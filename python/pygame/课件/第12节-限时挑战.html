@@ -1,0 +1,387 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>第12节：限时挑战</title>
+<style>
+*{margin:0;padding:0;box-sizing:border-box;}
+body{
+  font-family: "Microsoft YaHei", "PingFang SC", sans-serif;
+  background: #1a1a2e;
+  display:flex; justify-content:center; align-items:center;
+  min-height:100vh; overflow:hidden;
+}
+#slideshow{
+  width:960px; height:650px;
+  background: linear-gradient(135deg, #3d1e6d 0%, #1a0a3e 100%);
+  border-radius:20px; box-shadow:0 10px 40px rgba(0,0,0,0.5);
+  position:relative; overflow:hidden;
+  border:4px solid #FF6B35;
+}
+.slide{
+  position:absolute; top:0; left:0; width:100%; height:100%;
+  display:none; padding:40px 60px; color:#fff;
+}
+.slide.active{display:flex; flex-direction:column; justify-content:center;}
+.slide h1{font-size:44px; color:#FF6B35; margin-bottom:20px; text-align:center; text-shadow:2px 2px 4px rgba(0,0,0,0.5);}
+.slide h2{font-size:36px; color:#FF6B35; margin-bottom:18px; border-bottom:3px solid #FF6B35; padding-bottom:8px;}
+.slide h3{font-size:28px; color:#FFA500; margin-bottom:12px; margin-top:16px;}
+.slide p{font-size:26px; line-height:1.8; margin-bottom:12px; text-align:left;}
+.slide ul{font-size:26px; line-height:2; margin-left:30px;}
+.slide li{margin-bottom:8px;}
+.slide .highlight{color:#FF6B35; font-weight:bold;}
+.slide .code-block{
+  background:#1e1e2e; border-radius:12px; padding:20px 28px;
+  font-size:21px; line-height:1.7; margin:12px 0;
+  border:2px solid #3a3a5a; overflow-x:auto;
+  font-family: "Fira Code", "Consolas", "Courier New", monospace;
+  color:#cdd6f4; text-align:left;
+}
+.slide .code-block .kw{color:#cba6f7;}
+.slide .code-block .fn{color:#89b4fa;}
+.slide .code-block .str{color:#a6e3a1;}
+.slide .code-block .num{color:#fab387;}
+.slide .code-block .cmt{color:#6c7086; font-style:italic;}
+.slide .code-block .op{color:#f38ba8;}
+.slide .center{text-align:center;}
+.slide .big-icon{font-size:80px; text-align:center; margin:20px 0;}
+.slide .emoji{font-size:60px;}
+.slide .subtitle{font-size:28px; color:#ccc; text-align:center; margin-top:10px;}
+.slide .tag{
+  display:inline-block; background:rgba(255,107,53,0.2); color:#FF6B35;
+  padding:6px 18px; border-radius:20px; font-size:22px; margin:6px 8px;
+  border:1px solid #FF6B35;
+}
+.slide .tag-green{
+  display:inline-block; background:rgba(0,200,0,0.2); color:#0f0;
+  padding:6px 18px; border-radius:20px; font-size:22px; margin:6px 8px;
+  border:1px solid #0f0;
+}
+.slide .tag-red{
+  display:inline-block; background:rgba(255,80,80,0.2); color:#f55;
+  padding:6px 18px; border-radius:20px; font-size:22px; margin:6px 8px;
+  border:1px solid #f55;
+}
+.page-num{
+  position:absolute; bottom:15px; right:25px;
+  font-size:18px; color:rgba(255,255,255,0.5);
+}
+.two-col{display:flex; gap:30px; align-items:flex-start;}
+.two-col > div{flex:1;}
+table{
+  width:100%; border-collapse:collapse; font-size:24px; margin:12px 0;
+}
+th{background:rgba(255,107,53,0.3); padding:10px 14px; border:2px solid #FF6B35; text-align:left;}
+td{padding:10px 14px; border:2px solid #555; text-align:left;}
+.diagram{
+  background:rgba(255,255,255,0.05); border-radius:12px;
+  padding:20px; text-align:center; margin:12px 0;
+}
+.big-num{font-size:60px; font-weight:bold; color:#FF6B35;}
+</style>
+</head>
+<body>
+<div id="slideshow">
+
+<!-- 第1页：封面 -->
+<div class="slide active">
+  <div class="center">
+    <div class="big-icon">⏱️</div>
+    <h1>第12节：限时挑战</h1>
+    <p class="subtitle">倒计时 + 计分 + 难度选择 + Game Over</p>
+    <div style="margin-top:40px;">
+      <span class="tag">倒计时</span>
+      <span class="tag-green">+10 分</span>
+      <span class="tag-red">-5 分</span>
+      <span class="tag">难度选择</span>
+    </div>
+  </div>
+  <div class="page-num">1 / 12</div>
+</div>
+
+<!-- 第2页：学习目标 -->
+<div class="slide">
+  <h2>🎯 本节课学习目标</h2>
+  <ul>
+    <li>用 <span class="highlight">pygame.time.get_ticks()</span> 实现倒计时</li>
+    <li>实现打中加分、空点扣分的 <span class="highlight">计分系统</span></li>
+    <li>设计 <span class="highlight">难度分级</span>（简单/普通/困难）</li>
+    <li>制作 <span class="highlight">Game Over 画面</span> 与重新开始功能</li>
+  </ul>
+  <div class="page-num">2 / 12</div>
+</div>
+
+<!-- 第3页：时间计算的原理 -->
+<div class="slide">
+  <h2>🕐 倒计时是怎么实现的？</h2>
+  <p>计算机内部有一个"毫秒计时器"，从开机就在数。</p>
+  <div class="diagram">
+    <p style="font-size:28px;">
+      游戏开始时刻 &nbsp; = &nbsp; <span class="highlight">get_ticks()</span> &nbsp; （比如 52300 ms）
+    </p>
+    <p style="font-size:28px; margin-top:12px;">
+      当前时刻 &nbsp; = &nbsp; <span class="highlight">get_ticks()</span> &nbsp; （比如 65300 ms）
+    </p>
+    <p style="font-size:32px; margin-top:16px;">
+      ⬇️
+    </p>
+    <p style="font-size:28px;">
+      已过时间 = <span class="highlight">65300 - 52300 = 13000 ms = 13 秒</span>
+    </p>
+    <p style="font-size:28px;">
+      剩余时间 = <span class="highlight">30 - 13 = 17 秒 ⏱️</span>
+    </p>
+  </div>
+  <div class="page-num">3 / 12</div>
+</div>
+
+<!-- 第4页：倒计时代码 -->
+<div class="slide">
+  <h2>🕐 倒计时 — 代码实现</h2>
+  <div class="code-block">
+<span class="cmt"># 游戏开始前，记录起始毫秒数</span>
+start_ticks = pygame.time.<span class="fn">get_ticks</span>()
+GAME_DURATION = <span class="num">30</span>  <span class="cmt"># 游戏时长 30 秒</span>
+
+<span class="cmt"># 主循环中，每帧计算剩余时间</span>
+<span class="kw">while</span> running:
+    elapsed = pygame.time.<span class="fn">get_ticks</span>() - start_ticks
+    remaining = GAME_DURATION - elapsed // <span class="num">1000</span>
+
+    <span class="kw">if</span> remaining <= <span class="num">0</span>:
+        remaining = <span class="num">0</span>
+        game_over = <span class="fn">True</span>
+  </div>
+  <p style="margin-top:12px;">
+    ⚠️ 注意：<span class="highlight">1 秒 = 1000 毫秒</span>，`// 1000` 是整数除法
+  </p>
+  <div class="page-num">4 / 12</div>
+</div>
+
+<!-- 第5页：显示倒计时和分数 -->
+<div class="slide">
+  <h2>📊 在屏幕上显示文字</h2>
+  <p>Pygame 显示文字需要三步：<span class="highlight">Font → render → blit</span></p>
+  <div class="code-block">
+<span class="cmt"># 第1步：创建字体对象</span>
+font = pygame.font.<span class="fn">Font</span>(<span class="fn">None</span>, <span class="num">48</span>)  <span class="cmt"># None=默认字体</span>
+
+<span class="cmt"># 第2步：渲染文字表面</span>
+timer_text = font.<span class="fn">render</span>(
+    <span class="str">f"剩余时间: {remaining} 秒"</span>,
+    <span class="fn">True</span>,          <span class="cmt"># 抗锯齿</span>
+    (<span class="num">255</span>, <span class="num">255</span>, <span class="num">255</span>)  <span class="cmt"># 白色</span>
+)
+
+<span class="cmt"># 第3步：画到屏幕上</span>
+screen.<span class="fn">blit</span>(timer_text, (<span class="num">20</span>, <span class="num">20</span>))
+  </div>
+  <p style="margin-top:8px;">💡 分数显示同理：<span class="highlight">f"分数: {score}"</span>，放在右上角</p>
+  <div class="page-num">5 / 12</div>
+</div>
+
+<!-- 第6页：计分规则 -->
+<div class="slide">
+  <h2>🏆 计分规则</h2>
+  <div class="two-col">
+    <div style="text-align:center;">
+      <div class="big-num" style="color:#0f0;">+10</div>
+      <p style="font-size:30px;">✅ 打中地鼠</p>
+      <p style="font-size:20px; color:#aaa;">鼠标点击到有地鼠的洞口</p>
+    </div>
+    <div style="text-align:center;">
+      <div class="big-num" style="color:#f55;">-5</div>
+      <p style="font-size:30px;">❌ 空点扣分</p>
+      <p style="font-size:20px; color:#aaa;">鼠标点到洞口但没有地鼠</p>
+    </div>
+  </div>
+  <div class="code-block" style="margin-top:20px;">
+<span class="kw">if</span> mole_rect.<span class="fn">collidepoint</span>(x, y):
+    score += <span class="num">10</span>      <span class="cmt"># 打中加分！</span>
+<span class="kw">elif</span> any_hole_clicked:
+    score -= <span class="num">5</span>       <span class="cmt"># 空点扣分！</span>
+  </div>
+  <div class="page-num">6 / 12</div>
+</div>
+
+<!-- 第7页：难度分级 -->
+<div class="slide">
+  <h2>🎮 难度分级</h2>
+  <p>不同难度 = 地鼠换洞速度不同 = <span class="highlight">set_timer() 间隔不同</span></p>
+  <table>
+    <tr><th>难度</th><th>间隔时间</th><th>每10秒出现次数</th><th>难度说明</th></tr>
+    <tr><td>🟢 简单</td><td class="highlight">1200 ms</td><td>约 8 只</td><td>悠闲模式，适合热身</td></tr>
+    <tr><td>🟡 普通</td><td class="highlight">800 ms</td><td>约 12 只</td><td>标准节奏</td></tr>
+    <tr><td>🔴 困难</td><td class="highlight">500 ms</td><td>约 20 只</td><td>手速大考验！</td></tr>
+  </table>
+  <div class="code-block" style="margin-top:12px;">
+<span class="kw">def</span> <span class="fn">set_difficulty</span>(level):
+    interval = {<span class="str">"简单"</span>:<span class="num">1200</span>, <span class="str">"普通"</span>:<span class="num">800</span>, <span class="str">"困难"</span>:<span class="num">500</span>}[level]
+    pygame.time.<span class="fn">set_timer</span>(MOLE_CHANGE, interval)
+  </div>
+  <div class="page-num">7 / 12</div>
+</div>
+
+<!-- 第8页：游戏状态管理 -->
+<div class="slide">
+  <h2>🔄 游戏状态管理</h2>
+  <p>用 <span class="highlight">game_state</span> 变量控制游戏在不同阶段的行为</p>
+  <div style="display:flex; gap:20px; justify-content:center; margin:20px 0;">
+    <div style="background:rgba(255,107,53,0.2); padding:16px 30px; border-radius:16px; text-align:center; border:2px solid #FF6B35;">
+      <p style="font-size:32px;">📋 menu</p>
+      <p style="font-size:20px;">开始画面</p>
+      <p style="font-size:18px; color:#aaa;">选择难度</p>
+    </div>
+    <div style="font-size:40px; color:#FF6B35; padding-top:20px;">→</div>
+    <div style="background:rgba(0,200,0,0.2); padding:16px 30px; border-radius:16px; text-align:center; border:2px solid #0f0;">
+      <p style="font-size:32px;">🎮 playing</p>
+      <p style="font-size:20px;">游戏中</p>
+      <p style="font-size:18px; color:#aaa;">打地鼠 + 倒计时</p>
+    </div>
+    <div style="font-size:40px; color:#FF6B35; padding-top:20px;">→</div>
+    <div style="background:rgba(255,80,80,0.2); padding:16px 30px; border-radius:16px; text-align:center; border:2px solid #f55;">
+      <p style="font-size:32px;">💀 gameover</p>
+      <p style="font-size:20px;">游戏结束</p>
+      <p style="font-size:18px; color:#aaa;">显示得分</p>
+    </div>
+  </div>
+  <div class="page-num">8 / 12</div>
+</div>
+
+<!-- 第9页：Game Over 画面 -->
+<div class="slide">
+  <h2>💀 Game Over 画面设计</h2>
+  <div class="code-block">
+<span class="kw">def</span> <span class="fn">draw_gameover</span>():
+    <span class="cmt"># 半透明黑色遮罩</span>
+    overlay = pygame.<span class="fn">Surface</span>((<span class="num">800</span>, <span class="num">600</span>))
+    overlay.<span class="fn">set_alpha</span>(<span class="num">180</span>)       <span class="cmt"># 透明度</span>
+    overlay.<span class="fn">fill</span>((<span class="num">0</span>, <span class="num">0</span>, <span class="num">0</span>))
+    screen.<span class="fn">blit</span>(overlay, (<span class="num">0</span>, <span class="num">0</span>))
+
+    <span class="cmt"># 大标题</span>
+    title = big_font.<span class="fn">render</span>(<span class="str">"游戏结束!"</span>, <span class="fn">True</span>, (<span class="num">255</span>,<span class="num">80</span>,<span class="num">80</span>))
+    screen.<span class="fn">blit</span>(title, title_rect)
+
+    <span class="cmt"># 最终得分 + 重新开始按钮</span>
+    score_text = font.<span class="fn">render</span>(<span class="str">f"最终得分: {score}"</span>, ...)
+    <span class="cmt"># ... 绘制"再来一局"按钮 ...</span>
+  </div>
+  <p>💡 关键是 <span class="highlight">set_alpha()</span> — 让遮罩半透明，底层画面隐约可见</p>
+  <div class="page-num">9 / 12</div>
+</div>
+
+<!-- 第10页：主循环完整结构 -->
+<div class="slide">
+  <h2>🔄 完整主循环 (带状态管理)</h2>
+  <div class="code-block" style="font-size:18px;">
+<span class="kw">while</span> running:
+    <span class="kw">for</span> event <span class="kw">in</span> pygame.event.<span class="fn">get</span>():
+        <span class="kw">if</span> event.<span class="fn">type</span> == QUIT: running = <span class="num">False</span>
+
+        <span class="kw">if</span> game_state == <span class="str">"menu"</span>:
+            <span class="cmt"># 处理难度选择、开始按钮</span>
+        <span class="kw">elif</span> game_state == <span class="str">"playing"</span>:
+            <span class="cmt"># 处理 MOLE_CHANGE、MOUSEBUTTONDOWN</span>
+        <span class="kw">elif</span> game_state == <span class="str">"gameover"</span>:
+            <span class="cmt"># 处理重新开始按钮</span>
+
+    <span class="kw">if</span> game_state == <span class="str">"menu"</span>:     draw_menu()
+    <span class="kw">elif</span> game_state == <span class="str">"playing"</span>:  draw_game()
+    <span class="kw">elif</span> game_state == <span class="str">"gameover"</span>: draw_gameover()
+  </div>
+  <p style="margin-top:12px;">🔑 一个变量 <span class="highlight">game_state</span>，控制三种不同的画面和行为</p>
+  <div class="page-num">10 / 12</div>
+</div>
+
+<!-- 第11页：练习任务 -->
+<div class="slide">
+  <h2>✏️ 课堂练习（25分钟）</h2>
+  <div class="two-col">
+    <div>
+      <h3>✅ 基础任务</h3>
+      <ul style="font-size:22px;">
+        <li>添加 30 秒倒计时显示</li>
+        <li>打中 +10 分，空点 -5 分</li>
+        <li>时间到显示 Game Over</li>
+        <li>"再来一局"按钮可用</li>
+      </ul>
+    </div>
+    <div>
+      <h3>🚀 挑战任务</h3>
+      <ul style="font-size:22px;">
+        <li>难度选择界面</li>
+        <li>连击系统（连续打中加分递增）</li>
+        <li>最高分记录保存</li>
+        <li>尝试添加音效</li>
+      </ul>
+    </div>
+  </div>
+  <div class="page-num">11 / 12</div>
+</div>
+
+<!-- 第12页：总结 -->
+<div class="slide">
+  <h2>📋 两节课知识总览</h2>
+  <table>
+    <tr><th>第11节</th><th>第12节</th></tr>
+    <tr><td>Rect 网格布局</td><td>get_ticks() 倒计时</td></tr>
+    <tr><td>random 随机选洞</td><td>计分系统 (+10 / -5)</td></tr>
+    <tr><td>USEREVENT 自定义事件</td><td>难度分级 (set_timer)</td></tr>
+    <tr><td>set_timer 定时器</td><td>游戏状态管理</td></tr>
+    <tr><td>collidepoint 点击检测</td><td>Game Over 画面设计</td></tr>
+  </table>
+  <p style="text-align:center; margin-top:24px; font-size:28px;">
+    🎉 恭喜！你完成了一个完整的打地鼠游戏！
+  </p>
+  <div class="page-num">12 / 12</div>
+</div>
+
+</div>
+
+<div style="position:fixed; bottom:10px; left:50%; transform:translateX(-50%); color:#888; font-size:16px;">
+  按 ← → 方向键翻页
+</div>
+
+<script>
+(function(){
+  var slides = document.querySelectorAll('.slide');
+  var total = slides.length;
+  var current = 0;
+
+  function showSlide(n){
+    slides[current].classList.remove('active');
+    current = ((n % total) + total) % total;
+    slides[current].classList.add('active');
+  }
+
+  document.addEventListener('keydown', function(e){
+    if(e.key === 'ArrowRight' || e.key === 'ArrowDown' || e.key === ' '){
+      e.preventDefault();
+      showSlide(current + 1);
+    } else if(e.key === 'ArrowLeft' || e.key === 'ArrowUp'){
+      e.preventDefault();
+      showSlide(current - 1);
+    } else if(e.key === 'Home'){
+      e.preventDefault();
+      showSlide(0);
+    } else if(e.key === 'End'){
+      e.preventDefault();
+      showSlide(total - 1);
+    }
+  });
+
+  document.getElementById('slideshow').addEventListener('click', function(e){
+    var rect = this.getBoundingClientRect();
+    var x = e.clientX - rect.left;
+    if(x > rect.width / 2){
+      showSlide(current + 1);
+    } else {
+      showSlide(current - 1);
+    }
+  });
+})();
+</script>
+</body>
+</html>

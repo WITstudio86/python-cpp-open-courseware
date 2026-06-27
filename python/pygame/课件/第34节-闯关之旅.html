@@ -1,0 +1,502 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>第34节：闯关之旅 —— 卷轴滚动、敌人与关卡地图</title>
+<style>
+* { margin: 0; padding: 0; box-sizing: border-box; }
+
+body {
+    font-family: "Microsoft YaHei", "PingFang SC", "Noto Sans SC", sans-serif;
+    background: #1a1a2e;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    height: 100vh;
+    overflow: hidden;
+    user-select: none;
+}
+
+.slide-container {
+    width: 960px;
+    height: 640px;
+    background: linear-gradient(135deg, #0f0f23 0%, #1a1a3e 100%);
+    border-radius: 16px;
+    box-shadow: 0 0 40px rgba(99, 102, 241, 0.3), 0 0 80px rgba(99, 102, 241, 0.1);
+    position: relative;
+    overflow: hidden;
+}
+
+.slide {
+    position: absolute;
+    top: 0; left: 0; width: 100%; height: 100%;
+    display: none;
+    flex-direction: column;
+    padding: 50px 60px;
+    color: #e0e0e0;
+}
+
+.slide.active { display: flex; }
+
+/* Page indicator */
+.page-indicator {
+    position: absolute;
+    bottom: 20px; right: 30px;
+    font-size: 14px; color: #888; z-index: 10;
+}
+
+/* Navigation hint */
+.nav-hint {
+    position: absolute;
+    bottom: 18px; left: 30px;
+    font-size: 13px; color: #666; z-index: 10;
+}
+
+/* === Slide Types === */
+
+/* Title Slide */
+.slide-title {
+    justify-content: center; align-items: center; text-align: center;
+    background: linear-gradient(135deg, #0f0f23 0%, #1e1e4a 50%, #0f0f23 100%);
+}
+.slide-title .chapter {
+    font-size: 22px; color: #818cf8; letter-spacing: 4px; margin-bottom: 20px;
+}
+.slide-title h1 {
+    font-size: 48px; color: #ffffff; margin-bottom: 16px;
+    text-shadow: 0 0 20px rgba(99, 102, 241, 0.6);
+}
+.slide-title .subtitle {
+    font-size: 22px; color: #a5b4fc; margin-bottom: 40px;
+}
+.slide-title .info {
+    font-size: 16px; color: #888;
+}
+
+/* Content Slide */
+.slide-content h2 {
+    font-size: 36px; color: #818cf8; margin-bottom: 30px;
+    padding-bottom: 12px; border-bottom: 3px solid #3730a3;
+}
+.slide-content ul {
+    list-style: none; padding-left: 0;
+}
+.slide-content ul li {
+    font-size: 24px; line-height: 1.8; padding: 6px 0;
+    padding-left: 36px; position: relative;
+}
+.slide-content ul li::before {
+    content: "▸"; position: absolute; left: 0;
+    color: #818cf8; font-size: 20px;
+}
+
+/* Concept Slide */
+.slide-concept h2 {
+    font-size: 36px; color: #818cf8; margin-bottom: 20px;
+    padding-bottom: 12px; border-bottom: 3px solid #3730a3;
+}
+.slide-concept .concept-box {
+    background: rgba(55, 48, 163, 0.2); border: 2px solid #3730a3;
+    border-radius: 12px; padding: 20px 28px; margin-bottom: 16px;
+}
+.slide-concept .concept-box h3 {
+    font-size: 24px; color: #fbbf24; margin-bottom: 8px;
+}
+.slide-concept .concept-box p {
+    font-size: 20px; line-height: 1.7; color: #d1d5db;
+}
+.slide-concept .formula {
+    background: #1a1a3e; border-radius: 8px; padding: 10px 18px;
+    font-size: 22px; color: #34d399;
+    font-family: "Consolas", "Courier New", monospace; text-align: center; margin-top: 8px;
+}
+
+/* Table */
+.slide-table h2 {
+    font-size: 36px; color: #818cf8; margin-bottom: 24px;
+    padding-bottom: 12px; border-bottom: 3px solid #3730a3;
+}
+.slide-table table {
+    width: 100%; border-collapse: collapse; font-size: 20px;
+}
+.slide-table th {
+    background: #3730a3; color: #fff; padding: 12px 16px; text-align: left; font-size: 22px;
+}
+.slide-table td {
+    padding: 12px 16px; border-bottom: 1px solid #2e2e5e; color: #d1d5db;
+}
+.slide-table tr:nth-child(even) td { background: rgba(55, 48, 163, 0.1); }
+
+/* Code block */
+.code-block {
+    background: #0d1117; border: 2px solid #30363d; border-radius: 10px;
+    padding: 18px 22px; font-family: "Consolas", "Courier New", monospace;
+    font-size: 16px; line-height: 1.7; overflow-x: auto; white-space: pre; color: #e6edf3;
+}
+.code-block .kw { color: #ff7b72; }
+.code-block .fn { color: #d2a8ff; }
+.code-block .num { color: #79c0ff; }
+.code-block .cmt { color: #8b949e; font-style: italic; }
+.code-block .str { color: #a5d6ff; }
+.code-block .op { color: #ff7b72; }
+
+/* Tile map visual */
+.tile-grid {
+    display: inline-grid; gap: 1px;
+    background: #30363d; padding: 4px; border-radius: 8px;
+    font-family: "Consolas", monospace; font-size: 14px;
+    grid-template-columns: repeat(8, 32px);
+    margin: 10px 0;
+}
+.tile-grid span {
+    width: 32px; height: 32px;
+    display: flex; align-items: center; justify-content: center;
+    color: #000; font-weight: bold;
+}
+.tile-0 { background: #161b22; color: #444 !important; }
+.tile-1 { background: #8b6914; color: #fff !important; }
+.tile-2 { background: #6b7280; color: #fff !important; }
+.tile-3 { background: #fbbf24; }
+.tile-4 { background: #ef4444; }
+.tile-5 { background: #34d399; }
+
+/* Two columns */
+.two-col { display: flex; gap: 30px; flex: 1; }
+.two-col > div { flex: 1; }
+
+/* Emphasis */
+.em { color: #fbbf24; font-weight: bold; }
+.em2 { color: #34d399; font-weight: bold; }
+.em3 { color: #f87171; font-weight: bold; }
+
+/* Tags */
+.tag {
+    display: inline-block;
+    background: #3730a3; color: #fff;
+    padding: 4px 14px; border-radius: 20px;
+    font-size: 18px; margin: 4px;
+}
+.tag.green { background: #065f46; }
+.tag.yellow { background: #713f12; }
+.tag.red { background: #7f1d1d; }
+
+/* Diagram box */
+.diagram {
+    background: rgba(55, 48, 163, 0.15); border: 2px dashed #3730a3;
+    border-radius: 12px; padding: 20px; text-align: center; margin: 10px 0;
+}
+.diagram p { font-size: 20px; color: #d1d5db; line-height: 1.8; }
+</style>
+</head>
+<body>
+
+<div class="slide-container" id="slideContainer">
+
+<!-- Slide 0: Title -->
+<div class="slide slide-title active">
+    <div class="chapter">第 34 节</div>
+    <h1>闯 关 之 旅</h1>
+    <div class="subtitle">卷轴滚动、敌人与关卡地图</div>
+    <div class="info">Pygame 游戏开发课程 | 适用年龄 10-15 岁</div>
+</div>
+
+<!-- Slide 1: 学习目标 -->
+<div class="slide slide-content">
+    <h2>学习目标</h2>
+    <ul>
+        <li>理解<span class="em">相机偏移</span>与<span class="em">卷轴滚动</span>的原理</li>
+        <li>学会用<span class="em">Tile Map</span>（二维数组）拼接关卡</li>
+        <li>实现<span class="em2">踩踏消灭</span>敌人</li>
+        <li>完成<span class="em">金币收集</span>和<span class="em">过关判定</span></li>
+    </ul>
+</div>
+
+<!-- Slide 2: 导入 - 世界比屏幕大 -->
+<div class="slide slide-concept">
+    <h2>世界比屏幕大，怎么办？</h2>
+    <div class="diagram">
+        <p>关卡地图有 <span class="em">3000 像素宽</span></p>
+        <p>但屏幕只有 <span class="em">800 像素宽</span></p>
+        <p style="margin-top:10px;">❓ 角色走到 1200 像素时，屏幕外的画面去哪了？</p>
+    </div>
+    <div class="concept-box">
+        <h3>答案：相机（Camera）！</h3>
+        <p>相机不是真正的摄像头，而是两个数字：<span class="em">camera_x</span> 和 <span class="em">camera_y</span></p>
+        <p>代表"屏幕左上角在世界中的位置"</p>
+        <div class="formula">screen_x = world_x - camera_x</div>
+    </div>
+</div>
+
+<!-- Slide 3: 相机偏移原理 -->
+<div class="slide slide-concept">
+    <h2>相机偏移 —— "屏幕的眼睛"</h2>
+    <div class="diagram">
+        <p>角色在世界坐标 <span class="em">(1500, 400)</span></p>
+        <p>相机在世界坐标 <span class="em">(800, 200)</span></p>
+        <p style="margin-top:8px;">角色在屏幕上的位置：</p>
+        <p class="formula" style="font-size:28px;">1500 - 800 = <span class="em">700</span> , 400 - 200 = <span class="em">200</span></p>
+    </div>
+    <div class="code-block"><span class="cmt"># 画任何东西之前，都减去相机位置</span>
+pygame.draw.rect(screen, color, (
+    obj.x - camera_x,    <span class="cmt"># ← 关键！</span>
+    obj.y - camera_y,    <span class="cmt"># ← 关键！</span>
+    obj.w, obj.h
+))</div>
+</div>
+
+<!-- Slide 4: 卷轴滚动 -->
+<div class="slide slide-concept">
+    <h2>卷轴滚动 —— 相机跟随角色</h2>
+    <div class="concept-box">
+        <h3>规则：角色超过屏幕中线 → 相机跟着移动</h3>
+        <div class="code-block"><span class="cmt"># 让角色保持在屏幕 1/3 处</span>
+target = player.x - SCREEN_WIDTH // <span class="num">3</span>
+
+<span class="cmt"># 平滑移动（缓动效果）</span>
+camera_x += (target - camera_x) * <span class="num">0.1</span>
+
+<span class="cmt"># 限制相机不超出世界边界</span>
+camera_x = max(<span class="num">0</span>, min(camera_x, WORLD_W - SCREEN_W))</div>
+    </div>
+    <p style="margin-top:10px;font-size:20px;">
+        💡 <span class="em">0.1 的系数</span>让相机平滑滑动，而不是瞬移——这叫"缓动"
+    </p>
+</div>
+
+<!-- Slide 5: Tile Map -->
+<div class="slide slide-concept">
+    <h2>Tile Map —— 用数字拼出世界</h2>
+    <div class="concept-box">
+        <h3>什么是 Tile？</h3>
+        <p>Tile = "瓷砖"。Tile Map = 用一个个小方块拼出整个关卡</p>
+    </div>
+    <div class="two-col">
+        <div>
+            <p style="font-size:18px;color:#818cf8;margin-bottom:6px;">二维数组定义地图：</p>
+            <div class="code-block" style="font-size:14px;"><span class="num">0</span>=空 <span class="num">1</span>=地面 <span class="num">2</span>=平台
+<span class="num">3</span>=金币 <span class="num">4</span>=敌人 <span class="num">5</span>=终点
+
+level_map = [
+  [<span class="num">1</span>,<span class="num">1</span>,<span class="num">1</span>,<span class="num">1</span>,<span class="num">1</span>,<span class="num">1</span>,<span class="num">1</span>,<span class="num">1</span>],
+  [<span class="num">1</span>,<span class="num">0</span>,<span class="num">0</span>,<span class="num">0</span>,<span class="num">4</span>,<span class="num">3</span>,<span class="num">3</span>,<span class="num">1</span>],
+  [<span class="num">1</span>,<span class="num">0</span>,<span class="num">2</span>,<span class="num">0</span>,<span class="num">0</span>,<span class="num">0</span>,<span class="num">0</span>,<span class="num">1</span>],
+  [<span class="num">1</span>,<span class="num">0</span>,<span class="num">0</span>,<span class="num">0</span>,<span class="num">0</span>,<span class="num">2</span>,<span class="num">5</span>,<span class="num">1</span>],
+  [<span class="num">1</span>,<span class="num">1</span>,<span class="num">1</span>,<span class="num">1</span>,<span class="num">1</span>,<span class="num">1</span>,<span class="num">1</span>,<span class="num">1</span>],
+]</div>
+        </div>
+        <div>
+            <p style="font-size:18px;color:#818cf8;margin-bottom:6px;">可视化效果：</p>
+            <div class="tile-grid">
+                <span class="tile-1">1</span><span class="tile-1">1</span><span class="tile-1">1</span><span class="tile-1">1</span><span class="tile-1">1</span><span class="tile-1">1</span><span class="tile-1">1</span><span class="tile-1">1</span>
+                <span class="tile-1">1</span><span class="tile-0">0</span><span class="tile-0">0</span><span class="tile-0">0</span><span class="tile-4">4</span><span class="tile-3">3</span><span class="tile-3">3</span><span class="tile-1">1</span>
+                <span class="tile-1">1</span><span class="tile-0">0</span><span class="tile-2">2</span><span class="tile-0">0</span><span class="tile-0">0</span><span class="tile-0">0</span><span class="tile-0">0</span><span class="tile-1">1</span>
+                <span class="tile-1">1</span><span class="tile-0">0</span><span class="tile-0">0</span><span class="tile-0">0</span><span class="tile-0">0</span><span class="tile-2">2</span><span class="tile-5">5</span><span class="tile-1">1</span>
+                <span class="tile-1">1</span><span class="tile-1">1</span><span class="tile-1">1</span><span class="tile-1">1</span><span class="tile-1">1</span><span class="tile-1">1</span><span class="tile-1">1</span><span class="tile-1">1</span>
+            </div>
+            <p style="font-size:14px;color:#888;margin-top:8px;">🟫=地面  ⬜=平台  🟡=金币  🔴=敌人  🟢=终点</p>
+        </div>
+    </div>
+</div>
+
+<!-- Slide 6: Tile Map 转游戏对象 -->
+<div class="slide slide-concept">
+    <h2>从数组到游戏世界</h2>
+    <div class="code-block"><span class="cmt"># 遍历二维数组，创建对应的游戏对象</span>
+TILE_SIZE = <span class="num">40</span>
+<span class="kw">for</span> row <span class="kw">in</span> range(len(level_map)):
+    <span class="kw">for</span> col <span class="kw">in</span> range(len(level_map[row])):
+        tile = level_map[row][col]
+        x = col * TILE_SIZE
+        y = row * TILE_SIZE
+
+        <span class="kw">if</span> tile == <span class="num">1</span>:  tiles.append(Ground(x, y))
+        <span class="kw">elif</span> tile == <span class="num">2</span>:  tiles.append(Platform(x, y))
+        <span class="kw">elif</span> tile == <span class="num">3</span>:  coins.append(Coin(x, y))
+        <span class="kw">elif</span> tile == <span class="num">4</span>:  enemies.append(Enemy(x, y))
+        <span class="kw">elif</span> tile == <span class="num">5</span>:  flag = Flag(x, y)</div>
+    <p style="margin-top:10px;font-size:20px;">
+        🎯 就像用<span class="em">乐高积木</span>拼世界——你定义每个位置放什么，程序自动拼出来！
+    </p>
+</div>
+
+<!-- Slide 7: 踩踏消灭敌人 -->
+<div class="slide slide-concept">
+    <h2>踩踏消灭敌人</h2>
+    <div class="concept-box" style="border-color:#34d399;">
+        <h3 style="color:#34d399;">跳到敌人头顶 → 消灭！</h3>
+        <div class="code-block"><span class="kw">if</span> player.colliderect(enemy):
+    <span class="cmt"># 判断：角色在下落 且 脚接近敌人头顶</span>
+    <span class="kw">if</span> player.vy > <span class="num">0</span> <span class="kw">and</span> player.bottom - enemy.top < <span class="num">15</span>:
+        enemies.remove(enemy)     <span class="cmt"># 消灭敌人！</span>
+        player.vy = -<span class="num">8</span>             <span class="cmt"># 弹跳一下</span>
+        score += <span class="num">100</span>                <span class="cmt"># 加分！</span>
+    <span class="kw">else</span>:
+        game_over = <span class="kw">True</span>             <span class="cmt"># 碰到侧面/底部 → 死亡</span></div>
+    </div>
+    <p style="margin-top:10px;font-size:20px;">
+        🔑 关键条件：<span class="em">vy > 0</span>（下落中）+ <span class="em">脚接近头顶</span>（容差15像素）
+    </p>
+</div>
+
+<!-- Slide 8: 金币收集与过关 -->
+<div class="slide slide-concept">
+    <h2>金币收集 &amp; 过关判定</h2>
+    <div class="two-col">
+        <div class="concept-box" style="border-color:#fbbf24;">
+            <h3 style="color:#fbbf24;">金币收集</h3>
+            <div class="code-block" style="font-size:15px;"><span class="kw">for</span> coin <span class="kw">in</span> coins:
+    <span class="kw">if</span> player.colliderect(coin):
+        coins.remove(coin)
+        score += <span class="num">50</span></div>
+            <p style="font-size:16px;margin-top:4px;">碰到就收集，简单直接！</p>
+        </div>
+        <div class="concept-box" style="border-color:#34d399;">
+            <h3 style="color:#34d399;">到达终点</h3>
+            <div class="code-block" style="font-size:15px;"><span class="kw">if</span> player.colliderect(flag):
+    level_complete = <span class="kw">True</span>
+    <span class="cmt"># 显示通关文字！</span></div>
+            <p style="font-size:16px;margin-top:4px;">碰到旗帜就过关！</p>
+        </div>
+    </div>
+    <div class="concept-box" style="border-color:#f87171;margin-top:16px;">
+        <h3 style="color:#f87171;">死亡与重生</h3>
+        <p style="font-size:18px;">碰到敌人侧面/底部 → <span class="em3">重新开始</span>（重置位置、敌人、金币）</p>
+    </div>
+</div>
+
+<!-- Slide 9: 代码示例 -->
+<div class="slide slide-content">
+    <h2>完整代码结构</h2>
+    <div class="code-block" style="font-size:15px;"><span class="cmt"># 1. Tile Map 定义关卡</span>
+level_map = [ [...] ]  <span class="cmt"># 二维数组</span>
+camera_x, camera_y = <span class="num">0</span>, <span class="num">0</span>
+
+<span class="cmt"># 2. 从数组生成对象</span>
+generate_world_from_map(level_map)
+
+<span class="cmt"># 3. 游戏循环</span>
+<span class="kw">while</span> running:
+    <span class="cmt"># 相机跟随角色</span>
+    target_cam = player.x - SCREEN_W // <span class="num">3</span>
+    camera_x += (target_cam - camera_x) * <span class="num">0.1</span>
+
+    <span class="cmt"># 角色移动 + 重力 + 跳跃</span>
+    handle_player_input()
+    apply_gravity()
+
+    <span class="cmt"># 碰撞：平台、敌人、金币、终点</span>
+    check_platform_collisions()
+    check_enemy_collisions()
+    check_coin_collection()
+    check_flag_reached()
+
+    <span class="cmt"># 绘制（所有坐标减去camera）</span>
+    draw_world()</div>
+</div>
+
+<!-- Slide 10: 练习任务 -->
+<div class="slide slide-content">
+    <h2>练习任务</h2>
+    <h3 style="color:#fbbf24;margin:12px 0 8px;">基础任务（必做）</h3>
+    <ul>
+        <li>运行基础关卡代码，体验完整闯关流程</li>
+        <li>修改 level_map 数组，添加更多平台方块（数字2）</li>
+        <li>调整敌人位置（数字4），观察变化</li>
+    </ul>
+    <h3 style="color:#fbbf24;margin:12px 0 8px;">进阶任务（选做）</h3>
+    <ul>
+        <li>添加更多金币（数字3），设计收集路线</li>
+        <li>修改 camera_x 缓动系数，体验不同滚动感觉</li>
+        <li>给不同 Tile 类型添加不同的颜色</li>
+    </ul>
+    <h3 style="color:#f87171;margin:12px 0 8px;">挑战任务（高阶）</h3>
+    <ul>
+        <li>设计一个全新的关卡（修改整个 level_map）</li>
+        <li>添加"移动的敌人"——让敌人左右巡逻</li>
+        <li>添加新类型方块（如数字6=刺，碰到就死亡）</li>
+    </ul>
+</div>
+
+<!-- Slide 11: 总结 -->
+<div class="slide slide-content">
+    <h2>本课总结</h2>
+    <div style="display:flex;flex-wrap:wrap;gap:12px;margin-bottom:24px;">
+        <span class="tag">相机偏移</span>
+        <span class="tag yellow">卷轴滚动</span>
+        <span class="tag green">Tile Map</span>
+        <span class="tag">踩踏消灭</span>
+        <span class="tag yellow">金币收集</span>
+        <span class="tag red">死亡重生</span>
+    </div>
+    <ul>
+        <li>相机：<span class="em">screen = world - camera</span>，世界大于屏幕时必备</li>
+        <li>Tile Map：<span class="em">二维数组</span> = 乐高积木拼世界</li>
+        <li>踩踏敌人：<span class="em2">vy > 0</span> + 碰到头顶 → 消灭；否则 → 死亡</li>
+        <li>金币：碰到就收集；终点：碰到就过关</li>
+    </ul>
+    <p style="margin-top:30px;font-size:22px;color:#818cf8;text-align:center;">
+        你做出了一个<span class="em">完整的横版闯关游戏</span>！
+    </p>
+    <p style="font-size:18px;color:#888;text-align:center;">
+        下节预告：屏幕震动 + 粒子特效，让画面更炫酷 ✨
+    </p>
+</div>
+
+<!-- Page indicator and nav hint -->
+<div class="page-indicator" id="pageIndicator">1 / 12</div>
+<div class="nav-hint">← → 方向键翻页 | Home / End 跳转首尾 | 点击左右区域翻页</div>
+
+</div>
+
+<script>
+(function() {
+    var slides = document.querySelectorAll('.slide');
+    var indicator = document.getElementById('pageIndicator');
+    var total = slides.length;
+    var current = 0;
+
+    function showSlide(index) {
+        if (index < 0) index = 0;
+        if (index >= total) index = total - 1;
+
+        slides.forEach(function(s, i) {
+            s.classList.toggle('active', i === index);
+        });
+        current = index;
+        indicator.textContent = (current + 1) + ' / ' + total;
+    }
+
+    document.addEventListener('keydown', function(e) {
+        if (e.key === 'ArrowRight' || e.key === 'ArrowDown' || e.key === ' ') {
+            e.preventDefault();
+            showSlide(current + 1);
+        } else if (e.key === 'ArrowLeft' || e.key === 'ArrowUp') {
+            e.preventDefault();
+            showSlide(current - 1);
+        } else if (e.key === 'Home') {
+            e.preventDefault();
+            showSlide(0);
+        } else if (e.key === 'End') {
+            e.preventDefault();
+            showSlide(total - 1);
+        }
+    });
+
+    // Click navigation
+    document.getElementById('slideContainer').addEventListener('click', function(e) {
+        var rect = this.getBoundingClientRect();
+        var clickX = e.clientX - rect.left;
+        if (clickX < rect.width * 0.3) {
+            showSlide(current - 1);
+        } else if (clickX > rect.width * 0.7) {
+            showSlide(current + 1);
+        }
+    });
+
+    showSlide(0);
+})();
+</script>
+
+</body>
+</html>

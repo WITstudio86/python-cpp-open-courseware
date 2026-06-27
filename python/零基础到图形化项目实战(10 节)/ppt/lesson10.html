@@ -1,0 +1,604 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>第10课 · 打包发布</title>
+<link rel="stylesheet" href="assets/fonts.css">
+<link rel="stylesheet" href="assets/base.css">
+<link rel="stylesheet" id="theme-link" href="assets/themes/dracula.css">
+<link rel="stylesheet" href="assets/animations/animations.css">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/highlight.js@11.10.0/styles/dracula.min.css">
+<script src="https://cdn.jsdelivr.net/npm/highlight.js@11.10.0/lib/core.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/highlight.js@11.10.0/lib/languages/python.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/highlight.js@11.10.0/lib/languages/bash.min.js"></script>
+<script>addEventListener('DOMContentLoaded',()=>{hljs.registerLanguage('python',window.hljsLangPython||window.hljs.getLanguage('python'));hljs.registerLanguage('bash',window.hljsLangBash||window.hljs.getLanguage('bash'));document.querySelectorAll('pre code').forEach(el=>hljs.highlightElement(el))})</script>
+<style>
+  .slide { padding: 56px 72px; display: flex; flex-direction: column; justify-content: center; }
+  .slide.full { justify-content: center; align-items: center; text-align: center; }
+  .slide.full .deck-footer { position: absolute; bottom: 28px; left: 56px; right: 56px; }
+  .slide .deck-footer { position: absolute; bottom: 28px; left: 56px; right: 56px; }
+
+  .h1 { font-family: 'Inter','Noto Sans SC',sans-serif; font-size: 64px; line-height: 1.08; font-weight: 800; letter-spacing: -0.02em; color: var(--text-1); }
+  .h2 { font-family: 'Inter','Noto Sans SC',sans-serif; font-size: 44px; line-height: 1.15; font-weight: 700; letter-spacing: -0.015em; color: var(--text-1); }
+  .h3 { font-size: 24px; font-weight: 700; color: var(--text-1); }
+  .kicker { font-size: 12px; font-weight: 700; letter-spacing: .14em; text-transform: uppercase; color: var(--accent); }
+  .lede { font-size: 20px; color: var(--text-2); line-height: 1.7; max-width: 64ch; }
+
+  .bullet-card { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); padding: 20px 24px; }
+  .bullet-card h4 { margin: 0 0 6px; color: var(--accent); font-size: 17px; }
+  .bullet-card p { margin: 0; font-size: 15px; color: var(--text-2); line-height: 1.6; }
+
+  .code-card { background: #1e1f29; border-radius: var(--radius); padding: 20px 24px; overflow: auto; }
+  .code-card pre { margin: 0; }
+  .code-card code { font-family: 'JetBrains Mono','Fira Code',monospace; font-size: 15px; line-height: 1.75; }
+
+  .ic { font-family: 'JetBrains Mono','Fira Code',monospace; background: var(--surface-2); padding: 2px 8px; border-radius: 4px; font-size: .9em; color: var(--accent-2); }
+
+  .feat-card { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius-lg); padding: 28px 30px; text-align: center; }
+  .feat-card .icon { font-size: 40px; margin-bottom: 12px; }
+  .feat-card h4 { margin: 0 0 8px; color: var(--text-1); font-size: 18px; }
+  .feat-card p { margin: 0; color: var(--text-2); font-size: 14px; line-height: 1.6; }
+
+  .step-row { display: flex; gap: 16px; align-items: flex-start; margin-bottom: 14px; }
+  .step-num { flex: none; width: 36px; height: 36px; border-radius: 50%; background: var(--accent); color: #fff; display: flex; align-items: center; justify-content: center; font-weight: 700; font-size: 15px; }
+  .step-body h4 { margin: 0; color: var(--text-1); font-size: 16px; }
+  .step-body p { margin: 4px 0 0; color: var(--text-2); font-size: 14px; line-height: 1.5; }
+
+  .sum-table { width: 100%; border-collapse: collapse; font-size: 15px; }
+  .sum-table th { padding: 12px 16px; text-align: left; font-size: 11px; text-transform: uppercase; letter-spacing: .1em; color: var(--text-3); font-weight: 600; border-bottom: 2px solid var(--border-strong); }
+  .sum-table td { padding: 12px 16px; border-bottom: 1px solid var(--border); color: var(--text-2); }
+  .sum-table td:first-child { font-family: 'JetBrains Mono',monospace; color: var(--accent-2); font-size: 14px; }
+  .sum-table tr:hover td { background: var(--surface); }
+
+  .grad { background: var(--grad); -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text; }
+
+  .callout { border-left: 4px solid var(--accent); background: var(--surface); padding: 16px 20px; border-radius: 0 var(--radius) var(--radius) 0; font-size: 15px; color: var(--text-2); }
+  .callout b { color: var(--accent-2); }
+
+  .important { background: rgba(241,250,140,.1); border: 1px dashed var(--warn); border-radius: var(--radius); padding: 16px 20px; font-size: 14px; color: var(--text-2); }
+  .important b { color: var(--warn); }
+
+  .ex-item { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); padding: 16px 20px; display: flex; gap: 14px; align-items: flex-start; }
+  .ex-num { flex: none; width: 28px; height: 28px; border-radius: 50%; background: var(--surface-2); border: 2px solid var(--accent); color: var(--accent); display: flex; align-items: center; justify-content: center; font-weight: 700; font-size: 13px; }
+  .ex-item p { margin: 0; color: var(--text-2); font-size: 14px; line-height: 1.5; }
+
+  /* graduation box */
+  .grad-box { background: linear-gradient(135deg, rgba(189,147,249,.08), rgba(139,233,253,.08)); border: 2px solid var(--accent); border-radius: 16px; padding: 36px 48px; text-align: center; }
+  .grad-box pre { font-family: 'JetBrains Mono','Fira Code',monospace; font-size: 13px; line-height: 1.5; color: var(--accent-2); margin: 0; }
+  .grad-box .big { font-size: 24px; color: var(--accent); font-weight: 700; }
+</style>
+</head>
+<body>
+<div class="deck" data-themes="dracula,tokyo-night,catppuccin-mocha,nord,terminal-green,cyberpunk-neon" data-theme-base="assets/themes/">
+
+  <!-- ====== Slide 1: Cover ====== -->
+  <section class="slide full" data-title="Cover">
+    <p class="kicker anim-fade-down" data-anim="fade-down" style="color:var(--accent-2)">Python 零基础到图形化项目实战 · 第 10 课</p>
+    <h1 class="h1 anim-rise-in" data-anim="rise-in" style="font-size:72px;margin-top:12px">
+      打包<span class="grad">发布</span>
+    </h1>
+    <p class="lede anim-fade-up" data-anim="fade-up" style="margin-top:16px;max-width:56ch;font-size:22px">
+      让所有人用上你的程序 — PyInstaller 打包 + 课程总复习 + 结业成就
+    </p>
+    <div class="row wrap anim-fade-up" data-anim="fade-up" style="margin-top:32px;gap:12px;justify-content:center">
+      <span class="pill" style="background:rgba(189,147,249,.15);color:var(--accent);border:1px solid rgba(189,147,249,.3)">📦 PyInstaller</span>
+      <span class="pill" style="background:rgba(139,233,253,.15);color:var(--accent-3);border:1px solid rgba(139,233,253,.3)">🪟 .exe / .app</span>
+      <span class="pill" style="background:rgba(255,121,198,.15);color:var(--accent-2);border:1px solid rgba(255,121,198,.3)">🎓 结业</span>
+    </div>
+    <div class="deck-footer"><span class="dim2">第 10 课 · 打包发布</span><span class="slide-number" data-current="1" data-total="13"></span></div>
+    <div class="notes">最后一课！今天有三件事：学会打包发布、回顾 10 节课的所有收获、庆祝结业。这是最有成就感的一节课——你的代码终于变成真正的软件了！</div>
+  </section>
+
+  <!-- ====== Slide 2: 本课目标 ====== -->
+  <section class="slide" data-title="本课目标">
+    <p class="kicker">🎯 本课目标</p>
+    <h2 class="h2" style="margin-top:6px">最后一课，<span class="grad">六个目标</span></h2>
+    <div class="grid g2 anim-stagger-list" data-anim-target style="margin-top:32px;gap:18px">
+      <div class="bullet-card" style="display:flex;gap:16px;align-items:flex-start">
+        <span style="font-size:32px">📦</span>
+        <div><h4>用 PyInstaller 打包程序</h4><p>把 .py 变成 .exe（Windows）或 .app（Mac）。</p></div>
+      </div>
+      <div class="bullet-card" style="display:flex;gap:16px;align-items:flex-start">
+        <span style="font-size:32px">🎯</span>
+        <div><h4>掌握打包参数</h4><p>--onefile、--windowed、--icon，做出专业的可执行文件。</p></div>
+      </div>
+      <div class="bullet-card" style="display:flex;gap:16px;align-items:flex-start">
+        <span style="font-size:32px">📁</span>
+        <div><h4>处理数据文件路径</h4><p>理解 sys.frozen 和 sys._MEIPASS，打包后数据文件也能正常工作。</p></div>
+      </div>
+      <div class="bullet-card" style="display:flex;gap:16px;align-items:flex-start">
+        <span style="font-size:32px">🎨</span>
+        <div><h4>自定义程序图标</h4><p>给你的程序换一个专属图标，更像真正的软件。</p></div>
+      </div>
+      <div class="bullet-card" style="display:flex;gap:16px;align-items:flex-start">
+        <span style="font-size:32px">📋</span>
+        <div><h4>10 节课总复习</h4><p>盘点你从零基础到现在掌握的所有知识和技能。</p></div>
+      </div>
+      <div class="bullet-card" style="display:flex;gap:16px;align-items:flex-start">
+        <span style="font-size:32px">🎉</span>
+        <div><h4>结业成就解锁</h4><p>恭喜完成全部课程！你已经是一个真正的 Python 开发者了。</p></div>
+      </div>
+    </div>
+    <div class="deck-footer"><span class="dim2">第 10 课 · 打包发布</span><span class="slide-number" data-current="2" data-total="13"></span></div>
+    <div class="notes">6 个目标中，前 4 个是技术内容（打包），后 2 个是复习和庆祝。让学生知道，学完这一课他们就有能力把 Python 程序拿给任何人了。</div>
+  </section>
+
+  <!-- ====== Slide 3: 为什么需要打包 ====== -->
+  <section class="slide" data-title="为什么需要打包">
+    <p class="kicker">📚 新知识</p>
+    <h2 class="h2" style="margin-top:6px">为什么需要<span class="grad">打包</span>？</h2>
+    <p class="lede" style="margin-top:8px">目前运行你的备忘录需要 3 步：安装 Python、打开 VS Code、运行命令。但发给朋友的话——他们可不一定装了 Python！</p>
+    <div style="display:flex;gap:20px;margin-top:28px;align-items:start">
+      <div class="anim-fade-left" data-anim="fade-left" style="flex:1;min-width:0">
+        <div class="feat-card" style="margin-bottom:14px">
+          <div class="icon">🐍</div>
+          <h4>打包前</h4>
+          <p style="font-size:16px"><code>lesson9.py</code> + Python 环境 → 才能运行</p>
+        </div>
+        <div class="feat-card">
+          <div class="icon">📦</div>
+          <h4 style="color:var(--good)">打包后</h4>
+          <p style="font-size:16px;color:var(--good)"><code>备忘录.exe</code> → 直接双击运行！</p>
+        </div>
+      </div>
+      <div class="anim-fade-right" data-anim="fade-right" style="flex:1;min-width:0">
+        <div class="code-card"><pre><code class="language-python"># PyInstaller 做了什么？
+# 它把这三样东西打包在一起：
+
+# 1. 你的 Python 源代码
+# 2. Python 解释器（python.exe）
+# 3. 所有依赖库（tkinter, ttk...）
+
+# → 输出一个独立的 .exe 文件
+# 对方不需要安装任何东西！</code></pre></div>
+        <div class="callout" style="margin-top:14px">
+          <b>💡 类比：</b> 就像你把菜谱、锅、食材全部塞进一个盒子，对方打开就能直接吃——不用自己买菜做饭。
+        </div>
+      </div>
+    </div>
+    <div class="deck-footer"><span class="dim2">第 10 课 · 打包发布</span><span class="slide-number" data-current="3" data-total="13"></span></div>
+    <div class="notes">用对比的方式让学生理解打包的意义。核心概念：PyInstaller 把代码 + 解释器 + 依赖全部打包成一个独立文件。类比"便当盒"很形象。</div>
+  </section>
+
+  <!-- ====== Slide 4: 安装 PyInstaller + 基本命令 ====== -->
+  <section class="slide" data-title="安装 PyInstaller">
+    <p class="kicker">📚 新知识</p>
+    <h2 class="h2" style="margin-top:6px">安装 PyInstaller + <span class="grad">基本命令</span></h2>
+    <div class="grid g2" style="margin-top:24px;gap:20px;align-items:start">
+      <div class="anim-fade-left" data-anim="fade-left">
+        <h4 style="color:var(--accent-3)">📥 安装</h4>
+        <div class="code-card" style="margin-top:12px">
+          <pre><code class="language-bash"># 打开终端，输入：
+pip install pyinstaller
+
+# 如果 pip 找不到：
+# Windows: python -m pip install pyinstaller
+# Mac:     python3 -m pip install pyinstaller
+
+# 验证安装
+pyinstaller --version</code></pre>
+        </div>
+        <div style="display:flex;gap:10px;align-items:baseline;margin-top:12px">
+          <span class="ic" style="color:var(--accent)">pip</span>
+          <span style="color:var(--text-2);font-size:14px">Python 的包管理器，用来安装第三方库</span>
+        </div>
+      </div>
+      <div class="anim-fade-right" data-anim="fade-right">
+        <h4 style="color:var(--accent-2)">🚀 最简单的打包命令</h4>
+        <div class="code-card" style="margin-top:12px">
+          <pre><code class="language-bash"># 单文件模式（最常用）
+pyinstaller --onefile lesson9.py
+
+# 推荐：带窗口模式 + 自定义名称
+pyinstaller --onefile --windowed \
+  --name="我的备忘录" lesson9.py</code></pre>
+        </div>
+        <table class="sum-table" style="font-size:13px;margin-top:12px">
+          <thead><tr><th>参数</th><th>缩写</th><th>说明</th></tr></thead>
+          <tbody>
+            <tr><td><code>--onefile</code></td><td><code>-F</code></td><td>打包成单个文件</td></tr>
+            <tr><td><code>--windowed</code></td><td><code>-w</code></td><td>不显示终端黑窗口</td></tr>
+            <tr><td><code>--icon=...</code></td><td><code>-i</code></td><td>设置程序图标</td></tr>
+            <tr><td><code>--name="..."</code></td><td><code>-n</code></td><td>指定输出文件名</td></tr>
+            <tr><td><code>--add-data</code></td><td>—</td><td>附带数据文件</td></tr>
+            <tr><td><code>--clean</code></td><td>—</td><td>清理后重新打包</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+    <div class="deck-footer"><span class="dim2">第 10 课 · 打包发布</span><span class="slide-number" data-current="4" data-total="13"></span></div>
+    <div class="notes">pip 安装 PyInstaller 很简单。--onefile 和 --windowed 是两个最重要的参数。建议学生现场在终端里执行安装和打包，看到输出结果会很有成就感。</div>
+  </section>
+
+  <!-- ====== Slide 5: 输出结构 + 数据文件 ====== -->
+  <section class="slide" data-title="输出结构和数据文件">
+    <p class="kicker">📚 新知识</p>
+    <h2 class="h2" style="margin-top:6px">理解输出 + <span class="grad">数据文件路径</span></h2>
+    <div class="grid g2" style="margin-top:20px;gap:20px;align-items:start">
+      <div class="anim-fade-left" data-anim="fade-left">
+        <h4 style="color:var(--accent-3)">📁 输出结构</h4>
+        <div class="code-card" style="margin-top:10px">
+          <pre><code style="font-family:'JetBrains Mono',monospace;font-size:13px;color:#f8f8f2">
+项目文件夹/
+├── lesson9.py              ← 源代码
+├── todos.txt               ← 数据文件
+├── build/                  ← 临时文件（可删）
+│   └── ...
+├── <span style="color:var(--accent-2)">dist/</span>                   ← 🎉 最终输出！
+│   └── <span style="color:var(--good)">我的备忘录.exe</span>   ← 你的程序！
+└── 我的备忘录.spec          ← 配置文件</code></pre>
+        </div>
+        <div class="callout" style="margin-top:10px">
+          <b>🎯 dist/ 文件夹里的就是成品</b>，把它发给朋友就行了！
+        </div>
+      </div>
+      <div class="anim-fade-right" data-anim="fade-right">
+        <h4 style="color:var(--accent-2)">🗂️ 数据文件路径处理</h4>
+        <div class="code-card" style="margin-top:10px">
+          <pre><code class="language-python">import sys, os
+
+def get_data_path(filename):
+    """获取数据文件的正确路径"""
+    if getattr(sys, 'frozen', False):
+        # 打包后：在临时解压目录
+        base_path = sys._MEIPASS
+    else:
+        # 开发时：在脚本所在目录
+        base_path = os.path.dirname(
+            os.path.abspath(__file__))
+    return os.path.join(base_path, filename)
+
+# 使用
+DATA_FILE = get_data_path("todos.txt")</code></pre>
+        </div>
+        <table class="sum-table" style="font-size:13px;margin-top:10px">
+          <thead><tr><th>属性</th><th>开发时</th><th>打包后</th></tr></thead>
+          <tbody>
+            <tr><td><code>sys.frozen</code></td><td><code>False</code></td><td><code>True</code></td></tr>
+            <tr><td>文件位置</td><td>脚本目录</td><td><code>sys._MEIPASS</code></td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+    <div class="deck-footer"><span class="dim2">第 10 课 · 打包发布</span><span class="slide-number" data-current="5" data-total="13"></span></div>
+    <div class="notes">dist/ 文件夹是重点——学生要知道去哪找最终成品。数据文件路径是进阶内容，如果学生只是简单程序可以跳过。sys.frozen 是 PyInstaller 的"已打包"标志。</div>
+  </section>
+
+  <!-- ====== Slide 6: 图标 + 注意事项 ====== -->
+  <section class="slide" data-title="图标和注意事项">
+    <p class="kicker">📚 新知识</p>
+    <h2 class="h2" style="margin-top:6px">设置图标 + <span class="grad">打包注意事项</span></h2>
+    <div class="grid g2" style="margin-top:24px;gap:20px;align-items:start">
+      <div class="anim-fade-left" data-anim="fade-left">
+        <h4 style="color:var(--accent-3)">🎨 设置程序图标</h4>
+        <div style="margin-top:14px;display:flex;flex-direction:column;gap:10px">
+          <div class="step-row">
+            <div class="step-num">1</div>
+            <div class="step-body"><h4>准备图标文件</h4><p>Windows: .ico 格式 / Mac: .icns 格式</p></div>
+          </div>
+          <div class="step-row">
+            <div class="step-num">2</div>
+            <div class="step-body"><h4>转换格式</h4><p>搜索 "png to ico converter" 在线转换</p></div>
+          </div>
+          <div class="step-row">
+            <div class="step-num">3</div>
+            <div class="step-body"><h4>打包时指定</h4><p><code>--icon=icon.ico</code></p></div>
+          </div>
+        </div>
+        <div class="code-card" style="margin-top:12px">
+          <pre><code class="language-bash">pyinstaller --onefile --windowed \
+  --icon=icon.ico \
+  --name="我的备忘录" 备忘录.py</code></pre>
+        </div>
+      </div>
+      <div class="anim-fade-right" data-anim="fade-right">
+        <h4 style="color:var(--warn)">⚠️ 常见问题</h4>
+        <table class="sum-table" style="font-size:13px">
+          <thead><tr><th>问题</th><th>解决方案</th></tr></thead>
+          <tbody>
+            <tr><td>杀毒软件报警</td><td>正常！PyInstaller 打包的 exe 有时被误报，添加信任</td></tr>
+            <tr><td>文件太大</td><td>正常！打包了 Python 解释器，通常 30-50MB</td></tr>
+            <tr><td>中文路径报错</td><td>路径中不要有中文或空格，放英文目录</td></tr>
+            <tr><td>缺少 tkinter</td><td>通常不会，PyInstaller 自动检测</td></tr>
+            <tr><td>运行时闪退</td><td>先不加 --windowed，看终端报什么错</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+    <div class="deck-footer"><span class="dim2">第 10 课 · 打包发布</span><span class="slide-number" data-current="6" data-total="13"></span></div>
+    <div class="notes">图标设置让学生有"做真正软件"的感觉。注意事项表格可以提前预警，避免学生遇到问题就慌。强调杀软误报是正常的，文件 30-50MB 也是正常的。</div>
+  </section>
+
+  <!-- ====== Slide 7: 打包操作步骤 ====== -->
+  <section class="slide" data-title="打包操作步骤">
+    <p class="kicker">💻 动手操作</p>
+    <h2 class="h2" style="margin-top:6px">打包<span class="grad">五步走</span></h2>
+    <div style="display:flex;gap:24px;margin-top:28px;align-items:start">
+      <div class="anim-fade-left" data-anim="fade-left" style="flex:1;min-width:0">
+        <div style="display:flex;flex-direction:column;gap:12px">
+          <div class="step-row">
+            <div class="step-num">1</div>
+            <div class="step-body"><h4>整理文件</h4><p>把 <code>lesson9.py</code> 复制为 <code>备忘录.py</code></p></div>
+          </div>
+          <div class="step-row">
+            <div class="step-num">2</div>
+            <div class="step-body"><h4>确认运行正常</h4><p><code>python 备忘录.py</code> — 测试所有功能</p></div>
+          </div>
+          <div class="step-row">
+            <div class="step-num">3</div>
+            <div class="step-body"><h4>执行打包</h4><p><code>cd 项目文件夹</code><br><code>pyinstaller --onefile --windowed --name="我的备忘录" 备忘录.py</code></p></div>
+          </div>
+          <div class="step-row">
+            <div class="step-num">4</div>
+            <div class="step-body"><h4>等待完成</h4><p>通常 30 秒 ~ 2 分钟，看到 "Build complete!" 就成功了</p></div>
+          </div>
+          <div class="step-row">
+            <div class="step-num">5</div>
+            <div class="step-body"><h4>测试成品</h4><p>进入 dist/ → 双击运行 → 测试所有功能 → 发给朋友！</p></div>
+          </div>
+        </div>
+      </div>
+      <div class="anim-fade-right" data-anim="fade-right" style="flex:1;min-width:0">
+        <div class="code-card" style="max-height:340px;overflow:auto">
+          <pre><code style="font-family:'JetBrains Mono',monospace;font-size:13px;color:#f8f8f2">
+<span style="color:var(--text-3)"># 打包过程输出示例</span>
+<span style="color:var(--accent-2)">120 INFO:</span> PyInstaller: 6.x.x
+<span style="color:var(--accent-2)">130 INFO:</span> Python: 3.12.x
+<span style="color:var(--accent-2)">140 INFO:</span> Platform: Windows-10
+...
+<span style="color:var(--accent-2)">4500 INFO:</span> Analyzing script...
+<span style="color:var(--accent-2)">5000 INFO:</span> Building PKG...
+<span style="color:var(--accent-2)">5500 INFO:</span> Building EXE...
+<span style="color:var(--good)">6000 INFO:</span> EXE completed.
+<span style="color:var(--good)">7000 INFO:</span> <span style="color:var(--accent);font-weight:700">Build complete!</span>
+
+<span style="color:var(--accent)">🎉 打包完成！</span>
+<span style="color:var(--text-2)">输出文件：dist/我的备忘录.exe</span></code></pre>
+        </div>
+        <div class="callout" style="margin-top:14px">
+          <b>🎁 最后一步：</b> 把 <code>dist/我的备忘录.exe</code> 发给朋友，他们<b style="color:var(--good)">不需要安装 Python</b>，直接双击就能用！
+        </div>
+      </div>
+    </div>
+    <div class="deck-footer"><span class="dim2">第 10 课 · 打包发布</span><span class="slide-number" data-current="7" data-total="13"></span></div>
+    <div class="notes">现场带领学生完成这 5 步。打包过程需要一些时间（30秒到2分钟），可以趁这个时间讲其他内容。学生看到自己的程序变成 .exe 文件，通常会非常兴奋。</div>
+  </section>
+
+  <!-- ====== Slide 8: 打包脚本 ====== -->
+  <section class="slide" data-title="打包脚本">
+    <p class="kicker">💻 写代码</p>
+    <h2 class="h2" style="margin-top:6px">创建<span class="grad">打包脚本</span></h2>
+    <p class="lede" style="margin-top:8px">为了方便以后重复打包，写一个脚本来自动化打包流程。</p>
+    <div class="grid g2" style="margin-top:24px;gap:20px">
+      <div class="code-card anim-fade-left" data-anim="fade-left">
+        <p style="color:var(--text-3);font-size:12px;margin:0 0 8px">Windows — build.bat</p>
+        <pre><code class="language-batch">@echo off
+echo 🚀 开始打包备忘录...
+pyinstaller --onefile --windowed ^
+  --name="我的备忘录" --clean 备忘录.py
+echo ✅ 打包完成！
+echo 文件在 dist\ 文件夹中
+pause</code></pre>
+      </div>
+      <div class="code-card anim-fade-right" data-anim="fade-right">
+        <p style="color:var(--text-3);font-size:12px;margin:0 0 8px">Mac / Linux — build.sh</p>
+        <pre><code class="language-bash">#!/bin/bash
+echo "🚀 开始打包备忘录..."
+pyinstaller --onefile --windowed \
+  --name="我的备忘录" --clean 备忘录.py
+echo "✅ 打包完成！"
+echo "文件在 dist/ 文件夹中"</code></pre>
+      </div>
+    </div>
+    <div class="callout anim-fade-up" data-anim="fade-up" style="margin-top:20px">
+      <b>💡 使用脚本的好处：</b> 不用每次记长长的命令，双击运行脚本就完成打包。修改代码后重新打包也只需跑一下脚本。
+    </div>
+    <div class="deck-footer"><span class="dim2">第 10 课 · 打包发布</span><span class="slide-number" data-current="8" data-total="13"></span></div>
+    <div class="notes">脚本虽然简单，但体现了"自动化"的思想。让学生养成"重复的事情写脚本"的好习惯。Windows 的 .bat 和 Mac/Linux 的 .sh 都要讲。</div>
+  </section>
+
+  <!-- ====== Slide 9: 10 节课总复习 ====== -->
+  <section class="slide" data-title="10 节课总复习">
+    <p class="kicker">🎓 总复习</p>
+    <h2 class="h2" style="margin-top:6px">10 节课，一<span class="grad">路走来</span></h2>
+    <div style="margin-top:24px;overflow:auto;max-height:420px">
+      <table class="sum-table" style="font-size:13px">
+        <thead><tr><th>课次</th><th>主题</th><th>核心知识点</th><th style="width:14%">项目进度</th></tr></thead>
+        <tbody>
+          <tr><td>第 1 课</td><td>你好 Python</td><td><code>print()</code>、变量、<code>tk.Tk()</code>、<code>mainloop()</code></td><td>空窗口</td></tr>
+          <tr><td>第 2 课</td><td>放东西进窗口</td><td><code>Label</code>、<code>Button</code>、<code>pack()</code>、<code>f-string</code>、<code>def</code></td><td>有文字和按钮</td></tr>
+          <tr><td>第 3 课</td><td>输入和列表</td><td><code>Entry</code>、<code>.get()</code>、<code>Listbox</code>、<code>list</code>、<code>.append()</code>、<code>if</code></td><td>能添加待办</td></tr>
+          <tr><td>第 4 课</td><td>选中和删除</td><td><code>.curselection()</code>、<code>.delete()</code>、<code>if...else</code>、<code>messagebox</code></td><td>能管理待办</td></tr>
+          <tr><td>第 5 课</td><td>标记已完成</td><td><code>dict</code>、<code>for</code> 循环、<code>not</code> 取反、<code>itemconfig()</code></td><td>完成状态</td></tr>
+          <tr><td>第 6 课</td><td>数据存文件</td><td><code>open()</code>、<code>with</code>、<code>.read()/.write()</code>、<code>.split()/.join()</code></td><td>数据持久化</td></tr>
+          <tr><td>第 7 课</td><td>菜单快捷键</td><td><code>Menu</code>、<code>add_cascade()</code>、<code>bind_all()</code>、右键菜单</td><td>专业菜单</td></tr>
+          <tr><td>第 8 课</td><td>美化界面</td><td><code>ttk</code>、<code>Style()</code>、<code>theme_use()</code>、<code>grid()</code>、<code>Combobox</code></td><td>现代界面</td></tr>
+          <tr><td>第 9 课</td><td>搜索过滤</td><td><code>StringVar</code>、<code>trace()</code>、<code>in</code> 运算符、实时过滤</td><td>搜索筛选</td></tr>
+          <tr><td>第 10 课</td><td>打包发布</td><td><code>PyInstaller</code>、<code>--onefile</code>、<code>--windowed</code>、图标</td><td><b style="color:var(--accent)">独立程序！</b></td></tr>
+        </tbody>
+      </table>
+    </div>
+    <div class="callout anim-fade-up" data-anim="fade-up" style="margin-top:16px">
+      <b>📈 项目进化：</b> 空窗口 → 有文字按钮 → 能添加待办 → 能管理待办 → 完成状态 → 数据保存 → 专业菜单 → 现代界面 → 搜索筛选 → <b style="color:var(--accent)">独立程序</b>！
+    </div>
+    <div class="deck-footer"><span class="dim2">第 10 课 · 打包发布</span><span class="slide-number" data-current="9" data-total="13"></span></div>
+    <div class="notes">带领学生回顾每一节课的主题和项目进度。让他们感受到从空白窗口到独立程序的一步步成长。这个回顾本身就是最好的复习。</div>
+  </section>
+
+  <!-- ====== Slide 10: Python 核心语法 + tkinter 控件 ====== -->
+  <section class="slide" data-title="技能总结">
+    <p class="kicker">🎓 总复习</p>
+    <h2 class="h2" style="margin-top:6px">你掌握的<span class="grad">全部技能</span></h2>
+    <div class="grid g2" style="margin-top:20px;gap:16px;align-items:start">
+      <div class="code-card anim-fade-left" data-anim="fade-left" style="max-height:380px;overflow:auto">
+        <p style="color:var(--text-3);font-size:12px;margin:0 0 8px">Python 核心语法</p>
+        <pre><code class="language-python"># 变量和数据类型
+name = "小明"           # str
+age = 12                # int
+height = 1.65           # float
+is_student = True       # bool
+
+# 数据容器
+fruits = ["苹果", "香蕉"]   # list
+person = {"name": "小明"}   # dict
+
+# 条件判断
+if age >= 12:
+    print("中学生")
+elif age >= 6:
+    print("小学生")
+else:
+    print("幼儿")
+
+# 循环
+for fruit in fruits:
+    print(fruit)
+
+# 函数
+def greet(name):
+    return f"你好，{name}！"
+
+# 文件操作
+with open("data.txt", "r") as f:
+    content = f.read()</code></pre>
+      </div>
+      <div class="code-card anim-fade-right" data-anim="fade-right" style="max-height:380px;overflow:auto">
+        <p style="color:var(--text-3);font-size:12px;margin:0 0 8px">tkinter GUI 控件全集</p>
+        <pre><code class="language-python">import tkinter as tk
+from tkinter import ttk, messagebox
+
+window = tk.Tk()
+
+tk.Label(window, text="标签")
+tk.Button(window, text="按钮")
+tk.Entry(window)              # 输入框
+tk.Listbox(window)            # 列表框
+tk.Menu(window)               # 菜单
+tk.Scrollbar(window)          # 滚动条
+ttk.Combobox(window)          # 下拉框
+messagebox.showinfo("标题", "内容")
+messagebox.askyesno("标题", "问题")
+
+# 布局
+widget.pack()                 # 堆放
+widget.grid(row=0, column=1)  # 网格
+
+# 变量绑定
+var = tk.StringVar()
+entry = ttk.Entry(
+    textvariable=var)
+var.trace("w", callback)      # 实时监听</code></pre>
+      </div>
+    </div>
+    <div class="deck-footer"><span class="dim2">第 10 课 · 打包发布</span><span class="slide-number" data-current="10" data-total="13"></span></div>
+    <div class="notes">这两段代码是学生 10 节课学会的全部核心内容。左边是 Python 语法，右边是 tkinter 控件。让学生知道，这些就是他们掌握的工具箱，以后做什么项目都是从这些基础出发的。</div>
+  </section>
+
+  <!-- ====== Slide 11: 课后挑战 ====== -->
+  <section class="slide" data-title="课后挑战">
+    <p class="kicker">✏️ 课后挑战</p>
+    <h2 class="h2" style="margin-top:6px">结课不是结束，<span class="grad">而是开始</span></h2>
+    <div class="grid g2 anim-stagger-list" data-anim-target style="margin-top:28px;gap:16px">
+      <div class="ex-item">
+        <div class="ex-num">1</div>
+        <div><b style="color:var(--text-1)">写软件说明书</b><p>给你的备忘录写一个 README.txt，介绍功能和用法</p></div>
+      </div>
+      <div class="ex-item">
+        <div class="ex-num">2</div>
+        <div><b style="color:var(--text-1)">换一个图标</b><p>在网上找一个免费的备忘录图标，给你的程序换上</p></div>
+      </div>
+      <div class="ex-item">
+        <div class="ex-num">3</div>
+        <div><b style="color:var(--text-1)">打包多个版本</b><p>尝试改窗口大小或主题，打包几个版本看差异</p></div>
+      </div>
+      <div class="ex-item">
+        <div class="ex-num">4</div>
+        <div><b style="color:var(--text-1)">分享并收集反馈</b><p>发给 3 个同学/朋友，收集改进建议</p></div>
+      </div>
+      <div class="ex-item" style="grid-column:span 2">
+        <div class="ex-num">5</div>
+        <div><b style="color:var(--text-1)">终极挑战：想一个新功能，自己实现它！</b><p>添加提醒功能、云端同步、数据加密……你已经有了所有需要的技能！下一步可以学新项目：计算器、天气预报、小游戏……</p></div>
+      </div>
+    </div>
+    <div class="deck-footer"><span class="dim2">第 10 课 · 打包发布</span><span class="slide-number" data-current="11" data-total="13"></span></div>
+    <div class="notes">课后挑战从简单到有挑战性。终极挑战是开放的——鼓励学生把自己的想法变成代码。强调"你已经有了所有需要的技能"，给学生信心。</div>
+  </section>
+
+  <!-- ====== Slide 12: 本课小结 ====== -->
+  <section class="slide full" data-title="本课小结">
+    <p class="kicker" style="color:var(--accent-2)">🧠 本课小结</p>
+    <h1 class="h1 anim-rise-in" data-anim="rise-in" style="font-size:56px;margin-top:12px">
+      你今天<span class="grad">学到了</span>
+    </h1>
+    <div style="max-width:900px;width:100%;margin-top:28px">
+      <div class="card anim-fade-up" data-anim="fade-up" style="padding:20px 24px">
+      <table class="sum-table">
+        <thead><tr><th>学到的知识</th><th>是什么</th><th style="width:40%">怎么用</th></tr></thead>
+        <tbody>
+          <tr><td><code>pip install</code></td><td>安装第三方库</td><td><code>pip install pyinstaller</code></td></tr>
+          <tr><td><code>pyinstaller</code></td><td>打包工具</td><td><code>pyinstaller --onefile -w script.py</code></td></tr>
+          <tr><td><code>--onefile</code></td><td>单文件模式</td><td>打包成单个 .exe / .app</td></tr>
+          <tr><td><code>--windowed</code></td><td>无终端模式</td><td>GUI 程序不显示黑窗口</td></tr>
+          <tr><td><code>--icon</code></td><td>自定义图标</td><td><code>--icon=icon.ico</code></td></tr>
+          <tr><td><code>--name</code></td><td>自定义名称</td><td><code>--name="我的程序"</code></td></tr>
+          <tr><td><code>sys.frozen</code></td><td>判断是否打包</td><td>打包后为 <code>True</code></td></tr>
+          <tr><td><code>sys._MEIPASS</code></td><td>临时解压目录</td><td>打包后数据文件的位置</td></tr>
+        </tbody>
+      </table>
+      </div>
+    </div>
+    <div class="callout anim-fade-up" data-anim="fade-up" style="margin-top:24px;max-width:900px;width:100%">
+      <b>🚀 下一步：</b> 继续完善备忘录（提醒功能、云端同步……），或开始新项目（计算器、天气预报、小游戏……）。编程的世界，由你来探索！
+    </div>
+    <div class="deck-footer"><span class="dim2">第 10 课 · 打包发布</span><span class="slide-number" data-current="12" data-total="13"></span></div>
+    <div class="notes">8 个打包相关的知识点。sys.frozen 和 sys._MEIPASS 是进阶内容，简单了解即可。重点是让学生知道 pip install 和 pyinstaller 的基本用法。</div>
+  </section>
+
+  <!-- ====== Slide 13: 🎉 恭喜你！结业 ====== -->
+  <section class="slide full" data-title="恭喜结业">
+    <p class="kicker anim-fade-down" data-anim="fade-down" style="color:var(--accent-2);font-size:14px">🎓 🎓 🎓</p>
+    <h1 class="h1 anim-rise-in" data-anim="rise-in" style="font-size:52px;margin-top:8px">
+      <span class="grad">恭喜你</span>，毕业了！
+    </h1>
+    <p class="lede anim-fade-up" data-anim="fade-up" style="margin-top:12px;max-width:56ch;font-size:20px">
+      你从一行 <code>print("你好")</code> 开始，到现在做出了一个功能完整的桌面应用！
+    </p>
+    <div class="grad-box anim-fade-up" data-anim="fade-up" style="margin-top:24px;max-width:700px;width:100%">
+      <pre>
+╔══════════════════════════════════════════╗
+║                                          ║
+║   🎓 恭喜完成「零基础到图形化项目实战」！  ║
+║                                          ║
+║   你从一行 print("你好") 开始，           ║
+║   到现在做出了一个功能完整的桌面应用！     ║
+║                                          ║
+║   ✅ 掌握了 Python 核心语法               ║
+║   ✅ 学会了 tkinter GUI 编程              ║
+║   ✅ 做出了"我的备忘录"桌面软件            ║
+║   ✅ 学会了打包发布                       ║
+║                                          ║
+║   🚀 这只是开始！Python 的世界还有：       ║
+║   • 网站开发（Flask / Django）            ║
+║   • 游戏开发（Pygame）                   ║
+║   • 数据分析（Pandas）                   ║
+║   • 人工智能（机器学习 / 深度学习）        ║
+║                                          ║
+║   编程的世界，由你来探索！                 ║
+║                                          ║
+╚══════════════════════════════════════════╝</pre>
+    </div>
+    <div style="margin-top:20px;display:flex;gap:14px;flex-wrap:wrap;justify-content:center">
+      <span class="pill anim-fade-up" data-anim="fade-up" style="background:rgba(80,250,123,.15);color:var(--good);border:1px solid rgba(80,250,123,.3);font-size:15px">🐍 Python 开发者</span>
+      <span class="pill anim-fade-up" data-anim="fade-up" style="background:rgba(139,233,253,.15);color:var(--accent-3);border:1px solid rgba(139,233,253,.3);font-size:15px">🪟 GUI 程序员</span>
+      <span class="pill anim-fade-up" data-anim="fade-up" style="background:rgba(255,121,198,.15);color:var(--accent-2);border:1px solid rgba(255,121,198,.3);font-size:15px">📦 软件发布者</span>
+    </div>
+    <div class="deck-footer"><span class="dim2">第 10 课 · 打包发布</span><span class="slide-number" data-current="13" data-total="13"></span></div>
+    <div class="notes">最后一页！恭喜学生完成全部 10 节课。让他们知道自己已经是一个真正的 Python 开发者了。ASCII 艺术框里的内容来自 lesson10.md 的结业部分，是课程的完美收尾。鼓励学生继续探索 Python 的更多可能性。</div>
+  </section>
+
+</div>
+<script src="assets/runtime.js"></script>
+<script src="assets/animations/fx-runtime.js"></script>
+</body>
+</html>

@@ -1,0 +1,478 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>第07课：二叉树基础与遍历 — CSP-S 备考课程</title>
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "PingFang SC", "Microsoft YaHei", sans-serif;
+    background: #0f0f23;
+    color: #e0e0e0;
+    display: flex; justify-content: center; align-items: center;
+    min-height: 100vh;
+  }
+  .container {
+    width: 90%; max-width: 960px;
+    background: #1a1a2e;
+    border-radius: 16px;
+    padding: 2rem;
+    box-shadow: 0 8px 40px rgba(0,0,0,.5);
+    min-height: 550px;
+    display: flex; flex-direction: column;
+  }
+  .slide-header {
+    display: flex; justify-content: space-between; align-items: center;
+    margin-bottom: 1.5rem;
+    padding-bottom: 0.8rem;
+    border-bottom: 2px solid #0f3460;
+  }
+  .slide-title {
+    font-size: 1.6rem;
+    color: #e94560;
+    font-weight: 700;
+  }
+  .slide-num {
+    font-size: 0.9rem;
+    color: #999;
+    background: #16213e;
+    padding: 0.3rem 0.8rem;
+    border-radius: 20px;
+  }
+  .slide-content {
+    flex: 1;
+    overflow-y: auto;
+    line-height: 1.8;
+    font-size: 1.05rem;
+    padding-right: 0.5rem;
+  }
+  .slide-content h2 {
+    color: #f5c542;
+    margin-bottom: 0.8rem;
+    font-size: 1.3rem;
+    border-left: 3px solid #e94560;
+    padding-left: 12px;
+  }
+  .slide-content h3 {
+    color: #53d8fb;
+    margin: 0.6rem 0 0.4rem;
+    font-size: 1.1rem;
+  }
+  .slide-content ul {
+    margin-left: 1.5rem;
+  }
+  .slide-content li {
+    margin-bottom: 0.3rem;
+  }
+  .slide-content p {
+    margin-bottom: 0.5rem;
+  }
+  /* 代码块语法高亮 */
+  .code-block {
+    background: #0d1117;
+    border-radius: 8px;
+    padding: 1rem;
+    margin: 0.8rem 0;
+    font-family: "JetBrains Mono", "Fira Code", "Courier New", monospace;
+    font-size: 0.9rem;
+    overflow-x: auto;
+    line-height: 1.5;
+    border: 1px solid #30363d;
+  }
+  .kw { color: #ff7b72; }     /* 关键字 */
+  .fn { color: #d2a8ff; }     /* 函数名 */
+  .tp { color: #ffa657; }     /* 类型 */
+  .cm { color: #8b949e; font-style: italic; } /* 注释 */
+  .st { color: #a5d6ff; }     /* 字符串 */
+  .nu { color: #79c0ff; }     /* 数字 */
+  .op { color: #ff7b72; }     /* 运算符 */
+  /* 树形图 */
+  .tree-diagram {
+    font-family: "Courier New", monospace;
+    background: #0d1117;
+    border-radius: 8px;
+    padding: 1rem;
+    margin: 0.8rem 0;
+    font-size: 0.85rem;
+    line-height: 1.4;
+    border: 1px solid #30363d;
+    white-space: pre;
+    color: #79c0ff;
+  }
+  .highlight-box {
+    background: #16213e;
+    border-left: 4px solid #e94560;
+    padding: 0.8rem 1rem;
+    margin: 0.8rem 0;
+    border-radius: 0 8px 8px 0;
+  }
+  .formula {
+    background: #16213e;
+    padding: 0.4rem 0.8rem;
+    border-radius: 6px;
+    font-family: "Times New Roman", serif;
+    font-style: italic;
+    display: inline-block;
+  }
+  /* 导航 */
+  .nav {
+    display: flex; justify-content: center; gap: 2rem;
+    margin-top: 1.5rem; padding-top: 1rem;
+    border-top: 2px solid #0f3460;
+  }
+  .nav button {
+    background: #0f3460;
+    border: none; color: #e0e0e0;
+    padding: 0.6rem 1.8rem; border-radius: 8px;
+    font-size: 1rem; cursor: pointer;
+    transition: all 0.2s;
+  }
+  .nav button:hover { background: #e94560; }
+  .nav button:disabled {
+    background: #333; color: #666; cursor: not-allowed;
+  }
+  .dot { color: #e94560; font-weight: bold; }
+  @media (max-width: 600px) {
+    .container { padding: 1rem; }
+    .slide-title { font-size: 1.2rem; }
+    .slide-content { font-size: 0.9rem; }
+    .code-block { font-size: 0.75rem; }
+  }
+</style>
+</head>
+<body>
+<div class="container">
+  <div class="slide-header">
+    <span class="slide-title" id="slideTitle">第07课：二叉树基础与遍历</span>
+    <span class="slide-num" id="slideNum">1 / 7</span>
+  </div>
+  <div class="slide-content" id="slideContent"></div>
+  <div class="nav">
+    <button id="prevBtn" onclick="prevSlide()">◀ 上一页</button>
+    <button id="nextBtn" onclick="nextSlide()">下一页 ▶</button>
+  </div>
+</div>
+
+<script>
+let currentSlide = 0;
+const slides = [];
+
+// ========== 幻灯片 1：标题页 ==========
+slides.push(`
+<h2 style="text-align:center; color:#e94560; font-size:2rem; margin:1rem 0;">二叉树基础与遍历</h2>
+<p style="text-align:center; color:#f5c542; font-size:1.2rem;">CSP-S 备考课程 · 第07课</p>
+
+<div class="highlight-box" style="margin-top:2rem;">
+  <h3>📋 本课内容概览</h3>
+  <ul>
+    <li>二叉树的定义与基本性质（满二叉树 / 完全二叉树 / 下标关系）</li>
+    <li>链式存储（左右孩子指针）与数组存储法</li>
+    <li>四种遍历：前序（根-左-右）、中序（左-根-右）、后序（左-右-根）、层序（BFS）</li>
+    <li>非递归遍历：栈模拟（前序 / 中序 / 后序双栈法）</li>
+    <li>Morris 遍历（O(1) 额外空间）</li>
+    <li>前序 + 中序 → 重建二叉树</li>
+    <li>后序 + 中序 → 重建二叉树</li>
+  </ul>
+</div>
+
+<p style="text-align:center; margin-top:1.5rem; color:#888;">
+遍历算法是二叉树一切操作的基础，理解递归与迭代两种实现方式至关重要。
+</p>
+`);
+
+// ========== 幻灯片 2：知识精讲 - 二叉树定义与遍历 ==========
+slides.push(`
+<h2>一、二叉树的定义与存储</h2>
+<div class="tree-diagram">
+     满二叉树（深度3，2^3-1=7个节点）：
+         1
+      /     \\
+     2       3
+    / \\     / \\
+   4   5   6   7
+
+     完全二叉树：最后一层可不满，但从左到右连续
+         1
+      /     \\
+     2       3
+    / \\     /
+   4   5   6
+</div>
+
+<h3>完全二叉树的下标关系（数组存储，下标从 1 开始）</h3>
+<table style="width:100%; border-collapse:collapse; font-size:0.9rem; margin:0.5rem 0;">
+  <tr style="background:#16213e;">
+    <td style="padding:4px 8px; border:1px solid #30363d;">父节点</td>
+    <td style="padding:4px 8px; border:1px solid #30363d;"><code>i / 2</code></td>
+    <td style="padding:4px 8px; border:1px solid #30363d;">左孩子</td>
+    <td style="padding:4px 8px; border:1px solid #30363d;"><code>2 × i</code></td>
+  </tr>
+  <tr style="background:#16213e;">
+    <td style="padding:4px 8px; border:1px solid #30363d;">右孩子</td>
+    <td style="padding:4px 8px; border:1px solid #30363d;"><code>2 × i + 1</code></td>
+    <td style="padding:4px 8px; border:1px solid #30363d;">叶子判定</td>
+    <td style="padding:4px 8px; border:1px solid #30363d;"><code>2 × i > n</code></td>
+  </tr>
+</table>
+
+<h3>遍历顺序定义</h3>
+<div class="tree-diagram">
+          A
+       /     \\
+      B       C
+     / \\     / \\
+    D   E   F   G
+
+ 前序（根左右）：A B D E C F G
+ 中序（左根右）：D B E A F C G
+ 后序（左右根）：D E B F G C A
+ 层序（BFS）  ：A B C D E F G
+</div>
+`);
+
+// ========== 幻灯片 3：原理推导 - 非递归遍历 ==========
+slides.push(`
+<h2>二、非递归遍历 — 栈模拟详解</h2>
+
+<h3>前序遍历（非递归）核心思路</h3>
+<div class="code-block">
+<span class="cm">// 根→左→右。栈后进先出 → 先压右孩子，再压左孩子</span>
+<span class="tp">vector</span>&lt;<span class="tp">int</span>&gt; <span class="fn">preorderIterative</span>(<span class="tp">TreeNode</span>* root) {
+    <span class="tp">vector</span>&lt;<span class="tp">int</span>&gt; res; <span class="kw">if</span> (!root) <span class="kw">return</span> res;
+    <span class="tp">stack</span>&lt;<span class="tp">TreeNode</span>*&gt; st; st.<span class="fn">push</span>(root);
+    <span class="kw">while</span> (!st.<span class="fn">empty</span>()) {
+        <span class="tp">TreeNode</span>* cur = st.<span class="fn">top</span>(); st.<span class="fn">pop</span>();
+        res.<span class="fn">push_back</span>(cur->val);           <span class="cm">// 访问</span>
+        <span class="kw">if</span> (cur->right) st.<span class="fn">push</span>(cur->right); <span class="cm">// 先右</span>
+        <span class="kw">if</span> (cur->left)  st.<span class="fn">push</span>(cur->left);  <span class="cm">// 后左</span>
+    }
+    <span class="kw">return</span> res;
+}
+</div>
+
+<h3>中序遍历（非递归）核心思路</h3>
+<div class="code-block">
+<span class="cm">// 一路向左入栈 → 弹出访问 → 转向右子树</span>
+<span class="tp">vector</span>&lt;<span class="tp">int</span>&gt; <span class="fn">inorderIterative</span>(<span class="tp">TreeNode</span>* root) {
+    <span class="tp">vector</span>&lt;<span class="tp">int</span>&gt; res;
+    <span class="tp">stack</span>&lt;<span class="tp">TreeNode</span>*&gt; st; <span class="tp">TreeNode</span>* cur = root;
+    <span class="kw">while</span> (cur || !st.<span class="fn">empty</span>()) {
+        <span class="kw">while</span> (cur) { st.<span class="fn">push</span>(cur); cur = cur->left; }
+        cur = st.<span class="fn">top</span>(); st.<span class="fn">pop</span>();
+        res.<span class="fn">push_back</span>(cur->val);
+        cur = cur->right;
+    }
+    <span class="kw">return</span> res;
+}
+</div>
+
+<div class="highlight-box">
+<span class="dot">●</span> <strong>后序遍历非递归（双栈法）</strong>：利用「根-右-左」的逆序 = 「左-右-根」。第一个栈模拟「根右左」的前序变体，结果存第二个栈，最后反转输出。
+</div>
+`);
+
+// ========== 幻灯片 4：代码模板 ==========
+slides.push(`
+<h2>三、递归遍历 + 二叉树重建 标准模板</h2>
+
+<h3>递归遍历（简洁版）</h3>
+<div class="code-block">
+<span class="kw">void</span> <span class="fn">preorder</span>(<span class="tp">TreeNode</span>* root) {
+    <span class="kw">if</span> (!root) <span class="kw">return</span>;
+    cout &lt;&lt; root->val &lt;&lt; <span class="st">' '</span>;
+    <span class="fn">preorder</span>(root->left);
+    <span class="fn">preorder</span>(root->right);
+}
+<span class="kw">void</span> <span class="fn">inorder</span>(<span class="tp">TreeNode</span>* root) {
+    <span class="kw">if</span> (!root) <span class="kw">return</span>;
+    <span class="fn">inorder</span>(root->left);
+    cout &lt;&lt; root->val &lt;&lt; <span class="st">' '</span>;
+    <span class="fn">inorder</span>(root->right);
+}
+<span class="kw">void</span> <span class="fn">postorder</span>(<span class="tp">TreeNode</span>* root) {
+    <span class="kw">if</span> (!root) <span class="kw">return</span>;
+    <span class="fn">postorder</span>(root->left);
+    <span class="fn">postorder</span>(root->right);
+    cout &lt;&lt; root->val &lt;&lt; <span class="st">' '</span>;
+}
+</div>
+
+<h3>前序 + 中序 → 重建二叉树</h3>
+<div class="code-block">
+<span class="tp">unordered_map</span>&lt;<span class="tp">int</span>,<span class="tp">int</span>&gt; inMap;
+<span class="tp">TreeNode</span>* <span class="fn">build</span>(<span class="tp">vector</span>&lt;<span class="tp">int</span>&gt;& pre, <span class="tp">int</span> pL, <span class="tp">int</span> pR,
+                 <span class="tp">vector</span>&lt;<span class="tp">int</span>&gt;& in,  <span class="tp">int</span> iL, <span class="tp">int</span> iR) {
+    <span class="kw">if</span> (pL > pR) <span class="kw">return</span> <span class="kw">nullptr</span>;
+    <span class="tp">int</span> rv = pre[pL], pos = inMap[rv], sz = pos - iL;
+    <span class="tp">TreeNode</span>* root = <span class="kw">new</span> <span class="tp">TreeNode</span>(rv);
+    root->left  = <span class="fn">build</span>(pre, pL+<span class="nu">1</span>, pL+sz, in, iL, pos-<span class="nu">1</span>);
+    root->right = <span class="fn">build</span>(pre, pL+sz+<span class="nu">1</span>, pR, in, pos+<span class="nu">1</span>, iR);
+    <span class="kw">return</span> root;
+}
+<span class="cm">// 注意：仅前序+后序无法唯一确定二叉树！</span>
+</div>
+`);
+
+// ========== 幻灯片 5：真题精练 ==========
+slides.push(`
+<h2>四、真题精练</h2>
+
+<h3>真题一：二叉树重建与遍历</h3>
+<p>给定前序和中序遍历序列（n ≤ 10⁵，值互不相同），输出后序遍历序列。</p>
+<div class="code-block">
+<span class="cm">// 核心思想：前序第一个是根，在中序中定位根，递归建树同时输出后序</span>
+<span class="tp">int</span> pre[MAXN], in[MAXN], pos_map[MAXN];
+
+<span class="kw">void</span> <span class="fn">build_and_post</span>(<span class="tp">int</span> pL, <span class="tp">int</span> pR, <span class="tp">int</span> iL, <span class="tp">int</span> iR) {
+    <span class="kw">if</span> (pL > pR) <span class="kw">return</span>;
+    <span class="tp">int</span> rootVal = pre[pL];
+    <span class="tp">int</span> rootPos = pos_map[rootVal];
+    <span class="tp">int</span> leftSize = rootPos - iL;
+    <span class="fn">build_and_post</span>(pL+<span class="nu">1</span>, pL+leftSize, iL, rootPos-<span class="nu">1</span>);
+    <span class="fn">build_and_post</span>(pL+leftSize+<span class="nu">1</span>, pR, rootPos+<span class="nu">1</span>, iR);
+    cout &lt;&lt; rootVal &lt;&lt; <span class="st">' '</span>;  <span class="cm">// 后序：左右根</span>
+}
+</div>
+
+<h3>真题二：树的子结构判定</h3>
+<p>判断 B 是否是 A 的子树（n, m ≤ 10⁴）。<br>
+<span class="dot">●</span> <strong>关键技巧</strong>：将树序列化（前序遍历，空节点用 -1 表示），问题变为「判断 B 的序列化结果是否是 A 的序列化结果的子串」，使用 <strong>KMP 算法</strong> O(n+m) 完成匹配。</p>
+
+<div class="highlight-box">
+  <strong>复杂度：</strong>建树 O(n+m) + 序列化 O(n+m) + KMP O(n+m) → 总 O(n+m)
+</div>
+`);
+
+// ========== 幻灯片 6：优化技巧 ==========
+slides.push(`
+<h2>五、易错点与优化技巧</h2>
+
+<table style="width:100%; border-collapse:collapse; font-size:0.9rem;">
+  <tr style="background:#0f3460; color:#f5c542;">
+    <td style="padding:8px; border:1px solid #30363d;">#</td>
+    <td style="padding:8px; border:1px solid #30363d;">易错点</td>
+    <td style="padding:8px; border:1px solid #30363d;">正确做法</td>
+  </tr>
+  <tr style="background:#16213e;">
+    <td style="padding:6px 8px; border:1px solid #30363d; text-align:center;">1</td>
+    <td style="padding:6px 8px; border:1px solid #30363d;">递归未判空</td>
+    <td style="padding:6px 8px; border:1px solid #30363d;">函数入口必须加 <code>if (!root) return;</code></td>
+  </tr>
+  <tr style="background:#16213e;">
+    <td style="padding:6px 8px; border:1px solid #30363d; text-align:center;">2</td>
+    <td style="padding:6px 8px; border:1px solid #30363d;">中序 while 条件写错</td>
+    <td style="padding:6px 8px; border:1px solid #30363d;">应写 <code>while (cur || !st.empty())</code>，不能只判断栈空</td>
+  </tr>
+  <tr style="background:#16213e;">
+    <td style="padding:6px 8px; border:1px solid #30363d; text-align:center;">3</td>
+    <td style="padding:6px 8px; border:1px solid #30363d;">Morris 遍历后忘恢复</td>
+    <td style="padding:6px 8px; border:1px solid #30363d;">循环结束前断开所有临时指针，恢复树原结构</td>
+  </tr>
+  <tr style="background:#16213e;">
+    <td style="padding:6px 8px; border:1px solid #30363d; text-align:center;">4</td>
+    <td style="padding:6px 8px; border:1px solid #30363d;">用前序+后序重建</td>
+    <td style="padding:6px 8px; border:1px solid #30363d;">前序+后序无法唯一确定二叉树，必须配合中序</td>
+  </tr>
+  <tr style="background:#16213e;">
+    <td style="padding:6px 8px; border:1px solid #30363d; text-align:center;">5</td>
+    <td style="padding:6px 8px; border:1px solid #30363d;">数组存储下标写 0</td>
+    <td style="padding:6px 8px; border:1px solid #30363d;">完全二叉树数组存储必须从下标 1 开始，0 号空置</td>
+  </tr>
+  <tr style="background:#16213e;">
+    <td style="padding:6px 8px; border:1px solid #30363d; text-align:center;">6</td>
+    <td style="padding:6px 8px; border:1px solid #30363d;">递归深度过大栈溢出</td>
+    <td style="padding:6px 8px; border:1px solid #30363d;">Linux 下 <code>ulimit -s unlimited</code>，或用非递归版本</td>
+  </tr>
+</table>
+
+<h3 style="margin-top:1rem;">💡 层序分层技巧</h3>
+<div class="code-block">
+<span class="kw">while</span> (!q.<span class="fn">empty</span>()) {
+    <span class="tp">int</span> sz = q.<span class="fn">size</span>();  <span class="cm">// 记录当前层的节点数</span>
+    <span class="kw">for</span> (<span class="tp">int</span> i = <span class="nu">0</span>; i < sz; i++) {
+        <span class="tp">TreeNode</span>* cur = q.<span class="fn">front</span>(); q.<span class="fn">pop</span>();
+        <span class="cm">// 处理 cur</span>
+        <span class="kw">if</span> (cur->left)  q.<span class="fn">push</span>(cur->left);
+        <span class="kw">if</span> (cur->right) q.<span class="fn">push</span>(cur->right);
+    }
+    <span class="cm">// 当前层处理完毕</span>
+}
+</div>
+`);
+
+// ========== 幻灯片 7：总结 ==========
+slides.push(`
+<h2>本课小结</h2>
+
+<div style="display:grid; grid-template-columns:1fr 1fr; gap:1rem;">
+  <div class="highlight-box">
+    <h3 style="color:#53d8fb;">核心概念</h3>
+    <ul>
+      <li>满二叉树：2^k-1 个节点</li>
+      <li>完全二叉树：下标 i → 左 2i, 右 2i+1</li>
+      <li>链式存储 vs 数组存储</li>
+      <li>四种遍历顺序互不相同</li>
+    </ul>
+  </div>
+  <div class="highlight-box">
+    <h3 style="color:#53d8fb;">关键算法</h3>
+    <ul>
+      <li>递归遍历：三行代码搞定</li>
+      <li>非递归前序：栈 + 先右后左</li>
+      <li>非递归中序：栈 + 一路向左</li>
+      <li>非递归后序：双栈法（前序变体反转）</li>
+    </ul>
+  </div>
+  <div class="highlight-box">
+    <h3 style="color:#53d8fb;">重建二叉树</h3>
+    <ul>
+      <li>前序 + 中序 → 唯一确定</li>
+      <li>后序 + 中序 → 唯一确定</li>
+      <li>前序 + 后序 → 不唯一！</li>
+      <li>关键：中序划分左右子树</li>
+    </ul>
+  </div>
+  <div class="highlight-box">
+    <h3 style="color:#53d8fb;">进阶技巧</h3>
+    <ul>
+      <li>Morris 遍历：O(1) 空间</li>
+      <li>层序分层：记录每层 size</li>
+      <li>序列化判定子树：用 KMP 匹配</li>
+      <li>递归过深改用非递归</li>
+    </ul>
+  </div>
+</div>
+
+<p style="text-align:center; margin-top:1.5rem; color:#f5c542; font-size:1.2rem;">
+遍历是树操作的基础，理解递归本质才能写出正确的非递归版本！
+</p>
+
+<p style="text-align:center; color:#888; margin-top:1rem;">
+下一课预告：<strong>二叉搜索树与平衡树（BST / AVL / Treap）</strong>
+</p>
+`);
+
+function renderSlide() {
+    document.getElementById('slideContent').innerHTML = slides[currentSlide];
+    document.getElementById('slideNum').textContent = (currentSlide + 1) + ' / ' + slides.length;
+    document.getElementById('prevBtn').disabled = currentSlide === 0;
+    document.getElementById('nextBtn').disabled = currentSlide === slides.length - 1;
+}
+
+function prevSlide() { if (currentSlide > 0) { currentSlide--; renderSlide(); } }
+function nextSlide() { if (currentSlide < slides.length - 1) { currentSlide++; renderSlide(); } }
+
+// 键盘导航
+document.addEventListener('keydown', function(e) {
+    if (e.key === 'ArrowLeft' || e.key === 'ArrowUp') prevSlide();
+    if (e.key === 'ArrowRight' || e.key === 'ArrowDown' || e.key === ' ') {
+        e.preventDefault(); nextSlide();
+    }
+});
+
+// 初始渲染
+renderSlide();
+</script>
+</body>
+</html>

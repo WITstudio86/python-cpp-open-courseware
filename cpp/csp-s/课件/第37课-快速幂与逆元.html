@@ -1,0 +1,403 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>第37课：快速幂与逆元 — CSP-S 数论专题</title>
+<style>
+  :root {
+    --bg: #0d1b2a;
+    --slide-bg: #1b2838;
+    --text: #e0e6ed;
+    --accent: #4da6ff;
+    --gold: #f0c040;
+    --green: #5cdb5c;
+    --red: #e06060;
+    --code-bg: #0a1628;
+    --code-keyword: #66b2ff;
+    --code-string: #7ec87e;
+    --code-comment: #8899aa;
+    --code-number: #f0a060;
+    --code-func: #c0a0ff;
+    --border: #2a3a4e;
+    --nav-bg: #152535;
+    --shadow: 0 8px 32px rgba(0,0,0,0.4);
+  }
+  * { margin:0; padding:0; box-sizing:border-box; }
+  body {
+    font-family: "PingFang SC", "Microsoft YaHei", "Noto Sans SC", sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    display: flex; flex-direction: column; align-items: center;
+    justify-content: center; min-height: 100vh;
+  }
+  .container {
+    width: 100%; max-width: 1100px; margin: 0 auto; padding: 20px;
+  }
+  .slide {
+    display: none;
+    background: var(--slide-bg);
+    border-radius: 16px;
+    padding: 48px 56px;
+    min-height: 580px;
+    box-shadow: var(--shadow);
+    border: 1px solid var(--border);
+    position: relative;
+    animation: fadeIn 0.4s ease;
+  }
+  .slide.active { display: block; }
+  @keyframes fadeIn { from { opacity:0; transform: translateY(12px); } to { opacity:1; transform: translateY(0); } }
+
+  .slide h1 {
+    font-size: 2.4em; margin-bottom: 16px;
+    background: linear-gradient(135deg, var(--accent), #80d0ff);
+    -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+  }
+  .slide h2 {
+    font-size: 1.6em; margin-bottom: 20px; color: var(--accent);
+    border-left: 4px solid var(--accent); padding-left: 16px;
+  }
+  .slide h3 {
+    font-size: 1.2em; margin: 20px 0 10px; color: var(--gold);
+  }
+  .slide p, .slide li { font-size: 1.05em; line-height: 1.8; margin-bottom: 8px; }
+  .slide ul { padding-left: 24px; margin-bottom: 16px; }
+  .slide ul li::marker { color: var(--accent); }
+
+  /* 代码区域 */
+  .code-block {
+    background: var(--code-bg);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 18px 22px;
+    margin: 14px 0;
+    overflow-x: auto;
+    font-family: "JetBrains Mono", "Fira Code", "Consolas", "Courier New", monospace;
+    font-size: 0.9em;
+    line-height: 1.65;
+    white-space: pre;
+    color: var(--text);
+  }
+  .kw { color: var(--code-keyword); }   /* 关键字 */
+  .st { color: var(--code-string); }     /* 字符串 */
+  .cm { color: var(--code-comment); }    /* 注释 */
+  .nu { color: var(--code-number); }     /* 数字 */
+  .fn { color: var(--code-func); }       /* 函数名 */
+  .op { color: var(--gold); }            /* 操作符 */
+
+  /* 公式区域 */
+  .formula {
+    background: rgba(77,166,255,0.08);
+    border-left: 3px solid var(--accent);
+    padding: 14px 20px; margin: 14px 0; border-radius: 0 8px 8px 0;
+    font-family: "Georgia", "Times New Roman", serif;
+    font-size: 1.15em; color: var(--gold);
+  }
+
+  /* 表格 */
+  table { width: 100%; border-collapse: collapse; margin: 14px 0; font-size: 0.95em; }
+  th { background: rgba(77,166,255,0.15); color: var(--accent); }
+  th, td { border: 1px solid var(--border); padding: 10px 14px; text-align: left; }
+  tr:nth-child(even) { background: rgba(255,255,255,0.02); }
+
+  /* 小标签 */
+  .tag {
+    display: inline-block; padding: 3px 12px; border-radius: 14px;
+    font-size: 0.85em; margin-right: 6px;
+  }
+  .tag-accent { background: rgba(77,166,255,0.2); color: var(--accent); }
+  .tag-gold { background: rgba(240,192,64,0.2); color: var(--gold); }
+  .tag-green { background: rgba(92,219,92,0.2); color: var(--green); }
+
+  /* 导航 */
+  .nav {
+    display: flex; justify-content: space-between; align-items: center;
+    margin-top: 20px; gap: 16px;
+  }
+  .nav button {
+    background: var(--nav-bg); color: var(--text);
+    border: 1px solid var(--border); border-radius: 10px;
+    padding: 12px 28px; font-size: 1em; cursor: pointer;
+    transition: all 0.2s;
+    font-family: inherit;
+  }
+  .nav button:hover { background: var(--accent); color: #fff; border-color: var(--accent); }
+  .nav button:disabled { opacity: 0.3; cursor: not-allowed; }
+  .page-indicator { font-size: 0.95em; color: var(--code-comment); }
+
+  /* 标题页特殊样式 */
+  .title-slide { text-align: center; display: flex; flex-direction: column; justify-content: center; align-items: center; }
+  .title-slide h1 { font-size: 3em; margin-bottom: 20px; }
+  .title-slide .subtitle { font-size: 1.3em; color: var(--code-comment); margin-bottom: 30px; }
+  .title-slide .badges { margin-top: 20px; }
+
+  /* 两列布局 */
+  .two-col { display: flex; gap: 28px; margin: 14px 0; }
+  .two-col > div { flex: 1; }
+  @media (max-width: 768px) {
+    .two-col { flex-direction: column; }
+    .slide { padding: 32px 24px; }
+    .slide h1 { font-size: 1.6em; }
+    .slide h2 { font-size: 1.2em; }
+  }
+
+  .highlight { color: var(--gold); font-weight: bold; }
+</style>
+</head>
+<body>
+<div class="container">
+
+<!-- ==================== 幻灯片1：标题页 ==================== -->
+<div class="slide active title-slide" data-index="0">
+  <div class="badges">
+    <span class="tag tag-accent">CSP-S 考纲</span>
+    <span class="tag tag-gold">数论</span>
+    <span class="tag tag-green">第37课</span>
+  </div>
+  <h1>快速幂与逆元</h1>
+  <p class="subtitle">Binary Exponentiation &amp; Modular Multiplicative Inverse</p>
+  <p style="color: var(--code-comment); font-size: 1.1em;">
+    快速幂 · 模运算性质 · 费马小定理 · 扩展欧几里得 · 组合数取模 · 线性求逆元
+  </p>
+  <p style="margin-top:24px; color: var(--code-comment);">按 → 或点击按钮翻页 | 共 6 页</p>
+</div>
+
+<!-- ==================== 幻灯片2：快速幂原理 ==================== -->
+<div class="slide" data-index="1">
+  <h2>一、快速幂算法 O(log n)</h2>
+
+  <h3>核心思想：二分幂 / 二进制拆分</h3>
+
+  <div class="two-col">
+    <div>
+      <p><strong>递归视角：</strong></p>
+      <div class="formula">
+        a<sup>b</sup> = a<sup>b/2</sup> · a<sup>b/2</sup> &nbsp;（b 偶数）<br>
+        a<sup>b</sup> = a · a<sup>b/2</sup> · a<sup>b/2</sup> &nbsp;（b 奇数）
+      </div>
+      <p>每次指数折半 → <span class="highlight">O(log b)</span></p>
+    </div>
+    <div>
+      <p><strong>迭代视角（二进制拆分）：</strong></p>
+      <p>例：b = 13 = (1101)₂ = 8+4+1</p>
+      <div class="formula">
+        a<sup>13</sup> = a<sup>8</sup> · a<sup>4</sup> · a<sup>1</sup>
+      </div>
+      <p>遍历二进制位，位为 1 则乘入</p>
+    </div>
+  </div>
+
+  <div class="code-block"><span class="cm">// 迭代快速幂（推荐，避免递归栈溢出）</span>
+<span class="kw">long long</span> <span class="fn">fastPow</span>(<span class="kw">long long</span> a, <span class="kw">long long</span> b, <span class="kw">long long</span> MOD) {
+    <span class="kw">long long</span> result = <span class="nu">1</span>;
+    a %= MOD;  <span class="cm">// 先取模防溢出</span>
+    <span class="kw">while</span> (b > <span class="nu">0</span>) {
+        <span class="kw">if</span> (b & <span class="nu">1</span>)  result = result * a % MOD;
+        a = a * a % MOD;  <span class="cm">// a → a² → a⁴ → a⁸</span>
+        b >>= <span class="nu">1</span>;
+    }
+    <span class="kw">return</span> result;
+}</div>
+</div>
+
+<!-- ==================== 幻灯片3：模运算与费马小定理 ==================== -->
+<div class="slide" data-index="2">
+  <h2>二、模运算基本性质 &amp; 费马小定理求逆元</h2>
+
+  <div class="two-col">
+    <div>
+      <h3>模运算基本性质</h3>
+      <table>
+        <tr><th>运算</th><th>性质</th></tr>
+        <tr><td>加法</td><td>(a + b) mod m = ((a mod m) + (b mod m)) mod m</td></tr>
+        <tr><td>减法</td><td>(a - b) mod m = ((a mod m) - (b mod m) + m) mod m</td></tr>
+        <tr><td>乘法</td><td>(a · b) mod m = ((a mod m) · (b mod m)) mod m</td></tr>
+        <tr><td><span class="highlight">除法</span></td><td><span class="highlight">无直接公式！需用乘法逆元</span></td></tr>
+      </table>
+    </div>
+    <div>
+      <h3>费马小定理求逆元</h3>
+      <p>若 p 为质数且 a 不是 p 的倍数：</p>
+      <div class="formula">
+        a<sup>p-1</sup> ≡ 1 (mod p)
+      </div>
+      <p>推导：a · a<sup>p-2</sup> ≡ 1 (mod p)</p>
+      <div class="formula">
+        a<sup>-1</sup> ≡ a<sup>p-2</sup> (mod p)
+      </div>
+      <p>使用快速幂 O(log p) 求出</p>
+      <div class="code-block"><span class="kw">long long</span> <span class="fn">invFermat</span>(<span class="kw">long long</span> a, <span class="kw">long long</span> MOD) {
+    <span class="kw">return</span> <span class="fn">fastPow</span>(a, MOD - <span class="nu">2</span>, MOD);
+}</div>
+      <p><strong>适用条件：</strong>MOD 必须是质数</p>
+    </div>
+  </div>
+
+  <p style="margin-top:10px">
+    <span class="tag tag-accent">常见质数模数</span>
+    <code style="color:var(--gold)">1e9+7</code> &nbsp;
+    <code style="color:var(--gold)">998244353</code> &nbsp;
+    <code style="color:var(--gold)">1000000007</code>
+  </p>
+</div>
+
+<!-- ==================== 幻灯片4：代码模板页 ==================== -->
+<div class="slide" data-index="3">
+  <h2>三、扩展欧几里得求逆元 &amp; 线性求逆元</h2>
+
+  <div class="two-col">
+    <div>
+      <h3>扩展欧几里得求逆元</h3>
+      <p>当 <strong>gcd(a, m) = 1</strong> 时，解 ax + my = 1：</p>
+      <p>x 即为 a 在模 m 下的逆元。</p>
+      <p><span class="tag tag-green">通用</span> m 不一定是质数</p>
+      <div class="code-block" style="font-size:0.78em"><span class="cm">// 扩展欧几里得求 ax+by=gcd</span>
+<span class="kw">ll</span> <span class="fn">exgcd</span>(<span class="kw">ll</span> a, <span class="kw">ll</span> b, <span class="kw">ll</span> &x, <span class="kw">ll</span> &y) {
+    <span class="kw">if</span> (b == <span class="nu">0</span>) { x=<span class="nu">1</span>; y=<span class="nu">0</span>; <span class="kw">return</span> a; }
+    <span class="kw">ll</span> d = <span class="fn">exgcd</span>(b, a%b, y, x);
+    y -= a/b * x; <span class="kw">return</span> d;
+}
+<span class="kw">ll</span> <span class="fn">invExgcd</span>(<span class="kw">ll</span> a, <span class="kw">ll</span> MOD) {
+    <span class="kw">ll</span> x, y;
+    <span class="kw">if</span> (<span class="fn">exgcd</span>(a, MOD, x, y) != <span class="nu">1</span>) <span class="kw">return</span> -<span class="nu">1</span>;
+    <span class="kw">return</span> (x % MOD + MOD) % MOD;
+}</div>
+    </div>
+    <div>
+      <h3>线性求逆元 O(n)</h3>
+      <p>当 MOD 为质数时，O(n) 求出 1~n 所有逆元：</p>
+      <div class="formula">
+        inv[i] = (MOD - MOD/i) · inv[MOD % i] % MOD
+      </div>
+      <p><strong>推导：</strong>设 MOD = k·i + r（k=MOD/i, r=MOD%i）</p>
+      <p>k·i + r ≡ 0 → r ≡ -k·i<br>
+      乘 r⁻¹·i⁻¹ → i⁻¹ ≡ -k·r⁻¹</p>
+      <div class="code-block" style="font-size:0.82em"><span class="kw">void</span> <span class="fn">linearInv</span>(<span class="kw">int</span> n, <span class="kw">ll</span> MOD, <span class="kw">ll</span> inv[]) {
+    inv[<span class="nu">1</span>] = <span class="nu">1</span>;
+    <span class="kw">for</span> (<span class="kw">int</span> i = <span class="nu">2</span>; i <= n; i++)
+        inv[i] = (MOD - MOD / i) * inv[MOD % i] % MOD;
+}</div>
+    </div>
+  </div>
+</div>
+
+<!-- ==================== 幻灯片5：组合数取模 ==================== -->
+<div class="slide" data-index="4">
+  <h2>四、组合数取模 &amp; 完整代码模板</h2>
+
+  <h3>C(n, k) mod p 的标准做法（p 为质数）</h3>
+  <div class="formula">
+    C(n, k) = fact[n] · invFact[k] · invFact[n - k] mod p
+  </div>
+
+  <p><strong>预处理：</strong>O(n) 算阶乘 → O(log p) 求 invFact[n] → O(n) 倒推</p>
+  <div class="code-block"><span class="cm">// 预处理阶乘与阶乘逆元</span>
+<span class="kw">void</span> <span class="fn">precompute</span>(<span class="kw">int</span> n, <span class="kw">ll</span> MOD) {
+    fact[<span class="nu">0</span>] = <span class="nu">1</span>;
+    <span class="kw">for</span> (<span class="kw">int</span> i = <span class="nu">1</span>; i <= n; i++) fact[i] = fact[i-<span class="nu">1</span>] * i % MOD;
+    invFact[n] = <span class="fn">fastPow</span>(fact[n], MOD - <span class="nu">2</span>, MOD);
+    <span class="kw">for</span> (<span class="kw">int</span> i = n; i >= <span class="nu">1</span>; i--)
+        invFact[i-<span class="nu">1</span>] = invFact[i] * i % MOD;
+}
+<span class="cm">// O(1) 查询组合数</span>
+<span class="kw">ll</span> <span class="fn">C</span>(<span class="kw">int</span> n, <span class="kw">int</span> k, <span class="kw">ll</span> MOD) {
+    <span class="kw">if</span> (k < <span class="nu">0</span> || k > n) <span class="kw">return</span> <span class="nu">0</span>;
+    <span class="kw">return</span> fact[n] * invFact[k] % MOD * invFact[n-k] % MOD;
+}</div>
+
+  <div style="margin-top:20px">
+    <p><strong>知识点对比：</strong></p>
+    <table>
+      <tr><th>方法</th><th>时间复杂度</th><th>适用场景</th></tr>
+      <tr><td>费马小定理求逆元</td><td>O(log p)</td><td>p 是质数，单点求逆元</td></tr>
+      <tr><td>扩展欧几里得求逆元</td><td>O(log m)</td><td>gcd(a,m)=1，m 不一定是质数</td></tr>
+      <tr><td>组合数取模（预处理）</td><td>预处理 O(n) / 查询 O(1)</td><td>多次组合数查询</td></tr>
+      <tr><td>线性求逆元</td><td>O(n)</td><td>需要连续 1~n 所有逆元</td></tr>
+    </table>
+  </div>
+</div>
+
+<!-- ==================== 幻灯片6：总结页 ==================== -->
+<div class="slide" data-index="5">
+  <h2>五、CSP-S 考点总结</h2>
+
+  <div class="two-col">
+    <div>
+      <h3>核心考点速查</h3>
+      <ul>
+        <li><span class="highlight">快速幂</span> — 大指数取模，O(log b)，必须背熟</li>
+        <li><span class="highlight">费马小定理</span> — 质数模数下求逆元的标准方法</li>
+        <li><span class="highlight">扩展欧几里得</span> — 非质数模数下的逆元求解</li>
+        <li><span class="highlight">组合数取模</span> — 阶乘 + 阶乘逆元预处理，O(1) 查询</li>
+        <li><span class="highlight">线性求逆元</span> — O(n) 求所有逆元，重要公式必须记住</li>
+      </ul>
+    </div>
+    <div>
+      <h3>真题方向</h3>
+      <ul>
+        <li>快速幂直接考 / 作为其他算法的子过程</li>
+        <li>组合数取模（搭配乘法逆元）</li>
+        <li>概率与期望问题中的模运算</li>
+        <li>多项式乘法与卷积（FFT / NTT 的前置）</li>
+      </ul>
+      <div style="margin-top:20px; padding:16px; background:rgba(240,192,64,0.08); border-radius:8px;">
+        <p><strong>真题示例：</strong></p>
+        <p>1. 求 a<sup>b</sup> mod p（快速幂模板）</p>
+        <p>2. 求 C(n, k) mod 1e9+7（组合数取模）</p>
+      </div>
+    </div>
+  </div>
+
+  <div style="margin-top:30px; text-align:center;">
+    <p style="font-size:1.3em; color:var(--accent);">掌握快速幂与逆元 = 组合计数问题的基石</p>
+    <p style="color:var(--code-comment);">对应程序文件：<code>程序/lesson37_fast_pow_inverse.cpp</code></p>
+  </div>
+</div>
+
+<!-- ==================== 导航 ==================== -->
+<div class="nav">
+  <button id="prevBtn" onclick="changeSlide(-1)">← 上一页</button>
+  <span class="page-indicator" id="pageInd">1 / 6</span>
+  <button id="nextBtn" onclick="changeSlide(1)">下一页 →</button>
+</div>
+
+</div>
+
+<script>
+let currentSlide = 0;
+const totalSlides = 6;
+const slides = document.querySelectorAll('.slide');
+
+function updateSlide() {
+  slides.forEach((s, i) => s.classList.toggle('active', i === currentSlide));
+  document.getElementById('pageInd').textContent = (currentSlide + 1) + ' / ' + totalSlides;
+  document.getElementById('prevBtn').disabled = currentSlide === 0;
+  document.getElementById('nextBtn').disabled = currentSlide === totalSlides - 1;
+}
+
+function changeSlide(delta) {
+  currentSlide = Math.max(0, Math.min(totalSlides - 1, currentSlide + delta));
+  updateSlide();
+}
+
+// 键盘导航
+document.addEventListener('keydown', (e) => {
+  if (e.key === 'ArrowRight' || e.key === 'ArrowDown' || e.key === ' ') {
+    e.preventDefault(); changeSlide(1);
+  } else if (e.key === 'ArrowLeft' || e.key === 'ArrowUp') {
+    e.preventDefault(); changeSlide(-1);
+  }
+});
+
+// 触摸滑动
+let touchStartX = 0;
+document.addEventListener('touchstart', e => { touchStartX = e.touches[0].clientX; });
+document.addEventListener('touchend', e => {
+  const diff = touchStartX - e.changedTouches[0].clientX;
+  if (Math.abs(diff) > 60) changeSlide(diff > 0 ? 1 : -1);
+});
+
+updateSlide();
+</script>
+</body>
+</html>

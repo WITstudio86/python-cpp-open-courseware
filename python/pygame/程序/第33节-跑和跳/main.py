@@ -1,0 +1,309 @@
+"""
+第33节：跑和跳 —— 重力、跳跃与平台碰撞
+
+一个简单的平台跳跃游戏，展示了：
+1. 重力模拟（vy += GRAVITY）
+2. 跳跃物理（按下空格键）
+3. 三种平台碰撞：
+   - 类型一：站在平台上（从上方落下）
+   - 类型二：从下方穿透（单向平台）
+   - 类型三：侧面碰撞（被挡住）
+
+操作方式：
+- 左右方向键：移动
+- 空格键：跳跃
+- ESC：退出
+
+不需要任何外部文件，所有图形用 pygame Surface 绘制。
+"""
+
+import pygame
+import sys
+
+# ========== 初始化 Pygame ==========
+pygame.init()
+WIDTH, HEIGHT = 800, 600
+screen = pygame.display.set_mode((WIDTH, HEIGHT))
+pygame.display.set_caption("第33节：跑和跳 —— 平台跳跃")
+clock = pygame.time.Clock()
+FPS = 60
+
+# ========== 颜色常量 ==========
+SKY_BLUE = (135, 206, 235)      # 天空背景
+WHITE = (255, 255, 255)
+BLACK = (0, 0, 0)
+PLAYER_COLOR = (255, 100, 100)   # 角色颜色（红色）
+PLAYER_OUTLINE = (200, 50, 50)   # 角色边框
+PLATFORM_COLOR = (100, 180, 100) # 普通平台（绿色）
+PLATFORM_OUTLINE = (60, 140, 60) # 平台边框
+ONEWAY_COLOR = (180, 180, 100)   # 单向平台（黄色）
+ONEWAY_OUTLINE = (140, 140, 60)  # 单向平台边框
+GROUND_COLOR = (139, 90, 43)     # 地面（棕色）
+GROUND_OUTLINE = (100, 60, 30)   # 地面边框
+TEXT_COLOR = (50, 50, 50)        # 文字颜色
+
+# ========== 物理常量 ==========
+GRAVITY = 0.8        # 重力加速度：每帧增加的速度
+JUMP_FORCE = -14     # 跳跃力度：负数表示向上
+MOVE_SPEED = 5       # 左右移动速度
+
+# ========== 角色类 ==========
+class Player:
+    """玩家角色 —— 一个可以左右移动、跳跃、受重力影响的矩形"""
+
+    def __init__(self, x, y):
+        self.width = 30
+        self.height = 40
+        self.x = x
+        self.y = y
+        self.vx = 0         # 水平速度
+        self.vy = 0         # 垂直速度（正数=下落，负数=上升）
+        self.on_ground = False  # 是否站在平台上
+
+    def rect(self):
+        """返回角色的矩形边界（用于碰撞检测）"""
+        return pygame.Rect(self.x, self.y, self.width, self.height)
+
+    def move(self, keys):
+        """处理键盘输入 —— 左右移动和跳跃"""
+        self.vx = 0  # 每帧重置水平速度
+
+        # 左右移动
+        if keys[pygame.K_LEFT]:
+            self.vx = -MOVE_SPEED
+        if keys[pygame.K_RIGHT]:
+            self.vx = MOVE_SPEED
+
+        # 跳跃：必须站在平台上才能跳（防止二段跳）
+        if keys[pygame.K_SPACE] and self.on_ground:
+            self.vy = JUMP_FORCE  # 给一个向上的速度
+            self.on_ground = False  # 跳起来后就不站在地上了
+
+    def apply_gravity(self):
+        """应用重力：垂直速度不断增加，位置随之改变"""
+        self.vy += GRAVITY  # 重力让向下速度越来越大
+        self.y += self.vy   # 位置随速度变化
+
+        # 防止下落速度过快（终端速度）
+        if self.vy > 15:
+            self.vy = 15
+
+    def apply_horizontal(self):
+        """应用水平移动"""
+        self.x += self.vx
+
+        # 限制角色不超出屏幕左右边界
+        if self.x < 0:
+            self.x = 0
+        if self.x + self.width > WIDTH:
+            self.x = WIDTH - self.width
+
+    def draw(self, surface):
+        """绘制角色 —— 一个带边框的矩形，加上简单的「眼睛」"""
+        rect = self.rect()
+        # 身体
+        pygame.draw.rect(surface, PLAYER_COLOR, rect)
+        pygame.draw.rect(surface, PLAYER_OUTLINE, rect, 2)
+        # 简单的"眼睛"（两个小白点）
+        eye_y = int(self.y + 10)
+        pygame.draw.circle(surface, WHITE, (int(self.x + 8), eye_y), 4)
+        pygame.draw.circle(surface, WHITE, (int(self.x + 22), eye_y), 4)
+        pygame.draw.circle(surface, BLACK, (int(self.x + 9), eye_y), 2)
+        pygame.draw.circle(surface, BLACK, (int(self.x + 23), eye_y), 2)
+
+
+# ========== 平台类 ==========
+class Platform:
+    """平台 —— 角色可以站在上面的矩形"""
+
+    def __init__(self, x, y, width, height, is_one_way=False):
+        self.x = x
+        self.y = y
+        self.width = width
+        self.height = height
+        self.is_one_way = is_one_way  # True = 单向平台（可以从下方穿过）
+
+    def rect(self):
+        """返回平台的矩形边界"""
+        return pygame.Rect(self.x, self.y, self.width, self.height)
+
+    def draw(self, surface):
+        """绘制平台"""
+        rect = self.rect()
+        color = ONEWAY_COLOR if self.is_one_way else PLATFORM_COLOR
+        outline_color = ONEWAY_OUTLINE if self.is_one_way else PLATFORM_OUTLINE
+        pygame.draw.rect(surface, color, rect)
+        pygame.draw.rect(surface, outline_color, rect, 2)
+
+        # 单向平台画虚线提示
+        if self.is_one_way:
+            dash_width = 8
+            gap = 6
+            line_y = int(self.y + self.height // 2)
+            x_pos = self.x + 4
+            while x_pos < self.x + self.width - 4:
+                end_x = min(x_pos + dash_width, self.x + self.width - 4)
+                pygame.draw.line(surface, (100, 100, 50),
+                                 (int(x_pos), line_y), (int(end_x), line_y), 2)
+                x_pos += dash_width + gap
+
+
+# ========== 碰撞检测函数 ==========
+def handle_platform_collisions(player, platforms):
+    """
+    处理角色和所有平台的碰撞。
+    返回：角色是否站在某个平台上（on_ground）
+    """
+
+    player_rect = player.rect()
+    on_ground = False
+
+    for platform in platforms:
+        platform_rect = platform.rect()
+
+        # ---- 类型一 + 类型二：垂直碰撞（站在上面 / 从下穿透） ----
+        if player.vy > 0:  # 只有下落时才检测（上升时不管 → 单向平台可以穿过）
+            # 判断是否落在平台上：
+            # 条件：前一帧角色底部在平台上方，当前帧底部在平台内部或下方
+            prev_bottom = player.y - player.vy + player.height
+            # 角色底部的x范围是否和平台有重叠？
+            overlap_x = (player_rect.right > platform_rect.left and
+                         player_rect.left < platform_rect.right)
+
+            if overlap_x:
+                # 前一帧还在平台上方，现在碰到了
+                if prev_bottom <= platform_rect.top and player_rect.bottom >= platform_rect.top:
+                    # 站到平台上！
+                    player.y = platform_rect.top - player.height
+                    player.vy = 0
+                    on_ground = True
+                    continue  # 已经在平台上了，不用继续检测这个平台
+
+        # ---- 类型三：水平碰撞（侧面挡住） ----
+        # 先检查是否有重叠
+        if player_rect.colliderect(platform_rect):
+            # 计算前一帧的位置
+            prev_rect = pygame.Rect(
+                player.x - player.vx,  # 水平前一帧
+                player.y,              # 垂直位置用当前帧（因为垂直已经在上面处理了）
+                player.width,
+                player.height
+            )
+
+            # 水平重叠检测：忽略已经在平台上站着的轻微重叠
+            if not on_ground or abs(player_rect.bottom - platform_rect.top) > 5:
+                # 从左边撞来
+                if prev_rect.right <= platform_rect.left:
+                    player.x = platform_rect.left - player.width
+                # 从右边撞来
+                elif prev_rect.left >= platform_rect.right:
+                    player.x = platform_rect.right
+
+    return on_ground
+
+
+# ========== 创建游戏世界 ==========
+def create_platforms():
+    """创建多个平台，包括地面、空中平台和单向平台"""
+
+    platforms = []
+
+    # 地面（普通平台，屏幕底部）
+    platforms.append(Platform(0, 560, 800, 40, is_one_way=False))
+
+    # 空中平台1（低处，偏左）
+    platforms.append(Platform(80, 440, 160, 20, is_one_way=False))
+
+    # 空中平台2（中处，偏右）
+    platforms.append(Platform(520, 400, 180, 20, is_one_way=False))
+
+    # 空中平台3（高处，中间）
+    platforms.append(Platform(300, 320, 200, 20, is_one_way=False))
+
+    # 单向平台（可以从下方跳上去穿过，从上方落下时站住）
+    platforms.append(Platform(150, 250, 150, 16, is_one_way=True))
+    platforms.append(Platform(500, 200, 150, 16, is_one_way=True))
+
+    # 顶部小平台
+    platforms.append(Platform(350, 160, 100, 16, is_one_way=False))
+
+    return platforms
+
+
+# ========== 绘制界面 ==========
+def draw_ui(surface, player, font):
+    """绘制UI信息"""
+    info_text = f"左右方向键移动 | 空格键跳跃 | 站在地上: {'是' if player.on_ground else '否'}"
+    text_surface = font.render(info_text, True, TEXT_COLOR)
+    surface.blit(text_surface, (10, 10))
+
+    # 显示速度信息
+    vy_text = f"垂直速度 vy = {player.vy:.1f}"
+    vy_surface = font.render(vy_text, True, TEXT_COLOR)
+    surface.blit(vy_surface, (10, 35))
+
+
+# ========== 主函数 ==========
+def main():
+    """游戏主循环"""
+
+    # 创建角色（放在地面左上方）
+    player = Player(100, 400)
+
+    # 创建所有平台
+    platforms = create_platforms()
+
+    # 字体
+    font = pygame.font.SysFont("Microsoft YaHei", 18)
+
+    running = True
+    while running:
+        # ---- 事件处理 ----
+        for event in pygame.event.get():
+            if event.type == pygame.QUIT:
+                running = False
+            if event.type == pygame.KEYDOWN:
+                if event.key == pygame.K_ESCAPE:
+                    running = False
+
+        # ---- 获取键盘状态 ----
+        keys = pygame.key.get_pressed()
+
+        # ---- 角色移动（键盘输入 + 重力 + 碰撞） ----
+        player.move(keys)           # 1. 处理键盘输入
+        player.apply_gravity()      # 2. 应用重力（vy += GRAVITY, y += vy）
+        player.apply_horizontal()   # 3. 应用水平移动
+
+        # 4. 处理平台碰撞（三种类型）
+        player.on_ground = handle_platform_collisions(player, platforms)
+
+        # ---- 如果角色掉出屏幕底部 → 重置位置 ----
+        if player.y > HEIGHT + 50:
+            player.x = 100
+            player.y = 400
+            player.vy = 0
+
+        # ---- 绘制画面 ----
+        screen.fill(SKY_BLUE)  # 天空色背景
+
+        # 绘制所有平台
+        for platform in platforms:
+            platform.draw(screen)
+
+        # 绘制角色
+        player.draw(screen)
+
+        # 绘制UI信息
+        draw_ui(screen, player, font)
+
+        # 更新屏幕
+        pygame.display.flip()
+        clock.tick(FPS)
+
+    pygame.quit()
+    sys.exit()
+
+
+# ========== 程序入口 ==========
+if __name__ == "__main__":
+    main()

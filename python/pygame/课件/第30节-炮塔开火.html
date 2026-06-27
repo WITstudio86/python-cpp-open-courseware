@@ -1,0 +1,457 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>第30节：炮塔开火</title>
+<style>
+* { margin: 0; padding: 0; box-sizing: border-box; }
+body {
+  font-family: "Microsoft YaHei", "PingFang SC", sans-serif;
+  background: #1a1a2e;
+  color: #eee;
+  display: flex; justify-content: center; align-items: center;
+  height: 100vh; overflow: hidden;
+}
+#slide-container { width: 95vw; max-width: 1100px; height: 88vh; position: relative; }
+.slide { display: none; width: 100%; height: 100%; padding: 40px 50px;
+  background: #16213e; border-radius: 16px; box-shadow: 0 8px 40px rgba(0,0,0,0.5);
+  flex-direction: column; justify-content: center; }
+.slide.active { display: flex; }
+
+/* 页码 */
+#page-num {
+  position: fixed; bottom: 20px; right: 40px; font-size: 18px; color: #888; z-index: 10;
+}
+
+/* 标题样式 */
+h1 { font-size: 52px; color: #ff6b6b; margin-bottom: 20px; text-align: center; }
+h2 { font-size: 40px; color: #ffd93d; margin-bottom: 30px; border-bottom: 3px solid #ffd93d; padding-bottom: 10px; }
+h3 { font-size: 28px; color: #6bcb77; margin: 18px 0 10px; }
+p, li { font-size: 24px; line-height: 1.7; margin: 8px 0; }
+ul { padding-left: 40px; }
+li { margin: 6px 0; }
+
+/* 公式/重点 */
+.formula {
+  background: #0f3460; color: #ffd93d; font-size: 32px; padding: 20px 30px;
+  border-radius: 12px; text-align: center; margin: 20px 0; font-family: monospace;
+  border: 2px solid #e94560;
+}
+
+/* 代码块 */
+pre {
+  background: #1e1e1e; color: #d4d4d4; border-radius: 10px; padding: 20px 25px;
+  font-size: 20px; line-height: 1.6; overflow-x: auto; margin: 10px 0;
+  border: 1px solid #333;
+}
+pre code { font-family: "Fira Code", "Consolas", monospace; }
+
+/* 语法高亮 */
+.kw { color: #569cd6; } /* 关键字 */
+.fn { color: #dcdcaa; } /* 函数名 */
+.str { color: #ce9178; } /* 字符串 */
+.num { color: #b5cea8; } /* 数字 */
+.cmt { color: #6a9955; } /* 注释 */
+.op { color: #d4d4d4; } /* 运算符 */
+
+/* 格子/卡片布局 */
+.card-row { display: flex; gap: 25px; justify-content: center; flex-wrap: wrap; }
+.card {
+  background: #0f3460; border-radius: 14px; padding: 25px; text-align: center;
+  flex: 1; min-width: 200px; max-width: 320px;
+}
+.card .icon { font-size: 48px; margin-bottom: 12px; }
+.card h3 { font-size: 26px; color: #ffd93d; margin: 8px 0; }
+.card p { font-size: 20px; color: #ccc; }
+
+/* 表格 */
+table { width: 100%; border-collapse: collapse; font-size: 22px; margin: 15px 0; }
+th { background: #e94560; color: white; padding: 12px 15px; text-align: left; }
+td { padding: 10px 15px; border-bottom: 1px solid #333; }
+tr:nth-child(even) { background: rgba(255,255,255,0.03); }
+
+/* 提示 */
+.tip { background: #1b4332; border-left: 5px solid #6bcb77; padding: 15px 20px;
+  border-radius: 8px; font-size: 22px; margin: 15px 0; }
+
+/* 底部导航提示 */
+#nav-hint {
+  position: fixed; bottom: 20px; left: 40px; font-size: 16px; color: #666; z-index: 10;
+}
+
+/* 子标题小图标 */
+h2::before { content: "🎯 "; }
+
+/* 动画 */
+@keyframes pulse {
+  0%,100% { transform: scale(1); }
+  50% { transform: scale(1.03); }
+}
+.highlight { animation: pulse 2s infinite; }
+</style>
+</head>
+<body>
+
+<div id="slide-container">
+
+  <!-- 第1页：标题 -->
+  <div class="slide active">
+    <h1>🏰 第30节：炮塔开火</h1>
+    <p style="text-align:center; font-size:28px; color:#ffd93d; margin-top:20px;">
+      塔防游戏 · 自动瞄准 · 经济系统
+    </p>
+    <div style="text-align:center; margin-top:40px;">
+      <p>🔍 距离计算 → 🎯 自动瞄准 → 💥 发射子弹</p>
+      <p>💰 经济系统 → ❤️ 敌人血条</p>
+    </div>
+    <p style="text-align:center; color:#888; margin-top:50px; font-size:18px;">
+      按 → 或 空格 翻到下一页
+    </p>
+  </div>
+
+  <!-- 第2页：回顾 -->
+  <div class="slide">
+    <h2>回顾：防御工事（第29节）</h2>
+    <div class="card-row">
+      <div class="card">
+        <div class="icon">🗺️</div>
+        <h3>地图与路径</h3>
+        <p>敌人沿着预设路径行走</p>
+      </div>
+      <div class="card">
+        <div class="icon">🏗️</div>
+        <h3>放置炮塔</h3>
+        <p>在草地上点击放置炮塔</p>
+      </div>
+      <div class="card">
+        <div class="icon">👾</div>
+        <h3>敌人生成</h3>
+        <p>按波次生成不同类型的敌人</p>
+      </div>
+    </div>
+    <div class="tip" style="margin-top:25px;">
+      ❓ <b>问题：</b>炮塔已经摆好了，但它还不会攻击！今天我们就让炮塔「活」起来。
+    </div>
+  </div>
+
+  <!-- 第3页：本节目标 -->
+  <div class="slide">
+    <h2>本节教学目标</h2>
+    <table>
+      <tr><th style="width:50px;">#</th><th>目标</th><th>核心技能</th></tr>
+      <tr><td>1</td><td>计算两点之间的距离</td><td>math.sqrt()、勾股定理</td></tr>
+      <tr><td>2</td><td>检测射程内的敌人</td><td>循环遍历 + 条件判断</td></tr>
+      <tr><td>3</td><td>自动瞄准最近敌人</td><td>比较最小值算法</td></tr>
+      <tr><td>4</td><td>子弹飞行与命中</td><td>坐标更新、碰撞检测</td></tr>
+      <tr><td>5</td><td>经济系统</td><td>全局变量管理金币</td></tr>
+      <tr><td>6</td><td>绘制敌人血条</td><td>pygame.draw.rect()</td></tr>
+    </table>
+  </div>
+
+  <!-- 第4页：距离公式 -->
+  <div class="slide">
+    <h2>距离计算 —— 炮塔的"眼睛"</h2>
+    <p>炮塔需要知道敌人在不在攻击范围内。这就要用<strong>勾股定理</strong>计算两点距离。</p>
+    <div class="formula">
+      距离 = √((x₁ − x₂)² + (y₁ − y₂)²)
+    </div>
+<pre><code><span class="kw">import</span> math
+
+<span class="kw">def</span> <span class="fn">计算距离</span>(x1, y1, x2, y2):
+    <span class="cmt"># 计算两点之间的直线距离</span>
+    dx = x1 - x2          <span class="cmt"># x方向差值</span>
+    dy = y1 - y2          <span class="cmt"># y方向差值</span>
+    <span class="kw">return</span> math.sqrt(dx*dx + dy*dy)  <span class="cmt"># 开方</span>
+
+<span class="cmt"># 举例：(0,0) 到 (3,4) 的距离</span>
+<span class="fn">print</span>(计算距离(<span class="num">0</span>, <span class="num">0</span>, <span class="num">3</span>, <span class="num">4</span>))  <span class="cmt"># 输出：5.0 ✓</span></code></pre>
+    <div class="tip">
+      💡 <b>记住：</b>3-4-5 是经典的勾股数！3² + 4² = 5²
+    </div>
+  </div>
+
+  <!-- 第5页：优化比较 -->
+  <div class="slide">
+    <h2>不开方也能比大小！</h2>
+    <p>如果我们只需要判断"谁更近"，不一定要求出精确距离。</p>
+    <p style="font-size:20px; color:#aaa;">比较 距离² 和 射程² 的结果是一样的，但省去了开方运算！</p>
+
+<pre><code><span class="kw">def</span> <span class="fn">在射程内吗</span>(炮塔, 敌人):
+    dx = 炮塔.x - 敌人.x
+    dy = 炮塔.y - 敌人.y
+    距离平方 = dx*dx + dy*dy
+
+    <span class="cmt"># 比较距离平方，不需要开方！</span>
+    <span class="kw">if</span> 距离平方 <= 炮塔.射程 * 炮塔.射程:
+        <span class="kw">return</span> <span class="kw">True</span>
+    <span class="kw">return</span> <span class="kw">False</span></code></pre>
+
+    <table style="margin-top:20px;">
+      <tr><th>方法</th><th>代码</th><th>性能</th></tr>
+      <tr><td>精确距离</td><td><code>math.sqrt(dx² + dy²) <= 射程</code></td><td>较慢</td></tr>
+      <tr><td>距离平方</td><td><code>dx² + dy² <= 射程²</code></td><td style="color:#6bcb77;">更快！</td></tr>
+    </table>
+  </div>
+
+  <!-- 第6页：自动瞄准 -->
+  <div class="slide">
+    <h2>自动瞄准 —— 选择最近的敌人</h2>
+    <p>如果多个敌人在射程内，炮塔优先攻击<strong>最近的</strong>（威胁最大）。</p>
+
+<pre><code><span class="kw">def</span> <span class="fn">获取最近敌人</span>(炮塔, 敌人列表):
+    最近敌人 = <span class="kw">None</span>
+    最近距离平方 = <span class="kw">float</span>(<span class="str">'inf'</span>)  <span class="cmt"># 无穷大</span>
+
+    <span class="kw">for</span> 敌人 <span class="kw">in</span> 敌人列表:
+        dx = 炮塔.x - 敌人.x
+        dy = 炮塔.y - 敌人.y
+        d2 = dx*dx + dy*dy
+
+        <span class="cmt"># 在射程内 且 比之前找到的更近</span>
+        <span class="kw">if</span> d2 <= 炮塔.射程² <span class="kw">and</span> d2 < 最近距离平方:
+            最近距离平方 = d2
+            最近敌人 = 敌人
+
+    <span class="kw">return</span> 最近敌人  <span class="cmt"># 没找到则返回 None</span></code></pre>
+
+    <div class="tip">
+      🎯 <b>算法核心：</b>遍历 → 比较 → 更新最小值。这是编程中非常常见的模式！
+    </div>
+  </div>
+
+  <!-- 第7页：子弹飞行 -->
+  <div class="slide">
+    <h2>子弹飞行 —— 追踪目标</h2>
+    <p>子弹每帧向目标移动一点点，直到命中。</p>
+
+<pre><code><span class="cmt"># 每帧更新子弹位置</span>
+<span class="kw">for</span> 子弹 <span class="kw">in</span> 子弹列表[:]:    <span class="cmt"># [:] 是安全遍历技巧</span>
+    目标 = 子弹[<span class="str">'目标'</span>]
+    dx = 目标.x - 子弹[<span class="str">'x'</span>]
+    dy = 目标.y - 子弹[<span class="str">'y'</span>]
+    距离 = math.sqrt(dx*dx + dy*dy)
+
+    <span class="kw">if</span> 距离 < <span class="num">8</span>:   <span class="cmt"># 命中！</span>
+        目标.血量 -= 子弹[<span class="str">'伤害'</span>]
+        子弹列表.remove(子弹)
+    <span class="kw">else</span>:
+        <span class="cmt"># 向目标移动（单位向量 × 速度）</span>
+        子弹[<span class="str">'x'</span>] += dx / 距离 * 子弹[<span class="str">'速度'</span>]
+        子弹[<span class="str">'y'</span>] += dy / 距离 * 子弹[<span class="str">'速度'</span>]</code></pre>
+
+    <div class="tip">
+      💡 用 <code>dx/距离</code> 得到<span style="color:#ffd93d;">单位方向向量</span>，再乘速度就是每帧移动量。
+    </div>
+  </div>
+
+  <!-- 第8页：经济系统 -->
+  <div class="slide">
+    <h2>经济系统 —— 金币的管理</h2>
+    <div class="card-row">
+      <div class="card">
+        <div class="icon">💰</div>
+        <h3>获得金币</h3>
+        <p>击杀敌人<br>不同敌人赏金不同</p>
+      </div>
+      <div class="card">
+        <div class="icon">🛒</div>
+        <h3>消耗金币</h3>
+        <p>放置炮塔<br>升级炮塔</p>
+      </div>
+      <div class="card">
+        <div class="icon">⚖️</div>
+        <h3>策略决策</h3>
+        <p>先存钱？<br>还是先放塔？</p>
+      </div>
+    </div>
+
+<pre style="margin-top:20px;"><code><span class="cmt"># 放置炮塔</span>
+<span class="kw">if</span> 金币 >= <span class="num">100</span>:
+    金币 -= <span class="num">100</span>
+    创建炮塔(x, y)
+
+<span class="cmt"># 击杀敌人</span>
+金币 += 敌人.赏金</code></pre>
+    <p style="margin-top:10px; text-align:center; font-size:22px;">
+      经济系统让游戏有了<strong style="color:#ffd93d;">策略深度</strong> —— 不再是随便乱放！
+    </p>
+  </div>
+
+  <!-- 第9页：血条绘制 -->
+  <div class="slide">
+    <h2>敌人血条 —— 可视化剩余生命</h2>
+    <p>在敌人头顶绘制一个红绿相间的血条。</p>
+
+<pre><code><span class="kw">def</span> <span class="fn">绘制血条</span>(屏幕, 敌人):
+    条宽 = <span class="num">30</span>
+    条高 = <span class="num">4</span>
+    x = 敌人.x - 条宽 // <span class="num">2</span>   <span class="cmt"># 居中</span>
+    y = 敌人.y - <span class="num">15</span>          <span class="cmt"># 头顶</span>
+
+    <span class="cmt"># 红色背景（已损失的血量）</span>
+    pygame.draw.rect(屏幕, (<span class="num">255</span>,<span class="num">0</span>,<span class="num">0</span>),
+                     (x, y, 条宽, 条高))
+
+    <span class="cmt"># 绿色前景（剩余血量，按比例缩放）</span>
+    比例 = 敌人.血量 / 敌人.最大血量
+    pygame.draw.rect(屏幕, (<span class="num">0</span>,<span class="num">255</span>,<span class="num">0</span>),
+                     (x, y, 条宽*比例, 条高))</code></pre>
+
+    <div style="display:flex; gap:30px; justify-content:center; margin-top:20px;">
+      <div style="text-align:center;"><div style="width:120px;height:12px;background:#f00;border-radius:6px;margin:0 auto 8px;"><div style="width:100%;height:100%;background:#0f0;border-radius:6px;"></div></div>满血</div>
+      <div style="text-align:center;"><div style="width:120px;height:12px;background:#f00;border-radius:6px;margin:0 auto 8px;"><div style="width:60%;height:100%;background:#0f0;border-radius:6px;"></div></div>受伤60%</div>
+      <div style="text-align:center;"><div style="width:120px;height:12px;background:#f00;border-radius:6px;margin:0 auto 8px;"><div style="width:15%;height:100%;background:#0f0;border-radius:6px;"></div></div>濒死15%</div>
+    </div>
+  </div>
+
+  <!-- 第10页：游戏主循环结构 -->
+  <div class="slide">
+    <h2>完整游戏循环结构</h2>
+
+<pre style="font-size:18px;"><code><span class="kw">while</span> 运行中:
+    <span class="cmt"># 1. 事件处理</span>
+    <span class="kw">for</span> event <span class="kw">in</span> pygame.event.get():
+        <span class="kw">if</span> 点击草地 → 尝试放置炮塔（检查金币）
+
+    <span class="cmt"># 2. 更新逻辑</span>
+    生成敌人（按波次）
+    移动敌人（沿路径）
+    <span class="kw">for</span> 炮塔 <span class="kw">in</span> 炮塔列表:
+        目标 = 获取最近敌人(炮塔)
+        <span class="kw">if</span> 目标 → 发射子弹
+    更新子弹位置 + 检测命中
+    移除死亡的敌人（加金币）
+    检查敌人到达终点（扣命）
+
+    <span class="cmt"># 3. 绘制画面</span>
+    绘制地图 + 路径
+    绘制炮塔 + 射程圈
+    绘制敌人 + 血条
+    绘制子弹
+    绘制UI（金币、命数、波次）</code></pre>
+  </div>
+
+  <!-- 第11页：代码亮点展示 -->
+  <div class="slide">
+    <h2>代码亮点：炮塔冷却机制</h2>
+    <p>炮塔不能连续攻击，需要攻击间隔（冷却时间）。</p>
+
+<pre style="font-size:20px;"><code><span class="kw">class</span> <span class="fn">炮塔</span>:
+    <span class="kw">def</span> <span class="fn">__init__</span>(self, x, y):
+        self.冷却 = <span class="num">0</span>          <span class="cmt"># 当前冷却</span>
+        self.攻击间隔 = <span class="num">30</span>     <span class="cmt"># 每30帧攻击一次</span>
+        self.射程 = <span class="num">120</span>
+        self.攻击力 = <span class="num">25</span>
+
+    <span class="kw">def</span> <span class="fn">更新</span>(self, 敌人列表):
+        <span class="kw">if</span> self.冷却 > <span class="num">0</span>:
+            self.冷却 -= <span class="num">1</span>     <span class="cmt"># 冷却中</span>
+            <span class="kw">return</span> <span class="kw">None</span>
+
+        目标 = 获取最近敌人(self, 敌人列表)
+        <span class="kw">if</span> 目标:
+            self.冷却 = self.攻击间隔  <span class="cmt"># 重置冷却</span>
+            <span class="kw">return</span> 创建子弹(self, 目标)
+        <span class="kw">return</span> <span class="kw">None</span></code></pre>
+  </div>
+
+  <!-- 第12页：课堂练习 -->
+  <div class="slide">
+    <h2>课堂练习（25分钟）</h2>
+
+    <h3>⭐ 基础任务（必做）</h3>
+    <ul>
+      <li>完善射程检测 —— 让炮塔只在敌人进入射程时才攻击</li>
+      <li>调整游戏平衡 —— 修改金币、价格、攻击力等参数，找到最好玩的组合</li>
+      <li>添加简单的音效反馈</li>
+    </ul>
+
+    <h3 style="margin-top:25px;">🔥 挑战任务（选做）</h3>
+    <ul>
+      <li><strong>冰冻塔：</strong>攻击力低但能让敌人减速</li>
+      <li><strong>炮塔升级：</strong>点击已有炮塔，花钱提升攻击力或射程</li>
+      <li><strong>波次提示：</strong>新波次前屏幕显示"第X波来袭！"</li>
+    </ul>
+
+    <div class="tip" style="margin-top:15px;">
+      🏆 完成挑战任务的同学可以在作品展示环节分享你的创意！
+    </div>
+  </div>
+
+  <!-- 第13页：总结 -->
+  <div class="slide">
+    <h2>本节知识总结</h2>
+    <table>
+      <tr><th>知识点</th><th>核心代码</th><th>作用</th></tr>
+      <tr><td>距离计算</td><td><code>math.sqrt(dx² + dy²)</code></td><td>判断敌人在不在射程内</td></tr>
+      <tr><td>自动瞄准</td><td>遍历 + 找最小距离</td><td>优先攻击最近的敌人</td></tr>
+      <tr><td>子弹飞行</td><td><code>x += dx/距离 * 速度</code></td><td>子弹追踪敌人</td></tr>
+      <tr><td>冷却机制</td><td><code>冷却 -= 1</code></td><td>控制攻击频率</td></tr>
+      <tr><td>经济系统</td><td><code>金币 += 赏金 / -= 价格</code></td><td>策略性资源管理</td></tr>
+      <tr><td>血条绘制</td><td><code>draw.rect 按比例</code></td><td>直观显示敌人剩余生命</td></tr>
+    </table>
+  </div>
+
+  <!-- 第14页：下节预告 -->
+  <div class="slide">
+    <h2>下节预告：弹幕来袭</h2>
+    <h1 style="font-size:58px; margin:30px 0;">💥 第31节</h1>
+    <p style="text-align:center; font-size:26px; color:#ffd93d;">弹幕来袭 —— 敌人也会反击！</p>
+    <ul style="margin-top:30px;">
+      <li>👾 多种敌人类型（快速型、坦克型、飞行型）</li>
+      <li>💣 敌人发射子弹攻击你的基地</li>
+      <li>✨ 技能系统（冰冻、闪电、火焰）</li>
+      <li>🏆 分数排行榜</li>
+    </ul>
+    <p style="text-align:center; color:#888; margin-top:40px; font-size:20px;">
+      记得完成课后作业哦！下次见~ 🎮
+    </p>
+  </div>
+
+</div>
+
+<div id="nav-hint">⬅ ➡ 键盘方向键翻页 | 第 <span id="cur-page">1</span> / <span id="total-page">14</span> 页</div>
+<div id="page-num"></div>
+
+<script>
+let slides = document.querySelectorAll('.slide');
+let current = 0;
+let total = slides.length;
+document.getElementById('total-page').textContent = total;
+
+function showSlide(n) {
+  slides[current].classList.remove('active');
+  current = (n + total) % total;
+  slides[current].classList.add('active');
+  document.getElementById('cur-page').textContent = current + 1;
+}
+
+document.addEventListener('keydown', function(e) {
+  if (e.key === 'ArrowRight' || e.key === 'ArrowDown' || e.key === ' ') {
+    e.preventDefault();
+    showSlide(current + 1);
+  } else if (e.key === 'ArrowLeft' || e.key === 'ArrowUp') {
+    e.preventDefault();
+    showSlide(current - 1);
+  }
+});
+
+// 点击翻页（左边回退，右边前进）
+document.addEventListener('click', function(e) {
+  let w = window.innerWidth;
+  if (e.clientX < w * 0.3) showSlide(current - 1);
+  else if (e.clientX > w * 0.7) showSlide(current + 1);
+});
+
+// 触摸滑动
+let touchStartX = 0;
+document.addEventListener('touchstart', e => { touchStartX = e.touches[0].clientX; });
+document.addEventListener('touchend', e => {
+  let dx = e.changedTouches[0].clientX - touchStartX;
+  if (dx > 50) showSlide(current - 1);
+  else if (dx < -50) showSlide(current + 1);
+});
+</script>
+</body>
+</html>

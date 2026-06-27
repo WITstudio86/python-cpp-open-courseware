@@ -1,0 +1,430 @@
+"""
+第25节：外星人军团 — 太空侵略者 核心程序
+============================================
+知识点：
+  1. pygame.sprite.Sprite — 精灵类（image + rect + update）
+  2. pygame.sprite.Group  — 精灵组（批量管理精灵）
+  3. 编队移动算法           — 整排统一移动 + 触边换向 + 下移一行
+  4. 碰撞检测               — groupcollide()
+
+运行方式：python main.py
+素材说明：所有图像都用 pygame.Surface 绘制，不依赖外部图片文件
+"""
+
+import pygame
+import sys
+
+# ======================== 初始化 ========================
+pygame.init()
+WIDTH, HEIGHT = 800, 600
+screen = pygame.display.set_mode((WIDTH, HEIGHT))
+pygame.display.set_caption("太空侵略者 — 第25节：外星人军团")
+clock = pygame.time.Clock()
+
+# 颜色常量
+BLACK = (0, 0, 0)
+WHITE = (255, 255, 255)
+GREEN = (0, 255, 0)
+YELLOW = (255, 255, 0)
+RED = (255, 50, 50)
+CYAN = (0, 255, 255)
+DARK_GREEN = (0, 180, 0)
+LIGHT_GREEN = (100, 255, 100)
+ORANGE = (255, 180, 0)
+PURPLE = (180, 0, 255)
+
+
+# ======================== 精灵类定义 ========================
+
+class Player(pygame.sprite.Sprite):
+    """玩家飞船精灵
+
+    继承自 pygame.sprite.Sprite，必须包含：
+    - self.image：精灵的外观（Surface 对象）
+    - self.rect：精灵的位置和大小（Rect 对象）
+    - update()：每帧的行为逻辑
+
+    用 Surface 直接绘制飞船外形，不需要外部图片
+    """
+
+    def __init__(self):
+        super().__init__()  # 调用父类 Sprite 的 __init__，必不可少！
+
+        # --- 绘制飞船外观 ---
+        # 创建一个带透明通道的 Surface
+        self.image = pygame.Surface((50, 40), pygame.SRCALPHA)
+
+        # 飞船主体（白色三角形）
+        pygame.draw.polygon(self.image, WHITE, [
+            (25, 2),    # 顶部顶点
+            (5, 36),    # 左下顶点
+            (45, 36)    # 右下顶点
+        ])
+
+        # 飞船引擎火焰（橙色小梯形，更有动感）
+        pygame.draw.polygon(self.image, ORANGE, [
+            (18, 36),
+            (32, 36),
+            (29, 39),
+            (21, 39)
+        ])
+
+        # 驾驶舱（青色小方块）
+        pygame.draw.rect(self.image, CYAN, (20, 12, 10, 10))
+
+        # --- 设置初始位置 ---
+        self.rect = self.image.get_rect()
+        self.rect.centerx = WIDTH // 2       # 屏幕水平居中
+        self.rect.bottom = HEIGHT - 20       # 屏幕底部留 20 像素边距
+
+        self.speed = 6  # 玩家移动速度
+
+    def update(self):
+        """每帧调用：处理玩家左右移动"""
+        keys = pygame.key.get_pressed()
+
+        # 左箭头键：向左移动（不能超出屏幕左边界）
+        if keys[pygame.K_LEFT] and self.rect.left > 0:
+            self.rect.x -= self.speed
+
+        # 右箭头键：向右移动（不能超出屏幕右边界）
+        if keys[pygame.K_RIGHT] and self.rect.right < WIDTH:
+            self.rect.x += self.speed
+
+
+class Bullet(pygame.sprite.Sprite):
+    """子弹精灵
+
+    玩家发射的子弹，从飞船位置出发向上飞行。
+    飞出屏幕顶部后自动销毁（kill），避免占用内存。
+    """
+
+    def __init__(self, x, y):
+        super().__init__()
+
+        # 绘制子弹外观（黄色细长矩形）
+        self.image = pygame.Surface((4, 14), pygame.SRCALPHA)
+        pygame.draw.rect(self.image, YELLOW, (0, 0, 4, 14))
+        # 子弹头部更亮（白色小点）
+        pygame.draw.rect(self.image, WHITE, (1, 0, 2, 4))
+
+        self.rect = self.image.get_rect()
+        self.rect.centerx = x   # 从飞船中心发射
+        self.rect.bottom = y    # 从飞船顶部射出
+
+    def update(self):
+        """子弹向上飞行，飞出去就自动销毁"""
+        self.rect.y -= 8  # 向上的速度
+
+        # 如果子弹完全飞出屏幕顶部，就自我销毁
+        if self.rect.bottom < 0:
+            self.kill()  # kill() 会把精灵从所有精灵组中移除
+
+
+class Alien(pygame.sprite.Sprite):
+    """外星人精灵
+
+    每个外星人是一个独立的精灵对象，拥有自己的 image 和 rect。
+    精灵组会自动调用每个外星人的 update() 方法。
+    """
+
+    def __init__(self, x, y, color):
+        super().__init__()
+
+        # --- 根据颜色绘制不同外观的外星人 ---
+        self.image = pygame.Surface((40, 30), pygame.SRCALPHA)
+
+        if color == GREEN:
+            self._draw_green_alien()
+        elif color == YELLOW:
+            self._draw_yellow_alien()
+        else:
+            self._draw_red_alien()
+
+        self.rect = self.image.get_rect()
+        self.rect.x = x
+        self.rect.y = y
+
+    def _draw_green_alien(self):
+        """画绿色外星人（前排）——章鱼形"""
+        # 身体
+        pygame.draw.ellipse(self.image, GREEN, (5, 8, 30, 18))
+        # 头
+        pygame.draw.ellipse(self.image, LIGHT_GREEN, (10, 0, 20, 14))
+        # 眼睛
+        pygame.draw.circle(self.image, WHITE, (15, 6), 3)
+        pygame.draw.circle(self.image, WHITE, (25, 6), 3)
+        pygame.draw.circle(self.image, BLACK, (16, 6), 1.5)
+        pygame.draw.circle(self.image, BLACK, (26, 6), 1.5)
+        # 触手（底部小方块）
+        for i in range(4):
+            pygame.draw.rect(self.image, GREEN, (6 + i * 8, 24, 5, 4))
+
+    def _draw_yellow_alien(self):
+        """画黄色外星人（中排）——螃蟹形"""
+        # 身体
+        pygame.draw.rect(self.image, YELLOW, (8, 8, 24, 16), border_radius=4)
+        # 头
+        pygame.draw.rect(self.image, (255, 255, 150), (10, 2, 20, 10), border_radius=3)
+        # 眼睛（细长眼）
+        pygame.draw.rect(self.image, BLACK, (12, 5, 5, 2))
+        pygame.draw.rect(self.image, BLACK, (23, 5, 5, 2))
+        # 钳子（两侧）
+        pygame.draw.polygon(self.image, YELLOW, [(8, 12), (2, 8), (2, 20)])
+        pygame.draw.polygon(self.image, YELLOW, [(32, 12), (38, 8), (38, 20)])
+
+    def _draw_red_alien(self):
+        """画红色外星人（后排）——乌贼形"""
+        # 身体（上宽下窄）
+        pygame.draw.polygon(self.image, RED, [
+            (10, 28), (30, 28),
+            (35, 8), (20, 0), (5, 8)
+        ])
+        # 眼睛
+        pygame.draw.circle(self.image, WHITE, (13, 8), 3)
+        pygame.draw.circle(self.image, WHITE, (27, 8), 3)
+        pygame.draw.circle(self.image, BLACK, (14, 8), 1.5)
+        pygame.draw.circle(self.image, BLACK, (28, 8), 1.5)
+
+    def update(self):
+        """外星人自身的 update（由编队管理器统一移动，这里暂不单独动作）"""
+        pass
+
+
+class AlienFleet:
+    """外星人舰队管理器
+
+    负责：
+    1. 创建外星人编队（3行 × 8列，每行不同颜色）
+    2. 实现编队移动算法：
+       - 所有外星人统一水平移动
+       - 任意外星人触碰屏幕边界 → 全体换向 + 下移一行
+    """
+
+    def __init__(self):
+        self.aliens = pygame.sprite.Group()  # 精灵组：管理所有外星人
+        self.direction = 1                    # 移动方向：1=右移，-1=左移
+        self.speed = 2                        # 水平移动速度（像素/帧）
+        self.drop_distance = 20               # 触边后下移的像素数
+
+        # 三种外星人颜色（从上到下）
+        colors = [RED, YELLOW, GREEN]
+
+        # 创建编队：3行 × 8列
+        for row in range(3):
+            for col in range(8):
+                # 计算出每个外星人的初始位置
+                x = col * 65 + 60       # 列间距 65 像素
+                y = row * 55 + 40       # 行间距 55 像素
+
+                alien = Alien(x, y, colors[row])
+                self.aliens.add(alien)
+
+    def update(self):
+        """每帧调用：执行编队移动算法"""
+
+        # ===== 第一步：检测是否需要换向和下移 =====
+        need_reverse = False
+
+        for alien in self.aliens:
+            # 正在往右走，且最右边的外星人碰到右边界
+            if self.direction > 0 and alien.rect.right >= WIDTH - 10:
+                need_reverse = True
+                break  # 只要有一个触边就够，不用继续查
+
+            # 正在往左走，且最左边的外星人碰到左边界
+            if self.direction < 0 and alien.rect.left <= 10:
+                need_reverse = True
+                break
+
+        # ===== 第二步：如果需要换向，先全体下移再反转方向 =====
+        if need_reverse:
+            self.direction *= -1  # 反转方向（1 → -1，或 -1 → 1）
+
+            for alien in self.aliens:
+                alien.rect.y += self.drop_distance  # 每个外星人都下移
+
+        # ===== 第三步：按当前方向水平移动所有外星人 =====
+        for alien in self.aliens:
+            alien.rect.x += self.direction * self.speed
+
+    def draw(self, surface):
+        """在屏幕上绘制所有外星人"""
+        self.aliens.draw(surface)
+
+
+# ======================== 辅助函数 ========================
+
+def show_game_over(screen, message, score):
+    """显示游戏结束画面"""
+    # 半透明黑色遮罩
+    overlay = pygame.Surface((WIDTH, HEIGHT), pygame.SRCALPHA)
+    overlay.fill((0, 0, 0, 180))
+    screen.blit(overlay, (0, 0))
+
+    # 使用系统默认字体（中文可能显示不了，用英文配合简单说明）
+    font_large = pygame.font.Font(None, 72)
+    font_small = pygame.font.Font(None, 36)
+
+    # 游戏结束文字
+    text1 = font_large.render(message, True, WHITE)
+    rect1 = text1.get_rect(center=(WIDTH // 2, HEIGHT // 2 - 40))
+    screen.blit(text1, rect1)
+
+    # 分数
+    text2 = font_small.render(f"Score: {score}", True, YELLOW)
+    rect2 = text2.get_rect(center=(WIDTH // 2, HEIGHT // 2 + 20))
+    screen.blit(text2, rect2)
+
+    # 提示按 R 重新开始
+    text3 = font_small.render("Press SPACE restart / ESC quit", True, WHITE)
+    rect3 = text3.get_rect(center=(WIDTH // 2, HEIGHT // 2 + 70))
+    screen.blit(text3, rect3)
+
+    pygame.display.flip()
+
+
+def draw_ui(screen, score):
+    """绘制 UI：分数"""
+    font = pygame.font.Font(None, 36)
+    score_text = font.render(f"Score: {score}", True, WHITE)
+    screen.blit(score_text, (10, 10))
+
+    # 画一条分界线
+    pygame.draw.line(screen, WHITE, (0, HEIGHT - 50), (WIDTH, HEIGHT - 50), 2)
+
+
+# ======================== 主函数 ========================
+
+def main():
+    """游戏主入口"""
+
+    # ===== 创建精灵组 =====
+    all_sprites = pygame.sprite.Group()   # 总精灵组（所有可见对象）
+    bullets = pygame.sprite.Group()       # 子弹精灵组
+
+    # 创建玩家
+    player = Player()
+    all_sprites.add(player)
+
+    # 创建外星人舰队（编队管理器）
+    fleet = AlienFleet()
+    # 把外星人也加入总精灵组
+    for alien in fleet.aliens:
+        all_sprites.add(alien)
+
+    # 射击冷却（防止按住空格键时疯狂发射子弹）
+    shoot_cooldown = 0          # 冷却计时器（帧数）
+    SHOOT_DELAY = 20            # 两次射击之间最少间隔 20 帧
+
+    # 游戏状态
+    score = 0                   # 分数
+    running = True              # 主循环开关
+    game_active = True          # 游戏是否在进行中
+
+    # ===== 主游戏循环 =====
+    while running:
+        # --- 事件处理 ---
+        for event in pygame.event.get():
+            if event.type == pygame.QUIT:
+                running = False
+
+            # 按 ESC 退出游戏
+            if event.type == pygame.KEYDOWN:
+                if event.key == pygame.K_ESCAPE:
+                    running = False
+
+                # 游戏结束后按空格重新开始
+                if event.key == pygame.K_SPACE and not game_active:
+                    # 重置游戏
+                    main()      # 递归调用重新开始（简单实现）
+                    return
+
+        if not game_active:
+            # 游戏结束状态：等待玩家按空格重新开始
+            clock.tick(60)
+            continue
+
+        # --- 更新 ---
+
+        # 更新玩家
+        player.update()
+
+        # 射击：按空格键发射子弹
+        keys = pygame.key.get_pressed()
+        if keys[pygame.K_SPACE] and shoot_cooldown <= 0:
+            # 创建新子弹，从玩家飞船顶部中心发射
+            bullet = Bullet(player.rect.centerx, player.rect.top)
+            bullets.add(bullet)          # 加入子弹组
+            all_sprites.add(bullet)      # 加入总精灵组
+            shoot_cooldown = SHOOT_DELAY  # 重置冷却
+
+        # 冷却计时器递减
+        if shoot_cooldown > 0:
+            shoot_cooldown -= 1
+
+        # 更新外星人编队（核心算法！）
+        fleet.update()
+
+        # 更新子弹（飞出屏幕的子弹会自动 kill）
+        bullets.update()
+
+        # ===== 碰撞检测 =====
+        # groupcollide：检查两个精灵组之间是否有精灵碰撞
+        # 参数：组A(外星人), 组B(子弹), 销毁A?(是), 销毁B?(是)
+        hits = pygame.sprite.groupcollide(
+            fleet.aliens,   # 精灵组 A
+            bullets,        # 精灵组 B
+            True,           # dokill_a=True → 碰撞的外星人被移除
+            True            # dokill_b=True → 碰撞的子弹被移除
+        )
+
+        # 统计分数：每个被消灭的外星人 +10 分
+        for alien in hits:
+            score += 10
+
+        # ===== 胜负判定 =====
+
+        # 胜利条件：所有外星人都被消灭
+        if len(fleet.aliens) == 0:
+            show_game_over(screen, "YOU WIN!", score)
+            game_active = False
+
+        # 失败条件：外星人下降到玩家所在高度
+        for alien in fleet.aliens:
+            if alien.rect.bottom >= HEIGHT - 50:
+                show_game_over(screen, "GAME OVER", score)
+                game_active = False
+                break
+
+        # ===== 绘制 =====
+        screen.fill(BLACK)  # 黑色太空背景
+
+        # 画星星（装饰）
+        import random
+        random.seed(42)
+        for _ in range(50):
+            x = (13 * _ + 17) % WIDTH
+            y = (7 * _ + 31) % HEIGHT
+            brightness = (53 + _ * 7) % 200 + 55
+            pygame.draw.circle(screen, (brightness, brightness, brightness), (x, y), 1)
+
+        # 绘制所有精灵
+        all_sprites.draw(screen)
+
+        # 绘制 UI
+        draw_ui(screen, score)
+
+        # 刷新屏幕
+        pygame.display.flip()
+
+        # 控制帧率（60 FPS）
+        clock.tick(60)
+
+    pygame.quit()
+    sys.exit()
+
+
+# ======================== 程序入口 ========================
+if __name__ == "__main__":
+    main()

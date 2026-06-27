@@ -1,0 +1,386 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Python 趣味学习 · 第37节 · 循环 + Turtle = 美丽花纹</title>
+<link rel="stylesheet" href="assets/fonts.css">
+<link rel="stylesheet" href="assets/base.css">
+<link rel="stylesheet" href="assets/animations/animations.css">
+<link rel="stylesheet" href="style.css">
+<script src="assets/runtime.js"></script>
+<style>
+.tpl-course-module .slide{overflow-y:auto}
+.tpl-course-module .slide .main{overflow-y:auto;max-height:calc(100vh - 128px)}
+.tpl-course-module .slide.full{overflow-y:auto;display:flex;flex-direction:column;justify-content:flex-start;padding-top:64px}
+.tpl-course-module .h1{font-size:52px}
+.tpl-course-module .h2{font-size:32px}
+.tpl-course-module .slide{padding:44px 56px;gap:36px}
+.code-mini{background:#2a2418;color:#f4f1e8;border-radius:14px;padding:18px 22px;font-family:'JetBrains Mono',monospace;font-size:14px;line-height:1.7;margin:12px 0;overflow-x:auto;white-space:pre-wrap}
+.code-mini .cmt{color:#8a7f68;font-style:italic}
+.code-mini .kw{color:#e8a770}
+.code-mini .str{color:#8ec6b2}
+</style>
+</head>
+<body>
+<div class="tpl-course-module">
+<div class="deck">
+
+<!-- ==================== Slide 1: Cover ==================== -->
+<section class="slide full" data-title="循环 + Turtle = 美丽花纹">
+  <div class="unit-badge">Unit 7 · 第37节</div>
+  <h1 class="h1">循环 + Turtle = 美丽花纹</h1>
+  <p class="subtitle">for循环控制画图 + 旋转对称 + 万花筒效果</p>
+  <div class="cover-visual">
+    <svg viewBox="0 0 200 200" width="160" height="160">
+      <defs>
+        <linearGradient id="g1" x1="0%" y1="0%" x2="100%" y2="100%">
+          <stop offset="0%" stop-color="#e8a770"/>
+          <stop offset="100%" stop-color="#d4786e"/>
+        </linearGradient>
+      </defs>
+      <g transform="translate(100,100)">
+        <circle cx="0" cy="-60" r="12" fill="#e8a770" opacity="0.85"/>
+        <circle cx="52" cy="-30" r="12" fill="#d4a45e" opacity="0.85"/>
+        <circle cx="52" cy="30" r="12" fill="#c4906e" opacity="0.85"/>
+        <circle cx="0" cy="60" r="12" fill="#d4786e" opacity="0.85"/>
+        <circle cx="-52" cy="30" r="12" fill="#c4807a" opacity="0.85"/>
+        <circle cx="-52" cy="-30" r="12" fill="#e0b86a" opacity="0.85"/>
+        <circle cx="0" cy="-30" r="8" fill="#f4e1c8" opacity="0.5"/>
+        <circle cx="26" cy="-15" r="8" fill="#f4e1c8" opacity="0.5"/>
+        <circle cx="26" cy="15" r="8" fill="#f4e1c8" opacity="0.5"/>
+        <circle cx="0" cy="30" r="8" fill="#f4e1c8" opacity="0.5"/>
+        <circle cx="-26" cy="15" r="8" fill="#f4e1c8" opacity="0.5"/>
+        <circle cx="-26" cy="-15" r="8" fill="#f4e1c8" opacity="0.5"/>
+      </g>
+    </svg>
+  </div>
+  <footer class="slide-footer">第 1 页 / 共 6 页</footer>
+</section>
+
+<!-- ==================== Slide 2: 教学目标 ==================== -->
+<section class="slide" data-title="教学目标">
+  <aside class="sidebar">
+    <div class="section-num">第37节</div>
+    <div class="unit-label">Unit 7</div>
+    <div class="sidebar-topic">Turtle绘图进阶</div>
+  </aside>
+  <div class="main">
+    <h2 class="h2">🎯 教学目标</h2>
+    <div class="objectives">
+      <div class="obj-item">
+        <span class="obj-icon">🔁</span>
+        <div class="obj-text">
+          <strong>掌握 for 循环 + 旋转的组合用法</strong>
+          <p>理解"画一个图形 → 旋转固定角度 → 再画一次"的核心循环模式，能用一行 for 循环写出重复绘制代码。</p>
+        </div>
+      </div>
+      <div class="obj-item">
+        <span class="obj-icon">🔷</span>
+        <div class="obj-text">
+          <strong>理解旋转对称的数学原理</strong>
+          <p>掌握公式：<code>旋转角度 = 360 ÷ 重复次数</code>，能自己计算不同花纹需要的旋转角度（如 8 次 → 45°，12 次 → 30°）。</p>
+        </div>
+      </div>
+      <div class="obj-item">
+        <span class="obj-icon">🌈</span>
+        <div class="obj-text">
+          <strong>学会颜色列表轮换与渐变效果</strong>
+          <p>用列表存储多种颜色，在循环中通过索引取出颜色，实现花瓣颜色的渐变或轮换效果。</p>
+        </div>
+      </div>
+      <div class="obj-item">
+        <span class="obj-icon">✨</span>
+        <div class="obj-text">
+          <strong>创作出独一无二的万花筒花纹</strong>
+          <p>综合运用所学知识，调整图形、旋转角度和颜色，设计出属于自己的万花筒图案。</p>
+        </div>
+      </div>
+    </div>
+  </div>
+  <footer class="slide-footer">第 2 页 / 共 6 页</footer>
+</section>
+
+<!-- ==================== Slide 3: 重点概念 ==================== -->
+<section class="slide" data-title="重点概念">
+  <aside class="sidebar">
+    <div class="section-num">第37节</div>
+    <div class="unit-label">Unit 7</div>
+    <div class="sidebar-topic">核心概念</div>
+  </aside>
+  <div class="main">
+    <h2 class="h2">📖 重点概念</h2>
+
+    <div class="concept-card">
+      <div class="concept-header">
+        <span class="concept-num">01</span>
+        <h3>旋转对称：360 ÷ 重复次数 = 旋转角度</h3>
+      </div>
+      <div class="concept-body">
+        <p>旋转对称是自然界中最常见的对称形式之一。在 Turtle 绘图中，我们利用这个数学原理来生成美丽的花纹：</p>
+        <ul>
+          <li><strong>画 4 个图形</strong>，每次旋转 <strong>360 ÷ 4 = 90°</strong> → 形成一个十字花</li>
+          <li><strong>画 6 个图形</strong>，每次旋转 <strong>360 ÷ 6 = 60°</strong> → 形成一个六瓣花</li>
+          <li><strong>画 8 个图形</strong>，每次旋转 <strong>360 ÷ 8 = 45°</strong> → 形成一个八瓣花</li>
+          <li><strong>画 36 个图形</strong>，每次旋转 <strong>360 ÷ 36 = 10°</strong> → 形成完整的万花筒</li>
+        </ul>
+        <p class="note">💡 <em>关键：次数越多，每个图形之间的角度越小，花纹越密集、越华丽！</em></p>
+      </div>
+    </div>
+
+    <div class="concept-card">
+      <div class="concept-header">
+        <span class="concept-num">02</span>
+        <h3>循环 + 旋转：for循环中画图后旋转固定角度</h3>
+      </div>
+      <div class="concept-body">
+        <p>核心代码模式的「骨骼」只有一行：</p>
+        <div class="code-mini"><pre><span class="kw">for</span> i <span class="kw">in</span> range(次数):
+    <span class="cmt"># 1. 画出你要的图形（正方形、圆、三角形...）</span>
+    <span class="cmt"># 2. 右转 旋转角度</span>
+    t.right(旋转角度)</pre></div>
+        <p>循环的每一次迭代：先画一个图形，然后旋转一个固定的角度，为下一次画图做准备。关键在于——<strong>画笔朝向在不断变化</strong>，图形自动分布在圆周上。</p>
+      </div>
+    </div>
+
+    <div class="concept-card">
+      <div class="concept-header">
+        <span class="concept-num">03</span>
+        <h3>万花筒效果：多次重复叠加</h3>
+      </div>
+      <div class="concept-body">
+        <p>万花筒（Kaleidoscope）的原理就是通过镜面反射产生对称重复图案。在 Turtle 中，我们通过<strong>多次重复绘制同一个图形</strong>来模拟这个效果：</p>
+        <ul>
+          <li>重复次数越多（如 36 次），图案越接近圆形排列</li>
+          <li>每次旋转的角度 = 360 ÷ 次数，确保图形均匀分布</li>
+          <li>如果旋转角度不能整除 360，图案会"螺旋"偏移，产生意想不到的动态美</li>
+        </ul>
+      </div>
+    </div>
+
+    <div class="concept-card">
+      <div class="concept-header">
+        <span class="concept-num">04</span>
+        <h3>渐变颜色：颜色列表轮换</h3>
+      </div>
+      <div class="concept-body">
+        <p>Turtle 支持使用颜色名称（如 <code>"red"</code>, <code>"blue"</code>）或十六进制颜色码（如 <code>"#ff6b6b"</code>）。我们可以把颜色存入列表，在循环中依次使用：</p>
+        <div class="code-mini"><pre>colors = [<span class="str">"#ff6b6b"</span>, <span class="str">"#feca57"</span>, <span class="str">"#48dbfb"</span>, <span class="str">"#ff9ff3"</span>]
+<span class="kw">for</span> i <span class="kw">in</span> range(36):
+    t.color(colors[i % <span class="kw">len</span>(colors)])  <span class="cmt"># 取余数实现循环取色</span>
+    draw_circle()
+    t.right(10)</pre></div>
+        <p><code>i % len(colors)</code> 是取余数运算：当 i 超过列表长度时自动回到开头，实现颜色无限循环轮换。</p>
+      </div>
+    </div>
+
+  </div>
+  <footer class="slide-footer">第 3 页 / 共 6 页</footer>
+</section>
+
+<!-- ==================== Slide 4: 核心讲解 + 代码 ==================== -->
+<section class="slide" data-title="核心代码讲解">
+  <aside class="sidebar">
+    <div class="section-num">第37节</div>
+    <div class="unit-label">Unit 7</div>
+    <div class="sidebar-topic">代码实战</div>
+  </aside>
+  <div class="main">
+    <h2 class="h2">💻 核心代码讲解</h2>
+
+    <!-- Code Block 1: 正方形花配方 -->
+    <div class="code-block-section">
+      <h3>配方一：正方形花（8 个正方形，每次转 45°）</h3>
+      <p class="code-desc">这是最基础的旋转对称练习——把正方形当作"花瓣"，每画一个就转 45°，共画 8 个。</p>
+      <div class="code-mini"><pre><span class="kw">import</span> turtle <span class="kw">as</span> t
+
+t.speed(<span class="num">0</span>)          <span class="cmt"># 最快速度</span>
+t.bgcolor(<span class="str">"#1a1a2e"</span>)   <span class="cmt"># 深色背景，让图案更突出</span>
+t.pensize(<span class="num">2</span>)
+
+<span class="kw">for</span> i <span class="kw">in</span> range(<span class="num">8</span>):           <span class="cmt"># 画 8 个正方形</span>
+    <span class="kw">for</span> j <span class="kw">in</span> range(<span class="num">4</span>):       <span class="cmt"># 每个正方形 4 条边</span>
+        t.forward(<span class="num">100</span>)
+        t.left(<span class="num">90</span>)
+    t.right(<span class="num">45</span>)              <span class="cmt"># 关键！画完一个正方形后旋转 45°</span>
+
+t.hideturtle()
+t.done()</pre></div>
+      <p class="code-explanation">📝 <strong>运行效果：</strong>8 个正方形从中心向四周散开，中心形成一个小八边形空隙，每片"花瓣"是正方形，整体像一朵机械风格的几何花。</p>
+    </div>
+
+    <!-- Code Block 2: 圆形万花筒配方 -->
+    <div class="code-block-section">
+      <h3>配方二：圆形万花筒（36 个圆，每次转 10°）—— 经典款！</h3>
+      <p class="code-desc">这是最经典的万花筒效果：36 个圆均匀分布在圆周上，每个颜色都不同，效果极其华丽。</p>
+      <div class="code-mini"><pre><span class="kw">import</span> turtle <span class="kw">as</span> t
+
+t.speed(<span class="num">0</span>)
+t.bgcolor(<span class="str">"#1a1a2e"</span>)
+t.pensize(<span class="num">3</span>)
+
+colors = [<span class="str">"#ff6b6b"</span>, <span class="str">"#feca57"</span>, <span class="str">"#48dbfb"</span>,
+          <span class="str">"#ff9ff3"</span>, <span class="str">"#54a0ff"</span>, <span class="str">"#5f27cd"</span>]
+
+<span class="kw">for</span> i <span class="kw">in</span> range(<span class="num">36</span>):          <span class="cmt"># 画 36 个圆</span>
+    t.color(colors[i % <span class="kw">len</span>(colors)])  <span class="cmt"># 循环取颜色</span>
+    t.circle(<span class="num">100</span>)               <span class="cmt"># 画半径为100的圆</span>
+    t.right(<span class="num">10</span>)                 <span class="cmt"># 旋转 10°（360÷36=10）</span>
+
+t.hideturtle()
+t.done()</pre></div>
+      <p class="code-explanation">📝 <strong>运行效果：</strong>36 个彩色圆圈以中心为轴均匀排列，颜色每 6 个一轮循环。圆圈在中央交织重叠，形成密集华丽的万花筒纹理，中心尤其精美。</p>
+    </div>
+
+    <!-- Extended: 三角形六瓣花 -->
+    <div class="code-block-section">
+      <h3>配方三：三角形花瓣（6 个三角形，每次转 60°）</h3>
+      <p class="code-desc">把正方形换成三角形，6 个三角形组成一朵六瓣花，是课堂练习的参考答案。</p>
+      <div class="code-mini"><pre><span class="kw">import</span> turtle <span class="kw">as</span> t
+
+t.speed(<span class="num">0</span>)
+t.bgcolor(<span class="str">"#1a1a2e"</span>)
+t.pensize(<span class="num">2</span>)
+t.color(<span class="str">"#feca57"</span>)
+
+<span class="kw">for</span> i <span class="kw">in</span> range(<span class="num">6</span>):           <span class="cmt"># 6 片花瓣</span>
+    <span class="kw">for</span> j <span class="kw">in</span> range(<span class="num">3</span>):       <span class="cmt"># 三角形 3 条边</span>
+        t.forward(<span class="num">120</span>)
+        t.left(<span class="num">120</span>)
+    t.right(<span class="num">60</span>)              <span class="cmt"># 旋转 60°（360÷6=60）</span>
+
+t.hideturtle()
+t.done()</pre></div>
+    </div>
+
+  </div>
+  <footer class="slide-footer">第 4 页 / 共 6 页</footer>
+</section>
+
+<!-- ==================== Slide 5: 课堂练习 ==================== -->
+<section class="slide" data-title="课堂练习">
+  <aside class="sidebar">
+    <div class="section-num">第37节</div>
+    <div class="unit-label">Unit 7</div>
+    <div class="sidebar-topic">动手实践</div>
+  </aside>
+  <div class="main">
+    <h2 class="h2">✏️ 课堂练习</h2>
+
+    <div class="exercise-card beginner">
+      <div class="exercise-header">
+        <span class="difficulty">⭐ 基础</span>
+        <h3>练习一：画 6 个正方形，每次转 60°</h3>
+      </div>
+      <div class="exercise-body">
+        <p><strong>任务：</strong>修改"正方形花"的代码，把重复次数改成 6，旋转角度改成 60°。</p>
+        <p><strong>提示：</strong></p>
+        <ul>
+          <li><code>range(6)</code> 表示循环 6 次</li>
+          <li>旋转角度 = 360 ÷ 6 = <strong>60°</strong></li>
+          <li>正方形本身的画法不需要改，<code>forward(100)</code> 和 <code>left(90)</code> 保持不变</li>
+          <li>可以尝试改成 <code>range(12)</code>，旋转 <strong>30°</strong>，看看效果有什么不同</li>
+        </ul>
+        <p class="expected"><strong>预期效果：</strong>6 个正方形均匀分布，形成六瓣花图案。</p>
+      </div>
+    </div>
+
+    <div class="exercise-card intermediate">
+      <div class="exercise-header">
+        <span class="difficulty">⭐⭐ 挑战</span>
+        <h3>练习二：画圆形万花筒——36 个圆，每次转 10°</h3>
+      </div>
+      <div class="exercise-body">
+        <p><strong>任务：</strong>参考"配方二"的代码，写一个完整的圆万花筒程序。</p>
+        <p><strong>要求：</strong></p>
+        <ul>
+          <li>至少使用 <strong>4 种颜色</strong>，用颜色列表 + <code>i % len(colors)</code> 实现轮换</li>
+          <li>圆的半径自己选择（建议 80~120）</li>
+          <li>背景色建议用深色（如 <code>"#1a1a2e"</code> 或 <code>"black"</code>）</li>
+          <li>用 <code>t.speed(0)</code> 让绘图最快</li>
+        </ul>
+        <p class="expected"><strong>预期效果：</strong>36 个彩色圆圈均匀排列成完整的圆形万花筒，颜色轮换出现，图案华丽对称。</p>
+      </div>
+    </div>
+
+    <div class="exercise-card advanced">
+      <div class="exercise-header">
+        <span class="difficulty">⭐⭐⭐ 超级挑战</span>
+        <h3>练习三：设计你自己的万花筒花纹</h3>
+      </div>
+      <div class="exercise-body">
+        <p><strong>任务：</strong>发挥创意，设计一个独一无二的万花筒花纹。可以从以下方向探索：</p>
+        <ul>
+          <li><strong>换图形：</strong>不用正方形或圆，试试五角星、六边形、螺旋线？</li>
+          <li><strong>改次数：</strong>试试 5 次、7 次、18 次、72 次，旋转角度相应调整</li>
+          <li><strong>非整除：</strong>如果旋转角度不能整除 360（比如每次转 100°），图案会怎样？</li>
+          <li><strong>改大小：</strong>让图形在循环中逐渐变大（<code>size = 20 + i * 5</code>），产生"扩展"效果</li>
+          <li><strong>双色交替：</strong>用两种颜色交替绘制，形成条纹万花筒</li>
+        </ul>
+        <p class="expected"><strong>挑战目标：</strong>设计出一幅能让自己骄傲的 Turtle 艺术作品，保存截图并分享给同学！</p>
+      </div>
+    </div>
+
+  </div>
+  <footer class="slide-footer">第 5 页 / 共 6 页</footer>
+</section>
+
+<!-- ==================== Slide 6: 小结 ==================== -->
+<section class="slide full" data-title="本课小结">
+  <div class="summary-container">
+    <h2 class="h2">📋 本课小结</h2>
+
+    <div class="summary-section">
+      <h3>✅ 学会了什么</h3>
+      <div class="summary-grid">
+        <div class="summary-item">
+          <span class="summary-icon">🔢</span>
+          <div class="summary-content">
+            <strong>旋转对称公式</strong>
+            <p>旋转角度 = 360 ÷ 重复次数。次数越多，角度越小，图案越密集。</p>
+          </div>
+        </div>
+        <div class="summary-item">
+          <span class="summary-icon">🔁</span>
+          <div class="summary-content">
+            <strong>循环 + 旋转</strong>
+            <p>for 循环中：画图形 → 旋转 → 再画 → 再旋转，图形自动绕圆周分布。</p>
+          </div>
+        </div>
+        <div class="summary-item">
+          <span class="summary-icon">🎨</span>
+          <div class="summary-content">
+            <strong>颜色轮换</strong>
+            <p>颜色列表 + <code>i % len(colors)</code> 取余数，实现颜色无缝循环。</p>
+          </div>
+        </div>
+        <div class="summary-item">
+          <span class="summary-icon">🌈</span>
+          <div class="summary-content">
+            <strong>渐变与万花筒</strong>
+            <p>结合多次重复、颜色轮换和不同图形，创造出独一无二的万花筒艺术作品。</p>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="summary-section next-preview">
+      <h3>🔮 下节预告</h3>
+      <div class="next-card">
+        <span class="next-label">第 38 节</span>
+        <h4>Turtle 综合创作课</h4>
+        <p>我们将综合运用所有学过的 Turtle 技巧——移动、旋转、颜色、填充、循环——创作一幅完整的主题画作。从构思到代码，从草图到成品，完成你的第一件 Python 艺术作品！</p>
+      </div>
+    </div>
+
+    <div class="summary-encourage">
+      <p>🌟 <strong>你已经是 Turtle 绘图高手了！</strong> 继续保持好奇心和创造力，编程的世界还有更多精彩等着你去探索。</p>
+    </div>
+  </div>
+  <footer class="slide-footer">第 6 页 / 共 6 页</footer>
+</section>
+
+</div><!-- /.deck -->
+</div><!-- /.tpl-course-module -->
+</body>
+</html>

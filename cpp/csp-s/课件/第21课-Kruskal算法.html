@@ -1,0 +1,560 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>第21课：Kruskal 算法 — CSP-S 竞赛课件</title>
+<style>
+  /* ===== 全局变量与深色主题 ===== */
+  :root {
+    --bg: #0a1628;
+    --card-bg: #162744;
+    --card-border: #1e3a5f;
+    --text: #e0e6f0;
+    --text-secondary: #a0b0c8;
+    --accent: #4da6ff;
+    --accent-glow: #2d7dd2;
+    --keyword: #5ea3f0;
+    --string: #6db36d;
+    --number: #e0a050;
+    --comment: #6a7a90;
+    --function: #f0c060;
+    --type: #60c0d0;
+    --operator: #c0a0e0;
+    --danger: #ff6b6b;
+    --success: #4ecb71;
+    --slide-width: min(920px, 92vw);
+    --slide-padding: clamp(24px, 4vw, 48px);
+  }
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'PingFang SC',
+                 'Hiragino Sans GB', 'Microsoft YaHei', sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    min-height: 100vh;
+    overflow-x: hidden;
+  }
+
+  /* ===== 容器 ===== */
+  .presentation {
+    width: 100%;
+    max-width: var(--slide-width);
+    margin: 20px auto;
+    position: relative;
+  }
+
+  /* ===== 幻灯片卡片 ===== */
+  .slide {
+    display: none;
+    background: var(--card-bg);
+    border: 1px solid var(--card-border);
+    border-radius: 16px;
+    padding: var(--slide-padding);
+    box-shadow: 0 8px 40px rgba(0, 0, 0, 0.4);
+    animation: fadeSlideIn 0.4s ease-out;
+  }
+  .slide.active { display: block; }
+
+  @keyframes fadeSlideIn {
+    from { opacity: 0; transform: translateY(16px); }
+    to   { opacity: 1; transform: translateY(0); }
+  }
+
+  /* ===== 标题样式 ===== */
+  .slide-title {
+    font-size: clamp(1.5rem, 3.5vw, 2.2rem);
+    font-weight: 800;
+    color: var(--accent);
+    margin-bottom: 8px;
+    letter-spacing: 1px;
+  }
+  .slide-subtitle {
+    font-size: clamp(0.9rem, 1.5vw, 1.1rem);
+    color: var(--text-secondary);
+    margin-bottom: 24px;
+  }
+  .slide h2 {
+    font-size: clamp(1.2rem, 2.5vw, 1.6rem);
+    color: var(--accent);
+    border-left: 4px solid var(--accent);
+    padding-left: 14px;
+    margin: 20px 0 12px;
+  }
+  .slide h3 {
+    font-size: clamp(1rem, 1.8vw, 1.2rem);
+    color: #c8d8f0;
+    margin: 14px 0 8px;
+  }
+  .slide p, .slide li {
+    font-size: clamp(0.85rem, 1.4vw, 1rem);
+    line-height: 1.75;
+    color: var(--text-secondary);
+    margin-bottom: 6px;
+  }
+  .slide ul, .slide ol {
+    padding-left: 1.5em;
+    margin-bottom: 10px;
+  }
+  .slide strong { color: #f0d060; }
+
+  /* 重点框 */
+  .highlight-box {
+    background: rgba(77, 166, 255, 0.08);
+    border: 1px solid rgba(77, 166, 255, 0.25);
+    border-radius: 10px;
+    padding: 14px 18px;
+    margin: 14px 0;
+    font-size: 0.9rem;
+  }
+  .highlight-box.warn {
+    background: rgba(255, 107, 107, 0.08);
+    border-color: rgba(255, 107, 107, 0.25);
+  }
+  .highlight-box.success {
+    background: rgba(78, 203, 113, 0.08);
+    border-color: rgba(78, 203, 113, 0.25);
+  }
+
+  /* ===== 代码块 ===== */
+  .code-block {
+    background: #0d1b2d;
+    border: 1px solid #1a3350;
+    border-radius: 10px;
+    padding: 16px 20px;
+    margin: 12px 0;
+    overflow-x: auto;
+    font-family: 'SF Mono', 'Fira Code', 'Consolas', 'Monaco', monospace;
+    font-size: clamp(0.7rem, 1.1vw, 0.85rem);
+    line-height: 1.65;
+    white-space: pre;
+    position: relative;
+  }
+  /* 语法高亮类 */
+  .kw   { color: var(--keyword); }
+  .str  { color: var(--string); }
+  .num  { color: var(--number); }
+  .cmt  { color: var(--comment); font-style: italic; }
+  .fn   { color: var(--function); }
+  .type { color: var(--type); }
+  .op   { color: var(--operator); }
+
+  /* 公式 */
+  .formula {
+    display: inline-block;
+    background: rgba(255,255,255,0.05);
+    border-radius: 6px;
+    padding: 4px 10px;
+    margin: 2px 0;
+    font-family: 'SF Mono', 'Consolas', monospace;
+    font-size: 0.95em;
+    color: #e0c870;
+  }
+
+  /* 复杂度表格 */
+  .complexity-table {
+    width: 100%;
+    border-collapse: collapse;
+    margin: 12px 0;
+    font-size: 0.88rem;
+  }
+  .complexity-table th {
+    background: rgba(77,166,255,0.12);
+    padding: 10px 14px;
+    text-align: left;
+    border-bottom: 2px solid var(--card-border);
+    color: var(--accent);
+  }
+  .complexity-table td {
+    padding: 8px 14px;
+    border-bottom: 1px solid rgba(255,255,255,0.06);
+    color: var(--text-secondary);
+  }
+
+  /* ===== 导航栏 ===== */
+  .nav-bar {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-top: 20px;
+    gap: 12px;
+    flex-wrap: wrap;
+  }
+  .nav-btn {
+    background: var(--card-bg);
+    color: var(--text);
+    border: 1px solid var(--card-border);
+    border-radius: 8px;
+    padding: 10px 22px;
+    cursor: pointer;
+    font-size: 0.9rem;
+    font-weight: 600;
+    transition: all 0.2s;
+    user-select: none;
+  }
+  .nav-btn:hover {
+    background: #1e3a5f;
+    border-color: var(--accent);
+  }
+  .nav-btn:disabled {
+    opacity: 0.35;
+    cursor: not-allowed;
+    pointer-events: none;
+  }
+  .nav-btn.primary {
+    background: var(--accent);
+    border-color: var(--accent);
+    color: #fff;
+  }
+  .slide-counter {
+    color: var(--text-secondary);
+    font-size: 0.85rem;
+    font-weight: 600;
+    min-width: 80px;
+    text-align: center;
+  }
+  .dot-indicators {
+    display: flex;
+    gap: 6px;
+    flex-wrap: wrap;
+  }
+  .dot {
+    width: 10px;
+    height: 10px;
+    border-radius: 50%;
+    background: var(--card-border);
+    cursor: pointer;
+    transition: all 0.2s;
+  }
+  .dot.active {
+    background: var(--accent);
+    box-shadow: 0 0 8px var(--accent-glow);
+  }
+
+  /* ===== 响应式 ===== */
+  @media (max-width: 640px) {
+    .slide { padding: 18px 14px; }
+    .nav-btn { padding: 8px 14px; font-size: 0.8rem; }
+    .code-block { padding: 10px 12px; font-size: 0.7rem; }
+  }
+</style>
+</head>
+<body>
+
+<div class="presentation" id="app">
+
+  <!-- ===== 幻灯片 1：标题页 ===== -->
+  <div class="slide active" data-index="0">
+    <div class="slide-title">第21课：Kruskal 算法</div>
+    <div class="slide-subtitle">最小生成树 · 并查集 · 贪心策略 · 割性质证明</div>
+    <hr style="border-color:rgba(255,255,255,0.08); margin:24px 0;">
+    <h3>🎯 本课核心</h3>
+    <ul>
+      <li><strong>Kruskal 算法</strong>：基于边排序的贪心 MST 算法，复杂度 <span class="formula">O(E log E)</span></li>
+      <li><strong>并查集 (DSU)</strong>：路径压缩 + 按秩/大小合并，操作近乎 <span class="formula">O(1)</span></li>
+      <li><strong>正确性证明</strong>：利用<strong>割性质 (Cut Property)</strong> 的反证法</li>
+      <li><strong>MST 唯一性</strong>：同权边组判定法</li>
+      <li><strong>最小瓶颈生成树 (MBST)</strong>：最大边权最小化</li>
+    </ul>
+    <div class="highlight-box" style="margin-top:18px;">
+      <strong>⚡ Kruskal 核心思想：</strong>将所有边排序，从小到大依次尝试加入，若不会形成环（并查集判定）则入选，直到选满 n-1 条边。
+    </div>
+  </div>
+
+  <!-- ===== 幻灯片 2：知识精讲 - 并查集 ===== -->
+  <div class="slide" data-index="1">
+    <div class="slide-title">并查集 (DSU)</div>
+    <div class="slide-subtitle">Kruskal 算法的核心数据结构</div>
+    <h3>📌 两个核心操作</h3>
+    <ul>
+      <li><strong>Find(x)</strong>：查找 x 所在集合的代表元（根节点）</li>
+      <li><strong>Union(x, y)</strong>：合并 x 和 y 所在的两个集合</li>
+    </ul>
+    <h3>⚡ 两大优化</h3>
+    <ul>
+      <li><strong>路径压缩 (Path Compression)</strong>：查找时把沿途节点直接挂到根上</li>
+      <li><strong>按大小合并 (Union by Size)</strong>：始终把小树合并到大树上</li>
+    </ul>
+    <div class="highlight-box success">
+      同时使用两种优化后，m 次操作均摊复杂度 <span class="formula">O(m · α(n))</span>，其中 α(n) 是反阿克曼函数，在实际中 ≤ 4，可视为常数。
+    </div>
+    <h3>💻 实现代码</h3>
+    <div class="code-block"><span class="type">struct</span> <span class="type">DSU</span> {
+    <span class="type">vector</span>&lt;<span class="type">int</span>&gt; fa, sz;
+    <span class="fn">DSU</span>(<span class="type">int</span> n) {
+        fa.<span class="fn">resize</span>(n + <span class="num">1</span>);
+        sz.<span class="fn">resize</span>(n + <span class="num">1</span>, <span class="num">1</span>);
+        <span class="kw">for</span> (<span class="type">int</span> i = <span class="num">1</span>; i &lt;= n; i++) fa[i] = i;
+    }
+    <span class="type">int</span> <span class="fn">find</span>(<span class="type">int</span> x) {
+        <span class="kw">return</span> fa[x] == x ? x : fa[x] = <span class="fn">find</span>(fa[x]);
+    }
+    <span class="type">bool</span> <span class="fn">merge</span>(<span class="type">int</span> x, <span class="type">int</span> y) {
+        x = <span class="fn">find</span>(x); y = <span class="fn">find</span>(y);
+        <span class="kw">if</span> (x == y) <span class="kw">return false</span>;
+        <span class="kw">if</span> (sz[x] &lt; sz[y]) <span class="fn">swap</span>(x, y);
+        fa[y] = x;
+        sz[x] += sz[y];
+        <span class="kw">return true</span>;
+    }
+};</div>
+  </div>
+
+  <!-- ===== 幻灯片 3：知识精讲 - Kruskal 算法 ===== -->
+  <div class="slide" data-index="2">
+    <div class="slide-title">Kruskal 算法流程</div>
+    <div class="slide-subtitle">贪心选边 + 并查集判环</div>
+    <h3>📋 算法步骤</h3>
+    <ol>
+      <li>将所有 <strong>m</strong> 条边按权值<strong>从小到大排序</strong></li>
+      <li>初始化并查集，每个顶点自成一个集合</li>
+      <li>遍历排序后的边列表：若 u, v <strong>不在同一集合</strong>（不形成环），则<strong>选中此边</strong>，合并 u, v</li>
+      <li>已选边数达到 <span class="formula">n-1</span> 时<strong>提前退出</strong></li>
+      <li>若最终选中边数 &lt; n-1，说明<strong>图不连通</strong></li>
+    </ol>
+    <h3>💻 核心代码</h3>
+    <div class="code-block"><span class="type">long long</span> <span class="fn">kruskal</span>(<span class="type">int</span> n, <span class="type">vector</span>&lt;Edge&gt;&amp; edges) {
+    <span class="fn">sort</span>(edges.<span class="fn">begin</span>(), edges.<span class="fn">end</span>());  <span class="cmt">// O(E log E)</span>
+    <span class="type">DSU</span> dsu(n);
+    <span class="type">long long</span> mst = <span class="num">0</span>;
+    <span class="type">int</span> cnt = <span class="num">0</span>;
+    <span class="kw">for</span> (<span class="kw">auto</span>&amp; e : edges) {
+        <span class="kw">if</span> (dsu.<span class="fn">merge</span>(e.u, e.v)) {
+            mst += e.w;
+            cnt++;
+            <span class="kw">if</span> (cnt == n - <span class="num">1</span>) <span class="kw">break</span>;  <span class="cmt">// 提前退出</span>
+        }
+    }
+    <span class="kw">return</span> (cnt == n - <span class="num">1</span>) ? mst : -<span class="num">1</span>;
+}</div>
+    <table class="complexity-table">
+      <tr><th>步骤</th><th>复杂度</th></tr>
+      <tr><td>边排序</td><td><span class="formula">O(E log E)</span></td></tr>
+      <tr><td>并查集初始化</td><td><span class="formula">O(V)</span></td></tr>
+      <tr><td>遍历边 + 合并</td><td><span class="formula">O(E · α(V))</span></td></tr>
+      <tr><td><strong>总计</strong></td><td><strong><span class="formula">O(E log E)</span></strong></td></tr>
+    </table>
+    <div class="highlight-box">📌 <strong>适用场景：</strong>稀疏图 (<span class="formula">E ≈ V</span>) 表现优异。稠密图考虑 Prim。</div>
+  </div>
+
+  <!-- ===== 幻灯片 4：原理推导 - 贪心正确性证明 ===== -->
+  <div class="slide" data-index="3">
+    <div class="slide-title">贪心正确性证明</div>
+    <div class="slide-subtitle">割性质 + 反证法</div>
+    <h3>📐 割性质 (Cut Property)</h3>
+    <div class="highlight-box">
+      设 S 是顶点集 V 的任意<strong>非空真子集</strong>，e = (u, v) 是<strong>跨越</strong>割 (S, V\S) 的最小权边，则 <strong>e 一定属于某棵 MST</strong>。
+    </div>
+    <h3>🧾 Kruskal 正确性证明（反证法）</h3>
+    <ol>
+      <li>设 Kruskal 选择的边集为 <span class="formula">T = {e₁, ..., eₙ₋₁}</span></li>
+      <li><strong>假设</strong> T 不是最小生成树</li>
+      <li>令 T* 是与 T 前 <strong>k</strong> 条边一致的最优 MST（k 尽可能大，k &lt; n-1）</li>
+      <li>将 eₖ₊₁ 加入 T* 会形成<strong>一个环 C</strong></li>
+      <li>环 C 上必然存在边 f 跨越 eₖ₊₁ 选择时 u,v 所在的两个不同集合</li>
+      <li>由贪心排序知 <span class="formula">w(eₖ₊₁) ≤ w(f)</span></li>
+      <li>若严格小于 → 替换后得到更优 MST，<strong>矛盾</strong></li>
+      <li>若相等 → 替换后 MST 与 T 前 k+1 条边一致，<strong>与 k 最大性矛盾</strong></li>
+      <li>因此 T 是最小生成树 ✅</li>
+    </ol>
+    <div class="highlight-box success">
+      <strong>结论：</strong>Kruskal 算法的贪心策略在数学上保证能得到最优解。关键在于<strong>边排序的全局贪心</strong>不会损害未来的选择。
+    </div>
+  </div>
+
+  <!-- ===== 幻灯片 5：代码模板页 ===== -->
+  <div class="slide" data-index="4">
+    <div class="slide-title">完整代码模板</div>
+    <div class="slide-subtitle">并查集 + Kruskal + MST 唯一性判定</div>
+    <h3>🗂️ Edge 结构体</h3>
+    <div class="code-block"><span class="type">struct</span> <span class="type">Edge</span> {
+    <span class="type">int</span> u, v, w;
+    <span class="type">bool</span> <span class="kw">operator</span>&lt;(<span class="type">const</span> Edge&amp; rhs) <span class="type">const</span> {
+        <span class="kw">return</span> w &lt; rhs.w;   <span class="cmt">// 按边权升序</span>
+    }
+};</div>
+    <h3>🔍 MST 唯一性判定</h3>
+    <div class="code-block"><span class="type">bool</span> <span class="fn">is_mst_unique</span>(<span class="type">int</span> n, <span class="type">vector</span>&lt;Edge&gt; edges) {
+    <span class="fn">sort</span>(edges.<span class="fn">begin</span>(), edges.<span class="fn">end</span>());
+    <span class="type">DSU</span> dsu(n);
+    <span class="type">int</span> m = edges.<span class="fn">size</span>();
+    <span class="kw">for</span> (<span class="type">int</span> i = <span class="num">0</span>; i &lt; m; ) {
+        <span class="type">int</span> j = i;
+        <span class="kw">while</span> (j &lt; m &amp;&amp; edges[j].w == edges[i].w) j++;
+        <span class="type">int</span> avail = <span class="num">0</span>, merged = <span class="num">0</span>;
+        <span class="kw">for</span> (<span class="type">int</span> k = i; k &lt; j; k++)
+            <span class="kw">if</span> (dsu.<span class="fn">find</span>(edges[k].u) != dsu.<span class="fn">find</span>(edges[k].v))
+                avail++;
+        <span class="kw">for</span> (<span class="type">int</span> k = i; k &lt; j; k++)
+            <span class="kw">if</span> (dsu.<span class="fn">merge</span>(edges[k].u, edges[k].v))
+                merged++;
+        <span class="kw">if</span> (avail &gt; merged) <span class="kw">return false</span>;  <span class="cmt">// 存在替代方案</span>
+        i = j;
+    }
+    <span class="kw">return true</span>;
+}</div>
+    <div class="highlight-box">
+      <strong>判定原理：</strong>对每组同权边，若<strong>可选边数</strong>大于<strong>实际合并数</strong>，说明存在可替换的等价边，MST 不唯一。
+    </div>
+  </div>
+
+  <!-- ===== 幻灯片 6：真题精练 ===== -->
+  <div class="slide" data-index="5">
+    <div class="slide-title">真题精练</div>
+    <div class="slide-subtitle">经典 MST 及变种题型</div>
+    <h3>📝 例题 1：洛谷 P3366【模板】最小生成树</h3>
+    <ul>
+      <li>n ≤ 5000，m ≤ 2×10⁵，求 MST 总权值</li>
+      <li><strong>解法：</strong>直接 Kruskal，排序 O(m log m)，并查集 O(m α(n))</li>
+      <li><strong>注意：</strong>使用 <span class="formula">long long</span> 存储总权值防止溢出；不连通输出 "orz"</li>
+    </ul>
+    <h3>📝 例题 2：最小瓶颈路（货车运输 / 繁忙的都市）</h3>
+    <ul>
+      <li>求任意两点间路径上<strong>最大边权的最小值</strong></li>
+      <li><strong>解法：</strong>
+        <ol>
+          <li>Kruskal 构建 MST（任意 MST 都是最小瓶颈生成树）</li>
+          <li>在 MST 上做<strong>树上倍增</strong>，预处理 <span class="formula">up[u][k]</span> 和 <span class="formula">maxw[u][k]</span></li>
+          <li>每次查询在 LCA 处合并路径最大值，复杂度 O(log n)</li>
+        </ol>
+      </li>
+    </ul>
+    <div class="highlight-box success">
+      <strong>关键技巧：</strong>MST 有一个优良性质——任意两点在 MST 上的路径最大边权 = 原图中所有路径的最大边权的最小值。这就是<strong>最小瓶颈生成树定理</strong>。
+    </div>
+  </div>
+
+  <!-- ===== 幻灯片 7：优化技巧与易错点 ===== -->
+  <div class="slide" data-index="6">
+    <div class="slide-title">易错点与优化技巧</div>
+    <div class="slide-subtitle">竞赛中的常见坑与应对</div>
+    <h3>⚠️ 常见错误</h3>
+    <ul>
+      <li>❌ <strong>并查集未初始化：</strong><span class="formula">fa[i] = i</span> 必须覆盖 1..n，忘写或范围错误</li>
+      <li>❌ <strong>忘记排序：</strong>不对边按权值排序，贪心无效</li>
+      <li>❌ <strong>未判连通性：</strong>最终选中边数少于 n-1 说明图不连通，需特殊处理</li>
+      <li>❌ <strong>权值溢出：</strong>n 大、边权大时总权值超出 int，需用 <span class="formula">long long</span></li>
+      <li>❌ <strong>MST 唯一性误判：</strong>仅简单判同权边存在就认为不唯一（不严谨）</li>
+    </ul>
+    <h3>🚀 优化技巧</h3>
+    <ul>
+      <li>✅ <strong>提前 break：</strong>选够 n-1 条边立即退出，稀疏图效果显著</li>
+      <li>✅ <strong>emplace_back：</strong><span class="formula">edges.emplace_back(u, v, w)</span> 避免临时对象</li>
+      <li>✅ <strong>按大小合并：</strong>比按秩合并实现更简洁，效果等同</li>
+      <li>✅ <strong>Lambda 排序：</strong>不重载 operator&lt; 时用 Lambda 表达式</li>
+      <li>✅ <strong>边列表复用：</strong>Kruskal 可顺便输出 MST 边集，用于次小生成树等后续计算</li>
+    </ul>
+    <div class="highlight-box warn">
+      <strong>🔴 血泪教训：</strong>比赛时最常见的错误是并查集编号从 0 开始还是从 1 开始搞混。建议统一使用<strong>1-indexed</strong>，初始化 <span class="formula">fa.resize(n+1)</span>。
+    </div>
+  </div>
+
+  <!-- ===== 幻灯片 8：总结页 ===== -->
+  <div class="slide" data-index="7">
+    <div class="slide-title">🎯 本课小结</div>
+    <div class="slide-subtitle">Kruskal 算法核心要点回顾</div>
+    <table class="complexity-table">
+      <tr><th>要点</th><th>内容</th></tr>
+      <tr><td>算法本质</td><td>基于<strong>边排序</strong>的贪心算法，从最小边开始构造 MST</td></tr>
+      <tr><td>核心数据结构</td><td><strong>并查集 (DSU)</strong>——路径压缩 + 按大小合并</td></tr>
+      <tr><td>时间复杂度</td><td><span class="formula">O(E log E)</span>，适用于<strong>稀疏图</strong></td></tr>
+      <tr><td>正确性保证</td><td><strong>割性质</strong> + 反证法</td></tr>
+      <tr><td>MST 唯一性</td><td>同权边组统计：可选边数 > 实际合并数 → 不唯一</td></tr>
+      <tr><td>扩展应用</td><td><strong>最小瓶颈生成树</strong>、<strong>次小生成树</strong>（下节课）</td></tr>
+      <tr><td>经典题目</td><td>P3366 模板、P2330 繁忙的都市、最小瓶颈路</td></tr>
+    </table>
+    <div class="highlight-box" style="margin-top:18px;">
+      <strong>📖 下节课预告：第22课 Prim 算法与次小生成树</strong><br>
+      Prim 朴素 O(V²) → 堆优化 O(E log V) → 严格次小生成树（树上倍增 + LCA）
+    </div>
+  </div>
+
+  <!-- ===== 导航栏 ===== -->
+  <div class="nav-bar">
+    <button class="nav-btn" id="prevBtn" onclick="navigate(-1)">← 上一页</button>
+    <div class="dot-indicators" id="dots"></div>
+    <div class="slide-counter" id="counter">1 / 8</div>
+    <button class="nav-btn primary" id="nextBtn" onclick="navigate(1)">下一页 →</button>
+  </div>
+
+</div>
+
+<script>
+  // ===== 幻灯片导航逻辑 =====
+  const slides = document.querySelectorAll('.slide');
+  const totalSlides = slides.length;
+  let currentSlide = 0;
+
+  // 初始化导航点
+  const dotsContainer = document.getElementById('dots');
+  for (let i = 0; i < totalSlides; i++) {
+    const dot = document.createElement('span');
+    dot.className = 'dot' + (i === 0 ? ' active' : '');
+    dot.onclick = () => goToSlide(i);
+    dotsContainer.appendChild(dot);
+  }
+
+  function updateUI() {
+    // 更新幻灯片显示
+    slides.forEach((s, i) => s.classList.toggle('active', i === currentSlide));
+    // 更新导航点
+    const dots = dotsContainer.querySelectorAll('.dot');
+    dots.forEach((d, i) => d.classList.toggle('active', i === currentSlide));
+    // 更新计数器
+    document.getElementById('counter').textContent = `${currentSlide + 1} / ${totalSlides}`;
+    // 更新按钮状态
+    document.getElementById('prevBtn').disabled = currentSlide === 0;
+    document.getElementById('nextBtn').disabled = currentSlide === totalSlides - 1;
+  }
+
+  function navigate(dir) {
+    const next = currentSlide + dir;
+    if (next >= 0 && next < totalSlides) {
+      currentSlide = next;
+      updateUI();
+    }
+  }
+
+  function goToSlide(index) {
+    if (index >= 0 && index < totalSlides) {
+      currentSlide = index;
+      updateUI();
+    }
+  }
+
+  // 键盘导航
+  document.addEventListener('keydown', (e) => {
+    if (e.key === 'ArrowRight' || e.key === 'ArrowDown' || e.key === ' ') {
+      e.preventDefault();
+      navigate(1);
+    } else if (e.key === 'ArrowLeft' || e.key === 'ArrowUp') {
+      e.preventDefault();
+      navigate(-1);
+    } else if (e.key === 'Home') {
+      e.preventDefault();
+      goToSlide(0);
+    } else if (e.key === 'End') {
+      e.preventDefault();
+      goToSlide(totalSlides - 1);
+    }
+  });
+
+  // 触摸滑动支持
+  let touchStartX = 0;
+  document.addEventListener('touchstart', (e) => { touchStartX = e.touches[0].clientX; });
+  document.addEventListener('touchend', (e) => {
+    const diff = touchStartX - e.changedTouches[0].clientX;
+    if (Math.abs(diff) > 50) navigate(diff > 0 ? 1 : -1);
+  });
+
+  // 初始化
+  updateUI();
+</script>
+
+</body>
+</html>

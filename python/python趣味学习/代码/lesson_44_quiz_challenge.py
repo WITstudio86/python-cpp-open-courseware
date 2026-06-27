@@ -1,0 +1,364 @@
+"""
+========================================
+课程 44：项目六 —— 问答大挑战
+========================================
+学习目标：
+  1. 学会用列表 + 字典存储结构化的题目数据
+  2. 掌握用循环逐题出题、判断正误
+  3. 学会计分并给出个性化的评语
+  4. 了解随机打乱和难度分级的设计思路
+========================================
+"""
+
+import random  # 导入随机模块
+import time    # 导入时间模块（用于限时答题）
+
+
+# ── 题库 ──────────────────────────────────────
+# 每道题是一个字典，包含：
+#   question: 题目
+#   options:  选项列表（4个）
+#   answer:   正确答案的索引（1-based）
+#   difficulty: 难度（1=简单, 2=中等, 3=困难）
+QUESTION_BANK = [
+    # ===== 数学题 =====
+    {
+        "question": "45 + 37 = ?",
+        "options": ["72", "82", "78", "92"],
+        "answer": 2,  # 第2个选项是正确答案
+        "difficulty": 1,
+    },
+    {
+        "question": "9 × 8 = ?",
+        "options": ["70", "74", "72", "68"],
+        "answer": 3,
+        "difficulty": 1,
+    },
+    {
+        "question": "一个三角形的内角和是多少度？",
+        "options": ["90°", "180°", "270°", "360°"],
+        "answer": 2,
+        "difficulty": 2,
+    },
+    {
+        "question": "100 ÷ 4 = ?",
+        "options": ["20", "24", "25", "30"],
+        "answer": 3,
+        "difficulty": 1,
+    },
+    # ===== 科学题 =====
+    {
+        "question": "太阳系中，离太阳最近的行星是？",
+        "options": ["地球", "金星", "水星", "火星"],
+        "answer": 3,
+        "difficulty": 2,
+    },
+    {
+        "question": "水的化学式是什么？",
+        "options": ["CO₂", "H₂O", "O₂", "NaCl"],
+        "answer": 2,
+        "difficulty": 1,
+    },
+    {
+        "question": "光在真空中每秒大约传播多少公里？",
+        "options": ["3万公里", "30万公里", "300万公里", "3000万公里"],
+        "answer": 2,
+        "difficulty": 3,
+    },
+    # ===== 生活常识 =====
+    {
+        "question": "人体最大的器官是什么？",
+        "options": ["心脏", "大脑", "皮肤", "肝脏"],
+        "answer": 3,
+        "difficulty": 2,
+    },
+    {
+        "question": "中国的首都是哪个城市？",
+        "options": ["上海", "北京", "广州", "深圳"],
+        "answer": 2,
+        "difficulty": 1,
+    },
+    {
+        "question": "彩虹一般有几种颜色？",
+        "options": ["5种", "6种", "7种", "8种"],
+        "answer": 3,
+        "difficulty": 1,
+    },
+    # ===== 更多题目 =====
+    {
+        "question": "地球上最大的海洋是？",
+        "options": ["大西洋", "印度洋", "太平洋", "北冰洋"],
+        "answer": 3,
+        "difficulty": 2,
+    },
+    {
+        "question": "一年有多少天？（平年）",
+        "options": ["354天", "358天", "362天", "365天"],
+        "answer": 4,
+        "difficulty": 1,
+    },
+    {
+        "question": "下面哪个不是编程语言？",
+        "options": ["Python", "HTML", "Java", "C++"],
+        "answer": 2,
+        "difficulty": 3,
+    },
+    {
+        "question": "声音在什么介质中传播最快？",
+        "options": ["空气", "水", "钢铁", "真空"],
+        "answer": 3,
+        "difficulty": 3,
+    },
+    {
+        "question": "人体有多少块骨头？（成年人）",
+        "options": ["106块", "156块", "186块", "206块"],
+        "answer": 4,
+        "difficulty": 3,
+    },
+]
+
+
+def select_questions(difficulty="全部", count=10):
+    """
+    根据难度选择题目
+    参数：
+        difficulty: "简单"(1), "中等"(2), "困难"(3), "全部"(所有)
+        count: 需要选取的题目数量
+    """
+    if difficulty == "全部":
+        candidates = QUESTION_BANK  # 所有题目
+    elif difficulty == "简单":
+        candidates = [q for q in QUESTION_BANK if q["difficulty"] == 1]
+    elif difficulty == "中等":
+        candidates = [q for q in QUESTION_BANK if q["difficulty"] == 2]
+    elif difficulty == "困难":
+        candidates = [q for q in QUESTION_BANK if q["difficulty"] == 3]
+    else:
+        candidates = QUESTION_BANK
+
+    # 如果候选题目不够，就用全部候选
+    if len(candidates) < count:
+        count = len(candidates)
+
+    # 随机打乱并取前 count 道
+    selected = random.sample(candidates, count)
+    return selected
+
+
+def show_question(question, q_num):
+    """显示一道题目和选项"""
+    print(f"\n{'─' * 50}")
+    print(f"📝 第 {q_num} 题（难度：{'★' * question['difficulty']}）")
+    print(f"\n  {question['question']}")
+    print()
+    # 显示选项
+    letters = ["A", "B", "C", "D"]
+    for i, option in enumerate(question["options"]):
+        print(f"    {letters[i]}. {option}")
+    print()
+
+
+def get_player_answer():
+    """获取玩家的答案（A/B/C/D）"""
+    while True:
+        answer = input("👉 请选择 (A/B/C/D): ").strip().upper()
+        if answer in ["A", "B", "C", "D"]:
+            return answer
+        else:
+            print("⚠️  请输入 A、B、C 或 D。")
+
+
+def answer_to_index(letter):
+    """将字母 A/B/C/D 转换为索引 0/1/2/3"""
+    mapping = {"A": 0, "B": 1, "C": 2, "D": 3}
+    return mapping.get(letter, -1)
+
+
+def get_comment(score, total):
+    """根据得分给出评语"""
+    ratio = score / total  # 得分率
+
+    if ratio == 1.0:
+        return "🏆 完美！你是知识小达人！"
+    elif ratio >= 0.8:
+        return "🌟 非常棒！你知识很渊博！"
+    elif ratio >= 0.6:
+        return "👍 不错哦！继续加油！"
+    elif ratio >= 0.4:
+        return "📚 还需努力，多学多练！"
+    else:
+        return "💪 别灰心，学习是一步步来的！"
+
+
+def timed_input(prompt, time_limit=10):
+    """
+    限时答题功能（简化版）
+    给玩家 time_limit 秒来回答，超时算错。
+
+    注意：Python 原生的 input() 无法真正中断，
+    这里用了一种简化的方式——记录答题用时。
+    真正的限时需要使用 threading 模块，
+    对小学生来说比较复杂，这里暂不实现。
+    """
+    start_time = time.time()
+    answer = input(prompt)
+    elapsed = time.time() - start_time
+    return answer, elapsed
+
+
+def play_quiz(questions):
+    """进行问答游戏，返回得分"""
+    score = 0
+    total = len(questions)
+
+    print(f"\n{'=' * 50}")
+    print(f"  🧠  问答大挑战开始！共 {total} 题")
+    print(f"{'=' * 50}")
+
+    for i, question in enumerate(questions, start=1):
+        # 显示题目
+        show_question(question, i)
+
+        # 限时模式（可选，默认关闭）
+        # 如果去掉下面这行的注释，就会启用限时功能
+        # answer, elapsed = timed_input("👉 请选择 (A/B/C/D): ", time_limit=10)
+        # if elapsed > 10:
+        #     print(f"⏰ 超时了！用时 {elapsed:.1f} 秒")
+        #     print(f"❌ 正确答案是：{question['options'][question['answer'] - 1]}")
+        #     continue
+
+        # 获取玩家答案（不限时模式）
+        answer = get_player_answer()
+
+        # 判断对错
+        player_index = answer_to_index(answer)
+        correct_index = question["answer"] - 1  # 转换为0-based索引
+
+        if player_index == correct_index:
+            print("✅ 回答正确！太厉害了！")
+            score += 1
+        else:
+            correct_option = question["options"][correct_index]
+            correct_letter = ["A", "B", "C", "D"][correct_index]
+            print(f"❌ 回答错误！正确答案是 {correct_letter}. {correct_option}")
+
+        # 休息一下（可选）
+        # time.sleep(0.5)
+
+    return score, total
+
+
+def show_leaderboard():
+    """显示历史最高分（简化版：存在内存中）"""
+    # 这里留空，作为扩展功能
+    pass
+
+
+def main():
+    print("=" * 50)
+    print("       🧠  欢迎来到问答大挑战！  🧠")
+    print("=" * 50)
+    print("  涵盖数学、科学、生活常识等多个领域")
+    print()
+
+    # ── 选择难度 ────────────────────────────
+    print("请选择题目难度：")
+    print("  1. 简单模式（基础题目）")
+    print("  2. 中等模式（稍有挑战）")
+    print("  3. 困难模式（高难度）")
+    print("  4. 混合模式（所有难度）")
+    print()
+
+    diff_map = {"1": "简单", "2": "中等", "3": "困难", "4": "全部"}
+    while True:
+        diff_choice = input("请选择 (1/2/3/4): ").strip()
+        if diff_choice in diff_map:
+            difficulty = diff_map[diff_choice]
+            break
+        else:
+            print("⚠️  请输入 1、2、3 或 4。")
+
+    # ── 选择题目数量 ─────────────────────────
+    while True:
+        try:
+            total_q = int(input("你想挑战几道题？(建议 5~15): ").strip())
+            if total_q <= 0:
+                print("⚠️  题目数量必须大于 0。")
+            elif total_q > len(QUESTION_BANK):
+                print(f"⚠️  题库只有 {len(QUESTION_BANK)} 道题，最多选 {len(QUESTION_BANK)} 道。")
+            else:
+                break
+        except ValueError:
+            print("⚠️  请输入一个数字。")
+
+    # 选择题目
+    questions = select_questions(difficulty, total_q)
+
+    if len(questions) == 0:
+        print("😕 该难度下没有题目，请重新选择。")
+        return
+
+    # 开始答题
+    score, total = play_quiz(questions)
+
+    # ── 显示结果 ────────────────────────────
+    print("\n" + "=" * 50)
+    print("           📊  答题结果  📊")
+    print("=" * 50)
+    print(f"  总题数：  {total} 题")
+    print(f"  答对：    {score} 题")
+    print(f"  答错：    {total - score} 题")
+    print(f"  正确率：  {score / total * 100:.1f}%")
+    print("-" * 50)
+    print(f"  {get_comment(score, total)}")
+    print("=" * 50)
+
+    # 询问是否再来一次
+    play_again = input("\n🔄 再来一局？(y/n): ").strip().lower()
+    if play_again == "y":
+        print("\n" * 2)  # 空几行
+        main()  # 递归调用，重新开始
+    else:
+        print("\n感谢参与问答大挑战，再见！👋")
+
+
+# ── 程序入口 ──────────────────────────────────
+if __name__ == "__main__":
+    main()
+
+
+# ============================================================
+# 练习题（试着修改代码来实现以下功能）：
+# ============================================================
+#
+# 练习 1：增加更多题目
+#   在 QUESTION_BANK 中添加你自己出的题目。
+#   可以添加历史题、地理题、文学题等。
+#   每道题遵循同样的字典格式即可。
+#   提示：复制一个现有的题目字典，修改 question、
+#   options 和 answer 字段。
+#
+# 练习 2：限时答题
+#   给每道题加上时间限制（比如10秒）。
+#   超时没回答算错。
+#   提示：使用 time.time() 记录开始时间；
+#   答题后计算耗时，如果超过限制则算错。
+#   代码中已经留了 timed_input() 函数，试着完善它！
+#
+# 练习 3：随机打乱题目顺序
+#   目前 select_questions() 已经用了 random.sample 来打乱。
+#   如果你想打乱选项顺序（A不一定是第一个选项），可以怎么做？
+#   提示：在显示题目时用 random.shuffle() 打乱 options 列表，
+#   同时需要记录打乱后的正确答案位置。
+#
+# ============================================================
+# 综合小挑战：
+# ============================================================
+#   打造一个"多人竞赛模式"：
+#   - 支持 2~4 位玩家轮流答题。
+#   - 每题答对加分，答错不扣分。
+#   - 所有玩家答完后公布排名。
+#   - 增加"抢答"机制：谁先按键谁获得答题权。
+#   提示：用字典记录每个玩家的分数；
+#   用 input() 实现简单的抢答（先输入名字的那个获得答题权）。
+# ============================================================

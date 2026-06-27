@@ -1,0 +1,520 @@
+import pygame
+import math
+import sys
+
+# ============================================================
+# 第30节：炮塔开火 - 塔防游戏完整代码
+# 功能：炮塔自动瞄准、子弹飞行、经济系统、敌人血条
+# ============================================================
+
+pygame.init()
+WIDTH, HEIGHT = 800, 600
+screen = pygame.display.set_mode((WIDTH, HEIGHT))
+pygame.display.set_caption("第30节：炮塔开火 - 塔防游戏")
+clock = pygame.time.Clock()
+font_small = pygame.font.Font(None, 20)
+font_medium = pygame.font.Font(None, 28)
+font_large = pygame.font.Font(None, 40)
+font_huge = pygame.font.Font(None, 64)
+
+# ======================== 颜色常量 ========================
+WHITE  = (255, 255, 255)
+BLACK  = (0, 0, 0)
+RED    = (255, 0, 0)
+GREEN  = (0, 255, 0)
+BLUE   = (0, 100, 255)
+YELLOW = (255, 255, 0)
+ORANGE = (255, 165, 0)
+GRAY   = (128, 128, 128)
+DARK_GRAY = (60, 60, 60)
+BROWN  = (139, 90, 43)
+GRASS_GREEN = (34, 139, 34)
+DARK_GREEN = (0, 100, 0)
+GOLD_COLOR = (255, 215, 0)
+TURRET_COLOR = (100, 100, 100)
+RANGE_COLOR = (255, 255, 255, 60)
+
+# ======================== 游戏参数 ========================
+金幣 = 200                      # 初始金币
+生命 = 20                       # 玩家生命值
+炮塔价格 = 100                  # 放置一个炮塔的花费
+击杀赏金 = 50                   # 击杀一个敌人获得的金币
+当前波次 = 0                    # 当前第几波
+波次总数 = 5                    # 总共多少波
+
+# 波次配置：每波 [敌人数量, 敌人最大血量, 敌人速度, 生成间隔(帧)]
+波次配置 = [
+    [6,  80,  2, 60],   # 第1波：6个敌人，血量80，速度2
+    [8,  120, 2, 50],   # 第2波：8个敌人，血量120
+    [10, 180, 3, 45],   # 第3波
+    [10, 240, 3, 40],   # 第4波
+    [12, 300, 4, 35],   # 第5波
+]
+
+# ======================== 地图与路径 ========================
+# 敌人行走路径的关键点（waypoints），从上到下蜿蜒曲折
+路径点 = [
+    (0, 80),           # 起点：左上角进入
+    (180, 80),
+    (180, 200),
+    (420, 200),
+    (420, 80),
+    (600, 80),
+    (600, 280),
+    (300, 280),
+    (300, 420),
+    (600, 420),
+    (600, 520),
+    (800, 520),        # 终点：右侧离开
+]
+
+# 路径区域的矩形列表（用于检测点击是否在路径上，路径上不能放炮塔）
+路径矩形 = []
+for i in range(len(路径点) - 1):
+    x1, y1 = 路径点[i]
+    x2, y2 = 路径点[i + 1]
+    if x1 == x2:  # 垂直段
+        路径矩形.append(pygame.Rect(x1 - 25, min(y1, y2), 50, abs(y2 - y1)))
+    else:         # 水平段
+        路径矩形.append(pygame.Rect(min(x1, x2), y1 - 25, abs(x2 - x1), 50))
+
+
+def 在路径上(x, y):
+    """检测某个坐标是否在敌人路径上（不能放炮塔）"""
+    for rect in 路径矩形:
+        if rect.collidepoint(x, y):
+            return True
+    return False
+
+
+# ======================== 类定义 ========================
+
+class 炮塔:
+    """炮塔类：自动检测射程内最近的敌人并发起攻击"""
+    def __init__(self, x, y):
+        self.x = x
+        self.y = y
+        self.射程 = 120              # 攻击范围半径
+        self.攻击力 = 25             # 每发子弹的伤害
+        self.攻击间隔 = 30           # 攻击冷却（帧数）
+        self.冷却 = 0                # 当前冷却剩余帧数
+        self.目标 = None             # 当前瞄准的敌人
+        self.size = 20               # 炮塔绘制大小
+
+    def 更新(self, 敌人列表):
+        """每帧调用：冷却倒计时、寻找目标、发射子弹"""
+        if self.冷却 > 0:
+            self.冷却 -= 1
+            return None  # 冷却中，不攻击
+
+        # 找到射程内最近的敌人
+        最近敌人 = None
+        最近距离平方 = float('inf')
+
+        for 敌人 in 敌人列表:
+            if 敌人.血量 <= 0:
+                continue
+            dx = self.x - 敌人.x
+            dy = self.y - 敌人.y
+            距离平方 = dx * dx + dy * dy
+            if 距离平方 <= self.射程 * self.射程 and 距离平方 < 最近距离平方:
+                最近距离平方 = 距离平方
+                最近敌人 = 敌人
+
+        self.目标 = 最近敌人
+        if self.目标 is not None:
+            self.冷却 = self.攻击间隔  # 重置冷却
+            # 返回一颗新子弹
+            return {
+                'x': self.x,
+                'y': self.y,
+                '目标': self.目标,
+                '速度': 6,
+                '伤害': self.攻击力
+            }
+        return None
+
+    def 绘制(self, screen):
+        """绘制炮塔和射程指示圈"""
+        # 射程圈（半透明 - 只在有目标或鼠标悬停时可考虑显示）
+        # 这里简化：用虚线圆表示射程
+        range_surf = pygame.Surface((self.射程 * 2, self.射程 * 2), pygame.SRCALPHA)
+        pygame.draw.circle(range_surf, (100, 100, 100, 30),
+                           (self.射程, self.射程), self.射程, 1)
+        screen.blit(range_surf, (self.x - self.射程, self.y - self.射程))
+
+        # 炮塔身体（方形基座）
+        pygame.draw.rect(screen, TURRET_COLOR,
+                         (self.x - self.size, self.y - self.size,
+                          self.size * 2, self.size * 2))
+        pygame.draw.rect(screen, DARK_GRAY,
+                         (self.x - self.size, self.y - self.size,
+                          self.size * 2, self.size * 2), 2)
+
+        # 炮塔顶部（小圆）
+        pygame.draw.circle(screen, (150, 150, 150), (self.x, self.y), self.size - 4)
+        pygame.draw.circle(screen, DARK_GRAY, (self.x, self.y), self.size - 4, 2)
+
+        # 如果有目标，炮口指向目标
+        if self.目标 is not None and self.目标.血量 > 0:
+            dx = self.目标.x - self.x
+            dy = self.目标.y - self.y
+            dist = math.sqrt(dx * dx + dy * dy)
+            if dist > 0:
+                dx = dx / dist * (self.size + 8)
+                dy = dy / dist * (self.size + 8)
+            pygame.draw.line(screen, RED, (self.x, self.y),
+                             (self.x + int(dx), self.y + int(dy)), 4)
+
+
+class 敌人:
+    """敌人类：沿路径行走，有血量、速度、赏金"""
+    def __init__(self, 最大血量, 速度):
+        self.x = 路径点[0][0]          # 从第一个路径点出发
+        self.y = 路径点[0][1]
+        self.最大血量 = 最大血量
+        self.血量 = 最大血量
+        self.速度 = 速度
+        self.路径索引 = 1             # 当前要去第几个路径点
+        self.到达终点 = False
+        self.size = 10                # 敌人绘制半径
+        self.赏金 = 击杀赏金
+
+    def 移动(self):
+        """沿路径移动，到达一个路径点后转向下一个"""
+        if self.路径索引 >= len(路径点):
+            self.到达终点 = True
+            return
+
+        目标x, 目标y = 路径点[self.路径索引]
+        dx = 目标x - self.x
+        dy = 目标y - self.y
+        dist = math.sqrt(dx * dx + dy * dy)
+
+        if dist <= self.速度:
+            # 到达当前路径点，转向下一个
+            self.x = 目标x
+            self.y = 目标y
+            self.路径索引 += 1
+        else:
+            # 向目标路径点移动
+            self.x += dx / dist * self.速度
+            self.y += dy / dist * self.速度
+
+    def 绘制(self, screen):
+        """绘制敌人（圆形 + 眼睛）"""
+        if self.血量 <= 0:
+            return
+        # 身体
+        pygame.draw.circle(screen, RED, (int(self.x), int(self.y)), self.size)
+        pygame.draw.circle(screen, BLACK, (int(self.x), int(self.y)), self.size, 2)
+        # 白色眼睛
+        eye_offset = 4
+        pygame.draw.circle(screen, WHITE, (int(self.x - eye_offset), int(self.y - 2)), 3)
+        pygame.draw.circle(screen, WHITE, (int(self.x + eye_offset), int(self.y - 2)), 3)
+        # 黑色瞳孔
+        pygame.draw.circle(screen, BLACK, (int(self.x - eye_offset), int(self.y - 2)), 2)
+        pygame.draw.circle(screen, BLACK, (int(self.x + eye_offset), int(self.y - 2)), 2)
+
+    def 绘制血条(self, screen):
+        """在敌人头顶绘制血量条（红底绿条）"""
+        if self.血量 <= 0 or self.血量 >= self.最大血量:
+            return  # 满血时不显示血条，避免画面太乱
+        条宽 = 30
+        条高 = 4
+        x = int(self.x - 条宽 // 2)
+        y = int(self.y - self.size - 10)
+
+        # 红色背景
+        pygame.draw.rect(screen, RED, (x, y, 条宽, 条高))
+        # 绿色血量（按比例）
+        剩余比例 = self.血量 / self.最大血量
+        if 剩余比例 > 0:
+            # 颜色渐变：血量高绿色，血量低黄色→红色
+            if 剩余比例 > 0.5:
+                颜色 = (0, 255, 0)       # 绿色
+            elif 剩余比例 > 0.25:
+                颜色 = (255, 255, 0)     # 黄色
+            else:
+                颜色 = (255, 100, 0)     # 橙红色
+            pygame.draw.rect(screen, 颜色,
+                             (x, y, int(条宽 * 剩余比例), 条高))
+
+
+# ======================== 辅助函数 ========================
+
+def 绘制地图():
+    """绘制草地背景和敌人行走路径"""
+    # 草地背景
+    screen.fill(GRASS_GREEN)
+
+    # 路径（用粗线连接各个路径点）
+    for i in range(len(路径点) - 1):
+        pygame.draw.line(screen, BROWN, 路径点[i], 路径点[i + 1], 52)
+
+    # 路径边缘（深色边框让路径更明显）
+    for i in range(len(路径点) - 1):
+        pygame.draw.line(screen, (100, 60, 20), 路径点[i], 路径点[i + 1], 54)
+        pygame.draw.line(screen, BROWN, 路径点[i], 路径点[i + 1], 50)
+
+    # 起点标记（绿色圆圈）
+    pygame.draw.circle(screen, GREEN, 路径点[0], 15)
+    pygame.draw.circle(screen, BLACK, 路径点[0], 15, 2)
+    # 终点标记（红色圆圈）
+    pygame.draw.circle(screen, RED, 路径点[-1], 15)
+    pygame.draw.circle(screen, BLACK, 路径点[-1], 15, 2)
+
+    # 网格线（帮助定位放置炮塔的位置）
+    for x in range(0, WIDTH, 60):
+        pygame.draw.line(screen, (0, 80, 0, 40), (x, 0), (x, HEIGHT), 1)
+    for y in range(0, HEIGHT, 60):
+        pygame.draw.line(screen, (0, 80, 0, 40), (0, y), (WIDTH, y), 1)
+
+
+def 绘制UI():
+    """绘制顶部信息栏：金币、生命、波次"""
+    # 半透明背景条
+    ui_bar = pygame.Surface((WIDTH, 50), pygame.SRCALPHA)
+    ui_bar.fill((0, 0, 0, 180))
+    screen.blit(ui_bar, (0, 0))
+
+    # 金币（金色文字）
+    金币文字 = font_medium.render(f"💰 金币: {金幣}", True, GOLD_COLOR)
+    screen.blit(金币文字, (15, 12))
+
+    # 生命（红色文字）
+    生命文字 = font_medium.render(f"❤️ 生命: {生命}", True, RED)
+    screen.blit(生命文字, (230, 12))
+
+    # 波次信息
+    波次文字 = font_medium.render(f"🌊 波次: {当前波次 + 1}/{波次总数}", True, WHITE)
+    screen.blit(波次文字, (440, 12))
+
+    # 炮塔价格提示
+    价格文字 = font_small.render(f"放置炮塔: {炮塔价格}金币 (点击草地)", True, GRAY)
+    screen.blit(价格文字, (15, HEIGHT - 25))
+
+    # 操作提示
+    hint = font_small.render("R键重新开始 | ESC退出", True, GRAY)
+    screen.blit(hint, (WIDTH - 200, HEIGHT - 25))
+
+
+def 生成下一波():
+    """根据波次配置生成敌人"""
+    global 当前波次
+    if 当前波次 >= 波次总数:
+        return []
+    数量, 血量, 速度, 间隔 = 波次配置[当前波次]
+    敌人列表 = []
+    for i in range(数量):
+        敌人实例 = 敌人(血量, 速度)
+        # 每个敌人的初始位置稍微偏移，避免重叠
+        敌人实例.x = 路径点[0][0] - (i * 间隔)
+        敌人列表.append(敌人实例)
+    return 敌人列表
+
+
+def 显示消息(文字, 持续时间=120):
+    """在屏幕中央显示一条消息（用于波次提示等）"""
+    global 消息文字, 消息计时器
+    消息文字 = 文字
+    消息计时器 = 持续时间
+
+
+def 绘制结束画面(胜利):
+    """绘制游戏结束画面"""
+    overlay = pygame.Surface((WIDTH, HEIGHT), pygame.SRCALPHA)
+    overlay.fill((0, 0, 0, 180))
+    screen.blit(overlay, (0, 0))
+
+    if 胜利:
+        title = font_huge.render("🎉 胜利！", True, GOLD_COLOR)
+        sub = font_medium.render("你消灭了所有敌人！", True, WHITE)
+    else:
+        title = font_huge.render("💀 游戏结束", True, RED)
+        sub = font_medium.render("生命值耗尽…再接再厉！", True, WHITE)
+
+    screen.blit(title, (WIDTH // 2 - title.get_width() // 2, HEIGHT // 2 - 60))
+    screen.blit(sub, (WIDTH // 2 - sub.get_width() // 2, HEIGHT // 2 + 10))
+
+    restart = font_medium.render("按 R 键重新开始", True, YELLOW)
+    screen.blit(restart, (WIDTH // 2 - restart.get_width() // 2, HEIGHT // 2 + 60))
+
+
+def 重置游戏():
+    """重置所有游戏状态"""
+    global 金幣, 生命, 炮塔列表, 敌人列表, 子弹列表, 当前波次
+    global 波次生成计时器, 待生成敌人, 游戏结束, 游戏胜利, 消息文字, 消息计时器
+    金幣 = 200
+    生命 = 20
+    当前波次 = 0
+    炮塔列表 = []
+    敌人列表 = []
+    子弹列表 = []
+    波次生成计时器 = 0
+    待生成敌人 = 生成下一波()
+    游戏结束 = False
+    游戏胜利 = False
+    消息文字 = ""
+    消息计时器 = 0
+
+
+# ======================== 初始化游戏 ========================
+炮塔列表 = []
+敌人列表 = []
+子弹列表 = []
+待生成敌人 = []
+波次生成计时器 = 0
+游戏结束 = False
+游戏胜利 = False
+消息文字 = ""
+消息计时器 = 0
+
+重置游戏()
+
+# ======================== 主游戏循环 ========================
+running = True
+while running:
+    # ==================== 事件处理 ====================
+    for event in pygame.event.get():
+        if event.type == pygame.QUIT:
+            running = False
+
+        elif event.type == pygame.KEYDOWN:
+            if event.key == pygame.K_ESCAPE:
+                running = False
+            elif event.key == pygame.K_r:
+                重置游戏()  # 重新开始
+
+        elif event.type == pygame.MOUSEBUTTONDOWN and not 游戏结束:
+            if event.button == 1:  # 左键点击
+                mx, my = pygame.mouse.get_pos()
+                # 检查金币是否足够
+                if 金幣 >= 炮塔价格:
+                    # 检查点击位置不在路径上、不在UI区域
+                    if my > 55 and not 在路径上(mx, my):
+                        # 检查是否与已有炮塔重叠
+                        可以放置 = True
+                        for t in 炮塔列表:
+                            dx = t.x - mx
+                            dy = t.y - my
+                            if math.sqrt(dx*dx + dy*dy) < t.size * 2:
+                                可以放置 = False
+                                break
+                        if 可以放置:
+                            炮塔列表.append(炮塔(mx, my))
+                            金幣 -= 炮塔价格
+
+    # ==================== 游戏逻辑更新 ====================
+    if not 游戏结束:
+        # -- 生成敌人（按波次）--
+        if len(待生成敌人) > 0:
+            波次生成计时器 += 1
+            if 波次生成计时器 >= 30:  # 每30帧生成一个敌人
+                波次生成计时器 = 0
+                敌人列表.append(待生成敌人.pop(0))
+        elif len(敌人列表) == 0 and len(子弹列表) == 0:
+            # 当前波次所有敌人被消灭
+            if 当前波次 < 波次总数 - 1:
+                当前波次 += 1
+                待生成敌人 = 生成下一波()
+                显示消息(f"第 {当前波次 + 1} 波来袭！", 90)
+                波次生成计时器 = 60  # 给玩家一点准备时间
+            else:
+                # 所有波次完成
+                游戏结束 = True
+                游戏胜利 = True
+
+        # -- 更新敌人 --
+        for 敌人 in 敌人列表[:]:
+            敌人.移动()
+            if 敌人.到达终点:
+                生命 -= 1
+                敌人列表.remove(敌人)
+                if 生命 <= 0:
+                    游戏结束 = True
+                    游戏胜利 = False
+
+        # -- 更新炮塔并发射子弹 --
+        for t in 炮塔列表:
+            新子弹 = t.更新(敌人列表)
+            if 新子弹 is not None:
+                子弹列表.append(新子弹)
+
+        # -- 更新子弹 --
+        for 子弹 in 子弹列表[:]:
+            目标 = 子弹['目标']
+            # 检查目标是否还活着（已被其他子弹击杀？）
+            if 目标.血量 <= 0 or 目标 not in 敌人列表:
+                子弹列表.remove(子弹)
+                continue
+
+            dx = 目标.x - 子弹['x']
+            dy = 目标.y - 子弹['y']
+            dist = math.sqrt(dx * dx + dy * dy)
+
+            if dist < 8:  # 命中敌人
+                目标.血量 -= 子弹['伤害']
+                子弹列表.remove(子弹)
+            else:
+                # 向目标飞行
+                子弹['x'] += dx / dist * 子弹['速度']
+                子弹['y'] += dy / dist * 子弹['速度']
+
+                # 子弹飞出屏幕边界则移除
+                if (子弹['x'] < -20 or 子弹['x'] > WIDTH + 20 or
+                    子弹['y'] < -20 or 子弹['y'] > HEIGHT + 20):
+                    子弹列表.remove(子弹)
+
+        # -- 移除死亡敌人，增加金币 --
+        for 敌人 in 敌人列表[:]:
+            if 敌人.血量 <= 0:
+                金幣 += 敌人.赏金
+                敌人列表.remove(敌人)
+
+        # -- 更新消息计时器 --
+        if 消息计时器 > 0:
+            消息计时器 -= 1
+
+    # ==================== 绘制画面 ====================
+    绘制地图()
+
+    # 绘制炮塔
+    for t in 炮塔列表:
+        t.绘制(screen)
+
+    # 绘制敌人
+    for 敌人 in 敌人列表:
+        敌人.绘制(screen)
+        敌人.绘制血条(screen)
+
+    # 绘制子弹（黄色小圆点）
+    for 子弹 in 子弹列表:
+        pygame.draw.circle(screen, YELLOW,
+                           (int(子弹['x']), int(子弹['y'])), 4)
+        pygame.draw.circle(screen, ORANGE,
+                           (int(子弹['x']), int(子弹['y'])), 4, 1)
+
+    # 绘制UI
+    绘制UI()
+
+    # 显示波次消息
+    if 消息计时器 > 0 and 消息文字:
+        msg_surf = font_large.render(消息文字, True, YELLOW)
+        # 文字阴影
+        shadow = font_large.render(消息文字, True, BLACK)
+        sx = WIDTH // 2 - shadow.get_width() // 2
+        sy = HEIGHT // 2 - 60
+        screen.blit(shadow, (sx + 2, sy + 2))
+        screen.blit(msg_surf, (sx, sy))
+
+    # 游戏结束画面
+    if 游戏结束:
+        绘制结束画面(游戏胜利)
+
+    pygame.display.flip()
+    clock.tick(60)  # 60 FPS
+
+# ======================== 退出游戏 ========================
+pygame.quit()
+sys.exit()

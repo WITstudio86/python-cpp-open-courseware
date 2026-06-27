@@ -1,0 +1,638 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>第18节：寻找终点 —— 迷宫探索</title>
+<style>
+/* ========== 全局样式 ========== */
+* { margin: 0; padding: 0; box-sizing: border-box; }
+
+body {
+    font-family: "PingFang SC", "Microsoft YaHei", "Noto Sans SC", "Helvetica Neue", sans-serif;
+    background: #1a1a2e;
+    color: #e0e0e0;
+    overflow: hidden;
+    user-select: none;
+}
+
+/* ========== 幻灯片容器 ========== */
+#slides-container {
+    width: 100vw;
+    height: 100vh;
+    position: relative;
+}
+
+.slide {
+    position: absolute;
+    top: 0; left: 0;
+    width: 100%; height: 100%;
+    display: none;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    padding: 60px 100px;
+}
+.slide.active { display: flex; }
+
+/* ========== 标题样式 ========== */
+.slide-title {
+    font-size: 48px;
+    font-weight: 900;
+    color: #ffd700;
+    margin-bottom: 20px;
+    text-align: center;
+    text-shadow: 2px 2px 4px rgba(0,0,0,0.5);
+}
+.slide-subtitle {
+    font-size: 28px;
+    color: #a0c4ff;
+    margin-bottom: 40px;
+    text-align: center;
+}
+.slide-section {
+    font-size: 32px;
+    font-weight: 700;
+    color: #ffd700;
+    margin: 30px 0 15px 0;
+    border-left: 6px solid #ffd700;
+    padding-left: 20px;
+    align-self: flex-start;
+    width: 100%;
+}
+
+/* ========== 内容样式 ========== */
+.content-box {
+    background: rgba(255,255,255,0.06);
+    border-radius: 16px;
+    padding: 30px 40px;
+    width: 100%;
+    max-width: 1000px;
+    border: 1px solid rgba(255,255,255,0.1);
+}
+.content-text {
+    font-size: 26px;
+    line-height: 1.8;
+    margin: 8px 0;
+}
+.content-text.big { font-size: 32px; }
+.content-text.small { font-size: 22px; color: #aaa; }
+
+/* ========== 列表样式 ========== */
+.feature-list {
+    list-style: none;
+    font-size: 26px;
+    line-height: 2;
+}
+.feature-list li::before {
+    content: "▸ ";
+    color: #ffd700;
+    font-weight: bold;
+}
+.feature-list li {
+    padding-left: 10px;
+}
+
+/* ========== 代码展示区 ========== */
+.code-block {
+    background: #0d1117;
+    border-radius: 12px;
+    padding: 24px 30px;
+    margin: 15px 0;
+    font-family: "Fira Code", "JetBrains Mono", "Consolas", "Monaco", monospace;
+    font-size: 22px;
+    line-height: 1.6;
+    overflow-x: auto;
+    border: 1px solid #30363d;
+    white-space: pre-wrap;
+    word-break: break-all;
+}
+.code-block.small { font-size: 18px; }
+.code-block.medium { font-size: 20px; }
+
+/* Python语法高亮 */
+.kw  { color: #ff7b72; }  /* 关键字 */
+.fn  { color: #d2a8ff; }  /* 函数名 */
+.str { color: #a5d6ff; }  /* 字符串 */
+.num { color: #79c0ff; }  /* 数字 */
+.cmt { color: #8b949e; }  /* 注释 */
+.op  { color: #ff7b72; }  /* 运算符 */
+.var { color: #ffa657; }  /* 变量/标识符 */
+
+/* ========== 网格布局 ========== */
+.two-col {
+    display: flex;
+    gap: 40px;
+    width: 100%;
+    max-width: 1000px;
+}
+.two-col > * { flex: 1; }
+
+/* ========== 特殊装饰 ========== */
+.badge {
+    display: inline-block;
+    background: #ffd700;
+    color: #1a1a2e;
+    padding: 4px 16px;
+    border-radius: 20px;
+    font-size: 22px;
+    font-weight: 700;
+    margin: 4px;
+}
+.badge.blue { background: #58a6ff; }
+.badge.green { background: #3fb950; }
+.badge.red { background: #f85149; }
+.badge.purple { background: #bc8cff; }
+
+.highlight-box {
+    background: rgba(255,215,0,0.12);
+    border: 2px solid rgba(255,215,0,0.4);
+    border-radius: 12px;
+    padding: 20px 30px;
+    margin: 15px 0;
+    font-size: 26px;
+    line-height: 1.8;
+}
+
+/* ========== 页脚导航 ========== */
+#page-indicator {
+    position: fixed;
+    bottom: 20px;
+    right: 40px;
+    font-size: 20px;
+    color: #666;
+    z-index: 100;
+}
+#nav-hint {
+    position: fixed;
+    bottom: 20px;
+    left: 40px;
+    font-size: 18px;
+    color: #555;
+    z-index: 100;
+}
+
+/* ========== 颜色示例块 ========== */
+.color-demo {
+    display: inline-block;
+    width: 32px; height: 32px;
+    border-radius: 6px;
+    vertical-align: middle;
+    margin: 0 6px;
+    border: 1px solid rgba(255,255,255,0.3);
+}
+
+/* ========== 表格 ========== */
+.info-table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 24px;
+    margin: 20px 0;
+}
+.info-table th {
+    background: rgba(255,215,0,0.15);
+    padding: 12px 16px;
+    text-align: left;
+    border-bottom: 2px solid #ffd700;
+    font-size: 26px;
+}
+.info-table td {
+    padding: 12px 16px;
+    border-bottom: 1px solid rgba(255,255,255,0.1);
+}
+.info-table tr:nth-child(even) td {
+    background: rgba(255,255,255,0.03);
+}
+</style>
+</head>
+<body>
+
+<div id="slides-container">
+
+<!-- ============ 第1页：封面 ============ -->
+<div class="slide active">
+    <div class="slide-title" style="font-size:60px;">🏁 第18节：寻找终点</div>
+    <div class="slide-subtitle" style="font-size:32px;">迷宫探索 —— 第二课时</div>
+    <div class="content-box" style="text-align:center; margin-top:30px;">
+        <p class="content-text big">在迷宫中收集金币，找到终点！</p>
+        <div style="margin-top:25px;">
+            <span class="badge">终点标记</span>
+            <span class="badge green">金币收集</span>
+            <span class="badge blue">步数统计</span>
+            <span class="badge purple">胜利画面</span>
+        </div>
+    </div>
+    <p class="content-text small" style="margin-top:30px;">按 右方向键 → 开始 | 左右方向键翻页</p>
+</div>
+
+<!-- ============ 第2页：回顾上节课 ============ -->
+<div class="slide">
+    <div class="slide-title">📚 回顾：第17节"走不出的迷宫"</div>
+    <div class="content-box">
+        <ul class="feature-list">
+            <li>用<strong>二维列表</strong>设计迷宫地图（0=路，1=墙）</li>
+            <li>角色<strong>逐格移动</strong>（按一下方向键走一格）</li>
+            <li>坐标换算：<strong>像素 = 格子坐标 x TILE_SIZE</strong></li>
+            <li><strong>撞墙检测</strong>：移动前检查目标格是不是墙</li>
+        </ul>
+    </div>
+    <div class="slide-section">上节课的核心代码</div>
+    <div class="code-block medium"><span class="kw">if</span> <span class="var">maze</span>[<span class="var">new_row</span>][<span class="var">new_col</span>] <span class="op">==</span> <span class="num">1</span>:
+    <span class="kw">return</span>  <span class="cmt"># 撞墙，不能走！</span>
+<span class="cmt"># 否则移动角色</span>
+<span class="var">player_x</span>, <span class="var">player_y</span> = <span class="var">new_col</span>, <span class="var">new_row</span></div>
+    <div class="highlight-box">
+        <strong>思考：</strong>迷宫能走了，但还缺少什么？<br>
+        → <span style="color:#ffd700;">走到哪里算赢？</span> →
+        <span style="color:#3fb950;">有没有奖励可以收集？</span> →
+        <span style="color:#58a6ff;">怎么知道自己走了多少步？</span>
+    </div>
+</div>
+
+<!-- ============ 第3页：本节课目标 ============ -->
+<div class="slide">
+    <div class="slide-title">🎯 今天要做什么</div>
+    <div class="two-col">
+        <div class="content-box">
+            <p class="content-text big" style="color:#ffd700;">四大目标</p>
+            <ul class="feature-list">
+                <li><strong>终点标记</strong>：地图中加入终点(2)，走到即胜利</li>
+                <li><strong>金币收集</strong>：碰到金币(3) → 消失 → 加分</li>
+                <li><strong>步数统计</strong>：每走一步 +1，界面实时显示</li>
+                <li><strong>胜利画面</strong>：到达终点显示统计成绩</li>
+            </ul>
+        </div>
+        <div class="content-box">
+            <p class="content-text big" style="color:#3fb950;">新增地图编码</p>
+            <table class="info-table">
+                <tr><th>数字</th><th>含义</th></tr>
+                <tr><td>0</td><td>路（地板）</td></tr>
+                <tr><td>1</td><td>墙（不可通行）</td></tr>
+                <tr><td style="color:#3fb950;">2</td><td style="color:#3fb950;">终点（胜利！）</td></tr>
+                <tr><td style="color:#ffd700;">3</td><td style="color:#ffd700;">金币（可收集）</td></tr>
+                <tr><td style="color:#58a6ff;">4</td><td style="color:#58a6ff;">起点（出生点）</td></tr>
+            </table>
+        </div>
+    </div>
+</div>
+
+<!-- ============ 第4页：地图元素扩展 ============ -->
+<div class="slide">
+    <div class="slide-title">🗺️ 步骤1：扩展地图编码</div>
+    <div class="content-text" style="margin-bottom:10px;">用不同的数字代表不同的地图元素——<strong>编码设计</strong>思想</div>
+    <div class="code-block medium"><span class="cmt"># 地图数字含义：0=路  1=墙  2=终点  3=金币  4=起点</span>
+<span class="var">MAZE</span> = [
+    [<span class="num">1</span>, <span class="num">1</span>, <span class="num">1</span>, <span class="num">1</span>, <span class="num">1</span>, <span class="num">1</span>, <span class="num">1</span>, <span class="num">1</span>, <span class="num">1</span>, <span class="num">1</span>, <span class="num">1</span>, <span class="num">1</span>, <span class="num">1</span>, <span class="num">1</span>, <span class="num">1</span>, <span class="num">1</span>],
+    [<span class="num">1</span>, <span class="num" style="color:#58a6ff;">4</span>, <span class="num">0</span>, <span class="num">0</span>, <span class="num">0</span>, <span class="num">0</span>, <span class="num">0</span>, <span class="num">0</span>, <span class="num">1</span>, <span class="num">0</span>, <span class="num">0</span>, <span class="num">0</span>, <span class="num" style="color:#ffd700;">3</span>, <span class="num">0</span>, <span class="num">0</span>, <span class="num">1</span>],
+    [<span class="num">1</span>, <span class="num">1</span>, <span class="num">1</span>, <span class="num">1</span>, <span class="num">1</span>, <span class="num">1</span>, <span class="num">1</span>, <span class="num">0</span>, <span class="num">0</span>, <span class="num">0</span>, <span class="num">1</span>, <span class="num">0</span>, <span class="num">1</span>, <span class="num">1</span>, <span class="num">1</span>, <span class="num">1</span>],
+    <span class="cmt"># ...更多行...</span>
+    [<span class="num">1</span>, <span class="num">1</span>, <span class="num">1</span>, <span class="num">1</span>, <span class="num">1</span>, <span class="num">1</span>, <span class="num">1</span>, <span class="num">1</span>, <span class="num">1</span>, <span class="num">1</span>, <span class="num">1</span>, <span class="num">1</span>, <span class="num">1</span>, <span class="num">1</span>, <span class="num" style="color:#3fb950;">2</span>, <span class="num">1</span>],
+]</div>
+    <div class="content-box">
+        <p class="content-text"><strong>绘制对应：</strong>在 draw 函数中根据 cell 值画不同图案</p>
+        <ul class="feature-list">
+            <li>终点(2)：绿色菱形 <span style="color:#3fb950;">◆</span>（pygame.draw.polygon）</li>
+            <li>金币(3)：金色圆点 <span style="color:#ffd700;">●</span>（pygame.draw.circle）</li>
+            <li>起点(4)：蓝色方块 <span style="color:#58a6ff;">■</span>（pygame.draw.rect）</li>
+        </ul>
+    </div>
+</div>
+
+<!-- ============ 第5页：金币收集逻辑 ============ -->
+<div class="slide">
+    <div class="slide-title">💰 步骤2：收集金币系统</div>
+    <div class="slide-subtitle">核心思路：碰到金币 → 标记为地板 → 加分</div>
+    <div class="code-block">
+<span class="kw">def</span> <span class="fn">move_player</span>(<span class="var">dx</span>, <span class="var">dy</span>):
+    <span class="kw">global</span> <span class="var">player_x</span>, <span class="var">player_y</span>, <span class="var">steps</span>, <span class="var">coins_collected</span>
+
+    <span class="var">new_x</span> = <span class="var">player_x</span> + <span class="var">dx</span>
+    <span class="var">new_y</span> = <span class="var">player_y</span> + <span class="var">dy</span>
+
+    <span class="kw">if not</span> <span class="fn">can_move</span>(<span class="var">new_x</span>, <span class="var">new_y</span>):
+        <span class="kw">return</span>  <span class="cmt"># 撞墙或出界</span>
+
+    <span class="var">player_x</span>, <span class="var">player_y</span> = <span class="var">new_x</span>, <span class="var">new_y</span>
+    <span class="var">steps</span> += <span class="num">1</span>  <span class="cmt"># 步数 +1</span>
+
+    <span class="cmt"># ★ 核心：检查是否碰到金币</span>
+    <span class="kw">if</span> <span class="var">MAZE</span>[<span class="var">player_y</span>][<span class="var">player_x</span>] <span class="op">==</span> <span class="num">3</span>:
+        <span class="var">coins_collected</span> += <span class="num">1</span>            <span class="cmt"># 加分数</span>
+        <span class="var">MAZE</span>[<span class="var">player_y</span>][<span class="var">player_x</span>] = <span class="num">0</span>    <span class="cmt"># 金币变地板</span></div>
+    <div class="highlight-box">
+        <strong>关键点：</strong><br>
+        1. 先移动 → 再检查（顺序不能反！）<br>
+        2. <code>MAZE[y][x] = 0</code> 直接修改地图数据，金币"吃掉"就消失<br>
+        3. 这就是所有 RPG 游戏<strong>拾取物品</strong>的基本逻辑！
+    </div>
+</div>
+
+<!-- ============ 第6页：步数统计 ============ -->
+<div class="slide">
+    <div class="slide-title">👣 步骤3：步数计数器 + 状态栏</div>
+    <div class="two-col">
+        <div>
+            <div class="slide-section">计数器逻辑</div>
+            <div class="code-block medium">
+<span class="cmt"># 初始化</span>
+<span class="var">steps</span> = <span class="num">0</span>
+
+<span class="cmt"># 每次成功移动</span>
+<span class="var">steps</span> += <span class="num">1</span></div>
+            <p class="content-text" style="margin-top:10px;">超级简单！每走一步就 +1。<br>注意：<strong>撞墙时不能 +1</strong>！</p>
+        </div>
+        <div>
+            <div class="slide-section">状态栏显示</div>
+            <div class="code-block medium">
+<span class="cmt"># 渲染文字</span>
+<span class="var">text</span> = <span class="fn">font.render</span>(
+    <span class="str">f"步数: {steps}"</span>,
+    <span class="kw">True</span>, <span class="var">WHITE</span>
+)
+<span class="cmt"># 绘制到屏幕</span>
+<span class="fn">screen.blit</span>(<span class="var">text</span>, (<span class="num">20</span>, <span class="num">450</span>))</div>
+            <p class="content-text" style="margin-top:10px;">f-string 格式化：<code>f"步数: {steps}"</code><br>把变量值嵌入字符串中</p>
+        </div>
+    </div>
+    <div class="content-box" style="margin-top:20px; text-align:center;">
+        <p class="content-text">状态栏效果预览：</p>
+        <p style="font-size:24px; background:#0d1117; padding:10px 30px; border-radius:8px; display:inline-block; margin-top:8px;">
+            <span style="color:#fff;">步数: 42</span>
+            &nbsp;&nbsp;&nbsp;&nbsp;
+            <span style="color:#ffd700;">金币: 3/8</span>
+            &nbsp;&nbsp;&nbsp;&nbsp;
+            <span style="color:#666;">方向键移动 ESC退出</span>
+        </p>
+    </div>
+</div>
+
+<!-- ============ 第7页：胜利判定与画面 ============ -->
+<div class="slide">
+    <div class="slide-title">🏆 步骤4：胜利判定 & 统计画面</div>
+    <div class="two-col">
+        <div>
+            <div class="slide-section">胜利判定</div>
+            <div class="code-block medium">
+<span class="cmt"># 在游戏主循环中</span>
+<span class="kw">if not</span> <span class="var">won</span>:
+    <span class="kw">if</span> <span class="var">MAZE</span>[<span class="var">player_y</span>][<span class="var">player_x</span>] <span class="op">==</span> <span class="num">2</span>:
+        <span class="var">won</span> = <span class="kw">True</span>  <span class="cmt"># 胜利！</span></div>
+            <p class="content-text small" style="margin-top:8px;">到达终点格子(值为2) → won 变为 True<br><code>if not won</code> 防止重复触发</p>
+        </div>
+        <div>
+            <div class="slide-section">禁止移动</div>
+            <div class="code-block medium">
+<span class="kw">if not</span> <span class="var">won</span>:  <span class="cmt"># 胜利后不再响应按键</span>
+    <span class="kw">if</span> <span class="var">event</span>.<span class="var">key</span> <span class="op">==</span> <span class="var">K_LEFT</span>:
+        <span class="fn">move_player</span>(<span class="op">-</span><span class="num">1</span>, <span class="num">0</span>)</div>
+        </div>
+    </div>
+    <div class="content-box" style="margin-top:20px;">
+        <p class="content-text"><strong>胜利画面元素：</strong></p>
+        <ul class="feature-list">
+            <li>全屏<strong>半透明遮罩</strong>（Surface + set_alpha）</li>
+            <li>大标题"恭喜通关！"</li>
+            <li>统计数据：总步数、金币收集数</li>
+            <li><strong>动态评价</strong>：根据金币收集率显示不同评语</li>
+        </ul>
+    </div>
+</div>
+
+<!-- ============ 第8页：完整代码结构 ============ -->
+<div class="slide">
+    <div class="slide-title">📐 完整代码结构一览</div>
+    <div class="code-block medium">
+<span class="cmt"># 1. 初始化</span>
+<span class="fn">pygame</span>.<span class="fn">init</span>()
+
+<span class="cmt"># 2. 窗口设置（640x480，格子40px）</span>
+<span class="var">screen</span> = <span class="fn">pygame.display.set_mode</span>((<span class="num">640</span>, <span class="num">480</span>))
+
+<span class="cmt"># 3. 地图数据（0/1/2/3/4） + 状态变量</span>
+<span class="var">MAZE</span> = [...]  <span class="cmt"># 二维列表</span>
+<span class="var">player_x</span>, <span class="var">player_y</span> = <span class="num">1</span>, <span class="num">1</span>  <span class="cmt"># 起点</span>
+
+<span class="cmt"># 4. 绘制函数</span>
+<span class="kw">def</span> <span class="fn">draw_maze</span>(): ...      <span class="cmt"># 遍历 MAZE，画每格</span>
+<span class="kw">def</span> <span class="fn">draw_player</span>(): ...   <span class="cmt"># 画角色（蓝色方块+眼睛）</span>
+<span class="kw">def</span> <span class="fn">draw_status_bar</span>(): ...<span class="cmt"># 底部状态栏</span>
+<span class="kw">def</span> <span class="fn">draw_win_screen</span>(): ...<span class="cmt"># 胜利画面</span>
+
+<span class="cmt"># 5. 移动逻辑</span>
+<span class="kw">def</span> <span class="fn">can_move</span>(<span class="var">x</span>, <span class="var">y</span>): ...   <span class="cmt"># 检测能否移动</span>
+<span class="kw">def</span> <span class="fn">move_player</span>(<span class="var">dx</span>, <span class="var">dy</span>): ...<span class="cmt"># 移动+金币+步数</span>
+
+<span class="cmt"># 6. 游戏主循环</span>
+<span class="kw">while</span> <span class="var">running</span>:
+    <span class="cmt"># 事件处理 → 胜利判定 → 绘制 → 刷新</span></div>
+    <div class="highlight-box" style="margin-top:15px;">
+        <strong>绘制顺序很重要：</strong>背景 → 地图 → 玩家 → 状态栏 → 胜利画面（最后画，覆盖在最上面）
+    </div>
+</div>
+
+<!-- ============ 第9页：用Surface绘制素材 ============ -->
+<div class="slide">
+    <div class="slide-title">🎨 不依赖外部图片，用Surface画一切！</div>
+    <div class="two-col">
+        <div class="content-box">
+            <p class="content-text big" style="color:#ffd700;">墙壁（3D浮雕效果）</p>
+            <div class="code-block small">
+<span class="cmt"># 主体</span>
+<span class="fn">pygame.draw.rect</span>(<span class="var">screen</span>, <span class="var">COLOR_WALL</span>, <span class="var">rect</span>)
+<span class="cmt"># 左上亮边</span>
+<span class="fn">pygame.draw.line</span>(<span class="var">screen</span>, <span class="var">LIGHT</span>, ...)
+<span class="cmt"># 右下暗边</span>
+<span class="fn">pygame.draw.line</span>(<span class="var">screen</span>, <span class="var">DARK</span>, ...)</div>
+        </div>
+        <div class="content-box">
+            <p class="content-text big" style="color:#ffd700;">金币（光泽效果）</p>
+            <div class="code-block small">
+<span class="cmt"># 外圈金色</span>
+<span class="fn">pygame.draw.circle</span>(<span class="var">screen</span>, <span class="var">GOLD</span>, <span class="var">center</span>, <span class="var">r</span>)
+<span class="cmt"># 内圈亮色（光泽）</span>
+<span class="fn">pygame.draw.circle</span>(<span class="var">screen</span>, <span class="var">LIGHT_YELLOW</span>, <span class="var">center</span>, <span class="var">r</span><span class="op">-</span><span class="num">4</span>)</div>
+        </div>
+    </div>
+    <div class="two-col" style="margin-top:20px;">
+        <div class="content-box">
+            <p class="content-text big" style="color:#ffd700;">终点（菱形旗帜）</p>
+            <div class="code-block small">
+<span class="cmt"># 菱形 = 四个顶点</span>
+<span class="var">points</span> = [(<span class="var">cx</span>, <span class="var">cy</span><span class="op">-</span><span class="var">s</span>), (<span class="var">cx</span><span class="op">+</span><span class="var">s</span>, <span class="var">cy</span>),
+          (<span class="var">cx</span>, <span class="var">cy</span><span class="op">+</span><span class="var">s</span>), (<span class="var">cx</span><span class="op">-</span><span class="var">s</span>, <span class="var">cy</span>)]
+<span class="fn">pygame.draw.polygon</span>(<span class="var">screen</span>, <span class="var">GREEN</span>, <span class="var">points</span>)</div>
+        </div>
+        <div class="content-box">
+            <p class="content-text big" style="color:#ffd700;">玩家（可爱角色）</p>
+            <div class="code-block small">
+<span class="cmt"># 圆角矩形身体</span>
+<span class="fn">pygame.draw.rect</span>(<span class="var">screen</span>, <span class="var">BLUE</span>, <span class="var">body</span>, <span class="var">border_radius</span><span class="op">=</span><span class="num">8</span>)
+<span class="cmt"># 眼睛（白色圆点+黑色瞳孔）</span>
+<span class="fn">pygame.draw.circle</span>(<span class="var">screen</span>, <span class="var">WHITE</span>, ...)
+<span class="cmt"># 嘴巴（弧线）</span>
+<span class="fn">pygame.draw.arc</span>(<span class="var">screen</span>, <span class="var">BLACK</span>, ...)</div>
+        </div>
+    </div>
+</div>
+
+<!-- ============ 第10页：课堂练习 ============ -->
+<div class="slide">
+    <div class="slide-title">✏️ 课堂练习（25分钟）</div>
+
+    <div class="slide-section">基础任务（15分钟）</div>
+    <div class="content-box">
+        <ul class="feature-list">
+            <li>地图中添加<strong>终点</strong>(2)和<strong>金币</strong>(3)</li>
+            <li>补全 <code>move_player</code> 中的<strong>金币收集逻辑</strong></li>
+            <li>实现<strong>步数统计</strong>和<strong>状态栏显示</strong></li>
+            <li>到达终点弹出<strong>胜利画面</strong></li>
+        </ul>
+    </div>
+
+    <div class="slide-section">挑战任务（10分钟）</div>
+    <div class="content-box">
+        <ul class="feature-list">
+            <li><strong>自定义迷宫地图</strong>：至少8枚金币、3条死路</li>
+            <li><strong>加分项（选做）：</strong></li>
+            <ul style="font-size:24px; line-height:2; padding-left:30px;">
+                <li>按 R 键重新开始游戏</li>
+                <li>给胜利画面加<strong>星级评价</strong>（步数越少星星越多）</li>
+                <li>尝试修改<strong>颜色主题</strong>（暗黑风/森林风）</li>
+                <li>添加吃到金币的打印提示</li>
+            </ul>
+        </ul>
+    </div>
+</div>
+
+<!-- ============ 第11页：常见错误 ============ -->
+<div class="slide">
+    <div class="slide-title">⚠️ 常见问题 & 排查</div>
+    <table class="info-table">
+        <tr><th>问题现象</th><th>可能原因</th><th>解决方法</th></tr>
+        <tr>
+            <td>金币吃了还在原地</td>
+            <td>没有写 <code>MAZE[y][x] = 0</code></td>
+            <td>在收集逻辑中加上这一行</td>
+        </tr>
+        <tr>
+            <td>步数撞墙也+1</td>
+            <td>steps+1写在移动检测之前</td>
+            <td>把 steps+=1 移到 can_move 之后</td>
+        </tr>
+        <tr>
+            <td>中文不显示</td>
+            <td>默认字体不支持中文</td>
+            <td>用 <code>SysFont("simhei", size)</code></td>
+        </tr>
+        <tr>
+            <td>胜利后还能移动</td>
+            <td>按键处理没加 <code>if not won</code></td>
+            <td>在 KEYDOWN 中加 won 判断</td>
+        </tr>
+        <tr>
+            <td>胜利画面不显示</td>
+            <td>绘制顺序不对</td>
+            <td>draw_win_screen() 放在最后调用</td>
+        </tr>
+        <tr>
+            <td>起点标记消失了</td>
+            <td>MAZE 被修改，没保存原始副本</td>
+            <td>用 ORIGINAL_MAZE 深拷贝一份</td>
+        </tr>
+    </table>
+</div>
+
+<!-- ============ 第12页：知识总结 ============ -->
+<div class="slide">
+    <div class="slide-title">📝 知识总结</div>
+    <div class="two-col">
+        <div>
+            <div class="slide-section">本节课新知识</div>
+            <ul class="feature-list">
+                <li><strong>地图编码扩展</strong>：0-4数字编码设计</li>
+                <li><strong>收集系统</strong>：拾取→加分→原地消失</li>
+                <li><strong>步数统计</strong>：变量累加+实时渲染</li>
+                <li><strong>胜利画面</strong>：条件判定+遮罩+数据展示</li>
+                <li><strong>Surface绘制</strong>：rect/circle/polygon/arc</li>
+            </ul>
+        </div>
+        <div>
+            <div class="slide-section">编程思维</div>
+            <ul class="feature-list">
+                <li><strong>数据驱动</strong>：改数字 = 改地图</li>
+                <li><strong>状态管理</strong>：游玩中/已胜利</li>
+                <li><strong>代码复用</strong>：can_move 完全不变</li>
+                <li><strong>抽象编码</strong>：数字代表游戏元素</li>
+            </ul>
+        </div>
+    </div>
+    <div class="highlight-box" style="margin-top:30px; text-align:center;">
+        <strong>下节课预告：第19节"数字会合并"</strong> —— 2048游戏<br>
+        二维列表 → 4x4棋盘 | 相同数字合并 | 分数系统升级
+    </div>
+</div>
+
+</div><!-- /slides-container -->
+
+<!-- 页面指示器 -->
+<div id="page-indicator"></div>
+<div id="nav-hint">← → 方向键翻页</div>
+
+<script>
+// ========== 幻灯片导航逻辑 ==========
+const slides = document.querySelectorAll('.slide');
+const totalSlides = slides.length;
+let currentSlide = 0;
+
+function showSlide(index) {
+    // 循环边界
+    if (index < 0) index = 0;
+    if (index >= totalSlides) index = totalSlides - 1;
+
+    slides.forEach((s, i) => s.classList.toggle('active', i === index));
+    currentSlide = index;
+
+    // 更新页面指示器
+    document.getElementById('page-indicator').textContent =
+        `${currentSlide + 1} / ${totalSlides}`;
+}
+
+// 键盘翻页
+document.addEventListener('keydown', (e) => {
+    if (e.key === 'ArrowRight' || e.key === 'ArrowDown' || e.key === ' ') {
+        e.preventDefault();
+        showSlide(currentSlide + 1);
+    } else if (e.key === 'ArrowLeft' || e.key === 'ArrowUp') {
+        e.preventDefault();
+        showSlide(currentSlide - 1);
+    } else if (e.key === 'Home') {
+        e.preventDefault();
+        showSlide(0);
+    } else if (e.key === 'End') {
+        e.preventDefault();
+        showSlide(totalSlides - 1);
+    }
+});
+
+// 触摸滑动支持（移动端/平板）
+let touchStartX = 0;
+let touchStartY = 0;
+document.addEventListener('touchstart', (e) => {
+    touchStartX = e.touches[0].clientX;
+    touchStartY = e.touches[0].clientY;
+});
+document.addEventListener('touchend', (e) => {
+    const dx = e.changedTouches[0].clientX - touchStartX;
+    const dy = e.changedTouches[0].clientY - touchStartY;
+    if (Math.abs(dx) > Math.abs(dy)) {
+        if (dx > 50) showSlide(currentSlide - 1);
+        else if (dx < -50) showSlide(currentSlide + 1);
+    }
+});
+
+// 初始化
+showSlide(0);
+</script>
+
+</body>
+</html>

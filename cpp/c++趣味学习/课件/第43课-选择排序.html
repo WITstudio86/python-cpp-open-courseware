@@ -1,0 +1,291 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>第43课：快刀斩乱麻——选择排序</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            font-family: 'PingFang SC', 'Microsoft YaHei', sans-serif;
+            background: linear-gradient(135deg, #a18cd1 0%, #fbc2eb 100%);
+            min-height: 100vh;
+            display: flex; justify-content: center; align-items: center;
+        }
+        .slides-container {
+            width: 90%; max-width: 900px; min-height: 550px;
+            background: white; border-radius: 25px; padding: 40px;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+            position: relative;
+        }
+        .slide { display: none; animation: fadeIn 0.5s; }
+        .slide.active { display: block; }
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
+        h1 { color: #6c3fa0; font-size: 2.2em; margin-bottom: 20px; }
+        h2 { color: #7c4dff; font-size: 1.8em; margin-bottom: 15px; }
+        h3 { color: #2c7a4a; font-size: 1.4em; margin: 15px 0 10px; }
+        p, li { font-size: 1.15em; line-height: 1.8; color: #333; }
+        ul { padding-left: 30px; margin: 10px 0; }
+        ol { padding-left: 30px; margin: 10px 0; }
+        li { margin-bottom: 5px; }
+        .code-block {
+            background: #1e1e2e; color: #cdd6f4; padding: 20px;
+            border-radius: 12px; font-family: 'Courier New', monospace;
+            font-size: 0.9em; line-height: 1.6; overflow-x: auto;
+            margin: 15px 0; white-space: pre-wrap; word-break: break-all;
+        }
+        .code-block .keyword { color: #cba6f7; }
+        .code-block .string { color: #a6e3a1; }
+        .code-block .comment { color: #6c7086; font-style: italic; }
+        .code-block .number { color: #fab387; }
+        .nav-buttons {
+            position: absolute; bottom: 20px; left: 40px; right: 40px;
+            display: flex; justify-content: space-between;
+        }
+        .nav-btn {
+            background: linear-gradient(135deg, #a18cd1, #fbc2eb);
+            color: white; border: none; padding: 12px 30px;
+            border-radius: 30px; font-size: 1.1em; cursor: pointer;
+            transition: transform 0.2s, box-shadow 0.2s;
+            font-family: 'PingFang SC', 'Microsoft YaHei', sans-serif;
+        }
+        .nav-btn:hover { transform: scale(1.05); box-shadow: 0 5px 20px rgba(161,140,209,0.4); }
+        .nav-btn:disabled { opacity: 0.4; cursor: default; transform: none; }
+        .page-indicator { font-size: 1.1em; color: #6c3fa0; align-self: center; }
+        .emoji-big { font-size: 3em; text-align: center; display: block; margin: 15px 0; }
+        .badge { display: inline-block; background: #ede7f6; color: #6c3fa0; padding: 5px 15px; border-radius: 20px; font-size: 0.9em; margin: 3px; }
+        table { width: 100%; border-collapse: collapse; margin: 15px 0; }
+        th, td { border: 2px solid #ddd; padding: 10px; text-align: left; }
+        th { background: #a18cd1; color: white; }
+        .highlight-box { background: #fff3cd; border-left: 5px solid #ffc107; padding: 15px; border-radius: 8px; margin: 15px 0; }
+        .tip-box { background: #d4edda; border-left: 5px solid #28a745; padding: 15px; border-radius: 8px; margin: 15px 0; }
+        .step-box { background: #e8eaf6; border-left: 5px solid #7c4dff; padding: 12px 15px; border-radius: 8px; margin: 8px 0; }
+        .compare-table td:first-child { font-weight: bold; width: 20%; }
+        @media (max-width: 600px) {
+            .slides-container { padding: 25px; }
+            h1 { font-size: 1.5em; }
+            .code-block { font-size: 0.7em; }
+        }
+    </style>
+</head>
+<body>
+    <div class="slides-container">
+        <!-- ===== Slide 1: Title Slide ===== -->
+        <div class="slide active" id="slide1">
+            <span class="emoji-big">🎯</span>
+            <h1>第43课：快刀斩乱麻——选择排序</h1>
+            <p style="text-align:center; color:#666;">进阶阶段 | 课时：45分钟</p>
+            <p style="text-align:center; margin-top:20px; font-size:1.3em;">⚡ 一眼挑出最小的 ⚡</p>
+            <div style="text-align:center; margin-top:30px;">
+                <span class="badge">找最值</span>
+                <span class="badge">交换归位</span>
+                <span class="badge">n-1轮</span>
+                <span class="badge">减少交换</span>
+            </div>
+        </div>
+
+        <!-- ===== Slide 2: Learning Objectives ===== -->
+        <div class="slide" id="slide2">
+            <h2>🎯 学习目标</h2>
+            <ul>
+                <li>理解<strong>选择排序的基本思想</strong>——"找最值然后交换"，就像从筐里挑最小的苹果</li>
+                <li>掌握选择排序的<strong>代码实现</strong>：外层控制轮次，内层找最值下标</li>
+                <li>理解<strong>"记录最小下标"的技巧</strong>，知道为什么不能直接交换</li>
+                <li>能够<strong>比较选择排序和冒泡排序</strong>的异同，理解为什么选择排序交换更少</li>
+            </ul>
+            <div class="tip-box" style="margin-top:25px;">
+                <strong>💡 想一想：</strong><br>
+                你有一筐大小不一的苹果，要从小到大排列。你会每次挑出最小的那个，还是每次都把相邻的两个苹果比较交换？哪种方法更快？
+            </div>
+        </div>
+
+        <!-- ===== Slide 3: Core Knowledge ===== -->
+        <div class="slide" id="slide3">
+            <h2>📖 什么是选择排序？</h2>
+            <p>选择排序的核心：<strong>数组分成"已排序区"和"未排序区"，每轮从未排序区中选出最小的元素，放到已排序区的末尾。</strong></p>
+
+            <h3>算法步骤（从小到大）</h3>
+            <div class="step-box">
+                <strong>第①步：</strong>从 arr[0] 到 arr[n-1] 中，找到最小元素的下标 minIndex
+            </div>
+            <div class="step-box">
+                <strong>第②步：</strong>将 arr[minIndex] 与 arr[0] 交换 —— 第 1 个位置排好了！
+            </div>
+            <div class="step-box">
+                <strong>第③步：</strong>从 arr[1] 到 arr[n-1] 中，再找最小元素的下标
+            </div>
+            <div class="step-box">
+                <strong>第④步：</strong>将 arr[minIndex] 与 arr[1] 交换 —— 第 2 个位置排好了！
+            </div>
+            <div class="step-box">
+                <strong>重复以上……</strong>直到第 n-1 个位置也排好。最后一个元素自动归位！
+            </div>
+
+            <h3>与冒泡排序的区别</h3>
+            <table class="compare-table">
+                <tr><th>比较维度</th><th>冒泡排序 🫧</th><th>选择排序 ⚡</th></tr>
+                <tr><td>核心操作</td><td>相邻元素两两比较并交换</td><td>先找最值，再一次性交换</td></tr>
+                <tr><td>每轮交换次数</td><td>可能很多次</td><td>最多 1 次</td></tr>
+                <tr><td>总交换次数</td><td>最多约 n²/2 次</td><td>最多 n-1 次</td></tr>
+                <tr><td>比喻</td><td>像气泡慢慢冒上来</td><td>像快刀一下子切到位</td></tr>
+            </table>
+
+            <div class="highlight-box">
+                <strong>🔑 关键技巧：记录最小值的下标</strong><br>
+                在内层循环中，我们<strong>不直接交换</strong>，而是用一个变量 <code>minIndex</code> 记录当前找到的最小值的下标。等内层循环结束后，再把 arr[i] 和 arr[minIndex] 交换。<br>
+                这样做的好处是：每轮只做 1 次交换，效率最高！
+            </div>
+        </div>
+
+        <!-- ===== Slide 4: Example Code ===== -->
+        <div class="slide" id="slide4">
+            <h2>💻 选择排序代码（从小到大）</h2>
+            <div class="code-block">// 选择排序：从小到大排列
+#include &lt;iostream&gt;
+using namespace std;
+
+int main() {
+    int arr[] = {64, 25, 12, 22, 11};
+    int n = 5;
+
+    // 外层循环：控制已排序区边界，只需 n-1 轮
+    for (int i = 0; i &lt; n - 1; i++) {
+        int minIndex = i;  // 假设第 i 个最小
+
+        // 内层循环：在未排序区中找真正的最小值
+        for (int j = i + 1; j &lt; n; j++) {
+            if (arr[j] &lt; arr[minIndex]) {
+                minIndex = j;  // 更新最小下标
+            }
+        }
+
+        // 将最小值交换到已经排序区的末尾
+        if (minIndex != i) {
+            int temp = arr[i];
+            arr[i] = arr[minIndex];
+            arr[minIndex] = temp;
+        }
+    }
+
+    // 输出结果
+    cout &lt;&lt; "排序结果：";
+    for (int i = 0; i &lt; n; i++) {
+        cout &lt;&lt; arr[i] &lt;&lt; " ";
+    }  // 输出：11 12 22 25 64
+    return 0;
+}</div>
+
+            <h3>⚡ 从大到小排列——只需改一个符号！</h3>
+            <div class="code-block">// 把内层 if 中的 &lt; 改成 &gt; 即可！
+for (int i = 0; i &lt; n - 1; i++) {
+    int maxIndex = i;
+    for (int j = i + 1; j &lt; n; j++) {
+        if (arr[j] &gt; arr[maxIndex]) {  // ← 这里改成了 &gt;
+            maxIndex = j;
+        }
+    }
+    if (maxIndex != i) {
+        swap(arr[i], arr[maxIndex]);
+    }
+}</div>
+
+            <div class="tip-box">
+                <strong>✅ 记忆口诀：</strong><br>
+                外层轮次 i 开路，内层遍历找最小；<br>
+                minIndex 记位置，一轮只换一次位！
+            </div>
+        </div>
+
+        <!-- ===== Slide 5: Practice ===== -->
+        <div class="slide" id="slide5">
+            <h2>🎮 趣味练习</h2>
+
+            <h3>练习1：手动模拟 🔍</h3>
+            <p>给定数组 <code>[29, 10, 14, 37, 13]</code>，手动模拟选择排序（从小到大）的每一轮过程，写出每轮排序后的数组。</p>
+            <div class="tip-box">
+                <strong>✅ 答案：</strong><br>
+                第1轮：10, 29, 14, 37, 13（最小10，与29交换）<br>
+                第2轮：10, 13, 14, 37, 29（最小13，与29交换）<br>
+                第3轮：10, 13, 14, 37, 29（14已在正确位置）<br>
+                第4轮：10, 13, 14, 29, 37（最小29，与37交换）
+            </div>
+
+            <h3>练习2：代码找茬 🐛</h3>
+            <p>下面这段选择排序代码有一个错误，你能找到吗？</p>
+            <div class="code-block">for (int i = 0; i &lt; n; i++) {       // ← 这里有问题！
+    int minIndex = i;
+    for (int j = i + 1; j &lt; n; j++) {
+        if (arr[j] &lt; arr[minIndex])
+            minIndex = j;
+    }
+    int temp = arr[i];
+    arr[i] = arr[minIndex];
+    arr[minIndex] = temp;
+}</div>
+            <div class="highlight-box">
+                <strong>🐛 错误：</strong>外层循环应该写 <code>i &lt; n - 1</code>，而不是 <code>i &lt; n</code>。<br>
+                因为当 i = n-1 时，只剩下最后一个元素，它自然已经在正确位置了！写成 i &lt; n 会让程序多做一轮无用的循环。
+            </div>
+
+            <h3>挑战任务 🏆</h3>
+            <p><strong>排序算法大比拼：</strong>随机生成10个整数（1~100），分别用<strong>冒泡排序</strong>和<strong>选择排序</strong>排序，统计各自的<strong>比较次数</strong>和<strong>交换次数</strong>。分析为什么选择排序的交换次数更少？</p>
+            <div class="tip-box">
+                <strong>💡 提示：</strong>在程序里加两个计数器变量 <code>compareCount</code> 和 <code>swapCount</code>，每次比较和交换时各+1，最后输出看结果！
+            </div>
+        </div>
+
+        <!-- ===== Slide 6: Summary ===== -->
+        <div class="slide" id="slide6">
+            <h2>📝 本课小结</h2>
+            <ul>
+                <li><strong>核心思想：</strong>每轮"找最值 → 交换归位"，像挑苹果一样从小到大排列</li>
+                <li><strong>代码结构：</strong>外层循环控制轮次（n-1轮），内层循环找最值下标（从 i+1 开始）</li>
+                <li><strong>关键技巧：</strong>用 <code>minIndex</code> 记录最小值的下标，循环结束后再交换——每轮最多只交换 1 次</li>
+                <li><strong>与冒泡排序的区别：</strong>冒泡排序每轮可能交换多次，选择排序每轮最多只交换 1 次，所以选择排序的<strong>交换次数更少</strong></li>
+                <li><strong>方向切换：</strong>从小到大用 <code>arr[j] &lt; arr[minIndex]</code>，从大到小用 <code>arr[j] &gt; arr[maxIndex]</code></li>
+            </ul>
+
+            <div class="highlight-box" style="margin-top:20px;">
+                <strong>🔑 记住口诀：</strong><br>
+                选择排序快刀斩，每轮挑出最值来；<br>
+                下标先记不着急，一轮一次交换好；<br>
+                冒泡慢慢往上冒，选择一刀切到位；<br>
+                n减一轮就排好，从小到大真巧妙！
+            </div>
+            <p style="text-align:center; margin-top:20px; font-size:1.3em;">🎉 下一课预告：插入排序——像整理扑克牌一样排序</p>
+        </div>
+
+        <!-- Navigation -->
+        <div class="nav-buttons">
+            <button class="nav-btn" onclick="prevSlide()">◀ 上一页</button>
+            <span class="page-indicator" id="pageIndicator">1 / 6</span>
+            <button class="nav-btn" onclick="nextSlide()">下一页 ▶</button>
+        </div>
+    </div>
+
+    <script>
+        let currentSlide = 0;
+        const slides = document.querySelectorAll('.slide');
+        const totalSlides = slides.length;
+        const indicator = document.getElementById('pageIndicator');
+
+        function showSlide(n) {
+            slides[currentSlide].classList.remove('active');
+            currentSlide = (n + totalSlides) % totalSlides;
+            slides[currentSlide].classList.add('active');
+            indicator.textContent = (currentSlide + 1) + ' / ' + totalSlides;
+            document.querySelectorAll('.nav-btn')[0].disabled = currentSlide === 0;
+            document.querySelectorAll('.nav-btn')[1].disabled = currentSlide === totalSlides - 1;
+        }
+        function nextSlide() { showSlide(currentSlide + 1); }
+        function prevSlide() { showSlide(currentSlide - 1); }
+
+        document.addEventListener('keydown', function(e) {
+            if (e.key === 'ArrowRight' || e.key === ' ') { e.preventDefault(); nextSlide(); }
+            else if (e.key === 'ArrowLeft') { e.preventDefault(); prevSlide(); }
+        });
+
+        indicator.textContent = (currentSlide + 1) + ' / ' + totalSlides;
+    </script>
+</body>
+</html>

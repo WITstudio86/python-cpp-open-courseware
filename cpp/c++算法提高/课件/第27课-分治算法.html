@@ -1,0 +1,992 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>第27课 分治算法——化整为零</title>
+<style>
+  /* ============================================================
+     RESET & BASE
+     ============================================================ */
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  :root {
+    --bg-primary:   #0f0f1a;
+    --bg-secondary: #1a1a2e;
+    --bg-tertiary:  #25253e;
+    --bg-card:      #16213e;
+    --text-primary: #eaeaea;
+    --text-secondary: #a0a0b8;
+    --text-muted:   #6a6a82;
+    --accent:       #e94560;
+    --accent-light: #f06278;
+    --accent-dark:  #c23152;
+    --green:        #50fa7b;
+    --blue:         #8be9fd;
+    --yellow:       #f1fa8c;
+    --purple:       #bd93f9;
+    --orange:       #ffb86c;
+    --cyan:         #8be9fd;
+    --pink:         #ff79c6;
+    --radius:       12px;
+    --radius-sm:    8px;
+    --transition:   0.4s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+    --shadow:       0 8px 32px rgba(0, 0, 0, 0.4);
+    --font-mono:    'SF Mono', 'Fira Code', 'Consolas', 'Monaco', 'Courier New', monospace;
+    --font-sans:    'PingFang SC', 'Microsoft YaHei', 'Hiragino Sans GB', 'Noto Sans SC', sans-serif;
+  }
+
+  html, body {
+    height: 100%; width: 100%;
+    font-family: var(--font-sans);
+    background: var(--bg-primary);
+    color: var(--text-primary);
+    overflow: hidden;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+  }
+
+  /* ============================================================
+     SLIDE CONTAINER
+     ============================================================ */
+  .slideshow {
+    width: 100%; height: 100vh;
+    position: relative;
+    overflow: hidden;
+  }
+
+  .slide {
+    position: absolute;
+    top: 0; left: 0;
+    width: 100%; height: 100%;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 60px 80px;
+    opacity: 0;
+    transform: translateX(60px);
+    pointer-events: none;
+    transition: opacity var(--transition), transform var(--transition);
+  }
+
+  .slide.active {
+    opacity: 1;
+    transform: translateX(0);
+    pointer-events: auto;
+    z-index: 10;
+  }
+
+  .slide.exit-left {
+    opacity: 0;
+    transform: translateX(-60px);
+  }
+
+  /* ============================================================
+     SLIDE INNER LAYOUT
+     ============================================================ */
+  .slide-inner {
+    width: 100%; max-width: 1100px;
+    display: flex;
+    flex-direction: column;
+    gap: 32px;
+  }
+
+  .slide-title {
+    font-size: 2.4rem;
+    font-weight: 700;
+    color: var(--accent);
+    letter-spacing: 0.02em;
+    border-left: 4px solid var(--accent);
+    padding-left: 20px;
+    line-height: 1.3;
+  }
+
+  .slide-subtitle {
+    font-size: 1.15rem;
+    color: var(--text-secondary);
+    margin-top: 4px;
+  }
+
+  .slide-body {
+    font-size: 1.1rem;
+    line-height: 1.9;
+    color: var(--text-secondary);
+  }
+
+  .slide-body p { margin-bottom: 16px; }
+
+  /* ============================================================
+     TITLE SLIDE
+     ============================================================ */
+  .title-slide {
+    text-align: center;
+    background: radial-gradient(ellipse at center, rgba(233,69,96,0.08) 0%, transparent 70%);
+  }
+
+  .title-slide .main-title {
+    font-size: 3.8rem;
+    font-weight: 800;
+    color: var(--text-primary);
+    letter-spacing: 0.04em;
+    margin-bottom: 12px;
+  }
+
+  .title-slide .main-title span {
+    color: var(--accent);
+    position: relative;
+  }
+
+  .title-slide .main-title span::after {
+    content: '';
+    position: absolute;
+    bottom: 4px; left: 0; right: 0;
+    height: 6px;
+    background: var(--accent);
+    opacity: 0.25;
+    border-radius: 3px;
+  }
+
+  .title-slide .subtitle-line {
+    font-size: 1.5rem;
+    color: var(--accent);
+    font-weight: 600;
+    margin-bottom: 8px;
+    letter-spacing: 0.06em;
+  }
+
+  .title-slide .desc {
+    font-size: 1.1rem;
+    color: var(--text-secondary);
+    margin-top: 16px;
+    max-width: 600px;
+    margin-left: auto; margin-right: auto;
+  }
+
+  .title-decoration {
+    width: 120px; height: 3px;
+    background: linear-gradient(90deg, transparent, var(--accent), transparent);
+    margin: 32px auto 0;
+    border-radius: 2px;
+  }
+
+  /* ============================================================
+     CARDS
+     ============================================================ */
+  .card-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+    gap: 24px;
+    width: 100%;
+  }
+
+  .card {
+    background: var(--bg-card);
+    border: 1px solid rgba(233,69,96,0.15);
+    border-radius: var(--radius);
+    padding: 28px;
+    transition: border-color var(--transition), box-shadow var(--transition);
+  }
+
+  .card:hover {
+    border-color: rgba(233,69,96,0.4);
+    box-shadow: 0 4px 20px rgba(233,69,96,0.1);
+  }
+
+  .card-icon {
+    font-size: 2.2rem;
+    margin-bottom: 12px;
+    display: block;
+  }
+
+  .card h3 {
+    font-size: 1.3rem;
+    color: var(--accent);
+    margin-bottom: 10px;
+    font-weight: 700;
+  }
+
+  .card p {
+    color: var(--text-secondary);
+    line-height: 1.7;
+    font-size: 0.98rem;
+  }
+
+  /* ============================================================
+     STEP CARDS (for 三步走)
+     ============================================================ */
+  .step-row {
+    display: flex;
+    gap: 24px;
+    width: 100%;
+    flex-wrap: wrap;
+    justify-content: center;
+  }
+
+  .step-card {
+    flex: 1; min-width: 220px; max-width: 320px;
+    background: var(--bg-card);
+    border: 1px solid rgba(233,69,96,0.2);
+    border-radius: var(--radius);
+    padding: 32px 24px;
+    text-align: center;
+    position: relative;
+    transition: border-color var(--transition), transform 0.3s;
+  }
+
+  .step-card:hover { transform: translateY(-4px); }
+
+  .step-number {
+    width: 52px; height: 52px;
+    border-radius: 50%;
+    background: var(--accent);
+    color: #fff;
+    font-size: 1.5rem;
+    font-weight: 800;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin: 0 auto 16px;
+  }
+
+  .step-card h3 {
+    font-size: 1.25rem;
+    color: var(--accent);
+    margin-bottom: 8px;
+  }
+
+  .step-card p {
+    color: var(--text-secondary);
+    line-height: 1.7;
+    font-size: 0.95rem;
+  }
+
+  /* ============================================================
+     CODE BLOCK
+     ============================================================ */
+  .code-block {
+    background: var(--bg-primary);
+    border: 1px solid rgba(233,69,96,0.2);
+    border-radius: var(--radius);
+    padding: 24px 28px;
+    font-family: var(--font-mono);
+    font-size: 0.92rem;
+    line-height: 1.75;
+    overflow-x: auto;
+    white-space: pre;
+    color: var(--text-secondary);
+    position: relative;
+  }
+
+  .code-block::before {
+    content: 'C++';
+    position: absolute;
+    top: 10px; right: 16px;
+    font-size: 0.7rem;
+    font-family: var(--font-sans);
+    color: var(--accent);
+    opacity: 0.6;
+    letter-spacing: 0.1em;
+  }
+
+  /* syntax highlighting tokens */
+  .kw  { color: var(--pink);   font-weight: 600; } /* keyword */
+  .fn  { color: var(--blue);   }                  /* function name */
+  .ty  { color: var(--cyan);   }                  /* type */
+  .str { color: var(--yellow); }                  /* string */
+  .num { color: var(--purple); }                  /* number */
+  .cm  { color: var(--text-muted); font-style: italic; } /* comment */
+  .op  { color: var(--pink);   }                  /* operator */
+  .pp  { color: var(--accent); }                  /* preprocessor */
+
+  /* ============================================================
+     ASCII ART / DIAGRAM
+     ============================================================ */
+  .ascii-box {
+    background: var(--bg-primary);
+    border: 1px solid rgba(233,69,96,0.2);
+    border-radius: var(--radius);
+    padding: 24px 28px;
+    font-family: var(--font-mono);
+    font-size: 0.9rem;
+    line-height: 1.6;
+    color: var(--blue);
+    overflow-x: auto;
+    white-space: pre;
+    text-align: center;
+  }
+
+  /* ============================================================
+     HIGHLIGHT BOX
+     ============================================================ */
+  .highlight-box {
+    background: rgba(233,69,96,0.08);
+    border: 1px solid rgba(233,69,96,0.3);
+    border-left: 4px solid var(--accent);
+    border-radius: 0 var(--radius-sm) var(--radius-sm) 0;
+    padding: 18px 24px;
+    margin: 12px 0;
+    color: var(--accent-light);
+    font-weight: 600;
+    font-size: 1rem;
+  }
+
+  /* ============================================================
+     TWO-COLUMN LAYOUT
+     ============================================================ */
+  .two-col {
+    display: flex;
+    gap: 40px;
+    width: 100%;
+    align-items: flex-start;
+  }
+
+  .two-col > * { flex: 1; min-width: 0; }
+
+  /* ============================================================
+     TAG / BADGE
+     ============================================================ */
+  .tag {
+    display: inline-block;
+    background: rgba(233,69,96,0.15);
+    color: var(--accent-light);
+    font-size: 0.85rem;
+    font-weight: 600;
+    padding: 4px 14px;
+    border-radius: 100px;
+    margin-right: 8px;
+    margin-bottom: 8px;
+  }
+
+  /* ============================================================
+     TABLE STYLE (for 复杂度)
+     ============================================================ */
+  .info-table {
+    width: 100%;
+    border-collapse: collapse;
+    margin-top: 8px;
+  }
+
+  .info-table th, .info-table td {
+    padding: 12px 18px;
+    text-align: left;
+    border-bottom: 1px solid rgba(233,69,96,0.12);
+  }
+
+  .info-table th {
+    color: var(--accent);
+    font-weight: 700;
+    font-size: 0.95rem;
+    white-space: nowrap;
+  }
+
+  .info-table td {
+    color: var(--text-secondary);
+    font-size: 0.95rem;
+  }
+
+  /* ============================================================
+     NAVIGATION
+     ============================================================ */
+  .nav-bar {
+    position: fixed;
+    bottom: 32px;
+    left: 50%;
+    transform: translateX(-50%);
+    display: flex;
+    align-items: center;
+    gap: 20px;
+    z-index: 100;
+    background: rgba(26,26,46,0.85);
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
+    border: 1px solid rgba(233,69,96,0.2);
+    border-radius: 100px;
+    padding: 8px 24px;
+  }
+
+  .nav-btn {
+    background: none;
+    border: 1px solid rgba(233,69,96,0.3);
+    color: var(--text-primary);
+    font-size: 1rem;
+    padding: 10px 22px;
+    border-radius: 100px;
+    cursor: pointer;
+    font-family: var(--font-sans);
+    font-weight: 600;
+    transition: all 0.3s;
+    letter-spacing: 0.02em;
+  }
+
+  .nav-btn:hover {
+    background: var(--accent);
+    border-color: var(--accent);
+    color: #fff;
+  }
+
+  .nav-btn:disabled {
+    opacity: 0.3;
+    cursor: not-allowed;
+  }
+
+  .nav-btn:disabled:hover {
+    background: none;
+    border-color: rgba(233,69,96,0.3);
+    color: var(--text-primary);
+  }
+
+  .slide-counter {
+    font-size: 0.95rem;
+    color: var(--text-secondary);
+    font-weight: 600;
+    font-variant-numeric: tabular-nums;
+    min-width: 42px;
+    text-align: center;
+  }
+
+  /* ============================================================
+     DOT INDICATORS
+     ============================================================ */
+  .dot-indicators {
+    position: fixed;
+    right: 32px;
+    top: 50%;
+    transform: translateY(-50%);
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    z-index: 100;
+  }
+
+  .dot {
+    width: 10px; height: 10px;
+    border-radius: 50%;
+    background: var(--text-muted);
+    cursor: pointer;
+    transition: all 0.3s;
+  }
+
+  .dot.active {
+    background: var(--accent);
+    box-shadow: 0 0 12px rgba(233,69,96,0.6);
+    transform: scale(1.4);
+  }
+
+  .dot:hover {
+    background: var(--accent-light);
+  }
+
+  /* ============================================================
+     KEYBOARD HINT
+     ============================================================ */
+  .kbd-hint {
+    position: fixed;
+    bottom: 100px;
+    left: 50%;
+    transform: translateX(-50%);
+    font-size: 0.8rem;
+    color: var(--text-muted);
+    z-index: 100;
+    letter-spacing: 0.05em;
+  }
+
+  .kbd {
+    display: inline-block;
+    background: var(--bg-tertiary);
+    border: 1px solid rgba(233,69,96,0.2);
+    border-radius: 4px;
+    padding: 2px 8px;
+    font-family: var(--font-mono);
+    font-size: 0.75rem;
+    color: var(--accent-light);
+    margin: 0 2px;
+  }
+
+  /* ============================================================
+     RESPONSIVE
+     ============================================================ */
+  @media (max-width: 900px) {
+    .slide { padding: 40px 24px; }
+    .slide-title { font-size: 1.6rem; }
+    .title-slide .main-title { font-size: 2.2rem; }
+    .title-slide .subtitle-line { font-size: 1.1rem; }
+    .two-col { flex-direction: column; gap: 24px; }
+    .step-row { flex-direction: column; align-items: center; }
+    .step-card { max-width: 100%; }
+    .card-grid { grid-template-columns: 1fr; }
+    .dot-indicators { display: none; }
+    .code-block { font-size: 0.78rem; padding: 18px 16px; }
+    .ascii-box { font-size: 0.7rem; padding: 18px 16px; }
+    .nav-bar { bottom: 16px; gap: 10px; padding: 6px 16px; }
+    .nav-btn { padding: 8px 16px; font-size: 0.9rem; }
+    .kbd-hint { bottom: 80px; }
+  }
+
+  @media (max-width: 500px) {
+    .slide { padding: 24px 16px; }
+    .slide-title { font-size: 1.3rem; }
+    .title-slide .main-title { font-size: 1.7rem; }
+    .slide-body { font-size: 0.9rem; }
+    .info-table th, .info-table td { padding: 8px 10px; font-size: 0.82rem; }
+  }
+</style>
+</head>
+<body>
+
+<div class="slideshow" id="slideshow">
+
+  <!-- ============================================================
+       SLIDE 1 — 标题页
+       ============================================================ -->
+  <div class="slide title-slide active" data-index="0">
+    <div class="slide-inner" style="align-items:center;">
+      <div class="subtitle-line">C++ 算法提高</div>
+      <h1 class="main-title">第27课 <span>分治算法</span></h1>
+      <p style="font-size:1.8rem;font-weight:700;color:var(--accent);margin-top:4px;">化整为零，各个击破</p>
+      <p class="desc">
+        当问题规模过大时，我们将其拆分为若干个规模较小的子问题，
+        递归求解后再合并结果 —— 这就是分治思想的精髓。
+      </p>
+      <div class="title-decoration"></div>
+      <div style="margin-top:28px;display:flex;gap:16px;flex-wrap:wrap;justify-content:center;">
+        <span class="tag">归并排序</span>
+        <span class="tag">快速排序</span>
+        <span class="tag">最大子段和</span>
+        <span class="tag">棋盘覆盖</span>
+        <span class="tag">Strassen 矩阵乘法</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- ============================================================
+       SLIDE 2 — 什么是分治？
+       ============================================================ -->
+  <div class="slide" data-index="1">
+    <div class="slide-inner">
+      <h2 class="slide-title">什么是分治？</h2>
+      <p class="slide-subtitle">Divide and Conquer —— 从生活场景理解算法思想</p>
+      <div class="card-grid">
+        <div class="card">
+          <span class="card-icon">&#x1F3E0;</span>
+          <h3>整理房间</h3>
+          <p>
+            面对凌乱的整个房间，你不会同时收拾所有角落。你会<strong>先分区域</strong>（书桌、衣柜、床铺），
+            逐个整理每个区域，最后房间焕然一新。
+          </p>
+        </div>
+        <div class="card">
+          <span class="card-icon">&#x1F4DA;</span>
+          <h3>班级分组讨论</h3>
+          <p>
+            老师提出一个复杂问题，全班<strong>分成若干小组</strong>分别讨论，
+            各组汇报结论，老师<strong>汇总归纳</strong>得出最终答案。
+          </p>
+        </div>
+        <div class="card">
+          <span class="card-icon">&#x1F4E6;</span>
+          <h3>快递分拣</h3>
+          <p>
+            成千上万的包裹不是逐一处理，而是<strong>按地区层层划分</strong>——先分大区，
+            再分城市，再分街道，逐级细化，高效送达。
+          </p>
+        </div>
+      </div>
+      <div class="highlight-box">
+        核心思想：将原问题分解成若干个<strong>规模较小、相互独立、与原问题形式相同</strong>的子问题，
+        递归求解后再合并。
+      </div>
+    </div>
+  </div>
+
+  <!-- ============================================================
+       SLIDE 3 — 分治三步走
+       ============================================================ -->
+  <div class="slide" data-index="2">
+    <div class="slide-inner">
+      <h2 class="slide-title">分治三步走</h2>
+      <p class="slide-subtitle">分(Divide) — 治(Conquer) — 合(Combine)</p>
+
+      <div class="step-row">
+        <div class="step-card">
+          <div class="step-number">1</div>
+          <h3>分 Divide</h3>
+          <p>
+            将原问题划分为若干个<strong>规模更小</strong>的子问题，
+            子问题与原问题形式相同。
+          </p>
+        </div>
+        <div class="step-card">
+          <div class="step-number">2</div>
+          <h3>治 Conquer</h3>
+          <p>
+            <strong>递归求解</strong>各个子问题。
+            当子问题规模足够小时，直接求解（递归基）。
+          </p>
+        </div>
+        <div class="step-card">
+          <div class="step-number">3</div>
+          <h3>合 Combine</h3>
+          <p>
+            将子问题的解<strong>合并</strong>成原问题的解。
+            这是分治算法的关键——合并的效率决定整体效率。
+          </p>
+        </div>
+      </div>
+
+      <p style="color:var(--accent);font-weight:700;margin-top:8px;font-size:1.05rem;">
+        以归并排序为例 —— 递归树展示：
+      </p>
+
+      <!-- ASCII 递归树 -->
+      <div class="ascii-box">
+            [38, 27, 43, 3, 9, 82, 10]
+                   /          \
+                  /            \
+        [38, 27, 43, 3]      [9, 82, 10]
+            /      \            /      \
+           /        \          /        \
+      [38, 27]    [43, 3]  [9, 82]    [10]
+        /   \      /   \    /   \       |
+    [38]  [27]  [43]  [3] [9] [82]    [10]    ← 分到最小
+        \   /      \   /    \   /       |
+      [27,38]    [3,43]   [9,82]     [10]     ← 开始合
+            \      /           \      /
+        [3,27,38,43]        [9,10,82]          ← 合并有序子数组
+                  \           /
+             [3, 9, 10, 27, 38, 43, 82]       ← 最终有序
+      </div>
+
+      <div class="highlight-box" style="margin-top:12px;">
+        时间复杂度：T(n) = 2T(n/2) + O(n) → <strong>O(n log n)</strong>
+      </div>
+    </div>
+  </div>
+
+  <!-- ============================================================
+       SLIDE 4 — 最大子段和
+       ============================================================ -->
+  <div class="slide" data-index="3">
+    <div class="slide-inner">
+      <h2 class="slide-title">最大子段和问题</h2>
+      <p class="slide-subtitle">Maximum Subarray — 经典的分治应用</p>
+
+      <div class="two-col">
+        <div>
+          <p class="slide-body">
+            <strong style="color:var(--accent);">问题描述：</strong><br>
+            给定一个整数数组 <code style="color:var(--blue);">a[1..n]</code>，
+            求其连续子数组的最大和（允许空子数组，和为 0）。
+          </p>
+
+          <div class="highlight-box" style="margin-top:8px;">
+            例：[-2, 1, -3, 4, -1, 2, 1, -5, 4]<br>
+            → 最大子段和 = <strong>6</strong>（子数组 [4, -1, 2, 1]）
+          </div>
+
+          <p class="slide-body" style="margin-top:16px;">
+            <strong style="color:var(--accent);">分治思路：</strong>
+          </p>
+          <ul style="color:var(--text-secondary);line-height:2;margin-left:20px;">
+            <li><strong>分：</strong>将数组从中间 <code style="color:var(--blue);">mid</code> 分成左右两半</li>
+            <li><strong>治：</strong>递归求左半部分和右半部分的最大子段和</li>
+            <li><strong>合：</strong>考虑<em>跨越中点</em>的情况——从 mid 向左扫描最大后缀和，向右扫描最大前缀和，二者相加</li>
+            <li><strong>答案：</strong>max(左半答案, 右半答案, 跨越中点的答案)</li>
+          </ul>
+        </div>
+
+        <div>
+          <div class="code-block"><span class="cm">// 分治法求最大子段和 O(n log n)</span>
+<span class="kw">int</span> <span class="fn">maxSubArray</span>(<span class="kw">int</span> a[], <span class="kw">int</span> l, <span class="kw">int</span> r) {
+    <span class="kw">if</span> (l == r) <span class="kw">return</span> <span class="fn">max</span>(<span class="num">0</span>, a[l]);  <span class="cm">// 递归基</span>
+
+    <span class="kw">int</span> mid = (l + r) / <span class="num">2</span>;
+
+    <span class="cm">// 1. 递归求左右两边的最大子段和</span>
+    <span class="kw">int</span> leftMax  = <span class="fn">maxSubArray</span>(a, l, mid);
+    <span class="kw">int</span> rightMax = <span class="fn">maxSubArray</span>(a, mid + <span class="num">1</span>, r);
+
+    <span class="cm">// 2. 求跨越中点的最大子段和</span>
+    <span class="kw">int</span> leftSum = <span class="num">0</span>, maxLeft = <span class="num">0</span>;
+    <span class="kw">for</span> (<span class="kw">int</span> i = mid; i >= l; i--) {
+        leftSum += a[i];
+        maxLeft = <span class="fn">max</span>(maxLeft, leftSum);
+    }
+
+    <span class="kw">int</span> rightSum = <span class="num">0</span>, maxRight = <span class="num">0</span>;
+    <span class="kw">for</span> (<span class="kw">int</span> i = mid + <span class="num">1</span>; i &lt;= r; i++) {
+        rightSum += a[i];
+        maxRight = <span class="fn">max</span>(maxRight, rightSum);
+    }
+
+    <span class="kw">int</span> crossMax = maxLeft + maxRight;
+
+    <span class="cm">// 3. 返回三者最大值</span>
+    <span class="kw">return</span> <span class="fn">max</span>({leftMax, rightMax, crossMax});
+}</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ============================================================
+       SLIDE 5 — 棋盘覆盖问题
+       ============================================================ -->
+  <div class="slide" data-index="4">
+    <div class="slide-inner">
+      <h2 class="slide-title">棋盘覆盖问题</h2>
+      <p class="slide-subtitle">L 形骨牌覆盖 2<sup>k</sup> × 2<sup>k</sup> 棋盘 —— 分治的几何应用</p>
+
+      <div class="two-col">
+        <div>
+          <p class="slide-body">
+            <strong style="color:var(--accent);">问题描述：</strong><br>
+            在一个 2<sup>k</sup> × 2<sup>k</sup> 的棋盘上，<strong>恰好有一个方格是特殊方格（缺失）</strong>。
+            用<strong> L 形骨牌</strong>（占据 3 个方格，形状如「&#x2523;」）覆盖所有非特殊方格，
+            骨牌之间不可重叠。
+          </p>
+
+          <div class="highlight-box" style="margin-top:8px;">
+            关键性质：2<sup>k</sup> × 2<sup>k</sup> 棋盘去掉一格后，<br>
+            <strong>一定可以</strong>用 L 形骨牌完全覆盖！
+          </div>
+
+          <p class="slide-body" style="margin-top:16px;">
+            <strong style="color:var(--accent);">分治策略：</strong>
+          </p>
+          <ul style="color:var(--text-secondary);line-height:2;margin-left:20px;">
+            <li>将 2<sup>k</sup>×2<sup>k</sup> 棋盘<strong>分为 4 个</strong> 2<sup>k-1</sup>×2<sup>k-1</sup> 子棋盘</li>
+            <li>特殊格必在其中一个子棋盘中</li>
+            <li>在棋盘<strong>中心放置一个 L 形骨牌</strong>，使其覆盖另外三个子棋盘各一格</li>
+            <li>这样<strong>四个子棋盘各有一个"特殊格"</strong>，递归求解</li>
+          </ul>
+        </div>
+
+        <div>
+          <!-- ASCII 棋盘示意 -->
+          <div class="ascii-box" style="line-height:1.1;font-size:0.75rem;">
+棋盘 (k=2, 4×4, ★=特殊格):
+
+┌───────┬───────┐
+│       │       │        1. 将棋盘分成 4 个 2×2 子棋盘
+│   ★   │       │
+│       │       │        2. 特殊格 ★ 在左上子棋盘
+├───────┼───────┤
+│       │       │        3. 在中心放 L 形骨牌（用数字标记）
+│       │       │           覆盖右下 / 左下 / 右上
+│       │       │           各一格
+└───────┴───────┘
+
+        放置 L 骨牌后的递归：
+
+    ★       ①
+    ①       ①       ← 数字表示 L 骨牌覆盖
+    ─────── ───
+         ①
+    递归处理 4 个 2×2 子棋盘，
+    每个都有恰好一个"特殊格"！
+
+覆盖结果示意 (相同数字 = 同一 L 骨牌):
+
+   2  2  3  3
+   2  1  1  3       5 个 L 形骨牌完美覆盖！
+   4  1  5  5
+   4  4 ★  5       (★ 为原始特殊格)
+          </div>
+
+          <div class="highlight-box" style="margin-top:12px;">
+            时间复杂度递推：T(k) = 4·T(k-1) + O(1)<br>
+            → T(k) = <strong>O(4<sup>k</sup>)</strong> = <strong>O(n<sup>2</sup>)</strong>（n = 2<sup>k</sup> 为边长）
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ============================================================
+       SLIDE 6 — 总结
+       ============================================================ -->
+  <div class="slide" data-index="5">
+    <div class="slide-inner">
+      <h2 class="slide-title">分治算法总结</h2>
+      <p class="slide-subtitle">核心思想回顾 · 复杂度分析 · 适用场景</p>
+
+      <div class="two-col">
+        <div>
+          <h3 style="color:var(--accent);margin-bottom:12px;font-size:1.2rem;">核心思想</h3>
+          <div class="card" style="margin-bottom:20px;">
+            <p style="color:var(--text-secondary);line-height:1.9;">
+              将原问题划分为若干个<strong>规模较小的同类子问题</strong>，
+              递归求解后<strong>合并</strong>子问题的解得到原问题的解。
+            </p>
+          </div>
+
+          <h3 style="color:var(--accent);margin-bottom:12px;font-size:1.2rem;">适用条件</h3>
+          <ul style="color:var(--text-secondary);line-height:2.2;margin-left:20px;">
+            <li>问题可以分解为<strong>形式相同的子问题</strong></li>
+            <li>子问题之间<strong>相互独立</strong>（无公共子问题）</li>
+            <li>子问题的解可以<strong>合并</strong>为原问题的解</li>
+            <li>分解到足够小时可以<strong>直接求解</strong>（递归基）</li>
+          </ul>
+        </div>
+
+        <div>
+          <h3 style="color:var(--accent);margin-bottom:12px;font-size:1.2rem;">经典算法复杂度</h3>
+          <table class="info-table">
+            <thead>
+              <tr><th>算法</th><th>递推式</th><th>时间复杂度</th></tr>
+            </thead>
+            <tbody>
+              <tr><td>归并排序</td><td>T(n)=2T(n/2)+O(n)</td><td>O(n log n)</td></tr>
+              <tr><td>快速排序</td><td>T(n)=2T(n/2)+O(n)</td><td>O(n log n)</td></tr>
+              <tr><td>最大子段和</td><td>T(n)=2T(n/2)+O(n)</td><td>O(n log n)</td></tr>
+              <tr><td>棋盘覆盖</td><td>T(k)=4T(k-1)+O(1)</td><td>O(4<sup>k</sup>)=O(n<sup>2</sup>)</td></tr>
+              <tr><td>Strassen乘法</td><td>T(n)=7T(n/2)+O(n<sup>2</sup>)</td><td>O(n<sup>log₂7</sup>)≈O(n<sup>2.81</sup>)</td></tr>
+              <tr><td>快速幂</td><td>T(n)=T(n/2)+O(1)</td><td>O(log n)</td></tr>
+            </tbody>
+          </table>
+
+          <div class="highlight-box" style="margin-top:16px;">
+            主定理 (Master Theorem)：<br>
+            T(n) = a·T(n/b) + f(n)，根据 f(n) 与 n<sup>log<sub>b</sub>a</sup> 的关系确定复杂度。
+          </div>
+        </div>
+      </div>
+
+      <div style="display:flex;gap:12px;margin-top:8px;flex-wrap:wrap;">
+        <span class="tag">分治 vs 动态规划：子问题独立 vs 子问题重叠</span>
+        <span class="tag">平衡子问题规模是关键</span>
+        <span class="tag">合并步骤决定算法效率</span>
+      </div>
+    </div>
+  </div>
+
+</div><!-- end slideshow -->
+
+<!-- ============================================================
+     NAVIGATION BAR
+     ============================================================ -->
+<div class="nav-bar" id="navBar">
+  <button class="nav-btn" id="prevBtn" title="上一页 (← 键)">&#8592; 上一页</button>
+  <span class="slide-counter" id="counter">1 / 6</span>
+  <button class="nav-btn" id="nextBtn" title="下一页 (→ 键)">下一页 &#8594;</button>
+</div>
+
+<!-- ============================================================
+     DOT INDICATORS
+     ============================================================ -->
+<div class="dot-indicators" id="dots"></div>
+
+<!-- ============================================================
+     KEYBOARD HINT
+     ============================================================ -->
+<div class="kbd-hint">
+  按 <span class="kbd">←</span> <span class="kbd">→</span> 方向键或 <span class="kbd">Space</span> 切换幻灯片
+</div>
+
+<script>
+(function() {
+  const slides    = document.querySelectorAll('.slide');
+  const prevBtn   = document.getElementById('prevBtn');
+  const nextBtn   = document.getElementById('nextBtn');
+  const counterEl = document.getElementById('counter');
+  const dotsContainer = document.getElementById('dots');
+  const total     = slides.length;
+  let current     = 0;
+
+  // --- build dot indicators ---
+  for (let i = 0; i < total; i++) {
+    const dot = document.createElement('div');
+    dot.className = 'dot';
+    if (i === 0) dot.classList.add('active');
+    dot.addEventListener('click', function() { goTo(i); });
+    dotsContainer.appendChild(dot);
+  }
+  const dots = document.querySelectorAll('.dot');
+
+  function updateUI() {
+    // update current slide
+    slides.forEach(function(s, idx) {
+      s.classList.remove('active', 'exit-left');
+      if (idx < current) {
+        s.classList.add('exit-left');
+      } else if (idx === current) {
+        s.classList.add('active');
+      }
+    });
+
+    // update counter
+    counterEl.textContent = (current + 1) + ' / ' + total;
+
+    // update dots
+    dots.forEach(function(d, idx) {
+      d.classList.toggle('active', idx === current);
+    });
+
+    // update button states
+    prevBtn.disabled = (current === 0);
+    nextBtn.disabled = (current === total - 1);
+  }
+
+  function goTo(index) {
+    if (index < 0 || index >= total) return;
+    // direction-aware class removal
+    const old = current;
+    slides.forEach(function(s, idx) {
+      s.classList.remove('active', 'exit-left');
+    });
+
+    // set exit-left on slides before the new current for a smooth visual
+    for (let i = 0; i < index; i++) {
+      slides[i].classList.add('exit-left');
+    }
+
+    current = index;
+    slides[current].classList.add('active');
+    updateUI();
+  }
+
+  function nextSlide() { if (current < total - 1) goTo(current + 1); }
+  function prevSlide() { if (current > 0) goTo(current - 1); }
+
+  // --- event listeners ---
+  prevBtn.addEventListener('click', prevSlide);
+  nextBtn.addEventListener('click', nextSlide);
+
+  document.addEventListener('keydown', function(e) {
+    if (e.key === 'ArrowRight' || e.key === 'ArrowDown' || e.key === ' ') {
+      e.preventDefault();
+      nextSlide();
+    } else if (e.key === 'ArrowLeft' || e.key === 'ArrowUp') {
+      e.preventDefault();
+      prevSlide();
+    } else if (e.key === 'Home') {
+      e.preventDefault();
+      goTo(0);
+    } else if (e.key === 'End') {
+      e.preventDefault();
+      goTo(total - 1);
+    }
+  });
+
+  // --- touch support ---
+  let touchStartX = 0;
+  document.addEventListener('touchstart', function(e) {
+    touchStartX = e.touches[0].clientX;
+  }, { passive: true });
+
+  document.addEventListener('touchend', function(e) {
+    const dx = e.changedTouches[0].clientX - touchStartX;
+    if (Math.abs(dx) > 50) {
+      if (dx < 0) nextSlide();
+      else prevSlide();
+    }
+  });
+
+  // --- initial render ---
+  updateUI();
+})();
+</script>
+
+</body>
+</html>

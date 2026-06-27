@@ -1,0 +1,735 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Pygame 零基础到实践 — 48 节课程总览</title>
+<style>
+/* ===== Reset & Base ===== */
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+html { scroll-behavior: smooth; }
+body {
+  font-family: "PingFang SC", "Microsoft YaHei", "Noto Sans SC", sans-serif;
+  background: #0f0f1a;
+  color: #e0e0e0;
+  min-height: 100vh;
+}
+
+/* ===== Hero Header ===== */
+.hero {
+  background: linear-gradient(135deg, #1a1a2e 0%, #16213e 50%, #0f3460 100%);
+  text-align: center;
+  padding: 3rem 2rem 2.5rem;
+  border-bottom: 3px solid #e94560;
+  position: relative;
+  overflow: hidden;
+}
+.hero::before {
+  content: "";
+  position: absolute;
+  top: -50%; left: -50%;
+  width: 200%; height: 200%;
+  background: radial-gradient(circle at 30% 50%, rgba(233,69,96,0.08) 0%, transparent 50%),
+              radial-gradient(circle at 70% 50%, rgba(78,205,196,0.06) 0%, transparent 50%);
+  animation: heroGlow 8s ease-in-out infinite;
+}
+@keyframes heroGlow {
+  0%, 100% { transform: translate(0, 0); }
+  50% { transform: translate(2%, 1%); }
+}
+.hero h1 {
+  font-size: clamp(2rem, 5vw, 3.5rem);
+  font-weight: 900;
+  color: #fff;
+  position: relative;
+  z-index: 1;
+}
+.hero h1 .accent { color: #e94560; }
+.hero .subtitle {
+  font-size: clamp(1rem, 2.2vw, 1.4rem);
+  color: #a0a0c0;
+  margin-top: 0.8rem;
+  position: relative;
+  z-index: 1;
+}
+.hero .stats {
+  display: flex;
+  justify-content: center;
+  gap: 2rem;
+  margin-top: 1.5rem;
+  flex-wrap: wrap;
+  position: relative;
+  z-index: 1;
+}
+.hero .stat {
+  background: rgba(255,255,255,0.06);
+  border: 1px solid rgba(255,255,255,0.1);
+  border-radius: 12px;
+  padding: 0.6rem 1.4rem;
+  font-size: 0.95rem;
+  color: #c0c0d0;
+}
+.hero .stat strong { color: #4ECDC4; font-size: 1.15rem; }
+
+/* ===== Container ===== */
+.container { max-width: 1100px; margin: 0 auto; padding: 2rem 1.5rem 3rem; }
+
+/* ===== Stage Section ===== */
+.stage {
+  background: #1a1a2e;
+  border-radius: 16px;
+  margin-bottom: 2rem;
+  overflow: hidden;
+  border: 1px solid #2a2a4a;
+  transition: border-color 0.3s;
+}
+.stage:hover { border-color: #4a4a6a; }
+
+.stage-header {
+  padding: 1.2rem 1.8rem;
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  cursor: pointer;
+  user-select: none;
+}
+.stage-header .stage-num {
+  width: 48px; height: 48px;
+  border-radius: 12px;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 1.4rem; font-weight: 900;
+  flex-shrink: 0;
+}
+.stage-header .stage-info { flex: 1; }
+.stage-header .stage-title { font-size: 1.3rem; font-weight: 700; color: #fff; }
+.stage-header .stage-range { font-size: 0.85rem; color: #888; margin-top: 0.2rem; }
+.stage-header .stage-arrow { font-size: 1.2rem; color: #666; transition: transform 0.3s; }
+
+/* Stage color themes */
+.stage-s1 .stage-num { background: #e94560; }
+.stage-s1 .stage-header { border-left: 4px solid #e94560; }
+.stage-s1 .stage-title { color: #e94560; }
+
+.stage-s2 .stage-num { background: #4ECDC4; }
+.stage-s2 .stage-header { border-left: 4px solid #4ECDC4; }
+.stage-s2 .stage-title { color: #4ECDC4; }
+
+.stage-s3 .stage-num { background: #A55EEA; }
+.stage-s3 .stage-header { border-left: 4px solid #A55EEA; }
+.stage-s3 .stage-title { color: #A55EEA; }
+
+.stage-s4 .stage-num { background: #E6A817; }
+.stage-s4 .stage-header { border-left: 4px solid #E6A817; }
+.stage-s4 .stage-title { color: #E6A817; }
+
+/* ===== Stage Body ===== */
+.stage-body { padding: 0 1.8rem 1.5rem; }
+
+/* ===== Project Card ===== */
+.project {
+  background: #22223a;
+  border-radius: 12px;
+  margin-bottom: 0.8rem;
+  overflow: hidden;
+  border: 1px solid #2e2e4e;
+}
+.project:last-child { margin-bottom: 0; }
+.project-header {
+  padding: 0.8rem 1.2rem;
+  display: flex; align-items: center; gap: 0.8rem;
+  background: rgba(255,255,255,0.02);
+}
+.project-header .project-name {
+  font-weight: 700; font-size: 1.05rem; color: #e0e0e0;
+}
+.project-header .difficulty {
+  font-size: 0.8rem; letter-spacing: 1px;
+  margin-left: auto;
+}
+.diff-easy .difficulty { color: #4ECDC4; }
+.diff-medium .difficulty { color: #E6A817; }
+.diff-hard .difficulty { color: #e94560; }
+
+.project-lessons {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+  gap: 0.5rem;
+  padding: 0.6rem 1.2rem 0.9rem;
+}
+
+/* ===== Lesson Link Card ===== */
+.lesson-link {
+  display: flex; align-items: center; gap: 0.7rem;
+  background: #1a1a30;
+  border: 1px solid #2e2e4e;
+  border-radius: 8px;
+  padding: 0.55rem 1rem;
+  text-decoration: none;
+  color: #c0c0d0;
+  transition: all 0.2s;
+}
+.lesson-link:hover {
+  background: #252545;
+  border-color: #4ECDC4;
+  color: #fff;
+  transform: translateX(4px);
+}
+.lesson-link .lesson-num {
+  width: 32px; height: 32px;
+  border-radius: 8px;
+  background: #2a2a4a;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 0.8rem; font-weight: 700;
+  flex-shrink: 0;
+  color: #4ECDC4;
+}
+.lesson-link:hover .lesson-num { background: #4ECDC4; color: #1a1a2e; }
+.lesson-link .lesson-title { font-size: 0.95rem; flex: 1; }
+.lesson-link .lesson-arrow { color: #555; font-size: 0.85rem; transition: color 0.2s; }
+.lesson-link:hover .lesson-arrow { color: #4ECDC4; }
+
+/* ===== Solo lesson (stage 1 & 4) ===== */
+.solo-lessons {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+  gap: 0.5rem;
+}
+
+/* ===== Back to Top ===== */
+.back-to-top {
+  position: fixed; bottom: 2rem; right: 2rem;
+  width: 44px; height: 44px;
+  border-radius: 50%;
+  background: #e94560;
+  color: #fff;
+  border: none;
+  font-size: 1.3rem;
+  cursor: pointer;
+  opacity: 0;
+  transform: translateY(20px);
+  transition: all 0.3s;
+  pointer-events: none;
+  z-index: 100;
+  display: flex; align-items: center; justify-content: center;
+}
+.back-to-top.visible { opacity: 1; transform: translateY(0); pointer-events: auto; }
+.back-to-top:hover { background: #ff6b81; transform: translateY(-3px); }
+
+/* ===== Footer ===== */
+.footer {
+  text-align: center; padding: 2rem;
+  color: #555; font-size: 0.85rem;
+  border-top: 1px solid #1a1a2e;
+}
+.footer a { color: #4ECDC4; text-decoration: none; }
+.footer a:hover { text-decoration: underline; }
+
+/* ===== Responsive ===== */
+@media (max-width: 600px) {
+  .hero .stats { gap: 0.8rem; }
+  .hero .stat { padding: 0.4rem 0.9rem; font-size: 0.8rem; }
+  .stage-header { padding: 1rem 1.2rem; }
+  .stage-body { padding: 0 1rem 1.2rem; }
+  .project-lessons { grid-template-columns: 1fr; }
+  .solo-lessons { grid-template-columns: 1fr; }
+}
+</style>
+</head>
+<body>
+
+<!-- ===== Hero ===== -->
+<header class="hero">
+  <h1>🎮 Pygame <span class="accent">零基础到实践</span></h1>
+  <p class="subtitle">48 节系统课程 · 20 个完整游戏项目 · 覆盖 50+ 知识点</p>
+  <div class="stats">
+    <div class="stat">📚 <strong>48</strong> 节课</div>
+    <div class="stat">🎯 <strong>20</strong> 个游戏项目</div>
+    <div class="stat">⏱️ <strong>60</strong> 分钟/节</div>
+    <div class="stat">👦 <strong>10-15</strong> 岁</div>
+  </div>
+</header>
+
+<!-- ===== Main Content ===== -->
+<div class="container">
+
+  <!-- ============ 阶段一 ============ -->
+  <div class="stage stage-s1">
+    <div class="stage-header" onclick="this.parentElement.classList.toggle('collapsed')">
+      <div class="stage-num">一</div>
+      <div class="stage-info">
+        <div class="stage-title">初识 Pygame</div>
+        <div class="stage-range">第 1-4 节 · 窗口、游戏循环、事件、绘制 — 4 大核心</div>
+      </div>
+      <span class="stage-arrow">▼</span>
+    </div>
+    <div class="stage-body">
+      <div class="solo-lessons">
+        <a class="lesson-link" href="课件/第1节-HelloPygame.html">
+          <span class="lesson-num">1</span>
+          <span class="lesson-title">Hello, Pygame!</span>
+          <span class="lesson-arrow">→</span>
+        </a>
+        <a class="lesson-link" href="课件/第2节-让画面动起来.html">
+          <span class="lesson-num">2</span>
+          <span class="lesson-title">让画面动起来</span>
+          <span class="lesson-arrow">→</span>
+        </a>
+        <a class="lesson-link" href="课件/第3节-键盘是我的遥控器.html">
+          <span class="lesson-num">3</span>
+          <span class="lesson-title">键盘是我的遥控器</span>
+          <span class="lesson-arrow">→</span>
+        </a>
+        <a class="lesson-link" href="课件/第4节-鼠标与图片.html">
+          <span class="lesson-num">4</span>
+          <span class="lesson-title">鼠标与图片</span>
+          <span class="lesson-arrow">→</span>
+        </a>
+      </div>
+    </div>
+  </div>
+
+  <!-- ============ 阶段二：迷你项目群 ============ -->
+  <div class="stage stage-s2">
+    <div class="stage-header" onclick="this.parentElement.classList.toggle('collapsed')">
+      <div class="stage-num">二</div>
+      <div class="stage-info">
+        <div class="stage-title">迷你项目群</div>
+        <div class="stage-range">第 5-24 节 · 10 个迷你项目，知识点逐个引入</div>
+      </div>
+      <span class="stage-arrow">▼</span>
+    </div>
+    <div class="stage-body">
+
+      <!-- 项目1: 弹球消砖块 -->
+      <div class="project diff-easy">
+        <div class="project-header">
+          <span class="project-name">📦 弹球消砖块</span>
+          <span class="difficulty">★★☆☆☆</span>
+        </div>
+        <div class="project-lessons">
+          <a class="lesson-link" href="课件/第5节-会反弹的球.html">
+            <span class="lesson-num">5</span><span class="lesson-title">会反弹的球</span><span class="lesson-arrow">→</span>
+          </a>
+          <a class="lesson-link" href="课件/第6节-砖块消消乐.html">
+            <span class="lesson-num">6</span><span class="lesson-title">砖块消消乐</span><span class="lesson-arrow">→</span>
+          </a>
+        </div>
+      </div>
+
+      <!-- 项目2: 接苹果 -->
+      <div class="project diff-easy">
+        <div class="project-header">
+          <span class="project-name">📦 接苹果</span>
+          <span class="difficulty">★★☆☆☆</span>
+        </div>
+        <div class="project-lessons">
+          <a class="lesson-link" href="课件/第7节-天上掉水果.html">
+            <span class="lesson-num">7</span><span class="lesson-title">天上掉水果</span><span class="lesson-arrow">→</span>
+          </a>
+          <a class="lesson-link" href="课件/第8节-水果升级.html">
+            <span class="lesson-num">8</span><span class="lesson-title">水果升级</span><span class="lesson-arrow">→</span>
+          </a>
+        </div>
+      </div>
+
+      <!-- 项目3: 贪吃蛇 -->
+      <div class="project diff-easy">
+        <div class="project-header">
+          <span class="project-name">📦 贪吃蛇</span>
+          <span class="difficulty">★★☆☆☆</span>
+        </div>
+        <div class="project-lessons">
+          <a class="lesson-link" href="课件/第9节-贪吃的小蛇.html">
+            <span class="lesson-num">9</span><span class="lesson-title">贪吃的小蛇</span><span class="lesson-arrow">→</span>
+          </a>
+          <a class="lesson-link" href="课件/第10节-完整贪吃蛇.html">
+            <span class="lesson-num">10</span><span class="lesson-title">完整贪吃蛇</span><span class="lesson-arrow">→</span>
+          </a>
+        </div>
+      </div>
+
+      <!-- 项目4: 打地鼠 -->
+      <div class="project diff-medium">
+        <div class="project-header">
+          <span class="project-name">📦 打地鼠</span>
+          <span class="difficulty">★★★☆☆</span>
+        </div>
+        <div class="project-lessons">
+          <a class="lesson-link" href="课件/第11节-冒出来的地鼠.html">
+            <span class="lesson-num">11</span><span class="lesson-title">冒出来的地鼠</span><span class="lesson-arrow">→</span>
+          </a>
+          <a class="lesson-link" href="课件/第12节-限时挑战.html">
+            <span class="lesson-num">12</span><span class="lesson-title">限时挑战</span><span class="lesson-arrow">→</span>
+          </a>
+        </div>
+      </div>
+
+      <!-- 项目5: 记忆翻牌 -->
+      <div class="project diff-medium">
+        <div class="project-header">
+          <span class="project-name">📦 记忆翻牌</span>
+          <span class="difficulty">★★★☆☆</span>
+        </div>
+        <div class="project-lessons">
+          <a class="lesson-link" href="课件/第13节-翻开看看.html">
+            <span class="lesson-num">13</span><span class="lesson-title">翻开看看</span><span class="lesson-arrow">→</span>
+          </a>
+          <a class="lesson-link" href="课件/第14节-配对消除.html">
+            <span class="lesson-num">14</span><span class="lesson-title">配对消除</span><span class="lesson-arrow">→</span>
+          </a>
+        </div>
+      </div>
+
+      <!-- 项目6: 飞机大战 -->
+      <div class="project diff-medium">
+        <div class="project-header">
+          <span class="project-name">📦 飞机大战</span>
+          <span class="difficulty">★★★☆☆</span>
+        </div>
+        <div class="project-lessons">
+          <a class="lesson-link" href="课件/第15节-战机起飞.html">
+            <span class="lesson-num">15</span><span class="lesson-title">战机起飞</span><span class="lesson-arrow">→</span>
+          </a>
+          <a class="lesson-link" href="课件/第16节-敌人来袭.html">
+            <span class="lesson-num">16</span><span class="lesson-title">敌人来袭</span><span class="lesson-arrow">→</span>
+          </a>
+        </div>
+      </div>
+
+      <!-- 项目7: 迷宫探索 -->
+      <div class="project diff-medium">
+        <div class="project-header">
+          <span class="project-name">📦 迷宫探索</span>
+          <span class="difficulty">★★★☆☆</span>
+        </div>
+        <div class="project-lessons">
+          <a class="lesson-link" href="课件/第17节-走不出的迷宫.html">
+            <span class="lesson-num">17</span><span class="lesson-title">走不出的迷宫</span><span class="lesson-arrow">→</span>
+          </a>
+          <a class="lesson-link" href="课件/第18节-寻找终点.html">
+            <span class="lesson-num">18</span><span class="lesson-title">寻找终点</span><span class="lesson-arrow">→</span>
+          </a>
+        </div>
+      </div>
+
+      <!-- 项目8: 2048 -->
+      <div class="project diff-hard">
+        <div class="project-header">
+          <span class="project-name">📦 2048</span>
+          <span class="difficulty">★★★★☆</span>
+        </div>
+        <div class="project-lessons">
+          <a class="lesson-link" href="课件/第19节-数字会合并.html">
+            <span class="lesson-num">19</span><span class="lesson-title">数字会合并</span><span class="lesson-arrow">→</span>
+          </a>
+          <a class="lesson-link" href="课件/第20节-完整2048.html">
+            <span class="lesson-num">20</span><span class="lesson-title">完整 2048</span><span class="lesson-arrow">→</span>
+          </a>
+        </div>
+      </div>
+
+      <!-- 项目9: Pong -->
+      <div class="project diff-medium">
+        <div class="project-header">
+          <span class="project-name">📦 乒乓球 Pong</span>
+          <span class="difficulty">★★★☆☆</span>
+        </div>
+        <div class="project-lessons">
+          <a class="lesson-link" href="课件/第21节-双人对战.html">
+            <span class="lesson-num">21</span><span class="lesson-title">双人对战</span><span class="lesson-arrow">→</span>
+          </a>
+          <a class="lesson-link" href="课件/第22节-人机对战.html">
+            <span class="lesson-num">22</span><span class="lesson-title">人机对战</span><span class="lesson-arrow">→</span>
+          </a>
+        </div>
+      </div>
+
+      <!-- 项目10: Flappy Bird -->
+      <div class="project diff-medium">
+        <div class="project-header">
+          <span class="project-name">📦 Flappy Bird</span>
+          <span class="difficulty">★★★☆☆</span>
+        </div>
+        <div class="project-lessons">
+          <a class="lesson-link" href="课件/第23节-扑腾的小鸟.html">
+            <span class="lesson-num">23</span><span class="lesson-title">扑腾的小鸟</span><span class="lesson-arrow">→</span>
+          </a>
+          <a class="lesson-link" href="课件/第24节-水管森林.html">
+            <span class="lesson-num">24</span><span class="lesson-title">水管森林</span><span class="lesson-arrow">→</span>
+          </a>
+        </div>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- ============ 阶段三：进阶项目群 ============ -->
+  <div class="stage stage-s3">
+    <div class="stage-header" onclick="this.parentElement.classList.toggle('collapsed')">
+      <div class="stage-num">三</div>
+      <div class="stage-info">
+        <div class="stage-title">进阶项目群</div>
+        <div class="stage-range">第 25-44 节 · 10 个进阶项目，挑战升级、技巧融合</div>
+      </div>
+      <span class="stage-arrow">▼</span>
+    </div>
+    <div class="stage-body">
+
+      <!-- 项目11: 太空侵略者 -->
+      <div class="project diff-hard">
+        <div class="project-header">
+          <span class="project-name">📦 太空侵略者</span>
+          <span class="difficulty">★★★★☆</span>
+        </div>
+        <div class="project-lessons">
+          <a class="lesson-link" href="课件/第25节-外星人军团.html">
+            <span class="lesson-num">25</span><span class="lesson-title">外星人军团</span><span class="lesson-arrow">→</span>
+          </a>
+          <a class="lesson-link" href="课件/第26节-保卫地球.html">
+            <span class="lesson-num">26</span><span class="lesson-title">保卫地球</span><span class="lesson-arrow">→</span>
+          </a>
+        </div>
+      </div>
+
+      <!-- 项目12: 泡泡龙 -->
+      <div class="project diff-hard">
+        <div class="project-header">
+          <span class="project-name">📦 泡泡龙</span>
+          <span class="difficulty">★★★★☆</span>
+        </div>
+        <div class="project-lessons">
+          <a class="lesson-link" href="课件/第27节-瞄准发射.html">
+            <span class="lesson-num">27</span><span class="lesson-title">瞄准发射</span><span class="lesson-arrow">→</span>
+          </a>
+          <a class="lesson-link" href="课件/第28节-同色消除.html">
+            <span class="lesson-num">28</span><span class="lesson-title">同色消除</span><span class="lesson-arrow">→</span>
+          </a>
+        </div>
+      </div>
+
+      <!-- 项目13: 塔防 -->
+      <div class="project diff-hard">
+        <div class="project-header">
+          <span class="project-name">📦 塔防</span>
+          <span class="difficulty">★★★★☆</span>
+        </div>
+        <div class="project-lessons">
+          <a class="lesson-link" href="课件/第29节-防御工事.html">
+            <span class="lesson-num">29</span><span class="lesson-title">防御工事</span><span class="lesson-arrow">→</span>
+          </a>
+          <a class="lesson-link" href="课件/第30节-炮塔开火.html">
+            <span class="lesson-num">30</span><span class="lesson-title">炮塔开火</span><span class="lesson-arrow">→</span>
+          </a>
+        </div>
+      </div>
+
+      <!-- 项目14: 弹幕射击 -->
+      <div class="project diff-hard">
+        <div class="project-header">
+          <span class="project-name">📦 弹幕射击</span>
+          <span class="difficulty">★★★★☆</span>
+        </div>
+        <div class="project-lessons">
+          <a class="lesson-link" href="课件/第31节-弹幕来袭.html">
+            <span class="lesson-num">31</span><span class="lesson-title">弹幕来袭</span><span class="lesson-arrow">→</span>
+          </a>
+          <a class="lesson-link" href="课件/第32节-火力全开.html">
+            <span class="lesson-num">32</span><span class="lesson-title">火力全开</span><span class="lesson-arrow">→</span>
+          </a>
+        </div>
+      </div>
+
+      <!-- 项目15: 马里奥风格跳跃 -->
+      <div class="project diff-hard">
+        <div class="project-header">
+          <span class="project-name">📦 马里奥风格跳跃</span>
+          <span class="difficulty">★★★★☆</span>
+        </div>
+        <div class="project-lessons">
+          <a class="lesson-link" href="课件/第33节-跑和跳.html">
+            <span class="lesson-num">33</span><span class="lesson-title">跑和跳</span><span class="lesson-arrow">→</span>
+          </a>
+          <a class="lesson-link" href="课件/第34节-闯关之旅.html">
+            <span class="lesson-num">34</span><span class="lesson-title">闯关之旅</span><span class="lesson-arrow">→</span>
+          </a>
+        </div>
+      </div>
+
+      <!-- 项目16: 特效专题 -->
+      <div class="project diff-hard">
+        <div class="project-header">
+          <span class="project-name">📦 特效专题</span>
+          <span class="difficulty">★★★★☆</span>
+        </div>
+        <div class="project-lessons">
+          <a class="lesson-link" href="课件/第35节-屏幕在抖.html">
+            <span class="lesson-num">35</span><span class="lesson-title">屏幕在抖</span><span class="lesson-arrow">→</span>
+          </a>
+          <a class="lesson-link" href="课件/第36节-特效大赏.html">
+            <span class="lesson-num">36</span><span class="lesson-title">特效大赏</span><span class="lesson-arrow">→</span>
+          </a>
+        </div>
+      </div>
+
+      <!-- 项目17: 赛车跑酷 -->
+      <div class="project diff-medium">
+        <div class="project-header">
+          <span class="project-name">📦 赛车跑酷</span>
+          <span class="difficulty">★★★☆☆</span>
+        </div>
+        <div class="project-lessons">
+          <a class="lesson-link" href="课件/第37节-极速躲避.html">
+            <span class="lesson-num">37</span><span class="lesson-title">极速躲避</span><span class="lesson-arrow">→</span>
+          </a>
+          <a class="lesson-link" href="课件/第38节-收集与道具.html">
+            <span class="lesson-num">38</span><span class="lesson-title">收集与道具</span><span class="lesson-arrow">→</span>
+          </a>
+        </div>
+      </div>
+
+      <!-- 项目18: 俄罗斯方块 -->
+      <div class="project diff-hard">
+        <div class="project-header">
+          <span class="project-name">📦 俄罗斯方块</span>
+          <span class="difficulty">★★★★★</span>
+        </div>
+        <div class="project-lessons">
+          <a class="lesson-link" href="课件/第39节-方块下落.html">
+            <span class="lesson-num">39</span><span class="lesson-title">方块下落</span><span class="lesson-arrow">→</span>
+          </a>
+          <a class="lesson-link" href="课件/第40节-消行与加速.html">
+            <span class="lesson-num">40</span><span class="lesson-title">消行与加速</span><span class="lesson-arrow">→</span>
+          </a>
+        </div>
+      </div>
+
+      <!-- 项目19: 推箱子 -->
+      <div class="project diff-hard">
+        <div class="project-header">
+          <span class="project-name">📦 推箱子</span>
+          <span class="difficulty">★★★★★</span>
+        </div>
+        <div class="project-lessons">
+          <a class="lesson-link" href="课件/第41节-搬箱子.html">
+            <span class="lesson-num">41</span><span class="lesson-title">搬箱子</span><span class="lesson-arrow">→</span>
+          </a>
+          <a class="lesson-link" href="课件/第42节-关卡系统.html">
+            <span class="lesson-num">42</span><span class="lesson-title">关卡系统</span><span class="lesson-arrow">→</span>
+          </a>
+        </div>
+      </div>
+
+      <!-- 项目20: RPG战斗 -->
+      <div class="project diff-hard">
+        <div class="project-header">
+          <span class="project-name">📦 小型 RPG 战斗</span>
+          <span class="difficulty">★★★★★</span>
+        </div>
+        <div class="project-lessons">
+          <a class="lesson-link" href="课件/第43节-回合对战.html">
+            <span class="lesson-num">43</span><span class="lesson-title">回合对战</span><span class="lesson-arrow">→</span>
+          </a>
+          <a class="lesson-link" href="课件/第44节-冒险启程.html">
+            <span class="lesson-num">44</span><span class="lesson-title">冒险启程</span><span class="lesson-arrow">→</span>
+          </a>
+        </div>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- ============ 阶段四：展示与总结 ============ -->
+  <div class="stage stage-s4">
+    <div class="stage-header" onclick="this.parentElement.classList.toggle('collapsed')">
+      <div class="stage-num">四</div>
+      <div class="stage-info">
+        <div class="stage-title">展示与总结</div>
+        <div class="stage-range">第 45-48 节 · 自由创作 + 作品展 + 知识回顾</div>
+      </div>
+      <span class="stage-arrow">▼</span>
+    </div>
+    <div class="stage-body">
+      <div class="solo-lessons">
+        <a class="lesson-link" href="课件/第45节-我的游戏我设计1.html">
+          <span class="lesson-num">45</span>
+          <span class="lesson-title">我的游戏我设计 ①</span>
+          <span class="lesson-arrow">→</span>
+        </a>
+        <a class="lesson-link" href="课件/第46节-打磨我的作品2.html">
+          <span class="lesson-num">46</span>
+          <span class="lesson-title">打磨我的作品 ②</span>
+          <span class="lesson-arrow">→</span>
+        </a>
+        <a class="lesson-link" href="课件/第47节-游戏博览会.html">
+          <span class="lesson-num">47</span>
+          <span class="lesson-title">游戏博览会</span>
+          <span class="lesson-arrow">→</span>
+        </a>
+        <a class="lesson-link" href="课件/第48节-回顾与展望.html">
+          <span class="lesson-num">48</span>
+          <span class="lesson-title">回顾与展望</span>
+          <span class="lesson-arrow">→</span>
+        </a>
+      </div>
+    </div>
+  </div>
+
+</div>
+
+<!-- ===== Back to Top ===== -->
+<button class="back-to-top" id="backToTop" onclick="window.scrollTo({top:0,behavior:'smooth'})" title="回到顶部">↑</button>
+
+<!-- ===== Footer ===== -->
+<footer class="footer">
+  <p>Pygame 零基础到实践 — 48 节系统课程 | 面向 10-15 岁中小学生</p>
+  <p style="margin-top:0.3rem">课程大纲：<a href="Pygame零基础到实践-48节课课程大纲.md" target="_blank">查看完整大纲</a></p>
+</footer>
+
+<script>
+// Collapse/expand animation
+document.querySelectorAll('.stage-header').forEach(header => {
+  header.addEventListener('click', () => {
+    const arrow = header.querySelector('.stage-arrow');
+    const body = header.nextElementSibling;
+    const isCollapsed = header.parentElement.classList.contains('collapsed');
+    if (isCollapsed) {
+      header.parentElement.classList.remove('collapsed');
+      arrow.style.transform = 'rotate(0deg)';
+    } else {
+      header.parentElement.classList.add('collapsed');
+      arrow.style.transform = 'rotate(-90deg)';
+    }
+  });
+});
+
+// Back to top visibility
+const backToTop = document.getElementById('backToTop');
+window.addEventListener('scroll', () => {
+  if (window.scrollY > 400) {
+    backToTop.classList.add('visible');
+  } else {
+    backToTop.classList.remove('visible');
+  }
+});
+
+// Keyboard shortcut: C to collapse/expand all
+document.addEventListener('keydown', (e) => {
+  if (e.key === 'c' && !e.ctrlKey && !e.metaKey && !e.target.closest('a')) {
+    e.preventDefault();
+    const stages = document.querySelectorAll('.stage');
+    const allCollapsed = [...stages].every(s => s.classList.contains('collapsed'));
+    stages.forEach(s => {
+      if (allCollapsed) {
+        s.classList.remove('collapsed');
+        s.querySelector('.stage-arrow').style.transform = 'rotate(0deg)';
+      } else {
+        s.classList.add('collapsed');
+        s.querySelector('.stage-arrow').style.transform = 'rotate(-90deg)';
+      }
+    });
+  }
+});
+</script>
+
+</body>
+</html>

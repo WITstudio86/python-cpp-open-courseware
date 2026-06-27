@@ -1,0 +1,185 @@
+"""
+第15节：战机起飞
+功能：方向键移动飞机、空格键发射子弹、子弹列表管理、碰撞检测
+"""
+import pygame
+import sys
+
+# ==================== 初始化 ====================
+pygame.init()
+WIDTH, HEIGHT = 800, 600
+screen = pygame.display.set_mode((WIDTH, HEIGHT))
+pygame.display.set_caption("第15节 - 战机起飞")
+clock = pygame.time.Clock()
+
+# ==================== 颜色常量 ====================
+BLACK = (5, 5, 25)
+WHITE = (255, 255, 255)
+YELLOW = (255, 255, 0)
+BLUE = (50, 150, 255)
+LIGHT_BLUE = (80, 180, 255)
+RED = (255, 50, 50)
+DARK_RED = (180, 30, 30)
+
+# ==================== 玩家飞机 ====================
+player_width = 50
+player_height = 60
+player_x = WIDTH // 2 - player_width // 2   # 水平居中
+player_y = HEIGHT - player_height - 30       # 靠近底部
+player_speed = 5                             # 移动速度（像素/帧）
+
+# ==================== 子弹系统 ====================
+bullets = []              # 子弹列表，每个元素是 {"x": 坐标, "y": 坐标}
+bullet_width = 6
+bullet_height = 15
+bullet_speed = 8          # 子弹向上飞的速度
+bullet_cooldown = 0       # 冷却计时器（帧）
+COOLDOWN_MAX = 15         # 冷却时间：15帧 ≈ 0.25秒
+
+# ==================== 敌机（简化版，为下节课准备）====================
+enemy_width = 40
+enemy_height = 40
+enemy_x = 300
+enemy_y = 100
+enemy_speed_y = 2         # 敌机上下弹跳速度
+
+# ==================== 得分 ====================
+score = 0
+font = pygame.font.SysFont("simhei", 28)
+
+# ==================== 主循环 ====================
+running = True
+while running:
+    # ---------- 1. 事件处理 ----------
+    for event in pygame.event.get():
+        if event.type == pygame.QUIT:
+            running = False
+
+        # 空格键发射子弹（按下事件，配合冷却避免连发）
+        if event.type == pygame.KEYDOWN:
+            if event.key == pygame.K_SPACE and bullet_cooldown == 0:
+                # 子弹从飞机顶部中央出现
+                new_bullet = {
+                    "x": player_x + player_width // 2 - bullet_width // 2,
+                    "y": player_y
+                }
+                bullets.append(new_bullet)
+                bullet_cooldown = COOLDOWN_MAX  # 开始冷却倒计时
+
+    # ---------- 2. 逻辑更新 ----------
+    # 冷却计时器每秒减1
+    if bullet_cooldown > 0:
+        bullet_cooldown -= 1
+
+    # --- 玩家移动（方向键）---
+    keys = pygame.key.get_pressed()
+    if keys[pygame.K_LEFT] and player_x > 0:
+        player_x -= player_speed
+    if keys[pygame.K_RIGHT] and player_x < WIDTH - player_width:
+        player_x += player_speed
+    if keys[pygame.K_UP] and player_y > 0:
+        player_y -= player_speed
+    if keys[pygame.K_DOWN] and player_y < HEIGHT - player_height:
+        player_y += player_speed
+
+    # --- 更新子弹位置 ---
+    for bullet in bullets:
+        bullet["y"] -= bullet_speed  # 子弹向上飞行
+
+    # 移除飞出屏幕顶部的子弹（列表推导式 - 安全删除法）
+    bullets = [b for b in bullets if b["y"] + bullet_height > 0]
+
+    # --- 更新敌机位置（简单上下弹跳）---
+    enemy_y += enemy_speed_y
+    if enemy_y > HEIGHT - enemy_height or enemy_y < 0:
+        enemy_speed_y = -enemy_speed_y  # 碰到边界反弹
+
+    # --- 碰撞检测：子弹 vs 敌机 ---
+    enemy_rect = pygame.Rect(enemy_x, enemy_y, enemy_width, enemy_height)
+    bullets_to_remove = []
+    for bullet in bullets:
+        bullet_rect = pygame.Rect(bullet["x"], bullet["y"], bullet_width, bullet_height)
+        if bullet_rect.colliderect(enemy_rect):
+            bullets_to_remove.append(bullet)
+            score += 10          # 击中敌机加10分
+            enemy_x = 300        # 重置敌机位置
+            enemy_y = 50
+
+    # 移除碰到的子弹
+    for b in bullets_to_remove:
+        if b in bullets:
+            bullets.remove(b)
+
+    # ---------- 3. 绘制画面 ----------
+    screen.fill(BLACK)
+
+    # 绘制星星背景（随机小白点）
+    import random
+    for _ in range(80):
+        sx = random.randint(0, WIDTH)
+        sy = random.randint(0, HEIGHT)
+        size = random.randint(1, 3)
+        brightness = random.randint(100, 255)
+        pygame.draw.circle(screen, (brightness, brightness, brightness), (sx, sy), size)
+
+    # 绘制玩家飞机（蓝色矩形机身 + 三角形机翼 + 尾焰）
+    player_rect = pygame.Rect(player_x, player_y, player_width, player_height)
+    pygame.draw.rect(screen, BLUE, player_rect, border_radius=4)
+
+    # 机翼（三角形）
+    pygame.draw.polygon(screen, LIGHT_BLUE, [
+        (player_x - 18, player_y + player_height // 2),
+        (player_x + player_width + 18, player_y + player_height // 2),
+        (player_x + player_width // 2, player_y - 5)
+    ])
+
+    # 驾驶舱（小矩形）
+    cockpit_rect = pygame.Rect(
+        player_x + player_width // 2 - 8,
+        player_y + 10, 16, 20
+    )
+    pygame.draw.rect(screen, (150, 200, 255), cockpit_rect, border_radius=4)
+
+    # 尾焰（只有冷却计时中才显示，给"正在发射"的视觉反馈）
+    if bullet_cooldown > COOLDOWN_MAX - 5:
+        flame = pygame.Rect(
+            player_x + player_width // 2 - 5,
+            player_y + player_height, 10, 12
+        )
+        pygame.draw.rect(screen, YELLOW, flame)
+        pygame.draw.rect(screen, RED, (
+            player_x + player_width // 2 - 3,
+            player_y + player_height + 4, 6, 8
+        ))
+
+    # 绘制所有子弹（黄色长条）
+    for bullet in bullets:
+        pygame.draw.rect(screen, YELLOW,
+                         (bullet["x"], bullet["y"], bullet_width, bullet_height),
+                         border_radius=2)
+
+    # 绘制敌机（红色矩形 + X标记）
+    enemy_rect = pygame.Rect(enemy_x, enemy_y, enemy_width, enemy_height)
+    pygame.draw.rect(screen, RED, enemy_rect, border_radius=4)
+    # 敌机上的X标记
+    pygame.draw.line(screen, DARK_RED, (enemy_x + 5, enemy_y + 5),
+                     (enemy_x + enemy_width - 5, enemy_y + enemy_height - 5), 3)
+    pygame.draw.line(screen, DARK_RED, (enemy_x + enemy_width - 5, enemy_y + 5),
+                     (enemy_x + 5, enemy_y + enemy_height - 5), 3)
+
+    # 显示得分
+    score_text = font.render(f"得分: {score}", True, WHITE)
+    screen.blit(score_text, (15, 15))
+
+    # 显示冷却状态（底部提示）
+    if bullet_cooldown > 0:
+        cooldown_text = font.render(f"冷却中... ({bullet_cooldown})", True, (150, 150, 150))
+        screen.blit(cooldown_text, (WIDTH // 2 - 80, HEIGHT - 35))
+
+    # 刷新屏幕
+    pygame.display.flip()
+    clock.tick(60)
+
+# ==================== 退出 ====================
+pygame.quit()
+sys.exit()

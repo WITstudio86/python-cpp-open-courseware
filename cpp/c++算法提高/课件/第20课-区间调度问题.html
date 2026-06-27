@@ -1,0 +1,945 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>第20课：区间调度问题 - C++算法提高</title>
+    <style>
+        /* ================================================================
+           CSS Reset & Base
+           ================================================================ */
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "PingFang SC", "Microsoft YaHei", "Noto Sans SC", sans-serif;
+            background: linear-gradient(135deg, #0f0c29 0%, #302b63 50%, #24243e 100%);
+            min-height: 100vh;
+            color: #e0e0e0;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            overflow-x: hidden;
+        }
+
+        /* ================================================================
+           Top Bar
+           ================================================================ */
+        .top-bar {
+            width: 100%;
+            background: rgba(15, 12, 41, 0.95);
+            backdrop-filter: blur(10px);
+            padding: 10px 20px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border-bottom: 2px solid rgba(233, 69, 96, 0.4);
+            position: sticky;
+            top: 0;
+            z-index: 100;
+        }
+        .top-bar .course-name {
+            font-size: 0.95em;
+            color: #a0a0b0;
+            font-weight: 500;
+        }
+        .top-bar .lesson-tag {
+            background: #e94560;
+            color: #fff;
+            padding: 4px 14px;
+            border-radius: 20px;
+            font-size: 0.85em;
+            font-weight: bold;
+        }
+
+        /* ================================================================
+           Slideshow Container
+           ================================================================ */
+        .slideshow {
+            width: 100%;
+            max-width: 960px;
+            margin: 20px auto;
+            padding: 0 20px;
+            flex: 1;
+        }
+
+        .slide {
+            display: none;
+            animation: fadeSlideIn 0.45s ease-out;
+        }
+        .slide.active {
+            display: block;
+        }
+
+        @keyframes fadeSlideIn {
+            from {
+                opacity: 0;
+                transform: translateY(18px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        /* ================================================================
+           Slide 1 — Title Slide
+           ================================================================ */
+        .slide-title {
+            text-align: center;
+            padding: 60px 20px 40px 20px;
+        }
+        .slide-title .stage-badge {
+            display: inline-block;
+            background: rgba(233, 69, 96, 0.15);
+            border: 1px solid rgba(233, 69, 96, 0.5);
+            color: #e94560;
+            padding: 6px 24px;
+            border-radius: 25px;
+            font-size: 0.95em;
+            margin-bottom: 18px;
+            letter-spacing: 2px;
+        }
+        .slide-title h1 {
+            font-size: 3.2em;
+            color: #e94560;
+            margin-bottom: 12px;
+            text-shadow: 0 0 40px rgba(233, 69, 96, 0.5);
+            letter-spacing: 3px;
+        }
+        .slide-title .subtitle {
+            font-size: 1.2em;
+            color: #9090a0;
+            margin-bottom: 28px;
+        }
+        .slide-title .info-row {
+            display: flex;
+            justify-content: center;
+            gap: 30px;
+            flex-wrap: wrap;
+            margin-top: 30px;
+        }
+        .slide-title .info-item {
+            background: rgba(255,255,255,0.04);
+            border: 1px solid rgba(255,255,255,0.08);
+            border-radius: 10px;
+            padding: 14px 22px;
+            text-align: center;
+            min-width: 100px;
+        }
+        .slide-title .info-item .val {
+            font-size: 1.6em;
+            font-weight: bold;
+            color: #e94560;
+        }
+        .slide-title .info-item .lbl {
+            font-size: 0.8em;
+            color: #777;
+            margin-top: 4px;
+        }
+
+        /* ================================================================
+           Slide 2 — Principle Slide
+           ================================================================ */
+        .slide-principle {
+            padding: 20px 10px;
+        }
+        .slide-principle h2 {
+            font-size: 1.8em;
+            color: #e94560;
+            margin-bottom: 18px;
+            padding-bottom: 10px;
+            border-bottom: 2px solid rgba(233, 69, 96, 0.25);
+        }
+        .slide-principle h3 {
+            font-size: 1.2em;
+            color: #d0d0f0;
+            margin: 18px 0 10px 0;
+        }
+        .slide-principle p, .slide-principle li {
+            font-size: 1.02em;
+            line-height: 1.85;
+            color: #c0c0d0;
+            margin-bottom: 8px;
+        }
+        .slide-principle ul, .slide-principle ol {
+            margin-left: 22px;
+        }
+        .slide-principle li {
+            margin-bottom: 6px;
+        }
+
+        /* Strategy comparison cards */
+        .strategy-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+            gap: 14px;
+            margin: 16px 0;
+        }
+        .strategy-card {
+            background: rgba(255,255,255,0.04);
+            border: 1px solid rgba(255,255,255,0.1);
+            border-radius: 10px;
+            padding: 16px;
+            transition: all 0.3s;
+        }
+        .strategy-card.wrong {
+            border-left: 3px solid #ff6b6b;
+        }
+        .strategy-card.correct {
+            border-left: 3px solid #51cf66;
+            background: rgba(81, 207, 102, 0.06);
+        }
+        .strategy-card .strat-name {
+            font-weight: bold;
+            font-size: 1.05em;
+            margin-bottom: 6px;
+            color: #e0e0e0;
+        }
+        .strategy-card .strat-reason {
+            font-size: 0.9em;
+            color: #999;
+            line-height: 1.55;
+        }
+
+        .proof-box {
+            background: rgba(233, 69, 96, 0.07);
+            border: 1px solid rgba(233, 69, 96, 0.2);
+            border-radius: 10px;
+            padding: 18px 20px;
+            margin: 16px 0;
+        }
+        .proof-box h4 {
+            color: #e94560;
+            margin-bottom: 8px;
+            font-size: 1.05em;
+        }
+        .proof-box p {
+            color: #b0b0c0;
+            font-size: 0.95em;
+            line-height: 1.75;
+        }
+
+        /* ================================================================
+           Timeline Visualization
+           ================================================================ */
+        .timeline {
+            margin: 16px 0;
+            overflow-x: auto;
+            padding-bottom: 8px;
+        }
+        .timeline-axis {
+            position: relative;
+            height: 36px;
+            background: rgba(255,255,255,0.04);
+            border-radius: 6px;
+            margin-bottom: 2px;
+            min-width: 520px;
+        }
+        .timeline-bar {
+            position: absolute;
+            top: 4px;
+            height: 28px;
+            border-radius: 5px;
+            font-size: 0.72em;
+            color: #fff;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: bold;
+            letter-spacing: 0.5px;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            padding: 0 6px;
+            transition: all 0.3s;
+        }
+        .timeline-bar.selected {
+            background: #51cf66;
+            box-shadow: 0 0 12px rgba(81, 207, 102, 0.4);
+        }
+        .timeline-bar.skipped {
+            background: rgba(255, 107, 107, 0.6);
+        }
+        .timeline-labels {
+            display: flex;
+            justify-content: space-between;
+            font-size: 0.75em;
+            color: #666;
+            min-width: 520px;
+            padding: 0 4px;
+        }
+        .timeline-step {
+            font-size: 0.85em;
+            color: #aaa;
+            margin: 6px 0 2px 0;
+            line-height: 1.55;
+        }
+        .timeline-step .step-num {
+            color: #e94560;
+            font-weight: bold;
+        }
+
+        /* ================================================================
+           Code Display
+           ================================================================ */
+        .code-block {
+            background: #1a1a2e;
+            border: 1px solid rgba(255,255,255,0.08);
+            border-radius: 10px;
+            overflow: hidden;
+            margin: 14px 0;
+        }
+        .code-block .code-header {
+            background: rgba(255,255,255,0.04);
+            padding: 8px 16px;
+            font-size: 0.8em;
+            color: #888;
+            border-bottom: 1px solid rgba(255,255,255,0.06);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        .code-block .code-header .lang-tag {
+            color: #e94560;
+            font-weight: bold;
+        }
+        .code-block pre {
+            padding: 16px 20px;
+            margin: 0;
+            overflow-x: auto;
+            font-family: "Fira Code", "Cascadia Code", "JetBrains Mono", "SF Mono", "Menlo", "Consolas", monospace;
+            font-size: 0.88em;
+            line-height: 1.65;
+            color: #d4d4d4;
+            tab-size: 4;
+        }
+        /* Syntax highlighting classes */
+        .kw  { color: #c586c0; }  /* keyword */
+        .fn  { color: #dcdcaa; }  /* function name */
+        .str { color: #ce9178; }  /* string */
+        .num { color: #b5cea8; }  /* number */
+        .cmt { color: #6a9955; }  /* comment */
+        .op  { color: #d4d4d4; }  /* operator */
+        .typ { color: #4ec9b0; }  /* type */
+
+        /* ================================================================
+           Example Walkthrough Slide
+           ================================================================ */
+        .walkthrough-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 14px 0;
+            font-size: 0.92em;
+        }
+        .walkthrough-table th {
+            background: rgba(233, 69, 96, 0.15);
+            color: #e94560;
+            padding: 10px 12px;
+            text-align: left;
+            border-bottom: 2px solid rgba(233, 69, 96, 0.3);
+            font-weight: bold;
+        }
+        .walkthrough-table td {
+            padding: 8px 12px;
+            border-bottom: 1px solid rgba(255,255,255,0.06);
+            color: #c0c0d0;
+        }
+        .walkthrough-table tr:hover td {
+            background: rgba(255,255,255,0.03);
+        }
+        .walkthrough-table .pick {
+            color: #51cf66;
+            font-weight: bold;
+        }
+        .walkthrough-table .skip {
+            color: #ff6b6b;
+        }
+
+        /* ================================================================
+           Summary Slide
+           ================================================================ */
+        .summary-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 14px;
+            margin: 18px 0;
+        }
+        .summary-card {
+            background: rgba(255,255,255,0.04);
+            border: 1px solid rgba(255,255,255,0.08);
+            border-radius: 10px;
+            padding: 18px;
+            text-align: center;
+            transition: all 0.3s;
+        }
+        .summary-card:hover {
+            border-color: rgba(233, 69, 96, 0.35);
+            transform: translateY(-2px);
+        }
+        .summary-card .emoji-icon {
+            font-size: 2em;
+            margin-bottom: 8px;
+        }
+        .summary-card h4 {
+            color: #e94560;
+            margin-bottom: 6px;
+            font-size: 1.05em;
+        }
+        .summary-card p {
+            font-size: 0.88em;
+            color: #999;
+            line-height: 1.55;
+        }
+
+        /* ================================================================
+           Navigation
+           ================================================================ */
+        .nav-container {
+            width: 100%;
+            max-width: 960px;
+            margin: 0 auto 20px auto;
+            padding: 0 20px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        .nav-btn {
+            background: rgba(255,255,255,0.06);
+            border: 1px solid rgba(255,255,255,0.12);
+            color: #d0d0d0;
+            padding: 10px 24px;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 0.95em;
+            font-family: inherit;
+            transition: all 0.25s;
+            user-select: none;
+        }
+        .nav-btn:hover:not(:disabled) {
+            background: rgba(233, 69, 96, 0.12);
+            border-color: #e94560;
+            color: #fff;
+        }
+        .nav-btn:disabled {
+            opacity: 0.3;
+            cursor: not-allowed;
+        }
+        .nav-btn .arrow {
+            font-size: 1.1em;
+        }
+        .slide-counter {
+            font-size: 0.95em;
+            color: #888;
+            font-weight: 500;
+        }
+        .slide-counter .current {
+            color: #e94560;
+            font-weight: bold;
+            font-size: 1.15em;
+        }
+        .dot-nav {
+            display: flex;
+            gap: 8px;
+            justify-content: center;
+            margin-bottom: 10px;
+        }
+        .dot {
+            width: 10px;
+            height: 10px;
+            border-radius: 50%;
+            background: rgba(255,255,255,0.15);
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+        .dot.active {
+            background: #e94560;
+            box-shadow: 0 0 8px rgba(233, 69, 96, 0.6);
+            width: 28px;
+            border-radius: 10px;
+        }
+
+        /* ================================================================
+           Responsive
+           ================================================================ */
+        @media (max-width: 768px) {
+            .slide-title h1 { font-size: 2.2em; }
+            .slide-title .subtitle { font-size: 1em; }
+            .slide-principle h2 { font-size: 1.4em; }
+            .code-block pre { font-size: 0.76em; padding: 12px 14px; }
+            .strategy-grid { grid-template-columns: 1fr; }
+            .summary-grid { grid-template-columns: 1fr 1fr; }
+            .nav-btn { padding: 8px 16px; font-size: 0.85em; }
+            .timeline-axis, .timeline-labels { min-width: 380px; }
+        }
+        @media (max-width: 480px) {
+            .slide-title h1 { font-size: 1.7em; }
+            .summary-grid { grid-template-columns: 1fr; }
+            .slide-title .info-row { gap: 12px; }
+            .slide-title .info-item { min-width: 70px; padding: 10px 14px; }
+            .dot-nav { gap: 5px; }
+            .dot { width: 8px; height: 8px; }
+            .dot.active { width: 22px; }
+        }
+    </style>
+</head>
+<body>
+
+    <!-- ================================================================
+         Top Bar
+         ================================================================ -->
+    <div class="top-bar">
+        <span class="course-name">C++ 算法提高</span>
+        <span class="lesson-tag">第20课</span>
+    </div>
+
+    <!-- ================================================================
+         Dot Navigation
+         ================================================================ -->
+    <div class="dot-nav" id="dotNav">
+        <span class="dot active" data-slide="0"></span>
+        <span class="dot" data-slide="1"></span>
+        <span class="dot" data-slide="2"></span>
+        <span class="dot" data-slide="3"></span>
+        <span class="dot" data-slide="4"></span>
+    </div>
+
+    <!-- ================================================================
+         Slides
+         ================================================================ -->
+    <div class="slideshow" id="slideshow">
+
+        <!-- ============================================================
+             Slide 1 — Title
+             ============================================================ -->
+        <div class="slide slide-title active" data-index="0">
+            <div class="stage-badge">第五阶段 · 贪心算法</div>
+            <h1>区间调度问题</h1>
+            <p class="subtitle">安排尽可能多的活动 — 贪心策略的经典应用</p>
+            <div class="info-row">
+                <div class="info-item">
+                    <div class="val">第20课</div>
+                    <div class="lbl">课时编号</div>
+                </div>
+                <div class="info-item">
+                    <div class="val">第5阶段</div>
+                    <div class="lbl">贪心算法</div>
+                </div>
+                <div class="info-item">
+                    <div class="val">2题</div>
+                    <div class="lbl">经典例题</div>
+                </div>
+                <div class="info-item">
+                    <div class="val">60min</div>
+                    <div class="lbl">建议时长</div>
+                </div>
+            </div>
+            <p style="margin-top: 30px; color: #777; font-size: 0.95em;">
+                核心问题：在互不重叠的条件下，从 N 个区间中选出尽可能多的区间
+            </p>
+        </div>
+
+        <!-- ============================================================
+             Slide 2 — Principle
+             ============================================================ -->
+        <div class="slide slide-principle" data-index="1">
+            <h2>算法原理：为什么按结束时间排序？</h2>
+
+            <h3>问题场景</h3>
+            <p>
+                有 <strong>N</strong> 个活动，每个活动有一个<strong>开始时间 s[i]</strong> 和一个<strong>结束时间 f[i]</strong>。
+                同一时刻只能进行一个活动。目标：<strong>选出尽可能多的互不重叠的活动</strong>。
+            </p>
+
+            <h3>可能的策略对比</h3>
+            <div class="strategy-grid">
+                <div class="strategy-card wrong">
+                    <div class="strat-name">策略一：按开始时间排序</div>
+                    <div class="strat-reason">
+                        选开始最早的活动？不对——如果一个活动从 8:00 持续到 20:00，选它之后就再也选不了别的了。
+                    </div>
+                </div>
+                <div class="strategy-card wrong">
+                    <div class="strat-name">策略二：按持续时间排序</div>
+                    <div class="strat-reason">
+                        选最短的活动？也不对——短活动可能卡在中间，把两个本来可以都选的长活动破坏了。
+                    </div>
+                </div>
+                <div class="strategy-card correct">
+                    <div class="strat-name">策略三：按结束时间排序</div>
+                    <div class="strat-reason">
+                        选结束最早的活动，然后从剩余活动中选开始时间 >= 已选结束时间的活动。结束越早，留给后面的时间越多！
+                    </div>
+                </div>
+            </div>
+
+            <h3>算法步骤</h3>
+            <ol>
+                <li>将所有活动（区间）按<strong>结束时间从小到大</strong>排序</li>
+                <li>初始化：选中第一个活动，记录 <code>lastEnd = 第一个活动的结束时间</code></li>
+                <li>遍历剩余活动：如果 <code>当前活动.start >= lastEnd</code>，则选中它，更新 <code>lastEnd</code></li>
+                <li>选出的活动数量即为答案</li>
+            </ol>
+
+            <h3>正确性证明：交换论证</h3>
+            <div class="proof-box">
+                <h4>交换论证（Exchange Argument）</h4>
+                <p>
+                    设最优解 OPT 中结束最早的活动为 A，贪心选出的第一个活动为 B。由于 B 是全局结束最早的，必有 <strong>f[B] &le; f[A]</strong>。
+                    在 OPT 中把 A 换为 B，因为 B 结束得更早（或一样早），不会与 OPT 中后续活动产生冲突，所以替换后仍为可行解，且活动数量不变。
+                    重复此过程，可以将 OPT 完全转换为贪心解，证明贪心解也是最优的。
+                </p>
+            </div>
+        </div>
+
+        <!-- ============================================================
+             Slide 3 — Code
+             ============================================================ -->
+        <div class="slide slide-principle" data-index="2">
+            <h2>代码实现：区间调度贪心算法</h2>
+
+            <p>核心思路：<strong>struct 存储区间 + sort 自定义比较 + 贪心遍历选择</strong></p>
+
+            <div class="code-block">
+                <div class="code-header">
+                    <span class="lang-tag">C++</span>
+                    <span>区间调度 — 完整实现</span>
+                </div>
+                <pre><span class="cmt">// 定义区间结构体</span>
+<span class="kw">struct</span> <span class="typ">Interval</span> {
+    <span class="typ">int</span> start;  <span class="cmt">// 开始时间</span>
+    <span class="typ">int</span> end;    <span class="cmt">// 结束时间</span>
+};
+
+<span class="cmt">// 自定义比较函数：按结束时间从小到大排序</span>
+<span class="typ">bool</span> <span class="fn">cmp</span>(<span class="typ">Interval</span> a, <span class="typ">Interval</span> b) {
+    <span class="kw">return</span> a.end &lt; b.end;  <span class="cmt">// 结束时间早的排在前面</span>
+}
+
+<span class="cmt">// 贪心选择最大不重叠区间数</span>
+<span class="typ">int</span> <span class="fn">maxNonOverlap</span>(<span class="typ">Interval</span> arr[], <span class="typ">int</span> n) {
+    <span class="cmt">// 第一步：按结束时间排序</span>
+    <span class="fn">sort</span>(arr, arr + n, cmp);
+
+    <span class="cmt">// 第二步：贪心选择</span>
+    <span class="typ">int</span> count = <span class="num">1</span>;               <span class="cmt">// 至少选第一个</span>
+    <span class="typ">int</span> lastEnd = arr[<span class="num">0</span>].end;   <span class="cmt">// 最后一个已选活动的结束时间</span>
+
+    <span class="kw">for</span> (<span class="typ">int</span> i = <span class="num">1</span>; i &lt; n; i++) {
+        <span class="kw">if</span> (arr[i].start &gt;= lastEnd) {  <span class="cmt">// 不重叠</span>
+            count++;
+            lastEnd = arr[i].end;     <span class="cmt">// 更新最后结束时间</span>
+        }
+    }
+
+    <span class="kw">return</span> count;
+}</pre>
+            </div>
+
+            <div class="strategy-grid">
+                <div class="summary-card" style="text-align: left;">
+                    <h4>时间复杂度</h4>
+                    <p>O(N log N) — 排序是瓶颈<br>贪心遍历只须 O(N)</p>
+                </div>
+                <div class="summary-card" style="text-align: left;">
+                    <h4>空间复杂度</h4>
+                    <p>O(N) — 存储 N 个区间<br>可原地排序做到 O(1) 额外空间</p>
+                </div>
+                <div class="summary-card" style="text-align: left;">
+                    <h4>关键细节</h4>
+                    <p>端点恰好相接（start == end）<br>不算重叠，可以同时选</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- ============================================================
+             Slide 4 — Example Walkthrough
+             ============================================================ -->
+        <div class="slide slide-principle" data-index="3">
+            <h2>例题演练：活动选择 — 逐步推演</h2>
+
+            <p><strong>输入</strong>：6 个活动 (开始, 结束) = (1,4) (3,5) (0,6) (5,7) (3,8) (5,9)</p>
+
+            <h3>第一步：按结束时间排序</h3>
+            <table class="walkthrough-table">
+                <thead>
+                    <tr>
+                        <th>排序后序号</th>
+                        <th>开始时间</th>
+                        <th>结束时间</th>
+                        <th>原活动</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr><td>1</td><td>1</td><td>4</td><td>(1,4) ← 结束最早</td></tr>
+                    <tr><td>2</td><td>3</td><td>5</td><td>(3,5)</td></tr>
+                    <tr><td>3</td><td>0</td><td>6</td><td>(0,6)</td></tr>
+                    <tr><td>4</td><td>5</td><td>7</td><td>(5,7)</td></tr>
+                    <tr><td>5</td><td>3</td><td>8</td><td>(3,8)</td></tr>
+                    <tr><td>6</td><td>5</td><td>9</td><td>(5,9)</td></tr>
+                </tbody>
+            </table>
+
+            <h3>第二步：贪心选择过程</h3>
+            <table class="walkthrough-table">
+                <thead>
+                    <tr>
+                        <th>步骤</th>
+                        <th>检查活动</th>
+                        <th>start &ge; lastEnd ?</th>
+                        <th>操作</th>
+                        <th>lastEnd 更新为</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td class="step-num">1</td>
+                        <td>(1, 4)</td>
+                        <td>—（第一个）</td>
+                        <td class="pick">选中</td>
+                        <td>4</td>
+                    </tr>
+                    <tr>
+                        <td class="step-num">2</td>
+                        <td>(3, 5)</td>
+                        <td>3 < 4</td>
+                        <td class="skip">跳过（重叠）</td>
+                        <td>4</td>
+                    </tr>
+                    <tr>
+                        <td class="step-num">3</td>
+                        <td>(0, 6)</td>
+                        <td>0 < 4</td>
+                        <td class="skip">跳过（重叠）</td>
+                        <td>4</td>
+                    </tr>
+                    <tr>
+                        <td class="step-num">4</td>
+                        <td>(5, 7)</td>
+                        <td>5 &ge; 4</td>
+                        <td class="pick">选中</td>
+                        <td>7</td>
+                    </tr>
+                    <tr>
+                        <td class="step-num">5</td>
+                        <td>(3, 8)</td>
+                        <td>3 < 7</td>
+                        <td class="skip">跳过（重叠）</td>
+                        <td>7</td>
+                    </tr>
+                    <tr>
+                        <td class="step-num">6</td>
+                        <td>(5, 9)</td>
+                        <td>5 < 7</td>
+                        <td class="skip">跳过（重叠）</td>
+                        <td>7</td>
+                    </tr>
+                </tbody>
+            </table>
+
+            <h3>时间线可视化</h3>
+            <p style="font-size: 0.85em; color: #888;">绿色 = 选中，红色 = 因重叠而跳过</p>
+            <div class="timeline">
+                <div class="timeline-axis">
+                    <div class="timeline-bar selected" style="left: 6%; width: 18%;">(1,4) ✓</div>
+                    <div class="timeline-bar skipped" style="left: 18%; width: 12%;">(3,5)</div>
+                    <div class="timeline-bar skipped" style="left: 0%; width: 36%;">(0,6)</div>
+                    <div class="timeline-bar selected" style="left: 30%; width: 12%;">(5,7) ✓</div>
+                    <div class="timeline-bar skipped" style="left: 18%; width: 30%;">(3,8)</div>
+                    <div class="timeline-bar skipped" style="left: 30%; width: 24%;">(5,9)</div>
+                </div>
+                <div class="timeline-labels">
+                    <span>0</span><span>2</span><span>4</span><span>6</span><span>8</span><span>10</span>
+                </div>
+            </div>
+
+            <p style="margin-top: 14px; color: #51cf66; font-weight: bold;">
+                最终选出 2 个活动：(1,4) 和 (5,7)
+            </p>
+        </div>
+
+        <!-- ============================================================
+             Slide 5 — Summary
+             ============================================================ -->
+        <div class="slide slide-principle" data-index="4">
+            <h2>本课小结：区间调度问题</h2>
+
+            <div class="summary-grid">
+                <div class="summary-card">
+                    <div class="emoji-icon">1</div>
+                    <h4>核心策略</h4>
+                    <p>按结束时间从小到大排序，贪心地选择不重叠的区间</p>
+                </div>
+                <div class="summary-card">
+                    <div class="emoji-icon">2</div>
+                    <h4>正确性证明</h4>
+                    <p>交换论证：结束最早的区间给后面留出最多的空间，可以用它替换最优解中的第一个</p>
+                </div>
+                <div class="summary-card">
+                    <div class="emoji-icon">3</div>
+                    <h4>实现技巧</h4>
+                    <p>struct 存储区间 + sort 自定义比较函数 + 维护 lastEnd 变量</p>
+                </div>
+                <div class="summary-card">
+                    <div class="emoji-icon">4</div>
+                    <h4>复杂度</h4>
+                    <p>O(N log N)，排序是瓶颈<br>遍历选择只需线性时间</p>
+                </div>
+                <div class="summary-card">
+                    <div class="emoji-icon">5</div>
+                    <h4>经典应用</h4>
+                    <p>活动选择、会议安排<br>教室调度、CPU任务调度</p>
+                </div>
+                <div class="summary-card">
+                    <div class="emoji-icon">6</div>
+                    <h4>下节预告</h4>
+                    <p>区间覆盖与选点问题<br>最少点覆盖所有区间</p>
+                </div>
+            </div>
+
+            <div class="proof-box" style="margin-top: 20px;">
+                <h4>记忆口诀</h4>
+                <p style="font-size: 1.1em; text-align: center; color: #e0e0e0;">
+                    <strong>「结束早的优先选，不重叠的就拿下」</strong><br>
+                    排序定序 → 贪心选优 → O(N log N) 轻松解决区间调度
+                </p>
+            </div>
+
+            <p style="text-align: center; margin-top: 18px; color: #777; font-size: 0.9em;">
+                区间调度是贪心算法的经典入门问题。掌握了它，你就掌握了贪心策略中<br>
+                最核心的思维方式：<strong>找对排序维度，贪心地选最优</strong>。
+            </p>
+        </div>
+
+    </div>
+
+    <!-- ================================================================
+         Navigation Bar
+         ================================================================ -->
+    <div class="nav-container">
+        <button class="nav-btn" id="prevBtn" disabled>
+            <span class="arrow">◀</span> 上一页
+        </button>
+        <span class="slide-counter" id="slideCounter">
+            <span class="current">1</span> / 5
+        </span>
+        <button class="nav-btn" id="nextBtn">
+            下一页 <span class="arrow">▶</span>
+        </button>
+    </div>
+
+    <!-- ================================================================
+         JavaScript — Slide Navigation
+         ================================================================ -->
+    <script>
+        (function() {
+            var slides = document.querySelectorAll('.slide');
+            var dots = document.querySelectorAll('#dotNav .dot');
+            var prevBtn = document.getElementById('prevBtn');
+            var nextBtn = document.getElementById('nextBtn');
+            var currentEl = document.querySelector('#slideCounter .current');
+            var totalSlides = slides.length;
+            var currentIndex = 0;
+
+            function showSlide(index) {
+                // 边界检查
+                if (index < 0) index = 0;
+                if (index >= totalSlides) index = totalSlides - 1;
+
+                // 隐藏所有slide
+                for (var i = 0; i < slides.length; i++) {
+                    slides[i].classList.remove('active');
+                }
+                // 显示目标slide
+                slides[index].classList.add('active');
+
+                // 更新dots
+                for (var j = 0; j < dots.length; j++) {
+                    dots[j].classList.remove('active');
+                }
+                if (dots[index]) {
+                    dots[index].classList.add('active');
+                }
+
+                // 更新计数器
+                currentEl.textContent = (index + 1);
+
+                // 更新按钮状态
+                prevBtn.disabled = (index === 0);
+                nextBtn.disabled = (index === totalSlides - 1);
+
+                // 更新当前索引
+                currentIndex = index;
+
+                // 滚动到顶部
+                window.scrollTo({ top: 0, behavior: 'smooth' });
+            }
+
+            // 上一页
+            prevBtn.addEventListener('click', function() {
+                if (currentIndex > 0) {
+                    showSlide(currentIndex - 1);
+                }
+            });
+
+            // 下一页
+            nextBtn.addEventListener('click', function() {
+                if (currentIndex < totalSlides - 1) {
+                    showSlide(currentIndex + 1);
+                }
+            });
+
+            // 点击圆点导航
+            for (var k = 0; k < dots.length; k++) {
+                (function(dotIndex) {
+                    dots[dotIndex].addEventListener('click', function() {
+                        showSlide(dotIndex);
+                    });
+                })(k);
+            }
+
+            // 键盘导航
+            document.addEventListener('keydown', function(e) {
+                if (e.key === 'ArrowLeft' || e.key === 'ArrowUp') {
+                    e.preventDefault();
+                    if (currentIndex > 0) showSlide(currentIndex - 1);
+                } else if (e.key === 'ArrowRight' || e.key === 'ArrowDown' || e.key === ' ') {
+                    e.preventDefault();
+                    if (currentIndex < totalSlides - 1) showSlide(currentIndex + 1);
+                } else if (e.key === 'Home') {
+                    e.preventDefault();
+                    showSlide(0);
+                } else if (e.key === 'End') {
+                    e.preventDefault();
+                    showSlide(totalSlides - 1);
+                }
+            });
+
+            // 触摸滑动支持（平板）
+            var touchStartX = 0;
+            var touchEndX = 0;
+            var slideshow = document.getElementById('slideshow');
+
+            slideshow.addEventListener('touchstart', function(e) {
+                touchStartX = e.changedTouches[0].screenX;
+            }, { passive: true });
+
+            slideshow.addEventListener('touchend', function(e) {
+                touchEndX = e.changedTouches[0].screenX;
+                var diff = touchStartX - touchEndX;
+                // 左滑 → 下一页
+                if (diff > 50 && currentIndex < totalSlides - 1) {
+                    showSlide(currentIndex + 1);
+                }
+                // 右滑 → 上一页
+                if (diff < -50 && currentIndex > 0) {
+                    showSlide(currentIndex - 1);
+                }
+            }, { passive: true });
+
+            // 初始化：显示第一页
+            showSlide(0);
+        })();
+    </script>
+
+</body>
+</html>

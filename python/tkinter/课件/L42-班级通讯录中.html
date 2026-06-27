@@ -1,0 +1,202 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>第42节 · 项目12：班级通讯录（中）· Python Tkinter 课程</title>
+<link rel="stylesheet" href="assets/fonts.css">
+<link rel="stylesheet" href="assets/base.css">
+<link rel="stylesheet" id="theme-link" href="assets/themes/soft-pastel.css">
+<link rel="stylesheet" href="assets/animations/animations.css">
+<link rel="stylesheet" href="style.css">
+</head>
+<body class="tpl-tkinter-course" data-themes="soft-pastel,rainbow-gradient,sunset-warm,minimal-white" data-theme-base="assets/themes/">
+<div class="deck">
+
+  <!-- 1. Cover -->
+  <section class="slide full" data-title="封面">
+    <p class="kicker">Python Tkinter · 第 42 节</p>
+    <h1 class="h1 mt-s">项目 12：班级通讯录（中）<br><em>搜索·编辑·删除</em></h1>
+    <p class="lede mt-l" style="max-width:62ch">给通讯录加上搜索过滤、双击编辑和删除确认——让它从一个"只能看"的表格，变成真正好用的工具！</p>
+    <div class="row mt-l" style="gap:16px">
+      <span class="pill-academic">~ 60 分钟</span>
+      <span class="pill-academic">难度 · ⭐⭐</span>
+      <span class="pill-academic">前置 · L41 Treeview 基础</span>
+    </div>
+    <div class="deck-footer"><span>Python Tkinter 趣味编程课</span><span class="slide-number" data-current="1" data-total="7"></span></div>
+  </section>
+
+  <!-- 2. Objectives -->
+  <section class="slide" data-title="学习目标">
+    <aside class="sidebar">
+      <div class="brand">Tkinter 042</div>
+      <h5>学习目标</h5>
+      <ul class="obj-list">
+        <li class="current">Treeview 搜索过滤</li>
+        <li>双击编辑数据</li>
+        <li>删除确认弹窗</li>
+        <li>整合三大功能</li>
+      </ul>
+      <h5>本节成品</h5>
+      <p class="dim" style="font-size:13px">可搜索可编辑的通讯录 📇</p>
+    </aside>
+    <div class="main">
+      <p class="kicker">学习目标</p>
+      <h2 class="h2 mt-s">学完这节课，你将能够…</h2>
+      <div class="stack mt-l">
+        <div class="concept-box"><h4>① 实现 Treeview 实时搜索过滤</h4><p class="dim">Entry 输入关键字 → 遍历 item → detach/reattach 控制显示。</p></div>
+        <div class="concept-box"><h4>② 双击某一行弹出编辑窗口</h4><p class="dim">绑定 &lt;Double-1&gt; 事件 → Toplevel 子窗口编辑 → 保存回 Treeview。</p></div>
+        <div class="concept-box"><h4>③ 删除操作前弹出确认框</h4><p class="dim">用 messagebox.askyesno 防止误删，用户体验更友好。</p></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- 3. Search -->
+  <section class="slide" data-title="搜索过滤">
+    <aside class="sidebar">
+      <div class="brand">Tkinter 042</div>
+      <h5>学习目标</h5>
+      <ul class="obj-list">
+        <li class="done">Treeview 搜索过滤</li>
+        <li class="current">双击编辑数据</li>
+        <li>删除确认弹窗</li>
+        <li>整合三大功能</li>
+      </ul>
+      <h5>关键概念</h5>
+      <p class="dim" style="font-size:13px">detach · reattach · KeyRelease</p>
+    </aside>
+    <div class="main">
+      <p class="kicker">核心功能①</p>
+      <h2 class="h2 mt-s">Treeview 实时搜索过滤</h2>
+      <p class="lede mt-m">原理：遍历每一行 → 检查关键字是否在数据中 → <b>detach</b>（隐藏）或 <b>reattach</b>（显示）</p>
+      <div class="code mt-m"><pre style="margin:0"><span class="kw">def</span> <span class="fn">search_items</span>():
+    keyword = search_entry.get().strip().lower()
+    <span class="kw">for</span> item <span class="kw">in</span> tree.get_children():
+        values = tree.item(item, <span class="str">"values"</span>)
+        row_text = <span class="str">" "</span>.join(values).lower()
+        <span class="kw">if</span> keyword == <span class="str">""</span> <span class="kw">or</span> keyword <span class="kw">in</span> row_text:
+            tree.<span class="fn">reattach</span>(item, <span class="str">""</span>, tk.END)  <span class="cmt"># 显示</span>
+        <span class="kw">else</span>:
+            tree.<span class="fn">detach</span>(item)               <span class="cmt"># 隐藏</span>
+
+<span class="cmt"># 绑定：每输入一个字就触发搜索</span>
+search_entry.bind(<span class="str">"&lt;KeyRelease&gt;"</span>, <span class="kw">lambda</span> e: search_items())</pre></div>
+      <div class="callout mt-m">
+        <b>💡 重点：</b><code>detach()</code> 只是暂时隐藏，数据还在；<code>delete()</code> 才是彻底删除！
+      </div>
+    </div>
+  </section>
+
+  <!-- 4. Edit -->
+  <section class="slide" data-title="双击编辑">
+    <aside class="sidebar">
+      <div class="brand">Tkinter 042</div>
+      <h5>学习目标</h5>
+      <ul class="obj-list">
+        <li class="done">Treeview 搜索过滤</li>
+        <li class="done">双击编辑数据</li>
+        <li class="current">删除确认弹窗</li>
+        <li>整合三大功能</li>
+      </ul>
+      <h5>关键概念</h5>
+      <p class="dim" style="font-size:13px">Double-1 · Toplevel · tree.item</p>
+    </aside>
+    <div class="main">
+      <p class="kicker">核心功能②</p>
+      <h2 class="h2 mt-s">双击编辑数据</h2>
+      <p class="lede mt-m">绑定 <b>&lt;Double-1&gt;</b>（双击左键）事件 → 获取选中行数据 → 弹出 Toplevel 编辑窗口</p>
+      <div class="grid g2 mt-l">
+        <div class="concept-box"><h4>📌 获取选中行</h4>
+          <div class="code" style="font-size:13px"><pre style="margin:0">selected = tree.selection()
+item = selected[0]
+values = tree.item(item, "values")
+<span class="cmt"># values = ("张三","138...","同桌")</span></pre></div></div>
+        <div class="concept-box"><h4>📌 保存修改</h4>
+          <div class="code" style="font-size:13px"><pre style="margin:0">new_values = (name, phone, note)
+tree.item(item, values=new_values)
+edit_win.destroy()</pre></div></div>
+      </div>
+      <div class="callout mt-m">
+        <b>💡 Toplevel</b> 是"子窗口"，和主窗口独立存在，关闭子窗口不影响主窗口！
+      </div>
+    </div>
+  </section>
+
+  <!-- 5. Delete -->
+  <section class="slide" data-title="删除确认">
+    <aside class="sidebar">
+      <div class="brand">Tkinter 042</div>
+      <h5>学习目标</h5>
+      <ul class="obj-list">
+        <li class="done">Treeview 搜索过滤</li>
+        <li class="done">双击编辑数据</li>
+        <li class="done">删除确认弹窗</li>
+        <li class="current">整合三大功能</li>
+      </ul>
+      <h5>关键概念</h5>
+      <p class="dim" style="font-size:13px">messagebox.askyesno</p>
+    </aside>
+    <div class="main">
+      <p class="kicker">核心功能③</p>
+      <h2 class="h2 mt-s">删除确认弹窗</h2>
+      <p class="lede mt-m">直接删除太危险！用 <b>messagebox.askyesno</b> 弹出确认框。</p>
+      <div class="code mt-m"><pre style="margin:0"><span class="kw">from</span> tkinter <span class="kw">import</span> messagebox
+
+<span class="kw">def</span> <span class="fn">delete_selected</span>():
+    selected = tree.selection()
+    <span class="kw">if not</span> selected:
+        messagebox.showwarning(<span class="str">"提示"</span>, <span class="str">"请先选择联系人"</span>)
+        <span class="kw">return</span>
+    name = tree.item(selected[0], <span class="str">"values"</span>)[0]
+    result = messagebox.<span class="fn">askyesno</span>(<span class="str">"确认删除"</span>,
+        <span class="str">f"确定要删除「{name}」吗？\n此操作不可撤销！"</span>)
+    <span class="kw">if</span> result:
+        tree.delete(selected[0])</pre></div>
+      <p class="dim mt-m" style="font-size:14px">⚡ <code>askyesno</code> 返回 True（是）或 False（否），非常直观！</p>
+    </div>
+  </section>
+
+  <!-- 6. Try It -->
+  <section class="slide" data-title="动手试试">
+    <aside class="sidebar">
+      <div class="brand">Tkinter 042</div>
+      <h5>学习目标</h5>
+      <ul class="obj-list">
+        <li class="done">Treeview 搜索过滤</li>
+        <li class="done">双击编辑数据</li>
+        <li class="done">删除确认弹窗</li>
+        <li class="done">整合三大功能</li>
+      </ul>
+      <h5>时间</h5>
+      <p class="dim" style="font-size:13px">~20 分钟 · 动手实践</p>
+    </aside>
+    <div class="main">
+      <p class="kicker">动手试试</p>
+      <h2 class="h2 mt-s">完善你的通讯录</h2>
+      <div class="exercise mt-l">
+        <ol style="color:var(--text-2);line-height:2;margin:0;padding-left:20px;font-size:16px">
+          <li><b>测试搜索</b>：输入"班长"，看通讯录是不是只显示李四？</li>
+          <li><b>测试编辑</b>：双击张三那一行，把电话改掉保存</li>
+          <li><b>测试删除</b>：选中一行点"删除选中"，看看确认弹窗</li>
+        </ol>
+      </div>
+    </div>
+  </section>
+
+  <!-- 7. Summary -->
+  <section class="slide full" data-title="总结">
+    <p class="kicker">总结 · 第 42 节</p>
+    <h1 class="h1 mt-s">你学会了…</h1>
+    <div class="grid g2 mt-l">
+      <div class="concept-box"><h4>✓ 实时搜索过滤</h4><p class="dim">Entry + KeyRelease → 遍历行 → detach/reattach。</p></div>
+      <div class="concept-box"><h4>✓ 双击编辑</h4><p class="dim">Double-1 事件 → tree.selection() → Toplevel 编辑窗口。</p></div>
+      <div class="concept-box"><h4>✓ 删除确认</h4><p class="dim">messagebox.askyesno 弹出确认框，防止误删。</p></div>
+      <div class="concept-box"><h4>✓ Toplevel 子窗口</h4><p class="dim">创建独立窗口进行编辑和添加，不影响主窗口。</p></div>
+    </div>
+    <div class="callout mt-l">
+      <b>下节预告 · 第 43 节：班级通讯录（下）。</b> 用 JSON 保存数据到文件，还能导入导出 CSV！让通讯录的数据"永久化"。
+    </div>
+  </section>
+
+</div>
+<script src="assets/runtime.js"></script>
+</body></html>

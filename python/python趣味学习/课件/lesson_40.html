@@ -1,0 +1,277 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>第40节 · 单词翻译本</title>
+<link rel="stylesheet" href="assets/fonts.css">
+<link rel="stylesheet" href="assets/base.css">
+<link rel="stylesheet" href="assets/animations/animations.css">
+<link rel="stylesheet" href="style.css">
+<style>
+.tpl-course-module .slide{overflow-y:auto}
+.tpl-course-module .slide .main{overflow-y:auto;max-height:calc(100vh - 128px)}
+.tpl-course-module .slide.full{overflow-y:auto;display:flex;flex-direction:column;justify-content:flex-start;padding-top:64px}
+.tpl-course-module .h1{font-size:52px}
+.tpl-course-module .h2{font-size:32px}
+.tpl-course-module .slide{padding:44px 56px;gap:36px}
+.code-mini{background:#2a2418;color:#f4f1e8;border-radius:14px;padding:18px 22px;font-family:'JetBrains Mono',monospace;font-size:14px;line-height:1.7;margin:12px 0;overflow-x:auto;white-space:pre-wrap}
+.code-mini .cmt{color:#8a7f68;font-style:italic}
+.code-mini .kw{color:#e8a770}
+.code-mini .str{color:#8ec6b2}
+</style>
+</head>
+<body class="tpl-course-module">
+<div class="deck">
+
+<!-- ═══ COVER ═══ -->
+<section class="slide full" data-title="封面">
+  <p class="kicker">第八单元 · 第40节 · 项目实战</p>
+  <h1 class="h1 mt-s">项目二：单词翻译本<br><em>字典应用 · 文件读写 · while菜单循环</em></h1>
+  <p class="lede mt-l" style="max-width:60ch">制作一个属于自己的命令行翻译本！用字典存储单词、文件持久化保存，再做一个菜单界面来操作它。</p>
+  <div class="row mt-l" style="gap:12px;flex-wrap:wrap">
+    <span class="pill-academic">字典 dict</span><span class="pill-academic">文件读写</span>
+    <span class="pill-academic">while 菜单循环</span><span class="pill-academic">CRUD 操作</span>
+  </div>
+  <div class="deck-footer"><span>Python 趣味学习课程</span><span class="slide-number" data-current="1" data-total="7"></span></div>
+</section>
+
+<!-- ═══ 教学目标 ═══ -->
+<section class="slide" data-title="教学目标">
+  <aside class="sidebar"><div class="brand">Unit 8</div><h5>第 40 节</h5><p class="dim" style="font-size:12px">项目二：单词翻译本</p></aside>
+  <div class="main">
+    <p class="kicker">LEARNING OBJECTIVES</p>
+    <h2 class="h2 mt-s">教学目标</h2>
+    <ul class="obj-list mt-m">
+      <li>使用字典存储键值对数据，理解 dict 的核心思想</li>
+      <li>实现字典的增删查改（CRUD）四大基本操作</li>
+      <li>使用文件读写（open / write / read）来保存和加载数据</li>
+      <li>综合运用 while + if-elif 制作交互式菜单系统</li>
+    </ul>
+  </div>
+</section>
+
+<!-- ═══ 重点概念 ═══ -->
+<section class="slide" data-title="重点概念">
+  <aside class="sidebar"><div class="brand">Unit 8</div><h5>第 40 节</h5><p class="dim" style="font-size:12px">重点概念</p></aside>
+  <div class="main">
+    <p class="kicker">KEY CONCEPTS</p>
+    <h2 class="h2 mt-s">新知识点</h2>
+    <div class="grid g2 mt-m" style="display:grid;grid-template-columns:1fr 1fr;gap:16px">
+      <div class="concept-box">
+        <h4>字典 (dict)</h4>
+        <p class="dim">用 <code class="code-inline">{键: 值}</code> 配对存储数据。像一本真正的字典：查"apple"得到"苹果"。键必须唯一且不可变（字符串、数字、元组）。</p>
+      </div>
+      <div class="concept-box">
+        <h4>键值对</h4>
+        <p class="dim"><code class="code-inline">"apple" → "苹果"</code> 就是一个键值对。键(key)是索引，值(value)是数据。dict 通过键来快速查找对应的值，比列表逐个搜索快得多。</p>
+      </div>
+      <div class="concept-box">
+        <h4>文件读写</h4>
+        <p class="dim"><code class="code-inline">open()</code> 打开文件，<code class="code-inline">write()</code> 写入内容，<code class="code-inline">read()</code> 读取内容。记得指定 <code class="code-inline">encoding="utf-8"</code> 支持中文。</p>
+      </div>
+      <div class="concept-box">
+        <h4>菜单驱动循环</h4>
+        <p class="dim">用 <code class="code-inline">while True</code> 无限循环显示菜单，<code class="code-inline">if-elif</code> 判断用户选择，执行对应功能。<code class="code-inline">break</code> 退出循环。</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ═══ 核心讲解：字典操作 ═══ -->
+<section class="slide" data-title="字典操作">
+  <aside class="sidebar"><div class="brand">Unit 8</div><h5>第 40 节</h5><p class="dim" style="font-size:12px">核心讲解：字典操作</p></aside>
+  <div class="main">
+    <p class="kicker">CORE CONTENT</p>
+    <h2 class="h2 mt-s">字典的增删查改 (CRUD)</h2>
+
+    <div class="code-mini mt-m"><pre style="margin:0"><span class="cmt"># 创建字典 —— 一本迷你翻译本</span>
+word_dict = {
+    <span class="str">"apple"</span>: <span class="str">"苹果"</span>,
+    <span class="str">"cat"</span>: <span class="str">"猫"</span>,
+    <span class="str">"hello"</span>: <span class="str">"你好"</span>
+}
+
+<span class="cmt"># 【增】添加新单词</span>
+word_dict[<span class="str">"banana"</span>] = <span class="str">"香蕉"</span>
+<span class="kw">print</span>(word_dict)  <span class="cmt"># {'apple': '苹果', 'cat': '猫', ...}</span>
+
+<span class="cmt"># 【查】查询单词 —— 先用 in 安全检查</span>
+word = <span class="kw">input</span>(<span class="str">"请输入要查的单词: "</span>)
+<span class="kw">if</span> word <span class="kw">in</span> word_dict:
+    <span class="kw">print</span>(<span class="str">f"{word} → {word_dict[word]}"</span>)
+<span class="kw">else</span>:
+    <span class="kw">print</span>(<span class="str">"词典中暂无此单词"</span>)
+
+<span class="cmt"># 安全查询：使用 .get() 避免报错</span>
+result = word_dict.get(<span class="str">"dog"</span>, <span class="str">"未找到"</span>)
+<span class="kw">print</span>(result)  <span class="cmt"># 未找到（不会报错）</span>
+
+<span class="cmt"># 【改】修改已有的翻译</span>
+word_dict[<span class="str">"apple"</span>] = <span class="str">"苹果🍎"</span>
+</pre></div>
+
+    <div class="code-mini"><pre style="margin:0"><span class="cmt"># 【删】删除单词 —— del 或 pop()</span>
+<span class="kw">del</span> word_dict[<span class="str">"cat"</span>]
+<span class="cmt"># 或者用 pop()，可以指定默认值避免报错</span>
+removed = word_dict.pop(<span class="str">"cat"</span>, <span class="str">"不存在"</span>)
+
+<span class="cmt"># 【遍历】逐个查看所有单词</span>
+<span class="kw">for</span> eng, chn <span class="kw">in</span> word_dict.items():
+    <span class="kw">print</span>(<span class="str">f"{eng} → {chn}"</span>)
+
+<span class="cmt"># 只遍历键</span>
+<span class="kw">for</span> key <span class="kw">in</span> word_dict.keys():
+    <span class="kw">print</span>(key)  <span class="cmt"># apple, hello, banana</span>
+
+<span class="cmt"># 只遍历值</span>
+<span class="kw">for</span> value <span class="kw">in</span> word_dict.values():
+    <span class="kw">print</span>(value)  <span class="cmt"># 苹果🍎, 你好, 香蕉</span>
+
+<span class="cmt"># 字典长度</span>
+<span class="kw">print</span>(<span class="str">f"共有 {len(word_dict)} 个单词"</span>)</pre></div>
+
+    <div class="callout mt-m"><b>易错提醒：</b>直接访问不存在的 key 会报 <code class="code-inline">KeyError</code>！查询前必须用 <code class="code-inline">in</code> 检查或用 <code class="code-inline">.get()</code> 安全取值。</div>
+  </div>
+</section>
+
+<!-- ═══ 核心讲解：文件读写 + 菜单 ═══ -->
+<section class="slide" data-title="文件读写与菜单">
+  <aside class="sidebar"><div class="brand">Unit 8</div><h5>第 40 节</h5><p class="dim" style="font-size:12px">核心讲解：文件读写 + 菜单</p></aside>
+  <div class="main">
+    <p class="kicker">CORE CONTENT</p>
+    <h2 class="h2 mt-s">文件读写 —— 让数据"永久保存"</h2>
+
+    <div class="code-mini mt-m"><pre style="margin:0"><span class="cmt"># 【保存】将字典写入文件</span>
+<span class="kw">def</span> <span class="kw">save_dict</span>(word_dict, filename=<span class="str">"words.txt"</span>):
+    <span class="kw">with</span> <span class="kw">open</span>(filename, <span class="str">"w"</span>, encoding=<span class="str">"utf-8"</span>) <span class="kw">as</span> f:
+        <span class="kw">for</span> eng, chn <span class="kw">in</span> word_dict.items():
+            f.write(<span class="str">f"{eng},{chn}\n"</span>)
+
+<span class="cmt"># 【加载】从文件中读取字典</span>
+<span class="kw">def</span> <span class="kw">load_dict</span>(filename=<span class="str">"words.txt"</span>):
+    word_dict = {}
+    <span class="kw">try</span>:
+        <span class="kw">with</span> <span class="kw">open</span>(filename, <span class="str">"r"</span>, encoding=<span class="str">"utf-8"</span>) <span class="kw">as</span> f:
+            <span class="kw">for</span> line <span class="kw">in</span> f:
+                line = line.strip()
+                <span class="kw">if</span> line:
+                    eng, chn = line.split(<span class="str">","</span>, <span class="str">1</span>)
+                    word_dict[eng] = chn
+    <span class="kw">except</span> FileNotFoundError:
+        <span class="kw">print</span>(<span class="str">"词典文件不存在，将创建新词典"</span>)
+    <span class="kw">return</span> word_dict</pre></div>
+
+    <div class="callout"><b>with open(...) as f</b> 是推荐的写法：它会自动关闭文件，即使发生异常也不会忘记关闭。参数说明：<code class="code-inline">"w"</code> 写入模式（覆盖），<code class="code-inline">"r"</code> 读取模式，<code class="code-inline">"a"</code> 追加模式。务必将 <code class="code-inline">encoding="utf-8"</code> 写全，否则中文会乱码！</div>
+
+    <h2 class="h2 mt-l">while 菜单循环 —— 打造交互式程序</h2>
+
+    <div class="code-mini mt-m"><pre style="margin:0"><span class="cmt"># 菜单循环主体结构</span>
+<span class="kw">while</span> <span class="kw">True</span>:
+    <span class="kw">print</span>(<span class="str">"\n========== 单词翻译本 =========="</span>)
+    <span class="kw">print</span>(<span class="str">"1. 查询单词    2. 添加单词"</span>)
+    <span class="kw">print</span>(<span class="str">"3. 修改单词    4. 删除单词"</span>)
+    <span class="kw">print</span>(<span class="str">"5. 显示全部    6. 退出"</span>)
+    <span class="kw">print</span>(<span class="str">"================================"</span>)
+    choice = <span class="kw">input</span>(<span class="str">"请选择功能 (1-6): "</span>)
+
+    <span class="kw">if</span> choice == <span class="str">"1"</span>:
+        <span class="cmt"># 查询单词</span>
+        <span class="kw">pass</span>
+    <span class="kw">elif</span> choice == <span class="str">"2"</span>:
+        <span class="cmt"># 添加单词</span>
+        <span class="kw">pass</span>
+    <span class="kw">elif</span> choice == <span class="str">"3"</span>:
+        <span class="cmt"># 修改单词</span>
+        <span class="kw">pass</span>
+    <span class="kw">elif</span> choice == <span class="str">"4"</span>:
+        <span class="cmt"># 删除单词</span>
+        <span class="kw">pass</span>
+    <span class="kw">elif</span> choice == <span class="str">"5"</span>:
+        <span class="cmt"># 显示全部单词</span>
+        <span class="kw">pass</span>
+    <span class="kw">elif</span> choice == <span class="str">"6"</span>:
+        <span class="kw">print</span>(<span class="str">"再见！单词已自动保存~"</span>)
+        <span class="kw">break</span>
+    <span class="kw">else</span>:
+        <span class="kw">print</span>(<span class="str">"输入有误，请输入 1-6 之间的数字"</span>)</pre></div>
+  </div>
+</section>
+
+<!-- ═══ 课堂练习 ═══ -->
+<section class="slide" data-title="课堂练习">
+  <aside class="sidebar"><div class="brand">Unit 8</div><h5>第 40 节</h5><p class="dim" style="font-size:12px">课堂练习</p></aside>
+  <div class="main">
+    <p class="kicker">EXERCISES</p>
+    <h2 class="h2 mt-s">课堂练习</h2>
+
+    <div class="exercise mt-m">
+      <b>基础练习：代码纠错</b>
+      <p class="dim" style="margin:4px 0 0">下面代码有 <b>3 个错误</b>，找出并修正它们：</p>
+      <div class="code-mini"><pre style="margin:0"><span class="cmt"># 错误1：字典没有 .add() 方法！</span>
+word_dict.add(<span class="str">"dog"</span>, <span class="str">"狗"</span>)
+<span class="cmt"># 应该改为：word_dict["dog"] = "狗"</span>
+
+<span class="cmt"># 错误2：直接访问不存在的 key 会报 KeyError</span>
+result = word_dict[<span class="str">"zebra"</span>]  <span class="cmt"># 如果不存在直接崩溃！</span>
+<span class="cmt"># 应该改为：word_dict.get("zebra", "未找到") 或先 in 检查</span>
+
+<span class="cmt"># 错误3：遍历写法错误 —— 应使用 .items()</span>
+<span class="kw">for</span> eng, chn <span class="kw">in</span> word_dict:
+    <span class="kw">print</span>(eng, chn)  <span class="cmt"># 只会解包 key 的每个字符！</span>
+<span class="cmt"># 应该改为：for eng, chn in word_dict.items():</span></pre></div>
+    </div>
+
+    <div class="exercise mt-m">
+      <b>挑战练习：功能升级</b>
+      <p class="dim" style="margin:4px 0 0">在翻译本基础上添加以下功能（三选一或全部）：</p>
+      <ul style="margin:6px 0 0 18px;color:var(--text-2);line-height:1.8;font-size:14px">
+        <li><b>模糊搜索：</b>输入部分字母也能匹配。比如输入 "app" 能找到 "apple" 和 "application"（提示：用 <code class="code-inline">in</code> 判断子串）</li>
+        <li><b>分类标签：</b>给单词添加词性分类（名词/动词/形容词），查询时显示分类信息。提示：可以把值从字符串改为包含翻译和词性的列表或嵌套字典</li>
+        <li><b>学习统计：</b>记录每个单词被查询的次数，菜单增加"最常查的单词TOP3"功能。提示：用另一个字典 <code class="code-inline">{"apple": 5, "cat": 3}</code> 记录查询次数</li>
+      </ul>
+    </div>
+
+    <div class="exercise mt-m">
+      <b>完整代码参考：</b>
+      <p class="dim" style="margin:4px 0 0">将文件读写函数和菜单循环组合在一起，形成一个完整的翻译本程序。程序启动时加载词典文件，退出时自动保存，实现数据的持久化。</p>
+    </div>
+  </div>
+</section>
+
+<!-- ═══ 小结 ═══ -->
+<section class="slide full" data-title="小结">
+  <p class="kicker">SUMMARY</p>
+  <h2 class="h2 mt-s">学会了什么？</h2>
+  <div class="grid g2 mt-l" style="display:grid;grid-template-columns:1fr 1fr;gap:20px;max-width:80ch">
+    <div class="concept-box">
+      <h4>核心要点</h4>
+      <ul style="margin:8px 0 0;padding-left:18px;color:var(--text-2);line-height:1.8">
+        <li>掌握了 dict 字典的增删查改（CRUD）操作</li>
+        <li>学会用 <code class="code-inline">in</code> 和 <code class="code-inline">.get()</code> 安全访问字典</li>
+        <li>学会用 <code class="code-inline">.items() / .keys() / .values()</code> 遍历字典</li>
+        <li>掌握了文件读写（with open）实现数据持久化</li>
+        <li>综合运用 while + if-elif 制作菜单系统</li>
+        <li>完成了一个完整的"单词翻译本"项目！</li>
+      </ul>
+    </div>
+    <div class="concept-box">
+      <h4>下节预告</h4>
+      <p class="dim">第41节：石头剪刀布游戏</p>
+      <p class="dim" style="font-size:13px;margin-top:8px">学完字典和文件操作，下节课我们来做一个经典小游戏 —— 石头剪刀布！综合运用 random 模块、条件判断和计分系统，让你和电脑一决高下。</p>
+    </div>
+  </div>
+  <div class="mt-l" style="max-width:80ch">
+    <div class="concept-box">
+      <h4>家庭思考题</h4>
+      <ul style="margin:8px 0 0;padding-left:18px;color:var(--text-2);line-height:1.8">
+        <li><b>双向翻译：</b>如果用户输入中文，能不能自动翻译成英文？怎么修改程序实现双向翻译？（提示：用一个额外的"反向字典" <code class="code-inline">chn_to_eng = {v: k for k, v in word_dict.items()}</code>）</li>
+        <li><b>哈希表原理：</b>字典为什么查得这么快？它背后用了一种叫"哈希表"的数据结构。试着查查资料，了解 Python 字典是如何做到 O(1) 查找速度的。</li>
+      </ul>
+    </div>
+  </div>
+  <div class="deck-footer"><span>Python 趣味学习课程 · 第40节</span></div>
+</section>
+
+</div>
+<script src="assets/runtime.js"></script>
+</body></html>

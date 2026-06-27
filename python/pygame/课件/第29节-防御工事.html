@@ -1,0 +1,633 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>第29节：防御工事 - 塔防游戏</title>
+<style>
+/* ========== 全局样式 ========== */
+* { margin: 0; padding: 0; box-sizing: border-box; }
+
+body {
+  font-family: "PingFang SC", "Microsoft YaHei", "SimHei", sans-serif;
+  background: #1a1a2e;
+  display: flex; justify-content: center; align-items: center;
+  height: 100vh; overflow: hidden;
+}
+
+/* ========== 幻灯片容器 ========== */
+.slides-container {
+  width: 100vw; height: 100vh;
+  position: relative;
+}
+
+.slide {
+  position: absolute; top: 0; left: 0;
+  width: 100%; height: 100%;
+  display: none;
+  flex-direction: column; justify-content: center; align-items: center;
+  padding: 60px 80px;
+  color: #f0f0f0;
+}
+.slide.active { display: flex; }
+
+/* ========== 幻灯片背景（不同主题色） ========== */
+.slide-title { background: linear-gradient(135deg, #1a1a2e 0%, #16213e 50%, #0f3460 100%); }
+.slide-content { background: linear-gradient(135deg, #1b2430 0%, #263345 100%); }
+.slide-code { background: #1e1e2e; }
+.slide-summary { background: linear-gradient(135deg, #0f3460 0%, #1a1a2e 100%); }
+
+/* ========== 标题样式 ========== */
+h1 { font-size: 4rem; color: #f0c040; margin-bottom: 30px; text-align: center;
+     text-shadow: 3px 3px 6px rgba(0,0,0,0.5); }
+h2 { font-size: 2.8rem; color: #64b5f6; margin-bottom: 40px; text-align: center;
+     border-bottom: 3px solid #64b5f6; padding-bottom: 15px; }
+h3 { font-size: 2rem; color: #ffb74d; margin: 30px 0 20px 0; text-align: left; width: 100%; }
+h4 { font-size: 1.6rem; color: #81c784; margin: 20px 0 10px 0; }
+
+/* ========== 文字样式 ========== */
+p { font-size: 1.8rem; line-height: 2.4rem; margin: 15px 0; text-align: center; }
+p.left { text-align: left; width: 100%; }
+p.small { font-size: 1.4rem; line-height: 2rem; color: #bbb; }
+
+/* ========== 列表 ========== */
+ul { font-size: 1.7rem; line-height: 2.5rem; list-style: none; width: 100%; padding-left: 20px; }
+ul li::before { content: "▸ "; color: #ffb74d; font-weight: bold; }
+ul li { margin: 10px 0; }
+
+ol { font-size: 1.7rem; line-height: 2.5rem; width: 100%; padding-left: 40px; }
+ol li { margin: 10px 0; }
+
+/* ========== 代码展示区域 ========== */
+.code-block {
+  width: 100%; max-width: 900px;
+  background: #1e1e2e;
+  border: 2px solid #444;
+  border-radius: 12px;
+  margin: 15px 0;
+  overflow: hidden;
+}
+.code-header {
+  background: #333; padding: 8px 16px;
+  font-size: 1rem; color: #aaa;
+  display: flex; justify-content: space-between;
+}
+.code-body {
+  padding: 20px 24px; overflow-x: auto;
+  font-family: "Source Code Pro", "Fira Code", "JetBrains Mono", "Consolas", monospace;
+  font-size: 1.35rem; line-height: 2rem;
+  color: #d4d4d4; white-space: pre;
+}
+
+/* ========== 语法高亮 ========== */
+.kw { color: #569cd6; }       /* 关键字 */
+.fn { color: #dcdcaa; }       /* 函数名 */
+.str { color: #ce9178; }      /* 字符串 */
+.num { color: #b5cea8; }      /* 数字 */
+.cmt { color: #6a9955; }      /* 注释 */
+.var { color: #9cdcfe; }      /* 变量 */
+.op { color: #d4d4d4; }       /* 运算符 */
+.cls { color: #4ec9b0; }      /* 类名 */
+
+/* ========== 特殊排版 ========== */
+.highlight-box {
+  background: rgba(255, 183, 77, 0.15);
+  border: 2px solid #ffb74d;
+  border-radius: 16px;
+  padding: 25px 35px; margin: 20px 0;
+  width: 100%; max-width: 900px;
+}
+.highlight-box p { font-size: 1.6rem; text-align: left; }
+
+.big-icon { font-size: 6rem; margin-bottom: 20px; }
+.subtitle { font-size: 2rem; color: #aaa; margin-top: 10px; }
+
+/* ========== 两栏布局 ========== */
+.two-col {
+  display: flex; width: 100%; gap: 40px; align-items: flex-start;
+}
+.two-col > div { flex: 1; }
+
+/* ========== 流程图 ========== */
+.flow {
+  display: flex; align-items: center; justify-content: center;
+  gap: 20px; flex-wrap: wrap; margin: 20px 0;
+}
+.flow-box {
+  background: #263345; border: 2px solid #64b5f6;
+  border-radius: 12px; padding: 15px 25px;
+  font-size: 1.5rem; color: #f0f0f0; text-align: center;
+  min-width: 100px;
+}
+.flow-arrow { font-size: 2rem; color: #ffb74d; }
+
+/* ========== 页脚 ========== */
+.footer {
+  position: absolute; bottom: 30px; font-size: 1.1rem; color: #888;
+}
+
+/* ========== 导航提示 ========== */
+.nav-hint {
+  position: fixed; bottom: 20px; right: 30px;
+  background: rgba(0,0,0,0.5); padding: 8px 16px;
+  border-radius: 8px; font-size: 1rem; color: #aaa;
+  z-index: 100;
+}
+
+/* ========== 页面指示器 ========== */
+.page-indicator {
+  position: fixed; bottom: 20px; left: 30px;
+  font-size: 1.1rem; color: #aaa; z-index: 100;
+}
+</style>
+</head>
+<body>
+
+<div class="slides-container">
+
+<!-- ==================== 第 1 页：封面 ==================== -->
+<div class="slide slide-title active" data-index="0">
+  <div class="big-icon">🏰</div>
+  <h1>第29节：防御工事</h1>
+  <p class="subtitle">塔防游戏（第一部分）—— 建造我们的第一道防线</p>
+  <p style="margin-top:50px; color:#aaa;">Python + Pygame 游戏开发课程</p>
+  <div class="footer">按 → 键翻到下一页</div>
+</div>
+
+<!-- ==================== 第 2 页：今日目标 ==================== -->
+<div class="slide slide-content" data-index="1">
+  <h2>🎯 今日目标</h2>
+  <div style="width:100%; max-width:800px;">
+    <p class="left" style="font-size:2rem;">学完这节课，你将能够：</p>
+    <ul style="margin-top:30px;">
+      <li>用<strong style="color:#ffb74d;">路径点列表</strong>定义敌人的行走路线</li>
+      <li>实现敌人<strong style="color:#64b5f6;">沿路径点依次移动</strong>的逻辑</li>
+      <li>使用 <strong style="color:#ce9178;">MOUSEBUTTONDOWN</strong> 点击空地放置炮塔</li>
+      <li>理解<strong style="color:#81c784;">金币系统</strong>的设计思路</li>
+    </ul>
+  </div>
+  <div class="footer">1 / 13</div>
+</div>
+
+<!-- ==================== 第 3 页：什么是塔防游戏 ==================== -->
+<div class="slide slide-content" data-index="2">
+  <h2>🏰 什么是塔防游戏？</h2>
+  <div class="two-col">
+    <div>
+      <h4>核心要素</h4>
+      <ul>
+        <li><strong>路线</strong>：敌人沿着固定路线前进</li>
+        <li><strong>炮塔</strong>：玩家在路边放置防御工事</li>
+        <li><strong>金币</strong>：放置炮塔需要消耗金币</li>
+        <li><strong>目标</strong>：阻止敌人到达终点</li>
+      </ul>
+    </div>
+    <div>
+      <h4>今天做什么</h4>
+      <ul>
+        <li>✅ 画一条弯弯曲曲的路线</li>
+        <li>✅ 让敌人沿路线走</li>
+        <li>✅ 点击空地放置炮塔</li>
+        <li>⏳ 炮塔开火（下节课）</li>
+      </ul>
+    </div>
+  </div>
+  <div class="highlight-box" style="margin-top:30px;">
+    <p>💡 <strong>核心挑战：</strong>敌人怎么知道该往哪走？</p>
+    <p style="color:#ffb74d;">答案：用一串坐标点给它导航！</p>
+  </div>
+  <div class="footer">2 / 13</div>
+</div>
+
+<!-- ==================== 第 4 页：路径点概念 ==================== -->
+<div class="slide slide-content" data-index="3">
+  <h2>📍 核心概念：路径点（Waypoint）</h2>
+  <p class="left" style="font-size:1.8rem;">把路线想象成<strong style="color:#ffb74d;">导航路线</strong>——由一个个关键位置连起来：</p>
+
+  <div class="flow">
+    <div class="flow-box" style="background:#1b5e20;">起点<br><small>(0, 100)</small></div>
+    <div class="flow-arrow">→</div>
+    <div class="flow-box">路口1<br><small>(200, 100)</small></div>
+    <div class="flow-arrow">↓</div>
+    <div class="flow-box">路口2<br><small>(200, 300)</small></div>
+    <div class="flow-arrow">→</div>
+    <div class="flow-box">路口3<br><small>(500, 300)</small></div>
+    <div class="flow-arrow">↓</div>
+    <div class="flow-box">路口4<br><small>(500, 500)</small></div>
+    <div class="flow-arrow">→</div>
+    <div class="flow-box" style="background:#b71c1c;">终点<br><small>(800, 500)</small></div>
+  </div>
+
+  <div class="code-block" style="margin-top:30px;">
+    <div class="code-header"><span>路径点的 Python 表示</span></div>
+    <div class="code-body"><span class="cmt"># 路径 = 一串坐标点组成的列表</span>
+<span class="var">path</span> = [
+    (<span class="num">0</span>, <span class="num">100</span>),    <span class="cmt"># 起点：屏幕左侧</span>
+    (<span class="num">200</span>, <span class="num">100</span>),  <span class="cmt"># 向右走到这里，然后向下拐</span>
+    (<span class="num">200</span>, <span class="num">300</span>),  <span class="cmt"># 向下走到底，再向右拐</span>
+    (<span class="num">500</span>, <span class="num">300</span>),  <span class="cmt"># 向右走到这里，再向下拐</span>
+    (<span class="num">500</span>, <span class="num">500</span>),  <span class="cmt"># 向下走到底，再向右拐</span>
+    (<span class="num">700</span>, <span class="num">500</span>),  <span class="cmt"># 向右走向出口</span>
+    (<span class="num">800</span>, <span class="num">500</span>),  <span class="cmt"># 终点：走出屏幕</span>
+]</div>
+  </div>
+
+  <div class="footer">3 / 13</div>
+</div>
+
+<!-- ==================== 第 5 页：绘制路线 ==================== -->
+<div class="slide slide-code" data-index="4">
+  <h2>🎨 绘制地图：草地 + 路线</h2>
+  <div class="code-block" style="max-width:950px;">
+    <div class="code-header"><span>draw_map() 函数</span></div>
+    <div class="code-body"><span class="kw">def</span> <span class="fn">draw_map</span>():
+    <span class="cmt"># 1. 草地背景</span>
+    screen.fill(<span class="var">GREEN</span>)  <span class="cmt"># 铺满绿色</span>
+
+    <span class="cmt"># 2. 画网格线（让草地像策略地图）</span>
+    <span class="kw">for</span> x <span class="kw">in</span> <span class="fn">range</span>(<span class="num">0</span>, WIDTH, <span class="num">40</span>):
+        pygame.draw.line(screen, <span class="var">DARK_GREEN</span>,
+                         (x, <span class="num">0</span>), (x, HEIGHT), <span class="num">1</span>)
+
+    <span class="cmt"># 3. 画路线：把所有路径点用粗线连起来</span>
+    <span class="kw">if</span> <span class="fn">len</span>(path) >= <span class="num">2</span>:
+        <span class="cmt"># False = 不闭合（路线是开放的）</span>
+        pygame.draw.lines(screen, <span class="var">BROWN</span>,
+                          <span class="kw">False</span>, path, <span class="num">50</span>)</div>
+  </div>
+  <p class="left" style="font-size:1.6rem; margin-top:20px;">
+    <strong style="color:#ffb74d;">关键函数：</strong>
+    <code style="color:#ce9178; background:#333; padding:3px 10px; border-radius:5px;">pygame.draw.lines(表面, 颜色, 是否闭合, 点列表, 线宽)</code>
+  </p>
+  <div class="footer">4 / 13</div>
+</div>
+
+<!-- ==================== 第 6 页：敌人移动原理 ==================== -->
+<div class="slide slide-content" data-index="5">
+  <h2>🚶 敌人怎么沿路线走？</h2>
+  <h4>核心思路：朝当前目标走 → 到达后换下一个</h4>
+
+  <div class="flow" style="margin:25px 0;">
+    <div class="flow-box">站在 path[0]</div>
+    <div class="flow-arrow">→</div>
+    <div class="flow-box">朝 path[1] 走</div>
+    <div class="flow-arrow">→</div>
+    <div class="flow-box">到达 path[1]！<br>target_index +1</div>
+    <div class="flow-arrow">→</div>
+    <div class="flow-box">朝 path[2] 走</div>
+    <div class="flow-arrow">→</div>
+    <div class="flow-box">到达 path[2]！<br>target_index +1</div>
+    <div class="flow-arrow">→</div>
+    <div class="flow-box">... 继续 ...</div>
+  </div>
+
+  <div class="highlight-box">
+    <p style="font-size:1.6rem;"><strong style="color:#64b5f6;">target_index</strong> 就像导航软件的"下一个路口"指针</p>
+    <p style="font-size:1.4rem; color:#aaa;">每到达一个路口，指针就往后移一位，直到走完全程</p>
+  </div>
+  <div class="footer">5 / 13</div>
+</div>
+
+<!-- ==================== 第 7 页：敌人移动代码 ==================== -->
+<div class="slide slide-code" data-index="6">
+  <h2>💻 敌人移动 — 核心代码</h2>
+  <div class="code-block" style="max-width:950px; font-size:1.15rem;">
+    <div class="code-header"><span>Enemy 类的 update() 方法</span></div>
+    <div class="code-body"><span class="kw">def</span> <span class="fn">update</span>(<span class="kw">self</span>):
+    <span class="cmt"># 1. 获取当前目标路径点</span>
+    target = path[<span class="kw">self</span>.target_index]
+
+    <span class="cmt"># 2. 计算到目标的方向</span>
+    dx = target[<span class="num">0</span>] - <span class="kw">self</span>.rect.centerx
+    dy = target[<span class="num">1</span>] - <span class="kw">self</span>.rect.centery
+
+    <span class="cmt"># 3. 计算距离（勾股定理）</span>
+    distance = math.sqrt(dx * dx + dy * dy)
+
+    <span class="cmt"># 4. 如果到达 → 切换下一个目标</span>
+    <span class="kw">if</span> distance &lt; <span class="kw">self</span>.speed:
+        <span class="kw">self</span>.target_index += <span class="num">1</span>
+        <span class="kw">if</span> <span class="kw">self</span>.target_index &gt;= <span class="fn">len</span>(path):
+            <span class="kw">self</span>.kill()  <span class="cmt"># 走到终点，移除</span>
+            <span class="kw">return</span>
+
+    <span class="cmt"># 5. 沿方向移动一步（单位向量 × 速度）</span>
+    <span class="kw">self</span>.rect.x += (dx / distance) * <span class="kw">self</span>.speed
+    <span class="kw">self</span>.rect.y += (dy / distance) * <span class="kw">self</span>.speed</div>
+  </div>
+
+  <div class="highlight-box" style="margin-top:15px;">
+    <p style="font-size:1.4rem;">
+      <strong style="color:#ffb74d;">为什么用 dx/distance？</strong>
+      这叫<strong style="color:#64b5f6;">"归一化"</strong>——把方向变成长度为 1 的向量，再乘以速度。
+      这样不管朝哪个方向走，实际速度都是一样的。
+    </p>
+  </div>
+  <div class="footer">6 / 13</div>
+</div>
+
+<!-- ==================== 第 8 页：敌人移动可视化 ==================== -->
+<div class="slide slide-content" data-index="7">
+  <h2>👀 敌人移动 — 逐步演示</h2>
+  <div style="width:100%; max-width:850px;">
+    <h4>场景：敌人从 (0, 100) 出发，目标是 (200, 100)，速度 = 2</h4>
+
+    <table style="width:100%; font-size:1.3rem; border-collapse:collapse; margin:20px 0;">
+      <tr style="background:#263345;">
+        <th style="padding:10px; border:1px solid #555;">帧数</th>
+        <th style="padding:10px; border:1px solid #555;">敌人位置</th>
+        <th style="padding:10px; border:1px solid #555;">目标</th>
+        <th style="padding:10px; border:1px solid #555;">距离</th>
+        <th style="padding:10px; border:1px solid #555;">动作</th>
+      </tr>
+      <tr style="text-align:center;">
+        <td style="padding:10px; border:1px solid #444;">第 1 帧</td>
+        <td style="padding:10px; border:1px solid #444; color:#64b5f6;">(0, 100)</td>
+        <td style="padding:10px; border:1px solid #444;">(200, 100)</td>
+        <td style="padding:10px; border:1px solid #444;">200</td>
+        <td style="padding:10px; border:1px solid #444; color:#81c784;">向右移动 2px</td>
+      </tr>
+      <tr style="text-align:center; background:#1e2840;">
+        <td style="padding:10px; border:1px solid #444;">第 50 帧</td>
+        <td style="padding:10px; border:1px solid #444; color:#64b5f6;">(100, 100)</td>
+        <td style="padding:10px; border:1px solid #444;">(200, 100)</td>
+        <td style="padding:10px; border:1px solid #444;">100</td>
+        <td style="padding:10px; border:1px solid #444; color:#81c784;">继续向右走</td>
+      </tr>
+      <tr style="text-align:center;">
+        <td style="padding:10px; border:1px solid #444;">第 100 帧</td>
+        <td style="padding:10px; border:1px solid #444; color:#64b5f6;">(198, 100)</td>
+        <td style="padding:10px; border:1px solid #444;">(200, 100)</td>
+        <td style="padding:10px; border:1px solid #444;">2</td>
+        <td style="padding:10px; border:1px solid #444; color:#ffb74d;">距离 &lt; 速度 → 切换目标!</td>
+      </tr>
+    </table>
+
+    <p class="left" style="font-size:1.5rem; margin-top:20px;">
+      <strong style="color:#ffb74d;">关键判断：</strong>
+      <code style="color:#ce9178; background:#333; padding:3px 10px; border-radius:5px;">if distance &lt; self.speed:</code>
+      —— 距离小于一步的移动量，就认为"到达了"
+    </p>
+  </div>
+  <div class="footer">7 / 13</div>
+</div>
+
+<!-- ==================== 第 9 页：放置炮塔 ==================== -->
+<div class="slide slide-content" data-index="8">
+  <h2>🛡️ 点击放置炮塔</h2>
+  <div class="two-col">
+    <div>
+      <h4>放置条件</h4>
+      <ul>
+        <li>金币 ≥ 炮塔价格（50 金币）</li>
+        <li>点击位置不在路线上</li>
+        <li>不和已有炮塔重叠</li>
+      </ul>
+    </div>
+    <div>
+      <h4>实现步骤</h4>
+      <ol>
+        <li>监听 MOUSEBUTTONDOWN 事件</li>
+        <li>获取点击位置 event.pos</li>
+        <li>检查金币是否够</li>
+        <li>检查位置是否合法</li>
+        <li>创建 Tower 精灵</li>
+        <li>扣除金币</li>
+      </ol>
+    </div>
+  </div>
+
+  <div class="highlight-box" style="margin-top:20px;">
+    <p style="font-size:1.5rem;">
+      <strong style="color:#64b5f6;">如何判断点击是否在路线上？</strong><br>
+      遍历每段路径，构造包围矩形（扩展路径宽度的一半），<br>
+      检查点击坐标是否落在矩形内。
+    </p>
+  </div>
+  <div class="footer">8 / 13</div>
+</div>
+
+<!-- ==================== 第 10 页：炮塔放置代码 ==================== -->
+<div class="slide slide-code" data-index="9">
+  <h2>💻 炮塔放置 — 代码实现</h2>
+  <div class="code-block" style="max-width:950px;">
+    <div class="code-header"><span>事件处理 + 位置检测</span></div>
+    <div class="code-body"><span class="cmt"># 在游戏循环的事件处理中：</span>
+<span class="kw">if</span> event.type == pygame.<span class="var">MOUSEBUTTONDOWN</span>:
+    mouse_x, mouse_y = event.<span class="fn">pos</span>
+
+    <span class="cmt"># 条件1：金币够 + 条件2：位置不在路线上</span>
+    <span class="kw">if</span> gold &gt;= TOWER_COST <span class="kw">and</span> can_place_tower(mouse_x, mouse_y):
+        tower = Tower(mouse_x, mouse_y)    <span class="cmt"># 创建炮塔</span>
+        tower_group.add(tower)             <span class="cmt"># 加入组</span>
+        gold -= TOWER_COST                 <span class="cmt"># 扣金币</span>
+
+<span class="cmt"># ================</span>
+<span class="kw">def</span> <span class="fn">can_place_tower</span>(x, y):
+    <span class="cmt"># 遍历每一段路径，检查是否和路线重叠</span>
+    <span class="kw">for</span> i <span class="kw">in</span> <span class="fn">range</span>(<span class="fn">len</span>(path) - <span class="num">1</span>):
+        p1, p2 = path[i], path[i + <span class="num">1</span>]
+        <span class="cmt"># 构造这段路径的矩形范围</span>
+        min_x = <span class="fn">min</span>(p1[<span class="num">0</span>], p2[<span class="num">0</span>]) - <span class="num">43</span>
+        max_x = <span class="fn">max</span>(p1[<span class="num">0</span>], p2[<span class="num">0</span>]) + <span class="num">43</span>
+        min_y = <span class="fn">min</span>(p1[<span class="num">1</span>], p2[<span class="num">1</span>]) - <span class="num">43</span>
+        max_y = <span class="fn">max</span>(p1[<span class="num">1</span>], p2[<span class="num">1</span>]) + <span class="num">43</span>
+        <span class="kw">if</span> min_x &lt;= x &lt;= max_x <span class="kw">and</span> min_y &lt;= y &lt;= max_y:
+            <span class="kw">return</span> <span class="kw">False</span>  <span class="cmt"># 在路线上，不能放</span>
+    <span class="kw">return</span> <span class="kw">True</span>           <span class="cmt"># 可以放置</span></div>
+  </div>
+  <div class="footer">9 / 13</div>
+</div>
+
+<!-- ==================== 第 11 页：金币系统 ==================== -->
+<div class="slide slide-content" data-index="10">
+  <h2>💰 金币系统</h2>
+  <div class="two-col">
+    <div>
+      <h4>金币的三种操作</h4>
+      <ul>
+        <li><strong style="color:#81c784;">初始</strong>：gold = 200</li>
+        <li><strong style="color:#ffb74d;">消耗</strong>：放置炮塔 -50</li>
+        <li><strong style="color:#64b5f6;">增长</strong>：每 2 秒 +1</li>
+      </ul>
+    </div>
+    <div>
+      <h4>为什么要自动增长？</h4>
+      <p class="left" style="font-size:1.4rem; color:#bbb;">
+        给玩家一个持续的"收入"来源。<br>
+        即使一开始放错了炮塔位置，<br>
+        等一等金币攒够了还能再放。<br>
+        这也让游戏不会"卡住"。
+      </p>
+    </div>
+  </div>
+
+  <div class="code-block" style="max-width:800px; margin-top:25px;">
+    <div class="code-header"><span>金币自动增长</span></div>
+    <div class="code-body"><span class="cmt"># 在游戏循环中：</span>
+gold_timer += <span class="num">1</span>
+<span class="kw">if</span> gold_timer &gt;= <span class="num">120</span>:  <span class="cmt"># 120 帧 ≈ 2 秒</span>
+    gold += <span class="num">1</span>           <span class="cmt"># 自动获得 1 金币</span>
+    gold_timer = <span class="num">0</span>        <span class="cmt"># 重置计时器</span></div>
+  </div>
+  <div class="footer">10 / 13</div>
+</div>
+
+<!-- ==================== 第 12 页：完整游戏结构 ==================== -->
+<div class="slide slide-code" data-index="11">
+  <h2>🏗️ 完整游戏结构</h2>
+  <div class="code-block" style="max-width:950px; font-size:1.15rem;">
+    <div class="code-header"><span>游戏主循环概览</span></div>
+    <div class="code-body"><span class="kw">while</span> running:
+    <span class="cmt"># ── 1. 事件处理 ──</span>
+    <span class="kw">for</span> event <span class="kw">in</span> pygame.event.get():
+        <span class="kw">if</span> event == QUIT:     running = <span class="kw">False</span>
+        <span class="kw">if</span> event == MOUSEDOWN: 尝试放置炮塔
+
+    <span class="cmt"># ── 2. 自动生成敌人 ──</span>
+    enemy_timer += <span class="num">1</span>
+    <span class="kw">if</span> enemy_timer &gt;= <span class="num">90</span>:
+        enemy = Enemy()
+        all_sprites.add(enemy)
+
+    <span class="cmt"># ── 3. 金币增长 ──</span>
+    gold_timer += <span class="num">1</span>
+    <span class="kw">if</span> gold_timer &gt;= <span class="num">120</span>:
+        gold += <span class="num">1</span>
+
+    <span class="cmt"># ── 4. 更新所有精灵 ──</span>
+    all_sprites.update()
+
+    <span class="cmt"># ── 5. 绘制画面 ──</span>
+    draw_map()              <span class="cmt"># 地图</span>
+    all_sprites.draw(screen) <span class="cmt"># 精灵</span>
+    draw_ui()               <span class="cmt"># 界面</span>
+    pygame.display.flip()</div>
+  </div>
+  <div class="footer">11 / 13</div>
+</div>
+
+<!-- ==================== 第 13 页：练习任务 ==================== -->
+<div class="slide slide-content" data-index="12">
+  <h2>✏️ 课堂练习</h2>
+  <div class="two-col">
+    <div>
+      <h4>✅ 基础任务</h4>
+      <ol>
+        <li>设计自己的路线（至少 5 个路径点）</li>
+        <li>实现敌人沿路径移动</li>
+        <li>实现点击放置炮塔</li>
+        <li>完成金币系统</li>
+      </ol>
+    </div>
+    <div>
+      <h4>🚀 挑战任务</h4>
+      <ul>
+        <li>创建不同速度的敌人</li>
+        <li>显示炮塔攻击范围</li>
+        <li>实现精确的"点到线段距离"检测</li>
+      </ul>
+    </div>
+  </div>
+  <div class="footer">12 / 13</div>
+</div>
+
+<!-- ==================== 第 14 页：总结 ==================== -->
+<div class="slide slide-summary" data-index="13">
+  <h2>📝 本节总结</h2>
+  <div style="width:100%; max-width:800px;">
+    <div class="highlight-box">
+      <p style="font-size:1.7rem; color:#ffb74d;"><strong>五大要点：</strong></p>
+      <ol style="font-size:1.6rem; line-height:2.4rem;">
+        <li><strong>路径点 = 坐标列表</strong>：path = [(x1,y1), (x2,y2), ...]</li>
+        <li><strong>敌人移动</strong>：朝当前目标走 → 到达后 target_index +1</li>
+        <li><strong>方向归一化</strong>：dx/distance 保证速度恒定</li>
+        <li><strong>炮塔放置</strong>：点鼠标 → 检查金币 → 检查位置 → 创建</li>
+        <li><strong>金币系统</strong>：初始金币 + 放置花费 + 自动增长</li>
+      </ol>
+    </div>
+    <p style="font-size:1.8rem; margin-top:40px; color:#64b5f6;">
+      🎯 <strong>下节预告：第30节 — 炮塔开火！</strong>
+    </p>
+    <p style="font-size:1.4rem; color:#aaa;">
+      炮塔会自动检测范围内的敌人，发射子弹攻击，被击中的敌人消失，还能获得金币奖励！
+    </p>
+  </div>
+  <div class="footer">13 / 13</div>
+</div>
+
+</div>
+
+<!-- ========== 导航提示 ========== -->
+<div class="nav-hint">← → 方向键翻页</div>
+<div class="page-indicator" id="pageIndicator"></div>
+
+<script>
+// ========== 幻灯片导航逻辑 ==========
+(function() {
+  var slides = document.querySelectorAll('.slide');
+  var total = slides.length;
+  var current = 0;
+
+  function showSlide(index) {
+    // 隐藏所有
+    slides.forEach(function(s) { s.classList.remove('active'); });
+    // 显示当前
+    if (index >= 0 && index < total) {
+      slides[index].classList.add('active');
+      current = index;
+    }
+    // 更新页码
+    document.getElementById('pageIndicator').textContent =
+      (current + 1) + ' / ' + total;
+  }
+
+  // 键盘导航
+  document.addEventListener('keydown', function(e) {
+    if (e.key === 'ArrowRight' || e.key === 'ArrowDown' || e.key === ' ') {
+      e.preventDefault();
+      if (current < total - 1) showSlide(current + 1);
+    } else if (e.key === 'ArrowLeft' || e.key === 'ArrowUp') {
+      e.preventDefault();
+      if (current > 0) showSlide(current - 1);
+    } else if (e.key === 'Home') {
+      e.preventDefault();
+      showSlide(0);
+    } else if (e.key === 'End') {
+      e.preventDefault();
+      showSlide(total - 1);
+    }
+  });
+
+  // 点击翻页（左侧回退，右侧前进）
+  document.addEventListener('click', function(e) {
+    // 检查是否点击了链接或代码块（不触发翻页）
+    if (e.target.closest('a') || e.target.closest('button')) return;
+
+    var x = e.clientX;
+    var halfW = window.innerWidth / 2;
+    if (x < halfW && current > 0) {
+      showSlide(current - 1);
+    } else if (x >= halfW && current < total - 1) {
+      showSlide(current + 1);
+    }
+  });
+
+  // 触摸滑动支持
+  var touchStartX = 0;
+  document.addEventListener('touchstart', function(e) {
+    touchStartX = e.touches[0].clientX;
+  });
+  document.addEventListener('touchend', function(e) {
+    var diff = e.changedTouches[0].clientX - touchStartX;
+    if (diff > 50 && current > 0) showSlide(current - 1);
+    if (diff < -50 && current < total - 1) showSlide(current + 1);
+  });
+
+  // 初始化
+  showSlide(0);
+})();
+</script>
+
+</body>
+</html>

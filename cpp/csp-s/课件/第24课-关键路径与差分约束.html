@@ -1,0 +1,455 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>第24课：关键路径与差分约束 — CSP-S 竞赛课件</title>
+<style>
+  /* ===== 全局样式 ===== */
+  :root {
+    --bg: #0a1628;
+    --card: #162744;
+    --card-hover: #1a3056;
+    --text: #e0e6f0;
+    --text-secondary: #8899bb;
+    --accent: #5b9bd5;
+    --accent-bright: #7db9f0;
+    --green: #4ec9b0;
+    --orange: #ce9178;
+    --yellow: #dcdcaa;
+    --red: #f44747;
+    --purple: #c586c0;
+    --keyword: #569cd6;
+    --string: #6a9955;
+    --comment: #6a737d;
+    --number: #b5cea8;
+    --function: #dcdcaa;
+    --type: #4ec9b0;
+    --operator: #d4d4d4;
+    --border: #2a3a55;
+    --shadow: 0 4px 24px rgba(0,0,0,0.4);
+  }
+  * { margin:0; padding:0; box-sizing:border-box; }
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "PingFang SC", "Microsoft YaHei", sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 20px;
+    user-select: none;
+  }
+
+  /* ===== 幻灯片容器 ===== */
+  .slides-container {
+    width: 100%;
+    max-width: 1000px;
+    position: relative;
+  }
+  .slide {
+    display: none;
+    background: var(--card);
+    border-radius: 16px;
+    padding: 40px 48px;
+    box-shadow: var(--shadow);
+    border: 1px solid var(--border);
+    min-height: 520px;
+    animation: fadeIn 0.35s ease;
+  }
+  .slide.active { display: block; }
+  @keyframes fadeIn {
+    from { opacity:0; transform:translateY(12px); }
+    to   { opacity:1; transform:translateY(0); }
+  }
+
+  /* ===== 标题页 ===== */
+  .title-slide { text-align:center; display:flex; flex-direction:column; justify-content:center; align-items:center; }
+  .title-slide .lesson-num { font-size:1.1em; color:var(--accent); letter-spacing:2px; text-transform:uppercase; margin-bottom:8px; }
+  .title-slide h1 { font-size:2.6em; font-weight:700; margin-bottom:16px; background:linear-gradient(135deg, var(--accent-bright), var(--orange)); -webkit-background-clip:text; -webkit-text-fill-color:transparent; background-clip:text; }
+  .title-slide .subtitle { font-size:1.15em; color:var(--text-secondary); margin-bottom:24px; }
+  .title-slide .tags { display:flex; gap:10px; justify-content:center; flex-wrap:wrap; }
+  .title-slide .tag { padding:5px 16px; border-radius:20px; font-size:0.88em; background:rgba(91,155,213,0.15); color:var(--accent); border:1px solid rgba(91,155,213,0.3); }
+
+  /* ===== 内容页通用 ===== */
+  .slide h2 { font-size:1.75em; margin-bottom:20px; color:var(--accent-bright); display:flex; align-items:center; gap:10px; }
+  .slide h2 .icon { font-size:1.2em; }
+  .slide h3 { font-size:1.2em; color:var(--orange); margin:16px 0 8px; }
+  .slide p, .slide li { line-height:1.7; color:var(--text-secondary); font-size:0.98em; }
+  .slide ul, .slide ol { padding-left:1.5em; }
+  .slide li { margin-bottom:4px; }
+  .slide strong { color:var(--accent-bright); }
+  .slide .highlight { color:var(--green); font-weight:600; }
+  .slide .warn { color:var(--orange); font-weight:600; }
+
+  /* ===== 信息卡片 ===== */
+  .info-card {
+    background: rgba(91,155,213,0.06);
+    border-left: 3px solid var(--accent);
+    border-radius: 0 8px 8px 0;
+    padding: 12px 16px;
+    margin: 12px 0;
+  }
+  .info-card p { margin:0; }
+  .info-card p + p { margin-top:6px; }
+
+  /* ===== 对比表格 ===== */
+  .compare-table {
+    width: 100%;
+    border-collapse: collapse;
+    margin: 12px 0;
+    font-size: 0.9em;
+  }
+  .compare-table th {
+    background: rgba(91,155,213,0.12);
+    color: var(--accent-bright);
+    padding: 8px 12px;
+    text-align: left;
+    border: 1px solid var(--border);
+  }
+  .compare-table td {
+    padding: 8px 12px;
+    border: 1px solid var(--border);
+    color: var(--text-secondary);
+  }
+
+  /* ===== 代码块 ===== */
+  .code-block {
+    background: #0d1b2e;
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 16px 20px;
+    margin: 12px 0;
+    overflow-x: auto;
+    font-family: "SF Mono", "Fira Code", "Cascadia Code", "JetBrains Mono", monospace;
+    font-size: 0.84em;
+    line-height: 1.6;
+    white-space: pre;
+    max-height: 400px;
+    overflow-y: auto;
+  }
+  .code-block .kw { color: var(--keyword); }
+  .code-block .str { color: var(--string); }
+  .code-block .com { color: var(--comment); font-style:italic; }
+  .code-block .num { color: var(--number); }
+  .code-block .fn { color: var(--function); }
+  .code-block .tp { color: var(--type); }
+  .code-block .op { color: var(--operator); }
+  .code-block .pp { color: var(--purple); }
+  .code-block .inc { color: var(--purple); }
+
+  /* ===== 步骤列表 ===== */
+  .steps { counter-reset:step; list-style:none; padding-left:0; }
+  .steps li { counter-increment:step; position:relative; padding-left:40px; margin-bottom:12px; }
+  .steps li::before {
+    content: counter(step);
+    position: absolute; left:0; top:0;
+    width: 26px; height: 26px;
+    background: var(--accent);
+    color: #fff;
+    border-radius: 50%;
+    text-align: center;
+    line-height: 26px;
+    font-size: 0.82em;
+    font-weight: 700;
+  }
+
+  /* ===== 纵横布局 ===== */
+  .two-col { display:grid; grid-template-columns:1fr 1fr; gap:20px; }
+  @media (max-width: 700px) { .two-col { grid-template-columns:1fr; } }
+
+  /* ===== 公式 ===== */
+  .formula {
+    display: inline-block;
+    background: rgba(206,145,120,0.1);
+    border: 1px solid rgba(206,145,120,0.3);
+    border-radius: 6px;
+    padding: 4px 10px;
+    font-family: "SF Mono", "Fira Code", monospace;
+    color: var(--orange);
+    font-size: 0.92em;
+  }
+
+  /* ===== 导航 ===== */
+  .nav-bar {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-top: 20px;
+    max-width: 1000px;
+    width: 100%;
+  }
+  .nav-btn {
+    padding: 10px 24px;
+    border: 1px solid var(--border);
+    background: var(--card);
+    color: var(--accent);
+    border-radius: 8px;
+    cursor: pointer;
+    font-size: 0.95em;
+    transition: all 0.2s;
+    font-family: inherit;
+  }
+  .nav-btn:hover { background: var(--card-hover); border-color: var(--accent); color:var(--accent-bright); }
+  .nav-btn:disabled { opacity:0.35; cursor:not-allowed; }
+  .page-indicator { color: var(--text-secondary); font-size:0.9em; }
+
+  /* ===== 响应式 ===== */
+  @media (max-width: 640px) {
+    .slide { padding:24px 20px; min-height:auto; }
+    .title-slide h1 { font-size:1.8em; }
+    .slide h2 { font-size:1.3em; }
+    .code-block { font-size:0.72em; padding:10px 12px; }
+  }
+</style>
+</head>
+<body>
+
+<div class="slides-container">
+
+  <!-- ==================== 幻灯片0：标题页 ==================== -->
+  <div class="slide active title-slide">
+    <div class="lesson-num">CSP-S · 第 24 课</div>
+    <h1>关键路径与差分约束</h1>
+    <p class="subtitle">AOE 网 · ve/vl 计算 · 差分约束系统 · SPFA 求解 · 超级源点</p>
+    <div class="tags">
+      <span class="tag">AOE 网</span>
+      <span class="tag">关键活动</span>
+      <span class="tag">拓扑 DP</span>
+      <span class="tag">SPFA</span>
+      <span class="tag">负环检测</span>
+      <span class="tag">O(V+E)</span>
+    </div>
+  </div>
+
+  <!-- ==================== 幻灯片1：AOE 网与关键路径 ==================== -->
+  <div class="slide">
+    <h2><span class="icon">📘</span> AOE 网与关键路径</h2>
+    <div class="info-card">
+      <p><strong>AOE 网（Activity On Edge）：</strong>一种带权有向无环图。顶点 = 事件（时间点），有向边 = 活动（任务），边的权值 = 活动持续时间。</p>
+    </div>
+    <h3>核心概念</h3>
+    <table class="compare-table">
+      <tr><th>概念</th><th>定义</th><th>计算方法</th></tr>
+      <tr><td>源点</td><td>入度为 0 的顶点，工程起点</td><td>—</td></tr>
+      <tr><td>汇点</td><td>出度为 0 的顶点，工程终点</td><td>—</td></tr>
+      <tr><td><span class="highlight">ve[v]</span></td><td>事件 v 最早发生时间</td><td><span class="formula">ve[v] = max{ve[u] + w}</span>（正向拓扑 DP）</td></tr>
+      <tr><td><span class="highlight">vl[u]</span></td><td>事件 u 最晚发生时间</td><td><span class="formula">vl[u] = min{vl[v] - w}</span>（逆向拓扑 DP）</td></tr>
+      <tr><td>关键活动</td><td>没有任何时间余量的活动</td><td><span class="formula">ve[u] + w == vl[v]</span></td></tr>
+    </table>
+    <div class="info-card" style="margin-top:12px;">
+      <p><span class="highlight">工程最短完成时间 = 关键路径的长度</span>（汇点的 ve 值）</p>
+    </div>
+  </div>
+
+  <!-- ==================== 幻灯片2：差分约束系统 ==================== -->
+  <div class="slide">
+    <h2><span class="icon">📗</span> 差分约束系统</h2>
+    <div class="info-card">
+      <p><strong>定义：</strong>一组形如 <span class="formula">x_i - x_j ≤ c_k</span> 的不等式组。通过图论的方法求解。</p>
+    </div>
+    <h3>核心转化：不等式 → 图中的边</h3>
+    <p>利用最短路三角不等式 <span class="highlight">dist[i] ≤ dist[j] + w</span>（对于边 j→i 权 w）：</p>
+    <table class="compare-table">
+      <tr><th>不等式</th><th>转化</th><th>建边</th></tr>
+      <tr><td>x_i - x_j ≤ c</td><td>x_i ≤ x_j + c</td><td>j → i，权 c</td></tr>
+      <tr><td>x_i - x_j ≥ c</td><td>x_j ≤ x_i - c</td><td>i → j，权 -c</td></tr>
+      <tr><td>x_i - x_j = c</td><td>两条不等式</td><td>j→i 权c，i→j 权-c</td></tr>
+      <tr><td>x_i ≤ c</td><td>x_i - x₀ ≤ c</td><td>超级源点 → i，权 c</td></tr>
+    </table>
+    <div class="info-card">
+      <p><strong>超级源点：</strong>创建一个虚拟节点，向所有变量节点连一条权值为 0 的边，保证图的连通性并为解提供统一基准。</p>
+      <p><strong>无解判定：</strong>若图中存在<strong>负环</strong>，则不等式组无解（因为负环导致 <span class="formula">x_i ≤ x_i + (负数)</span> 矛盾）。</p>
+    </div>
+  </div>
+
+  <!-- ==================== 幻灯片3：建模与 SPFA 求解 ==================== -->
+  <div class="slide">
+    <h2><span class="icon">📙</span> SPFA 求解差分约束（原理推导）</h2>
+    <h3>算法流程</h3>
+    <ol class="steps">
+      <li><strong>建图：</strong>对每个约束 x_i - x_j ≤ c，添加有向边 j → i，权值为 c。</li>
+      <li><strong>超级源点：</strong>创建节点 S = n，对所有 i ∈ [0, n-1] 添加边 S → i，权 0。</li>
+      <li><strong>SPFA 求最短路：</strong>以 S 为起点运行 SPFA，得到 dist[0..n-1]。</li>
+      <li><strong>检测负环：</strong>若某节点入队次数 ≥ n+1，说明存在负环 → 不等式组无解。</li>
+      <li><strong>输出解：</strong>x_i = dist[i] 即为一组可行解。</li>
+    </ol>
+    <h3>为什么最短路径就是解？</h3>
+    <div class="info-card">
+      <p>SPFA 求出的最短距离满足：对每条边 j→i（权 c），有 <span class="highlight">dist[i] ≤ dist[j] + c</span>。</p>
+      <p>令 x_i = dist[i]，则 <span class="highlight">x_i ≤ x_j + c</span>，即 <span class="highlight">x_i - x_j ≤ c</span> —— 正好满足差分约束！</p>
+    </div>
+    <h3>解的平移性质</h3>
+    <div class="info-card">
+      <p>若 (x₁, x₂, ..., xₙ) 是一组可行解，则 (x₁+d, x₂+d, ..., xₙ+d) 也是可行解。</p>
+      <p>因为 (x_i+d) - (x_j+d) = x_i - x_j，差值不变。</p>
+    </div>
+  </div>
+
+  <!-- ==================== 幻灯片4：代码模板 ==================== -->
+  <div class="slide">
+    <h2><span class="icon">💻</span> 代码模板</h2>
+    <div class="two-col">
+      <div>
+        <h3>关键路径（核心片段）</h3>
+        <div class="code-block"><span class="com">// 正向拓扑 + 计算 ve</span>
+<span class="kw">while</span> (!q.empty()) {
+    <span class="kw">int</span> u = q.front(); q.pop();
+    topo.push_back(u);
+    <span class="kw">for</span> (<span class="kw">auto</span>&amp; e : adj[u]) {
+        <span class="kw">int</span> v = e.to, w = e.w;
+        ve[v] = max(ve[v], ve[u] + w);
+        <span class="kw">if</span> (--indeg[v] == <span class="num">0</span>) q.push(v);
+    }
+}
+<span class="com">// 逆向计算 vl</span>
+<span class="kw">for</span> (<span class="kw">int</span> i=n-<span class="num">1</span>; i&gt;=<span class="num">0</span>; i--) {
+    <span class="kw">int</span> u = topo[i];
+    <span class="kw">for</span> (<span class="kw">auto</span>&amp; e : adj[u])
+        vl[u] = min(vl[u], vl[e.to] - e.w);
+}
+<span class="com">// 关键活动：ve[u]+w == vl[v]</span></div>
+      </div>
+      <div>
+        <h3>差分约束 SPFA（核心片段）</h3>
+        <div class="code-block"><span class="com">// 超级源点 super = n</span>
+<span class="kw">for</span> (<span class="kw">int</span> i=<span class="num">0</span>; i&lt;n; i++)
+    adj[super].push_back({i, <span class="num">0</span>});
+
+<span class="com">// SPFA 最短路</span>
+dist[super] = <span class="num">0</span>; q.push(super);
+<span class="kw">while</span> (!q.empty()) {
+    <span class="kw">int</span> u = q.front(); q.pop();
+    inq[u] = <span class="kw">false</span>;
+    <span class="kw">for</span> (<span class="kw">auto</span>&amp; [v, w] : adj[u]) {
+        <span class="kw">if</span> (dist[v] &gt; dist[u] + w) {
+            dist[v] = dist[u] + w;
+            cnt[v] = cnt[u] + <span class="num">1</span>;
+            <span class="kw">if</span> (cnt[v] &gt;= N)
+                <span class="kw">return</span> <span class="kw">false</span>; <span class="com">// 负环</span>
+            <span class="kw">if</span> (!inq[v]) q.push(v);
+        }
+    }
+}
+<span class="com">// x_i = dist[i]</span></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ==================== 幻灯片5：真题精练 ==================== -->
+  <div class="slide">
+    <h2><span class="icon">📝</span> 真题精练</h2>
+    <h3>题目1：关键路径（CSP 经典题型）</h3>
+    <div class="info-card">
+      <p>给定 AOE 网（n 个事件，m 个活动），求：工程最短完成时间 和 关键路径上的活动。</p>
+      <p><strong>解题步骤：</strong></p>
+      <p>① 正向拓扑排序，计算 ve[v] = max{ve[u] + w}（DP 转移）</p>
+      <p>② 逆向计算 vl[u] = min{vl[v] - w}</p>
+      <p>③ 遍历所有边，ve[u] + w == vl[v] 即为关键活动</p>
+      <p><span class="highlight">复杂度：</span>O(V+E)</p>
+    </div>
+    <h3>题目2：差分约束（POJ 1201 风格）</h3>
+    <div class="info-card">
+      <p>给定 m 个约束条件，形如 x_b - x_a ≥ c，求满足所有约束的最小解空间。</p>
+      <p><strong>转化：</strong>x_b - x_a ≥ c → x_a - x_b ≤ -c → 建边 b → a，权 -c。添加超级源点后 SPFA 求解。</p>
+      <p><strong>注意：</strong>求最短路得到的是使变量尽可能小的解（最大下界）。</p>
+    </div>
+  </div>
+
+  <!-- ==================== 幻灯片6：优化技巧与易错点 ==================== -->
+  <div class="slide">
+    <h2><span class="icon">⚡</span> 优化技巧与易错点</h2>
+    <div class="two-col">
+      <div>
+        <h3>常见错误</h3>
+        <table class="compare-table">
+          <tr><th>错误</th><th>正确做法</th></tr>
+          <tr><td>ve 初始化为 INF</td><td>ve 应初始化为 0</td></tr>
+          <tr><td>vl 各节点初始值不一致</td><td>统一初始化为汇点 ve</td></tr>
+          <tr><td>差分约束建边方向反</td><td>x_i - x_j ≤ c → j→i</td></tr>
+          <tr><td>遗忘超级源点</td><td>必须加！否则不连通</td></tr>
+          <tr><td>负环检测阈值用 n</td><td>应用总节点数 N = n+1</td></tr>
+        </table>
+      </div>
+      <div>
+        <h3>优化技巧</h3>
+        <ul>
+          <li><strong>边权取负求最长路：</strong>DAG 上关键路径即最长路，可对边权取负后求最短路。</li>
+          <li><strong>SPFA 优化：</strong>使用 SLF（Small Label First）优化入队策略。</li>
+          <li><strong>DAG 用拓扑 DP：</strong>如果差分约束图是 DAG，直接用 DP 可按 O(V+E) 求解，无需 SPFA。</li>
+          <li><strong>Bellman-Ford 备选：</strong>当数据规模较小时，用 Bellman-Ford 更稳定（负环检测无遗漏）。</li>
+          <li><strong>不等式转化模板：</strong>建立 Builder 辅助类，统一处理 LEQ/GEQ/EQ 约束。</li>
+        </ul>
+      </div>
+    </div>
+    <h3 style="margin-top:12px;">关键路径 vs 差分约束 解题思路对比</h3>
+    <table class="compare-table">
+      <tr><th>维度</th><th>关键路径</th><th>差分约束</th></tr>
+      <tr><td>图类型</td><td>DAG（必须无环）</td><td>任意有向图</td></tr>
+      <tr><td>求解目标</td><td>最长路径</td><td>最短路径</td></tr>
+      <tr><td>判无解</td><td>拓扑序列长度 &lt; n</td><td>存在负环</td></tr>
+      <tr><td>算法</td><td>拓扑排序 + DP</td><td>SPFA / Bellman-Ford</td></tr>
+      <tr><td>复杂度</td><td>O(V+E)</td><td>O(VE) ~ O(kE)</td></tr>
+    </table>
+  </div>
+
+  <!-- ==================== 幻灯片7：总结 ==================== -->
+  <div class="slide">
+    <h2><span class="icon">🎯</span> 本课小结</h2>
+    <table class="compare-table">
+      <tr><th>知识点</th><th>核心</th><th>复杂度</th></tr>
+      <tr><td>AOE 网</td><td>顶点=事件，边=活动，带权 DAG</td><td>—</td></tr>
+      <tr><td>ve（最早时间）</td><td>正向拓扑 DP：ve[v] = max(ve[u] + w)</td><td>O(V+E)</td></tr>
+      <tr><td>vl（最晚时间）</td><td>逆向拓扑 DP：vl[u] = min(vl[v] - w)</td><td>O(V+E)</td></tr>
+      <tr><td>关键活动判定</td><td>ve[u] + w == vl[v]</td><td>O(E)</td></tr>
+      <tr><td>差分约束建模</td><td>x_i - x_j ≤ c → 边 j→i 权 c</td><td>—</td></tr>
+      <tr><td>SPFA 求解</td><td>最短路 + 负环检测（cnt ≥ N）</td><td>O(kE)</td></tr>
+      <tr><td>超级源点</td><td>向所有节点连权 0 边，保证连通</td><td>O(V)</td></tr>
+    </table>
+    <div class="info-card" style="margin-top:16px;">
+      <p><span class="highlight">一句话总结：</span>关键路径在 DAG 上通过拓扑 DP 求最长路；差分约束将不等式组转化为图中最短路问题，由 SPFA 求解，负环即无解。两者都是「约束 → 图」的建模思维。</p>
+    </div>
+  </div>
+
+</div><!-- /slides-container -->
+
+<!-- ===== 导航栏 ===== -->
+<div class="nav-bar">
+  <button class="nav-btn" id="prevBtn" onclick="navigate(-1)">← 上一页</button>
+  <span class="page-indicator" id="pageIndicator">1 / 8</span>
+  <button class="nav-btn" id="nextBtn" onclick="navigate(1)">下一页 →</button>
+</div>
+
+<script>
+  const slides = document.querySelectorAll('.slide');
+  const totalSlides = slides.length;
+  let current = 0;
+
+  function showSlide(idx) {
+    slides[current].classList.remove('active');
+    current = idx;
+    slides[current].classList.add('active');
+    document.getElementById('prevBtn').disabled = (current === 0);
+    document.getElementById('nextBtn').disabled = (current === totalSlides - 1);
+    document.getElementById('pageIndicator').textContent = (current + 1) + ' / ' + totalSlides;
+  }
+
+  function navigate(dir) {
+    const next = current + dir;
+    if (next >= 0 && next < totalSlides) showSlide(next);
+  }
+
+  // 键盘导航
+  document.addEventListener('keydown', function(e) {
+    if (e.key === 'ArrowRight' || e.key === ' ') { e.preventDefault(); navigate(1); }
+    else if (e.key === 'ArrowLeft') { e.preventDefault(); navigate(-1); }
+  });
+
+  // 初始化
+  showSlide(0);
+</script>
+
+</body>
+</html>

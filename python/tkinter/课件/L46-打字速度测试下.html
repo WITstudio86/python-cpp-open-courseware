@@ -1,0 +1,197 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>第46节 · 项目13：打字速度测试（下）· Python Tkinter 课程</title>
+<link rel="stylesheet" href="assets/fonts.css">
+<link rel="stylesheet" href="assets/base.css">
+<link rel="stylesheet" id="theme-link" href="assets/themes/soft-pastel.css">
+<link rel="stylesheet" href="assets/animations/animations.css">
+<link rel="stylesheet" href="style.css">
+</head>
+<body class="tpl-tkinter-course" data-themes="soft-pastel,rainbow-gradient,sunset-warm,minimal-white" data-theme-base="assets/themes/">
+<div class="deck">
+
+  <!-- 1. Cover -->
+  <section class="slide full" data-title="封面">
+    <p class="kicker">Python Tkinter · 第 46 节</p>
+    <h1 class="h1 mt-s">项目 13：打字速度测试（下）<br><em>历史记录 + 排行榜 + 难度</em></h1>
+    <p class="lede mt-l" style="max-width:62ch">打造完整的打字测试工具！历史成绩保存、排行榜展示、难度自由选择——你的打字会越来越快！</p>
+    <div class="row mt-l" style="gap:16px">
+      <span class="pill-academic">~ 60 分钟</span>
+      <span class="pill-academic">难度 · ⭐⭐</span>
+      <span class="pill-academic">前置 · L45 倒计时</span>
+    </div>
+    <div class="deck-footer"><span>Python Tkinter 趣味编程课</span><span class="slide-number" data-current="1" data-total="7"></span></div>
+  </section>
+
+  <!-- 2. Objectives -->
+  <section class="slide" data-title="学习目标">
+    <aside class="sidebar">
+      <div class="brand">Tkinter 046</div>
+      <h5>学习目标</h5>
+      <ul class="obj-list">
+        <li class="current">JSON 历史记录</li>
+        <li>Listbox 排行榜</li>
+        <li>Radiobutton 难度</li>
+        <li>完整项目整合</li>
+      </ul>
+      <h5>本节成品</h5>
+      <p class="dim" style="font-size:13px">完整打字测试工具 ⌨️🏆</p>
+    </aside>
+    <div class="main">
+      <p class="kicker">学习目标</p>
+      <h2 class="h2 mt-s">学完这节课，你将能够…</h2>
+      <div class="stack mt-l">
+        <div class="concept-box"><h4>① JSON 保存历史成绩</h4><p class="dim">每次测试后自动保存 WPM、准确率、难度和日期到 JSON 文件。</p></div>
+        <div class="concept-box"><h4>② 用 Listbox 做排行榜</h4><p class="dim">读取历史记录，按 WPM 降序排列，前三名加奖牌 emoji。</p></div>
+        <div class="concept-box"><h4>③ Radiobutton 难度选择</h4><p class="dim">短文/中文/长文三档难度，StringVar 关联选中值，切换范文库。</p></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- 3. History -->
+  <section class="slide" data-title="历史记录">
+    <aside class="sidebar">
+      <div class="brand">Tkinter 046</div>
+      <h5>学习目标</h5>
+      <ul class="obj-list">
+        <li class="done">JSON 历史记录</li>
+        <li class="current">Listbox 排行榜</li>
+        <li>Radiobutton 难度</li>
+        <li>完整项目整合</li>
+      </ul>
+      <h5>关键概念</h5>
+      <p class="dim" style="font-size:13px">JSON · sort · 列表切片</p>
+    </aside>
+    <div class="main">
+      <p class="kicker">核心功能①</p>
+      <h2 class="h2 mt-s">JSON 历史成绩保存</h2>
+      <p class="lede mt-m">每次测试结束自动保存成绩到 <b>typing_history.json</b>，包含日期、WPM、准确率、难度。</p>
+      <div class="code mt-m"><pre style="margin:0">record = {
+    <span class="str">"date"</span>: datetime.now().strftime(<span class="str">"%Y-%m-%d %H:%M"</span>),
+    <span class="str">"wpm"</span>: wpm,
+    <span class="str">"accuracy"</span>: accuracy,
+    <span class="str">"difficulty"</span>: diff_name
+}
+history.append(record)
+history.sort(key=<span class="kw">lambda</span> x: x[<span class="str">"wpm"</span>], reverse=<span class="kw">True</span>)
+history = history[:20]  <span class="cmt"># 只保留前 20 条</span></pre></div>
+      <div class="callout mt-m">
+        <b>💡 排序技巧：</b><code>sort(key=lambda x: x["wpm"], reverse=True)</code> 按 WPM 从高到低排列。
+      </div>
+    </div>
+  </section>
+
+  <!-- 4. Leaderboard -->
+  <section class="slide" data-title="排行榜">
+    <aside class="sidebar">
+      <div class="brand">Tkinter 046</div>
+      <h5>学习目标</h5>
+      <ul class="obj-list">
+        <li class="done">JSON 历史记录</li>
+        <li class="done">Listbox 排行榜</li>
+        <li class="current">Radiobutton 难度</li>
+        <li>完整项目整合</li>
+      </ul>
+      <h5>关键概念</h5>
+      <p class="dim" style="font-size:13px">Listbox · 奖牌 emoji · 格式化</p>
+    </aside>
+    <div class="main">
+      <p class="kicker">核心功能②</p>
+      <h2 class="h2 mt-s">Listbox 排行榜</h2>
+      <p class="lede mt-m">用 <b>Listbox</b> 展示历史最高分，前三名加 🥇🥈🥉 奖牌。</p>
+      <div class="grid g2 mt-l">
+        <div class="concept-box"><h4>📋 创建 Listbox</h4>
+          <div class="code" style="font-size:13px"><pre style="margin:0">listbox = tk.Listbox(lb_win,
+    font=(<span class="str">"微软雅黑"</span>, 11),
+    width=55, height=15)
+listbox.insert(tk.END, line)</pre></div></div>
+        <div class="concept-box"><h4>🏅 格式化显示</h4>
+          <div class="code" style="font-size:13px"><pre style="margin:0">medal = [<span class="str">"🥇"</span>,<span class="str">"🥈"</span>,<span class="str">"🥉"</span>][i-1]
+line = <span class="str">f"{medal} {wpm}字/分 | {acc}% | {diff} | {date}"</span></pre></div></div>
+      </div>
+      <p class="dim mt-m" style="font-size:14px">⚡ Listbox 适合展示"列表型"数据，每行一条，可滚动。</p>
+    </div>
+  </section>
+
+  <!-- 5. Difficulty -->
+  <section class="slide" data-title="难度选择">
+    <aside class="sidebar">
+      <div class="brand">Tkinter 046</div>
+      <h5>学习目标</h5>
+      <ul class="obj-list">
+        <li class="done">JSON 历史记录</li>
+        <li class="done">Listbox 排行榜</li>
+        <li class="done">Radiobutton 难度</li>
+        <li class="current">完整项目整合</li>
+      </ul>
+      <h5>关键概念</h5>
+      <p class="dim" style="font-size:13px">Radiobutton · StringVar</p>
+    </aside>
+    <div class="main">
+      <p class="kicker">核心功能③</p>
+      <h2 class="h2 mt-s">Radiobutton 难度选择</h2>
+      <p class="lede mt-m">用 <b>Radiobutton</b> + <b>StringVar</b> 实现三档难度切换。</p>
+      <div class="code mt-m"><pre style="margin:0">difficulty = tk.StringVar(value=<span class="str">"medium"</span>)
+
+tk.Radiobutton(root, text=<span class="str">"🌱 短文"</span>, variable=difficulty, value=<span class="str">"easy"</span>)
+tk.Radiobutton(root, text=<span class="str">"🌿 中文"</span>, variable=difficulty, value=<span class="str">"medium"</span>)
+tk.Radiobutton(root, text=<span class="str">"🌳 长文"</span>, variable=difficulty, value=<span class="str">"hard"</span>)
+
+<span class="kw">def</span> <span class="fn">get_sample</span>():
+    diff = difficulty.get()  <span class="cmt"># 获取当前选中的值</span>
+    <span class="kw">if</span> diff == <span class="str">"easy"</span>:
+        <span class="kw">return</span> random.choice(SAMPLES_EASY)
+    ...</pre></div>
+      <div class="callout mt-m">
+        <b>💡 StringVar</b> 是 tkinter 的特殊变量，它的值会自动随 Radiobutton 选择而改变。
+      </div>
+    </div>
+  </section>
+
+  <!-- 6. Try It -->
+  <section class="slide" data-title="动手试试">
+    <aside class="sidebar">
+      <div class="brand">Tkinter 046</div>
+      <h5>学习目标</h5>
+      <ul class="obj-list">
+        <li class="done">JSON 历史记录</li>
+        <li class="done">Listbox 排行榜</li>
+        <li class="done">Radiobutton 难度</li>
+        <li class="done">完整项目整合</li>
+      </ul>
+      <h5>时间</h5>
+      <p class="dim" style="font-size:13px">~20 分钟 · 动手实践</p>
+    </aside>
+    <div class="main">
+      <p class="kicker">动手试试</p>
+      <h2 class="h2 mt-s">完善打字测试工具</h2>
+      <div class="exercise mt-l">
+        <ol style="color:var(--text-2);line-height:2;margin:0;padding-left:20px;font-size:16px">
+          <li><b>选"短文"难度</b>测一次，再选"长文"测一次，对比 WPM</li>
+          <li><b>打开排行榜</b>，看看前三名是哪几次成绩</li>
+          <li><b>挑战</b>：增加"清除历史记录"按钮，或打开 typing_history.json 查看保存的数据格式</li>
+        </ol>
+      </div>
+    </div>
+  </section>
+
+  <!-- 7. Summary -->
+  <section class="slide full" data-title="总结">
+    <p class="kicker">总结 · 第 46 节</p>
+    <h1 class="h1 mt-s">你学会了…</h1>
+    <div class="grid g2 mt-l">
+      <div class="concept-box"><h4>✓ JSON 历史记录</h4><p class="dim">保存成绩到 JSON、排序、保留前 20 条。</p></div>
+      <div class="concept-box"><h4>✓ Listbox 排行榜</h4><p class="dim">展示历史最高分，前三名奖牌 emoji 标记。</p></div>
+      <div class="concept-box"><h4>✓ Radiobutton 难度</h4><p class="dim">StringVar 关联选中值，切换不同范文库。</p></div>
+      <div class="concept-box"><h4>✓ 完整项目整合</h4><p class="dim">搜索+编辑+存储+计时+统计+排行，一个完整的桌面应用！</p></div>
+    </div>
+    <div class="callout mt-l">
+      <b>下节预告 · 第 47 节：tkinter 进阶主题。</b> ttk 主题美化、窗口图标设置、pyinstaller 打包成 exe——让你的程序更专业！
+    </div>
+  </section>
+
+</div>
+<script src="assets/runtime.js"></script>
+</body></html>

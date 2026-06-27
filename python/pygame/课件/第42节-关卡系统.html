@@ -1,0 +1,422 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>第42节：关卡系统</title>
+<style>
+*{margin:0;padding:0;box-sizing:border-box;}
+body{
+  font-family: "Microsoft YaHei", "PingFang SC", sans-serif;
+  background: #1a0a2e;
+  display:flex; justify-content:center; align-items:center;
+  min-height:100vh; overflow:hidden;
+}
+#slideshow{
+  width:960px; height:650px;
+  background: linear-gradient(135deg, #2d1b4e 0%, #1a0a2e 100%);
+  border-radius:20px; box-shadow:0 10px 40px rgba(0,0,0,0.5);
+  position:relative; overflow:hidden;
+  border:4px solid #2ecc71;
+}
+.slide{
+  position:absolute; top:0; left:0; width:100%; height:100%;
+  display:none; padding:35px 55px; color:#fff;
+}
+.slide.active{display:flex; flex-direction:column; justify-content:center;}
+.slide h1{font-size:44px; color:#2ecc71; margin-bottom:20px; text-align:center; text-shadow:2px 2px 4px rgba(0,0,0,0.5);}
+.slide h2{font-size:34px; color:#2ecc71; margin-bottom:16px; border-bottom:3px solid #8e44ad; padding-bottom:8px;}
+.slide h3{font-size:26px; color:#a29bfe; margin-bottom:10px; margin-top:14px;}
+.slide p{font-size:24px; line-height:1.8; margin-bottom:10px; text-align:left;}
+.slide ul{font-size:24px; line-height:2; margin-left:30px;}
+.slide li{margin-bottom:6px;}
+.slide .highlight{color:#2ecc71; font-weight:bold;}
+.slide .purple{color:#a29bfe; font-weight:bold;}
+.slide .gold{color:#f1c40f; font-weight:bold;}
+.slide .code-block{
+  background:#1a1a2e; border-radius:12px; padding:18px 24px;
+  font-size:20px; line-height:1.65; margin:10px 0;
+  border:2px solid #3a3a5a; overflow-x:auto;
+  font-family: "Fira Code", "Consolas", "Courier New", monospace;
+  color:#cdd6f4; text-align:left;
+}
+.slide .code-block .kw{color:#cba6f7;}
+.slide .code-block .fn{color:#89b4fa;}
+.slide .code-block .str{color:#a6e3a1;}
+.slide .code-block .num{color:#fab387;}
+.slide .code-block .cmt{color:#6c7086; font-style:italic;}
+.slide .code-block .op{color:#f38ba8;}
+.slide .center{text-align:center;}
+.slide .big-icon{font-size:80px; text-align:center; margin:20px 0;}
+.slide .subtitle{font-size:26px; color:#bdc3c7; text-align:center; margin-top:10px;}
+.slide .tag{
+  display:inline-block; background:rgba(46,204,113,0.2); color:#2ecc71;
+  padding:6px 18px; border-radius:20px; font-size:20px; margin:6px 8px;
+  border:1px solid #2ecc71;
+}
+.page-num{
+  position:absolute; bottom:15px; right:25px;
+  font-size:18px; color:rgba(255,255,255,0.5);
+}
+.hint{
+  position:absolute; bottom:15px; left:25px;
+  font-size:18px; color:rgba(255,255,255,0.4);
+}
+.two-col{display:flex; gap:30px; align-items:flex-start;}
+.two-col > div{flex:1;}
+table{
+  width:100%; border-collapse:collapse; font-size:22px; margin:12px 0;
+}
+th{background:rgba(46,204,113,0.25); padding:10px 14px; border:2px solid #8e44ad; text-align:left;}
+td{padding:10px 14px; border:2px solid #555; text-align:left;}
+.slide .step-box{
+  background:rgba(142,68,173,0.2); border:2px solid #8e44ad;
+  border-radius:12px; padding:16px 20px; margin:8px 0;
+}
+.slide .step-box h3{color:#2ecc71; margin-top:0; margin-bottom:6px;}
+.slide .step-box p{font-size:20px; line-height:1.6;}
+</style>
+</head>
+<body>
+<div id="slideshow">
+
+<!-- 第1页：封面 -->
+<div class="slide active">
+  <div class="center">
+    <div class="big-icon">📦</div>
+    <h1>第42节：关卡系统</h1>
+    <p class="subtitle">多关卡推箱子 —— 让游戏真正「玩起来」</p>
+    <div style="margin-top:30px;">
+      <span class="tag">多关卡数据</span>
+      <span class="tag">选关界面</span>
+      <span class="tag">通关动画</span>
+      <span class="tag">步数统计</span>
+      <span class="tag">JSON读写</span>
+    </div>
+  </div>
+  <div class="page-num">1 / 11</div>
+</div>
+
+<!-- 第2页：学习目标 -->
+<div class="slide">
+  <h2>🎯 本节课学习目标</h2>
+  <ul>
+    <li>学会用 <span class="highlight">三维列表</span> 存储多个关卡的地图数据</li>
+    <li>掌握 <span class="highlight">关卡加载与切换</span> 的核心逻辑</li>
+    <li>了解 <span class="highlight">游戏状态机</span>（选关 → 游戏 → 通关）</li>
+    <li>实现 <span class="highlight">通关动画</span>（目标点闪烁 + 胜利画面）</li>
+    <li>（选学）用 <span class="highlight">JSON 文件</span> 读写关卡数据</li>
+  </ul>
+  <div style="margin-top:20px; text-align:center; font-size:80px;">🎮→🏆→🎉</div>
+  <div class="page-num">2 / 11</div>
+</div>
+
+<!-- 第3页：多关卡数据结构 -->
+<div class="slide">
+  <h2>📊 多关卡数据 = 三维列表</h2>
+  <p>上节课：<span class="highlight">二维列表</span> = 一个关卡的地图</p>
+  <p>本节课：<span class="highlight">三维列表</span> = 多个关卡的地图集合</p>
+  <div class="code-block">
+<span class="cmt"># 关卡系统：用列表存储多个关卡</span>
+<span class="cmt"># levels[关卡索引][行][列]  = 三维列表</span>
+levels = [
+    <span class="cmt"># ====== 第1关：初入仓库 ======</span>
+    [[1,1,1,1,1], [1,<span class="num">4</span>,0,<span class="num">3</span>,1], [1,0,<span class="num">2</span>,0,1], [1,1,1,1,1]],
+    <span class="cmt"># ====== 第2关：渐入佳境 ======</span>
+    [[1,1,1,1,1], [1,<span class="num">4</span>,1,<span class="num">3</span>,1], [1,0,<span class="num">2</span>,0,1], [1,1,1,1,1]],
+    <span class="cmt"># ====== 第3关：仓库达人 ======</span>
+    [[1,1,1,1,1], [1,<span class="num">4</span>,0,<span class="num">3</span>,1], [1,<span class="num">2</span>,<span class="num">2</span>,0,1], [1,1,1,1,1]],
+]
+
+<span class="cmt"># 访问方式</span>
+current_level = <span class="num">0</span>         <span class="cmt"># 当前关卡索引</span>
+map_data = levels[current_level]  <span class="cmt"># 取出第1关的二维地图</span>
+cell = map_data[<span class="num">1</span>][<span class="num">1</span>]        <span class="cmt"># 第1行第1列 = 4（玩家）</span>
+  </div>
+  <p>💡 <span class="purple">核心思想</span>：把多个二维地图装进一个大列表！</p>
+  <div class="page-num">3 / 11</div>
+</div>
+
+<!-- 第4页：关卡加载逻辑 -->
+<div class="slide">
+  <h2>🔄 关卡加载 load_level()</h2>
+  <p>把地图数据拆成 <span class="highlight">静态部分</span> + <span class="highlight">动态部分</span></p>
+  <div class="code-block">
+<span class="kw">def</span> <span class="fn">load_level</span>(level_index):
+    <span class="kw">global</span> player_x, player_y, boxes, targets, static_grid
+    map_data = levels[level_index]
+    boxes = []; targets = []; static_grid = []
+
+    <span class="kw">for</span> row <span class="kw">in</span> range(<span class="num">10</span>):
+        <span class="kw">for</span> col <span class="kw">in</span> range(<span class="num">10</span>):
+            cell = map_data[row][col]
+            <span class="kw">if</span> cell == <span class="num">1</span>:   static_grid[row][col] = <span class="num">1</span>   <span class="cmt"># 墙</span>
+            <span class="kw">elif</span> cell == <span class="num">2</span>: static_grid[row][col] = <span class="num">2</span>   <span class="cmt"># 目标点</span>
+                           targets.append((col, row))
+            <span class="kw">elif</span> cell == <span class="num">3</span>: boxes.append((col, row))   <span class="cmt"># 箱子</span>
+            <span class="kw">elif</span> cell == <span class="num">4</span>: player_x, player_y = col, row <span class="cmt"># 玩家</span>
+            <span class="kw">else</span>:        static_grid[row][col] = <span class="num">0</span>   <span class="cmt"># 地板</span>
+
+<span class="cmt"># 关卡切换只需要两行代码！</span>
+current_level = <span class="num">1</span>          <span class="cmt"># 切换到第2关</span>
+<span class="fn">load_level</span>(current_level)   <span class="cmt"># 加载新关卡</span>
+  </div>
+  <p>🔑 <span class="gold">关键</span>：静态数据不动，动态数据方便操作和撤销</p>
+  <div class="page-num">4 / 11</div>
+</div>
+
+<!-- 第5页：关卡切换逻辑 -->
+<div class="slide">
+  <h2>🎮 关卡切换——状态机的力量</h2>
+  <p>用 <span class="highlight">game_state</span> 变量控制不同的游戏画面</p>
+  <div style="text-align:center; font-size:22px; margin:10px 0;">
+    <span class="tag">menu</span> → 点击 → <span class="tag">playing</span> → 通关 → <span class="tag">win</span> → N键 → <span class="tag">playing</span>
+  </div>
+  <div class="code-block">
+<span class="cmt"># 事件处理中的状态切换</span>
+<span class="kw">if</span> game_state == <span class="str">"menu"</span>:
+    <span class="kw">if</span> 点击关卡按钮:
+        current_level = 按钮索引
+        <span class="fn">load_level</span>(current_level)
+        game_state = <span class="str">"playing"</span>
+
+<span class="kw">elif</span> game_state == <span class="str">"playing"</span>:
+    <span class="kw">if</span> event.key == K_ESCAPE:    game_state = <span class="str">"menu"</span>
+    <span class="kw">if</span> event.key == K_r:         <span class="fn">reset_level</span>()
+    <span class="kw">if</span> <span class="fn">check_win</span>():             game_state = <span class="str">"win"</span>
+
+<span class="kw">elif</span> game_state == <span class="str">"win"</span>:
+    <span class="kw">if</span> event.key == K_n:        <span class="cmt"># 下一关</span>
+        current_level += <span class="num">1</span>
+        <span class="fn">load_level</span>(current_level)
+        game_state = <span class="str">"playing"</span>
+  </div>
+  <p>💡 <span class="purple">状态机</span>：每个状态只处理自己关心的按键和事件</p>
+  <div class="page-num">5 / 11</div>
+</div>
+
+<!-- 第6页：通关检测与动画 -->
+<div class="slide">
+  <h2>✅ 通关检测 &amp; 闪烁动画</h2>
+  <div class="two-col">
+    <div>
+      <h3>通关检测（超简单！）</h3>
+      <div class="code-block">
+<span class="kw">def</span> <span class="fn">check_win</span>():
+    <span class="kw">for</span> (tx, ty) <span class="kw">in</span> targets:
+        <span class="kw">if</span> (tx, ty) <span class="kw">not in</span> boxes:
+            <span class="kw">return</span> <span class="num">False</span>
+    <span class="kw">return</span> <span class="num">True</span>  <span class="cmt"># 所有目标→箱子 ✓</span>
+      </div>
+    </div>
+    <div>
+      <h3>闪烁动画（时间魔法）</h3>
+      <div class="code-block">
+elapsed = <span class="fn">get_ticks</span>() - start
+flash = (elapsed // <span class="num">200</span>) % <span class="num">2</span>
+<span class="kw">if</span> flash == <span class="num">0</span>:
+    color = <span class="kw">GREEN</span>    <span class="cmt"># 闪烁！</span>
+<span class="kw">else</span>:
+    color = <span class="kw">RED</span>      <span class="cmt"># 变回</span>
+      </div>
+    </div>
+  </div>
+  <div class="step-box" style="margin-top:14px;">
+    <h3>🪄 闪烁动画公式</h3>
+    <p><span class="highlight">(当前时间 // 间隔) % 2</span> = 0 或 1 交替 → 产生闪烁！</p>
+    <p>改 <span class="gold">200</span> 改速度，改 <span class="gold">2</span> 改状态数</p>
+  </div>
+  <div class="page-num">6 / 11</div>
+</div>
+
+<!-- 第7页：选关界面设计 -->
+<div class="slide">
+  <h2>🖱️ 选关界面设计</h2>
+  <p>就是 <span class="highlight">画按钮 + 检测点击</span>，和之前做的菜单一样！</p>
+  <div class="code-block">
+<span class="cmt"># 生成关卡按钮（3列布局）</span>
+level_buttons = []
+<span class="kw">for</span> i <span class="kw">in</span> range(<span class="kw">len</span>(levels)):
+    col = i % <span class="num">3</span>;  row = i // <span class="num">3</span>
+    x = <span class="num">80</span> + col * <span class="num">200</span>;  y = <span class="num">220</span> + row * <span class="num">140</span>
+    btn = pygame.<span class="fn">Rect</span>(x, y, <span class="num">160</span>, <span class="num">90</span>)
+    level_buttons.<span class="fn">append</span>(btn)
+
+<span class="cmt"># 检测点击</span>
+<span class="kw">if</span> event.<span class="fn">type</span> == MOUSEBUTTONDOWN:
+    <span class="kw">for</span> i, btn <span class="kw">in</span> <span class="fn">enumerate</span>(level_buttons):
+        <span class="kw">if</span> btn.<span class="fn">collidepoint</span>(event.pos):
+            current_level = i
+            <span class="fn">load_level</span>(i)
+            game_state = <span class="str">"playing"</span>
+
+<span class="cmt"># 悬停效果 — 让按钮有「呼吸感」</span>
+<span class="kw">if</span> btn.<span class="fn">collidepoint</span>(mouse_pos):
+    color = (<span class="num">120</span>, <span class="num">220</span>, <span class="num">120</span>)  <span class="cmt"># 亮绿</span>
+<span class="kw">else</span>:
+    color = (<span class="num">80</span>, <span class="num">160</span>, <span class="num">80</span>)   <span class="cmt"># 暗绿</span>
+  </div>
+  <p>🎨 <span class="purple">悬停效果</span> 是好 UI 的基本素养！</p>
+  <div class="page-num">7 / 11</div>
+</div>
+
+<!-- 第8页：JSON 读写（选学） -->
+<div class="slide">
+  <h2>📁 JSON 读写关卡数据（选学）</h2>
+  <p>把关卡数据存到文件 → <span class="highlight">代码和内容分离</span></p>
+  <div class="two-col">
+    <div>
+      <h3>保存关卡</h3>
+      <div class="code-block">
+<span class="kw">import</span> json
+<span class="kw">with</span> <span class="fn">open</span>(<span class="str">"levels.json"</span>, <span class="str">"w"</span>) <span class="kw">as</span> f:
+    json.<span class="fn">dump</span>(levels, f,
+              indent=<span class="num">2</span>,
+              ensure_ascii=<span class="num">False</span>)
+  <span class="cmt"># dump = 倒出数据</span>
+      </div>
+    </div>
+    <div>
+      <h3>读取关卡</h3>
+      <div class="code-block">
+<span class="kw">import</span> json
+<span class="kw">with</span> <span class="fn">open</span>(<span class="str">"levels.json"</span>, <span class="str">"r"</span>) <span class="kw">as</span> f:
+    levels = json.<span class="fn">load</span>(f)
+  <span class="cmt"># load = 装入数据</span>
+<span class="fn">print</span>(<span class="kw">len</span>(levels))
+  <span class="cmt"># 输出：3</span>
+      </div>
+    </div>
+  </div>
+  <div class="step-box" style="margin-top:14px;">
+    <h3>📋 口诀</h3>
+    <p><span class="highlight">dump = 倒出去（写文件）</span> &nbsp; | &nbsp; <span class="highlight">load = 装进来（读文件）</span></p>
+    <p>JSON 文件是人类可读的纯文本，可以用记事本打开修改！</p>
+  </div>
+  <div class="page-num">8 / 11</div>
+</div>
+
+<!-- 第9页：完整游戏流程 -->
+<div class="slide">
+  <h2>🔄 完整游戏流程总览</h2>
+  <table>
+    <tr><th>步骤</th><th>游戏状态</th><th>玩家操作</th><th>代码动作</th></tr>
+    <tr><td><span class="highlight">1</span></td><td>选关界面</td><td>点击关卡按钮</td><td>load_level() → playing</td></tr>
+    <tr><td><span class="highlight">2</span></td><td>游戏中</td><td>方向键移动 / 推箱子</td><td>move_player() → 步数+1</td></tr>
+    <tr><td><span class="highlight">3</span></td><td>游戏中</td><td>按 R 键</td><td>reset_level() 重新开始</td></tr>
+    <tr><td><span class="highlight">4</span></td><td>游戏中</td><td>按 U 键</td><td>undo_move() 撤销一步</td></tr>
+    <tr><td><span class="highlight">5</span></td><td>游戏中</td><td>所有箱子到位</td><td>check_win() → win 状态</td></tr>
+    <tr><td><span class="highlight">6</span></td><td>通关动画</td><td>观看闪烁效果</td><td>get_ticks() 控制闪烁</td></tr>
+    <tr><td><span class="highlight">7</span></td><td>通关画面</td><td>按 N 键</td><td>下一关 / 回到选关</td></tr>
+    <tr><td><span class="highlight">8</span></td><td>通关画面</td><td>按 ESC 键</td><td>回到选关界面</td></tr>
+  </table>
+  <p style="text-align:center; margin-top:12px;">
+    🔑 <span class="gold">核心</span>：<span class="highlight">game_state</span> 变量决定一切行为
+  </p>
+  <div class="page-num">9 / 11</div>
+</div>
+
+<!-- 第10页：练习任务 -->
+<div class="slide">
+  <h2>✏️ 课堂练习（25分钟）</h2>
+  <div class="two-col">
+    <div>
+      <h3>✅ 基础任务</h3>
+      <ul style="font-size:20px;">
+        <li>复制单关卡代码，添加2-3个关卡</li>
+        <li>实现 <span class="highlight">load_level()</span> 函数</li>
+        <li>添加 R 键重新开始</li>
+        <li>添加步数统计</li>
+      </ul>
+      <br>
+      <h3>✨ 进阶任务</h3>
+      <ul style="font-size:20px;">
+        <li>实现通关检测 + 胜利画面</li>
+        <li>实现选关界面（点击进入）</li>
+        <li>按 N 键进入下一关</li>
+        <li>通关闪烁动画</li>
+      </ul>
+    </div>
+    <div>
+      <h3>🚀 挑战任务</h3>
+      <ul style="font-size:20px;">
+        <li>用 <span class="purple">JSON 文件</span> 存储关卡</li>
+        <li>用 <span class="purple">json.load()</span> 读取</li>
+        <li>添加撤销功能（U 键）</li>
+        <li>记录最少步数</li>
+        <li>设计你自己的第4关！</li>
+      </ul>
+      <div style="text-align:center; font-size:60px; margin-top:10px;">🎯</div>
+      <p style="text-align:center; font-size:18px; color:#bdc3c7;">先完成基础，再挑战进阶！</p>
+    </div>
+  </div>
+  <div class="page-num">10 / 11</div>
+</div>
+
+<!-- 第11页：总结 -->
+<div class="slide">
+  <h2>📋 本节课知识清单</h2>
+  <table>
+    <tr><th>知识点</th><th>核心代码 / 概念</th></tr>
+    <tr><td>多关卡数据</td><td class="highlight">levels = [地图1, 地图2, 地图3]</td></tr>
+    <tr><td>关卡加载</td><td class="highlight">load_level(index) — 解析地图，分离静态/动态</td></tr>
+    <tr><td>游戏状态机</td><td class="highlight">game_state = "menu" / "playing" / "win"</td></tr>
+    <tr><td>通关检测</td><td class="highlight">for t in targets: if t not in boxes</td></tr>
+    <tr><td>闪烁动画</td><td class="highlight">(elapsed // 200) % 2 → 0/1 交替</td></tr>
+    <tr><td>选关界面</td><td class="highlight">Rect + collidepoint() + 悬停变色</td></tr>
+    <tr><td>JSON 读写</td><td class="highlight">json.dump() 倒出 | json.load() 装入</td></tr>
+  </table>
+  <p style="text-align:center; margin-top:20px; font-size:26px;">
+    🎉 下节课预告：<span class="gold">双人对战推箱子</span> —— 两个玩家轮流操作！
+  </p>
+  <div class="page-num">11 / 11</div>
+</div>
+
+</div>
+
+<div class="hint" style="position:fixed; bottom:10px; left:50%; transform:translateX(-50%); color:#888; font-size:16px;">
+  按 ← → 方向键翻页 &nbsp;|&nbsp; 点击左/右半屏翻页
+</div>
+
+<script>
+(function(){
+  var slides = document.querySelectorAll('.slide');
+  var total = slides.length;
+  var current = 0;
+
+  function showSlide(n){
+    slides[current].classList.remove('active');
+    current = ((n % total) + total) % total;
+    slides[current].classList.add('active');
+  }
+
+  document.addEventListener('keydown', function(e){
+    if(e.key === 'ArrowRight' || e.key === 'ArrowDown' || e.key === ' '){
+      e.preventDefault();
+      showSlide(current + 1);
+    } else if(e.key === 'ArrowLeft' || e.key === 'ArrowUp'){
+      e.preventDefault();
+      showSlide(current - 1);
+    } else if(e.key === 'Home'){
+      e.preventDefault();
+      showSlide(0);
+    } else if(e.key === 'End'){
+      e.preventDefault();
+      showSlide(total - 1);
+    }
+  });
+
+  // 点击页面翻页
+  document.getElementById('slideshow').addEventListener('click', function(e){
+    var rect = this.getBoundingClientRect();
+    var x = e.clientX - rect.left;
+    if(x > rect.width / 2){
+      showSlide(current + 1);
+    } else {
+      showSlide(current - 1);
+    }
+  });
+})();
+</script>
+</body>
+</html>

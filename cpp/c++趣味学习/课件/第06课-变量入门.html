@@ -1,0 +1,230 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>第06课：听电脑说话——变量入门</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            font-family: 'PingFang SC', 'Microsoft YaHei', sans-serif;
+            background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);
+            min-height: 100vh;
+            display: flex; justify-content: center; align-items: center;
+        }
+        .slides-container {
+            width: 90%; max-width: 900px; min-height: 550px;
+            background: white; border-radius: 25px; padding: 40px;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+            position: relative;
+        }
+        .slide { display: none; animation: fadeIn 0.5s; }
+        .slide.active { display: block; }
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
+        h1 { color: #0369a1; font-size: 2.2em; margin-bottom: 20px; }
+        h2 { color: #e8573a; font-size: 1.8em; margin-bottom: 15px; }
+        h3 { color: #2c7a4a; font-size: 1.4em; margin: 15px 0 10px; }
+        p, li { font-size: 1.15em; line-height: 1.8; color: #333; }
+        ul { padding-left: 30px; margin: 10px 0; }
+        .code-block {
+            background: #1e1e2e; color: #cdd6f4; padding: 20px;
+            border-radius: 12px; font-family: 'Courier New', monospace;
+            font-size: 0.95em; line-height: 1.6; overflow-x: auto;
+            margin: 15px 0; white-space: pre-wrap; word-break: break-all;
+        }
+        .code-block .keyword { color: #cba6f7; }
+        .code-block .string { color: #a6e3a1; }
+        .code-block .comment { color: #6c7086; font-style: italic; }
+        .code-block .number { color: #fab387; }
+        .nav-buttons {
+            position: absolute; bottom: 20px; left: 40px; right: 40px;
+            display: flex; justify-content: space-between;
+        }
+        .nav-btn {
+            background: linear-gradient(135deg, #0369a1, #0284c7);
+            color: white; border: none; padding: 12px 30px;
+            border-radius: 30px; font-size: 1.1em; cursor: pointer;
+            transition: transform 0.2s, box-shadow 0.2s;
+            font-family: 'PingFang SC', 'Microsoft YaHei', sans-serif;
+        }
+        .nav-btn:hover { transform: scale(1.05); box-shadow: 0 5px 20px rgba(3,105,161,0.4); }
+        .nav-btn:disabled { opacity: 0.4; cursor: default; transform: none; }
+        .page-indicator { font-size: 1.1em; color: #0369a1; align-self: center; }
+        .emoji-big { font-size: 3em; text-align: center; display: block; margin: 15px 0; }
+        .badge { display: inline-block; background: #e0f2fe; color: #0369a1; padding: 5px 15px; border-radius: 20px; font-size: 0.9em; margin: 3px; }
+        table { width: 100%; border-collapse: collapse; margin: 15px 0; }
+        th, td { border: 2px solid #ddd; padding: 10px; text-align: left; }
+        th { background: #0369a1; color: white; }
+        .highlight-box { background: #fff3cd; border-left: 5px solid #ffc107; padding: 15px; border-radius: 8px; margin: 15px 0; }
+        .tip-box { background: #d4edda; border-left: 5px solid #28a745; padding: 15px; border-radius: 8px; margin: 15px 0; }
+        @media (max-width: 600px) {
+            .slides-container { padding: 25px; }
+            h1 { font-size: 1.5em; }
+            .code-block { font-size: 0.75em; }
+        }
+    </style>
+</head>
+<body>
+    <div class="slides-container">
+        <!-- Slide 1: Title Page -->
+        <div class="slide active" id="slide1">
+            <span class="emoji-big">📦</span>
+            <h1>第06课：变量入门</h1>
+            <p style="text-align:center; color:#666;">第二阶段：变量与输入输出 | 课时：45分钟</p>
+            <p style="text-align:center; margin-top:20px; font-size:1.3em;">✨ 给数据贴标签 ✨</p>
+            <div style="text-align:center; margin-top:30px;">
+                <span class="badge">变量概念</span>
+                <span class="badge">int类型</span>
+                <span class="badge">声明赋值</span>
+                <span class="badge">命名规则</span>
+            </div>
+        </div>
+
+        <!-- Slide 2: Learning Objectives -->
+        <div class="slide" id="slide2">
+            <h2>🎯 学习目标</h2>
+            <ul>
+                <li>理解<strong>变量</strong>的概念：给数据贴标签的"储物柜"</li>
+                <li>掌握 <strong>int</strong> 类型变量的声明、赋值和使用</li>
+                <li>理解变量名<strong>命名规则</strong>（不能数字开头等）</li>
+                <li>能够用变量<strong>存储和修改</strong>数据</li>
+            </ul>
+            <div class="tip-box" style="margin-top:25px;">
+                <strong>💡 想一想：</strong><br>
+                变量就像你的储物柜 —— 有<strong>名字</strong>（标签）、能放<strong>东西</strong>（值）、还能<strong>换东西</strong>（修改）！
+            </div>
+        </div>
+
+        <!-- Slide 3: Core Knowledge -->
+        <div class="slide" id="slide3">
+            <h2>📖 变量的三要素</h2>
+
+            <h3>1️⃣ 声明变量（准备柜子）</h3>
+            <div class="code-block">int score;        // 声明一个整数柜子，叫score
+score = 100;      // 把100放进去</div>
+
+            <h3>2️⃣ 一步到位（声明+初始化）</h3>
+            <div class="code-block">int age = 10;     // 类型 + 名字 + 值，一步完成</div>
+
+            <h3>3️⃣ 值可以改变！</h3>
+            <div class="code-block">int score = 80;
+score = 95;         // 成绩提高了！
+score = score + 5;  // 又加了5分 → 100分！</div>
+
+            <h3>变量命名规则</h3>
+            <table>
+                <tr><th>规则</th><th>✅ 正确</th><th>❌ 错误</th></tr>
+                <tr><td>字母/数字/下划线</td><td><code>my_age</code></td><td><code>my-age</code></td></tr>
+                <tr><td>不能数字开头</td><td><code>score1</code></td><td><code>1score</code></td></tr>
+                <tr><td>不能用关键字</td><td><code>myInt</code></td><td><code>int</code></td></tr>
+                <tr><td>区分大小写</td><td>age 不等于 Age</td><td>—</td></tr>
+            </table>
+        </div>
+
+        <!-- Slide 4: Example Code -->
+        <div class="slide" id="slide4">
+            <h2>💻 成绩管理系统</h2>
+            <div class="code-block">int math = 95;
+int chinese = 88;
+int english = 92;
+
+// 用变量做计算
+int total = math + chinese + english;
+int average = total / 3;
+
+cout &lt;&lt; "总分：" &lt;&lt; total &lt;&lt; "分" &lt;&lt; endl;
+cout &lt;&lt; "平均：" &lt;&lt; average &lt;&lt; "分" &lt;&lt; endl;
+
+// 修改变量——英语成绩提高了！
+english = 97;
+total = math + chinese + english;  // 重新计算</div>
+
+            <h3>交换两个变量的值</h3>
+            <div class="code-block">// 怎么交换两杯水？需要第三杯！
+int cupA = 10, cupB = 20;
+int temp = cupA;  // 倒进临时杯子
+cupA = cupB;      // B倒进A
+cupB = temp;      // 临时倒进B
+// 现在 cupA=20, cupB=10</div>
+        </div>
+
+        <!-- Slide 5: Practice -->
+        <div class="slide" id="slide5">
+            <h2>🎮 趣味练习</h2>
+
+            <h3>练习1：找错误 🔍</h3>
+            <div class="code-block">int 1stPlace = 100;   // Bug1
+int score;
+cout &lt;&lt; score;        // Bug2
+int return = 5;        // Bug3</div>
+            <p>3个错误：数字开头、未赋值就使用、用了关键字</p>
+
+            <h3>练习2：我是计算器 🧮</h3>
+            <p>长方形：长=10，宽=5。计算周长和面积。</p>
+            <div class="code-block">int length = 10, width = 5;
+int perimeter = 2 * (length + width);  // 周长
+int area = length * width;             // 面积</div>
+
+            <h3>练习3：倒计时 🚀</h3>
+            <p>用变量从5倒数到1，每次减1。</p>
+            <div class="code-block">int count = 5;
+cout &lt;&lt; count;   // 5
+count = count - 1; // 4
+count = count - 1; // 3
+// ... 直到1 → 发射！</div>
+        </div>
+
+        <!-- Slide 6: Summary -->
+        <div class="slide" id="slide6">
+            <h2>📝 本课小结</h2>
+            <table>
+                <tr><th>知识点</th><th>说明</th><th>示例</th></tr>
+                <tr><td>变量</td><td>存储数据的"储物柜"</td><td><code>int age;</code></td></tr>
+                <tr><td>声明</td><td>告诉电脑变量名和类型</td><td><code>int score;</code></td></tr>
+                <tr><td>初始化</td><td>声明同时赋值</td><td><code>int age = 10;</code></td></tr>
+                <tr><td>赋值</td><td>改变变量的值</td><td><code>score = 95;</code></td></tr>
+                <tr><td>int类型</td><td>整数（年龄、分数）</td><td>不能存小数</td></tr>
+                <tr><td>命名规则</td><td>有意义、不数字开头</td><td>见名知意</td></tr>
+            </table>
+            <div class="highlight-box" style="margin-top:20px;">
+                <strong>🔑 记住口诀：</strong><br>
+                变量就像储物柜，贴上标签放东西；<br>
+                int整数最常见，先声明后再使用！
+            </div>
+            <p style="text-align:center; margin-top:20px; font-size:1.3em;">🎉 下一课预告：电脑的问答机——cin输入</p>
+        </div>
+
+        <!-- Navigation -->
+        <div class="nav-buttons">
+            <button class="nav-btn" onclick="prevSlide()">◀ 上一页</button>
+            <span class="page-indicator" id="pageIndicator">1 / 6</span>
+            <button class="nav-btn" onclick="nextSlide()">下一页 ▶</button>
+        </div>
+    </div>
+
+    <script>
+        let currentSlide = 0;
+        const slides = document.querySelectorAll('.slide');
+        const totalSlides = slides.length;
+        const indicator = document.getElementById('pageIndicator');
+
+        function showSlide(n) {
+            slides[currentSlide].classList.remove('active');
+            currentSlide = (n + totalSlides) % totalSlides;
+            slides[currentSlide].classList.add('active');
+            indicator.textContent = (currentSlide + 1) + ' / ' + totalSlides;
+            document.querySelectorAll('.nav-btn')[0].disabled = currentSlide === 0;
+            document.querySelectorAll('.nav-btn')[1].disabled = currentSlide === totalSlides - 1;
+        }
+        function nextSlide() { showSlide(currentSlide + 1); }
+        function prevSlide() { showSlide(currentSlide - 1); }
+
+        document.addEventListener('keydown', function(e) {
+            if (e.key === 'ArrowRight' || e.key === ' ') { e.preventDefault(); nextSlide(); }
+            else if (e.key === 'ArrowLeft') { e.preventDefault(); prevSlide(); }
+        });
+
+        indicator.textContent = (currentSlide + 1) + ' / ' + totalSlides;
+    </script>
+</body>
+</html>

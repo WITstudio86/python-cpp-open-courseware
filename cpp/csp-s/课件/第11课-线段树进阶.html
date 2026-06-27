@@ -1,0 +1,184 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>第11课：线段树进阶</title>
+<style>
+* { margin: 0; padding: 0; box-sizing: border-box; }
+body { font-family: 'Segoe UI', 'Microsoft YaHei', sans-serif; background: #0d1117; color: #c9d1d9; display: flex; justify-content: center; align-items: center; min-height: 100vh; }
+#app { width: 95%; max-width: 1000px; background: #161b22; border-radius: 16px; padding: 40px; box-shadow: 0 0 40px rgba(0,0,0,0.5); }
+.slide { display: none; } .slide.active { display: block; }
+h1 { font-size: 2.2em; color: #58a6ff; margin-bottom: 16px; border-bottom: 2px solid #30363d; padding-bottom: 12px; }
+h2 { font-size: 1.6em; color: #79c0ff; margin: 20px 0 12px; }
+h3 { font-size: 1.3em; color: #d2a8ff; margin: 16px 0 8px; }
+p, li { font-size: 1.08em; line-height: 1.85; margin-bottom: 8px; }
+ul, ol { margin-left: 24px; margin-bottom: 12px; }
+.highlight { color: #ff7b72; font-weight: bold; } .accent { color: #7ee787; font-weight: bold; } .info { color: #a5d6ff; }
+pre { background: #0d1117; border: 1px solid #30363d; border-radius: 8px; padding: 18px; overflow-x: auto; margin: 12px 0; font-size: 0.88em; line-height: 1.6; }
+code { font-family: 'Fira Code', 'Consolas', monospace; }
+.kw { color: #ff7b72; } .type { color: #ffa657; } .func { color: #d2a8ff; }
+.num { color: #79c0ff; } .str { color: #a5d6ff; } .cmt { color: #8b949e; font-style: italic; }
+.nav { display: flex; justify-content: space-between; align-items: center; margin-top: 30px; }
+.nav button { background: #21262d; color: #c9d1d9; border: 1px solid #30363d; padding: 10px 24px; border-radius: 8px; cursor: pointer; font-size: 1em; transition: background 0.2s; }
+.nav button:hover { background: #30363d; } .nav .page-indicator { font-size: 1em; color: #8b949e; }
+.title-slide { text-align: center; padding-top: 40px; }
+.title-slide h1 { font-size: 2.8em; border: none; }
+.title-slide .subtitle { font-size: 1.3em; color: #8b949e; margin: 16px 0; }
+.tag { display: inline-block; background: #1f6feb33; color: #58a6ff; padding: 4px 14px; border-radius: 20px; margin: 4px; font-size: 0.92em; border: 1px solid #1f6feb55; }
+</style>
+</head>
+<body>
+<div id="app">
+<div class="slide active" id="s1">
+<div class="title-slide">
+<h1>第11课：线段树进阶</h1>
+<p class="subtitle">多懒标记 · 权值线段树 · 线段树合并 · 可持久化</p>
+<div class="tags">
+<span class="tag">CSP-S 高级数据结构</span><span class="tag">多懒标记</span><span class="tag">第K小数</span><span class="tag">主席树</span>
+</div>
+<p style="margin-top:30px; color:#8b949e">从线性维护到可持久化，线段树的高级战场</p>
+</div>
+</div>
+
+<div class="slide" id="s2">
+<h1>📖 知识精讲 — 多懒标记协同</h1>
+<h2>同时支持加法 + 乘法</h2>
+<p>核心原则：<span class="highlight">先乘后加</span></p>
+<p>对值 x，先乘 a 再加 b → a·x + b</p>
+<p>再乘 c 再加 d → c·(a·x + b) + d = <span class="accent">(a·c)·x + (b·c + d)</span></p>
+
+<h3>apply 函数（统一更新节点）</h3>
+<pre><span class="type">void</span> <span class="func">apply</span>(<span class="type">int</span> p, <span class="type">int</span> len, <span class="type">long long</span> mu, <span class="type">long long</span> ad) {
+    sum[p] = (sum[p] * mu + ad * len) % P;
+    mul[p] = (mul[p] * mu) % P;
+    add[p] = (add[p] * mu + ad) % P;
+    <span class="cmt">// 关键：原有的加法标记也要乘 mu！</span>
+}</pre>
+</div>
+
+<div class="slide" id="s3">
+<h1>📖 知识精讲 — 权值线段树</h1>
+<h2>值域线段树 vs 下标线段树</h2>
+<p>叶子节点代表<span class="highlight">某个值的出现次数</span>，而非数组元素</p>
+
+<h3>第 K 小查询（线段树上二分）</h3>
+<pre><span class="type">int</span> <span class="func">kth</span>(<span class="type">int</span> p, <span class="type">int</span> l, <span class="type">int</span> r, <span class="type">int</span> k) {
+    <span class="kw">if</span> (l == r) <span class="kw">return</span> l;
+    <span class="type">int</span> mid = (l + r) >> <span class="num">1</span>;
+    <span class="kw">if</span> (tree[lc[p]] >= k)
+        <span class="kw">return</span> <span class="func">kth</span>(lc[p], l, mid, k);
+    <span class="kw">else</span>
+        <span class="kw">return</span> <span class="func">kth</span>(rc[p], mid+<span class="num">1</span>, r, k - tree[lc[p]]);
+}</pre>
+
+<h3>适用场景</h3>
+<ul><li>全局第K小 / 第K大</li><li>查询排名、前驱、后继</li><li>动态开点处理 10⁹ 值域</li></ul>
+</div>
+
+<div class="slide" id="s4">
+<h1>💻 代码模板 — 线段树合并 & 可持久化</h1>
+<h3>线段树合并（动态开点）</h3>
+<pre><span class="type">int</span> <span class="func">merge</span>(<span class="type">int</span> p, <span class="type">int</span> q, <span class="type">int</span> l, <span class="type">int</span> r) {
+    <span class="kw">if</span> (!p || !q) <span class="kw">return</span> p + q;     <span class="cmt">// 一方为空</span>
+    <span class="kw">if</span> (l == r) { cnt[p] += cnt[q]; <span class="kw">return</span> p; }
+    lc[p] = <span class="func">merge</span>(lc[p], lc[q], l, mid);
+    rc[p] = <span class="func">merge</span>(rc[p], rc[q], mid+<span class="num">1</span>, r);
+    <span class="func">pushup</span>(p); <span class="kw">return</span> p;
+}</pre>
+
+<h3>可持久化（主席树）— 修改</h3>
+<pre><span class="type">int</span> <span class="func">update</span>(<span class="type">int</span> pre, <span class="type">int</span> l, <span class="type">int</span> r, <span class="type">int</span> x) {
+    <span class="type">int</span> p = ++tot; t[p] = t[pre];  <span class="cmt">// 复制节点</span>
+    <span class="kw">if</span> (l == r) { cnt[p]++; <span class="kw">return</span> p; }
+    <span class="kw">if</span> (x &lt;= mid) lc[p] = <span class="func">update</span>(lc[pre], l, mid, x);
+    <span class="kw">else</span> rc[p] = <span class="func">update</span>(rc[pre], mid+<span class="num">1</span>, r, x);
+    <span class="func">pushup</span>(p); <span class="kw">return</span> p;
+}</pre>
+<p><span class="accent">每次修改只新建 O(log n) 个节点</span></p>
+</div>
+
+<div class="slide" id="s5">
+<h1>⚠️ 易错点与优化技巧</h1>
+<ul>
+<li><span class="highlight">⚠ 多懒标记顺序</span> — 必须"先乘后加"，pushdown和update一致</li>
+<li><span class="highlight">⚠ 加法标记被乘法影响</span> — add[p] = add[p] * mu + ad</li>
+<li><span class="highlight">⚠ 动态开点空间</span> — 开到 操作数×log(值域)，约30~40倍</li>
+<li><span class="highlight">⚠ 线段树合并不回溯</span> — 原树可能被破坏，必要时先复制</li>
+<li><span class="accent">✔ 离散化 + 权值树</span> — 减小值域，降低log因子</li>
+<li><span class="accent">✔ mid防溢出</span> — l + (r-l)/2 而非 (l+r)/2</li>
+<li><span class="accent">✔ 主席树静态区间K小</span> — 版本前缀和做差</li>
+</ul>
+</div>
+
+<div class="slide" id="s6">
+<h1>📝 真题精练</h1>
+<h3>真题一：区间加法+乘法+求和（模 P）</h3>
+<p><span class="info">n, m ≤ 10⁵ | 三种操作：乘、加、求和</span></p>
+<p>要点：apply 统一处理、pushdown 正确传递、取模</p>
+
+<h3 style="margin-top:20px">真题二：静态区间第 K 小（主席树）</h3>
+<p><span class="info">n, q ≤ 2×10⁵ | 在线询问任意区间第K小</span></p>
+<p>要点：离散化、前缀版本树、两版本做差在线段树上二分</p>
+
+<div style="background:#0d1117; padding:14px; border-radius:8px; border:1px solid #30363d; margin-top:16px">
+<p><span class="accent">复杂度分析：</span></p>
+<p>真题一：O((n+m) log n) | 真题二：O((n+q) log n)，空间 O(n log n)</p>
+</div>
+</div>
+
+<div class="slide" id="s7">
+<h1>🎯 本课小结</h1>
+<div style="display:grid; grid-template-columns:1fr 1fr; gap:16px; margin-top:20px">
+<div style="background:#0d1117; padding:18px; border-radius:8px; border:1px solid #30363d">
+<h3>多懒标记</h3>
+<p>先乘后加原则</p>
+<p>apply 统一更新</p>
+<p>加法标记 × 乘法系数</p>
+</div>
+<div style="background:#0d1117; padding:18px; border-radius:8px; border:1px solid #30363d">
+<h3>权值线段树</h3>
+<p>维护值域 → 第K小</p>
+<p>动态开点 → 处理大值域</p>
+<p>线段树二分 O(log V)</p>
+</div>
+<div style="background:#0d1117; padding:18px; border-radius:8px; border:1px solid #30363d">
+<h3>线段树合并</h3>
+<p>动态开点前提</p>
+<p>O(m log V) 复杂度</p>
+<p>树上信息合并利器</p>
+</div>
+<div style="background:#0d1117; padding:18px; border-radius:8px; border:1px solid #30363d">
+<h3>可持久化</h3>
+<p>改 O(log n) 节点/次</p>
+<p>前缀版本做差</p>
+<p>静态区间第K小</p>
+</div>
+</div>
+</div>
+
+<div class="nav">
+<button onclick="prevSlide()">◀ 上一页</button>
+<span class="page-indicator" id="pageNum">1 / 7</span>
+<button onclick="nextSlide()">下一页 ▶</button>
+</div>
+</div>
+<script>
+let current = 0;
+const slides = document.querySelectorAll('.slide');
+const total = slides.length;
+function showSlide(n) {
+    slides[current].classList.remove('active');
+    current = ((n % total) + total) % total;
+    slides[current].classList.add('active');
+    document.getElementById('pageNum').textContent = (current + 1) + ' / ' + total;
+}
+function nextSlide() { showSlide(current + 1); }
+function prevSlide() { showSlide(current - 1); }
+document.addEventListener('keydown', function(e) {
+    if (e.key === 'ArrowRight' || e.key === 'ArrowDown') nextSlide();
+    if (e.key === 'ArrowLeft' || e.key === 'ArrowUp') prevSlide();
+});
+</script>
+</body>
+</html>

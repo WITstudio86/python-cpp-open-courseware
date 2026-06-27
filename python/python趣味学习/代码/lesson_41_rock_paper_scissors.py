@@ -1,0 +1,158 @@
+"""
+========================================
+课程 41：项目三 —— 石头剪刀布
+========================================
+学习目标：
+  1. 学会用列表（list）存储多个选项
+  2. 掌握 random.choice() 让电脑随机出拳
+  3. 用 if-elif-else 判断复杂的输赢逻辑
+  4. 学会计分系统和多局比赛规则
+========================================
+"""
+
+import random  # 导入随机模块
+
+# ── 游戏配置 ──────────────────────────────────
+OPTIONS = ["石头", "剪刀", "布"]  # 三种出拳选项
+TOTAL_ROUNDS = 3  # 总局数（三局两胜）
+WIN_SCORE = TOTAL_ROUNDS // 2 + 1  # 需要赢几局才算获胜（3局需要赢2局）
+
+# 胜利规则：key 可以战胜 value
+# 例如：石头 赢 剪刀，剪刀 赢 布，布 赢 石头
+WIN_RULES = {
+    "石头": "剪刀",  # 石头砸剪刀
+    "剪刀": "布",    # 剪刀剪布
+    "布": "石头",    # 布包石头
+}
+
+
+def get_computer_choice():
+    """电脑随机出拳"""
+    return random.choice(OPTIONS)
+
+
+def get_player_choice():
+    """玩家输入出拳"""
+    print("\n请出拳：")
+    print("  1 → 石头")
+    print("  2 → 剪刀")
+    print("  3 → 布")
+
+    while True:
+        choice = input("请输入数字 (1/2/3): ").strip()
+        if choice == "1":
+            return "石头"
+        elif choice == "2":
+            return "剪刀"
+        elif choice == "3":
+            return "布"
+        else:
+            print("⚠️  输入有误，请输入 1、2 或 3。")
+
+
+def judge_round(player, computer):
+    """
+    判断一局的输赢
+    返回: "玩家赢", "电脑赢", "平局"
+    """
+    if player == computer:
+        return "平局"
+    elif WIN_RULES[player] == computer:
+        # 玩家的出拳能战胜电脑的出拳
+        return "玩家赢"
+    else:
+        return "电脑赢"
+
+
+def show_result(player, computer, result):
+    """显示一局的结果"""
+    print(f"\n🧑 你出了：{player}")
+    print(f"🤖 电脑出了：{computer}")
+
+    if result == "平局":
+        print("🤝 平局！势均力敌！")
+    elif result == "玩家赢":
+        print("🎉 你赢了这一局！")
+    else:
+        print("😢 电脑赢了这一局！")
+
+
+def main():
+    print("=" * 40)
+    print("     ✊✌️🖐️  石头剪刀布  ✊✌️🖐️")
+    print("=" * 40)
+    print(f"        三局两胜制（共{TOTAL_ROUNDS}局）")
+    print("=" * 40)
+
+    player_score = 0  # 玩家得分
+    computer_score = 0  # 电脑得分
+    round_num = 1  # 当前局数
+
+    # 比赛循环：直到有一方先赢得足够的局数
+    while player_score < WIN_SCORE and computer_score < WIN_SCORE:
+        print(f"\n{'─' * 30}")
+        print(f"📌 第 {round_num} 局")
+        print(f"   比分：玩家 {player_score} : {computer_score} 电脑")
+
+        # 玩家出拳
+        player = get_player_choice()
+        # 电脑出拳
+        computer = get_computer_choice()
+
+        # 判断输赢
+        result = judge_round(player, computer)
+        show_result(player, computer, result)
+
+        # 计分
+        if result == "玩家赢":
+            player_score += 1
+        elif result == "电脑赢":
+            computer_score += 1
+        # 平局不计分，但算作一局已过
+
+        round_num += 1
+
+    # ── 最终结果 ──────────────────────────────
+    print("\n" + "=" * 40)
+    print("        🏆  比赛结束！  🏆")
+    print("=" * 40)
+    print(f"   最终比分：玩家 {player_score} : {computer_score} 电脑")
+
+    if player_score > computer_score:
+        print("\n🎉🎉🎉  恭喜你，赢得了比赛！  🎉🎉🎉")
+    else:
+        print("\n🤖  电脑赢得了比赛，再接再厉！")
+
+
+# ── 程序入口 ──────────────────────────────────
+if __name__ == "__main__":
+    main()
+
+
+# ============================================================
+# 练习题（试着修改代码来实现以下功能）：
+# ============================================================
+#
+# 练习 1：五局三胜制
+#   把 TOTAL_ROUNDS 改成 5，让比赛变为五局三胜制。
+#   提示：只需修改 TOTAL_ROUNDS = 5 这一行即可，代码会自动调整判断逻辑。
+#
+# 练习 2：用 Emoji 美化显示
+#   在显示结果时加入 emoji：
+#   石头 → ✊、剪刀 → ✌️、布 → 🖐️
+#   提示：创建一个表情字典，show_result 时用字典找出对应的 emoji。
+#
+# 练习 3：统计胜率
+#   游戏结束后，显示玩家的胜率（胜局数 / 总局数 * 100%）。
+#   提示：记录总共玩了多少局（不包括平局？包括平局？由你来决定！）。
+#
+# ============================================================
+# 综合小挑战：
+# ============================================================
+#   打造一个"石头剪刀布锦标赛"：
+#   - 支持多位玩家（名字输入），两两对战。
+#   - 制作淘汰赛对阵表。
+#   - 最后决出冠军并显示排名。
+#   提示：用列表存储所有玩家，用循环安排比赛；
+#   胜者进入下一轮，败者淘汰。
+# ============================================================

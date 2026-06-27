@@ -1,0 +1,176 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>第29节 · 天气预报查询（上）· Python Tkinter 课程</title>
+<link rel="stylesheet" href="assets/fonts.css">
+<link rel="stylesheet" href="assets/base.css">
+<link rel="stylesheet" id="theme-link" href="assets/themes/soft-pastel.css">
+<link rel="stylesheet" href="assets/animations/animations.css">
+<link rel="stylesheet" href="style.css">
+</head>
+<body class="tpl-tkinter-course" data-themes="soft-pastel,rainbow-gradient,sunset-warm,minimal-white" data-theme-base="assets/themes/">
+<div class="deck">
+
+  <!-- 1. Cover -->
+  <section class="slide full" data-title="封面">
+    <p class="kicker">Python Tkinter · 第 29 节</p>
+    <h1 class="h1 mt-s">项目 6：天气预报查询<br><em>接入互联网 API</em></h1>
+    <p class="lede mt-l" style="max-width:62ch">今天开始，你的程序不再孤立！学会用 requests 库调用天气 API，输入城市名就能查到实时天气。</p>
+    <div class="row mt-l" style="gap:16px">
+      <span class="pill-academic">~ 60 分钟</span>
+      <span class="pill-academic">难度 · ⭐⭐⭐</span>
+      <span class="pill-academic">前置 · 第 28 节</span>
+    </div>
+    <div class="deck-footer"><span>Python Tkinter 趣味编程课</span><span class="slide-number" data-current="1" data-total="6"></span></div>
+  </section>
+
+  <!-- 2. Objectives -->
+  <section class="slide" data-title="学习目标">
+    <aside class="sidebar">
+      <div class="brand">Tkinter 029</div>
+      <h5>学习目标</h5>
+      <ul class="obj-list">
+        <li class="current">理解什么是 API</li>
+        <li>安装 requests 库</li>
+        <li>调用 wttr.in 天气 API</li>
+        <li>解析 JSON 数据</li>
+        <li>错误处理</li>
+      </ul>
+      <h5>本节成品</h5>
+      <p class="dim" style="font-size:13px">天气查询工具 🌤️</p>
+    </aside>
+    <div class="main">
+      <p class="kicker">学习目标</p>
+      <h2 class="h2 mt-s">学完这节课，你将能够…</h2>
+      <div class="stack mt-l">
+        <div class="concept-box"><h4>① 理解 API 的概念</h4><p class="dim">互联网上的数据接口，发请求、收数据。</p></div>
+        <div class="concept-box"><h4>② 用 requests 发送网络请求</h4><p class="dim">requests.get(url) 获取数据，.json() 解析。</p></div>
+        <div class="concept-box"><h4>③ 解析 JSON 数据</h4><p class="dim">多层字典取值，提取温度、天气、湿度等。</p></div>
+        <div class="concept-box"><h4>④ 做好错误处理</h4><p class="dim">try...except 处理网络故障，给用户友好提示。</p></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- 3. API + requests -->
+  <section class="slide" data-title="API 与 requests">
+    <aside class="sidebar">
+      <div class="brand">Tkinter 029</div>
+      <h5>学习目标</h5>
+      <ul class="obj-list">
+        <li class="done">理解什么是 API</li>
+        <li class="done">安装 requests 库</li>
+        <li class="current">调用 wttr.in 天气 API</li>
+        <li>解析 JSON 数据</li>
+        <li>错误处理</li>
+      </ul>
+      <h5>wttr.in</h5>
+      <p class="dim" style="font-size:13px">免费 · 无需注册</p>
+    </aside>
+    <div class="main">
+      <p class="kicker">核心概念</p>
+      <h2 class="h2 mt-s">API 是什么 + requests 怎么用</h2>
+      <div class="grid g2 mt-m">
+        <div class="concept-box">
+          <h4>🍽️ API = 网络餐厅</h4>
+          <p class="dim">你（程序）→ 点菜（发请求）→ 厨房（服务器）→ 上菜（返回数据）</p>
+        </div>
+        <div class="concept-box">
+          <h4>📡 wttr.in 天气 API</h4>
+          <p class="dim"><code>https://wttr.in/Beijing?format=j1</code><br>免费、无需 API Key、支持中文城市名</p>
+        </div>
+      </div>
+      <div class="code mt-m"><pre style="margin:0"><span class="kw">import</span> requests
+
+url = <span class="str">"https://wttr.in/Beijing?format=j1"</span>
+response = requests.<span class="fn">get</span>(url, timeout=5)
+data = response.<span class="fn">json</span>()  <span class="cmt"># JSON → Python 字典</span></pre></div>
+    </div>
+  </section>
+
+  <!-- 4. JSON 解析 -->
+  <section class="slide" data-title="JSON 解析">
+    <aside class="sidebar">
+      <div class="brand">Tkinter 029</div>
+      <h5>学习目标</h5>
+      <ul class="obj-list">
+        <li class="done">理解什么是 API</li>
+        <li class="done">安装 requests 库</li>
+        <li class="done">调用 wttr.in 天气 API</li>
+        <li class="current">解析 JSON 数据</li>
+        <li>错误处理</li>
+      </ul>
+      <h5>JSON 结构</h5>
+      <p class="dim" style="font-size:13px">字典嵌套 · 列表取值</p>
+    </aside>
+    <div class="main">
+      <p class="kicker">数据处理</p>
+      <h2 class="h2 mt-s">逐层解析 JSON 天气数据</h2>
+      <div class="code mt-m"><pre style="margin:0">data = response.<span class="fn">json</span>()                         <span class="cmt"># 整个 JSON 转字典</span>
+
+current = data[<span class="str">"current_condition"</span>][0]  <span class="cmt"># 当前天气（列表取第一个）</span>
+
+temp    = current[<span class="str">"temp_C"</span>]                 <span class="cmt"># 温度  → "25"</span>
+desc    = current[<span class="str">"weatherDesc"</span>][0][<span class="str">"value"</span>]  <span class="cmt"># 天气  → "晴"</span>
+humidity = current[<span class="str">"humidity"</span>]               <span class="cmt"># 湿度  → "60"</span>
+wind    = current[<span class="str">"windspeedKmph"</span>]            <span class="cmt"># 风速  → "15"</span></pre></div>
+      <div class="callout mt-m">
+        <b>🔍 技巧：</b>不确定 JSON 结构时，先用 <code>print(data.keys())</code> 看看有哪些键，一层一层探索。
+      </div>
+    </div>
+  </section>
+
+  <!-- 5. 错误处理 -->
+  <section class="slide" data-title="错误处理">
+    <aside class="sidebar">
+      <div class="brand">Tkinter 029</div>
+      <h5>学习目标</h5>
+      <ul class="obj-list">
+        <li class="done">理解什么是 API</li>
+        <li class="done">安装 requests 库</li>
+        <li class="done">调用 wttr.in 天气 API</li>
+        <li class="done">解析 JSON 数据</li>
+        <li class="current">错误处理</li>
+      </ul>
+      <h5>异常类型</h5>
+      <p class="dim" style="font-size:13px">ConnectionError · Timeout</p>
+    </aside>
+    <div class="main">
+      <p class="kicker">防御编程</p>
+      <h2 class="h2 mt-s">网络不可靠，必须做好错误处理</h2>
+      <div class="code mt-m"><pre style="margin:0"><span class="kw">def</span> <span class="fn">get_weather</span>(city):
+    <span class="kw">try:</span>
+        url = <span class="str">f"https://wttr.in/{city}?format=j1"</span>
+        r = requests.<span class="fn">get</span>(url, timeout=5)
+        r.<span class="fn">raise_for_status</span>()
+        <span class="kw">return</span> r.<span class="fn">json</span>()
+    <span class="kw">except</span> requests.exceptions.ConnectionError:
+        <span class="kw">return</span> {<span class="str">"error"</span>: <span class="str">"网络不通"</span>}
+    <span class="kw">except</span> requests.exceptions.Timeout:
+        <span class="kw">return</span> {<span class="str">"error"</span>: <span class="str">"请求超时"</span>}
+    <span class="kw">except</span>:
+        <span class="kw">return</span> {<span class="str">"error"</span>: <span class="str">"未知错误"</span>}</pre></div>
+      <div class="callout mt-m">
+        <b>⚠️ 三个必须：</b>① 必须设 timeout；② 必须 try...except；③ 必须给用户友好提示，不要直接报错。
+      </div>
+    </div>
+  </section>
+
+  <!-- 6. Summary -->
+  <section class="slide full" data-title="总结">
+    <p class="kicker">总结 · 第 29 节</p>
+    <h1 class="h1 mt-s">你学会了…</h1>
+    <div class="grid g2 mt-l">
+      <div class="concept-box"><h4>✓ API 概念</h4><p class="dim">网络上的数据服务接口，发请求、收数据。</p></div>
+      <div class="concept-box"><h4>✓ requests 库</h4><p class="dim">requests.get(url) 发请求，.json() 解析结果。</p></div>
+      <div class="concept-box"><h4>✓ JSON 解析</h4><p class="dim">多层字典和列表的取值，逐层深入。</p></div>
+      <div class="concept-box"><h4>✓ 网络错误处理</h4><p class="dim">try...except + timeout，给用户友好的错误提示。</p></div>
+    </div>
+    <div class="callout mt-l">
+      <b>下节预告 · 第 30 节：天气预报查询（下）。</b> 美化天气显示界面，加上 emoji 图标和多城市切换！
+    </div>
+  </section>
+
+</div>
+<script src="assets/runtime.js"></script>
+</body></html>

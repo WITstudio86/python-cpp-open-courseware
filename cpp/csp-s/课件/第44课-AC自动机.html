@@ -1,0 +1,729 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>第44课：AC 自动机</title>
+<style>
+/* ===== 深色主题 ===== */
+:root {
+  --bg: #1a1a2e;
+  --slide-bg: #16213e;
+  --text: #e0e0e0;
+  --title: #e94560;
+  --accent: #0f3460;
+  --accent2: #533483;
+  --code-bg: #0d1117;
+  --border: #333;
+  --keyword: #ff79c6;
+  --string: #f1fa8c;
+  --func: #50fa7b;
+  --comment: #6272a4;
+  --number: #bd93f9;
+  --type: #8be9fd;
+}
+
+* { margin: 0; padding: 0; box-sizing: border-box; }
+
+body {
+  font-family: "Microsoft YaHei", "PingFang SC", sans-serif;
+  background: var(--bg);
+  color: var(--text);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  min-height: 100vh;
+  overflow-x: hidden;
+}
+
+/* ===== 幻灯片容器 ===== */
+.slides-container {
+  width: 90%;
+  max-width: 960px;
+  min-height: 600px;
+  background: var(--slide-bg);
+  border-radius: 16px;
+  box-shadow: 0 8px 40px rgba(0,0,0,0.5);
+  padding: 40px 50px;
+  position: relative;
+  margin: 20px 0;
+  border: 1px solid var(--border);
+}
+
+.slide {
+  display: none;
+  animation: fadeIn 0.4s ease;
+}
+.slide.active { display: block; }
+
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(10px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+/* ===== 标题 ===== */
+.slide-title {
+  font-size: 2rem;
+  color: var(--title);
+  margin-bottom: 24px;
+  border-bottom: 2px solid var(--title);
+  padding-bottom: 12px;
+}
+
+.slide-subtitle {
+  font-size: 1.2rem;
+  color: #888;
+  margin-bottom: 20px;
+}
+
+/* ===== 内容区 ===== */
+.content { line-height: 1.8; font-size: 1.02rem; }
+
+.content h3 {
+  color: var(--type);
+  margin: 14px 0 6px;
+  font-size: 1.15rem;
+}
+
+.content ul {
+  padding-left: 24px;
+  margin: 6px 0;
+}
+.content li { margin: 4px 0; }
+
+.content table {
+  width: 100%;
+  border-collapse: collapse;
+  margin: 10px 0;
+  font-size: 0.92rem;
+}
+.content th, .content td {
+  border: 1px solid var(--border);
+  padding: 7px 10px;
+  text-align: left;
+}
+.content th {
+  background: var(--accent);
+  color: #fff;
+}
+.content tr:nth-child(even) { background: rgba(255,255,255,0.03); }
+
+/* ===== 代码块 ===== */
+.code-block {
+  background: var(--code-bg);
+  border-radius: 8px;
+  padding: 14px 18px;
+  margin: 10px 0;
+  overflow-x: auto;
+  font-family: "Fira Code", "Consolas", "Courier New", monospace;
+  font-size: 0.82rem;
+  line-height: 1.45;
+  border: 1px solid var(--border);
+  white-space: pre-wrap;
+}
+
+.code-block .kw { color: var(--keyword); }
+.code-block .st { color: var(--string); }
+.code-block .cm { color: var(--comment); }
+.code-block .nu { color: var(--number); }
+.code-block .fn { color: var(--func); }
+.code-block .tp { color: var(--type); }
+
+/* ===== 重点标注 ===== */
+.highlight-box {
+  background: rgba(233,69,96,0.1);
+  border-left: 4px solid var(--title);
+  padding: 12px 16px;
+  margin: 10px 0;
+  border-radius: 0 8px 8px 0;
+}
+.info-box {
+  background: rgba(139,233,253,0.1);
+  border-left: 4px solid var(--type);
+  padding: 12px 16px;
+  margin: 10px 0;
+  border-radius: 0 8px 8px 0;
+}
+.warn-box {
+  background: rgba(241,250,140,0.1);
+  border-left: 4px solid var(--string);
+  padding: 12px 16px;
+  margin: 10px 0;
+  border-radius: 0 8px 8px 0;
+}
+
+/* ===== AC 自动机 BFS 可视化 ===== */
+.bfs-container {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin: 12px 0;
+}
+.bfs-row {
+  display: flex;
+  gap: 12px;
+  align-items: center;
+  padding: 6px 12px;
+  background: rgba(255,255,255,0.03);
+  border-radius: 6px;
+}
+.bfs-node {
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  background: var(--accent);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: bold;
+  font-size: 0.85rem;
+  color: #fff;
+}
+.bfs-node.root { background: var(--title); }
+.bfs-node.current { background: var(--func); color: #000; }
+.bfs-arrow { color: var(--title); font-weight: bold; font-size: 1.2rem; }
+.bfs-label { color: #888; font-size: 0.85rem; margin-left: 8px; }
+
+/* ===== 匹配过程演示 ===== */
+.match-table {
+  width: 100%;
+  border-collapse: collapse;
+  margin: 10px 0;
+  font-size: 0.9rem;
+  font-family: "Fira Code", monospace;
+}
+.match-table td, .match-table th {
+  border: 1px solid var(--border);
+  padding: 6px 8px;
+  text-align: center;
+}
+.match-table .match-yes { background: rgba(80,250,123,0.2); }
+.match-table .match-pos { background: rgba(139,233,253,0.2); }
+
+/* ===== 导航按钮 ===== */
+.nav-bar {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-top: 20px;
+}
+
+.nav-btn {
+  background: var(--accent);
+  color: #fff;
+  border: none;
+  padding: 10px 24px;
+  border-radius: 8px;
+  cursor: pointer;
+  font-size: 1rem;
+  transition: background 0.3s;
+}
+.nav-btn:hover {
+  background: var(--accent2);
+}
+.nav-btn:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+
+.page-indicator {
+  color: #888;
+  font-size: 0.9rem;
+}
+
+/* ===== 进度条 ===== */
+.progress-bar {
+  width: 100%;
+  height: 4px;
+  background: var(--border);
+  border-radius: 2px;
+  margin-bottom: 16px;
+}
+.progress-fill {
+  height: 100%;
+  background: var(--title);
+  border-radius: 2px;
+  transition: width 0.3s;
+}
+
+/* ===== 响应式 ===== */
+@media (max-width: 768px) {
+  .slides-container {
+    padding: 24px 20px;
+    width: 95%;
+  }
+  .slide-title { font-size: 1.4rem; }
+  .code-block { font-size: 0.72rem; }
+  .match-table { font-size: 0.75rem; }
+}
+</style>
+</head>
+<body>
+
+<div class="slides-container">
+
+<!-- 进度条 -->
+<div class="progress-bar"><div class="progress-fill" id="progress"></div></div>
+
+<!-- ==================== 幻灯片 1：标题页 ==================== -->
+<div class="slide active" data-slide="1">
+  <h1 class="slide-title" style="text-align:center; border:none; font-size:2.4rem;">
+    📚 第44课<br>AC 自动机
+  </h1>
+  <p class="slide-subtitle" style="text-align:center;">
+    CSP-S 竞赛进阶字符串算法
+  </p>
+  <div class="content" style="text-align:center; margin-top:40px;">
+    <p style="font-size:1.2rem;">多模式串匹配 | fail 指针 | Trie + KMP 结合</p>
+    <p style="color:#888; margin-top:20px;">
+      考纲要求：AC 自动机多模式匹配 · fail 指针 BFS 构建 · Trie 图优化
+    </p>
+  </div>
+</div>
+
+<!-- ==================== 幻灯片 2：知识精讲 ==================== -->
+<div class="slide" data-slide="2">
+  <h2 class="slide-title">📖 知识精讲：AC 自动机概述</h2>
+  <div class="content">
+    <h3>解决的问题</h3>
+    <div class="highlight-box">
+      给定 N 个<strong>模式串</strong> p₁, p₂, ..., p<sub>N</sub> 和一个<strong>文本串</strong> T，要求找出每个模式串在文本串中的出现位置（或次数）。
+    </div>
+
+    <h3>为什么不直接用 KMP？</h3>
+    <p>KMP 每次只能匹配一个模式串。对 N 个模式串分别 KMP，时间复杂度 O(N × |T|)，数据大了会 TLE。</p>
+
+    <h3>AC 自动机 = Trie + fail 指针</h3>
+    <ul>
+      <li><strong>Trie 树：</strong>存储所有模式串，每个节点代表一个前缀</li>
+      <li><strong>fail 指针：</strong>指向当前节点最长后缀（该后缀也是某个模式串的前缀）</li>
+    </ul>
+
+    <h3>时间复杂度</h3>
+    <table>
+      <tr><th>步骤</th><th>时间复杂度</th></tr>
+      <tr><td>构建 Trie</td><td>O(∑|pᵢ|)</td></tr>
+      <tr><td>构建 fail 指针</td><td>O(∑|pᵢ| × |Σ|)</td></tr>
+      <tr><td>匹配</td><td>O(|T|)</td></tr>
+      <tr><td><strong>总计</strong></td><td><strong>O(∑|pᵢ| × 26 + |T|)</strong></td></tr>
+    </table>
+
+    <div class="info-box">
+      <strong>本质：</strong>AC 自动机是 KMP 在 Trie 树上的推广。KMP 的 next 数组是一维失配函数，fail 指针是二维的。
+    </div>
+  </div>
+</div>
+
+<!-- ==================== 幻灯片 3：fail 指针构建 ==================== -->
+<div class="slide" data-slide="3">
+  <h2 class="slide-title">🔗 fail 指针的 BFS 构建</h2>
+  <div class="content">
+    <h3>fail 指针的定义</h3>
+    <p>设节点 u 表示的字符串为 s(u)，则 <strong>fail[u]</strong> 指向节点 v，满足：</p>
+    <ol>
+      <li>s(v) 是 s(u) 的 <strong>真后缀</strong>（不等于 s(u) 本身）</li>
+      <li>s(v) 是某个模式串的<strong>前缀</strong></li>
+      <li>|s(v)| <strong>最大</strong>（即最长真后缀）</li>
+    </ol>
+
+    <h3>BFS 构建算法</h3>
+    <div class="code-block">
+<span class="cm">// 1. 将所有模式串先插入 Trie（略）</span>
+
+<span class="tp">void</span> <span class="fn">build</span>() {
+    <span class="kw">queue&lt;int&gt;</span> q;
+    <span class="cm">// 第一层：根节点的直接子节点 fail → 根</span>
+    <span class="kw">for</span> (<span class="kw">int</span> c = <span class="nu">0</span>; c &lt; <span class="nu">26</span>; c++) {
+        <span class="kw">if</span> (son[<span class="nu">0</span>][c]) {
+            fail[son[<span class="nu">0</span>][c]] = <span class="nu">0</span>;
+            q.push(son[<span class="nu">0</span>][c]);
+        }
+    }
+    <span class="cm">// 2. BFS 逐层构建</span>
+    <span class="kw">while</span> (!q.empty()) {
+        <span class="kw">int</span> u = q.front(); q.pop();
+        <span class="kw">for</span> (<span class="kw">int</span> c = <span class="nu">0</span>; c &lt; <span class="nu">26</span>; c++) {
+            <span class="kw">int</span> v = son[u][c];
+            <span class="kw">if</span> (v) {
+                <span class="cm">// 沿 fail 链向上查找</span>
+                <span class="kw">int</span> f = fail[u];
+                <span class="kw">while</span> (f &amp;&amp; !son[f][c]) f = fail[f];
+                fail[v] = son[f][c];
+                q.push(v);
+            }
+        }
+    }
+}
+    </div>
+  </div>
+</div>
+
+<!-- ==================== 幻灯片 4：BFS 构建过程可视化 ==================== -->
+<div class="slide" data-slide="4">
+  <h2 class="slide-title">🎬 BFS 构建过程演示</h2>
+  <div class="content">
+    <h3>模式串：「he」「she」「his」「hers」</h3>
+    <div class="bfs-container" id="bfsViz">
+      <div class="bfs-row">
+        <span style="color:var(--comment); width:80px;">初始队列</span>
+        <span class="bfs-node root">h</span>
+        <span class="bfs-node root">s</span>
+        <span class="bfs-label">fail → 根(0)</span>
+      </div>
+    </div>
+
+    <button class="nav-btn" onclick="advanceBFS()" style="font-size:0.9rem; margin-top:8px;">▶ BFS 下一步</button>
+    <button class="nav-btn" onclick="resetBFS()" style="font-size:0.9rem; margin-top:8px;">↺ 重置</button>
+
+    <h3 style="margin-top:16px;">最终 fail 指针关系</h3>
+    <table>
+      <tr><th>节点（字符串）</th><th>fail 指向</th><th>最长后缀=前缀</th></tr>
+      <tr><td>h</td><td>根</td><td>无</td></tr>
+      <tr><td>he</td><td>根</td><td>无</td></tr>
+      <tr><td>s</td><td>根</td><td>无</td></tr>
+      <tr><td>sh</td><td>h 节点</td><td>"h" 是 "sh" 的后缀，也是前缀</td></tr>
+      <tr><td>she</td><td>he 节点</td><td>"he" 是 "she" 的后缀，也是前缀</td></tr>
+      <tr><td>her</td><td>根</td><td>无</td></tr>
+      <tr><td>hers</td><td>s 节点</td><td>"s" 是 "hers" 的后缀，也是前缀</td></tr>
+    </table>
+  </div>
+</div>
+
+<!-- ==================== 幻灯片 5：匹配过程 ==================== -->
+<div class="slide" data-slide="5">
+  <h2 class="slide-title">🔍 匹配过程演示</h2>
+  <div class="content">
+    <h3>文本串 T = "ushers"，模式串 = {he, she, his, hers}</h3>
+
+    <div class="code-block">
+<span class="tp">int</span> <span class="fn">query</span>(<span class="kw">const</span> string &amp;text) {
+    <span class="kw">int</span> p = <span class="nu">0</span>, res = <span class="nu">0</span>;
+    <span class="kw">for</span> (<span class="kw">char</span> ch : text) {
+        <span class="kw">int</span> c = ch - <span class="st">'a'</span>;
+        <span class="cm">// 当前节点无子节点 c，沿 fail 向上跳</span>
+        <span class="kw">while</span> (p &amp;&amp; !son[p][c]) p = fail[p];
+        p = son[p][c];
+        <span class="cm">// 收集 fail 链上所有匹配</span>
+        <span class="kw">for</span> (<span class="kw">int</span> t = p; t &amp;&amp; cnt[t] != -<span class="nu">1</span>; t = fail[t]) {
+            res += cnt[t];
+            cnt[t] = -<span class="nu">1</span>;  <span class="cm">// 标记已统计</span>
+        }
+    }
+    <span class="kw">return</span> res;
+}
+    </div>
+
+    <h3>匹配过程追踪</h3>
+    <table class="match-table" id="matchTable">
+      <tr><th>文本位置</th><th>字符</th><th>当前节点</th><th>匹配到</th></tr>
+      <tr><td>0</td><td>u</td><td>0→0</td><td>无</td></tr>
+      <tr><td>1</td><td>s</td><td>0→s</td><td>无</td></tr>
+      <tr><td>2</td><td>h</td><td>s→sh</td><td>无</td></tr>
+      <tr class="match-yes"><td>3</td><td>e</td><td>sh→she</td><td><strong>she, he</strong></td></tr>
+      <tr class="match-yes"><td>4</td><td>r</td><td>she→her</td><td>无（her 不是结尾）</td></tr>
+      <tr class="match-yes"><td>5</td><td>s</td><td>her→hers</td><td><strong>hers</strong></td></tr>
+    </table>
+    <p style="color:var(--func); margin-top:8px;"><strong>匹配结果：she, he, hers → 共 3 个模式串</strong></p>
+  </div>
+</div>
+
+<!-- ==================== 幻灯片 6：Trie 图优化 ==================== -->
+<div class="slide" data-slide="6">
+  <h2 class="slide-title">⚡ Trie 图优化</h2>
+  <div class="content">
+    <h3>优化的动机</h3>
+    <p>普通 AC 自动机在匹配时，如果当前节点没有某个字符的子节点，需要通过 while 循环不断跳 fail 查找，可能退化。</p>
+
+    <h3>Trie 图的核心</h3>
+    <div class="highlight-box">
+      在构建 fail 的同时，将 Trie 树<strong>补全为一张图</strong>：<br>
+      对于不存在的子节点 son[u][c]，设定 <strong>son[u][c] = son[fail[u]][c]</strong>
+    </div>
+
+    <h3>Trie 图版 build 函数</h3>
+    <div class="code-block">
+<span class="tp">void</span> <span class="fn">build</span>() {
+    <span class="kw">queue&lt;int&gt;</span> q;
+    <span class="kw">for</span> (<span class="kw">int</span> c = <span class="nu">0</span>; c &lt; <span class="nu">26</span>; c++) {
+        <span class="kw">if</span> (son[<span class="nu">0</span>][c]) {
+            fail[son[<span class="nu">0</span>][c]] = <span class="nu">0</span>;
+            q.push(son[<span class="nu">0</span>][c]);
+        }
+    }
+    <span class="kw">while</span> (!q.empty()) {
+        <span class="kw">int</span> u = q.front(); q.pop();
+        <span class="kw">for</span> (<span class="kw">int</span> c = <span class="nu">0</span>; c &lt; <span class="nu">26</span>; c++) {
+            <span class="kw">int</span> v = son[u][c];
+            <span class="kw">if</span> (v) {
+                fail[v] = son[fail[u]][c];  <span class="cm">// 已在图中，直接取</span>
+                q.push(v);
+            } <span class="kw">else</span> {
+                son[u][c] = son[fail[u]][c];  <span class="cm">// 核心优化！</span>
+            }
+        }
+    }
+}
+    </div>
+
+    <h3>匹配也变得简单</h3>
+    <div class="code-block">
+<span class="tp">void</span> <span class="fn">query</span>(<span class="kw">const</span> string &amp;text) {
+    <span class="kw">int</span> p = <span class="nu">0</span>;
+    <span class="kw">for</span> (<span class="kw">char</span> ch : text) {
+        p = son[p][ch - <span class="st">'a'</span>];  <span class="cm">// 直接走！无需 while 循环</span>
+        ans[p]++;  <span class="cm">// 只记录访问，不跳 fail</span>
+    }
+}
+    </div>
+
+    <div class="info-box">
+      <strong>效果：</strong>匹配过程的时间复杂度从「可能退化」变为严格的 O(|T|)。
+    </div>
+  </div>
+</div>
+
+<!-- ==================== 幻灯片 7：代码模板 ==================== -->
+<div class="slide" data-slide="7">
+  <h2 class="slide-title">💻 完整代码模板</h2>
+  <div class="content">
+    <h3>AC 自动机（Trie 图 + 拓扑排序优化）</h3>
+    <div class="code-block">
+<span class="kw">const int</span> N = <span class="nu">500010</span>;
+<span class="kw">int</span> son[N][<span class="nu">26</span>], fail[N], cnt[N], ans[N], in[N], idx;
+
+<span class="tp">void</span> <span class="fn">insert</span>(<span class="kw">const</span> string &amp;s, <span class="kw">int</span> id) {
+    <span class="kw">int</span> p = <span class="nu">0</span>;
+    <span class="kw">for</span> (<span class="kw">char</span> ch : s) {
+        <span class="kw">int</span> c = ch - <span class="st">'a'</span>;
+        <span class="kw">if</span> (!son[p][c]) son[p][c] = ++idx;
+        p = son[p][c];
+    }
+    cnt[p] = id;  <span class="cm">// 记录是哪个模式串的结尾</span>
+}
+
+<span class="tp">void</span> <span class="fn">build</span>() { <span class="cm">/* 见上一页 Trie 图优化版 */</span> }
+
+<span class="tp">void</span> <span class="fn">topo</span>() {  <span class="cm">// 拓扑排序统计出现次数</span>
+    <span class="kw">queue&lt;int&gt;</span> q;
+    <span class="kw">for</span> (<span class="kw">int</span> i = <span class="nu">1</span>; i &lt;= idx; i++) <span class="kw">if</span> (in[i] == <span class="nu">0</span>) q.push(i);
+    <span class="kw">while</span> (!q.empty()) {
+        <span class="kw">int</span> u = q.front(); q.pop();
+        <span class="kw">int</span> v = fail[u];
+        ans[v] += ans[u];
+        <span class="kw">if</span> (--in[v] == <span class="nu">0</span>) q.push(v);
+    }
+}
+    </div>
+
+    <h3>使用流程</h3>
+    <ol>
+      <li>insert 所有模式串 → 记录结尾节点</li>
+      <li>build 构建 fail → BFS</li>
+      <li>query 遍历文本串 → ans[p]++（不跳 fail）</li>
+      <li>topo 拓扑排序 → 统计每个模式串的出现次数</li>
+    </ol>
+  </div>
+</div>
+
+<!-- ==================== 幻灯片 8：真题精练 1 ==================== -->
+<div class="slide" data-slide="8">
+  <h2 class="slide-title">📝 真题精练 1：统计每个模式串的出现次数</h2>
+  <div class="content">
+    <h3>题目</h3>
+    <div class="info-box">
+      给定 N 个模式串 p₁...p<sub>N</sub> 和一个文本串 T，求每个模式串在文本串中出现的次数。<br>
+      数据范围：N ≤ 2×10⁵，∑|pᵢ| ≤ 2×10⁵，|T| ≤ 2×10⁶。
+    </div>
+
+    <h3>样例</h3>
+    <table>
+      <tr><th>输入</th><th>输出</th></tr>
+      <tr><td>5<br>a<br>aa<br>aaa<br>aaaa<br>aaaaa<br>aaabbaaab</td><td>6<br>4<br>2<br>1<br>0</td></tr>
+    </table>
+
+    <h3>关键技巧</h3>
+    <ul>
+      <li>匹配时不跳 fail，只 ans[p]++</li>
+      <li>拓扑排序将 ans 沿 fail 指针方向累加</li>
+      <li>ans[ 模式串结尾节点 ] = 该模式串的出现次数</li>
+    </ul>
+
+    <div class="warn-box">
+      <strong>不能跳 fail 统计！</strong>如果匹配时沿 fail 链跳转累加，最坏 O(|T| × max模式串长度)，会 TLE。
+    </div>
+  </div>
+</div>
+
+<!-- ==================== 幻灯片 9：拓扑排序优化 ==================== -->
+<div class="slide" data-slide="9">
+  <h2 class="slide-title">📊 拓扑排序优化详解</h2>
+  <div class="content">
+    <h3>为什么需要拓扑排序？</h3>
+    <p>fail 指针构成了一棵<strong>fail 树</strong>（根是 0，边从节点指向 fail 节点）。</p>
+    <p>在匹配过程中，我们只标记了当前到达的节点（ans[p]++），但没有计算 fail 链上的后缀匹配。</p>
+
+    <h3>拓扑排序的作用</h3>
+    <div class="highlight-box">
+      按 BFS 的<strong>逆序</strong>（即 fail 树的拓扑序），将子节点的 ans 值累加到父节点（fail 指向的节点）。<br>
+      这样 ans[node] 就包含了所有以该节点为结尾的模式串的出现次数。
+    </div>
+
+    <h3>fail 树示意图</h3>
+    <div style="text-align:center; margin:12px 0;">
+      <pre style="background:var(--code-bg); padding:12px 16px; border-radius:8px; display:inline-block; text-align:left; font-size:0.88rem; line-height:1.6;">
+    ans[4] = 1       ans[3] = 2       ans[2] = 3
+        |                |                |
+      fail[4]        fail[3]          fail[2]
+        |                |                |
+        v                v                v
+    fail[3] = 1     fail[2] = 0     fail[1] = 0
+
+ 拓扑序累加: ans[0] += ans[1] + ans[2]
+             ans[1] += ans[3]
+             ans[3] += ans[4]
+      </pre>
+    </div>
+
+    <div class="info-box">
+      <strong>时间复杂度：</strong>拓扑排序 O(节点数)，加上匹配 O(|T|)，总计 O(|T| + 节点数)，远优于跳 fail 的 O(|T| × 深度)。
+    </div>
+  </div>
+</div>
+
+<!-- ==================== 幻灯片 10：真题精练 2 ==================== -->
+<div class="slide" data-slide="10">
+  <h2 class="slide-title">📝 真题精练 2：不可重叠匹配</h2>
+  <div class="content">
+    <h3>题目</h3>
+    <div class="info-box">
+      给定文本串 T 和 N 个模式串，问文本串中最多能匹配多少个模式串，要求<strong>匹配位置不可重叠</strong>。<br>
+      约束：模式串之间不可互相包含。
+    </div>
+
+    <h3>解题思路</h3>
+    <ul>
+      <li>构建 AC 自动机</li>
+      <li>遍历文本串，记录每个位置能匹配到的模式串（取最短的）</li>
+      <li>使用贪心策略：按结束位置排序，选择不重叠的匹配</li>
+    </ul>
+
+    <h3>AC 自动机 vs KMP 对比</h3>
+    <table>
+      <tr><th>特性</th><th>KMP</th><th>AC 自动机</th></tr>
+      <tr><td>模式串数量</td><td>1 个</td><td>多个</td></tr>
+      <tr><td>失配函数</td><td>next 数组（一维）</td><td>fail 指针（树形）</td></tr>
+      <tr><td>构建复杂度</td><td>O(|P|)</td><td>O(∑|Pᵢ|)</td></tr>
+      <tr><td>匹配复杂度</td><td>O(|T|)</td><td>O(|T|)</td></tr>
+      <tr><td>空间</td><td>O(|P|)</td><td>O(∑|Pᵢ| × 26)</td></tr>
+    </table>
+
+    <div class="highlight-box">
+      <strong>关键区别：</strong>AC 自动机是 KMP 在 Trie 树上的推广，每个节点都有一个 fail 指针而不是一维数组。
+    </div>
+  </div>
+</div>
+
+<!-- ==================== 幻灯片 11：总结 ==================== -->
+<div class="slide" data-slide="11">
+  <h2 class="slide-title">🎯 本课小结</h2>
+  <div class="content">
+    <table>
+      <tr><th>知识点</th><th>核心内容</th></tr>
+      <tr><td>问题定义</td><td>多模式串在文本串中的匹配</td></tr>
+      <tr><td>fail 指针</td><td>最长后缀=某模式串前缀；BFS 构建</td></tr>
+      <tr><td>匹配过程</td><td>遍历文本串，沿 fail 跳转收集匹配</td></tr>
+      <tr><td>Trie 图优化</td><td>son[u][c]=son[fail[u]][c]，消除 while</td></tr>
+      <tr><td>拓扑优化</td><td>不跳 fail，逆 BFS 序传递到 fail 链</td></tr>
+      <tr><td>时间复杂度</td><td>O(∑|pᵢ|×|Σ| + |T|)</td></tr>
+    </table>
+
+    <h3>易错点回顾</h3>
+    <ul>
+      <li>根节点的直接子节点 fail 指向根（0）</li>
+      <li>BFS 构建 fail 时注意边界（p 可能回到 0）</li>
+      <li>匹配时跳 fail 可能 TLE → 用 Trie 图 + 拓扑排序</li>
+      <li>数组大小要考虑模式串总长</li>
+    </ul>
+
+    <h3>扩展方向</h3>
+    <div class="info-box">
+      <p><strong>fail 树的应用：</strong>fail 树上的 DFS 序 + 树状数组可解决模式串的子串出现次数问题。</p>
+      <p><strong>AC 自动机 + DP：</strong>在 AC 自动机上做 DP 解决字符串构造问题。</p>
+    </div>
+  </div>
+</div>
+
+</div><!-- slides-container -->
+
+<!-- ===== 导航按钮 ===== -->
+<div class="nav-bar" style="width:90%; max-width:960px;">
+  <button class="nav-btn" id="prevBtn" onclick="changeSlide(-1)">◀ 上一页</button>
+  <span class="page-indicator" id="pageNum">1 / 11</span>
+  <button class="nav-btn" id="nextBtn" onclick="changeSlide(1)">下一页 ▶</button>
+</div>
+
+<script>
+// ===== 幻灯片导航 =====
+let currentSlide = 1;
+const totalSlides = 11;
+
+function changeSlide(dir) {
+  document.querySelector(`[data-slide="${currentSlide}"]`).classList.remove('active');
+  currentSlide = Math.max(1, Math.min(totalSlides, currentSlide + dir));
+  document.querySelector(`[data-slide="${currentSlide}"]`).classList.add('active');
+  document.getElementById('pageNum').textContent = `${currentSlide} / ${totalSlides}`;
+  document.getElementById('progress').style.width = `${(currentSlide / totalSlides) * 100}%`;
+
+  document.getElementById('prevBtn').disabled = (currentSlide === 1);
+  document.getElementById('nextBtn').disabled = (currentSlide === totalSlides);
+}
+
+// 键盘导航
+document.addEventListener('keydown', (e) => {
+  if (e.key === 'ArrowRight' || e.key === 'ArrowDown') changeSlide(1);
+  if (e.key === 'ArrowLeft' || e.key === 'ArrowUp') changeSlide(-1);
+});
+
+// 初始化进度
+document.getElementById('progress').style.width = `${(1 / totalSlides) * 100}%`;
+
+// ===== BFS 构建 fail 指针可视化 =====
+let bfsStep = 0;
+const bfsSteps = [
+  "初始队列：[h节点, s节点]，fail→0",
+  "处理节点<h>：子节点<e> 入队，fail[he]=0",
+  "处理节点<s>：子节点<h> 入队，fail[sh]=son[fail[s]][h]=h",
+  "处理节点<he>：子节点<r> 入队，fail[her]=0",
+  "处理节点<sh>：子节点<e> 入队，fail[she]=son[fail[sh]][e]=he",
+  "处理节点<her>：子节点<s> 入队，fail[hers]=son[fail[her]][s]=s",
+  "BFS 完成！所有 fail 指针构建完毕。",
+];
+
+function advanceBFS() {
+  bfsStep = Math.min(bfsStep + 1, bfsSteps.length - 1);
+  const container = document.getElementById('bfsViz');
+  let html = '';
+  for (let i = 0; i <= bfsStep; i++) {
+    html += `<div class="bfs-row">
+      <span style="color:var(--comment); width:80px;">${i === 0 ? '初始队列' : 'Step ' + i}</span>
+      <span style="color:var(--text);">${bfsSteps[i]}</span>
+    </div>`;
+  }
+  container.innerHTML = html;
+}
+
+function resetBFS() {
+  bfsStep = 0;
+  document.getElementById('bfsViz').innerHTML = `
+    <div class="bfs-row">
+      <span style="color:var(--comment); width:80px;">初始队列</span>
+      <span class="bfs-node root">h</span>
+      <span class="bfs-node root">s</span>
+      <span class="bfs-label">fail → 根(0)</span>
+    </div>`;
+}
+</script>
+
+</body>
+</html>

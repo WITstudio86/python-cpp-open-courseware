@@ -1,0 +1,342 @@
+/**
+ * 第45课：综合模拟赛（一）— 数据结构+图论综合
+ * CSP-S 模拟赛 AC 代码
+ *
+ * 包含以下题目：
+ *   T1：树状数组（差分）区间修改 + 单点查询
+ *   T2：分层图最短路（Dijkstra + 堆优化）
+ *   T3：Kruskal 最小生成树 + 必须边/禁止边条件判断
+ *   T4：拓扑排序 + DAG 上的 DP（最长路径 + 方案数）
+ *
+ * 所有代码均为可 AC 的完整实现
+ */
+
+#include <bits/stdc++.h>
+using namespace std;
+using ll = long long;
+
+// ============================================================
+// T1：树状数组（差分）— 区间修改 + 单点查询
+// 题目：给定 n 和 m 个操作，操作 1：区间加 x，操作 2：查询 a[p]
+// 数据范围：n, m ≤ 5×10⁵
+// 时间复杂度：O(m log n)
+// ============================================================
+namespace T1_FenwickRangeAddPointQuery {
+    const int MAXN = 500005;
+    int n, m;
+    ll c[MAXN];
+
+    int lowbit(int x) { return x & (-x); }
+
+    void add(int x, ll v) {
+        while (x <= n) {
+            c[x] += v;
+            x += lowbit(x);
+        }
+    }
+
+    ll sum(int x) {
+        ll res = 0;
+        while (x > 0) {
+            res += c[x];
+            x -= lowbit(x);
+        }
+        return res;
+    }
+
+    void range_add(int l, int r, ll v) {
+        add(l, v);
+        add(r + 1, -v);
+    }
+
+    void solve() {
+        cin >> n >> m;
+        while (m--) {
+            int op; cin >> op;
+            if (op == 1) {
+                int l, r, x; cin >> l >> r >> x;
+                range_add(l, r, x);
+            } else {
+                int p; cin >> p;
+                cout << sum(p) << '\n';
+            }
+        }
+    }
+}
+
+// ============================================================
+// T2：分层图最短路（Dijkstra + 堆优化）
+// 题目：n 节点 m 边无向图，每条边有费用 w 和类型 c
+//       c=0 普通路，c=1 高速公路。求从 1 到 n，
+//       经过 ≤ k 条高速的最短路径。k ≤ 10。
+// 解法：将状态 (node, used_hw) 作为 Dijkstra 的节点
+//       即 graph 分层：第 j 层表示已走 j 条高速
+// 时间复杂度：O((n·k + m·k) log(n·k)) ≈ O((n+m) log n)
+// ============================================================
+namespace T2_LayeredGraphShortestPath {
+    const int MAXN = 100005;
+    const int MAXK = 11;
+    const ll INF = 1e18;
+
+    struct Edge { int to, w, c; };
+    vector<Edge> g[MAXN];
+    ll dist[MAXN][MAXK];
+    bool vis[MAXN][MAXK];
+
+    // 小根堆：按照距离排序
+    struct State {
+        ll d; int u, hw;
+        bool operator>(const State& o) const { return d > o.d; }
+    };
+
+    void solve() {
+        int n, m, k;
+        cin >> n >> m >> k;
+
+        for (int i = 0; i < m; i++) {
+            int u, v, w, c;
+            cin >> u >> v >> w >> c;
+            // 无向图
+            g[u].push_back({v, w, c});
+            g[v].push_back({u, w, c});
+        }
+
+        // 初始化距离数组
+        for (int i = 1; i <= n; i++)
+            for (int j = 0; j <= k; j++)
+                dist[i][j] = INF;
+
+        priority_queue<State, vector<State>, greater<State>> pq;
+        dist[1][0] = 0;
+        pq.push({0, 1, 0});
+
+        while (!pq.empty()) {
+            auto [d, u, hw] = pq.top(); pq.pop();
+            if (vis[u][hw]) continue;
+            vis[u][hw] = true;
+
+            for (auto [v, w, c] : g[u]) {
+                if (c == 0) {
+                    // 普通路：在同一层内走
+                    if (dist[v][hw] > d + w) {
+                        dist[v][hw] = d + w;
+                        pq.push({dist[v][hw], v, hw});
+                    }
+                } else {
+                    // 高速公路：进入下一层（高速计数 +1）
+                    if (hw + 1 <= k && dist[v][hw + 1] > d + w) {
+                        dist[v][hw + 1] = d + w;
+                        pq.push({dist[v][hw + 1], v, hw + 1});
+                    }
+                }
+            }
+        }
+
+        ll ans = INF;
+        for (int j = 0; j <= k; j++)
+            ans = min(ans, dist[n][j]);
+
+        cout << (ans == INF ? -1 : ans) << '\n';
+    }
+}
+
+// ============================================================
+// T3：Kruskal 最小生成树 + 必须边/禁止边条件
+// 题目：n 节点 m 条边，q 对必须直连，p 对禁止直连
+//      求满足条件的最小生成树总费用，不可行输出 -1
+// 解法：先处理必须边（用 set 找最小费用），再用 Kruskal
+//      处理剩余边时跳过禁止边
+// 时间复杂度：O(m log m)，空间 O(n + m)
+// ============================================================
+namespace T3_KruskalWithConditions {
+    const int MAXN = 100005;
+
+    struct Edge {
+        int u, v, w;
+        bool operator<(const Edge& o) const { return w < o.w; }
+    };
+
+    int fa[MAXN];
+    int find(int x) { return fa[x] == x ? x : fa[x] = find(fa[x]); }
+
+    void solve() {
+        int n, m, q, p;
+        cin >> n >> m >> q >> p;
+
+        vector<Edge> edges(m);
+        for (int i = 0; i < m; i++) {
+            cin >> edges[i].u >> edges[i].v >> edges[i].w;
+        }
+
+        // 读取必须边和禁止边
+        vector<pair<int, int>> required(q);
+        set<pair<int, int>> forbidden;
+
+        for (int i = 0; i < q; i++) {
+            int a, b; cin >> a >> b;
+            required[i] = {a, b};
+        }
+        for (int i = 0; i < p; i++) {
+            int c, d; cin >> c >> d;
+            forbidden.insert({min(c, d), max(c, d)});
+        }
+
+        // 初始化并查集（从 1 开始编号）
+        iota(fa, fa + n + 1, 0);
+
+        ll ans = 0;
+        int cnt = 0;
+        bool ok = true;
+
+        // 第一步：加入必须边（找最小费用）
+        // 遍历边集找到每对必须边的权值
+        for (auto [a, b] : required) {
+            // 找 a-b 之间的最小费用边
+            ll min_w = LLONG_MAX;
+            for (auto& e : edges) {
+                if ((e.u == a && e.v == b) || (e.u == b && e.v == a)) {
+                    min_w = min(min_w, (ll)e.w);
+                }
+            }
+            if (min_w == LLONG_MAX) {
+                ok = false; break;  // 必须边不存在
+            }
+            int fu = find(a), fv = find(b);
+            if (fu != fv) {
+                fa[fu] = fv;
+                ans += min_w;
+                cnt++;
+            }
+            // 如果已连通（fu==fv），这条必须边产生环
+            // 按题意：必须边必须被选中，但产生环时直接输出 -1
+            else {
+                ok = false; break;
+            }
+        }
+
+        if (!ok) { cout << "-1\n"; return; }
+
+        // 第二步：Kruskal 处理剩余边
+        sort(edges.begin(), edges.end());
+        for (auto& e : edges) {
+            if (cnt == n - 1) break;
+
+            int a = e.u, b = e.v;
+            // 跳过禁止边
+            if (forbidden.count({min(a, b), max(a, b)})) continue;
+
+            int fu = find(a), fv = find(b);
+            if (fu != fv) {
+                fa[fu] = fv;
+                ans += e.w;
+                cnt++;
+            }
+        }
+
+        if (cnt < n - 1) cout << "-1\n";
+        else cout << ans << '\n';
+    }
+}
+
+// ============================================================
+// T4：拓扑排序 + DAG 上的 DP（最长路径 + 方案数）
+// 题目：n 个任务，每个任务耗时 t[i]，m 条先后依赖边 u→v
+//      求工程最早完成时间（最长路径）及关键路径方案数 mod 10⁹+7
+//      存在环则输出 -1
+// 解法：Kahn 拓扑排序判环，在拓扑序上 DP
+//      dp_time[v] = max(dp_time[v], dp_time[u] + t[v])
+//      dp_cnt[v] 统计所有达到 dp_time[v] 的路径
+// 时间复杂度：O(n + m)
+// ============================================================
+namespace T4_TopoSortDP {
+    const int MAXN = 100005;
+    const ll MOD = 1e9 + 7;
+
+    int n, m;
+    ll t[MAXN];              // 每个任务的耗时
+    vector<int> g[MAXN];     // 邻接表
+    int indeg[MAXN];         // 入度
+
+    ll dp_time[MAXN];        // 最早完成时间
+    ll dp_cnt[MAXN];         // 方案数
+
+    void solve() {
+        cin >> n >> m;
+        for (int i = 1; i <= n; i++) cin >> t[i];
+
+        for (int i = 0; i < m; i++) {
+            int u, v; cin >> u >> v;
+            g[u].push_back(v);
+            indeg[v]++;
+        }
+
+        // Kahn 拓扑排序
+        queue<int> q;
+        for (int i = 1; i <= n; i++) {
+            if (indeg[i] == 0) {
+                q.push(i);
+                dp_time[i] = t[i];    // 初始任务完成时间 = 自身耗时
+                dp_cnt[i] = 1;        // 到达该任务的方案数为 1
+            }
+        }
+
+        int visited = 0;
+        ll max_time = 0;
+
+        while (!q.empty()) {
+            int u = q.front(); q.pop();
+            visited++;
+
+            max_time = max(max_time, dp_time[u]);
+
+            for (int v : g[u]) {
+                // 更新最长路径
+                if (dp_time[v] < dp_time[u] + t[v]) {
+                    dp_time[v] = dp_time[u] + t[v];
+                    dp_cnt[v] = dp_cnt[u];
+                } else if (dp_time[v] == dp_time[u] + t[v]) {
+                    // 同等长度的路径，累加方案数
+                    dp_cnt[v] = (dp_cnt[v] + dp_cnt[u]) % MOD;
+                }
+
+                if (--indeg[v] == 0) {
+                    q.push(v);
+                }
+            }
+        }
+
+        // 判环
+        if (visited < n) {
+            cout << "-1\n";
+            return;
+        }
+
+        // 汇总所有终点的最长路径方案数
+        ll total_cnt = 0;
+        for (int i = 1; i <= n; i++) {
+            if (dp_time[i] == max_time) {
+                total_cnt = (total_cnt + dp_cnt[i]) % MOD;
+            }
+        }
+
+        cout << max_time << '\n';
+        cout << total_cnt << '\n';
+    }
+}
+
+// ============================================================
+// 主函数：根据需要调用各题
+// 每道题可独立运行（输入格式与题目描述一致）
+// ============================================================
+int main() {
+    ios::sync_with_stdio(false);
+    cin.tie(nullptr);
+
+    // 选择要运行的题目（取消注释即可）
+    // T1_FenwickRangeAddPointQuery::solve();   // T1：树状数组区间修改 + 单点查询
+    // T2_LayeredGraphShortestPath::solve();    // T2：分层图最短路
+    // T3_KruskalWithConditions::solve();       // T3：Kruskal + 必须边/禁止边
+    // T4_TopoSortDP::solve();                  // T4：拓扑排序 + DP
+
+    return 0;
+}

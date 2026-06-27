@@ -1,0 +1,278 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>第12课：逻辑大侦探——逻辑运算符</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            font-family: 'PingFang SC', 'Microsoft YaHei', sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            display: flex; justify-content: center; align-items: center;
+        }
+        .slides-container {
+            width: 90%; max-width: 900px; min-height: 550px;
+            background: white; border-radius: 25px; padding: 40px;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+            position: relative;
+        }
+        .slide { display: none; animation: fadeIn 0.5s; }
+        .slide.active { display: block; }
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
+        h1 { color: #5b3cc4; font-size: 2.2em; margin-bottom: 20px; }
+        h2 { color: #e8573a; font-size: 1.8em; margin-bottom: 15px; }
+        h3 { color: #2c7a4a; font-size: 1.4em; margin: 15px 0 10px; }
+        p, li { font-size: 1.15em; line-height: 1.8; color: #333; }
+        ul { padding-left: 30px; margin: 10px 0; }
+        .code-block {
+            background: #1e1e2e; color: #cdd6f4; padding: 20px;
+            border-radius: 12px; font-family: 'Courier New', monospace;
+            font-size: 0.95em; line-height: 1.6; overflow-x: auto;
+            margin: 15px 0; white-space: pre-wrap; word-break: break-all;
+        }
+        .code-block .keyword { color: #cba6f7; }
+        .code-block .string { color: #a6e3a1; }
+        .code-block .comment { color: #6c7086; font-style: italic; }
+        .code-block .number { color: #fab387; }
+        .nav-buttons {
+            position: absolute; bottom: 20px; left: 40px; right: 40px;
+            display: flex; justify-content: space-between;
+        }
+        .nav-btn {
+            background: linear-gradient(135deg, #667eea, #764ba2);
+            color: white; border: none; padding: 12px 30px;
+            border-radius: 30px; font-size: 1.1em; cursor: pointer;
+            transition: transform 0.2s, box-shadow 0.2s;
+            font-family: 'PingFang SC', 'Microsoft YaHei', sans-serif;
+        }
+        .nav-btn:hover { transform: scale(1.05); box-shadow: 0 5px 20px rgba(102,126,234,0.4); }
+        .nav-btn:disabled { opacity: 0.4; cursor: default; transform: none; }
+        .page-indicator { font-size: 1.1em; color: #764ba2; align-self: center; }
+        .emoji-big { font-size: 3em; text-align: center; display: block; margin: 15px 0; }
+        .badge { display: inline-block; background: #fdf6e3; color: #b58900; padding: 5px 15px; border-radius: 20px; font-size: 0.9em; margin: 3px; }
+        table { width: 100%; border-collapse: collapse; margin: 15px 0; }
+        th, td { border: 2px solid #ddd; padding: 10px; text-align: left; }
+        th { background: #667eea; color: white; }
+        .highlight-box { background: #fff3cd; border-left: 5px solid #ffc107; padding: 15px; border-radius: 8px; margin: 15px 0; }
+        .tip-box { background: #d4edda; border-left: 5px solid #28a745; padding: 15px; border-radius: 8px; margin: 15px 0; }
+        .truth-table td { text-align: center; font-family: 'Courier New', monospace; font-size: 1.05em; }
+        .truth-table .true { color: #28a745; font-weight: bold; }
+        .truth-table .false { color: #dc3545; font-weight: bold; }
+        .cols { display: flex; gap: 20px; }
+        .col { flex: 1; }
+        @media (max-width: 600px) {
+            .slides-container { padding: 25px; }
+            h1 { font-size: 1.5em; }
+            .code-block { font-size: 0.75em; }
+            .cols { flex-direction: column; }
+        }
+    </style>
+</head>
+<body>
+    <div class="slides-container">
+        <!-- Slide 1: Title Page -->
+        <div class="slide active" id="slide1">
+            <span class="emoji-big">🔎</span>
+            <h1>第12课：逻辑大侦探——逻辑运算符</h1>
+            <p style="text-align:center; color:#666;">第二单元：运算小当家 | 课时：45分钟</p>
+            <p style="text-align:center; margin-top:20px; font-size:1.3em;">🔎 破译逻辑密码</p>
+            <div style="text-align:center; margin-top:30px;">
+                <span class="badge">&& 逻辑与</span>
+                <span class="badge">|| 逻辑或</span>
+                <span class="badge">! 逻辑非</span>
+                <span class="badge">真值表</span>
+            </div>
+        </div>
+
+        <!-- Slide 2: Learning Objectives -->
+        <div class="slide" id="slide2">
+            <h2>🎯 学习目标</h2>
+            <ul>
+                <li>掌握<strong>三种逻辑运算符</strong>：与（&&）、或（||）、非（!）</li>
+                <li>理解<strong>真值表</strong>并能判断逻辑表达式的结果</li>
+                <li>能够用逻辑运算符<strong>组合多个条件</strong>做复杂判断</li>
+            </ul>
+            <div class="tip-box" style="margin-top:25px;">
+                <strong>💡 先想一想：</strong><br>
+                你生活中做过"既要...又要..."或者"要么...要么..."的选择吗？比如：周末到了<strong>而且</strong>作业写完了<strong>并且</strong>天气好，才能出去玩。这就是逻辑！
+            </div>
+            <div class="highlight-box" style="margin-top:15px;">
+                <strong>🔗 和上节课的联系：</strong><br>
+                比较运算符 + 逻辑运算符 = <strong>黄金搭档</strong>！比如：<code>x >= 10 && x <= 20</code> 判断x是否在区间内。
+            </div>
+        </div>
+
+        <!-- Slide 3: Core Knowledge - Truth Tables -->
+        <div class="slide" id="slide3">
+            <h2>📖 核心知识：三位逻辑大侦探</h2>
+
+            <h3>🔍 侦探1号：&&（与）——"两边都对才行"</h3>
+            <p>就像进游乐园：<strong>既要</strong>买票 <strong>又要</strong>身高够 → 两个都满足才能进！</p>
+            <table class="truth-table">
+                <tr><th>条件A</th><th>条件B</th><th>A && B</th><th>解读</th></tr>
+                <tr><td>true</td><td>true</td><td class="true">true ✓</td><td>两个都对</td></tr>
+                <tr><td>true</td><td>false</td><td class="false">false ✗</td><td>一对 一错</td></tr>
+                <tr><td>false</td><td>true</td><td class="false">false ✗</td><td>一错 一对</td></tr>
+                <tr><td>false</td><td>false</td><td class="false">false ✗</td><td>两个都错</td></tr>
+            </table>
+            <p><strong>口诀：全真才真，一假全假！</strong></p>
+
+            <h3>🔍 侦探2号：||（或）——"一个对就行"</h3>
+            <p>周末活动：<strong>可以</strong>看电视 <strong>或者</strong>出去玩 → 有一个就行！</p>
+            <table class="truth-table">
+                <tr><th>条件A</th><th>条件B</th><th>A || B</th><th>解读</th></tr>
+                <tr><td>true</td><td>true</td><td class="true">true ✓</td><td>两个都对</td></tr>
+                <tr><td>true</td><td>false</td><td class="true">true ✓</td><td>一对 一错</td></tr>
+                <tr><td>false</td><td>true</td><td class="true">true ✓</td><td>一错 一对</td></tr>
+                <tr><td>false</td><td>false</td><td class="false">false ✗</td><td>两个都错</td></tr>
+            </table>
+            <p><strong>口诀：一真全真，全假才假！</strong></p>
+
+            <h3>🔍 侦探3号：!（非）——"说反话"</h3>
+            <table class="truth-table">
+                <tr><th>条件A</th><th>!A</th><th>解读</th></tr>
+                <tr><td>true</td><td class="false">false</td><td>真的反义词是假</td></tr>
+                <tr><td>false</td><td class="true">true</td><td>假的反义词是真</td></tr>
+            </table>
+            <p><strong>口诀：真变假，假变真！</strong></p>
+        </div>
+
+        <!-- Slide 4: Example Code -->
+        <div class="slide" id="slide4">
+            <h2>💻 示例代码</h2>
+
+            <h3>🕵️ 逻辑大侦探综合案例</h3>
+            <div class="code-block">// 示例1：&& —— 游乐园入园检查
+bool hasTicket = true;
+int height = 130;
+if (hasTicket && height >= 120) {
+    cout &lt;&lt; "欢迎进入游乐园！";
+}
+
+// 示例2：|| —— 周末活动选择
+bool watchTV = true, playOutside = false;
+if (watchTV || playOutside) {
+    cout &lt;&lt; "周末有事做！";
+}
+
+// 示例3：! —— 说反话
+bool isRaining = false;
+if (!isRaining) {
+    cout &lt;&lt; "没下雨，可以出去！";
+}</div>
+
+            <h3>🌟 黄金搭档：比较 + 逻辑</h3>
+            <div class="code-block">int score;
+cin &gt;&gt; score;
+
+// 判断成绩是否在良好区间 [80, 90)
+if (score >= 80 && score < 90) {
+    cout &lt;&lt; "成绩良好！";
+}
+
+// 判断是否在区间外
+if (score < 60 || score > 100) {
+    cout &lt;&lt; "分数异常！";
+}</div>
+
+            <div class="highlight-box">
+                <strong>💡 短路求值（聪明的大侦探）：</strong><br>
+                <code>false && ??? </code> → 左边是false，右边不用看，结果肯定是false！<br>
+                <code>true || ??? </code> → 左边是true，右边不用看，结果肯定是true！
+            </div>
+        </div>
+
+        <!-- Slide 5: Practice & Challenge -->
+        <div class="slide" id="slide5">
+            <h2>🎮 趣味练习 & 挑战任务</h2>
+
+            <h3>练习1：逻辑侦探考试 📝</h3>
+            <p>判断下列表达式的真假：</p>
+            <table>
+                <tr><td><code>true && false</code></td><td>→ <strong>false</strong></td><td><code>true || false</code></td><td>→ <strong>true</strong></td></tr>
+                <tr><td><code>!true</code></td><td>→ <strong>false</strong></td><td><code>(5>3) && (2<1)</code></td><td>→ <strong>false</strong></td></tr>
+            </table>
+
+            <h3>练习2：游乐园入园条件 🎢</h3>
+            <p>小明要进入游乐园需要：①身高>=120cm ②年满8岁。写出C++判断表达式。</p>
+            <div class="code-block">if (height >= 120 && age >= 8) {
+    cout &lt;&lt; "可以进入！";
+}</div>
+
+            <h3>练习3：区间判断 📏</h3>
+            <p>判断一个数是否在10到20之间（包含边界）。</p>
+            <div class="code-block">if (num >= 10 && num <= 20) {
+    cout &lt;&lt; "在区间内！";
+}</div>
+
+            <h3>🏆 挑战任务：闰年判断器 📅</h3>
+            <p>输入一个年份，判断是否为<strong>闰年</strong>。</p>
+            <p><strong>规则：</strong>（能被4整除 <strong>且</strong> 不能被100整除）<strong>或</strong>（能被400整除）</p>
+            <div class="code-block">bool isLeap = (year%4==0 && year%100!=0) || (year%400==0);</div>
+            <div class="tip-box">
+                <strong>💡 测试数据：</strong>2000→闰年 | 2004→闰年 | 1900→不是 | 2024→闰年 | 2023→不是
+            </div>
+        </div>
+
+        <!-- Slide 6: Summary -->
+        <div class="slide" id="slide6">
+            <h2>📝 本课小结</h2>
+            <table>
+                <tr><th>运算符</th><th>名称</th><th>含义</th><th>口诀</th></tr>
+                <tr><td><code>&&</code></td><td>逻辑与</td><td>两个条件都满足才为真</td><td>全真才真，一假全假</td></tr>
+                <tr><td><code>||</code></td><td>逻辑或</td><td>满足一个条件就为真</td><td>一真全真，全假才假</td></tr>
+                <tr><td><code>!</code></td><td>逻辑非</td><td>把真变假，把假变真</td><td>说反话，真假颠倒</td></tr>
+            </table>
+
+            <h3 style="margin-top:15px;">优先级（从高到低）</h3>
+            <p style="text-align:center; font-size:1.2em;">
+                <code>!</code> → 算术运算符 → 比较运算符 → <code>&&</code> → <code>||</code>
+            </p>
+
+            <div class="highlight-box" style="margin-top:15px;">
+                <strong>🔑 记住口诀：</strong><br>
+                与（&&）是同时都要有，或（||）是至少有一个，<br>
+                非（!）是说反话颠倒走。<br>
+                比较逻辑是搭档，复杂判断不用愁！
+            </div>
+            <p style="text-align:center; margin-top:20px; font-size:1.3em;">🚦 下一课预告：人生的十字路口——if语句</p>
+        </div>
+
+        <!-- Navigation -->
+        <div class="nav-buttons">
+            <button class="nav-btn" onclick="prevSlide()">◀ 上一页</button>
+            <span class="page-indicator" id="pageIndicator">1 / 6</span>
+            <button class="nav-btn" onclick="nextSlide()">下一页 ▶</button>
+        </div>
+    </div>
+
+    <script>
+        let currentSlide = 0;
+        const slides = document.querySelectorAll('.slide');
+        const totalSlides = slides.length;
+        const indicator = document.getElementById('pageIndicator');
+
+        function showSlide(n) {
+            slides[currentSlide].classList.remove('active');
+            currentSlide = (n + totalSlides) % totalSlides;
+            slides[currentSlide].classList.add('active');
+            indicator.textContent = (currentSlide + 1) + ' / ' + totalSlides;
+            document.querySelectorAll('.nav-btn')[0].disabled = currentSlide === 0;
+            document.querySelectorAll('.nav-btn')[1].disabled = currentSlide === totalSlides - 1;
+        }
+        function nextSlide() { showSlide(currentSlide + 1); }
+        function prevSlide() { showSlide(currentSlide - 1); }
+
+        // Keyboard navigation
+        document.addEventListener('keydown', function(e) {
+            if (e.key === 'ArrowRight' || e.key === ' ') { e.preventDefault(); nextSlide(); }
+            else if (e.key === 'ArrowLeft') { e.preventDefault(); prevSlide(); }
+        });
+
+        // Init
+        indicator.textContent = (currentSlide + 1) + ' / ' + totalSlides;
+    </script>
+</body>
+</html>

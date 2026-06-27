@@ -1,0 +1,744 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>第26课 - LCS（最长公共子序列）与编辑距离</title>
+<style>
+:root {
+  --bg-deep: #1a1a2e;
+  --bg-card: #16213e;
+  --text: #e0e0e0;
+  --accent: #00d4ff;
+  --accent2: #7c3aed;
+  --code-keyword: #569cd6;
+  --code-function: #dcdcaa;
+  --code-number: #ce9178;
+  --code-string: #6a9955;
+  --code-comment: #6a9955;
+  --code-preprocessor: #e6a8d7;
+  --glass-bg: rgba(22, 33, 62, 0.65);
+  --glass-border: rgba(255,255,255,0.08);
+}
+
+* { margin: 0; padding: 0; box-sizing: border-box; }
+
+body {
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "PingFang SC", "Microsoft YaHei", sans-serif;
+  background: var(--bg-deep);
+  background-image:
+    radial-gradient(ellipse at 20% 50%, rgba(0,212,255,0.06) 0%, transparent 50%),
+    radial-gradient(ellipse at 80% 50%, rgba(124,58,237,0.06) 0%, transparent 50%);
+  color: var(--text);
+  height: 100vh;
+  overflow: hidden;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  user-select: none;
+  -webkit-user-select: none;
+}
+
+/* Slide Container */
+.slides-container {
+  width: 100%;
+  max-width: 1000px;
+  height: 85vh;
+  max-height: 700px;
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0 40px;
+}
+
+/* Each Slide */
+.slide {
+  position: absolute;
+  width: 100%;
+  max-width: 960px;
+  min-height: 480px;
+  height: auto;
+  background: var(--glass-bg);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  border: 1px solid var(--glass-border);
+  border-radius: 20px;
+  padding: 48px 56px 44px;
+  opacity: 0;
+  transform: translateX(60px);
+  transition: opacity 0.45s ease, transform 0.45s ease;
+  pointer-events: none;
+  overflow-y: auto;
+  box-shadow:
+    0 8px 32px rgba(0,0,0,0.35),
+    inset 0 1px 0 rgba(255,255,255,0.04);
+}
+
+.slide.active {
+  opacity: 1;
+  transform: translateX(0);
+  pointer-events: auto;
+}
+
+.slide.exit-left {
+  opacity: 0;
+  transform: translateX(-60px);
+}
+
+/* Gradient accent bar at top */
+.slide::before {
+  content: '';
+  position: absolute;
+  top: 0; left: 0; right: 0;
+  height: 4px;
+  border-radius: 20px 20px 0 0;
+  background: linear-gradient(90deg, var(--accent), var(--accent2));
+}
+
+/* Headings */
+.slide h1 {
+  font-size: 2.2rem;
+  font-weight: 700;
+  background: linear-gradient(135deg, var(--accent), #a78bfa);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+  margin-bottom: 12px;
+  letter-spacing: 0.02em;
+}
+
+.slide h2 {
+  font-size: 1.55rem;
+  font-weight: 600;
+  color: var(--accent);
+  margin: 24px 0 12px;
+  padding-bottom: 6px;
+  border-bottom: 1px solid rgba(0,212,255,0.25);
+}
+
+.slide h3 {
+  font-size: 1.2rem;
+  font-weight: 600;
+  color: #a78bfa;
+  margin: 18px 0 8px;
+}
+
+.slide p, .slide li {
+  font-size: 1rem;
+  line-height: 1.75;
+  color: #ccc;
+}
+
+.slide ul, .slide ol {
+  padding-left: 24px;
+}
+
+.slide li {
+  margin-bottom: 4px;
+}
+
+/* Code Blocks */
+.slide pre {
+  background: rgba(0,0,0,0.35);
+  border: 1px solid rgba(255,255,255,0.08);
+  border-radius: 10px;
+  padding: 16px 20px;
+  overflow-x: auto;
+  font-size: 0.88rem;
+  line-height: 1.65;
+  margin: 12px 0;
+  font-family: "JetBrains Mono", "Fira Code", "Cascadia Code", "Source Code Pro", "Menlo", monospace;
+  position: relative;
+}
+
+.slide pre::after {
+  content: '';
+  position: absolute;
+  top: 0; left: 20px; right: 20px;
+  height: 1px;
+  background: linear-gradient(90deg, transparent, rgba(0,212,255,0.15), transparent);
+}
+
+.slide code {
+  font-family: "JetBrains Mono", "Fira Code", "Cascadia Code", "Source Code Pro", "Menlo", monospace;
+  font-size: 0.88rem;
+}
+
+/* Syntax Highlighting */
+.k  { color: #569cd6; } /* keywords */
+.f  { color: #dcdcaa; } /* function names */
+.n  { color: #ce9178; } /* numbers */
+.s  { color: #6a9955; } /* strings */
+.c  { color: #6a9955; } /* comments */
+.p  { color: #e6a8d7; } /* preprocessor */
+.op { color: #d4d4d4; } /* operators */
+.t  { color: #4ec9b0; } /* types */
+
+/* Inline code */
+p code, li code {
+  background: rgba(0,0,0,0.3);
+  padding: 2px 6px;
+  border-radius: 4px;
+  font-size: 0.85rem;
+  color: #dcdcaa;
+}
+
+/* Highlight box */
+.highlight-box {
+  background: linear-gradient(135deg, rgba(0,212,255,0.08), rgba(124,58,237,0.08));
+  border: 1px solid rgba(0,212,255,0.2);
+  border-radius: 12px;
+  padding: 16px 20px;
+  margin: 12px 0;
+}
+
+.highlight-box p {
+  margin: 4px 0;
+  color: #d0d0f0;
+}
+
+/* Table */
+.slide table {
+  width: 100%;
+  border-collapse: collapse;
+  margin: 16px 0;
+  font-size: 0.9rem;
+}
+
+.slide th {
+  background: rgba(0,212,255,0.12);
+  color: var(--accent);
+  padding: 10px 14px;
+  text-align: left;
+  font-weight: 600;
+  border-bottom: 1px solid rgba(0,212,255,0.2);
+}
+
+.slide td {
+  padding: 10px 14px;
+  border-bottom: 1px solid rgba(255,255,255,0.06);
+  color: #ccc;
+  line-height: 1.6;
+}
+
+.slide td:first-child {
+  font-weight: 600;
+  color: #a78bfa;
+  white-space: nowrap;
+}
+
+/* Title slide special */
+.slide.title-slide {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  min-height: 500px;
+}
+
+.slide.title-slide h1 {
+  font-size: 2.8rem;
+  margin-bottom: 20px;
+}
+
+.slide.title-slide .subtitle {
+  font-size: 1.6rem;
+  color: #aaa;
+  margin-bottom: 16px;
+  font-weight: 300;
+}
+
+.slide.title-slide .lesson-num {
+  font-size: 1rem;
+  color: var(--accent);
+  letter-spacing: 0.15em;
+  margin-bottom: 8px;
+  text-transform: uppercase;
+}
+
+.slide.title-slide .meta {
+  font-size: 0.95rem;
+  color: #777;
+  margin-top: 32px;
+  line-height: 1.6;
+}
+
+/* Tag */
+.tag {
+  display: inline-block;
+  background: rgba(0,212,255,0.1);
+  color: var(--accent);
+  border: 1px solid rgba(0,212,255,0.25);
+  border-radius: 20px;
+  padding: 2px 12px;
+  font-size: 0.8rem;
+  margin: 2px 4px;
+}
+
+/* Navigation */
+.nav {
+  position: fixed;
+  bottom: 30px;
+  left: 50%;
+  transform: translateX(-50%);
+  display: flex;
+  align-items: center;
+  gap: 18px;
+  z-index: 10;
+}
+
+.nav-btn {
+  width: 44px;
+  height: 44px;
+  border-radius: 50%;
+  border: 1px solid rgba(255,255,255,0.15);
+  background: var(--glass-bg);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+  color: var(--text);
+  font-size: 1.2rem;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.25s ease;
+}
+
+.nav-btn:hover {
+  border-color: var(--accent);
+  background: rgba(0,212,255,0.12);
+  color: var(--accent);
+}
+
+.nav-btn:active {
+  transform: scale(0.92);
+}
+
+/* Dots */
+.dots {
+  display: flex;
+  gap: 8px;
+}
+
+.dot {
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  background: rgba(255,255,255,0.2);
+  cursor: pointer;
+  transition: all 0.3s ease;
+}
+
+.dot.active {
+  background: var(--accent);
+  box-shadow: 0 0 8px rgba(0,212,255,0.5);
+  transform: scale(1.2);
+}
+
+.dot:hover {
+  background: rgba(0,212,255,0.5);
+}
+
+/* Page indicator */
+.page-indicator {
+  position: fixed;
+  top: 24px;
+  right: 40px;
+  font-size: 0.85rem;
+  color: #666;
+  font-family: "JetBrains Mono", monospace;
+}
+
+/* Scrollbar */
+.slide::-webkit-scrollbar { width: 4px; }
+.slide::-webkit-scrollbar-track { background: transparent; }
+.slide::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.1); border-radius: 4px; }
+.slide::-webkit-scrollbar-thumb:hover { background: rgba(255,255,255,0.2); }
+
+/* Responsive */
+@media (max-width: 768px) {
+  .slides-container { padding: 0 16px; height: 80vh; }
+  .slide { padding: 32px 24px 28px; border-radius: 16px; min-height: auto; }
+  .slide h1 { font-size: 1.6rem; }
+  .slide h2 { font-size: 1.25rem; }
+  .slide p, .slide li { font-size: 0.9rem; }
+  .slide pre { font-size: 0.75rem; padding: 12px 14px; }
+  .slide.title-slide h1 { font-size: 2rem; }
+  .slide.title-slide .subtitle { font-size: 1.2rem; }
+  .nav { bottom: 16px; gap: 12px; }
+  .nav-btn { width: 38px; height: 38px; font-size: 1rem; }
+  .slide table { font-size: 0.78rem; }
+  .slide td, .slide th { padding: 6px 8px; }
+  .page-indicator { right: 16px; top: 12px; }
+}
+</style>
+</head>
+<body>
+
+<main class="slides-container">
+
+  <!-- ==================== SLIDE 1: 标题页 ==================== -->
+  <section class="slide title-slide active" data-index="0">
+    <div class="lesson-num">第 26 课</div>
+    <h1>LCS（最长公共子序列）与编辑距离</h1>
+    <div class="subtitle" style="color:#a78bfa;">字符串 DP 经典问题</div>
+    <div style="display:flex;gap:10px;flex-wrap:wrap;justify-content:center;margin-top:12px;">
+      <span class="tag">滚动数组优化</span>
+      <span class="tag">序列比对</span>
+      <span class="tag">区间 DP 拓展</span>
+    </div>
+    <div class="meta">
+      适用于 CSP-S / NOIP 提高组<br>
+      算法竞赛进阶 · 动态规划专题
+    </div>
+  </section>
+
+  <!-- ==================== SLIDE 2: LCS问题定义 ==================== -->
+  <section class="slide" data-index="1">
+    <h1>LCS 问题定义</h1>
+
+    <p style="margin-bottom:8px;"><strong>LCS</strong>：Longest Common Subsequence，<strong style="color:#00d4ff;">最长公共子序列</strong></p>
+
+    <div class="highlight-box" style="margin-top:16px;">
+      <p><strong>子序列</strong>：不要求连续，但要求保持原序列中的<strong style="color:#a78bfa;">相对顺序</strong>。</p>
+      <p>对于一个长度为 <span class="n">n</span> 的序列，其子序列共有 <span class="n">2ⁿ</span> 个。</p>
+    </div>
+
+    <h3>示例</h3>
+    <pre><code><span class="c">// 两个字符串</span>
+s1 = <span class="s">"ABCBDAB"</span>
+s2 = <span class="s">"BDCABA"</span>
+
+<span class="c">// LCS = "BCBA" 或 "BDAB"，长度 = 4</span>
+<span class="c">//   B   C   B   A   （非连续出现）</span></code></pre>
+
+    <h3>子序列 vs 子串</h3>
+    <table>
+      <tr><th></th><th>要求连续？</th><th>保持顺序？</th><th>示例（s="abc"）</th></tr>
+      <tr><td>子序列</td><td>否</td><td>是</td><td>"a", "ac", "b", "abc" ...</td></tr>
+      <tr><td>子串</td><td>是</td><td>是</td><td>"a", "ab", "abc", "bc" ...</td></tr>
+    </table>
+
+    <h3>实际应用</h3>
+    <p>LCS 是许多字符串问题的核心基础：</p>
+    <ul>
+      <li><strong>diff 工具</strong>：git diff、文件差异对比</li>
+      <li><strong>版本控制</strong>：计算两个版本的共同部分</li>
+      <li><strong>DNA 序列比对</strong>：生物信息学中的核心算法</li>
+      <li><strong>拼写检查</strong>：与编辑距离结合使用</li>
+    </ul>
+  </section>
+
+  <!-- ==================== SLIDE 3: LCS DP推导 ==================== -->
+  <section class="slide" data-index="2">
+    <h1>LCS 动态规划推导</h1>
+
+    <h3>状态定义</h3>
+    <p><code>dp[i][j]</code> = <strong>s1 前 i 个字符</strong>与 <strong>s2 前 j 个字符</strong>的 LCS 长度</p>
+
+    <h3>转移方程</h3>
+    <div class="highlight-box">
+      <p>若 <code>s1[i-1] == s2[j-1]</code>：<code>dp[i][j] = dp[i-1][j-1] + <span class="n">1</span></code></p>
+      <p>否则：<code>dp[i][j] = max(dp[i-1][j], dp[i][j-1])</code></p>
+    </div>
+
+    <h3>代码实现 — O(n×m) 二维 DP</h3>
+    <pre><code><span class="k">int</span> <span class="f">lcs</span>(<span class="k">string</span>&amp; s1, <span class="k">string</span>&amp; s2) {
+    <span class="k">int</span> n = s1.<span class="f">size</span>(), m = s2.<span class="f">size</span>();
+    vector&lt;vector&lt;<span class="k">int</span>&gt;&gt; dp(n + <span class="n">1</span>, vector&lt;<span class="k">int</span>&gt;(m + <span class="n">1</span>, <span class="n">0</span>));
+    <span class="k">for</span> (<span class="k">int</span> i = <span class="n">1</span>; i &lt;= n; i++)
+        <span class="k">for</span> (<span class="k">int</span> j = <span class="n">1</span>; j &lt;= m; j++)
+            <span class="k">if</span> (s1[i - <span class="n">1</span>] == s2[j - <span class="n">1</span>])
+                dp[i][j] = dp[i - <span class="n">1</span>][j - <span class="n">1</span>] + <span class="n">1</span>;
+            <span class="k">else</span>
+                dp[i][j] = <span class="f">max</span>(dp[i - <span class="n">1</span>][j], dp[i][j - <span class="n">1</span>]);
+    <span class="k">return</span> dp[n][m];
+}</code></pre>
+
+    <table style="margin-top:12px;">
+      <tr><td>初始化</td><td><code>dp[0][j] = dp[i][0] = 0</code>（空串 LCS 为 0）</td></tr>
+      <tr><td>答案</td><td><code>dp[n][m]</code>（右下角）</td></tr>
+      <tr><td>时间复杂度</td><td>O(n × m)</td></tr>
+      <tr><td>空间复杂度</td><td>O(n × m) → 可优化</td></tr>
+    </table>
+  </section>
+
+  <!-- ==================== SLIDE 4: 空间优化原理 ==================== -->
+  <section class="slide" data-index="3">
+    <h1>空间优化原理</h1>
+
+    <h3>依赖关系分析</h3>
+    <div class="highlight-box">
+      <p><code>dp[i][j]</code> 只依赖三个位置：</p>
+      <p>&nbsp;&nbsp;<strong style="color:#00d4ff;">上方</strong> <code>dp[i-1][j]</code> · <strong style="color:#00d4ff;">左侧</strong> <code>dp[i][j-1]</code> · <strong style="color:#a78bfa;">左上角</strong> <code>dp[i-1][j-1]</code></p>
+      <p>因此只需要保留<strong style="color:#00d4ff;">当前行和上一行</strong>即可计算！</p>
+    </div>
+
+    <h3>方案一：两行交替法</h3>
+    <pre><code><span class="c">// dp[2][m+1]，用 cur = i % 2 交替</span>
+<span class="k">int</span> dp[<span class="n">2</span>][MAXM];
+<span class="k">for</span> (<span class="k">int</span> i = <span class="n">1</span>; i &lt;= n; i++) {
+    <span class="k">int</span> cur = i &amp; <span class="n">1</span>, pre = cur ^ <span class="n">1</span>;
+    <span class="k">for</span> (<span class="k">int</span> j = <span class="n">1</span>; j &lt;= m; j++)
+        <span class="k">if</span> (s1[i-<span class="n">1</span>] == s2[j-<span class="n">1</span>])
+            dp[cur][j] = dp[pre][j-<span class="n">1</span>] + <span class="n">1</span>;
+        <span class="k">else</span>
+            dp[cur][j] = <span class="f">max</span>(dp[pre][j], dp[cur][j-<span class="n">1</span>]);
+}</code></pre>
+
+    <h3>方案二：一维数组 + prev 变量（更省空间）</h3>
+    <pre><code><span class="c">// 核心技巧：prev 保存左上角 dp[i-1][j-1]</span>
+<span class="k">int</span> dp[MAXM] = {<span class="n">0</span>};
+<span class="k">for</span> (<span class="k">int</span> i = <span class="n">1</span>; i &lt;= n; i++) {
+    <span class="k">int</span> prev = <span class="n">0</span>;                    <span class="c">// prev = dp[i-1][j-1]</span>
+    <span class="k">for</span> (<span class="k">int</span> j = <span class="n">1</span>; j &lt;= m; j++) {
+        <span class="k">int</span> temp = dp[j];            <span class="c">// 暂存当前 dp[j] (上一行的值)</span>
+        <span class="k">if</span> (s1[i-<span class="n">1</span>] == s2[j-<span class="n">1</span>])
+            dp[j] = prev + <span class="n">1</span>;         <span class="c">// dp[i-1][j-1] + 1</span>
+        <span class="k">else</span>
+            dp[j] = <span class="f">max</span>(dp[j], dp[j-<span class="n">1</span>]);
+        prev = temp;                <span class="c">// 更新左上角</span>
+    }
+}</code></pre>
+
+    <div class="highlight-box" style="margin-top:12px;">
+      <p>空间复杂度从 <strong style="color:#00d4ff;">O(nm)</strong> 降至 <strong style="color:#a78bfa;">O(min(n, m))</strong></p>
+      <p style="color:#e6a8d7;margin-top:8px;">注意：一维优化后无法直接回溯 LCS 路径，需要额外记录方向数组。</p>
+    </div>
+  </section>
+
+  <!-- ==================== SLIDE 5: 编辑距离DP ==================== -->
+  <section class="slide" data-index="4">
+    <h1>编辑距离（Levenshtein 距离）</h1>
+
+    <h3>问题描述</h3>
+    <p>将 <strong>word1</strong> 转换为 <strong>word2</strong> 所需的最少操作次数。</p>
+
+    <div class="highlight-box">
+      <p><strong>三种操作</strong>（代价均为 1）：</p>
+      <p>&nbsp;&nbsp;🔹 <strong style="color:#00d4ff;">插入</strong>一个字符 &nbsp;|&nbsp;
+         🔹 <strong style="color:#00d4ff;">删除</strong>一个字符 &nbsp;|&nbsp;
+         🔹 <strong style="color:#00d4ff;">替换</strong>一个字符</p>
+    </div>
+
+    <h3>DP 推导</h3>
+    <table>
+      <tr><td>状态</td><td><code>dp[i][j]</code>：word1 前 i 个 → word2 前 j 个的最小代价</td></tr>
+      <tr><td>匹配</td><td><code>dp[i][j] = dp[i-1][j-1]</code>（字符相同无需操作）</td></tr>
+      <tr><td>不匹配</td><td><code>dp[i][j] = 1 + min(删除, 插入, 替换)</code></td></tr>
+      <tr><td>初始化</td><td><code>dp[i][0] = i</code>（全删），<code>dp[0][j] = j</code>（全插）</td></tr>
+    </table>
+
+    <pre><code><span class="k">int</span> <span class="f">editDistance</span>(<span class="k">string</span>&amp; w1, <span class="k">string</span>&amp; w2) {
+    <span class="k">int</span> n = w1.<span class="f">size</span>(), m = w2.<span class="f">size</span>();
+    vector&lt;vector&lt;<span class="k">int</span>&gt;&gt; dp(n + <span class="n">1</span>, vector&lt;<span class="k">int</span>&gt;(m + <span class="n">1</span>));
+    <span class="k">for</span> (<span class="k">int</span> i = <span class="n">0</span>; i &lt;= n; i++) dp[i][<span class="n">0</span>] = i;
+    <span class="k">for</span> (<span class="k">int</span> j = <span class="n">0</span>; j &lt;= m; j++) dp[<span class="n">0</span>][j] = j;
+    <span class="k">for</span> (<span class="k">int</span> i = <span class="n">1</span>; i &lt;= n; i++)
+        <span class="k">for</span> (<span class="k">int</span> j = <span class="n">1</span>; j &lt;= m; j++)
+            <span class="k">if</span> (w1[i - <span class="n">1</span>] == w2[j - <span class="n">1</span>])
+                dp[i][j] = dp[i - <span class="n">1</span>][j - <span class="n">1</span>];
+            <span class="k">else</span>
+                dp[i][j] = <span class="n">1</span> + <span class="f">min</span>({dp[i-<span class="n">1</span>][j], dp[i][j-<span class="n">1</span>], dp[i-<span class="n">1</span>][j-<span class="n">1</span>]});
+    <span class="k">return</span> dp[n][m];
+}</code></pre>
+
+    <h3>应用场景</h3>
+    <p>
+      <span class="tag">拼写检查</span>
+      <span class="tag">模糊搜索</span>
+      <span class="tag">DNA 序列比对</span>
+      <span class="tag">NLP 文本相似度</span>
+      <span class="tag">语音识别纠错</span>
+    </p>
+    <p style="margin-top:10px;color:#aaa;">同样可滚动数组优化空间至 O(min(n,m))。</p>
+  </section>
+
+  <!-- ==================== SLIDE 6: 真题精练 ==================== -->
+  <section class="slide" data-index="5">
+    <h1>真题精练</h1>
+
+    <h2>真题 1：LCS 模板题</h2>
+    <div class="highlight-box">
+      <p><strong>题意</strong>：给定两个字符串，求最长公共子序列的长度。</p>
+      <p><strong>数据范围</strong>：<span class="n">n</span>, <span class="n">m</span> ≤ <span class="n">1000</span></p>
+      <p><strong>解法</strong>：O(nm) DP 模板直接套用，可用滚动数组优化空间。</p>
+    </div>
+
+    <h2>真题 2：编辑距离（LeetCode 72 等价题）</h2>
+    <div class="highlight-box">
+      <p><strong>示例</strong>：<span class="s">"horse"</span> → <span class="s">"ros"</span>，最少操作 <span class="n">3</span> 步：</p>
+      <p>horse → rorse（h→r，替换）→ rose（删 r）→ ros（删 e）</p>
+      <p><strong>数据范围</strong>：<span class="n">n</span>, <span class="n">m</span> ≤ <span class="n">500</span>，标准编辑距离 DP 即可。</p>
+    </div>
+
+    <h2>扩展知识点</h2>
+    <table>
+      <tr>
+        <td>LCS → LIS 转化</td>
+        <td>当一个字符串字符唯一时，可转化为最长上升子序列，<strong style="color:#a78bfa;">O(n log n)</strong> 解决</td>
+      </tr>
+      <tr>
+        <td>Needleman-Wunsch</td>
+        <td><strong>全局比对</strong>算法，本质是 LCS 加上了匹配/不匹配/空位的<strong>打分矩阵</strong></td>
+      </tr>
+      <tr>
+        <td>Smith-Waterman</td>
+        <td><strong>局部比对</strong>算法，找出两序列中相似度最高的子段</td>
+      </tr>
+      <tr>
+        <td>最短公共超序列</td>
+        <td><code>SCS = n + m - LCS</code>，包含两个串的最短序列</td>
+      </tr>
+    </table>
+
+    <p style="margin-top:14px;color:#999;font-size:0.9rem;">
+      拓展阅读：最长公共子串 → 可用后缀自动机 (SAM) 在 O(n) 时间内求解。
+    </p>
+  </section>
+
+  <!-- ==================== SLIDE 7: 总结 ==================== -->
+  <section class="slide" data-index="6">
+    <h1>总结：LCS 与编辑距离核心对照</h1>
+
+    <table>
+      <tr>
+        <th style="width:25%;">知识点</th>
+        <th style="width:75%;">核心内容</th>
+      </tr>
+      <tr>
+        <td>LCS 基础 DP</td>
+        <td><code>dp[i][j] = dp[i-1][j-1]+1</code>（匹配）或 <code>max(dp[i-1][j], dp[i][j-1])</code>（不匹配）</td>
+      </tr>
+      <tr>
+        <td>LCS 空间优化</td>
+        <td>一维 + prev 变量法，注意 <strong style="color:#a78bfa;">左上角依赖</strong>，空间 O(min(n,m))</td>
+      </tr>
+      <tr>
+        <td>LCS 路径回溯</td>
+        <td>用 <code>dir</code> 方向数组记录来源（左上/上/左），从右下角反向追踪</td>
+      </tr>
+      <tr>
+        <td>编辑距离</td>
+        <td>三种操作（插入/删除/替换），初始化边界 <code>dp[i][0]=i, dp[0][j]=j</code> 有讲究</td>
+      </tr>
+      <tr>
+        <td>编辑距离空间优化</td>
+        <td>同样可一维优化至 O(min(n,m))</td>
+      </tr>
+      <tr>
+        <td>LCS → LIS 转化</td>
+        <td>字符唯一时可转化为最长上升子序列，用 <strong style="color:#a78bfa;">O(n log n)</strong> 解法</td>
+      </tr>
+      <tr>
+        <td>序列比对推广</td>
+        <td>NW（全局比对）与 SW（局部比对），本质是 DP 的推广，加入打分矩阵</td>
+      </tr>
+    </table>
+
+    <div class="highlight-box" style="margin-top:20px;text-align:center;">
+      <p style="font-size:1.1rem;">两类问题的核心都是在<strong style="color:#00d4ff;">两个序列</strong>上做<strong style="color:#00d4ff;">二维 DP</strong>，</p>
+      <p style="font-size:1.1rem;">掌握转移方程的推导逻辑，<strong style="color:#a78bfa;">举一反三</strong>应对更多序列比对变种！</p>
+    </div>
+
+    <p style="text-align:center;margin-top:18px;color:#666;font-size:0.85rem;">
+      下一课预告：最长上升子序列 (LIS) 与 Dilworth 定理
+    </p>
+  </section>
+
+</main>
+
+<!-- Navigation -->
+<nav class="nav" id="nav">
+  <button class="nav-btn" id="prevBtn" aria-label="上一页">◀</button>
+  <div class="dots" id="dots"></div>
+  <button class="nav-btn" id="nextBtn" aria-label="下一页">▶</button>
+</nav>
+
+<div class="page-indicator" id="pageIndicator">1 / 7</div>
+
+<script>
+(function() {
+  var slides = document.querySelectorAll('.slide');
+  var dotsContainer = document.getElementById('dots');
+  var prevBtn = document.getElementById('prevBtn');
+  var nextBtn = document.getElementById('nextBtn');
+  var pageIndicator = document.getElementById('pageIndicator');
+  var total = slides.length;
+  var current = 0;
+  var isTransitioning = false;
+
+  // Build dots
+  for (var i = 0; i < total; i++) {
+    var dot = document.createElement('span');
+    dot.className = 'dot';
+    dot.setAttribute('data-index', i);
+    dot.addEventListener('click', (function(idx) {
+      return function() { goTo(idx); };
+    })(i));
+    dotsContainer.appendChild(dot);
+  }
+  var dots = document.querySelectorAll('.dot');
+
+  function updateSlide(oldIndex, newIndex) {
+    slides[oldIndex].classList.remove('active');
+    dots[oldIndex].classList.remove('active');
+    slides[newIndex].classList.add('active');
+    dots[newIndex].classList.add('active');
+    slides[newIndex].scrollTop = 0;
+    pageIndicator.textContent = (newIndex + 1) + ' / ' + total;
+    current = newIndex;
+  }
+
+  function goTo(index) {
+    if (isTransitioning || index === current || index < 0 || index >= total) return;
+    isTransitioning = true;
+    updateSlide(current, index);
+    setTimeout(function() { isTransitioning = false; }, 450);
+  }
+
+  function goNext() { goTo(current + 1); }
+  function goPrev() { goTo(current - 1); }
+
+  prevBtn.addEventListener('click', goPrev);
+  nextBtn.addEventListener('click', goNext);
+
+  // Keyboard navigation
+  document.addEventListener('keydown', function(e) {
+    if (e.key === 'ArrowRight' || e.key === 'ArrowDown' || e.key === ' ') {
+      e.preventDefault();
+      goNext();
+    } else if (e.key === 'ArrowLeft' || e.key === 'ArrowUp') {
+      e.preventDefault();
+      goPrev();
+    }
+  });
+
+  // Touch / swipe support
+  var touchStartX = 0;
+  var touchStartY = 0;
+  document.addEventListener('touchstart', function(e) {
+    touchStartX = e.touches[0].clientX;
+    touchStartY = e.touches[0].clientY;
+  }, { passive: true });
+
+  document.addEventListener('touchend', function(e) {
+    var dx = e.changedTouches[0].clientX - touchStartX;
+    var dy = e.changedTouches[0].clientY - touchStartY;
+    if (Math.abs(dx) > Math.abs(dy) && Math.abs(dx) > 50) {
+      if (dx < 0) goNext();
+      else goPrev();
+    }
+  });
+
+  // Initialize
+  slides[0].classList.add('active');
+  dots[0].classList.add('active');
+  pageIndicator.textContent = '1 / ' + total;
+})();
+</script>
+
+</body>
+</html>

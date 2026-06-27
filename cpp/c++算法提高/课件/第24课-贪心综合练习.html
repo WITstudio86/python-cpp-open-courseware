@@ -1,0 +1,560 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>第24课：贪心综合练习</title>
+<style>
+* { margin: 0; padding: 0; box-sizing: border-box; }
+body {
+    font-family: 'PingFang SC', 'Microsoft YaHei', -apple-system, BlinkMacSystemFont, sans-serif;
+    background: linear-gradient(135deg, #0f0c29, #302b63, #24243e);
+    color: #e0e0e0;
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+}
+.slideshow {
+    width: 100%;
+    max-width: 960px;
+    margin: 20px auto;
+    position: relative;
+}
+.slide {
+    display: none;
+    background: #16213e;
+    border-radius: 12px;
+    padding: 40px;
+    min-height: 540px;
+    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.4);
+    animation: fadeIn 0.4s ease;
+    border: 1px solid rgba(255, 255, 255, 0.06);
+}
+.slide.active {
+    display: block;
+}
+@keyframes fadeIn {
+    from { opacity: 0; transform: translateY(12px); }
+    to   { opacity: 1; transform: translateY(0); }
+}
+h1 {
+    font-size: 2em;
+    color: #e94560;
+    margin-bottom: 16px;
+    border-bottom: 2px solid #e94560;
+    padding-bottom: 10px;
+}
+h2 {
+    font-size: 1.5em;
+    color: #0f3460;
+    background: #e94560;
+    display: inline-block;
+    padding: 6px 18px;
+    border-radius: 6px;
+    margin-bottom: 18px;
+}
+h3 {
+    color: #f5c518;
+    margin: 14px 0 8px;
+    font-size: 1.15em;
+}
+ul {
+    margin: 12px 0;
+    padding-left: 24px;
+}
+li {
+    margin: 8px 0;
+    line-height: 1.7;
+}
+p {
+    line-height: 1.8;
+    margin: 8px 0;
+}
+pre {
+    background: #0d1b2a;
+    border-radius: 8px;
+    padding: 16px;
+    overflow-x: auto;
+    margin: 12px 0;
+    font-size: 0.88em;
+    border-left: 4px solid #e94560;
+}
+code {
+    font-family: 'Cascadia Code', 'Fira Code', 'Consolas', 'Courier New', monospace;
+    color: #7ec8e3;
+}
+.label {
+    color: #f5c518;
+    font-weight: bold;
+}
+.note {
+    color: #aaa;
+    font-size: 0.9em;
+}
+.highlight {
+    color: #f5c518;
+    font-weight: bold;
+}
+.accent {
+    color: #e94560;
+    font-weight: bold;
+}
+/* Navigation */
+.navigation {
+    display: flex;
+    justify-content: center;
+    gap: 16px;
+    margin: 20px 0 40px;
+    align-items: center;
+}
+.nav-btn {
+    background: #e94560;
+    color: #fff;
+    border: none;
+    padding: 10px 28px;
+    border-radius: 8px;
+    font-size: 1em;
+    cursor: pointer;
+    transition: background 0.3s;
+}
+.nav-btn:hover {
+    background: #c73a52;
+}
+.nav-btn:disabled {
+    background: #555;
+    cursor: not-allowed;
+}
+.page-indicator {
+    color: #aaa;
+    font-size: 0.9em;
+    min-width: 60px;
+    text-align: center;
+}
+/* Common elements */
+.step-box {
+    background: #0d1b2a;
+    border-left: 4px solid #f5c518;
+    padding: 12px 16px;
+    margin: 8px 0;
+    border-radius: 4px;
+}
+.step-box.info {
+    border-left-color: #4ecdc4;
+}
+.ascii-box {
+    font-family: 'Courier New', 'Consolas', monospace;
+    background: #0d1b2a;
+    padding: 14px;
+    border-radius: 6px;
+    line-height: 1.5;
+    white-space: pre;
+    font-size: 0.85em;
+    color: #a8d8a8;
+}
+/* Diagram for even cards */
+.card-piles {
+    display: flex;
+    justify-content: center;
+    gap: 24px;
+    margin: 16px 0;
+    flex-wrap: wrap;
+}
+.pile {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 6px;
+}
+.pile-label {
+    font-size: 0.8em;
+    color: #888;
+}
+.pile-cards {
+    background: #1a1a3e;
+    border: 2px solid #e94560;
+    border-radius: 8px;
+    padding: 10px 16px;
+    min-width: 60px;
+    text-align: center;
+    font-size: 1.2em;
+    font-weight: bold;
+    color: #f0f0f0;
+}
+.pile-cards.done {
+    border-color: #4ecdc4;
+    color: #4ecdc4;
+}
+.pile-arrow {
+    color: #f5c518;
+    font-size: 1.5em;
+    display: flex;
+    align-items: center;
+}
+.pile-diff {
+    font-size: 0.75em;
+    padding: 2px 6px;
+    border-radius: 4px;
+}
+.pile-diff.plus { color: #4ecdc4; }
+.pile-diff.minus { color: #e94560; }
+/* Strategy grid */
+.strategy-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 12px;
+    margin: 16px 0;
+}
+.strategy-card {
+    background: #0d1b2a;
+    border-radius: 8px;
+    padding: 14px;
+    border: 1px solid rgba(255, 255, 255, 0.08);
+}
+.strategy-card .strategy-name {
+    color: #e94560;
+    font-weight: bold;
+    font-size: 1.05em;
+    margin-bottom: 6px;
+}
+.strategy-card .strategy-desc {
+    color: #aaa;
+    font-size: 0.85em;
+    line-height: 1.6;
+}
+/* Comparison table */
+.comp-table {
+    width: 100%;
+    border-collapse: collapse;
+    margin: 12px 0;
+    font-size: 0.9em;
+}
+.comp-table th {
+    background: #e94560;
+    color: #fff;
+    padding: 10px 12px;
+    text-align: left;
+}
+.comp-table td {
+    padding: 10px 12px;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+}
+.comp-table tr:hover td {
+    background: rgba(233, 69, 96, 0.08);
+}
+/* Responsive */
+@media (max-width: 768px) {
+    .slide { padding: 24px; min-height: auto; }
+    h1 { font-size: 1.5em; }
+    h2 { font-size: 1.2em; }
+    .strategy-grid { grid-template-columns: 1fr; }
+    .card-piles { gap: 12px; }
+    pre { font-size: 0.78em; padding: 10px; }
+}
+@media (max-width: 480px) {
+    .slide { padding: 16px; }
+    h1 { font-size: 1.3em; }
+    .nav-btn { padding: 8px 16px; font-size: 0.9em; }
+}
+</style>
+</head>
+<body>
+
+<div class="slideshow" id="slideshow">
+
+<!-- ============================================================ -->
+<!-- 幻灯片1：标题页 -->
+<!-- ============================================================ -->
+<div class="slide active" id="slide1">
+    <h1>第24课：贪心综合练习</h1>
+    <h2>多种贪心策略综合运用</h2>
+    <div style="margin:30px 0;">
+        <p style="font-size:1.2em;line-height:2.2;">
+            <span class="highlight">核心主题：</span>删数问题 + 均分纸牌<br>
+            <span class="highlight">本课重点：</span>贪心策略的识别、选择与综合运用<br>
+            <span class="highlight">已学策略：</span>排序贪心、区间调度、分数背包、哈夫曼编码<br>
+            <span class="highlight">学习目标：</span>能够独立判断和设计贪心策略
+        </p>
+    </div>
+    <div class="step-box">
+        <strong>贪心算法的本质：</strong>每一步都做当前最优的局部选择，相信局部最优能累积成全局最优。
+        关键是判断问题是否具有<span class="highlight">最优子结构</span>和<span class="highlight">贪心选择性质</span>。
+    </div>
+    <div class="note" style="margin-top:16px;">
+        C++ 算法提高 · 第三阶段：贪心算法 · 综合练习
+    </div>
+</div>
+
+<!-- ============================================================ -->
+<!-- 幻灯片2：贪心策略回顾与识别 -->
+<!-- ============================================================ -->
+<div class="slide" id="slide2">
+    <h2>已学贪心策略回顾与识别方法</h2>
+
+    <h3>六大贪心策略一览</h3>
+    <div class="strategy-grid">
+        <div class="strategy-card">
+            <div class="strategy-name">排序贪心</div>
+            <div class="strategy-desc">先排序，再从小到大/从大到小依次选择。关键词：<span class="highlight">排序</span>、<span class="highlight">依次取</span></div>
+        </div>
+        <div class="strategy-card">
+            <div class="strategy-name">区间调度</div>
+            <div class="strategy-desc">按结束时间排序，每次选最早结束且不冲突的区间。关键词：<span class="highlight">不重叠</span>、<span class="highlight">最多</span></div>
+        </div>
+        <div class="strategy-card">
+            <div class="strategy-name">分数背包</div>
+            <div class="strategy-desc">按单位价值排序，能拿多少拿多少。关键词：<span class="highlight">可分割</span>、<span class="highlight">性价比</span></div>
+        </div>
+        <div class="strategy-card">
+            <div class="strategy-name">均分策略</div>
+            <div class="strategy-desc">算平均值，逐堆调整差额。关键词：<span class="highlight">平均数</span>、<span class="highlight">均衡</span></div>
+        </div>
+        <div class="strategy-card">
+            <div class="strategy-name">删数策略</div>
+            <div class="strategy-desc">维护单调性，删除"破坏者"。关键词：<span class="highlight">删元素</span>、<span class="highlight">最小/最大</span></div>
+        </div>
+        <div class="strategy-card">
+            <div class="strategy-name">哈夫曼编码</div>
+            <div class="strategy-desc">每次合并最小的两个。关键词：<span class="highlight">合并</span>、<span class="highlight">最小代价</span></div>
+        </div>
+    </div>
+
+    <h3>如何识别贪心策略？</h3>
+    <div class="step-box">
+        <strong>判断标准1 —— 最优子结构：</strong>
+        问题的最优解包含子问题的最优解。大问题可以拆成小问题，且大问题的最优解由小问题的最优解组成。
+    </div>
+    <div class="step-box info">
+        <strong>判断标准2 —— 贪心选择性质：</strong>
+        每一步的局部最优选择，不会影响后续得到全局最优。<br>
+        相当于"先做最优的一步，剩下的问题还是一个同类问题"。
+    </div>
+    <div class="note" style="margin-top:10px;">
+        解题口诀：<span class="highlight">先猜后证</span> —— 大胆提出贪心猜想，用反例验证，找不到反例就写代码！
+    </div>
+</div>
+
+<!-- ============================================================ -->
+<!-- 幻灯片3：删数问题 —— 代码实现 -->
+<!-- ============================================================ -->
+<div class="slide" id="slide3">
+    <h2>例题1：删数问题 —— 代码实现</h2>
+
+    <h3>问题描述</h3>
+    <p>给定一个数字串，删除 <span class="highlight">K</span> 个数字，使剩下的数字组成的数值<span class="highlight">最小</span>。</p>
+
+    <h3>贪心策略</h3>
+    <div class="step-box">
+        从高位到低位扫描，找到<span class="highlight">第一个「当前位 > 下一位」</span>的位置，删除当前位。<br>
+        因为高位越小，整体数值越小！把较小数字往高位"推"，是核心思路。
+    </div>
+
+    <pre><code>// 删数问题：每次删除第一个「比下一位大」的数字
+string deleteDigits(string s, int k) {
+    for (int t = 0; t < k; t++) {
+        int pos = s.size() - 1;   // 默认删最后一位
+        // 扫描：找第一个 s[i] > s[i+1] 的位置
+        for (int i = 0; i < (int)s.size() - 1; i++) {
+            if (s[i] > s[i + 1]) {
+                pos = i;          // 找到！删除它
+                break;
+            }
+        }
+        s.erase(pos, 1);          // 执行删除
+    }
+    // 去除前导零（保留至少一个 '0'）
+    while (s.size() > 1 && s[0] == '0')
+        s.erase(0, 1);
+    return s;
+}</code></pre>
+
+    <h3>样例演示：178543，删4个</h3>
+    <div class="ascii-box">
+178543 → 找 8>5，删 8 → <span style="color:#e94560;">1</span>7543
+17543  → 找 7>5，删 7 → <span style="color:#e94560;">1</span>543
+1543   → 找 5>4，删 5 → <span style="color:#e94560;">1</span>43
+143    → 找 4>3，删 4 → <span style="color:#e94560;">1</span>3
+结果：<span style="color:#4ecdc4;font-weight:bold;">13</span> ✅
+    </div>
+    <div class="note">时间复杂度：O(n×k) | 空间复杂度：O(1)</div>
+</div>
+
+<!-- ============================================================ -->
+<!-- 幻灯片4：均分纸牌 —— 分步演示 -->
+<!-- ============================================================ -->
+<div class="slide" id="slide4">
+    <h2>例题2：均分纸牌 —— 分步演示</h2>
+
+    <h3>问题描述</h3>
+    <p>N 堆纸牌排成一行，每次可将<span class="highlight">任意张</span>牌移到相邻堆（算<span class="highlight">1次</span>移动）。求使所有堆相等的最少移动次数。</p>
+
+    <h3>初始状态：N=4，纸牌 [9, 8, 17, 6]，平均值 = 10</h3>
+    <div class="card-piles">
+        <div class="pile">
+            <div class="pile-label">堆1</div>
+            <div class="pile-cards">9</div>
+            <div class="pile-diff minus">少1</div>
+        </div>
+        <div class="pile">
+            <div class="pile-label">堆2</div>
+            <div class="pile-cards">8</div>
+            <div class="pile-diff minus">少2</div>
+        </div>
+        <div class="pile">
+            <div class="pile-label">堆3</div>
+            <div class="pile-cards">17</div>
+            <div class="pile-diff plus">多7</div>
+        </div>
+        <div class="pile">
+            <div class="pile-label">堆4</div>
+            <div class="pile-cards">6</div>
+            <div class="pile-diff minus">少4</div>
+        </div>
+    </div>
+
+    <h3>贪心调整过程（从左到右）</h3>
+    <div class="ascii-box">
+<span style="color:#888;">步骤1：</span>堆1 少1张 → 从堆2借1张
+     [<span style="color:#4ecdc4;">10</span>] [7] [17] [6]     <span style="color:#f5c518;">移动 1 次</span>
+
+<span style="color:#888;">步骤2：</span>堆2 少3张 → 从堆3借3张
+     [<span style="color:#4ecdc4;">10</span>] [<span style="color:#4ecdc4;">10</span>] [14] [6]   <span style="color:#f5c518;">移动 2 次</span>
+
+<span style="color:#888;">步骤3：</span>堆3 多4张 → 给堆4 4张
+     [<span style="color:#4ecdc4;">10</span>] [<span style="color:#4ecdc4;">10</span>] [<span style="color:#4ecdc4;">10</span>] [<span style="color:#4ecdc4;">10</span>] <span style="color:#f5c518;">移动 3 次 ✅</span>
+    </div>
+
+    <h3>核心代码</h3>
+    <pre><code>int avg = sum / n;
+int moves = 0;
+for (int i = 0; i < n - 1; i++) {
+    if (a[i] != avg) {
+        int diff = a[i] - avg;   // 差额（正=多，负=少）
+        a[i + 1] += diff;        // 转移给下一堆
+        moves++;                 // 无论多少张，算 1 次移动
+    }
+}</code></pre>
+    <div class="note">时间复杂度：O(n) | 空间复杂度：O(1) | 关键：每堆差额必须通过相邻堆转移</div>
+</div>
+
+<!-- ============================================================ -->
+<!-- 幻灯片5：贪心 vs 动态规划 + 小结 -->
+<!-- ============================================================ -->
+<div class="slide" id="slide5">
+    <h2>贪心 vs 动态规划 + 本课小结</h2>
+
+    <h3>贪心 vs 动态规划 —— 一张表说清楚</h3>
+    <table class="comp-table">
+        <tr>
+            <th>对比维度</th>
+            <th>贪心算法</th>
+            <th>动态规划</th>
+        </tr>
+        <tr>
+            <td><span class="highlight">决策方式</span></td>
+            <td>每步做局部最优，不回头</td>
+            <td>记录多种可能，选最优</td>
+        </tr>
+        <tr>
+            <td><span class="highlight">是否可撤销</span></td>
+            <td>不可撤销</td>
+            <td>可以回退比较</td>
+        </tr>
+        <tr>
+            <td><span class="highlight">时间复杂度</span></td>
+            <td>通常较低 O(n log n)</td>
+            <td>通常较高 O(n²)</td>
+        </tr>
+        <tr>
+            <td><span class="highlight">正确性</span></td>
+            <td>需要严格证明</td>
+            <td>天然保证全局最优</td>
+        </tr>
+        <tr>
+            <td><span class="highlight">典型问题</span></td>
+            <td>删数、均分纸牌、活动选择</td>
+            <td>0-1背包、最长子序列</td>
+        </tr>
+    </table>
+
+    <h3>本课核心收获</h3>
+    <div style="display:grid; grid-template-columns:1fr 1fr; gap:12px; margin:12px 0;">
+        <div class="step-box info">
+            <strong>删数问题</strong><br>
+            策略：每次删除第一个「当前位 > 下一位」的数字<br>
+            本质：维护高位单调性，让高位尽可能小<br>
+            复杂度：O(n×k)
+        </div>
+        <div class="step-box info">
+            <strong>均分纸牌</strong><br>
+            策略：算平均值，从左到右差额转移<br>
+            本质：每堆差额必须通过相邻堆调整<br>
+            复杂度：O(n)
+        </div>
+    </div>
+
+    <div class="step-box" style="margin-top:12px;">
+        <strong>解题思维流程：</strong><br>
+        理解目标 → 提出猜想 → <span class="highlight">构造反例验证</span> → 代码实现 → 测试<br>
+        <span style="color:#aaa;">判断口诀：如果"先选最优的"不会堵死后路，贪心可行；否则用DP。</span>
+    </div>
+
+    <div class="step-box" style="margin-top:12px; border-left-color:#4ecdc4;">
+        <strong>下节预告：</strong>第25课 —— 递归算法入门：函数自己调用自己的魔法！
+    </div>
+</div>
+
+</div><!-- slideshow end -->
+
+<!-- Navigation -->
+<div class="navigation">
+    <button class="nav-btn" id="prevBtn" onclick="changeSlide(-1)">上一页</button>
+    <span class="page-indicator" id="pageIndicator">1 / 5</span>
+    <button class="nav-btn" id="nextBtn" onclick="changeSlide(1)">下一页</button>
+</div>
+
+<script>
+let currentSlide = 0;
+const slides = document.querySelectorAll('.slide');
+const totalSlides = slides.length;
+
+function showSlide(index) {
+    slides.forEach(s => s.classList.remove('active'));
+    slides[index].classList.add('active');
+    document.getElementById('pageIndicator').textContent = (index + 1) + ' / ' + totalSlides;
+    document.getElementById('prevBtn').disabled = (index === 0);
+    document.getElementById('nextBtn').disabled = (index === totalSlides - 1);
+}
+
+function changeSlide(delta) {
+    currentSlide = Math.min(Math.max(currentSlide + delta, 0), totalSlides - 1);
+    showSlide(currentSlide);
+}
+
+// 键盘导航
+document.addEventListener('keydown', function(e) {
+    if (e.key === 'ArrowRight' || e.key === 'ArrowDown') changeSlide(1);
+    if (e.key === 'ArrowLeft'  || e.key === 'ArrowUp')   changeSlide(-1);
+});
+
+// 触摸滑动支持（平板友好）
+let touchStartX = 0;
+let touchStartY = 0;
+document.addEventListener('touchstart', function(e) {
+    touchStartX = e.touches[0].clientX;
+    touchStartY = e.touches[0].clientY;
+}, { passive: true });
+document.addEventListener('touchend', function(e) {
+    let diffX = touchStartX - e.changedTouches[0].clientX;
+    let diffY = touchStartY - e.changedTouches[0].clientY;
+    // 水平滑动距离大于垂直，且超过阈值
+    if (Math.abs(diffX) > Math.abs(diffY) && Math.abs(diffX) > 50) {
+        changeSlide(diffX > 0 ? 1 : -1);
+    }
+});
+
+// 初始化
+showSlide(0);
+</script>
+</body>
+</html>

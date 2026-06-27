@@ -1,0 +1,418 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>第45课：综合模拟赛（一）— 数据结构+图论综合</title>
+<style>
+* { margin: 0; padding: 0; box-sizing: border-box; }
+body {
+    font-family: 'Segoe UI', 'Microsoft YaHei', 'PingFang SC', sans-serif;
+    background: #0d1117;
+    color: #c9d1d9;
+    display: flex; justify-content: center; align-items: center;
+    min-height: 100vh;
+}
+#app {
+    width: 95%; max-width: 1050px;
+    background: #161b22;
+    border-radius: 16px;
+    padding: 40px 48px;
+    box-shadow: 0 0 40px rgba(0,0,0,0.5);
+    position: relative;
+    min-height: 500px;
+}
+.slide { display: none; }
+.slide.active { display: block; }
+h1 { font-size: 2em; color: #58a6ff; margin-bottom: 14px; border-bottom: 2px solid #30363d; padding-bottom: 10px; }
+h2 { font-size: 1.5em; color: #79c0ff; margin: 18px 0 10px; }
+h3 { font-size: 1.2em; color: #d2a8ff; margin: 14px 0 8px; }
+p, li { font-size: 1.04em; line-height: 1.8; margin-bottom: 6px; }
+ul, ol { margin-left: 22px; margin-bottom: 10px; }
+.highlight { color: #ff7b72; font-weight: bold; }
+.accent { color: #7ee787; font-weight: bold; }
+.info { color: #a5d6ff; }
+.warn { color: #d29922; }
+pre { background: #0d1117; border: 1px solid #30363d; border-radius: 8px; padding: 16px; overflow-x: auto; margin: 10px 0; font-size: 0.88em; line-height: 1.6; }
+code { font-family: 'Fira Code', 'Cascadia Code', 'Consolas', 'Monaco', monospace; }
+.kw { color: #ff7b72; } .type { color: #ffa657; } .func { color: #d2a8ff; }
+.num { color: #79c0ff; } .str { color: #a5d6ff; } .cmt { color: #8b949e; font-style: italic; }
+.op { color: #ff7b72; } .macro { color: #f0883e; }
+.nav { display: flex; justify-content: space-between; align-items: center; margin-top: 28px; }
+.nav button {
+    background: #21262d; color: #c9d1d9; border: 1px solid #30363d;
+    padding: 10px 24px; border-radius: 8px; cursor: pointer; font-size: 1em;
+    transition: background 0.2s;
+}
+.nav button:hover { background: #30363d; }
+.nav .page-indicator { font-size: 1em; color: #8b949e; }
+.title-slide { text-align: center; padding-top: 30px; }
+.title-slide h1 { font-size: 2.5em; border: none; }
+.title-slide .subtitle { font-size: 1.2em; color: #8b949e; margin: 14px 0; }
+.title-slide .tags { margin-top: 20px; }
+.tag { display: inline-block; background: #1f6feb33; color: #58a6ff; padding: 4px 14px; border-radius: 20px; margin: 4px; font-size: 0.9em; border: 1px solid #1f6feb55; }
+.two-col { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-top: 14px; }
+.card { background: #0d1117; padding: 16px; border-radius: 8px; border: 1px solid #30363d; }
+.problem-box { background: #0d1117; border: 1px solid #d29922; border-radius: 8px; padding: 16px; margin: 10px 0; }
+.diff-easy { color: #7ee787; }
+.diff-mid { color: #d29922; }
+.diff-hard { color: #ff7b72; }
+table { border-collapse: collapse; width: 100%; margin: 10px 0; }
+th, td { border: 1px solid #30363d; padding: 8px 12px; text-align: left; font-size: 0.95em; }
+th { background: #21262d; color: #58a6ff; }
+@media (max-width: 768px) {
+    #app { padding: 20px; }
+    h1 { font-size: 1.5em; }
+    .two-col { grid-template-columns: 1fr; }
+}
+</style>
+</head>
+<body>
+<div id="app">
+
+<!-- 幻灯片 1：标题页 -->
+<div class="slide active" id="s1">
+<div class="title-slide">
+<h1>第45课：综合模拟赛（一）</h1>
+<p class="subtitle">数据结构 + 图论综合</p>
+<div class="tags">
+<span class="tag">CSP-S 模拟赛</span>
+<span class="tag">树状数组</span>
+<span class="tag">分层图最短路</span>
+<span class="tag">Kruskal变种</span>
+<span class="tag">拓扑排序+DP</span>
+</div>
+<p style="margin-top:30px; color:#8b949e">综合运用数据结构与图论知识，提升竞赛实战能力</p>
+</div>
+</div>
+
+<!-- 幻灯片 2：模拟赛说明 -->
+<div class="slide" id="s2">
+<h1>📋 模拟赛说明</h1>
+<h3>时间分配策略</h3>
+<table>
+<tr><th>阶段</th><th>时间</th><th>内容</th></tr>
+<tr><td>读题</td><td>15~20 分钟</td><td>通读 4 道题，标记难度，预估解法</td></tr>
+<tr><td>T1（简单）</td><td>30~40 分钟</td><td>快速编码 + 调试，确保 AC</td></tr>
+<tr><td>T2（中等）</td><td>40~60 分钟</td><td>仔细设计，注意边界条件</td></tr>
+<tr><td>T3（中等偏难）</td><td>50~70 分钟</td><td>可能需要尝试多种思路</td></tr>
+<tr><td>T4（较难）</td><td>50~70 分钟</td><td>暴力保底，有时间再优化正解</td></tr>
+<tr><td>检查</td><td>10~20 分钟</td><td>文件名、I/O、数组大小</td></tr>
+</table>
+<h3>核心原则</h3>
+<ul>
+<li><span class="accent">先易后难，暴力保底</span>：确保容易题 AC，难题先写部分分</li>
+<li><span class="accent">读题→审题→设计→编码→调试</span>：不要跳过设计阶段</li>
+<li><span class="highlight">数据范围决定算法</span>：n≤10⁵ → O(n log n)；n≤500 → O(n³)</li>
+</ul>
+<h3>本场题目</h3>
+<p><span class="diff-easy">T1 简单</span>：树状数组（差分）区间修改+单点查询<br>
+<span class="diff-mid">T2 中等</span>：分层图最短路（Dijkstra + 堆优化）<br>
+<span class="diff-mid">T3 中等</span>：Kruskal 最小生成树 + 必须边/禁止边<br>
+<span class="diff-hard">T4 较难</span>：拓扑排序 + DAG 上的 DP</p>
+</div>
+
+<!-- 幻灯片 3：知识回顾—数据结构 -->
+<div class="slide" id="s3">
+<h1>📖 知识回顾 — 数据结构</h1>
+<h3>树状数组（差分）— 区间修改 + 单点查询</h3>
+<p>核心：维护原数组的<span class="highlight">差分数组</span> d[i] = a[i] - a[i-1]</p>
+<p>区间加 [l, r] + v → <code class="func">add(l, v)</code>、<code class="func">add(r+1, -v)</code></p>
+<p>单点查询 a[x] → <code class="func">sum(x)</code>（查询差分前缀和）</p>
+<pre><span class="kw">void</span> <span class="func">range_add</span>(<span class="type">int</span> l, <span class="type">int</span> r, <span class="type">ll</span> v) {
+    <span class="func">add</span>(l, v);
+    <span class="func">add</span>(r + <span class="num">1</span>, -v);
+}
+<span class="type">ll</span> <span class="func">point_query</span>(<span class="type">int</span> x) {
+    <span class="kw">return</span> <span class="func">sum</span>(x);
+}</pre>
+<p>时间复杂度：<span class="accent">O(log n)</span> 每次操作</p>
+
+<h3>为什么要用差分？</h3>
+<ul>
+<li>直接修改区间 O(n) 不可接受（n ≤ 5×10⁵）</li>
+<li>差分将"区间修改"转化为"两次单点修改"</li>
+<li>配合 BIT 实现 O(log n) 操作</li>
+</ul>
+</div>
+
+<!-- 幻灯片 4：知识回顾—图论 -->
+<div class="slide" id="s4">
+<h1>📖 知识回顾 — 图论算法</h1>
+<h3>Dijkstra + 堆优化</h3>
+<p>适用：<span class="accent">非负权图</span>单源最短路，O((n+m) log n)</p>
+<p>分层图思想：将状态 (节点, 约束值) 作为额外维度，拆分到不同"层"</p>
+<pre><span class="cmt">// 分层图：dist[node][k] 表示到达 node 且使用了 k 次特殊条件的距离</span></pre>
+
+<h3>Kruskal 最小生成树</h3>
+<p>核心：<span class="accent">边排序 + 并查集判环</span>，O(m log m)</p>
+<p>变种处理：</p>
+<ul>
+<li><span class="highlight">必须选中的边</span> → 初始化时直接加入 MST，不计入 Kruskal 选择</li>
+<li><span class="highlight">禁止选择的边</span> → 遍历时跳过（用 set 快速检查）</li>
+</ul>
+
+<h3>拓扑排序（Kahn 算法）</h3>
+<p>应用：<span class="accent">DAG 判环 + 拓扑序 DP</span>，O(n+m)</p>
+<ul>
+<li>入度为零的节点入队 → 出队处理 → 邻接点入度减 1</li>
+<li>处理节点数 < n → 存在环</li>
+<li>在出队时执行 DP（保证前驱已被处理）</li>
+</ul>
+</div>
+
+<!-- 幻灯片 5：T1 题目+分析 -->
+<div class="slide" id="s5">
+<h1>📝 T1：区间操作与查询 <span class="diff-easy">[简单]</span></h1>
+<div class="problem-box">
+<p><span class="info">数据范围</span>：n, m ≤ 5×10⁵</p>
+<p><span class="info">操作 1</span>：<code>1 l r x</code> — 区间 [l, r] 全体加 x<br>
+<span class="info">操作 2</span>：<code>2 p</code> — 查询 a[p] 的值</p>
+<p><span class="info">样例</span>：n=5，<code>1 1 3 2</code>、<code>2 2</code>→2，<code>1 2 4 3</code>、<code>2 5</code>→0，<code>2 3</code>→5</p>
+</div>
+<h3>解题思路</h3>
+<ul>
+<li>树状数组维护<span class="accent">差分数组</span>：add 向上跳、sum 向下跳</li>
+<li><span class="highlight">区间修改</span>：add(l, x)、add(r+1, -x)</li>
+<li><span class="highlight">单点查询</span>：sum(p) — 求差分前缀和</li>
+</ul>
+<h3>核心代码</h3>
+<pre><span class="type">int</span> <span class="func">lowbit</span>(<span class="type">int</span> x) { <span class="kw">return</span> x & (-x); }
+<span class="type">void</span> <span class="func">add</span>(<span class="type">int</span> x, <span class="type">ll</span> v) { <span class="kw">while</span> (x &lt;= n) { c[x] += v; x += <span class="func">lowbit</span>(x); } }
+<span class="type">ll</span> <span class="func">sum</span>(<span class="type">int</span> x) { <span class="type">ll</span> r = <span class="num">0</span>; <span class="kw">while</span> (x) { r += c[x]; x -= <span class="func">lowbit</span>(x); } <span class="kw">return</span> r; }</pre>
+<p><span class="accent">复杂度：O(m log n)，空间 O(n)</span></p>
+</div>
+
+<!-- 幻灯片 6：T2 题目+分析 -->
+<div class="slide" id="s6">
+<h1>📝 T2：带限制的最短路 <span class="diff-mid">[中等]</span></h1>
+<div class="problem-box">
+<p><span class="info">n 节点 m 边无向图，边权 w，类型 c∈{0,1}</span></p>
+<p><span class="info">限制</span>：经过的高速公路（c=1）数量 ≤ k（k ≤ 10）</p>
+<p><span class="info">求</span>：1 到 n 的最小费用，不可达输出 -1</p>
+</div>
+<h3>解题思路 — 分层图</h3>
+<p>将每个节点复制为 <span class="accent">k+1 层</span>，第 j 层表示已走 j 条高速</p>
+<ul>
+<li>普通路（c=0）：<span class="highlight">层内</span>走，距离不变层</li>
+<li>高速路（c=1）：<span class="highlight">跨层</span>走，从 j → j+1 层</li>
+</ul>
+<p>等价做法：<code class="func">dist[node][used_hw]</code> 作为 Dijkstra 的节点状态</p>
+<h3>关键代码</h3>
+<pre><span class="cmt">// 高速公路：进入下一层</span>
+<span class="kw">if</span> (c == <span class="num">1</span> && hw + <span class="num">1</span> &lt;= k && dist[v][hw+<span class="num">1</span>] > d + w) {
+    dist[v][hw+<span class="num">1</span>] = d + w;
+    pq.push({dist[v][hw+<span class="num">1</span>], v, hw+<span class="num">1</span>});
+}</pre>
+<p><span class="accent">复杂度：O((n·k + m·k) log(n·k)) ≈ O((n+m) log n)</span></p>
+</div>
+
+<!-- 幻灯片 7：T3 题目+分析 -->
+<div class="slide" id="s7">
+<h1>📝 T3：MST + 特殊条件 <span class="diff-mid">[中等]</span></h1>
+<div class="problem-box">
+<p><span class="info">n 社区 m 条可选道路，每条有修建费用 w</span></p>
+<p><span class="highlight">q 对必须直连</span>：这些边必须被选中<br>
+<span class="highlight">p 对禁止直连</span>：这些边不能选中</p>
+<p><span class="info">求</span>：满足条件的最小生成树总费用，不可行输出 -1</p>
+</div>
+<h3>解题思路</h3>
+<ul>
+<li><span class="accent">Step 1</span>：初始化并查集，遍历必须边，查找每条的最小费用并加入 MST</li>
+<li><span class="accent">Step 2</span>：若必须边形成环 → 直接 -1</li>
+<li><span class="accent">Step 3</span>：对剩余边执行 Kruskal，跳过禁止边</li>
+<li><span class="accent">Step 4</span>：最终边数 < n-1 → 图不连通 → -1</li>
+</ul>
+<h3>必须边处理</h3>
+<pre><span class="cmt">// 在边集中找 a-b 的最小费用</span>
+<span class="type">ll</span> min_w = LLONG_MAX;
+<span class="kw">for</span> (<span class="kw">auto</span>& e : edges)
+    <span class="kw">if</span> ((e.u==a && e.v==b) || (e.u==b && e.v==a))
+        min_w = min(min_w, (<span class="type">ll</span>)e.w);</pre>
+<p><span class="accent">复杂度：O(m log m)，空间 O(n+m)</span></p>
+</div>
+
+<!-- 幻灯片 8：T4 题目+分析 -->
+<div class="slide" id="s8">
+<h1>📝 T4：拓扑排序 + DP <span class="diff-hard">[较难]</span></h1>
+<div class="problem-box">
+<p><span class="info">n 个任务，耗时 t[i]，m 条依赖边 u→v</span></p>
+<p><span class="info">求</span>：① 工程最早完成时间（最长路径长度）<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;② 最长路径的方案数（mod 10⁹+7）<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;③ 有环则输出 -1</p>
+</div>
+<h3>解题思路</h3>
+<ol>
+<li><span class="accent">Kahn 拓扑排序判环</span>：若处理节点数 < n，存在环</li>
+<li><span class="accent">dp_time[v]</span>：最早完成时间 = max(dp_time[u] + t[v])，其中 u→v</li>
+<li><span class="accent">dp_cnt[v]</span>：方案数累计（仅统计最长路径上的前驱）</li>
+</ol>
+<h3>DP 核心</h3>
+<pre><span class="kw">if</span> (dp_time[v] &lt; dp_time[u] + t[v]) {
+    dp_time[v] = dp_time[u] + t[v];  <span class="cmt">// 找到更长路径</span>
+    dp_cnt[v] = dp_cnt[u];           <span class="cmt">// 重置方案数</span>
+} <span class="kw">else</span> <span class="kw">if</span> (dp_time[v] == dp_time[u] + t[v]) {
+    dp_cnt[v] = (dp_cnt[v] + dp_cnt[u]) % MOD;  <span class="cmt">// 累加</span>
+}</pre>
+<p><span class="accent">复杂度：O(n+m)，空间 O(n+m)</span></p>
+</div>
+
+<!-- 幻灯片 9：T4 代码细节 -->
+<div class="slide" id="s9">
+<h1>📝 T4 代码细节与边界</h1>
+<h3>初始化</h3>
+<pre><span class="cmt">// 没有前驱的任务：自身就是一个起点</span>
+<span class="kw">for</span> (<span class="type">int</span> i = <span class="num">1</span>; i &lt;= n; i++) {
+    <span class="kw">if</span> (indeg[i] == <span class="num">0</span>) {
+        q.push(i);
+        dp_time[i] = t[i];    <span class="cmt">// 最早完成 = 自身时间</span>
+        dp_cnt[i] = <span class="num">1</span>;       <span class="cmt">// 方案数 = 1</span>
+    }
+}</pre>
+<h3>答案汇总</h3>
+<pre><span class="cmt">// 可能有多个终点，汇总所有终点的方案数</span>
+<span class="type">ll</span> total_cnt = <span class="num">0</span>;
+<span class="kw">for</span> (<span class="type">int</span> i = <span class="num">1</span>; i &lt;= n; i++) {
+    <span class="kw">if</span> (dp_time[i] == max_time)
+        total_cnt = (total_cnt + dp_cnt[i]) % MOD;
+}</pre>
+<h3>易错提醒</h3>
+<ul>
+<li><span class="highlight">⚠ 方案数统计</span>：多个终点可能都是关键路径终点，需汇总</li>
+<li><span class="highlight">⚠ 取模</span>：方案数多大都取模，防止溢出</li>
+<li><span class="highlight">⚠ 环的处理</span>：visited < n → 必有环，输出 -1</li>
+</ul>
+</div>
+
+<!-- 幻灯片 10：综合难度系数 -->
+<div class="slide" id="s10">
+<h1>📊 题目难度与得分预估</h1>
+<div class="two-col">
+<div class="card">
+<h3>各题难度与预期</h3>
+<table>
+<tr><th>题目</th><th>难度</th><th>算法</th><th>预期得分</th></tr>
+<tr><td>T1</td><td class="diff-easy">简单</td><td>树状数组+差分</td><td>100</td></tr>
+<tr><td>T2</td><td class="diff-mid">中等</td><td>分层图Dijkstra</td><td>100</td></tr>
+<tr><td>T3</td><td class="diff-mid">中等</td><td>Kruskal变种</td><td>100</td></tr>
+<tr><td>T4</td><td class="diff-hard">较难</td><td>拓扑排序+DP</td><td>70-100</td></tr>
+</table>
+</div>
+<div class="card">
+<h3>得分策略</h3>
+<ul>
+<li><span class="accent">T1</span>：10~15 分钟快速完成，确保 AC</li>
+<li><span class="accent">T2</span>：理解分层图思想，注意 k≤10 的条件</li>
+<li><span class="accent">T3</span>：标准 Kruskal + 特殊逻辑，注意并查集写法</li>
+<li><span class="accent">T4</span>：正解写出 70%，留 30% 时间尝试优化</li>
+</ul>
+<h3>暴力分提示</h3>
+<ul>
+<li>T4 暴力 O(n²) 可拿 30% 分</li>
+<li>T3 不计条件直接 Kruskal 可拿 30%</li>
+<li>T2 不考虑限制直接 Dijkstra 可拿 20%</li>
+</ul>
+</div>
+</div>
+</div>
+
+<!-- 幻灯片 11：易错点 -->
+<div class="slide" id="s11">
+<h1>⚠️ 易错点与优化技巧</h1>
+<div class="two-col">
+<div class="card">
+<h3>树状数组</h3>
+<ul>
+<li><span class="highlight">下标从 1 开始</span>！lowbit(0)=0 死循环</li>
+<li>数据范围大用 <code class="type">long long</code></li>
+<li>差分边界：r+1 不能超过 n+1</li>
+</ul>
+</div>
+<div class="card">
+<h3>最短路</h3>
+<ul>
+<li>优先队列默认<span class="highlight">大根堆</span>，需 greater&lt;&gt;</li>
+<li>vis 数组避免重复扩展</li>
+<li>多测试数据时初始化 dist 数组</li>
+</ul>
+</div>
+<div class="card">
+<h3>Kruskal</h3>
+<ul>
+<li>并查集路径压缩（find 函数）</li>
+<li>生成树边数 = n-1 的判断</li>
+<li>必须边可能有多条，取最小费用</li>
+</ul>
+</div>
+<div class="card">
+<h3>拓扑排序+DP</h3>
+<ul>
+<li>入度为 0 节点全部入队</li>
+<li>DP 在拓扑序上进行</li>
+<li>方案数取模 <code class="num">1e9+7</code></li>
+<li>多终点汇总方案数</li>
+</ul>
+</div>
+</div>
+</div>
+
+<!-- 幻灯片 12：小结 -->
+<div class="slide" id="s12">
+<h1>🎯 本课小结</h1>
+<div class="two-col">
+<div class="card">
+<h3>数据结构</h3>
+<p>树状数组（差分）→ 区间修改+单点查询</p>
+<p>BIT 常数小，能用就不用线段树</p>
+</div>
+<div class="card">
+<h3>图论</h3>
+<p>分层图最短路 → 扩展状态维度</p>
+<p>Kruskal 变种 → 并查集 + 条件筛选</p>
+<p>拓扑排序+DP → 关键路径与方案计数</p>
+</div>
+<div class="card">
+<h3>模拟赛策略</h3>
+<p>先易后难，合理分配时间</p>
+<p>暴力保底，正解攻坚</p>
+<p>反复检查、对拍验证</p>
+</div>
+<div class="card">
+<h3>核心能力</h3>
+<p>识别题目隐藏的算法模型</p>
+<p>灵活组合多个知识点</p>
+<p>根据数据范围选择合适算法</p>
+</div>
+</div>
+<p style="text-align:center; margin-top:18px; color:#8b949e">综合模拟赛是提升 CSP-S 实战能力的最佳途径，多练多总结！</p>
+</div>
+
+<div class="nav">
+<button onclick="prevSlide()">◀ 上一页</button>
+<span class="page-indicator" id="pageNum">1 / 12</span>
+<button onclick="nextSlide()">下一页 ▶</button>
+</div>
+</div>
+
+<script>
+let current = 0;
+const slides = document.querySelectorAll('.slide');
+const total = slides.length;
+
+function showSlide(n) {
+    slides[current].classList.remove('active');
+    current = ((n % total) + total) % total;
+    slides[current].classList.add('active');
+    document.getElementById('pageNum').textContent = (current + 1) + ' / ' + total;
+}
+
+function nextSlide() { showSlide(current + 1); }
+function prevSlide() { showSlide(current - 1); }
+
+document.addEventListener('keydown', function(e) {
+    if (e.key === 'ArrowRight' || e.key === 'ArrowDown') nextSlide();
+    if (e.key === 'ArrowLeft' || e.key === 'ArrowUp') prevSlide();
+});
+</script>
+</body>
+</html>

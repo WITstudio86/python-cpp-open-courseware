@@ -1,0 +1,401 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Python 与 C++ 开放课件 — 课程总览</title>
+    <link rel="icon" type="image/png" href="logo.png">
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        html { scroll-behavior: smooth; }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "PingFang SC", "Microsoft YaHei", "Noto Sans SC", sans-serif;
+            background: linear-gradient(135deg, #0f0c29, #302b63, #24243e);
+            min-height: 100vh;
+            color: #e0e0e0;
+        }
+
+        /* ===== Hero Header ===== */
+        .hero {
+            background: linear-gradient(135deg, #1a1a2e 0%, #16213e 50%, #0f3460 100%);
+            text-align: center;
+            padding: 3.5rem 2rem 3rem;
+            border-bottom: 3px solid #e94560;
+            position: relative;
+            overflow: hidden;
+        }
+        .hero::before {
+            content: "";
+            position: absolute;
+            top: -50%; left: -50%;
+            width: 200%; height: 200%;
+            background: radial-gradient(circle at 30% 50%, rgba(233,69,96,0.08) 0%, transparent 50%),
+                        radial-gradient(circle at 70% 50%, rgba(78,205,196,0.06) 0%, transparent 50%);
+            animation: heroGlow 8s ease-in-out infinite;
+        }
+        @keyframes heroGlow {
+            0%, 100% { transform: translate(0, 0); }
+            50% { transform: translate(2%, 1%); }
+        }
+        .hero-logo {
+            width: 80px;
+            height: 80px;
+            margin-bottom: 1.5rem;
+            position: relative;
+            z-index: 1;
+            filter: drop-shadow(0 0 20px rgba(233, 69, 96, 0.3));
+            transition: transform 0.5s ease;
+        }
+        .hero-logo:hover {
+            transform: rotate(-10deg) scale(1.1);
+        }
+        .hero h1 {
+            font-size: clamp(2rem, 5vw, 3.5rem);
+            font-weight: 900;
+            color: #fff;
+            position: relative;
+            z-index: 1;
+        }
+        .hero h1 .accent-python { color: #4ecdc4; }
+        .hero h1 .accent-cpp { color: #e94560; }
+        .hero .subtitle {
+            font-size: clamp(1rem, 2.2vw, 1.3rem);
+            color: #a0a0c0;
+            margin-top: 0.8rem;
+            position: relative;
+            z-index: 1;
+            line-height: 1.6;
+        }
+
+        /* ===== Stats Row ===== */
+        .stats-row {
+            display: flex;
+            justify-content: center;
+            gap: 2rem;
+            margin-top: 2rem;
+            flex-wrap: wrap;
+            position: relative;
+            z-index: 1;
+        }
+        .stat-item {
+            background: rgba(255,255,255,0.05);
+            border: 1px solid rgba(255,255,255,0.1);
+            border-radius: 12px;
+            padding: 18px 28px;
+            text-align: center;
+            min-width: 100px;
+            backdrop-filter: blur(4px);
+        }
+        .stat-item .num {
+            font-size: 2.2em;
+            font-weight: bold;
+            color: #e94560;
+        }
+        .stat-item .label {
+            font-size: 0.85em;
+            color: #888;
+            margin-top: 4px;
+        }
+
+        /* ===== Main Container ===== */
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 2.5rem 1.5rem 4rem;
+        }
+
+        /* ===== Section ===== */
+        .section {
+            margin-bottom: 3rem;
+        }
+        .section-header {
+            display: flex;
+            align-items: center;
+            gap: 0.8rem;
+            margin-bottom: 1.5rem;
+            padding-bottom: 0.6rem;
+            border-bottom: 2px solid rgba(255,255,255,0.08);
+        }
+        .section-header .icon {
+            font-size: 2rem;
+        }
+        .section-header h2 {
+            font-size: 1.8rem;
+            font-weight: 800;
+            color: #fff;
+        }
+        .section-header.python h2 { color: #4ecdc4; }
+        .section-header.cpp h2 { color: #e94560; }
+
+        /* ===== Course Cards Grid ===== */
+        .course-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+            gap: 1.5rem;
+        }
+        .course-card {
+            background: rgba(255,255,255,0.04);
+            border: 1px solid rgba(255,255,255,0.08);
+            border-radius: 14px;
+            padding: 1.8rem;
+            text-decoration: none;
+            color: inherit;
+            transition: all 0.3s ease;
+            position: relative;
+            overflow: hidden;
+            display: flex;
+            flex-direction: column;
+        }
+        .course-card::before {
+            content: "";
+            position: absolute;
+            top: 0; left: 0;
+            width: 100%; height: 3px;
+            transition: height 0.3s ease;
+        }
+        .course-card.python-card::before { background: #4ecdc4; }
+        .course-card.cpp-card::before { background: #e94560; }
+
+        .course-card:hover {
+            transform: translateY(-4px);
+            border-color: rgba(255,255,255,0.2);
+            box-shadow: 0 12px 40px rgba(0,0,0,0.3);
+        }
+        .course-card.python-card:hover { box-shadow: 0 12px 40px rgba(78,205,196,0.15); }
+        .course-card.cpp-card:hover { box-shadow: 0 12px 40px rgba(233,69,96,0.15); }
+        .course-card:hover::before { height: 5px; }
+
+        .course-card .card-badge {
+            display: inline-block;
+            font-size: 0.75rem;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.08em;
+            padding: 3px 10px;
+            border-radius: 4px;
+            margin-bottom: 1rem;
+            width: fit-content;
+        }
+        .badge-python { background: rgba(78,205,196,0.15); color: #4ecdc4; }
+        .badge-cpp { background: rgba(233,69,96,0.15); color: #e94560; }
+
+        .course-card h3 {
+            font-size: 1.3rem;
+            font-weight: 700;
+            color: #fff;
+            margin-bottom: 0.5rem;
+        }
+        .course-card .card-desc {
+            font-size: 0.92rem;
+            color: #a0a0b0;
+            line-height: 1.7;
+            flex: 1;
+            margin-bottom: 1rem;
+        }
+        .course-card .card-meta {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            font-size: 0.82rem;
+            color: #666;
+            padding-top: 0.8rem;
+            border-top: 1px solid rgba(255,255,255,0.06);
+        }
+        .course-card .card-arrow {
+            font-size: 1.1rem;
+            color: #888;
+            transition: transform 0.3s ease, color 0.3s ease;
+        }
+        .course-card:hover .card-arrow {
+            transform: translateX(4px);
+            color: #fff;
+        }
+
+        /* ===== Footer ===== */
+        .footer {
+            text-align: center;
+            padding: 2rem;
+            color: #555;
+            font-size: 0.85rem;
+            border-top: 1px solid rgba(255,255,255,0.05);
+        }
+
+        /* ===== Responsive ===== */
+        @media (max-width: 768px) {
+            .hero { padding: 2rem 1rem 2rem; }
+            .hero h1 { font-size: 1.6rem; }
+            .course-grid { grid-template-columns: 1fr; }
+            .stats-row { gap: 0.8rem; }
+            .stat-item { padding: 12px 18px; min-width: 70px; }
+            .stat-item .num { font-size: 1.6em; }
+            .section-header h2 { font-size: 1.4rem; }
+        }
+    </style>
+</head>
+<body>
+
+<!-- ===== Hero Header ===== -->
+<header class="hero">
+    <img src="logo.png" alt="Logo" class="hero-logo">
+    <h1>
+        <span class="accent-python">Python</span> 与 <span class="accent-cpp">C++</span> 开放课件
+    </h1>
+    <p class="subtitle">
+        从零基础到算法竞赛，系统化的编程学习路径<br>
+        覆盖 Python 图形化编程、C++ 算法与信息学奥赛备考
+    </p>
+    <div class="stats-row">
+        <div class="stat-item">
+            <div class="num">8</div>
+            <div class="label">课程系列</div>
+        </div>
+        <div class="stat-item">
+            <div class="num">4</div>
+            <div class="label">Python 方向</div>
+        </div>
+        <div class="stat-item">
+            <div class="num">4</div>
+            <div class="label">C++ 方向</div>
+        </div>
+    </div>
+</header>
+
+<!-- ===== Main Content ===== -->
+<main class="container">
+
+    <!-- Python Section -->
+    <section class="section">
+        <div class="section-header python">
+            <span class="icon">🐍</span>
+            <h2>Python 课程</h2>
+        </div>
+        <div class="course-grid">
+
+            <!-- Python 零基础到图形化项目实战 -->
+            <a href="python/零基础到图形化项目实战(10 节)/ppt/index.html" class="course-card python-card">
+                <span class="card-badge badge-python">Python</span>
+                <h3>零基础到图形化项目实战</h3>
+                <p class="card-desc">
+                    10 节快速入门课程。从 Python 基础语法到图形化界面实战，适合完全没有编程经验的初学者，用最短时间做出看得见的作品。
+                </p>
+                <div class="card-meta">
+                    <span>📚 10 节课</span>
+                    <span class="card-arrow">→</span>
+                </div>
+            </a>
+
+            <!-- Python 趣味学习 -->
+            <a href="python/python趣味学习/课件/index.html" class="course-card python-card">
+                <span class="card-badge badge-python">Python</span>
+                <h3>Python 趣味学习</h3>
+                <p class="card-desc">
+                    48 节系统课程，以趣味项目驱动学习。涵盖 Python 核心语法、数据结构与算法思维，为后续深入学习打下坚实基础。
+                </p>
+                <div class="card-meta">
+                    <span>📚 48 节课</span>
+                    <span class="card-arrow">→</span>
+                </div>
+            </a>
+
+            <!-- Python Tkinter -->
+            <a href="python/tkinter/课件/总览.html" class="course-card python-card">
+                <span class="card-badge badge-python">Python</span>
+                <h3>Tkinter GUI 开发</h3>
+                <p class="card-desc">
+                    48 节 GUI 编程课程。使用 Python 内置的 Tkinter 库，从窗口组件到完整桌面应用，让程序拥有图形化界面。
+                </p>
+                <div class="card-meta">
+                    <span>📚 48 节课</span>
+                    <span class="card-arrow">→</span>
+                </div>
+            </a>
+
+            <!-- Pygame -->
+            <a href="python/pygame/总览.html" class="course-card python-card">
+                <span class="card-badge badge-python">Python</span>
+                <h3>Pygame 游戏开发</h3>
+                <p class="card-desc">
+                    48 节游戏开发课程。从 Hello Pygame 到完整的游戏作品，覆盖动画、碰撞、AI 对战、特效，做出属于自己的游戏。
+                </p>
+                <div class="card-meta">
+                    <span>📚 48 节课</span>
+                    <span class="card-arrow">→</span>
+                </div>
+            </a>
+
+        </div>
+    </section>
+
+    <!-- C++ Section -->
+    <section class="section">
+        <div class="section-header cpp">
+            <span class="icon">⚡</span>
+            <h2>C++ 课程</h2>
+        </div>
+        <div class="course-grid">
+
+            <!-- C++ 趣味学习 -->
+            <a href="cpp/c++趣味学习/课件/总览.html" class="course-card cpp-card">
+                <span class="card-badge badge-cpp">C++</span>
+                <h3>C++ 趣味学习</h3>
+                <p class="card-desc">
+                    从 C++ 基础语法开始，以趣味案例驱动学习。适合有 Python 基础或首次接触 C++ 的学习者，轻松过渡到 C++ 世界。
+                </p>
+                <div class="card-meta">
+                    <span>📚 课程总览</span>
+                    <span class="card-arrow">→</span>
+                </div>
+            </a>
+
+            <!-- C++ 算法提高 -->
+            <a href="cpp/c++算法提高/课件/总览.html" class="course-card cpp-card">
+                <span class="card-badge badge-cpp">C++</span>
+                <h3>C++ 算法提高</h3>
+                <p class="card-desc">
+                    47 节算法进阶课程。涵盖枚举、排序、贪心、递归、DP、图论等核心算法专题，面向信息学竞赛的核心能力培养。
+                </p>
+                <div class="card-meta">
+                    <span>📚 47 节课</span>
+                    <span class="card-arrow">→</span>
+                </div>
+            </a>
+
+            <!-- CSP-J -->
+            <a href="cpp/csp-j/课件/总览.html" class="course-card cpp-card">
+                <span class="card-badge badge-cpp">C++</span>
+                <h3>CSP-J 入门级备考</h3>
+                <p class="card-desc">
+                    面向 CSP-J（入门级）认证考试的专项备考课程。梳理考点、真题精讲、模拟训练，助力取得优异成绩。
+                </p>
+                <div class="card-meta">
+                    <span>📚 课程总览</span>
+                    <span class="card-arrow">→</span>
+                </div>
+            </a>
+
+            <!-- CSP-S -->
+            <a href="cpp/csp-s/课件/总览.html" class="course-card cpp-card">
+                <span class="card-badge badge-cpp">C++</span>
+                <h3>CSP-S 提高级备考</h3>
+                <p class="card-desc">
+                    面向 CSP-S（提高级）认证考试的进阶备考课程。深入算法与数据结构，为冲击省选和 NOIP 做好准备。
+                </p>
+                <div class="card-meta">
+                    <span>📚 课程总览</span>
+                    <span class="card-arrow">→</span>
+                </div>
+            </a>
+
+        </div>
+    </section>
+
+</main>
+
+<!-- ===== Footer ===== -->
+<footer class="footer">
+    <p>Python 与 C++ 开放课件 · 从零基础到算法竞赛的系统化学习资源</p>
+</footer>
+
+</body>
+</html>

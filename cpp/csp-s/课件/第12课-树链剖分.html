@@ -1,0 +1,193 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>第12课：树链剖分（HLD）</title>
+<style>
+* { margin: 0; padding: 0; box-sizing: border-box; }
+body { font-family: 'Segoe UI', 'Microsoft YaHei', sans-serif; background: #0d1117; color: #c9d1d9; display: flex; justify-content: center; align-items: center; min-height: 100vh; }
+#app { width: 95%; max-width: 1000px; background: #161b22; border-radius: 16px; padding: 40px; box-shadow: 0 0 40px rgba(0,0,0,0.5); }
+.slide { display: none; } .slide.active { display: block; }
+h1 { font-size: 2.2em; color: #58a6ff; margin-bottom: 16px; border-bottom: 2px solid #30363d; padding-bottom: 12px; }
+h2 { font-size: 1.6em; color: #79c0ff; margin: 20px 0 12px; }
+h3 { font-size: 1.3em; color: #d2a8ff; margin: 16px 0 8px; }
+p, li { font-size: 1.08em; line-height: 1.85; margin-bottom: 8px; }
+ul, ol { margin-left: 24px; margin-bottom: 12px; }
+.highlight { color: #ff7b72; font-weight: bold; } .accent { color: #7ee787; font-weight: bold; } .info { color: #a5d6ff; }
+pre { background: #0d1117; border: 1px solid #30363d; border-radius: 8px; padding: 18px; overflow-x: auto; margin: 12px 0; font-size: 0.86em; line-height: 1.6; }
+code { font-family: 'Fira Code', 'Consolas', monospace; }
+.kw { color: #ff7b72; } .type { color: #ffa657; } .func { color: #d2a8ff; }
+.num { color: #79c0ff; } .cmt { color: #8b949e; font-style: italic; }
+.nav { display: flex; justify-content: space-between; align-items: center; margin-top: 30px; }
+.nav button { background: #21262d; color: #c9d1d9; border: 1px solid #30363d; padding: 10px 24px; border-radius: 8px; cursor: pointer; font-size: 1em; transition: background 0.2s; }
+.nav button:hover { background: #30363d; } .nav .page-indicator { font-size: 1em; color: #8b949e; }
+.title-slide { text-align: center; padding-top: 40px; }
+.title-slide h1 { font-size: 2.8em; border: none; }
+.title-slide .subtitle { font-size: 1.3em; color: #8b949e; margin: 16px 0; }
+.tag { display: inline-block; background: #1f6feb33; color: #58a6ff; padding: 4px 14px; border-radius: 20px; margin: 4px; font-size: 0.92em; border: 1px solid #1f6feb55; }
+.tree { font-family: 'Fira Code', 'Consolas', monospace; white-space: pre; background: #0d1117; padding: 14px; border-radius: 6px; border: 1px solid #30363d; line-height: 1.5; font-size: 0.82em; overflow-x: auto; }
+</style>
+</head>
+<body>
+<div id="app">
+<div class="slide active" id="s1">
+<div class="title-slide">
+<h1>第12课：树链剖分</h1>
+<p class="subtitle">Heavy-Light Decomposition（HLD）</p>
+<div class="tags">
+<span class="tag">CSP-S 高级图论</span><span class="tag">O(log² n)</span><span class="tag">DFS序</span><span class="tag">路径转区间</span>
+</div>
+<p style="margin-top:30px; color:#8b949e">将树上路径操作转化为区间操作的核心技术</p>
+</div>
+</div>
+
+<div class="slide" id="s2">
+<h1>📖 知识精讲 — 核心概念</h1>
+<h2>轻重链剖分定义</h2>
+<table style="width:100%; border-collapse:collapse; margin:12px 0">
+<tr style="border-bottom:1px solid #30363d"><td style="padding:6px"><span class="highlight">重儿子</span></td><td style="padding:6px">子树节点数最多的儿子</td></tr>
+<tr style="border-bottom:1px solid #30363d"><td style="padding:6px"><span class="info">轻儿子</span></td><td style="padding:6px">除重儿子外的其他儿子</td></tr>
+<tr style="border-bottom:1px solid #30363d"><td style="padding:6px"><span class="accent">重边/轻边</span></td><td style="padding:6px">父节点连向重/轻儿子的边</td></tr>
+<tr style="border-bottom:1px solid #30363d"><td style="padding:6px"><span class="accent">重链</span></td><td style="padding:6px">由连续重边组成的路径</td></tr>
+<tr style="border-bottom:1px solid #30363d"><td style="padding:6px"><span class="highlight">top[u]</span></td><td style="padding:6px">节点 u 所在重链的顶端节点</td></tr>
+</table>
+
+<h3>关键性质</h3>
+<ul>
+<li>根到任意叶子的路径上，轻边不超过 <span class="accent">O(log n)</span> 条</li>
+<li>每条<span class="highlight">重链上的节点 DFS 序连续</span></li>
+<li>DFS 序中，子树区间为 <span class="info">[dfn[u], dfn[u] + siz[u] - 1]</span></li>
+</ul>
+</div>
+
+<div class="slide" id="s3">
+<h1>📖 知识精讲 — 两次 DFS</h1>
+<h3>DFS1：计算子树信息</h3>
+<p>求 father、depth、siz、<span class="highlight">heavy（重儿子）</span></p>
+
+<h3 style="margin-top:16px">DFS2：分配 DFS 序</h3>
+<p><span class="highlight">优先遍历重儿子</span> → 重链上 dfn 连续</p>
+<p>轻儿子作为新重链的顶端</p>
+
+<pre><span class="cmt">// DFS2 核心逻辑</span>
+<span class="type">void</span> <span class="func">dfs2</span>(<span class="type">int</span> u, <span class="type">int</span> tp) {
+    dfn[u] = ++timer; rnk[timer] = u; top[u] = tp;
+    <span class="kw">if</span> (heavy[u] == <span class="num">0</span>) <span class="kw">return</span>;
+    <span class="func">dfs2</span>(heavy[u], tp);         <span class="cmt">// 优先重儿子！</span>
+    <span class="kw">for</span> (<span class="type">int</span> v : adj[u]) {
+        <span class="kw">if</span> (v == parent[u] || v == heavy[u]) <span class="kw">continue</span>;
+        <span class="func">dfs2</span>(v, v);              <span class="cmt">// 轻儿子：新链顶</span>
+    }
+}</pre>
+</div>
+
+<div class="slide" id="s4">
+<h1>💻 代码模板 — 路径跳链</h1>
+<h3>核心：路径跳链算法</h3>
+<pre><span class="cmt">// 查询路径 u-v 的和</span>
+<span class="type">long long</span> <span class="func">query_path</span>(<span class="type">int</span> u, <span class="type">int</span> v) {
+    <span class="type">long long</span> res = <span class="num">0</span>;
+    <span class="kw">while</span> (top[u] != top[v]) {           <span class="cmt">// 不在同一条链</span>
+        <span class="kw">if</span> (depth[top[u]] &lt; depth[top[v]])
+            <span class="func">swap</span>(u, v);                      <span class="cmt">// 确保 u 的链顶更深</span>
+        res += seg.<span class="func">sum</span>(dfn[top[u]], dfn[u]); <span class="cmt">// 查当前链</span>
+        u = parent[top[u]];                 <span class="cmt">// 跳到链顶的父节点</span>
+    }
+    <span class="kw">if</span> (depth[u] &gt; depth[v]) <span class="func">swap</span>(u, v);
+    res += seg.<span class="func">sum</span>(dfn[u], dfn[v]);          <span class="cmt">// 同一条链，查剩余</span>
+    <span class="kw">return</span> res;
+}</pre>
+
+<h3>时间复杂度</h3>
+<p>每条路径分解为 <span class="accent">O(log n)</span> 条重链 × 每次区间查询 <span class="accent">O(log n)</span> = <span class="highlight">O(log² n)</span></p>
+<p>子树操作：只需 1 个区间 → <span class="accent">O(log n)</span></p>
+</div>
+
+<div class="slide" id="s5">
+<h1>⚠️ 易错点与优化技巧</h1>
+<ul>
+<li><span class="highlight">⚠ dfs2 优先遍历重儿子</span> — 重链连续的关键，忘记会全错</li>
+<li><span class="highlight">⚠ 跳链比较 depth[top[u]]</span> — 不是 depth[u]！</li>
+<li><span class="highlight">⚠ 跳链后 u = parent[top[u]]</span> — 不是 parent[u]</li>
+<li><span class="highlight">⚠ 同链后确保 dfn 有序</span> — 深度小的 dfn 也小</li>
+<li><span class="accent">✔ dfn 从 1 开始</span> — 方便直接配合线段树</li>
+<li><span class="accent">✔ 线段树用 dfn 索引</span> — 不是原始节点编号</li>
+<li><span class="accent">✔ 子树区间</span> — [dfn[u], dfn[u] + siz[u] - 1]</li>
+<li><span class="accent">✔ lca 可用 HLD</span> — 最后在同一链上深度小的即为 LCA</li>
+</ul>
+</div>
+
+<div class="slide" id="s6">
+<h1>📝 真题精练</h1>
+<h3>真题一：树上路径修改 + 查询</h3>
+<p><span class="info">操作：</span>路径加 x、查询路径和、子树加 x、查询子树和</p>
+<p><span class="info">n, m ≤ 10⁵</span></p>
+<p>路径 O(log² n)，子树 O(log n)</p>
+
+<div style="background:#0d1117; padding:14px; border-radius:8px; border:1px solid #30363d; margin-top:20px">
+<h3>真题二：HLD 求 LCA</h3>
+<pre><span class="type">int</span> <span class="func">lca</span>(<span class="type">int</span> u, <span class="type">int</span> v) {
+    <span class="kw">while</span> (top[u] != top[v]) {
+        <span class="kw">if</span> (depth[top[u]] &lt; depth[top[v]]) <span class="func">swap</span>(u, v);
+        u = parent[top[u]];
+    }
+    <span class="kw">return</span> depth[u] &lt; depth[v] ? u : v;
+}</pre>
+<p><span class="accent">O(log n) 单次查询</span>，常数比倍增法大，但可顺便维护路径信息</p>
+</div>
+</div>
+
+<div class="slide" id="s7">
+<h1>🎯 本课小结</h1>
+<div style="display:grid; grid-template-columns:1fr 1fr; gap:16px; margin-top:20px">
+<div style="background:#0d1117; padding:18px; border-radius:8px; border:1px solid #30363d">
+<h3>两遍 DFS</h3>
+<p>DFS1：重儿子、子树大小</p>
+<p>DFS2：DFS序（优先重儿）</p>
+</div>
+<div style="background:#0d1117; padding:18px; border-radius:8px; border:1px solid #30363d">
+<h3>路径操作</h3>
+<p>跳链：while top不同</p>
+<p>每次 O(log n) × O(log n)</p>
+<p>= O(log² n)</p>
+</div>
+<div style="background:#0d1117; padding:18px; border-radius:8px; border:1px solid #30363d">
+<h3>子树操作</h3>
+<p>1 个连续区间</p>
+<p>O(log n)</p>
+</div>
+<div style="background:#0d1117; padding:18px; border-radius:8px; border:1px solid #30363d">
+<h3>HLD + 线段树</h3>
+<p>HLD 提供区间映射</p>
+<p>线段树提供区间操作</p>
+<p>树剖 + 线段树 = 树上 DS</p>
+</div>
+</div>
+</div>
+
+<div class="nav">
+<button onclick="prevSlide()">◀ 上一页</button>
+<span class="page-indicator" id="pageNum">1 / 7</span>
+<button onclick="nextSlide()">下一页 ▶</button>
+</div>
+</div>
+<script>
+let current = 0;
+const slides = document.querySelectorAll('.slide');
+const total = slides.length;
+function showSlide(n) {
+    slides[current].classList.remove('active');
+    current = ((n % total) + total) % total;
+    slides[current].classList.add('active');
+    document.getElementById('pageNum').textContent = (current + 1) + ' / ' + total;
+}
+function nextSlide() { showSlide(current + 1); }
+function prevSlide() { showSlide(current - 1); }
+document.addEventListener('keydown', function(e) {
+    if (e.key === 'ArrowRight' || e.key === 'ArrowDown') nextSlide();
+    if (e.key === 'ArrowLeft' || e.key === 'ArrowUp') prevSlide();
+});
+</script>
+</body>
+</html>

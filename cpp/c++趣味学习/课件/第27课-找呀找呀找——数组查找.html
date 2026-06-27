@@ -1,0 +1,211 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>第27课：找呀找呀找——数组查找</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font-family: 'PingFang SC', 'Microsoft YaHei', sans-serif; background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%); min-height: 100vh; display: flex; justify-content: center; align-items: center; }
+        .slides-container { width: 90%; max-width: 900px; min-height: 550px; background: white; border-radius: 25px; padding: 40px; box-shadow: 0 20px 60px rgba(0,0,0,0.3); position: relative; padding-bottom: 90px; }
+        .slide { display: none; animation: fadeIn 0.5s; }
+        .slide.active { display: block; }
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
+        h1 { color: #0d47a1; font-size: 2.2em; margin-bottom: 20px; }
+        h2 { color: #1565c0; font-size: 1.8em; margin-bottom: 15px; }
+        h3 { color: #2e7d32; font-size: 1.4em; margin: 15px 0 10px; }
+        p, li { font-size: 1.15em; line-height: 1.8; color: #333; }
+        ul, ol { padding-left: 30px; margin: 10px 0; }
+        .code-block { background: #1e1e2e; color: #cdd6f4; padding: 20px; border-radius: 12px; font-family: 'Courier New', monospace; font-size: 0.95em; line-height: 1.6; overflow-x: auto; margin: 15px 0; white-space: pre-wrap; word-break: break-all; }
+        .nav-buttons { position: absolute; bottom: 20px; left: 40px; right: 40px; display: flex; justify-content: space-between; }
+        .nav-btn { background: linear-gradient(135deg, #4facfe, #00f2fe); color: white; border: none; padding: 12px 30px; border-radius: 30px; font-size: 1.1em; cursor: pointer; transition: transform 0.2s; font-family: 'PingFang SC', 'Microsoft YaHei', sans-serif; }
+        .nav-btn:hover { transform: scale(1.05); }
+        .nav-btn:disabled { opacity: 0.4; cursor: default; transform: none; }
+        .page-indicator { font-size: 1.1em; color: #1565c0; align-self: center; }
+        .emoji-big { font-size: 3em; text-align: center; display: block; margin: 15px 0; }
+        .badge { display: inline-block; background: #e3f2fd; color: #0d47a1; padding: 5px 15px; border-radius: 20px; font-size: 0.9em; margin: 3px; }
+        table { width: 100%; border-collapse: collapse; margin: 15px 0; }
+        th, td { border: 2px solid #ddd; padding: 10px; text-align: left; }
+        th { background: #4facfe; color: white; }
+        .highlight-box { background: #fff3cd; border-left: 5px solid #ffc107; padding: 15px; border-radius: 8px; margin: 15px 0; }
+        .tip-box { background: #d4edda; border-left: 5px solid #28a745; padding: 15px; border-radius: 8px; margin: 15px 0; }
+        @media (max-width: 600px) { .slides-container { padding: 25px; } h1 { font-size: 1.5em; } .code-block { font-size: 0.75em; } }
+    </style>
+</head>
+<body>
+    <div class="slides-container">
+        <!-- 幻灯片1：标题页 -->
+        <div class="slide active">
+            <span class="emoji-big">🔍</span>
+            <h1>第27课：找呀找呀找——数组查找</h1>
+            <p><span class="badge">第三单元：数据的组织</span> <span class="badge">课时：45分钟</span></p>
+            <p style="font-size: 1.3em; margin-top: 20px;"><strong>项目：</strong>寻找最高分的同学</p>
+            <div style="margin-top: 30px;">
+                <p>🔹 如何在数组中查找数据？</p>
+                <p>🔹 如何找到最大值和最小值？</p>
+                <p>🔹 用程序分析全班成绩！</p>
+            </div>
+        </div>
+
+        <!-- 幻灯片2：学习目标 -->
+        <div class="slide">
+            <h2>📋 学习目标</h2>
+            <ol>
+                <li><strong>理解线性查找</strong>的原理——从第一个元素开始，逐个比较，直到找到目标值。</li>
+                <li><strong>掌握查找最大值</strong>的算法——假设第一个最大，逐个比较并更新。</li>
+                <li><strong>掌握查找最小值</strong>的算法——与最大值类似，但比较方向相反。</li>
+                <li><strong>能够综合运用</strong>数组查找解决实际问题，如成绩分析、数据统计。</li>
+            </ol>
+            <div class="tip-box">
+                <strong>💡 小提示：</strong>数组查找就像在书架上找一本书——你可以一本一本翻过去看，这就是"线性查找"！
+            </div>
+        </div>
+
+        <!-- 幻灯片3：核心知识 -->
+        <div class="slide">
+            <h2>🧠 核心知识</h2>
+
+            <h3>1. 线性查找（Linear Search）</h3>
+            <p>从数组的第一个元素开始，<strong>逐个比较</strong>，直到找到目标值或遍历完整个数组。用 <code>break</code> 可以在找到后立即退出循环。</p>
+            <div class="code-block">// 在数组中查找目标值
+int pos = -1;  // -1 表示没找到
+for (int i = 0; i < n; i++) {
+    if (arr[i] == target) {
+        pos = i;
+        break;  // 找到了，退出！
+    }
+}</div>
+
+            <h3>2. 查找最大值算法</h3>
+            <div class="code-block">int maxVal = arr[0];   // 假设第一个最大
+int maxIdx = 0;         // 记录位置
+for (int i = 1; i < n; i++) {
+    if (arr[i] > maxVal) {
+        maxVal = arr[i];  // 更新最大值
+        maxIdx = i;       // 更新位置
+    }
+}</div>
+
+            <h3>3. 查找最小值算法</h3>
+            <p>与最大值同理，把 <code>&gt;</code> 换成 <code>&lt;</code> 即可！</p>
+        </div>
+
+        <!-- 幻灯片4：完整代码示例 -->
+        <div class="slide">
+            <h2>💻 完整代码：寻找最高分的同学</h2>
+            <div class="code-block">#include &lt;iostream&gt;
+#include &lt;string&gt;
+using namespace std;
+
+int main() {
+    const int N = 5;
+    string names[N];
+    int scores[N];
+
+    // 输入学生姓名和成绩
+    for (int i = 0; i &lt; N; i++) {
+        cout &lt;&lt; "姓名：";
+        cin &gt;&gt; names[i];
+        cout &lt;&lt; "成绩：";
+        cin &gt;&gt; scores[i];
+    }
+
+    // 查找最高分
+    int maxScore = scores[0], maxIdx = 0;
+    for (int i = 1; i &lt; N; i++) {
+        if (scores[i] &gt; maxScore) {
+            maxScore = scores[i];
+            maxIdx = i;
+        }
+    }
+
+    // 查找最低分
+    int minScore = scores[0], minIdx = 0;
+    for (int i = 1; i &lt; N; i++) {
+        if (scores[i] &lt; minScore) {
+            minScore = scores[i];
+            minIdx = i;
+        }
+    }
+
+    cout &lt;&lt; "最高分：" &lt;&lt; names[maxIdx]
+         &lt;&lt; " " &lt;&lt; maxScore &lt;&lt; "分" &lt;&lt; endl;
+    cout &lt;&lt; "最低分：" &lt;&lt; names[minIdx]
+         &lt;&lt; " " &lt;&lt; minScore &lt;&lt; "分" &lt;&lt; endl;
+
+    return 0;
+}</div>
+            <div class="highlight-box">
+                <strong>⚡ 注意：</strong>数组下标从0开始！第i个元素的位置就是下标i，但是从"第几个"来说，是第 i+1 个。
+            </div>
+        </div>
+
+        <!-- 幻灯片5：练习与挑战 -->
+        <div class="slide">
+            <h2>📝 课后练习与挑战</h2>
+
+            <h3>基础练习</h3>
+            <ol>
+                <li><strong>找最小值：</strong>输入10个整数，找出最小值及其下标。</li>
+                <li><strong>统计分数段：</strong>15位同学的成绩中，90分以上（优秀）和60分以下（不及格）各有多少人？</li>
+                <li><strong>找高于平均分的同学：</strong>输入5位同学姓名和成绩，输出所有高于平均分的同学。</li>
+            </ol>
+
+            <h3>🏆 挑战任务</h3>
+            <div class="highlight-box">
+                <p><strong>寻找最高分的同学——升级版：</strong></p>
+                <p>① 输入全班同学姓名和成绩<br>
+                   ② 找出最高分和最低分的同学<br>
+                   ③ 计算平均分，输出高于平均分的同学<br>
+                   ④ 支持按姓名查找某位同学的成绩<br>
+                   ⑤ <em>（选做）</em>将成绩从高到低排序输出</p>
+            </div>
+        </div>
+
+        <!-- 幻灯片6：本课小结 -->
+        <div class="slide">
+            <h2>✅ 本课小结</h2>
+            <ul>
+                <li><strong>线性查找</strong>是最基本的查找方法：从第一个元素开始，逐个比较，直到找到目标。</li>
+                <li>查找<strong>最大值</strong>：假设第一个最大，遍历比较，遇到更大的就更新。</li>
+                <li>查找<strong>最小值</strong>：方法与最大值相同，比较条件从"大于"变成"小于"。</li>
+                <li><strong>记录位置</strong>很重要——不仅要知道值，还要知道是谁（哪个下标）。</li>
+                <li><strong>break</strong> 语句可以在找到目标后立即退出循环，提高效率。</li>
+                <li>数组查找是编程中<strong>最常用的操作</strong>之一，掌握它就能解决成绩分析、数据统计等实际问题！</li>
+            </ul>
+            <div class="tip-box">
+                <strong>🌟 下节课预告：</strong>数组不仅能存储数据，还能用来"计数"！我们将在第28课学习数组的趣味应用——频率计数。
+            </div>
+        </div>
+
+        <!-- 导航按钮 -->
+        <div class="nav-buttons">
+            <button class="nav-btn" onclick="prevSlide()" disabled>⬅ 上一页</button>
+            <span class="page-indicator" id="pageIndicator">1 / 6</span>
+            <button class="nav-btn" onclick="nextSlide()">下一页 ➡</button>
+        </div>
+    </div>
+
+    <script>
+        let currentSlide = 0;
+        const slides = document.querySelectorAll('.slide');
+        const totalSlides = slides.length;
+        const indicator = document.getElementById('pageIndicator');
+        function showSlide(n) {
+            slides[currentSlide].classList.remove('active');
+            currentSlide = (n + totalSlides) % totalSlides;
+            slides[currentSlide].classList.add('active');
+            indicator.textContent = (currentSlide + 1) + ' / ' + totalSlides;
+            document.querySelectorAll('.nav-btn')[0].disabled = currentSlide === 0;
+            document.querySelectorAll('.nav-btn')[1].disabled = currentSlide === totalSlides - 1;
+        }
+        function nextSlide() { showSlide(currentSlide + 1); }
+        function prevSlide() { showSlide(currentSlide - 1); }
+        document.addEventListener('keydown', function(e) {
+            if (e.key === 'ArrowRight' || e.key === ' ') { e.preventDefault(); nextSlide(); }
+            else if (e.key === 'ArrowLeft') { e.preventDefault(); prevSlide(); }
+        });
+        indicator.textContent = (currentSlide + 1) + ' / ' + totalSlides;
+    </script>
+</body>
+</html>

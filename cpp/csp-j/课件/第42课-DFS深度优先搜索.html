@@ -1,0 +1,706 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>CSP-J 备考课程 - 第42课：DFS深度优先搜索</title>
+    <style>
+        :root {
+            --primary: #1a237e;
+            --primary-light: #283593;
+            --accent: #ffd600;
+            --accent-light: #ffea00;
+            --bg: #ffffff;
+            --text: #212121;
+            --text-light: #616161;
+            --code-bg: #1e1e1e;
+            --code-text: #d4d4d4;
+            --slide-radius: 12px;
+            --shadow: 0 4px 24px rgba(0,0,0,0.12);
+            --tip-border: #ff8f00;
+            --tip-bg: #fff8e1;
+        }
+
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "PingFang SC", "Microsoft YaHei", sans-serif;
+            background: #f0f2f5;
+            color: var(--text);
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+
+        /* Title Bar */
+        .title-bar {
+            width: 100%;
+            background: var(--primary);
+            color: white;
+            padding: 14px 32px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.15);
+            position: sticky;
+            top: 0;
+            z-index: 100;
+        }
+        .title-bar .course-name {
+            font-size: 18px;
+            font-weight: 700;
+            letter-spacing: 1px;
+        }
+        .title-bar .lesson-info {
+            font-size: 14px;
+            opacity: 0.9;
+        }
+        .title-bar .progress {
+            font-size: 14px;
+            background: rgba(255,255,255,0.2);
+            padding: 4px 14px;
+            border-radius: 20px;
+        }
+
+        /* Main Container */
+        .container {
+            width: 100%;
+            max-width: 1000px;
+            padding: 32px 20px;
+            flex: 1;
+        }
+
+        /* Slide */
+        .slide {
+            display: none;
+            background: var(--bg);
+            border-radius: var(--slide-radius);
+            box-shadow: var(--shadow);
+            padding: 48px 56px;
+            min-height: 520px;
+            animation: fadeSlideIn 0.4s ease;
+        }
+        .slide.active {
+            display: block;
+        }
+
+        @keyframes fadeSlideIn {
+            from { opacity: 0; transform: translateY(20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        /* Slide Content Styles */
+        .slide h1 {
+            font-size: 36px;
+            color: var(--primary);
+            margin-bottom: 16px;
+            border-bottom: 3px solid var(--accent);
+            padding-bottom: 12px;
+            display: inline-block;
+        }
+        .slide h2 {
+            font-size: 28px;
+            color: var(--primary);
+            margin-bottom: 20px;
+            margin-top: 8px;
+        }
+        .slide h3 {
+            font-size: 22px;
+            color: var(--primary-light);
+            margin-bottom: 12px;
+            margin-top: 24px;
+        }
+        .slide p {
+            font-size: 17px;
+            line-height: 1.8;
+            margin-bottom: 16px;
+            color: #333;
+        }
+        .slide ul, .slide ol {
+            font-size: 17px;
+            line-height: 2;
+            margin-left: 24px;
+            margin-bottom: 16px;
+            color: #333;
+        }
+        .slide ul li::marker {
+            color: var(--accent);
+        }
+
+        /* Title Slide */
+        .slide-title {
+            text-align: center;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            min-height: 520px;
+        }
+        .slide-title .lesson-number {
+            font-size: 72px;
+            font-weight: 900;
+            color: var(--primary);
+            margin-bottom: 8px;
+        }
+        .slide-title .lesson-title {
+            font-size: 32px;
+            color: var(--primary-light);
+            margin-bottom: 24px;
+        }
+        .slide-title .subtitle {
+            font-size: 18px;
+            color: var(--text-light);
+            margin-bottom: 8px;
+        }
+        .slide-title .accent-bar {
+            width: 80px;
+            height: 4px;
+            background: var(--accent);
+            margin: 20px auto;
+            border-radius: 2px;
+        }
+
+        /* Code Blocks */
+        pre {
+            background: var(--code-bg);
+            border-radius: 8px;
+            padding: 20px 24px;
+            overflow-x: auto;
+            margin: 16px 0;
+            font-size: 14px;
+            line-height: 1.6;
+        }
+        code {
+            font-family: "Consolas", "Monaco", "Courier New", monospace;
+            color: var(--code-text);
+        }
+        .code-inline {
+            background: #f5f5f5;
+            color: #c62828;
+            padding: 2px 8px;
+            border-radius: 4px;
+            font-size: 15px;
+            border: 1px solid #e0e0e0;
+        }
+
+        /* Syntax Highlighting */
+        .kw { color: #569cd6; } /* keyword */
+        .ty { color: #4ec9b0; } /* type */
+        .fn { color: #dcdcaa; } /* function */
+        .nu { color: #b5cea8; } /* number */
+        .st { color: #ce9178; } /* string */
+        .cm { color: #6a9955; } /* comment */
+        .op { color: #d4d4d4; } /* operator */
+        .pp { color: #c586c0; } /* preprocessor */
+
+        /* Tip Box */
+        .tip-box {
+            border-left: 4px solid var(--tip-border);
+            background: var(--tip-bg);
+            padding: 16px 20px;
+            margin: 20px 0;
+            border-radius: 0 8px 8px 0;
+            font-size: 15px;
+        }
+        .tip-box .tip-title {
+            font-weight: 700;
+            color: #e65100;
+            margin-bottom: 6px;
+            font-size: 16px;
+        }
+        .tip-box.warning {
+            border-left-color: #c62828;
+            background: #ffebee;
+        }
+        .tip-box.warning .tip-title {
+            color: #c62828;
+        }
+        .tip-box.success {
+            border-left-color: #2e7d32;
+            background: #e8f5e9;
+        }
+        .tip-box.success .tip-title {
+            color: #2e7d32;
+        }
+
+        /* Table */
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 16px 0;
+            font-size: 15px;
+        }
+        th {
+            background: var(--primary);
+            color: white;
+            padding: 10px 16px;
+            text-align: left;
+        }
+        td {
+            padding: 10px 16px;
+            border-bottom: 1px solid #e0e0e0;
+        }
+        tr:nth-child(even) td {
+            background: #fafafa;
+        }
+
+        /* Grid */
+        .grid-2 {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 24px;
+            margin: 16px 0;
+        }
+        .grid-2 .card {
+            background: #f5f7ff;
+            border-radius: 8px;
+            padding: 20px;
+            border: 1px solid #e8eaf6;
+        }
+        .grid-2 .card h3 {
+            margin-top: 0;
+        }
+
+        /* Backtracking visualization */
+        .backtrack-flow {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            margin: 16px 0;
+            flex-wrap: wrap;
+            justify-content: center;
+        }
+        .backtrack-step {
+            background: var(--primary);
+            color: white;
+            padding: 10px 18px;
+            border-radius: 8px;
+            font-weight: 700;
+            font-size: 15px;
+        }
+        .backtrack-arrow {
+            color: var(--primary);
+            font-size: 24px;
+            font-weight: 900;
+        }
+
+        /* Navigation */
+        .nav-bar {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 20px;
+            padding: 20px 0;
+        }
+        .nav-btn {
+            background: var(--primary);
+            color: white;
+            border: none;
+            padding: 10px 28px;
+            border-radius: 24px;
+            font-size: 15px;
+            cursor: pointer;
+            transition: all 0.2s;
+            font-weight: 600;
+        }
+        .nav-btn:hover {
+            background: var(--primary-light);
+            transform: translateY(-1px);
+            box-shadow: 0 4px 12px rgba(26,35,126,0.3);
+        }
+        .nav-btn:disabled {
+            background: #bdbdbd;
+            cursor: not-allowed;
+            transform: none;
+            box-shadow: none;
+        }
+        .slide-dots {
+            display: flex;
+            gap: 8px;
+        }
+        .dot {
+            width: 10px;
+            height: 10px;
+            border-radius: 50%;
+            background: #ccc;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+        .dot.active {
+            background: var(--primary);
+            width: 28px;
+            border-radius: 12px;
+        }
+        .dot:hover {
+            background: var(--primary-light);
+        }
+
+        /* Keywords highlighted */
+        .highlight {
+            background: linear-gradient(180deg, transparent 60%, var(--accent) 60%);
+            padding: 0 4px;
+        }
+
+        /* Summary List */
+        .summary-list li {
+            padding: 8px 0;
+            font-size: 18px;
+        }
+        .summary-list li strong {
+            color: var(--primary);
+        }
+
+        /* Responsive */
+        @media (max-width: 768px) {
+            .slide {
+                padding: 32px 24px;
+            }
+            .slide h1 { font-size: 26px; }
+            .slide h2 { font-size: 22px; }
+            .slide p, .slide li { font-size: 15px; }
+            .grid-2 { grid-template-columns: 1fr; }
+            .slide-title .lesson-number { font-size: 48px; }
+            .slide-title .lesson-title { font-size: 24px; }
+            .backtrack-flow { flex-direction: column; }
+            .backtrack-arrow { transform: rotate(90deg); }
+        }
+    </style>
+</head>
+<body>
+
+    <!-- Title Bar -->
+    <div class="title-bar">
+        <span class="course-name">CSP-J 备考课程</span>
+        <span class="lesson-info">第42课：DFS深度优先搜索</span>
+        <span class="progress" id="progressText">1 / 8</span>
+    </div>
+
+    <div class="container">
+
+        <!-- Slide 1: Title -->
+        <div class="slide slide-title active" id="slide1">
+            <div class="lesson-number">42</div>
+            <div class="lesson-title">DFS 深度优先搜索</div>
+            <div class="accent-bar"></div>
+            <p class="subtitle">Depth First Search</p>
+            <p class="subtitle">递归 | 回溯 | 连通块 | 迷宫 | 排列</p>
+        </div>
+
+        <!-- Slide 2: What is DFS -->
+        <div class="slide" id="slide2">
+            <h2>一、什么是 DFS？</h2>
+            <p>深度优先搜索的核心思想：<strong>沿着一条路径尽可能深地探索，直到无法继续才回溯到上一个分支点，尝试其他路径。</strong></p>
+
+            <div class="tip-box">
+                <div class="tip-title">形象理解</div>
+                <p>好比走迷宫：一直往前走，遇到岔路就选一条继续走，走到死胡同就退回到上一个岔路口，换另一条路。<span class="highlight">"一条路走到黑、不撞南墙不回头"</span>。</p>
+            </div>
+
+            <h3>DFS 递归框架（必须背熟！）</h3>
+            <pre><code><span class="kw">bool</span> vis[<span class="nu">N</span>];           <span class="cm">// 标记数组</span>
+<span class="kw">vector</span>&lt;<span class="kw">int</span>&gt; g[<span class="nu">N</span>];      <span class="cm">// 邻接表</span>
+
+<span class="kw">void</span> <span class="fn">dfs</span>(<span class="kw">int</span> u) {
+    vis[u] = <span class="kw">true</span>;        <span class="cm">// ① 标记已访问</span>
+    <span class="cm">// 此处处理当前顶点</span>
+    <span class="kw">for</span> (<span class="kw">int</span> v : g[u]) {   <span class="cm">// ② 遍历邻接点</span>
+        <span class="kw">if</span> (!vis[v])         <span class="cm">// ③ 未访问才递归</span>
+            <span class="fn">dfs</span>(v);          <span class="cm">// ④ 深入探索</span>
+    }
+}</code></pre>
+
+            <div class="tip-box warning">
+                <div class="tip-title">致命错误</div>
+                <p>如果忘记写 <span class="code-inline">vis[u] = true</span>，DFS 会在无向图中无限循环：A → B → A → B... 最后栈溢出！</p>
+            </div>
+        </div>
+
+        <!-- Slide 3: DFS vs BFS -->
+        <div class="slide" id="slide3">
+            <h2>二、DFS vs BFS 对比</h2>
+
+            <table>
+                <tr><th>特性</th><th>DFS</th><th>BFS</th></tr>
+                <tr><td>实现方式</td><td>递归（或栈）</td><td>队列</td></tr>
+                <tr><td>遍历顺序</td><td>深度优先</td><td>广度（层次）优先</td></tr>
+                <tr><td>空间复杂度</td><td>O(h)，h 为递归深度</td><td>O(w)，w 为最大宽度</td></tr>
+                <tr><td>求最短路径</td><td>不适合</td><td>✅ 首次到达即最短</td></tr>
+                <tr><td>适用场景</td><td>连通块、回溯、排列</td><td>最短路、层次遍历</td></tr>
+            </table>
+
+            <div class="grid-2">
+                <div class="card">
+                    <h3>DFS 遍历顺序</h3>
+                    <p>以树为例：先序遍历</p>
+                    <pre><code>    1
+   / \
+  2   3
+ / \ / \
+4  5 6  7
+
+DFS: 1 → 2 → 4 → 5 → 3 → 6 → 7</code></pre>
+                </div>
+                <div class="card">
+                    <h3>BFS 遍历顺序</h3>
+                    <p>层序遍历</p>
+                    <pre><code>    1
+   / \
+  2   3
+ / \ / \
+4  5 6  7
+
+BFS: 1 → 2 → 3 → 4 → 5 → 6 → 7</code></pre>
+                </div>
+            </div>
+
+            <div class="tip-box success">
+                <div class="tip-title">记忆口诀</div>
+                <p>DFS 一条路走到黑（适合找所有解）<br>
+                BFS 层层往外推（适合找最短路径）</p>
+            </div>
+        </div>
+
+        <!-- Slide 4: Backtracking -->
+        <div class="slide" id="slide4">
+            <h2>三、回溯法（Backtracking）</h2>
+            <p>回溯法是 DFS 思想的延伸，核心三步曲：</p>
+
+            <div class="backtrack-flow">
+                <div class="backtrack-step">1. 做选择</div>
+                <span class="backtrack-arrow">→</span>
+                <div class="backtrack-step">2. 递归深入</div>
+                <span class="backtrack-arrow">→</span>
+                <div class="backtrack-step">3. 撤销选择</div>
+            </div>
+
+            <h3>全排列生成（经典示例）</h3>
+            <pre><code><span class="kw">int</span> path[<span class="nu">N</span>];      <span class="cm">// 当前排列</span>
+<span class="kw">bool</span> used[<span class="nu">N</span>];    <span class="cm">// 数字是否已被使用</span>
+
+<span class="kw">void</span> <span class="fn">dfs</span>(<span class="kw">int</span> k) {         <span class="cm">// k = 已选了几个数</span>
+    <span class="kw">if</span> (k == n) {           <span class="cm">// 选满了，输出排列</span>
+        <span class="kw">for</span> (<span class="kw">int</span> i = <span class="nu">0</span>; i &lt; n; i++)
+            cout &lt;&lt; path[i] &lt;&lt; <span class="st">" "</span>;
+        cout &lt;&lt; endl; <span class="kw">return</span>;
+    }
+    <span class="kw">for</span> (<span class="kw">int</span> i = <span class="nu">1</span>; i &lt;= n; i++) {
+        <span class="kw">if</span> (!used[i]) {
+            path[k] = i;       <span class="cm">// ① 做选择</span>
+            used[i] = <span class="kw">true</span>;   <span class="cm">// ② 标记已用</span>
+            <span class="fn">dfs</span>(k + <span class="nu">1</span>);         <span class="cm">// ③ 递归</span>
+            used[i] = <span class="kw">false</span>;  <span class="cm">// ④ 回溯！恢复！</span>
+        }
+    }
+}</code></pre>
+
+            <div class="tip-box warning">
+                <div class="tip-title">最易忘的一行代码</div>
+                <p><span class="code-inline">used[i] = false;</span> — 初学者 90% 的错误来源于忘记写这行回溯代码。忘记恢复状态会导致后续分支无法使用该数字，结果严重不全！</p>
+            </div>
+        </div>
+
+        <!-- Slide 5: Connected Components -->
+        <div class="slide" id="slide5">
+            <h2>四、应用1：连通块计数</h2>
+            <p><strong>问题：</strong>给定一个无向图，求图中有多少个连通块（连通分量）。</p>
+
+            <p><strong>核心思想：</strong>对每个未访问的顶点调用一次 DFS，每调用一次就访问完一整个连通块。因此 <span class="highlight">调用 DFS 的次数 = 连通块数</span>。</p>
+
+            <pre><code><span class="kw">int</span> cnt = <span class="nu">0</span>;
+<span class="kw">for</span> (<span class="kw">int</span> i = <span class="nu">1</span>; i &lt;= n; i++) {
+    <span class="kw">if</span> (!vis[i]) {
+        cnt++;          <span class="cm">// 发现新连通块</span>
+        <span class="fn">dfs</span>(i);         <span class="cm">// DFS访问整个连通块</span>
+    }
+}
+cout &lt;&lt; cnt &lt;&lt; endl;   <span class="cm">// 输出连通块数量</span></code></pre>
+
+            <div class="tip-box">
+                <div class="tip-title">扩展示例</div>
+                <p>输入：n=5, 边 {1-2, 2-3, 4-5}</p>
+                <p>连通块1：{1,2,3}；连通块2：{4,5} → 输出 2</p>
+            </div>
+
+            <h3>进阶：统计每个连通块的大小</h3>
+            <pre><code><span class="kw">int</span> <span class="fn">dfs</span>(<span class="kw">int</span> u) {
+    vis[u] = <span class="kw">true</span>;
+    <span class="kw">int</span> size = <span class="nu">1</span>;         <span class="cm">// 当前顶点算1个</span>
+    <span class="kw">for</span> (<span class="kw">int</span> v : g[u])
+        <span class="kw">if</span> (!vis[v])
+            size += <span class="fn">dfs</span>(v);  <span class="cm">// 累加子树大小</span>
+    <span class="kw">return</span> size;
+}</code></pre>
+        </div>
+
+        <!-- Slide 6: Maze -->
+        <div class="slide" id="slide6">
+            <h2>五、应用2：迷宫寻路</h2>
+            <p>给定 N×M 网格迷宫，<span class="code-inline">'.'</span> 可行走，<span class="code-inline">'#'</span> 是墙壁，判断能否从起点走到终点。</p>
+
+            <pre><code><span class="kw">int</span> dx[<span class="nu">4</span>] = {<span class="nu">0</span>, <span class="nu">0</span>, <span class="nu">1</span>, -<span class="nu">1</span>};   <span class="cm">// 四方向偏移</span>
+<span class="kw">int</span> dy[<span class="nu">4</span>] = {<span class="nu">1</span>, -<span class="nu">1</span>, <span class="nu">0</span>, <span class="nu">0</span>};
+
+<span class="kw">bool</span> <span class="fn">dfs</span>(<span class="kw">int</span> x, <span class="kw">int</span> y) {
+    <span class="kw">if</span> (x == tx && y == ty)
+        <span class="kw">return</span> <span class="kw">true</span>;        <span class="cm">// 到达终点</span>
+    vis[x][y] = <span class="kw">true</span>;
+
+    <span class="kw">for</span> (<span class="kw">int</span> i = <span class="nu">0</span>; i &lt; <span class="nu">4</span>; i++) {
+        <span class="kw">int</span> nx = x + dx[i];
+        <span class="kw">int</span> ny = y + dy[i];
+        <span class="kw">if</span> (nx &gt;= <span class="nu">1</span> && nx &lt;= N &&
+            ny &gt;= <span class="nu">1</span> && ny &lt;= M &&
+            maze[nx][ny] == <span class="st">'.'</span> && !vis[nx][ny]) {
+            <span class="kw">if</span> (<span class="fn">dfs</span>(nx, ny))
+                <span class="kw">return</span> <span class="kw">true</span>;  <span class="cm">// 找到通路</span>
+        }
+    }
+    <span class="kw">return</span> <span class="kw">false</span>;  <span class="cm">// 四个方向都不通</span>
+}</code></pre>
+
+            <div class="grid-2">
+                <div class="tip-box success" style="margin:0">
+                    <div class="tip-title">三重检查</div>
+                    <p>1. 边界：不越界<br>
+                    2. 障碍物：是 '.'<br>
+                    3. 已访问：!vis</p>
+                </div>
+                <div class="tip-box warning" style="margin:0">
+                    <div class="tip-title">注意</div>
+                    <p>DFS 找到的路径不一定是最短路径！如果要最短路径，请使用 BFS。</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- Slide 7: Real Exam -->
+        <div class="slide" id="slide7">
+            <h2>六、真题精练</h2>
+
+            <h3>题目1：连通块计数</h3>
+            <p>输入 n 个顶点 m 条边的无向图，输出连通块的数量。</p>
+            <div class="tip-box">
+                <pre style="margin:0"><code><span class="cm">样例输入：</span>
+5 3
+1 2
+2 3
+4 5
+<span class="cm">样例输出：2</span>
+<span class="cm">说明：{1,2,3} 和 {4,5} 两个连通块</span></code></pre>
+            </div>
+
+            <h3>题目2：全排列</h3>
+            <p>输入 n（1 ≤ n ≤ 8），输出 1~n 的所有全排列（字典序）。</p>
+            <div class="tip-box">
+                <pre style="margin:0"><code><span class="cm">样例输入：3</span>
+<span class="cm">样例输出：</span>
+1 2 3
+1 3 2
+2 1 3
+2 3 1
+3 1 2
+3 2 1</code></pre>
+            </div>
+
+            <div class="tip-box warning">
+                <div class="tip-title">考试注意</div>
+                <p>全排列的时间复杂度是 O(n!)，n 通常不会超过 10。如果题目 n 较大（如 n=20），就不能用全排列枚举，要考虑其他算法如状态压缩 DP。</p>
+            </div>
+        </div>
+
+        <!-- Slide 8: Summary -->
+        <div class="slide" id="slide8">
+            <h2>七、本课小结</h2>
+            <ul class="summary-list">
+                <li><strong>DFS 递归框架</strong>：vis 标记 → 遍历邻接点 → 递归深入。四个步骤缺一不可。</li>
+                <li><strong>回溯法三步曲</strong>：①做选择 → ②递归深入 → ③撤销选择（恢复状态）。<span class="highlight">恢复状态是重中之重！</span></li>
+                <li><strong>连通块计数</strong>：对每个未访问顶点调用 DFS，调用次数 = 连通块数。</li>
+                <li><strong>迷宫寻路</strong>：四个方向 + 三重检查（边界、障碍物、vis）。</li>
+                <li><strong>排列组合</strong>：回溯法经典应用，排列 O(n!)，组合 O(C(n,k))。</li>
+                <li><strong>DFS vs BFS</strong>：DFS 找所有解（回溯），BFS 找最短路径。</li>
+                <li><strong>递归深度</strong>：太深可能栈溢出，极端情况考虑手动栈或改用 BFS。</li>
+            </ul>
+
+            <div class="accent-bar" style="margin: 32px auto 0;"></div>
+            <p style="text-align:center; color: var(--text-light); margin-top: 16px;">
+                CSP-J 复赛必考算法，建议将代码模板背到滚瓜烂熟！
+            </p>
+        </div>
+
+    </div>
+
+    <!-- Navigation Bar -->
+    <div class="nav-bar">
+        <button class="nav-btn" id="prevBtn" disabled onclick="prevSlide()">← 上一页</button>
+        <div class="slide-dots" id="slideDots"></div>
+        <button class="nav-btn" id="nextBtn" onclick="nextSlide()">下一页 →</button>
+    </div>
+
+    <script>
+        const totalSlides = 8;
+        let currentSlide = 1;
+
+        // Generate dots
+        const dotsContainer = document.getElementById('slideDots');
+        for (let i = 1; i <= totalSlides; i++) {
+            const dot = document.createElement('span');
+            dot.className = 'dot' + (i === 1 ? ' active' : '');
+            dot.onclick = () => goToSlide(i);
+            dotsContainer.appendChild(dot);
+        }
+
+        function showSlide(n) {
+            document.querySelectorAll('.slide').forEach(s => s.classList.remove('active'));
+            const slide = document.getElementById('slide' + n);
+            if (slide) slide.classList.add('active');
+
+            document.querySelectorAll('.dot').forEach((d, i) => {
+                d.classList.toggle('active', i + 1 === n);
+            });
+
+            document.getElementById('prevBtn').disabled = (n === 1);
+            document.getElementById('nextBtn').disabled = (n === totalSlides);
+
+            document.getElementById('progressText').textContent = n + ' / ' + totalSlides;
+            currentSlide = n;
+        }
+
+        function nextSlide() {
+            if (currentSlide < totalSlides) showSlide(currentSlide + 1);
+        }
+
+        function prevSlide() {
+            if (currentSlide > 1) showSlide(currentSlide - 1);
+        }
+
+        function goToSlide(n) {
+            showSlide(n);
+        }
+
+        // Keyboard navigation
+        document.addEventListener('keydown', function(e) {
+            if (e.key === 'ArrowRight' || e.key === 'ArrowDown' || e.key === ' ') {
+                e.preventDefault();
+                nextSlide();
+            } else if (e.key === 'ArrowLeft' || e.key === 'ArrowUp') {
+                e.preventDefault();
+                prevSlide();
+            }
+        });
+
+        // Touch swipe support
+        let touchStartX = 0;
+        document.addEventListener('touchstart', (e) => {
+            touchStartX = e.changedTouches[0].screenX;
+        });
+        document.addEventListener('touchend', (e) => {
+            const diff = touchStartX - e.changedTouches[0].screenX;
+            if (Math.abs(diff) > 50) {
+                if (diff > 0) nextSlide();
+                else prevSlide();
+            }
+        });
+    </script>
+
+</body>
+</html>

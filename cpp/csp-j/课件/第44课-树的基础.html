@@ -1,0 +1,603 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>第44课：树的基础 — CSP-J 备考课程</title>
+<style>
+* { margin: 0; padding: 0; box-sizing: border-box; }
+
+body {
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "PingFang SC", "Microsoft YaHei", "Helvetica Neue", sans-serif;
+    background: #f5f5f5;
+    color: #212121;
+    overflow: hidden;
+}
+
+/* 顶部标题栏 */
+.title-bar {
+    background: #1a237e;
+    color: #ffffff;
+    padding: 12px 24px;
+    font-size: 18px;
+    font-weight: 700;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    z-index: 100;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.2);
+}
+.title-bar .badge {
+    background: #ffd600;
+    color: #1a237e;
+    padding: 2px 10px;
+    border-radius: 12px;
+    font-size: 13px;
+    font-weight: 600;
+}
+
+/* 幻灯片容器 */
+.slides-container {
+    position: absolute;
+    top: 50px;
+    left: 0;
+    right: 0;
+    bottom: 60px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 16px;
+}
+
+.slide {
+    display: none;
+    background: #ffffff;
+    border-radius: 12px;
+    box-shadow: 0 4px 24px rgba(0,0,0,0.10);
+    max-width: 960px;
+    width: 100%;
+    max-height: 100%;
+    overflow-y: auto;
+    padding: 32px 40px;
+    position: relative;
+}
+.slide.active { display: block; }
+
+.slide h1 {
+    font-size: 28px;
+    color: #1a237e;
+    margin-bottom: 8px;
+    border-bottom: 3px solid #ffd600;
+    padding-bottom: 10px;
+    display: inline-block;
+}
+.slide h2 {
+    font-size: 22px;
+    color: #1a237e;
+    margin: 20px 0 10px;
+}
+.slide h3 {
+    font-size: 18px;
+    color: #283593;
+    margin: 14px 0 8px;
+}
+.slide p, .slide li {
+    font-size: 15px;
+    line-height: 1.75;
+    color: #333;
+    margin-bottom: 6px;
+}
+.slide ul, .slide ol {
+    padding-left: 24px;
+    margin-bottom: 10px;
+}
+
+/* 代码块 */
+.code-block {
+    background: #1e1e1e;
+    color: #d4d4d4;
+    border-radius: 8px;
+    padding: 14px 18px;
+    margin: 10px 0 16px;
+    font-family: "Consolas", "Monaco", "Courier New", monospace;
+    font-size: 13px;
+    line-height: 1.6;
+    overflow-x: auto;
+    white-space: pre-wrap;
+    word-break: break-word;
+}
+.code-block .keyword { color: #569cd6; }
+.code-block .func   { color: #dcdcaa; }
+.code-block .number { color: #b5cea8; }
+.code-block .string { color: #ce9178; }
+.code-block .comment { color: #6a9955; font-style: italic; }
+.code-block .preprocessor { color: #c586c0; }
+.code-block .type { color: #4ec9b0; }
+
+/* 考试技巧提示框 */
+.tip-box {
+    border-left: 4px solid #ffd600;
+    background: #fffde7;
+    padding: 12px 16px;
+    margin: 12px 0;
+    border-radius: 0 8px 8px 0;
+    font-size: 14px;
+}
+.tip-box strong {
+    color: #f57f17;
+}
+
+/* 警告框 */
+.warn-box {
+    border-left: 4px solid #ff9800;
+    background: #fff3e0;
+    padding: 12px 16px;
+    margin: 12px 0;
+    border-radius: 0 8px 8px 0;
+    font-size: 14px;
+}
+.warn-box strong {
+    color: #e65100;
+}
+
+/* 遍历顺序图 */
+.traversal-diagram {
+    display: flex;
+    justify-content: space-around;
+    flex-wrap: wrap;
+    gap: 12px;
+    margin: 12px 0;
+}
+.traversal-card {
+    background: #e8eaf6;
+    border-radius: 8px;
+    padding: 12px 16px;
+    text-align: center;
+    min-width: 140px;
+    flex: 1;
+}
+.traversal-card .title {
+    font-weight: 700;
+    color: #1a237e;
+    margin-bottom: 4px;
+}
+.traversal-card .order {
+    font-family: "Consolas", "Monaco", monospace;
+    font-size: 14px;
+    color: #333;
+}
+
+/* 对比表格 */
+.compare-table {
+    width: 100%;
+    border-collapse: collapse;
+    margin: 12px 0 16px;
+    font-size: 14px;
+}
+.compare-table th {
+    background: #1a237e;
+    color: #ffffff;
+    padding: 8px 12px;
+    text-align: left;
+}
+.compare-table td {
+    padding: 8px 12px;
+    border-bottom: 1px solid #e0e0e0;
+}
+.compare-table tr:nth-child(even) td {
+    background: #fafafa;
+}
+
+/* 底部导航 */
+.nav-bar {
+    position: fixed;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    height: 60px;
+    background: #ffffff;
+    border-top: 1px solid #e0e0e0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 20px;
+    z-index: 100;
+}
+.nav-btn {
+    background: #1a237e;
+    color: #ffffff;
+    border: none;
+    padding: 8px 24px;
+    border-radius: 20px;
+    font-size: 14px;
+    cursor: pointer;
+    font-weight: 600;
+    transition: background 0.2s;
+}
+.nav-btn:hover {
+    background: #283593;
+}
+.nav-btn:disabled {
+    background: #bdbdbd;
+    cursor: not-allowed;
+}
+.nav-btn.gold {
+    background: #ffd600;
+    color: #1a237e;
+}
+.nav-btn.gold:hover {
+    background: #fdd835;
+}
+.slide-indicator {
+    font-size: 14px;
+    color: #666;
+    min-width: 60px;
+    text-align: center;
+}
+
+/* 响应式 */
+@media (max-width: 768px) {
+    .slide { padding: 20px 16px; }
+    .slide h1 { font-size: 22px; }
+    .slide h2 { font-size: 18px; }
+    .code-block { font-size: 11px; padding: 10px; }
+    .traversal-card { min-width: 120px; }
+}
+</style>
+</head>
+<body>
+
+<!-- 标题栏 -->
+<div class="title-bar">
+    <span>CSP-J 备考课程</span>
+    <span class="badge">第44课</span>
+    <span>树的基础</span>
+</div>
+
+<!-- 幻灯片容器 -->
+<div class="slides-container">
+
+    <!-- ========== 第1页：标题页 ========== -->
+    <div class="slide active" id="slide1">
+        <h1>第44课：树的基础</h1>
+        <h3>二叉树 · 遍历 · 并查集</h3>
+        <br>
+        <p><strong>考纲对应：</strong>树的基本概念、二叉树的性质与遍历、并查集入门</p>
+        <p><strong>核心内容：</strong>树的术语 | 二叉树性质 | 四种遍历 | 前中后序重建 | Union-Find | 路径压缩</p>
+        <br>
+        <div class="tip-box">
+            <strong>本课目标：</strong>掌握二叉树的性质与四种遍历方式，理解并查集的基本操作（find / union / 路径压缩），能解决树的遍历和简单并查集问题。
+        </div>
+        <br>
+        <p style="color:#888; font-size:13px;">使用方向键 ← → 或点击下方按钮切换幻灯片</p>
+    </div>
+
+    <!-- ========== 第2页：树的基本概念 ========== -->
+    <div class="slide" id="slide2">
+        <h1>一、树的基本概念</h1>
+
+        <h3>什么是树？</h3>
+        <p>树是一种<strong>非线性数据结构</strong>，模拟层级关系。有 n 个节点的树恰好有 <strong>n-1 条边</strong>，连通且无环。</p>
+
+        <h3>基本术语</h3>
+        <table class="compare-table">
+            <tr><th>术语</th><th>含义</th></tr>
+            <tr><td>根节点 (Root)</td><td>树的最顶层节点，没有父节点，每棵树有且仅有一个根</td></tr>
+            <tr><td>父节点 (Parent)</td><td>直接连接到当前节点上层的节点</td></tr>
+            <tr><td>子节点 (Child)</td><td>直接连接到当前节点下层的节点</td></tr>
+            <tr><td>叶子节点 (Leaf)</td><td>没有子节点的节点（度为0）</td></tr>
+            <tr><td>深度 (Depth)</td><td>从根到该节点的路径长度（边数），根的深度为0</td></tr>
+            <tr><td>高度 (Height)</td><td>从该节点到最远叶子的路径长度，叶子的高度为0</td></tr>
+            <tr><td>度 (Degree)</td><td>一个节点拥有的子节点数目</td></tr>
+        </table>
+
+        <h3>二叉树节点结构（C++）</h3>
+        <div class="code-block"><span class="keyword">struct</span> <span class="type">TreeNode</span> {
+    <span class="type">int</span> val;
+    TreeNode *left;
+    TreeNode *right;
+    <span class="func">TreeNode</span>(<span class="type">int</span> x) : <span class="func">val</span>(x), <span class="func">left</span>(<span class="keyword">nullptr</span>), <span class="func">right</span>(<span class="keyword">nullptr</span>) {}
+};</div>
+    </div>
+
+    <!-- ========== 第3页：二叉树的性质 ========== -->
+    <div class="slide" id="slide3">
+        <h1>二、二叉树的性质</h1>
+
+        <p>二叉树（Binary Tree）是每个节点<strong>最多有两个子节点</strong>（左子节点和右子节点）的树。</p>
+
+        <h3>五大核心性质（常考）</h3>
+        <ol>
+            <li><strong>第 i 层最多节点数：</strong>2<sup>i−1</sup> 个（i ≥ 1）。
+                <br><small>推导：第1层 2⁰=1，第2层 2¹=2，第3层 2²=4 ... 数学归纳法可证</small></li>
+            <li><strong>深度为 k 的二叉树最多节点数：</strong>2<sup>k</sup> − 1 个（k ≥ 1）。
+                <br><small>推导：等比数列和 2⁰ + 2¹ + ... + 2<sup>k−1</sup> = 2<sup>k</sup> − 1</small></li>
+            <li><strong>满二叉树：</strong>深度为 k 且有 2<sup>k</sup>−1 个节点的二叉树（每层都填满）。</li>
+            <li><strong>完全二叉树：</strong>除最后一层外每层填满，且最后一层节点靠左排列。<strong>堆（heap）基于完全二叉树。</strong></li>
+            <li><strong>n0 = n2 + 1：</strong>叶子节点数 = 度为2的节点数 + 1。
+                <br><small>推导：n = n0 + n1 + n2，边数 e = n1 + 2n2 = n − 1，代入得 n0 = n2 + 1</small></li>
+        </ol>
+
+        <h3>特殊二叉树</h3>
+        <ul>
+            <li><strong>二叉搜索树 (BST)：</strong>左子树所有值 &lt; 根 &lt; 右子树所有值。中序遍历 BST 得到递增有序序列。</li>
+            <li><strong>平衡二叉树 (AVL)：</strong>任意节点左右子树高度差不超过 1。</li>
+        </ul>
+
+        <div class="tip-box">
+            <strong>考试技巧：</strong>理解推导过程比死记硬背更重要。对于 k 叉树，第 i 层最多 k<sup>i−1</sup> 个节点，深度 k 的 k 叉树最多 (k<sup>k</sup>−1)/(k−1) 个节点。
+        </div>
+    </div>
+
+    <!-- ========== 第4页：二叉树的遍历 ========== -->
+    <div class="slide" id="slide4">
+        <h1>三、二叉树的四种遍历</h1>
+
+        <p>遍历是 CSP-J 的<strong>必考内容</strong>，必须能脱稿写出四种遍历的递归代码。</p>
+
+        <h3>遍历方式速览</h3>
+        <div class="traversal-diagram">
+            <div class="traversal-card">
+                <div class="title">前序 Preorder</div>
+                <div class="order">根 → 左 → 右</div>
+                <small>第一个一定是根</small>
+            </div>
+            <div class="traversal-card">
+                <div class="title">中序 Inorder</div>
+                <div class="order">左 → 根 → 右</div>
+                <small>BST 中序 = 有序</small>
+            </div>
+            <div class="traversal-card">
+                <div class="title">后序 Postorder</div>
+                <div class="order">左 → 右 → 根</div>
+                <small>最后一个一定是根</small>
+            </div>
+            <div class="traversal-card">
+                <div class="title">层序 Level-order</div>
+                <div class="order">逐层从上到下</div>
+                <small>使用 BFS / 队列</small>
+            </div>
+        </div>
+
+        <h3>递归实现代码</h3>
+        <div class="code-block"><span class="comment">// 前序：根左右</span>
+<span class="keyword">void</span> <span class="func">preorder</span>(TreeNode* root) {
+    <span class="keyword">if</span> (!root) <span class="keyword">return</span>;
+    cout &lt;&lt; root-&gt;val &lt;&lt; <span class="string">" "</span>;
+    <span class="func">preorder</span>(root-&gt;left);
+    <span class="func">preorder</span>(root-&gt;right);
+}
+
+<span class="comment">// 中序：左根右</span>
+<span class="keyword">void</span> <span class="func">inorder</span>(TreeNode* root) {
+    <span class="keyword">if</span> (!root) <span class="keyword">return</span>;
+    <span class="func">inorder</span>(root-&gt;left);
+    cout &lt;&lt; root-&gt;val &lt;&lt; <span class="string">" "</span>;
+    <span class="func">inorder</span>(root-&gt;right);
+}
+
+<span class="comment">// 后序：左右根</span>
+<span class="keyword">void</span> <span class="func">postorder</span>(TreeNode* root) {
+    <span class="keyword">if</span> (!root) <span class="keyword">return</span>;
+    <span class="func">postorder</span>(root-&gt;left);
+    <span class="func">postorder</span>(root-&gt;right);
+    cout &lt;&lt; root-&gt;val &lt;&lt; <span class="string">" "</span>;
+}
+
+<span class="comment">// 层序：队列（BFS）</span>
+<span class="keyword">void</span> <span class="func">levelorder</span>(TreeNode* root) {
+    <span class="keyword">if</span> (!root) <span class="keyword">return</span>;
+    queue&lt;TreeNode*&gt; q;
+    q.<span class="func">push</span>(root);
+    <span class="keyword">while</span> (!q.<span class="func">empty</span>()) {
+        TreeNode* cur = q.<span class="func">front</span>(); q.<span class="func">pop</span>();
+        cout &lt;&lt; cur-&gt;val &lt;&lt; <span class="string">" "</span>;
+        <span class="keyword">if</span> (cur-&gt;left)  q.<span class="func">push</span>(cur-&gt;left);
+        <span class="keyword">if</span> (cur-&gt;right) q.<span class="func">push</span>(cur-&gt;right);
+    }
+}</div>
+
+        <h3>遍历序列重建二叉树</h3>
+        <p><strong>前序 + 中序</strong> 或 <strong>后序 + 中序</strong> 可以唯一确定二叉树。核心：前序第一个 / 后序最后一个 = 根，在中序中确定左右子树范围。</p>
+        <div class="warn-box">
+            <strong>注意：</strong>已知前序和后序<strong>不能</strong>唯一确定二叉树（无法区分左右子树为空的情况）。
+        </div>
+    </div>
+
+    <!-- ========== 第5页：并查集 Union-Find ========== -->
+    <div class="slide" id="slide5">
+        <h1>四、并查集（Union-Find）</h1>
+
+        <p>并查集用于处理<strong>"不相交集合的合并与查询"</strong>问题。两种核心操作：<strong>Find</strong>（查找所属集合）和 <strong>Union</strong>（合并两个集合）。</p>
+
+        <h3>基础版本（理解原理用）</h3>
+        <div class="code-block"><span class="type">int</span> parent[MAXN];
+
+<span class="keyword">void</span> <span class="func">init</span>(<span class="type">int</span> n) {
+    <span class="keyword">for</span> (<span class="type">int</span> i = <span class="number">1</span>; i &lt;= n; i++)
+        parent[i] = i;  <span class="comment">// 每个元素自成集合</span>
+}
+
+<span class="keyword">int</span> <span class="func">find</span>(<span class="type">int</span> x) {
+    <span class="keyword">if</span> (parent[x] == x) <span class="keyword">return</span> x;
+    <span class="keyword">return</span> <span class="func">find</span>(parent[x]);  <span class="comment">// 沿链向上查找</span>
+}
+
+<span class="keyword">void</span> <span class="func">union_sets</span>(<span class="type">int</span> a, <span class="type">int</span> b) {
+    <span class="type">int</span> ra = <span class="func">find</span>(a), rb = <span class="func">find</span>(b);
+    <span class="keyword">if</span> (ra != rb) parent[ra] = rb;
+}</div>
+
+        <div class="warn-box">
+            <strong>问题：</strong>树可能退化成链，find 最坏 O(n)。需要优化！
+        </div>
+
+        <h3>优化版本（CSP-J 必备）</h3>
+        <div class="code-block"><span class="type">int</span> parent[MAXN], rnk[MAXN];
+
+<span class="keyword">void</span> <span class="func">init</span>(<span class="type">int</span> n) {
+    <span class="keyword">for</span> (<span class="type">int</span> i = <span class="number">1</span>; i &lt;= n; i++)
+        parent[i] = i, rnk[i] = <span class="number">0</span>;
+}
+
+<span class="comment">// 路径压缩：关键的一行代码！</span>
+<span class="keyword">int</span> <span class="func">find</span>(<span class="type">int</span> x) {
+    <span class="keyword">if</span> (parent[x] == x) <span class="keyword">return</span> x;
+    <span class="keyword">return</span> parent[x] = <span class="func">find</span>(parent[x]);
+}
+
+<span class="comment">// 按秩合并</span>
+<span class="keyword">void</span> <span class="func">union_sets</span>(<span class="type">int</span> a, <span class="type">int</span> b) {
+    <span class="type">int</span> ra = <span class="func">find</span>(a), rb = <span class="func">find</span>(b);
+    <span class="keyword">if</span> (ra == rb) <span class="keyword">return</span>;
+    <span class="keyword">if</span> (rnk[ra] &lt; rnk[rb]) parent[ra] = rb;
+    <span class="keyword">else</span> <span class="keyword">if</span> (rnk[ra] &gt; rnk[rb]) parent[rb] = ra;
+    <span class="keyword">else</span> { parent[rb] = ra; rnk[ra]++; }
+}</div>
+
+        <div class="tip-box">
+            <strong>核心记忆：</strong><code>return parent[x] = find(parent[x]);</code> — 这一行代码同时完成了递归查找 + 路径压缩。时间复杂度近似 O(1)。
+        </div>
+    </div>
+
+    <!-- ========== 第6页：真题演练 ========== -->
+    <div class="slide" id="slide6">
+        <h1>五、真题演练：树的遍历与朋友圈</h1>
+
+        <h3>题1：前序+中序求后序</h3>
+        <p><strong>题目：</strong>给定二叉树的前序和中序遍历序列（大写字母，互不相同），输出后序遍历序列。</p>
+        <p><strong>输入：</strong><code>ABDECF</code> / <code>DBEACF</code> &nbsp;&nbsp; <strong>输出：</strong><code>DEBFCA</code></p>
+
+        <h4>AC 代码</h4>
+        <div class="code-block"><span class="keyword">#include</span> <span class="string">&lt;iostream&gt;</span>
+<span class="keyword">#include</span> <span class="string">&lt;string&gt;</span>
+<span class="keyword">using</span> <span class="keyword">namespace</span> std;
+
+<span class="keyword">struct</span> <span class="type">TreeNode</span> {
+    <span class="type">char</span> val;
+    TreeNode *left, *right;
+    <span class="func">TreeNode</span>(<span class="type">char</span> x) : <span class="func">val</span>(x), <span class="func">left</span>(<span class="keyword">nullptr</span>), <span class="func">right</span>(<span class="keyword">nullptr</span>) {}
+};
+
+TreeNode* <span class="func">build</span>(string pre, string in) {
+    <span class="keyword">if</span> (pre.<span class="func">empty</span>() || in.<span class="func">empty</span>()) <span class="keyword">return</span> <span class="keyword">nullptr</span>;
+    TreeNode* root = <span class="keyword">new</span> <span class="func">TreeNode</span>(pre[<span class="number">0</span>]);
+    <span class="type">int</span> pos = in.<span class="func">find</span>(pre[<span class="number">0</span>]);
+    root-&gt;left  = <span class="func">build</span>(pre.<span class="func">substr</span>(<span class="number">1</span>, pos), in.<span class="func">substr</span>(<span class="number">0</span>, pos));
+    root-&gt;right = <span class="func">build</span>(pre.<span class="func">substr</span>(pos + <span class="number">1</span>), in.<span class="func">substr</span>(pos + <span class="number">1</span>));
+    <span class="keyword">return</span> root;
+}
+
+<span class="keyword">void</span> <span class="func">postorder</span>(TreeNode* root) {
+    <span class="keyword">if</span> (!root) <span class="keyword">return</span>;
+    <span class="func">postorder</span>(root-&gt;left);
+    <span class="func">postorder</span>(root-&gt;right);
+    cout &lt;&lt; root-&gt;val;
+}
+
+<span class="type">int</span> <span class="func">main</span>() {
+    string pre, in; cin &gt;&gt; pre &gt;&gt; in;
+    TreeNode* root = <span class="func">build</span>(pre, in);
+    <span class="func">postorder</span>(root); cout &lt;&lt; endl;
+}</div>
+
+        <h3>题2：朋友圈（并查集）</h3>
+        <p><strong>题目：</strong>n 个学生，m 对好友关系（传递性），求朋友圈数量。</p>
+        <p><strong>输入：</strong><code>5 3</code> / <code>1 2</code> <code>2 3</code> <code>4 5</code> &nbsp;&nbsp; <strong>输出：</strong><code>2</code></p>
+        <p>解法：将所有关系 union，统计 find(i) == i 的节点数 = 朋友圈数量。</p>
+    </div>
+
+    <!-- ========== 第7页：本课小结 ========== -->
+    <div class="slide" id="slide7">
+        <h1>本课小结</h1>
+
+        <ol>
+            <li><strong>树的基本概念：</strong>n 个节点的树有 n-1 条边，无环连通图。理解根、父、子、叶子、深度、高度、度等术语。</li>
+            <li><strong>二叉树性质（必背）：</strong>第 i 层最多 2<sup>i−1</sup> 个节点；深度 k 最多 2<sup>k</sup>−1 个节点；n0 = n2 + 1。</li>
+            <li><strong>四种遍历（必会）：</strong>前序（根左右）、中序（左根右）、后序（左右根）、层序（BFS 按层）。必须能写出递归代码并手算结果。</li>
+            <li><strong>遍历序列重建：</strong>前序 + 中序 或 后序 + 中序 可唯一重建。前序 + 后序不行。</li>
+            <li><strong>并查集核心操作：</strong>find（带路径压缩）+ union（按秩合并）。路径压缩一行代码 <code>return parent[x] = find(parent[x]);</code> 必须熟记。</li>
+            <li><strong>并查集应用：</strong>判断连通性、统计连通分量数、Kruskal 最小生成树。均摊时间近似 O(1)。</li>
+        </ol>
+
+        <div class="tip-box">
+            <strong>课后练习建议：</strong>
+            <ul>
+                <li>脱稿写出四种遍历的递归代码，并找一个二叉树手算出遍历序列</li>
+                <li>默写并查集的 find + union（含路径压缩 + 按秩合并）</li>
+                <li>练习"前序 + 中序求后序"类题目，理解子串划分逻辑</li>
+            </ul>
+        </div>
+
+        <p style="text-align:center; margin-top:16px; color:#888;">
+            第43-44课是整个搜索与数据结构模块的核心，务必完全掌握！
+        </p>
+    </div>
+
+</div><!-- /slides-container -->
+
+<!-- 底部导航 -->
+<div class="nav-bar">
+    <button class="nav-btn" id="prevBtn" onclick="changeSlide(-1)">◀ 上一页</button>
+    <span class="slide-indicator" id="slideIndicator">1 / 7</span>
+    <button class="nav-btn gold" id="nextBtn" onclick="changeSlide(1)">下一页 ▶</button>
+</div>
+
+<script>
+var currentSlide = 0;
+var slides = document.querySelectorAll('.slide');
+var totalSlides = slides.length;
+
+function showSlide(index) {
+    slides.forEach(function(slide) { slide.classList.remove('active'); });
+    slides[index].classList.add('active');
+    document.getElementById('slideIndicator').textContent = (index + 1) + ' / ' + totalSlides;
+    document.getElementById('prevBtn').disabled = (index === 0);
+    document.getElementById('nextBtn').disabled = (index === totalSlides - 1);
+}
+
+function changeSlide(delta) {
+    var next = currentSlide + delta;
+    if (next >= 0 && next < totalSlides) {
+        currentSlide = next;
+        showSlide(currentSlide);
+    }
+}
+
+// 键盘导航
+document.addEventListener('keydown', function(e) {
+    if (e.key === 'ArrowRight' || e.key === 'ArrowDown') {
+        changeSlide(1);
+    } else if (e.key === 'ArrowLeft' || e.key === 'ArrowUp') {
+        changeSlide(-1);
+    } else if (e.key === 'Home') {
+        currentSlide = 0;
+        showSlide(currentSlide);
+    } else if (e.key === 'End') {
+        currentSlide = totalSlides - 1;
+        showSlide(currentSlide);
+    }
+});
+
+// 触摸滑动支持
+var touchStartX = 0;
+document.addEventListener('touchstart', function(e) {
+    touchStartX = e.changedTouches[0].screenX;
+});
+document.addEventListener('touchend', function(e) {
+    var diff = touchStartX - e.changedTouches[0].screenX;
+    if (Math.abs(diff) > 50) {
+        changeSlide(diff > 0 ? 1 : -1);
+    }
+});
+
+// 初始化
+showSlide(0);
+</script>
+
+</body>
+</html>

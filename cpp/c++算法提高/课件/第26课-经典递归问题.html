@@ -1,0 +1,683 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>第26课：经典递归问题</title>
+    <style>
+        :root {
+            --bg-primary: #1a1a2e;
+            --bg-secondary: #16213e;
+            --bg-card: rgba(255,255,255,0.05);
+            --text-primary: #e0e0e0;
+            --text-secondary: #a0a0b0;
+            --accent: #e94560;
+            --accent-glow: rgba(233, 69, 96, 0.3);
+            --code-bg: #0d1117;
+            --border: rgba(255,255,255,0.1);
+            --shadow: 0 8px 32px rgba(0,0,0,0.4);
+            --success: #7ee787;
+        }
+
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "PingFang SC", "Microsoft YaHei", "Noto Sans SC", sans-serif;
+            background: linear-gradient(135deg, #0f0c29 0%, #302b63 50%, #24243e 100%);
+            min-height: 100vh;
+            color: var(--text-primary);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            overflow-x: hidden;
+        }
+
+        .slideshow-container {
+            width: 100%;
+            max-width: 960px;
+            min-height: 600px;
+            position: relative;
+            padding: 20px;
+        }
+
+        .slide {
+            display: none;
+            animation: fadeIn 0.5s ease-in-out;
+            background: var(--bg-card);
+            border: 1px solid var(--border);
+            border-radius: 16px;
+            padding: 40px 50px;
+            min-height: 550px;
+            box-shadow: var(--shadow);
+            backdrop-filter: blur(10px);
+        }
+        .slide.active { display: block; }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .slide-title {
+            font-size: 2em;
+            color: var(--accent);
+            margin-bottom: 20px;
+            padding-bottom: 12px;
+            border-bottom: 2px solid var(--accent-glow);
+            text-shadow: 0 0 15px var(--accent-glow);
+        }
+        .slide-subtitle {
+            font-size: 1.1em;
+            color: var(--text-secondary);
+            margin-bottom: 25px;
+            line-height: 1.6;
+        }
+
+        .title-slide {
+            text-align: center;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+        }
+        .title-slide h1 {
+            font-size: 3em;
+            color: var(--accent);
+            text-shadow: 0 0 30px var(--accent-glow);
+            margin-bottom: 15px;
+        }
+        .title-slide .subtitle-big {
+            font-size: 1.4em;
+            color: var(--text-secondary);
+            margin-bottom: 30px;
+        }
+        .title-slide .lesson-info {
+            color: var(--text-secondary);
+            font-size: 1em;
+            opacity: 0.7;
+        }
+        .title-icon {
+            font-size: 5em;
+            margin-bottom: 20px;
+            animation: pulse 2s infinite;
+        }
+        @keyframes pulse {
+            0%, 100% { transform: scale(1); opacity: 0.8; }
+            50% { transform: scale(1.1); opacity: 1; }
+        }
+
+        .content-block {
+            line-height: 1.9;
+            font-size: 1.05em;
+            color: var(--text-primary);
+            margin-bottom: 15px;
+        }
+        .content-block strong {
+            color: var(--accent);
+        }
+        .content-block ul {
+            list-style: none;
+            padding-left: 0;
+        }
+        .content-block ul li {
+            padding: 6px 0 6px 24px;
+            position: relative;
+        }
+        .content-block ul li::before {
+            content: "▸";
+            color: var(--accent);
+            position: absolute;
+            left: 0;
+        }
+
+        /* Info Cards */
+        .info-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+            gap: 15px;
+            margin: 20px 0;
+        }
+        .info-card {
+            background: rgba(233, 69, 96, 0.08);
+            border: 1px solid var(--accent-glow);
+            border-radius: 12px;
+            padding: 20px;
+            text-align: center;
+            transition: transform 0.3s, box-shadow 0.3s;
+        }
+        .info-card:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 6px 20px var(--accent-glow);
+        }
+        .info-card .card-number {
+            font-size: 2em;
+            font-weight: bold;
+            color: var(--accent);
+            margin-bottom: 8px;
+        }
+        .info-card .card-title {
+            font-size: 1.1em;
+            font-weight: bold;
+            margin-bottom: 8px;
+        }
+        .info-card .card-desc {
+            font-size: 0.9em;
+            color: var(--text-secondary);
+            line-height: 1.5;
+        }
+
+        /* Code Block */
+        .code-block {
+            background: var(--code-bg);
+            border: 1px solid #30363d;
+            border-radius: 8px;
+            padding: 18px 22px;
+            margin: 15px 0;
+            overflow-x: auto;
+            font-family: "JetBrains Mono", "Fira Code", "Cascadia Code", "SF Mono", Consolas, monospace;
+            font-size: 0.9em;
+            line-height: 1.7;
+            position: relative;
+        }
+        .code-block::before {
+            content: "CPP";
+            position: absolute;
+            top: 8px;
+            right: 14px;
+            font-size: 0.7em;
+            color: var(--text-secondary);
+            opacity: 0.5;
+        }
+        .kw { color: #ff7b72; }
+        .tp { color: #ffa657; }
+        .fn { color: #d2a8ff; }
+        .str { color: #a5d6ff; }
+        .num { color: #79c0ff; }
+        .cm { color: #8b949e; font-style: italic; }
+        .op { color: #ff7b72; }
+        .pp { color: #79c0ff; }
+        .bu { color: #7ee787; }
+
+        /* Diagram */
+        .tree-vis {
+            font-family: "JetBrains Mono", "Fira Code", monospace;
+            background: var(--code-bg);
+            border: 1px solid #30363d;
+            border-radius: 8px;
+            padding: 20px;
+            margin: 15px 0;
+            white-space: pre;
+            line-height: 1.6;
+            color: #7ee787;
+            font-size: 0.85em;
+            overflow-x: auto;
+        }
+        .tree-vis .highlight { color: var(--accent); font-weight: bold; }
+
+        /* Hanoi peg visualization */
+        .hanoi-pegs {
+            display: flex;
+            justify-content: space-around;
+            align-items: flex-end;
+            margin: 25px auto;
+            max-width: 500px;
+            min-height: 120px;
+            gap: 20px;
+        }
+        .peg {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 2px;
+            position: relative;
+        }
+        .peg-label {
+            font-size: 0.85em;
+            color: var(--accent);
+            font-weight: bold;
+            margin-top: 8px;
+        }
+        .peg-pole {
+            width: 4px;
+            height: 80px;
+            background: var(--text-secondary);
+            border-radius: 2px;
+            position: absolute;
+            bottom: 25px;
+        }
+        .disk {
+            height: 14px;
+            border-radius: 7px;
+            z-index: 1;
+            transition: all 0.4s ease;
+        }
+
+        /* Comparison table */
+        .compare-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 20px 0;
+            font-size: 0.95em;
+        }
+        .compare-table th {
+            background: rgba(233, 69, 96, 0.2);
+            padding: 12px 15px;
+            text-align: left;
+            color: var(--accent);
+            border: 1px solid var(--border);
+        }
+        .compare-table td {
+            padding: 10px 15px;
+            border: 1px solid var(--border);
+            color: var(--text-primary);
+        }
+        .compare-table tr:nth-child(even) td {
+            background: rgba(255,255,255,0.03);
+        }
+
+        /* Navigation */
+        .nav-container {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            gap: 30px;
+            margin-top: 20px;
+            padding: 10px;
+        }
+        .nav-btn {
+            background: rgba(233, 69, 96, 0.15);
+            border: 1px solid var(--accent);
+            color: var(--accent);
+            padding: 10px 28px;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 1em;
+            font-weight: bold;
+            transition: all 0.3s;
+            font-family: inherit;
+        }
+        .nav-btn:hover {
+            background: var(--accent);
+            color: white;
+            box-shadow: 0 4px 15px var(--accent-glow);
+        }
+        .nav-btn:disabled {
+            opacity: 0.3;
+            cursor: not-allowed;
+            pointer-events: none;
+        }
+        .slide-counter {
+            color: var(--text-secondary);
+            font-size: 1em;
+            min-width: 60px;
+            text-align: center;
+        }
+        .dot-nav {
+            display: flex;
+            gap: 8px;
+            justify-content: center;
+        }
+        .dot {
+            width: 10px;
+            height: 10px;
+            border-radius: 50%;
+            background: rgba(255,255,255,0.2);
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+        .dot.active {
+            background: var(--accent);
+            box-shadow: 0 0 10px var(--accent-glow);
+            transform: scale(1.3);
+        }
+
+        /* Highlight box */
+        .highlight-box {
+            background: rgba(233, 69, 96, 0.1);
+            border-left: 4px solid var(--accent);
+            padding: 15px 20px;
+            border-radius: 0 8px 8px 0;
+            margin: 15px 0;
+            font-size: 0.95em;
+            line-height: 1.7;
+        }
+
+        .gcd-demo {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 10px;
+            flex-wrap: wrap;
+            font-family: "JetBrains Mono", monospace;
+            font-size: 1em;
+            padding: 15px;
+            margin: 15px 0;
+        }
+        .gcd-step {
+            background: rgba(233, 69, 96, 0.12);
+            border: 1px solid var(--accent-glow);
+            padding: 8px 16px;
+            border-radius: 8px;
+            color: var(--text-primary);
+        }
+        .gcd-arrow {
+            color: var(--accent);
+            font-weight: bold;
+            font-size: 1.3em;
+        }
+
+        /* Responsive */
+        @media (max-width: 768px) {
+            .slideshow-container { padding: 10px; }
+            .slide { padding: 25px 20px; min-height: auto; }
+            .slide-title { font-size: 1.4em; }
+            .title-slide h1 { font-size: 2em; }
+            .info-grid { grid-template-columns: 1fr; }
+            .code-block { font-size: 0.75em; padding: 12px 14px; }
+            .tree-vis { font-size: 0.7em; }
+            .nav-btn { padding: 8px 18px; font-size: 0.9em; }
+        }
+    </style>
+</head>
+<body>
+
+<div class="slideshow-container">
+
+    <!-- Slide 1: Title -->
+    <div class="slide title-slide active">
+        <div class="title-icon">🗼</div>
+        <h1>经典递归问题</h1>
+        <p class="subtitle-big">汉诺塔与辗转相除法</p>
+        <p class="lesson-info">第26课 | C++ 算法提高</p>
+    </div>
+
+    <!-- Slide 2: Hanoi Legend & Rules -->
+    <div class="slide">
+        <div class="slide-title">汉诺塔 —— 古老的传说</div>
+        <div class="content-block">
+            <p><strong>传说：</strong>在印度的一座神庙里，有一块黄铜板上插着三根宝石针。梵天在创造世界时，在其中一根针上从下到上穿好了由大到小的64片金片——这就是汉诺塔。僧侣们日夜不停地移动金片，当64片金片全部移动到另一根针上时，世界将在一声霹雳中毁灭。</p>
+        </div>
+        <div class="highlight-box">
+            <p><strong>游戏规则（三条铁则）：</strong></p>
+            <ul>
+                <li><strong>规则一：</strong>每次只能移动一个圆盘</li>
+                <li><strong>规则二：</strong>大盘不能放在小盘上面</li>
+                <li><strong>规则三：</strong>可以将圆盘临时放在中间的辅助柱上</li>
+            </ul>
+        </div>
+        <div class="content-block">
+            <p>目标：将 <strong>n</strong> 个圆盘从柱 <strong>A</strong>（起始柱）全部移动到柱 <strong>C</strong>（目标柱），可以借助柱 <strong>B</strong>（辅助柱）。</p>
+        </div>
+        <div class="hanoi-pegs" id="hanoiInit">
+            <div class="peg">
+                <div class="disk" style="width:70px;background:#e94560;"></div>
+                <div class="disk" style="width:90px;background:#d63852;"></div>
+                <div class="disk" style="width:110px;background:#c42b44;"></div>
+                <div class="peg-pole"></div>
+                <div class="peg-label">A (起始)</div>
+            </div>
+            <div class="peg">
+                <div class="peg-pole"></div>
+                <div class="peg-label">B (辅助)</div>
+            </div>
+            <div class="peg">
+                <div class="peg-pole"></div>
+                <div class="peg-label">C (目标)</div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Slide 3: Hanoi Recursive Thinking -->
+    <div class="slide">
+        <div class="slide-title">汉诺塔的递归思路</div>
+        <div class="content-block">
+            <p><strong>核心思想：</strong>要把 n 个盘从 A 移到 C，可以分三步：</p>
+        </div>
+        <div class="info-grid">
+            <div class="info-card">
+                <div class="card-number">①</div>
+                <div class="card-title">移走上面 n-1 个</div>
+                <div class="card-desc">把 A 柱上面的 n-1 个盘<br>借助 C 柱 → 移到 B 柱<br><code>hanoi(n-1, A, C, B)</code></div>
+            </div>
+            <div class="info-card">
+                <div class="card-number">②</div>
+                <div class="card-title">移动最底下的大盘</div>
+                <div class="card-desc">把 A 柱剩下的第 n 个盘<br>直接 → 移到 C 柱<br><code>A → C</code></div>
+            </div>
+            <div class="info-card">
+                <div class="card-number">③</div>
+                <div class="card-title">移回上面 n-1 个</div>
+                <div class="card-desc">把 B 柱上的 n-1 个盘<br>借助 A 柱 → 移到 C 柱<br><code>hanoi(n-1, B, A, C)</code></div>
+            </div>
+        </div>
+        <div class="tree-vis" style="margin-top:20px;">
+<span class="highlight">hanoi(3, A, C, B)</span>  目标：把3个盘从A移到C
+│
+├── hanoi(2, A, B, C)        把上面2个盘从A移到B（借助C）
+│   ├── hanoi(1, A, C, B)    → A→C
+│   ├── A→B                  移动大盘
+│   └── hanoi(1, C, B, A)    → C→B
+│
+├── <span class="highlight">A→C</span>                 ← 最底下的大盘直接移过去！
+│
+└── hanoi(2, B, C, A)        把上面2个盘从B移到C（借助A）
+    ├── hanoi(1, B, A, C)    → B→A
+    ├── B→C                  移动大盘
+    └── hanoi(1, A, C, B)    → A→C
+
+<span class="highlight">总移动次数 = 2³ - 1 = 7 次</span>
+        </div>
+    </div>
+
+    <!-- Slide 4: Hanoi Code -->
+    <div class="slide">
+        <div class="slide-title">汉诺塔 —— 递归代码实现</div>
+        <div class="code-block"><span class="pp">#include</span> <span class="str">&lt;iostream&gt;</span>
+<span class="kw">using</span> <span class="kw">namespace</span> std;
+
+<span class="comment">cm">// n: 盘子数量, from: 起始柱, to: 目标柱, aux: 辅助柱</span>
+<span class="kw">void</span> <span class="fn">hanoi</span>(<span class="kw">int</span> n, <span class="kw">char</span> from, <span class="kw">char</span> to, <span class="kw">char</span> aux) {
+    <span class="kw">if</span> (n == <span class="num">1</span>) {
+        <span class="comment">cm">// 终止条件：只剩1个盘，直接移</span>
+        cout &lt;&lt; from &lt;&lt; <span class="str">" -> "</span> &lt;&lt; to &lt;&lt; endl;
+        <span class="kw">return</span>;
+    }
+    <span class="comment">cm">// 第1步：把上面 n-1 个盘从 from 移到 aux</span>
+    <span class="fn">hanoi</span>(n - <span class="num">1</span>, from, aux, to);
+    <span class="comment">cm">// 第2步：把最底下的大盘从 from 移到 to</span>
+    cout &lt;&lt; from &lt;&lt; <span class="str">" -> "</span> &lt;&lt; to &lt;&lt; endl;
+    <span class="comment">cm">// 第3步：把 n-1 个盘从 aux 移到 to</span>
+    <span class="fn">hanoi</span>(n - <span class="num">1</span>, aux, to, from);
+}</div>
+        <div class="highlight-box">
+            <p><strong>输出（n=3）示例：</strong></p>
+            <p style="font-family: monospace; color: var(--success);">
+                A -> C<br>A -> B<br>C -> B<br>A -> C<br>B -> A<br>B -> C<br>A -> C
+            </p>
+            <p style="margin-top:8px;">总步数 = 2³ - 1 = <strong>7</strong> 步。n=64 时需要 2⁶⁴-1 ≈ 1844亿亿步！</p>
+        </div>
+    </div>
+
+    <!-- Slide 5: GCD - Euclidean Algorithm -->
+    <div class="slide">
+        <div class="slide-title">辗转相除法 —— 求最大公约数</div>
+        <div class="content-block">
+            <p><strong>什么是最大公约数（GCD）？</strong>两个整数共有的约数中最大的那个。例如 gcd(48, 18) = 6。</p>
+            <p><strong>辗转相除法</strong>（欧几里得算法）是公元前300年由欧几里得发明的，至今仍是求GCD最优雅高效的方法。</p>
+        </div>
+        <div class="highlight-box">
+            <p><strong>核心原理（带余除法）：</strong></p>
+            <p style="text-align:center;font-size:1.1em;">
+                <strong>gcd(a, b) = gcd(b, a % b)</strong>
+            </p>
+            <p>当 b = 0 时，a 就是最大公约数。</p>
+        </div>
+        <div class="content-block">
+            <p><strong>直观理解：</strong>一个长方形的长是 a，宽是 b。不断用短边去"量"长边（取余数），相当于不断用正方形去填充长方形，直到恰好填满为止。最后的正方形边长就是最大公约数。</p>
+        </div>
+        <div class="gcd-demo">
+            <span class="gcd-step">gcd(48, 18)</span>
+            <span class="gcd-arrow">→</span>
+            <span class="gcd-step">gcd(18, 12)</span>
+            <span class="gcd-arrow">→</span>
+            <span class="gcd-step">gcd(12, 6)</span>
+            <span class="gcd-arrow">→</span>
+            <span class="gcd-step">gcd(6, 0)</span>
+            <span class="gcd-arrow">→</span>
+            <span class="gcd-step" style="background:rgba(233,69,96,0.25);">= 6</span>
+        </div>
+        <table class="compare-table" style="margin-top:15px;">
+            <tr><th>步骤</th><th>a</th><th>b</th><th>a % b</th><th>说明</th></tr>
+            <tr><td>1</td><td>48</td><td>18</td><td>12</td><td>48 ÷ 18 = 2 余 12</td></tr>
+            <tr><td>2</td><td>18</td><td>12</td><td>6</td><td>18 ÷ 12 = 1 余 6</td></tr>
+            <tr><td>3</td><td>12</td><td>6</td><td>0</td><td>12 ÷ 6 = 2 余 0，b=0，结束！</td></tr>
+        </table>
+    </div>
+
+    <!-- Slide 6: GCD Code -->
+    <div class="slide">
+        <div class="slide-title">GCD —— 递归代码实现</div>
+        <div class="code-block"><span class="comment">cm">// 辗转相除法：递归求最大公约数</span>
+<span class="kw">int</span> <span class="fn">gcd</span>(<span class="kw">int</span> a, <span class="kw">int</span> b) {
+    <span class="comment">cm">// 终止条件：余数为0，a就是答案</span>
+    <span class="kw">if</span> (b == <span class="num">0</span>) <span class="kw">return</span> a;
+    <span class="comment">cm">// 递归：gcd(a, b) = gcd(b, a % b)</span>
+    <span class="kw">return</span> <span class="fn">gcd</span>(b, a % b);
+}
+
+<span class="comment">cm">// 也可以写成一行（C++三目运算符）</span>
+<span class="kw">int</span> <span class="fn">gcd2</span>(<span class="kw">int</span> a, <span class="kw">int</span> b) {
+    <span class="kw">return</span> b == <span class="num">0</span> ? a : <span class="fn">gcd2</span>(b, a % b);
+}</div>
+        <div class="content-block">
+            <p><strong>为什么这个算法这么高效？</strong></p>
+            <p>每两次递归，<strong>a 的值至少减半</strong>。因此即使是对非常大的数（比如 10¹⁸），递归深度也不超过约 <strong>100 层</strong>。时间复杂度仅为 <strong>O(log min(a,b))</strong>。</p>
+        </div>
+        <div class="highlight-box">
+            <p><strong>扩展知识 —— 最小公倍数（LCM）：</strong></p>
+            <p style="text-align:center;font-size:1.1em;">
+                <strong>lcm(a, b) = a / gcd(a, b) * b</strong>
+            </p>
+            <p style="margin-top:5px;font-size:0.9em;color:var(--text-secondary);">注意：先除后乘，避免 a×b 溢出！</p>
+        </div>
+    </div>
+
+    <!-- Slide 7: Summary -->
+    <div class="slide">
+        <div class="slide-title">递归思想总结</div>
+        <div class="info-grid">
+            <div class="info-card">
+                <div class="card-number">🧩</div>
+                <div class="card-title">自相似性</div>
+                <div class="card-desc">问题能分解为结构相同、规模更小的子问题，是使用递归的前提。</div>
+            </div>
+            <div class="info-card">
+                <div class="card-number">🎯</div>
+                <div class="card-title">终止条件</div>
+                <div class="card-desc">必须有明确的递归出口，否则会无限递归导致栈溢出。</div>
+            </div>
+            <div class="info-card">
+                <div class="card-number">📐</div>
+                <div class="card-title">问题规模缩小</div>
+                <div class="card-desc">每次递归调用必须向终止条件靠近，问题规模必须严格缩小。</div>
+            </div>
+        </div>
+        <table class="compare-table" style="margin-top:20px;">
+            <thead>
+                <tr><th>问题</th><th>递归要素</th><th>时间复杂度</th><th>空间复杂度</th></tr>
+            </thead>
+            <tbody>
+                <tr><td>阶乘</td><td>n! = n × (n-1)!</td><td>O(n)</td><td>O(n)</td></tr>
+                <tr><td>斐波那契</td><td>F(n) = F(n-1) + F(n-2)</td><td>O(2ⁿ)</td><td>O(n)</td></tr>
+                <tr><td>汉诺塔</td><td>H(n) = 2H(n-1) + 1</td><td>O(2ⁿ)</td><td>O(n)</td></tr>
+                <tr><td>GCD</td><td>gcd(a,b) = gcd(b, a%b)</td><td>O(log n)</td><td>O(log n)</td></tr>
+            </tbody>
+        </table>
+        <div class="content-block" style="margin-top:15px;text-align:center;">
+            <p style="color:var(--accent);">💡 递归不是魔法，而是一种思维方式——相信函数能"解决好规模更小的问题"，然后利用这个结果解决当前问题。</p>
+            <p style="color:var(--text-secondary);">下节课，我们将学习分治算法——递归思想在算法设计中的终极应用！</p>
+        </div>
+    </div>
+
+</div>
+
+<!-- Navigation -->
+<div class="nav-container">
+    <button class="nav-btn" id="prevBtn" onclick="changeSlide(-1)">⬅ 上一页</button>
+    <div style="text-align:center;">
+        <div class="slide-counter" id="slideCounter">1/7</div>
+        <div class="dot-nav" id="dotNav"></div>
+    </div>
+    <button class="nav-btn" id="nextBtn" onclick="changeSlide(1)">下一页 ➡</button>
+</div>
+
+<script>
+    let currentSlide = 0;
+    const slides = document.querySelectorAll('.slide');
+    const totalSlides = slides.length;
+    const dotNav = document.getElementById('dotNav');
+    const slideCounter = document.getElementById('slideCounter');
+    const prevBtn = document.getElementById('prevBtn');
+    const nextBtn = document.getElementById('nextBtn');
+
+    // Create dots
+    for (let i = 0; i < totalSlides; i++) {
+        const dot = document.createElement('span');
+        dot.className = 'dot' + (i === 0 ? ' active' : '');
+        dot.onclick = () => goToSlide(i);
+        dotNav.appendChild(dot);
+    }
+
+    function showSlide(index) {
+        slides.forEach((s, i) => {
+            s.classList.toggle('active', i === index);
+        });
+        const dots = dotNav.querySelectorAll('.dot');
+        dots.forEach((d, i) => {
+            d.classList.toggle('active', i === index);
+        });
+        slideCounter.textContent = (index + 1) + '/' + totalSlides;
+        prevBtn.disabled = (index === 0);
+        nextBtn.disabled = (index === totalSlides - 1);
+    }
+
+    function changeSlide(delta) {
+        const newIndex = currentSlide + delta;
+        if (newIndex >= 0 && newIndex < totalSlides) {
+            currentSlide = newIndex;
+            showSlide(currentSlide);
+        }
+    }
+
+    function goToSlide(index) {
+        currentSlide = index;
+        showSlide(currentSlide);
+    }
+
+    // Keyboard navigation
+    document.addEventListener('keydown', (e) => {
+        if (e.key === 'ArrowRight' || e.key === 'ArrowDown') changeSlide(1);
+        if (e.key === 'ArrowLeft' || e.key === 'ArrowUp') changeSlide(-1);
+        if (e.key === 'Home') goToSlide(0);
+        if (e.key === 'End') goToSlide(totalSlides - 1);
+    });
+
+    // Touch swipe
+    let touchStartX = 0;
+    document.addEventListener('touchstart', (e) => {
+        touchStartX = e.changedTouches[0].screenX;
+    });
+    document.addEventListener('touchend', (e) => {
+        const diff = e.changedTouches[0].screenX - touchStartX;
+        if (Math.abs(diff) > 50) {
+            changeSlide(diff < 0 ? 1 : -1);
+        }
+    });
+
+    showSlide(0);
+</script>
+
+</body>
+</html>

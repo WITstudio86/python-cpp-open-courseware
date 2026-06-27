@@ -1,0 +1,190 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>第37节 · 贪吃蛇游戏（上） · Python Tkinter 课程</title>
+<link rel="stylesheet" href="assets/fonts.css">
+<link rel="stylesheet" href="assets/base.css">
+<link rel="stylesheet" id="theme-link" href="assets/themes/soft-pastel.css">
+<link rel="stylesheet" href="assets/animations/animations.css">
+<link rel="stylesheet" href="style.css">
+</head>
+<body class="tpl-tkinter-course" data-themes="soft-pastel,rainbow-gradient,sunset-warm,minimal-white" data-theme-base="assets/themes/">
+<div class="deck">
+
+  <!-- 1. Cover -->
+  <section class="slide full" data-title="封面">
+    <p class="kicker">Python Tkinter · 第 37 节</p>
+    <h1 class="h1 mt-s">项目 10：贪吃蛇游戏<em>（上）</em></h1>
+    <p class="lede mt-l" style="max-width:62ch">从今天起，我们正式进军游戏开发！用 Canvas 画布、键盘事件和定时器，做出一条会动的蛇 🐍</p>
+    <div class="row mt-l" style="gap:16px">
+      <span class="pill-academic">~ 60 分钟</span>
+      <span class="pill-academic">难度 · ⭐⭐</span>
+      <span class="pill-academic">前置 · 第 1~36 节</span>
+    </div>
+    <div class="deck-footer"><span>Python Tkinter 趣味编程课</span><span class="slide-number" data-current="1" data-total="6"></span></div>
+  </section>
+
+  <!-- 2. Objectives -->
+  <section class="slide" data-title="学习目标">
+    <aside class="sidebar">
+      <div class="brand">Tkinter 037</div>
+      <h5>学习目标</h5>
+      <ul class="obj-list">
+        <li class="current">用 Canvas 绘制蛇身</li>
+        <li>用 bind("&lt;Key&gt;") 控制方向</li>
+        <li>用 after() 制造动画</li>
+        <li>用列表存储蛇身坐标</li>
+      </ul>
+      <h5>本节成品</h5>
+      <p class="dim" style="font-size:13px">一条能用方向键控制的移动蛇 🐍</p>
+    </aside>
+    <div class="main">
+      <p class="kicker">学习目标</p>
+      <h2 class="h2 mt-s">学完这节课，你将能够…</h2>
+      <div class="stack mt-l">
+        <div class="concept-box"><h4>① 在 Canvas 上绘制图形</h4><p class="dim">用 <code>create_rectangle()</code> 画蛇身的每一节，还能设置颜色和边框。</p></div>
+        <div class="concept-box"><h4>② 用键盘控制游戏</h4><p class="dim">绑定 <code>&lt;Key&gt;</code> 事件，监听上下左右箭头，实时改变蛇的方向。</p></div>
+        <div class="concept-box"><h4>③ 用 after() 创建动画循环</h4><p class="dim">每隔 150 毫秒移动蛇并重绘，让画面"活"起来——这就是游戏的"心跳"！</p></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- 3. Canvas + Snake Body -->
+  <section class="slide" data-title="Canvas 绘制蛇身">
+    <aside class="sidebar">
+      <div class="brand">Tkinter 037</div>
+      <h5>学习目标</h5>
+      <ul class="obj-list">
+        <li class="done">用 Canvas 绘制蛇身</li>
+        <li class="current">用 bind("&lt;Key&gt;") 控制方向</li>
+        <li>用 after() 制造动画</li>
+        <li>用列表存储蛇身坐标</li>
+      </ul>
+      <h5>关键概念</h5>
+      <p class="dim" style="font-size:13px">Canvas · 坐标系 · create_rectangle · 列表存坐标</p>
+    </aside>
+    <div class="main">
+      <p class="kicker">画布与蛇身</p>
+      <h2 class="h2 mt-s">Canvas 画布 + 列表存储蛇身坐标</h2>
+      <p class="lede mt-m">Canvas 的坐标系很特别：<b>左上角是 (0, 0)</b>，x 往右增加，y 往下增加。</p>
+      <div class="grid g2 mt-m">
+        <div class="concept-box">
+          <h4>🎨 绘制蛇身矩形</h4>
+          <p class="dim" style="font-size:13px;line-height:1.8">
+            左上角 (x, y) 到右下角 (x+20, y+20)<br>
+            每一节就是一个 20x20 的小方块<br>
+            蛇头颜色亮，身体颜色深
+          </p>
+        </div>
+        <div class="concept-box">
+          <h4>📋 列表存储蛇身坐标</h4>
+          <p class="dim" style="font-size:13px;line-height:1.8">
+            snake_body = [<br>
+            &nbsp;&nbsp;(200,200), ← 蛇头<br>
+            &nbsp;&nbsp;(180,200), ← 第2节<br>
+            &nbsp;&nbsp;(160,200)  ← 蛇尾<br>
+            ]
+          </p>
+        </div>
+      </div>
+      <div class="code mt-m"><pre style="margin:0"><span class="cmt"># 画一节蛇身</span>
+canvas.<span class="fn">create_rectangle</span>(
+    x, y, x + <span class="num">20</span>, y + <span class="num">20</span>,  <span class="cmt"># 左上角 → 右下角</span>
+    fill=<span class="str">"#00ff88"</span>,               <span class="cmt"># 填充色</span>
+    outline=<span class="str">"#00aa55"</span>,             <span class="cmt"># 边框色</span>
+    tag=<span class="str">"snake"</span>                    <span class="cmt"># 打标签，方便删除</span>
+)</pre></div>
+      <p class="dim" style="font-size:12px;margin-top:6px">💡 打 <code>tag="snake"</code> 标签，用 <code>canvas.delete("snake")</code> 一键清掉蛇身重画。</p>
+    </div>
+  </section>
+
+  <!-- 4. Keyboard + after() -->
+  <section class="slide" data-title="键盘控制与游戏循环">
+    <aside class="sidebar">
+      <div class="brand">Tkinter 037</div>
+      <h5>学习目标</h5>
+      <ul class="obj-list">
+        <li class="done">用 Canvas 绘制蛇身</li>
+        <li class="done">用 bind("&lt;Key&gt;") 控制方向</li>
+        <li class="current">用 after() 制造动画</li>
+        <li>用列表存储蛇身坐标</li>
+      </ul>
+      <h5>两个引擎</h5>
+      <p class="dim" style="font-size:13px">键盘事件 · 定时器循环</p>
+    </aside>
+    <div class="main">
+      <p class="kicker">让蛇动起来</p>
+      <h2 class="h2 mt-s">键盘控制方向 + after() 定时移动</h2>
+      <p class="lede mt-m">蛇的"灵魂"由两个部分组成：<b>键盘事件</b>决定走哪边，<b>after() 定时器</b>负责不停移动。</p>
+      <div class="grid g2 mt-m">
+        <div class="concept-box">
+          <h4>⌨️ 键盘控制方向</h4>
+          <div class="code" style="margin:8px 0 0 0"><pre style="margin:0;font-size:12px"><span class="kw">def</span> <span class="fn">change_dir</span>(event):
+    key = event.keysym
+    <span class="kw">if</span> key == <span class="str">"Up"</span> <span class="kw">and</span> dir != <span class="str">"Down"</span>:
+        dir = <span class="str">"Up"</span>
+
+root.<span class="fn">bind</span>(<span class="str">"&lt;Key>"</span>, change_dir)</pre></div>
+          <p class="dim" style="font-size:12px;margin-top:4px">⚠️ 必须防止反向：向右走时不能按左！</p>
+        </div>
+        <div class="concept-box">
+          <h4>⏱️ after() 游戏循环</h4>
+          <div class="code" style="margin:8px 0 0 0"><pre style="margin:0;font-size:12px"><span class="kw">def</span> <span class="fn">game_loop</span>():
+    move_snake()              <span class="cmt"># 移动</span>
+    root.<span class="fn">after</span>(<span class="num">150</span>, game_loop) <span class="cmt"># 再来</span></pre></div>
+          <p class="dim" style="font-size:12px;margin-top:4px">150ms = 每秒约 6.7 帧，眼睛刚好看到连续动画！</p>
+        </div>
+      </div>
+      <div class="callout mt-m">
+        <b>🧠 核心算法：</b><code>snake_body = [new_head] + snake_body[:-1]</code> —— 新蛇头加到最前面，旧尾巴被切掉。这就是蛇"移动"的全部秘密！
+      </div>
+    </div>
+  </section>
+
+  <!-- 5. Try It -->
+  <section class="slide" data-title="动手试试">
+    <aside class="sidebar">
+      <div class="brand">Tkinter 037</div>
+      <h5>学习目标</h5>
+      <ul class="obj-list">
+        <li class="done">用 Canvas 绘制蛇身</li>
+        <li class="done">用 bind("&lt;Key&gt;") 控制方向</li>
+        <li class="done">用 after() 制造动画</li>
+        <li class="current">用列表存储蛇身坐标</li>
+      </ul>
+      <h5>时间</h5>
+      <p class="dim" style="font-size:13px">~20 分钟 · 自己动手</p>
+    </aside>
+    <div class="main">
+      <p class="kicker">动手试试</p>
+      <h2 class="h2 mt-s">改造你的贪吃蛇</h2>
+      <div class="exercise mt-l">
+        <ol style="color:var(--text-2);line-height:2;margin:0;padding-left:20px;font-size:16px">
+          <li><b>调速度</b>：把 <code>INITIAL_SPEED</code> 改成 <code>80</code>（飞快）或 <code>300</code>（慢悠悠），感受节奏变化</li>
+          <li><b>改颜色</b>：把蛇头换成红色 <code>"#ff4444"</code>，身体换成橙色 <code>"#ff8844"</code></li>
+          <li><b>挑战</b>：支持 WASD 键控制方向（W=上, S=下, A=左, D=右），再给 <code>snake_body</code> 多加坐标让蛇一开始就有 8 节！</li>
+        </ol>
+      </div>
+      <p class="dim mt-m" style="font-size:14px">💡 <code>after(150, game_loop)</code> 里的 <code>game_loop</code> 后面<b>没有括号</b>——这是"把函数交给 after，让它到时候再调用"，而不是"立刻执行"。</p>
+    </div>
+  </section>
+
+  <!-- 6. Summary -->
+  <section class="slide full" data-title="总结">
+    <p class="kicker">总结 · 第 37 节</p>
+    <h1 class="h1 mt-s">你学会了…</h1>
+    <div class="grid g2 mt-l">
+      <div class="concept-box"><h4>✓ Canvas 绘制</h4><p class="dim">create_rectangle() 画矩形，tag 标签管理图形，左上角是坐标系原点。</p></div>
+      <div class="concept-box"><h4>✓ 键盘事件 bind()</h4><p class="dim">bind("&lt;Key&gt;") 监听按键，event.keysym 获取键名，判断方向并防止反向。</p></div>
+      <div class="concept-box"><h4>✓ after() 定时循环</h4><p class="dim">每隔 150ms 移动蛇并重绘，形成连续动画——这就是游戏的心跳！</p></div>
+      <div class="concept-box"><h4>✓ 列表 + 坐标移动</h4><p class="dim">snake_body = [new_head] + body[:-1]，加头去尾实现移动。</p></div>
+    </div>
+    <div class="callout mt-l">
+      <b>下节预告 · 第 38 节：贪吃蛇游戏（下）。</b> 给蛇加上"食物"——吃到食物蛇会变长，分数会增加！还会加入碰撞检测，蛇撞到自己或墙壁就 Game Over。一条完整的贪吃蛇即将诞生 🍎！
+    </div>
+  </section>
+
+</div>
+<script src="assets/runtime.js"></script>
+</body></html>

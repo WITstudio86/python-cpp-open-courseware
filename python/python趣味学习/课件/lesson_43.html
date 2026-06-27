@@ -1,0 +1,319 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>第43节 · Turtle 画城市</title>
+<link rel="stylesheet" href="assets/fonts.css">
+<link rel="stylesheet" href="assets/base.css">
+<link rel="stylesheet" href="assets/animations/animations.css">
+<link rel="stylesheet" href="style.css">
+<style>
+.tpl-course-module .slide{overflow-y:auto}
+.tpl-course-module .slide .main{overflow-y:auto;max-height:calc(100vh - 128px)}
+.tpl-course-module .slide.full{overflow-y:auto;display:flex;flex-direction:column;justify-content:flex-start;padding-top:64px}
+.tpl-course-module .h1{font-size:52px}
+.tpl-course-module .h2{font-size:32px}
+.tpl-course-module .slide{padding:44px 56px;gap:36px}
+.code-mini{background:#2a2418;color:#f4f1e8;border-radius:14px;padding:18px 22px;font-family:'JetBrains Mono',monospace;font-size:14px;line-height:1.7;margin:12px 0;overflow-x:auto;white-space:pre-wrap}
+.code-mini .cmt{color:#8a7f68;font-style:italic}
+.code-mini .kw{color:#e8a770}
+.code-mini .str{color:#8ec6b2}
+.code-mini .fn{color:#c4a8d0}
+.code-mini .num{color:#d4b87a}
+</style>
+</head>
+<body class="tpl-course-module">
+<div class="deck">
+
+<!-- ═══ SLIDE 1 — COVER ═══ -->
+<section class="slide full" data-title="封面">
+  <p class="kicker">第八单元 · 第43节</p>
+  <h1 class="h1 mt-s">项目五：Turtle 画城市</h1>
+  <p class="lede mt-l" style="max-width:60ch">函数封装画房子/树/太阳 · .goto()坐标移动 · 你就是城市规划师</p>
+  <div class="row mt-l" style="gap:12px;flex-wrap:wrap">
+    <span class="pill-academic">Turtle 绘图</span><span class="pill-academic">函数封装</span>
+    <span class="pill-academic">坐标布局</span><span class="pill-academic">项目实战</span>
+  </div>
+  <div class="deck-footer"><span>Python 趣味学习课程</span><span class="slide-number" data-current="1" data-total="6"></span></div>
+</section>
+
+<!-- ═══ SLIDE 2 — 教学目标 ═══ -->
+<section class="slide" data-title="教学目标">
+  <aside class="sidebar"><div class="brand">Unit 8</div><h5>第 43 节</h5><p class="dim" style="font-size:12px">项目五：Turtle 画城市</p></aside>
+  <div class="main">
+    <p class="kicker">LEARNING OBJECTIVES</p>
+    <h2 class="h2 mt-s">教学目标</h2>
+    <ul class="obj-list mt-m">
+      <li>综合运用Turtle库绘图功能</li>
+      <li>将重复绘制任务封装成函数</li>
+      <li>使用.goto()和.penup()/.pendown()移动不留痕</li>
+      <li>规划画面布局，创作"我的城市"主题画作</li>
+    </ul>
+  </div>
+</section>
+
+<!-- ═══ SLIDE 3 — 重点概念 ═══ -->
+<section class="slide" data-title="重点概念">
+  <aside class="sidebar"><div class="brand">Unit 8</div><h5>第 43 节</h5><p class="dim" style="font-size:12px">重点概念</p></aside>
+  <div class="main">
+    <p class="kicker">KEY CONCEPTS</p>
+    <h2 class="h2 mt-s">重点概念</h2>
+    <div class="grid g2 mt-m" style="display:grid;grid-template-columns:1fr 1fr;gap:16px">
+      <div class="concept-box">
+        <h4>Turtle 绘图基础</h4>
+        <p class="dim">forward(距离) 前进、left(角度)/right(角度) 转向、circle(半径) 画圆、color() 设颜色、begin_fill()/end_fill() 填充。这些是画任何图形的基本积木。</p>
+      </div>
+      <div class="concept-box">
+        <h4>函数封装绘图</h4>
+        <p class="dim">def draw_house(t, x, y, wall_color) 把画房子的代码打包成一个"印章"函数。调用一次就画一栋房子，调用十次就画十栋——就像盖章一样方便！</p>
+      </div>
+      <div class="concept-box">
+        <h4>坐标移动 .goto(x, y)</h4>
+        <p class="dim">画布是一个坐标系：原点(0, 0)在中心，x轴左右、y轴上下。.goto(x, y)让海龟飞到指定位置，配合抬笔落笔实现"瞬移"。</p>
+      </div>
+      <div class="concept-box">
+        <h4>抬笔/落笔</h4>
+        <p class="dim">.penup() 抬起笔——海龟移动但不画线（飞着走）；.pendown() 落下笔——海龟移动时留下轨迹（画着走）。布局城市时：先 penup → goto → pendown → 开始画。</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ═══ SLIDE 4 — 核心讲解 + 代码 ═══ -->
+<section class="slide" data-title="核心讲解">
+  <aside class="sidebar"><div class="brand">Unit 8</div><h5>第 43 节</h5><p class="dim" style="font-size:12px">核心讲解</p></aside>
+  <div class="main">
+    <p class="kicker">CORE CONTENT</p>
+    <h2 class="h2 mt-s">画房子 —— draw_house()</h2>
+
+    <div class="code-mini mt-m"><pre style="margin:0"><span class="kw">def</span> <span class="fn">draw_house</span>(t, x, y, wall_color=<span class="str">"#E8D5B7"</span>):
+    <span class="cmt">"""画一栋房子：墙壁矩形 + 三角形屋顶 + 门 + 两扇窗户"""</span>
+    t.penup()
+    t.goto(x, y)             <span class="cmt"># 飞到房子左下角</span>
+    t.pendown()
+
+    <span class="cmt"># ① 画墙壁（矩形）</span>
+    t.fillcolor(wall_color)
+    t.begin_fill()
+    <span class="kw">for</span> _ <span class="kw">in</span> <span class="kw">range</span>(<span class="num">2</span>):
+        t.forward(<span class="num">120</span>)
+        t.left(<span class="num">90</span>)
+        t.forward(<span class="num">100</span>)
+        t.left(<span class="num">90</span>)
+    t.end_fill()
+
+    <span class="cmt"># ② 画屋顶（三角形）</span>
+    t.fillcolor(<span class="str">"#C4593F"</span>)
+    t.begin_fill()
+    <span class="kw">for</span> _ <span class="kw">in</span> <span class="kw">range</span>(<span class="num">3</span>):
+        t.forward(<span class="num">120</span>)
+        t.left(<span class="num">120</span>)
+    t.end_fill()
+
+    <span class="cmt"># ③ 画门</span>
+    t.penup()
+    t.goto(x + <span class="num">45</span>, y)
+    t.pendown()
+    t.fillcolor(<span class="str">"#8B4513"</span>)
+    t.begin_fill()
+    <span class="kw">for</span> _ <span class="kw">in</span> <span class="kw">range</span>(<span class="num">2</span>):
+        t.forward(<span class="num">30</span>)
+        t.left(<span class="num">90</span>)
+        t.forward(<span class="num">50</span>)
+        t.left(<span class="num">90</span>)
+    t.end_fill()
+
+    <span class="cmt"># ④ 画左窗户</span>
+    t.penup()
+    t.goto(x + <span class="num">15</span>, y + <span class="num">60</span>)
+    t.pendown()
+    t.fillcolor(<span class="str">"#87CEEB"</span>)
+    t.begin_fill()
+    <span class="kw">for</span> _ <span class="kw">in</span> <span class="kw">range</span>(<span class="num">4</span>):
+        t.forward(<span class="num">25</span>)
+        t.left(<span class="num">90</span>)
+    t.end_fill()
+
+    <span class="cmt"># ⑤ 画右窗户</span>
+    t.penup()
+    t.goto(x + <span class="num">80</span>, y + <span class="num">60</span>)
+    t.pendown()
+    t.fillcolor(<span class="str">"#87CEEB"</span>)
+    t.begin_fill()
+    <span class="kw">for</span> _ <span class="kw">in</span> <span class="kw">range</span>(<span class="num">4</span>):
+        t.forward(<span class="num">25</span>)
+        t.left(<span class="num">90</span>)
+    t.end_fill()</pre></div>
+
+    <div class="callout"><b>关键步骤：</b>① penup→goto→pendown 瞬移到指定位置 ② 矩形墙壁：2次循环，每次走120再转90，走100再转90 ③ 三角形屋顶：3次循环，每次走120转120（等边三角形）④ 门和窗户也是矩形，用相同的套路画在不同位置。</div>
+
+    <h3 class="mt-m" style="font-size:18px">画树 —— draw_tree()</h3>
+
+    <div class="code-mini mt-s"><pre style="margin:0"><span class="kw">def</span> <span class="fn">draw_tree</span>(t, x, y, scale=<span class="num">1.0</span>):
+    <span class="cmt">"""画一棵树：棕色树干 + 绿色圆形树冠，scale 控制大小"""</span>
+    t.penup()
+    t.goto(x, y)
+    t.pendown()
+
+    <span class="cmt"># 树干（矩形）</span>
+    t.fillcolor(<span class="str">"#8B4513"</span>)
+    t.begin_fill()
+    <span class="kw">for</span> _ <span class="kw">in</span> <span class="kw">range</span>(<span class="num">2</span>):
+        t.forward(<span class="num">20</span> * scale)
+        t.left(<span class="num">90</span>)
+        t.forward(<span class="num">60</span> * scale)
+        t.left(<span class="num">90</span>)
+    t.end_fill()
+
+    <span class="cmt"># 移到树冠位置</span>
+    t.penup()
+    t.goto(x + <span class="num">10</span> * scale, y + <span class="num">60</span> * scale)
+    t.pendown()
+
+    <span class="cmt"># 树冠（圆形）</span>
+    t.fillcolor(<span class="str">"#2D8B2D"</span>)
+    t.begin_fill()
+    t.circle(<span class="num">35</span> * scale)
+    t.end_fill()</pre></div>
+
+    <h3 class="mt-m" style="font-size:18px">画太阳 —— draw_sun()</h3>
+
+    <div class="code-mini mt-s"><pre style="margin:0"><span class="kw">def</span> <span class="fn">draw_sun</span>(t, x, y, radius=<span class="num">40</span>):
+    <span class="cmt">"""画太阳：黄色圆形 + 12道光芒"""</span>
+    t.penup()
+    t.goto(x, y - radius)    <span class="cmt"># circle()从底部开始画，所以往下移</span>
+    t.pendown()
+
+    <span class="cmt"># 太阳圆盘</span>
+    t.fillcolor(<span class="str">"#FFD700"</span>)
+    t.pencolor(<span class="str">"#FFD700"</span>)
+    t.begin_fill()
+    t.circle(radius)
+    t.end_fill()
+
+    <span class="cmt"># 光芒（12条射线）</span>
+    t.pencolor(<span class="str">"#FFA500"</span>)
+    t.pensize(<span class="num">3</span>)
+    <span class="kw">for</span> i <span class="kw">in</span> <span class="kw">range</span>(<span class="num">12</span>):
+        t.penup()
+        t.goto(x, y)
+        t.setheading(i * <span class="num">30</span>)   <span class="cmt"># 每条光芒间隔30度</span>
+        t.forward(radius + <span class="num">5</span>)
+        t.pendown()
+        t.forward(<span class="num">20</span>)
+    t.pensize(<span class="num">1</span>)            <span class="cmt"># 恢复笔粗细</span></pre></div>
+
+    <h3 class="mt-m" style="font-size:18px">主程序 —— 组合成城市</h3>
+
+    <div class="code-mini mt-s"><pre style="margin:0"><span class="kw">import</span> turtle
+
+<span class="cmt"># ===== 上面三个函数定义放在这里 =====</span>
+
+screen = turtle.Screen()
+screen.bgcolor(<span class="str">"#87CEEB"</span>)        <span class="cmt"># 天空蓝背景</span>
+screen.title(<span class="str">"我的城市"</span>)
+
+t = turtle.Turtle()
+t.speed(<span class="num">0</span>)                     <span class="cmt"># 最快速度</span>
+
+<span class="cmt"># 城市规划：从左到右布局</span>
+draw_sun(t, <span class="num">220</span>, <span class="num">160</span>, <span class="num">45</span>)        <span class="cmt"># 右上角太阳</span>
+draw_house(t, <span class="num">-280</span>, <span class="num">-120</span>, <span class="str">"#E8D5B7"</span>) <span class="cmt"># 左1：米色房子</span>
+draw_house(t, <span class="num">-120</span>, <span class="num">-120</span>, <span class="str">"#D4A76A"</span>) <span class="cmt"># 左2：土黄房子</span>
+draw_house(t, <span class="num">40</span>, <span class="num">-120</span>, <span class="str">"#C9A97A"</span>)   <span class="cmt"># 右1：浅棕房子</span>
+draw_tree(t, <span class="num">-320</span>, <span class="num">-120</span>, <span class="num">0.7</span>)        <span class="cmt"># 最左边小树</span>
+draw_tree(t, <span class="num">-180</span>, <span class="num">-120</span>, <span class="num">0.9</span>)        <span class="cmt"># 房子间中等树</span>
+draw_tree(t, <span class="num">170</span>, <span class="num">-120</span>, <span class="num">1.1</span>)         <span class="cmt"># 最右边大树</span>
+
+t.hideturtle()
+turtle.done()</pre></div>
+
+    <div class="callout"><b>城市规划法则：</b>画布坐标系 (0,0) 在中心，x范围约-350到+350，y范围约-250到+250。先画远处的（太阳），再画近处的（房子和树）。函数封装让每栋房子只是"盖章"——改(x, y)就换位置，改wall_color就换颜色！</div>
+  </div>
+</section>
+
+<!-- ═══ SLIDE 5 — 课堂练习 ═══ -->
+<section class="slide" data-title="课堂练习">
+  <aside class="sidebar"><div class="brand">Unit 8</div><h5>第 43 节</h5><p class="dim" style="font-size:12px">课堂练习</p></aside>
+  <div class="main">
+    <p class="kicker">EXERCISES</p>
+    <h2 class="h2 mt-s">课堂练习</h2>
+
+    <div class="exercise mt-m"><b>基础练习 —— 补全画房子函数（3处填空）：</b></div>
+
+    <div class="code-mini mt-s"><pre style="margin:0"><span class="kw">def</span> <span class="fn">draw_house</span>(t, x, y, wall_color):
+    t.penup()
+    t.<span class="cmt">____</span>(x, y)              <span class="cmt"># ① 填空：用什么方法飞到 (x, y)？</span>
+    t.pendown()
+
+    <span class="cmt"># 画墙壁</span>
+    t.<span class="cmt">____</span>(wall_color)         <span class="cmt"># ② 填空：用什么方法设置填充颜色？</span>
+    t.begin_fill()
+    <span class="kw">for</span> _ <span class="kw">in</span> <span class="kw">range</span>(<span class="cmt">____</span>):        <span class="cmt"># ③ 填空：矩形有几条边？循环几次？</span>
+        t.forward(<span class="num">120</span>)
+        t.left(<span class="num">90</span>)
+        t.forward(<span class="num">100</span>)
+        t.left(<span class="num">90</span>)
+    t.end_fill()</pre></div>
+
+    <div class="exercise mt-m"><b>挑战A —— 画一个学校：</b>写一个 draw_school(t, x, y) 函数，比房子大两倍，有钟楼（窄高矩形+小三角顶）、操场（绿色大矩形）、红旗（红色小矩形+旗杆线）。</div>
+
+    <div class="code-mini mt-s"><pre style="margin:0"><span class="cmt"># 提示：学校框架</span>
+<span class="kw">def</span> <span class="fn">draw_school</span>(t, x, y):
+    <span class="cmt"># ① 教学楼主体：矩形，宽240、高200（比房子大一倍）</span>
+    <span class="cmt"># ② 钟楼：在楼顶中间，宽40、高80的窄矩形 + 小三角形顶</span>
+    <span class="cmt"># ③ 操场：在教学楼前面，绿色大矩形（宽200、高80）</span>
+    <span class="cmt"># ④ 红旗：旗杆（细线） + 红色小矩形旗面</span>
+    <span class="kw">pass</span></pre></div>
+
+    <div class="exercise mt-m"><b>挑战B —— 画夜晚的城市：</b>修改背景为深蓝色("#0B1026")，画月亮（白色圆形+环形山），画星星（多个小圆点随机散布），窗户亮灯（每扇窗户用黄色填充）。</div>
+
+    <div class="code-mini mt-s"><pre style="margin:0"><span class="cmt"># 提示：夜晚城市关键修改</span>
+screen.bgcolor(<span class="str">"#0B1026"</span>)      <span class="cmt"># 深蓝夜空</span>
+
+<span class="kw">def</span> <span class="fn">draw_moon</span>(t, x, y, r):
+    t.fillcolor(<span class="str">"#FFFACD"</span>)    <span class="cmt"># 柠檬黄月亮</span>
+    <span class="cmt"># ... circle(r) ...</span>
+
+<span class="kw">def</span> <span class="fn">draw_star</span>(t, x, y, size):
+    <span class="cmt"># 画一个小星星（可用.dot()快速画圆点）</span>
+    t.penup()
+    t.goto(x, y)
+    t.dot(size, <span class="str">"white"</span>)</pre></div>
+
+    <div class="exercise mt-m"><b>挑战C —— 动态城市（超级挑战）：</b>让太阳从左边升起到右边落下（循环改变太阳坐标并重画），或者画一辆小汽车从左开到右。提示：用 screen.tracer(0) 关闭动画，每帧用 screen.update() 刷新。</div>
+
+    <div class="callout"><b>关键技巧：</b>动态画面 = 循环 + 移动坐标 + 清屏重画。每轮循环：① t.clear() 清屏 ② 改变太阳/汽车的(x, y) ③ 重新调用所有draw函数 ④ screen.update() 刷新。用 time.sleep(0.05) 控制速度。</div>
+  </div>
+</section>
+
+<!-- ═══ SLIDE 6 — 小结 ═══ -->
+<section class="slide full" data-title="小结">
+  <p class="kicker">SUMMARY</p>
+  <h2 class="h2 mt-s">学会了什么？</h2>
+  <div class="grid g2 mt-l" style="display:grid;grid-template-columns:1fr 1fr;gap:20px;max-width:80ch">
+    <div class="concept-box">
+      <h4>核心要点</h4>
+      <ul style="margin:8px 0 0;padding-left:18px;color:var(--text-2);line-height:1.8">
+        <li>Turtle 综合应用：forward/left/right/circle/color/fill 组合出复杂图形</li>
+        <li>函数封装绘图：def draw_xxx(t, x, y, ...) 把绘制步骤打包成可复用的"印章"</li>
+        <li>坐标布局：.goto(x, y) 精确控制每个元素的位置，在城市规划中自由摆放</li>
+        <li>抬笔/落笔：.penup()/.pendown() 控制移动时是否画线——飞着走 vs 画着走</li>
+        <li>创意编程：从画房子开始，可以扩展到学校、游乐场、摩天轮、整个城市！</li>
+      </ul>
+    </div>
+    <div class="concept-box">
+      <h4>下节预告</h4>
+      <p class="dim">第44节：问答大挑战 —— 列表 + 字典做知识竞赛</p>
+      <p class="dim" style="font-size:13px;margin-top:8px">学完了Turtle画城市，下节课做一个烧脑的知识竞赛游戏！用列表装题目、用字典存储题目和答案、用 random 随机出题，看看谁能拿满分！还会加入计分系统和排行榜哦~</p>
+    </div>
+  </div>
+  <div class="mt-l">
+    <div class="callout"><b>课后任务：</b>继续完善你的城市——添加更多建筑（学校、超市、公园），截图分享给同学，思考游乐场（摩天轮、滑梯）怎么用 Turtle 画出来。</div>
+  </div>
+  <div class="deck-footer"><span>Python 趣味学习课程 · 第43节</span></div>
+</section>
+
+</div>
+<script src="assets/runtime.js"></script>
+</body></html>

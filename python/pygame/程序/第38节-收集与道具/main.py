@@ -1,0 +1,823 @@
+#!/usr/bin/env python3
+# -*- coding: utf-8 -*-
+"""
+第38节 - 带道具系统的跑酷/收集游戏
+基于第37节跑酷游戏扩展，新增：
+  - 金币收集系统
+  - 磁铁道具（吸引金币）
+  - 护盾道具（免疫伤害）
+  - 道具掉落机制
+  - 道具效果计时与UI显示
+"""
+
+import pygame
+import random
+import math
+
+# ============================================================
+# 初始化 Pygame
+# ============================================================
+pygame.init()
+
+# ============================================================
+# 常量定义
+# ============================================================
+SCREEN_WIDTH = 400
+SCREEN_HEIGHT = 700
+FPS = 60
+
+# 颜色常量
+WHITE = (255, 255, 255)
+BLACK = (0, 0, 0)
+GRAY = (100, 100, 100)
+DARK_GRAY = (50, 50, 50)
+YELLOW = (255, 255, 0)
+GOLD = (255, 215, 0)
+RED = (255, 50, 50)
+BLUE = (50, 100, 255)
+GREEN = (50, 200, 50)
+CYAN = (0, 255, 255)
+PURPLE = (180, 50, 220)
+ORANGE = (255, 165, 0)
+
+# 道路相关
+ROAD_LEFT = 50
+ROAD_RIGHT = 350
+LANE_COUNT = 3
+LANE_WIDTH = (ROAD_RIGHT - ROAD_LEFT) // LANE_COUNT
+# 每条车道的中心 X 坐标
+LANE_CENTERS = [ROAD_LEFT + LANE_WIDTH * i + LANE_WIDTH // 2 for i in range(LANE_COUNT)]
+
+# 车道线
+LINE_WIDTH = 4
+LINE_HEIGHT = 40
+LINE_GAP = 30
+LINE_SPEED_BASE = 4
+
+# 玩家参数
+PLAYER_WIDTH = 50
+PLAYER_HEIGHT = 80
+PLAYER_COLOR = BLUE
+PLAYER_SPEED = 8  # 换道平滑移动速度
+
+# 障碍物参数
+OBSTACLE_WIDTH = 50
+OBSTACLE_HEIGHT = 80
+OBSTACLE_COLOR = RED
+OBSTACLE_BASE_SPEED = 4
+OBSTACLE_SPAWN_INTERVAL_BASE = 60  # 帧
+OBSTACLE_DROP_CHANCE = 0.30  # 30%概率掉落道具
+
+# 金币参数
+COIN_SIZE = 20
+COIN_COLOR = GOLD
+COIN_SPAWN_INTERVAL = 90  # 帧
+COIN_FALL_SPEED = 3
+COIN_SCORE = 10
+
+# 磁铁道具参数
+MAGNET_SIZE = 28
+MAGNET_COLOR = PURPLE
+MAGNET_DURATION = 5.0  # 秒
+MAGNET_ATTRACT_SPEED = 6
+MAGNET_FALL_SPEED = 3
+
+# 护盾道具参数
+SHIELD_SIZE = 28
+SHIELD_COLOR = CYAN
+SHIELD_DURATION = 3.0  # 秒
+SHIELD_RINGS = 3  # 光圈层数
+SHIELD_FALL_SPEED = 3
+
+# 道具掉落参数
+POWERUP_FALL_SPEED = 3
+
+# 分数
+DISTANCE_SCORE_RATE = 0.1  # 每帧距离分
+
+# ============================================================
+# 字体（用于UI）
+# ============================================================
+FONT_SMALL = pygame.font.SysFont("simhei", 18)
+FONT_MEDIUM = pygame.font.SysFont("simhei", 24)
+FONT_LARGE = pygame.font.SysFont("simhei", 36)
+FONT_TITLE = pygame.font.SysFont("simhei", 48)
+
+
+# ============================================================
+# 玩家类
+# ============================================================
+class Player:
+    """玩家车辆 - 矩形绘制"""
+
+    def __init__(self):
+        self.width = PLAYER_WIDTH
+        self.height = PLAYER_HEIGHT
+        # 初始在中间车道
+        self.target_lane = 1  # 0=左, 1=中, 2=右
+        self.current_x = LANE_CENTERS[self.target_lane] - self.width // 2
+        self.y = SCREEN_HEIGHT - self.height - 30
+        self.color = PLAYER_COLOR
+
+    @property
+    def lane(self):
+        return self.target_lane
+
+    @lane.setter
+    def lane(self, value):
+        self.target_lane = max(0, min(LANE_COUNT - 1, value))
+
+    @property
+    def center_x(self):
+        return self.current_x + self.width // 2
+
+    @property
+    def center_y(self):
+        return self.y + self.height // 2
+
+    def get_rect(self):
+        return pygame.Rect(self.current_x, self.y, self.width, self.height)
+
+    def update(self):
+        """平滑移动到目标车道"""
+        target_x = LANE_CENTERS[self.target_lane] - self.width // 2
+        if abs(self.current_x - target_x) < PLAYER_SPEED:
+            self.current_x = target_x
+        elif self.current_x < target_x:
+            self.current_x += PLAYER_SPEED
+        else:
+            self.current_x -= PLAYER_SPEED
+
+    def draw(self, screen):
+        """绘制玩家车辆"""
+        rect = self.get_rect()
+        # 车身
+        pygame.draw.rect(screen, self.color, rect, border_radius=6)
+        # 车窗
+        window_rect = pygame.Rect(
+            self.current_x + 8, self.y + 10,
+            self.width - 16, 25
+        )
+        pygame.draw.rect(screen, CYAN, window_rect, border_radius=4)
+        # "前灯"
+        lx = self.current_x + 8
+        lw = self.width - 16
+        pygame.draw.rect(screen, YELLOW,
+                         (lx, self.y + self.height - 10, lw // 3, 6),
+                         border_radius=2)
+        pygame.draw.rect(screen, YELLOW,
+                         (lx + 2 * lw // 3, self.y + self.height - 10,
+                          lw // 3, 6),
+                         border_radius=2)
+
+    def move_left(self):
+        """向左换道"""
+        if self.target_lane > 0:
+            self.target_lane -= 1
+
+    def move_right(self):
+        """向右换道"""
+        if self.target_lane < LANE_COUNT - 1:
+            self.target_lane += 1
+
+
+# ============================================================
+# 障碍物类
+# ============================================================
+class Obstacle:
+    """障碍车辆"""
+
+    def __init__(self, lane, speed):
+        self.lane = lane
+        self.width = OBSTACLE_WIDTH
+        self.height = OBSTACLE_HEIGHT
+        self.x = LANE_CENTERS[lane] - self.width // 2
+        self.y = -self.height
+        self.speed = speed
+        self.color = OBSTACLE_COLOR
+
+    def update(self):
+        self.y += self.speed
+
+    def is_off_screen(self):
+        return self.y > SCREEN_HEIGHT
+
+    def get_rect(self):
+        return pygame.Rect(self.x, self.y, self.width, self.height)
+
+    def center_position(self):
+        """返回障碍物中心坐标，用于道具掉落"""
+        return (self.x + self.width // 2, self.y + self.height // 2)
+
+    def draw(self, screen):
+        """绘制障碍车辆"""
+        rect = self.get_rect()
+        # 车身
+        pygame.draw.rect(screen, self.color, rect, border_radius=6)
+        # 车窗
+        window_rect = pygame.Rect(self.x + 8, self.y + 10,
+                                   self.width - 16, 25)
+        pygame.draw.rect(screen, (200, 200, 200), window_rect, border_radius=4)
+        # 尾灯
+        lx = self.x + 8
+        lw = self.width - 16
+        pygame.draw.rect(screen, ORANGE,
+                         (lx, self.y + 5, lw // 3, 6), border_radius=2)
+        pygame.draw.rect(screen, ORANGE,
+                         (lx + 2 * lw // 3, self.y + 5, lw // 3, 6),
+                         border_radius=2)
+
+
+# ============================================================
+# 金币类
+# ============================================================
+class Coin:
+    """金币 - 金色圆形"""
+
+    def __init__(self, x, y=None):
+        self.x = x
+        self.y = y if y is not None else -COIN_SIZE
+        self.size = COIN_SIZE
+        self.speed = COIN_FALL_SPEED
+        self.collected = False
+
+    def update(self):
+        self.y += self.speed
+
+    def is_off_screen(self):
+        return self.y > SCREEN_HEIGHT + self.size
+
+    def get_rect(self):
+        return pygame.Rect(
+            self.x - self.size // 2,
+            self.y - self.size // 2,
+            self.size, self.size
+        )
+
+    def draw(self, screen):
+        """绘制金币 - 金色圆形带高光"""
+        center = (int(self.x), int(self.y))
+        radius = self.size // 2
+        # 主体金色圆
+        pygame.draw.circle(screen, GOLD, center, radius)
+        # 深色边框
+        pygame.draw.circle(screen, ORANGE, center, radius, 2)
+        # 高光（小亮圆）
+        highlight_center = (int(self.x - radius // 3), int(self.y - radius // 3))
+        pygame.draw.circle(screen, YELLOW, highlight_center, radius // 3)
+        # "$" 符号
+        text = FONT_SMALL.render("$", True, BLACK)
+        text_rect = text.get_rect(center=center)
+        screen.blit(text, text_rect)
+
+
+# ============================================================
+# 磁铁道具类
+# ============================================================
+class MagnetPowerUp:
+    """磁铁道具 - 紫色方块带"M"标记"""
+
+    def __init__(self, x, y=None):
+        self.x = x
+        self.y = y if y is not None else -MAGNET_SIZE
+        self.size = MAGNET_SIZE
+        self.speed = POWERUP_FALL_SPEED
+        self.collected = False
+
+    def update(self):
+        self.y += self.speed
+
+    def is_off_screen(self):
+        return self.y > SCREEN_HEIGHT + self.size
+
+    def get_rect(self):
+        return pygame.Rect(
+            self.x - self.size // 2,
+            self.y - self.size // 2,
+            self.size, self.size
+        )
+
+    def draw(self, screen):
+        """绘制磁铁道具 - 紫色方块带'M'和磁铁图标"""
+        rect = self.get_rect()
+        # 主体紫色方块
+        pygame.draw.rect(screen, MAGNET_COLOR, rect, border_radius=6)
+        # 边框
+        pygame.draw.rect(screen, (200, 100, 255), rect, 4, border_radius=6)
+        # "M" 标记
+        text = FONT_SMALL.render("M", True, WHITE)
+        text_rect = text.get_rect(center=(self.x, self.y))
+        screen.blit(text, text_rect)
+        # 磁铁两端装饰（±符号简化表示）
+        pole_size = 4
+        pygame.draw.circle(screen, RED,
+                           (int(self.x - self.size // 3), int(self.y - self.size // 4)),
+                           pole_size)
+        pygame.draw.circle(screen, BLUE,
+                           (int(self.x + self.size // 3), int(self.y + self.size // 4)),
+                           pole_size)
+
+
+# ============================================================
+# 护盾道具类
+# ============================================================
+class ShieldPowerUp:
+    """护盾道具 - 青色方块带"S"标记"""
+
+    def __init__(self, x, y=None):
+        self.x = x
+        self.y = y if y is not None else -SHIELD_SIZE
+        self.size = SHIELD_SIZE
+        self.speed = POWERUP_FALL_SPEED
+        self.collected = False
+
+    def update(self):
+        self.y += self.speed
+
+    def is_off_screen(self):
+        return self.y > SCREEN_HEIGHT + self.size
+
+    def get_rect(self):
+        return pygame.Rect(
+            self.x - self.size // 2,
+            self.y - self.size // 2,
+            self.size, self.size
+        )
+
+    def draw(self, screen):
+        """绘制护盾道具 - 青色方块带'S'和盾牌装饰"""
+        rect = self.get_rect()
+        # 主体青色方块
+        pygame.draw.rect(screen, SHIELD_COLOR, rect, border_radius=6)
+        # 边框
+        pygame.draw.rect(screen, (100, 255, 255), rect, 4, border_radius=6)
+        # "S" 标记
+        text = FONT_SMALL.render("S", True, BLACK)
+        text_rect = text.get_rect(center=(self.x, self.y))
+        screen.blit(text, text_rect)
+        # 盾牌装饰（小三角形）
+        tri_points = [
+            (self.x, self.y + self.size // 3),
+            (self.x - self.size // 4, self.y - self.size // 4),
+            (self.x + self.size // 4, self.y - self.size // 4),
+        ]
+        pygame.draw.polygon(screen, DARK_GRAY, tri_points, 2)
+
+
+# ============================================================
+# 游戏状态管理
+# ============================================================
+class GameState:
+    """管理所有游戏状态"""
+
+    def __init__(self):
+        self.reset()
+
+    def reset(self):
+        """重置所有游戏状态"""
+        self.game_over = False
+        self.score_coins = 0       # 金币得分
+        self.score_distance = 0.0  # 距离得分
+        self.game_time = 0         # 游戏持续帧数
+
+        self.line_offset = 0       # 车道线偏移
+
+        self.player = Player()
+        self.obstacles = []
+        self.coins = []
+        self.magnet_powerups = []
+        self.shield_powerups = []
+
+        # 道具效果状态
+        self.magnet_active = False
+        self.magnet_start_time = 0
+        self.shield_active = False
+        self.shield_start_time = 0
+
+        # 生成计时器
+        self.obstacle_spawn_timer = 0
+        self.coin_spawn_timer = 0
+
+        # 难度
+        self.current_speed = OBSTACLE_BASE_SPEED
+
+    @property
+    def total_score(self):
+        return self.score_coins + int(self.score_distance)
+
+    @property
+    def obstacle_spawn_interval(self):
+        """根据难度动态调整障碍物生成间隔"""
+        interval = OBSTACLE_SPAWN_INTERVAL_BASE - self.game_time // 600
+        return max(20, interval)
+
+    def get_difficulty_speed(self):
+        """根据游戏时间返回当前速度"""
+        return OBSTACLE_BASE_SPEED + self.game_time // 600 * 0.5
+
+
+# ============================================================
+# 辅助函数
+# ============================================================
+
+def random_lane_x():
+    """随机返回一条车道的中心 X 坐标"""
+    lane = random.randint(0, LANE_COUNT - 1)
+    return LANE_CENTERS[lane]
+
+
+def random_lane():
+    """随机返回一条车道编号"""
+    return random.randint(0, LANE_COUNT - 1)
+
+
+def create_dropped_powerup(obstacle):
+    """
+    根据概率决定是否掉落道具，并随机选择磁铁或护盾。
+    返回 (magnet, shield) 元组，各自的 None 表示未生成。
+    """
+    if random.random() < OBSTACLE_DROP_CHANCE:
+        cx, cy = obstacle.center_position()
+        if random.random() < 0.5:
+            return (MagnetPowerUp(cx, cy), None)
+        else:
+            return (None, ShieldPowerUp(cx, cy))
+    return (None, None)
+
+
+# ============================================================
+# 绘制道路
+# ============================================================
+def draw_road(screen, line_offset):
+    """绘制道路背景和滚动车道线"""
+    # 道路背景
+    road_rect = pygame.Rect(ROAD_LEFT, 0, ROAD_RIGHT - ROAD_LEFT, SCREEN_HEIGHT)
+    pygame.draw.rect(screen, DARK_GRAY, road_rect)
+
+    # 道路边缘线
+    pygame.draw.rect(screen, WHITE, (ROAD_LEFT - 4, 0, 4, SCREEN_HEIGHT))
+    pygame.draw.rect(screen, WHITE, (ROAD_RIGHT, 0, 4, SCREEN_HEIGHT))
+
+    # 车道虚线
+    for lane_line in range(LANE_COUNT - 1):
+        line_x = ROAD_LEFT + LANE_WIDTH * (lane_line + 1) - LINE_WIDTH // 2
+        y = -LINE_HEIGHT + (line_offset % (LINE_HEIGHT + LINE_GAP))
+        while y < SCREEN_HEIGHT:
+            pygame.draw.rect(screen, WHITE,
+                             (line_x, y, LINE_WIDTH, LINE_HEIGHT))
+            y += LINE_HEIGHT + LINE_GAP
+
+
+# ============================================================
+# 绘制 UI
+# ============================================================
+def draw_ui(screen, game_state):
+    """绘制分数和道具效果UI"""
+    current_time = pygame.time.get_ticks() / 1000.0
+
+    # 左上角：分数
+    score_text = FONT_SMALL.render(
+        f"金币: {game_state.score_coins}  总分: {game_state.total_score}",
+        True, WHITE
+    )
+    screen.blit(score_text, (10, 10))
+
+    # 右上角：道具效果计时器
+    y_offset = 10
+
+    if game_state.magnet_active:
+        elapsed = current_time - game_state.magnet_start_time / 1000.0
+        remaining = max(0, MAGNET_DURATION - elapsed)
+        magnet_text = FONT_SMALL.render(
+            f"磁铁: {remaining:.1f}秒", True, PURPLE
+        )
+        text_rect = magnet_text.get_rect(topright=(SCREEN_WIDTH - 10, y_offset))
+        screen.blit(magnet_text, text_rect)
+        y_offset += 24
+
+    if game_state.shield_active:
+        elapsed = current_time - game_state.shield_start_time / 1000.0
+        remaining = max(0, SHIELD_DURATION - elapsed)
+        shield_text = FONT_SMALL.render(
+            f"护盾: {remaining:.1f}秒", True, CYAN
+        )
+        text_rect = shield_text.get_rect(topright=(SCREEN_WIDTH - 10, y_offset))
+        screen.blit(shield_text, text_rect)
+
+    # 底部：难度速度提示
+    speed_text = FONT_SMALL.render(
+        f"速度: {game_state.current_speed:.1f}", True, GRAY
+    )
+    screen.blit(speed_text, (10, SCREEN_HEIGHT - 25))
+
+
+def draw_shield_effect(screen, player, current_time):
+    """绘制护盾视觉效果 - 多层半透明彩色光圈"""
+    cx, cy = player.center_x, player.center_y
+    ring_spacing = 6
+    for i in range(SHIELD_RINGS):
+        radius = max(player.width, player.height) // 2 + 10 + i * ring_spacing
+        # 用不同深浅的青色绘制光圈，模拟半透明效果
+        alpha = 128 - i * 30
+        color_val = min(255, max(100, alpha))
+        ring_color = (0, color_val, color_val)
+        # 用虚线圆环模拟半透明
+        # 绘制多个不连续弧线来模拟虚线效果
+        arc_count = 16
+        for j in range(arc_count):
+            angle_start = j * (2 * math.pi / arc_count) + current_time * 3 * (-1 if i % 2 == 0 else 1)
+            angle_end = angle_start + (2 * math.pi / arc_count) * 0.6
+            # 用点来近似弧线
+            points_on_arc = 8
+            for k in range(points_on_arc):
+                a = angle_start + (angle_end - angle_start) * k / points_on_arc
+                px = cx + math.cos(a) * radius
+                py = cy + math.sin(a) * radius
+                dot_radius = 3 - i * 0.5
+                if dot_radius > 0:
+                    pygame.draw.circle(screen, ring_color,
+                                       (int(px), int(py)), int(dot_radius))
+
+
+# ============================================================
+# 游戏结束画面
+# ============================================================
+def draw_game_over(screen, game_state):
+    """绘制游戏结束画面"""
+    # 半透明遮罩
+    overlay = pygame.Surface((SCREEN_WIDTH, SCREEN_HEIGHT))
+    overlay.set_alpha(180)
+    overlay.fill(BLACK)
+    screen.blit(overlay, (0, 0))
+
+    # 标题
+    title_text = FONT_TITLE.render("游戏结束", True, RED)
+    title_rect = title_text.get_rect(center=(SCREEN_WIDTH // 2, SCREEN_HEIGHT // 2 - 120))
+    screen.blit(title_text, title_rect)
+
+    # 分数统计
+    score1 = FONT_MEDIUM.render(
+        f"金币得分: {game_state.score_coins}", True, GOLD
+    )
+    score1_rect = score1.get_rect(center=(SCREEN_WIDTH // 2, SCREEN_HEIGHT // 2 - 50))
+    screen.blit(score1, score1_rect)
+
+    score2 = FONT_MEDIUM.render(
+        f"距离得分: {int(game_state.score_distance)}", True, WHITE
+    )
+    score2_rect = score2.get_rect(center=(SCREEN_WIDTH // 2, SCREEN_HEIGHT // 2 - 10))
+    screen.blit(score2, score2_rect)
+
+    score3 = FONT_LARGE.render(
+        f"总分: {game_state.total_score}", True, YELLOW
+    )
+    score3_rect = score3.get_rect(center=(SCREEN_WIDTH // 2, SCREEN_HEIGHT // 2 + 40))
+    screen.blit(score3, score3_rect)
+
+    # 提示
+    hint_text = FONT_MEDIUM.render("按 R 键重新开始", True, WHITE)
+    hint_rect = hint_text.get_rect(center=(SCREEN_WIDTH // 2, SCREEN_HEIGHT // 2 + 100))
+    screen.blit(hint_text, hint_rect)
+
+
+# ============================================================
+# 碰撞检测
+# ============================================================
+def check_collision(rect1, rect2):
+    """两个矩形之间的碰撞检测"""
+    return rect1.colliderect(rect2)
+
+
+# ============================================================
+# 主游戏循环
+# ============================================================
+def main():
+    screen = pygame.display.set_mode((SCREEN_WIDTH, SCREEN_HEIGHT))
+    pygame.display.set_caption("跑酷收集游戏 - 第38节")
+    clock = pygame.time.Clock()
+
+    game_state = GameState()
+    running = True
+
+    while running:
+        # -------------------- 事件处理 --------------------
+        for event in pygame.event.get():
+            if event.type == pygame.QUIT:
+                running = False
+
+            if event.type == pygame.KEYDOWN:
+                if game_state.game_over:
+                    if event.key == pygame.K_r:
+                        game_state.reset()
+                else:
+                    if event.key == pygame.K_LEFT or event.key == pygame.K_a:
+                        game_state.player.move_left()
+                    elif event.key == pygame.K_RIGHT or event.key == pygame.K_d:
+                        game_state.player.move_right()
+
+        # -------------------- 更新逻辑 --------------------
+        if not game_state.game_over:
+            current_time_ms = pygame.time.get_ticks()
+            current_time_sec = current_time_ms / 1000.0
+            game_state.game_time += 1
+
+            # 更新难度速度
+            game_state.current_speed = game_state.get_difficulty_speed()
+
+            # --- 更新玩家 ---
+            game_state.player.update()
+
+            # --- 更新车道线 ---
+            game_state.line_offset += game_state.current_speed
+            if game_state.line_offset >= LINE_HEIGHT + LINE_GAP:
+                game_state.line_offset -= LINE_HEIGHT + LINE_GAP
+
+            # --- 更新距离分 ---
+            game_state.score_distance += DISTANCE_SCORE_RATE * game_state.current_speed
+
+            # --- 生成障碍物 ---
+            game_state.obstacle_spawn_timer += 1
+            if game_state.obstacle_spawn_timer >= game_state.obstacle_spawn_interval:
+                game_state.obstacle_spawn_timer = 0
+                lane = random_lane()
+                new_obstacle = Obstacle(lane, game_state.current_speed)
+                game_state.obstacles.append(new_obstacle)
+
+            # --- 生成金币 ---
+            game_state.coin_spawn_timer += 1
+            if game_state.coin_spawn_timer >= COIN_SPAWN_INTERVAL:
+                game_state.coin_spawn_timer = 0
+                x = random_lane_x()
+                new_coin = Coin(x)
+                game_state.coins.append(new_coin)
+
+            # --- 更新障碍物 ---
+            for obstacle in game_state.obstacles[:]:
+                obstacle.speed = game_state.current_speed
+                obstacle.update()
+                if obstacle.is_off_screen():
+                    # 障碍物移出屏幕时，尝试掉落道具
+                    magnet_drop, shield_drop = create_dropped_powerup(obstacle)
+                    if magnet_drop:
+                        game_state.magnet_powerups.append(magnet_drop)
+                    if shield_drop:
+                        game_state.shield_powerups.append(shield_drop)
+                    game_state.obstacles.remove(obstacle)
+
+            # --- 更新金币 ---
+            for coin in game_state.coins[:]:
+                if not coin.collected:
+                    # 磁铁效果：金币向玩家位置移动
+                    if game_state.magnet_active:
+                        # 计算方向向量
+                        dx = game_state.player.center_x - coin.x
+                        dy = game_state.player.center_y - coin.y
+                        dist = math.sqrt(dx * dx + dy * dy)
+                        if dist > 0:
+                            # 归一化方向向量
+                            dx /= dist
+                            dy /= dist
+                            # 按吸附速度移动
+                            coin.x += dx * MAGNET_ATTRACT_SPEED
+                            coin.y += dy * MAGNET_ATTRACT_SPEED
+                        else:
+                            # 已到达玩家位置
+                            pass
+                    else:
+                        # 正常下落
+                        coin.y += coin.speed
+
+                # 如果金币在磁铁效果下到达玩家，标记为收集
+                if game_state.magnet_active and not coin.collected:
+                    player_rect = game_state.player.get_rect()
+                    if check_collision(coin.get_rect(), player_rect):
+                        coin.collected = True
+                        game_state.score_coins += COIN_SCORE
+
+                # 移除移出屏幕的金币或已收集的金币
+                if coin.is_off_screen() or coin.collected:
+                    game_state.coins.remove(coin)
+
+            # --- 更新磁铁道具 ---
+            for magnet in game_state.magnet_powerups[:]:
+                magnet.update()
+                if magnet.is_off_screen():
+                    game_state.magnet_powerups.remove(magnet)
+
+            # --- 更新护盾道具 ---
+            for shield in game_state.shield_powerups[:]:
+                shield.update()
+                if shield.is_off_screen():
+                    game_state.shield_powerups.remove(shield)
+
+            # --- 玩家与金币碰撞（非磁铁模式下的正常碰撞） ---
+            if not game_state.magnet_active:
+                player_rect = game_state.player.get_rect()
+                for coin in game_state.coins[:]:
+                    if not coin.collected and check_collision(player_rect, coin.get_rect()):
+                        coin.collected = True
+                        game_state.score_coins += COIN_SCORE
+                        game_state.coins.remove(coin)
+
+            # --- 玩家与磁铁道具碰撞 ---
+            player_rect = game_state.player.get_rect()
+            for magnet in game_state.magnet_powerups[:]:
+                if check_collision(player_rect, magnet.get_rect()):
+                    game_state.magnet_active = True
+                    game_state.magnet_start_time = current_time_ms
+                    game_state.magnet_powerups.remove(magnet)
+
+            # --- 玩家与护盾道具碰撞 ---
+            for shield in game_state.shield_powerups[:]:
+                if check_collision(player_rect, shield.get_rect()):
+                    game_state.shield_active = True
+                    game_state.shield_start_time = current_time_ms
+                    game_state.shield_powerups.remove(shield)
+
+            # --- 道具效果计时检查 ---
+            if game_state.magnet_active:
+                elapsed = current_time_ms - game_state.magnet_start_time
+                if elapsed >= MAGNET_DURATION * 1000:
+                    game_state.magnet_active = False
+                    game_state.magnet_start_time = 0
+
+            if game_state.shield_active:
+                elapsed = current_time_ms - game_state.shield_start_time
+                if elapsed >= SHIELD_DURATION * 1000:
+                    game_state.shield_active = False
+                    game_state.shield_start_time = 0
+
+            # --- 玩家与障碍物碰撞 ---
+            player_rect = game_state.player.get_rect()
+            for obstacle in game_state.obstacles:
+                if check_collision(player_rect, obstacle.get_rect()):
+                    if game_state.shield_active:
+                        # 护盾激活：不死亡，但移除障碍物并可能掉落道具
+                        magnet_drop, shield_drop = create_dropped_powerup(obstacle)
+                        if magnet_drop:
+                            game_state.magnet_powerups.append(magnet_drop)
+                        if shield_drop:
+                            game_state.shield_powerups.append(shield_drop)
+                        game_state.obstacles.remove(obstacle)
+                    else:
+                        # 无护盾：游戏结束
+                        game_state.game_over = True
+                    break
+
+        # -------------------- 绘制 --------------------
+        screen.fill(GREEN)  # 草地背景色（道路两侧）
+
+        # 绘制道路
+        draw_road(screen, game_state.line_offset)
+
+        # 绘制金币
+        for coin in game_state.coins:
+            coin.draw(screen)
+
+        # 绘制磁铁道具
+        for magnet in game_state.magnet_powerups:
+            magnet.draw(screen)
+
+        # 绘制护盾道具
+        for shield in game_state.shield_powerups:
+            shield.draw(screen)
+
+        # 绘制障碍物
+        for obstacle in game_state.obstacles:
+            obstacle.draw(screen)
+
+        # 绘制玩家
+        game_state.player.draw(screen)
+
+        # 绘制护盾视觉效果
+        if game_state.shield_active:
+            # 使用基于帧的旋转效果
+            draw_shield_effect(screen, game_state.player,
+                               game_state.game_time * 0.05)
+
+        # 绘制磁铁效果提示
+        if game_state.magnet_active:
+            # 在玩家周围绘制小电流效果
+            px, py = game_state.player.center_x, game_state.player.center_y
+            spark_count = 4
+            for i in range(spark_count):
+                angle = game_state.game_time * 0.1 + i * 2 * math.pi / spark_count
+                sx = px + math.cos(angle) * 30
+                sy = py + math.sin(angle) * 30
+                pygame.draw.circle(screen, PURPLE, (int(sx), int(sy)), 3)
+
+        # 绘制UI
+        draw_ui(screen, game_state)
+
+        # 绘制游戏结束画面
+        if game_state.game_over:
+            draw_game_over(screen, game_state)
+
+        pygame.display.flip()
+        clock.tick(FPS)
+
+    pygame.quit()
+
+
+if __name__ == "__main__":
+    main()

@@ -1,0 +1,225 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>第05课：模拟算法——照章办事</title>
+<style>
+* { margin:0;padding:0;box-sizing:border-box; }
+body { font-family:'PingFang SC','Microsoft YaHei',sans-serif; background:#1a1a2e; color:#e0e0e0; min-height:100vh; display:flex; flex-direction:column; align-items:center; }
+.slideshow { width:100%; max-width:960px; margin:20px auto; position:relative; }
+.slide { display:none; background:#16213e; border-radius:12px; padding:40px; min-height:540px; box-shadow:0 8px 32px rgba(0,0,0,.4); animation:fadeIn .4s; }
+.slide.active { display:block; }
+@keyframes fadeIn { from{opacity:0;transform:translateY(12px);} to{opacity:1;transform:translateY(0);} }
+h1 { font-size:2em; color:#e94560; margin-bottom:16px; border-bottom:2px solid #e94560; padding-bottom:10px; }
+h2 { font-size:1.5em; color:#0f3460; background:#e94560; display:inline-block; padding:6px 18px; border-radius:6px; margin-bottom:18px; }
+h3 { color:#f5c518; margin:12px 0 6px; }
+ul { margin:12px 0; padding-left:24px; }
+li { margin:8px 0; line-height:1.7; }
+pre { background:#0d1b2a; border-radius:8px; padding:16px; overflow-x:auto; margin:10px 0; font-size:.85em; border-left:4px solid #e94560; }
+code { font-family:'Cascadia Code','Fira Code','Consolas',monospace; color:#7ec8e3; }
+.label { color:#f5c518; font-weight:bold; }
+.note { color:#aaa; font-size:.85em; }
+.navigation { display:flex; justify-content:center; gap:16px; margin:20px 0; }
+.nav-btn { background:#e94560; color:#fff; border:none; padding:10px 28px; border-radius:8px; font-size:1em; cursor:pointer; transition:background .3s; }
+.nav-btn:hover { background:#c73a52; }
+.nav-btn:disabled { background:#555; cursor:not-allowed; }
+.page-indicator { color:#aaa; font-size:.9em; align-self:center; }
+.highlight { color:#f5c518; font-weight:bold; }
+.step-box { background:#0d1b2a; border-left:4px solid #f5c518; padding:12px 16px; margin:8px 0; border-radius:4px; }
+.ascii-box { font-family:'Courier New',monospace; background:#0d1b2a; padding:14px; border-radius:6px; line-height:1.6; white-space:pre; font-size:.82em; color:#a8d8a8; }
+.sim-grid { display:grid; grid-template-columns:1fr 1fr; gap:14px; margin:16px 0; }
+@media(max-width:640px) { .slide{padding:20px;} .sim-grid{grid-template-columns:1fr;} h1{font-size:1.4em;} }
+</style>
+</head>
+<body>
+
+<div class="slideshow" id="slideshow">
+
+<!-- 幻灯片1：标题页 -->
+<div class="slide active" id="slide1">
+<h1>📋 第05课：模拟算法</h1>
+<h2>照章办事 —— 按规则逐步执行</h2>
+<div style="margin:30px 0;">
+<p style="font-size:1.15em;line-height:2;">
+📌 <span class="highlight">核心思想：</span>题目怎么说，代码就怎么写<br>
+📌 <span class="highlight">关键要素：</span>状态变量 + 循环推进 + 规则执行<br>
+📌 <span class="highlight">循环选择：</span>while（条件循环） vs for（计数循环）<br>
+📌 <span class="highlight">经典问题：</span>蜗牛爬井、猴子吃桃
+</p>
+</div>
+<div class="step-box">
+<strong>💡 模拟算法口诀：</strong>读题如读操作手册，写代码像写操作步骤——照章办事，不偷懒，不漏步！
+</div>
+</div>
+
+<!-- 幻灯片2：原理页 -->
+<div class="slide" id="slide2">
+<h2>📖 模拟算法框架 &amp; 流程</h2>
+
+<h3>模拟算法四要素</h3>
+<div class="ascii-box">
+  ┌─────────────────────────────────────┐
+  │  ① 状态变量  → 记录当前状态        │
+  │  ② 循环推进  → while/for 推进时间   │
+  │  ③ 规则执行  → 按规则更新状态      │
+  │  ④ 终止条件  → 何时停止模拟        │
+  └─────────────────────────────────────┘
+</div>
+
+<h3>蜗牛爬井流程图</h3>
+<div class="ascii-box">
+  开始
+   ↓
+  初始化: pos=H, day=0
+   ↓
+  ┌──────┐
+  │pos>0?│──否──→ 输出 day，结束
+  └──是──┘
+   ↓
+  day++, pos -= A      (白天爬)
+   ↓
+  ┌──────┐
+  │pos≤0?│──是──→ 输出 day，结束 (出井了！)
+  └──否──┘
+   ↓
+  pos += B             (晚上滑)
+   ↓
+  返回循环
+</div>
+</div>
+
+<!-- 幻灯片3：代码页 -->
+<div class="slide" id="slide3">
+<h2>💻 蜗牛爬井 —— 代码实现</h2>
+
+<pre><code>long long pos = H;   // 距离井口的深度
+int day = 0;
+
+while (pos > 0) {          // 还没出井就继续
+    day++;                 // 新的一天
+    pos -= A;              // 白天向上爬
+
+    if (pos <= 0) break;   // ← 关键！白天出井就不滑了
+
+    pos += B;              // 晚上下滑
+}</code></pre>
+
+<div class="sim-grid">
+<div class="step-box">
+<h3 style="color:#4ecdc4;">🐌 示例：H=10, A=3, B=2</h3>
+<div class="ascii-box">
+第1天: 10→7→9（滑回）
+第2天: 9→6→8
+第3天: 8→5→7
+第4天: 7→4→6
+第5天: 6→3→5
+第6天: 5→2→4
+第7天: 4→1→3
+第8天: 3→0 出井！
+</div>
+</div>
+<div class="step-box">
+<h3 style="color:#f5c518;">⚠️ 常见错误</h3>
+<ul>
+<li>忘写 break：出井后还下滑</li>
+<li>先下滑再爬：顺序错了</li>
+<li>位置从0开始：应从H开始（距离井口的深度）</li>
+<li>用 int 溢出：应该用 long long</li>
+</ul>
+</div>
+</div>
+</div>
+
+<!-- 幻灯片4：例题页 -->
+<div class="slide" id="slide4">
+<h2>🏋️ 例题：猴子吃桃（逆向模拟）</h2>
+
+<h3>问题描述</h3>
+<p>猴子每天吃<span class="highlight">前一天剩下的一半多一个</span>。第N天早上只剩1个。问第一天有多少？</p>
+
+<h3>正向 vs 逆向</h3>
+<div class="sim-grid">
+<div class="step-box">
+<strong>正向（自然过程）</strong>
+<div class="ascii-box">x个 → 吃 x/2+1 → 剩 x/2-1
+46  → 吃24   → 剩22
+22  → 吃12   → 剩10
+10  → 吃6    → 剩4
+4   → 吃3    → 剩1</div>
+</div>
+<div class="step-box">
+<strong>逆向（从结果推）</strong>
+<div class="ascii-box">剩1  → 原有 (1+1)×2 = 4
+剩4  → 原有 (4+1)×2 = 10
+剩10 → 原有 (10+1)×2 = 22
+剩22 → 原有 (22+1)×2 = 46</div>
+</div>
+</div>
+
+<pre><code>// 逆向递推公式：前一天的桃子 = (当天桃子 + 1) × 2
+int peach = 1;                    // 第N天剩1个
+for (int day = N; day > 1; day--) {
+    peach = (peach + 1) * 2;
+}
+cout << peach;  // 第一天的总数</code></pre>
+
+<div class="step-box">
+<strong>💡 技巧：</strong>逆向思维在模拟题中非常实用——当正向难推时，试着从结果倒着走！
+</div>
+</div>
+
+<!-- 幻灯片5：小结页 -->
+<div class="slide" id="slide5">
+<h2>📝 本课小结</h2>
+
+<div style="display:grid; gap:14px; margin:20px 0;">
+<div class="step-box">
+<h3 style="color:#4ecdc4;">✅ 模拟算法检查清单</h3>
+<ul>
+<li>☑ 状态变量定义清晰了吗？</li>
+<li>☑ 循环条件写对了吗？（while vs for）</li>
+<li>☑ 每一步的更新顺序对吗？</li>
+<li>☑ 边界情况处理了吗？（正好在边界时）</li>
+<li>☑ 数据类型够大吗？（int vs long long）</li>
+</ul>
+</div>
+<div class="step-box">
+<h3 style="color:#f5c518;">🔄 while vs for 选择指南</h3>
+<table style="width:100%; text-align:center; border-collapse:collapse;">
+<tr style="color:#f5c518;"><td>情况</td><td>用哪个</td><td>例子</td></tr>
+<tr><td>知道具体次数</td><td>for</td><td>猴子吃桃（推N-1次）</td></tr>
+<tr><td>不知道次数</td><td>while</td><td>蜗牛爬井（直到出井）</td></tr>
+<tr><td>可能永远循环</td><td>while+上限</td><td>需要加保护</td></tr>
+</table>
+</div>
+</div>
+
+<div class="ascii-box" style="text-align:center;font-size:1.05em;">
+  模拟 = 照章办事
+  读题如读手册，写码如做操作
+  细心 + 耐心 = 模拟成功！
+</div>
+<div class="step-box" style="margin-top:16px;">
+<strong>📌 下节预告：</strong>第06课——日期与时间模拟：闰年判断、天数计算、星期推算！
+</div>
+</div>
+
+</div><!-- slideshow end -->
+
+<div class="navigation">
+<button class="nav-btn" id="prevBtn" onclick="changeSlide(-1)">&#9664; 上一页</button>
+<span class="page-indicator" id="pageIndicator">1 / 5</span>
+<button class="nav-btn" id="nextBtn" onclick="changeSlide(1)">下一页 &#9654;</button>
+</div>
+
+<script>
+let currentSlide=0; const slides=document.querySelectorAll('.slide'); const totalSlides=slides.length;
+function showSlide(i){slides.forEach(s=>s.classList.remove('active'));slides[i].classList.add('active');document.getElementById('pageIndicator').textContent=(i+1)+' / '+totalSlides;document.getElementById('prevBtn').disabled=(i===0);document.getElementById('nextBtn').disabled=(i===totalSlides-1);}
+function changeSlide(d){currentSlide=Math.min(Math.max(currentSlide+d,0),totalSlides-1);showSlide(currentSlide);}
+document.addEventListener('keydown',function(e){if(e.key==='ArrowRight'||e.key==='ArrowDown')changeSlide(1);if(e.key==='ArrowLeft'||e.key==='ArrowUp')changeSlide(-1);});
+let touchStartX=0;document.addEventListener('touchstart',e=>{touchStartX=e.touches[0].clientX;});document.addEventListener('touchend',e=>{let diff=touchStartX-e.changedTouches[0].clientX;if(Math.abs(diff)>50)changeSlide(diff>0?1:-1);});
+showSlide(0);
+</script>
+</body>
+</html>

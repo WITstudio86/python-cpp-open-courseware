@@ -1,0 +1,494 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>第08课：二叉搜索树与平衡树 — CSP-S 备考课程</title>
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "PingFang SC", "Microsoft YaHei", sans-serif;
+    background: #0f0f23;
+    color: #e0e0e0;
+    display: flex; justify-content: center; align-items: center;
+    min-height: 100vh;
+  }
+  .container {
+    width: 90%; max-width: 960px;
+    background: #1a1a2e;
+    border-radius: 16px;
+    padding: 2rem;
+    box-shadow: 0 8px 40px rgba(0,0,0,.5);
+    min-height: 550px;
+    display: flex; flex-direction: column;
+  }
+  .slide-header {
+    display: flex; justify-content: space-between; align-items: center;
+    margin-bottom: 1.5rem;
+    padding-bottom: 0.8rem;
+    border-bottom: 2px solid #0f3460;
+  }
+  .slide-title {
+    font-size: 1.6rem;
+    color: #e94560;
+    font-weight: 700;
+  }
+  .slide-num {
+    font-size: 0.9rem;
+    color: #999;
+    background: #16213e;
+    padding: 0.3rem 0.8rem;
+    border-radius: 20px;
+  }
+  .slide-content {
+    flex: 1;
+    overflow-y: auto;
+    line-height: 1.8;
+    font-size: 1.05rem;
+    padding-right: 0.5rem;
+  }
+  .slide-content h2 {
+    color: #f5c542;
+    margin-bottom: 0.8rem;
+    font-size: 1.3rem;
+    border-left: 3px solid #e94560;
+    padding-left: 12px;
+  }
+  .slide-content h3 {
+    color: #53d8fb;
+    margin: 0.6rem 0 0.4rem;
+    font-size: 1.1rem;
+  }
+  .slide-content ul {
+    margin-left: 1.5rem;
+  }
+  .slide-content li {
+    margin-bottom: 0.3rem;
+  }
+  .slide-content p {
+    margin-bottom: 0.5rem;
+  }
+  .code-block {
+    background: #0d1117;
+    border-radius: 8px;
+    padding: 1rem;
+    margin: 0.8rem 0;
+    font-family: "JetBrains Mono", "Fira Code", "Courier New", monospace;
+    font-size: 0.85rem;
+    overflow-x: auto;
+    line-height: 1.5;
+    border: 1px solid #30363d;
+  }
+  .kw { color: #ff7b72; }
+  .fn { color: #d2a8ff; }
+  .tp { color: #ffa657; }
+  .cm { color: #8b949e; font-style: italic; }
+  .st { color: #a5d6ff; }
+  .nu { color: #79c0ff; }
+  .tree-diagram {
+    font-family: "Courier New", monospace;
+    background: #0d1117;
+    border-radius: 8px;
+    padding: 1rem;
+    margin: 0.8rem 0;
+    font-size: 0.85rem;
+    line-height: 1.4;
+    border: 1px solid #30363d;
+    white-space: pre;
+    color: #79c0ff;
+  }
+  .highlight-box {
+    background: #16213e;
+    border-left: 4px solid #e94560;
+    padding: 0.8rem 1rem;
+    margin: 0.8rem 0;
+    border-radius: 0 8px 8px 0;
+  }
+  .dot { color: #e94560; font-weight: bold; }
+  .grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; }
+  .grid-item {
+    background: #16213e;
+    border: 1px solid #30363d;
+    border-radius: 8px;
+    padding: 0.8rem;
+    text-align: center;
+  }
+  .rotation-ascii {
+    font-family: "Courier New", monospace;
+    background: #0d1117;
+    border-radius: 8px;
+    padding: 0.8rem;
+    margin: 0.5rem 0;
+    font-size: 0.78rem;
+    line-height: 1.3;
+    border: 1px solid #30363d;
+    color: #a5d6ff;
+    white-space: pre;
+    overflow-x: auto;
+  }
+  .nav {
+    display: flex; justify-content: center; gap: 2rem;
+    margin-top: 1.5rem; padding-top: 1rem;
+    border-top: 2px solid #0f3460;
+  }
+  .nav button {
+    background: #0f3460;
+    border: none; color: #e0e0e0;
+    padding: 0.6rem 1.8rem; border-radius: 8px;
+    font-size: 1rem; cursor: pointer;
+    transition: all 0.2s;
+  }
+  .nav button:hover { background: #e94560; }
+  .nav button:disabled {
+    background: #333; color: #666; cursor: not-allowed;
+  }
+  @media (max-width: 600px) {
+    .container { padding: 1rem; }
+    .slide-title { font-size: 1.2rem; }
+    .slide-content { font-size: 0.9rem; }
+    .code-block { font-size: 0.72rem; }
+    .grid-2 { grid-template-columns: 1fr; }
+  }
+</style>
+</head>
+<body>
+<div class="container">
+  <div class="slide-header">
+    <span class="slide-title" id="slideTitle">第08课：二叉搜索树与平衡树</span>
+    <span class="slide-num" id="slideNum">1 / 7</span>
+  </div>
+  <div class="slide-content" id="slideContent"></div>
+  <div class="nav">
+    <button id="prevBtn" onclick="prevSlide()">◀ 上一页</button>
+    <button id="nextBtn" onclick="nextSlide()">下一页 ▶</button>
+  </div>
+</div>
+
+<script>
+let currentSlide = 0;
+const slides = [];
+
+// ========== 幻灯片 1：标题页 ==========
+slides.push(`
+<h2 style="text-align:center; color:#e94560; font-size:2rem; margin:1rem 0;">二叉搜索树与平衡树</h2>
+<p style="text-align:center; color:#f5c542; font-size:1.2rem;">CSP-S 备考课程 · 第08课</p>
+
+<div class="highlight-box" style="margin-top:2rem;">
+  <h3>📋 本课内容概览</h3>
+  <ul>
+    <li><strong>二叉搜索树（BST）</strong>：定义、中序有序性、插入/查找/删除（三种情况）</li>
+    <li><strong>BST 退化问题</strong>：退化为链 → 复杂度退化为 O(n)</li>
+    <li><strong>AVL 树</strong>：平衡因子 |BF| ≤ 1，四种旋转（LL 右旋、RR 左旋、LR 左右旋、RL 右左旋）</li>
+    <li><strong>Treap（树堆）</strong>：Tree + Heap，随机优先级实现期望平衡，竞赛首选平衡树</li>
+    <li><strong>高级操作</strong>：Treap 分裂（Split）与合并（Merge）</li>
+  </ul>
+</div>
+
+<p style="text-align:center; margin-top:1.5rem; color:#888;">
+平衡树是 CSP-S 数据结构的核心难点——理解旋转本质，掌握 Treap 模板，考场无忧！
+</p>
+`);
+
+// ========== 幻灯片 2：BST 知识精讲 ==========
+slides.push(`
+<h2>一、二叉搜索树（BST）</h2>
+
+<div class="tree-diagram">
+        BST 示例：         中序遍历 → 1 3 4 6 7 8 10 13 14（递增！）
+            8
+          /   \\
+         3     10
+        / \\      \\
+       1   6      14
+          / \\    /
+         4   7  13
+</div>
+
+<h3>BST 的核心性质</h3>
+<ul>
+  <li>左子树所有节点值 <strong>&lt;</strong> 根节点值</li>
+  <li>右子树所有节点值 <strong>&gt;</strong> 根节点值</li>
+  <li>左右子树也分别是 BST</li>
+  <li><span class="dot">●</span> <strong>中序有序性</strong>：BST 的中序遍历结果严格递增 — 这是 BST 最重要的性质！</li>
+</ul>
+
+<h3>BST 的三种操作复杂度</h3>
+<table style="width:100%; border-collapse:collapse; font-size:0.9rem; margin:0.5rem 0;">
+  <tr style="background:#0f3460; color:#f5c542;">
+    <td style="padding:6px; border:1px solid #30363d;">操作</td>
+    <td style="padding:6px; border:1px solid #30363d;"><strong>时间复杂度</strong></td>
+    <td style="padding:6px; border:1px solid #30363d;">说明</td>
+  </tr>
+  <tr style="background:#16213e;">
+    <td style="padding:6px; border:1px solid #30363d;">查找</td>
+    <td style="padding:6px; border:1px solid #30363d;">O(h)</td>
+    <td style="padding:6px; border:1px solid #30363d;">h = 树高，平衡时 h = O(log n)</td>
+  </tr>
+  <tr style="background:#16213e;">
+    <td style="padding:6px; border:1px solid #30363d;">插入</td>
+    <td style="padding:6px; border:1px solid #30363d;">O(h)</td>
+    <td style="padding:6px; border:1px solid #30363d;">走到叶子位置插入</td>
+  </tr>
+  <tr style="background:#16213e;">
+    <td style="padding:6px; border:1px solid #30363d;">删除</td>
+    <td style="padding:6px; border:1px solid #30363d;">O(h)</td>
+    <td style="padding:6px; border:1px solid #30363d;">三种情况：叶子、单子、双子（用前驱/后继替）</td>
+  </tr>
+</table>
+
+<div class="highlight-box">
+<span class="dot">●</span> <strong>核心问题</strong>：BST 可能退化为链（如按升序插入 1,2,3,4,5），此时 h = n，所有操作 O(n)。需要平衡树来解决！
+</div>
+`);
+
+// ========== 幻灯片 3：AVL 树原理与旋转 ==========
+slides.push(`
+<h2>二、AVL 树 — 四种旋转操作</h2>
+
+<div class="grid-2">
+  <div class="grid-item">
+    <strong style="color:#53d8fb;">LL 型 → 右旋</strong>
+    <div class="rotation-ascii">  A(BF=2)       B
+ /      →     / \\
+B              C   A
+/ \\
+C   *</div>
+  </div>
+  <div class="grid-item">
+    <strong style="color:#53d8fb;">RR 型 → 左旋</strong>
+    <div class="rotation-ascii">A(BF=-2)        B
+ \\      →      / \\
+  B            A   C
+ / \\
+*   C</div>
+  </div>
+  <div class="grid-item">
+    <strong style="color:#53d8fb;">LR 型 → 先左后右</strong>
+    <div class="rotation-ascii">  A(BF=2)          A         C
+ /      先左旋    /   再右旋  / \\
+B(BF=-1)  →    C       →  B   A
+ \\           /
+  C         B</div>
+  </div>
+  <div class="grid-item">
+    <strong style="color:#53d8fb;">RL 型 → 先右后左</strong>
+    <div class="rotation-ascii">A(BF=-2)         A         C
+ \\     先右旋    \\  再左旋  / \\
+  B(BF=1) →      C      →  A   B
+ /               \\
+C                 B</div>
+  </div>
+</div>
+
+<div class="highlight-box" style="margin-top:0.5rem;">
+<span class="dot">●</span> <strong>记忆口诀</strong>：LL 右旋，RR 左旋，LR 先左后右，RL 先右后左。<br>
+<span class="dot">●</span> <strong>旋转后更新高度的顺序</strong>：必须先更新下层节点（原根），再更新上层节点（新根）！
+</div>
+`);
+
+// ========== 幻灯片 4：代码模板 - AVL 与 Treap ==========
+slides.push(`
+<h2>三、AVL 插入 &amp; Treap 插入 标准模板</h2>
+
+<h3>AVL 插入（BST 插入 + 回溯平衡）</h3>
+<div class="code-block">
+<span class="tp">AVLNode</span>* <span class="fn">avlInsert</span>(<span class="tp">AVLNode</span>* root, <span class="tp">int</span> key) {
+    <span class="kw">if</span> (!root) <span class="kw">return</span> <span class="kw">new</span> <span class="tp">AVLNode</span>(key);          <span class="cm">// 1.BST插入</span>
+    <span class="kw">if</span> (key &lt; root->val) root->left = <span class="fn">avlInsert</span>(root->left, key);
+    <span class="kw">else if</span> (key > root->val) root->right = <span class="fn">avlInsert</span>(root->right, key);
+    <span class="kw">else return</span> root;
+    <span class="fn">updateHeight</span>(root);                   <span class="cm">// 2.更新高度</span>
+    <span class="tp">int</span> bf = <span class="fn">getBF</span>(root);                   <span class="cm">// 3.计算平衡因子</span>
+    <span class="kw">if</span> (bf > <span class="nu">1</span> && key &lt; root->left->val)   <span class="kw">return</span> <span class="fn">rotateRight</span>(root); <span class="cm">// LL</span>
+    <span class="kw">if</span> (bf &lt; -<span class="nu">1</span> && key > root->right->val)  <span class="kw">return</span> <span class="fn">rotateLeft</span>(root);  <span class="cm">// RR</span>
+    <span class="kw">if</span> (bf > <span class="nu">1</span> && key > root->left->val)    <span class="cm">// LR</span>
+        { root->left = <span class="fn">rotateLeft</span>(root->left); <span class="kw">return</span> <span class="fn">rotateRight</span>(root); }
+    <span class="kw">if</span> (bf &lt; -<span class="nu">1</span> && key &lt; root->right->val)   <span class="cm">// RL</span>
+        { root->right = <span class="fn">rotateRight</span>(root->right); <span class="kw">return</span> <span class="fn">rotateLeft</span>(root); }
+    <span class="kw">return</span> root;
+}
+</div>
+
+<h3>Treap 插入（BST 插入 + 旋转维护大根堆）</h3>
+<div class="code-block">
+<span class="tp">TreapNode</span>* <span class="fn">treapInsert</span>(<span class="tp">TreapNode</span>* root, <span class="tp">int</span> key) {
+    <span class="kw">if</span> (!root) <span class="kw">return</span> <span class="kw">new</span> <span class="tp">TreapNode</span>(key);  <span class="cm">// 随机 priority</span>
+    <span class="kw">if</span> (key &lt; root->key) {
+        root->left = <span class="fn">treapInsert</span>(root->left, key);
+        <span class="kw">if</span> (root->left->priority > root->priority)
+            root = <span class="fn">rotateRight</span>(root);  <span class="cm">// 左孩子priority大→右旋上浮</span>
+    } <span class="kw">else if</span> (key > root->key) {
+        root->right = <span class="fn">treapInsert</span>(root->right, key);
+        <span class="kw">if</span> (root->right->priority > root->priority)
+            root = <span class="fn">rotateLeft</span>(root);   <span class="cm">// 右孩子priority大→左旋上浮</span>
+    }
+    <span class="kw">return</span> root;
+}
+</div>
+`);
+
+// ========== 幻灯片 5：真题精练 ==========
+slides.push(`
+<h2>四、真题精练</h2>
+
+<h3>真题一：[CSP-S 真题变体] 普通平衡树（Treap 实现）</h3>
+<p>支持 6 种操作（n ≤ 10⁵）：插入 x、删除 x、查询 rank、查询第 k 小、前驱、后继。</p>
+<div class="highlight-box">
+  <strong>解题关键</strong>：Treap 节点维护 <code>size</code> 用于排名，<code>cnt</code> 处理重复元素。使用 <code>mt19937</code> 生成高质量的随机优先级。
+</div>
+
+<h3>真题二：[CSP-S 模拟] 第 K 大数查询（AVL 实现）</h3>
+<p>支持插入、删除、查询第 k 大数（Q ≤ 2×10⁵，|x| ≤ 10⁹）。<br>
+第 k 大 = 升序排名第 (size - k + 1) 小的数。</p>
+
+<div class="code-block">
+<span class="cm">// 查询第 k 小（排名）—— AVL / Treap 通用模板</span>
+<span class="tp">int</span> <span class="fn">kthSmallest</span>(<span class="tp">AVLNode</span>* root, <span class="tp">int</span> k) {
+    <span class="tp">int</span> leftSize = <span class="fn">getSize</span>(root->left);
+    <span class="kw">if</span> (k &lt;= leftSize) <span class="kw">return</span> <span class="fn">kthSmallest</span>(root->left, k);
+    <span class="kw">if</span> (k == leftSize + <span class="nu">1</span>) <span class="kw">return</span> root->val;
+    <span class="kw">return</span> <span class="fn">kthSmallest</span>(root->right, k - leftSize - <span class="nu">1</span>);
+}
+<span class="cm">// 第 k 大 = kthSmallest(root, totalSize - k + 1)</span>
+</div>
+
+<div class="highlight-box" style="margin-top:0.5rem;">
+  <strong>复杂度分析</strong>：每次操作 O(log n)，总 O(n log n)。空间 O(n)。Treap 期望平衡，AVL 严格平衡，均能通过 10⁵ 级数据。
+</div>
+`);
+
+// ========== 幻灯片 6：优化技巧 ==========
+slides.push(`
+<h2>五、易错点与优化技巧</h2>
+
+<table style="width:100%; border-collapse:collapse; font-size:0.88rem;">
+  <tr style="background:#0f3460; color:#f5c542;">
+    <td style="padding:8px; border:1px solid #30363d;">#</td>
+    <td style="padding:8px; border:1px solid #30363d;">易错点</td>
+    <td style="padding:8px; border:1px solid #30363d;">正确做法</td>
+  </tr>
+  <tr style="background:#16213e;">
+    <td style="padding:5px 8px; border:1px solid #30363d; text-align:center;">1</td>
+    <td style="padding:5px 8px; border:1px solid #30363d;">AVL 旋转后高度更新顺序错误</td>
+    <td style="padding:5px 8px; border:1px solid #30363d;">先 update(原根下层)，再 update(新根上层)</td>
+  </tr>
+  <tr style="background:#16213e;">
+    <td style="padding:5px 8px; border:1px solid #30363d; text-align:center;">2</td>
+    <td style="padding:5px 8px; border:1px solid #30363d;">Treap 删除时旋转方向错误</td>
+    <td style="padding:5px 8px; border:1px solid #30363d;">priority<strong>小</strong>的孩子旋转上来，使待删节点下沉</td>
+  </tr>
+  <tr style="background:#16213e;">
+    <td style="padding:5px 8px; border:1px solid #30363d; text-align:center;">3</td>
+    <td style="padding:5px 8px; border:1px solid #30363d;"><code>rand()</code> 范围太小（32767）</td>
+    <td style="padding:5px 8px; border:1px solid #30363d;">使用 <code>mt19937</code> 或 <code>rand()*RAND_MAX+rand()</code></td>
+  </tr>
+  <tr style="background:#16213e;">
+    <td style="padding:5px 8px; border:1px solid #30363d; text-align:center;">4</td>
+    <td style="padding:5px 8px; border:1px solid #30363d;">BST 删除后忘 return</td>
+    <td style="padding:5px 8px; border:1px solid #30363d;">删除函数每一分支都必须正确返回新根节点</td>
+  </tr>
+  <tr style="background:#16213e;">
+    <td style="padding:5px 8px; border:1px solid #30363d; text-align:center;">5</td>
+    <td style="padding:5px 8px; border:1px solid #30363d;">AVL 删除只用一次旋转</td>
+    <td style="padding:5px 8px; border:1px solid #30363d;">AVL 删除可能导致沿路径多次旋转，必须递归回溯平衡</td>
+  </tr>
+  <tr style="background:#16213e;">
+    <td style="padding:5px 8px; border:1px solid #30363d; text-align:center;">6</td>
+    <td style="padding:5px 8px; border:1px solid #30363d;">Treap split 边界条件错误</td>
+    <td style="padding:5px 8px; border:1px solid #30363d;">按 k 分裂：root->key ≤ k 归左树；root->key > k 归右树</td>
+  </tr>
+</table>
+
+<h3 style="margin-top:1rem;">💡 Split + Merge 实现无旋 Treap</h3>
+<div class="code-block">
+<span class="cm">// 插入：split 出 ≤k 和 >k，合并 (合并(左, 新节点), 右)</span>
+<span class="kw">void</span> <span class="fn">split</span>(<span class="tp">TreapNode</span>* root, <span class="tp">int</span> k, <span class="tp">TreapNode</span>*& L, <span class="tp">TreapNode</span>*& R) {
+    <span class="kw">if</span> (!root) { L = R = <span class="kw">nullptr</span>; <span class="kw">return</span>; }
+    <span class="kw">if</span> (root->key &lt;= k) { L = root; <span class="fn">split</span>(root->right, k, L->right, R); }
+    <span class="kw">else</span> { R = root; <span class="fn">split</span>(root->left, k, L, R->left); }
+}
+<span class="tp">TreapNode</span>* <span class="fn">merge</span>(<span class="tp">TreapNode</span>* L, <span class="tp">TreapNode</span>* R) {
+    <span class="kw">if</span> (!L || !R) <span class="kw">return</span> L ? L : R;
+    <span class="kw">if</span> (L->priority > R->priority) { L->right = <span class="fn">merge</span>(L->right, R); <span class="kw">return</span> L; }
+    <span class="kw">else</span> { R->left = <span class="fn">merge</span>(L, R->left); <span class="kw">return</span> R; }
+}
+</div>
+`);
+
+// ========== 幻灯片 7：总结 ==========
+slides.push(`
+<h2>本课小结</h2>
+
+<div class="grid-2">
+  <div class="highlight-box">
+    <h3 style="color:#53d8fb;">BST 要点</h3>
+    <ul>
+      <li>中序有序性：递增序列</li>
+      <li>操作复杂度 = O(h)</li>
+      <li>删除三情况：叶子/单子/双子</li>
+      <li>双子用前驱/后继替换</li>
+      <li>可能退化为链 O(n)</li>
+    </ul>
+  </div>
+  <div class="highlight-box">
+    <h3 style="color:#53d8fb;">AVL 要点</h3>
+    <ul>
+      <li>平衡因子 |BF| ≤ 1</li>
+      <li>LL→右旋, RR→左旋</li>
+      <li>LR→先左后右</li>
+      <li>RL→先右后左</li>
+      <li>插入最多旋1次，删除可多次</li>
+    </ul>
+  </div>
+  <div class="highlight-box">
+    <h3 style="color:#53d8fb;">Treap 要点</h3>
+    <ul>
+      <li>Tree + Heap 结合</li>
+      <li>随机 priority 保证期望平衡</li>
+      <li>插入：BST+旋转维护堆</li>
+      <li>删除：旋转下沉再删</li>
+      <li>Split/Merge 实现区间操作</li>
+    </ul>
+  </div>
+  <div class="highlight-box">
+    <h3 style="color:#53d8fb;">竞赛建议</h3>
+    <ul>
+      <li>能用 std::set/map 就用</li>
+      <li>手写平衡树首选 Treap</li>
+      <li>不要手写红黑树！</li>
+      <li>Treap 加 size 支持排名</li>
+      <li>AVL 查找最优（最严格平衡）</li>
+    </ul>
+  </div>
+</div>
+
+<p style="text-align:center; margin-top:1.5rem; color:#f5c542; font-size:1.2rem;">
+旋转不改变中序序列，只改变树的高度——理解这一点，平衡树就掌握了一半！
+</p>
+
+<p style="text-align:center; color:#888; margin-top:1rem;">
+下一课预告：<strong>树状数组（Fenwick Tree）</strong>
+</p>
+`);
+
+function renderSlide() {
+    document.getElementById('slideContent').innerHTML = slides[currentSlide];
+    document.getElementById('slideNum').textContent = (currentSlide + 1) + ' / ' + slides.length;
+    document.getElementById('prevBtn').disabled = currentSlide === 0;
+    document.getElementById('nextBtn').disabled = currentSlide === slides.length - 1;
+}
+
+function prevSlide() { if (currentSlide > 0) { currentSlide--; renderSlide(); } }
+function nextSlide() { if (currentSlide < slides.length - 1) { currentSlide++; renderSlide(); } }
+
+document.addEventListener('keydown', function(e) {
+    if (e.key === 'ArrowLeft' || e.key === 'ArrowUp') prevSlide();
+    if (e.key === 'ArrowRight' || e.key === 'ArrowDown' || e.key === ' ') {
+        e.preventDefault(); nextSlide();
+    }
+});
+
+renderSlide();
+</script>
+</body>
+</html>

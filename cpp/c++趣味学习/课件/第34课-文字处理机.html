@@ -1,0 +1,261 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>第34课：文字处理机——字符串入门</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            font-family: 'PingFang SC', 'Microsoft YaHei', sans-serif;
+            background: linear-gradient(135deg, #a18cd1 0%, #fbc2eb 100%);
+            min-height: 100vh;
+            display: flex; justify-content: center; align-items: center;
+        }
+        .slides-container {
+            width: 90%; max-width: 900px; min-height: 550px;
+            background: white; border-radius: 25px; padding: 40px;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+            position: relative; padding-bottom: 90px;
+        }
+        .slide { display: none; animation: fadeIn 0.5s; }
+        .slide.active { display: block; }
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
+        h1 { color: #6c3483; font-size: 2.2em; margin-bottom: 20px; }
+        h2 { color: #8e44ad; font-size: 1.8em; margin-bottom: 15px; }
+        h3 { color: #1e8449; font-size: 1.4em; margin: 15px 0 10px; }
+        p, li { font-size: 1.15em; line-height: 1.8; color: #333; }
+        ul, ol { padding-left: 30px; margin: 10px 0; }
+        .code-block {
+            background: #1e1e2e; color: #cdd6f4; padding: 20px;
+            border-radius: 12px; font-family: 'Courier New', monospace;
+            font-size: 0.95em; line-height: 1.6; overflow-x: auto;
+            margin: 15px 0; white-space: pre-wrap; word-break: break-all;
+        }
+        .nav-buttons {
+            position: absolute; bottom: 20px; left: 40px; right: 40px;
+            display: flex; justify-content: space-between;
+        }
+        .nav-btn {
+            background: linear-gradient(135deg, #a18cd1, #fbc2eb);
+            color: white; border: none; padding: 12px 30px;
+            border-radius: 30px; font-size: 1.1em; cursor: pointer;
+            transition: transform 0.2s;
+            font-family: 'PingFang SC', 'Microsoft YaHei', sans-serif;
+        }
+        .nav-btn:hover { transform: scale(1.05); }
+        .nav-btn:disabled { opacity: 0.4; cursor: default; transform: none; }
+        .page-indicator { font-size: 1.1em; color: #8e44ad; align-self: center; }
+        .emoji-big { font-size: 3em; text-align: center; display: block; margin: 15px 0; }
+        .badge { display: inline-block; background: #f3e5f5; color: #6a1b9a; padding: 5px 15px; border-radius: 20px; font-size: 0.9em; margin: 3px; }
+        table { width: 100%; border-collapse: collapse; margin: 15px 0; }
+        th, td { border: 2px solid #ddd; padding: 10px; text-align: left; }
+        th { background: #a18cd1; color: white; }
+        .highlight-box { background: #fff3cd; border-left: 5px solid #ffc107; padding: 15px; border-radius: 8px; margin: 15px 0; }
+        .tip-box { background: #d4edda; border-left: 5px solid #28a745; padding: 15px; border-radius: 8px; margin: 15px 0; }
+        @media (max-width: 600px) {
+            .slides-container { padding: 25px; }
+            h1 { font-size: 1.5em; }
+            .code-block { font-size: 0.75em; }
+        }
+    </style>
+</head>
+<body>
+    <div class="slides-container">
+        <!-- Slide 1: Title -->
+        <div class="slide active" id="slide1">
+            <span class="emoji-big">📝</span>
+            <h1>第34课：文字处理机——字符串入门</h1>
+            <p style="text-align:center;color:#666;">第三阶段：数据类型进阶 | 课时：45分钟</p>
+            <p style="text-align:center;margin-top:20px;">✨ 📝 制作个人名片生成器 ✨</p>
+            <p style="text-align:center;margin-top:15px;">
+                <span class="badge">string 类型</span>
+                <span class="badge">cin vs getline</span>
+                <span class="badge">字符串拼接</span>
+                <span class="badge">名片生成器</span>
+            </p>
+            <p style="text-align:center;margin-top:20px;color:#999;font-size:0.9em;">使用键盘 ← → 或点击按钮翻页</p>
+        </div>
+
+        <!-- Slide 2: Objectives -->
+        <div class="slide" id="slide2">
+            <h2>🎯 学习目标</h2>
+            <ol>
+                <li><strong>认识 string 类型</strong> —— 理解什么是字符串，知道它和 int、double 等数字类型的区别，学会用双引号 <code>""</code> 创建字符串。</li>
+                <li><strong>掌握两种输入方式</strong> —— 学会 <code>cin &gt;&gt;</code> 读取单词、<code>getline()</code> 读取整行文本，知道什么时候用哪一个。</li>
+                <li><strong>学会字符串拼接</strong> —— 使用 <code>+</code> 和 <code>+=</code> 运算符把多个字符串组合在一起，像搭积木一样构建文字内容。</li>
+                <li><strong>独立制作名片生成器</strong> —— 综合运用输入、拼接、格式化输出，开发一个实用又好玩的个人名片生成程序。</li>
+            </ol>
+            <div class="highlight-box">
+                <strong>🔑 本课关键词：</strong> string、getline、cin.ignore()、字符串拼接、length()
+            </div>
+        </div>
+
+        <!-- Slide 3: Core Knowledge -->
+        <div class="slide" id="slide3">
+            <h2>📖 核心知识：深入理解 string</h2>
+
+            <h3>1️⃣ 什么是 string？</h3>
+            <p><code>string</code> 是 C++ 提供的<strong>字符串类型</strong>，专门用来存储和处理文字。使用前需要 <code>#include &lt;string&gt;</code>。</p>
+            <div class="code-block">string name = "小明";
+string message = "你好，欢迎学习 C++！";
+// 注意：必须用英文双引号 "" 括起来！</div>
+
+            <h3>2️⃣ cin &gt;&gt; vs getline() 对比</h3>
+            <table>
+                <tr><th>输入方式</th><th>能读空格？</th><th>读到哪停止？</th><th>适用场景</th></tr>
+                <tr><td><code>cin &gt;&gt; s</code></td><td style="color:red;">❌ 不能</td><td>遇到空格 / Tab / 换行</td><td>读单词、学号等不含空格的</td></tr>
+                <tr><td><code>getline(cin, s)</code></td><td style="color:green;">✅ 可以</td><td>遇到换行符</td><td>读名字、地址、一句话等</td></tr>
+            </table>
+
+            <div class="highlight-box">
+                <strong>⚠️ 关键警告：</strong>混合使用 <code>cin &gt;&gt;</code> 和 <code>getline()</code> 时，必须在 <code>cin &gt;&gt;</code> 后面加上 <code>cin.ignore();</code>，否则 <code>getline()</code> 会"吃"到残留的换行符，导致输入被跳过！
+            </div>
+
+            <h3>3️⃣ 字符串拼接：用 + 把文字连起来</h3>
+            <div class="code-block">string firstName = "张";
+string lastName = "三";
+string fullName = firstName + lastName;  // "张三"
+
+string card = "姓名：" + fullName + "\n";
+card += "年龄：12岁\n";     // += 在末尾追加
+card += "爱好：编程\n";</div>
+
+            <h3>4️⃣ 常用操作速查</h3>
+            <table>
+                <tr><th>操作</th><th>代码</th><th>说明</th></tr>
+                <tr><td>获取长度</td><td><code>s.length()</code></td><td>返回字符个数</td></tr>
+                <tr><td>访问字符</td><td><code>s[0]</code></td><td>第1个字符（索引从0开始）</td></tr>
+                <tr><td>判断为空</td><td><code>s.empty()</code></td><td>空则返回 true</td></tr>
+                <tr><td>清空</td><td><code>s.clear()</code></td><td>变成空字符串</td></tr>
+                <tr><td>比较</td><td><code>s1 == s2</code></td><td>内容相同则 true</td></tr>
+            </table>
+        </div>
+
+        <!-- Slide 4: Code Example -->
+        <div class="slide" id="slide4">
+            <h2>💻 示例代码：个人名片生成器</h2>
+            <p style="margin-bottom:10px;">输入你的姓名、学校、爱好和电话，程序自动生成一张漂亮的文字名片！</p>
+            <div class="code-block">#include &lt;iostream&gt;
+#include &lt;string&gt;
+using namespace std;
+
+int main() {
+    string name, school, hobby, phone;
+
+    cout &lt;&lt; "🎨 === 个人名片生成器 === 🎨" &lt;&lt; endl;
+
+    cout &lt;&lt; "请输入你的姓名：";
+    getline(cin, name);           // 用 getline 读取整行
+
+    cout &lt;&lt; "请输入你的学校：";
+    getline(cin, school);
+
+    cout &lt;&lt; "请输入你的爱好：";
+    getline(cin, hobby);
+
+    cout &lt;&lt; "请输入你的电话：";
+    getline(cin, phone);
+
+    // 拼接生成名片
+    string card = "";
+    card += "╔══════════════════════════╗\n";
+    card += "║      🪪  个 人 名 片      ║\n";
+    card += "╠══════════════════════════╣\n";
+    card += "║  姓名：" + name  + "     ║\n";
+    card += "║  学校：" + school + "  ║\n";
+    card += "║  爱好：" + hobby  + "   ║\n";
+    card += "║  电话：" + phone  + "    ║\n";
+    card += "╚══════════════════════════╝\n";
+
+    cout &lt;&lt; card;  // 输出名片
+
+    // 统计信息
+    cout &lt;&lt; "📊 姓名字符数：" &lt;&lt; name.length() &lt;&lt; endl;
+    return 0;
+}</div>
+            <div class="tip-box">
+                <strong>💡 思考：</strong>为什么这里用 <code>getline()</code> 而不是 <code>cin &gt;&gt;</code>？因为姓名和学校名称可能包含空格（比如"北京大学附属中学"），用 <code>cin &gt;&gt;</code> 会读到空格就停止，导致数据不完整！
+            </div>
+        </div>
+
+        <!-- Slide 5: Exercises -->
+        <div class="slide" id="slide5">
+            <h2>🎮 趣味练习</h2>
+
+            <h3>练习一：填空补全代码</h3>
+            <p>补全下面的代码，实现输入名字和爱好后输出一句话：</p>
+            <div class="code-block">string name, _____;  // ① 第二个变量名
+cout &lt;&lt; "你的名字：";
+getline(cin, _____);    // ② 变量名
+cout &lt;&lt; "你的爱好：";
+getline(cin, hobby);
+// ③ 补全输出：小华喜欢编程！
+cout &lt;&lt; name __ "喜欢" __ hobby __ "！" &lt;&lt; endl;</div>
+            <div class="tip-box">
+                <strong>✅ 答案：</strong>① <code>hobby</code> ② <code>name</code> ③ <code>+</code> <code>+</code> <code>&lt;&lt;</code>
+            </div>
+
+            <h3>练习二：判断对错</h3>
+            <p>小明写了一段代码，输入"Bei Jing"后，输出的 a 和 b 分别是什么？</p>
+            <div class="code-block">string a, b;
+cin &gt;&gt; a &gt;&gt; b;
+// 用户输入：Bei Jing</div>
+            <div class="tip-box">
+                <strong>✅ 答案：</strong><code>a = "Bei"</code>，<code>b = "Jing"</code>。<code>cin &gt;&gt;</code> 遇到空格就停下来，所以"Bei Jing"被分成了两个单词。
+            </div>
+
+            <h3>🏆 挑战：智能问候机器人</h3>
+            <p>编写程序：输入名字和心情（"开心"/"有点困"），根据心情输出不同的问候语。提示：用 <strong>if-else</strong> 判断心情，用 <strong>+</strong> 拼接问候。</p>
+            <div class="tip-box">
+                <strong>✅ 核心思路：</strong><br>
+                <code>if (mood == "开心")</code> → <code>cout &lt;&lt; name + "，太棒了！" &lt;&lt; endl;</code><br>
+                <code>else if (mood == "有点困")</code> → <code>cout &lt;&lt; name + "，喝杯水提提神！" &lt;&lt; endl;</code><br>
+                <code>else</code> → <code>cout &lt;&lt; name + "，每天都是新的开始，加油！" &lt;&lt; endl;</code>
+            </div>
+        </div>
+
+        <!-- Slide 6: Summary -->
+        <div class="slide" id="slide6">
+            <h2>📝 本课小结</h2>
+            <ul>
+                <li><strong>string 是处理文字的类型</strong> —— 用双引号 <code>""</code> 赋值，用 <code>+</code> 拼接，需 <code>#include &lt;string&gt;</code>。</li>
+                <li><strong>cin &gt;&gt; 读单词</strong> —— 遇空格就停，适合读学号、单词。</li>
+                <li><strong>getline() 读整行</strong> —— 空格也保留，适合读姓名、地址、句子。</li>
+                <li><strong>混用别忘 cin.ignore()</strong> —— 清除缓冲区残留的换行符，防止 getline 被跳过。</li>
+                <li><strong>length() 获取长度</strong> —— 知道字符串里有多少个字符。</li>
+                <li><strong>字符串可以比较</strong> —— 用 <code>==</code> 判断内容是否相同，实现智能对话。</li>
+            </ul>
+            <p style="text-align:center;margin-top:20px;color:#8e44ad;font-size:1.2em;">📝 拥有了字符串，就能处理所有文字信息啦！</p>
+            <p style="text-align:center;margin-top:10px;color:#999;">下一课预告：字符串的更多魔法操作 —— 查找、替换、提取子串</p>
+        </div>
+
+        <div class="nav-buttons">
+            <button class="nav-btn" onclick="prevSlide()" disabled>◀ 上一页</button>
+            <span class="page-indicator" id="pageIndicator">1 / 6</span>
+            <button class="nav-btn" onclick="nextSlide()">下一页 ▶</button>
+        </div>
+    </div>
+    <script>
+        let currentSlide = 0;
+        const slides = document.querySelectorAll('.slide');
+        const totalSlides = slides.length;
+        const indicator = document.getElementById('pageIndicator');
+        function showSlide(n) {
+            slides[currentSlide].classList.remove('active');
+            currentSlide = (n + totalSlides) % totalSlides;
+            slides[currentSlide].classList.add('active');
+            indicator.textContent = (currentSlide + 1) + ' / ' + totalSlides;
+            document.querySelectorAll('.nav-btn')[0].disabled = currentSlide === 0;
+            document.querySelectorAll('.nav-btn')[1].disabled = currentSlide === totalSlides - 1;
+        }
+        function nextSlide() { showSlide(currentSlide + 1); }
+        function prevSlide() { showSlide(currentSlide - 1); }
+        document.addEventListener('keydown', function(e) {
+            if (e.key === 'ArrowRight' || e.key === ' ') { e.preventDefault(); nextSlide(); }
+            else if (e.key === 'ArrowLeft') { e.preventDefault(); prevSlide(); }
+        });
+        indicator.textContent = (currentSlide + 1) + ' / ' + totalSlides;
+    </script>
+</body>
+</html>

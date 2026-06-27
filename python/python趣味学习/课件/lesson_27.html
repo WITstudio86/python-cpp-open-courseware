@@ -1,0 +1,222 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>第27节：综合练习：通讯录小管家</title>
+<link rel="stylesheet" href="assets/fonts.css">
+<link rel="stylesheet" href="assets/base.css">
+<link rel="stylesheet" href="assets/animations/animations.css">
+<link rel="stylesheet" href="style.css">
+<style>
+.tpl-course-module .slide{overflow-y:auto}
+.tpl-course-module .slide .main{overflow-y:auto;max-height:calc(100vh - 128px)}
+.tpl-course-module .slide.full{overflow-y:auto;display:flex;flex-direction:column;justify-content:flex-start;padding-top:64px}
+.tpl-course-module .h1{font-size:52px}
+.tpl-course-module .h2{font-size:32px}
+.tpl-course-module .slide{padding:44px 56px;gap:36px}
+.code-mini{background:#2a2418;color:#f4f1e8;border-radius:14px;padding:18px 22px;font-family:'JetBrains Mono',monospace;font-size:14px;line-height:1.7;margin:12px 0;overflow-x:auto}
+.code-mini .cmt{color:#8a7f68;font-style:italic}
+.code-mini .kw{color:#e8a770}
+.code-mini .str{color:#8ec6b2}
+.code-mini .num{color:#a8c8e8}
+</style>
+</head>
+<body class="tpl-course-module">
+<div class="deck">
+
+<!-- ═══ COVER ═══ -->
+<section class="slide full" data-title="封面">
+  <p class="kicker">第五单元 · 第27节</p>
+  <h1 class="h1 mt-s">综合练习<br><em>通讯录小管家</em></h1>
+  <p class="lede mt-l" style="max-width:60ch">列表 + 字典综合运用！做一个真正能用的通讯录程序，支持添加、查找、显示、删除联系人的全部功能！</p>
+  <div class="row mt-l" style="gap:12px;flex-wrap:wrap">
+    <span class="pill-academic">列表 + 字典</span><span class="pill-academic">while 菜单</span>
+    <span class="pill-academic">CRUD 操作</span><span class="pill-academic">综合实战</span>
+  </div>
+  <div class="deck-footer"><span>Python 趣味学习课程</span><span class="slide-number" data-current="1" data-total="7"></span></div>
+</section>
+
+<!-- ═══ 教学目标 ═══ -->
+<section class="slide" data-title="教学目标">
+  <aside class="sidebar"><div class="brand">Unit 5</div><h5>第 27 节</h5><p class="dim" style="font-size:12px">综合练习：通讯录小管家</p></aside>
+  <div class="main">
+    <p class="kicker">LEARNING OBJECTIVES</p>
+    <h2 class="h2 mt-s">教学目标</h2>
+    <ul class="obj-list mt-m">
+      <li>综合运用列表和字典：用列表存放多个字典（每个联系人是一个字典）</li>
+      <li>掌握 while True 菜单循环，让程序一直运行直到用户选择退出</li>
+      <li>实现通讯录的四大功能：添加、查找、显示全部、删除联系人</li>
+      <li>独立完成完整的"通讯录小管家"项目</li>
+    </ul>
+  </div>
+</section>
+
+<!-- ═══ 重点概念 ═══ -->
+<section class="slide" data-title="重点概念">
+  <aside class="sidebar"><div class="brand">Unit 5</div><h5>第 27 节</h5><p class="dim" style="font-size:12px">重点概念</p></aside>
+  <div class="main">
+    <p class="kicker">KEY CONCEPTS</p>
+    <h2 class="h2 mt-s">重点概念</h2>
+    <div class="grid g2 mt-m" style="display:grid;grid-template-columns:1fr 1fr;gap:16px">
+      <div class="concept-box">
+        <h4>列表装字典</h4>
+        <p class="dim">通讯录是一个列表，里面每个元素都是一个字典。每个字典代表一个联系人，包含 "name" 和 "phone" 两个键。</p>
+      </div>
+      <div class="concept-box">
+        <h4>while 菜单循环</h4>
+        <p class="dim">用 while True 做一个无限循环，打印菜单让用户选择操作。用户选择"退出"时用 break 跳出循环。</p>
+      </div>
+      <div class="concept-box">
+        <h4>CRUD 操作</h4>
+        <p class="dim">Create（添加）、Read（查找/显示）、Update（修改）、Delete（删除）——这四种操作是几乎所有程序的基石。</p>
+      </div>
+      <div class="concept-box">
+        <h4>遍历查找</h4>
+        <p class="dim">用 for 循环遍历通讯录列表，逐一比对字典中的 "name" 字段，找到匹配的联系人就输出他的电话。</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ═══ 核心讲解：数据结构 ═══ -->
+<section class="slide" data-title="数据结构">
+  <aside class="sidebar"><div class="brand">Unit 5</div><h5>第 27 节</h5><p class="dim" style="font-size:12px">核心讲解</p></aside>
+  <div class="main">
+    <p class="kicker">CORE CONTENT</p>
+    <h2 class="h2 mt-s">数据结构：列表 + 字典</h2>
+
+    <div class="code-mini mt-m"><pre style="margin:0"><span class="cmt"># 通讯录的数据结构：列表里装字典</span>
+<span class="kw">contacts</span> = [
+    {<span class="str">"name"</span>: <span class="str">"小明"</span>, <span class="str">"phone"</span>: <span class="str">"13800138001"</span>},
+    {<span class="str">"name"</span>: <span class="str">"小红"</span>, <span class="str">"phone"</span>: <span class="str">"13900139002"</span>},
+    {<span class="str">"name"</span>: <span class="str">"小刚"</span>, <span class="str">"phone"</span>: <span class="str">"13700137003"</span>}
+]
+
+<span class="cmt"># 访问方式：列表[索引]["键"]</span>
+<span class="kw">print</span>(contacts[<span class="num">0</span>][<span class="str">"name"</span>])   <span class="cmt"># 输出：小明</span>
+<span class="kw">print</span>(contacts[<span class="num">1</span>][<span class="str">"phone"</span>])  <span class="cmt"># 输出：13900139002</span>
+
+<span class="cmt"># 遍历所有联系人</span>
+<span class="kw">for</span> person <span class="kw">in</span> contacts:
+    <span class="kw">print</span>(<span class="str">f"{person['name']}：{person['phone']}"</span>)</pre></div>
+
+    <div class="callout"><b>为什么这样设计？</b>列表负责"组织顺序"（第1个、第2个...），字典负责"描述一个人"（名字是什么、电话是什么）。两者分工合作，就像书架（列表）上放了很多文件夹（字典），每个文件夹里装着一个人的信息。</div>
+  </div>
+</section>
+
+<!-- ═══ 核心讲解：完整代码 ═══ -->
+<section class="slide" data-title="完整代码">
+  <aside class="sidebar"><div class="brand">Unit 5</div><h5>第 27 节</h5><p class="dim" style="font-size:12px">代码演示</p></aside>
+  <div class="main">
+    <p class="kicker">CODE DEMO</p>
+    <h2 class="h2 mt-s">通讯录小管家 —— 完整代码</h2>
+
+    <div class="code-mini mt-m"><pre style="margin:0"><span class="cmt"># ===== 通讯录小管家 =====</span>
+<span class="kw">contacts</span> = []  <span class="cmt"># 用列表存放所有联系人</span>
+
+<span class="kw">while</span> <span class="kw">True</span>:
+    <span class="kw">print</span>(<span class="str">"\n" + "="</span> * <span class="num">30</span>)
+    <span class="kw">print</span>(<span class="str">"    📇 通讯录小管家"</span>)
+    <span class="kw">print</span>(<span class="str">"="</span> * <span class="num">30</span>)
+    <span class="kw">print</span>(<span class="str">"1. 添加联系人"</span>)
+    <span class="kw">print</span>(<span class="str">"2. 查找联系人"</span>)
+    <span class="kw">print</span>(<span class="str">"3. 显示全部"</span>)
+    <span class="kw">print</span>(<span class="str">"4. 删除联系人"</span>)
+    <span class="kw">print</span>(<span class="str">"5. 退出"</span>)
+    <span class="kw">print</span>(<span class="str">"-"</span> * <span class="num">30</span>)
+
+    choice = <span class="kw">input</span>(<span class="str">"请输入你的选择（1-5）："</span>)
+
+    <span class="kw">if</span> choice == <span class="str">"1"</span>:
+        <span class="cmt"># 添加联系人</span>
+        name = <span class="kw">input</span>(<span class="str">"请输入姓名："</span>)
+        phone = <span class="kw">input</span>(<span class="str">"请输入电话："</span>)
+        contacts.append({<span class="str">"name"</span>: name, <span class="str">"phone"</span>: phone})
+        <span class="kw">print</span>(<span class="str">f"✅ 已添加联系人：{name}"</span>)
+
+    <span class="kw">elif</span> choice == <span class="str">"2"</span>:
+        <span class="cmt"># 查找联系人</span>
+        search_name = <span class="kw">input</span>(<span class="str">"请输入要查找的姓名："</span>)
+        found = <span class="kw">False</span>
+        <span class="kw">for</span> person <span class="kw">in</span> contacts:
+            <span class="kw">if</span> person[<span class="str">"name"</span>] == search_name:
+                <span class="kw">print</span>(<span class="str">f"📞 {person['name']}：{person['phone']}"</span>)
+                found = <span class="kw">True</span>
+                <span class="kw">break</span>
+        <span class="kw">if</span> <span class="kw">not</span> found:
+            <span class="kw">print</span>(<span class="str">f"❌ 没有找到 {search_name}"</span>)
+
+    <span class="kw">elif</span> choice == <span class="str">"3"</span>:
+        <span class="cmt"># 显示全部联系人</span>
+        <span class="kw">if</span> <span class="kw">len</span>(contacts) == <span class="num">0</span>:
+            <span class="kw">print</span>(<span class="str">"通讯录还是空的哦~"</span>)
+        <span class="kw">else</span>:
+            <span class="kw">print</span>(<span class="str">"\n📋 全部联系人："</span>)
+            <span class="kw">for</span> i, person <span class="kw">in</span> <span class="kw">enumerate</span>(contacts, <span class="num">1</span>):
+                <span class="kw">print</span>(<span class="str">f"  {i}. {person['name']} — {person['phone']}"</span>)
+
+    <span class="kw">elif</span> choice == <span class="str">"4"</span>:
+        <span class="cmt"># 删除联系人</span>
+        del_name = <span class="kw">input</span>(<span class="str">"请输入要删除的联系人姓名："</span>)
+        deleted = <span class="kw">False</span>
+        <span class="kw">for</span> person <span class="kw">in</span> contacts:
+            <span class="kw">if</span> person[<span class="str">"name"</span>] == del_name:
+                contacts.remove(person)
+                <span class="kw">print</span>(<span class="str">f"🗑️ 已删除：{del_name}"</span>)
+                deleted = <span class="kw">True</span>
+                <span class="kw">break</span>
+        <span class="kw">if</span> <span class="kw">not</span> deleted:
+            <span class="kw">print</span>(<span class="str">f"❌ 没有找到 {del_name}"</span>)
+
+    <span class="kw">elif</span> choice == <span class="str">"5"</span>:
+        <span class="kw">print</span>(<span class="str">"👋 再见！"</span>)
+        <span class="kw">break</span>
+
+    <span class="kw">else</span>:
+        <span class="kw">print</span>(<span class="str">"⚠️ 请输入 1-5 之间的数字！"</span>)</pre></div>
+  </div>
+</section>
+
+<!-- ═══ 课堂练习 ═══ -->
+<section class="slide" data-title="课堂练习">
+  <aside class="sidebar"><div class="brand">Unit 5</div><h5>第 27 节</h5><p class="dim" style="font-size:12px">课堂练习</p></aside>
+  <div class="main">
+    <p class="kicker">EXERCISES</p>
+    <h2 class="h2 mt-s">课堂练习</h2>
+
+    <div class="exercise mt-m"><b>基础练习：</b>抄写完整代码并运行。至少添加 3 个联系人，尝试查找、显示全部、删除等操作，确保每个功能都能正常工作。</div>
+
+    <div class="exercise mt-m"><b>改造练习：</b>为通讯录增加"修改联系人"功能（选项 4 变成修改，删除变成 5，退出变成 6）。用户输入姓名后，可以修改该联系人的电话号码。</div>
+
+    <div class="exercise mt-m"><b>挑战练习：</b>给通讯录增加更多信息字段 —— 除了"姓名"和"电话"，再加"地址"和"邮箱"。修改所有相关功能，让查找和显示时也能看到完整信息。</div>
+  </div>
+</section>
+
+<!-- ═══ 小结 ═══ -->
+<section class="slide full" data-title="小结">
+  <p class="kicker">SUMMARY</p>
+  <h2 class="h2 mt-s">学会了什么？</h2>
+  <div class="grid g2 mt-l" style="display:grid;grid-template-columns:1fr 1fr;gap:20px;max-width:80ch">
+    <div class="concept-box">
+      <h4>核心要点</h4>
+      <ul style="margin:8px 0 0;padding-left:18px;color:var(--text-2);line-height:1.8">
+        <li>列表 + 字典组合：列表装多个字典，每个字典描述一个实体</li>
+        <li>while True 菜单循环让程序持续运行，用户选择退出时 break</li>
+        <li>添加联系人：用 .append() 把新字典加入列表</li>
+        <li>查找联系人：for 循环遍历列表，比对字典的 "name" 键</li>
+        <li>删除联系人：遍历找到后用 .remove() 删除，或用 del</li>
+        <li>显示全部：for + enumerate() 带序号输出所有联系人</li>
+      </ul>
+    </div>
+    <div class="concept-box">
+      <h4>下节预告</h4>
+      <p class="dim">第28节：函数是什么？为什么要用函数？</p>
+      <p class="dim" style="font-size:13px;margin-top:8px">通讯录程序写了很多代码，但里面有不少重复模式。从下节课开始，我们学习"函数"——把常用的代码打包起来，下次直接用名字调用就行！就像用遥控器按一个按钮就能换台，不用每次都跑去电视机前操作。</p>
+    </div>
+  </div>
+  <div class="deck-footer"><span>Python 趣味学习课程 · 第27节</span></div>
+</section>
+
+</div>
+<script src="assets/runtime.js"></script>
+</body></html>

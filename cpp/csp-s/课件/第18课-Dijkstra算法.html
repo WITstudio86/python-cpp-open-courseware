@@ -1,0 +1,409 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>第18课：Dijkstra 算法</title>
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body {
+    font-family: 'PingFang SC', 'Microsoft YaHei', 'Helvetica Neue', sans-serif;
+    background: #0a1628; color: #e0e6f0;
+    display: flex; justify-content: center; align-items: center;
+    min-height: 100vh;
+  }
+  .slides-container {
+    width: 100%; max-width: 960px;
+    padding: 20px;
+  }
+  .slide {
+    display: none;
+    background: #162744;
+    border-radius: 16px;
+    padding: 48px 40px;
+    box-shadow: 0 8px 32px rgba(0,0,0,.4);
+    min-height: 540px;
+    border: 1px solid rgba(255,255,255,.06);
+    animation: fadeIn .35s ease;
+  }
+  .slide.active { display: block; }
+  @keyframes fadeIn { from { opacity: 0; transform: translateY(12px); } to { opacity: 1; transform: translateY(0); } }
+
+  .slide h1 { font-size: 2rem; color: #64b5f6; margin-bottom: 8px; }
+  .slide h2 { font-size: 1.5rem; color: #90caf9; margin: 20px 0 12px; border-left: 4px solid #42a5f5; padding-left: 12px; }
+  .slide h3 { font-size: 1.2rem; color: #bbdefb; margin: 16px 0 8px; }
+  .slide p, .slide li { font-size: 1.05rem; line-height: 1.8; color: #b0bec5; }
+  .slide ul, .slide ol { padding-left: 24px; margin: 8px 0; }
+  .slide li { margin-bottom: 6px; }
+
+  .slide table {
+    width: 100%; border-collapse: collapse; margin: 16px 0;
+    font-size: .95rem;
+  }
+  .slide th {
+    background: #1a3a5c; color: #90caf9; padding: 10px 14px;
+    text-align: left; border-bottom: 2px solid #2a5a8c;
+  }
+  .slide td {
+    padding: 8px 14px; border-bottom: 1px solid rgba(255,255,255,.08);
+    color: #b0bec5;
+  }
+  .slide tr:hover td { background: rgba(66,165,245,.06); }
+
+  .code-block {
+    background: #0d1b2a;
+    border: 1px solid rgba(66,165,245,.2);
+    border-radius: 10px;
+    padding: 16px 20px;
+    margin: 14px 0;
+    overflow-x: auto;
+    font-family: 'SF Mono', 'Fira Code', 'Consolas', 'Monaco', monospace;
+    font-size: .875rem;
+    line-height: 1.6;
+    color: #c9d1d9;
+    white-space: pre;
+  }
+  .kw { color: #ff7b72; }
+  .cm { color: #8b949e; }
+  .st { color: #a5d6ff; }
+  .nu { color: #79c0ff; }
+  .fn { color: #d2a8ff; }
+  .ty { color: #ffa657; }
+  .op { color: #ff7b72; }
+
+  .note-box {
+    background: rgba(255,193,7,.1); border-left: 4px solid #ffc107;
+    padding: 12px 16px; border-radius: 0 8px 8px 0; margin: 12px 0;
+    font-size: .95rem;
+  }
+  .warn-box {
+    background: rgba(255,107,107,.1); border-left: 4px solid #ff6b6b;
+    padding: 12px 16px; border-radius: 0 8px 8px 0; margin: 12px 0;
+    font-size: .95rem;
+  }
+  .highlight { color: #ffd54f; font-weight: bold; }
+  .accent { color: #64b5f6; }
+
+  .nav {
+    display: flex; justify-content: space-between; align-items: center;
+    margin-top: 18px;
+  }
+  .nav button {
+    background: #1a3a5c; color: #90caf9; border: 1px solid rgba(66,165,245,.3);
+    padding: 10px 28px; border-radius: 8px; cursor: pointer;
+    font-size: 1rem; transition: all .2s;
+  }
+  .nav button:hover { background: #245a8c; border-color: #42a5f5; }
+  .nav button:disabled { opacity: .35; cursor: default; }
+  .page-indicator { color: #8b949e; font-size: .95rem; }
+
+  .title-slide { text-align: center; padding-top: 80px !important; }
+  .title-slide h1 { font-size: 2.6rem; margin-bottom: 16px; }
+  .title-slide .subtitle { font-size: 1.25rem; color: #9e9e9e; margin-bottom: 40px; }
+  .title-slide .badge {
+    display: inline-block; background: #1a3a5c; color: #64b5f6;
+    padding: 6px 18px; border-radius: 20px; font-size: .9rem;
+  }
+
+  @media (max-width: 640px) {
+    .slide { padding: 28px 20px; }
+    .title-slide { padding-top: 40px !important; }
+    .slide h1 { font-size: 1.5rem; }
+    .title-slide h1 { font-size: 1.8rem; }
+  }
+</style>
+</head>
+<body>
+<div class="slides-container">
+
+<!-- Slide 0: 标题页 -->
+<div class="slide active title-slide" data-index="0">
+  <span class="badge">CSP-S 算法专题</span>
+  <h1>第18课：Dijkstra 算法</h1>
+  <p class="subtitle">单源最短路径 · 贪心策略 · 堆优化 · 路径还原</p>
+  <div style="margin-top:40px;color:#8b949e;font-size:.9rem;">
+    <p>由荷兰计算机科学家 Edsger W. Dijkstra 于 1956 年提出</p>
+    <p style="margin-top:8px;">CSP-S 图论核心考点，最短路径问题第一选择</p>
+  </div>
+</div>
+
+<!-- Slide 1: 朴素 Dijkstra O(V²) -->
+<div class="slide" data-index="1">
+  <h1>朴素 Dijkstra — O(V²)</h1>
+  <p>适合<b>稠密图</b>（V ≤ 1000, E ≈ V²），配合邻接矩阵使用。</p>
+
+  <h2>算法流程</h2>
+  <ol>
+    <li>初始化：<span class="highlight">dist[s]=0</span>，其余 dist = INF，vis 全 false</li>
+    <li>重复 V 轮：从未确定顶点中选出 <span class="highlight">dist 最小</span>的 u</li>
+    <li>将 u 标记为「已确定」：<span class="highlight">vis[u] = true</span></li>
+    <li>用 u 松弛所有邻接点 v：<span class="highlight">dist[v] = min(dist[v], dist[u] + w(u,v))</span></li>
+  </ol>
+
+  <h2>代码框架</h2>
+  <div class="code-block"><span class="kw">for</span> (<span class="ty">int</span> i = <span class="nu">1</span>; i &lt;= n; i++) {
+    <span class="cm">// 1. 找最小 dist 的未确定顶点</span>
+    <span class="ty">int</span> u = -<span class="nu">1</span>;
+    <span class="kw">for</span> (<span class="ty">int</span> j = <span class="nu">1</span>; j &lt;= n; j++)
+        <span class="kw">if</span> (!vis[j] && (u == -<span class="nu">1</span> || dist[j] &lt; dist[u]))
+            u = j;
+    <span class="kw">if</span> (u == -<span class="nu">1</span>) <span class="kw">break</span>;
+    vis[u] = <span class="kw">true</span>;
+    <span class="cm">// 2. 松弛邻接点</span>
+    <span class="kw">for</span> (<span class="ty">int</span> v = <span class="nu">1</span>; v &lt;= n; v++)
+        <span class="kw">if</span> (!vis[v] && g[u][v] != INF)
+            dist[v] = <span class="fn">min</span>(dist[v], dist[u] + g[u][v]);
+}</div>
+
+  <table>
+    <tr><th>操作</th><th>复杂度</th></tr>
+    <tr><td>找最小 dist</td><td class="accent">O(V) 暴力扫描</td></tr>
+    <tr><td>松弛邻接点</td><td class="accent">O(V) 全扫描</td></tr>
+    <tr><td>总复杂度</td><td class="highlight">O(V²)</td></tr>
+  </table>
+
+  <div class="note-box">
+    💡 当 V=500, E≈124750 时，O(V²)=250K 优于 O(E log V)≈2.2M，朴素版反而更快。
+  </div>
+</div>
+
+<!-- Slide 2: 堆优化 Dijkstra O(E log V) -->
+<div class="slide" data-index="2">
+  <h1>堆优化 Dijkstra — O(E log V)</h1>
+  <p>适合<b>稀疏图</b>（V ≤ 10⁵），配合邻接表使用。这是 <span class="highlight">CSP-S 最常用版本</span>。</p>
+
+  <h2>核心改进</h2>
+  <p>朴素版的瓶颈是「找最小 dist」。用<b>优先队列</b>（小根堆）代替暴力扫描。</p>
+
+  <h2>完整代码</h2>
+  <div class="code-block">priority_queue&lt;pair&lt;<span class="ty">int</span>,<span class="ty">int</span>&gt;, vector&lt;...&gt;, <span class="fn">greater</span>&lt;&gt;&gt; pq;
+pq.<span class="fn">push</span>({<span class="nu">0</span>, s});
+<span class="kw">while</span> (!pq.<span class="fn">empty</span>()) {
+    <span class="kw">auto</span> [d, u] = pq.<span class="fn">top</span>(); pq.<span class="fn">pop</span>();
+    <span class="kw">if</span> (vis[u]) <span class="kw">continue</span>;  <span class="cm">// ← 「懒删除」</span>
+    vis[u] = <span class="kw">true</span>;
+    <span class="kw">for</span> (<span class="kw">auto</span> [v, w] : g[u]) {
+        <span class="kw">if</span> (dist[v] &gt; dist[u] + w) {
+            dist[v] = dist[u] + w;
+            pq.<span class="fn">push</span>({dist[v], v});
+        }
+    }
+}</div>
+
+  <h2>时间复杂度分析</h2>
+  <table>
+    <tr><th>操作</th><th>复杂度</th><th>说明</th></tr>
+    <tr><td>每个顶点出队</td><td class="accent">O(log V)</td><td>最多 V 次</td></tr>
+    <tr><td>每次松弛入堆</td><td class="accent">O(log V)</td><td>最多 E 次</td></tr>
+    <tr><td>总复杂度</td><td class="highlight">O((V+E) log V)</td><td>简记 O(E log V)</td></tr>
+  </table>
+
+  <div class="note-box">
+    🔑 <b>懒删除</b>：同一顶点可能多次入堆（每次 dist 更新），但只处理第一次出队。旧记录通过 <code>if (vis[u]) continue</code> 跳过。
+  </div>
+</div>
+
+<!-- Slide 3: 正确性证明 -->
+<div class="slide" data-index="3">
+  <h1>贪心正确性证明</h1>
+
+  <h2>定理（Dijkstra 正确性）</h2>
+  <p>在边权非负的图中，每次选中 <b>dist 最小的未确定顶点</b>时，其 dist 值等于该顶点的真正最短距离。</p>
+
+  <h2>反证法证明</h2>
+  <p>设当前选中 u，假设存在比 dist[u] 更短的真实路径 P。</p>
+  <p>P 必然在某个点首次离开「已确定集合 S」：设该点为 x ∈ S，下一个点为 y ∉ S。</p>
+
+  <div class="code-block" style="font-size:.9rem">
+ len(P) ≥ dist[x] + w(x,y)   <span class="cm">// P 经 x→y 到达 y</span>
+        ≥ dist[y]              <span class="cm">// dist[y] 可能已被 x 更新过，即 dist[y] ≤ dist[x]+w(x,y)</span>
+        ≥ dist[u]              <span class="cm">// 因为算法选了 dist 最小的 u，而非 y</span>
+
+ 因此 len(P) ≥ dist[u]，矛盾 ∎</div>
+
+  <h2>为什么负权边不可用？</h2>
+  <div class="warn-box">
+    <b>❌ 关键矛盾</b>：若有负权边，经过更多边的路径可能<b>反而更短</b>！<br>
+    dist[u] 最小时，其他未确定顶点可能通过负权边让路径缩短，<b>贪心性质被破坏</b>。
+  </div>
+  <p><b>反例</b>：三角形 A→B(2), B→C(-3), A→C(1)。Dijkstra 先确定 dist[C]=1（错），实际 A→B→C = -1。</p>
+
+  <table>
+    <tr><th>图类型</th><th>可用算法</th></tr>
+    <tr><td>非负权</td><td class="accent">Dijkstra O(E log V)</td></tr>
+    <tr><td>含负权边</td><td>Bellman-Ford O(VE) / SPFA</td></tr>
+    <tr><td>含负环</td><td>Bellman-Ford 检测负环</td></tr>
+    <tr><td>全源最短（含负）</td><td>Floyd O(V³) 或 Johnson O(VE log V)</td></tr>
+  </table>
+</div>
+
+<!-- Slide 4: 代码模板 -->
+<div class="slide" data-index="4">
+  <h1>代码模板 &amp; 路径还原</h1>
+
+  <h2>模板：堆优化 Dijkstra</h2>
+  <div class="code-block"><span class="ty">int</span> dist[MAXN], pre[MAXN];
+<span class="ty">bool</span> vis[MAXN];
+
+<span class="kw">void</span> <span class="fn">dijkstra</span>(<span class="ty">int</span> s) {
+    <span class="fn">memset</span>(dist, <span class="nu">0x3f</span>, <span class="kw">sizeof</span>(dist));
+    dist[s] = <span class="nu">0</span>;
+    priority_queue&lt;...&gt; pq; pq.<span class="fn">push</span>({<span class="nu">0</span>, s});
+    <span class="kw">while</span> (!pq.<span class="fn">empty</span>()) {
+        <span class="kw">auto</span> [d, u] = pq.<span class="fn">top</span>(); pq.<span class="fn">pop</span>();
+        <span class="kw">if</span> (vis[u]) <span class="kw">continue</span>; vis[u] = <span class="kw">true</span>;
+        <span class="kw">for</span> (<span class="kw">auto</span> [v, w] : g[u]) {
+            <span class="kw">if</span> (dist[v] &gt; dist[u] + w) {
+                dist[v] = dist[u] + w;
+                pre[v] = u;  <span class="cm">// ← 记录前驱，用于路径还原</span>
+                pq.<span class="fn">push</span>({dist[v], v});
+            }
+        }
+    }
+}</div>
+
+  <h2>路径还原</h2>
+  <div class="code-block"><span class="cm">// 还原 s → t 的最短路径</span>
+vector&lt;<span class="ty">int</span>&gt; <span class="fn">get_path</span>(<span class="ty">int</span> s, <span class="ty">int</span> t) {
+    vector&lt;<span class="ty">int</span>&gt; path;
+    <span class="kw">if</span> (dist[t] == INF) <span class="kw">return</span> path; <span class="cm">// 不可达</span>
+    <span class="kw">for</span> (<span class="ty">int</span> v = t; v != -<span class="nu">1</span>; v = pre[v])
+        path.<span class="fn">push_back</span>(v);
+    <span class="fn">reverse</span>(path.<span class="fn">begin</span>(), path.<span class="fn">end</span>());
+    <span class="kw">return</span> path;
+}</div>
+
+  <h2>两种实现选择策略</h2>
+  <table>
+    <tr><th>条件</th><th>选择</th></tr>
+    <tr><td>V ≤ 1000, 图较稠密</td><td class="accent">朴素 O(V²) + 邻接矩阵</td></tr>
+    <tr><td>V ≤ 10⁵, 稀疏图</td><td class="highlight">堆优化 O(E log V) + 邻接表</td></tr>
+    <tr><td>边权只有 0 和 1</td><td>双端队列 0-1 BFS O(V+E)</td></tr>
+  </table>
+</div>
+
+<!-- Slide 5: 真题精练 -->
+<div class="slide" data-index="5">
+  <h1>真题精练</h1>
+
+  <h2>题1：单源最短路径（标准模板）</h2>
+  <p>n ≤ 10⁵, m ≤ 2×10⁵，w ≤ 10⁹，有向图，求 s 到所有顶点的最短距离。不可达输出 -1。</p>
+  <div class="note-box">
+    <b>注意</b>：边权可达 10⁹，dist 用 <code>long long</code>，INF 用 <code>1e18</code>。
+  </div>
+
+  <h2>题2：最短路径 + 路径还原</h2>
+  <p>给定 s 和 t，输出 s 到 t 的最短距离，以及完整的路径序列。若不可达输出 -1。</p>
+  <div style="margin-top:12px;">
+    <p><b>常考变式</b>：</p>
+    <ul>
+      <li>输出路径上的顶点序列（需 pre[] 回溯）</li>
+      <li>统计最短路径的<b>条数</b>（需 cnt[] 累加）</li>
+      <li>次短路径（维护两个 dist 数组）</li>
+      <li>K 短路（A* 算法）</li>
+    </ul>
+  </div>
+
+  <h2>复杂度对照</h2>
+  <table>
+    <tr><th>算法</th><th>复杂度</th><th>n=10⁵, m=2×10⁵</th></tr>
+    <tr><td>朴素 Dijkstra</td><td>O(n²)</td><td class="warn-box" style="display:table-cell;padding:8px;border-radius:0;">10¹⁰ → <b>TLE</b></td></tr>
+    <tr><td>堆优化 Dijkstra</td><td>O(m log n)</td><td class="accent">2×10⁵ × 17 ≈ 3.4×10⁶ → <b>AC</b></td></tr>
+    <tr><td>SPFA (平均)</td><td>O(km)</td><td>可能被卡退化为 O(nm)</td></tr>
+  </table>
+</div>
+
+<!-- Slide 6: 易错点 -->
+<div class="slide" data-index="6">
+  <h1>易错点与技巧总结</h1>
+
+  <table>
+    <tr><th>常见错误</th><th>原因</th><th>解决方案</th></tr>
+    <tr><td>priority_queue 是大根堆</td><td>默认 less&lt;&gt; 是最大堆</td><td class="highlight">用 greater&lt;pair&gt;</td></tr>
+    <tr><td>vis 标记时机错</td><td>在 push 时就标 vis</td><td class="highlight">在 pop 后才标 vis（懒删除）</td></tr>
+    <tr><td>INF 溢出</td><td>INT_MAX + 正数 溢出</td><td class="highlight">用 0x3f3f3f3f 或 1e18</td></tr>
+    <tr><td>重边导致错误</td><td>多条 (u,v) 取错权值</td><td>根据题意取 min 或保留</td></tr>
+    <tr><td>无向图漏反向边</td><td>只加了单向边</td><td>g[u].push({v,w}); g[v].push({u,w})</td></tr>
+    <tr><td>负权边用 Dijkstra</td><td>Dijkstra 不适用负权图</td><td>换用 SPFA / Bellman-Ford</td></tr>
+    <tr><td>memset 给 long long</td><td>memset 按字节填充</td><td>用 fill / for 循环 / 手动赋值</td></tr>
+  </table>
+
+  <h2>核心技巧清单</h2>
+  <ul>
+    <li><b>0x3f3f3f3f 技巧</b>：memset 按字节填充，int 值为 10⁶⁷，两倍相加不溢出，常用于 dist 初始化</li>
+    <li><b>懒删除</b>：不做 decrease-key，旧记录在 pop 时跳过，代码量减半</li>
+    <li><b>稠密图用朴素</b>：V ≤ 1000 时 O(n²) 往往比堆优化快</li>
+    <li><b>多源最短路径</b>：建超级源点，向各个起点连 0 权边，一次 Dijkstra</li>
+    <li><b>路径记录</b>：松弛时 pre[v] = u，终点回溯即可</li>
+    <li><b>边权很大时</b>：dist 换 long long，INF 换 1e18</li>
+  </ul>
+
+  <div class="warn-box">
+    ⚠️ <b>死记硬背点</b>：小根堆声明——<br>
+    <code>priority_queue&lt;pair&lt;int,int&gt;, vector&lt;pair&lt;int,int&gt;&gt;, greater&lt;pair&lt;int,int&gt;&gt;&gt;</code><br>
+    C++17 起可简写为 <code>priority_queue&lt;pair&lt;int,int&gt;, vector&lt;pair&lt;int,int&gt;&gt;, greater&lt;&gt;&gt;</code>
+  </div>
+</div>
+
+<!-- Slide 7: 总结 -->
+<div class="slide" data-index="7">
+  <h1>本课小结</h1>
+  <table>
+    <tr><th>模块</th><th>要点</th></tr>
+    <tr><td>问题定义</td><td>非负权图上，求 s 到所有顶点的单源最短路径</td></tr>
+    <tr><td>算法思想</td><td>贪心：每次选 dist 最小的未确定顶点并确定之</td></tr>
+    <tr><td>朴素实现</td><td>O(V²)，邻接矩阵，适合 V≤1000 稠密图</td></tr>
+    <tr><td>堆优化</td><td>O(E log V)，邻接表 + priority_queue，CSP-S 首选</td></tr>
+    <tr><td>正确性条件</td><td>边权必须非负；负权图请用 Bellman-Ford/SPFA</td></tr>
+    <tr><td>vis 时机</td><td>pop 后检查 vis（懒删除），代码简洁无误</td></tr>
+    <tr><td>路径还原</td><td>pre[v] = u 记录前驱，终点向前回溯再反转</td></tr>
+    <tr><td>INF 技巧</td><td>0x3f3f3f3f = memset 填充，2× 不溢出</td></tr>
+  </table>
+
+  <div class="note-box" style="margin-top:20px;">
+    <b>🎯 CSP-S 应试核心</b>：堆优化 Dijkstra 是必须<b>手写无误</b>的模板。理解 vis 的「懒删除」位置、
+    小根堆的三种模板参数、以及朴素/堆优的适用场景选择。<br><br>
+    <b>记忆口诀</b>：「邻接表 + 小根堆 + 懒删除 = Dijkstra」
+  </div>
+
+  <p style="text-align:center; margin-top:30px; color:#64b5f6; font-size:1.2rem;">
+    第17-18课完成。后续课程：最小生成树 &amp; Floyd 算法
+  </p>
+</div>
+
+</div>
+
+<!-- 导航栏 -->
+<div class="nav">
+  <button id="prevBtn" onclick="changeSlide(-1)">◀ 上一页</button>
+  <span class="page-indicator" id="pageIndicator">1 / 8</span>
+  <button id="nextBtn" onclick="changeSlide(1)">下一页 ▶</button>
+</div>
+
+<script>
+let current = 0;
+const slides = document.querySelectorAll('.slide');
+const total = slides.length;
+
+function changeSlide(delta) {
+  slides[current].classList.remove('active');
+  current = Math.max(0, Math.min(total - 1, current + delta));
+  slides[current].classList.add('active');
+  updateNav();
+}
+
+function updateNav() {
+  document.getElementById('pageIndicator').textContent = (current + 1) + ' / ' + total;
+  document.getElementById('prevBtn').disabled = current === 0;
+  document.getElementById('nextBtn').disabled = current === total - 1;
+}
+
+document.addEventListener('keydown', (e) => {
+  if (e.key === 'ArrowLeft') changeSlide(-1);
+  if (e.key === 'ArrowRight') changeSlide(1);
+});
+
+updateNav();
+</script>
+</body>
+</html>

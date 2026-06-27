@@ -1,0 +1,611 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>第25课：递归入门——函数调用自己</title>
+    <style>
+        :root {
+            --bg-primary: #1a1a2e;
+            --bg-secondary: #16213e;
+            --bg-card: rgba(255,255,255,0.05);
+            --text-primary: #e0e0e0;
+            --text-secondary: #a0a0b0;
+            --accent: #e94560;
+            --accent-glow: rgba(233, 69, 96, 0.3);
+            --code-bg: #0d1117;
+            --code-keyword: #ff7b72;
+            --code-type: #ffa657;
+            --code-function: #d2a8ff;
+            --code-string: #a5d6ff;
+            --code-number: #79c0ff;
+            --code-comment: #8b949e;
+            --code-builtin: #7ee787;
+            --border: rgba(255,255,255,0.1);
+            --shadow: 0 8px 32px rgba(0,0,0,0.4);
+        }
+
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "PingFang SC", "Microsoft YaHei", "Noto Sans SC", sans-serif;
+            background: linear-gradient(135deg, #0f0c29 0%, #302b63 50%, #24243e 100%);
+            min-height: 100vh;
+            color: var(--text-primary);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            overflow-x: hidden;
+        }
+
+        /* Slide Container */
+        .slideshow-container {
+            width: 100%;
+            max-width: 960px;
+            min-height: 600px;
+            position: relative;
+            padding: 20px;
+        }
+
+        /* Individual Slide */
+        .slide {
+            display: none;
+            animation: fadeIn 0.5s ease-in-out;
+            background: var(--bg-card);
+            border: 1px solid var(--border);
+            border-radius: 16px;
+            padding: 40px 50px;
+            min-height: 550px;
+            box-shadow: var(--shadow);
+            backdrop-filter: blur(10px);
+        }
+        .slide.active { display: block; }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        /* Slide Title */
+        .slide-title {
+            font-size: 2em;
+            color: var(--accent);
+            margin-bottom: 20px;
+            padding-bottom: 12px;
+            border-bottom: 2px solid var(--accent-glow);
+            text-shadow: 0 0 15px var(--accent-glow);
+        }
+        .slide-subtitle {
+            font-size: 1.1em;
+            color: var(--text-secondary);
+            margin-bottom: 25px;
+            line-height: 1.6;
+        }
+
+        /* Title Slide */
+        .title-slide {
+            text-align: center;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+        }
+        .title-slide h1 {
+            font-size: 3em;
+            color: var(--accent);
+            text-shadow: 0 0 30px var(--accent-glow);
+            margin-bottom: 15px;
+        }
+        .title-slide .subtitle-big {
+            font-size: 1.4em;
+            color: var(--text-secondary);
+            margin-bottom: 30px;
+        }
+        .title-slide .lesson-info {
+            color: var(--text-secondary);
+            font-size: 1em;
+            opacity: 0.7;
+        }
+        .recursion-icon {
+            font-size: 5em;
+            margin-bottom: 20px;
+            animation: pulse 2s infinite;
+        }
+        @keyframes pulse {
+            0%, 100% { transform: scale(1); opacity: 0.8; }
+            50% { transform: scale(1.1); opacity: 1; }
+        }
+
+        /* Content Styles */
+        .content-block {
+            line-height: 1.9;
+            font-size: 1.05em;
+            color: var(--text-primary);
+            margin-bottom: 15px;
+        }
+        .content-block strong {
+            color: var(--accent);
+        }
+        .content-block ul {
+            list-style: none;
+            padding-left: 0;
+        }
+        .content-block ul li {
+            padding: 6px 0 6px 24px;
+            position: relative;
+        }
+        .content-block ul li::before {
+            content: "▸";
+            color: var(--accent);
+            position: absolute;
+            left: 0;
+        }
+
+        /* Info Cards */
+        .info-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+            gap: 15px;
+            margin: 20px 0;
+        }
+        .info-card {
+            background: rgba(233, 69, 96, 0.08);
+            border: 1px solid var(--accent-glow);
+            border-radius: 12px;
+            padding: 20px;
+            text-align: center;
+            transition: transform 0.3s, box-shadow 0.3s;
+        }
+        .info-card:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 6px 20px var(--accent-glow);
+        }
+        .info-card .card-number {
+            font-size: 2em;
+            font-weight: bold;
+            color: var(--accent);
+            margin-bottom: 8px;
+        }
+        .info-card .card-title {
+            font-size: 1.1em;
+            font-weight: bold;
+            margin-bottom: 8px;
+        }
+        .info-card .card-desc {
+            font-size: 0.9em;
+            color: var(--text-secondary);
+            line-height: 1.5;
+        }
+
+        /* Code Block */
+        .code-block {
+            background: var(--code-bg);
+            border: 1px solid #30363d;
+            border-radius: 8px;
+            padding: 18px 22px;
+            margin: 15px 0;
+            overflow-x: auto;
+            font-family: "JetBrains Mono", "Fira Code", "Cascadia Code", "SF Mono", Consolas, monospace;
+            font-size: 0.9em;
+            line-height: 1.7;
+            position: relative;
+        }
+        .code-block::before {
+            content: "CPP";
+            position: absolute;
+            top: 8px;
+            right: 14px;
+            font-size: 0.7em;
+            color: var(--text-secondary);
+            opacity: 0.5;
+        }
+
+        /* Syntax Highlighting Colors */
+        .kw { color: #ff7b72; }        /* keyword */
+        .tp { color: #ffa657; }        /* type */
+        .fn { color: #d2a8ff; }        /* function */
+        .str { color: #a5d6ff; }       /* string */
+        .num { color: #79c0ff; }       /* number */
+        .cm { color: #8b949e; font-style: italic; } /* comment */
+        .op { color: #ff7b72; }        /* operator */
+        .pp { color: #79c0ff; }        /* preprocessor */
+        .bu { color: #7ee787; }        /* builtin */
+
+        /* Tree / Stack Visualization */
+        .tree-vis {
+            font-family: "JetBrains Mono", "Fira Code", monospace;
+            background: var(--code-bg);
+            border: 1px solid #30363d;
+            border-radius: 8px;
+            padding: 20px;
+            margin: 15px 0;
+            white-space: pre;
+            line-height: 1.6;
+            color: #7ee787;
+            font-size: 0.85em;
+            overflow-x: auto;
+        }
+        .tree-vis .highlight { color: var(--accent); font-weight: bold; }
+
+        /* Call Stack Animation */
+        .stack-demo {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 4px;
+            margin: 20px auto;
+            font-family: "JetBrains Mono", monospace;
+            max-width: 400px;
+        }
+        .stack-frame {
+            background: rgba(233, 69, 96, 0.15);
+            border: 1px solid var(--accent-glow);
+            border-radius: 6px;
+            padding: 8px 16px;
+            color: var(--accent);
+            font-size: 0.85em;
+            width: 100%;
+            text-align: center;
+            animation: stackPush 0.4s ease-out;
+        }
+        @keyframes stackPush {
+            from { transform: translateY(-15px); opacity: 0; }
+            to { transform: translateY(0); opacity: 1; }
+        }
+        .stack-arrow { color: var(--text-secondary); font-size: 1.2em; }
+
+        /* Compare Table */
+        .compare-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 20px 0;
+            font-size: 0.95em;
+        }
+        .compare-table th {
+            background: rgba(233, 69, 96, 0.2);
+            padding: 12px 15px;
+            text-align: left;
+            color: var(--accent);
+            border: 1px solid var(--border);
+        }
+        .compare-table td {
+            padding: 10px 15px;
+            border: 1px solid var(--border);
+            color: var(--text-primary);
+        }
+        .compare-table tr:nth-child(even) td {
+            background: rgba(255,255,255,0.03);
+        }
+
+        /* Navigation */
+        .nav-container {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            gap: 30px;
+            margin-top: 20px;
+            padding: 10px;
+        }
+        .nav-btn {
+            background: rgba(233, 69, 96, 0.15);
+            border: 1px solid var(--accent);
+            color: var(--accent);
+            padding: 10px 28px;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 1em;
+            font-weight: bold;
+            transition: all 0.3s;
+            font-family: inherit;
+        }
+        .nav-btn:hover {
+            background: var(--accent);
+            color: white;
+            box-shadow: 0 4px 15px var(--accent-glow);
+        }
+        .nav-btn:disabled {
+            opacity: 0.3;
+            cursor: not-allowed;
+            pointer-events: none;
+        }
+        .slide-counter {
+            color: var(--text-secondary);
+            font-size: 1em;
+            min-width: 60px;
+            text-align: center;
+        }
+        .dot-nav {
+            display: flex;
+            gap: 8px;
+            justify-content: center;
+        }
+        .dot {
+            width: 10px;
+            height: 10px;
+            border-radius: 50%;
+            background: rgba(255,255,255,0.2);
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+        .dot.active {
+            background: var(--accent);
+            box-shadow: 0 0 10px var(--accent-glow);
+            transform: scale(1.3);
+        }
+
+        /* Responsive */
+        @media (max-width: 768px) {
+            .slideshow-container { padding: 10px; }
+            .slide { padding: 25px 20px; min-height: auto; }
+            .slide-title { font-size: 1.4em; }
+            .title-slide h1 { font-size: 2em; }
+            .info-grid { grid-template-columns: 1fr; }
+            .code-block { font-size: 0.75em; padding: 12px 14px; }
+            .tree-vis { font-size: 0.7em; }
+            .nav-btn { padding: 8px 18px; font-size: 0.9em; }
+        }
+    </style>
+</head>
+<body>
+
+<div class="slideshow-container">
+
+    <!-- Slide 1: Title -->
+    <div class="slide title-slide active">
+        <div class="recursion-icon">🔄</div>
+        <h1>递归入门</h1>
+        <p class="subtitle-big">函数调用自己</p>
+        <p class="lesson-info">第25课 | C++ 算法提高</p>
+    </div>
+
+    <!-- Slide 2: What is Recursion? -->
+    <div class="slide">
+        <div class="slide-title">什么是递归？</div>
+        <div class="content-block">
+            <p><strong>递归</strong>（Recursion）是一种程序设计技巧，指一个函数在定义中<strong>直接或间接地调用自身</strong>。</p>
+        </div>
+        <div class="content-block">
+            <p><strong>生活中的递归例子：</strong></p>
+            <ul>
+                <li><strong>套娃</strong>——打开一个套娃，里面还有一个小一号的套娃，直到最小的那个。</li>
+                <li><strong>镜子对镜子</strong>——两面镜子相对放置，会看到无限嵌套的影像。</li>
+                <li><strong>讲故事</strong>——"从前有座山，山里有座庙，庙里有个老和尚在讲故事，讲的什么故事呢？从前有座山……"</li>
+                <li><strong>文件夹嵌套</strong>——文件夹里面可以有文件夹，一层一层嵌套下去。</li>
+            </ul>
+        </div>
+        <div class="content-block">
+            <p>在计算机科学中，递归是解决<strong>具有自相似结构问题</strong>的利器。一个问题如果可以分解为更小的同类子问题，就可以用递归来解决。</p>
+        </div>
+    </div>
+
+    <!-- Slide 3: Three Elements of Recursion -->
+    <div class="slide">
+        <div class="slide-title">递归三要素</div>
+        <div class="info-grid">
+            <div class="info-card">
+                <div class="card-number">①</div>
+                <div class="card-title">终止条件</div>
+                <div class="card-desc">明确"什么时候停下来"<br>否则会陷入无限递归<br>→ 导致栈溢出（Stack Overflow）</div>
+            </div>
+            <div class="info-card">
+                <div class="card-number">②</div>
+                <div class="card-title">递归公式</div>
+                <div class="card-desc">明确"问题如何缩小"<br>将大问题转化为更小的同类问题<br>→ 每次递归都向终止条件靠近</div>
+            </div>
+            <div class="info-card">
+                <div class="card-number">③</div>
+                <div class="card-title">递归调用</div>
+                <div class="card-desc">明确"函数如何调用自己"<br>用更小的参数调用自身<br>→ 将子问题的结果组合为原问题的解</div>
+            </div>
+        </div>
+        <div class="content-block" style="margin-top:20px;">
+            <p><strong>记忆口诀：</strong></p>
+            <p style="color:var(--accent);font-size:1.1em;">
+                递归三要素，一个不能少 —— 结束有终点，递推有公式，自己调用自己！
+            </p>
+        </div>
+    </div>
+
+    <!-- Slide 4: Factorial Recursion -->
+    <div class="slide">
+        <div class="slide-title">阶乘递归 —— 最经典的递归例子</div>
+        <div class="content-block">
+            <p><strong>定义：</strong>n! = n × (n-1) × (n-2) × ... × 1，特别地 0! = 1</p>
+            <p><strong>递归公式：</strong>n! = n × (n-1)! ，终止条件：n == 0 时返回 1</p>
+        </div>
+        <div class="code-block"><span class="kw">int</span> <span class="fn">factorial</span>(<span class="kw">int</span> n) {
+    <span class="comment">cm">// 终止条件：0的阶乘为1</span>
+    <span class="kw">if</span> (n == <span class="num">0</span>) <span class="kw">return</span> <span class="num">1</span>;
+    <span class="comment">cm">// 递归公式：n! = n * (n-1)!</span>
+    <span class="kw">return</span> n * <span class="fn">factorial</span>(n - <span class="num">1</span>);
+}</div>
+        <div class="tree-vis">
+<span class="highlight">factorial(3)</span>
+    │
+    ├─→ 3 * <span class="highlight">factorial(2)</span>
+    │        │
+    │        ├─→ 2 * <span class="highlight">factorial(1)</span>
+    │        │        │
+    │        │        ├─→ 1 * <span class="highlight">factorial(0)</span>
+    │        │        │        │
+    │        │        │        └─→ 返回 1    ← 终止条件！
+    │        │        │
+    │        │        └─→ 返回 1 * 1 = 1
+    │        │
+    │        └─→ 返回 2 * 1 = 2
+    │
+    └─→ 返回 3 * 2 = 6
+        </div>
+    </div>
+
+    <!-- Slide 5: Fibonacci Recursion -->
+    <div class="slide">
+        <div class="slide-title">斐波那契递归 —— 兔子数列</div>
+        <div class="content-block">
+            <p><strong>斐波那契数列：</strong>1, 1, 2, 3, 5, 8, 13, 21, ...</p>
+            <p><strong>递推公式：</strong>F(n) = F(n-1) + F(n-2)，F(1)=1, F(2)=1</p>
+        </div>
+        <div class="code-block"><span class="kw">int</span> <span class="fn">fib</span>(<span class="kw">int</span> n) {
+    <span class="comment">cm">// 终止条件：前两项都是1</span>
+    <span class="kw">if</span> (n == <span class="num">1</span> || n == <span class="num">2</span>) <span class="kw">return</span> <span class="num">1</span>;
+    <span class="comment">cm">// 递归：F(n) = F(n-1) + F(n-2)</span>
+    <span class="kw">return</span> <span class="fn">fib</span>(n - <span class="num">1</span>) + <span class="fn">fib</span>(n - <span class="num">2</span>);
+}</div>
+        <div class="tree-vis">
+              <span class="highlight">fib(5)</span>
+             /         \
+    <span class="highlight">fib(4)</span>           <span class="highlight">fib(3)</span>
+     /      \          /      \
+<span class="highlight">fib(3)</span>   fib(2)   fib(2)   fib(1)
+ /    \     (1)      (1)      (1)
+<span class="highlight">fib(2)</span> fib(1)
+(1)     (1)
+
+→ fib(5) = fib(4)+fib(3) = 3+2 = 5
+        </div>
+        <div class="content-block" style="font-size:0.85em;color:var(--text-secondary);">
+            <p>⚠️ 注意：朴素递归求斐波那契有大量<strong>重复计算</strong>（如fib(2)算了3次），时间复杂度高达O(2ⁿ)。后续课程会学习用记忆化搜索来优化。</p>
+        </div>
+    </div>
+
+    <!-- Slide 6: Call Stack -->
+    <div class="slide">
+        <div class="slide-title">递归调用栈 —— 背后的魔法</div>
+        <div class="content-block">
+            <p>计算机使用<strong>调用栈（Call Stack）</strong>来管理函数调用。每次函数调用都会在栈上压入一个"栈帧"，存储函数的参数、局部变量和返回地址。</p>
+        </div>
+        <div style="text-align:center;margin:20px 0;color:var(--text-secondary);">以 factorial(3) 为例的调用栈变化：</div>
+        <div class="stack-demo">
+            <div class="stack-frame">factorial(0) → 返回 1</div>
+            <div class="stack-arrow">↑ 返回 ↑</div>
+            <div class="stack-frame">factorial(1) → 等待 1×(结果) → 返回 1</div>
+            <div class="stack-arrow">↑ 返回 ↑</div>
+            <div class="stack-frame">factorial(2) → 等待 2×(结果) → 返回 2</div>
+            <div class="stack-arrow">↑ 返回 ↑</div>
+            <div class="stack-frame">factorial(3) → 等待 3×(结果) → 返回 6</div>
+            <div class="stack-arrow">↑ 调用 ↑</div>
+            <div class="stack-frame" style="background:rgba(233,69,96,0.25);">main()</div>
+        </div>
+        <div class="content-block" style="font-size:0.9em;color:var(--text-secondary);text-align:center;margin-top:10px;">
+            <p>调用时向下生长（压栈），返回时向上收缩（弹栈）</p>
+        </div>
+    </div>
+
+    <!-- Slide 7: Pros and Cons -->
+    <div class="slide">
+        <div class="slide-title">递归的优缺点总结</div>
+        <table class="compare-table">
+            <thead>
+                <tr><th style="width:50%;">✅ 优点</th><th style="width:50%;">❌ 缺点</th></tr>
+            </thead>
+            <tbody>
+                <tr>
+                    <td>代码简洁、优雅，思路清晰</td>
+                    <td>函数调用有开销，效率可能较低</td>
+                </tr>
+                <tr>
+                    <td>天然适合处理树、图等递归结构</td>
+                    <td>深度过大可能导致栈溢出</td>
+                </tr>
+                <tr>
+                    <td>与数学归纳法思维一致，易于证明</td>
+                    <td>可能产生大量重复计算</td>
+                </tr>
+                <tr>
+                    <td>是分治、回溯等高级算法的基础</td>
+                    <td>调试相对困难，需要追踪调用链</td>
+                </tr>
+                <tr>
+                    <td>"将复杂问题简单化"的思维模式</td>
+                    <td>某些问题递归转迭代需要额外技巧</td>
+                </tr>
+            </tbody>
+        </table>
+        <div class="content-block" style="margin-top:15px;text-align:center;">
+            <p style="color:var(--accent);">💡 核心经验：能递归解决的问题，一定是能分解为更小同类子问题的问题。</p>
+            <p style="color:var(--text-secondary);">下节课，我们将学习汉诺塔等更经典的递归问题！</p>
+        </div>
+    </div>
+
+</div>
+
+<!-- Navigation -->
+<div class="nav-container">
+    <button class="nav-btn" id="prevBtn" onclick="changeSlide(-1)">⬅ 上一页</button>
+    <div style="text-align:center;">
+        <div class="slide-counter" id="slideCounter">1/7</div>
+        <div class="dot-nav" id="dotNav"></div>
+    </div>
+    <button class="nav-btn" id="nextBtn" onclick="changeSlide(1)">下一页 ➡</button>
+</div>
+
+<script>
+    let currentSlide = 0;
+    const slides = document.querySelectorAll('.slide');
+    const totalSlides = slides.length;
+    const dotNav = document.getElementById('dotNav');
+    const slideCounter = document.getElementById('slideCounter');
+    const prevBtn = document.getElementById('prevBtn');
+    const nextBtn = document.getElementById('nextBtn');
+
+    // Create dots
+    for (let i = 0; i < totalSlides; i++) {
+        const dot = document.createElement('span');
+        dot.className = 'dot' + (i === 0 ? ' active' : '');
+        dot.onclick = () => goToSlide(i);
+        dotNav.appendChild(dot);
+    }
+
+    function showSlide(index) {
+        slides.forEach((s, i) => {
+            s.classList.toggle('active', i === index);
+        });
+        const dots = dotNav.querySelectorAll('.dot');
+        dots.forEach((d, i) => {
+            d.classList.toggle('active', i === index);
+        });
+        slideCounter.textContent = (index + 1) + '/' + totalSlides;
+        prevBtn.disabled = (index === 0);
+        nextBtn.disabled = (index === totalSlides - 1);
+    }
+
+    function changeSlide(delta) {
+        const newIndex = currentSlide + delta;
+        if (newIndex >= 0 && newIndex < totalSlides) {
+            currentSlide = newIndex;
+            showSlide(currentSlide);
+        }
+    }
+
+    function goToSlide(index) {
+        currentSlide = index;
+        showSlide(currentSlide);
+    }
+
+    // Keyboard navigation
+    document.addEventListener('keydown', (e) => {
+        if (e.key === 'ArrowRight' || e.key === 'ArrowDown') changeSlide(1);
+        if (e.key === 'ArrowLeft' || e.key === 'ArrowUp') changeSlide(-1);
+        if (e.key === 'Home') goToSlide(0);
+        if (e.key === 'End') goToSlide(totalSlides - 1);
+    });
+
+    // Touch swipe support
+    let touchStartX = 0;
+    document.addEventListener('touchstart', (e) => {
+        touchStartX = e.changedTouches[0].screenX;
+    });
+    document.addEventListener('touchend', (e) => {
+        const diff = e.changedTouches[0].screenX - touchStartX;
+        if (Math.abs(diff) > 50) {
+            changeSlide(diff < 0 ? 1 : -1);
+        }
+    });
+
+    // Initialize
+    showSlide(0);
+</script>
+
+</body>
+</html>

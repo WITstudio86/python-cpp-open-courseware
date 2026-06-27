@@ -1,0 +1,193 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>第44节 · 项目13：打字速度测试（上）· Python Tkinter 课程</title>
+<link rel="stylesheet" href="assets/fonts.css">
+<link rel="stylesheet" href="assets/base.css">
+<link rel="stylesheet" id="theme-link" href="assets/themes/soft-pastel.css">
+<link rel="stylesheet" href="assets/animations/animations.css">
+<link rel="stylesheet" href="style.css">
+</head>
+<body class="tpl-tkinter-course" data-themes="soft-pastel,rainbow-gradient,sunset-warm,minimal-white" data-theme-base="assets/themes/">
+<div class="deck">
+
+  <!-- 1. Cover -->
+  <section class="slide full" data-title="封面">
+    <p class="kicker">Python Tkinter · 第 44 节</p>
+    <h1 class="h1 mt-s">项目 13：打字速度测试（上）<br><em>实时逐字对比</em></h1>
+    <p class="lede mt-l" style="max-width:62ch">做一个打字练习器！显示范文、实时逐字对比——打对变绿、打错变红，一眼就能看到哪里需要改进。</p>
+    <div class="row mt-l" style="gap:16px">
+      <span class="pill-academic">~ 60 分钟</span>
+      <span class="pill-academic">难度 · ⭐⭐</span>
+      <span class="pill-academic">前置 · Text 控件基础</span>
+    </div>
+    <div class="deck-footer"><span>Python Tkinter 趣味编程课</span><span class="slide-number" data-current="1" data-total="7"></span></div>
+  </section>
+
+  <!-- 2. Objectives -->
+  <section class="slide" data-title="学习目标">
+    <aside class="sidebar">
+      <div class="brand">Tkinter 044</div>
+      <h5>学习目标</h5>
+      <ul class="obj-list">
+        <li class="current">随机范文显示</li>
+        <li>Text 打字输入区</li>
+        <li>实时逐字对比高亮</li>
+        <li>tag_config 颜色标记</li>
+      </ul>
+      <h5>本节成品</h5>
+      <p class="dim" style="font-size:13px">能实时对比的打字练习器 ⌨️</p>
+    </aside>
+    <div class="main">
+      <p class="kicker">学习目标</p>
+      <h2 class="h2 mt-s">学完这节课，你将能够…</h2>
+      <div class="stack mt-l">
+        <div class="concept-box"><h4>① 随机选择范文并显示</h4><p class="dim">用 random.choice + Label（wraplength 自动换行）展示范文。</p></div>
+        <div class="concept-box"><h4>② 创建打字输入区</h4><p class="dim">用 Text 控件（而非 Entry）做多行打字输入。</p></div>
+        <div class="concept-box"><h4>③ 实时逐字对比高亮</h4><p class="dim">Text.tag_config 设置颜色 → KeyRelease 事件触发对比 → 正确变绿、错误变红。</p></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- 3. Sample + Input -->
+  <section class="slide" data-title="范文和输入区">
+    <aside class="sidebar">
+      <div class="brand">Tkinter 044</div>
+      <h5>学习目标</h5>
+      <ul class="obj-list">
+        <li class="done">随机范文显示</li>
+        <li class="current">Text 打字输入区</li>
+        <li>实时逐字对比高亮</li>
+        <li>tag_config 颜色标记</li>
+      </ul>
+      <h5>关键概念</h5>
+      <p class="dim" style="font-size:13px">random · Label · Text · wraplength</p>
+    </aside>
+    <div class="main">
+      <p class="kicker">布局</p>
+      <h2 class="h2 mt-s">范文显示 + 打字输入区</h2>
+      <div class="grid g2 mt-l">
+        <div class="concept-box"><h4>📝 范文显示</h4>
+          <div class="code" style="font-size:13px"><pre style="margin:0">samples = [<span class="str">"今天天气真好..."</span>, ...]
+current_text = random.choice(samples)
+
+text_label = tk.Label(root,
+    text=current_text,
+    font=(<span class="str">"微软雅黑"</span>, 18),
+    wraplength=600)  <span class="cmt"># 自动换行</span></pre></div></div>
+        <div class="concept-box"><h4>⌨️ 打字输入</h4>
+          <div class="code" style="font-size:13px"><pre style="margin:0">input_text = tk.Text(root,
+    font=(<span class="str">"微软雅黑"</span>, 18),
+    height=4, width=50,
+    wrap=<span class="str">"word"</span>)  <span class="cmt"># 按词换行</span>
+input_text.bind(<span class="str">"&lt;KeyRelease&gt;"</span>, check_typing)</pre></div></div>
+      </div>
+      <p class="dim mt-m" style="font-size:14px">⚡ Text 与 Entry 的区别：Text 可以多行，Entry 只能单行。</p>
+    </div>
+  </section>
+
+  <!-- 4. Highlight -->
+  <section class="slide" data-title="逐字对比高亮">
+    <aside class="sidebar">
+      <div class="brand">Tkinter 044</div>
+      <h5>学习目标</h5>
+      <ul class="obj-list">
+        <li class="done">随机范文显示</li>
+        <li class="done">Text 打字输入区</li>
+        <li class="current">实时逐字对比高亮</li>
+        <li>tag_config 颜色标记</li>
+      </ul>
+      <h5>关键概念</h5>
+      <p class="dim" style="font-size:13px">tag_config · tag_add · 逐字对比</p>
+    </aside>
+    <div class="main">
+      <p class="kicker">核心功能</p>
+      <h2 class="h2 mt-s">实时逐字对比高亮</h2>
+      <p class="lede mt-m">用 Text 的 <b>tag</b> 机制给文字上色：打对 → 绿色，打错 → 红色。</p>
+      <div class="code mt-m"><pre style="margin:0">input_text.tag_config(<span class="str">"correct"</span>, foreground=<span class="str">"#2e7d32"</span>)
+input_text.tag_config(<span class="str">"wrong"</span>, foreground=<span class="str">"#c62828"</span>, background=<span class="str">"#ffebee"</span>)
+<span class="kw">def</span> <span class="fn">check_typing</span>(event=None):  <span class="cmt"># 每次按键后对比</span>
+    user_text = input_text.get(<span class="str">"1.0"</span>, tk.END).rstrip(<span class="str">"\n"</span>)
+    <span class="kw">for</span> i, char <span class="kw">in</span> enumerate(user_text):
+        pos = <span class="str">f"1.{i}"</span>
+        <span class="kw">if</span> i &lt; len(current_text) <span class="kw">and</span> char == current_text[i]:
+            input_text.tag_add(<span class="str">"correct"</span>, pos)  <span class="cmt"># 绿色</span>
+        <span class="kw">else</span>:
+            input_text.tag_add(<span class="str">"wrong"</span>, pos)   <span class="cmt"># 红色</span></pre></div>
+      <div class="callout mt-m">
+        <b>💡 Text 索引格式：</b><code>"1.0"</code> = 第1行第0个字符，<code>"1.5"</code> = 第1行第5个字符。
+      </div>
+    </div>
+  </section>
+
+  <!-- 5. Try It -->
+  <section class="slide" data-title="动手试试">
+    <aside class="sidebar">
+      <div class="brand">Tkinter 044</div>
+      <h5>学习目标</h5>
+      <ul class="obj-list">
+        <li class="done">随机范文显示</li>
+        <li class="done">Text 打字输入区</li>
+        <li class="done">实时逐字对比高亮</li>
+        <li class="current">tag_config 颜色标记</li>
+      </ul>
+      <h5>时间</h5>
+      <p class="dim" style="font-size:13px">~20 分钟 · 动手实践</p>
+    </aside>
+    <div class="main">
+      <p class="kicker">动手试试</p>
+      <h2 class="h2 mt-s">打造你的打字练习器</h2>
+      <div class="exercise mt-l">
+        <ol style="color:var(--text-2);line-height:2;margin:0;padding-left:20px;font-size:16px">
+          <li><b>打一遍范文</b>，观察绿色和红色的实时变化</li>
+          <li><b>故意打错几个字</b>，看看红色的效果</li>
+          <li><b>点"换一篇"</b>，试试不同长度的范文</li>
+        </ol>
+      </div>
+    </div>
+  </section>
+
+  <!-- 6. Tag demo -->
+  <section class="slide" data-title="tag_config 详解">
+    <aside class="sidebar">
+      <div class="brand">Tkinter 044</div>
+      <h5>学习目标</h5>
+      <ul class="obj-list">
+        <li class="done">随机范文显示</li>
+        <li class="done">Text 打字输入区</li>
+        <li class="done">实时逐字对比高亮</li>
+        <li class="done">tag_config 颜色标记</li>
+      </ul>
+      <h5>关键概念</h5>
+      <p class="dim" style="font-size:13px">tag · 索引 · 颜色样式</p>
+    </aside>
+    <div class="main">
+      <p class="kicker">深入理解</p>
+      <h2 class="h2 mt-s">tag_config 可以做什么？</h2>
+      <div class="stack mt-l">
+        <div class="concept-box"><h4>🎨 不只是颜色</h4><p class="dim">foreground、background、font、underline 等任意样式均可设置。</p></div>
+        <div class="concept-box"><h4>📍 索引方式</h4><p class="dim"><code>"1.0"</code>=第1行0字符，<code>"2.5"</code>=第2行5字符，<code>tk.END</code>=末尾。</p></div>
+        <div class="concept-box"><h4>🔧 常用操作</h4><p class="dim">tag_add 标记 → tag_remove 清除 → tag_delete 删除。</p></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- 7. Summary -->
+  <section class="slide full" data-title="总结">
+    <p class="kicker">总结 · 第 44 节</p>
+    <h1 class="h1 mt-s">你学会了…</h1>
+    <div class="grid g2 mt-l">
+      <div class="concept-box"><h4>✓ 随机范文</h4><p class="dim">random.choice 从列表中随机选，Label wraplength 自动换行。</p></div>
+      <div class="concept-box"><h4>✓ Text 控件</h4><p class="dim">多行输入、word wrap、get/set 文本内容。</p></div>
+      <div class="concept-box"><h4>✓ tag_config 高亮</h4><p class="dim">定义颜色标记 → KeyRelease 触发 → 逐字对比着色。</p></div>
+      <div class="concept-box"><h4>✓ Text 索引</h4><p class="dim">"行.列" 格式精确定位每个字符，tag_add 局部着色。</p></div>
+    </div>
+    <div class="callout mt-l">
+      <b>下节预告 · 第 45 节：打字速度测试（中）。</b> 加入倒计时 60 秒！统计 WPM（每分钟打字数）和准确率——看看你的打字有多快！
+    </div>
+  </section>
+
+</div>
+<script src="assets/runtime.js"></script>
+</body></html>

@@ -1,0 +1,899 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>第3节：键盘是我的遥控器 - Pygame 课件</title>
+<style>
+  /* ===== Reset & Base ===== */
+  *, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
+
+  :root {
+    --blue:       #2563eb;
+    --blue-light: #3b82f6;
+    --green:      #16a34a;
+    --green-light:#22c55e;
+    --orange:     #ea580c;
+    --orange-light:#f97316;
+    --purple:     #7c3aed;
+    --red:        #dc2626;
+    --teal:       #0d9488;
+    --pink:       #db2777;
+    --white:      #ffffff;
+    --gray-50:    #f8fafc;
+    --gray-100:   #f1f5f9;
+    --gray-200:   #e2e8f0;
+    --gray-300:   #cbd5e1;
+    --gray-400:   #94a3b8;
+    --gray-600:   #475569;
+    --gray-700:   #334155;
+    --gray-800:   #1e293b;
+    --gray-900:   #0f172a;
+    --code-bg:    #1e1e1e;
+    --code-text:  #d4d4d4;
+    --keyword:    #569cd6;
+    --string:     #ce9178;
+    --comment:    #6a9955;
+    --func:       #dcdcaa;
+    --number:     #b5cea8;
+    --operator:   #d4d4d4;
+    --type:       #4ec9b0;
+  }
+
+  html, body {
+    width: 100%; height: 100%;
+    overflow: hidden;
+    font-family: "PingFang SC", "Hiragino Sans GB", "Microsoft YaHei", "Noto Sans SC", sans-serif;
+    background: #0f172a;
+  }
+
+  /* ===== Slides Container ===== */
+  .slides-container {
+    width: 100vw;
+    height: 100vh;
+    position: relative;
+  }
+
+  .slide {
+    position: absolute;
+    top: 0; left: 0;
+    width: 100%; height: 100%;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    padding: 60px 80px;
+    opacity: 0;
+    transform: translateX(40px);
+    transition: opacity 0.45s ease, transform 0.45s ease;
+    pointer-events: none;
+    background: linear-gradient(135deg, #f0f4ff 0%, #e8f0fe 30%, #f0fdf4 70%, #fff7ed 100%);
+  }
+
+  .slide.active {
+    opacity: 1;
+    transform: translateX(0);
+    pointer-events: auto;
+  }
+
+  .slide.exit-left {
+    opacity: 0;
+    transform: translateX(-40px);
+  }
+
+  /* ===== Title Slide ===== */
+  .slide-title {
+    background: linear-gradient(135deg, #1e40af 0%, #3b82f6 40%, #6366f1 100%);
+    color: var(--white);
+  }
+  .slide-title .lesson-number {
+    font-size: 28px;
+    font-weight: 500;
+    letter-spacing: 4px;
+    opacity: 0.85;
+    margin-bottom: 20px;
+    background: rgba(255,255,255,0.15);
+    padding: 8px 28px;
+    border-radius: 30px;
+  }
+  .slide-title h1 {
+    font-size: 60px;
+    font-weight: 800;
+    letter-spacing: 3px;
+    margin-bottom: 24px;
+    text-shadow: 0 4px 20px rgba(0,0,0,0.25);
+  }
+  .slide-title .subtitle {
+    font-size: 30px;
+    font-weight: 400;
+    opacity: 0.9;
+    margin-bottom: 40px;
+  }
+  .slide-title .key-icons {
+    display: flex;
+    gap: 16px;
+    margin-bottom: 40px;
+  }
+  .slide-title .key-icon {
+    width: 56px; height: 56px;
+    background: rgba(255,255,255,0.2);
+    border: 2px solid rgba(255,255,255,0.4);
+    border-radius: 10px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 22px;
+    backdrop-filter: blur(4px);
+  }
+  .slide-title .course-name {
+    font-size: 22px;
+    opacity: 0.7;
+    letter-spacing: 2px;
+  }
+
+  /* ===== Content Slide ===== */
+  .slide-content {
+    text-align: left;
+  }
+  .slide-content .slide-header {
+    width: 100%;
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    margin-bottom: 36px;
+  }
+  .slide-content .slide-header .icon-circle {
+    width: 56px; height: 56px;
+    border-radius: 16px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 28px;
+    color: white;
+    flex-shrink: 0;
+  }
+  .slide-content .slide-header h2 {
+    font-size: 44px;
+    font-weight: 700;
+    color: var(--gray-800);
+    line-height: 1.3;
+  }
+
+  /* Content body */
+  .content-body {
+    width: 100%;
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+    overflow-y: auto;
+    font-size: 30px;
+    line-height: 1.7;
+    color: var(--gray-700);
+  }
+
+  .content-body p {
+    font-size: 30px;
+    line-height: 1.7;
+  }
+  .content-body ul, .content-body ol {
+    padding-left: 40px;
+    font-size: 30px;
+    line-height: 1.9;
+  }
+  .content-body li { margin-bottom: 10px; }
+
+  /* Highlight box */
+  .highlight-box {
+    background: linear-gradient(135deg, #eff6ff, #dbeafe);
+    border-left: 6px solid var(--blue);
+    padding: 20px 28px;
+    border-radius: 0 14px 14px 0;
+    font-size: 28px;
+    line-height: 1.7;
+    color: var(--gray-700);
+  }
+  .highlight-box.green {
+    background: linear-gradient(135deg, #f0fdf4, #dcfce7);
+    border-left-color: var(--green);
+  }
+  .highlight-box.orange {
+    background: linear-gradient(135deg, #fff7ed, #ffedd5);
+    border-left-color: var(--orange);
+  }
+  .highlight-box.purple {
+    background: linear-gradient(135deg, #f5f3ff, #ede9fe);
+    border-left-color: var(--purple);
+  }
+
+  /* ===== Code Block ===== */
+  .code-block {
+    position: relative;
+    background: var(--code-bg);
+    border-radius: 14px;
+    padding: 28px 32px;
+    font-family: "SF Mono", "Cascadia Code", "Fira Code", "Consolas", "Source Code Pro", monospace;
+    font-size: 22px;
+    line-height: 1.7;
+    color: var(--code-text);
+    overflow-x: auto;
+    white-space: pre;
+    box-shadow: 0 8px 30px rgba(0,0,0,0.3);
+    margin: 8px 0;
+  }
+  .code-block .comment { color: var(--comment); }
+  .code-block .keyword { color: var(--keyword); }
+  .code-block .string { color: var(--string); }
+  .code-block .func { color: var(--func); }
+  .code-block .number { color: var(--number); }
+
+  /* ===== Comparison Table ===== */
+  .compare-table {
+    width: 100%;
+    border-collapse: separate;
+    border-spacing: 0;
+    border-radius: 14px;
+    overflow: hidden;
+    box-shadow: 0 4px 20px rgba(0,0,0,0.08);
+    font-size: 26px;
+  }
+  .compare-table th {
+    background: var(--blue);
+    color: white;
+    padding: 16px 24px;
+    font-size: 28px;
+    font-weight: 600;
+    text-align: center;
+  }
+  .compare-table td {
+    padding: 16px 24px;
+    background: white;
+    border-bottom: 1px solid var(--gray-200);
+    line-height: 1.6;
+  }
+  .compare-table tr:last-child td { border-bottom: none; }
+  .compare-table td:first-child {
+    font-weight: 600;
+    color: var(--gray-800);
+    background: var(--gray-50);
+    text-align: center;
+    white-space: nowrap;
+  }
+
+  /* ===== Summary card ===== */
+  .summary-cards {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 20px;
+    width: 100%;
+  }
+  .summary-card {
+    background: white;
+    border-radius: 16px;
+    padding: 28px;
+    box-shadow: 0 4px 16px rgba(0,0,0,0.06);
+    border-top: 5px solid var(--blue);
+  }
+  .summary-card.green { border-top-color: var(--green); }
+  .summary-card.orange { border-top-color: var(--orange); }
+  .summary-card.purple { border-top-color: var(--purple); }
+  .summary-card h3 {
+    font-size: 30px;
+    font-weight: 700;
+    color: var(--gray-800);
+    margin-bottom: 12px;
+  }
+  .summary-card p, .summary-card ul {
+    font-size: 26px;
+    line-height: 1.7;
+    color: var(--gray-600);
+  }
+  .summary-card ul { padding-left: 24px; }
+
+  /* ===== Practice Card ===== */
+  .practice-box {
+    background: linear-gradient(135deg, #fff7ed, #fef3c7);
+    border: 3px dashed var(--orange);
+    border-radius: 20px;
+    padding: 32px;
+    font-size: 28px;
+    line-height: 1.8;
+    color: var(--gray-700);
+  }
+  .practice-box h3 {
+    font-size: 34px;
+    color: var(--orange);
+    margin-bottom: 14px;
+  }
+
+  /* ===== Two-column layout ===== */
+  .two-col {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 28px;
+    width: 100%;
+  }
+
+  /* ===== Vertical centered for two-column code ===== */
+  .col-center {
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+  }
+
+  /* ===== Navigation ===== */
+  .nav-bar {
+    position: fixed;
+    bottom: 28px;
+    left: 50%;
+    transform: translateX(-50%);
+    display: flex;
+    align-items: center;
+    gap: 20px;
+    z-index: 1000;
+    background: rgba(15, 23, 42, 0.85);
+    backdrop-filter: blur(12px);
+    padding: 12px 24px;
+    border-radius: 40px;
+    box-shadow: 0 8px 32px rgba(0,0,0,0.3);
+  }
+  .nav-btn {
+    width: 44px; height: 44px;
+    border-radius: 50%;
+    border: 2px solid rgba(255,255,255,0.3);
+    background: transparent;
+    color: white;
+    font-size: 20px;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.2s;
+  }
+  .nav-btn:hover { background: rgba(255,255,255,0.15); border-color: rgba(255,255,255,0.6); }
+  .nav-btn:active { transform: scale(0.92); }
+
+  .slide-counter {
+    color: white;
+    font-size: 20px;
+    font-weight: 600;
+    min-width: 80px;
+    text-align: center;
+    letter-spacing: 1px;
+  }
+
+  .nav-hint {
+    position: fixed;
+    bottom: 100px;
+    left: 50%;
+    transform: translateX(-50%);
+    color: rgba(255,255,255,0.5);
+    font-size: 16px;
+    letter-spacing: 1px;
+    z-index: 1000;
+    pointer-events: none;
+    transition: opacity 1.5s ease;
+  }
+
+  /* ===== Bullet points with icons ===== */
+  .icon-bullet {
+    display: flex;
+    align-items: flex-start;
+    gap: 14px;
+    margin-bottom: 12px;
+  }
+  .icon-bullet .bullet-emoji {
+    font-size: 30px;
+    flex-shrink: 0;
+    margin-top: 2px;
+  }
+
+  /* ===== Inline code ===== */
+  code {
+    background: #e2e8f0;
+    color: #1e40af;
+    padding: 3px 10px;
+    border-radius: 6px;
+    font-family: "SF Mono", "Cascadia Code", "Fira Code", "Consolas", monospace;
+    font-size: 0.9em;
+    font-weight: 600;
+  }
+
+  /* ===== Key badge ===== */
+  .key-badge {
+    display: inline-block;
+    background: linear-gradient(135deg, #6366f1, #4f46e5);
+    color: white;
+    padding: 6px 16px;
+    border-radius: 8px;
+    font-family: "SF Mono", "Cascadia Code", "Consolas", monospace;
+    font-size: 24px;
+    font-weight: 700;
+    letter-spacing: 1px;
+    margin: 0 4px;
+  }
+
+  /* ===== Scrollbar for code blocks ===== */
+  .code-block::-webkit-scrollbar { height: 6px; }
+  .code-block::-webkit-scrollbar-track { background: #2d2d2d; border-radius: 3px; }
+  .code-block::-webkit-scrollbar-thumb { background: #555; border-radius: 3px; }
+
+  .content-body::-webkit-scrollbar { width: 6px; }
+  .content-body::-webkit-scrollbar-track { background: transparent; }
+  .content-body::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 3px; }
+</style>
+</head>
+<body>
+
+<div class="slides-container">
+
+  <!-- ==================== SLIDE 0: Title ==================== -->
+  <div class="slide slide-title active" data-index="0">
+    <div class="lesson-number">LESSON 3</div>
+    <h1>键盘是我的遥控器</h1>
+    <div class="subtitle">用键盘控制游戏角色</div>
+    <div class="key-icons">
+      <div class="key-icon">&#8593;</div>
+      <div class="key-icon">&#8595;</div>
+      <div class="key-icon">&#8592;</div>
+      <div class="key-icon">&#8594;</div>
+    </div>
+    <div class="course-name">Pygame 游戏编程入门</div>
+  </div>
+
+  <!-- ==================== SLIDE 1: What are events? ==================== -->
+  <div class="slide slide-content" data-index="1">
+    <div class="slide-header">
+      <div class="icon-circle" style="background:linear-gradient(135deg,#f97316,#ea580c);">&#9889;</div>
+      <h2>事件是什么？</h2>
+    </div>
+    <div class="content-body">
+      <p>在 Pygame 中，<strong>事件（Event）</strong> 就是游戏中发生的各种"事情"。</p>
+      <div class="highlight-box orange">
+        <strong>打个比方：</strong> 你在玩游戏时 ——<br>
+        鼠标点击 = 一个事件&nbsp;&nbsp;&nbsp;键盘按键 = 一个事件&nbsp;&nbsp;&nbsp;关闭窗口 = 一个事件
+      </div>
+      <p>Pygame 会把这些事件 <strong>放进一个队列</strong> 里，我们的程序需要<strong>逐个取出来处理</strong>。</p>
+      <div class="highlight-box">
+        <strong>核心思路：</strong> "发生什么 → 产生事件 → 程序获取事件 → 做出反应"
+      </div>
+    </div>
+  </div>
+
+  <!-- ==================== SLIDE 2: Event Loop ==================== -->
+  <div class="slide slide-content" data-index="2">
+    <div class="slide-header">
+      <div class="icon-circle" style="background:linear-gradient(135deg,#2563eb,#3b82f6);">&#8635;</div>
+      <h2>Pygame 的事件循环</h2>
+    </div>
+    <div class="content-body">
+      <p>游戏在每一帧都会执行<strong>事件循环</strong>：</p>
+      <div class="highlight-box">
+        <strong>关键函数：</strong><br>
+        <code>pygame.event.get()</code> — 获取当前发生的所有事件列表
+      </div>
+      <p>通常的写法：</p>
+      <div class="code-block"><span class="keyword">for</span> event <span class="keyword">in</span> pygame.event.get():
+    <span class="comment"># 处理每一个事件</span>
+    <span class="keyword">if</span> event.type == pygame.QUIT:
+        running = <span class="keyword">False</span></div>
+      <p>代码含义：用 <code>for</code> 循环遍历每一个事件，根据事件类型做不同处理。</p>
+    </div>
+  </div>
+
+  <!-- ==================== SLIDE 3: QUIT Event ==================== -->
+  <div class="slide slide-content" data-index="3">
+    <div class="slide-header">
+      <div class="icon-circle" style="background:linear-gradient(135deg,#dc2626,#ef4444);">&#10005;</div>
+      <h2>QUIT 事件 — 如何关闭窗口</h2>
+    </div>
+    <div class="content-body">
+      <p>当你点击游戏窗口右上角的 <strong>&#10005; 关闭按钮</strong> 时，Pygame 会产生一个 <code>pygame.QUIT</code> 事件。</p>
+      <div class="highlight-box orange">
+        <strong>如果不处理 QUIT 事件会怎样？</strong><br>
+        你就无法正常关闭窗口！上面的 &#10005; 按钮会失效，只能用任务管理器强制结束程序。
+      </div>
+      <p>所以 <strong>每个 Pygame 程序</strong> 都要处理 QUIT 事件：</p>
+      <div class="code-block"><span class="keyword">if</span> event.type == pygame.QUIT:
+    <span class="comment"># 退出游戏循环</span>
+    running = <span class="keyword">False</span></div>
+    </div>
+  </div>
+
+  <!-- ==================== SLIDE 4: KEYDOWN Event ==================== -->
+  <div class="slide slide-content" data-index="4">
+    <div class="slide-header">
+      <div class="icon-circle" style="background:linear-gradient(135deg,#7c3aed,#8b5cf6);">&#9000;</div>
+      <h2>KEYDOWN 事件 — 检测按键</h2>
+    </div>
+    <div class="content-body">
+      <p>当你按下键盘上的任意一个键时，Pygame 会产生一个 <code>pygame.KEYDOWN</code> 事件。</p>
+      <div class="highlight-box purple">
+        <strong>每一个按键都有一个"身份证"——</strong><br>
+        <code>event.key</code> 属性表示你按下的是哪个键。
+      </div>
+      <p>基本写法：</p>
+      <div class="code-block"><span class="keyword">if</span> event.type == pygame.KEYDOWN:
+    <span class="keyword">if</span> event.key == pygame.K_RIGHT:
+        <span class="comment"># 按下了右箭头键</span>
+        x += <span class="number">5</span></div>
+    </div>
+  </div>
+
+  <!-- ==================== SLIDE 5: Direction Key Constants ==================== -->
+  <div class="slide slide-content" data-index="5">
+    <div class="slide-header">
+      <div class="icon-circle" style="background:linear-gradient(135deg,#0d9488,#14b8a6);">&#127760;</div>
+      <h2>方向键常量</h2>
+    </div>
+    <div class="content-body">
+      <p>Pygame 为方向键定义了对应的常量：</p>
+      <div class="two-col">
+        <div>
+          <table class="compare-table">
+            <tr><th>方向</th><th>Pygame 常量</th></tr>
+            <tr><td>&#8593; 上</td><td><code>pygame.K_UP</code></td></tr>
+            <tr><td>&#8595; 下</td><td><code>pygame.K_DOWN</code></td></tr>
+            <tr><td>&#8592; 左</td><td><code>pygame.K_LEFT</code></td></tr>
+            <tr><td>&#8594; 右</td><td><code>pygame.K_RIGHT</code></td></tr>
+          </table>
+          <p style="margin-top:16px;font-size:24px;color:#666;">还有这些常用键：</p>
+          <table class="compare-table">
+            <tr><th>按键</th><th>Pygame 常量</th></tr>
+            <tr><td>空格</td><td><code>pygame.K_SPACE</code></td></tr>
+            <tr><td>回车</td><td><code>pygame.K_RETURN</code></td></tr>
+            <tr><td>ESC</td><td><code>pygame.K_ESCAPE</code></td></tr>
+          </table>
+        </div>
+        <div class="col-center">
+          <div class="highlight-box green">
+            <strong>记忆口诀：</strong><br><br>
+            <code>K_UP</code> = Key Up<br>
+            <code>K_DOWN</code> = Key Down<br>
+            <code>K_LEFT</code> = Key Left<br>
+            <code>K_RIGHT</code> = Key Right<br><br>
+            都是 <code>pygame.K_</code> + 英文方向单词！
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ==================== SLIDE 6: Method 1 — event.get() ==================== -->
+  <div class="slide slide-content" data-index="6">
+    <div class="slide-header">
+      <div class="icon-circle" style="background:linear-gradient(135deg,#2563eb,#3b82f6);">&#9312;</div>
+      <h2>方式一：event.get() 检测按键</h2>
+    </div>
+    <div class="content-body">
+      <p>使用 <code>pygame.event.get()</code> 获取事件列表，检查 <code>KEYDOWN</code> 事件：</p>
+      <div class="highlight-box blue">
+        <strong>特点：</strong> 按键每<strong>按下一次</strong>，只触发<strong>一次</strong>事件。
+      </div>
+      <div class="code-block"><span class="comment"># 在游戏循环中</span>
+<span class="keyword">for</span> event <span class="keyword">in</span> pygame.event.get():
+    <span class="keyword">if</span> event.type == pygame.QUIT:
+        running = <span class="keyword">False</span>
+    <span class="keyword">if</span> event.type == pygame.KEYDOWN:
+        <span class="keyword">if</span> event.key == pygame.K_LEFT:
+            player_x -= speed
+        <span class="keyword">elif</span> event.key == pygame.K_RIGHT:
+            player_x += speed
+        <span class="keyword">elif</span> event.key == pygame.K_UP:
+            player_y -= speed
+        <span class="keyword">elif</span> event.key == pygame.K_DOWN:
+            player_y += speed</div>
+      <p style="font-size:24px;color:#666;">适合场景：菜单选择、技能释放（按一次触发一次）</p>
+    </div>
+  </div>
+
+  <!-- ==================== SLIDE 7: Method 2 — key.get_pressed() ==================== -->
+  <div class="slide slide-content" data-index="7">
+    <div class="slide-header">
+      <div class="icon-circle" style="background:linear-gradient(135deg,#16a34a,#22c55e);">&#9313;</div>
+      <h2>方式二：key.get_pressed() 持续检测</h2>
+    </div>
+    <div class="content-body">
+      <p>使用 <code>pygame.key.get_pressed()</code> 获取<strong>所有按键的实时状态</strong>：</p>
+      <div class="highlight-box green">
+        <strong>特点：</strong> 只要键<strong>按住不放</strong>，每一帧都能检测到。角色会<strong>持续移动</strong>！
+      </div>
+      <div class="code-block"><span class="comment"># 在游戏循环中（放在 for event 循环外面）</span>
+keys = pygame.key.get_pressed()
+
+<span class="keyword">if</span> keys[pygame.K_LEFT]:
+    player_x -= speed
+<span class="keyword">if</span> keys[pygame.K_RIGHT]:
+    player_x += speed
+<span class="keyword">if</span> keys[pygame.K_UP]:
+    player_y -= speed
+<span class="keyword">if</span> keys[pygame.K_DOWN]:
+    player_y += speed</div>
+      <p style="font-size:24px;color:#666;">适合场景：角色移动（按住方向键持续走动）</p>
+    </div>
+  </div>
+
+  <!-- ==================== SLIDE 8: Comparison ==================== -->
+  <div class="slide slide-content" data-index="8">
+    <div class="slide-header">
+      <div class="icon-circle" style="background:linear-gradient(135deg,#db2777,#ec4899);">&#9878;</div>
+      <h2>对比两种方式</h2>
+    </div>
+    <div class="content-body">
+      <table class="compare-table">
+        <tr>
+          <th></th>
+          <th><code>pygame.event.get()</code></th>
+          <th><code>pygame.key.get_pressed()</code></th>
+        </tr>
+        <tr>
+          <td>触发方式</td>
+          <td>按键按下时触发<strong>一次</strong></td>
+          <td>按住时<strong>每帧连续</strong>触发</td>
+        </tr>
+        <tr>
+          <td>返回数据</td>
+          <td>事件对象列表</td>
+          <td>布尔值元组（True/False 数组）</td>
+        </tr>
+        <tr>
+          <td>代码位置</td>
+          <td>在 <code>for event</code> 循环内</td>
+          <td>在循环外（或循环后）</td>
+        </tr>
+        <tr>
+          <td>典型用法</td>
+          <td>菜单选择、跳跃、技能</td>
+          <td>角色移动、赛车加速</td>
+        </tr>
+        <tr>
+          <td>同时按多键</td>
+          <td>每次只处理一个事件</td>
+          <td><strong>同时检测多个键</strong></td>
+        </tr>
+      </table>
+      <div class="highlight-box" style="margin-top:16px;">
+        <strong>实际游戏开发中，两种方式经常搭配使用：</strong><br>
+        用 <code>get_pressed()</code> 做持续移动 + 用 <code>event.get()</code> 做按键触发
+      </div>
+    </div>
+  </div>
+
+  <!-- ==================== SLIDE 9: Boundary Limiting ==================== -->
+  <div class="slide slide-content" data-index="9">
+    <div class="slide-header">
+      <div class="icon-circle" style="background:linear-gradient(135deg,#f97316,#ea580c);">&#128274;</div>
+      <h2>边界限制 — 别让角色跑出屏幕！</h2>
+    </div>
+    <div class="content-body">
+      <p>如果角色一直移动，就会跑到窗口外面去。我们需要用 <code>if</code> 语句限制它的范围。</p>
+      <div class="highlight-box orange">
+        <strong>核心思路：</strong> 移动后检查坐标，如果超出边界就把它拉回来。
+      </div>
+      <div class="code-block"><span class="comment"># 角色移动后，限制在窗口范围内</span>
+<span class="keyword">if</span> player_x &lt; <span class="number">0</span>:                    <span class="comment"># 不能超出左边界</span>
+    player_x = <span class="number">0</span>
+<span class="keyword">if</span> player_x &gt; WIDTH - player_size:   <span class="comment"># 不能超出右边界</span>
+    player_x = WIDTH - player_size
+<span class="keyword">if</span> player_y &lt; <span class="number">0</span>:                    <span class="comment"># 不能超出上边界</span>
+    player_y = <span class="number">0</span>
+<span class="keyword">if</span> player_y &gt; HEIGHT - player_size:  <span class="comment"># 不能超出下边界</span>
+    player_y = HEIGHT - player_size</div>
+      <p style="font-size:24px;color:#666;">另一种写法：<code>player_x = max(0, min(player_x, WIDTH - player_size))</code> 一行搞定！</p>
+    </div>
+  </div>
+
+  <!-- ==================== SLIDE 10: Complete Example Code ==================== -->
+  <div class="slide slide-content" data-index="10">
+    <div class="slide-header">
+      <div class="icon-circle" style="background:linear-gradient(135deg,#2563eb,#6366f1);">&#128187;</div>
+      <h2>完整代码展示</h2>
+    </div>
+    <div class="content-body">
+      <p>把今天学的所有内容整合到一起：</p>
+      <div class="code-block"><span class="keyword">import</span> pygame
+pygame.init()
+
+WIDTH, HEIGHT = <span class="number">800</span>, <span class="number">600</span>
+screen = pygame.display.set_mode((WIDTH, HEIGHT))
+pygame.display.set_caption(<span class="string">"键盘控制角色"</span>)
+
+<span class="comment"># 角色的初始位置</span>
+player_x, player_y = WIDTH // <span class="number">2</span>, HEIGHT // <span class="number">2</span>
+player_size = <span class="number">50</span>
+speed = <span class="number">5</span>
+
+clock = pygame.time.Clock()
+running = <span class="keyword">True</span>
+
+<span class="keyword">while</span> running:
+    <span class="comment"># 1. 事件处理</span>
+    <span class="keyword">for</span> event <span class="keyword">in</span> pygame.event.get():
+        <span class="keyword">if</span> event.type == pygame.QUIT:
+            running = <span class="keyword">False</span>
+
+    <span class="comment"># 2. 持续按键检测</span>
+    keys = pygame.key.get_pressed()
+    <span class="keyword">if</span> keys[pygame.K_LEFT]:  player_x -= speed
+    <span class="keyword">if</span> keys[pygame.K_RIGHT]: player_x += speed
+    <span class="keyword">if</span> keys[pygame.K_UP]:    player_y -= speed
+    <span class="keyword">if</span> keys[pygame.K_DOWN]:  player_y += speed
+
+    <span class="comment"># 3. 边界限制</span>
+    player_x = max(<span class="number">0</span>, min(player_x, WIDTH - player_size))
+    player_y = max(<span class="number">0</span>, min(player_y, HEIGHT - player_size))
+
+    <span class="comment"># 4. 绘制</span>
+    screen.fill((<span class="number">30</span>, <span class="number">30</span>, <span class="number">30</span>))
+    pygame.draw.rect(screen, (<span class="number">0</span>, <span class="number">150</span>, <span class="number">255</span>),
+                     (player_x, player_y, player_size, player_size))
+    pygame.display.flip()
+    clock.tick(<span class="number">60</span>)
+
+pygame.quit()</div>
+    </div>
+  </div>
+
+  <!-- ==================== SLIDE 11: Summary & Practice ==================== -->
+  <div class="slide slide-content" data-index="11">
+    <div class="slide-header">
+      <div class="icon-circle" style="background:linear-gradient(135deg,#16a34a,#22c55e);">&#10004;</div>
+      <h2>总结与练习</h2>
+    </div>
+    <div class="content-body">
+      <div class="summary-cards">
+        <div class="summary-card">
+          <h3>今天学的知识</h3>
+          <ul>
+            <li>事件（Event）的概念</li>
+            <li><code>pygame.event.get()</code> 事件循环</li>
+            <li><code>QUIT</code> 事件关闭窗口</li>
+            <li><code>KEYDOWN</code> 检测按键</li>
+            <li>方向键常量 K_UP / K_DOWN / K_LEFT / K_RIGHT</li>
+            <li><code>key.get_pressed()</code> 持续检测</li>
+            <li>两种方式的区别和适用场景</li>
+            <li>边界限制防止出屏</li>
+          </ul>
+        </div>
+        <div class="summary-card green">
+          <h3>两种方式记住咯</h3>
+          <ul>
+            <li><code>event.get()</code> — 按一次，触发一次（菜单、技能）</li>
+            <li><code>key.get_pressed()</code> — 按住不放，持续触发（角色移动）</li>
+          </ul>
+        </div>
+      </div>
+      <div style="margin-top:20px;">
+        <div class="practice-box">
+          <h3>课后挑战</h3>
+          <p>
+            <strong>1.</strong> 修改代码，让角色按 <span class="key-badge">W</span><span class="key-badge">A</span><span class="key-badge">S</span><span class="key-badge">D</span> 也能移动（W=上, A=左, S=下, D=右）<br>
+            <strong>2.</strong> 把角色改成圆形，颜色改成红色<br>
+            <strong>3.</strong> 按下空格键时角色"跳跃"（向上移动 30 像素再掉下来）<br>
+            <strong>4.</strong> 试试让角色速度越来越快（按住 Shift 加速）
+          </p>
+        </div>
+      </div>
+    </div>
+  </div>
+
+</div><!-- /.slides-container -->
+
+<!-- ===== Navigation Bar ===== -->
+<div class="nav-bar">
+  <button class="nav-btn" id="btn-prev" title="上一页 (左箭头键)">&#8592;</button>
+  <div class="slide-counter" id="slide-counter">1 / 12</div>
+  <button class="nav-btn" id="btn-next" title="下一页 (右箭头键)">&#8594;</button>
+</div>
+<div class="nav-hint" id="nav-hint">按 ← → 方向键翻页</div>
+
+<script>
+(function() {
+  var slides = document.querySelectorAll('.slide');
+  var totalSlides = slides.length;
+  var currentIndex = 0;
+  var hintTimer = null;
+
+  var btnPrev = document.getElementById('btn-prev');
+  var btnNext = document.getElementById('btn-next');
+  var counter = document.getElementById('slide-counter');
+  var hint    = document.getElementById('nav-hint');
+
+  function goToSlide(index) {
+    if (index < 0 || index >= totalSlides) return;
+    if (index === currentIndex) return;
+
+    var oldSlide = slides[currentIndex];
+    var newSlide = slides[index];
+
+    // Remove old slide
+    oldSlide.classList.remove('active');
+    oldSlide.classList.add('exit-left');
+
+    // Add new slide after a tiny delay for CSS transition
+    newSlide.style.transition = 'none';
+    newSlide.style.opacity = '0';
+    newSlide.style.transform = 'translateX(40px)';
+
+    // Force reflow
+    newSlide.offsetHeight;
+
+    newSlide.style.transition = 'opacity 0.45s ease, transform 0.45s ease';
+    newSlide.classList.add('active');
+    newSlide.style.opacity = '1';
+    newSlide.style.transform = 'translateX(0)';
+
+    // Clean up old slide after transition
+    setTimeout(function() {
+      oldSlide.classList.remove('exit-left');
+      oldSlide.style.transform = '';
+    }, 500);
+
+    currentIndex = index;
+    updateCounter();
+    showHintBriefly();
+  }
+
+  function nextSlide() {
+    if (currentIndex < totalSlides - 1) {
+      goToSlide(currentIndex + 1);
+    }
+  }
+
+  function prevSlide() {
+    if (currentIndex > 0) {
+      goToSlide(currentIndex - 1);
+    }
+  }
+
+  function updateCounter() {
+    counter.textContent = (currentIndex + 1) + ' / ' + totalSlides;
+  }
+
+  function showHintBriefly() {
+    if (hintTimer) clearTimeout(hintTimer);
+    hint.style.opacity = '0.7';
+    hintTimer = setTimeout(function() {
+      hint.style.opacity = '0';
+    }, 2500);
+  }
+
+  // Keyboard navigation
+  document.addEventListener('keydown', function(e) {
+    if (e.key === 'ArrowRight' || e.key === 'Right' || e.keyCode === 39) {
+      e.preventDefault();
+      nextSlide();
+    } else if (e.key === 'ArrowLeft' || e.key === 'Left' || e.keyCode === 37) {
+      e.preventDefault();
+      prevSlide();
+    }
+  });
+
+  // Button clicks
+  btnPrev.addEventListener('click', prevSlide);
+  btnNext.addEventListener('click', nextSlide);
+
+  // Touch/swipe support
+  var touchStartX = 0;
+  document.addEventListener('touchstart', function(e) {
+    touchStartX = e.touches[0].clientX;
+  });
+  document.addEventListener('touchend', function(e) {
+    var diff = touchStartX - e.changedTouches[0].clientX;
+    if (Math.abs(diff) > 50) {
+      if (diff > 0) nextSlide();
+      else prevSlide();
+    }
+  });
+
+  // Initialize
+  updateCounter();
+  showHintBriefly();
+
+  // Make initial slide properly visible
+  slides[0].classList.add('active');
+})();
+</script>
+
+</body>
+</html>

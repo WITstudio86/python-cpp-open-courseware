@@ -1,0 +1,591 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>第41课：图的认识与存储</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "PingFang SC", "Microsoft YaHei", sans-serif;
+            background: linear-gradient(135deg, #0f0c29, #302b63, #24243e);
+            min-height: 100vh;
+            color: #e0e0e0;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+
+        /* ---- Header ---- */
+        .header-bar {
+            width: 100%;
+            background: linear-gradient(135deg, #1a1a2e, #16213e);
+            padding: 20px 30px;
+            text-align: center;
+            border-bottom: 3px solid #e94560;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 15px;
+            flex-wrap: wrap;
+        }
+        .header-bar .lesson-num {
+            background: #e94560;
+            color: white;
+            border-radius: 50%;
+            width: 44px;
+            height: 44px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: bold;
+            font-size: 1.1em;
+            flex-shrink: 0;
+        }
+        .header-bar h1 {
+            font-size: 1.8em;
+            color: #e94560;
+            text-shadow: 0 0 20px rgba(233, 69, 96, 0.5);
+        }
+
+        /* ---- Slide Container ---- */
+        .slides-wrapper {
+            width: 100%;
+            max-width: 1000px;
+            padding: 20px;
+        }
+
+        /* Pure CSS tab switching */
+        .slides-radio {
+            display: none;
+        }
+
+        .slides-nav {
+            display: flex;
+            justify-content: center;
+            gap: 8px;
+            margin-bottom: 25px;
+            flex-wrap: wrap;
+        }
+        .slides-nav label {
+            background: rgba(255,255,255,0.08);
+            border: 1px solid rgba(255,255,255,0.15);
+            color: #aaa;
+            padding: 10px 18px;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 0.9em;
+            transition: all 0.3s;
+            user-select: none;
+        }
+        .slides-nav label:hover {
+            background: rgba(233, 69, 96, 0.15);
+            border-color: #e94560;
+            color: #e0e0e0;
+        }
+
+        /* Active tab highlight per radio */
+        #s1:checked ~ .slides-nav label[for="s1"],
+        #s2:checked ~ .slides-nav label[for="s2"],
+        #s3:checked ~ .slides-nav label[for="s3"],
+        #s4:checked ~ .slides-nav label[for="s4"],
+        #s5:checked ~ .slides-nav label[for="s5"],
+        #s6:checked ~ .slides-nav label[for="s6"] {
+            background: #e94560;
+            color: white;
+            border-color: #e94560;
+            box-shadow: 0 0 15px rgba(233, 69, 96, 0.4);
+        }
+
+        /* ---- Slide Panels ---- */
+        .slide {
+            display: none;
+            background: rgba(255,255,255,0.04);
+            border: 1px solid rgba(255,255,255,0.1);
+            border-radius: 16px;
+            padding: 40px 35px;
+            min-height: 480px;
+            animation: fadeSlide 0.4s ease;
+        }
+        @keyframes fadeSlide {
+            from { opacity: 0; transform: translateY(12px); }
+            to   { opacity: 1; transform: translateY(0); }
+        }
+
+        #s1:checked ~ .slides-wrapper #slide1,
+        #s2:checked ~ .slides-wrapper #slide2,
+        #s3:checked ~ .slides-wrapper #slide3,
+        #s4:checked ~ .slides-wrapper #slide4,
+        #s5:checked ~ .slides-wrapper #slide5,
+        #s6:checked ~ .slides-wrapper #slide6 {
+            display: block;
+        }
+
+        .slide h2 {
+            font-size: 1.7em;
+            color: #e94560;
+            margin-bottom: 20px;
+            padding-bottom: 10px;
+            border-bottom: 2px solid rgba(233, 69, 96, 0.3);
+        }
+        .slide h3 {
+            font-size: 1.2em;
+            color: #e94560;
+            margin: 18px 0 10px;
+        }
+        .slide p, .slide li {
+            line-height: 1.85;
+            color: #ccc;
+            font-size: 1.05em;
+        }
+        .slide ul, .slide ol {
+            padding-left: 24px;
+            margin: 10px 0;
+        }
+        .slide li { margin-bottom: 6px; }
+
+        /* ---- Info Boxes ---- */
+        .info-box {
+            background: rgba(233, 69, 96, 0.08);
+            border-left: 4px solid #e94560;
+            padding: 14px 18px;
+            border-radius: 0 8px 8px 0;
+            margin: 15px 0;
+            color: #ddd;
+            line-height: 1.7;
+        }
+
+        .tip-box {
+            background: rgba(255, 193, 7, 0.08);
+            border-left: 4px solid #ffc107;
+            padding: 12px 16px;
+            border-radius: 0 8px 8px 0;
+            margin: 12px 0;
+            color: #ddd;
+        }
+
+        /* ---- Code Block ---- */
+        pre {
+            background: rgba(0, 0, 0, 0.4);
+            border: 1px solid rgba(255,255,255,0.1);
+            border-radius: 10px;
+            padding: 18px 22px;
+            overflow-x: auto;
+            font-family: "SF Mono", "Fira Code", "Cascadia Code", Consolas, monospace;
+            font-size: 0.9em;
+            line-height: 1.65;
+            color: #c8d6e5;
+            margin: 12px 0;
+        }
+        pre .kw { color: #e94560; }
+        pre .cm { color: #6c7a89; }
+        pre .fn { color: #feca57; }
+        pre .str { color: #55efc4; }
+
+        /* ---- ASCII Diagram ---- */
+        .ascii-art {
+            font-family: "SF Mono", "Fira Code", "Cascadia Code", Consolas, monospace;
+            background: rgba(0,0,0,0.3);
+            padding: 16px 20px;
+            border-radius: 10px;
+            display: inline-block;
+            line-height: 1.5;
+            color: #dfe6e9;
+            margin: 10px 0;
+            white-space: pre;
+        }
+
+        /* ---- Comparison Table ---- */
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 15px 0;
+            font-size: 0.95em;
+        }
+        th {
+            background: rgba(233, 69, 96, 0.2);
+            color: #f0f0f0;
+            padding: 10px 14px;
+            text-align: left;
+            border: 1px solid rgba(255,255,255,0.08);
+        }
+        td {
+            padding: 9px 14px;
+            border: 1px solid rgba(255,255,255,0.06);
+            color: #ccc;
+        }
+        tr:nth-child(even) td {
+            background: rgba(255,255,255,0.02);
+        }
+
+        /* ---- Progress ---- */
+        .progress-bar {
+            display: flex;
+            justify-content: center;
+            gap: 6px;
+            margin: 20px 0;
+        }
+        .progress-dot {
+            width: 10px;
+            height: 10px;
+            border-radius: 50%;
+            background: rgba(255,255,255,0.2);
+        }
+        #s1:checked ~ .progress-bar .dot1,
+        #s2:checked ~ .progress-bar .dot2,
+        #s3:checked ~ .progress-bar .dot3,
+        #s4:checked ~ .progress-bar .dot4,
+        #s5:checked ~ .progress-bar .dot5,
+        #s6:checked ~ .progress-bar .dot6 {
+            background: #e94560;
+            box-shadow: 0 0 8px rgba(233, 69, 96, 0.6);
+        }
+
+        /* ---- Footer controls ---- */
+        .nav-arrows {
+            display: flex;
+            justify-content: space-between;
+            margin-top: 20px;
+        }
+        .nav-arrows label {
+            background: rgba(255,255,255,0.08);
+            border: 1px solid rgba(255,255,255,0.15);
+            color: #bbb;
+            padding: 10px 22px;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 0.95em;
+            transition: all 0.3s;
+            user-select: none;
+        }
+        .nav-arrows label:hover {
+            background: rgba(233, 69, 96, 0.2);
+            border-color: #e94560;
+        }
+        .nav-arrows label.disabled {
+            opacity: 0.3;
+            pointer-events: none;
+        }
+
+        /* ---- Badge ---- */
+        .badge {
+            display: inline-block;
+            background: #e94560;
+            color: white;
+            font-size: 0.75em;
+            padding: 3px 10px;
+            border-radius: 12px;
+            margin-left: 6px;
+            vertical-align: middle;
+        }
+
+        .highlight { color: #e94560; font-weight: bold; }
+
+        @media (max-width: 700px) {
+            .slide { padding: 25px 18px; }
+            .slides-nav label { padding: 8px 12px; font-size: 0.8em; }
+            .header-bar h1 { font-size: 1.3em; }
+        }
+    </style>
+</head>
+<body>
+
+<div class="header-bar">
+    <div class="lesson-num">41</div>
+    <h1>图的认识与存储</h1>
+</div>
+
+<!-- Hidden radio buttons for slide switching -->
+<input type="radio" name="slides" class="slides-radio" id="s1" checked>
+<input type="radio" name="slides" class="slides-radio" id="s2">
+<input type="radio" name="slides" class="slides-radio" id="s3">
+<input type="radio" name="slides" class="slides-radio" id="s4">
+<input type="radio" name="slides" class="slides-radio" id="s5">
+<input type="radio" name="slides" class="slides-radio" id="s6">
+
+<!-- Tab navigation -->
+<div class="slides-nav">
+    <label for="s1">1. 图是什么</label>
+    <label for="s2">2. 图的分类</label>
+    <label for="s3">3. 邻接矩阵</label>
+    <label for="s4">4. 邻接表</label>
+    <label for="s5">5. 链式前向星</label>
+    <label for="s6">6. 总结对比</label>
+</div>
+
+<!-- Progress dots -->
+<div class="progress-bar">
+    <div class="progress-dot dot1"></div>
+    <div class="progress-dot dot2"></div>
+    <div class="progress-dot dot3"></div>
+    <div class="progress-dot dot4"></div>
+    <div class="progress-dot dot5"></div>
+    <div class="progress-dot dot6"></div>
+</div>
+
+<div class="slides-wrapper">
+
+    <!-- ====== Slide 1: 图是什么 ====== -->
+    <div class="slide" id="slide1">
+        <h2>一、图是什么？</h2>
+        <div class="info-box">
+            <strong>定义：</strong>图（Graph）由 <span class="highlight">顶点集 V</span> 和 <span class="highlight">边集 E</span> 组成，记作 <strong>G = (V, E)</strong>。它是描述事物之间"关系"的强大工具。
+        </div>
+
+        <h3>朋友圈关系图（无向图）</h3>
+        <div class="ascii-art">
+            [小明] ─────────── [小红]
+              │                  │
+              │                  │
+            [小刚] ─────────── [小丽]
+              │
+              │
+            [小强]
+
+    V = {小明, 小红, 小刚, 小丽, 小强}
+    E = {(小明,小红), (小明,小刚), (小红,小丽), (小刚,小丽), (小刚,小强)}
+        </div>
+
+        <h3>现实世界中的图</h3>
+        <table>
+            <tr><th>场景</th><th>顶点 = ?</th><th>边 = ?</th></tr>
+            <tr><td>社交网络</td><td>用户</td><td>好友关系 / 关注关系</td></tr>
+            <tr><td>道路地图</td><td>城市 / 路口</td><td>公路</td></tr>
+            <tr><td>网页链接</td><td>网页</td><td>超链接</td></tr>
+            <tr><td>电路板</td><td>电子元件</td><td>导线</td></tr>
+            <tr><td>航班网络</td><td>机场</td><td>航线</td></tr>
+        </table>
+
+        <div class="tip-box">
+            <strong>核心思想：</strong>万事万物皆可抽象为"顶点 + 关系"，图论就是研究这种关系网络的数学分支。
+        </div>
+    </div>
+
+    <!-- ====== Slide 2: 图的分类 ====== -->
+    <div class="slide" id="slide2">
+        <h2>二、图的分类</h2>
+
+        <table>
+            <tr><th>类型</th><th>特点</th><th>生活举例</th></tr>
+            <tr><td><strong>无向图</strong></td><td>边没有方向，(u,v) = (v,u)</td><td>微信好友（互为好友）</td></tr>
+            <tr><td><strong>有向图</strong></td><td>边有方向，u → v ≠ v → u</td><td>微博关注（A 关注 B，B 不一定关注 A）</td></tr>
+            <tr><td><strong>带权图</strong></td><td>边上带有"权重"数值</td><td>城市间距离（公里）</td></tr>
+            <tr><td><strong>无权图</strong></td><td>边只表示存在/不存在</td><td>简单的好友关系</td></tr>
+        </table>
+
+        <h3>有向图 vs 无向图</h3>
+        <div class="ascii-art">
+    无向图（对称）           有向图（单向）
+
+      A ─── B                A ──→ B
+      │     │                │     │
+      │     │                ↓     ↓
+      C ─── D                C ←── D
+        </div>
+
+        <h3>带权图示例</h3>
+        <div class="ascii-art">
+      北京 ──1200km──→ 上海
+       │                │
+     300km            500km
+       │                │
+      南京 ──300km──→ 杭州
+        </div>
+
+        <div class="tip-box">
+            <strong>记忆口诀：</strong>无向如镜子（互相对称），有向如单行道（单向通行），带权如导航（有距离数字）。
+        </div>
+    </div>
+
+    <!-- ====== Slide 3: 邻接矩阵 ====== -->
+    <div class="slide" id="slide3">
+        <h2>三、邻接矩阵存储</h2>
+
+        <div class="info-box">
+            <strong>核心：</strong>用一个 <span class="highlight">二维数组 graph[N][N]</span> 表示图。<br>
+            graph[i][j] = 1 表示有边，graph[i][j] = 0 表示无边。<br>
+            无向图的邻接矩阵是 <strong>对称的</strong>：graph[i][j] == graph[j][i]
+        </div>
+
+        <h3>存储示意图</h3>
+        <div class="ascii-art">
+    图结构:                    邻接矩阵 graph[4][4]:
+
+       1 ─── 2                    1 2 3 4
+        │   ╱                   ┌───────┐
+        │ ╱                   1│0 1 0 1│
+        3                     2│1 0 1 0│
+        │                     3│0 1 0 1│
+        4                     4│1 0 1 0│
+                                └───────┘
+        </div>
+
+        <h3>代码实现</h3>
+        <pre><span class="kw">const int</span> MAXN = 101;
+<span class="kw">int</span> graph[MAXN][MAXN];   <span class="cm">// 邻接矩阵</span>
+
+<span class="cm">// 添加无向边</span>
+<span class="kw">void</span> <span class="fn">addEdge</span>(<span class="kw">int</span> u, <span class="kw">int</span> v) {
+    graph[u][v] = 1;
+    graph[v][u] = 1;       <span class="cm">// 对称赋值！</span>
+}
+
+<span class="cm">// 查询：O(1) 判断两点是否相邻</span>
+<span class="kw">bool</span> <span class="fn">hasEdge</span>(<span class="kw">int</span> u, <span class="kw">int</span> v) {
+    <span class="kw">return</span> graph[u][v] == 1;
+}</pre>
+
+        <table>
+            <tr><th>优点</th><th>缺点</th></tr>
+            <tr><td>实现简单直观</td><td>空间 O(V²)，稀疏图浪费严重</td></tr>
+            <tr><td>查询边 O(1)</td><td>遍历邻居需 O(V)</td></tr>
+            <tr><td>修改边方便</td><td>无法存储重边</td></tr>
+        </table>
+
+        <div class="tip-box">
+            <strong>适用场景：</strong>顶点数 ≤ 500，边比较稠密，或需要频繁判断"两点是否相邻"。
+        </div>
+    </div>
+
+    <!-- ====== Slide 4: 邻接表 ====== -->
+    <div class="slide" id="slide4">
+        <h2>四、邻接表存储</h2>
+
+        <div class="info-box">
+            <strong>核心：</strong>为每个顶点维护一个 <span class="highlight">邻居列表</span>。<br>
+            使用 <code>vector&lt;int&gt; adj[N]</code>，adj[u] 存储 u 的所有邻居。
+        </div>
+
+        <h3>存储示意图</h3>
+        <div class="ascii-art">
+    图结构:                    邻接表:
+
+       1 ─── 2                 adj[1] = {2, 4}
+        │   ╱                  adj[2] = {1, 3}
+        │ ╱                   adj[3] = {2, 4}
+        3                      adj[4] = {1, 3}
+        │
+        4
+        </div>
+
+        <h3>代码实现</h3>
+        <pre><span class="kw">#include &lt;vector&gt;</span>
+<span class="kw">using namespace</span> std;
+
+<span class="kw">const int</span> MAXN = 101;
+vector&lt;<span class="kw">int</span>&gt; adj[MAXN];    <span class="cm">// 邻接表</span>
+
+<span class="kw">void</span> <span class="fn">addEdge</span>(<span class="kw">int</span> u, <span class="kw">int</span> v) {
+    adj[u].push_back(v);
+    adj[v].push_back(u);
+}
+
+<span class="cm">// 遍历 u 的所有邻居</span>
+<span class="kw">for</span> (<span class="kw">int</span> v : adj[u]) {
+    cout &lt;&lt; v &lt;&lt; <span class="str">" "</span>;
+}</pre>
+
+        <table>
+            <tr><th>优点</th><th>缺点</th></tr>
+            <tr><td>空间 O(V+E)，稀疏图友好</td><td>查询边需 O(degree)</td></tr>
+            <tr><td>遍历邻居高效 O(degree)</td><td>删除边稍麻烦</td></tr>
+            <tr><td>天然支持重边</td><td>实现稍复杂</td></tr>
+        </table>
+
+        <div class="tip-box">
+            <strong>适用场景：</strong>绝大多数实际问题！顶点数大、边稀疏时首选邻接表。
+        </div>
+    </div>
+
+    <!-- ====== Slide 5: 链式前向星 ====== -->
+    <div class="slide" id="slide5">
+        <h2>五、链式前向星（进阶）</h2>
+
+        <div class="info-box">
+            <strong>本质：</strong>邻接表的 <span class="highlight">数组高效实现</span>，用单向链表模拟邻接表，是算法竞赛中的常用选择。
+        </div>
+
+        <h3>核心数据结构</h3>
+        <pre><span class="kw">struct</span> Edge {
+    <span class="kw">int</span> to;       <span class="cm">// 边的终点</span>
+    <span class="kw">int</span> next;     <span class="cm">// 下一条边的索引（链表指针）</span>
+    <span class="kw">int</span> w;        <span class="cm">// 边权（可选）</span>
+} edge[MAXM];
+
+<span class="kw">int</span> head[MAXN];  <span class="cm">// head[u] 指向从 u 出发的第一条边</span>
+<span class="kw">int</span> cnt = 0;     <span class="cm">// 边计数器</span></pre>
+
+        <h3>加边操作（头插法）</h3>
+        <pre><span class="kw">void</span> <span class="fn">addEdge</span>(<span class="kw">int</span> u, <span class="kw">int</span> v, <span class="kw">int</span> w) {
+    cnt++;
+    edge[cnt].to = v;
+    edge[cnt].w = w;
+    edge[cnt].next = head[u];  <span class="cm">// 新边指向之前的"第一条边"</span>
+    head[u] = cnt;             <span class="cm">// head 指向新边</span>
+}</pre>
+
+        <h3>遍历邻居</h3>
+        <pre><span class="kw">for</span> (<span class="kw">int</span> i = head[u]; i != -1; i = edge[i].next) {
+    <span class="kw">int</span> v = edge[i].to;   <span class="cm">// 邻居顶点</span>
+    <span class="kw">int</span> w = edge[i].w;    <span class="cm">// 边的权重</span>
+}</pre>
+
+        <div class="tip-box">
+            <strong>优点：</strong>无 vector 开销，常数极小，速度快于邻接表。<br>
+            <strong>缺点：</strong>实现相对复杂，需要理解链表插入逻辑。<br>
+            <strong>什么时候用：</strong>参加算法竞赛、追求极致性能时使用。
+        </div>
+    </div>
+
+    <!-- ====== Slide 6: 总结对比 ====== -->
+    <div class="slide" id="slide6">
+        <h2>六、三种存储方式总结</h2>
+
+        <h3>复杂度对比</h3>
+        <table>
+            <tr><th>操作</th><th>邻接矩阵</th><th>邻接表 (vector)</th><th>链式前向星</th></tr>
+            <tr><td>存储空间</td><td>O(V²)</td><td>O(V + E)</td><td>O(V + E)</td></tr>
+            <tr><td>添加边</td><td>O(1)</td><td>O(1) 均摊</td><td>O(1)</td></tr>
+            <tr><td>删除边</td><td>O(1)</td><td>O(degree)</td><td>不直接支持</td></tr>
+            <tr><td>查询边 (u,v)</td><td><span class="highlight">O(1)</span></td><td>O(degree)</td><td>O(degree)</td></tr>
+            <tr><td>遍历 u 的邻居</td><td>O(V) ❌</td><td><span class="highlight">O(degree)</span></td><td><span class="highlight">O(degree)</span></td></tr>
+            <tr><td>实现难度</td><td>★☆☆☆☆</td><td>★★☆☆☆</td><td>★★★☆☆</td></tr>
+        </table>
+
+        <h3>如何选择？</h3>
+        <table>
+            <tr><th>场景</th><th>推荐方式</th><th>原因</th></tr>
+            <tr><td>V ≤ 500，边稠密</td><td>邻接矩阵</td><td>O(1)查边，简单</td></tr>
+            <tr><td>V 较大，边稀疏</td><td>邻接表</td><td>空间 O(V+E)，遍历快</td></tr>
+            <tr><td>频繁判断两点相邻</td><td>邻接矩阵</td><td>O(1) 快速</td></tr>
+            <tr><td>只关心遍历/搜索</td><td>邻接表</td><td>每条边访问一次</td></tr>
+            <tr><td>算法竞赛</td><td>链式前向星</td><td>常数最小</td></tr>
+        </table>
+
+        <div class="info-box">
+            <strong>本课核心收获：</strong><br>
+            1. 图 G = (V, E) 是描述"关系"的自然数学工具<br>
+            2. <span class="highlight">邻接矩阵</span> → 稠密图 / 小规模 / 需要快速查边<br>
+            3. <span class="highlight">邻接表</span> → 稀疏图 / 大规模 / 遍历边<br>
+            4. <span class="highlight">链式前向星</span> → 竞赛用、性能极致<br>
+            5. 选存储方式的核心依据：<strong>图的稠密程度</strong>和<strong>需要的操作</strong>
+        </div>
+    </div>
+
+    <!-- Navigation arrows -->
+    <div class="nav-arrows">
+        <label for="s6" title="上一张">← 上一张</label>
+        <label for="s2" title="下一张">下一张 →</label>
+    </div>
+
+</div>
+
+<!-- Bottom spacer -->
+<div style="height: 40px;"></div>
+<div style="text-align: center; color: #555; font-size: 0.85em; padding-bottom: 30px;">
+    第41课 · 图的认识与存储 · 下一课：图的遍历 DFS 与 BFS
+</div>
+
+</body>
+</html>

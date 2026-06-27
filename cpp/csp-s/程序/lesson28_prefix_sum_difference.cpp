@@ -1,0 +1,391 @@
+/*
+ * 第28课：前缀和与差分优化
+ * 考纲知识点：前缀和、差分数组及其在DP中的优化应用
+ *
+ * 本文件包含以下完整实现：
+ *   1. 一维前缀和：构建 O(n)、区间和查询 O(1)
+ *   2. 二维前缀和：构建 O(nm)、子矩阵和查询 O(1)
+ *   3. 一维差分数组：区间加 O(1)、还原 O(n)
+ *   4. 二维差分数组：子矩阵加 O(1)、还原 O(nm)
+ *   5. 前缀最大值优化DP（最大子段和的另一种视角）
+ *   6. 真题1：区间修改与查询（差分 + 前缀和）
+ *   7. 真题2：最大子矩阵和（前缀和优化版）
+ *
+ * 每个函数均配有详细的注释和独立的 main 测试入口。
+ */
+
+#include <bits/stdc++.h>
+using namespace std;
+using ll = long long;
+
+// ============================ 常量定义 ============================
+const ll INF = 1e18;
+
+// ==================================================================
+// 1. 一维前缀和
+//    pre[0] = 0
+//    pre[i] = pre[i-1] + a[i-1]  （a 为 0-indexed，pre 为 1-indexed）
+//    sum(l, r) = pre[r] - pre[l-1]  （l, r 为 1-indexed 闭区间）
+// ==================================================================
+
+// 构建一维前缀和数组
+vector<ll> build_prefix_1d(const vector<ll>& a) {
+    int n = a.size();
+    vector<ll> pre(n + 1, 0);
+    for (int i = 1; i <= n; ++i) {
+        pre[i] = pre[i - 1] + a[i - 1];
+    }
+    return pre;
+}
+
+// 区间和查询（l, r 为 1-indexed 闭区间）
+ll range_sum_1d(const vector<ll>& pre, int l, int r) {
+    return pre[r] - pre[l - 1];
+}
+
+// ==================================================================
+// 2. 二维前缀和
+//    pre[i][j] = 以 (1,1) 为左上角、(i,j) 为右下角的矩形和
+//    递推：pre[i][j] = pre[i-1][j] + pre[i][j-1] - pre[i-1][j-1] + a[i-1][j-1]
+//    查询 (x1,y1) 到 (x2,y2)：
+//      sum = pre[x2][y2] - pre[x1-1][y2] - pre[x2][y1-1] + pre[x1-1][y1-1]
+// ==================================================================
+
+// 构建二维前缀和
+vector<vector<ll>> build_prefix_2d(const vector<vector<ll>>& a) {
+    int n = a.size();
+    int m = a[0].size();
+    vector<vector<ll>> pre(n + 1, vector<ll>(m + 1, 0));
+
+    for (int i = 1; i <= n; ++i) {
+        for (int j = 1; j <= m; ++j) {
+            pre[i][j] = pre[i-1][j] + pre[i][j-1] - pre[i-1][j-1] + a[i-1][j-1];
+        }
+    }
+    return pre;
+}
+
+// 子矩阵和查询（坐标均为 1-indexed）
+ll rect_sum_2d(const vector<vector<ll>>& pre,
+               int x1, int y1, int x2, int y2) {
+    return pre[x2][y2]
+         - pre[x1 - 1][y2]
+         - pre[x2][y1 - 1]
+         + pre[x1 - 1][y1 - 1];
+}
+
+// ==================================================================
+// 3. 一维差分数组
+//    定义：d[i] = a[i] - a[i-1]（a 为原数组，1-indexed）
+//    区间加 [l, r] + val：
+//      d[l] += val
+//      d[r+1] -= val
+//    还原：对 d 求前缀和即得修改后的 a
+// ==================================================================
+
+// 从原数组构建差分数组（1-indexed，多开 2 位防止 r+1 越界）
+vector<ll> build_diff_1d(const vector<ll>& a) {
+    int n = a.size();
+    vector<ll> d(n + 2, 0);  // d[1..n] 有效，d[n+1] 用于接收 r+1 的减操作
+    for (int i = 1; i <= n; ++i) {
+        d[i] = a[i - 1] - (i == 1 ? 0 : a[i - 2]);
+    }
+    return d;
+}
+
+// 区间加（l, r 为 1-indexed，闭区间）
+void range_add_1d(vector<ll>& d, int l, int r, ll val) {
+    d[l] += val;
+    d[r + 1] -= val;
+}
+
+// 还原：对差分数组求前缀和
+vector<ll> restore_diff_1d(const vector<ll>& d, int n) {
+    vector<ll> result(n);
+    ll cur = 0;
+    for (int i = 1; i <= n; ++i) {
+        cur += d[i];
+        result[i - 1] = cur;
+    }
+    return result;
+}
+
+// ==================================================================
+// 4. 二维差分数组
+//    子矩阵加 [x1,y1]~[x2,y2] + val：
+//      d[x1][y1]         += val
+//      d[x2+1][y1]       -= val
+//      d[x1][y2+1]       -= val
+//      d[x2+1][y2+1]     += val
+//    还原：对 d 求二维前缀和
+// ==================================================================
+
+// 二维差分：子矩阵加（坐标均为 1-indexed）
+void rect_add_2d(vector<vector<ll>>& d,
+                 int x1, int y1, int x2, int y2, ll val) {
+    d[x1][y1]         += val;
+    d[x2 + 1][y1]     -= val;
+    d[x1][y2 + 1]     -= val;
+    d[x2 + 1][y2 + 1] += val;
+}
+
+// 还原二维差分：对 d 求二维前缀和（原地操作）
+void restore_diff_2d(vector<vector<ll>>& d, int n, int m) {
+    for (int i = 1; i <= n; ++i) {
+        for (int j = 1; j <= m; ++j) {
+            d[i][j] += d[i - 1][j] + d[i][j - 1] - d[i - 1][j - 1];
+        }
+    }
+}
+
+// ==================================================================
+// 5. 前缀最大值优化DP
+//    经典应用：最大子段和的「前缀和 + 前缀最小值」解法
+//    子段 [l, r] 的和 = pre[r] - pre[l-1]
+//    对于固定的 r，最大化 pre[r] - pre[l-1] 等价于最小化 pre[l-1]
+//    因此维护 pre_min = min_{k < r} pre[k]
+//    答案 = max_r (pre[r] - pre_min)
+// ==================================================================
+ll max_subarray_prefix_method(const vector<ll>& a) {
+    ll pre = 0;             // 当前前缀和
+    ll min_pre = 0;         // 当前遇到的最小前缀和（初始 0 对应空前缀）
+    ll ans = -INF;
+
+    for (ll x : a) {
+        pre += x;
+        ans = max(ans, pre - min_pre);
+        min_pre = min(min_pre, pre);
+    }
+    return ans;
+}
+
+// ==================================================================
+// 6. 真题1：区间修改与查询（差分 + 前缀和）
+//    题目：长度为 n 的初始全 0 数组，m 次区间 +1，求最终数组最大值
+//    约束：1 ≤ n, m ≤ 1e5
+//    解法：差分数组 O(1) 修改 + O(n) 还原
+// ==================================================================
+void solve_range_modify_query() {
+    int n, m;
+    cin >> n >> m;
+
+    // 差分数组，多开 2 位防止越界
+    vector<int> d(n + 2, 0);
+
+    // 读取所有区间加操作
+    for (int i = 0; i < m; ++i) {
+        int l, r;
+        cin >> l >> r;
+        d[l] += 1;
+        d[r + 1] -= 1;
+    }
+
+    // 还原并求最大值
+    int cur = 0, ans = 0;
+    for (int i = 1; i <= n; ++i) {
+        cur += d[i];
+        ans = max(ans, cur);
+    }
+    cout << ans << "\n";
+}
+
+// ==================================================================
+// 7. 真题2：二维前缀和查询
+//    题目：n×n 矩阵，q 次查询子矩阵和
+//    约束：1 ≤ n ≤ 1000, 1 ≤ q ≤ 1e5
+//    解法：预处理二维前缀和 O(n²)，每次查询 O(1)
+// ==================================================================
+void solve_2d_prefix_query() {
+    int n, q;
+    cin >> n >> q;
+
+    // 构建二维前缀和
+    vector<vector<ll>> pre(n + 1, vector<ll>(n + 1, 0));
+    for (int i = 1; i <= n; ++i) {
+        for (int j = 1; j <= n; ++j) {
+            ll x;
+            cin >> x;
+            pre[i][j] = pre[i-1][j] + pre[i][j-1] - pre[i-1][j-1] + x;
+        }
+    }
+
+    // 处理查询
+    while (q--) {
+        int x1, y1, x2, y2;
+        cin >> x1 >> y1 >> x2 >> y2;
+        ll ans = rect_sum_2d(pre, x1, y1, x2, y2);
+        cout << ans << "\n";
+    }
+}
+
+// ==================================================================
+// 主函数：运行所有测试
+// ==================================================================
+int main() {
+    ios::sync_with_stdio(false);
+    cin.tie(nullptr);
+
+    cout << "===== 第28课：前缀和与差分优化 测试程序 =====\n\n";
+
+    // ---- 测试 1：一维前缀和 ----
+    {
+        cout << "【测试1】一维前缀和\n";
+        vector<ll> a = {1, 3, 5, 7, 9, 11};
+        auto pre = build_prefix_1d(a);
+        cout << "  数组: ";
+        for (ll x : a) cout << x << " ";
+        cout << "\n  前缀和: ";
+        for (size_t i = 1; i < pre.size(); ++i) cout << pre[i] << " ";
+        cout << "\n  sum(2, 5) = " << range_sum_1d(pre, 2, 5) << "（期望 24）\n";
+        cout << "  sum(1, 3) = " << range_sum_1d(pre, 1, 3) << "（期望 9）\n\n";
+    }
+
+    // ---- 测试 2：二维前缀和 ----
+    {
+        cout << "【测试2】二维前缀和\n";
+        vector<vector<ll>> mat = {
+            {1, 2, 3},
+            {4, 5, 6},
+            {7, 8, 9}
+        };
+        auto pre2d = build_prefix_2d(mat);
+        cout << "  3x3 矩阵:\n";
+        for (auto& row : mat) {
+            cout << "    ";
+            for (ll x : row) cout << x << " ";
+            cout << "\n";
+        }
+        cout << "  rect(1,1,2,2) = " << rect_sum_2d(pre2d, 1, 1, 2, 2) << "（期望 12）\n";
+        cout << "  rect(2,2,3,3) = " << rect_sum_2d(pre2d, 2, 2, 3, 3) << "（期望 28）\n";
+        cout << "  rect(1,1,3,3) = " << rect_sum_2d(pre2d, 1, 1, 3, 3) << "（期望 45）\n\n";
+    }
+
+    // ---- 测试 3：一维差分数组 ----
+    {
+        cout << "【测试3】一维差分数组\n";
+        vector<ll> a = {0, 0, 0, 0, 0};  // 初始全零
+        auto d = build_diff_1d(a);
+        cout << "  初始数组: 0 0 0 0 0\n";
+
+        // 区间 [2, 4] 加 3
+        range_add_1d(d, 2, 4, 3);
+        cout << "  区间[2,4]加3后差分: ";
+        for (size_t i = 1; i < d.size(); ++i) cout << d[i] << " ";
+        cout << "\n";
+
+        // 区间 [3, 5] 加 2
+        range_add_1d(d, 3, 5, 2);
+        cout << "  区间[3,5]加2后差分: ";
+        for (size_t i = 1; i < d.size(); ++i) cout << d[i] << " ";
+        cout << "\n";
+
+        auto result = restore_diff_1d(d, 5);
+        cout << "  还原后数组: ";
+        for (ll x : result) cout << x << " ";
+        cout << "（期望 0 3 5 5 2）\n\n";
+    }
+
+    // ---- 测试 4：二维差分数组 ----
+    {
+        cout << "【测试4】二维差分数组\n";
+        int n = 3, m = 3;
+        // 二维差分数组，多开一些防止越界
+        vector<vector<ll>> diff(n + 2, vector<ll>(m + 2, 0));
+
+        // 子矩阵 [1,1]~[2,2] 加 5
+        rect_add_2d(diff, 1, 1, 2, 2, 5);
+        // 子矩阵 [2,2]~[3,3] 加 3
+        rect_add_2d(diff, 2, 2, 3, 3, 3);
+
+        restore_diff_2d(diff, n, m);
+        cout << "  3x3 矩阵，[1,1]~[2,2]+5, [2,2]~[3,3]+3:\n";
+        cout << "  还原后:\n";
+        for (int i = 1; i <= n; ++i) {
+            cout << "    ";
+            for (int j = 1; j <= m; ++j) {
+                cout << diff[i][j] << " ";
+            }
+            cout << "\n";
+        }
+        cout << "  期望:\n";
+        cout << "    5 5 0\n";
+        cout << "    5 8 3\n";
+        cout << "    0 3 3\n\n";
+    }
+
+    // ---- 测试 5：前缀最大值优化DP ----
+    {
+        cout << "【测试5】前缀最大值优化（最大子段和）\n";
+        vector<ll> a = {-2, 1, -3, 4, -1, 2, 1, -5, 4};
+        cout << "  数组: ";
+        for (ll x : a) cout << x << " ";
+        cout << "\n  前缀和法结果 = " << max_subarray_prefix_method(a)
+             << "（期望 6）\n\n";
+    }
+
+    // ---- 交互模式 ----
+    cout << "===== 交互模式 =====\n";
+    cout << "选项:\n";
+    cout << "  0 - 退出\n";
+    cout << "  1 - 一维前缀和查询\n";
+    cout << "  2 - 二维前缀和查询\n";
+    cout << "  3 - 一维差分区间修改\n";
+    cout << "  4 - 真题：区间修改查询\n";
+    cout << "  5 - 真题：二维前缀和查询\n";
+    cout << "请输入选项: ";
+
+    int opt;
+    cin >> opt;
+
+    if (opt == 1) {
+        cout << "输入 n 和 n 个数: ";
+        int n; cin >> n;
+        vector<ll> a(n);
+        for (int i = 0; i < n; ++i) cin >> a[i];
+        auto pre = build_prefix_1d(a);
+        cout << "输入查询次数 q: ";
+        int q; cin >> q;
+        while (q--) {
+            int l, r; cin >> l >> r;
+            cout << range_sum_1d(pre, l, r) << "\n";
+        }
+    } else if (opt == 2) {
+        cout << "输入 n m 和矩阵:\n";
+        int n, m; cin >> n >> m;
+        vector<vector<ll>> mat(n, vector<ll>(m));
+        for (int i = 0; i < n; ++i)
+            for (int j = 0; j < m; ++j)
+                cin >> mat[i][j];
+        auto pre = build_prefix_2d(mat);
+        cout << "输入查询次数 q: ";
+        int q; cin >> q;
+        while (q--) {
+            int x1, y1, x2, y2;
+            cin >> x1 >> y1 >> x2 >> y2;
+            cout << rect_sum_2d(pre, x1, y1, x2, y2) << "\n";
+        }
+    } else if (opt == 3) {
+        cout << "输入 n 和 m（修改次数）:\n";
+        int n, m; cin >> n >> m;
+        vector<ll> d(n + 2, 0);
+        while (m--) {
+            int l, r; ll val;
+            cin >> l >> r >> val;
+            range_add_1d(d, l, r, val);
+        }
+        auto res = restore_diff_1d(d, n);
+        cout << "最终数组: ";
+        for (ll x : res) cout << x << " ";
+        cout << "\n";
+    } else if (opt == 4) {
+        cout << "输入 n m（数组长度和操作次数）:\n";
+        solve_range_modify_query();
+    } else if (opt == 5) {
+        cout << "输入 n q（矩阵大小和查询次数）:\n";
+        solve_2d_prefix_query();
+    } else {
+        cout << "程序结束。\n";
+    }
+
+    return 0;
+}

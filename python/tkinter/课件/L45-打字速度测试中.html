@@ -1,0 +1,200 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>第45节 · 项目13：打字速度测试（中）· Python Tkinter 课程</title>
+<link rel="stylesheet" href="assets/fonts.css">
+<link rel="stylesheet" href="assets/base.css">
+<link rel="stylesheet" id="theme-link" href="assets/themes/soft-pastel.css">
+<link rel="stylesheet" href="assets/animations/animations.css">
+<link rel="stylesheet" href="style.css">
+</head>
+<body class="tpl-tkinter-course" data-themes="soft-pastel,rainbow-gradient,sunset-warm,minimal-white" data-theme-base="assets/themes/">
+<div class="deck">
+
+  <!-- 1. Cover -->
+  <section class="slide full" data-title="封面">
+    <p class="kicker">Python Tkinter · 第 45 节</p>
+    <h1 class="h1 mt-s">项目 13：打字速度测试（中）<br><em>倒计时 + WPM 统计</em></h1>
+    <p class="lede mt-l" style="max-width:62ch">加入 60 秒倒计时！统计 WPM（每分钟打字数）和准确率——看看你的打字到底有多快！</p>
+    <div class="row mt-l" style="gap:16px">
+      <span class="pill-academic">~ 60 分钟</span>
+      <span class="pill-academic">难度 · ⭐⭐</span>
+      <span class="pill-academic">前置 · L44 逐字对比</span>
+    </div>
+    <div class="deck-footer"><span>Python Tkinter 趣味编程课</span><span class="slide-number" data-current="1" data-total="7"></span></div>
+  </section>
+
+  <!-- 2. Objectives -->
+  <section class="slide" data-title="学习目标">
+    <aside class="sidebar">
+      <div class="brand">Tkinter 045</div>
+      <h5>学习目标</h5>
+      <ul class="obj-list">
+        <li class="current">after() 倒计时</li>
+        <li>WPM 速度统计</li>
+        <li>准确率计算</li>
+        <li>成绩弹窗展示</li>
+      </ul>
+      <h5>本节成品</h5>
+      <p class="dim" style="font-size:13px">能计时的打字测试 ⏱️</p>
+    </aside>
+    <div class="main">
+      <p class="kicker">学习目标</p>
+      <h2 class="h2 mt-s">学完这节课，你将能够…</h2>
+      <div class="stack mt-l">
+        <div class="concept-box"><h4>① 用 after() 实现倒计时</h4><p class="dim">after(1000, func) 每秒更新一次，倒计时到 0 时显示成绩。</p></div>
+        <div class="concept-box"><h4>② 计算 WPM 打字速度</h4><p class="dim">WPM = 正确字数 / 已用秒数 × 60，国际通用的打字速度单位。</p></div>
+        <div class="concept-box"><h4>③ 计算准确率</h4><p class="dim">准确率 = 正确字数 / 总打字数 × 100%，衡量打字的准确性。</p></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- 3. Timer -->
+  <section class="slide" data-title="倒计时">
+    <aside class="sidebar">
+      <div class="brand">Tkinter 045</div>
+      <h5>学习目标</h5>
+      <ul class="obj-list">
+        <li class="done">after() 倒计时</li>
+        <li class="current">WPM 速度统计</li>
+        <li>准确率计算</li>
+        <li>成绩弹窗展示</li>
+      </ul>
+      <h5>关键概念</h5>
+      <p class="dim" style="font-size:13px">after · 递归调用 · state</p>
+    </aside>
+    <div class="main">
+      <p class="kicker">核心功能①</p>
+      <h2 class="h2 mt-s">after() 倒计时</h2>
+      <p class="lede mt-m"><b>after(毫秒, 函数)</b> 是 tkinter 的定时器——在指定毫秒后执行一次函数。要循环？在函数里再调用 after！</p>
+      <div class="code mt-m"><pre style="margin:0">time_left = 60
+
+<span class="kw">def</span> <span class="fn">update_timer</span>():
+    <span class="kw">global</span> time_left
+    <span class="kw">if</span> time_left &gt; 0:
+        time_left -= 1
+        timer_label.config(text=<span class="str">f"剩余：{time_left}秒"</span>)
+        root.<span class="fn">after</span>(1000, update_timer)  <span class="cmt"># 1秒后再调自己</span>
+    <span class="kw">else</span>:
+        <span class="fn">show_result</span>()  <span class="cmt"># 时间到！显示成绩</span></pre></div>
+      <div class="callout mt-m">
+        <b>💡 技巧：</b>开始前 input_text.config(state=<b>"disabled"</b>) 禁止输入；开始后再 config(state=<b>"normal"</b>) 启用。
+      </div>
+    </div>
+  </section>
+
+  <!-- 4. WPM -->
+  <section class="slide" data-title="WPM 与准确率">
+    <aside class="sidebar">
+      <div class="brand">Tkinter 045</div>
+      <h5>学习目标</h5>
+      <ul class="obj-list">
+        <li class="done">after() 倒计时</li>
+        <li class="done">WPM 速度统计</li>
+        <li class="current">准确率计算</li>
+        <li>成绩弹窗展示</li>
+      </ul>
+      <h5>关键公式</h5>
+      <p class="dim" style="font-size:13px">WPM · 准确率 · 边界处理</p>
+    </aside>
+    <div class="main">
+      <p class="kicker">核心功能②</p>
+      <h2 class="h2 mt-s">WPM 与准确率计算</h2>
+      <div class="grid g2 mt-l">
+        <div class="concept-box"><h4>📊 WPM 公式</h4>
+          <div class="code" style="font-size:14px"><pre style="margin:0">elapsed = 60 - time_left
+correct = sum(
+  1 <span class="kw">for</span> i,ch <span class="kw">in</span> enumerate(user)
+  <span class="kw">if</span> i&lt;len(ref) <span class="kw">and</span> ch==ref[i])
+wpm = (correct / elapsed) * 60
+<span class="kw">return</span> round(wpm, 1)</pre></div></div>
+        <div class="concept-box"><h4>🎯 准确率公式</h4>
+          <div class="code" style="font-size:14px"><pre style="margin:0"><span class="kw">if</span> len(user_text) == 0:
+    <span class="kw">return</span> 0  <span class="cmt"># 防止除以0</span>
+accuracy = (correct
+    / len(user_text)) * 100
+<span class="kw">return</span> round(accuracy, 1)</pre></div></div>
+      </div>
+      <div class="callout mt-m">
+        <b>⚠️ 注意边界：</b>多余字算错；总字数=0 时特殊处理防除零。
+      </div>
+    </div>
+  </section>
+
+  <!-- 5. Result -->
+  <section class="slide" data-title="成绩展示">
+    <aside class="sidebar">
+      <div class="brand">Tkinter 045</div>
+      <h5>学习目标</h5>
+      <ul class="obj-list">
+        <li class="done">after() 倒计时</li>
+        <li class="done">WPM 速度统计</li>
+        <li class="done">准确率计算</li>
+        <li class="current">成绩弹窗展示</li>
+      </ul>
+      <h5>关键概念</h5>
+      <p class="dim" style="font-size:13px">Toplevel · grab_set · 评价</p>
+    </aside>
+    <div class="main">
+      <p class="kicker">核心功能③</p>
+      <h2 class="h2 mt-s">成绩弹窗展示</h2>
+      <p class="lede mt-m">时间到后弹出 <b>Toplevel</b> 成绩窗口，显示 WPM、准确率和趣味评价。</p>
+      <div class="code mt-m"><pre style="margin:0"><span class="kw">def</span> <span class="fn">show_result</span>():
+    result_win = tk.<span class="fn">Toplevel</span>(root)
+    result_win.grab_set()
+    tk.Label(result_win, text=<span class="str">f"速度：{wpm} 字/分钟"</span>).pack()
+    tk.Label(result_win, text=<span class="str">f"准确率：{accuracy}%"</span>).pack()
+    <span class="cmt"># 趣味评价</span>
+    <span class="kw">if</span> wpm &gt;= 60 <span class="kw">and</span> accuracy &gt;= 95: grade = <span class="str">"🌟 打字高手！"</span>
+    <span class="kw">elif</span> wpm &gt;= 30: grade = <span class="str">"👍 不错哦！"</span>
+    <span class="kw">else</span>: grade = <span class="str">"💪 多多练习！"</span>
+    tk.Label(result_win, text=grade).pack()</pre></div>
+    </div>
+  </section>
+
+  <!-- 6. Try It -->
+  <section class="slide" data-title="动手试试">
+    <aside class="sidebar">
+      <div class="brand">Tkinter 045</div>
+      <h5>学习目标</h5>
+      <ul class="obj-list">
+        <li class="done">after() 倒计时</li>
+        <li class="done">WPM 速度统计</li>
+        <li class="done">准确率计算</li>
+        <li class="done">成绩弹窗展示</li>
+      </ul>
+      <h5>时间</h5>
+      <p class="dim" style="font-size:13px">~20 分钟 · 动手实践</p>
+    </aside>
+    <div class="main">
+      <p class="kicker">动手试试</p>
+      <h2 class="h2 mt-s">测试你的打字速度</h2>
+      <div class="exercise mt-l">
+        <ol style="color:var(--text-2);line-height:2;margin:0;padding-left:20px;font-size:16px">
+          <li><b>点击"开始测试"</b>，60 秒内尽量多打，观察倒计时</li>
+          <li><b>看成绩</b>：你的 WPM 和准确率是多少？</li>
+          <li><b>多测几次</b>，看自己有没有进步</li>
+        </ol>
+      </div>
+    </div>
+  </section>
+
+  <!-- 7. Summary -->
+  <section class="slide full" data-title="总结">
+    <p class="kicker">总结 · 第 45 节</p>
+    <h1 class="h1 mt-s">你学会了…</h1>
+    <div class="grid g2 mt-l">
+      <div class="concept-box"><h4>✓ after() 定时器</h4><p class="dim">after(1000, func) 延迟执行，递归调用实现循环倒计时。</p></div>
+      <div class="concept-box"><h4>✓ WPM 速度统计</h4><p class="dim">(正确字数 / 已用秒数) × 60，国际通用打字速度指标。</p></div>
+      <div class="concept-box"><h4>✓ 准确率计算</h4><p class="dim">正确字数 / 总打字数 × 100%，注意除零保护。</p></div>
+      <div class="concept-box"><h4>✓ 成绩展示</h4><p class="dim">Toplevel + grab_set() + 趣味评价，用户体验友好。</p></div>
+    </div>
+    <div class="callout mt-l">
+      <b>下节预告 · 第 46 节：打字速度测试（下）。</b> 历史成绩记录（JSON）、排行榜 Listbox、难度选择（短/中/长文）——打造完整的打字测试工具！
+    </div>
+  </section>
+
+</div>
+<script src="assets/runtime.js"></script>
+</body></html>

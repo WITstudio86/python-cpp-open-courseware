@@ -1,0 +1,640 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>CSP-J 备考课程 - 第23课 STL入门：vector与string</title>
+<style>
+* { margin: 0; padding: 0; box-sizing: border-box; }
+body {
+    font-family: "PingFang SC", "Microsoft YaHei", "Hiragino Sans GB", sans-serif;
+    background: #f5f5f5;
+    color: #333;
+    overflow: hidden;
+    height: 100vh;
+}
+#title-bar {
+    background: #1a237e;
+    color: #ffd600;
+    padding: 8px 24px;
+    font-size: 14px;
+    font-weight: bold;
+    letter-spacing: 2px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    position: fixed;
+    top: 0; left: 0; right: 0;
+    z-index: 1000;
+    height: 40px;
+}
+#slide-container {
+    position: absolute;
+    top: 40px; left: 0; right: 0; bottom: 60px;
+    overflow: hidden;
+}
+.slide {
+    display: none;
+    background: white;
+    height: 100%;
+    padding: 40px 60px;
+    overflow-y: auto;
+    animation: fadeSlide 0.4s ease;
+}
+.slide.active { display: block; }
+@keyframes fadeSlide {
+    from { opacity: 0; transform: translateX(30px); }
+    to { opacity: 1; transform: translateX(0); }
+}
+h1 { font-size: 32px; color: #1a237e; margin-bottom: 16px; border-bottom: 3px solid #ffd600; padding-bottom: 12px; }
+h2 { font-size: 24px; color: #1a237e; margin: 20px 0 12px; }
+h3 { font-size: 18px; color: #283593; margin: 14px 0 8px; }
+p, li { font-size: 16px; line-height: 1.8; margin-bottom: 6px; }
+ul, ol { margin-left: 24px; }
+table { border-collapse: collapse; width: 100%; margin: 12px 0; }
+th { background: #1a237e; color: white; padding: 10px 12px; text-align: left; font-size: 14px; }
+td { padding: 8px 12px; border-bottom: 1px solid #e0e0e0; font-size: 14px; }
+tr:nth-child(even) td { background: #f5f5f5; }
+.code-block {
+    background: #1e1e1e;
+    color: #d4d4d4;
+    padding: 16px 20px;
+    border-radius: 8px;
+    font-family: Consolas, Monaco, "Courier New", monospace;
+    font-size: 13px;
+    line-height: 1.7;
+    overflow-x: auto;
+    margin: 10px 0;
+    white-space: pre-wrap;
+    word-wrap: break-word;
+}
+.code-block .keyword { color: #569cd6; }
+.code-block .type { color: #4ec9b0; }
+.code-block .string { color: #ce9178; }
+.code-block .comment { color: #6a9955; }
+.code-block .number { color: #b5cea8; }
+.code-block .builtin { color: #dcdcaa; }
+.exam-tips {
+    border: 2px solid #ff9800;
+    border-left: 6px solid #ff9800;
+    background: #fff8e1;
+    padding: 14px 18px;
+    margin: 14px 0;
+    border-radius: 4px;
+}
+.exam-tips h4 { color: #e65100; margin-bottom: 6px; font-size: 15px; }
+.exam-tips ul { margin-left: 18px; }
+.exam-tips li { font-size: 14px; line-height: 1.7; }
+.key-point {
+    background: #e8eaf6;
+    border-left: 4px solid #1a237e;
+    padding: 10px 16px;
+    margin: 10px 0;
+    border-radius: 4px;
+}
+.highlight { color: #e65100; font-weight: bold; }
+.gold { color: #ffd600; }
+.title-slide {
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    text-align: center;
+    background: linear-gradient(135deg, #1a237e 0%, #283593 50%, #3949ab 100%);
+    color: white;
+}
+.title-slide h1 { color: #ffd600; font-size: 44px; border: none; margin-bottom: 20px; }
+.title-slide h2 { color: white; font-size: 24px; margin-bottom: 12px; font-weight: normal; }
+.title-slide p { color: #bbdefb; font-size: 18px; }
+#nav-bar {
+    position: fixed;
+    bottom: 0; left: 0; right: 0;
+    height: 60px;
+    background: white;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    gap: 12px;
+    border-top: 1px solid #e0e0e0;
+    z-index: 1000;
+}
+.nav-btn {
+    background: #1a237e;
+    color: white;
+    border: none;
+    padding: 10px 28px;
+    border-radius: 20px;
+    cursor: pointer;
+    font-size: 14px;
+    font-family: inherit;
+    transition: background 0.2s;
+}
+.nav-btn:hover { background: #283593; }
+.nav-btn:disabled { background: #bdbdbd; cursor: not-allowed; }
+#page-indicator { font-size: 14px; color: #666; min-width: 60px; text-align: center; }
+.sample-io { background: #f5f5f5; padding: 10px 16px; border-radius: 4px; margin: 8px 0; font-family: Consolas, Monaco, monospace; font-size: 13px; }
+@media (max-width: 768px) {
+    .slide { padding: 24px 16px; }
+    h1 { font-size: 22px; }
+    h2 { font-size: 18px; }
+    p, li { font-size: 13px; }
+    .code-block { font-size: 11px; }
+}
+</style>
+</head>
+<body>
+
+<div id="title-bar">
+    <span>CSP-J 备考课程</span>
+    <span>第23课：STL入门——vector与string</span>
+</div>
+
+<div id="slide-container">
+
+    <!-- ======== 幻灯片 1：标题页 ======== -->
+    <div class="slide active title-slide">
+        <h1>STL入门：vector与string</h1>
+        <h2>第23课 · CSP-J 备考课程</h2>
+        <p>让STL成为你的竞赛加速器</p>
+        <p style="margin-top:40px; font-size:14px; color:#90caf9;">
+            vector动态数组 | 迭代器 | string高级操作 | auto | 范围for循环
+        </p>
+    </div>
+
+    <!-- ======== 幻灯片 2：Vector 基础 ======== -->
+    <div class="slide">
+        <h1>Vector——会自己长大的数组</h1>
+
+        <h2>什么是vector？</h2>
+        <p>vector是一个<strong>动态数组</strong>。普通数组大小编译时固定，vector可以在运行时自动扩容。</p>
+
+        <h2>声明与初始化（5种方式）</h2>
+        <div class="code-block">
+<span class="comment">// 包含头文件</span>
+<span class="keyword">#include</span> <span class="string">&lt;vector&gt;</span>
+
+<span class="type">vector</span>&lt;<span class="keyword">int</span>&gt; v;                  <span class="comment">// 空vector，size=0</span>
+<span class="type">vector</span>&lt;<span class="keyword">int</span>&gt; v(<span class="number">10</span>);              <span class="comment">// 10个元素，默认都是0</span>
+<span class="type">vector</span>&lt;<span class="keyword">int</span>&gt; v(<span class="number">10</span>, <span class="number">5</span>);           <span class="comment">// 10个元素，每个都是5</span>
+<span class="type">vector</span>&lt;<span class="keyword">int</span>&gt; v = {<span class="number">1</span>, <span class="number">2</span>, <span class="number">3</span>};       <span class="comment">// C++11列表初始化</span>
+<span class="type">vector</span>&lt;<span class="keyword">int</span>&gt; v2(v);              <span class="comment">// 拷贝构造</span>
+        </div>
+
+        <h2>常用操作速查表</h2>
+        <table>
+            <tr><th>操作</th><th>说明</th><th>复杂度</th></tr>
+            <tr><td>v.push_back(x)</td><td>在末尾添加元素x</td><td>均摊O(1)</td></tr>
+            <tr><td>v.pop_back()</td><td>删除末尾元素</td><td>O(1)</td></tr>
+            <tr><td>v.size()</td><td>返回元素个数</td><td>O(1)</td></tr>
+            <tr><td>v.empty()</td><td>判断是否为空</td><td>O(1)</td></tr>
+            <tr><td>v.clear()</td><td>清空所有元素</td><td>O(n)</td></tr>
+            <tr><td>v.front() / v.back()</td><td>首元素 / 尾元素</td><td>O(1)</td></tr>
+            <tr><td>v[i]</td><td>下标访问（无越界检查）</td><td>O(1)</td></tr>
+        </table>
+
+        <div class="key-point">
+            <strong>注意：</strong><code>v[i]</code> 不检查越界，你必须自己保证 <code>0 &le; i &lt; v.size()</code>。
+            <code>v.at(i)</code> 会检查越界但速度更慢，竞赛中常用 <code>v[i]</code>。
+        </div>
+    </div>
+
+    <!-- ======== 幻灯片 3：Vector 操作详解 ======== -->
+    <div class="slide">
+        <h1>Vector 操作详解</h1>
+
+        <h2>push_back / pop_back / size / empty / clear</h2>
+        <div class="code-block">
+<span class="type">vector</span>&lt;<span class="keyword">int</span>&gt; v;
+
+v.push_back(<span class="number">10</span>);              <span class="comment">// v = {10}</span>
+v.push_back(<span class="number">20</span>);              <span class="comment">// v = {10, 20}</span>
+v.push_back(<span class="number">30</span>);              <span class="comment">// v = {10, 20, 30}</span>
+
+cout &lt;&lt; v.size();          <span class="comment">// 输出 3</span>
+cout &lt;&lt; v.front();         <span class="comment">// 输出 10（第一个元素）</span>
+cout &lt;&lt; v.back();          <span class="comment">// 输出 30（最后一个元素）</span>
+
+v.pop_back();               <span class="comment">// v = {10, 20}</span>
+
+v.clear();                  <span class="comment">// v = {}，size变为0</span>
+cout &lt;&lt; v.empty();         <span class="comment">// 输出 1 (true)</span>
+        </div>
+
+        <h2>三种遍历方式</h2>
+        <div class="code-block">
+<span class="comment">// 方式1：下标循环（需要用到索引时）</span>
+<span class="keyword">for</span> (<span class="keyword">int</span> i = <span class="number">0</span>; i &lt; v.size(); i++) {
+    cout &lt;&lt; v[i] &lt;&lt; <span class="string">" "</span>;
+}
+
+<span class="comment">// 方式2：迭代器（配合STL算法时）</span>
+<span class="keyword">for</span> (<span class="keyword">auto</span> it = v.begin(); it != v.end(); ++it) {
+    cout &lt;&lt; *it &lt;&lt; <span class="string">" "</span>;
+}
+
+<span class="comment">// 方式3：范围for循环（最简洁，C++11）</span>
+<span class="keyword">for</span> (<span class="keyword">int</span> x : v) {
+    cout &lt;&lt; x &lt;&lt; <span class="string">" "</span>;
+}
+        </div>
+
+        <h2>二维vector（邻接表基础）</h2>
+        <div class="code-block">
+<span class="type">vector</span>&lt;<span class="type">vector</span>&lt;<span class="keyword">int</span>&gt;&gt; graph(n + <span class="number">1</span>);    <span class="comment">// n个节点，1-indexed</span>
+graph[<span class="number">1</span>].push_back(<span class="number">2</span>);                    <span class="comment">// 节点1→节点2</span>
+graph[<span class="number">1</span>].push_back(<span class="number">3</span>);                    <span class="comment">// 节点1→节点3</span>
+
+<span class="keyword">for</span> (<span class="keyword">int</span> neighbor : graph[<span class="number">1</span>]) {  <span class="comment">// 遍历节点1的所有邻居</span>
+    cout &lt;&lt; neighbor &lt;&lt; <span class="string">" "</span>;       <span class="comment">// 输出: 2 3</span>
+}
+        </div>
+
+        <div class="exam-tips">
+            <h4>竞赛提示</h4>
+            <ul>
+                <li>邻接表用 <code>vector&lt;vector&lt;int&gt;&gt;</code> 是最简洁的实现方式</li>
+                <li>如果预先知道元素数量，用 <code>reserve(n)</code> 提前分配空间，避免多次扩容</li>
+                <li><code>size()</code> 返回的是实际元素数，<code>capacity()</code> 是已分配的空间大小——不要搞混</li>
+            </ul>
+        </div>
+    </div>
+
+    <!-- ======== 幻灯片 4：迭代器初步 ======== -->
+    <div class="slide">
+        <h1>迭代器——广义的"指针"</h1>
+
+        <h2>什么是迭代器？</h2>
+        <p>迭代器（iterator）是一种遍历容器元素的对象，可以理解为<strong>封装的指针</strong>：
+        <code>*it</code> 取值，<code>++it</code> 后移。</p>
+
+        <div class="code-block">
+<span class="type">vector</span>&lt;<span class="keyword">int</span>&gt; v = {<span class="number">10</span>, <span class="number">20</span>, <span class="number">30</span>, <span class="number">40</span>, <span class="number">50</span>};
+
+<span class="comment">// begin() → 第一个元素     end() → 最后一个元素之后</span>
+<span class="keyword">auto</span> it = v.begin();    <span class="comment">// *it = 10</span>
+cout &lt;&lt; *it;            <span class="comment">// 输出 10</span>
+
+<span class="comment">// 遍历</span>
+<span class="keyword">for</span> (<span class="keyword">auto</span> it = v.begin(); it != v.end(); ++it) {
+    cout &lt;&lt; *it &lt;&lt; <span class="string">" "</span>;   <span class="comment">// 10 20 30 40 50</span>
+}
+        </div>
+
+        <h2>迭代器的常用配合（algorithm库）</h2>
+        <div class="code-block">
+<span class="comment">// 排序</span>
+sort(v.begin(), v.end());
+
+<span class="comment">// 反转</span>
+reverse(v.begin(), v.end());
+
+<span class="comment">// 查找</span>
+<span class="keyword">auto</span> it = find(v.begin(), v.end(), <span class="number">30</span>);
+<span class="keyword">if</span> (it != v.end()) {
+    cout &lt;&lt; <span class="string">"找到! 索引="</span> &lt;&lt; (it - v.begin());
+}
+
+<span class="comment">// 插入/删除</span>
+v.insert(v.begin() + <span class="number">2</span>, <span class="number">100</span>);   <span class="comment">// 在下标2处插入100</span>
+v.erase(v.begin() + <span class="number">1</span>);          <span class="comment">// 删除下标1处的元素</span>
+        </div>
+
+        <div class="key-point">
+            <strong>关键记忆：</strong><code>begin()</code> 是第一个元素，<code>end()</code> 是最后一个元素的<strong>下一个位置</strong>
+            （不是最后一个元素）。所以遍历条件永远是 <code>it != v.end()</code>。
+        </div>
+
+        <div class="exam-tips">
+            <h4>竞赛建议</h4>
+            <ul>
+                <li>遍历容器优先使用范围for，简洁不易错</li>
+                <li>配合 <code>algorithm</code> 库函数时必须使用迭代器</li>
+                <li><code>auto</code> 让迭代器声明简单10倍——<code>auto it = v.begin()</code></li>
+            </ul>
+        </div>
+    </div>
+
+    <!-- ======== 幻灯片 5：String 高级操作 ======== -->
+    <div class="slide">
+        <h1>String 高级操作——CSP-J字符串处理利器</h1>
+
+        <h2>getline()——读一整行（含空格）</h2>
+        <div class="code-block">
+<span class="keyword">#include</span> <span class="string">&lt;string&gt;</span>
+<span class="keyword">string</span> line;
+getline(cin, line);      <span class="comment">// 读入一整行，包括空格</span>
+
+<span class="comment">// ⚠️ 陷阱：cin >> 之后必须 cin.ignore()</span>
+<span class="keyword">int</span> n; cin &gt;&gt; n;
+cin.ignore();            <span class="comment">// 清除残留的换行符！</span>
+<span class="keyword">string</span> s;
+getline(cin, s);         <span class="comment">// 现在才能正确读取</span>
+        </div>
+
+        <h2>find()——查找子串</h2>
+        <div class="code-block">
+<span class="keyword">string</span> s = <span class="string">"hello world, hello cpp"</span>;
+
+<span class="keyword">size_t</span> p1 = s.find(<span class="string">"hello"</span>);       <span class="comment">// p1 = 0 (第一个出现位置)</span>
+<span class="keyword">size_t</span> p2 = s.find(<span class="string">"hello"</span>, <span class="number">5</span>);    <span class="comment">// p2 = 13 (从下标5开始找)</span>
+
+<span class="keyword">if</span> (s.find(<span class="string">"java"</span>) == <span class="keyword">string</span>::npos) {
+    cout &lt;&lt; <span class="string">"没找到"</span>;          <span class="comment">// npos = 没找到</span>
+}
+        </div>
+
+        <h2>substr()——截取子串</h2>
+        <div class="code-block">
+<span class="keyword">string</span> s = <span class="string">"0123456789"</span>;
+s.substr(<span class="number">0</span>, <span class="number">3</span>);   <span class="comment">// "012"    (从0开始，取3个字符)</span>
+s.substr(<span class="number">5</span>);      <span class="comment">// "56789"  (从5到末尾)</span>
+        </div>
+
+        <h2>insert() / erase()——修改字符串</h2>
+        <div class="code-block">
+<span class="keyword">string</span> s = <span class="string">"Hello World"</span>;
+s.insert(<span class="number">5</span>, <span class="string">" beautiful"</span>);   <span class="comment">// "Hello beautiful World"</span>
+
+<span class="keyword">string</span> t = <span class="string">"abcdef"</span>;
+t.erase(<span class="number">2</span>, <span class="number">3</span>);                <span class="comment">// "abf" (从2开始删3个)</span>
+        </div>
+
+        <h2>字符串比较与转换</h2>
+        <div class="code-block">
+<span class="comment">// 字符串可直接用 ==, &lt;, &gt; 比较（字典序）</span>
+<span class="keyword">if</span> (<span class="string">"abc"</span> &lt; <span class="string">"abd"</span>) { ... }   <span class="comment">// true</span>
+
+<span class="comment">// 数字与字符串互转 (C++11)</span>
+<span class="keyword">string</span> s1 = to_string(<span class="number">123</span>);     <span class="comment">// "123"</span>
+<span class="keyword">int</span>    n1 = stoi(<span class="string">"456"</span>);        <span class="comment">// 456</span>
+<span class="keyword">double</span> d1 = stod(<span class="string">"3.14"</span>);      <span class="comment">// 3.14</span>
+        </div>
+    </div>
+
+    <!-- ======== 幻灯片 6：C++11 特性 + 代码模板 ======== -->
+    <div class="slide">
+        <h1>C++11利器：auto + 范围for</h1>
+
+        <h2>auto——编译时类型推导</h2>
+        <div class="code-block">
+<span class="keyword">auto</span> x = <span class="number">42</span>;              <span class="comment">// int</span>
+<span class="keyword">auto</span> y = <span class="number">3.14</span>;            <span class="comment">// double</span>
+<span class="keyword">auto</span> it = v.begin();    <span class="comment">// vector&lt;int&gt;::iterator（省太多字了！）</span>
+<span class="keyword">auto</span> s = <span class="string">"hello"</span>;        <span class="comment">// const char*</span>
+        </div>
+
+        <h2>范围for——三种模式的记忆口诀</h2>
+        <table>
+            <tr><th>写法</th><th>含义</th><th>何时使用</th></tr>
+            <tr><td><code>for (auto x : v)</code></td><td>拷贝每个元素</td><td>值类型小，不需要修改</td></tr>
+            <tr><td><code>for (auto&amp; x : v)</code></td><td>引用每个元素</td><td>需要修改原容器中的值</td></tr>
+            <tr><td><code>for (const auto&amp; x : v)</code></td><td>只读引用</td><td>值类型大（如string）且不修改</td></tr>
+        </table>
+
+        <h2>实战模板：去重排序</h2>
+        <div class="code-block">
+<span class="type">vector</span>&lt;<span class="keyword">int</span>&gt; a(n);
+<span class="keyword">for</span> (<span class="keyword">int</span> i = <span class="number">0</span>; i &lt; n; i++) cin &gt;&gt; a[i];
+
+sort(a.begin(), a.end());                             <span class="comment">// 排序</span>
+<span class="keyword">auto</span> last = unique(a.begin(), a.end());               <span class="comment">// 去重</span>
+a.erase(last, a.end());
+
+<span class="keyword">for</span> (<span class="keyword">int</span> i = <span class="number">0</span>; i &lt; a.size(); i++) {
+    cout &lt;&lt; a[i] &lt;&lt; <span class="string">" \n"</span>[i == a.size() - <span class="number">1</span>];
+}
+        </div>
+
+        <h2>实战模板：CSV字符串分割</h2>
+        <div class="code-block">
+<span class="keyword">string</span> line; getline(cin, line);
+<span class="type">vector</span>&lt;<span class="keyword">string</span>&gt; fields;
+<span class="keyword">size_t</span> pos;
+<span class="keyword">while</span> ((pos = line.find(<span class="string">','</span>)) != <span class="keyword">string</span>::npos) {
+    fields.push_back(line.substr(<span class="number">0</span>, pos));
+    line.erase(<span class="number">0</span>, pos + <span class="number">1</span>);
+}
+fields.push_back(line);   <span class="comment">// 最后一段</span>
+        </div>
+
+        <div class="exam-tips">
+            <h4>竞赛技巧</h4>
+            <ul>
+                <li><code>auto</code> + 范围for 一起用，代码量减半</li>
+                <li><code>unique</code> 只是把重复元素移到末尾，必须配合 <code>erase</code> 才能真正删除</li>
+                <li>字符串分割时注意最后一段要单独处理</li>
+            </ul>
+        </div>
+    </div>
+
+    <!-- ======== 幻灯片 7：易错点 ======== -->
+    <div class="slide">
+        <h1>⚠️ 易错点——这些坑千万别踩</h1>
+
+        <div class="exam-tips">
+            <h4>易错点1：vector越界访问</h4>
+            <ul>
+                <li><code>vector&lt;int&gt; v(5);</code> 有 <code>v[0]</code> 到 <code>v[4]</code>，<code>v[5]</code> 就是越界！</li>
+                <li>循环条件必须是 <code>i &lt; v.size()</code>，不是 <code>i &lt;= v.size()</code></li>
+            </ul>
+        </div>
+
+        <div class="exam-tips">
+            <h4>易错点2：忘记 include 头文件</h4>
+            <ul>
+                <li><code>vector</code> 需要 <code>#include &lt;vector&gt;</code></li>
+                <li><code>string</code> 需要 <code>#include &lt;string&gt;</code></li>
+                <li>使用 <code>sort/unique/find</code> 需要 <code>#include &lt;algorithm&gt;</code></li>
+                <li>竞赛中可以用 <code>#include &lt;bits/stdc++.h&gt;</code> 一劳永逸</li>
+            </ul>
+        </div>
+
+        <div class="exam-tips">
+            <h4>易错点3：混淆 size() 和 capacity()</h4>
+            <ul>
+                <li><code>size()</code>：实际存储的元素数量</li>
+                <li><code>capacity()</code>：已分配内存能容纳的元素数</li>
+                <li><code>reserve(100)</code> 改capacity，不改size——此时 <code>v[0]</code> 仍然越界！</li>
+            </ul>
+        </div>
+
+        <div class="exam-tips">
+            <h4>易错点4：string::npos 比较错误</h4>
+            <ul>
+                <li><code>find()</code> 返回的是 <code>size_t</code>（无符号类型）</li>
+                <li>正确：<code>if (s.find(x) == string::npos)</code></li>
+                <li>错误：<code>if (s.find(x) &lt; 0)</code> —— 永远为false，因为无符号数不可能小于0</li>
+            </ul>
+        </div>
+
+        <div class="exam-tips">
+            <h4>易错点5：cin >> 后直接 getline</h4>
+            <ul>
+                <li><code>cin >> n</code> 在缓冲区留下了换行符</li>
+                <li>紧接着的 <code>getline(cin, s)</code> 会读到空字符串</li>
+                <li>解决方法：<code>cin >> n; cin.ignore(); getline(cin, s);</code></li>
+            </ul>
+        </div>
+    </div>
+
+    <!-- ======== 幻灯片 8：真题精练 ======== -->
+    <div class="slide">
+        <h1>真题精练</h1>
+
+        <h2>题目1：去重排序</h2>
+        <p>给定n个整数（可能有重复），从小到大排序并输出去重后的结果。</p>
+
+        <div class="sample-io">
+<strong>输入样例：</strong><br>
+8<br>
+3 1 4 1 5 9 2 6<br><br>
+<strong>输出样例：</strong><br>
+7<br>
+1 2 3 4 5 6 9
+        </div>
+
+        <div class="code-block">
+<span class="keyword">#include</span> <span class="string">&lt;iostream&gt;</span>
+<span class="keyword">#include</span> <span class="string">&lt;vector&gt;</span>
+<span class="keyword">#include</span> <span class="string">&lt;algorithm&gt;</span>
+<span class="keyword">using namespace std</span>;
+
+<span class="keyword">int</span> main() {
+    <span class="keyword">int</span> n; cin &gt;&gt; n;
+    <span class="type">vector</span>&lt;<span class="keyword">int</span>&gt; a(n);
+    <span class="keyword">for</span> (<span class="keyword">int</span> i = <span class="number">0</span>; i &lt; n; i++) cin &gt;&gt; a[i];
+
+    sort(a.begin(), a.end());
+    <span class="keyword">auto</span> last = unique(a.begin(), a.end());
+    a.erase(last, a.end());
+
+    cout &lt;&lt; a.size() &lt;&lt; endl;
+    <span class="keyword">for</span> (<span class="keyword">int</span> i = <span class="number">0</span>; i &lt; a.size(); i++) {
+        <span class="keyword">if</span> (i &gt; <span class="number">0</span>) cout &lt;&lt; <span class="string">" "</span>;
+        cout &lt;&lt; a[i];
+    }
+    cout &lt;&lt; endl;
+    <span class="keyword">return</span> <span class="number">0</span>;
+}
+        </div>
+
+        <h2>题目2：CSV字段解析</h2>
+        <p>解析逗号分隔的字符串，每行输出一个字段。</p>
+
+        <div class="sample-io">
+<strong>输入样例：</strong> Zhang,San,15,Math,95<br>
+<strong>输出样例：</strong><br>
+Zhang<br>San<br>15<br>Math<br>95
+        </div>
+
+        <div class="code-block">
+<span class="keyword">#include</span> <span class="string">&lt;iostream&gt;</span>
+<span class="keyword">#include</span> <span class="string">&lt;string&gt;</span>
+<span class="keyword">#include</span> <span class="string">&lt;vector&gt;</span>
+<span class="keyword">using namespace std</span>;
+
+<span class="keyword">int</span> main() {
+    <span class="keyword">string</span> line; getline(cin, line);
+    <span class="type">vector</span>&lt;<span class="keyword">string</span>&gt; fields;
+    <span class="keyword">size_t</span> pos;
+    <span class="keyword">while</span> ((pos = line.find(<span class="string">','</span>)) != <span class="keyword">string</span>::npos) {
+        fields.push_back(line.substr(<span class="number">0</span>, pos));
+        line.erase(<span class="number">0</span>, pos + <span class="number">1</span>);
+    }
+    fields.push_back(line);
+    <span class="keyword">for</span> (<span class="keyword">const auto</span>&amp; f : fields)
+        cout &lt;&lt; f &lt;&lt; endl;
+    <span class="keyword">return</span> <span class="number">0</span>;
+}
+        </div>
+    </div>
+
+    <!-- ======== 幻灯片 9：本课小结 ======== -->
+    <div class="slide">
+        <h1>本课小结</h1>
+
+        <table>
+            <tr><th>知识点</th><th>关键内容</th><th>一句记忆</th></tr>
+            <tr><td><strong>vector</strong></td><td>动态数组，push_back添加，v[i]访问，sort排序</td><td>会自己变长的数组</td></tr>
+            <tr><td><strong>迭代器</strong></td><td>begin()→首，end()→尾后，*it取值</td><td>广义指针，*it取值</td></tr>
+            <tr><td><strong>string</strong></td><td>getline读行，find查找，substr截取，to_string转换</td><td>CSP-J字符串三件套</td></tr>
+            <tr><td><strong>auto</strong></td><td>编译时类型推导，简化迭代器声明</td><td>让编译器猜类型，你写算法</td></tr>
+            <tr><td><strong>范围for</strong></td><td>for(auto x:v) / auto& / const auto&</td><td>告别冗长的下标循环</td></tr>
+        </table>
+
+        <h2>竞赛建议</h2>
+        <ul>
+            <li><strong>vector</strong> 是CSP-J中最常用的容器，几乎所有"不确定个数"的数组都用它</li>
+            <li>学<strong>string高级操作</strong>，一劳永逸解决字符串解析题</li>
+            <li><strong>auto</strong> 和<strong>范围for</strong>让代码更短、更少出错</li>
+            <li>考前务必回顾<strong>五大易错点</strong>：越界、npos、include、cin.ignore、size vs capacity</li>
+        </ul>
+
+        <div class="key-point">
+            <strong>核心公式：</strong><br>
+            STL = <strong>更少Bug + 更快编码 + 更清晰逻辑</strong><br>
+            把时间花在思考算法上，而不是"怎么造一个能用的数组"。
+        </div>
+
+        <p style="margin-top:30px; text-align:center; color:#1a237e; font-size:20px; font-weight:bold;">
+            STL是你的武器库，用它去解决真正的问题！
+        </p>
+    </div>
+
+</div><!-- /slide-container -->
+
+<div id="nav-bar">
+    <button class="nav-btn" id="btn-prev" onclick="prevSlide()">&#9664; 上一页</button>
+    <span id="page-indicator">1 / 9</span>
+    <button class="nav-btn" id="btn-next" onclick="nextSlide()">下一页 &#9654;</button>
+</div>
+
+<script>
+let currentSlide = 0;
+const slides = document.querySelectorAll('.slide');
+const totalSlides = slides.length;
+const indicator = document.getElementById('page-indicator');
+const btnPrev = document.getElementById('btn-prev');
+const btnNext = document.getElementById('btn-next');
+
+function showSlide(n) {
+    if (n < 0 || n >= totalSlides) return;
+    slides[currentSlide].classList.remove('active');
+    currentSlide = n;
+    slides[currentSlide].classList.add('active');
+    indicator.textContent = (currentSlide + 1) + ' / ' + totalSlides;
+    btnPrev.disabled = (currentSlide === 0);
+    btnNext.disabled = (currentSlide === totalSlides - 1);
+}
+
+function nextSlide() {
+    if (currentSlide < totalSlides - 1) showSlide(currentSlide + 1);
+}
+
+function prevSlide() {
+    if (currentSlide > 0) showSlide(currentSlide - 1);
+}
+
+// Keyboard navigation
+document.addEventListener('keydown', function(e) {
+    if (e.key === 'ArrowRight' || e.key === 'ArrowDown' || e.key === ' ') {
+        e.preventDefault();
+        nextSlide();
+    } else if (e.key === 'ArrowLeft' || e.key === 'ArrowUp') {
+        e.preventDefault();
+        prevSlide();
+    } else if (e.key === 'Home') {
+        e.preventDefault();
+        showSlide(0);
+    } else if (e.key === 'End') {
+        e.preventDefault();
+        showSlide(totalSlides - 1);
+    }
+});
+
+// Initialize
+showSlide(0);
+</script>
+
+</body>
+</html>

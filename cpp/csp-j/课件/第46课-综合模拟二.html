@@ -1,0 +1,896 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>CSP-J 备考课程 — 第46课：综合模拟（二）</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "Microsoft YaHei", "PingFang SC", sans-serif;
+            background: #0d1117;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            color: #333;
+        }
+
+        .title-bar {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 44px;
+            background: #1a237e;
+            color: #fff;
+            display: flex;
+            align-items: center;
+            padding: 0 24px;
+            font-size: 14px;
+            font-weight: 600;
+            z-index: 1000;
+            letter-spacing: 1px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.3);
+        }
+
+        .container {
+            width: 100%;
+            max-width: 960px;
+            margin: 60px auto 40px;
+            padding: 20px;
+        }
+
+        .slide {
+            display: none;
+            background: #ffffff;
+            border-radius: 16px;
+            padding: 48px 52px 40px;
+            box-shadow: 0 8px 40px rgba(0,0,0,0.15);
+            min-height: 520px;
+            position: relative;
+            animation: fadeIn 0.4s ease;
+        }
+
+        .slide.active {
+            display: block;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(12px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .slide h1 {
+            font-size: 32px;
+            color: #1a237e;
+            margin-bottom: 8px;
+            font-weight: 800;
+        }
+
+        .slide h2 {
+            font-size: 26px;
+            color: #1a237e;
+            margin-bottom: 24px;
+            padding-bottom: 12px;
+            border-bottom: 3px solid #ffd600;
+            display: inline-block;
+            font-weight: 700;
+        }
+
+        .slide h3 {
+            font-size: 20px;
+            color: #1a237e;
+            margin: 20px 0 10px;
+            font-weight: 700;
+        }
+
+        .slide p {
+            font-size: 17px;
+            line-height: 1.8;
+            color: #444;
+            margin-bottom: 12px;
+        }
+
+        .slide ul, .slide ol {
+            font-size: 17px;
+            line-height: 2;
+            color: #444;
+            margin-left: 24px;
+            margin-bottom: 16px;
+        }
+
+        .slide li {
+            margin-bottom: 4px;
+        }
+
+        .code-block {
+            background: #1e1e1e;
+            color: #d4d4d4;
+            border-radius: 8px;
+            padding: 16px 20px;
+            margin: 14px 0;
+            font-family: "Consolas", "Monaco", "Courier New", monospace;
+            font-size: 14px;
+            line-height: 1.6;
+            overflow-x: auto;
+            white-space: pre;
+            border-left: 4px solid #ffd600;
+        }
+
+        .code-inline {
+            background: #f0f0f0;
+            color: #c7254e;
+            padding: 2px 6px;
+            border-radius: 3px;
+            font-family: "Consolas", "Monaco", "Courier New", monospace;
+            font-size: 14px;
+        }
+
+        .keyword { color: #569cd6; }
+        .type { color: #4ec9b0; }
+        .string { color: #ce9178; }
+        .number { color: #b5cea8; }
+        .comment { color: #6a9955; }
+        .func { color: #dcdcaa; }
+
+        .tip-box {
+            background: #fff8e1;
+            border-left: 5px solid #ffd600;
+            border-radius: 6px;
+            padding: 14px 18px;
+            margin: 16px 0;
+            font-size: 15px;
+            color: #5d4037;
+            line-height: 1.7;
+        }
+
+        .tip-box.orange {
+            background: #fff3e0;
+            border-left-color: #ff9800;
+        }
+
+        .tip-box.green {
+            background: #e8f5e9;
+            border-left-color: #4caf50;
+        }
+
+        .tip-box.red {
+            background: #ffebee;
+            border-left-color: #f44336;
+        }
+
+        .tip-box strong {
+            color: #e65100;
+        }
+
+        .table-wrap {
+            overflow-x: auto;
+            margin: 16px 0;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 15px;
+        }
+
+        table th {
+            background: #1a237e;
+            color: #fff;
+            padding: 10px 14px;
+            text-align: left;
+            font-weight: 600;
+        }
+
+        table td {
+            padding: 9px 14px;
+            border-bottom: 1px solid #e0e0e0;
+        }
+
+        table tr:nth-child(even) td {
+            background: #f5f5f5;
+        }
+
+        table tr:hover td {
+            background: #e8eaf6;
+        }
+
+        .badge {
+            display: inline-block;
+            background: #ffd600;
+            color: #1a237e;
+            font-weight: 700;
+            padding: 3px 10px;
+            border-radius: 12px;
+            font-size: 13px;
+            margin-right: 6px;
+        }
+
+        .highlight-num {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            width: 32px;
+            height: 32px;
+            background: #1a237e;
+            color: #ffd600;
+            border-radius: 50%;
+            font-weight: 700;
+            font-size: 15px;
+            margin-right: 8px;
+            flex-shrink: 0;
+        }
+
+        .step-item {
+            display: flex;
+            align-items: flex-start;
+            margin-bottom: 14px;
+            line-height: 1.7;
+        }
+
+        .nav {
+            position: fixed;
+            bottom: 24px;
+            left: 50%;
+            transform: translateX(-50%);
+            display: flex;
+            gap: 12px;
+            align-items: center;
+            z-index: 1000;
+        }
+
+        .nav button {
+            background: #1a237e;
+            color: #fff;
+            border: none;
+            padding: 10px 24px;
+            border-radius: 24px;
+            font-size: 15px;
+            cursor: pointer;
+            font-weight: 600;
+            transition: all 0.25s;
+            box-shadow: 0 4px 14px rgba(26,35,126,0.35);
+        }
+
+        .nav button:hover {
+            background: #283593;
+            box-shadow: 0 6px 20px rgba(26,35,126,0.45);
+            transform: translateY(-2px);
+        }
+
+        .nav button:disabled {
+            background: #9e9e9e;
+            cursor: not-allowed;
+            box-shadow: none;
+            transform: none;
+        }
+
+        .nav .page-indicator {
+            color: #fff;
+            font-size: 16px;
+            font-weight: 600;
+            min-width: 80px;
+            text-align: center;
+            background: rgba(255,255,255,0.12);
+            padding: 8px 16px;
+            border-radius: 20px;
+        }
+
+        .slide-number {
+            position: absolute;
+            top: 20px;
+            right: 24px;
+            color: #bbb;
+            font-size: 14px;
+            font-weight: 600;
+        }
+
+        .grid-2 {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 20px;
+        }
+
+        .grid-3 {
+            display: grid;
+            grid-template-columns: 1fr 1fr 1fr;
+            gap: 16px;
+        }
+
+        .grid-4 {
+            display: grid;
+            grid-template-columns: 1fr 1fr 1fr 1fr;
+            gap: 14px;
+        }
+
+        .card {
+            background: #f5f5f5;
+            border-radius: 10px;
+            padding: 20px;
+            border-top: 4px solid #ffd600;
+        }
+
+        .card h4 {
+            color: #1a237e;
+            margin-bottom: 8px;
+            font-size: 16px;
+        }
+
+        .card p {
+            font-size: 14px;
+            color: #555;
+            line-height: 1.6;
+        }
+
+        .algo-card {
+            background: #fafafa;
+            border-radius: 10px;
+            padding: 18px;
+            border: 1px solid #e0e0e0;
+            text-align: center;
+        }
+
+        .algo-card h4 {
+            color: #1a237e;
+            font-size: 16px;
+            margin-bottom: 8px;
+        }
+
+        .algo-card .complexity {
+            color: #f44336;
+            font-weight: 700;
+            font-size: 13px;
+        }
+
+        .algo-card p {
+            font-size: 13px;
+            color: #666;
+            line-height: 1.5;
+        }
+
+        @media (max-width: 768px) {
+            .slide {
+                padding: 28px 22px 24px;
+                min-height: auto;
+            }
+            .slide h1 {
+                font-size: 24px;
+            }
+            .slide h2 {
+                font-size: 20px;
+            }
+            .grid-2, .grid-3, .grid-4 {
+                grid-template-columns: 1fr;
+            }
+            .nav button {
+                padding: 8px 16px;
+                font-size: 13px;
+            }
+        }
+    </style>
+</head>
+<body>
+
+<div class="title-bar">CSP-J 备考课程 — 第46课：综合模拟（二）</div>
+
+<div class="container">
+
+    <!-- ========== 第1页：标题页 ========== -->
+    <div class="slide active" id="slide1">
+        <div class="slide-number">1 / 10</div>
+        <div style="text-align:center; padding-top:50px;">
+            <h1 style="font-size:42px; margin-bottom:20px;">💻 第46课：综合模拟（二）</h1>
+            <p style="font-size:22px; color:#666;">编程题专项训练</p>
+            <div style="margin-top:28px;">
+                <span class="badge" style="font-size:16px; padding:6px 16px;">CSP-J 第二轮·编程模拟</span>
+            </div>
+            <div style="margin-top:32px;">
+                <span class="badge" style="font-size:14px;">模拟算法</span>
+                <span class="badge" style="font-size:14px;">枚举优化</span>
+                <span class="badge" style="font-size:14px;">贪心算法</span>
+                <span class="badge" style="font-size:14px;">二分答案</span>
+            </div>
+            <p style="margin-top:36px; color:#999; font-size:15px;">4 道编程题 | 满分 400 分 | 考试时间 3.5 小时</p>
+        </div>
+    </div>
+
+    <!-- ========== 第2页：第二轮考试策略 ========== -->
+    <div class="slide" id="slide2">
+        <div class="slide-number">2 / 10</div>
+        <h2>📋 第二轮编程考试策略</h2>
+
+        <h3>四题难度梯度与时间分配</h3>
+        <div class="grid-4">
+            <div class="algo-card">
+                <h4>第1题</h4>
+                <p>简单模拟/基础算法</p>
+                <span class="badge">30-45 min</span>
+                <p style="margin-top:6px;">目标：<strong>满分 100</strong></p>
+            </div>
+            <div class="algo-card">
+                <h4>第2题</h4>
+                <p>中等难度/枚举优化/贪心</p>
+                <span class="badge">45-60 min</span>
+                <p style="margin-top:6px;">目标：<strong>满分 100</strong></p>
+            </div>
+            <div class="algo-card">
+                <h4>第3题</h4>
+                <p>中等偏难/数据结构</p>
+                <span class="badge">50-70 min</span>
+                <p style="margin-top:6px;">目标：<strong>> 60 分</strong></p>
+            </div>
+            <div class="algo-card">
+                <h4>第4题</h4>
+                <p>压轴/综合算法</p>
+                <span class="badge">50-70 min</span>
+                <p style="margin-top:6px;">目标：<strong>> 30 分</strong></p>
+            </div>
+        </div>
+
+        <div class="tip-box orange" style="margin-top:20px;">
+            <strong>⚠️ 核心策略：先易后难，保住基础分</strong><br>
+            • 第1题必须拿满分（通常是送分题）<br>
+            • 第2题争取拿满分，至少拿到80%以上分数<br>
+            • 第3/4题做不出时，使用部分分策略（暴力、特判、打表）
+        </div>
+
+        <h3>检查清单</h3>
+        <ul>
+            <li>✅ 输入输出格式是否正确（文件名、空格、换行）</li>
+            <li>✅ 数组大小是否足够（+5~+10 余量）</li>
+            <li>✅ 是否需要 <span class="code-inline">long long</span>（数据 > 2×10⁹）</li>
+            <li>✅ 边界数据测试（n=1, n=最大值）</li>
+        </ul>
+    </div>
+
+    <!-- ========== 第3页：部分分策略 ========== -->
+    <div class="slide" id="slide3">
+        <div class="slide-number">3 / 10</div>
+        <h2>🃏 部分分策略（"骗分"技巧）</h2>
+
+        <p>许多题目有部分分设计——允许针对部分数据范围编写专门代码，不需要完美解决也能拿分。</p>
+
+        <div class="step-item">
+            <span class="highlight-num">1</span>
+            <div>
+                <strong>暴力枚举小数据（常见 20-30 分）</strong>
+                <p>当 n ≤ 10 时用 O(n!) 暴力，n ≤ 100 时用 O(n³)。针对不同数据范围写分支代码。</p>
+                <div class="code-block"><span class="keyword">int</span> main() {
+    <span class="keyword">int</span> n; cin &gt;&gt; n;
+    <span class="keyword">if</span> (n &lt;= <span class="number">10</span>) {
+        <span class="comment">// 暴力全排列 O(n!) — 拿小数据满分</span>
+    } <span class="keyword">else if</span> (n &lt;= <span class="number">1000</span>) {
+        <span class="comment">// O(n^2) 算法 — 拿中等数据满分</span>
+    } <span class="keyword">else</span> {
+        <span class="comment">// O(n log n) 最优算法</span>
+    }
+}</div>
+            </div>
+        </div>
+
+        <div class="step-item">
+            <span class="highlight-num">2</span>
+            <div>
+                <strong>特殊情况的特判（常见 5-15 分）</strong>
+                <p>n=1、全部相同、单调递增/递减等边界情况单独处理。</p>
+            </div>
+        </div>
+
+        <div class="step-item">
+            <span class="highlight-num">3</span>
+            <div>
+                <strong>打表法（适合输入范围小的题）</strong>
+                <p>提前计算所有可能答案，程序中直接查表输出。适合 n ≤ 10 的斐波那契、阶乘等问题。</p>
+            </div>
+        </div>
+
+        <div class="step-item">
+            <span class="highlight-num">4</span>
+            <div>
+                <strong>输出固定值碰运气</strong>
+                <p>完全不会的题，输出 0、-1、n 等常见答案，有时能碰中 1-2 个测试点。</p>
+            </div>
+        </div>
+
+        <div class="tip-box green" style="margin-top:16px;">
+            <strong>💡 骗分不是"骗"，是竞赛策略</strong><br>
+            很多省份的 CSP-J 第二轮三等奖线在 80-120 分。即使第3、4题不会，只要第1题满分 + 第2题大部分分 + 第3、4题的部分分，也能拿到不错的奖项。
+        </div>
+    </div>
+
+    <!-- ========== 第4页：模拟题模式 ========== -->
+    <div class="slide" id="slide4">
+        <div class="slide-number">4 / 10</div>
+        <h2>🔧 模拟题解题模板</h2>
+
+        <h3>核心思路：按规则一步步模拟，注意细节</h3>
+
+        <div class="grid-2">
+            <div class="card">
+                <h4>📅 日期模拟模板</h4>
+                <div class="code-block"><span class="comment">// 闰年判断</span>
+<span class="keyword">bool</span> <span class="func">isLeap</span>(<span class="keyword">int</span> y) {
+    <span class="keyword">return</span> (y%<span class="number">4</span>==<span class="number">0</span> &amp;&amp; y%<span class="number">100</span>!=<span class="number">0</span>)
+        || y%<span class="number">400</span>==<span class="number">0</span>;
+}
+
+<span class="comment">// 年月日 → 总天数（基准法）</span>
+<span class="keyword">long long</span> <span class="func">totalDays</span>(<span class="keyword">int</span> y,<span class="keyword">int</span> m,<span class="keyword">int</span> d){
+    <span class="keyword">long long</span> total = <span class="number">0</span>;
+    <span class="keyword">for</span>(<span class="keyword">int</span> i=<span class="number">1</span>;i&lt;y;i++)
+        total += isLeap(i)?<span class="number">366</span>:<span class="number">365</span>;
+    <span class="keyword">for</span>(<span class="keyword">int</span> i=<span class="number">1</span>;i&lt;m;i++)
+        total += daysOfMonth(y,i);
+    total += d;
+    <span class="keyword">return</span> total;
+}
+<span class="comment">// 日期差 = totalDays(d2) - totalDays(d1)</span></div>
+            </div>
+            <div class="card">
+                <h4>🔢 高精度加法模板</h4>
+                <div class="code-block"><span class="type">string</span> <span class="func">add</span>(<span class="type">string</span> a, <span class="type">string</span> b) {
+    <span class="type">string</span> res = <span class="string">""</span>;
+    <span class="keyword">int</span> carry = <span class="number">0</span>;
+    <span class="keyword">int</span> i = a.size()-<span class="number">1</span>, j = b.size()-<span class="number">1</span>;
+    <span class="keyword">while</span> (i&gt;=<span class="number">0</span> || j&gt;=<span class="number">0</span> || carry) {
+        <span class="keyword">int</span> sum = carry;
+        <span class="keyword">if</span>(i&gt;=<span class="number">0</span>) sum += a[i--]-<span class="string">'0'</span>;
+        <span class="keyword">if</span>(j&gt;=<span class="number">0</span>) sum += b[j--]-<span class="string">'0'</span>;
+        res += sum%<span class="number">10</span> + <span class="string">'0'</span>;
+        carry = sum/<span class="number">10</span>;
+    }
+    <span class="func">reverse</span>(res.begin(),res.end());
+    <span class="keyword">return</span> res;
+}</div>
+            </div>
+        </div>
+
+        <div class="tip-box orange" style="margin-top:16px;">
+            <strong>⚠️ 模拟题易错点</strong><br>
+            • 闰年判断：能被4整除但不能被100整除<strong>或</strong>能被400整除<br>
+            • 月份天数：2月平年28天，闰年29天<br>
+            • 日期进位：日超→月+1，月超13→年+1<br>
+            • 高精度进位：循环条件要包含 <span class="code-inline">carry != 0</span>
+        </div>
+    </div>
+
+    <!-- ========== 第5页：枚举优化 & 贪心 ========== -->
+    <div class="slide" id="slide5">
+        <div class="slide-number">5 / 10</div>
+        <h2>🔍 枚举优化 &amp; 贪心模板</h2>
+
+        <h3>枚举优化三大思路</h3>
+        <ol>
+            <li><strong>减少枚举维度</strong>：通过等式关系消去一重循环。如三数之和：枚举两个数，第三个用 target-a[i]-a[j] 二分查找，O(n³) → O(n² log n) → O(n²)</li>
+            <li><strong>缩小枚举范围</strong>：利用题目的约束条件（大小关系、奇偶性）缩小上下界</li>
+            <li><strong>剪枝</strong>：发现当前分支不可能产生更优解，立即跳过</li>
+        </ol>
+
+        <h3>贪心算法：区间调度模板</h3>
+        <div class="code-block"><span class="keyword">struct</span> <span class="type">Activity</span> { <span class="keyword">int</span> start, end; };
+<span class="keyword">bool</span> <span class="func">cmp</span>(Activity a, Activity b) { <span class="keyword">return</span> a.end &lt; b.end; }
+
+<span class="keyword">int</span> <span class="func">maxActivities</span>(Activity a[], <span class="keyword">int</span> n) {
+    <span class="func">sort</span>(a, a+n, cmp);  <span class="comment">// 按结束时间排序</span>
+    <span class="keyword">int</span> count = <span class="number">0</span>, lastEnd = -<span class="number">1</span>;
+    <span class="keyword">for</span> (<span class="keyword">int</span> i = <span class="number">0</span>; i &lt; n; i++) {
+        <span class="keyword">if</span> (a[i].start &gt;= lastEnd) {
+            count++;
+            lastEnd = a[i].end;
+        }
+    }
+    <span class="keyword">return</span> count;
+}</div>
+
+        <div class="grid-2" style="margin-top:16px;">
+            <div class="tip-box green">
+                <strong>✅ 适合贪心的问题</strong><br>
+                • 区间调度（按结束时间排序）<br>
+                • 哈夫曼编码<br>
+                • 部分背包（物品可分割）<br>
+                • 最小生成树 Kruskal
+            </div>
+            <div class="tip-box red">
+                <strong>❌ 不适合贪心的问题</strong><br>
+                • 01 背包（需动态规划）<br>
+                • 最长路径<br>
+                • 旅行商问题<br>
+                • 大多数"选或不选"类问题
+            </div>
+        </div>
+    </div>
+
+    <!-- ========== 第6页：二分答案 ========== -->
+    <div class="slide" id="slide6">
+        <div class="slide-number">6 / 10</div>
+        <h2>🎯 二分答案模板</h2>
+
+        <h3>核心思想</h3>
+        <p>将<strong>"求满足条件的最大值/最小值"</strong>转化为<strong>"判断某个值是否满足条件"</strong>。前提：问题的判定函数具有<strong>单调性</strong>。</p>
+
+        <div class="grid-2">
+            <div>
+                <h3>求最大值模板</h3>
+                <div class="code-block"><span class="keyword">int</span> left = minVal, right = maxVal;
+<span class="keyword">int</span> ans = left;
+<span class="keyword">while</span> (left &lt;= right) {
+    <span class="keyword">int</span> mid = left + (right-left)/<span class="number">2</span>;
+    <span class="keyword">if</span> (<span class="func">check</span>(mid)) {
+        ans = mid;
+        left = mid + <span class="number">1</span>;  <span class="comment">// 尝试更大</span>
+    } <span class="keyword">else</span> {
+        right = mid - <span class="number">1</span>;
+    }
+}</div>
+                <p style="font-size:14px;">适用场景：砍树求最高锯子、最大化最小值</p>
+            </div>
+            <div>
+                <h3>求最小值模板</h3>
+                <div class="code-block"><span class="keyword">int</span> left = minVal, right = maxVal;
+<span class="keyword">int</span> ans = right;
+<span class="keyword">while</span> (left &lt;= right) {
+    <span class="keyword">int</span> mid = left + (right-left)/<span class="number">2</span>;
+    <span class="keyword">if</span> (<span class="func">check</span>(mid)) {
+        ans = mid;
+        right = mid - <span class="number">1</span>;  <span class="comment">// 尝试更小</span>
+    } <span class="keyword">else</span> {
+        left = mid + <span class="number">1</span>;
+    }
+}</div>
+                <p style="font-size:14px;">适用场景：最小化最大值、最小化代价</p>
+            </div>
+        </div>
+
+        <h3>经典例题：砍树问题</h3>
+        <p>n 棵树高度 h_i，需要至少 M 木材。锯子高度越高，砍下的木材越少（<strong>单调性</strong>）。求满足条件下的最高锯子高度。</p>
+
+        <div class="code-block"><span class="comment">// check(H): 判断H高度是否能获得≥M木材</span>
+<span class="keyword">bool</span> <span class="func">check</span>(<span class="keyword">int</span> H) {
+    <span class="keyword">long long</span> total = <span class="number">0</span>;
+    <span class="keyword">for</span> (<span class="keyword">int</span> i = <span class="number">0</span>; i &lt; n; i++)
+        <span class="keyword">if</span> (h[i] &gt; H) total += h[i] - H;
+    <span class="keyword">return</span> total &gt;= M;
+}
+<span class="comment">// 时间复杂度: O(n log maxH)</span></div>
+
+        <div class="tip-box orange">
+            <strong>⚠️ 二分答案死循环排查</strong><br>
+            更新区间时，确保 <span class="code-inline">mid</span> 的计算方式是 <span class="code-inline">left + (right-left)/2</span>（防溢出），并且 <span class="code-inline">left</span> 和 <span class="code-inline">right</span> 的更新方向正确（一个用 mid±1，另一个用 mid）。
+        </div>
+    </div>
+
+    <!-- ========== 第7页：例题1-日期差值 ========== -->
+    <div class="slide" id="slide7">
+        <div class="slide-number">7 / 10</div>
+        <h2>📋 模拟题示例：日期差值计算</h2>
+
+        <div class="tip-box orange">
+            <strong>题目：</strong>给定两个日期 "YYYY-MM-DD"，计算相差天数。<br>
+            <strong>输入：</strong>2024-01-01 / 2024-01-10 &nbsp;&nbsp; <strong>输出：</strong>9
+        </div>
+
+        <div class="code-block"><span class="comment">// 核心思路：转换为"公元1年1月1日"起的累计天数，再相减</span>
+<span class="keyword">bool</span> <span class="func">isLeap</span>(<span class="keyword">int</span> y) {
+    <span class="keyword">return</span> (y%<span class="number">4</span>==<span class="number">0</span>&amp;&amp;y%<span class="number">100</span>!=<span class="number">0</span>) || y%<span class="number">400</span>==<span class="number">0</span>;
+}
+
+<span class="keyword">int</span> <span class="func">daysOfMonth</span>(<span class="keyword">int</span> y, <span class="keyword">int</span> m) {
+    <span class="keyword">int</span> d[]={<span class="number">0</span>,<span class="number">31</span>,<span class="number">28</span>,<span class="number">31</span>,<span class="number">30</span>,<span class="number">31</span>,<span class="number">30</span>,<span class="number">31</span>,<span class="number">31</span>,<span class="number">30</span>,<span class="number">31</span>,<span class="number">30</span>,<span class="number">31</span>};
+    <span class="keyword">if</span>(m==<span class="number">2</span> &amp;&amp; isLeap(y)) <span class="keyword">return</span> <span class="number">29</span>;
+    <span class="keyword">return</span> d[m];
+}
+
+<span class="keyword">long long</span> <span class="func">totalDays</span>(<span class="keyword">int</span> y, <span class="keyword">int</span> m, <span class="keyword">int</span> d) {
+    <span class="keyword">long long</span> total = <span class="number">0</span>;
+    <span class="keyword">for</span>(<span class="keyword">int</span> i=<span class="number">1</span>; i&lt;y; i++) total += isLeap(i)?<span class="number">366</span>:<span class="number">365</span>;
+    <span class="keyword">for</span>(<span class="keyword">int</span> i=<span class="number">1</span>; i&lt;m; i++) total += daysOfMonth(y, i);
+    total += d;
+    <span class="keyword">return</span> total;
+}
+<span class="comment">// 日期差 = totalDays(y2,m2,d2) - totalDays(y1,m1,d1)</span></div>
+
+        <div class="tip-box">
+            <strong>💡 基准日法优势：</strong>统一处理所有跨年、跨月、闰年情况，代码简洁不易出错。注意使用 <span class="code-inline">long long</span> 存储大年份的累计天数，避免溢出。
+        </div>
+    </div>
+
+    <!-- ========== 第8页：例题2-三数之和 & 活动选择 ========== -->
+    <div class="slide" id="slide8">
+        <div class="slide-number">8 / 10</div>
+        <h2>📋 枚举 &amp; 贪心示例</h2>
+
+        <h3>枚举优化：三数之和为零</h3>
+        <div class="code-block"><span class="comment">// 排序 + 双指针：O(n²)</span>
+sort(a, a+n);
+<span class="keyword">for</span> (<span class="keyword">int</span> i=<span class="number">0</span>; i&lt;n-<span class="number">2</span>; i++) {
+    <span class="keyword">if</span> (a[i] &gt; <span class="number">0</span>) <span class="keyword">break</span>;  <span class="comment">// 剪枝：最小的数>0，不可能和为0</span>
+    <span class="keyword">int</span> left = i+<span class="number">1</span>, right = n-<span class="number">1</span>;
+    <span class="keyword">while</span> (left &lt; right) {
+        <span class="keyword">int</span> sum = a[i] + a[left] + a[right];
+        <span class="keyword">if</span> (sum == <span class="number">0</span>) <span class="keyword">return</span> <span class="keyword">true</span>;
+        <span class="keyword">else if</span> (sum &lt; <span class="number">0</span>) left++;
+        <span class="keyword">else</span> right--;
+    }
+}</div>
+        <p style="font-size:14px;">朴素 O(n³) → 排序+双指针 O(n²)，n=1000 时可接受（约 10⁶ 运算）。</p>
+
+        <h3>贪心：活动选择（区间调度）</h3>
+        <div class="code-block"><span class="comment">// 贪心策略：每次选结束时间最早的不冲突活动</span>
+<span class="comment">// 步骤：① 按结束时间排序 ② 遍历选不冲突的活动</span>
+sort(a, a+n, [](<span class="keyword">auto</span>&amp; x,<span class="keyword">auto</span>&amp; y){<span class="keyword">return</span> x.end&lt;y.end;});
+<span class="keyword">int</span> count=<span class="number">0</span>, lastEnd=-<span class="number">1</span>;
+<span class="keyword">for</span>(<span class="keyword">int</span> i=<span class="number">0</span>;i&lt;n;i++) {
+    <span class="keyword">if</span>(a[i].start &gt;= lastEnd) { count++; lastEnd=a[i].end; }
+}</div>
+        <p style="font-size:14px;">时间复杂度 O(n log n)。<strong>证明方法：</strong>交换论证——最优解中第一个活动一定是结束时间最早的。</p>
+
+        <div class="tip-box orange" style="margin-top:10px;">
+            <strong>记忆口诀：</strong>贪心看结束，枚举少一维，二分要单调，模拟重细节。
+        </div>
+    </div>
+
+    <!-- ========== 第9页：四大题型总结 ========== -->
+    <div class="slide" id="slide9">
+        <div class="slide-number">9 / 10</div>
+        <h2>🗂️ CSP-J 第二轮四大题型总结</h2>
+
+        <div class="grid-2">
+            <div class="card">
+                <h4>1. 模拟题</h4>
+                <p>
+                    <strong>特征：</strong>规则明确，按步骤实现<br>
+                    <strong>典型：</strong>日期计算、字符串处理<br>
+                    <strong>关键：</strong>细心读题，注意边界<br>
+                    <strong>复杂度：</strong>通常 O(n) 或 O(1)<br>
+                    <span class="badge">第1题高频</span>
+                </p>
+            </div>
+            <div class="card">
+                <h4>2. 枚举题</h4>
+                <p>
+                    <strong>特征：</strong>需要遍历搜索空间<br>
+                    <strong>典型：</strong>三数之和、子集枚举<br>
+                    <strong>优化：</strong>排序+双指针、剪枝<br>
+                    <strong>复杂度：</strong>O(n²) 通常可接受<br>
+                    <span class="badge">第2题高频</span>
+                </p>
+            </div>
+            <div class="card">
+                <h4>3. 贪心题</h4>
+                <p>
+                    <strong>特征：</strong>局部最优→全局最优<br>
+                    <strong>典型：</strong>区间调度、活动选择<br>
+                    <strong>关键：</strong>证明贪心正确性<br>
+                    <strong>复杂度：</strong>O(n log n)（常需排序）<br>
+                    <span class="badge">第2-3题高频</span>
+                </p>
+            </div>
+            <div class="card">
+                <h4>4. 二分答案</h4>
+                <p>
+                    <strong>特征：</strong>单调性判定问题<br>
+                    <strong>典型：</strong>砍树、最小化最大值<br>
+                    <strong>关键：</strong>check 函数设计<br>
+                    <strong>复杂度：</strong>O(n log V)<br>
+                    <span class="badge">第3-4题高频</span>
+                </p>
+            </div>
+        </div>
+
+        <div class="tip-box green" style="margin-top:20px;">
+            <strong>📊 目标得分策略</strong><br>
+            第1题 100分 + 第2题 100分 + 第3题 60分 + 第4题 30分 = <strong>290分</strong>（大多数省份一等奖线在 200-250 分）
+        </div>
+    </div>
+
+    <!-- ========== 第10页：考前叮嘱 ========== -->
+    <div class="slide" id="slide10">
+        <div class="slide-number">10 / 10</div>
+        <div style="text-align:center; padding-top:30px;">
+            <h1 style="font-size:36px; color:#1a237e;">✅ 编程考试最后叮嘱</h1>
+
+            <div style="text-align:left; max-width:600px; margin:28px auto;">
+                <div class="step-item">
+                    <span class="highlight-num" style="background:#4caf50;">1</span>
+                    <div><strong>先通读四道题</strong>，对难度有整体判断，选自己最有把握的先做</div>
+                </div>
+                <div class="step-item">
+                    <span class="highlight-num" style="background:#4caf50;">2</span>
+                    <div><strong>第1题不要轻视</strong>，看似简单也要仔细读题，注意输入输出格式</div>
+                </div>
+                <div class="step-item">
+                    <span class="highlight-num" style="background:#4caf50;">3</span>
+                    <div><strong>善用 freopen 调试</strong>，用样例文件测试输出是否正确</div>
+                </div>
+                <div class="step-item">
+                    <span class="highlight-num" style="background:#4caf50;">4</span>
+                    <div><strong>用边界数据自测</strong>：n=1、n=max、全0、全相同值</div>
+                </div>
+                <div class="step-item">
+                    <span class="highlight-num" style="background:#4caf50;">5</span>
+                    <div><strong>注意数据类型</strong>：int 不够用 long long，大数组用全局变量</div>
+                </div>
+                <div class="step-item">
+                    <span class="highlight-num" style="background:#4caf50;">6</span>
+                    <div><strong>不要死磕一题</strong>，确保每题至少拿到部分分</div>
+                </div>
+            </div>
+
+            <div class="tip-box" style="max-width:500px; margin:20px auto; text-align:center;">
+                <strong>📌 四个模板必须背熟</strong><br>
+                高精度加法 | 日期模拟 | 区间调度 | 二分答案
+            </div>
+
+            <div class="tip-box orange" style="max-width:500px; margin:16px auto; text-align:center;">
+                <strong>⚠️ 提交前必查</strong><br>
+                文件名正确？数组大小够？需要 long long？<br>
+                <span class="code-inline">return 0;</span> 写了吗？
+            </div>
+
+            <p style="margin-top:20px; color:#1a237e; font-size:22px; font-weight:700;">
+                祝同学们编程顺利，满分通关！💪
+            </p>
+        </div>
+    </div>
+
+</div>
+
+<!-- 导航按钮 -->
+<div class="nav">
+    <button id="prevBtn" onclick="changeSlide(-1)">◀ 上一页</button>
+    <span class="page-indicator" id="pageIndicator">1 / 10</span>
+    <button id="nextBtn" onclick="changeSlide(1)">下一页 ▶</button>
+</div>
+
+<script>
+    let currentSlide = 1;
+    const totalSlides = 10;
+
+    function showSlide(n) {
+        const slides = document.querySelectorAll('.slide');
+        slides.forEach(s => s.classList.remove('active'));
+
+        if (n < 1) n = 1;
+        if (n > totalSlides) n = totalSlides;
+
+        currentSlide = n;
+        document.getElementById('slide' + n).classList.add('active');
+        document.getElementById('pageIndicator').textContent = n + ' / ' + totalSlides;
+
+        document.getElementById('prevBtn').disabled = (n === 1);
+        document.getElementById('nextBtn').disabled = (n === totalSlides);
+    }
+
+    function changeSlide(delta) {
+        showSlide(currentSlide + delta);
+    }
+
+    // 键盘导航
+    document.addEventListener('keydown', function(e) {
+        if (e.key === 'ArrowLeft' || e.key === 'ArrowUp') {
+            e.preventDefault();
+            changeSlide(-1);
+        } else if (e.key === 'ArrowRight' || e.key === 'ArrowDown' || e.key === ' ') {
+            e.preventDefault();
+            changeSlide(1);
+        } else if (e.key === 'Home') {
+            e.preventDefault();
+            showSlide(1);
+        } else if (e.key === 'End') {
+            e.preventDefault();
+            showSlide(totalSlides);
+        }
+    });
+
+    // 初始化
+    showSlide(1);
+</script>
+
+</body>
+</html>

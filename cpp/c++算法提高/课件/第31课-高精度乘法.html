@@ -1,0 +1,589 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>第31课：高精度乘法</title>
+<style>
+  /* ======= 基础样式与暗色主题 ======= */
+  :root {
+    --bg: #0d1117;
+    --bg2: #161b22;
+    --bg3: #1c2333;
+    --text: #e6edf3;
+    --text2: #adbac7;
+    --accent: #e94560;
+    --accent2: #ff6b81;
+    --blue: #58a6ff;
+    --green: #3fb950;
+    --yellow: #d2991d;
+    --purple: #a371f7;
+    --code-bg: #0d1117;
+    --border: #30363d;
+    --radius: 12px;
+    --shadow: 0 4px 24px rgba(0,0,0,0.4);
+  }
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "Noto Sans SC", sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    min-height: 100vh;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    padding: 20px;
+    line-height: 1.7;
+  }
+
+  .slides-container {
+    width: 100%;
+    max-width: 900px;
+    min-height: 550px;
+    background: var(--bg2);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    box-shadow: var(--shadow);
+    position: relative;
+    overflow: hidden;
+  }
+
+  /* ======= 幻灯片 ======= */
+  .slide {
+    display: none;
+    padding: 40px 48px;
+    animation: fadeSlideIn 0.45s ease;
+  }
+  .slide.active {
+    display: block;
+  }
+
+  @keyframes fadeSlideIn {
+    from { opacity: 0; transform: translateY(18px); }
+    to   { opacity: 1; transform: translateY(0); }
+  }
+
+  /* ======= 标题页特殊样式 ======= */
+  .slide-title {
+    text-align: center;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    min-height: 480px;
+  }
+  .slide-title .lesson-num {
+    font-size: 1rem;
+    color: var(--accent);
+    text-transform: uppercase;
+    letter-spacing: 4px;
+    margin-bottom: 16px;
+    font-weight: 600;
+  }
+  .slide-title h1 {
+    font-size: 2.8rem;
+    background: linear-gradient(135deg, var(--accent), var(--accent2));
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+    margin-bottom: 20px;
+  }
+  .slide-title .subtitle {
+    color: var(--text2);
+    font-size: 1.1rem;
+  }
+  .slide-title .icon-big {
+    font-size: 4rem;
+    margin-bottom: 24px;
+    opacity: 0.9;
+  }
+
+  /* ======= 通用内容样式 ======= */
+  .slide h2 {
+    font-size: 1.8rem;
+    color: var(--accent);
+    margin-bottom: 20px;
+    padding-bottom: 12px;
+    border-bottom: 2px solid var(--accent);
+    display: inline-block;
+  }
+  .slide h3 {
+    font-size: 1.3rem;
+    color: var(--blue);
+    margin: 20px 0 10px;
+  }
+  .slide p, .slide li {
+    color: var(--text2);
+    font-size: 1rem;
+    margin-bottom: 10px;
+  }
+  .slide ul {
+    padding-left: 24px;
+  }
+  .slide li {
+    margin-bottom: 8px;
+  }
+  .slide li::marker {
+    color: var(--accent);
+  }
+
+  /* 强调卡片 */
+  .card {
+    background: var(--bg3);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 16px 20px;
+    margin: 14px 0;
+  }
+  .card-accent {
+    border-left: 3px solid var(--accent);
+  }
+
+  /* 表格模拟 */
+  .info-row {
+    display: flex;
+    gap: 24px;
+    flex-wrap: wrap;
+    margin: 14px 0;
+  }
+  .info-item {
+    background: var(--bg3);
+    border-radius: 8px;
+    padding: 12px 20px;
+    min-width: 160px;
+  }
+  .info-item .label {
+    font-size: 0.8rem;
+    color: var(--text2);
+    text-transform: uppercase;
+    letter-spacing: 1px;
+  }
+  .info-item .value {
+    font-size: 1.3rem;
+    color: var(--accent);
+    font-weight: 700;
+    font-family: "SF Mono", "Fira Code", "Consolas", monospace;
+  }
+
+  /* ======= 代码块 ======= */
+  .code-block {
+    background: var(--code-bg);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 18px 22px;
+    margin: 14px 0;
+    overflow-x: auto;
+    font-family: "SF Mono", "Fira Code", "Consolas", "Courier New", monospace;
+    font-size: 0.85rem;
+    line-height: 1.6;
+    white-space: pre;
+  }
+  .code-block .kw  { color: #ff7b72; }  /* 关键字 */
+  .code-block .fn  { color: #d2a8ff; }  /* 函数名 */
+  .code-block .str { color: #a5d6ff; }  /* 字符串 */
+  .code-block .cmt { color: #6e7681; }  /* 注释 */
+  .code-block .num { color: #79c0ff; }  /* 数字 */
+  .code-block .op  { color: #ffa657; }  /* 运算符 */
+  .code-block .type{ color: #ffa657; }  /* 类型 */
+
+  /* ======= ASCII 竖式图 ======= */
+  .vertical-mul {
+    font-family: "SF Mono", "Fira Code", "Consolas", monospace;
+    background: var(--bg3);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 20px 28px;
+    margin: 14px 0;
+    white-space: pre;
+    line-height: 1.5;
+    font-size: 0.95rem;
+    color: var(--green);
+    overflow-x: auto;
+  }
+  .vertical-mul .digit { color: var(--accent); }
+  .vertical-mul .line  { color: var(--text2); }
+
+  /* ======= 导航条 ======= */
+  .nav-bar {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 16px 48px;
+    background: var(--bg3);
+    border-top: 1px solid var(--border);
+    border-radius: 0 0 var(--radius) var(--radius);
+  }
+  .nav-btn {
+    background: var(--bg);
+    color: var(--text);
+    border: 1px solid var(--border);
+    padding: 10px 24px;
+    border-radius: 6px;
+    cursor: pointer;
+    font-size: 0.9rem;
+    transition: all 0.2s;
+    font-family: inherit;
+  }
+  .nav-btn:hover {
+    background: var(--accent);
+    border-color: var(--accent);
+    color: #fff;
+  }
+  .nav-btn:disabled {
+    opacity: 0.3;
+    cursor: not-allowed;
+  }
+  .nav-btn:disabled:hover {
+    background: var(--bg);
+    border-color: var(--border);
+    color: var(--text);
+  }
+  .slide-counter {
+    color: var(--text2);
+    font-size: 0.9rem;
+  }
+  .slide-counter span {
+    color: var(--accent);
+    font-weight: 700;
+    font-size: 1.1rem;
+  }
+
+  /* ======= 进度点 ======= */
+  .dots {
+    display: flex;
+    gap: 8px;
+    justify-content: center;
+  }
+  .dot {
+    width: 10px;
+    height: 10px;
+    border-radius: 50%;
+    background: var(--border);
+    transition: all 0.3s;
+    cursor: pointer;
+  }
+  .dot.active {
+    background: var(--accent);
+    box-shadow: 0 0 8px var(--accent);
+  }
+
+  /* ======= 响应式 ======= */
+  @media (max-width: 768px) {
+    .slide { padding: 28px 24px; }
+    .slide-title h1 { font-size: 2rem; }
+    .slide h2 { font-size: 1.4rem; }
+    .nav-bar { padding: 12px 24px; }
+    .info-row { flex-direction: column; }
+    .code-block { font-size: 0.75rem; padding: 12px 14px; }
+    .vertical-mul { font-size: 0.72rem; padding: 12px 14px; }
+  }
+
+  @media (max-width: 480px) {
+    body { padding: 8px; }
+    .slide { padding: 20px 16px; }
+    .slide-title h1 { font-size: 1.6rem; }
+    .nav-btn { padding: 8px 16px; font-size: 0.8rem; }
+  }
+
+  /* ======= 打印样式 ======= */
+  @media print {
+    body { background: #fff; color: #000; }
+    .slide { display: block !important; page-break-after: always; }
+    .nav-bar { display: none; }
+  }
+</style>
+</head>
+<body>
+
+<div class="slides-container">
+
+  <!-- ========== 幻灯片 1：标题页 ========== -->
+  <div class="slide slide-title active" data-index="0">
+    <div class="icon-big">✖️</div>
+    <div class="lesson-num">第 31 课</div>
+    <h1>高精度乘法</h1>
+    <p class="subtitle">模拟竖式乘法 · 逐位相乘 · 统一进位</p>
+    <p class="subtitle" style="margin-top:10px; font-size:0.9rem; color: var(--text2);">
+      当 int 和 long long 都不够用时，就该数组登场了
+    </p>
+  </div>
+
+  <!-- ========== 幻灯片 2：为什么需要高精度？ ========== -->
+  <div class="slide" data-index="1">
+    <h2>为什么需要高精度？</h2>
+
+    <h3>整数类型的"天花板"</h3>
+    <div class="info-row">
+      <div class="info-item">
+        <div class="label">int 最大值</div>
+        <div class="value">≈ 2.1 × 10⁹</div>
+      </div>
+      <div class="info-item">
+        <div class="label">long long 最大值</div>
+        <div class="value">≈ 9.2 × 10¹⁸</div>
+      </div>
+      <div class="info-item">
+        <div class="label">50! 约为</div>
+        <div class="value">≈ 3.0 × 10⁶⁴</div>
+      </div>
+    </div>
+
+    <div class="card card-accent" style="margin-top:18px;">
+      <strong style="color:var(--accent);">核心矛盾：</strong>
+      <span style="color:var(--text2);">计算机的整数类型空间有限，但我们想算的数可以无限大。50 的阶乘有 65 位，远超 long long 的范围！</span>
+    </div>
+
+    <h3>解决思路</h3>
+    <ul>
+      <li><strong style="color:var(--accent);">用数组存储每一位数字</strong> — 一个格子存一位，想存多少位就开多大的数组</li>
+      <li><strong style="color:var(--accent);">模拟手工竖式计算</strong> — 用代码"复刻"我们小学就会的算法</li>
+      <li><strong style="color:var(--accent);">倒序存储</strong> — 个位在索引 0，进位往右自然扩展</li>
+    </ul>
+
+    <div class="card" style="margin-top:10px;">
+      <p style="color:var(--green); margin:0;">
+        例如 12345 在数组中：<br>
+        a[0]=5（个位）, a[1]=4（十位）, a[2]=3（百位）, a[3]=2（千位）, a[4]=1（万位）
+      </p>
+    </div>
+  </div>
+
+  <!-- ========== 幻灯片 3：竖式乘法原理 ========== -->
+  <div class="slide" data-index="2">
+    <h2>竖式乘法原理</h2>
+
+    <h3>回顾：123 × 456 竖式</h3>
+
+    <div class="vertical-mul">
+              <span class="digit">1</span>  <span class="digit">2</span>  <span class="digit">3</span>        ← 被乘数 A (3位)
+       ×      <span class="digit">4</span>  <span class="digit">5</span>  <span class="digit">6</span>        ← 乘数 B (3位)
+       <span class="line">──────────────</span>
+              <span class="digit">7</span>  <span class="digit">3</span>  <span class="digit">8</span>        ← 123 × 6 = 738
+           <span class="digit">6</span>  <span class="digit">1</span>  <span class="digit">5</span>           ← 123 × 5 = 615（左移一位）
+        <span class="digit">4</span>  <span class="digit">9</span>  <span class="digit">2</span>              ← 123 × 4 = 492（左移两位）
+       <span class="line">──────────────</span>
+        <span class="digit">5</span>  <span class="digit">6</span>  <span class="digit">0</span>  <span class="digit">8</span>  <span class="digit">8</span>        ← 相加结果 = 56088
+    </div>
+
+    <div class="card card-accent" style="margin-top:16px;">
+      <strong style="color:var(--accent);">核心规律：</strong><br>
+      <strong style="color:var(--yellow); font-size:1.1rem;">A 的第 i 位 × B 的第 j 位 → 贡献到答案的第 i+j 位</strong>
+      <br><br>
+      <span style="color:var(--text2);">即：</span>
+      <code style="color:var(--blue); font-size:1rem;">c[i+j] += a[i] × b[j]</code>
+    </div>
+  </div>
+
+  <!-- ========== 幻灯片 4：数组存储与逐位相乘 ========== -->
+  <div class="slide" data-index="3">
+    <h2>数组存储与逐位相乘</h2>
+
+    <h3>第一步：逐位相乘累加</h3>
+    <div class="code-block">
+<span class="cmt">// 倒序存储：a = [3,2,1]（即 123），b = [6,5,4]（即 456）</span>
+<span class="kw">for</span> (<span class="type">int</span> i = <span class="num">0</span>; i &lt; len1; i++) {
+    <span class="kw">for</span> (<span class="type">int</span> j = <span class="num">0</span>; j &lt; len2; j++) {
+        c[i + j] += a[i] * b[j];  <span class="cmt">// 关键公式</span>
+    }
+}
+<span class="cmt">// 结果 c = [18, 27, 28, 13, 4]（尚未进位）</span>
+    </div>
+
+    <h3>第二步：统一进位</h3>
+    <div class="code-block">
+<span class="kw">for</span> (<span class="type">int</span> i = <span class="num">0</span>; i &lt; len1 + len2; i++) {
+    <span class="kw">if</span> (c[i] &gt;= <span class="num">10</span>) {
+        c[i + <span class="num">1</span>] += c[i] / <span class="num">10</span>;  <span class="cmt">// 进位</span>
+        c[i] %= <span class="num">10</span>;              <span class="cmt">// 保留个位</span>
+    }
+}
+<span class="cmt">// 进位后 c = [8, 8, 0, 6, 5] → 倒序读出 "56088"</span>
+    </div>
+
+    <div class="card" style="margin-top:10px; background: var(--bg3);">
+      <strong style="color:var(--green);">进位过程可视化：</strong><br>
+      <span style="color:var(--text2); font-size:0.9rem;">
+        c[0]=18 → 留8进1　c[1]=27+1=28 → 留8进2<br>
+        c[2]=28+2=30 → 留0进3　c[3]=13+3=16 → 留6进1<br>
+        c[4]=4+1=5 → 留5　结果：5 6 0 8 8 ✓
+      </span>
+    </div>
+  </div>
+
+  <!-- ========== 幻灯片 5：进位处理与完整实现 ========== -->
+  <div class="slide" data-index="4">
+    <h2>完整实现：高精度乘高精度</h2>
+
+    <div class="code-block">
+<span class="cmt">// 高精度乘法函数</span>
+<span class="type">string</span> <span class="fn">high_precision_multiply</span>(<span class="kw">const</span> <span class="type">string</span> &amp;num1, <span class="kw">const</span> <span class="type">string</span> &amp;num2) {
+    <span class="kw">if</span> (num1 == <span class="str">"0"</span> || num2 == <span class="str">"0"</span>) <span class="kw">return</span> <span class="str">"0"</span>;
+
+    <span class="type">int</span> len1 = num1.size(), len2 = num2.size();
+    <span class="type">vector</span>&lt;<span class="type">int</span>&gt; a(len1), b(len2);
+
+    <span class="cmt">// 倒序存储：个位在索引 0</span>
+    <span class="kw">for</span> (<span class="type">int</span> i = <span class="num">0</span>; i &lt; len1; i++)
+        a[i] = num1[len1-<span class="num">1</span>-i] - <span class="str">'0'</span>;
+    <span class="kw">for</span> (<span class="type">int</span> i = <span class="num">0</span>; i &lt; len2; i++)
+        b[i] = num2[len2-<span class="num">1</span>-i] - <span class="str">'0'</span>;
+
+    <span class="type">vector</span>&lt;<span class="type">int</span>&gt; c(len1 + len2, <span class="num">0</span>);
+
+    <span class="cmt">// 逐位相乘累加</span>
+    <span class="kw">for</span> (<span class="type">int</span> i = <span class="num">0</span>; i &lt; len1; i++)
+        <span class="kw">for</span> (<span class="type">int</span> j = <span class="num">0</span>; j &lt; len2; j++)
+            c[i+j] += a[i] * b[j];
+
+    <span class="cmt">// 统一进位</span>
+    <span class="kw">for</span> (<span class="type">int</span> i = <span class="num">0</span>; i &lt; len1+len2; i++) {
+        <span class="kw">if</span> (c[i] &gt;= <span class="num">10</span>) {
+            c[i+<span class="num">1</span>] += c[i] / <span class="num">10</span>;
+            c[i] %= <span class="num">10</span>;
+        }
+    }
+
+    <span class="cmt">// 去除前导零并转换字符串</span>
+    <span class="type">int</span> pos = len1+len2-<span class="num">1</span>;
+    <span class="kw">while</span> (pos &gt; <span class="num">0</span> &amp;&amp; c[pos] == <span class="num">0</span>) pos--;
+    <span class="type">string</span> result;
+    <span class="kw">for</span> (<span class="type">int</span> i = pos; i &gt;= <span class="num">0</span>; i--) result += <span class="type">char</span>(c[i]+<span class="str">'0'</span>);
+    <span class="kw">return</span> result;
+}
+    </div>
+
+    <div class="info-row" style="margin-top:10px;">
+      <div class="info-item">
+        <div class="label">时间复杂度</div>
+        <div class="value">O(n × m)</div>
+      </div>
+      <div class="info-item">
+        <div class="label">空间复杂度</div>
+        <div class="value">O(n + m)</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ========== 幻灯片 6：阶乘之和与总结 ========== -->
+  <div class="slide" data-index="5">
+    <h2>阶乘之和与总结</h2>
+
+    <h3>例题：计算 S = 1! + 2! + ... + n!（n ≤ 50）</h3>
+
+    <div class="code-block">
+<span class="cmt">// 递推计算阶乘并累加</span>
+<span class="type">string</span> factorial = <span class="str">"1"</span>;  <span class="cmt">// 当前阶乘</span>
+<span class="type">string</span> sum = <span class="str">"0"</span>;       <span class="cmt">// 累加和</span>
+
+<span class="kw">for</span> (<span class="type">int</span> i = <span class="num">1</span>; i &lt;= n; i++) {
+    factorial = multiply(factorial, to_string(i));
+    sum = add(sum, factorial);
+}
+    </div>
+
+    <div class="card card-accent" style="margin-top:16px;">
+      <strong style="color:var(--accent);">本课核心要点：</strong>
+      <ul style="margin-top:8px;">
+        <li>高精度运算的<strong style="color:var(--accent);">本质</strong>：用数组模拟手工竖式</li>
+        <li><strong style="color:var(--accent);">核心公式</strong>：c[i+j] += a[i] × b[j]</li>
+        <li><strong style="color:var(--accent);">倒序存储</strong>（个位在索引 0）方便进位</li>
+        <li>先<strong style="color:var(--accent);">逐位相乘</strong>，再<strong style="color:var(--accent);">统一进位</strong>，分两步走最清晰</li>
+        <li>时间复杂度 O(n×m)，对于 200 位以内的数足够快</li>
+      </ul>
+    </div>
+
+    <p style="margin-top:16px; text-align:center; color:var(--green); font-size:1.1rem;">
+      掌握了高精度乘法，下一课我们将挑战最后一块拼图——<strong>高精度除法</strong>！
+    </p>
+  </div>
+
+  <!-- ========== 导航条 ========== -->
+  <div class="nav-bar">
+    <button class="nav-btn" id="prevBtn" onclick="changeSlide(-1)">◀ 上一页</button>
+    <div style="display:flex; flex-direction:column; align-items:center; gap:6px;">
+      <div class="dots" id="dots"></div>
+      <div class="slide-counter"><span id="currentSlide">1</span> / <span id="totalSlides">6</span></div>
+    </div>
+    <button class="nav-btn" id="nextBtn" onclick="changeSlide(1)">下一页 ▶</button>
+  </div>
+
+</div>
+
+<script>
+  // ======= 幻灯片控制器 =======
+  const slides = document.querySelectorAll('.slide');
+  const totalSlides = slides.length;
+  let currentIndex = 0;
+
+  document.getElementById('totalSlides').textContent = totalSlides;
+
+  // 创建导航点
+  const dotsContainer = document.getElementById('dots');
+  for (let i = 0; i < totalSlides; i++) {
+    const dot = document.createElement('span');
+    dot.className = 'dot';
+    dot.onclick = () => goToSlide(i);
+    dotsContainer.appendChild(dot);
+  }
+
+  function updateSlide() {
+    // 更新幻灯片显示
+    slides.forEach((s, i) => s.classList.toggle('active', i === currentIndex));
+    // 更新导航点
+    document.querySelectorAll('.dot').forEach((d, i) => d.classList.toggle('active', i === currentIndex));
+    // 更新计数器
+    document.getElementById('currentSlide').textContent = currentIndex + 1;
+    // 更新按钮状态
+    document.getElementById('prevBtn').disabled = currentIndex === 0;
+    document.getElementById('nextBtn').disabled = currentIndex === totalSlides - 1;
+  }
+
+  function goToSlide(index) {
+    if (index >= 0 && index < totalSlides) {
+      currentIndex = index;
+      updateSlide();
+    }
+  }
+
+  function changeSlide(delta) {
+    goToSlide(currentIndex + delta);
+  }
+
+  // 键盘导航
+  document.addEventListener('keydown', (e) => {
+    if (e.key === 'ArrowLeft' || e.key === 'ArrowUp') {
+      e.preventDefault();
+      changeSlide(-1);
+    } else if (e.key === 'ArrowRight' || e.key === 'ArrowDown' || e.key === ' ') {
+      e.preventDefault();
+      changeSlide(1);
+    } else if (e.key === 'Home') {
+      e.preventDefault();
+      goToSlide(0);
+    } else if (e.key === 'End') {
+      e.preventDefault();
+      goToSlide(totalSlides - 1);
+    }
+  });
+
+  // 触摸滑动支持
+  let touchStartX = 0, touchEndX = 0;
+  document.querySelector('.slides-container').addEventListener('touchstart', (e) => {
+    touchStartX = e.changedTouches[0].screenX;
+  });
+  document.querySelector('.slides-container').addEventListener('touchend', (e) => {
+    touchEndX = e.changedTouches[0].screenX;
+    const diff = touchStartX - touchEndX;
+    if (Math.abs(diff) > 50) {
+      changeSlide(diff > 0 ? 1 : -1);
+    }
+  });
+
+  // 初始化
+  updateSlide();
+</script>
+
+</body>
+</html>

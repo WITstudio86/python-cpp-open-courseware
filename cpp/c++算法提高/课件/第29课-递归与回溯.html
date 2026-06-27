@@ -1,0 +1,364 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>第29课：递归与回溯</title>
+<style>
+* { margin: 0; padding: 0; box-sizing: border-box; }
+body { font-family: 'PingFang SC','Microsoft YaHei',sans-serif; background:#1a1a2e; color:#e0e0e0; min-height:100vh; display:flex; flex-direction:column; align-items:center; }
+.slideshow { width:100%; max-width:960px; margin:20px auto; position:relative; }
+.slide { display:none; background:#16213e; border-radius:12px; padding:40px; min-height:540px; box-shadow:0 8px 32px rgba(0,0,0,.4); animation:fadeIn .4s; }
+.slide.active { display:block; }
+@keyframes fadeIn { from{opacity:0;transform:translateY(12px);} to{opacity:1;transform:translateY(0);} }
+h1 { font-size:2em; color:#e94560; margin-bottom:16px; border-bottom:2px solid #e94560; padding-bottom:10px; }
+h2 { font-size:1.5em; color:#0f3460; background:#e94560; display:inline-block; padding:6px 18px; border-radius:6px; margin-bottom:18px; }
+h3 { color:#f5c518; margin:12px 0 6px; }
+ul { margin:12px 0; padding-left:24px; }
+li { margin:8px 0; line-height:1.7; }
+p { line-height:1.8; margin:8px 0; }
+pre { background:#0d1b2a; border-radius:8px; padding:16px; overflow-x:auto; margin:12px 0; font-size:.85em; border-left:4px solid #e94560; }
+code { font-family:'Cascadia Code','Fira Code','Consolas',monospace; color:#7ec8e3; }
+.label { color:#f5c518; font-weight:bold; }
+.note { color:#aaa; font-size:.9em; }
+.navigation { display:flex; justify-content:center; gap:16px; margin:20px 0; }
+.nav-btn { background:#e94560; color:#fff; border:none; padding:10px 28px; border-radius:8px; font-size:1em; cursor:pointer; transition:background .3s; }
+.nav-btn:hover { background:#c73a52; }
+.nav-btn:disabled { background:#555; cursor:not-allowed; }
+.page-indicator { color:#aaa; font-size:.9em; align-self:center; }
+.highlight { color:#f5c518; font-weight:bold; }
+.step-box { background:#0d1b2a; border-left:4px solid #f5c518; padding:12px 16px; margin:8px 0; border-radius:4px; }
+.ascii-box { font-family:'Courier New',monospace; background:#0d1b2a; padding:14px; border-radius:6px; line-height:1.5; white-space:pre; font-size:.85em; color:#a8d8a8; overflow-x:auto; }
+.diagram-result { background:#0d1b2a; padding:12px 20px; border-radius:8px; border:2px solid #4ecdc4; display:inline-block; margin-top:10px; }
+.grid-container { display:grid; grid-template-columns:1fr 1fr; gap:16px; margin:16px 0; }
+.keyword-tag { display:inline-block; background:#e94560; color:#fff; padding:2px 10px; border-radius:12px; font-size:.85em; margin:2px 4px; }
+.tree-box { font-family:'Courier New',monospace; background:#0d1b2a; padding:16px; border-radius:8px; line-height:1.4; font-size:.78em; color:#a8d8a8; overflow-x:auto; white-space:pre; }
+.flow-diagram { display:flex; align-items:center; justify-content:center; gap:8px; margin:16px 0; flex-wrap:wrap; }
+.flow-step { background:#0d1b2a; border:2px solid #e94560; border-radius:10px; padding:14px 18px; text-align:center; min-width:90px; }
+.flow-arrow { color:#e94560; font-size:1.5em; font-weight:bold; }
+.flow-step.current { border-color:#f5c518; box-shadow:0 0 12px rgba(245,197,24,.3); }
+.flow-step.back { border-color:#aaa; }
+.chess-board { display:inline-grid; grid-template-columns:repeat(8,32px); grid-template-rows:repeat(8,32px); gap:1px; background:#333; padding:2px; border-radius:4px; margin:10px 0; }
+.chess-cell { width:32px; height:32px; display:flex; align-items:center; justify-content:center; font-size:18px; font-weight:bold; }
+.chess-cell.light { background:#f0d9b5; }
+.chess-cell.dark { background:#b58863; }
+.chess-cell .queen { font-size:22px; }
+@media(max-width:640px) { .slide { padding:20px; } h1 { font-size:1.4em; } .flow-diagram { flex-direction:column; } .flow-arrow { transform:rotate(90deg); } }
+</style>
+</head>
+<body>
+
+<div class="slideshow" id="slideshow">
+
+<!-- 幻灯片1：标题页 -->
+<div class="slide active" id="slide1">
+<h1>第29课：递归与回溯</h1>
+<h2>试探与回溯 —— 走迷宫式的搜索策略</h2>
+<div style="margin:30px 0;">
+<p style="font-size:1.2em;line-height:2.2;">
+<span class="keyword-tag">核心思想</span> 像走迷宫一样，遇到死路就退回来换条路<br>
+<span class="keyword-tag">经典框架</span> 选择 → 试探 → 递归 → 撤销<br>
+<span class="keyword-tag">关键优化</span> 剪枝 —— 提前排除不可能的分支<br>
+<span class="keyword-tag">经典问题</span> 八皇后、组合输出、全排列
+</p>
+</div>
+<div class="step-box">
+<strong>生活中的回溯：</strong><br>
+走迷宫时，每到一个岔路口用粉笔做标记，选一条路走。遇到死胡同就沿着标记退回来，擦掉标记，换另一条路——这就是回溯！
+</div>
+</div>
+
+<!-- 幻灯片2：什么是回溯？ -->
+<div class="slide" id="slide2">
+<h2>什么是回溯？—— 走迷宫比喻</h2>
+
+<div class="ascii-box">
+┌──────────────────────────────────────────────────────────┐
+│                    迷宫中的回溯过程                        │
+│                                                          │
+│    起点 ──→ [岔路A] ──→ [岔路B] ──→ 💀 死胡同           │
+│                │                    ↑                    │
+│                │                    │ 退回到 B            │
+│                │              [岔路B] ← 擦掉标记          │
+│                │                    │                     │
+│                │              [岔路C] ──→ 🚩 出口！       │
+│                │                                         │
+│                └──→ [岔路D] ──→  可能还有别的路...       │
+│                                                          │
+│  核心策略：                                               │
+│  ① 每到一个岔路口 → 标记 + 选一条路深入                  │
+│  ② 走到死胡同 → 退回上一个岔路口（回溯）                 │
+│  ③ 尝试该岔路口的其他分支                                │
+│  ④ 所有分支都试完还没出口 → 继续回溯                     │
+└──────────────────────────────────────────────────────────┘
+</div>
+
+<h3>回溯法的本质</h3>
+<div class="grid-container">
+<div class="step-box">
+<strong>深度优先搜索 (DFS)</strong><br>
+对解空间树进行深度优先遍历，一条路走到底再看其他分支。
+</div>
+<div class="step-box">
+<strong>状态维护 + 撤销</strong><br>
+做选择时记录状态，返回时恢复状态。这是回溯区别于普通DFS的关键。
+</div>
+</div>
+</div>
+
+<!-- 幻灯片3：回溯法通用框架 -->
+<div class="slide" id="slide3">
+<h2>回溯法通用框架 —— 四步法</h2>
+
+<div class="flow-diagram">
+<div class="flow-step current"><strong>① 选择</strong><br><span class="note">枚举候选值</span></div>
+<div class="flow-arrow">→</div>
+<div class="flow-step"><strong>② 试探</strong><br><span class="note">记录选择</span></div>
+<div class="flow-arrow">→</div>
+<div class="flow-step"><strong>③ 递归</strong><br><span class="note">深入搜索</span></div>
+<div class="flow-arrow">→</div>
+<div class="flow-step back"><strong>④ 撤销</strong><br><span class="note">恢复状态</span></div>
+<div class="flow-arrow" style="color:#aaa;">↺</div>
+<div class="flow-step current">回到①</div>
+</div>
+
+<h3>代码模板</h3>
+<pre><code>void backtrack(参数) {
+    <span class="highlight">if (满足终止条件) {</span>
+        记录/输出解;        // 找到一组解！
+        return;
+    }
+
+    <span class="highlight">for (遍历所有候选选择) {</span>
+        <span class="highlight">if (选择合法) {</span>        // ← 剪枝在这里发生
+            做选择;              // ② 试探
+            backtrack(新参数);    // ③ 递归
+            撤销选择;            // ④ 撤销 ★ 关键步骤
+        }
+    }
+}</code></pre>
+
+<div class="step-box">
+<strong>为什么必须"撤销选择"？</strong><br>
+如果不撤销，上一次选择的"脚印"会污染下一条分支。就像走迷宫时，如果你不擦掉之前做的标记，新的路径会被旧标记干扰，可能错过正确的出口。撤销保证了每次探索都是从"干净"的状态开始。
+</div>
+</div>
+
+<!-- 幻灯片4：八皇后问题 -->
+<div class="slide" id="slide4">
+<h2>八皇后问题 —— 经典回溯例题</h2>
+
+<div class="grid-container">
+<div>
+<h3>问题规则</h3>
+<ul>
+<li>8×8 棋盘放 8 个皇后</li>
+<li>皇后可以攻击：<span class="highlight">同行、同列、同对角线</span></li>
+<li>要求任意两个皇后<span class="highlight">互不攻击</span></li>
+<li>问有多少种放置方法？</li>
+</ul>
+<div class="diagram-result">
+<strong>答案：92 种解法</strong><br>
+<span class="note">实际探索约 2057 个节点<br>远小于 8! = 40320</span>
+</div>
+</div>
+<div>
+<h3>数据结构</h3>
+<pre><code>int pos[8];
+// pos[i] = 第i行皇后在哪一列
+// 天然保证"每行一个皇后"</code></pre>
+
+<h3>冲突检查</h3>
+<pre><code>// 同列：
+pos[i] == col
+
+// 对角线：
+abs(row-i) == abs(col-pos[i])
+// 行差 = 列差 → 同一条对角线</code></pre>
+</div>
+</div>
+
+<h3>4皇后简化版搜索树（便于理解）</h3>
+<div class="tree-box">
+                        根节点（空棋盘）
+                              │
+               ┌──────────────┼──────────────┬──────────────┐
+             行1=0           行1=1           行1=2           行1=3
+           [Q···]           [·Q··]           [··Q·]           [···Q]
+              │                │                │                │
+        ┌─────┼─────┐    ┌─────┼─────┐    ┌─────┼─────┐    ┌─────┼─────┐
+     行2=2   行2=3   行2=3  ...     行2=0   行2=3   行2=0   行2=1
+      Q···    Q···    ·Q··          ··Q·    ··Q·    ···Q    ···Q
+      ··Q·    ···Q    ···Q          Q···    ···Q    Q···    ·Q··
+        │       │       │             │       │       │       │
+     行3=1     ✗冲突    ✗冲突        ✗冲突    ✗冲突    ✗冲突    ✗冲突
+     失败     剪枝     剪枝          剪枝    剪枝    剪枝     剪枝
+
+  图例：Q=皇后  ·=空格  ✗=因冲突被剪枝   4皇后共有2个解
+</div>
+</div>
+
+<!-- 幻灯片5：剪枝优化 -->
+<div class="slide" id="slide5">
+<h2>剪枝优化 —— 回溯法的效率关键</h2>
+
+<h3>什么是剪枝？</h3>
+<p>在搜索过程中，如果发现当前选择<span class="highlight">不可能导出合法解</span>，就立即放弃这个分支，不再继续深入搜索。</p>
+
+<div class="grid-container">
+<div>
+<h3 style="color:#e94560;">没有剪枝</h3>
+<div class="ascii-box">
+       o
+     / | \
+    o  o  o       ← 全部探索
+   /|\ /|\ /|\
+  o o o o o o o o
+  ...
+  探索量：8! = 40320</div>
+</div>
+<div>
+<h3 style="color:#4ecdc4;">有剪枝</h3>
+<div class="ascii-box">
+       o
+     / | \
+    o  o  ✗       ← 提前排除！
+   /|\ /|\
+  o o ✗ o o
+  ...
+  探索量：约 2057 个节点</div>
+</div>
+</div>
+
+<h3>八皇后中的剪枝策略</h3>
+<table style="width:100%;border-collapse:collapse;margin:12px 0;">
+<tr style="background:#0d1b2a;">
+<td style="padding:10px;border:1px solid #333;"><strong>策略</strong></td>
+<td style="padding:10px;border:1px solid #333;"><strong>检查时机</strong></td>
+<td style="padding:10px;border:1px solid #333;"><strong>效果</strong></td>
+</tr>
+<tr>
+<td style="padding:10px;border:1px solid #333;">同列剪枝</td>
+<td style="padding:10px;border:1px solid #333;">放置新皇后时立即检查</td>
+<td style="padding:10px;border:1px solid #333;">排除同列冲突分支</td>
+</tr>
+<tr style="background:#0d1b2a;">
+<td style="padding:10px;border:1px solid #333;">对角线剪枝</td>
+<td style="padding:10px;border:1px solid #333;">放置新皇后时立即检查</td>
+<td style="padding:10px;border:1px solid #333;">排除对角线冲突分支</td>
+</tr>
+<tr>
+<td style="padding:10px;border:1px solid #333;">组合剪枝</td>
+<td style="padding:10px;border:1px solid #333;">剩余可选不够时</td>
+<td style="padding:10px;border:1px solid #333;">避免无效深层递归</td>
+</tr>
+</table>
+
+<div class="step-box">
+<strong>剪枝口诀：</strong>
+"能早剪就早剪，能剪深就剪深" —— 越早发现分支不可行，节省的计算量越大！
+</div>
+</div>
+
+<!-- 幻灯片6：组合输出与总结 -->
+<div class="slide" id="slide6">
+<h2>组合输出 + 本课总结</h2>
+
+<div class="grid-container">
+<div>
+<h3>组合输出问题</h3>
+<p>从 1~n 中选 r 个数，输出所有组合</p>
+<pre><code>// n=5, r=3 的输出：
+1 2 3   1 2 4   1 2 5
+1 3 4   1 3 5   1 4 5
+2 3 4   2 3 5   2 4 5
+3 4 5
+// 共 C(5,3) = 10 种</code></pre>
+<div class="note">通过 start 参数保证递增，避免重复组合</div>
+</div>
+<div>
+<h3>组合回溯模板</h3>
+<pre><code>void dfs(int start, int depth) {
+    if (depth == r) {  输出; return; }
+    for (int i = start; i <= n; i++) {
+        // 剪枝：剩余不够
+        if (n-i+1 < r-depth) break;
+        comb[depth] = i;        // 选
+        dfs(i+1, depth+1);      // 递归
+        // 自动撤销（被覆盖）
+    }
+}</code></pre>
+</div>
+</div>
+
+<h3>本课核心知识点</h3>
+<div class="grid-container">
+<div class="step-box">
+<strong>回溯法四步框架</strong><br>
+① 选择 → ② 试探 → ③ 递归 → ④ 撤销
+</div>
+<div class="step-box">
+<strong>解空间树</strong><br>
+深度优先搜索 + 剪枝 = 高效回溯
+</div>
+<div class="step-box">
+<strong>八皇后问题</strong><br>
+列冲突 + 对角线冲突检查，92种解
+</div>
+<div class="step-box">
+<strong>组合输出</strong><br>
+递增选取避免重复，剩余不足则剪枝
+</div>
+</div>
+
+<div class="diagram-result" style="display:block;margin-top:20px;text-align:center;">
+<strong>记忆口诀：</strong>
+大胆试探，果断回溯，及时剪枝 —— 三招搞定回溯法！
+</div>
+</div>
+
+</div><!-- slideshow end -->
+
+<div class="navigation">
+<button class="nav-btn" id="prevBtn" onclick="changeSlide(-1)">◀ 上一页</button>
+<span class="page-indicator" id="pageIndicator">1 / 6</span>
+<button class="nav-btn" id="nextBtn" onclick="changeSlide(1)">下一页 ▶</button>
+</div>
+
+<script>
+let currentSlide = 0;
+const slides = document.querySelectorAll('.slide');
+const totalSlides = slides.length;
+
+function showSlide(index) {
+    slides.forEach(s => s.classList.remove('active'));
+    slides[index].classList.add('active');
+    document.getElementById('pageIndicator').textContent = (index+1) + ' / ' + totalSlides;
+    document.getElementById('prevBtn').disabled = (index === 0);
+    document.getElementById('nextBtn').disabled = (index === totalSlides - 1);
+}
+
+function changeSlide(delta) {
+    currentSlide = Math.min(Math.max(currentSlide + delta, 0), totalSlides - 1);
+    showSlide(currentSlide);
+}
+
+// 键盘导航
+document.addEventListener('keydown', function(e) {
+    if (e.key === 'ArrowRight' || e.key === 'ArrowDown') changeSlide(1);
+    if (e.key === 'ArrowLeft' || e.key === 'ArrowUp') changeSlide(-1);
+});
+
+// 触摸滑动支持
+let touchStartX = 0;
+document.addEventListener('touchstart', e => { touchStartX = e.touches[0].clientX; });
+document.addEventListener('touchend', e => {
+    let diff = touchStartX - e.changedTouches[0].clientX;
+    if (Math.abs(diff) > 50) changeSlide(diff > 0 ? 1 : -1);
+});
+
+// 初始化
+showSlide(0);
+</script>
+</body>
+</html>

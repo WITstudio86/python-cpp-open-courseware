@@ -1,0 +1,670 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>CSP-J 备考课程 - 第9课：switch-case 多分支结构</title>
+    <style>
+        :root {
+            --primary: #1a237e;
+            --primary-light: #283593;
+            --accent: #ffd600;
+            --accent-dark: #f9a825;
+            --bg: #ffffff;
+            --text: #212121;
+            --text-light: #616161;
+            --code-bg: #1e1e1e;
+            --code-text: #d4d4d4;
+            --tip-bg: #fff8e1;
+            --tip-border: #f9a825;
+            --danger-bg: #ffebee;
+            --danger-border: #e53935;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "Microsoft YaHei", "PingFang SC", sans-serif;
+            background: #f5f5f5;
+            color: var(--text);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .slides-container {
+            width: 100%;
+            max-width: 960px;
+            background: var(--bg);
+            border-radius: 16px;
+            box-shadow: 0 8px 40px rgba(0, 0, 0, 0.12);
+            overflow: hidden;
+            position: relative;
+        }
+
+        /* 标题栏 */
+        .header-bar {
+            background: var(--primary);
+            color: #ffffff;
+            padding: 12px 24px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            font-size: 14px;
+        }
+        .header-bar .course-name {
+            font-weight: 700;
+            letter-spacing: 1px;
+        }
+        .header-bar .slide-indicator {
+            opacity: 0.8;
+        }
+
+        /* 幻灯片区域 */
+        .slide-area {
+            min-height: 520px;
+            padding: 40px 48px;
+            position: relative;
+        }
+
+        .slide {
+            display: none;
+            animation: fadeSlideIn 0.4s ease;
+        }
+        .slide.active {
+            display: block;
+        }
+
+        @keyframes fadeSlideIn {
+            from {
+                opacity: 0;
+                transform: translateY(18px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        /* 标题页 */
+        .slide-title {
+            text-align: center;
+            padding-top: 60px;
+        }
+        .slide-title .lesson-number {
+            display: inline-block;
+            background: var(--accent);
+            color: var(--primary);
+            padding: 6px 20px;
+            border-radius: 20px;
+            font-size: 14px;
+            font-weight: 700;
+            letter-spacing: 2px;
+            margin-bottom: 16px;
+        }
+        .slide-title h1 {
+            font-size: 36px;
+            color: var(--primary);
+            margin-bottom: 12px;
+            line-height: 1.3;
+        }
+        .slide-title .subtitle {
+            font-size: 18px;
+            color: var(--text-light);
+            margin-bottom: 32px;
+        }
+        .slide-title .key-points {
+            display: flex;
+            justify-content: center;
+            gap: 16px;
+            flex-wrap: wrap;
+        }
+        .slide-title .key-point {
+            background: #e8eaf6;
+            color: var(--primary);
+            padding: 8px 18px;
+            border-radius: 8px;
+            font-size: 14px;
+            font-weight: 600;
+        }
+
+        /* 内容页 */
+        .slide-content h2 {
+            font-size: 28px;
+            color: var(--primary);
+            margin-bottom: 24px;
+            padding-bottom: 12px;
+            border-bottom: 3px solid var(--accent);
+            display: inline-block;
+        }
+        .slide-content h3 {
+            font-size: 20px;
+            color: var(--primary-light);
+            margin: 20px 0 10px;
+        }
+        .slide-content p {
+            font-size: 16px;
+            line-height: 1.8;
+            margin-bottom: 12px;
+        }
+        .slide-content ul, .slide-content ol {
+            font-size: 16px;
+            line-height: 1.8;
+            padding-left: 24px;
+            margin-bottom: 12px;
+        }
+        .slide-content li {
+            margin-bottom: 6px;
+        }
+
+        /* 代码块 */
+        .code-block {
+            background: var(--code-bg);
+            color: var(--code-text);
+            border-radius: 10px;
+            padding: 18px 22px;
+            margin: 14px 0;
+            font-family: "Consolas", "Courier New", "Source Code Pro", monospace;
+            font-size: 14px;
+            line-height: 1.7;
+            overflow-x: auto;
+            white-space: pre;
+            position: relative;
+        }
+        .code-block .kw { color: #569cd6; }  /* 关键字 */
+        .code-block .fn { color: #dcdcaa; }  /* 函数名 */
+        .code-block .str { color: #ce9178; } /* 字符串 */
+        .code-block .cmt { color: #6a9955; } /* 注释 */
+        .code-block .num { color: #b5cea8; } /* 数字 */
+        .code-block .op  { color: #d4d4d4; } /* 运算符 */
+
+        /* 提示框 */
+        .tip-box {
+            background: var(--tip-bg);
+            border-left: 5px solid var(--tip-border);
+            padding: 14px 18px;
+            margin: 16px 0;
+            border-radius: 6px;
+            font-size: 15px;
+            line-height: 1.7;
+        }
+        .tip-box strong {
+            color: var(--accent-dark);
+        }
+
+        .danger-box {
+            background: var(--danger-bg);
+            border-left: 5px solid var(--danger-border);
+            padding: 14px 18px;
+            margin: 16px 0;
+            border-radius: 6px;
+            font-size: 15px;
+            line-height: 1.7;
+        }
+        .danger-box strong {
+            color: var(--danger-border);
+        }
+
+        /* 表格 */
+        .info-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 14px 0;
+            font-size: 15px;
+        }
+        .info-table th {
+            background: var(--primary);
+            color: #ffffff;
+            padding: 10px 14px;
+            text-align: left;
+            font-weight: 600;
+        }
+        .info-table td {
+            padding: 10px 14px;
+            border-bottom: 1px solid #e0e0e0;
+        }
+        .info-table tr:hover td {
+            background: #f5f5ff;
+        }
+
+        /* 两列布局 */
+        .two-col {
+            display: flex;
+            gap: 24px;
+        }
+        .two-col > div {
+            flex: 1;
+        }
+
+        /* 真题卡片 */
+        .exam-card {
+            background: #fafafa;
+            border: 1px solid #e0e0e0;
+            border-radius: 10px;
+            padding: 20px;
+            margin: 16px 0;
+        }
+        .exam-card h4 {
+            color: var(--primary);
+            font-size: 18px;
+            margin-bottom: 10px;
+        }
+        .exam-card .sample {
+            background: #f5f5f5;
+            border-left: 3px solid var(--primary-light);
+            padding: 10px 14px;
+            margin: 8px 0;
+            font-family: "Consolas", "Courier New", monospace;
+            font-size: 13px;
+            line-height: 1.6;
+            white-space: pre;
+        }
+
+        /* 小结 */
+        .summary-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 12px;
+            margin: 16px 0;
+        }
+        .summary-item {
+            background: #e8eaf6;
+            padding: 14px 18px;
+            border-radius: 8px;
+            font-size: 15px;
+            line-height: 1.6;
+        }
+        .summary-item .label {
+            font-weight: 700;
+            color: var(--primary);
+        }
+
+        /* 导航栏 */
+        .nav-bar {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 14px 24px;
+            background: #fafafa;
+            border-top: 1px solid #eeeeee;
+        }
+        .nav-btn {
+            background: var(--primary);
+            color: #ffffff;
+            border: none;
+            padding: 10px 24px;
+            border-radius: 8px;
+            font-size: 15px;
+            cursor: pointer;
+            font-weight: 600;
+            transition: background 0.2s, transform 0.1s;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+        .nav-btn:hover {
+            background: var(--primary-light);
+        }
+        .nav-btn:active {
+            transform: scale(0.96);
+        }
+        .nav-btn:disabled {
+            background: #bdbdbd;
+            cursor: not-allowed;
+        }
+        .nav-btn .arrow {
+            font-size: 18px;
+        }
+        .page-dots {
+            display: flex;
+            gap: 8px;
+        }
+        .page-dot {
+            width: 10px;
+            height: 10px;
+            border-radius: 50%;
+            background: #cccccc;
+            cursor: pointer;
+            transition: background 0.2s, transform 0.2s;
+        }
+        .page-dot.active {
+            background: var(--primary);
+            transform: scale(1.3);
+        }
+
+        /* 响应式 */
+        @media (max-width: 768px) {
+            .slide-area {
+                padding: 24px 20px;
+                min-height: 400px;
+            }
+            .slide-title h1 {
+                font-size: 26px;
+            }
+            .slide-content h2 {
+                font-size: 22px;
+            }
+            .two-col {
+                flex-direction: column;
+                gap: 12px;
+            }
+            .summary-grid {
+                grid-template-columns: 1fr;
+            }
+            .nav-btn {
+                padding: 8px 16px;
+                font-size: 13px;
+            }
+            .code-block {
+                font-size: 12px;
+                padding: 12px 14px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="slides-container">
+        <!-- 标题栏 -->
+        <div class="header-bar">
+            <span class="course-name">CSP-J 备考课程</span>
+            <span class="slide-indicator" id="slideIndicator">1 / 6</span>
+        </div>
+
+        <!-- 幻灯片区域 -->
+        <div class="slide-area">
+
+            <!-- 第1页：标题页 -->
+            <div class="slide slide-title active" data-slide="1">
+                <div class="lesson-number" style="background: var(--accent); color: var(--primary); padding: 6px 20px; border-radius: 20px; font-size: 14px; font-weight: 700; letter-spacing: 2px; margin-bottom: 16px; display: inline-block;">
+                    第 9 课
+                </div>
+                <h1>switch-case<br>多分支结构</h1>
+                <p class="subtitle">掌握多分支选择的核心技能</p>
+                <div class="key-points">
+                    <span class="key-point">switch 语法</span>
+                    <span class="key-point">break 穿透</span>
+                    <span class="key-point">default 分支</span>
+                    <span class="key-point">策略选择</span>
+                </div>
+            </div>
+
+            <!-- 第2页：switch-case 基本语法 -->
+            <div class="slide slide-content" data-slide="2">
+                <h2>switch-case 基本语法</h2>
+                <p>switch-case 是一种<strong>多分支选择结构</strong>，根据表达式的值跳转到对应的 case 标签执行代码。</p>
+
+                <div class="code-block"><span class="kw">switch</span> (<span class="fn">表达式</span>) {
+    <span class="kw">case</span> <span class="num">常量1</span>:
+        语句块<span class="num">1</span>;
+        <span class="kw">break</span>;
+    <span class="kw">case</span> <span class="num">常量2</span>:
+        语句块<span class="num">2</span>;
+        <span class="kw">break</span>;
+    <span class="kw">default</span>:
+        默认语句块;
+        <span class="kw">break</span>;
+}</div>
+
+                <div class="tip-box">
+                    <strong>考试技巧：</strong> switch 的表达式只能是<strong>整型</strong>、<strong>字符型</strong>或<strong>枚举类型</strong>。float、double、string 都不能用于 switch。这是 CSP-J 选择题的常考知识点。
+                </div>
+
+                <table class="info-table">
+                    <tr><th>要素</th><th>说明</th></tr>
+                    <tr><td>switch(表达式)</td><td>整型/字符型/枚举型，与各 case 常量比较</td></tr>
+                    <tr><td>case 常量:</td><td>必须是编译期确定的常量（字面量或 const）</td></tr>
+                    <tr><td>break;</td><td>跳出 switch 结构，防止穿透</td></tr>
+                    <tr><td>default:</td><td>所有 case 都不匹配时执行（可选但推荐）</td></tr>
+                </table>
+            </div>
+
+            <!-- 第3页：break 与穿透现象 -->
+            <div class="slide slide-content" data-slide="3">
+                <h2>break 与穿透现象（Fall-through）</h2>
+
+                <h3>什么是穿透？</h3>
+                <p>当一个 case 执行完毕但<strong>没有遇到 break</strong> 时，程序会继续执行下一个 case 的代码，直到遇到 break 或 switch 结束。</p>
+
+                <div class="two-col">
+                    <div>
+                        <div class="danger-box">
+                            <strong>错误示范：忘记 break</strong>
+                            <div class="code-block" style="margin-top:8px;"><span class="kw">int</span> x = <span class="num">2</span>;
+<span class="kw">switch</span> (x) {
+    <span class="kw">case</span> <span class="num">1</span>: cout &lt;&lt; <span class="str">"A"</span>;
+    <span class="kw">case</span> <span class="num">2</span>: cout &lt;&lt; <span class="str">"B"</span>;
+    <span class="kw">case</span> <span class="num">3</span>: cout &lt;&lt; <span class="str">"C"</span>;
+}
+<span class="cmt">// 输出 BCD，不是 B！</span></div>
+                        </div>
+                    </div>
+                    <div>
+                        <div class="tip-box">
+                            <strong>正确示范：合并 case</strong>
+                            <div class="code-block" style="margin-top:8px;"><span class="kw">switch</span> (grade) {
+    <span class="kw">case</span> <span class="str">'A'</span>:
+        cout &lt;&lt; <span class="str">"优秀"</span>;
+        <span class="kw">break</span>;
+    <span class="kw">case</span> <span class="str">'B'</span>:
+    <span class="kw">case</span> <span class="str">'C'</span>:
+        cout &lt;&lt; <span class="str">"良好"</span>;
+        <span class="kw">break</span>;
+}
+<span class="cmt">// B 和 C 共享代码块</span></div>
+                        </div>
+                    </div>
+                </div>
+
+                <p>穿透现象的<strong>合理利用</strong>：多个 case 需要执行相同逻辑时，可以让它们共享代码块，减少重复代码。</p>
+            </div>
+
+            <!-- 第4页：default 与选择策略 -->
+            <div class="slide slide-content" data-slide="4">
+                <h2>default 分支与选择策略</h2>
+
+                <h3>default 的作用</h3>
+                <p>当表达式的值与<strong>所有 case 都不匹配</strong>时执行。用于错误处理或默认行为。习惯上放在末尾，建议也写 break。</p>
+
+                <h3>switch vs if-else 选择策略</h3>
+                <table class="info-table">
+                    <tr><th>场景</th><th>推荐结构</th><th>原因</th></tr>
+                    <tr><td>离散值判断（1,2,3 或 'A','B','C'）</td><td><strong>switch</strong></td><td>代码清晰，可合并 case</td></tr>
+                    <tr><td>范围判断（x > 0 && x < 100）</td><td><strong>if-else</strong></td><td>case 后必须是常量</td></tr>
+                    <tr><td>多变量组合条件</td><td><strong>if-else</strong></td><td>switch 只能判断一个表达式</td></tr>
+                    <tr><td>浮点数或字符串判断</td><td><strong>if-else</strong></td><td>switch 不支持这些类型</td></tr>
+                </table>
+
+                <div class="tip-box">
+                    <strong>记忆口诀：</strong> 「离散值用 switch，范围判断用 if-else」。switch 表达式只能是整型/字符型/枚举型，遇到浮点数或字符串用 if-else。
+                </div>
+            </div>
+
+            <!-- 第5页：真题精练 -->
+            <div class="slide slide-content" data-slide="5">
+                <h2>真题精练</h2>
+
+                <div class="exam-card">
+                    <h4>真题1：简单计算器</h4>
+                    <p>输入 <code>a op b</code>（如 <code>10 + 5</code>），根据运算符执行运算并输出结果。除法时分母为 0 需报错。</p>
+                    <div class="sample">输入：10 + 5
+输出：15
+
+输入：10 / 0
+输出：Error: Division by zero</div>
+                    <div class="code-block" style="font-size:12px;"><span class="kw">switch</span> (op) {
+    <span class="kw">case</span> <span class="str">'+'</span>: cout &lt;&lt; a + b &lt;&lt; endl; <span class="kw">break</span>;
+    <span class="kw">case</span> <span class="str">'-'</span>: cout &lt;&lt; a - b &lt;&lt; endl; <span class="kw">break</span>;
+    <span class="kw">case</span> <span class="str">'*'</span>: cout &lt;&lt; a * b &lt;&lt; endl; <span class="kw">break</span>;
+    <span class="kw">case</span> <span class="str">'/'</span>:
+        <span class="kw">if</span> (b == <span class="num">0</span>) cout &lt;&lt; <span class="str">"Error: Division by zero"</span>;
+        <span class="kw">else</span> cout &lt;&lt; a / b &lt;&lt; endl;
+        <span class="kw">break</span>;
+    <span class="kw">default</span>: cout &lt;&lt; <span class="str">"Error: Invalid operator"</span>;
+}</div>
+                </div>
+
+                <div class="exam-card">
+                    <h4>真题2：成绩等级转换</h4>
+                    <p>输入 A/B/C/D/F（不区分大小写），输出对应分数范围和评语。</p>
+                    <div class="sample">输入：A        输入：c
+输出：90-100 优秀   输出：70-79 中等</div>
+                    <div class="code-block" style="font-size:12px;"><span class="kw">switch</span> (grade) {
+    <span class="kw">case</span> <span class="str">'A'</span>: <span class="kw">case</span> <span class="str">'a'</span>: cout &lt;&lt; <span class="str">"90-100 优秀"</span>; <span class="kw">break</span>;
+    <span class="kw">case</span> <span class="str">'B'</span>: <span class="kw">case</span> <span class="str">'b'</span>: cout &lt;&lt; <span class="str">"80-89 良好"</span>; <span class="kw">break</span>;
+    <span class="kw">case</span> <span class="str">'C'</span>: <span class="kw">case</span> <span class="str">'c'</span>: cout &lt;&lt; <span class="str">"70-79 中等"</span>; <span class="kw">break</span>;
+    <span class="kw">case</span> <span class="str">'D'</span>: <span class="kw">case</span> <span class="str">'d'</span>: cout &lt;&lt; <span class="str">"60-69 及格"</span>; <span class="kw">break</span>;
+    <span class="kw">case</span> <span class="str">'F'</span>: <span class="kw">case</span> <span class="str">'f'</span>: cout &lt;&lt; <span class="str">"0-59 需要努力"</span>; <span class="kw">break</span>;
+    <span class="kw">default</span>: cout &lt;&lt; <span class="str">"无效等级"</span>;
+}</div>
+                </div>
+            </div>
+
+            <!-- 第6页：本课小结 -->
+            <div class="slide slide-content" data-slide="6">
+                <h2>本课小结</h2>
+
+                <div class="summary-grid">
+                    <div class="summary-item">
+                        <span class="label">switch 语法</span><br>
+                        switch(整型/字符型) + case 常量 + break
+                    </div>
+                    <div class="summary-item">
+                        <span class="label">break 穿透</span><br>
+                        无 break 会穿透到下一个 case；可合理合并 case
+                    </div>
+                    <div class="summary-item">
+                        <span class="label">default 分支</span><br>
+                        兜底处理，当所有 case 不匹配时执行
+                    </div>
+                    <div class="summary-item">
+                        <span class="label">选择策略</span><br>
+                        离散值用 switch，范围判断用 if-else
+                    </div>
+                    <div class="summary-item">
+                        <span class="label">类型限制</span><br>
+                        表达式不能是 float/double/string
+                    </div>
+                    <div class="summary-item">
+                        <span class="label">嵌套 switch</span><br>
+                        内层 break 只跳出内层，外层需单独 break
+                    </div>
+                </div>
+
+                <div class="tip-box">
+                    <strong>考试建议：</strong> 读代码题常考穿透输出；选择题常考 switch vs if-else 场景判断；编程题常考简单计算器和等级转换。每写完一个 case 就立刻写 break，养成肌肉记忆。
+                </div>
+
+                <p style="text-align:center; color: var(--text-light); margin-top: 20px;">
+                    下一课预告：第10课 · for 循环结构
+                </p>
+            </div>
+
+        </div>
+
+        <!-- 导航栏 -->
+        <div class="nav-bar">
+            <button class="nav-btn" id="prevBtn" onclick="changeSlide(-1)">
+                <span class="arrow">&#9664;</span> 上一页
+            </button>
+            <div class="page-dots" id="pageDots">
+                <span class="page-dot active" data-dot="1"></span>
+                <span class="page-dot" data-dot="2"></span>
+                <span class="page-dot" data-dot="3"></span>
+                <span class="page-dot" data-dot="4"></span>
+                <span class="page-dot" data-dot="5"></span>
+                <span class="page-dot" data-dot="6"></span>
+            </div>
+            <button class="nav-btn" id="nextBtn" onclick="changeSlide(1)">
+                下一页 <span class="arrow">&#9654;</span>
+            </button>
+        </div>
+    </div>
+
+    <script>
+        let currentSlide = 1;
+        const totalSlides = 6;
+
+        function showSlide(n) {
+            // 边界处理
+            if (n < 1) n = 1;
+            if (n > totalSlides) n = totalSlides;
+            currentSlide = n;
+
+            // 隐藏所有幻灯片
+            document.querySelectorAll('.slide').forEach(s => s.classList.remove('active'));
+
+            // 显示当前幻灯片
+            const target = document.querySelector(`.slide[data-slide="${n}"]`);
+            if (target) target.classList.add('active');
+
+            // 更新页码指示器
+            document.getElementById('slideIndicator').textContent = n + ' / ' + totalSlides;
+
+            // 更新圆点
+            document.querySelectorAll('.page-dot').forEach(d => d.classList.remove('active'));
+            const activeDot = document.querySelector(`.page-dot[data-dot="${n}"]`);
+            if (activeDot) activeDot.classList.add('active');
+
+            // 更新按钮状态
+            document.getElementById('prevBtn').disabled = (n === 1);
+            document.getElementById('nextBtn').disabled = (n === totalSlides);
+        }
+
+        function changeSlide(delta) {
+            showSlide(currentSlide + delta);
+        }
+
+        // 圆点点击跳转
+        document.getElementById('pageDots').addEventListener('click', function(e) {
+            if (e.target.classList.contains('page-dot')) {
+                const n = parseInt(e.target.getAttribute('data-dot'));
+                showSlide(n);
+            }
+        });
+
+        // 键盘导航
+        document.addEventListener('keydown', function(e) {
+            if (e.key === 'ArrowRight' || e.key === 'ArrowDown') {
+                e.preventDefault();
+                changeSlide(1);
+            } else if (e.key === 'ArrowLeft' || e.key === 'ArrowUp') {
+                e.preventDefault();
+                changeSlide(-1);
+            } else if (e.key === 'Home') {
+                e.preventDefault();
+                showSlide(1);
+            } else if (e.key === 'End') {
+                e.preventDefault();
+                showSlide(totalSlides);
+            }
+        });
+
+        // 触摸滑动支持
+        let touchStartX = 0;
+        let touchEndX = 0;
+        const slideArea = document.querySelector('.slide-area');
+
+        slideArea.addEventListener('touchstart', function(e) {
+            touchStartX = e.changedTouches[0].screenX;
+        });
+
+        slideArea.addEventListener('touchend', function(e) {
+            touchEndX = e.changedTouches[0].screenX;
+            const diff = touchStartX - touchEndX;
+            if (Math.abs(diff) > 50) {
+                if (diff > 0) changeSlide(1);
+                else changeSlide(-1);
+            }
+        });
+
+        // 初始化
+        showSlide(1);
+    </script>
+</body>
+</html>

@@ -1,0 +1,196 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>第21节 · 简易计算器（上） · Python Tkinter 课程</title>
+<link rel="stylesheet" href="assets/fonts.css">
+<link rel="stylesheet" href="assets/base.css">
+<link rel="stylesheet" id="theme-link" href="assets/themes/soft-pastel.css">
+<link rel="stylesheet" href="assets/animations/animations.css">
+<link rel="stylesheet" href="style.css">
+</head>
+<body class="tpl-tkinter-course" data-themes="soft-pastel,rainbow-gradient,sunset-warm,minimal-white" data-theme-base="assets/themes/">
+<div class="deck">
+
+  <!-- 1. Cover -->
+  <section class="slide full" data-title="封面">
+    <p class="kicker">Python Tkinter · 第 21 节</p>
+    <h1 class="h1 mt-s">项目2 · 简易计算器<em>（上）</em></h1>
+    <p class="lede mt-l" style="max-width:62ch">用 Python 做一个计算器！这节课我们先搭好按钮面板，下一节让它真正算出结果。</p>
+    <div class="row mt-l" style="gap:16px">
+      <span class="pill-academic">~ 60 分钟</span>
+      <span class="pill-academic">难度 · ⭐⭐</span>
+      <span class="pill-academic">前置 · grid布局、Button、StringVar</span>
+    </div>
+    <div class="deck-footer"><span>Python Tkinter 趣味编程课</span><span class="slide-number" data-current="1" data-total="6"></span></div>
+  </section>
+
+  <!-- 2. Objectives -->
+  <section class="slide" data-title="学习目标">
+    <aside class="sidebar">
+      <div class="brand">Tkinter 021</div>
+      <h5>学习目标</h5>
+      <ul class="obj-list">
+        <li class="current">用 grid 网格排列按钮</li>
+        <li>用 lambda 给命令传参数</li>
+        <li>拼接数字显示在 Entry 中</li>
+      </ul>
+      <h5>本节成品</h5>
+      <p class="dim" style="font-size:13px">一个能点击输入的计算器面板</p>
+    </aside>
+    <div class="main">
+      <p class="kicker">学习目标</p>
+      <h2 class="h2 mt-s">学完这节课，你将能够…</h2>
+      <div class="stack mt-l">
+        <div class="concept-box"><h4>① 用 grid 排列计算器按钮</h4><p class="dim">把 4x5 的按钮面板精确放到对应的 row 和 column，做出整齐的计算器布局。</p></div>
+        <div class="concept-box"><h4>② 用 lambda 给按钮传参数</h4><p class="dim">点击不同按钮时，把对应的数字或符号传给 click 函数，而不是在创建时就执行。</p></div>
+        <div class="concept-box"><h4>③ 拼接显示在 Entry 中</h4><p class="dim">用 StringVar 绑定 Entry，每次点击把新字符追加到已有内容后面。</p></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- 3. grid 网格布局 -->
+  <section class="slide" data-title="grid 网格布局">
+    <aside class="sidebar">
+      <div class="brand">Tkinter 021</div>
+      <h5>学习目标</h5>
+      <ul class="obj-list">
+        <li class="done">用 grid 网格排列按钮</li>
+        <li class="current">用 lambda 给命令传参数</li>
+        <li>拼接数字显示在 Entry 中</li>
+      </ul>
+      <h5>关键概念</h5>
+      <p class="dim" style="font-size:13px">grid() · row · column · columnspan · sticky</p>
+    </aside>
+    <div class="main">
+      <p class="kicker">知识点 1</p>
+      <h2 class="h2 mt-s">grid 网格布局</h2>
+      <p class="lede mt-m">把窗口想象成一个表格，每个控件放到第几行、第几列。</p>
+      <div class="grid g2 mt-l">
+        <div class="concept-box">
+          <h4>计算器按钮布局</h4>
+          <pre style="font-family:var(--font-mono);font-size:12px;line-height:1.8;color:var(--text-2);margin:0">
+┌──────┬──────┬──────┬──────┐
+│  C   │  ←   │      │  /   │ row=1
+├──────┼──────┼──────┼──────┤
+│  7   │  8   │  9   │  *   │ row=2
+├──────┼──────┼──────┼──────┤
+│  4   │  5   │  6   │  -   │ row=3
+├──────┼──────┼──────┼──────┤
+│  1   │  2   │  3   │  +   │ row=4
+├──────┼──────┼──────┼──────┤
+│  0   │  .   │  =   │      │ row=5
+└──────┴──────┴──────┴──────┘
+col=0  col=1  col=2  col=3</pre>
+        </div>
+        <div class="concept-box">
+          <h4>关键参数</h4>
+          <table class="param-table" style="font-size:13px">
+            <tr><th>参数</th><th>说明</th></tr>
+            <tr><td><code>row=</code></td><td>第几行（从 0 开始）</td></tr>
+            <tr><td><code>column=</code></td><td>第几列（从 0 开始）</td></tr>
+            <tr><td><code>columnspan=</code></td><td>跨几列（如 Entry 跨 4 列）</td></tr>
+            <tr><td><code>sticky=</code></td><td>对齐方向（N/S/E/W）</td></tr>
+            <tr><td><code>padx/pady</code></td><td>外边距</td></tr>
+          </table>
+        </div>
+      </div>
+      <div class="callout mt-l">
+        <b>💡 记住：</b>Entry 放在 row=0，使用 <code>columnspan=4</code> 横跨整行；按钮从 row=1 开始，每行 4 列。
+      </div>
+    </div>
+  </section>
+
+  <!-- 4. lambda 传参 + 数字拼接 -->
+  <section class="slide" data-title="lambda 传参 + 数字拼接">
+    <aside class="sidebar">
+      <div class="brand">Tkinter 021</div>
+      <h5>学习目标</h5>
+      <ul class="obj-list">
+        <li class="done">用 grid 网格排列按钮</li>
+        <li class="done">用 lambda 给命令传参数</li>
+        <li class="current">拼接数字显示在 Entry 中</li>
+      </ul>
+      <h5>关键概念</h5>
+      <p class="dim" style="font-size:13px">lambda · StringVar · Entry · textvariable</p>
+    </aside>
+    <div class="main">
+      <p class="kicker">知识点 2 + 3</p>
+      <h2 class="h2 mt-s">lambda 传参 + 数字拼接</h2>
+      <div class="grid g2 mt-l">
+        <div class="concept-box">
+          <h4>lambda：延迟执行的包装盒</h4>
+          <div class="code mt-s" style="font-size:13px"><pre style="margin:0"><span class="cmt"># ❌ 错误：创建按钮时就执行了！</span>
+btn = tk.<span class="fn">Button</span>(root, text=<span class="str">"1"</span>,
+               command=<span class="fn">click</span>(<span class="str">"1"</span>))
+
+<span class="cmt"># ✅ 正确：用 lambda 包一层</span>
+btn = tk.<span class="fn">Button</span>(root, text=<span class="str">"1"</span>,
+               command=<span class="kw">lambda</span>: <span class="fn">click</span>(<span class="str">"1"</span>))</pre></div>
+          <p class="dim" style="font-size:13px;margin-top:10px"><b>lambda 就是"延迟包装盒"</b>——把函数调用装好，等点击时才打开执行。</p>
+        </div>
+        <div class="concept-box">
+          <h4>StringVar + Entry 数字拼接</h4>
+          <div class="code mt-s" style="font-size:13px"><pre style="margin:0">entry_var = tk.<span class="fn">StringVar</span>()
+
+entry = tk.<span class="fn">Entry</span>(root,
+    textvariable=entry_var,
+    state=<span class="str">"readonly"</span>)
+
+<span class="kw">def</span> <span class="fn">click</span>(key):
+    cur = entry_var.<span class="fn">get</span>()
+    entry_var.<span class="fn">set</span>(cur + key)</pre></div>
+          <p class="dim" style="font-size:13px;margin-top:10px">点 "1" → "1" · 点 "2" → "12" · 点 "+" → "12+" · 点 "3" → "12+3"</p>
+        </div>
+      </div>
+      <div class="callout mt-l">
+        <b>⚠️ 循环中创建按钮要注意：</b>使用 <code>lambda n=num: click(str(n))</code> 来"固定"当前循环变量的值，否则所有按钮都共用最后一个值！
+      </div>
+    </div>
+  </section>
+
+  <!-- 5. 动手试试 -->
+  <section class="slide" data-title="动手试试">
+    <aside class="sidebar">
+      <div class="brand">Tkinter 021</div>
+      <h5>学习目标</h5>
+      <ul class="obj-list">
+        <li class="done">用 grid 网格排列按钮</li>
+        <li class="done">用 lambda 给命令传参数</li>
+        <li class="done">拼接数字显示在 Entry 中</li>
+      </ul>
+      <h5>时间</h5>
+      <p class="dim" style="font-size:13px">~15 分钟 · 自己动手</p>
+    </aside>
+    <div class="main">
+      <p class="kicker">动手试试</p>
+      <h2 class="h2 mt-s">改造你的计算器</h2>
+      <div class="exercise mt-l">
+        <ol style="color:var(--text-2);line-height:2;margin:0;padding-left:20px;font-size:16px">
+          <li><b>改颜色</b>：把运算符按钮（+ - * /）的颜色换成你喜欢的颜色</li>
+          <li><b>加功能</b>：在空着的位置（第 1 行第 3 列，col=2）添加一个 "%" 按钮</li>
+          <li><b>挑战</b>：给 ← 按钮加上"长按连续删除"功能（提示：需要 bind 事件）</li>
+        </ol>
+      </div>
+      <p class="dim mt-m" style="font-size:14px">💡 改完后运行看看，你的计算器是不是越来越像真家伙了？</p>
+    </div>
+  </section>
+
+  <!-- 6. Summary -->
+  <section class="slide full" data-title="总结">
+    <p class="kicker">总结 · 第 21 节</p>
+    <h1 class="h1 mt-s">你学会了…</h1>
+    <div class="grid g2 mt-l">
+      <div class="concept-box"><h4>✓ grid 网格布局</h4><p class="dim">用 row 和 column 把 20 个按钮精确放到 4x5 的面板中，Entry 用 columnspan 横跨 4 列。</p></div>
+      <div class="concept-box"><h4>✓ lambda 传参数</h4><p class="dim">lambda 是"延迟包装盒"，把函数和参数打包，等用户点击时才执行。</p></div>
+      <div class="concept-box"><h4>✓ 数字拼接显示</h4><p class="dim">用 StringVar 绑定 Entry，每次点击把新字符追加到后面：get() 获取 + set() 更新。</p></div>
+      <div class="concept-box"><h4>✓ 循环中的 lambda 陷阱</h4><p class="dim">for 循环中要用 lambda n=num: 来固定参数值，避免所有按钮共用最后一个值。</p></div>
+    </div>
+    <div class="callout mt-l">
+      <b>下节预告 · 第 22 节：项目2 - 简易计算器（下）。</b> 给 "=" 按钮加上 eval()，让计算器真正算出结果！还要处理除以 0 的错误。
+    </div>
+  </section>
+
+</div>
+<script src="assets/runtime.js"></script>
+</body></html>

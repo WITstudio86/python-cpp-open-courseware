@@ -1,0 +1,274 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>第38课：邮递员送信——参数与返回值</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            font-family: 'PingFang SC', 'Microsoft YaHei', sans-serif;
+            background: linear-gradient(135deg, #a18cd1 0%, #fbc2eb 100%);
+            min-height: 100vh;
+            display: flex; justify-content: center; align-items: center;
+        }
+        .slides-container {
+            width: 90%; max-width: 900px; min-height: 550px;
+            background: white; border-radius: 25px; padding: 40px;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+            position: relative; padding-bottom: 90px;
+        }
+        .slide { display: none; animation: fadeIn 0.5s; }
+        .slide.active { display: block; }
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
+        h1 { color: #6c3483; font-size: 2.2em; margin-bottom: 20px; }
+        h2 { color: #8e44ad; font-size: 1.8em; margin-bottom: 15px; }
+        h3 { color: #1e8449; font-size: 1.4em; margin: 15px 0 10px; }
+        p, li { font-size: 1.15em; line-height: 1.8; color: #333; }
+        ul, ol { padding-left: 30px; margin: 10px 0; }
+        .code-block {
+            background: #1e1e2e; color: #cdd6f4; padding: 20px;
+            border-radius: 12px; font-family: 'Courier New', monospace;
+            font-size: 0.95em; line-height: 1.6; overflow-x: auto;
+            margin: 15px 0; white-space: pre-wrap; word-break: break-all;
+        }
+        .nav-buttons {
+            position: absolute; bottom: 20px; left: 40px; right: 40px;
+            display: flex; justify-content: space-between;
+        }
+        .nav-btn {
+            background: linear-gradient(135deg, #a18cd1, #fbc2eb);
+            color: white; border: none; padding: 12px 30px;
+            border-radius: 30px; font-size: 1.1em; cursor: pointer;
+            transition: transform 0.2s;
+            font-family: 'PingFang SC', 'Microsoft YaHei', sans-serif;
+        }
+        .nav-btn:hover { transform: scale(1.05); }
+        .nav-btn:disabled { opacity: 0.4; cursor: default; transform: none; }
+        .page-indicator { font-size: 1.1em; color: #8e44ad; align-self: center; }
+        .emoji-big { font-size: 3em; text-align: center; display: block; margin: 15px 0; }
+        .badge { display: inline-block; background: #f3e5f5; color: #6a1b9a; padding: 5px 15px; border-radius: 20px; font-size: 0.9em; margin: 3px; }
+        table { width: 100%; border-collapse: collapse; margin: 15px 0; }
+        th, td { border: 2px solid #ddd; padding: 10px; text-align: left; }
+        th { background: #a18cd1; color: white; }
+        .highlight-box { background: #fff3cd; border-left: 5px solid #ffc107; padding: 15px; border-radius: 8px; margin: 15px 0; }
+        .tip-box { background: #d4edda; border-left: 5px solid #28a745; padding: 15px; border-radius: 8px; margin: 15px 0; }
+        @media (max-width: 600px) {
+            .slides-container { padding: 25px; }
+            h1 { font-size: 1.5em; }
+            .code-block { font-size: 0.75em; }
+        }
+    </style>
+</head>
+<body>
+    <div class="slides-container">
+        <!-- Slide 1: Title Page -->
+        <div class="slide active" id="slide1">
+            <span class="emoji-big">📬</span>
+            <h1>第38课：邮递员送信——参数与返回值</h1>
+            <p style="text-align:center; color:#666;">第三阶段：函数与模块化编程 | 课时：45分钟</p>
+            <p style="text-align:center; margin-top:20px; font-size:1.3em;">📬 数据快递站 —— 把数据打包、投递、签收</p>
+            <div style="text-align:center; margin-top:30px;">
+                <span class="badge">形参 &amp; 实参</span>
+                <span class="badge">return 返回值</span>
+                <span class="badge">void 函数</span>
+                <span class="badge">多参数传递</span>
+            </div>
+        </div>
+
+        <!-- Slide 2: Learning Objectives -->
+        <div class="slide" id="slide2">
+            <h2>🎯 学习目标</h2>
+            <ul>
+                <li><strong>区分形参与实参：</strong>理解函数定义时的"占位变量"（形参）和调用时传入的"真实数据"（实参），借助"快递单空白栏 vs 填好的单子"的比喻建立清晰概念。</li>
+                <li><strong>掌握 return 语句：</strong>学会用 <code>return</code> 把计算结果"寄回"给调用方，理解不同返回值类型（int / double / string / bool）的用法。</li>
+                <li><strong>认识 void 类型：</strong>理解 <code>void</code> 函数"只干活、不退货"的特点，知道何时该用 void，何时该用有返回值的函数。</li>
+                <li><strong>传递多个参数：</strong>学会编写接收多个参数的函数，掌握数量、类型、顺序一一对应的"对号入座"规则。</li>
+            </ul>
+            <div class="highlight-box" style="margin-top:25px;">
+                <strong>💡 想一想：</strong><br>
+                你去快递站寄包裹时，快递员会问：寄给谁？多重？加急吗？这些问题就像函数的<strong>参数</strong>。快递员处理完后，给你一个快递单号——那就是<strong>返回值</strong>！
+            </div>
+        </div>
+
+        <!-- Slide 3: Core Knowledge -->
+        <div class="slide" id="slide3">
+            <h2>📖 核心知识：快递站的运作逻辑</h2>
+
+            <h3>一、形参 vs 实参 —— 快递单的空白栏 vs 填好的信息</h3>
+            <table>
+                <tr><th>对比维度</th><th>形参（占位符）</th><th>实参（真实数据）</th></tr>
+                <tr><td>出现位置</td><td>函数定义时</td><td>函数调用时</td></tr>
+                <tr><td>类比</td><td>📋 快递单空白栏</td><td>✏️ 填写后的快递单</td></tr>
+                <tr><td>本质</td><td>变量声明（占位置的）</td><td>具体的值或变量</td></tr>
+                <tr><td>举例</td><td><code>int add(int x, int y)</code> —— x, y 是形参</td><td><code>add(3, 5)</code> —— 3, 5 是实参</td></tr>
+            </table>
+
+            <h3>二、return 语句 —— 签收回执</h3>
+            <table>
+                <tr><th>返回类型</th><th>示例函数</th><th>return 的内容</th></tr>
+                <tr><td>int</td><td><code>int getAge()</code></td><td><code>return 12;</code></td></tr>
+                <tr><td>double</td><td><code>double 计算运费()</code></td><td><code>return 18.50;</code></td></tr>
+                <tr><td>string</td><td><code>string 查询物流()</code></td><td><code>return "运输中";</code></td></tr>
+                <tr><td>bool</td><td><code>bool 是否签收()</code></td><td><code>return true;</code></td></tr>
+            </table>
+
+            <h3>三、void 函数 —— 投递公告，无需签收</h3>
+            <p>void 函数只执行任务（如打印面单），不返回任何值。<br>不能写成 <code>int x = voidFunction();</code> —— 这就像向一个只投递公告的邮递员要签收单！</p>
+
+            <div class="tip-box">
+                <strong>🔑 记忆口诀：</strong><br>
+                形参像空白栏，实参把内容填；<br>
+                return 带回执，void 不归还；<br>
+                参数对号坐，顺序别乱串！
+            </div>
+        </div>
+
+        <!-- Slide 4: Code Examples -->
+        <div class="slide" id="slide4">
+            <h2>💻 代码演示：数据快递站系统</h2>
+
+            <h3>📦 快递计费函数（有参数、有返回值）</h3>
+            <div class="code-block">// 计算快递费用的函数
+// weight, distance, isUrgent 是形参（占位符）
+double calculateFee(double weight, int distance, bool isUrgent) {
+    double fee = weight * 2.0;          // 基础费：每kg 2元
+
+    if (distance > 1000) {              // 远距离附加费
+        fee += 10.0;
+    }
+    if (isUrgent) {                     // 加急服务费
+        fee += 15.0;
+    }
+    return fee;  // ← 把结果"寄回"给调用方
+}
+
+int main() {
+    double fee1 = calculateFee(2.5, 500, false);
+    //    2.5, 500, false 是实参（真实数据）
+    //    → 费用 = 2.5 × 2 = 5.0 元
+    cout << "普通包裹费用：￥" << fee1 << endl;
+
+    double fee2 = calculateFee(8.0, 1500, true);
+    //    → 费用 = 8.0×2 + 10 + 15 = 41 → 满30打9折 → 36.9 元
+    cout << "加急包裹费用：￥" << fee2 << endl;
+    return 0;
+}</div>
+
+            <h3>📋 打印面单（void 函数 —— 只干活，不退货）</h3>
+            <div class="code-block">// void 函数：只执行任务，不返回任何值
+void printReceipt(string sender, string receiver,
+                  double weight, int distance, bool isUrgent) {
+    // 在 void 函数内部调用其他函数帮忙！
+    double fee = calculateFee(weight, distance, isUrgent);
+
+    cout << "╔══════════════════════════════╗" << endl;
+    cout << "║  📬 数据快递站 · 电子面单   ║" << endl;
+    cout << "║  发件人：" << sender << "        ║" << endl;
+    cout << "║  收件人：" << receiver << "        ║" << endl;
+    cout << "║  费用合计：￥" << fee << "          ║" << endl;
+    cout << "╚══════════════════════════════╝" << endl;
+    // void 函数不需要 return —— 执行完就结束
+}</div>
+        </div>
+
+        <!-- Slide 5: Exercises -->
+        <div class="slide" id="slide5">
+            <h2>🎮 趣味练习</h2>
+
+            <h3>练习1：填空补全 —— 计算圆面积 🟡</h3>
+            <p>小明想写一个函数计算圆面积，请帮他补全缺少的内容：</p>
+            <div class="code-block">______ circleArea(double ______) {    // ① 返回值类型和形参名
+    const double PI = 3.14159;
+    return PI * r * r;               // ② 计算结果返回
+}
+
+int main() {
+    double r;
+    cin >> r;
+    double s = circleArea(______);    // ③ 实参填什么？
+    cout << "面积：" << s << endl;
+    return 0;
+}</div>
+            <div class="tip-box">
+                <strong>✅ 答案：</strong>① <code>double</code> 和 <code>r</code> ② 代码本身正确 ③ 填 <code>r</code>（把用户输入传给函数）
+            </div>
+
+            <h3>练习2：判断正误 ⚖️</h3>
+            <p>以下说法中，<strong>正确</strong>的是哪一条？</p>
+            <ol>
+                <li>形参在函数定义时可以不给名字，只写类型就行。</li>
+                <li>void 函数中可以用 <code>return 0;</code> 提前退出。</li>
+                <li>实参和形参的名字必须相同。</li>
+                <li>函数有2个 int 形参时，调用时必须传恰好2个 int 实参。</li>
+            </ol>
+            <div class="tip-box">
+                <strong>✅ 答案：</strong>只有<strong>第 4 条</strong>正确。第 1 条：形参必须有名字；第 2 条：void 函数中 <code>return;</code> 不带值；第 3 条：名字可以不同，关键看位置对应。
+            </div>
+
+            <h3>🏆 挑战题：快递费用计算系统</h3>
+            <p>编写函数 <code>double calculateFee(double w, int d, bool u)</code>：基础费=w×2元，d>1000加10元，u=true加15元；费用>30打9折。再写 <code>void printReceipt(...)</code> 打印电子面单。</p>
+            <div class="highlight-box">
+                <strong>💡 提示：</strong>在 printReceipt 中调用 calculateFee —— 函数之间可以互相调用！这就是模块化编程的核心：<strong>各司其职，互相协作</strong>。
+            </div>
+        </div>
+
+        <!-- Slide 6: Summary -->
+        <div class="slide" id="slide6">
+            <h2>📝 本课小结：快递站工作手册</h2>
+            <table>
+                <tr><th>概念</th><th>快递站比喻</th><th>C++ 代码</th></tr>
+                <tr><td>形参</td><td>📋 快递单上的空白姓名栏</td><td><code>int add(int x, int y)</code> 中的 x, y</td></tr>
+                <tr><td>实参</td><td>✏️ 你填上去的具体名字</td><td><code>add(3, 5)</code> 中的 3, 5</td></tr>
+                <tr><td>return</td><td>📨 签收回执 / 快递单号</td><td><code>return result;</code></td></tr>
+                <tr><td>void</td><td>📢 贴公告——只投递，不收件</td><td><code>void print(...)</code></td></tr>
+                <tr><td>多参数</td><td>📦 一张快递单有多项信息</td><td>参数用逗号隔开，顺序必须对应</td></tr>
+            </table>
+
+            <h3>✨ 核心要点</h3>
+            <ul>
+                <li><strong>形参是占位符</strong>（定义时），<strong>实参是真数据</strong>（调用时），两者在位置上"对号入座"。</li>
+                <li><strong>return 做两件事</strong>：① 把结果"寄回去"；② 立刻结束函数执行。</li>
+                <li><strong>void 函数不返回值</strong>，只执行任务。调用时不能赋值给变量。</li>
+                <li><strong>参数传递规则</strong>：数量、类型、顺序必须与定义时一模一样。</li>
+                <li><strong>函数之间可以互相调用</strong>：一个函数可以请另一个函数帮忙，分工合作效率高！</li>
+                <li><strong>基本类型参数是"拷贝传递"</strong>：函数内部修改形参，不会影响外部的实参。</li>
+            </ul>
+
+            <div class="highlight-box" style="margin-top:20px;">
+                <strong>🔑 终极口诀：</strong><br>
+                形参实参对号入座，return 把结果带回家，<br>
+                void 只管干好活，模块分工力量大！
+            </div>
+            <p style="text-align:center; margin-top:20px; font-size:1.3em;">🎉 下一课预告：函数的多面手——默认参数与函数重载</p>
+        </div>
+
+        <div class="nav-buttons">
+            <button class="nav-btn" onclick="prevSlide()" disabled>◀ 上一页</button>
+            <span class="page-indicator" id="pageIndicator">1 / 6</span>
+            <button class="nav-btn" onclick="nextSlide()">下一页 ▶</button>
+        </div>
+    </div>
+    <script>
+        let currentSlide = 0;
+        const slides = document.querySelectorAll('.slide');
+        const totalSlides = slides.length;
+        const indicator = document.getElementById('pageIndicator');
+        function showSlide(n) {
+            slides[currentSlide].classList.remove('active');
+            currentSlide = (n + totalSlides) % totalSlides;
+            slides[currentSlide].classList.add('active');
+            indicator.textContent = (currentSlide + 1) + ' / ' + totalSlides;
+            document.querySelectorAll('.nav-btn')[0].disabled = currentSlide === 0;
+            document.querySelectorAll('.nav-btn')[1].disabled = currentSlide === totalSlides - 1;
+        }
+        function nextSlide() { showSlide(currentSlide + 1); }
+        function prevSlide() { showSlide(currentSlide - 1); }
+        document.addEventListener('keydown', function(e) {
+            if (e.key === 'ArrowRight' || e.key === ' ') { e.preventDefault(); nextSlide(); }
+            else if (e.key === 'ArrowLeft') { e.preventDefault(); prevSlide(); }
+        });
+        indicator.textContent = (currentSlide + 1) + ' / ' + totalSlides;
+    </script>
+</body>
+</html>

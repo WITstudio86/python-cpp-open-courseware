@@ -1,0 +1,845 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>第21课：区间覆盖与选点 — C++算法提高</title>
+    <style>
+        /* ============================================================
+           Global Styles — Dark Theme with accent #e94560
+           ============================================================ */
+        :root {
+            --bg-primary: #0f0f1a;
+            --bg-secondary: #1a1a2e;
+            --bg-card: #16213e;
+            --bg-code: #0d1117;
+            --text-primary: #e0e0e0;
+            --text-secondary: #a0a0b8;
+            --text-heading: #ffffff;
+            --accent: #e94560;
+            --accent-dim: #c23152;
+            --border: #2a2a4a;
+            --code-keyword: #ff79c6;
+            --code-type: #8be9fd;
+            --code-string: #f1fa8c;
+            --code-comment: #6272a4;
+            --code-number: #bd93f9;
+            --code-func: #50fa7b;
+            --code-operator: #ff79c6;
+            --success: #50fa7b;
+            --warning: #f1fa8c;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "PingFang SC", "Microsoft YaHei",
+                         "Hiragino Sans GB", "Noto Sans CJK SC", sans-serif;
+            background: linear-gradient(135deg, #0f0f1a 0%, #1a1a2e 50%, #16213e 100%);
+            color: var(--text-primary);
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            overflow: hidden;
+        }
+
+        /* ============================================================
+           Slideshow Container
+           ============================================================ */
+        .slideshow-container {
+            width: 100%;
+            max-width: 960px;
+            height: 100vh;
+            max-height: 700px;
+            position: relative;
+            display: flex;
+            flex-direction: column;
+            padding: 20px;
+        }
+
+        /* Slide area */
+        .slide-area {
+            flex: 1;
+            position: relative;
+            overflow: hidden;
+            border-radius: 16px;
+            background: var(--bg-secondary);
+            border: 1px solid var(--border);
+            box-shadow: 0 4px 40px rgba(233, 69, 96, 0.1);
+        }
+
+        /* Individual slide */
+        .slide {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            padding: 40px 48px;
+            opacity: 0;
+            transform: translateX(40px);
+            transition: opacity 0.4s ease, transform 0.4s ease;
+            pointer-events: none;
+            overflow-y: auto;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .slide.active {
+            opacity: 1;
+            transform: translateX(0);
+            pointer-events: all;
+        }
+
+        .slide.exit-left {
+            opacity: 0;
+            transform: translateX(-40px);
+        }
+
+        /* ============================================================
+           Typography
+           ============================================================ */
+        .slide h1 {
+            font-size: 2.2em;
+            color: var(--text-heading);
+            margin-bottom: 12px;
+            font-weight: 800;
+            letter-spacing: 0.02em;
+        }
+
+        .slide h2 {
+            font-size: 1.6em;
+            color: var(--accent);
+            margin-bottom: 16px;
+            font-weight: 700;
+            border-bottom: 2px solid var(--border);
+            padding-bottom: 8px;
+        }
+
+        .slide h3 {
+            font-size: 1.2em;
+            color: var(--text-heading);
+            margin: 16px 0 8px 0;
+            font-weight: 600;
+        }
+
+        .slide p, .slide li {
+            font-size: 1.05em;
+            line-height: 1.8;
+            color: var(--text-secondary);
+            margin-bottom: 8px;
+        }
+
+        .slide ul, .slide ol {
+            padding-left: 24px;
+            margin-bottom: 12px;
+        }
+
+        .slide ul li {
+            list-style-type: none;
+            position: relative;
+            padding-left: 4px;
+        }
+
+        .slide ul li::before {
+            content: "▸";
+            color: var(--accent);
+            position: absolute;
+            left: -18px;
+            font-size: 0.8em;
+        }
+
+        .accent-text {
+            color: var(--accent);
+            font-weight: 700;
+        }
+
+        .highlight-box {
+            background: rgba(233, 69, 96, 0.08);
+            border-left: 3px solid var(--accent);
+            padding: 12px 20px;
+            border-radius: 0 8px 8px 0;
+            margin: 16px 0;
+            font-size: 0.95em;
+            color: var(--text-primary);
+        }
+
+        /* ============================================================
+           Title Slide
+           ============================================================ */
+        .title-slide {
+            justify-content: center;
+            align-items: center;
+            text-align: center;
+        }
+
+        .title-slide .lesson-number {
+            font-size: 1.1em;
+            color: var(--accent);
+            text-transform: uppercase;
+            letter-spacing: 0.2em;
+            margin-bottom: 16px;
+        }
+
+        .title-slide h1 {
+            font-size: 3em;
+            margin-bottom: 8px;
+            background: linear-gradient(135deg, #e94560, #f77f8a);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        .title-slide .subtitle {
+            font-size: 1.2em;
+            color: var(--text-secondary);
+            margin-top: 8px;
+        }
+
+        .title-slide .stage {
+            display: inline-block;
+            margin-top: 24px;
+            padding: 6px 24px;
+            border: 1px solid var(--accent);
+            border-radius: 20px;
+            font-size: 0.95em;
+            color: var(--accent);
+            letter-spacing: 0.05em;
+        }
+
+        /* ============================================================
+           Code Blocks
+           ============================================================ */
+        .code-block {
+            background: var(--bg-code);
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            padding: 16px 20px;
+            margin: 12px 0;
+            overflow-x: auto;
+            font-family: "SF Mono", "Fira Code", "Cascadia Code", "Consolas", "Monaco", monospace;
+            font-size: 0.85em;
+            line-height: 1.6;
+            white-space: pre;
+            color: var(--text-primary);
+        }
+
+        .code-block .kw  { color: var(--code-keyword); font-weight: bold; }
+        .code-block .tp  { color: var(--code-type); }
+        .code-block .str { color: var(--code-string); }
+        .code-block .cm  { color: var(--code-comment); font-style: italic; }
+        .code-block .num { color: var(--code-number); }
+        .code-block .fn  { color: var(--code-func); }
+        .code-block .op  { color: var(--code-operator); }
+
+        /* Inline code */
+        code {
+            background: rgba(233, 69, 96, 0.15);
+            color: var(--accent);
+            padding: 2px 6px;
+            border-radius: 4px;
+            font-family: "SF Mono", "Fira Code", "Consolas", monospace;
+            font-size: 0.9em;
+        }
+
+        /* ============================================================
+           Number Line Visualization
+           ============================================================ */
+        .number-line {
+            position: relative;
+            margin: 20px 0;
+            padding: 20px 0;
+        }
+
+        .number-line .axis {
+            height: 2px;
+            background: var(--border);
+            position: relative;
+            margin: 0 20px;
+        }
+
+        .number-line .tick {
+            position: absolute;
+            top: -4px;
+            font-size: 0.7em;
+            color: var(--text-secondary);
+            transform: translateX(-50%);
+        }
+
+        .number-line .interval-bar {
+            position: absolute;
+            height: 24px;
+            background: rgba(233, 69, 96, 0.2);
+            border: 1px solid var(--accent);
+            border-radius: 4px;
+            top: -30px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 0.7em;
+            color: var(--text-primary);
+            transition: all 0.3s ease;
+        }
+
+        .number-line .interval-bar.covered {
+            background: rgba(80, 250, 123, 0.15);
+            border-color: var(--success);
+        }
+
+        .number-line .point-marker {
+            position: absolute;
+            top: -6px;
+            width: 12px;
+            height: 12px;
+            background: var(--accent);
+            border-radius: 50%;
+            transform: translateX(-50%);
+            box-shadow: 0 0 10px rgba(233, 69, 96, 0.5);
+            z-index: 5;
+        }
+
+        .number-line .point-label {
+            position: absolute;
+            top: 14px;
+            font-size: 0.65em;
+            color: var(--accent);
+            transform: translateX(-50%);
+            white-space: nowrap;
+            font-weight: bold;
+        }
+
+        /* ============================================================
+           Steps visualization
+           ============================================================ */
+        .step-list {
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
+
+        .step-item {
+            display: flex;
+            align-items: flex-start;
+            gap: 12px;
+            padding: 12px 16px;
+            background: var(--bg-card);
+            border-radius: 8px;
+            border: 1px solid var(--border);
+        }
+
+        .step-number {
+            background: var(--accent);
+            color: white;
+            width: 28px;
+            height: 28px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: bold;
+            font-size: 0.85em;
+            flex-shrink: 0;
+        }
+
+        .step-content {
+            flex: 1;
+            font-size: 0.95em;
+            color: var(--text-secondary);
+            line-height: 1.6;
+        }
+
+        .step-content strong {
+            color: var(--text-heading);
+        }
+
+        /* ============================================================
+           Summary Cards
+           ============================================================ */
+        .summary-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 16px;
+            margin-top: 16px;
+        }
+
+        .summary-card {
+            background: var(--bg-card);
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            padding: 20px;
+            text-align: center;
+            transition: border-color 0.3s ease;
+        }
+
+        .summary-card:hover {
+            border-color: var(--accent);
+        }
+
+        .summary-card .card-icon {
+            font-size: 2em;
+            margin-bottom: 8px;
+        }
+
+        .summary-card h4 {
+            color: var(--accent);
+            margin-bottom: 6px;
+            font-size: 1em;
+        }
+
+        .summary-card p {
+            font-size: 0.85em;
+            line-height: 1.5;
+            color: var(--text-secondary);
+        }
+
+        /* ============================================================
+           Navigation Controls
+           ============================================================ */
+        .nav-bar {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 20px;
+            padding: 16px 0 4px 0;
+        }
+
+        .nav-btn {
+            background: var(--bg-card);
+            border: 1px solid var(--border);
+            color: var(--text-primary);
+            padding: 10px 24px;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 0.95em;
+            font-family: inherit;
+            transition: all 0.2s ease;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        .nav-btn:hover {
+            background: var(--accent);
+            border-color: var(--accent);
+            color: #fff;
+        }
+
+        .nav-btn:disabled {
+            opacity: 0.35;
+            cursor: not-allowed;
+        }
+
+        .nav-btn:disabled:hover {
+            background: var(--bg-card);
+            border-color: var(--border);
+            color: var(--text-primary);
+        }
+
+        .slide-counter {
+            font-size: 0.95em;
+            color: var(--text-secondary);
+            min-width: 60px;
+            text-align: center;
+        }
+
+        .slide-dots {
+            display: flex;
+            gap: 8px;
+        }
+
+        .dot {
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            background: var(--border);
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .dot.active {
+            background: var(--accent);
+            box-shadow: 0 0 8px rgba(233, 69, 96, 0.5);
+            width: 24px;
+            border-radius: 4px;
+        }
+
+        /* ============================================================
+           Keyboard hint
+           ============================================================ */
+        .key-hint {
+            text-align: center;
+            font-size: 0.75em;
+            color: var(--text-secondary);
+            opacity: 0.5;
+        }
+
+        /* ============================================================
+           Responsive Design
+           ============================================================ */
+        @media (max-width: 768px) {
+            .slideshow-container {
+                max-height: none;
+                height: 100vh;
+                padding: 10px;
+            }
+
+            .slide {
+                padding: 24px 20px;
+            }
+
+            .slide h1 {
+                font-size: 1.6em;
+            }
+
+            .slide h2 {
+                font-size: 1.3em;
+            }
+
+            .title-slide h1 {
+                font-size: 2em;
+            }
+
+            .summary-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .nav-btn {
+                padding: 8px 16px;
+                font-size: 0.85em;
+            }
+
+            .code-block {
+                font-size: 0.72em;
+                padding: 12px 14px;
+            }
+        }
+
+        @media (max-width: 480px) {
+            .slide {
+                padding: 16px 14px;
+            }
+
+            .slide h1 {
+                font-size: 1.3em;
+            }
+
+            .slide h2 {
+                font-size: 1.1em;
+            }
+
+            .title-slide h1 {
+                font-size: 1.6em;
+            }
+
+            .step-item {
+                flex-direction: column;
+                gap: 6px;
+            }
+        }
+    </style>
+</head>
+<body>
+
+<div class="slideshow-container">
+    <!-- ============================================================
+         Slide Area
+         ============================================================ -->
+    <div class="slide-area" id="slideArea">
+
+        <!-- Slide 1: Title -->
+        <div class="slide title-slide active" data-index="0">
+            <div class="lesson-number">Lesson 21</div>
+            <h1>区间覆盖与选点</h1>
+            <p class="subtitle">最少点覆盖所有区间 · 种树问题</p>
+            <div class="stage">C++ 算法提高</div>
+        </div>
+
+        <!-- Slide 2: Principle — 核心策略 -->
+        <div class="slide" data-index="1">
+            <h2>核心策略：按右端点排序</h2>
+
+            <h3>问题回顾</h3>
+            <p>给定 <span class="accent-text">N</span> 个闭区间，每个区间内至少需要一个点。求最少需要多少个点？</p>
+
+            <div class="highlight-box">
+                <strong>贪心选择规则</strong>：将所有区间按 <code>右端点</code> 从小到大排序，然后依次处理。对于每个未被覆盖的区间，<span class="accent-text">在其右端点放置一个点</span>。
+            </div>
+
+            <h3>为什么放在右端点？</h3>
+            <ul>
+                <li><strong>最大化覆盖</strong>：右端点是区间内最靠右的位置，更容易落入后续区间的范围内</li>
+                <li><strong>最保守策略</strong>：如果放在左端，会浪费覆盖后续区间的机会</li>
+                <li><strong>交换论证</strong>：任何最优解都可以通过交换操作转化为「放在右端点」的贪心解而不增加点数</li>
+            </ul>
+
+            <h3>为什么按右端点排序？</h3>
+            <ul>
+                <li>优先处理「最早结束」的区间，避免它被遗漏</li>
+                <li>晚结束的区间跨度大，有更多机会被后续放置的点覆盖</li>
+                <li>按左端点排序会失效（反例：[1,100], [2,3], [4,5]）</li>
+            </ul>
+        </div>
+
+        <!-- Slide 3: Code — C++ 实现 -->
+        <div class="slide" data-index="2">
+            <h2>代码实现：区间选点</h2>
+
+            <h3>核心代码</h3>
+            <div class="code-block"><span class="kw">struct</span> <span class="tp">Interval</span> {
+    <span class="tp">int</span> l, r;
+    <span class="kw">bool</span> <span class="kw">operator</span>&lt;(<span class="kw">const</span> <span class="tp">Interval</span> &amp;o) <span class="kw">const</span> {
+        <span class="kw">return</span> r &lt; o.r;  <span class="cm">// 按右端点排序</span>
+    }
+};
+
+<span class="tp">int</span> <span class="fn">solve</span>(<span class="tp">int</span> n) {
+    sort(a, a + n);              <span class="cm">// 排序</span>
+    <span class="tp">int</span> ans = <span class="num">0</span>;
+    <span class="tp">int</span> last = -<span class="num">2e9</span>;       <span class="cm">// 上一个点的位置</span>
+
+    <span class="kw">for</span> (<span class="tp">int</span> i = <span class="num">0</span>; i &lt; n; i++) {
+        <span class="kw">if</span> (last &lt; a[i].l) {     <span class="cm">// 未被覆盖？</span>
+            ans++;               <span class="cm">// 新增一个点</span>
+            last = a[i].r;       <span class="cm">// 放在右端点</span>
+        }
+    }
+    <span class="kw">return</span> ans;
+}</div>
+
+            <h3>种树问题（扩展版）</h3>
+            <div class="code-block"><span class="kw">for</span> (<span class="tp">int</span> i = <span class="num">0</span>; i &lt; n; i++) {
+    <span class="cm">// 1. 统计 [l, r] 内已有树数</span>
+    <span class="tp">int</span> cnt = <span class="num">0</span>;
+    <span class="kw">for</span> (<span class="tp">int</span> p = l; p &lt;= r; p++)
+        <span class="kw">if</span> (planted[p]) cnt++;
+
+    <span class="cm">// 2. 从右向左补种不足部分</span>
+    <span class="tp">int</span> need = t - cnt;
+    <span class="kw">for</span> (<span class="tp">int</span> p = r; p &gt;= l &amp;&amp; need &gt; <span class="num">0</span>; p--)
+        <span class="kw">if</span> (!planted[p]) {
+            planted[p] = <span class="kw">true</span>;
+            need--; total++;
+        }
+}</div>
+        </div>
+
+        <!-- Slide 4: Example Walkthrough -->
+        <div class="slide" data-index="3">
+            <h2>逐步演示：区间选点</h2>
+
+            <p>输入区间：<code>[0,2]</code> <code>[1,3]</code> <code>[2,5]</code> <code>[3,6]</code> <code>[4,7]</code></p>
+
+            <div class="step-list">
+                <div class="step-item">
+                    <div class="step-number">1</div>
+                    <div class="step-content">
+                        <strong>排序后</strong>（按右端点）：[0,2] [1,3] [2,5] [3,6] [4,7]
+                    </div>
+                </div>
+                <div class="step-item">
+                    <div class="step-number">2</div>
+                    <div class="step-content">
+                        <strong>处理 [0,2]：</strong> 无点覆盖 → 在 <code>r=2</code> 放点 <span class="accent-text">①</span>
+                    </div>
+                </div>
+                <div class="step-item">
+                    <div class="step-number">3</div>
+                    <div class="step-content">
+                        <strong>处理 [1,3]：</strong> 点①(位置2) ∈ [1,3] → 已覆盖，跳过
+                    </div>
+                </div>
+                <div class="step-item">
+                    <div class="step-number">4</div>
+                    <div class="step-content">
+                        <strong>处理 [2,5]：</strong> 点①(位置2) ∈ [2,5] → 已覆盖，跳过
+                    </div>
+                </div>
+                <div class="step-item">
+                    <div class="step-number">5</div>
+                    <div class="step-content">
+                        <strong>处理 [3,6]：</strong> 点①(位置2) &lt; 左端点3 → 未覆盖！在 <code>r=6</code> 放点 <span class="accent-text">②</span>
+                    </div>
+                </div>
+                <div class="step-item">
+                    <div class="step-number">6</div>
+                    <div class="step-content">
+                        <strong>处理 [4,7]：</strong> 点②(位置6) ∈ [4,7] → 已覆盖，跳过
+                    </div>
+                </div>
+            </div>
+
+            <div class="highlight-box" style="margin-top: 16px;">
+                最终答案：最少需要 <span class="accent-text">2</span> 个点（位置 2 和 6）
+            </div>
+        </div>
+
+        <!-- Slide 5: Summary -->
+        <div class="slide" data-index="4">
+            <h2>本课小结</h2>
+
+            <div class="summary-grid">
+                <div class="summary-card">
+                    <div class="card-icon">🎯</div>
+                    <h4>核心策略</h4>
+                    <p>按<strong>右端点排序</strong>，将点放在未覆盖区间的右端点</p>
+                </div>
+                <div class="summary-card">
+                    <div class="card-icon">🌳</div>
+                    <h4>种树问题</h4>
+                    <p>区间选点的扩展：每个区间需要多个点，<strong>从右向左</strong>补种</p>
+                </div>
+                <div class="summary-card">
+                    <div class="card-icon">⏱️</div>
+                    <h4>时间复杂度</h4>
+                    <p>排序 <code>O(n log n)</code>，贪心处理 <code>O(n)</code></p>
+                </div>
+                <div class="summary-card">
+                    <div class="card-icon">💡</div>
+                    <h4>证明方法</h4>
+                    <p><strong>交换论证法</strong>：任何最优解都可转化为贪心解</p>
+                </div>
+            </div>
+
+            <h3 style="margin-top: 20px;">关键要点</h3>
+            <ul>
+                <li>区间问题的贪心策略几乎都是<strong>按端点排序</strong>，不同问题排序依据不同</li>
+                <li>区间选点 → 按<strong>右端点</strong>排序，放在右端</li>
+                <li>种树问题 → 同样按右端点排序，从右向左填坑</li>
+                <li>掌握这两种模型，就能应对大多数区间覆盖类问题</li>
+            </ul>
+        </div>
+
+    </div><!-- /slide-area -->
+
+    <!-- ============================================================
+         Navigation Bar
+         ============================================================ -->
+    <div class="nav-bar">
+        <button class="nav-btn" id="prevBtn" onclick="changeSlide(-1)">
+            ← 上一页
+        </button>
+
+        <div class="slide-dots" id="slideDots"></div>
+
+        <span class="slide-counter" id="slideCounter">1 / 5</span>
+
+        <button class="nav-btn" id="nextBtn" onclick="changeSlide(1)">
+            下一页 →
+        </button>
+    </div>
+
+    <div class="key-hint">使用 ← → 方向键或点击按钮切换幻灯片</div>
+</div>
+
+<script>
+    // ============================================================
+    // Slide Navigation Logic
+    // ============================================================
+    let currentSlide = 0;
+    const slides = document.querySelectorAll('.slide');
+    const totalSlides = slides.length;
+
+    // Build dots
+    const dotsContainer = document.getElementById('slideDots');
+    for (let i = 0; i < totalSlides; i++) {
+        const dot = document.createElement('span');
+        dot.className = 'dot' + (i === 0 ? ' active' : '');
+        dot.setAttribute('data-index', i);
+        dot.onclick = function() { goToSlide(parseInt(this.getAttribute('data-index'))); };
+        dotsContainer.appendChild(dot);
+    }
+
+    function updateSlide() {
+        // Update slide classes
+        slides.forEach((slide, index) => {
+            slide.classList.remove('active', 'exit-left');
+            if (index === currentSlide) {
+                slide.classList.add('active');
+            } else if (index < currentSlide) {
+                // Already passed slides — keep them hidden
+            }
+        });
+
+        // Update dots
+        const dots = document.querySelectorAll('.dot');
+        dots.forEach((dot, index) => {
+            dot.classList.toggle('active', index === currentSlide);
+        });
+
+        // Update counter
+        document.getElementById('slideCounter').textContent =
+            (currentSlide + 1) + ' / ' + totalSlides;
+
+        // Update button states
+        document.getElementById('prevBtn').disabled = (currentSlide === 0);
+        document.getElementById('nextBtn').disabled = (currentSlide === totalSlides - 1);
+    }
+
+    function goToSlide(index) {
+        if (index < 0 || index >= totalSlides) return;
+
+        // Animate: old slide exits left
+        const oldSlide = slides[currentSlide];
+        oldSlide.classList.add('exit-left');
+        oldSlide.classList.remove('active');
+
+        currentSlide = index;
+
+        // Short delay for exit animation, then show new slide
+        setTimeout(() => {
+            updateSlide();
+        }, 150);
+    }
+
+    function changeSlide(direction) {
+        goToSlide(currentSlide + direction);
+    }
+
+    // Keyboard navigation
+    document.addEventListener('keydown', function(e) {
+        if (e.key === 'ArrowLeft' || e.key === 'ArrowUp') {
+            e.preventDefault();
+            changeSlide(-1);
+        } else if (e.key === 'ArrowRight' || e.key === 'ArrowDown' || e.key === ' ') {
+            e.preventDefault();
+            changeSlide(1);
+        } else if (e.key === 'Home') {
+            e.preventDefault();
+            goToSlide(0);
+        } else if (e.key === 'End') {
+            e.preventDefault();
+            goToSlide(totalSlides - 1);
+        }
+    });
+
+    // Touch support for tablets
+    let touchStartX = 0;
+    let touchEndX = 0;
+
+    document.getElementById('slideArea').addEventListener('touchstart', function(e) {
+        touchStartX = e.changedTouches[0].screenX;
+    }, { passive: true });
+
+    document.getElementById('slideArea').addEventListener('touchend', function(e) {
+        touchEndX = e.changedTouches[0].screenX;
+        const diff = touchStartX - touchEndX;
+        if (Math.abs(diff) > 50) {
+            if (diff > 0) {
+                changeSlide(1);  // Swipe left → next
+            } else {
+                changeSlide(-1); // Swipe right → previous
+            }
+        }
+    });
+
+    // Initialize
+    updateSlide();
+</script>
+
+</body>
+</html>

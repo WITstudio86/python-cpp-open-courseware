@@ -1,0 +1,635 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>第3课 · 输入文字吧</title>
+<link rel="stylesheet" href="assets/fonts.css">
+<link rel="stylesheet" href="assets/base.css">
+<link rel="stylesheet" id="theme-link" href="assets/themes/dracula.css">
+<link rel="stylesheet" href="assets/animations/animations.css">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/highlight.js@11.10.0/styles/dracula.min.css">
+<script src="https://cdn.jsdelivr.net/npm/highlight.js@11.10.0/lib/core.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/highlight.js@11.10.0/lib/languages/python.min.js"></script>
+<script>addEventListener('DOMContentLoaded',()=>{hljs.registerLanguage('python',window.hljsLangPython||window.hljs.getLanguage('python'));document.querySelectorAll('pre code').forEach(el=>hljs.highlightElement(el))})</script>
+<style>
+  /* ---- deck-level custom styles ---- */
+  .slide { padding: 56px 72px; display: flex; flex-direction: column; justify-content: center; }
+  .slide.full { justify-content: center; align-items: center; text-align: center; }
+  .slide.full .deck-footer { position: absolute; bottom: 28px; left: 56px; right: 56px; }
+  .slide .deck-footer { position: absolute; bottom: 28px; left: 56px; right: 56px; }
+
+  .h1 { font-family: 'Inter','Noto Sans SC',sans-serif; font-size: 64px; line-height: 1.08; font-weight: 800; letter-spacing: -0.02em; color: var(--text-1); }
+  .h2 { font-family: 'Inter','Noto Sans SC',sans-serif; font-size: 44px; line-height: 1.15; font-weight: 700; letter-spacing: -0.015em; color: var(--text-1); }
+  .h3 { font-size: 24px; font-weight: 700; color: var(--text-1); }
+  .kicker { font-size: 12px; font-weight: 700; letter-spacing: .14em; text-transform: uppercase; color: var(--accent); }
+  .lede { font-size: 20px; color: var(--text-2); line-height: 1.7; max-width: 64ch; }
+
+  /* cards for bullet lists */
+  .bullet-card { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); padding: 20px 24px; }
+  .bullet-card h4 { margin: 0 0 6px; color: var(--accent); font-size: 17px; }
+  .bullet-card p { margin: 0; font-size: 15px; color: var(--text-2); line-height: 1.6; }
+
+  /* code card */
+  .code-card { background: #1e1f29; border-radius: var(--radius); padding: 20px 24px; overflow: auto; }
+  .code-card pre { margin: 0; }
+  .code-card code { font-family: 'JetBrains Mono','Fira Code',monospace; font-size: 15px; line-height: 1.75; }
+
+  /* inline code */
+  .ic { font-family: 'JetBrains Mono','Fira Code',monospace; background: var(--surface-2); padding: 2px 8px; border-radius: 4px; font-size: .9em; color: var(--accent-2); }
+
+  /* feature card with icon */
+  .feat-card { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius-lg); padding: 28px 30px; text-align: center; }
+  .feat-card .icon { font-size: 40px; margin-bottom: 12px; }
+  .feat-card h4 { margin: 0 0 8px; color: var(--text-1); font-size: 18px; }
+  .feat-card p { margin: 0; color: var(--text-2); font-size: 14px; line-height: 1.6; }
+
+  /* step card */
+  .step-row { display: flex; gap: 16px; align-items: flex-start; margin-bottom: 14px; }
+  .step-num { flex: none; width: 36px; height: 36px; border-radius: 50%; background: var(--accent); color: #fff; display: flex; align-items: center; justify-content: center; font-weight: 700; font-size: 15px; }
+  .step-body h4 { margin: 0; color: var(--text-1); font-size: 16px; }
+  .step-body p { margin: 4px 0 0; color: var(--text-2); font-size: 14px; line-height: 1.5; }
+
+  /* two-column install */
+  .install-col { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); padding: 24px 28px; }
+  .install-col h3 { margin: 0 0 12px; font-size: 20px; color: var(--accent-2); display: flex; align-items: center; gap: 8px; }
+  .install-col ol { margin: 0; padding-left: 20px; color: var(--text-2); font-size: 14px; line-height: 2; }
+  .install-col .tip { margin-top: 12px; padding: 8px 14px; background: var(--surface-2); border-radius: 6px; font-size: 13px; color: var(--warn); }
+
+  /* summary table */
+  .sum-table { width: 100%; border-collapse: collapse; font-size: 15px; }
+  .sum-table th { padding: 12px 16px; text-align: left; font-size: 11px; text-transform: uppercase; letter-spacing: .1em; color: var(--text-3); font-weight: 600; border-bottom: 2px solid var(--border-strong); }
+  .sum-table td { padding: 12px 16px; border-bottom: 1px solid var(--border); color: var(--text-2); }
+  .sum-table td:first-child { font-family: 'JetBrains Mono',monospace; color: var(--accent-2); font-size: 14px; }
+  .sum-table tr:hover td { background: var(--surface); }
+
+  /* gradient text */
+  .grad { background: var(--grad); -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text; }
+
+  /* callout box */
+  .callout { border-left: 4px solid var(--accent); background: var(--surface); padding: 16px 20px; border-radius: 0 var(--radius) var(--radius) 0; font-size: 15px; color: var(--text-2); }
+  .callout b { color: var(--accent-2); }
+
+  /* rule card */
+  .rule-ok { background: rgba(80,250,123,.08); border: 1px solid rgba(80,250,123,.25); border-radius: var(--radius); padding: 16px 20px; }
+  .rule-no { background: rgba(255,85,85,.08); border: 1px solid rgba(255,85,85,.25); border-radius: var(--radius); padding: 16px 20px; }
+  .rule-ok h4 { color: var(--good); margin: 0 0 8px; font-size: 15px; }
+  .rule-no h4 { color: var(--bad); margin: 0 0 8px; font-size: 15px; }
+  .rule-ok code, .rule-no code { font-family: 'JetBrains Mono',monospace; font-size: 13px; }
+
+  /* exercise */
+  .ex-item { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); padding: 16px 20px; display: flex; gap: 14px; align-items: flex-start; }
+  .ex-num { flex: none; width: 28px; height: 28px; border-radius: 50%; background: var(--surface-2); border: 2px solid var(--accent); color: var(--accent); display: flex; align-items: center; justify-content: center; font-weight: 700; font-size: 13px; }
+  .ex-item p { margin: 0; color: var(--text-2); font-size: 14px; line-height: 1.5; }
+
+  /* important highlight */
+  .important { background: rgba(241,250,140,.1); border: 1px dashed var(--warn); border-radius: var(--radius); padding: 16px 20px; font-size: 14px; color: var(--text-2); }
+  .important b { color: var(--warn); }
+</style>
+</head>
+<body>
+<div class="deck" data-themes="dracula,tokyo-night,catppuccin-mocha,nord,terminal-green,cyberpunk-neon" data-theme-base="assets/themes/">
+
+  <!-- ====== Slide 1: Cover ====== -->
+  <section class="slide full" data-title="Cover">
+    <p class="kicker anim-fade-down" data-anim="fade-down" style="color:var(--accent-2)">Python 零基础到图形化项目实战 · 第 3 课</p>
+    <h1 class="h1 anim-rise-in" data-anim="rise-in" style="font-size:80px;margin-top:12px">
+      <span class="grad">输入文字</span>吧！
+    </h1>
+    <p class="lede anim-fade-up" data-anim="fade-up" style="margin-top:16px;max-width:56ch;font-size:22px">
+      Entry 输入框 + Listbox 列表 + if 条件判断
+    </p>
+    <div class="row wrap anim-fade-up" data-anim="fade-up" style="margin-top:32px;gap:12px;justify-content:center">
+      <span class="pill" style="background:rgba(189,147,249,.15);color:var(--accent);border:1px solid rgba(189,147,249,.3)">⌨️ Entry</span>
+      <span class="pill" style="background:rgba(139,233,253,.15);color:var(--accent-3);border:1px solid rgba(139,233,253,.3)">📋 Listbox</span>
+      <span class="pill" style="background:rgba(255,121,198,.15);color:var(--accent-2);border:1px solid rgba(255,121,198,.3)">🤔 if 判断</span>
+    </div>
+    <div class="deck-footer"><span class="dim2">第 3 课 · 输入文字吧</span><span class="slide-number" data-current="1" data-total="11"></span></div>
+    <div class="notes">欢迎来到 Python 第 3 课！前两课我们建好了窗口、学会了 Label 和 Button。今天我们要让窗口真正"活"起来——用户可以输入文字、点击按钮添加待办事项，备忘录的核心功能就在这一课实现！</div>
+  </section>
+
+  <!-- ====== Slide 2: 本课目标 ====== -->
+  <section class="slide" data-title="本课目标">
+    <p class="kicker">🎯 本课目标</p>
+    <h2 class="h2" style="margin-top:6px">今天要掌握的 <span class="grad">6 个新技能</span></h2>
+    <div class="grid g2 anim-stagger-list" data-anim-target style="margin-top:32px;gap:18px">
+      <div class="bullet-card" style="display:flex;gap:16px;align-items:flex-start">
+        <span style="font-size:32px">⌨️</span>
+        <div><h4>Entry 输入框</h4><p>让用户可以打字输入内容，就像填写表单一样。</p></div>
+      </div>
+      <div class="bullet-card" style="display:flex;gap:16px;align-items:flex-start">
+        <span style="font-size:32px">📋</span>
+        <div><h4>Listbox 列表框</h4><p>显示一列待办事项，可以滚动查看。</p></div>
+      </div>
+      <div class="bullet-card" style="display:flex;gap:16px;align-items:flex-start">
+        <span style="font-size:32px">📦</span>
+        <div><h4>list 列表</h4><p>Python 的数据容器，按顺序存放多个数据。</p></div>
+      </div>
+      <div class="bullet-card" style="display:flex;gap:16px;align-items:flex-start">
+        <span style="font-size:32px">🤔</span>
+        <div><h4>if 条件判断</h4><p>让程序学会"思考"，根据条件做不同的事。</p></div>
+      </div>
+      <div class="bullet-card" style="display:flex;gap:16px;align-items:flex-start">
+        <span style="font-size:32px">🔲</span>
+        <div><h4>Frame 容器</h4><p>组织控件的隐形盒子，让布局更整齐。</p></div>
+      </div>
+      <div class="bullet-card" style="display:flex;gap:16px;align-items:flex-start">
+        <span style="font-size:32px">⚡</span>
+        <div><h4>实现备忘录核心功能</h4><p>输入 → 添加 → 显示，一条龙实现！</p></div>
+      </div>
+    </div>
+    <div class="deck-footer"><span class="dim2">第 3 课 · 输入文字吧</span><span class="slide-number" data-current="2" data-total="11"></span></div>
+    <div class="notes">今天 6 个新技能围绕一个核心目标：让备忘录能接收输入并显示待办列表。Entry 负责输入、Listbox 负责显示、if 负责判断空输入、Frame 负责布局、list 是后台数据结构。每个技能都会在项目中用上。</div>
+  </section>
+
+  <!-- ====== Slide 3: Entry 输入框 ====== -->
+  <section class="slide" data-title="Entry 输入框">
+    <p class="kicker">📚 新知识</p>
+    <h2 class="h2" style="margin-top:6px">Entry 输入框 — <span class="grad">让用户打字</span></h2>
+    <p class="lede" style="margin-top:8px"><span class="ic">Entry</span> 是一个<b style="color:var(--text-1)">单行文本输入框</b>。用户可以点击它，然后用键盘输入文字。</p>
+    <div style="display:flex;gap:20px;margin-top:20px;align-items:start">
+      <div class="code-card anim-fade-left" data-anim="fade-left" style="flex:1;min-width:0">
+        <pre><code class="language-python">entry = tk.Entry(
+    window,
+    font=("微软雅黑", 13),
+    width=25
+)
+entry.pack()
+
+# 获取输入内容
+text = entry.get()
+
+# 清空输入框
+entry.delete(0, tk.END)</code></pre>
+      </div>
+      <div class="anim-fade-right" data-anim="fade-right" style="flex:1.1;min-width:0">
+        <table class="sum-table" style="font-size:14px">
+          <thead><tr><th>方法</th><th>作用</th></tr></thead>
+          <tbody>
+            <tr>
+              <td><code>.get()</code></td>
+              <td><b>获取</b>输入框里的文字</td>
+            </tr>
+            <tr>
+              <td><code>.delete(0, END)</code></td>
+              <td><b>清空</b>输入框，删除所有文字</td>
+            </tr>
+            <tr>
+              <td><code>.insert(0, "...")</code></td>
+              <td>在开头<b>插入</b>文字</td>
+            </tr>
+          </tbody>
+        </table>
+        <div style="margin-top:14px">
+          <p style="color:var(--text-3);font-size:12px;letter-spacing:.06em;margin:0 0 6px"><code>delete(0, tk.END)</code> 参数详解：</p>
+          <p style="color:var(--text-2);font-size:14px;margin:0;line-height:1.6">
+            <code style="color:var(--accent-2)">0</code> — 从第 0 个字符开始（即开头）<br>
+            <code style="color:var(--accent-2)">tk.END</code> — 到最后一个字符（即末尾）<br>
+            合起来：<b style="color:var(--text-1)">从头删到尾</b> = 全部清空
+          </p>
+        </div>
+      </div>
+    </div>
+    <div class="callout anim-fade-up" data-anim="fade-up" style="margin-top:16px">
+      <b>💡 类比：</b> Entry 就像一张<b>便利贴</b>。`.get()` 是读上面的内容，`.delete(0, END)` 是把便利贴撕掉换新的。
+    </div>
+    <div class="deck-footer"><span class="dim2">第 3 课 · 输入文字吧</span><span class="slide-number" data-current="3" data-total="11"></span></div>
+    <div class="notes">Entry 是第一个需要理解"方法"概念的控件——.get() 读取、.delete() 清空、.insert() 写入。delete(0, tk.END) 的参数容易让人困惑：0 是起始位置，tk.END 是结束位置，合起来就是全部删除。让学生当场试试每个方法。</div>
+  </section>
+
+  <!-- ====== Slide 4: Listbox 列表框 ====== -->
+  <section class="slide" data-title="Listbox 列表框">
+    <p class="kicker">📚 新知识</p>
+    <h2 class="h2" style="margin-top:6px">Listbox 列表框 — <span class="grad">显示一列内容</span></h2>
+    <p class="lede" style="margin-top:8px"><span class="ic">Listbox</span> 是一个<b style="color:var(--text-1)">可滚动的列表</b>，可以显示多条内容，用户可以选中其中某一项。</p>
+    <div style="display:flex;gap:20px;margin-top:20px;align-items:start">
+      <div class="code-card anim-fade-left" data-anim="fade-left" style="flex:1;min-width:0">
+        <pre><code class="language-python">listbox = tk.Listbox(
+    window,
+    font=("微软雅黑", 12),
+    height=15,
+    width=40
+)
+listbox.pack()
+
+# 在末尾添加一条
+listbox.insert(tk.END, "学Python")
+
+# 获取共有几条
+count = listbox.size()
+
+# 获取第 0 条内容
+item = listbox.get(0)</code></pre>
+      </div>
+      <div class="anim-fade-right" data-anim="fade-right" style="flex:1.1;min-width:0">
+        <table class="sum-table" style="font-size:14px">
+          <thead><tr><th>方法</th><th>作用</th></tr></thead>
+          <tbody>
+            <tr>
+              <td><code>.insert(END, x)</code></td>
+              <td>在末尾<b>添加</b>一条内容</td>
+            </tr>
+            <tr>
+              <td><code>.delete(索引)</code></td>
+              <td><b>删除</b>指定位置的一条</td>
+            </tr>
+            <tr>
+              <td><code>.size()</code></td>
+              <td>获取当前<b>共有几条</b></td>
+            </tr>
+            <tr>
+              <td><code>.get(索引)</code></td>
+              <td><b>获取</b>指定位置的内容</td>
+            </tr>
+          </tbody>
+        </table>
+        <div style="margin-top:14px">
+          <p style="color:var(--text-3);font-size:12px;letter-spacing:.06em;margin:0 0 6px">📏 索引（index）从 0 开始：</p>
+          <p style="color:var(--text-2);font-size:14px;margin:0;line-height:1.6">
+            位置 <code style="color:var(--accent-2)">0</code> → 第一条数据<br>
+            位置 <code style="color:var(--accent-2)">1</code> → 第二条数据<br>
+            位置 <code style="color:var(--accent-2)">2</code> → 第三条数据
+          </p>
+        </div>
+      </div>
+    </div>
+    <div class="callout anim-fade-up" data-anim="fade-up" style="margin-top:16px">
+      <b>💡 注意：</b> <code>tk.END</code> 是一个特殊常量，表示"列表末尾"。<code>listbox.insert(tk.END, "学Python")</code> 的意思就是"在列表末尾插入一条"。
+    </div>
+    <div class="deck-footer"><span class="dim2">第 3 课 · 输入文字吧</span><span class="slide-number" data-current="4" data-total="11"></span></div>
+    <div class="notes">Listbox 的方法和 Entry 很相似：都有 .insert() 和 .delete()，但 Listbox 多了 .size() 统计条数。索引从 0 开始是编程的通用规则，需要强调。tk.END 常量很实用——我们通常不需要知道列表里到底有几条，直接用 tk.END 就能加到末尾。</div>
+  </section>
+
+  <!-- ====== Slide 5: list 列表类型 ====== -->
+  <section class="slide" data-title="list 列表类型">
+    <p class="kicker">📚 新知识</p>
+    <h2 class="h2" style="margin-top:6px">list 列表 — Python 的 <span class="grad">数据容器</span></h2>
+    <p class="lede" style="margin-top:8px"><b style="color:var(--text-1)">列表（list）</b> 是 Python 中最常用的数据容器，可以<b style="color:var(--text-1)">按顺序存放多个数据</b>。</p>
+    <div class="grid g2" style="margin-top:24px;gap:20px;align-items:start">
+      <div class="code-card anim-fade-left" data-anim="fade-left" style="flex:1;min-width:0">
+        <pre><code class="language-python"># 创建一个列表
+todos = ["学Python", "写作业", "做运动"]
+
+# 列表操作
+todos.append("学吉他")    # 添加元素
+first = todos[0]          # 访问第 1 个
+second = todos[1]         # 访问第 2 个
+count = len(todos)        # 获取长度 → 4
+
+# 列表可以混合不同类型
+mixed = ["文字", 123, True, 3.14]</code></pre>
+      </div>
+      <div class="anim-fade-right" data-anim="fade-right" style="flex:1;min-width:0;display:flex;flex-direction:column;gap:16px">
+        <div style="background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:20px 24px">
+          <h4 style="color:var(--accent);margin:0 0 12px;font-size:16px">🔤 核心操作</h4>
+          <table class="sum-table" style="font-size:13px">
+            <thead><tr><th>操作</th><th>语法</th></tr></thead>
+            <tbody>
+              <tr><td>创建列表</td><td><code>todos = [...]</code></td></tr>
+              <tr><td>添加元素</td><td><code>.append(x)</code></td></tr>
+              <tr><td>访问第 i 个</td><td><code>todos[i]</code></td></tr>
+              <tr><td>获取长度</td><td><code>len(todos)</code></td></tr>
+            </tbody>
+          </table>
+        </div>
+        <div class="callout">
+          <b>💡 类比：</b> 列表就像<b>购物清单</b> 📋——一行一行写，有顺序，可以随时加新东西。
+        </div>
+      </div>
+    </div>
+    <div class="deck-footer"><span class="dim2">第 3 课 · 输入文字吧</span><span class="slide-number" data-current="5" data-total="11"></span></div>
+    <div class="notes">list 是 Python 最常用的数据结构。这节课的重点是 append() 和索引访问。学生可能会混淆 list（Python 数据类型）和 Listbox（tkinter 控件）——list 是数据存储，Listbox 是界面显示。购物清单的类比非常直观。</div>
+  </section>
+
+  <!-- ====== Slide 6: if 条件判断 ====== -->
+  <section class="slide" data-title="if 条件判断">
+    <p class="kicker">📚 新知识</p>
+    <h2 class="h2" style="margin-top:6px">if 条件判断 — <span class="grad">让程序学会"思考"</span></h2>
+    <div style="display:flex;gap:24px;margin-top:24px;align-items:start">
+      <div class="anim-fade-left" data-anim="fade-left" style="flex:1.1;min-width:0">
+        <h4 style="color:var(--accent-3);margin:0 0 10px">📝 if/else 语法</h4>
+        <div class="code-card" style="margin-bottom:14px">
+          <pre><code class="language-python">if 条件:
+    条件成立时执行的代码
+else:
+    条件不成立时执行的代码</code></pre>
+        </div>
+        <div class="code-card">
+          <pre><code class="language-python">age = 15
+
+if age >= 18:
+    print("你是成年人")
+else:
+    print("你是未成年人")</code></pre>
+        </div>
+        <div class="code-card" style="margin-top:14px">
+          <pre><code class="language-python"># 本课的应用：判断输入是否为空
+text = entry.get()
+if text:        # 如果文字非空
+    listbox.insert(tk.END, text)
+else:
+    print("请输入内容！")</code></pre>
+        </div>
+        <div style="margin-top:12px;color:var(--text-2);font-size:13px">
+          💡 在 Python 中，<b style="color:var(--accent)">空字符串 ""</b> 被视为 <code style="color:var(--bad)">False</code>，非空字符串被视为 <code style="color:var(--good)">True</code>。所以 <code class="ic">if text:</code> 就是在判断"输入了东西吗？"
+        </div>
+      </div>
+      <div class="anim-fade-right" data-anim="fade-right" style="flex:0.9;min-width:0">
+        <h4 style="color:var(--accent-2);margin:0 0 10px">🔢 比较运算符</h4>
+        <table class="sum-table" style="font-size:14px">
+          <thead><tr><th>运算符</th><th>含义</th><th>示例</th></tr></thead>
+          <tbody>
+            <tr><td><code>==</code></td><td>等于</td><td><code style="color:var(--good)">5 == 5 → True</code></td></tr>
+            <tr><td><code>!=</code></td><td>不等于</td><td><code style="color:var(--good)">5 != 3 → True</code></td></tr>
+            <tr><td><code>&gt;</code></td><td>大于</td><td><code style="color:var(--good)">10 &gt; 3 → True</code></td></tr>
+            <tr><td><code>&lt;</code></td><td>小于</td><td><code style="color:var(--good)">3 &lt; 10 → True</code></td></tr>
+            <tr><td><code>&gt;=</code></td><td>大于等于</td><td><code style="color:var(--good)">10 &gt;= 10 → True</code></td></tr>
+            <tr><td><code>&lt;=</code></td><td>小于等于</td><td><code style="color:var(--good)">3 &lt;= 5 → True</code></td></tr>
+          </tbody>
+        </table>
+        <div class="important" style="margin-top:16px">
+          <b>⚠️ 重要区分：</b><br>
+          <code style="color:var(--bad)">==</code> 两个等号 → <b style="color:var(--warn)">判断"等于"</b><br>
+          <code style="color:var(--bad)">=</code> 一个等号 → <b style="color:var(--warn)">赋值</b>（把右边装进左边）
+        </div>
+      </div>
+    </div>
+    <div class="deck-footer"><span class="dim2">第 3 课 · 输入文字吧</span><span class="slide-number" data-current="6" data-total="11"></span></div>
+    <div class="notes">if 判断是编程的核心逻辑。两个关键点：1) == 和 = 的区别——这是初学者最常见的错误；2) Python 中空字符串是 False，所以 if text: 可以简洁地判断非空。让学生当场用 if 写几个判断练习。</div>
+  </section>
+
+  <!-- ====== Slide 7: Frame 容器 + 项目框架 ====== -->
+  <section class="slide" data-title="Frame 容器">
+    <p class="kicker">💻 写代码</p>
+    <h2 class="h2" style="margin-top:6px">Frame 容器 + <span class="grad">项目框架</span></h2>
+    <p class="lede" style="margin-top:8px"><span class="ic">Frame</span> 是一个<b style="color:var(--text-1)">看不见的盒子</b>，可以把多个控件装在一起，方便整体布局。</p>
+    <div style="display:flex;gap:24px;margin-top:20px;align-items:start">
+      <div class="anim-fade-left" data-anim="fade-left" style="flex:1;min-width:0">
+        <h4 style="color:var(--accent-2);margin:0 0 8px">🔲 为什么需要 Frame？</h4>
+        <div style="display:flex;flex-direction:column;gap:10px">
+          <div class="bullet-card" style="padding:14px 18px">
+            <h4 style="font-size:15px">水平排列</h4>
+            <p style="font-size:13px">Entry 和 Button 默认是上下排列，用 Frame + <code class="ic">side=tk.LEFT</code> 可以让它们<b>左右并排</b></p>
+          </div>
+          <div class="bullet-card" style="padding:14px 18px">
+            <h4 style="font-size:15px">整体控制</h4>
+            <p style="font-size:13px">把一组相关控件装进 Frame，可以统一调整它们的位置（pady 等）</p>
+          </div>
+          <div class="bullet-card" style="padding:14px 18px">
+            <h4 style="font-size:15px">代码整洁</h4>
+            <p style="font-size:13px">逻辑分组让代码更好读、更好改</p>
+          </div>
+        </div>
+      </div>
+      <div class="code-card anim-fade-right" data-anim="fade-right" style="flex:1.2;min-width:0">
+        <pre><code class="language-python"># 创建 Frame 容器
+input_frame = tk.Frame(window)
+input_frame.pack(pady=15)
+
+# 输入框 — 放在 Frame 左边
+entry = tk.Entry(
+    input_frame,              # 父容器是 Frame！
+    font=("微软雅黑", 13),
+    width=25
+)
+entry.pack(side=tk.LEFT, padx=(0, 5))
+
+# 添加按钮 — 放在 Frame 右边
+add_btn = tk.Button(
+    input_frame,              # 父容器也是 Frame！
+    text="添加 ✅",
+    font=("微软雅黑", 12),
+    bg="#4CAF50",
+    fg="white"
+)
+add_btn.pack(side=tk.LEFT)</code></pre>
+      </div>
+    </div>
+    <div class="deck-footer"><span class="dim2">第 3 课 · 输入文字吧</span><span class="slide-number" data-current="7" data-total="11"></span></div>
+    <div class="notes">Frame 是一个容易被忽视但很实用的控件。它本身的"不可见"特性正好用来做布局容器。关键概念：Entry 和 Button 的父容器从 window 变成了 input_frame——这意味着它们是 Frame 的"孩子"，在 Frame 内部用 side=LEFT 水平排列。</div>
+  </section>
+
+  <!-- ====== Slide 8: 完整代码 ====== -->
+  <section class="slide" data-title="完整代码">
+    <p class="kicker">💻 写代码</p>
+    <h2 class="h2" style="margin-top:6px">本课<span class="grad">完整代码</span></h2>
+    <p class="lede" style="margin-top:8px">保存为 <code>lesson3.py</code>，点击 ▶️ 运行</p>
+    <div class="code-card anim-fade-up" data-anim="fade-up" style="margin-top:16px;max-height:380px;overflow:auto">
+      <pre><code class="language-python"># ============================================
+# 第 3 课：Entry 输入框和 Listbox 列表
+# ============================================
+
+import tkinter as tk
+
+# ==================== 创建窗口 ====================
+
+window = tk.Tk()
+window.title("我的备忘录")
+window.geometry("400x550")
+
+# ==================== 标题区域 ====================
+
+title_label = tk.Label(
+    window,
+    text="📝 我的备忘录",
+    font=("微软雅黑", 20, "bold"),
+    fg="#333333"
+)
+title_label.pack(pady=15)
+
+subtitle_label = tk.Label(
+    window,
+    text="输入待办事项，点击添加吧！",
+    font=("微软雅黑", 10),
+    fg="#888888"
+)
+subtitle_label.pack(pady=5)
+
+# ==================== 输入区域 ====================
+
+input_frame = tk.Frame(window)
+input_frame.pack(pady=15)
+
+entry = tk.Entry(
+    input_frame,
+    font=("微软雅黑", 13),
+    width=25
+)
+entry.pack(side=tk.LEFT, padx=(0, 5))
+
+add_btn = tk.Button(
+    input_frame,
+    text="添加 ✅",
+    font=("微软雅黑", 12),
+    bg="#4CAF50",
+    fg="white",
+    padx=10,
+    pady=5
+)
+add_btn.pack(side=tk.LEFT)
+
+# ==================== 列表区域 ====================
+
+list_label = tk.Label(
+    window,
+    text="📋 待办事项",
+    font=("微软雅黑", 12, "bold"),
+    fg="#555555"
+)
+list_label.pack(pady=(20, 5))
+
+listbox = tk.Listbox(
+    window,
+    font=("微软雅黑", 12),
+    height=15,
+    width=40,
+    selectbackground="#C8E6C9",
+    selectforeground="#333333"
+)
+listbox.pack(pady=5)
+
+# ==================== 核心功能 ====================
+
+def add_todo():
+    """获取输入框内容，添加到列表中"""
+    text = entry.get().strip()      # 获取并清理文字
+
+    if text:
+        listbox.insert(tk.END, text)   # 添加到列表框
+        entry.delete(0, tk.END)        # 清空输入框
+        print(f"✅ 添加了：{text}")
+    else:
+        print("⚠️ 请输入待办事项！")
+
+add_btn.config(command=add_todo)        # 绑定按钮点击
+
+def on_enter_press(event):              # 绑定回车键
+    add_todo()
+
+entry.bind("&lt;Return&gt;", on_enter_press)
+
+# ==================== 运行 ====================
+
+entry.focus()           # 光标默认停在输入框
+window.mainloop()</code></pre>
+    </div>
+    <div class="deck-footer"><span class="dim2">第 3 课 · 输入文字吧</span><span class="slide-number" data-current="8" data-total="11"></span></div>
+    <div class="notes">完整代码分为 5 个区域：窗口、标题、输入、列表、核心功能。结构清晰，注释详细。关键点：add_todo() 函数的流程是 get → strip → if 判断 → insert/delete；add_btn.config(command=add_todo) 把函数绑定到按钮；entry.bind 绑定回车键。</div>
+  </section>
+
+  <!-- ====== Slide 9: 运行效果 ====== -->
+  <section class="slide" data-title="运行效果">
+    <p class="kicker">▶️ 运行看效果</p>
+    <h2 class="h2" style="margin-top:6px">运行后你会看到…</h2>
+    <div class="grid g2" style="margin-top:24px;gap:20px;align-items:start">
+      <div class="anim-fade-left" data-anim="fade-left">
+        <h4 style="color:var(--accent-3)">🖥️ 终端输出示例</h4>
+        <div class="code-card" style="margin-top:12px">
+          <pre><code style="font-family:'JetBrains Mono',monospace;font-size:14px;color:#f8f8f2">
+✅ 添加了：学Python
+✅ 添加了：写作业
+✅ 添加了：做运动
+⚠️ 请输入待办事项！</code></pre>
+        </div>
+      </div>
+      <div class="anim-fade-right" data-anim="fade-right" style="text-align:center">
+        <h4 style="color:var(--accent-2)">🪟 窗口界面</h4>
+        <div class="bullet-card" style="margin-top:12px;padding:24px;text-align:center">
+          <div style="width:260px;margin:0 auto;border:2px solid var(--border-strong);border-radius:8px;overflow:hidden">
+            <div style="background:var(--surface-2);padding:6px;font-size:12px;color:var(--text-1);text-align:center">我的备忘录</div>
+            <div style="padding:16px 20px;text-align:left">
+              <div style="font-size:13px;font-weight:600;color:var(--text-1);margin-bottom:8px">📝 我的备忘录</div>
+              <div style="font-size:11px;color:var(--text-3);margin-bottom:12px">输入待办事项，点击添加吧！</div>
+              <div style="display:flex;gap:6px;margin-bottom:14px">
+                <div style="flex:1;border:1px solid var(--border);border-radius:4px;padding:4px 8px;font-size:11px;color:var(--text-3)">输入框</div>
+                <div style="background:var(--good);border-radius:4px;padding:4px 10px;font-size:11px;color:#fff">添加 ✅</div>
+              </div>
+              <div style="font-size:11px;font-weight:600;color:var(--text-1);margin-bottom:6px">📋 待办事项</div>
+              <div style="border:1px solid var(--border);border-radius:4px;height:80px;padding:4px 8px;font-size:11px;color:var(--text-3)">
+                学Python<br>写作业<br>做运动
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div style="margin-top:16px">
+      <h4 style="color:var(--text-1);font-size:15px;margin:0 0 10px">📋 运行后你可以：</h4>
+      <div style="display:flex;flex-wrap:wrap;gap:8px">
+        <span style="background:var(--surface);border:1px solid var(--border);border-radius:6px;padding:6px 12px;font-size:13px;color:var(--text-2)"><b style="color:var(--accent)">1.</b> 输入文字 → 点"添加 ✅"→ 列表出现</span>
+        <span style="background:var(--surface);border:1px solid var(--border);border-radius:6px;padding:6px 12px;font-size:13px;color:var(--text-2)"><b style="color:var(--accent)">2.</b> 输入框自动清空</span>
+        <span style="background:var(--surface);border:1px solid var(--border);border-radius:6px;padding:6px 12px;font-size:13px;color:var(--text-2)"><b style="color:var(--accent)">3.</b> 继续添加多条</span>
+        <span style="background:var(--surface);border:1px solid var(--border);border-radius:6px;padding:6px 12px;font-size:13px;color:var(--text-2)"><b style="color:var(--accent)">4.</b> 按回车键也能添加</span>
+        <span style="background:var(--surface);border:1px solid var(--border);border-radius:6px;padding:6px 12px;font-size:13px;color:var(--text-2)"><b style="color:var(--accent)">5.</b> 空输入 → 终端提示</span>
+      </div>
+    </div>
+    <div class="deck-footer"><span class="dim2">第 3 课 · 输入文字吧</span><span class="slide-number" data-current="9" data-total="11"></span></div>
+    <div class="notes">让学生感受备忘录项目真正"活"起来的一刻。终端输出和窗口界面的对比让学生理解两个输出通道。5 步操作涵盖了所有核心功能：输入、添加、清空、回车、空输入提示。建议现场演示一次完整的操作流程。</div>
+  </section>
+
+  <!-- ====== Slide 10: 小练习 ====== -->
+  <section class="slide" data-title="小练习">
+    <p class="kicker">✏️ 小练习</p>
+    <h2 class="h2" style="margin-top:6px">动动手，<span class="grad">改一改</span></h2>
+    <div class="grid g2 anim-stagger-list" data-anim-target style="margin-top:28px;gap:16px">
+      <div class="ex-item">
+        <div class="ex-num">1</div>
+        <div><b style="color:var(--text-1)">改提示方式</b><p>空输入时不在终端打印，而是在窗口里弹出一个<b style="color:var(--bad)">红色错误标签</b>（提示：创建一个 Label，用 <code>.config()</code> 更新文字）</p></div>
+      </div>
+      <div class="ex-item">
+        <div class="ex-num">2</div>
+        <div><b style="color:var(--text-1)">改颜色</b><p>把"添加"按钮改成蓝色 <code>"bg="#2196F3"</code>"，再看看还有什么颜色可以用</p></div>
+      </div>
+      <div class="ex-item">
+        <div class="ex-num">3</div>
+        <div><b style="color:var(--text-1)">统计数量</b><p>让列表标题显示当前待办数量，比如 <code>"📋 待办事项（共 3 条）"</code>（提示：用 <code>listbox.size()</code>）</p></div>
+      </div>
+      <div class="ex-item">
+        <div class="ex-num">4</div>
+        <div><b style="color:var(--text-1)">⭐ 挑战题：清空全部</b><p>加一个"清空全部"按钮，点击后删除 Listbox 中的所有内容（提示：<code>listbox.delete(0, tk.END)</code>）</p></div>
+      </div>
+    </div>
+    <div class="callout anim-fade-up" data-anim="fade-up" style="margin-top:20px">
+      <b>💡 提示：</b> 改代码 → 保存 → 再运行，这是编程的基本节奏。前 3 个练习是修改现有代码，第 4 个挑战题需要<b style="color:var(--accent)">新增按钮和函数</b>，试试看！
+    </div>
+    <div class="deck-footer"><span class="dim2">第 3 课 · 输入文字吧</span><span class="slide-number" data-current="10" data-total="11"></span></div>
+    <div class="notes">4 个练习由易到难。练习 1 涉及 Label 的 .config() 方法（第 2 课学过）；练习 2 改颜色参数；练习 3 需要用到 listbox.size() 并结合字符串拼接；练习 4 是挑战题，需要新增一个按钮和对应的函数来清空列表。</div>
+  </section>
+
+  <!-- ====== Slide 11: 本课小结 + 下节课预告 ====== -->
+  <section class="slide full" data-title="本课小结">
+    <p class="kicker" style="color:var(--accent-2)">🧠 本课小结</p>
+    <h1 class="h1 anim-rise-in" data-anim="rise-in" style="font-size:56px;margin-top:12px">
+      你今天<span class="grad">学到了</span>
+    </h1>
+    <div style="max-width:900px;width:100%;margin-top:28px">
+      <div class="card anim-fade-up" data-anim="fade-up" style="padding:20px 24px">
+      <table class="sum-table">
+        <thead><tr><th>学到的知识</th><th>是什么</th><th style="width:40%">怎么用</th></tr></thead>
+        <tbody>
+          <tr><td><code>Entry</code></td><td>单行输入框</td><td><code>entry = tk.Entry(window)</code></td></tr>
+          <tr><td><code>.get()</code></td><td>获取输入内容</td><td><code>text = entry.get()</code></td></tr>
+          <tr><td><code>.strip()</code></td><td>去掉首尾空格</td><td><code>text = text.strip()</code></td></tr>
+          <tr><td><code>.delete(0, END)</code></td><td>清空输入框</td><td><code>entry.delete(0, tk.END)</code></td></tr>
+          <tr><td><code>Listbox</code></td><td>列表框</td><td><code>listbox = tk.Listbox(window)</code></td></tr>
+          <tr><td><code>.insert(END, x)</code></td><td>添加到列表</td><td><code>listbox.insert(tk.END, "内容")</code></td></tr>
+          <tr><td><code>if text:</code></td><td>判断非空</td><td>空字符串是 <code>False</code></td></tr>
+          <tr><td><code>Frame</code></td><td>容器框架</td><td><code>frame = tk.Frame(window)</code></td></tr>
+          <tr><td><code>.bind()</code></td><td>绑定键盘事件</td><td><code>entry.bind("&lt;Return&gt;", fn)</code></td></tr>
+        </tbody>
+      </table>
+      </div>
+    </div>
+    <div class="callout anim-fade-up" data-anim="fade-up" style="margin-top:24px;max-width:900px;width:100%">
+      <b>📖 下节课预告 · 第 4 课：</b> 选中和删除 — 让备忘录能管理事项<br>
+      <span style="color:var(--text-2)">我们将学会如何<b>选中</b>列表中的某条事项，然后<b>删除</b>它。还会引入 <code>curselection()</code>、<code>messagebox</code> 弹出确认提示框。</span>
+    </div>
+    <div class="deck-footer"><span class="dim2">第 3 课 · 输入文字吧</span><span class="slide-number" data-current="11" data-total="11"></span></div>
+    <div class="notes">总结本课的 9 个核心知识点。Entry 和 Listbox 是今天的主角，配合 if 判断和 Frame 布局，完成了备忘录核心功能。下节课预告激发继续学习的兴趣——从"只能添加"升级到"能选中和删除"，让备忘录真正实用。</div>
+  </section>
+
+</div>
+<script src="assets/runtime.js"></script>
+<script src="assets/animations/fx-runtime.js"></script>
+</body>
+</html>

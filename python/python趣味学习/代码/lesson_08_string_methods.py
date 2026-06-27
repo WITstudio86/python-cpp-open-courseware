@@ -1,0 +1,214 @@
+# ============================================================
+# 第8节：字符串的更多玩法
+# 主题：拼接、重复、大小写、去空格、替换、f-string
+# ============================================================
+
+# ===== 1. 拼接（+）=====
+print("===== 1. 字符串拼接（+）=====")
+
+first = "你好"
+second = "世界"
+print(first + second)                # 你好世界
+print(first + "，" + second + "！")   # 你好，世界！
+
+# 注意：+ 只能拼字符串，不能直接拼数字
+name = "小明"
+age = 10
+# print(name + "今年" + age + "岁")  # 错误！age是数字
+print(name + "今年" + str(age) + "岁")  # 正确：先转成字符串
+
+# 但用逗号分开就可以混搭！
+print(name, "今年", age, "岁")        # 用逗号最方便
+
+# ===== 2. 重复（*）=====
+print("\n===== 2. 重复（*）=====")
+
+print("哈" * 5)        # 哈哈哈哈哈
+print("=" * 30)        # 分隔线神器！
+print("重要！" * 3)    # 重要的事说三遍
+print("汪" * 10)       # 汪汪汪汪汪汪汪汪汪汪
+
+# 做各种好看的边框
+print("\n--- 各种边框 ---")
+print("★" * 20)
+print("♥" * 20)
+print("◆" * 20)
+print("-" * 20)
+print("~" * 20)
+
+# ===== 3. 大小写变换 =====
+print("\n===== 3. 大小写变换 =====")
+
+text = "hello python world"
+print("原文:", text)
+print("upper():", text.upper())        # HELLO PYTHON WORLD
+print("lower():", text.lower())        # hello python world
+print("title():", text.title())        # Hello Python World
+print("capitalize():", text.capitalize())  # Hello python world
+
+# 实用场景：统一用户名格式
+name1 = "XIAO MING"      # 全大写
+name2 = "xiao hong"      # 全小写
+name3 = "Xiao Gang"      # 混合
+print("\n统一格式：")
+print(name1.title())
+print(name2.title())
+print(name3.title())
+
+# ===== 4. 去除空格 strip() =====
+print("\n===== 4. 去除空格 =====")
+
+messy = "   你好，世界   "
+print("原始:|" + messy + "|")
+print("strip:|" + messy.strip() + "|")      # 去两边空格
+print("lstrip:|" + messy.lstrip() + "|")    # 去左边空格
+print("rstrip:|" + messy.rstrip() + "|")    # 去右边空格
+
+# 实用：用户输入常常带空格
+user_input = "   小明   "
+clean_input = user_input.strip()
+print(f"\n用户输入了: |{user_input}|")
+print(f"处理后: |{clean_input}|")
+
+# 组合使用：先 strip 再 title
+raw_name = "   xiao ming   "
+nice_name = raw_name.strip().title()
+print(f"\n原始:|{raw_name}| → 美化:|{nice_name}|")
+
+# ===== 5. 替换 replace() =====
+print("\n===== 5. 替换 replace() =====")
+
+message = "我喜欢吃苹果，苹果很好吃"
+print("原文:", message)
+print("苹果→西瓜:", message.replace("苹果", "西瓜"))
+print("苹果→草莓:", message.replace("苹果", "草莓"))
+
+# 替换敏感词
+text = "你是个大笨蛋！"
+clean = text.replace("笨蛋", "**")
+print(f"\n原文:{text}")
+print(f"过滤:{clean}")
+
+# 多个替换
+sentence = "今天天气真好，真开心"
+sentence = sentence.replace("真", "非常")
+print(f"\n替换'真'为'非常':{sentence}")
+
+# ===== 6. f-string（格式化字符串）=====
+print("\n===== 6. f-string =====")
+
+name = "小明"
+age = 10
+score = 95.5
+
+# 老方法：用 + 拼接（麻烦！）
+print("老方法: 我叫" + name + "，今年" + str(age) + "岁，考了" + str(score) + "分")
+
+# f-string：简单优雅！
+print(f"f-string: 我叫{name}，今年{age}岁，考了{score}分")
+
+# {} 里面可以写运算
+a = 15
+b = 25
+print(f"{a} + {b} = {a + b}")
+print(f"{a} × {b} = {a * b}")
+print(f"{a} 的平方 = {a ** 2}")
+
+# 格式化数字
+pi = 3.1415926535
+print(f"圆周率保留2位小数: {pi:.2f}")
+print(f"圆周率保留4位小数: {pi:.4f}")
+
+# 对齐排版
+print("\n--- 对齐排版 ---")
+print(f"|{'左对齐':<10}|")
+print(f"|{'居中显示':^10}|")
+print(f"|{'右对齐':>10}|")
+
+# 填充字符
+print(f"|{'填充':★^10}|")      # 用★填充
+print(f"|{'填充':-^10}|")      # 用-填充
+
+# ===== 7. 其他实用方法 =====
+print("\n===== 7. 其他实用方法 =====")
+
+# startswith / endswith
+filename = "homework.py"
+print(f"{filename} 以.py结尾吗？", filename.endswith(".py"))
+print(f"{filename} 以.txt结尾吗？", filename.endswith(".txt"))
+
+# count() 统计出现的次数
+text = "banana"
+print(f'"{text}" 中 a 出现了 {text.count("a")} 次')
+
+# find() 查找位置
+sentence = "我爱Python编程"
+position = sentence.find("Python")
+print(f'"Python" 在第 {position} 个位置（索引 {sentence.find("Python")}）')
+
+# ===== 8. 项目：奖状生成器 =====
+print("\n===== 8. 奖状生成器 =====")
+
+print("★" * 36)
+print("       🏆 荣誉奖状生成器 🏆")
+print("★" * 36)
+
+name = input("请输入获奖人姓名：").strip().title()
+award = input("请输入奖项名称：").strip().upper()
+reason = input("请输入获奖原因：").strip()
+date = input("请输入日期：").strip()
+
+print()
+print("╔" + "═" * 34 + "╗")
+print("║" + " " * 34 + "║")
+print(f"║  🎖   {name} 同学：".ljust(36) + "║")
+print("║" + " " * 34 + "║")
+print(f"║    在本次活动中表现优异，".ljust(36) + "║")
+print(f"║    荣获".ljust(36) + "║")
+print(f"║      《 {award} 》".center(38) + "║")
+print("║" + " " * 34 + "║")
+print(f"║    获奖原因：{reason}".ljust(36) + "║")
+print("║" + " " * 34 + "║")
+print(f"║    特发此状，以资鼓励！".ljust(36) + "║")
+print("║" + " " * 34 + "║")
+print(f"║                    {date}".ljust(36) + "║")
+print("║" + " " * 34 + "║")
+print("╚" + "═" * 34 + "╝")
+print()
+print(f"🏆 恭喜 {name} 同学获得 {award}！")
+
+
+# ============================================================
+# ✏️ 课堂练习
+# ============================================================
+
+# 练习1：基础操作
+# (1) 用 + 拼出 "你好，世界！" 这句话（分别用三个变量）
+# (2) 用 * 画出 15 个 ★ 组成的分隔线
+# (3) 把 "hello world" 分别变成全大写和首字母大写
+
+# 练习2：输入处理
+# 让用户输入一段带有空格和大小写混乱的文字
+# 用 strip() 去掉空格，用 title() 美化，然后输出
+
+# 练习3：句子改造
+# 让用户输入一句话，然后：
+# (1) 把所有的 "我" 替换成 "你"
+# (2) 在句子前后加上 "★★★"
+
+
+# ============================================================
+# 🏆 综合挑战：制作一张精美的电子贺卡
+# ============================================================
+# 结合今天学的所有字符串魔法，制作一张电子贺卡：
+# 1. 问用户：收卡人姓名、祝福语、发卡人姓名
+# 2. 用 f-string 把所有内容排版
+# 3. 用字符画边框（如 ╔══╗ 等）
+# 4. 用 .title() 美化姓名
+# 5. 用 * 和 + 构建装饰图案
+# 6. 输出一张完整的、好看的贺卡
+#
+# 提示：可以先在纸上画好贺卡的样子，再写代码
+
+# --- 在这里写你的代码 ---
+

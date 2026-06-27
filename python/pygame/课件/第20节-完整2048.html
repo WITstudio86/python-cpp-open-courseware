@@ -1,0 +1,869 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>第20节：完整2048 — Pygame编程课件</title>
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  :root {
+    --slide-width: 1280px;
+    --slide-height: 720px;
+    --bg: #fafafa;
+    --text: #2c2c2c;
+    --accent: #2563eb;
+    --accent-dark: #1d4ed8;
+    --code-bg: #1e1e2e;
+    --code-text: #cdd6f4;
+    --card-bg: #ffffff;
+    --border: #e2e8f0;
+    --muted: #64748b;
+    --gradient-start: #1e3a5f;
+    --gradient-end: #2563eb;
+  }
+
+  body {
+    font-family: -apple-system, "PingFang SC", "Microsoft YaHei", "Noto Sans SC", sans-serif;
+    background: #0f172a;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    min-height: 100vh;
+    overflow: hidden;
+    user-select: none;
+  }
+
+  .container {
+    position: relative;
+    width: var(--slide-width);
+    max-width: 98vw;
+    aspect-ratio: 16 / 9;
+    max-height: 98vh;
+    background: var(--bg);
+    border-radius: 12px;
+    overflow: hidden;
+    box-shadow: 0 25px 60px rgba(0,0,0,0.5);
+  }
+
+  .slides-wrapper {
+    position: relative;
+    width: 100%;
+    height: 100%;
+  }
+
+  .slide {
+    position: absolute;
+    inset: 0;
+    display: flex;
+    flex-direction: column;
+    opacity: 0;
+    transform: translateX(60px);
+    transition: opacity 0.4s ease, transform 0.4s ease;
+    pointer-events: none;
+    padding: 0;
+    overflow-y: auto;
+  }
+
+  .slide.active {
+    opacity: 1;
+    transform: translateX(0);
+    pointer-events: auto;
+  }
+
+  .slide.exit-left {
+    opacity: 0;
+    transform: translateX(-60px);
+  }
+
+  /* === TITLE BAR === */
+  .title-bar {
+    flex-shrink: 0;
+    background: linear-gradient(135deg, var(--gradient-start), var(--gradient-end));
+    color: #fff;
+    padding: 28px 48px 24px;
+    position: relative;
+    overflow: hidden;
+  }
+  .title-bar::after {
+    content: '';
+    position: absolute;
+    bottom: 0; left: 0; right: 0;
+    height: 4px;
+    background: linear-gradient(90deg, #fbbf24, #f59e0b, #ef4444, #8b5cf6, #06b6d4);
+  }
+  .title-bar h1 {
+    font-size: 38px;
+    font-weight: 700;
+    letter-spacing: 0.02em;
+    line-height: 1.3;
+  }
+  .title-bar .subtitle {
+    font-size: 20px;
+    opacity: 0.85;
+    margin-top: 4px;
+    font-weight: 400;
+  }
+
+  /* === BODY === */
+  .slide-body {
+    flex: 1;
+    padding: 36px 48px 40px;
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+    overflow-y: auto;
+  }
+
+  /* ===== SLIDE 1: TITLE SLIDE ===== */
+  .title-slide {
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    text-align: center;
+    background: linear-gradient(160deg, #f0f4ff 0%, #fafafa 40%, #fef9f0 100%);
+  }
+  .title-slide .title-bar {
+    display: none;
+  }
+  .title-slide .slide-body {
+    justify-content: center;
+    align-items: center;
+    gap: 12px;
+  }
+  .title-slide .big-number {
+    font-size: 120px;
+    font-weight: 900;
+    background: linear-gradient(135deg, #2563eb, #7c3aed);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+    line-height: 1;
+    margin-bottom: 8px;
+  }
+  .title-slide .main-title {
+    font-size: 52px;
+    font-weight: 800;
+    color: #1e293b;
+    line-height: 1.2;
+  }
+  .title-slide .sub-title-line {
+    font-size: 24px;
+    color: #64748b;
+    font-weight: 500;
+    margin-top: 4px;
+    letter-spacing: 0.05em;
+  }
+  .title-slide .meta-info {
+    margin-top: 32px;
+    font-size: 18px;
+    color: #94a3b8;
+    display: flex;
+    gap: 28px;
+  }
+
+  /* === TYPOGRAPHY === */
+  h2 { font-size: 34px; color: #1e293b; font-weight: 700; }
+  h3 { font-size: 26px; color: #334155; font-weight: 600; }
+  p, li { font-size: 26px; line-height: 1.6; color: #334155; }
+  ul, ol { padding-left: 36px; }
+  li { margin-bottom: 6px; }
+
+  .obj-list {
+    list-style: none;
+    padding-left: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+  }
+  .obj-list li {
+    display: flex;
+    align-items: flex-start;
+    gap: 14px;
+    font-size: 26px;
+    padding: 14px 20px;
+    background: var(--card-bg);
+    border-radius: 10px;
+    border-left: 5px solid var(--accent);
+    box-shadow: 0 1px 4px rgba(0,0,0,0.06);
+  }
+  .obj-list li .num {
+    flex-shrink: 0;
+    width: 38px;
+    height: 38px;
+    border-radius: 50%;
+    background: var(--accent);
+    color: #fff;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: 700;
+    font-size: 20px;
+  }
+
+  /* === CARDS === */
+  .card-row {
+    display: flex;
+    gap: 24px;
+  }
+  .card {
+    flex: 1;
+    background: var(--card-bg);
+    border-radius: 12px;
+    padding: 24px 28px;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.07);
+    border: 1px solid var(--border);
+  }
+  .card h3 { margin-bottom: 10px; font-size: 24px; }
+  .card p, .card li { font-size: 22px; }
+
+  /* === CODE BLOCKS === */
+  .code-block {
+    background: var(--code-bg);
+    border-radius: 10px;
+    padding: 20px 26px;
+    font-family: 'JetBrains Mono', 'Fira Code', 'Cascadia Code', 'SF Mono', 'Consolas', monospace;
+    font-size: 20px;
+    line-height: 1.55;
+    color: var(--code-text);
+    overflow-x: auto;
+    white-space: pre;
+    box-shadow: 0 4px 16px rgba(0,0,0,0.2);
+    border: 1px solid #313244;
+    position: relative;
+  }
+  .code-block .kw  { color: #c792ea; } /* def, class, import, from, as, pass, is, in, not, and, or, with, global, nonlocal */
+  .code-block .ctrl { color: #f78c6c; } /* if, elif, else, for, while, return, break, continue, try, except, raise, finally */
+  .code-block .fn  { color: #ffcb6b; } /* function name calls */
+  .code-block .str { color: #c3e88d; } /* strings */
+  .code-block .num { color: #f78c6c; } /* numbers */
+  .code-block .cm  { color: #676e95; font-style: italic; } /* comments */
+  .code-block .op  { color: #89ddff; } /* operators */
+  .code-block .bif { color: #82aaff; } /* builtin functions */
+  .code-block .var { color: #eeffff; } /* variable */
+  .code-block .decor { color: #c792ea; } /* decorator */
+  .code-file-label {
+    display: inline-block;
+    background: #313244;
+    color: #a6adc8;
+    font-size: 14px;
+    padding: 4px 14px;
+    border-radius: 6px 6px 0 0;
+    font-family: 'JetBrains Mono', 'Fira Code', monospace;
+    margin-bottom: -1px;
+  }
+
+  /* === FLOW DIAGRAM === */
+  .flow-box {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    align-items: center;
+  }
+  .flow-row {
+    display: flex;
+    gap: 16px;
+    flex-wrap: wrap;
+    justify-content: center;
+  }
+  .flow-step {
+    background: #fff;
+    border: 2px solid var(--accent);
+    border-radius: 10px;
+    padding: 10px 24px;
+    font-size: 22px;
+    font-weight: 600;
+    color: #1e293b;
+    text-align: center;
+    min-width: 140px;
+  }
+  .flow-arrow {
+    font-size: 28px;
+    color: var(--accent);
+    font-weight: bold;
+  }
+  .flow-step.branch {
+    border-color: #f59e0b;
+    background: #fffbeb;
+    border-style: dashed;
+  }
+  .flow-step.result {
+    border-color: #10b981;
+    background: #ecfdf5;
+  }
+
+  /* === TAG / BADGE === */
+  .tag {
+    display: inline-block;
+    padding: 3px 12px;
+    border-radius: 20px;
+    font-size: 16px;
+    font-weight: 600;
+    letter-spacing: 0.03em;
+  }
+  .tag-warn { background: #fef3c7; color: #92400e; }
+  .tag-ok   { background: #d1fae5; color: #065f46; }
+  .tag-info { background: #dbeafe; color: #1e40af; }
+
+  /* === WARN / NOTE BOX === */
+  .note-box {
+    background: #fffbeb;
+    border: 1px solid #fcd34d;
+    border-radius: 10px;
+    padding: 16px 22px;
+    display: flex;
+    align-items: flex-start;
+    gap: 12px;
+    font-size: 24px;
+    color: #78350f;
+  }
+  .note-box .icon { font-size: 30px; flex-shrink: 0; }
+  .info-box {
+    background: #eff6ff;
+    border: 1px solid #93c5fd;
+    border-radius: 10px;
+    padding: 16px 22px;
+    display: flex;
+    align-items: flex-start;
+    gap: 12px;
+    font-size: 24px;
+    color: #1e3a5f;
+  }
+
+  /* === NAV === */
+  .nav-info {
+    position: absolute;
+    bottom: 14px;
+    right: 28px;
+    font-size: 16px;
+    color: #94a3b8;
+    font-weight: 500;
+    z-index: 10;
+  }
+  .nav-hint {
+    position: absolute;
+    bottom: 14px;
+    left: 28px;
+    font-size: 14px;
+    color: #cbd5e1;
+    z-index: 10;
+  }
+  .nav-area {
+    position: absolute;
+    top: 0;
+    bottom: 0;
+    width: 80px;
+    cursor: pointer;
+    z-index: 9;
+  }
+  .nav-area.left  { left: 0; }
+  .nav-area.right { right: 0; }
+
+  /* === HIGHLIGHT === */
+  .hl { color: var(--accent); font-weight: 700; }
+
+  /* ========== RESPONSIVE SCALING ========== */
+  @media (max-width: 1340px) {
+    .container {
+      width: 100vw;
+      max-width: 100vw;
+      height: auto;
+      aspect-ratio: 16/9;
+      border-radius: 0;
+    }
+    .code-block { font-size: 16px; }
+    h2 { font-size: 28px; }
+    p, li { font-size: 22px; }
+  }
+  @media (max-width: 960px) {
+    .container { border-radius: 0; }
+    .slide-body { padding: 20px 24px; }
+    .title-bar { padding: 20px 24px 16px; }
+    .title-bar h1 { font-size: 28px; }
+    h2 { font-size: 24px; }
+    p, li { font-size: 18px; }
+    .code-block { font-size: 14px; padding: 12px 16px; }
+  }
+</style>
+</head>
+<body>
+
+<div class="container">
+  <div class="nav-area left"  onclick="prevSlide()"></div>
+  <div class="nav-area right" onclick="nextSlide()"></div>
+
+  <div class="slides-wrapper" id="slidesWrapper">
+  </div>
+
+  <div class="nav-hint">← → 方向键翻页 | 点击左右边缘翻页</div>
+  <div class="nav-info" id="navInfo"></div>
+</div>
+
+<script>
+// ==================== SLIDE DATA ====================
+const slides = [];
+
+// --- helper: highlight Python code ---
+function h(code) {
+  return code
+    // decorators first
+    .replace(/(@\w+)/g, '<span class="decor">$1</span>')
+    // comments
+    .replace(/(#.*)/g, '<span class="cm">$1</span>')
+    // strings (single, double, triple)
+    .replace(/("""[\s\S]*?""")/g, '<span class="str">$1</span>')
+    .replace(/('''[\s\S]*?''')/g, '<span class="str">$1</span>')
+    .replace(/("(?:[^"\\]|\\.)*")/g, '<span class="str">$1</span>')
+    .replace(/('(?:[^'\\]|\\.)*')/g, '<span class="str">$1</span>')
+    // numbers
+    .replace(/\b(\d+\.?\d*)\b/g, '<span class="num">$1</span>')
+    // keywords: import, from, as, def, class, pass, None, True, False, is, in, and, or, not, with, global, nonlocal, lambda
+    .replace(/\b(import|from|as|def|class|pass|None|True|False|is|in|and|or|not|with|global|nonlocal|lambda|yield|assert|del|raise)\b/g, '<span class="kw">$1</span>')
+    // control flow: if, elif, else, for, while, return, break, continue, try, except, finally
+    .replace(/\b(if|elif|else|for|while|return|break|continue|try|except|finally)\b/g, '<span class="ctrl">$1</span>')
+    // builtins: print, range, len, open, int, str, list, dict, set, tuple, input, enumerate, zip, map, filter, sorted, reversed, min, max, sum, abs, round, type, isinstance, hasattr, getattr, setattr, super, all, any, chr, ord, bool, float, list, dict, tuple, set
+    .replace(/\b(print|range|len|open|int|str|list|dict|set|tuple|input|enumerate|zip|map|filter|sorted|reversed|min|max|sum|abs|round|type|isinstance|hasattr|getattr|setattr|super|all|any|chr|ord|bool|float|copy|deepcopy|append)\b/g, '<span class="bif">$1</span>')
+    // function names (word immediately followed by opening paren, but not after def or keywords)
+    .replace(/(?<!\bdef\s)(?<!\bclass\s)(?<!\bif\s)(?<!\belif\s)(?<!\bfor\s)(?<!\bwhile\s)(?<!\breturn\s)(?<!\band\s)(?<!\bor\s)(?<!\bnot\s)(?<!\bis\s)(?<!\bin\s)(?<!\bimport\s)(?<!\bfrom\s)(?<!\bwith\s)(?<!\bexcept\s)(?<!\braise\s)(?<!\bassert\s)\b([a-zA-Z_]\w*)\s*\(/g, (m, fn) => m.replace(fn, `<span class="fn">${fn}</span>`))
+    // operators (keep last)
+    .replace(/([=+\-*\/%<>&|^~!]+)/g, '<span class="op">$1</span>');
+}
+
+function codeBlock(codeText, label) {
+  let labelHtml = label ? `<div class="code-file-label">${label}</div>` : '';
+  return `${labelHtml}<div class="code-block">${h(codeText)}</div>`;
+}
+
+// ==================== BUILD SLIDES ====================
+
+// --- Slide 1: Title ---
+slides.push(`
+<div class="slide active title-slide" data-index="0">
+  <div class="slide-body">
+    <div class="big-number">2048</div>
+    <div class="main-title">第20节：完整2048</div>
+    <div class="sub-title-line">深拷贝判断 · 胜负判定 · 最高分记录</div>
+    <div class="meta-info">
+      <span>Pygame游戏编程课程</span>
+      <span>|</span>
+      <span>第二课时</span>
+      <span>|</span>
+      <span>10-15岁</span>
+    </div>
+  </div>
+</div>
+`);
+
+// --- Slide 2: 本节目标 ---
+slides.push(`
+<div class="slide" data-index="1">
+  <div class="title-bar"><h1>本节目标</h1></div>
+  <div class="slide-body">
+    <ul class="obj-list">
+      <li><span class="num">1</span><span>理解<b>无效移动</b>的概念：按下方向键但棋盘没有变化时，不应生成新数字</span></li>
+      <li><span class="num">2</span><span>掌握 <span class="hl">copy.deepcopy()</span> 深拷贝，用于保存移动前的棋盘状态</span></li>
+      <li><span class="num">3</span><span>实现 <span class="hl">胜负判定</span> 逻辑：检测2048出现 → 胜利；无空格且无可合并 → 失败</span></li>
+      <li><span class="num">4</span><span>学习 <span class="hl">文件读写</span> 保存和加载最高分记录</span></li>
+      <li><span class="num">5</span><span>完成完整的2048游戏，具备商业级别的基本游戏循环</span></li>
+    </ul>
+  </div>
+</div>
+`);
+
+// --- Slide 3: 上节回顾 ---
+slides.push(`
+<div class="slide" data-index="2">
+  <div class="title-bar"><h1>上节回顾 —— 2048基础</h1></div>
+  <div class="slide-body">
+    <div class="card-row">
+      <div class="card">
+        <h3>已完成的功能</h3>
+        <ul>
+          <li>创建 4&times;4 棋盘（二维列表）</li>
+          <li>方向键监听与移动逻辑</li>
+          <li>数字合并（相同数字合并为和）</li>
+          <li>随机在空位生成 2 或 4</li>
+          <li>PyGame 图形渲染</li>
+        </ul>
+      </div>
+      <div class="card">
+        <h3>存在的问题</h3>
+        <ul>
+          <li>⏳ 无效移动仍会出新数字</li>
+          <li>⏳ 没有胜利条件判断</li>
+          <li>⏳ 无法判断游戏结束</li>
+          <li>⏳ 没有分数持久化</li>
+          <li>⏳ 缺少结束界面</li>
+        </ul>
+      </div>
+    </div>
+    <div class="note-box">
+      <span class="icon">💡</span>
+      <span>本节要做的，就是把这些"坑"一个一个填上，让2048成为一个完整的游戏！</span>
+    </div>
+  </div>
+</div>
+`);
+
+// --- Slide 4: 问题引入 ---
+slides.push(`
+<div class="slide" data-index="3">
+  <div class="title-bar"><h1>问题引入 —— 无效移动</h1></div>
+  <div class="slide-body">
+    <h2>场景：你按了方向键，但棋盘根本没变！</h2>
+    <p style="margin-top:8px;">比如最上面一行已经全是数字了，再按"上"，不会有任何变化。</p>
+    <div class="card-row" style="margin-top:12px;">
+      <div class="card" style="text-align:center;">
+        <h3>❌ 错误做法</h3>
+        <p style="font-size:28px;">不管三七二十一，每次按键都生成一个新数字</p>
+        <p style="color:#ef4444; font-weight:700; font-size:24px; margin-top:8px;">结果：明明没有移动，数字却凭空出现！</p>
+      </div>
+      <div class="card" style="text-align:center;">
+        <h3>✅ 正确做法</h3>
+        <p style="font-size:28px;">移动前先"拍照"保存棋盘，移动后对比</p>
+        <p style="color:#10b981; font-weight:700; font-size:24px; margin-top:8px;">棋盘变了 → 生成新数字<br>棋盘没变 → 跳过</p>
+      </div>
+    </div>
+    <div class="info-box" style="margin-top:12px;">
+      <span class="icon">🔑</span>
+      <span>核心思路：<b>移动前保存棋盘副本</b> → 执行移动 → <b>比较是否变化</b> → 决定是否生成新数字</span>
+    </div>
+  </div>
+</div>
+`);
+
+// --- Slide 5: 深拷贝 ---
+slides.push(`
+<div class="slide" data-index="4">
+  <div class="title-bar"><h1>深拷贝 copy.deepcopy()</h1></div>
+  <div class="slide-body">
+    <h2>为什么要用 deepcopy？</h2>
+    <div class="card-row">
+      <div class="card">
+        <h3>浅拷贝 = 赋值</h3>
+        ${codeBlock('board = [[0,2,4,8],\\n         [0,0,0,0],\\n         [0,0,0,0],\\n         [0,0,0,0]]\\nold_board = board  # 指向同一块内存！', '错误示范')}
+        <p style="color:#ef4444; font-size:20px; margin-top:8px;">修改 board 时 old_board 也会跟着变！没法比较！</p>
+      </div>
+      <div class="card">
+        <h3>深拷贝 = 完全独立复制</h3>
+        ${codeBlock('import copy\\n\\nboard = [[0,2,4,8],\\n         [0,0,0,0],\\n         [0,0,0,0],\\n         [0,0,0,0]]\\nold_board = copy.deepcopy(board)\\n# 完全独立的副本，互不影响！', '正确做法')}
+      </div>
+    </div>
+    <div class="note-box" style="margin-top:8px;">
+      <span class="icon">📌</span>
+      <span><b>记忆口诀：</b>浅拷贝"照镜子"，深拷贝"克隆人"——克隆人可以独立行动，镜子里的人不行！</span>
+    </div>
+  </div>
+</div>
+`);
+
+// --- Slide 6: 移动有效性判断流程 ---
+slides.push(`
+<div class="slide" data-index="5">
+  <div class="title-bar"><h1>移动有效性判断流程</h1></div>
+  <div class="slide-body">
+    <h2>判断流程（4步）</h2>
+    <div class="flow-box" style="margin-top:8px;">
+      <div class="flow-row">
+        <div class="flow-step">1. deepcopy 保存棋盘</div>
+        <span class="flow-arrow">→</span>
+        <div class="flow-step">2. 执行移动 + 合并</div>
+        <span class="flow-arrow">→</span>
+        <div class="flow-step">3. 比较两个棋盘</div>
+        <span class="flow-arrow">→</span>
+        <div class="flow-step result">4. 相同→跳过<br>不同→生成数字</div>
+      </div>
+    </div>
+    ${codeBlock(`import copy\\n\\ndef handle_move(board, direction):\\n    old_board = copy.deepcopy(board)  # ① 保存\\n\\n    # ② 执行移动与合并（上节课的代码）\\n    move_and_merge(board, direction)\\n\\n    # ③ 比较\\n    if old_board != board:\\n        # ④ 棋盘变了 → 生成新数字\\n        spawn_new_number(board)\\n    # 棋盘没变 → 什么都不做`, '核心代码模式')}
+  </div>
+</div>
+`);
+
+// --- Slide 7: 胜利条件 ---
+slides.push(`
+<div class="slide" data-index="6">
+  <div class="title-bar"><h1>胜利条件检测</h1></div>
+  <div class="slide-body">
+    <div class="card-row">
+      <div class="card" style="flex:1.5;">
+        <h3>判断逻辑</h3>
+        <p style="font-size:26px;">遍历棋盘的 <b>每一个格子</b>，只要有一个格子的值 <span class="hl">≥ 2048</span>，就判定为胜利！</p>
+        <div class="tag tag-ok" style="margin-top:12px; font-size:18px;">找到 2048 → 🎉 恭喜通关！</div>
+      </div>
+      <div class="card" style="flex:1;">
+        ${codeBlock(`def check_win(board):\\n    \"\"\"检测是否胜利\"\"\"\\n    for row in range(4):\\n        for col in range(4):\\n            if board[row][col] >= 2048:\\n                return True\\n    return False`, 'win_check.py')}
+      </div>
+    </div>
+    <div class="info-box" style="margin-top:10px;">
+      <span class="icon">🎮</span>
+      <span>胜利后可以弹出"你赢了！"的提示，并让玩家选择<b>继续游戏</b>或<b>重新开始</b>。</span>
+    </div>
+  </div>
+</div>
+`);
+
+// --- Slide 8: 失败条件 ---
+slides.push(`
+<div class="slide" data-index="7">
+  <div class="title-bar"><h1>失败条件检测</h1></div>
+  <div class="slide-body">
+    <h2>两步检查法</h2>
+    <div class="card-row">
+      <div class="card">
+        <h3>第1步：有空位吗？</h3>
+        ${codeBlock(`def has_empty(board):\\n    for row in board:\\n        if 0 in row:\\n            return True\\n    return False`)}
+        <p style="margin-top:8px; font-size:22px;">有空位 → <span class="hl">还能继续</span></p>
+      </div>
+      <div class="card">
+        <h3>第2步：有相邻相同数字吗？</h3>
+        ${codeBlock(`def can_merge(board):\\n    for i in range(4):\\n        for j in range(4):\\n            # 检查右邻\\n            if j < 3 and board[i][j] == board[i][j+1]:\\n                return True\\n            # 检查下邻\\n            if i < 3 and board[i][j] == board[i+1][j]:\\n                return True\\n    return False`)}
+      </div>
+    </div>
+    <div class="note-box" style="margin-top:10px;">
+      <span class="icon">⚠️</span>
+      <span><b>两个条件都不满足 = 游戏结束！</b>没有空位（第1步）<b>且</b>没有相邻相同数字（第2步）→ Game Over</span>
+    </div>
+  </div>
+</div>
+`);
+
+// --- Slide 9: 最高分记录 ---
+slides.push(`
+<div class="slide" data-index="8">
+  <div class="title-bar"><h1>最高分记录</h1></div>
+  <div class="slide-body">
+    <div class="card-row">
+      <div class="card">
+        <h3>保存最高分</h3>
+        ${codeBlock(`def save_high_score(score):\\n    \"\"\"将最高分写入文件\"\"\"\\n    with open("high_score.txt", "w") as f:\\n        f.write(str(score))`)}
+      </div>
+      <div class="card">
+        <h3>加载最高分</h3>
+        ${codeBlock(`def load_high_score():\\n    \"\"\"从文件读取最高分\"\"\"\\n    try:\\n        with open("high_score.txt", "r") as f:\\n            return int(f.read())\\n    except FileNotFoundError:\\n        return 0  # 首次玩，返回0`)}
+      </div>
+    </div>
+    <h3 style="margin-top:12px;">在游戏循环中使用</h3>
+    ${codeBlock(`high_score = load_high_score()  # 游戏启动时读取\\n\\n# 在游戏中\\nif current_score > high_score:\\n    high_score = current_score\\n    save_high_score(high_score)  # 刷新纪录时保存`)}
+    <div class="info-box" style="margin-top:8px;">
+      <span class="icon">💾</span>
+      <span><b>文件读写模式：</b>"r" = 读取, "w" = 写入（会覆盖）, 使用 <span class="hl">try/except</span> 处理首次运行时文件不存在的情况</span>
+    </div>
+  </div>
+</div>
+`);
+
+// --- Slide 10: 完整游戏流程图 ---
+slides.push(`
+<div class="slide" data-index="9">
+  <div class="title-bar"><h1>完整游戏流程图</h1></div>
+  <div class="slide-body" style="align-items:center; justify-content:center;">
+    <div class="flow-box" style="width:100%;">
+      <div class="flow-row">
+        <div class="flow-step">初始化棋盘 & 加载最高分</div>
+      </div>
+      <span class="flow-arrow">↓</span>
+      <div class="flow-row">
+        <div class="flow-step">等待玩家按键</div>
+      </div>
+      <span class="flow-arrow">↓</span>
+      <div class="flow-row">
+        <div class="flow-step">deepcopy 保存旧棋盘</div>
+        <span class="flow-arrow">→</span>
+        <div class="flow-step">执行移动+合并</div>
+        <span class="flow-arrow">→</span>
+        <div class="flow-step branch">棋盘变了？</div>
+      </div>
+      <div style="display:flex; gap:40px; margin-top:4px;">
+        <div style="text-align:center;">
+          <span class="tag tag-ok" style="font-size:18px;">是 → 生成新数字</span>
+          <div style="margin-top:6px;">
+            <span class="flow-arrow" style="display:block;">↓</span>
+            <div class="flow-step result" style="display:inline-block;margin-top:4px;">更新分数 & 检查最高分</div>
+          </div>
+        </div>
+        <div style="text-align:center;">
+          <span class="tag tag-warn" style="font-size:18px;">否 → 跳过</span>
+          <div style="margin-top:6px;">
+            <span class="flow-arrow" style="display:block;">↓</span>
+            <div class="flow-step" style="display:inline-block;margin-top:4px;">返回等待按键</div>
+          </div>
+        </div>
+      </div>
+      <span class="flow-arrow" style="margin-top:8px;">↓</span>
+      <div class="flow-row">
+        <div class="flow-step branch">检测胜利？</div>
+        <span class="flow-arrow">|</span>
+        <div class="flow-step branch">检测失败？</div>
+      </div>
+      <span class="flow-arrow" style="margin-top:4px;">↓</span>
+      <div class="flow-row">
+        <div class="flow-step result">胜利/失败 → 显示结束画面</div>
+        <span class="flow-arrow">→</span>
+        <div class="flow-step">保存最高分 → 循环回到按键</div>
+      </div>
+    </div>
+  </div>
+</div>
+`);
+
+// --- Slide 11: 课堂练习 ---
+slides.push(`
+<div class="slide" data-index="10">
+  <div class="title-bar"><h1>课堂练习</h1></div>
+  <div class="slide-body">
+    <div class="obj-list">
+      <li>
+        <span class="num">1</span>
+        <div>
+          <b>实现 deepcopy 有效性检查</b> <span class="tag tag-info">⏱ 10分钟</span>
+          <p style="font-size:22px; margin-top:4px;">在 handle_move 函数中，用 copy.deepcopy() 保存旧棋盘，移动后比较，仅在棋盘变化时生成新数字。</p>
+        </div>
+      </li>
+      <li>
+        <span class="num">2</span>
+        <div>
+          <b>添加胜负检测</b> <span class="tag tag-info">⏱ 8分钟</span>
+          <p style="font-size:22px; margin-top:4px;">编写 check_win() 和 check_lose() 函数，在每次有效移动后调用，检测游戏是否结束。</p>
+        </div>
+      </li>
+      <li>
+        <span class="num">3</span>
+        <div>
+          <b>实现最高分与结束画面</b> <span class="tag tag-info">⏱ 7分钟</span>
+          <p style="font-size:22px; margin-top:4px;">用文件读写保存/加载最高分，设计胜利和失败的结束画面（可用简单的文字渲染）。</p>
+        </div>
+      </li>
+    </ul>
+    <div class="note-box" style="margin-top:4px;">
+      <span class="icon">💪</span>
+      <span><b>挑战任务：</b>完成得快的同学，可以尝试在胜利后弹出一个对话框，让玩家选择"继续"还是"重新开始"！</span>
+    </div>
+  </div>
+</div>
+`);
+
+// --- Slide 12: 本节总结 ---
+slides.push(`
+<div class="slide" data-index="11">
+  <div class="title-bar"><h1>本节总结</h1></div>
+  <div class="slide-body">
+    <div class="card-row">
+      <div class="card">
+        <h3>核心知识点</h3>
+        <ul style="padding-left:22px;">
+          <li style="font-size:24px;"><span class="hl">深拷贝 vs 浅拷贝</span>：copy.deepcopy() 创建完全独立的副本</li>
+          <li style="font-size:24px;"><span class="hl">移动有效性判断</span>：保存 → 移动 → 比较 → 决定</li>
+          <li style="font-size:24px;"><span class="hl">胜负判定</span>：遍历检查2048 / 两步检查法</li>
+          <li style="font-size:24px;"><span class="hl">文件读写</span>：open() + try/except 持久化数据</li>
+        </ul>
+      </div>
+      <div class="card">
+        <h3>知识连接</h3>
+        <ul style="padding-left:22px;">
+          <li style="font-size:24px;">copy 模块 → Python 标准库</li>
+          <li style="font-size:24px;">try/except → 异常处理机制</li>
+          <li style="font-size:24px;">文件I/O → 数据持久化基础</li>
+          <li style="font-size:24px;">二维列表遍历 → 算法思维训练</li>
+        </ul>
+      </div>
+    </div>
+    <div class="card" style="margin-top:10px;">
+      <h3>课后作业</h3>
+      <p style="font-size:24px;">将本节课所有功能整合到你的2048项目中，完成一个<b>完整可玩的游戏</b>。要求：</p>
+      <ol style="padding-left:26px; margin-top:4px;">
+        <li style="font-size:24px;">无效移动不生成新数字</li>
+        <li style="font-size:24px;">达到2048显示胜利画面</li>
+        <li style="font-size:24px;">无法移动时显示失败画面</li>
+        <li style="font-size:24px;">最高分能保存到文件，下次启动时自动加载</li>
+      </ol>
+    </div>
+  </div>
+</div>
+`);
+
+// Add slides 5-12 to the slide numbering fix: now we have 12 slides
+// But wait, we need to recount. Let's check:
+// 0: Title, 1: Objectives, 2: Review, 3: Problem Intro, 4: Deepcopy,
+// 5: Move Validity Flow, 6: Win Check, 7: Lose Check, 8: High Score,
+// 9: Flow Diagram, 10: Exercises, 11: Summary
+// That's 12 slides. Good.
+
+// Update slide count display
+const totalSlides = slides.length;
+const navInfo = document.getElementById('navInfo');
+navInfo.textContent = `1 / ${totalSlides}`;
+
+// ==================== RENDER SLIDES ====================
+const wrapper = document.getElementById('slidesWrapper');
+wrapper.innerHTML = slides.join('\n');
+
+// ==================== NAVIGATION ====================
+let current = 0;
+
+function showSlide(index) {
+  if (index < 0 || index >= totalSlides) return;
+
+  const allSlides = wrapper.querySelectorAll('.slide');
+  const oldSlide = allSlides[current];
+  const newSlide = allSlides[index];
+
+  if (current === index) return;
+
+  // Direction of movement
+  if (index > current) {
+    // Going forward: old slides out left
+    oldSlide.classList.remove('active');
+    oldSlide.classList.add('exit-left');
+  } else {
+    // Going backward: old slides out right (fade only)
+    oldSlide.classList.remove('active');
+    oldSlide.classList.remove('exit-left');
+  }
+
+  newSlide.classList.remove('exit-left');
+  newSlide.classList.add('active');
+
+  current = index;
+  navInfo.textContent = `${current + 1} / ${totalSlides}`;
+
+  // Scroll new slide to top
+  newSlide.scrollTop = 0;
+}
+
+function nextSlide() { showSlide(current + 1); }
+function prevSlide() { showSlide(current - 1); }
+
+// ==================== KEYBOARD ====================
+document.addEventListener('keydown', (e) => {
+  if (e.key === 'ArrowRight' || e.key === 'ArrowDown' || e.key === ' ') {
+    e.preventDefault();
+    nextSlide();
+  } else if (e.key === 'ArrowLeft' || e.key === 'ArrowUp') {
+    e.preventDefault();
+    prevSlide();
+  } else if (e.key === 'Home') {
+    e.preventDefault();
+    showSlide(0);
+  } else if (e.key === 'End') {
+    e.preventDefault();
+    showSlide(totalSlides - 1);
+  }
+});
+
+// ==================== TOUCH ====================
+let touchStartX = 0;
+document.addEventListener('touchstart', (e) => {
+  touchStartX = e.touches[0].clientX;
+});
+document.addEventListener('touchend', (e) => {
+  const diff = e.changedTouches[0].clientX - touchStartX;
+  if (Math.abs(diff) > 50) {
+    if (diff < 0) nextSlide();
+    else prevSlide();
+  }
+});
+</script>
+
+</body>
+</html>

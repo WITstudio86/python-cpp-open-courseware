@@ -1,0 +1,800 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>第30课：多重背包与分组背包</title>
+<style>
+/* ========== 基础样式与深色主题 ========== */
+:root {
+    --bg-primary: #1a1a2e;
+    --bg-secondary: #16213e;
+    --bg-tertiary: #0f3460;
+    --text-primary: #e0e0e0;
+    --text-secondary: #b0b0b0;
+    --accent: #e94560;
+    --accent-light: #ff6b81;
+    --code-bg: #1e2a3a;
+    --code-border: #2a3a5c;
+    --keyword: #5dade2;
+    --string: #2ecc71;
+    --comment: #7f8c8d;
+    --number: #f39c12;
+    --type: #a569bd;
+    --table-border: #2a3a5c;
+    --slide-width: 90vw;
+    --slide-max-width: 960px;
+}
+
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+body {
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "PingFang SC",
+                 "Hiragino Sans GB", "Microsoft YaHei", "Helvetica Neue",
+                 Helvetica, Arial, sans-serif;
+    background: var(--bg-primary);
+    color: var(--text-primary);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    min-height: 100vh;
+    overflow-x: hidden;
+    line-height: 1.7;
+}
+
+/* ========== 幻灯片容器 ========== */
+.slides-container {
+    position: relative;
+    width: var(--slide-width);
+    max-width: var(--slide-max-width);
+    min-height: 70vh;
+    margin: 20px auto;
+    perspective: 1000px;
+}
+
+.slide {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    background: var(--bg-secondary);
+    border: 1px solid var(--table-border);
+    border-radius: 16px;
+    padding: 48px 56px;
+    opacity: 0;
+    transform: translateX(60px);
+    transition: opacity 0.45s ease, transform 0.45s ease;
+    pointer-events: none;
+    box-shadow: 0 8px 40px rgba(0, 0, 0, 0.4);
+    max-height: 75vh;
+    overflow-y: auto;
+}
+
+.slide.active {
+    opacity: 1;
+    transform: translateX(0);
+    pointer-events: all;
+    position: relative;
+}
+
+.slide.exit-left {
+    opacity: 0;
+    transform: translateX(-60px);
+}
+
+/* ========== 幻灯片标题 ========== */
+.slide h1 {
+    font-size: 2.2em;
+    color: var(--accent);
+    margin-bottom: 24px;
+    border-bottom: 2px solid var(--accent);
+    padding-bottom: 12px;
+    text-align: center;
+}
+
+.slide h2 {
+    font-size: 1.6em;
+    color: var(--accent-light);
+    margin: 28px 0 12px;
+}
+
+.slide h3 {
+    font-size: 1.25em;
+    color: #f0c040;
+    margin: 20px 0 8px;
+}
+
+.slide p, .slide li {
+    font-size: 1.05em;
+    margin-bottom: 8px;
+    color: var(--text-primary);
+}
+
+.slide ul, .slide ol {
+    padding-left: 28px;
+    margin-bottom: 16px;
+}
+
+.slide li {
+    margin-bottom: 6px;
+}
+
+/* ========== 标题页特殊样式 ========== */
+.slide-title {
+    text-align: center;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    min-height: 55vh;
+}
+
+.slide-title h1 {
+    font-size: 3em;
+    border-bottom: none;
+    margin-bottom: 16px;
+}
+
+.slide-title .subtitle {
+    font-size: 1.4em;
+    color: var(--text-secondary);
+    margin-bottom: 32px;
+}
+
+.slide-title .badge {
+    display: inline-block;
+    background: var(--accent);
+    color: #fff;
+    padding: 8px 24px;
+    border-radius: 24px;
+    font-size: 1.1em;
+    margin: 6px;
+}
+
+.slide-title .tags {
+    margin-top: 24px;
+}
+
+/* ========== 代码块 ========== */
+pre {
+    background: var(--code-bg);
+    border: 1px solid var(--code-border);
+    border-radius: 10px;
+    padding: 18px 22px;
+    overflow-x: auto;
+    font-family: "Fira Code", "Cascadia Code", "JetBrains Mono", "SF Mono",
+                 Consolas, "Liberation Mono", Menlo, monospace;
+    font-size: 0.9em;
+    line-height: 1.65;
+    margin: 12px 0;
+    white-space: pre-wrap;
+    word-break: break-word;
+    tab-size: 4;
+}
+
+code {
+    font-family: "Fira Code", "Cascadia Code", "JetBrains Mono", "SF Mono",
+                 Consolas, "Liberation Mono", Menlo, monospace;
+}
+
+/* 语法高亮 */
+.kw { color: #5dade2; font-weight: bold; }   /* 关键字 */
+.st { color: #2ecc71; }                       /* 字符串 */
+.cm { color: #7f8c8d; font-style: italic; }   /* 注释 */
+.nu { color: #f39c12; }                       /* 数字 */
+.tp { color: #a569bd; }                       /* 类型/头文件 */
+.fn { color: #f1c40f; }                       /* 函数名 */
+.op { color: #e74c3c; }                       /* 运算符 */
+
+/* ========== 表格 ========== */
+table {
+    width: 100%;
+    border-collapse: collapse;
+    margin: 16px 0;
+    font-size: 0.95em;
+}
+
+th, td {
+    border: 1px solid var(--table-border);
+    padding: 10px 14px;
+    text-align: left;
+}
+
+th {
+    background: var(--bg-tertiary);
+    color: var(--accent-light);
+    font-weight: bold;
+}
+
+td {
+    background: var(--code-bg);
+}
+
+tr:nth-child(even) td {
+    background: #1a2740;
+}
+
+/* ========== 强调 / 公式 / 标注 ========== */
+.highlight {
+    color: var(--accent-light);
+    font-weight: bold;
+}
+
+.formula {
+    display: inline-block;
+    background: var(--code-bg);
+    border: 1px solid var(--code-border);
+    border-radius: 6px;
+    padding: 4px 10px;
+    font-family: "Fira Code", "JetBrains Mono", Consolas, monospace;
+    font-size: 0.95em;
+    margin: 2px 0;
+}
+
+.note {
+    background: rgba(233, 69, 96, 0.12);
+    border-left: 4px solid var(--accent);
+    padding: 12px 18px;
+    border-radius: 0 8px 8px 0;
+    margin: 12px 0;
+    font-size: 0.95em;
+}
+
+/* ========== 导航栏 ========== */
+.nav-bar {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 24px;
+    padding: 16px 0;
+    margin-top: 8px;
+}
+
+.nav-btn {
+    background: var(--bg-tertiary);
+    color: var(--text-primary);
+    border: 1px solid var(--table-border);
+    border-radius: 8px;
+    padding: 10px 28px;
+    font-size: 1em;
+    cursor: pointer;
+    transition: background 0.25s, transform 0.15s;
+    user-select: none;
+}
+
+.nav-btn:hover {
+    background: var(--accent);
+    color: #fff;
+    transform: translateY(-2px);
+}
+
+.nav-btn:active {
+    transform: translateY(0);
+}
+
+.nav-btn:disabled {
+    opacity: 0.35;
+    cursor: not-allowed;
+    pointer-events: none;
+}
+
+/* ========== 页码指示器 (圆点) ========== */
+.page-indicator {
+    display: flex;
+    gap: 10px;
+    justify-content: center;
+    align-items: center;
+}
+
+.dot {
+    width: 12px;
+    height: 12px;
+    border-radius: 50%;
+    background: var(--table-border);
+    cursor: pointer;
+    transition: background 0.3s, transform 0.2s;
+}
+
+.dot.active {
+    background: var(--accent);
+    transform: scale(1.35);
+}
+
+.dot:hover {
+    background: var(--accent-light);
+}
+
+/* ========== 页码文字 ========== */
+.page-num {
+    font-size: 0.9em;
+    color: var(--text-secondary);
+    min-width: 60px;
+    text-align: center;
+}
+
+/* ========== 响应式 ========== */
+@media (max-width: 768px) {
+    .slide {
+        padding: 28px 22px;
+        border-radius: 10px;
+        max-height: 78vh;
+    }
+
+    .slide h1 {
+        font-size: 1.6em;
+    }
+
+    .slide h2 {
+        font-size: 1.25em;
+    }
+
+    .slide-title h1 {
+        font-size: 2em;
+    }
+
+    pre {
+        padding: 12px 14px;
+        font-size: 0.8em;
+    }
+
+    table {
+        font-size: 0.8em;
+    }
+
+    th, td {
+        padding: 6px 8px;
+    }
+
+    .nav-btn {
+        padding: 8px 18px;
+        font-size: 0.9em;
+    }
+
+    .slides-container {
+        width: 96vw;
+    }
+}
+
+@media (max-width: 480px) {
+    .slide {
+        padding: 20px 16px;
+    }
+
+    .slide h1 {
+        font-size: 1.4em;
+    }
+
+    .slide-title h1 {
+        font-size: 1.7em;
+    }
+
+    .nav-bar {
+        gap: 12px;
+    }
+
+    .nav-btn {
+        padding: 7px 14px;
+        font-size: 0.85em;
+    }
+}
+
+/* ========== 对比总结特殊行样式 ========== */
+.summary-row td:first-child {
+    font-weight: bold;
+    color: var(--accent-light);
+}
+
+/* 滚动条美化 */
+.slide::-webkit-scrollbar {
+    width: 6px;
+}
+.slide::-webkit-scrollbar-track {
+    background: var(--bg-secondary);
+    border-radius: 3px;
+}
+.slide::-webkit-scrollbar-thumb {
+    background: var(--table-border);
+    border-radius: 3px;
+}
+</style>
+</head>
+<body>
+
+<!-- ==================== 幻灯片容器 ==================== -->
+<div class="slides-container" id="slidesContainer">
+
+<!-- ====== 幻灯片 1：标题页 ====== -->
+<div class="slide slide-title active" data-index="0">
+    <h1>第30课<br>多重背包与分组背包</h1>
+    <p class="subtitle">多重背包的二进制拆分优化 · 单调队列优化 · 分组背包</p>
+    <div class="tags">
+        <span class="badge">CSP-S 提高级</span>
+        <span class="badge">动态规划</span>
+        <span class="badge">背包问题</span>
+    </div>
+    <p style="margin-top:28px; color:var(--text-secondary);">
+        四种背包对比总结 · 经典真题精练 · 易错点剖析
+    </p>
+</div>
+
+<!-- ====== 幻灯片 2：多重背包问题定义 ====== -->
+<div class="slide" data-index="1">
+    <h1>多重背包问题定义</h1>
+
+    <h2>问题描述</h2>
+    <p>有 <span class="highlight">n</span> 种物品和一个容量为 <span class="highlight">V</span> 的背包。</p>
+    <p>第 i 种物品最多有 <span class="highlight">c[i]</span> 件可用，每件重量 <span class="highlight">w[i]</span>，价值 <span class="highlight">v[i]</span>。</p>
+    <p>求在不超过容量的前提下，能获得的最大总价值。</p>
+
+    <h2>朴素做法 O(V · Σc[i])</h2>
+    <p>将每种物品拆成 c[i] 个单独物品，转化为 01 背包：</p>
+<pre><span class="kw">for</span> (<span class="kw">int</span> i = <span class="nu">1</span>; i <= n; i++)
+    <span class="kw">for</span> (<span class="kw">int</span> j = V; j >= w[i]; j--)
+        <span class="kw">for</span> (<span class="kw">int</span> k = <span class="nu">0</span>; k <= c[i] && k*w[i] <= j; k++)
+            dp[j] = max(dp[j], dp[j - k*w[i]] + k*v[i]);</pre>
+
+    <div class="note">
+        <strong>问题：</strong>当 Σc[i] 很大（如 c[i] 可达 10<sup>5</sup>）时，
+        时间复杂度 O(V · Σc[i]) 会严重超时，必须优化。
+    </div>
+
+    <h2>优化方向</h2>
+    <ul>
+        <li><span class="highlight">二进制拆分优化</span>：O(V · Σ log c[i])，实现简单</li>
+        <li><span class="highlight">单调队列优化</span>：O(V · n)，理论最优</li>
+    </ul>
+</div>
+
+<!-- ====== 幻灯片 3：二进制拆分优化 ====== -->
+<div class="slide" data-index="2">
+    <h1>二进制拆分优化</h1>
+
+    <h2>核心思想</h2>
+    <p>将 c[i] 拆为若干"打包物品"，使它们能组合出 <span class="highlight">0 ~ c[i]</span> 之间的任意整数。</p>
+
+    <h3>拆分方法</h3>
+    <p class="formula">c[i] = 2⁰ + 2¹ + 2² + ... + 2ᵏ + r</p>
+    <p>其中 <span class="formula">2<sup>k+1</sup> - 1 ≤ c[i]</span>，余数 <span class="formula">r = c[i] - (2<sup>k+1</sup> - 1)</span></p>
+
+    <h3>示例：c[i] = 13</h3>
+    <table>
+        <tr><th>步</th><th>k</th><th>打包重量</th><th>打包价值</th><th>剩余</th></tr>
+        <tr><td>1</td><td>1</td><td>w</td><td>v</td><td>12</td></tr>
+        <tr><td>2</td><td>2</td><td>2w</td><td>2v</td><td>10</td></tr>
+        <tr><td>3</td><td>4</td><td>4w</td><td>4v</td><td>6</td></tr>
+        <tr><td>4</td><td>余数</td><td>6w</td><td>6v</td><td>0</td></tr>
+    </table>
+    <p>拆分结果：1件、2件、4件、6件打包 → 共 <span class="highlight">4 个 01 背包物品</span></p>
+    <p>验证：选 11 件 = 1+4+6 ✓ | 选 7 件 = 1+2+4 ✓</p>
+
+    <h3>复杂度</h3>
+    <p class="highlight">O(V · Σ log c[i])</p>
+    <p>拆分后物品数 ≈ Σ ⌈log₂(c[i]+1)⌉，远小于 Σc[i]</p>
+</div>
+
+<!-- ====== 幻灯片 4：单调队列优化 ====== -->
+<div class="slide" data-index="3">
+    <h1>单调队列优化原理</h1>
+
+    <h2>状态转移分析</h2>
+    <p class="formula">dp[j] = max{ dp[j - k·w] + k·v } &nbsp; (0 ≤ k ≤ c, k·w ≤ j)</p>
+
+    <h3>同余分组</h3>
+    <p>令 r = j mod w，则同组容量为：<span class="formula">r, r+w, r+2w, r+3w, ...</span></p>
+    <p>组内状态转移只依赖同组前面的状态，各组独立计算。</p>
+
+    <h3>滑动窗口 + 单调队列</h3>
+    <p>设 <span class="formula">j = r + x·w</span>，候选值：</p>
+    <p class="formula">candidate[t] = g[r + t·w] − t·v</p>
+    <p>则：</p>
+    <p class="formula">dp[r + x·w] = max{ candidate[t] } + x·v</p>
+    <p style="font-size:0.9em; color:var(--text-secondary);">其中 t ∈ [x−c, x]，g[] 为上一轮 dp 状态</p>
+
+    <h3>队列操作</h3>
+    <ul>
+        <li><span class="highlight">入队：</span>将新 candidate[x] 入队前，弹出队尾所有 ≤ 它的元素（维护递减）</li>
+        <li><span class="highlight">出队：</span>队首下标 < x−c 时弹出（窗口滑动，超出范围）</li>
+        <li><span class="highlight">取值：</span>队首即窗口内最大值，dp[j] = candidate[队首] + x·v</li>
+    </ul>
+
+    <div class="note">
+        <strong>复杂度 O(V·n)：</strong>每个容量被每个物品处理常数次（入队/出队各至多一次）
+    </div>
+</div>
+
+<!-- ====== 幻灯片 5：分组背包 ====== -->
+<div class="slide" data-index="4">
+    <h1>分组背包</h1>
+
+    <h2>问题定义</h2>
+    <p>有 n <span class="highlight">组</span>物品，<span class="highlight">每组最多选一件</span>（也可不选）。求最大价值。</p>
+
+    <h2>标准代码（三层循环）</h2>
+<pre><span class="kw">for</span> (<span class="kw">int</span> i = <span class="nu">0</span>; i &lt; n; i++)              <span class="cm">// 外层：枚举组</span>
+    <span class="kw">for</span> (<span class="kw">int</span> j = V; j &gt;= <span class="nu">0</span>; j--)          <span class="cm">// 中层：容量逆序 V→0</span>
+        <span class="kw">for</span> (<span class="kw">auto</span>&amp; item : group[i])      <span class="cm">// 内层：组内物品</span>
+            <span class="kw">if</span> (j &gt;= item.w)
+                dp[j] = max(dp[j], dp[j - item.w] + item.v);</pre>
+
+    <h2>为什么中层必须逆序？</h2>
+    <div class="note">
+        <p>如果 <span class="highlight">正序</span>（j=0→V）：物品 k 更新 dp[j] 后，
+        更大的 j' 可能再次使用同组物品（dp[j' - w[k']] 已含物品 k），
+        导致<span class="highlight">同组选多件</span>，违反约束。</p>
+        <p style="margin-top:6px;"><span class="highlight">逆序</span>（j=V→0）：dp[j - w[k]] 尚未被当前组更新，
+        保证每组最多选一件。</p>
+    </div>
+
+    <h2>类比理解</h2>
+    <p>内层循环本质是 <span class="highlight">同组物品间的"竞争"</span>——在同一个容量 j 上，
+    多个物品各自尝试更新 dp[j]，最终只有一个能"占领"该状态。</p>
+</div>
+
+<!-- ====== 幻灯片 6：四种背包对比总结表 ====== -->
+<div class="slide" data-index="5">
+    <h1>四种背包对比总结</h1>
+
+    <table>
+        <tr>
+            <th>背包类型</th>
+            <th>物品限制</th>
+            <th>容量循环方向</th>
+            <th>时间复杂度</th>
+            <th>空间</th>
+        </tr>
+        <tr>
+            <td><strong>01背包</strong></td>
+            <td>每种最多选1次</td>
+            <td><span class="highlight">逆序 V→0</span></td>
+            <td>O(V·n)</td>
+            <td>O(V)</td>
+        </tr>
+        <tr>
+            <td><strong>完全背包</strong></td>
+            <td>每种可选无限次</td>
+            <td><span style="color:#2ecc71;">正序 0→V</span></td>
+            <td>O(V·n)</td>
+            <td>O(V)</td>
+        </tr>
+        <tr>
+            <td><strong>多重背包</strong></td>
+            <td>第 i 种最多 c[i] 件</td>
+            <td>逆序（拆分后）</td>
+            <td>O(V·Σlog c[i]) 二进制<br>O(V·n) 单调队列</td>
+            <td>O(V)</td>
+        </tr>
+        <tr>
+            <td><strong>分组背包</strong></td>
+            <td>每组最多选1件</td>
+            <td><span class="highlight">逆序 V→0</span></td>
+            <td>O(V·Σsize[i])</td>
+            <td>O(V)</td>
+        </tr>
+    </table>
+
+    <h2>记忆口诀</h2>
+    <div class="note">
+        <p><strong>「01 逆，完全正，分组外层组中层逆，多重拆了再 01」</strong></p>
+        <ul style="margin-top:8px; margin-bottom:0;">
+            <li>逆序 → 保证每个物品只用一次（依赖上一轮状态）</li>
+            <li>正序 → 允许物品多次使用（依赖本轮已更新状态）</li>
+        </ul>
+    </div>
+
+    <h2>循环顺序对比</h2>
+<pre><span class="cm">// 01背包：外层物品，内层逆序容量</span>
+<span class="kw">for</span>(i) <span class="kw">for</span>(j=V..w) dp[j]=max(dp[j], dp[j-w]+v);
+
+<span class="cm">// 完全背包：外层物品，内层正序容量</span>
+<span class="kw">for</span>(i) <span class="kw">for</span>(j=w..V) dp[j]=max(dp[j], dp[j-w]+v);
+
+<span class="cm">// 分组背包：外层组，中层逆序容量，内层组内物品</span>
+<span class="kw">for</span>(组) <span class="kw">for</span>(j=V..0) <span class="kw">for</span>(k in 组) dp[j]=max(dp[j], dp[j-w[k]]+v[k]);</pre>
+</div>
+
+<!-- ====== 幻灯片 7：真题精练 ====== -->
+<div class="slide" data-index="6">
+    <h1>真题精练</h1>
+
+    <h2>题1：宝物筛选（多重背包）</h2>
+    <p><strong>来源：</strong>Luogu P1776 | N ≤ 100, V ≤ 40000, c[i] ≤ 100</p>
+    <p>N 种宝物，容量 V，每种有重量 w、价值 v、数量 c，求最大价值。</p>
+    <p><strong>解法：</strong>二进制拆分 → 01背包。<span class="highlight">O(V · N · log c) ≈ 2.8×10⁷</span></p>
+    <p><strong>核心技巧：</strong>拆分时不漏余数 r，c·w ≥ V 时转完全背包剪枝。</p>
+
+<pre><span class="cm">// 二进制拆分核心</span>
+<span class="kw">for</span> (<span class="kw">int</span> k = <span class="nu">1</span>; k <= cnt; k &lt;&lt;= <span class="nu">1</span>) {
+    goods.push_back({w * k, v * k});
+    cnt -= k;
+}
+<span class="kw">if</span> (cnt &gt; <span class="nu">0</span>) goods.push_back({w * cnt, v * cnt});</pre>
+
+    <h2>题2：选拔队员（分组背包）</h2>
+    <p>N 个班级，预算 V，每班若干候选人（费用 w, 能力 v），每班最多选1人。</p>
+    <p><strong>解法：</strong>标准分组背包。<span class="highlight">O(N · V · m) ≈ 10⁷</span></p>
+    <p style="color:var(--accent-light);"><strong>关键：</strong>中层容量必须逆序，保证同组最多选一件。</p>
+
+<pre><span class="kw">for</span> (<span class="kw">int</span> i = <span class="nu">0</span>; i &lt; n; i++)           <span class="cm">// 每组</span>
+    <span class="kw">for</span> (<span class="kw">int</span> j = V; j &gt;= <span class="nu">0</span>; j--)       <span class="cm">// 逆序容量</span>
+        <span class="kw">for</span> (<span class="kw">auto</span>&amp; [w, v] : group[i])  <span class="cm">// 组内竞争</span>
+            <span class="kw">if</span> (j &gt;= w) dp[j] = max(dp[j], dp[j - w] + v);</pre>
+</div>
+
+<!-- ====== 幻灯片 8：本课小结 ====== -->
+<div class="slide" data-index="7">
+    <h1>本课小结</h1>
+
+    <h2>核心要点回顾</h2>
+    <ol>
+        <li><span class="highlight">多重背包</span>是 01 背包的推广，每种物品有数量限制 c[i]</li>
+        <li><span class="highlight">二进制拆分优化：</span>将 c[i] 拆为 1, 2, 4, …, 2ᵏ, r，
+            转化为 O(log c[i]) 个 01 背包物品，复杂度 O(V · Σ log c[i])</li>
+        <li><span class="highlight">单调队列优化：</span>同余分组 + 滑动窗口，
+            复杂度 O(V·n)，理论最优但实现较复杂，
+            注意 <span class="formula">−t·v</span> 和 <span class="formula">+x·v</span> 偏移量</li>
+        <li><span class="highlight">分组背包：</span>每组最多选一件，
+            <span style="color:#e94560;">关键特征：容量必须逆序！</span></li>
+    </ol>
+
+    <h2>循环方向规律</h2>
+    <table style="margin-top:12px;">
+        <tr><th>背包类型</th><th>循环方向</th><th>原因</th></tr>
+        <tr><td>01背包</td><td class="highlight">逆序 V→0</td><td>保证每件只用一次</td></tr>
+        <tr><td>完全背包</td><td style="color:#2ecc71;">正序 0→V</td><td>允许无限次使用</td></tr>
+        <tr><td>分组背包</td><td class="highlight">逆序 V→0</td><td>保证每组最多一件</td></tr>
+        <tr><td>多重背包</td><td>逆序（拆分后做01）</td><td>拆后等价于01背包</td></tr>
+    </table>
+
+    <h2>易错提醒</h2>
+    <div class="note">
+        <ul style="margin:0;">
+            <li>二进制拆分：<strong>不能漏掉余数 r</strong>（cnt > 0 时的处理）</li>
+            <li>分组背包：<strong>中层容量必须逆序</strong>，防止同组多选</li>
+            <li>单调队列：注意 candidate 的 <strong>−t·v 偏移</strong>和最后 <strong>+x·v 回补</strong></li>
+            <li>可行剪枝：c·w ≥ V 时可转为完全背包处理</li>
+        </ul>
+    </div>
+
+    <p style="text-align:center; margin-top:30px; color:var(--accent-light); font-size:1.15em;">
+        掌握循环方向规律，灵活运用优化策略，轻松应对背包变种问题！
+    </p>
+</div>
+
+</div><!-- /slides-container -->
+
+<!-- ==================== 导航栏 ==================== -->
+<div class="nav-bar">
+    <button class="nav-btn" id="prevBtn" onclick="changeSlide(-1)">
+        ← 上一页
+    </button>
+
+    <div class="page-indicator" id="pageIndicator"></div>
+
+    <span class="page-num" id="pageNum">1 / 8</span>
+
+    <button class="nav-btn" id="nextBtn" onclick="changeSlide(1)">
+        下一页 →
+    </button>
+</div>
+
+<!-- ==================== 脚本 ==================== -->
+<script>
+(function() {
+    const slides = document.querySelectorAll('.slide');
+    const totalSlides = slides.length;
+    let currentIndex = 0;
+
+    const prevBtn = document.getElementById('prevBtn');
+    const nextBtn = document.getElementById('nextBtn');
+    const pageNum = document.getElementById('pageNum');
+    const pageIndicator = document.getElementById('pageIndicator');
+
+    // 创建圆点指示器
+    for (let i = 0; i < totalSlides; i++) {
+        const dot = document.createElement('span');
+        dot.className = 'dot' + (i === 0 ? ' active' : '');
+        dot.setAttribute('data-index', i);
+        dot.addEventListener('click', function() {
+            goToSlide(parseInt(this.getAttribute('data-index')));
+        });
+        pageIndicator.appendChild(dot);
+    }
+
+    const dots = document.querySelectorAll('.dot');
+
+    function updateSlide(index) {
+        // 更新幻灯片
+        slides.forEach((slide, i) => {
+            if (i === index) {
+                slide.classList.add('active');
+                slide.classList.remove('exit-left');
+            } else {
+                slide.classList.remove('active');
+                if (i === currentIndex && index > currentIndex) {
+                    slide.classList.add('exit-left');
+                } else {
+                    slide.classList.remove('exit-left');
+                }
+            }
+        });
+
+        // 更新圆点
+        dots.forEach((dot, i) => {
+            dot.classList.toggle('active', i === index);
+        });
+
+        // 更新页码文字
+        pageNum.textContent = (index + 1) + ' / ' + totalSlides;
+
+        // 更新按钮状态
+        prevBtn.disabled = (index === 0);
+        nextBtn.disabled = (index === totalSlides - 1);
+
+        currentIndex = index;
+    }
+
+    window.changeSlide = function(delta) {
+        const newIndex = currentIndex + delta;
+        if (newIndex >= 0 && newIndex < totalSlides) {
+            goToSlide(newIndex);
+        }
+    };
+
+    window.goToSlide = function(index) {
+        if (index >= 0 && index < totalSlides) {
+            updateSlide(index);
+        }
+    };
+
+    // 键盘左右箭头翻页
+    document.addEventListener('keydown', function(e) {
+        if (e.key === 'ArrowLeft' || e.key === 'ArrowUp') {
+            e.preventDefault();
+            changeSlide(-1);
+        } else if (e.key === 'ArrowRight' || e.key === 'ArrowDown' || e.key === ' ') {
+            e.preventDefault();
+            changeSlide(1);
+        } else if (e.key === 'Home') {
+            e.preventDefault();
+            goToSlide(0);
+        } else if (e.key === 'End') {
+            e.preventDefault();
+            goToSlide(totalSlides - 1);
+        }
+    });
+
+    // 触屏滑动支持
+    let touchStartX = 0;
+    let touchStartY = 0;
+
+    document.addEventListener('touchstart', function(e) {
+        touchStartX = e.touches[0].clientX;
+        touchStartY = e.touches[0].clientY;
+    }, { passive: true });
+
+    document.addEventListener('touchend', function(e) {
+        const dx = e.changedTouches[0].clientX - touchStartX;
+        const dy = e.changedTouches[0].clientY - touchStartY;
+
+        // 水平滑动距离 > 50px 且大于垂直滑动
+        if (Math.abs(dx) > 50 && Math.abs(dx) > Math.abs(dy)) {
+            if (dx < 0) {
+                changeSlide(1);  // 左滑 → 下一页
+            } else {
+                changeSlide(-1); // 右滑 → 上一页
+            }
+        }
+    });
+
+    // 初始化
+    updateSlide(0);
+})();
+</script>
+
+</body>
+</html>

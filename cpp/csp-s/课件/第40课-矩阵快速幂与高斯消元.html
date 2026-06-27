@@ -1,0 +1,300 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>第40课：矩阵快速幂与高斯消元</title>
+<style>
+* { margin: 0; padding: 0; box-sizing: border-box; }
+body {
+    font-family: 'Segoe UI', 'Microsoft YaHei', 'PingFang SC', sans-serif;
+    background: #0d1117;
+    color: #c9d1d9;
+    display: flex; justify-content: center; align-items: center;
+    min-height: 100vh;
+}
+#app {
+    width: 95%; max-width: 1000px;
+    background: #161b22;
+    border-radius: 16px;
+    padding: 40px;
+    box-shadow: 0 0 40px rgba(0,0,0,0.5);
+    position: relative;
+}
+.slide { display: none; }
+.slide.active { display: block; }
+h1 { font-size: 2.2em; color: #58a6ff; margin-bottom: 16px; border-bottom: 2px solid #30363d; padding-bottom: 12px; }
+h2 { font-size: 1.6em; color: #79c0ff; margin: 20px 0 12px; }
+h3 { font-size: 1.3em; color: #d2a8ff; margin: 16px 0 8px; }
+p, li { font-size: 1.08em; line-height: 1.85; margin-bottom: 8px; }
+ul, ol { margin-left: 24px; margin-bottom: 12px; }
+.highlight { color: #ff7b72; font-weight: bold; }
+.accent { color: #7ee787; font-weight: bold; }
+.info { color: #a5d6ff; }
+pre { background: #0d1117; border: 1px solid #30363d; border-radius: 8px; padding: 18px; overflow-x: auto; margin: 12px 0; font-size: 0.85em; line-height: 1.65; }
+code { font-family: 'Fira Code', 'Cascadia Code', 'Consolas', 'Monaco', monospace; }
+.kw { color: #ff7b72; } .type { color: #ffa657; } .func { color: #d2a8ff; }
+.num { color: #79c0ff; } .str { color: #a5d6ff; } .cmt { color: #8b949e; font-style: italic; }
+.op { color: #ff7b72; } .macro { color: #f0883e; }
+.nav { display: flex; justify-content: space-between; align-items: center; margin-top: 30px; }
+.nav button {
+    background: #21262d; color: #c9d1d9; border: 1px solid #30363d;
+    padding: 10px 24px; border-radius: 8px; cursor: pointer; font-size: 1em;
+    transition: background 0.2s;
+}
+.nav button:hover { background: #30363d; }
+.nav .page-indicator { font-size: 1em; color: #8b949e; }
+.title-slide { text-align: center; padding-top: 40px; }
+.title-slide h1 { font-size: 2.8em; border: none; }
+.title-slide .subtitle { font-size: 1.3em; color: #8b949e; margin: 16px 0; }
+.title-slide .tags { margin-top: 24px; }
+.tag { display: inline-block; background: #1f6feb33; color: #58a6ff; padding: 4px 14px; border-radius: 20px; margin: 4px; font-size: 0.92em; border: 1px solid #1f6feb55; }
+.tree { font-family: 'Fira Code', 'Consolas', monospace; white-space: pre; background: #0d1117; padding: 16px; border-radius: 6px; border: 1px solid #30363d; line-height: 1.5; font-size: 0.85em; }
+.formula { font-family: 'Fira Code', 'Consolas', monospace; color: #d2a8ff; font-size: 1.15em; margin: 8px 0; text-align: center; }
+table { width: 100%; border-collapse: collapse; margin: 12px 0; font-size: 0.92em; }
+th, td { padding: 8px 12px; border: 1px solid #30363d; text-align: left; }
+th { background: #21262d; color: #58a6ff; }
+td { background: #0d1117; }
+.matrix { display: inline-block; font-family: 'Fira Code', 'Consolas', monospace; font-size: 0.9em; line-height: 1.5; background: #0d1117; padding: 8px 14px; border-radius: 6px; border: 1px solid #30363d; text-align: center; }
+</style>
+</head>
+<body>
+<div id="app">
+
+<!-- ==================== 第1页：标题页 ==================== -->
+<div class="slide active" id="s1">
+<div class="title-slide">
+<h1>第40课：矩阵快速幂与高斯消元</h1>
+<p class="subtitle">矩阵乘法 · 快速幂加速递推 · 高斯消元解方程组 · 行列式与逆矩阵</p>
+<div class="tags">
+<span class="tag">CSP-S 数学进阶</span>
+<span class="tag">O(log n) 递推加速</span>
+<span class="tag">O(n³) 高斯消元</span>
+<span class="tag">线性代数基础</span>
+</div>
+<p style="margin-top:30px; color:#8b949e">掌握矩阵运算与高斯消元，解决高维递推与方程组问题</p>
+</div>
+</div>
+
+<!-- ==================== 第2页：矩阵乘法基础 ==================== -->
+<div class="slide" id="s2">
+<h1>📖 矩阵乘法基础</h1>
+
+<h2>定义</h2>
+<p>若 A 是 n×m 矩阵，B 是 m×p 矩阵，则 C = A×B 是 n×p 矩阵：</p>
+<p class="formula">C[i][j] = Σ A[i][k] · B[k][j] &nbsp;&nbsp;（k = 1..m）</p>
+
+<h3>关键性质</h3>
+<table>
+<tr><th>性质</th><th>说明</th><th>重要性</th></tr>
+<tr><td>结合律</td><td>(A×B)×C = A×(B×C)</td><td><span class="accent">矩阵快速幂的基础</span></td></tr>
+<tr><td>不满足交换律</td><td>一般 A×B ≠ B×A</td><td><span class="highlight">容易出错</span></td></tr>
+<tr><td>单位矩阵</td><td>I[i][i]=1, 其余为0; A×I = I×A = A</td><td>快速幂的初始化</td></tr>
+</table>
+
+<h3>缓存优化技巧</h3>
+<p>循环顺序应为 <span class="accent">i → k → j</span>（而非 i → j → k），利用 B 的第 k 行被重复使用的特性：</p>
+
+<pre><span class="cmt">// 正确的循环顺序（缓存友好）</span>
+<span class="kw">for</span> (<span class="type">int</span> i = <span class="num">0</span>; i &lt; n; i++)
+    <span class="kw">for</span> (<span class="type">int</span> k = <span class="num">0</span>; k &lt; m; k++)        <span class="cmt">// k 在中间!</span>
+        <span class="kw">if</span> (A[i][k])                     <span class="cmt">// 稀疏优化</span>
+            <span class="kw">for</span> (<span class="type">int</span> j = <span class="num">0</span>; j &lt; p; j++)
+                C[i][j] = (C[i][j] + A[i][k] * B[k][j]) % MOD;</pre>
+
+<p>时间复杂度：朴素 <span class="accent">O(n³)</span>，竞赛中 n ≤ 300 安全</p>
+</div>
+
+<!-- ==================== 第3页：矩阵快速幂原理推导 ==================== -->
+<div class="slide" id="s3">
+<h1>📖 矩阵快速幂 — 原理推导</h1>
+
+<h2>核心思想</h2>
+<p>矩阵乘法满足<span class="accent">结合律</span>，因此整数快速幂的二分思想可直接推广：</p>
+<p class="formula">Aⁿ = (A²)^(n/2) &nbsp;（n 为偶数）</p>
+<p class="formula">Aⁿ = A · (A²)^((n-1)/2) &nbsp;（n 为奇数）</p>
+
+<pre><span class="cmt">// 矩阵快速幂模板</span>
+Matrix <span class="func">mat_pow</span>(Matrix A, <span class="type">ll</span> n) {
+    Matrix res = <span class="func">identity</span>(A.size());  <span class="cmt">// 单位矩阵</span>
+    <span class="kw">while</span> (n) {
+        <span class="kw">if</span> (n & <span class="num">1</span>) res = <span class="func">mat_mul</span>(res, A);
+        A = <span class="func">mat_mul</span>(A, A);
+        n &gt;&gt;= <span class="num">1</span>;
+    }
+    <span class="kw">return</span> res;
+}</pre>
+
+<h3>最重要的应用：加速线性递推</h3>
+<p>任何 <span class="accent">k 阶线性递推</span> 都可以用 k×k 矩阵在 O(k³·log n) 内求解：</p>
+
+<p style="margin-top:8px"><span class="highlight">核心思想：</span>将递推状态列向量 × 转移矩阵 = 下一状态列向量</p>
+
+<h3>递推 → 矩阵转换规则</h3>
+<p>递推 aₙ = c₁·aₙ₋₁ + c₂·aₙ₋₂ + ... + cₖ·aₙ₋ₖ</p>
+<p>→ 构造 k×k 矩阵：第一行 = [c₁, c₂, ..., cₖ]；其余行为偏移单位矩阵</p>
+</div>
+
+<!-- ==================== 第4页：斐波那契加速示例 ==================== -->
+<div class="slide" id="s4">
+<h1>💻 斐波那契数列 — 矩阵加速 O(log n)</h1>
+
+<h3>从 O(n) 到 O(log n) 的质变</h3>
+
+<p><span class="info">递推关系：</span>fib(n) = fib(n-1) + fib(n-2)</p>
+<p>将递推写成矩阵形式：</p>
+
+<p class="formula">[fib(n) &nbsp;&nbsp; fib(n-1)]ᵀ = [[1,1],[1,0]] · [fib(n-1) &nbsp;&nbsp; fib(n-2)]ᵀ</p>
+
+<p>展开后：</p>
+<p class="formula">[fib(n) &nbsp;&nbsp; fib(n-1)]ᵀ = [[1,1],[1,0]]ⁿ⁻¹ · [fib(1) &nbsp;&nbsp; fib(0)]ᵀ</p>
+
+<pre><span class="cmt">// 完整代码 — 仅 O(log n) 时间</span>
+<span class="type">ll</span> <span class="func">fibonacci</span>(<span class="type">ll</span> n) {
+    <span class="kw">if</span> (n == <span class="num">0</span>) <span class="kw">return</span> <span class="num">0</span>;
+    <span class="kw">if</span> (n == <span class="num">1</span>) <span class="kw">return</span> <span class="num">1</span>;
+    Matrix T = {{<span class="num">1</span>, <span class="num">1</span>}, {<span class="num">1</span>, <span class="num">0</span>}};
+    T = <span class="func">mat_pow</span>(T, n - <span class="num">1</span>);
+    <span class="kw">return</span> T[<span class="num">0</span>][<span class="num">0</span>];
+    <span class="cmt">// 因为 [fib(1), fib(0)] = [1, 0]，结果第一位 = T[0][0]</span>
+}</pre>
+
+<h3>适用范围</h3>
+<table>
+<tr><th>递推类型</th><th>矩阵大小</th><th>总复杂度</th></tr>
+<tr><td>二阶线性递推（如斐波那契）</td><td>2×2</td><td>O(log n)</td></tr>
+<tr><td>k 阶线性递推</td><td>k×k</td><td>O(k³·log n)</td></tr>
+<tr><td>DP 转移（状态数 k）</td><td>k×k</td><td>O(k³·log n)</td></tr>
+<tr><td>图论路径计数（n 个点）</td><td>n×n</td><td>O(n³·log L)</td></tr>
+</table>
+</div>
+
+<!-- ==================== 第5页：高斯消元精讲 ==================== -->
+<div class="slide" id="s5">
+<h1>📖 高斯消元精讲</h1>
+
+<h2>解线性方程组 Ax = b</h2>
+
+<h3>算法两步走</h3>
+<ol>
+<li><span class="highlight">前向消元：</span>化为行阶梯形（选主元 → 消下方行）</li>
+<li><span class="highlight">回代：</span>从最后一行向上求解</li>
+</ol>
+
+<h3>三种结果的判定</h3>
+<table>
+<tr><th>情况</th><th>判定条件</th><th>输出</th></tr>
+<tr><td>唯一解</td><td>所有列有主元，无矛盾行</td><td><span class="accent">回代得唯一解</span></td></tr>
+<tr><td>无解</td><td>存在行 [0...0|c] 且 c ≠ 0</td><td><span class="highlight">No solution</span></td></tr>
+<tr><td>无穷多解</td><td>存在自由变量，无矛盾行</td><td><span class="info">Infinite solutions</span></td></tr>
+</table>
+
+<h3>核心操作：选列主元</h3>
+<p>每列选择绝对值<span class="accent">最大</span>的元素所在行，交换到当前行</p>
+<ul>
+<li>避免除以 0 → NaN 错误</li>
+<li>减少浮点数累积误差</li>
+<li>比较时使用 <span class="func">fabs()</span>，精度判零用 <span class="num">EPS = 1e-9</span></li>
+</ul>
+
+<h3>进阶应用</h3>
+<p><span class="accent">求行列式：</span>化为上三角矩阵 → 对角线乘积（注意行交换变号）</p>
+<p><span class="accent">求逆矩阵：</span>增广矩阵法 [A | I] → [I | A⁻¹]</p>
+</div>
+
+<!-- ==================== 第6页：真题精练 ==================== -->
+<div class="slide" id="s6">
+<h1>📝 真题精练</h1>
+
+<h3>真题一：斐波那契第 n 项（n ≤ 10¹⁸）</h3>
+<p><span class="info">题目：</span>fib(0)=0, fib(1)=1, fib(n)=fib(n-1)+fib(n-2)，n ≤ 10¹⁸，对 1e9+7 取模</p>
+<p><span class="highlight">矩阵加速策略：</span></p>
+<pre>转移矩阵 T = [[<span class="num">1</span>,<span class="num">1</span>],[<span class="num">1</span>,<span class="num">0</span>]]
+fib(n) = (T^(n-<span class="num">1</span>))[<span class="num">0</span>][<span class="num">0</span>]  <span class="cmt">// n≥1，n=0 特判</span>
+<span class="accent">复杂度：O(log n)，轻松处理 n=10^18</span></pre>
+
+<h3 style="margin-top:20px">真题二：解线性方程组（高斯消元模板）</h3>
+<p><span class="info">题目：</span>n 个方程 n 个未知数，判断：无解 / 唯一解 / 无穷多解</p>
+<p><span class="info">数据范围：</span>n ≤ 100</p>
+<pre><span class="cmt">// 三步骤：前向消元 → 矛盾检测 → 自由变量检测 → 回代</span>
+<span class="type">int</span> <span class="func">gauss</span>(vector&lt;vector&lt;<span class="type">double</span>&gt;&gt; a, vector&lt;<span class="type">double</span>&gt;& x) {
+    <span class="cmt">// 1. 选主元 + 消元</span>
+    <span class="cmt">// 2. 检查 0=c (c≠0) → 无解 return -1</span>
+    <span class="cmt">// 3. 检查自由变量 → 无穷多解 return 0</span>
+    <span class="cmt">// 4. 回代 → 唯一解 return 1</span>
+}</pre>
+
+<h3 style="margin-top:20px">常见易错点</h3>
+<ul>
+<li><span class="highlight">矩阵乘法维度</span> → A(n×m) × B(m×p)，必须匹配</li>
+<li><span class="highlight">快速幂初始值</span> → 单位矩阵，不是全零矩阵</li>
+<li><span class="highlight">浮点判零</span> → 必须用 EPS，不能用 == 0</li>
+<li><span class="highlight">行列式变号</span> → 交换行时 det = -det</li>
+</ul>
+</div>
+
+<!-- ==================== 第7页：总结 ==================== -->
+<div class="slide" id="s7">
+<h1>🎯 本课小结</h1>
+<div style="display:grid; grid-template-columns:1fr 1fr; gap:16px; margin-top:20px">
+<div style="background:#0d1117; padding:18px; border-radius:8px; border:1px solid #30363d">
+<h3>矩阵快速幂</h3>
+<p>核心：<span class="accent">结合律</span>保证二分有效</p>
+<p>递推加速：k阶递推 → k×k矩阵</p>
+<p>复杂度：<span class="accent">O(k³·log n)</span></p>
+<p>初始化：<span class="highlight">单位矩阵</span></p>
+</div>
+<div style="background:#0d1117; padding:18px; border-radius:8px; border:1px solid #30363d">
+<h3>高斯消元核心</h3>
+<p><span class="accent">选主元</span> → 避免除零</p>
+<p>前向消元 + 回代</p>
+<p>三种解：判矛盾行+自由变量</p>
+<p>精度：<span class="highlight">EPS=1e-9</span></p>
+</div>
+<div style="background:#0d1117; padding:18px; border-radius:8px; border:1px solid #30363d">
+<h3>进阶应用</h3>
+<p>行列式 — 上三角化 + 对角线</p>
+<p>逆矩阵 — 增广矩阵法</p>
+<p>图论 — 邻接矩阵的 k 次幂</p>
+<p>DP — 转移矩阵加速</p>
+</div>
+<div style="background:#0d1117; padding:18px; border-radius:8px; border:1px solid #30363d">
+<h3>常见错误</h3>
+<p>矩阵乘法维度不匹配</p>
+<p>快速幂初始化不是 I</p>
+<p>行列式交换行忘记变号</p>
+<p>浮点数直接用 == 0</p>
+</div>
+</div>
+</div>
+
+<!-- ==================== 导航 ==================== -->
+<div class="nav">
+<button onclick="prevSlide()">◀ 上一页</button>
+<span class="page-indicator" id="pageNum">1 / 7</span>
+<button onclick="nextSlide()">下一页 ▶</button>
+</div>
+</div>
+
+<script>
+let current = 0;
+const slides = document.querySelectorAll('.slide');
+const total = slides.length;
+
+function showSlide(n) {
+    slides[current].classList.remove('active');
+    current = ((n % total) + total) % total;
+    slides[current].classList.add('active');
+    document.getElementById('pageNum').textContent = (current + 1) + ' / ' + total;
+}
+
+function nextSlide() { showSlide(current + 1); }
+function prevSlide() { showSlide(current - 1); }
+
+document.addEventListener('keydown', function(e) {
+    if (e.key === 'ArrowRight' || e.key === 'ArrowDown') nextSlide();
+    if (e.key === 'ArrowLeft' || e.key === 'ArrowUp') prevSlide();
+});
+</script>
+</body>
+</html>

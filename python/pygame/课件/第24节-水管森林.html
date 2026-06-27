@@ -1,0 +1,725 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>第24节：水管森林 — Flappy Bird（二）</title>
+<style>
+/* ===== 全局样式 ===== */
+* { margin: 0; padding: 0; box-sizing: border-box; }
+body {
+    font-family: "Microsoft YaHei", "PingFang SC", "Noto Sans SC", sans-serif;
+    background: #1a1a2e;
+    color: #eee;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    height: 100vh;
+    overflow: hidden;
+}
+#slide-container {
+    width: 1100px;
+    height: 700px;
+    background: #16213e;
+    border-radius: 16px;
+    box-shadow: 0 0 40px rgba(0,0,0,0.6);
+    padding: 50px 60px;
+    position: relative;
+    display: flex;
+    flex-direction: column;
+}
+/* ===== 页码 ===== */
+#page-num {
+    position: absolute;
+    bottom: 20px;
+    right: 30px;
+    font-size: 16px;
+    color: #666;
+}
+/* ===== 标题 ===== */
+.slide-title {
+    font-size: 42px;
+    color: #ffd700;
+    margin-bottom: 20px;
+    border-bottom: 3px solid #ffd700;
+    padding-bottom: 12px;
+}
+.slide-subtitle {
+    font-size: 22px;
+    color: #aaa;
+    margin-bottom: 30px;
+}
+/* ===== 内容区 ===== */
+.slide-content {
+    flex: 1;
+    font-size: 24px;
+    line-height: 1.8;
+    overflow-y: auto;
+}
+.slide-content ul { padding-left: 30px; }
+.slide-content li { margin-bottom: 10px; }
+.slide-content p { margin-bottom: 16px; }
+.slide-content .highlight {
+    color: #ff6b6b;
+    font-weight: bold;
+}
+.slide-content .keyword {
+    color: #ffd700;
+    font-weight: bold;
+}
+/* ===== 代码区 ===== */
+.code-block {
+    background: #0d1117;
+    border: 1px solid #30363d;
+    border-radius: 10px;
+    padding: 18px 24px;
+    margin: 16px 0;
+    font-size: 17px;
+    font-family: "SF Mono", "Fira Code", "Consolas", "Courier New", monospace;
+    line-height: 1.7;
+    overflow-x: auto;
+    white-space: pre;
+}
+/* Python 高亮 */
+.py-keyword { color: #ff7b72; }        /* import, def, if, else, for, while, return, and, or, not, in, True, False */
+.py-builtin { color: #79c0ff; }         /* pygame, random, sys, print, range */
+.py-func    { color: #d2a8ff; }         /* init, set_mode, display, draw, Rect, font, quit */
+.py-string  { color: #a5d6ff; }         /* 字符串 */
+.py-comment { color: #8b949e; font-style: italic; } /* 注释 */
+.py-number  { color: #79c0ff; }         /* 数字 */
+.py-op      { color: #ff7b72; }         /* = + - * / > < */
+.py-const   { color: #7ee787; }         /* WIDTH, HEIGHT 等常量 */
+/* ===== 特殊框 ===== */
+.info-box {
+    background: rgba(255,215,0,0.1);
+    border-left: 4px solid #ffd700;
+    padding: 14px 20px;
+    margin: 16px 0;
+    border-radius: 0 8px 8px 0;
+    font-size: 20px;
+}
+.danger-box {
+    background: rgba(255,107,107,0.1);
+    border-left: 4px solid #ff6b6b;
+    padding: 14px 20px;
+    margin: 16px 0;
+    border-radius: 0 8px 8px 0;
+    font-size: 20px;
+}
+/* ===== 两栏布局 ===== */
+.two-col {
+    display: flex;
+    gap: 30px;
+}
+.two-col > div { flex: 1; }
+/* ===== 导航提示 ===== */
+#nav-hint {
+    position: absolute;
+    bottom: 20px;
+    left: 30px;
+    font-size: 15px;
+    color: #555;
+}
+/* ===== 图表 ===== */
+.diagram {
+    background: #0d1117;
+    border-radius: 10px;
+    padding: 16px 20px;
+    margin: 16px 0;
+    font-family: "SF Mono", "Consolas", monospace;
+    font-size: 15px;
+    line-height: 1.5;
+    white-space: pre;
+    color: #7ee787;
+    text-align: center;
+}
+/* ===== 步骤列表 ===== */
+.step-list {
+    list-style: none;
+    padding-left: 0 !important;
+    counter-reset: step;
+}
+.step-list li {
+    counter-increment: step;
+    margin-bottom: 14px !important;
+    padding-left: 50px;
+    position: relative;
+}
+.step-list li::before {
+    content: counter(step);
+    position: absolute;
+    left: 0;
+    top: 0;
+    width: 36px;
+    height: 36px;
+    background: #ffd700;
+    color: #1a1a2e;
+    border-radius: 50%;
+    text-align: center;
+    line-height: 36px;
+    font-weight: bold;
+    font-size: 20px;
+}
+</style>
+</head>
+<body>
+<div id="slide-container">
+    <div id="slide-content" class="slide-content"></div>
+    <div id="nav-hint">← → 方向键翻页  |  共 <span id="total-slides"></span> 页</div>
+    <div id="page-num"><span id="current-slide"></span> / <span id="total-slides-2"></span></div>
+</div>
+
+<script>
+// ==================== 幻灯片数据 ====================
+const slides = [
+    // === 第1页：封面 ===
+    `
+    <div style="display:flex;flex-direction:column;justify-content:center;align-items:center;height:100%;text-align:center;">
+        <div style="font-size:80px;margin-bottom:20px;">🚰</div>
+        <div class="slide-title" style="border:none;font-size:56px;text-align:center;">第24节：水管森林</div>
+        <div class="slide-subtitle" style="font-size:28px;margin-top:10px;">Flappy Bird 项目 · 第二节课</div>
+        <div style="margin-top:40px;font-size:22px;color:#8b949e;">
+            碰撞检测 | 过管计分 | 最高分记录 | 完整游戏
+        </div>
+    </div>
+    `,
+
+    // === 第2页：本节目标 ===
+    `
+    <div class="slide-title">🎯 教学目标</div>
+    <ul>
+        <li>实现<strong class="highlight">上下水管对</strong>的随机生成（固定间隙 + 随机偏移）</li>
+        <li>掌握<strong class="highlight">三种碰撞检测</strong>：小鸟 vs 水管 / 小鸟 vs 地面 / 小鸟 vs 天空</li>
+        <li>理解<strong class="highlight">过管计分</strong>逻辑，会用 scored 标记防止重复加分</li>
+        <li>实现<strong class="highlight">最高分记录</strong>功能（session 内保存）</li>
+        <li>学会使用<strong class="highlight">游戏状态机</strong>管理 playing 和 game_over 两种状态</li>
+    </ul>
+    <br>
+    <div class="info-box">
+        📌 上节课我们让小鸟飞起来、水管动起来了。<br>
+        今天加上"碰撞"和"计分"，变成一个真正可玩的游戏！
+    </div>
+    `,
+
+    // === 第3页：回顾上节 ===
+    `
+    <div class="slide-title">📖 上节课回顾</div>
+    <div class="two-col">
+        <div>
+            <p><strong class="keyword">已实现的功能：</strong></p>
+            <ul style="font-size:20px;">
+                <li>小鸟受重力下落</li>
+                <li>按空格键向上飞</li>
+                <li>水管从右向左移动</li>
+                <li>水管超出左边界后移除</li>
+            </ul>
+            <br>
+            <p><strong class="highlight">缺少的功能：</strong></p>
+            <ul style="font-size:20px;">
+                <li style="color:#ff6b6b;">小鸟能直接穿过水管！</li>
+                <li style="color:#ff6b6b;">撞到地面也没事</li>
+                <li style="color:#ff6b6b;">没有分数</li>
+                <li style="color:#ff6b6b;">没有 Game Over</li>
+            </ul>
+        </div>
+        <div>
+            <div class="code-block"><span class="py-comment"># 小鸟的核心变量</span>
+<span class="py-const">bird_y</span> <span class="py-op">=</span> <span class="py-const">HEIGHT</span> <span class="py-op">//</span> <span class="py-number">2</span>
+<span class="py-const">bird_vy</span> <span class="py-op">=</span> <span class="py-number">0</span>          <span class="py-comment"># 垂直速度</span>
+<span class="py-const">GRAVITY</span> <span class="py-op">=</span> <span class="py-number">0.5</span>       <span class="py-comment"># 重力</span>
+<span class="py-const">FLAP_STRENGTH</span> <span class="py-op">=</span> <span class="py-op">-</span><span class="py-number">8</span> <span class="py-comment"># 上升力度</span>
+
+<span class="py-comment"># 水管列表</span>
+<span class="py-const">pipes</span> <span class="py-op">=</span> []  <span class="py-comment"># 存储水管对</span></div>
+        </div>
+    </div>
+    `,
+
+    // === 第4页：水管对设计 ===
+    `
+    <div class="slide-title">🔧 水管对设计：上水管 + 间隙 + 下水管</div>
+    <div class="two-col">
+        <div class="diagram">
+屏幕顶部 (y=0)
+┌──────────────┐
+│   上水管      │  ← 从顶部延伸到 gap_y
+│   (矩形)     │
+└──────────────┘  ← gap_y（间隙上沿）
+
+╔══════════════╗
+║  GAP_SIZE    ║  ← 固定 150 像素
+║   间隙       ║     小鸟穿过的空间
+╚══════════════╝
+
+┌──────────────┐  ← gap_y + GAP_SIZE
+│   下水管      │
+│   (矩形)     │
+│              │  ← 延伸到屏幕底部
+└──────────────┘
+屏幕底部 (y=HEIGHT)
+        </div>
+        <div>
+            <div class="code-block"><span class="py-comment"># 随机生成间隙位置</span>
+<span class="py-const">gap_y</span> <span class="py-op">=</span> random.randint(
+    <span class="py-number">80</span>, <span class="py-const">HEIGHT</span> <span class="py-op">-</span> <span class="py-number">80</span> <span class="py-op">-</span> <span class="py-const">GAP_SIZE</span>)
+
+<span class="py-comment"># 上水管：从顶部到间隙上沿</span>
+<span class="py-const">top_pipe</span> <span class="py-op">=</span> pygame.Rect(
+    <span class="py-const">WIDTH</span>, <span class="py-number">0</span>, <span class="py-const">PIPE_WIDTH</span>, <span class="py-const">gap_y</span>)
+
+<span class="py-comment"># 下水管：从间隙下沿到底部</span>
+<span class="py-const">bottom_pipe</span> <span class="py-op">=</span> pygame.Rect(
+    <span class="py-const">WIDTH</span>,
+    <span class="py-const">gap_y</span> <span class="py-op">+</span> <span class="py-const">GAP_SIZE</span>,
+    <span class="py-const">PIPE_WIDTH</span>,
+    <span class="py-const">HEIGHT</span> <span class="py-op">-</span> <span class="py-const">gap_y</span> <span class="py-op">-</span> <span class="py-const">GAP_SIZE</span>)</div>
+        </div>
+    </div>
+    <div class="info-box" style="margin-top:10px;">
+        💡 <span class="keyword">GAP_SIZE</span> 固定不变，<span class="keyword">gap_y</span> 在一定范围内随机 → 间隙位置随机，难度随机！
+    </div>
+    `,
+
+    // === 第5页：水管对存储结构 ===
+    `
+    <div class="slide-title">📦 水管对的存储结构</div>
+    <p>每一对水管用<strong class="keyword">列表</strong>存储三个元素：</p>
+    <div class="code-block"><span class="py-comment"># pipes 列表的每一项：</span>
+[top_pipe_rect, bottom_pipe_rect, scored]
+
+<span class="py-comment"># 完整示例：</span>
+<span class="py-const">pipes</span> <span class="py-op">=</span> [
+    [top_rect1, bottom_rect1, <span class="py-keyword">False</span>],  <span class="py-comment"># 第1对：还没计分</span>
+    [top_rect2, bottom_rect2, <span class="py-keyword">True</span>],   <span class="py-comment"># 第2对：已计过分</span>
+    [top_rect3, bottom_rect3, <span class="py-keyword">False</span>],  <span class="py-comment"># 第3对：还没计分</span>
+]</div>
+    <br>
+    <div class="two-col">
+        <div>
+            <p><strong class="keyword">scored 的作用：</strong></p>
+            <ul>
+                <li><code>False</code> = 还没加分，小鸟经过时 +1</li>
+                <li><code>True</code> = 已经加过分了，不再重复加分</li>
+            </ul>
+        </div>
+        <div>
+            <p><strong class="keyword">管道移动 & 清理：</strong></p>
+            <div class="code-block" style="font-size:15px;"><span class="py-keyword">for</span> pipe_pair <span class="py-keyword">in</span> pipes[:]:
+    pipe_pair[<span class="py-number">0</span>].x <span class="py-op">-=</span> <span class="py-const">PIPE_SPEED</span>
+    pipe_pair[<span class="py-number">1</span>].x <span class="py-op">-=</span> <span class="py-const">PIPE_SPEED</span>
+    <span class="py-keyword">if</span> pipe_pair[<span class="py-number">0</span>].right <span class="py-op">&lt;</span> <span class="py-number">0</span>:
+        pipes.remove(pipe_pair)</div>
+        </div>
+    </div>
+    `,
+
+    // === 第6页：碰撞检测（三种情况） ===
+    `
+    <div class="slide-title">💥 碰撞检测：三种死亡方式</div>
+    <div class="code-block"><span class="py-keyword">def</span> <span class="py-func">check_death</span>(bird_rect, pipes):
+    <span class="py-comment"># 碰撞 1：小鸟撞到水管</span>
+    <span class="py-keyword">for</span> top_pipe, bottom_pipe, _ <span class="py-keyword">in</span> pipes:
+        <span class="py-keyword">if</span> bird_rect.colliderect(top_pipe) <span class="py-keyword">or</span> \
+           bird_rect.colliderect(bottom_pipe):
+            <span class="py-keyword">return</span> <span class="py-keyword">True</span>  <span class="py-comment"># 撞水管，死亡！</span>
+
+    <span class="py-comment"># 碰撞 2：小鸟撞到地面</span>
+    <span class="py-keyword">if</span> bird_rect.bottom <span class="py-op">&gt;=</span> <span class="py-const">HEIGHT</span>:
+        <span class="py-keyword">return</span> <span class="py-keyword">True</span>  <span class="py-comment"># 摔到地上，死亡！</span>
+
+    <span class="py-comment"># 碰撞 3：小鸟撞到天空</span>
+    <span class="py-keyword">if</span> bird_rect.top <span class="py-op">&lt;=</span> <span class="py-number">0</span>:
+        <span class="py-keyword">return</span> <span class="py-keyword">True</span>  <span class="py-comment"># 飞出天花板，死亡！</span>
+
+    <span class="py-keyword">return</span> <span class="py-keyword">False</span>  <span class="py-comment"># 活着！</span></div>
+    <br>
+    <div class="two-col">
+        <div class="danger-box">
+            <strong>⚠️ 碰撞1：水管</strong><br>
+            用 <code>colliderect()</code> 对上下水管分别检测
+        </div>
+        <div class="danger-box">
+            <strong>⚠️ 碰撞2：地面</strong><br>
+            <code>bird.bottom >= HEIGHT</code>
+        </div>
+        <div class="danger-box">
+            <strong>⚠️ 碰撞3：天空</strong><br>
+            <code>bird.top <= 0</code>
+        </div>
+    </div>
+    `,
+
+    // === 第7页：过管计分 ===
+    `
+    <div class="slide-title">⭐ 过管计分逻辑</div>
+    <div class="diagram">
+  ┌─────┐
+  │水管 │  pipe.right ──→  ← bird.left
+  │     │                       ┌──┐
+  │     │                       │鸟│  → 鸟飞过了！
+  └─────┘                       └──┘
+
+  条件：bird.left > pipe.right（小鸟的左边缘超过水管的右边缘）
+    </div>
+    <br>
+    <div class="code-block"><span class="py-comment"># 计分检测（在游戏循环中每帧执行）</span>
+<span class="py-keyword">for</span> pipe_pair <span class="py-keyword">in</span> pipes:
+    top_pipe, bottom_pipe, scored <span class="py-op">=</span> pipe_pair
+
+    <span class="py-comment"># 条件1：小鸟飞过了水管</span>
+    <span class="py-comment"># 条件2：这对水管还没被计过分</span>
+    <span class="py-keyword">if</span> bird_rect.left <span class="py-op">&gt;</span> top_pipe.right <span class="py-keyword">and</span> <span class="py-keyword">not</span> scored:
+        score <span class="py-op">+=</span> <span class="py-number">1</span>               <span class="py-comment"># 得分！</span>
+        pipe_pair[<span class="py-number">2</span>] <span class="py-op">=</span> <span class="py-keyword">True</span>    <span class="py-comment"># 标记已计分，防止重复加分</span></div>
+    <br>
+    <div class="danger-box">
+        ⚠️ <strong>为什么需要 scored 标记？</strong> 如果不标记，每一帧 bird.left 都大于 pipe.right，60 FPS 下一秒钟就加 60 分！标记后每对水管只加 1 次。
+    </div>
+    `,
+
+    // === 第8页：游戏状态机 ===
+    `
+    <div class="slide-title">🔁 游戏状态机</div>
+    <div class="two-col">
+        <div>
+            <div class="diagram" style="font-size:20px;line-height:2.2;">
+     ┌──────────┐
+     │ PLAYING  │
+     │          │
+     └────┬─────┘
+          │ 碰撞/出界
+          ▼
+     ┌──────────┐
+     │GAME_OVER │
+     │          │
+     └────┬─────┘
+          │ 按空格键
+          ▼
+     ┌──────────┐
+     │ PLAYING  │  ← 重置所有变量
+     └──────────┘
+            </div>
+        </div>
+        <div>
+            <div class="code-block" style="font-size:15px;"><span class="py-const">game_state</span> <span class="py-op">=</span> <span class="py-string">"playing"</span>
+
+<span class="py-keyword">if</span> game_state <span class="py-op">==</span> <span class="py-string">"playing"</span>:
+    <span class="py-comment"># 更新小鸟位置</span>
+    <span class="py-comment"># 移动水管</span>
+    <span class="py-comment"># 检测碰撞 → game_over</span>
+    <span class="py-comment"># 检测过管 → 加分</span>
+
+<span class="py-keyword">elif</span> game_state <span class="py-op">==</span> <span class="py-string">"game_over"</span>:
+    <span class="py-comment"># 显示 Game Over 画面</span>
+    <span class="py-comment"># 按空格 → 重置 → playing</span></div>
+        </div>
+    </div>
+    <div class="info-box" style="margin-top:15px;">
+        💡 <strong>状态机的好处：</strong>playing 和 game_over 的逻辑完全独立，不会互相干扰。就像红绿灯——红灯时车停，绿灯时车行，不会乱。
+    </div>
+    `,
+
+    // === 第9页：最高分记录 ===
+    `
+    <div class="slide-title">🏆 最高分记录</div>
+    <div class="code-block"><span class="py-comment"># 初始化最高分（程序开始时）</span>
+<span class="py-const">high_score</span> <span class="py-op">=</span> <span class="py-number">0</span>
+
+<span class="py-comment"># 游戏结束时更新最高分</span>
+<span class="py-keyword">if</span> game_state <span class="py-op">==</span> <span class="py-string">"game_over"</span>:
+    <span class="py-keyword">if</span> score <span class="py-op">&gt;</span> high_score:
+        high_score <span class="py-op">=</span> score  <span class="py-comment"># 刷新记录！</span>
+
+<span class="py-comment"># 显示最高分（右上角）</span>
+draw_text(<span class="py-string">f"最高: {high_score}"</span>, <span class="py-number">20</span>, <span class="py-const">TEXT_COLOR</span>, x, y)
+
+<span class="py-comment"># 如果打出了新纪录，Game Over 画面特殊显示</span>
+<span class="py-keyword">if</span> score <span class="py-op">&gt;=</span> high_score <span class="py-keyword">and</span> score <span class="py-op">&gt;</span> <span class="py-number">0</span>:
+    draw_text(<span class="py-string">"新纪录！"</span>, <span class="py-number">28</span>, (<span class="py-number">255</span>,<span class="py-number">255</span>,<span class="py-number">0</span>), ...)</div>
+    <br>
+    <div class="two-col">
+        <div class="info-box">
+            <strong>📌 本节方案：</strong>最高分存在变量里，程序关闭后清零。简单、够用。
+        </div>
+        <div class="info-box">
+            <strong>🔮 后续进阶：</strong>用文件读写（<code>open()</code> / <code>write()</code>）将最高分写入 <code>highscore.txt</code>，下次打开还能看到！
+        </div>
+    </div>
+    `,
+
+    // === 第10页：完整代码结构 ===
+    `
+    <div class="slide-title">📝 完整游戏代码结构</div>
+    <div class="code-block" style="font-size:15px;line-height:1.6;"><span class="py-comment"># ===== 1. 初始化 =====</span>
+<span class="py-keyword">import</span> pygame, random, sys
+pygame.init()
+<span class="py-const">WIDTH</span>, <span class="py-const">HEIGHT</span> <span class="py-op">=</span> <span class="py-number">400</span>, <span class="py-number">600</span>
+screen <span class="py-op">=</span> pygame.display.set_mode((<span class="py-const">WIDTH</span>, <span class="py-const">HEIGHT</span>))
+clock <span class="py-op">=</span> pygame.time.Clock()
+
+<span class="py-comment"># ===== 2. 常量 =====</span>
+<span class="py-const">GRAVITY</span> <span class="py-op">=</span> <span class="py-number">0.5</span>; <span class="py-const">FLAP_STRENGTH</span> <span class="py-op">=</span> <span class="py-op">-</span><span class="py-number">8</span>
+<span class="py-const">GAP_SIZE</span> <span class="py-op">=</span> <span class="py-number">150</span>; <span class="py-const">PIPE_SPEED</span> <span class="py-op">=</span> <span class="py-number">3</span>
+
+<span class="py-comment"># ===== 3. 游戏变量 =====</span>
+<span class="py-const">game_state</span> <span class="py-op">=</span> <span class="py-string">"playing"</span>
+<span class="py-const">bird_y</span> <span class="py-op">=</span> <span class="py-const">HEIGHT</span> <span class="py-op">//</span> <span class="py-number">2</span>; <span class="py-const">bird_vy</span> <span class="py-op">=</span> <span class="py-number">0</span>
+<span class="py-const">pipes</span> <span class="py-op">=</span> []
+<span class="py-const">score</span> <span class="py-op">=</span> <span class="py-number">0</span>; <span class="py-const">high_score</span> <span class="py-op">=</span> <span class="py-number">0</span>
+
+<span class="py-comment"># ===== 4. 游戏循环 =====</span>
+<span class="py-keyword">while</span> running:
+    <span class="py-comment"># 事件处理 → 更新 → 绘制 → flip → tick</span>
+    <span class="py-comment">#   ↑ 空格键      ↑ 重力/碰撞/计分</span></div>
+    <br>
+    <div class="info-box">
+        📋 完整可运行代码见 <code>main.py</code>，所有素材用 <code>pygame.draw</code> 绘制，不依赖外部图片！
+    </div>
+    `,
+
+    // === 第11页：绘制说明 ===
+    `
+    <div class="slide-title">🎨 用 pygame.draw 绘制所有素材</div>
+    <div class="two-col">
+        <div>
+            <p><strong class="keyword">小鸟：</strong></p>
+            <div class="code-block" style="font-size:15px;"><span class="py-comment"># 身体（圆形 + 描边）</span>
+pygame.draw.circle(screen,
+    <span class="py-const">BIRD_COLOR</span>, (x, y), <span class="py-const">BIRD_RADIUS</span>)
+pygame.draw.circle(screen,
+    <span class="py-const">BLACK</span>, (x, y), <span class="py-const">BIRD_RADIUS</span>, <span class="py-number">2</span>)
+
+<span class="py-comment"># 眼睛（白色 + 黑色瞳孔）</span>
+pygame.draw.circle(screen,
+    <span class="py-const">WHITE</span>, (x<span class="py-op">+</span><span class="py-number">6</span>, y<span class="py-op">-</span><span class="py-number">4</span>), <span class="py-number">6</span>)
+pygame.draw.circle(screen,
+    <span class="py-const">BLACK</span>, (x<span class="py-op">+</span><span class="py-number">8</span>, y<span class="py-op">-</span><span class="py-number">4</span>), <span class="py-number">3</span>)
+
+<span class="py-comment"># 翅膀（椭圆）</span>
+pygame.draw.ellipse(screen,
+    <span class="py-const">WING_COLOR</span>, (x<span class="py-op">-</span><span class="py-number">12</span>, y<span class="py-op">-</span><span class="py-number">6</span>, <span class="py-number">16</span>, <span class="py-number">10</span>))</div>
+        </div>
+        <div>
+            <p><strong class="keyword">水管：</strong></p>
+            <div class="code-block" style="font-size:15px;"><span class="py-comment"># 水管主体</span>
+pygame.draw.rect(screen,
+    <span class="py-const">PIPE_COLOR</span>, pipe_rect)
+<span class="py-comment"># 深色边框（立体感）</span>
+pygame.draw.rect(screen,
+    <span class="py-const">BORDER_COLOR</span>, pipe_rect, <span class="py-number">2</span>)
+<span class="py-comment"># 管口装饰</span>
+pygame.draw.rect(screen,
+    <span class="py-const">BORDER_COLOR</span>, cap_rect)</div>
+            <br>
+            <p><strong class="keyword">地面：</strong></p>
+            <div class="code-block" style="font-size:15px;"><span class="py-comment"># 土黄色地面 + 绿色条纹</span>
+pygame.draw.rect(screen,
+    <span class="py-const">GROUND_COLOR</span>,
+    (<span class="py-number">0</span>, <span class="py-const">HEIGHT</span><span class="py-op">-</span><span class="py-number">15</span>, <span class="py-const">WIDTH</span>, <span class="py-number">15</span>))</div>
+        </div>
+    </div>
+    `,
+
+    // === 第12页：Game Over 画面 ===
+    `
+    <div class="slide-title">🖥️ Game Over 画面设计</div>
+    <div class="two-col">
+        <div>
+            <p><strong class="keyword">画面元素：</strong></p>
+            <ul>
+                <li>半透明黑色遮罩（让画面暗下来）</li>
+                <li>红色大字："游戏结束"</li>
+                <li>显示本局得分</li>
+                <li>显示最高分（如果是新纪录，黄色高亮）</li>
+                <li>提示文字："按空格键重新开始"</li>
+            </ul>
+            <br>
+            <div class="code-block" style="font-size:14px;"><span class="py-comment"># 半透明遮罩</span>
+overlay <span class="py-op">=</span> pygame.Surface((<span class="py-const">WIDTH</span>, <span class="py-const">HEIGHT</span>))
+overlay.set_alpha(<span class="py-number">160</span>)  <span class="py-comment"># 透明度</span>
+overlay.fill((<span class="py-number">0</span>, <span class="py-number">0</span>, <span class="py-number">0</span>))
+screen.blit(overlay, (<span class="py-number">0</span>, <span class="py-number">0</span>))</div>
+        </div>
+        <div>
+            <div class="code-block" style="font-size:15px;"><span class="py-comment"># 重置游戏函数</span>
+<span class="py-keyword">def</span> <span class="py-func">reset_game</span>():
+    <span class="py-keyword">global</span> bird_y, bird_vy, pipes
+    <span class="py-keyword">global</span> pipe_timer, score, game_state
+    bird_y <span class="py-op">=</span> <span class="py-const">HEIGHT</span> <span class="py-op">//</span> <span class="py-number">2</span>
+    bird_vy <span class="py-op">=</span> <span class="py-number">0</span>
+    pipes.clear()      <span class="py-comment"># 清空水管</span>
+    pipe_timer <span class="py-op">=</span> <span class="py-number">0</span>
+    score <span class="py-op">=</span> <span class="py-number">0</span>            <span class="py-comment"># 分数归零！</span>
+    game_state <span class="py-op">=</span> <span class="py-string">"playing"</span>
+
+<span class="py-comment"># 键盘事件中：</span>
+<span class="py-keyword">if</span> game_state <span class="py-op">==</span> <span class="py-string">"game_over"</span>:
+    reset_game()  <span class="py-comment"># 重新开始</span></div>
+        </div>
+    </div>
+    `,
+
+    // === 第13页：练习任务 ===
+    `
+    <div class="slide-title">✍️ 课堂练习（25分钟）</div>
+    <ol class="step-list">
+        <li><strong>添加碰撞检测（8分钟）</strong><br>
+            创建小鸟 Rect → 遍历水管检测碰撞 → 地面/天空边界检测 → 死亡后切换 game_state</li>
+        <li><strong>添加计分系统（5分钟）</strong><br>
+            <code>bird.left > pipe.right</code> 且 <code>scored == False</code> → 分数+1 → 标记 scored=True</li>
+        <li><strong>添加 Game Over 画面（5分钟）</strong><br>
+            半透明遮罩 + "游戏结束"文字 + 分数显示 + "按空格重新开始"提示</li>
+        <li><strong>添加最高分记录（2分钟）</strong><br>
+            死亡时比较 score 和 high_score → 更新 → Game Over 画面显示</li>
+    </ol>
+    <br>
+    <div class="info-box">
+        🚀 <strong>挑战任务：</strong>水管变色 | 难度递增（每5分加速）| 地面装饰
+    </div>
+    `,
+
+    // === 第14页：常见问题 ===
+    `
+    <div class="slide-title">💡 常见问题与解决</div>
+    <table style="width:100%;border-collapse:collapse;font-size:18px;">
+        <tr style="background:rgba(255,215,0,0.15);">
+            <th style="padding:10px;text-align:left;border-bottom:1px solid #444;">问题</th>
+            <th style="padding:10px;text-align:left;border-bottom:1px solid #444;">原因</th>
+            <th style="padding:10px;text-align:left;border-bottom:1px solid #444;">解决</th>
+        </tr>
+        <tr>
+            <td style="padding:8px;border-bottom:1px solid #333;">分数一秒变几百</td>
+            <td style="padding:8px;border-bottom:1px solid #333;">没加 scored 标记</td>
+            <td style="padding:8px;border-bottom:1px solid #333;">计分后 <code>pipe_pair[2] = True</code></td>
+        </tr>
+        <tr style="background:rgba(255,255,255,0.02);">
+            <td style="padding:8px;border-bottom:1px solid #333;">小鸟卡在水管里</td>
+            <td style="padding:8px;border-bottom:1px solid #333;">死亡后还在更新位置</td>
+            <td style="padding:8px;border-bottom:1px solid #333;">切换到 game_over 后停止更新</td>
+        </tr>
+        <tr>
+            <td style="padding:8px;border-bottom:1px solid #333;">重启后分数不清零</td>
+            <td style="padding:8px;border-bottom:1px solid #333;">reset_game() 忘了重置</td>
+            <td style="padding:8px;border-bottom:1px solid #333;">确保 <code>score = 0</code></td>
+        </tr>
+        <tr style="background:rgba(255,255,255,0.02);">
+            <td style="padding:8px;border-bottom:1px solid #333;">碰撞检测不灵敏</td>
+            <td style="padding:8px;border-bottom:1px solid #333;">bird_rect 没每帧更新</td>
+            <td style="padding:8px;border-bottom:1px solid #333;">用最新坐标重建 Rect</td>
+        </tr>
+        <tr>
+            <td style="padding:8px;border-bottom:1px solid #333;">小鸟飞出屏幕</td>
+            <td style="padding:8px;border-bottom:1px solid #333;">没检测天空/地面边界</td>
+            <td style="padding:8px;border-bottom:1px solid #333;">加 <code>bird.top <= 0</code> 检测</td>
+        </tr>
+    </table>
+    `,
+
+    // === 第15页：总结 ===
+    `
+    <div class="slide-title">🏁 本节总结</div>
+    <div class="two-col">
+        <div>
+            <p><strong class="keyword">核心知识点：</strong></p>
+            <ol style="font-size:22px;line-height:2;">
+                <li>水管对 = 上水管 + 间隙 + 下水管</li>
+                <li>间隙位置 = gap_y 随机偏移</li>
+                <li>碰撞检测 = 水管 / 地面 / 天空</li>
+                <li>过管计分 = left > right + scored</li>
+                <li>状态机 = playing / game_over</li>
+                <li>最高分 = 死亡时比较更新</li>
+            </ol>
+        </div>
+        <div>
+            <p><strong class="keyword">课后作业：</strong></p>
+            <ul style="font-size:20px;line-height:2;">
+                <li>✅ 必做：完成碰撞检测、计分、Game Over</li>
+                <li>⭐ 选做：实现一个挑战功能</li>
+                <li>🔮 思考：最高分如何永久保存？</li>
+            </ul>
+            <br>
+            <div class="info-box" style="font-size:18px;">
+                📅 <strong>下节预告：</strong>外星人军团<br>
+                开启新项目——太空大战！
+            </div>
+        </div>
+    </div>
+    `,
+
+    // === 第16页：结束页 ===
+    `
+    <div style="display:flex;flex-direction:column;justify-content:center;align-items:center;height:100%;text-align:center;">
+        <div style="font-size:80px;margin-bottom:20px;">🎮</div>
+        <div class="slide-title" style="border:none;font-size:52px;text-align:center;">开始动手吧！</div>
+        <div class="slide-subtitle" style="font-size:26px;margin-top:10px;">打开 main.py，让小鸟穿过水管森林</div>
+        <div style="margin-top:50px;font-size:20px;color:#8b949e;">
+            遇到问题？先自己思考 → 再问同学 → 最后问老师
+        </div>
+    </div>
+    `
+];
+
+// ==================== 幻灯片引擎 ====================
+let currentSlide = 0;
+const totalSlides = slides.length;
+document.getElementById('total-slides').textContent = totalSlides;
+document.getElementById('total-slides-2').textContent = totalSlides;
+
+function showSlide(index) {
+    if (index < 0) index = 0;
+    if (index >= totalSlides) index = totalSlides - 1;
+    currentSlide = index;
+    document.getElementById('slide-content').innerHTML = slides[currentSlide];
+    document.getElementById('current-slide').textContent = currentSlide + 1;
+}
+
+// 键盘导航
+document.addEventListener('keydown', function(e) {
+    if (e.key === 'ArrowRight' || e.key === 'ArrowDown' || e.key === ' ') {
+        e.preventDefault();
+        if (e.key === ' ' && currentSlide < totalSlides - 1) {
+            // 空格键翻到下一页（但最后一页不翻，防止和游戏冲突）
+        }
+        showSlide(currentSlide + 1);
+    } else if (e.key === 'ArrowLeft' || e.key === 'ArrowUp') {
+        e.preventDefault();
+        showSlide(currentSlide - 1);
+    } else if (e.key === 'Home') {
+        e.preventDefault();
+        showSlide(0);
+    } else if (e.key === 'End') {
+        e.preventDefault();
+        showSlide(totalSlides - 1);
+    }
+});
+
+// 点击翻页（点击右侧前进，点击左侧后退）
+document.getElementById('slide-container').addEventListener('click', function(e) {
+    const rect = this.getBoundingClientRect();
+    const clickX = e.clientX - rect.left;
+    if (clickX > rect.width * 0.6) {
+        showSlide(currentSlide + 1);
+    } else if (clickX < rect.width * 0.4) {
+        showSlide(currentSlide - 1);
+    }
+});
+
+// 触摸滑动支持
+let touchStartX = 0;
+document.addEventListener('touchstart', function(e) {
+    touchStartX = e.touches[0].clientX;
+});
+document.addEventListener('touchend', function(e) {
+    const touchEndX = e.changedTouches[0].clientX;
+    const diff = touchStartX - touchEndX;
+    if (Math.abs(diff) > 50) {
+        if (diff > 0) showSlide(currentSlide + 1);
+        else showSlide(currentSlide - 1);
+    }
+});
+
+// 初始化显示第一页
+showSlide(0);
+</script>
+</body>
+</html>

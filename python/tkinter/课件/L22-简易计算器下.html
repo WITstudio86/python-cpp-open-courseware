@@ -1,0 +1,180 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>第22节 · 简易计算器（下）· Python Tkinter 课程</title>
+<link rel="stylesheet" href="assets/fonts.css">
+<link rel="stylesheet" href="assets/base.css">
+<link rel="stylesheet" id="theme-link" href="assets/themes/soft-pastel.css">
+<link rel="stylesheet" href="assets/animations/animations.css">
+<link rel="stylesheet" href="style.css">
+</head>
+<body class="tpl-tkinter-course" data-themes="soft-pastel,rainbow-gradient,sunset-warm,minimal-white" data-theme-base="assets/themes/">
+<div class="deck">
+
+  <!-- 1. Cover -->
+  <section class="slide full" data-title="封面">
+    <p class="kicker">Python Tkinter · 第 22 节</p>
+    <h1 class="h1 mt-s">项目2 · 简易计算器（下）<br>完整版计算器 <em>⌨️</em></h1>
+    <p class="lede mt-l" style="max-width:62ch">上节课我们搭好了计算器的"骨架"，这节课给它装上"大脑"——让它真正能算、能清空、能退格，还能用键盘操作！</p>
+    <div class="row mt-l" style="gap:16px">
+      <span class="pill-academic">~ 60 分钟</span>
+      <span class="pill-academic">难度 · ⭐⭐</span>
+      <span class="pill-academic">前置 · 第 21 节</span>
+    </div>
+    <div class="deck-footer"><span>Python Tkinter 趣味编程课</span><span class="slide-number" data-current="1" data-total="6"></span></div>
+  </section>
+
+  <!-- 2. Objectives -->
+  <section class="slide" data-title="学习目标">
+    <aside class="sidebar">
+      <div class="brand">Tkinter 022</div>
+      <h5>学习目标</h5>
+      <ul class="obj-list">
+        <li class="current">C 清除 + ← 退格</li>
+        <li>连续运算逻辑</li>
+        <li>eval() 安全使用</li>
+        <li>键盘按键绑定 bind()</li>
+      </ul>
+      <h5>本节成品</h5>
+      <p class="dim" style="font-size:13px">一个真正能用的计算器 🧮</p>
+    </aside>
+    <div class="main">
+      <p class="kicker">学习目标</p>
+      <h2 class="h2 mt-s">学完这节课，你将能够…</h2>
+      <div class="stack mt-l">
+        <div class="concept-box"><h4>① 实现 C 清除和 ← 退格</h4><p class="dim">用 StringVar 和字符串切片，让计算器可以"改错"。<code>entry_var.set("")</code> 清空，<code>current[:-1]</code> 删末位。</p></div>
+        <div class="concept-box"><h4>② 实现连续运算</h4><p class="dim">算完一次不重置，结果留在输入框里继续参与下一个运算。表达式字符串自然拼接。</p></div>
+        <div class="concept-box"><h4>③ 安全使用 eval() 求值</h4><p class="dim">把输入框的字符串变成计算结果。用 <code>try-except</code> 防止非法表达式崩溃。</p></div>
+        <div class="concept-box"><h4>④ 键盘按键绑定</h4><p class="dim">用 <code>root.bind("&lt;Key&gt;", key_press)</code> 让键盘也能操控计算器！Enter 等于 =，ESC 等于 C。</p></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- 3. C清除 + ←退格 + eval -->
+  <section class="slide" data-title="核心功能">
+    <aside class="sidebar">
+      <div class="brand">Tkinter 022</div>
+      <h5>学习目标</h5>
+      <ul class="obj-list">
+        <li class="done">C 清除 + ← 退格</li>
+        <li class="current">连续运算逻辑</li>
+        <li>eval() 安全使用</li>
+        <li>键盘按键绑定 bind()</li>
+      </ul>
+      <h5>三个核心函数</h5>
+      <p class="dim" style="font-size:13px">clear · backspace · calculate</p>
+    </aside>
+    <div class="main">
+      <p class="kicker">核心功能</p>
+      <h2 class="h2 mt-s">C 清除 + ← 退格 + eval 求值</h2>
+      <p class="lede mt-m">计算器的三个核心操作，用三个函数实现。</p>
+      <div class="code mt-m"><pre style="margin:0"><span class="cmt"># ① C 按钮：一键清空</span>
+<span class="kw">def</span> <span class="fn">clear</span>():
+    entry_var.<span class="fn">set</span>(<span class="str">""</span>)
+
+<span class="cmt"># ② ← 按钮：删除最后一个字符</span>
+<span class="kw">def</span> <span class="fn">backspace</span>():
+    current = entry_var.<span class="fn">get</span>()
+    entry_var.<span class="fn">set</span>(current[:-1])      <span class="cmt"># 切片去尾</span>
+
+<span class="cmt"># ③ = 按钮：计算表达式结果</span>
+<span class="kw">def</span> <span class="fn">calculate</span>():
+    <span class="kw">try</span>:
+        result = <span class="fn">eval</span>(entry_var.<span class="fn">get</span>())  <span class="cmt"># 把字符串当代码执行</span>
+        entry_var.<span class="fn">set</span>(<span class="fn">str</span>(result))
+    <span class="kw">except</span>:
+        entry_var.<span class="fn">set</span>(<span class="str">"错误"</span>)</pre></div>
+      <div class="grid g2 mt-l">
+        <div class="concept-box"><h4>🧹 clear() + ⌫ backspace()</h4><p class="dim"><code>set("")</code> 一键清空；<code>[:-1]</code> 切片去掉最后一个字符，空字符串也不报错。</p></div>
+        <div class="concept-box"><h4>🧠 eval() + 🛡️ try-except</h4><p class="dim">把 <code>"2+3*4"</code> 当成代码执行得 14。用 try-except 兜底，表达式出问题显示"错误"而不是崩溃。</p></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- 4. 键盘按键绑定 -->
+  <section class="slide" data-title="键盘绑定">
+    <aside class="sidebar">
+      <div class="brand">Tkinter 022</div>
+      <h5>学习目标</h5>
+      <ul class="obj-list">
+        <li class="done">C 清除 + ← 退格</li>
+        <li class="done">连续运算逻辑</li>
+        <li class="done">eval() 安全使用</li>
+        <li class="current">键盘按键绑定 bind()</li>
+      </ul>
+      <h5>事件属性</h5>
+      <p class="dim" style="font-size:13px">event.char · event.keysym</p>
+    </aside>
+    <div class="main">
+      <p class="kicker">键盘交互</p>
+      <h2 class="h2 mt-s">键盘按键绑定 —— bind()</h2>
+      <p class="lede mt-m">不用鼠标也能操作计算器！按下键盘，tkinter 能"听"到并响应。</p>
+      <div class="code mt-m"><pre style="margin:0">root.<span class="fn">bind</span>(<span class="str">"&lt;Key&gt;"</span>, key_press)      <span class="cmt"># 绑定所有按键</span>
+
+<span class="kw">def</span> <span class="fn">key_press</span>(event):
+    key = event.<span class="fn">char</span>              <span class="cmt"># 可打印字符（如 "1"、"+"）</span>
+
+    <span class="kw">if</span> key <span class="kw">in</span> <span class="str">"0123456789+-*/.="</span>:
+        <span class="kw">if</span> key == <span class="str">"="</span>:
+            <span class="fn">calculate</span>()
+        <span class="kw">else</span>:
+            <span class="fn">click</span>(key)
+    <span class="kw">elif</span> event.<span class="fn">keysym</span> == <span class="str">"Return"</span>:   <span class="cmt"># 回车 → =</span>
+        <span class="fn">calculate</span>()
+    <span class="kw">elif</span> event.<span class="fn">keysym</span> == <span class="str">"BackSpace"</span>: <span class="cmt"># 退格 → ←</span>
+        <span class="fn">backspace</span>()
+    <span class="kw">elif</span> event.<span class="fn">keysym</span> == <span class="str">"Escape"</span>:    <span class="cmt"># ESC → C</span>
+        <span class="fn">clear</span>()</pre></div>
+      <div class="callout mt-m">
+        <b>💡 关键区别：</b><code>event.char</code> 用于普通按键（数字、字母），返回字符本身。但回车、退格等<em>特殊按键</em>没有字符，要用 <code>event.keysym</code> 获取按键名称。两者搭配，覆盖所有按键！
+      </div>
+    </div>
+  </section>
+
+  <!-- 5. 动手试试 -->
+  <section class="slide" data-title="动手试试">
+    <aside class="sidebar">
+      <div class="brand">Tkinter 022</div>
+      <h5>学习目标</h5>
+      <ul class="obj-list">
+        <li class="done">C 清除 + ← 退格</li>
+        <li class="done">连续运算逻辑</li>
+        <li class="done">eval() 安全使用</li>
+        <li class="done">键盘按键绑定 bind()</li>
+      </ul>
+      <h5>时间</h5>
+      <p class="dim" style="font-size:13px">~15 分钟 · 自己动手</p>
+    </aside>
+    <div class="main">
+      <p class="kicker">动手试试</p>
+      <h2 class="h2 mt-s">测试你的计算器</h2>
+      <div class="exercise mt-l">
+        <ol style="color:var(--text-2);line-height:2;margin:0;padding-left:20px;font-size:16px">
+          <li><b>测试连续运算</b>：输入 <code>1 + 2 =</code>，结果出来后再按 <code>+ 3 =</code>，看能不能继续算</li>
+          <li><b>测试 C 和 ←</b>：输入一串数字，按 ← 删除一个字符，按 C 全部清空</li>
+          <li><b>挑战</b>：不用鼠标，只用键盘操作——数字键、运算符键、回车键（=）、ESC（C）、退格键（←），再故意输入 <code>1++2</code> 测试 try-except！</li>
+        </ol>
+      </div>
+      <p class="dim mt-m" style="font-size:14px">💡 别忘了：<code>state="readonly"</code> 阻止了直接在输入框里打字——所有输入都必须通过按钮或键盘绑定来传递。</p>
+    </div>
+  </section>
+
+  <!-- 6. Summary -->
+  <section class="slide full" data-title="总结">
+    <p class="kicker">总结 · 第 22 节</p>
+    <h1 class="h1 mt-s">你学会了…</h1>
+    <div class="grid g2 mt-l">
+      <div class="concept-box"><h4>✓ C 清除 + ← 退格</h4><p class="dim"><code>entry_var.set("")</code> 一键清空，<code>current[:-1]</code> 切片删末位。计算器的"橡皮擦"功能。</p></div>
+      <div class="concept-box"><h4>✓ 连续运算</h4><p class="dim">结果留在输入框里不消失，继续输入就能拼接成新表达式，eval 一次性算完——简单又优雅。</p></div>
+      <div class="concept-box"><h4>✓ eval() 计算表达式</h4><p class="dim">把字符串 <code>"2+3*4"</code> 直接算出 <code>14</code>。自动处理运算优先级。用 <code>try-except</code> 兜底。</p></div>
+      <div class="concept-box"><h4>✓ 键盘按键绑定 bind()</h4><p class="dim"><code>root.bind("&lt;Key&gt;", ...)</code> 让计算器响应键盘。<code>event.char</code> 取字符，<code>event.keysym</code> 取特殊键名。</p></div>
+    </div>
+    <div class="callout mt-l">
+      <b>下节预告 · 项目3：猜数字游戏！</b> 计算器做完了，下个项目我们玩点好玩的——让电脑"想"一个随机数，你来猜！学习 <code>random</code> 模块和条件判断。
+    </div>
+  </section>
+
+</div>
+<script src="assets/runtime.js"></script>
+</body></html>

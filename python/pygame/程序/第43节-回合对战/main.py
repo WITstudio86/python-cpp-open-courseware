@@ -1,0 +1,680 @@
+"""
+第43节：回合对战 — 回合制战斗系统
+=====================================
+知识点：
+  - 回合制状态机（4个状态切换）
+  - 伤害计算公式：damage = max(1, atk * 倍率 - def * 0.5)
+  - 血条平滑动画（Lerp线性插值）
+  - 鼠标点击UI交互
+  - Surface绘制角色和UI元素
+
+操作方式：鼠标点击按钮选择操作
+"""
+
+import pygame
+import sys
+import random
+import math
+
+# ============================================================
+# 初始化 Pygame
+# ============================================================
+pygame.init()
+WIDTH, HEIGHT = 800, 600
+screen = pygame.display.set_mode((WIDTH, HEIGHT))
+pygame.display.set_caption("第43节：回合对战 — 回合制战斗系统")
+clock = pygame.time.Clock()
+font = pygame.font.Font(None, 24)       # 小字体
+font_big = pygame.font.Font(None, 32)    # 大字体
+font_title = pygame.font.Font(None, 40)  # 标题字体
+
+# ============================================================
+# 颜色常量
+# ============================================================
+WHITE   = (255, 255, 255)
+BLACK   = (0,   0,   0)
+GRAY    = (80,  80,  80)
+DARK_GRAY = (40, 40, 40)
+RED     = (220, 50, 50)
+GREEN   = (50,  200, 50)
+YELLOW  = (220, 220, 50)
+BLUE    = (60,  120, 220)
+ORANGE  = (255, 150, 30)
+GOLD    = (240, 192, 64)
+DARK_RED = (120, 20, 20)
+BG_COLOR = (20, 10, 10)       # 深色战斗背景
+PANEL_BG = (35, 18, 18)       # 面板背景
+
+# ============================================================
+# 战斗数据定义
+# ============================================================
+
+# --- 技能数据（字典驱动设计） ---
+skills = {
+    "attack": {
+        "name": "普通攻击",
+        "multiplier": 1.0,       # 伤害倍率
+        "mp_cost": 0,            # MP消耗
+        "desc": "造成100%攻击力的伤害",
+        "color": RED,
+    },
+    "defend": {
+        "name": "防御",
+        "multiplier": 0,         # 不造成伤害
+        "mp_cost": 0,
+        "desc": "本回合受到的伤害减半",
+        "color": BLUE,
+    },
+    "fireball": {
+        "name": "火球术",
+        "multiplier": 2.0,       # 双倍伤害
+        "mp_cost": 15,
+        "desc": "消耗15MP，造成200%攻击力的伤害",
+        "color": ORANGE,
+    },
+}
+
+# --- 角色属性 ---
+class Fighter:
+    """战斗角色类：存储属性和状态"""
+    def __init__(self, name, max_hp, max_mp, atk, defense, is_player=True):
+        self.name = name
+        self.max_hp = max_hp
+        self.max_mp = max_mp
+        self.atk = atk
+        self.defense = defense
+        self.is_player = is_player
+
+        # HP：分为「显示值」和「目标值」以实现 lerp 平滑动画
+        self.hp_current = max_hp   # 当前显示的血量（lerp动画用）
+        self.hp_target  = max_hp   # 目标血量（实际血量）
+        self.mp = max_mp           # MP（不需要动画，直接变化）
+
+        self.is_defending = False  # 是否处于防御状态
+        self.alive = True
+
+    @property
+    def hp(self):
+        """对外接口：返回实际血量"""
+        return self.hp_target
+
+    def take_damage(self, damage):
+        """受到伤害（只改 target，current 在 update 中自动追赶）"""
+        if self.is_defending:
+            damage = max(1, damage // 2)  # 防御状态伤害减半
+        self.hp_target = max(0, self.hp_target - damage)
+        if self.hp_target <= 0:
+            self.alive = False
+
+    def heal(self, amount):
+        """恢复HP"""
+        self.hp_target = min(self.max_hp, self.hp_target + amount)
+        self.hp_current = self.hp_target  # 治疗立即生效
+
+    def update_hp_bar(self, speed=0.1):
+        """每帧调用：Lerp 平滑血条动画"""
+        self.hp_current += (self.hp_target - self.hp_current) * speed
+
+    def reset_defend(self):
+        """重置防御状态（回合开始时调用）"""
+        self.is_defending = False
+
+
+# 创建玩家和敌人
+player = Fighter("勇者", max_hp=120, max_mp=40, atk=25, defense=15)
+enemy  = Fighter("恶龙", max_hp=80,  max_mp=0,  atk=20, defense=10, is_player=False)
+
+# ============================================================
+# 回合制状态机
+# ============================================================
+# 4个状态：
+#   PLAYER_TURN   - 等待玩家选择操作
+#   PLAYER_ACTION - 执行玩家动作（含动画延迟）
+#   ENEMY_TURN    - 敌人回合
+#   CHECK_RESULT  - 判定胜负
+state = "PLAYER_TURN"
+action_timer = 0       # 动作动画计时器（帧数）
+ACTION_DELAY = 40      # 动作显示延迟（帧数，约0.67秒@60fps）
+round_number = 1       # 当前回合数
+
+# --- 战斗日志 ---
+battle_log = []        # 存储日志列表，每条日志是 (文本, 剩余帧数)
+LOG_DURATION = 120     # 日志保留帧数（约2秒）
+
+def add_log(text):
+    """添加一条战斗日志"""
+    battle_log.append([text, LOG_DURATION])
+
+# --- 按钮定义 ---
+# 攻击、防御、技能三个按钮
+button_w, button_h = 160, 60
+button_y = 500
+buttons = [
+    {
+        "rect": pygame.Rect(60, button_y, button_w, button_h),
+        "text": "⚔ 攻击",
+        "action": "attack",
+        "color": RED,
+    },
+    {
+        "rect": pygame.Rect(260, button_y, button_w, button_h),
+        "text": "🛡 防御",
+        "action": "defend",
+        "color": BLUE,
+    },
+    {
+        "rect": pygame.Rect(460, button_y, button_w, button_h),
+        "text": "🔥 火球术",
+        "action": "fireball",
+        "color": ORANGE,
+    },
+]
+
+# 当前选中的技能（玩家选择后存储）
+selected_skill = None
+
+# 敌人AI的计时器
+enemy_action_done = False
+
+# 游戏结束标志
+game_over = False
+game_result = ""  # "victory" 或 "defeat"
+
+
+# ============================================================
+# 辅助函数
+# ============================================================
+
+def calc_damage(atk, defense, multiplier):
+    """
+    伤害计算公式
+    damage = max(1, atk × 技能倍率 − def × 0.5)
+    """
+    raw = atk * multiplier - defense * 0.5
+    return max(1, int(raw))
+
+
+def draw_text(surf, text, x, y, color=WHITE, font_obj=font, center=False):
+    """绘制文字，可选居中"""
+    text_surf = font_obj.render(text, True, color)
+    if center:
+        rect = text_surf.get_rect(center=(x, y))
+        surf.blit(text_surf, rect)
+    else:
+        surf.blit(text_surf, (x, y))
+
+
+def draw_hp_bar(surf, x, y, width, current, max_val, show_text=True):
+    """
+    绘制血条
+    - 灰色背景
+    - 根据比例变色：绿(>50%) → 黄(>25%) → 红(≤25%)
+    - 白色边框
+    - 可选显示数值文字
+    """
+    bar_height = 20
+    # 背景
+    pygame.draw.rect(surf, DARK_GRAY, (x, y, width, bar_height))
+    # 血量填充
+    ratio = max(0, min(1, current / max_val))
+    if ratio > 0.5:
+        color = GREEN
+    elif ratio > 0.25:
+        color = YELLOW
+    else:
+        color = RED
+    fill_width = int(width * ratio)
+    if fill_width > 0:
+        pygame.draw.rect(surf, color, (x, y, fill_width, bar_height))
+    # 边框
+    pygame.draw.rect(surf, WHITE, (x, y, width, bar_height), 2)
+    # HP文字
+    if show_text:
+        hp_text = f"{int(current)}/{max_val}"
+        text_surf = font.render(hp_text, True, WHITE)
+        text_rect = text_surf.get_rect(center=(x + width // 2, y + bar_height // 2))
+        surf.blit(text_surf, text_rect)
+
+
+def draw_mp_bar(surf, x, y, width, current, max_val):
+    """绘制MP条（蓝色）"""
+    bar_height = 12
+    pygame.draw.rect(surf, DARK_GRAY, (x, y, width, bar_height))
+    ratio = max(0, min(1, current / max_val))
+    fill_width = int(width * ratio)
+    if fill_width > 0:
+        pygame.draw.rect(surf, (60, 120, 220), (x, y, fill_width, bar_height))
+    pygame.draw.rect(surf, WHITE, (x, y, width, bar_height), 1)
+    mp_text = f"MP {int(current)}/{max_val}"
+    text_surf = font.render(mp_text, True, WHITE)
+    surf.blit(text_surf, (x + width + 8, y - 2))
+
+
+def draw_character(surf, x, y, is_player):
+    """
+    用 Surface 绘制角色（简单几何形状）
+    玩家：蓝色勇者形象
+    敌人：红色恶龙形象
+    """
+    if is_player:
+        # --- 勇者：蓝色系 ---
+        # 身体（矩形）
+        body_color = (50, 100, 200)
+        pygame.draw.rect(surf, body_color, (x + 15, y + 50, 70, 80))
+
+        # 头（圆）
+        head_color = (255, 200, 150)
+        pygame.draw.circle(surf, head_color, (x + 50, y + 35), 28)
+        # 眼睛
+        pygame.draw.circle(surf, BLACK, (x + 40, y + 30), 4)
+        pygame.draw.circle(surf, BLACK, (x + 60, y + 30), 4)
+        # 嘴（弧线，微笑）
+        pygame.draw.arc(surf, BLACK, (x + 38, y + 28, 24, 18), 0.5, 2.6, 2)
+
+        # 剑（右手）
+        sword_color = (180, 180, 200)
+        pygame.draw.rect(surf, sword_color, (x + 82, y + 55, 6, 50))
+        # 剑柄
+        pygame.draw.rect(surf, (150, 100, 50), (x + 76, y + 55, 18, 8))
+        # 剑尖（三角形）
+        pygame.draw.polygon(surf, sword_color, [
+            (x + 82, y + 105), (x + 88, y + 105), (x + 85, y + 120)
+        ])
+
+        # 盾牌（左手）
+        shield_color = (100, 100, 150)
+        pygame.draw.rect(surf, shield_color, (x + 0, y + 60, 20, 35), border_radius=5)
+
+        # 腿
+        leg_color = (40, 40, 80)
+        pygame.draw.rect(surf, leg_color, (x + 25, y + 130, 18, 35))
+        pygame.draw.rect(surf, leg_color, (x + 55, y + 130, 18, 35))
+
+        return pygame.Rect(x, y, 100, 170)
+
+    else:
+        # --- 恶龙：红色系 ---
+        # 身体（较大的椭圆状矩形）
+        body_color = (180, 40, 40)
+        pygame.draw.ellipse(surf, body_color, (x + 20, y + 55, 100, 75))
+
+        # 头
+        head_color = (200, 60, 60)
+        pygame.draw.circle(surf, head_color, (x + 70, y + 40), 32)
+        # 眼睛（凶恶）
+        pygame.draw.circle(surf, YELLOW, (x + 58, y + 32), 8)
+        pygame.draw.circle(surf, YELLOW, (x + 82, y + 32), 8)
+        pygame.draw.circle(surf, BLACK, (x + 58, y + 32), 4)
+        pygame.draw.circle(surf, BLACK, (x + 82, y + 32), 4)
+        # 眉毛（倒V）
+        pygame.draw.line(surf, BLACK, (x + 48, y + 22), (x + 64, y + 28), 4)
+        pygame.draw.line(surf, BLACK, (x + 76, y + 28), (x + 92, y + 22), 4)
+        # 嘴（尖牙）
+        pygame.draw.polygon(surf, WHITE, [
+            (x + 60, y + 48), (x + 80, y + 48), (x + 70, y + 58)
+        ])
+
+        # 翅膀
+        wing_color = (120, 30, 30)
+        pygame.draw.polygon(surf, wing_color, [
+            (x + 10, y + 60), (x + 30, y + 20), (x + 60, y + 55)
+        ])
+        pygame.draw.polygon(surf, wing_color, [
+            (x + 80, y + 55), (x + 110, y + 20), (x + 130, y + 60)
+        ])
+
+        # 尾巴
+        tail_color = (160, 40, 40)
+        pygame.draw.polygon(surf, tail_color, [
+            (x + 135, y + 90), (x + 160, y + 100), (x + 140, y + 115)
+        ])
+
+        # 腿
+        leg_color = (100, 20, 20)
+        pygame.draw.rect(surf, leg_color, (x + 35, y + 130, 22, 30))
+        pygame.draw.rect(surf, leg_color, (x + 80, y + 130, 22, 30))
+
+        return pygame.Rect(x, y, 165, 165)
+
+
+def draw_button(surf, btn, hover=False):
+    """绘制按钮"""
+    rect = btn["rect"]
+    color = btn["color"]
+
+    # 按钮背景
+    if hover:
+        bg = tuple(min(255, c + 60) for c in color)
+    else:
+        bg = tuple(max(0, c - 60) for c in color)
+
+    pygame.draw.rect(surf, bg, rect, border_radius=12)
+    pygame.draw.rect(surf, color, rect, 3, border_radius=12)
+
+    # 按钮文字
+    text_surf = font_big.render(btn["text"], True, WHITE)
+    text_rect = text_surf.get_rect(center=rect.center)
+    surf.blit(text_surf, text_rect)
+
+    # 如果是技能按钮，显示MP消耗
+    if btn["action"] in skills:
+        skill = skills[btn["action"]]
+        if skill["mp_cost"] > 0:
+            mp_text = f"MP:{skill['mp_cost']}"
+            mp_surf = font.render(mp_text, True, (100, 180, 255))
+            mp_rect = mp_surf.get_rect(center=(rect.centerx, rect.bottom - 12))
+            surf.blit(mp_surf, mp_rect)
+
+
+def draw_background(surf):
+    """绘制战斗背景"""
+    surf.fill(BG_COLOR)
+
+    # 地面
+    pygame.draw.rect(surf, (30, 20, 15), (0, HEIGHT - 120, WIDTH, 120))
+    pygame.draw.line(surf, (50, 35, 25), (0, HEIGHT - 120), (WIDTH, HEIGHT - 120), 2)
+
+    # 一些装饰性的地面纹理
+    for i in range(10):
+        x = random.randint(0, WIDTH)
+        y = random.randint(HEIGHT - 110, HEIGHT - 20)
+        pygame.draw.circle(surf, (40, 28, 20), (x, y), random.randint(2, 5))
+
+
+def draw_battle_log(surf):
+    """绘制战斗日志区域"""
+    log_y = 380
+    log_height = 80
+
+    # 日志背景
+    log_rect = pygame.Rect(30, log_y, WIDTH - 60, log_height)
+    pygame.draw.rect(surf, PANEL_BG, log_rect, border_radius=8)
+    pygame.draw.rect(surf, GOLD, log_rect, 2, border_radius=8)
+
+    # 日志标题
+    draw_text(surf, "📜 战斗日志", 50, log_y + 6, GOLD, font)
+
+    # 显示最近的日志（最多3条）
+    visible_logs = [log for log in battle_log if log[1] > 0]
+    for i, log_entry in enumerate(visible_logs[-3:]):
+        text = log_entry[0]
+        alpha = min(255, log_entry[1] * 4)  # 渐隐效果
+        color = (min(255, 255), min(255, 230), min(255, 180))
+        draw_text(surf, text, 50, log_y + 26 + i * 18, color, font)
+
+
+def draw_status_panel(surf):
+    """绘制玩家和敌人的状态面板"""
+    # 玩家状态面板（左）
+    panel_w, panel_h = 220, 80
+    panel_x, panel_y = 20, 20
+
+    pygame.draw.rect(surf, PANEL_BG, (panel_x, panel_y, panel_w, panel_h), border_radius=10)
+    pygame.draw.rect(surf, BLUE, (panel_x, panel_y, panel_w, panel_h), 2, border_radius=10)
+
+    draw_text(surf, f"🧙 {player.name}  Lv.5", panel_x + 10, panel_y + 6, WHITE, font)
+    draw_hp_bar(surf, panel_x + 10, panel_y + 30, 200, player.hp_current, player.max_hp)
+    draw_mp_bar(surf, panel_x + 10, panel_y + 54, 200, player.mp, player.max_mp)
+
+    # 防御状态标记
+    if player.is_defending:
+        shield_text = font.render("🛡 防御中", True, BLUE)
+        surf.blit(shield_text, (panel_x + panel_w - 75, panel_y + 6))
+
+    # 敌人状态面板（右）
+    enemy_panel_x = WIDTH - panel_w - 20
+    enemy_panel_y = 20
+
+    pygame.draw.rect(surf, PANEL_BG, (enemy_panel_x, enemy_panel_y, panel_w, panel_h), border_radius=10)
+    pygame.draw.rect(surf, RED, (enemy_panel_x, enemy_panel_y, panel_w, panel_h), 2, border_radius=10)
+
+    draw_text(surf, f"🐉 {enemy.name}", enemy_panel_x + 10, enemy_panel_y + 6, WHITE, font)
+    draw_hp_bar(surf, enemy_panel_x + 10, enemy_panel_y + 30, 200, enemy.hp_current, enemy.max_hp)
+
+
+def draw_result_screen(surf):
+    """绘制战斗结果画面"""
+    overlay = pygame.Surface((WIDTH, HEIGHT))
+    overlay.set_alpha(180)
+    overlay.fill(BLACK)
+    surf.blit(overlay, (0, 0))
+
+    if game_result == "victory":
+        result_text = "🎉 胜 利 ！"
+        result_color = GOLD
+        sub_text = "勇者击败了恶龙！"
+    else:
+        result_text = "💀 战 败 ..."
+        result_color = RED
+        sub_text = "勇者倒下了..."
+
+    # 大标题
+    title_surf = font_title.render(result_text, True, result_color)
+    title_rect = title_surf.get_rect(center=(WIDTH // 2, HEIGHT // 2 - 30))
+    surf.blit(title_surf, title_rect)
+
+    # 副标题
+    sub_surf = font_big.render(sub_text, True, WHITE)
+    sub_rect = sub_surf.get_rect(center=(WIDTH // 2, HEIGHT // 2 + 20))
+    surf.blit(sub_surf, sub_rect)
+
+    # 提示
+    hint_surf = font.render("按 R 键重新开始  |  按 ESC 退出", True, GRAY)
+    hint_rect = hint_surf.get_rect(center=(WIDTH // 2, HEIGHT // 2 + 60))
+    surf.blit(hint_surf, hint_rect)
+
+
+def reset_game():
+    """重置游戏状态"""
+    global state, action_timer, battle_log, selected_skill
+    global enemy_action_done, game_over, game_result, round_number
+
+    player.hp_current = player.max_hp
+    player.hp_target = player.max_hp
+    player.mp = player.max_mp
+    player.is_defending = False
+    player.alive = True
+
+    enemy.hp_current = enemy.max_hp
+    enemy.hp_target = enemy.max_hp
+    enemy.is_defending = False
+    enemy.alive = True
+
+    state = "PLAYER_TURN"
+    action_timer = 0
+    round_number = 1
+    battle_log.clear()
+    selected_skill = None
+    enemy_action_done = False
+    game_over = False
+    game_result = ""
+
+    add_log("⚔ 战斗开始！选择你的行动吧！")
+
+
+def enemy_ai():
+    """敌人AI：随机选择攻击或防御（简单AI）"""
+    # 恶龙只有普通攻击
+    return "attack"
+
+
+def execute_player_action(skill_key):
+    """执行玩家选择的动作"""
+    global state, action_timer
+
+    skill = skills[skill_key]
+
+    # 检查MP是否足够
+    if skill["mp_cost"] > player.mp:
+        add_log(f"❌ MP不足！需要{skill['mp_cost']}MP，当前{player.mp}MP")
+        state = "PLAYER_TURN"  # 返回选择状态
+        return
+
+    # 消耗MP
+    player.mp -= skill["mp_cost"]
+
+    if skill_key == "defend":
+        # 防御：不造成伤害，本回合减伤
+        player.is_defending = True
+        add_log(f"🛡 {player.name}进入防御姿态！本回合受到的伤害减半")
+    else:
+        # 攻击/技能：计算伤害
+        damage = calc_damage(player.atk, enemy.defense, skill["multiplier"])
+        enemy.take_damage(damage)
+        add_log(f"⚔ {player.name}使用「{skill['name']}」！造成 {damage} 点伤害！")
+
+    # 切换到动作显示状态（带延迟，让玩家看到效果）
+    state = "PLAYER_ACTION"
+    action_timer = ACTION_DELAY
+
+
+def execute_enemy_action():
+    """执行敌人动作"""
+    global state, action_timer, enemy_action_done
+
+    skill_key = enemy_ai()
+    skill = skills[skill_key]
+
+    # 计算伤害
+    damage = calc_damage(enemy.atk, player.defense, skill["multiplier"])
+    player.take_damage(damage)
+    add_log(f"👊 {enemy.name}使用「{skill['name']}」！造成 {damage} 点伤害！")
+
+    state = "ENEMY_TURN"
+    action_timer = ACTION_DELAY
+    enemy_action_done = True
+
+
+# ============================================================
+# 主循环
+# ============================================================
+
+# 初始化日志
+add_log("⚔ 战斗开始！选择你的行动吧！")
+
+running = True
+while running:
+    dt = clock.tick(60)  # 60 FPS
+
+    # ---- 获取鼠标位置（用于按钮悬停效果） ----
+    mouse_pos = pygame.mouse.get_pos()
+
+    # ================================================
+    # 事件处理
+    # ================================================
+    for event in pygame.event.get():
+        if event.type == pygame.QUIT:
+            running = False
+
+        elif event.type == pygame.KEYDOWN:
+            if event.key == pygame.K_ESCAPE:
+                running = False
+            # 游戏结束后按R重新开始
+            if game_over and event.key == pygame.K_r:
+                reset_game()
+
+        elif event.type == pygame.MOUSEBUTTONDOWN and not game_over:
+            if event.button == 1 and state == "PLAYER_TURN":
+                # 检查点击了哪个按钮
+                for btn in buttons:
+                    if btn["rect"].collidepoint(event.pos):
+                        execute_player_action(btn["action"])
+                        break
+
+    # ================================================
+    # 状态机更新
+    # ================================================
+    if not game_over:
+        # --- 动作延迟计时（等待动画显示） ---
+        if state == "PLAYER_ACTION":
+            action_timer -= 1
+            if action_timer <= 0:
+                # 玩家动作结束 → 进入敌人回合
+                if enemy.alive:
+                    execute_enemy_action()
+                else:
+                    state = "CHECK_RESULT"
+
+        elif state == "ENEMY_TURN":
+            action_timer -= 1
+            if action_timer <= 0:
+                # 敌人动作结束 → 判定胜负
+                state = "CHECK_RESULT"
+
+        elif state == "CHECK_RESULT":
+            # 判定胜负
+            if not player.alive:
+                game_over = True
+                game_result = "defeat"
+                add_log("💀 勇者倒下了...战斗失败！")
+            elif not enemy.alive:
+                game_over = True
+                game_result = "victory"
+                add_log("🎉 恶龙被击败了！勇者获得胜利！")
+            else:
+                # 双方都活着 → 下一回合
+                round_number += 1
+                player.reset_defend()
+                enemy.reset_defend()
+                add_log(f"— — — 第 {round_number} 回合 — — —")
+                state = "PLAYER_TURN"
+
+    # --- 始终更新血条 Lerp 动画 ---
+    player.update_hp_bar(0.1)
+    enemy.update_hp_bar(0.1)
+
+    # --- 更新日志计时器（渐隐） ---
+    for log_entry in battle_log:
+        log_entry[1] -= 1
+    # 清理过期日志
+    battle_log[:] = [log for log in battle_log if log[1] > -60]
+
+    # ================================================
+    # 绘制
+    # ================================================
+    draw_background(screen)
+
+    # --- 绘制角色 ---
+    # 玩家角色（左侧）
+    player_rect = draw_character(screen, 80, 220, is_player=True)
+    # 敌人角色（右侧）
+    enemy_rect = draw_character(screen, 520, 220, is_player=False)
+
+    # --- 绘制状态面板 ---
+    draw_status_panel(screen)
+
+    # --- 绘制战斗日志 ---
+    draw_battle_log(screen)
+
+    # --- 绘制按钮（仅在玩家回合且游戏未结束时） ---
+    if not game_over and state == "PLAYER_TURN":
+        for btn in buttons:
+            hover = btn["rect"].collidepoint(mouse_pos)
+            draw_button(screen, btn, hover)
+
+        # 提示文字
+        draw_text(screen, "选择一个行动：", 60, button_y - 26, GOLD, font)
+
+    # --- 绘制当前状态指示器 ---
+    if not game_over:
+        state_names = {
+            "PLAYER_TURN": "🧙 你的回合",
+            "PLAYER_ACTION": "⚔ 执行中...",
+            "ENEMY_TURN": "🐉 敌人回合...",
+            "CHECK_RESULT": "⏳ 判定中...",
+        }
+        status_text = state_names.get(state, "")
+        draw_text(screen, status_text, WIDTH // 2, HEIGHT - 30, GOLD, font_big, center=True)
+
+    # --- 绘制结果画面 ---
+    if game_over:
+        draw_result_screen(screen)
+
+    # --- 刷新屏幕 ---
+    pygame.display.flip()
+
+# ============================================================
+# 退出
+# ============================================================
+pygame.quit()
+sys.exit()

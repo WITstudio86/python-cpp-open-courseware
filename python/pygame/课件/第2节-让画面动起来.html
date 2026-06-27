@@ -1,0 +1,878 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>第2节 · 让画面动起来</title>
+<style>
+/* ===== RESET & BASE ===== */
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+html, body {
+  width: 100%; height: 100%;
+  font-family: "PingFang SC", "Microsoft YaHei", "Noto Sans SC", "Helvetica Neue", sans-serif;
+  overflow: hidden;
+  background: #1a1a2e;
+}
+
+/* ===== DECK & SLIDES ===== */
+.deck {
+  width: 100vw; height: 100vh;
+  position: relative;
+}
+.slide {
+  position: absolute; inset: 0;
+  display: flex; flex-direction: column; align-items: center; justify-content: center;
+  padding: 60px 80px;
+  background: #FFF8F0;
+  color: #2d3436;
+  opacity: 0; transform: translateY(20px);
+  pointer-events: none;
+  transition: opacity 0.45s ease, transform 0.45s ease;
+}
+.slide.is-active {
+  opacity: 1; transform: translateY(0);
+  pointer-events: auto;
+  z-index: 1;
+}
+
+/* ===== SLIDE VARIATIONS ===== */
+.slide--title {
+  background: linear-gradient(135deg, #FFF8F0 0%, #FFE8E0 50%, #FFF0E8 100%);
+}
+.slide--dark { background: #1E1E2E; color: #e0e0e0; }
+
+/* ===== TYPOGRAPHY ===== */
+.slide__title {
+  font-size: 4rem; font-weight: 900;
+  margin-bottom: 0.5em;
+  line-height: 1.2;
+}
+.slide__subtitle {
+  font-size: 2rem; font-weight: 400;
+  opacity: 0.7;
+}
+.slide__heading {
+  font-size: 3rem; font-weight: 800;
+  margin-bottom: 0.6em;
+  line-height: 1.2;
+}
+.slide__body {
+  font-size: 1.6rem; line-height: 1.8;
+  max-width: 1000px;
+}
+.slide__body ul { list-style: none; padding-left: 0; }
+.slide__body li { padding: 0.35em 0; position: relative; padding-left: 1.6em; }
+.slide__body li::before { content: "◆"; position: absolute; left: 0; font-size: 0.7em; top: 0.5em; }
+
+/* ===== COLOR ACCENTS ===== */
+.txt-coral { color: #FF6B6B; }
+.txt-teal  { color: #4ECDC4; }
+.txt-yellow{ color: #F0C040; }
+.txt-purple{ color: #A78BFA; }
+.txt-white { color: #f0f0f0; }
+.bg-coral  { background: #FF6B6B; }
+.bg-teal   { background: #4ECDC4; }
+.bg-yellow { background: #FFE66D; }
+.bg-purple { background: #A78BFA; }
+
+/* ===== TITLE SLIDE ===== */
+.title-deco {
+  width: 140px; height: 6px;
+  border-radius: 100px;
+  background: linear-gradient(90deg, #FF6B6B, #4ECDC4, #A78BFA, #FFE66D);
+  margin: 30px auto 40px;
+}
+.title-badge {
+  display: inline-block;
+  padding: 12px 36px;
+  border-radius: 100px;
+  font-size: 1.5rem; font-weight: 700;
+  color: #fff; background: #FF6B6B;
+  margin-top: 20px;
+  letter-spacing: 2px;
+}
+
+/* ===== CODE BLOCK ===== */
+.code-block {
+  background: #1E1E2E; color: #e0e0e0;
+  font-family: "SF Mono", "Fira Code", "Cascadia Code", "Consolas", monospace;
+  font-size: 1.15rem; line-height: 1.75;
+  padding: 28px 36px;
+  border-radius: 16px;
+  text-align: left;
+  overflow: auto;
+  max-width: 95%;
+  box-shadow: 0 8px 32px rgba(0,0,0,0.35);
+  white-space: pre;
+}
+.code-block .kw  { color: #C792EA; } /* keyword */
+.code-block .fn  { color: #82AAFF; } /* function */
+.code-block .str { color: #C3E88D; } /* string */
+.code-block .num { color: #F78C6C; } /* number */
+.code-block .cm  { color: #676E95; } /* comment */
+.code-block .op  { color: #89DDFF; } /* operator */
+.code-block .var { color: #FFCB6B; } /* variable */
+.code-block .cl  { color: #FFCB6B; } /* class */
+.code-block .co  { color: #F07178; } /* constant */
+.code-block .b   { color: #89DDFF; } /* builtin */
+
+/* ===== TWO COLUMN ===== */
+.cols2 {
+  display: flex; gap: 40px;
+  width: 100%; max-width: 1100px;
+  justify-content: center; align-items: flex-start;
+}
+.cols2 > * { flex: 1; min-width: 0; }
+
+/* ===== CARD ===== */
+.card {
+  background: #fff; border-radius: 20px;
+  padding: 32px 36px;
+  box-shadow: 0 6px 24px rgba(0,0,0,0.08);
+  text-align: center;
+}
+.card__title {
+  font-size: 1.8rem; font-weight: 700;
+  margin-bottom: 0.4em;
+}
+.card__body { font-size: 1.3rem; line-height: 1.7; }
+
+/* ===== REVIEW TAGS ===== */
+.review-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 30px;
+  max-width: 1000px; width: 100%;
+}
+.review-item {
+  background: #fff; border-radius: 18px;
+  padding: 28px 30px;
+  box-shadow: 0 4px 20px rgba(0,0,0,0.06);
+  border-left: 6px solid;
+  text-align: left;
+}
+.review-item h3 { font-size: 1.6rem; margin-bottom: 0.4em; }
+.review-item p  { font-size: 1.2rem; line-height: 1.6; opacity: 0.85; }
+.review-item:nth-child(1) { border-left-color: #FF6B6B; }
+.review-item:nth-child(2) { border-left-color: #4ECDC4; }
+.review-item:nth-child(3) { border-left-color: #A78BFA; }
+.review-item:nth-child(4) { border-left-color: #FFE66D; }
+
+/* ===== FRAME ANIMATION VISUAL (Slide 3) ===== */
+.frame-strip {
+  display: flex; gap: 12px;
+  align-items: center; justify-content: center;
+  margin: 30px 0;
+}
+.frame-box {
+  width: 120px; height: 160px;
+  background: #fff; border-radius: 12px;
+  border: 3px solid #555;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 3rem;
+  box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+}
+.frame-box--blank { border-style: dashed; }
+.frame-box .ball {
+  width: 32px; height: 32px;
+  background: #FF6B6B; border-radius: 50%;
+}
+.frame-arrow { font-size: 2rem; color: #4ECDC4; font-weight: 700; }
+
+/* ===== LOOP FLOW (Slide 4) ===== */
+.loop-flow {
+  display: flex; align-items: center; justify-content: center;
+  gap: 20px; margin: 30px 0; flex-wrap: wrap;
+}
+.loop-step {
+  background: #fff; border-radius: 16px;
+  padding: 20px 28px; text-align: center;
+  font-size: 1.3rem; font-weight: 700;
+  box-shadow: 0 4px 16px rgba(0,0,0,0.08);
+  min-width: 130px;
+}
+.loop-step .num {
+  display: block; font-size: 2.2rem; font-weight: 900;
+}
+.loop-arrow {
+  font-size: 2.2rem; color: #4ECDC4; font-weight: 700;
+}
+
+/* ===== FPS COMPARISON (Slide 5) ===== */
+.fps-compare {
+  display: flex; gap: 30px;
+  justify-content: center; margin: 30px 0;
+}
+.fps-card {
+  background: #fff; border-radius: 16px;
+  padding: 24px 28px; text-align: center;
+  box-shadow: 0 4px 16px rgba(0,0,0,0.08);
+  width: 180px;
+}
+.fps-card__label { font-size: 1.5rem; font-weight: 700; margin-bottom: 10px; }
+.fps-bar-track { width: 100%; height: 200px; background: #eee; border-radius: 12px; position: relative; overflow: hidden; }
+.fps-bar { position: absolute; bottom: 0; width: 100%; border-radius: 12px; }
+.fps-bar--slow { height: 10%; background: #ddd; }
+.fps-bar--mid  { height: 40%; background: linear-gradient(0deg, #4ECDC4, #FFE66D); }
+.fps-bar--fast { height: 70%; background: linear-gradient(0deg, #4ECDC4, #A78BFA, #FF6B6B); }
+.fps-bar--no   { height: 100%; background: repeating-linear-gradient(45deg, #FF6B6B, #FF6B6B 8px, #fff 8px, #fff 16px); }
+.fps-card__emoji { font-size: 2.5rem; margin-top: 12px; }
+
+/* ===== METRONOME VISUAL (Slide 6) ===== */
+.metronome {
+  display: flex; flex-direction: column; align-items: center;
+  margin: 30px 0;
+}
+.metro-body {
+  width: 60px; height: 180px;
+  background: linear-gradient(180deg, #4ECDC4, #2d9d93);
+  border-radius: 30px 30px 12px 12px;
+  position: relative;
+}
+.metro-needle {
+  position: absolute; bottom: 30px; left: 50%;
+  width: 4px; height: 90px;
+  background: #FF6B6B; border-radius: 4px;
+  transform-origin: bottom center;
+  animation: metronome-swing 0.8s ease-in-out infinite alternate;
+}
+@keyframes metronome-swing {
+  0% { transform: translateX(-50%) rotate(-18deg); }
+  100% { transform: translateX(-50%) rotate(18deg); }
+}
+.metro-label { margin-top: 20px; font-size: 1.5rem; font-weight: 700; color: #FF6B6B; }
+
+/* ===== FILL COMPARISON (Slide 7) ===== */
+.compare-boxes {
+  display: flex; gap: 50px; align-items: center; margin: 30px 0;
+}
+.compare-box {
+  width: 240px; height: 200px;
+  background: #fff;
+  border: 3px solid #555; border-radius: 12px;
+  position: relative; overflow: hidden;
+}
+.compare-box__header {
+  text-align: center; font-weight: 700; font-size: 1.3rem;
+  padding: 10px 0; margin-bottom: 0;
+}
+.no-fill-box { position: relative; }
+.no-fill-box .trail {
+  position: absolute;
+  width: 32px; height: 32px;
+  background: rgba(255,107,107,0.3); border-radius: 50%;
+}
+.no-fill-box .trail--1 { top: 60px; left: 40px; }
+.no-fill-box .trail--2 { top: 60px; left: 80px; }
+.no-fill-box .trail--3 { top: 60px; left: 120px; }
+.no-fill-box .trail--4 { top: 60px; left: 160px; }
+.no-fill-box .ball-origin { top: 60px; left: 190px; }
+.fill-box { position: relative; }
+.fill-box .ball-only {
+  position: absolute;
+  width: 32px; height: 32px;
+  background: #FF6B6B; border-radius: 50%;
+  top: 60px; left: 160px;
+}
+.no-fill-box .ball-origin {
+  position: absolute;
+  width: 32px; height: 32px;
+  background: #FF6B6B; border-radius: 50%;
+}
+
+/* ===== RECT DIAGRAM (Slide 8) ===== */
+.rect-diagram {
+  display: flex; align-items: center; gap: 60px;
+  margin: 30px 0;
+}
+.rect-params {
+  background: #fff; border-radius: 16px;
+  padding: 28px 32px;
+  box-shadow: 0 4px 16px rgba(0,0,0,0.08);
+  text-align: left; font-size: 1.3rem; line-height: 2;
+}
+.rect-params span { font-weight: 700; }
+.rect-visual {
+  position: relative;
+  width: 280px; height: 200px;
+  background: #f5f5f5;
+  border-radius: 8px;
+  border: 2px dashed #ccc;
+}
+.rect-visual .drawn-rect {
+  position: absolute;
+  top: 40px; left: 50px;
+  width: 180px; height: 100px;
+  background: rgba(78, 205, 196, 0.5);
+  border: 4px solid #4ECDC4;
+  border-radius: 4px;
+}
+.rect-visual .dim-x { position: absolute; top: 8px; left: 140px; font-size: 0.9rem; color: #FF6B6B; font-weight: 700; }
+.rect-visual .dim-y { position: absolute; top: 90px; left: 6px; font-size: 0.9rem; color: #A78BFA; font-weight: 700; }
+.rect-visual .dim-w { position: absolute; top: 140px; left: 50px; font-size: 0.9rem; color: #4ECDC4; font-weight: 700; }
+.rect-visual .dim-h { position: absolute; top: 90px; left: 238px; font-size: 0.9rem; color: #F0C040; font-weight: 700; writing-mode: vertical-rl; }
+
+/* ===== EDGE BOUNCE DIAGRAM (Slide 9) ===== */
+.edge-diagram {
+  position: relative; width: 360px; height: 260px;
+  background: #f5f5f5; border-radius: 16px;
+  border: 3px solid #555; margin: 20px auto;
+}
+.edge-ball {
+  position: absolute;
+  width: 28px; height: 28px;
+  background: #FF6B6B; border-radius: 50%;
+  transition: all 0.3s ease;
+}
+.edge-label {
+  position: absolute; font-size: 0.85rem; font-weight: 700;
+  background: #fff; padding: 3px 10px; border-radius: 8px;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+}
+.edge--left   { top: 110px; left: 15px; }
+.edge--right  { top: 110px; right: 290px; transform: translateX(50%); }
+.edge--bottom { bottom: 10px; left: 100px; transform: translateX(-50%); }
+
+/* ===== PRACTICE LIST (Slide 11) ===== */
+.practice-list {
+  list-style: none;
+  max-width: 900px; width: 100%;
+}
+.practice-list li {
+  background: #fff; border-radius: 16px;
+  padding: 22px 30px;
+  margin-bottom: 16px;
+  box-shadow: 0 4px 16px rgba(0,0,0,0.06);
+  font-size: 1.4rem; line-height: 1.7;
+  display: flex; align-items: flex-start; gap: 16px;
+  text-align: left;
+}
+.practice-list .badge {
+  flex-shrink: 0;
+  width: 42px; height: 42px;
+  border-radius: 50%;
+  display: flex; align-items: center; justify-content: center;
+  font-weight: 900; font-size: 1.3rem;
+  color: #fff;
+}
+
+/* ===== SUMMARY GRID (Slide 12) ===== */
+.summary-grid {
+  display: grid; grid-template-columns: 1fr 1fr;
+  gap: 24px; max-width: 950px; width: 100%;
+}
+.summary-item {
+  background: #fff; border-radius: 16px;
+  padding: 24px 28px;
+  box-shadow: 0 4px 16px rgba(0,0,0,0.06);
+  display: flex; align-items: center; gap: 16px;
+  text-align: left;
+  font-size: 1.25rem; line-height: 1.6;
+}
+.summary-item__icon {
+  width: 50px; height: 50px; border-radius: 50%;
+  display: flex; align-items: center; justify-content: center;
+  flex-shrink: 0;
+  font-size: 1.6rem; font-weight: 900; color: #fff;
+}
+
+/* ===== PROGRESS BAR ===== */
+.progress-wrap {
+  position: fixed; bottom: 0; left: 0; right: 0;
+  height: 6px; background: rgba(0,0,0,0.08);
+  z-index: 100;
+}
+.progress-bar {
+  height: 100%; border-radius: 0 100px 100px 0;
+  background: linear-gradient(90deg, #FF6B6B, #4ECDC4, #A78BFA);
+  transition: width 0.35s ease;
+}
+
+/* ===== SLIDE NUMBER ===== */
+.slide-num {
+  position: fixed; bottom: 18px; right: 30px;
+  font-size: 1rem; font-weight: 600;
+  color: #999; z-index: 100;
+  pointer-events: none;
+}
+
+/* ===== HINT BOX ===== */
+.hint {
+  position: fixed; bottom: 20px; left: 50%;
+  transform: translateX(-50%);
+  font-size: 0.95rem; color: #aaa;
+  z-index: 100; pointer-events: none;
+  transition: opacity 0.5s;
+}
+
+/* ===== NOTIFICATION / OVERLAY ===== */
+.notify {
+  position: fixed; top: 30px; left: 50%;
+  transform: translateX(-50%);
+  background: #2d3436; color: #fff;
+  padding: 12px 32px; border-radius: 100px;
+  font-size: 1rem; font-weight: 600;
+  z-index: 200; opacity: 0;
+  transition: opacity 0.3s; pointer-events: none;
+}
+.notify.show { opacity: 1; }
+
+/* ===== RESPONSIVE ===== */
+@media (max-width: 768px) {
+  .slide { padding: 30px 24px; }
+  .slide__title { font-size: 2.4rem; }
+  .slide__heading { font-size: 2rem; }
+  .slide__body { font-size: 1.2rem; }
+  .cols2, .review-grid, .fps-compare, .compare-boxes, .rect-diagram, .summary-grid { flex-direction: column; grid-template-columns: 1fr; }
+  .loop-flow { flex-direction: column; }
+  .loop-arrow { transform: rotate(90deg); }
+}
+</style>
+</head>
+<body>
+
+<div class="progress-wrap"><div class="progress-bar" id="progressBar"></div></div>
+<div class="slide-num" id="slideNum">1 / 12</div>
+<div class="hint" id="hint">← → 方向键翻页</div>
+<div class="notify" id="notify"></div>
+
+<div class="deck">
+
+<!-- ==================== SLIDE 1: TITLE ==================== -->
+<section class="slide slide--title is-active">
+  <div style="font-size:6rem;font-weight:900;color:#2d3436;line-height:1.15;text-align:center;">
+    <span class="txt-coral">让画面</span><br>动起来
+  </div>
+  <div class="title-deco"></div>
+  <div style="font-size:1.8rem;color:#666;text-align:center;line-height:1.8;">
+    第二节 · 游戏主循环与动画原理
+  </div>
+  <div class="title-badge">Pygame 入门系列</div>
+</section>
+
+<!-- ==================== SLIDE 2: REVIEW ==================== -->
+<section class="slide">
+  <h2 class="slide__heading"><span class="txt-coral">上节回顾</span> · 我们学了什么？</h2>
+  <div class="review-grid">
+    <div class="review-item">
+      <h3 class="txt-coral">1. Pygame 是什么？</h3>
+      <p>一个让 Python 可以制作 2D 游戏的库。安装：<code style="background:#eee;padding:2px 8px;border-radius:4px;">pip install pygame</code></p>
+    </div>
+    <div class="review-item">
+      <h3 class="txt-teal">2. 创建游戏窗口</h3>
+      <p><code>pygame.display.set_mode((800, 600))</code> 设定窗口大小，<code>set_caption()</code> 设置标题。</p>
+    </div>
+    <div class="review-item">
+      <h3 class="txt-purple">3. 坐标系</h3>
+      <p>原点在左上角。X 轴向右增大，Y 轴向下增大。和数学课本不一样哦！</p>
+    </div>
+    <div class="review-item">
+      <h3 style="color:#F0B040;">4. RGB 色彩</h3>
+      <p>红绿蓝三原色混合。每种 0-255。黑色 (0,0,0)，白色 (255,255,255)。</p>
+    </div>
+  </div>
+</section>
+
+<!-- ==================== SLIDE 3: SECRET OF ANIMATION ==================== -->
+<section class="slide">
+  <h2 class="slide__heading"><span class="txt-purple">动画的秘密</span></h2>
+  <p class="slide__body" style="text-align:center;margin-bottom:10px;">
+    动画 = <span class="txt-coral" style="font-weight:700;">一张张静止画面</span>的快速切换，就像<span class="txt-teal" style="font-weight:700;">翻页动画书</span>！</p>
+  <div class="frame-strip">
+    <div class="frame-box"><div class="ball" style="transform:translateY(-20px);"></div></div>
+    <div class="frame-arrow">→</div>
+    <div class="frame-box"><div class="ball" style="transform:translateY(-8px);"></div></div>
+    <div class="frame-arrow">→</div>
+    <div class="frame-box"><div class="ball" style="transform:translateY(5px);"></div></div>
+    <div class="frame-arrow">→</div>
+    <div class="frame-box"><div class="ball" style="transform:translateY(18px);"></div></div>
+    <div class="frame-arrow">→</div>
+    <div class="frame-box"><div class="ball" style="transform:translateY(30px);"></div></div>
+  </div>
+  <div style="font-size:1.1rem;color:#888;text-align:center;">
+    每张图叫一「<span class="txt-coral" style="font-weight:700;">帧</span>」·Frame │ 每秒切换的帧数越多，画面越流畅
+  </div>
+</section>
+
+<!-- ==================== SLIDE 4: GAME LOOP ==================== -->
+<section class="slide">
+  <h2 class="slide__heading"><span class="txt-coral">游戏主循环</span> · 4 步走</h2>
+  <div class="loop-flow">
+    <div class="loop-step" style="border-top:4px solid #FF6B6B;"><span class="num txt-coral">1</span>处理事件</div>
+    <div class="loop-arrow">→</div>
+    <div class="loop-step" style="border-top:4px solid #A78BFA;"><span class="num txt-purple">2</span>更新状态</div>
+    <div class="loop-arrow">→</div>
+    <div class="loop-step" style="border-top:4px solid #4ECDC4;"><span class="num txt-teal">3</span>绘制画面</div>
+    <div class="loop-arrow">→</div>
+    <div class="loop-step" style="border-top:4px solid #F0C040;"><span class="num txt-yellow">4</span>控制速度</div>
+  </div>
+  <div class="code-block" style="margin-top:25px;font-size:1.05rem;">
+<span class="kw">import</span> pygame
+pygame.<span class="fn">init</span>()
+screen = pygame.display.<span class="fn">set_mode</span>((<span class="num">800</span>, <span class="num">600</span>))
+clock = pygame.time.<span class="fn">Clock</span>()
+<span class="kw">while</span> <span class="var">running</span>:
+    <span class="cm"># 1. 处理事件（键盘、鼠标、关闭窗口）</span>
+    <span class="kw">for</span> <span class="var">event</span> <span class="kw">in</span> pygame.event.<span class="fn">get</span>():
+        <span class="kw">if</span> event.type == pygame.<span class="co">QUIT</span>:
+            <span class="var">running</span> = <span class="kw">False</span>
+    <span class="cm"># 2. 更新状态（移动物体、检测碰撞...）</span>
+    <span class="var">x</span> += <span class="var">speed</span>
+    <span class="cm"># 3. 绘制画面</span>
+    screen.<span class="fn">fill</span>((<span class="num">255</span>,<span class="num">248</span>,<span class="num">240</span>))
+    pygame.draw.<span class="fn">rect</span>(screen, (<span class="num">255</span>,<span class="num">107</span>,<span class="num">107</span>), (<span class="var">x</span>,<span class="var">y</span>,<span class="num">60</span>,<span class="num">60</span>))
+    pygame.display.<span class="fn">update</span>()
+    <span class="cm"># 4. 控制速度</span>
+    clock.<span class="fn">tick</span>(<span class="num">60</span>)</div>
+</section>
+
+<!-- ==================== SLIDE 5: FPS ==================== -->
+<section class="slide">
+  <h2 class="slide__heading">FPS 是什么？<span class="txt-teal">—— 每秒帧数</span></h2>
+  <p class="slide__body" style="text-align:center;margin-bottom:20px;">
+    FPS = <span class="txt-coral" style="font-weight:700;">F</span>rames <span class="txt-coral" style="font-weight:700;">P</span>er <span class="txt-coral" style="font-weight:700;">S</span>econd · 每秒刷新多少张画面
+  </p>
+  <div class="fps-compare">
+    <div class="fps-card">
+      <div class="fps-card__label txt-coral">1 FPS</div>
+      <div class="fps-bar-track"><div class="fps-bar fps-bar--slow"></div></div>
+      <div style="font-size:1rem;margin-top:8px;color:#888;">幻灯片<br>一顿一顿</div>
+    </div>
+    <div class="fps-card">
+      <div class="fps-card__label" style="color:#F0C040;">30 FPS</div>
+      <div class="fps-bar-track"><div class="fps-bar fps-bar--mid"></div></div>
+      <div style="font-size:1rem;margin-top:8px;color:#888;">基本流畅<br>普通动画</div>
+    </div>
+    <div class="fps-card">
+      <div class="fps-card__label txt-teal">60 FPS</div>
+      <div class="fps-bar-track"><div class="fps-bar fps-bar--fast"></div></div>
+      <div style="font-size:1rem;margin-top:8px;color:#888;">非常丝滑<br>推荐值！</div>
+    </div>
+    <div class="fps-card">
+      <div class="fps-card__label txt-purple">不控制</div>
+      <div class="fps-bar-track"><div class="fps-bar fps-bar--no"></div></div>
+      <div style="font-size:1rem;margin-top:8px;color:#888;">各电脑<br>快慢不一</div>
+    </div>
+  </div>
+</section>
+
+<!-- ==================== SLIDE 6: CLOCK ==================== -->
+<section class="slide">
+  <h2 class="slide__heading"><span class="txt-teal">Clock</span> —— 节拍器</h2>
+  <div class="cols2">
+    <div style="text-align:center;">
+      <div class="metronome">
+        <div class="metro-body"><div class="metro-needle"></div></div>
+        <div class="metro-label">Tick · Tick · Tick</div>
+      </div>
+      <p style="font-size:1.2rem;color:#666;margin-top:10px;">节拍器打拍子，Clock 打帧</p>
+    </div>
+    <div>
+      <div class="code-block" style="font-size:1.05rem;">
+<span class="cm"># 创建 Clock</span>
+clock = pygame.time.<span class="fn">Clock</span>()
+
+<span class="cm"># 每帧末尾调用：</span>
+clock.<span class="fn">tick</span>(<span class="num">60</span>)  <span class="cm">← 最多 60 帧/秒</span></div>
+      <div style="margin-top:20px;text-align:center;">
+        <div class="card">
+          <div class="card__title txt-coral">为什么要 Clcok？</div>
+          <div class="card__body">
+            没有 Clock → 快的电脑跑几百帧/秒，慢的电脑只跑十几帧<br>
+            有 Clock → <span style="font-weight:700;color:#4ECDC4;">所有电脑保持一致速度</span>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ==================== SLIDE 7: FILL & TRAILS ==================== -->
+<section class="slide">
+  <h2 class="slide__heading"><span class="txt-coral">清屏与拖尾</span></h2>
+  <p class="slide__body" style="text-align:center;margin-bottom:5px;">
+    <code style="background:#ffe8e0;padding:4px 12px;border-radius:8px;font-size:1.3rem;">screen.fill((255, 248, 240))</code> 的作用 —— 擦掉上一帧！
+  </p>
+  <div class="compare-boxes">
+    <div>
+      <div class="compare-box__header txt-coral" style="font-size:1.4rem;">没有 fill() → 拖尾！</div>
+      <div class="compare-box no-fill-box">
+        <div class="trail trail--1"></div>
+        <div class="trail trail--2"></div>
+        <div class="trail trail--3"></div>
+        <div class="trail trail--4"></div>
+        <div class="ball-origin"></div>
+      </div>
+    </div>
+    <div style="font-size:3rem;color:#4ECDC4;font-weight:700;">→</div>
+    <div>
+      <div class="compare-box__header txt-teal" style="font-size:1.4rem;">有 fill() → 干净！</div>
+      <div class="compare-box fill-box">
+        <div class="ball-only"></div>
+      </div>
+    </div>
+  </div>
+  <div style="font-size:1.2rem;color:#888;text-align:center;max-width:700px;">
+    每一帧开始前，用 <code style="background:#eee;padding:2px 8px;border-radius:4px;">fill()</code> 把整个屏幕涂成背景色 = 擦掉上一帧的内容，再画新的一帧
+  </div>
+</section>
+
+<!-- ==================== SLIDE 8: DRAW RECT ==================== -->
+<section class="slide">
+  <h2 class="slide__heading"><span class="txt-teal">画一个矩形</span></h2>
+  <p class="slide__body" style="text-align:center;">
+    <code style="background:#e8f8f6;padding:6px 16px;border-radius:8px;font-size:1.3rem;">pygame.draw.rect(surface, color, (x, y, w, h))</code>
+  </p>
+  <div class="rect-diagram">
+    <div class="rect-visual">
+      <div class="drawn-rect"></div>
+      <div class="dim-x">x</div>
+      <div class="dim-y">y</div>
+      <div class="dim-w">w (宽度)</div>
+      <div class="dim-h">h (高度)</div>
+    </div>
+    <div class="rect-params">
+      <p><span class="txt-coral">surface</span> — 画在哪（screen）</p>
+      <p><span class="txt-teal">color</span> — 什么颜色（RGB 元组）</p>
+      <p><span class="txt-purple">(x, y)</span> — 左上角坐标</p>
+      <p><span style="color:#F0B040;">w</span> — 宽度（向右）</p>
+      <p><span style="color:#4ECDC4;">h</span> — 高度（向下）</p>
+    </div>
+  </div>
+</section>
+
+<!-- ==================== SLIDE 9: EDGE BOUNCE ==================== -->
+<section class="slide">
+  <h2 class="slide__heading"><span class="txt-purple">边缘反弹</span> —— 别飞出屏幕！</h2>
+  <div class="cols2">
+    <div>
+      <div class="edge-diagram">
+        <div class="edge-label edge--left">左边缘<br>x ≤ 0</div>
+        <div class="edge-label edge--left" style="top:145px;">右边缘<br>x ≥ W - w</div>
+        <div class="edge-label edge--bottom" style="top:0px;left:140px;">上边缘<br>y ≤ 0</div>
+        <div class="edge-label edge--bottom">下边缘<br>y ≥ H - h</div>
+      </div>
+    </div>
+    <div>
+      <div class="code-block" style="font-size:1rem;">
+<span class="cm"># 假设矩形宽 w, 高 h, 屏幕 800×600</span>
+<span class="kw">if</span> <span class="var">x</span> <span class="op"><=</span> <span class="num">0</span> <span class="kw">or</span> <span class="var">x</span> <span class="op">>=</span> <span class="num">800</span> - <span class="var">w</span>:
+    <span class="var">speed_x</span> = -<span class="var">speed_x</span>  <span class="cm"># 水平反弹</span>
+
+<span class="kw">if</span> <span class="var">y</span> <span class="op"><=</span> <span class="num">0</span> <span class="kw">or</span> <span class="var">y</span> <span class="op">>=</span> <span class="num">600</span> - <span class="var">h</span>:
+    <span class="var">speed_y</span> = -<span class="var">speed_y</span>  <span class="cm"># 垂直反弹</span></div>
+      <p style="margin-top:18px;font-size:1.3rem;text-align:center;line-height:1.8;">
+        <span class="txt-coral" style="font-weight:700;">核心思路：</span>碰到边缘 → 速度<strong>取反</strong> → 掉头往回走！
+      </p>
+    </div>
+  </div>
+</section>
+
+<!-- ==================== SLIDE 10: FULL CODE ==================== -->
+<section class="slide slide--dark">
+  <h2 class="slide__heading" style="font-size:2.4rem;"><span class="txt-teal" style="color:#82AAFF;">完整代码</span> <span style="font-size:1.4rem;font-weight:400;opacity:0.6;">—— 弹跳的矩形</span></h2>
+  <div class="code-block" style="font-size:0.95rem;max-width:1000px;max-height:70vh;overflow:auto;">
+<span class="kw">import</span> pygame
+pygame.<span class="fn">init</span>()
+
+<span class="cm"># 窗口设置</span>
+<span class="var">W</span>, <span class="var">H</span> = <span class="num">800</span>, <span class="num">600</span>
+screen = pygame.display.<span class="fn">set_mode</span>((<span class="var">W</span>, <span class="var">H</span>))
+pygame.display.<span class="fn">set_caption</span>(<span class="str">"弹跳矩形"</span>)
+
+<span class="cm"># 矩形属性</span>
+<span class="var">rect_w</span>, <span class="var">rect_h</span> = <span class="num">60</span>, <span class="num">60</span>
+<span class="var">x</span>, <span class="var">y</span> = <span class="var">W</span> <span class="op">//</span> <span class="num">2</span>, <span class="var">H</span> <span class="op">//</span> <span class="num">2</span>
+<span class="var">speed_x</span>, <span class="var">speed_y</span> = <span class="num">5</span>, <span class="num">3</span>
+<span class="var">color</span> = (<span class="num">255</span>, <span class="num">107</span>, <span class="num">107</span>)  <span class="cm"># 珊瑚红</span>
+
+clock = pygame.time.<span class="fn">Clock</span>()
+<span class="var">running</span> = <span class="kw">True</span>
+
+<span class="kw">while</span> <span class="var">running</span>:
+    <span class="cm"># 1. 处理事件</span>
+    <span class="kw">for</span> <span class="var">event</span> <span class="kw">in</span> pygame.event.<span class="fn">get</span>():
+        <span class="kw">if</span> event.type == pygame.<span class="co">QUIT</span>:
+            <span class="var">running</span> = <span class="kw">False</span>
+
+    <span class="cm"># 2. 更新位置</span>
+    <span class="var">x</span> += <span class="var">speed_x</span>
+    <span class="var">y</span> += <span class="var">speed_y</span>
+
+    <span class="cm"># 3. 边缘反弹</span>
+    <span class="kw">if</span> <span class="var">x</span> <span class="op"><=</span> <span class="num">0</span> <span class="kw">or</span> <span class="var">x</span> <span class="op">>=</span> <span class="var">W</span> - <span class="var">rect_w</span>:
+        <span class="var">speed_x</span> = -<span class="var">speed_x</span>
+    <span class="kw">if</span> <span class="var">y</span> <span class="op"><=</span> <span class="num">0</span> <span class="kw">or</span> <span class="var">y</span> <span class="op">>=</span> <span class="var">H</span> - <span class="var">rect_h</span>:
+        <span class="var">speed_y</span> = -<span class="var">speed_y</span>
+
+    <span class="cm"># 4. 绘制画面</span>
+    screen.<span class="fn">fill</span>((<span class="num">255</span>, <span class="num">248</span>, <span class="num">240</span>))
+    pygame.draw.<span class="fn">rect</span>(screen, <span class="var">color</span>, (<span class="var">x</span>, <span class="var">y</span>, <span class="var">rect_w</span>, <span class="var">rect_h</span>))
+    pygame.display.<span class="fn">update</span>()
+
+    <span class="cm"># 5. 控制帧率</span>
+    clock.<span class="fn">tick</span>(<span class="num">60</span>)
+
+pygame.<span class="fn">quit</span>()</div>
+</section>
+
+<!-- ==================== SLIDE 11: PRACTICE ==================== -->
+<section class="slide">
+  <h2 class="slide__heading"><span class="txt-coral">动手试一试</span></h2>
+  <p class="slide__body" style="text-align:center;margin-bottom:25px;">在完整代码的基础上，试试修改这些：</p>
+  <ul class="practice-list">
+    <li>
+      <div class="badge bg-coral">1</div>
+      <div><strong class="txt-coral">改变速度值</strong><br>把 speed_x 和 speed_y 改成 10，看看矩形是不是飞得更快了？再试试 1 — 是不是慢得像蜗牛？</div>
+    </li>
+    <li>
+      <div class="badge bg-teal">2</div>
+      <div><strong class="txt-teal">改变矩形大小</strong><br>把 rect_w 改成 120，rect_h 改成 30 — 变成长条了！注意边缘反弹的条件会自动适配。</div>
+    </li>
+    <li>
+      <div class="badge bg-purple">3</div>
+      <div><strong class="txt-purple">添加第二个矩形</strong><br>复制一份 x、y、speed，再新增一个 pygame.draw.rect() — 两个矩形同时弹跳！</div>
+    </li>
+    <li>
+      <div class="badge bg-yellow" style="color:#333;">4</div>
+      <div><strong style="color:#c09020;">关掉 fill()</strong><br>把 screen.fill() 这一行注释掉，看看屏幕会发生什么——是不是画出一道道「拖尾」？</div>
+    </li>
+  </ul>
+</section>
+
+<!-- ==================== SLIDE 12: SUMMARY ==================== -->
+<section class="slide">
+  <h2 class="slide__heading"><span class="txt-teal">本节小结</span></h2>
+  <div class="summary-grid">
+    <div class="summary-item">
+      <div class="summary-item__icon bg-coral">帧</div>
+      <div>动画 = 快速切换静止帧<br>每秒帧数越多越流畅</div>
+    </div>
+    <div class="summary-item">
+      <div class="summary-item__icon bg-teal">环</div>
+      <div>游戏主循环 4 步：<br>事件 → 更新 → 绘制 → 控速</div>
+    </div>
+    <div class="summary-item">
+      <div class="summary-item__icon bg-purple">FPS</div>
+      <div>FPS = 每秒帧率<br>建议设为 60</div>
+    </div>
+    <div class="summary-item">
+      <div class="summary-item__icon bg-yellow" style="color:#333;">钟</div>
+      <div>Clock.tick(60)<br>让所有电脑速度一致</div>
+    </div>
+    <div class="summary-item">
+      <div class="summary-item__icon bg-coral">擦</div>
+      <div>screen.fill() 清屏<br>避免上一帧拖尾残留</div>
+    </div>
+    <div class="summary-item">
+      <div class="summary-item__icon bg-teal">弹</div>
+      <div>边缘检测 + 速度取反<br>实现矩形反弹效果</div>
+    </div>
+  </div>
+  <div style="margin-top:30px;padding:18px 36px;background:linear-gradient(135deg,#FF6B6B,#A78BFA);border-radius:100px;color:#fff;font-size:1.6rem;font-weight:700;">
+    下节预告：<span style="font-size:2rem;">键盘是我的遥控器！</span>
+  </div>
+</section>
+
+</div><!-- .deck -->
+
+<script>
+(function() {
+  const slides = document.querySelectorAll('.slide');
+  const progressBar = document.getElementById('progressBar');
+  const slideNum = document.getElementById('slideNum');
+  const hint = document.getElementById('hint');
+  const notify = document.getElementById('notify');
+  const total = slides.length;
+  let current = 0;
+
+  function showSlide(idx) {
+    if (idx < 0 || idx >= total) return;
+    slides[current].classList.remove('is-active');
+    current = idx;
+    slides[current].classList.add('is-active');
+    updateUI();
+  }
+
+  function updateUI() {
+    const pct = ((current + 1) / total) * 100;
+    progressBar.style.width = pct + '%';
+    slideNum.textContent = (current + 1) + ' / ' + total;
+  }
+
+  function flashNotify(msg) {
+    notify.textContent = msg;
+    notify.classList.add('show');
+    clearTimeout(notify._tid);
+    notify._tid = setTimeout(function() { notify.classList.remove('show'); }, 1500);
+  }
+
+  function hideHint() {
+    hint.style.opacity = '0';
+  }
+
+  document.addEventListener('keydown', function(e) {
+    if (e.key === 'ArrowRight' || e.key === 'ArrowDown' || e.key === ' ' || e.key === 'PageDown') {
+      e.preventDefault();
+      if (current < total - 1) {
+        showSlide(current + 1);
+        hideHint();
+      } else {
+        flashNotify('已经是最后一页啦');
+      }
+    } else if (e.key === 'ArrowLeft' || e.key === 'ArrowUp' || e.key === 'PageUp') {
+      e.preventDefault();
+      if (current > 0) {
+        showSlide(current - 1);
+        hideHint();
+      } else {
+        flashNotify('已经是第一页啦');
+      }
+    } else if (e.key === 'Home') {
+      e.preventDefault();
+      showSlide(0);
+    } else if (e.key === 'End') {
+      e.preventDefault();
+      showSlide(total - 1);
+    } else if (e.key === 'f' || e.key === 'F') {
+      if (document.fullscreenElement) {
+        document.exitFullscreen();
+      } else {
+        document.documentElement.requestFullscreen();
+      }
+    }
+  });
+
+  // Touch swipe support
+  let touchStartX = 0, touchStartY = 0;
+  document.addEventListener('touchstart', function(e) {
+    touchStartX = e.touches[0].clientX;
+    touchStartY = e.touches[0].clientY;
+  });
+  document.addEventListener('touchend', function(e) {
+    var dx = (e.changedTouches[0] || {}).clientX - touchStartX;
+    var dy = (e.changedTouches[0] || {}).clientY - touchStartY;
+    if (Math.abs(dx) > Math.abs(dy) && Math.abs(dx) > 40) {
+      if (dx < 0 && current < total - 1) { showSlide(current + 1); hideHint(); }
+      else if (dx > 0 && current > 0) { showSlide(current - 1); hideHint(); }
+    }
+  });
+
+  // Handle hash-based deep linking
+  function handleHash() {
+    var h = window.location.hash;
+    var m = h.match(/^#(\d+)$/);
+    if (m) {
+      var n = parseInt(m[1], 10) - 1;
+      if (n >= 0 && n < total) showSlide(n);
+    }
+  }
+  window.addEventListener('hashchange', handleHash);
+  handleHash();
+
+  updateUI();
+})();
+</script>
+
+</body>
+</html>

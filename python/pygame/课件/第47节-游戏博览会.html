@@ -1,0 +1,616 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>第47节：游戏博览会</title>
+<style>
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+body {
+  font-family: "Microsoft YaHei", "PingFang SC", "Noto Sans SC", sans-serif;
+  background: linear-gradient(135deg, #1a0a0a 0%, #2d1111 30%, #1a0a0a 60%, #2d1111 100%);
+  color: #f0e6d3;
+  overflow: hidden;
+  height: 100vh;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  user-select: none;
+}
+
+/* Canvas for confetti background effect */
+#confetti-canvas {
+  position: fixed; top: 0; left: 0;
+  width: 100%; height: 100%;
+  z-index: 0; pointer-events: none;
+  opacity: 0.25;
+}
+
+.slides-container { width: 100vw; height: 100vh; position: relative; z-index: 1; }
+
+.slide {
+  position: absolute; top: 0; left: 0;
+  width: 100%; height: 100%;
+  display: flex; flex-direction: column;
+  justify-content: center; align-items: center;
+  padding: 60px 80px;
+  opacity: 0; transition: opacity 0.4s ease;
+  pointer-events: none;
+  text-align: center;
+}
+.slide.active { opacity: 1; pointer-events: auto; }
+
+/* Typography */
+.slide h1 {
+  font-size: 72px; font-weight: 900;
+  background: linear-gradient(180deg, #ffd700 0%, #ff8c00 50%, #e63946 100%);
+  -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+  background-clip: text;
+  margin-bottom: 24px; line-height: 1.2;
+  text-shadow: none;
+  filter: drop-shadow(0 4px 8px rgba(255, 215, 0, 0.3));
+}
+.slide h2 {
+  font-size: 52px; color: #ffd700;
+  margin-bottom: 28px; line-height: 1.3;
+}
+.slide h3 {
+  font-size: 38px; color: #ff8c66;
+  margin-bottom: 20px; line-height: 1.4;
+}
+.slide p {
+  font-size: 32px; line-height: 1.7;
+  margin-bottom: 12px;
+  max-width: 900px;
+}
+.slide p.small { font-size: 24px; color: #c9a87c; }
+.slide p.medium { font-size: 28px; }
+
+/* Lists */
+.slide ul {
+  font-size: 30px; line-height: 2.0;
+  text-align: left; padding-left: 0;
+  list-style: none; max-width: 850px;
+}
+.slide ul li {
+  margin-bottom: 6px; padding: 6px 0;
+}
+.slide ul li::before {
+  content: "🎮 "; font-size: 28px;
+}
+.slide ul.check li::before { content: "✅ "; }
+.slide ul.star li::before { content: "⭐ "; }
+.slide ul.rule li::before { content: "📋 "; }
+.slide ul.tip li::before { content: "💡 "; }
+.slide ul.clap li::before { content: "👏 "; }
+
+/* Cards */
+.card-row {
+  display: flex; gap: 24px; flex-wrap: wrap;
+  justify-content: center; width: 100%;
+  max-width: 1100px;
+}
+.card {
+  background: linear-gradient(135deg, rgba(255,215,0,0.08), rgba(255,140,0,0.05));
+  border: 2px solid rgba(255,215,0,0.3);
+  border-radius: 16px;
+  padding: 28px 24px;
+  flex: 1; min-width: 200px; max-width: 260px;
+  text-align: center;
+  transition: transform 0.2s, box-shadow 0.2s;
+}
+.card:hover { transform: translateY(-4px); box-shadow: 0 8px 24px rgba(255,215,0,0.2); }
+.card .card-icon { font-size: 56px; margin-bottom: 12px; }
+.card .card-title { font-size: 28px; color: #ffd700; font-weight: bold; margin-bottom: 8px; }
+.card .card-desc { font-size: 22px; color: #d4b896; line-height: 1.5; }
+
+/* Ribbon banner */
+.ribbon {
+  background: linear-gradient(90deg, #c41e3a, #e63946, #c41e3a);
+  color: #ffd700;
+  font-size: 28px; font-weight: bold;
+  padding: 12px 40px;
+  border-radius: 8px;
+  margin: 16px 0;
+  display: inline-block;
+  box-shadow: 0 4px 16px rgba(198, 30, 58, 0.4);
+  letter-spacing: 4px;
+}
+
+/* Timer display */
+.timer-box {
+  display: flex; gap: 20px; justify-content: center;
+  margin: 24px 0;
+}
+.timer-item {
+  background: rgba(255,215,0,0.1);
+  border: 2px solid #ffd700;
+  border-radius: 16px;
+  padding: 16px 32px;
+  text-align: center;
+}
+.timer-item .time-num {
+  font-size: 64px; font-weight: 900;
+  color: #ffd700; line-height: 1;
+}
+.timer-item .time-label {
+  font-size: 20px; color: #d4b896; margin-top: 6px;
+}
+
+/* Big emoji / icon */
+.big-icon {
+  font-size: 140px; line-height: 1;
+  margin-bottom: 16px;
+  animation: bounce 2s ease-in-out infinite;
+}
+@keyframes bounce {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-20px); }
+}
+
+/* Grid for scoring */
+.score-grid {
+  display: grid; grid-template-columns: auto 1fr 1fr 1fr 1fr 1fr;
+  gap: 2px; width: 100%; max-width: 1000px;
+  font-size: 24px; margin: 20px 0;
+}
+.score-grid .sg-header {
+  background: rgba(255,215,0,0.15);
+  padding: 12px 16px; font-weight: bold;
+  color: #ffd700; text-align: center;
+}
+.score-grid .sg-cell {
+  background: rgba(255,255,255,0.04);
+  padding: 12px 16px; text-align: center;
+}
+.score-grid .sg-name {
+  text-align: left; font-weight: bold;
+  color: #f0e6d3;
+}
+
+/* Voting buttons */
+.vote-grid {
+  display: flex; gap: 20px; flex-wrap: wrap;
+  justify-content: center; max-width: 900px;
+}
+.vote-btn {
+  background: linear-gradient(135deg, rgba(255,215,0,0.12), rgba(230,57,70,0.08));
+  border: 2px solid rgba(255,215,0,0.4);
+  border-radius: 16px;
+  padding: 24px 32px;
+  font-size: 24px; color: #f0e6d3;
+  cursor: pointer; transition: all 0.2s;
+  min-width: 180px;
+}
+.vote-btn:hover {
+  background: linear-gradient(135deg, rgba(255,215,0,0.25), rgba(230,57,70,0.18));
+  border-color: #ffd700;
+  transform: scale(1.05);
+  box-shadow: 0 8px 24px rgba(255,215,0,0.3);
+}
+.vote-btn .vote-emoji { font-size: 48px; display: block; margin-bottom: 8px; }
+
+/* Process steps */
+.process-row {
+  display: flex; gap: 16px; align-items: center;
+  justify-content: center; flex-wrap: wrap;
+  margin: 20px 0;
+}
+.process-step {
+  background: rgba(255,215,0,0.08);
+  border: 2px solid rgba(255,215,0,0.25);
+  border-radius: 16px;
+  padding: 20px 28px;
+  text-align: center;
+  min-width: 160px;
+}
+.process-step .step-num {
+  font-size: 42px; font-weight: 900;
+  color: #ffd700; line-height: 1;
+}
+.process-step .step-text {
+  font-size: 22px; color: #d4b896; margin-top: 6px;
+}
+.process-arrow {
+  font-size: 36px; color: #ffd700;
+}
+
+/* Page indicator */
+.page-num {
+  position: absolute; bottom: 30px; right: 50px;
+  font-size: 22px; color: rgba(255,215,0,0.5);
+  font-weight: bold;
+}
+.nav-hint {
+  position: absolute; bottom: 30px; left: 50px;
+  font-size: 20px; color: rgba(255,255,255,0.3);
+}
+
+/* Decorative corner ribbons */
+.corner-ribbon {
+  position: fixed;
+  width: 200px; height: 200px;
+  pointer-events: none; z-index: 2;
+  opacity: 0.15;
+}
+.corner-ribbon.tl { top: -60px; left: -60px; background: radial-gradient(circle at 40% 40%, #ffd700, transparent 70%); }
+.corner-ribbon.tr { top: -60px; right: -60px; background: radial-gradient(circle at 60% 40%, #e63946, transparent 70%); }
+.corner-ribbon.bl { bottom: -60px; left: -60px; background: radial-gradient(circle at 40% 60%, #e63946, transparent 70%); }
+.corner-ribbon.br { bottom: -60px; right: -60px; background: radial-gradient(circle at 60% 60%, #ffd700, transparent 70%); }
+
+/* Stars decoration */
+.stars { color: #ffd700; font-size: 32px; letter-spacing: 12px; margin-bottom: 16px; }
+
+/* Highlight text */
+.hl { color: #ffd700; font-weight: bold; }
+.hl2 { color: #ff8c66; font-weight: bold; }
+.hl3 { color: #e63946; font-weight: bold; }
+
+/* Wide text block */
+.text-block {
+  background: rgba(255,255,255,0.04);
+  border-left: 4px solid #ffd700;
+  border-radius: 0 12px 12px 0;
+  padding: 20px 32px;
+  text-align: left;
+  max-width: 850px;
+  margin: 16px 0;
+}
+.text-block p { font-size: 28px; margin-bottom: 8px; }
+</style>
+</head>
+<body>
+
+<div class="corner-ribbon tl"></div>
+<div class="corner-ribbon tr"></div>
+<div class="corner-ribbon bl"></div>
+<div class="corner-ribbon br"></div>
+<canvas id="confetti-canvas"></canvas>
+
+<div class="slides-container">
+
+<!-- 第1页：封面 -->
+<div class="slide active">
+  <div class="stars">⭐ 🎮 ⭐ 🎮 ⭐</div>
+  <div class="big-icon">🎪</div>
+  <h1>游戏博览会</h1>
+  <div class="ribbon">第 47 节 · 作品展示与互评</div>
+  <p class="medium" style="margin-top:16px">展示你的作品 · 发现同学的创意 · 一起庆祝编程的乐趣！</p>
+  <p class="small" style="margin-top:32px">按 → 键开始</p>
+  <div class="page-num">1 / 10</div>
+</div>
+
+<!-- 第2页：今天的任务 -->
+<div class="slide">
+  <h2>📋 今天的任务</h2>
+  <div class="process-row">
+    <div class="process-step">
+      <div class="step-num">1</div>
+      <div class="step-text">了解规则</div>
+    </div>
+    <div class="process-arrow">→</div>
+    <div class="process-step">
+      <div class="step-num">2</div>
+      <div class="step-text">作品展示</div>
+    </div>
+    <div class="process-arrow">→</div>
+    <div class="process-step">
+      <div class="step-num">3</div>
+      <div class="step-text">自由试玩</div>
+    </div>
+    <div class="process-arrow">→</div>
+    <div class="process-step">
+      <div class="step-num">4</div>
+      <div class="step-text">投票总结</div>
+    </div>
+  </div>
+  <p class="medium" style="margin-top:32px; color:#d4b896">今天不敲代码，我们<span class="hl">展示、分享、互相学习</span>！</p>
+  <p class="small" style="margin-top:16px">每节课 60 分钟 · 约 6-7 组展示</p>
+  <div class="page-num">2 / 10</div>
+</div>
+
+<!-- 第3页：展示规则 -->
+<div class="slide">
+  <h2>📋 展示规则</h2>
+  <div class="timer-box">
+    <div class="timer-item">
+      <div class="time-num">5</div>
+      <div class="time-label">分钟演示</div>
+    </div>
+    <div style="font-size:48px;color:#ffd700;display:flex;align-items:center">+</div>
+    <div class="timer-item">
+      <div class="time-num">2</div>
+      <div class="time-label">分钟问答</div>
+    </div>
+  </div>
+  <ul class="rule" style="margin-top:8px">
+    <li>每组<span class="hl">5分钟</span>演示游戏 + <span class="hl">2分钟</span>回答提问</li>
+    <li>老师会计时，大屏幕能看到剩余时间</li>
+    <li>演示内容：游戏介绍 → 玩法展示 → 设计亮点 → 技术难点 → 心得</li>
+    <li>观众请认真观看，并填写<span class="hl2">反馈表</span></li>
+  </ul>
+  <div class="page-num">3 / 10</div>
+</div>
+
+<!-- 第4页：评价标准 -->
+<div class="slide">
+  <h2>🏆 评价标准</h2>
+  <div class="card-row">
+    <div class="card">
+      <div class="card-icon">💡</div>
+      <div class="card-title">创意</div>
+      <div class="card-desc">游戏概念新颖吗？有没有让人惊喜的设计？</div>
+    </div>
+    <div class="card">
+      <div class="card-icon">✅</div>
+      <div class="card-title">完成度</div>
+      <div class="card-desc">游戏能正常运行吗？功能完整吗？</div>
+    </div>
+    <div class="card">
+      <div class="card-icon">💻</div>
+      <div class="card-title">代码质量</div>
+      <div class="card-desc">代码结构清晰吗？命名规范吗？</div>
+    </div>
+    <div class="card">
+      <div class="card-icon">🎤</div>
+      <div class="card-title">展示表达</div>
+      <div class="card-desc">讲解清楚吗？能回答问题吗？</div>
+    </div>
+  </div>
+  <p class="small" style="margin-top:20px">每个维度 1-5 星 ⭐</p>
+  <div class="page-num">4 / 10</div>
+</div>
+
+<!-- 第5页：评分表 -->
+<div class="slide">
+  <h2>📊 观众评分表</h2>
+  <div class="score-grid">
+    <div class="sg-header">小组</div>
+    <div class="sg-header">创意<br>⭐</div>
+    <div class="sg-header">完成度<br>⭐</div>
+    <div class="sg-header">代码<br>⭐</div>
+    <div class="sg-header">表达<br>⭐</div>
+    <div class="sg-header">总分</div>
+
+    <div class="sg-cell sg-name">第1组</div>
+    <div class="sg-cell"></div><div class="sg-cell"></div><div class="sg-cell"></div><div class="sg-cell"></div><div class="sg-cell"></div>
+
+    <div class="sg-cell sg-name">第2组</div>
+    <div class="sg-cell"></div><div class="sg-cell"></div><div class="sg-cell"></div><div class="sg-cell"></div><div class="sg-cell"></div>
+
+    <div class="sg-cell sg-name">第3组</div>
+    <div class="sg-cell"></div><div class="sg-cell"></div><div class="sg-cell"></div><div class="sg-cell"></div><div class="sg-cell"></div>
+
+    <div class="sg-cell sg-name">第4组</div>
+    <div class="sg-cell"></div><div class="sg-cell"></div><div class="sg-cell"></div><div class="sg-cell"></div><div class="sg-cell"></div>
+
+    <div class="sg-cell sg-name">第5组</div>
+    <div class="sg-cell"></div><div class="sg-cell"></div><div class="sg-cell"></div><div class="sg-cell"></div><div class="sg-cell"></div>
+
+    <div class="sg-cell sg-name">第6组</div>
+    <div class="sg-cell"></div><div class="sg-cell"></div><div class="sg-cell"></div><div class="sg-cell"></div><div class="sg-cell"></div>
+  </div>
+  <p class="small" style="margin-top:16px">每看完一组演示，在对应栏打分（1-5分）</p>
+  <div class="page-num">5 / 10</div>
+</div>
+
+<!-- 第6页：演示者提示 -->
+<div class="slide">
+  <h2>💡 演示者，记住说这些...</h2>
+  <ul class="tip">
+    <li><span class="hl">游戏叫什么？</span> — 一句话介绍你的游戏</li>
+    <li><span class="hl">怎么玩？</span> — 操作方式、游戏规则</li>
+    <li><span class="hl">亮点是什么？</span> — 你觉得最酷的设计或功能</li>
+    <li><span class="hl">最难的是什么？</span> — 遇到的最大困难，怎么解决的</li>
+    <li><span class="hl">学到了什么？</span> — 做这个游戏最大的收获</li>
+  </ul>
+  <div class="ribbon" style="margin-top:24px">🎤 自信表达 · 你是最棒的！</div>
+  <div class="page-num">6 / 10</div>
+</div>
+
+<!-- 第7页：观众礼仪 -->
+<div class="slide">
+  <h2>👀 观众礼仪</h2>
+  <ul class="clap">
+    <li><span class="hl">认真观看</span> — 尊重每一位演示者的努力</li>
+    <li><span class="hl">热情鼓掌</span> — 每组演示结束都献上掌声</li>
+    <li><span class="hl">积极提问</span> — 有问题大胆举手</li>
+    <li><span class="hl">填写反馈</span> — 给演示的同学写下真诚的评价</li>
+    <li><span class="hl">不玩手机</span> — 全程专注参与</li>
+  </ul>
+  <div class="big-icon" style="font-size:100px;margin-top:20px;animation:none">👏👏👏</div>
+  <div class="page-num">7 / 10</div>
+</div>
+
+<!-- 第8页：自由试玩 -->
+<div class="slide">
+  <div class="big-icon">🎮</div>
+  <h2>自由试玩时间！</h2>
+  <p style="font-size:36px;color:#ff8c66;margin-top:8px;">现在去玩同学们的游戏吧！</p>
+  <div class="process-row" style="margin-top:24px">
+    <div class="process-step">
+      <div class="step-num">🚶</div>
+      <div class="step-text">走到你想玩的<br>游戏旁边</div>
+    </div>
+    <div class="process-arrow">→</div>
+    <div class="process-step">
+      <div class="step-num">🕹️</div>
+      <div class="step-text">动手试玩<br>体验一下</div>
+    </div>
+    <div class="process-arrow">→</div>
+    <div class="process-step">
+      <div class="step-num">📝</div>
+      <div class="step-text">留下你的<br>反馈便利贴</div>
+    </div>
+    <div class="process-arrow">→</div>
+    <div class="process-step">
+      <div class="step-num">🔄</div>
+      <div class="step-text">换一个游戏<br>继续体验</div>
+    </div>
+  </div>
+  <p class="medium" style="margin-top:28px;color:#d4b896">试玩时想一想：<span class="hl">好玩吗？为什么？</span></p>
+  <div class="page-num">8 / 10</div>
+</div>
+
+<!-- 第9页：投票 -->
+<div class="slide">
+  <h2>🗳️ 选出你最喜欢的游戏</h2>
+  <p class="medium" style="margin-bottom:16px">每人一票 · 不能投自己组 · 选出你心中的最佳！</p>
+  <div class="vote-grid">
+    <div class="vote-btn">
+      <span class="vote-emoji">🏆</span>
+      最佳游戏奖
+    </div>
+    <div class="vote-btn">
+      <span class="vote-emoji">💡</span>
+      最佳创意奖
+    </div>
+    <div class="vote-btn">
+      <span class="vote-emoji">💻</span>
+      最佳代码奖
+    </div>
+    <div class="vote-btn">
+      <span class="vote-emoji">🎨</span>
+      最佳美术奖
+    </div>
+    <div class="vote-btn">
+      <span class="vote-emoji">🎤</span>
+      最佳展示奖
+    </div>
+    <div class="vote-btn">
+      <span class="vote-emoji">❤️</span>
+      最受欢迎奖
+    </div>
+  </div>
+  <div class="page-num">9 / 10</div>
+</div>
+
+<!-- 第10页：致谢 -->
+<div class="slide">
+  <div class="stars">⭐ ⭐ ⭐</div>
+  <div class="big-icon" style="animation:none">🎉</div>
+  <h1 style="font-size:64px">感谢每一位创作者！</h1>
+  <p class="medium" style="margin-top:8px">你们的每一行代码，都是成长的印记</p>
+  <div class="text-block" style="margin-top:24px">
+    <p>"编程不只是写给机器看的，<br>也是写给人看的；</p>
+    <p>游戏不只是自己玩的，<br>更是让别人玩的。"</p>
+  </div>
+  <p class="small" style="margin-top:32px">继续创造 · 继续分享 · 继续成长 🚀</p>
+  <div class="page-num">10 / 10</div>
+</div>
+
+</div>
+
+<script>
+(function() {
+  const slides = document.querySelectorAll('.slide');
+  const total = slides.length;
+  let current = 0;
+
+  function showSlide(index) {
+    slides.forEach((s, i) => s.classList.toggle('active', i === index));
+    current = index;
+  }
+
+  document.addEventListener('keydown', function(e) {
+    if (e.key === 'ArrowRight' || e.key === 'ArrowDown' || e.key === ' ') {
+      e.preventDefault();
+      if (current < total - 1) showSlide(current + 1);
+    } else if (e.key === 'ArrowLeft' || e.key === 'ArrowUp') {
+      e.preventDefault();
+      if (current > 0) showSlide(current - 1);
+    } else if (e.key === 'Home') {
+      e.preventDefault(); showSlide(0);
+    } else if (e.key === 'End') {
+      e.preventDefault(); showSlide(total - 1);
+    }
+  });
+
+  // Touch swipe support
+  let touchStartX = 0;
+  document.addEventListener('touchstart', function(e) { touchStartX = e.touches[0].clientX; });
+  document.addEventListener('touchend', function(e) {
+    const diff = touchStartX - e.changedTouches[0].clientX;
+    if (Math.abs(diff) > 50) {
+      if (diff > 0 && current < total - 1) showSlide(current + 1);
+      else if (diff < 0 && current > 0) showSlide(current - 1);
+    }
+  });
+
+  // Confetti animation on the canvas
+  (function() {
+    const canvas = document.getElementById('confetti-canvas');
+    const ctx = canvas.getContext('2d');
+    let particles = [];
+    const colors = ['#ffd700', '#ff8c00', '#e63946', '#ff6b6b', '#ffb347', '#c41e3a', '#f9ca24'];
+
+    function resize() {
+      canvas.width = window.innerWidth;
+      canvas.height = window.innerHeight;
+    }
+    resize();
+    window.addEventListener('resize', resize);
+
+    function createParticle() {
+      return {
+        x: Math.random() * canvas.width,
+        y: Math.random() * canvas.height - canvas.height,
+        size: Math.random() * 8 + 3,
+        color: colors[Math.floor(Math.random() * colors.length)],
+        speedY: Math.random() * 1.5 + 0.5,
+        speedX: (Math.random() - 0.5) * 0.8,
+        rotation: Math.random() * 360,
+        rotSpeed: (Math.random() - 0.5) * 3,
+        shape: Math.random() > 0.5 ? 'rect' : 'circle',
+        opacity: Math.random() * 0.6 + 0.2
+      };
+    }
+
+    // Initialize particles
+    for (let i = 0; i < 50; i++) {
+      const p = createParticle();
+      p.y = Math.random() * canvas.height;
+      particles.push(p);
+    }
+
+    function animate() {
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+      for (let i = 0; i < particles.length; i++) {
+        const p = particles[i];
+        p.y += p.speedY;
+        p.x += p.speedX;
+        p.rotation += p.rotSpeed;
+
+        if (p.y > canvas.height + 20) {
+          particles[i] = createParticle();
+          continue;
+        }
+        if (p.x < -20) p.x = canvas.width + 20;
+        if (p.x > canvas.width + 20) p.x = -20;
+
+        ctx.save();
+        ctx.translate(p.x, p.y);
+        ctx.rotate((p.rotation * Math.PI) / 180);
+        ctx.globalAlpha = p.opacity;
+        ctx.fillStyle = p.color;
+
+        if (p.shape === 'rect') {
+          ctx.fillRect(-p.size / 2, -p.size / 4, p.size, p.size / 2);
+        } else {
+          ctx.beginPath();
+          ctx.arc(0, 0, p.size / 2, 0, Math.PI * 2);
+          ctx.fill();
+        }
+        ctx.restore();
+      }
+      requestAnimationFrame(animate);
+    }
+    animate();
+  })();
+})();
+</script>
+
+</body>
+</html>

@@ -1,0 +1,266 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>第41课：超级名片——结构体入门</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            font-family: 'PingFang SC', 'Microsoft YaHei', sans-serif;
+            background: linear-gradient(135deg, #ffecd2 0%, #fcb69f 100%);
+            min-height: 100vh;
+            display: flex; justify-content: center; align-items: center;
+        }
+        .slides-container {
+            width: 90%; max-width: 900px; min-height: 550px;
+            background: white; border-radius: 25px; padding: 40px;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+            position: relative; padding-bottom: 90px;
+        }
+        .slide { display: none; animation: fadeIn 0.5s; }
+        .slide.active { display: block; }
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
+        h1 { color: #d35400; font-size: 2.2em; margin-bottom: 20px; }
+        h2 { color: #e67e22; font-size: 1.8em; margin-bottom: 15px; }
+        h3 { color: #27ae60; font-size: 1.4em; margin: 15px 0 10px; }
+        p, li { font-size: 1.15em; line-height: 1.8; color: #333; }
+        ul, ol { padding-left: 30px; margin: 10px 0; }
+        .code-block {
+            background: #1e1e2e; color: #cdd6f4; padding: 20px;
+            border-radius: 12px; font-family: 'Courier New', monospace;
+            font-size: 0.95em; line-height: 1.6; overflow-x: auto;
+            margin: 15px 0; white-space: pre-wrap; word-break: break-all;
+        }
+        .nav-buttons {
+            position: absolute; bottom: 20px; left: 40px; right: 40px;
+            display: flex; justify-content: space-between;
+        }
+        .nav-btn {
+            background: linear-gradient(135deg, #ffecd2, #fcb69f);
+            color: #d35400; border: none; padding: 12px 30px;
+            border-radius: 30px; font-size: 1.1em; cursor: pointer;
+            transition: transform 0.2s; font-weight: bold;
+            font-family: 'PingFang SC', 'Microsoft YaHei', sans-serif;
+        }
+        .nav-btn:hover { transform: scale(1.05); }
+        .nav-btn:disabled { opacity: 0.4; cursor: default; transform: none; }
+        .page-indicator { font-size: 1.1em; color: #e67e22; align-self: center; }
+        .emoji-big { font-size: 3em; text-align: center; display: block; margin: 15px 0; }
+        .badge { display: inline-block; background: #fff3e0; color: #e65100; padding: 5px 15px; border-radius: 20px; font-size: 0.9em; margin: 3px; }
+        table { width: 100%; border-collapse: collapse; margin: 15px 0; }
+        th, td { border: 2px solid #ddd; padding: 10px; text-align: left; }
+        th { background: #fcb69f; color: white; }
+        .highlight-box { background: #fff3cd; border-left: 5px solid #ffc107; padding: 15px; border-radius: 8px; margin: 15px 0; }
+        .tip-box { background: #d4edda; border-left: 5px solid #28a745; padding: 15px; border-radius: 8px; margin: 15px 0; }
+        @media (max-width: 600px) {
+            .slides-container { padding: 25px; }
+            h1 { font-size: 1.5em; }
+            .code-block { font-size: 0.75em; }
+        }
+    </style>
+</head>
+<body>
+    <div class="slides-container">
+
+        <!-- ============ 第1页：封面 ============ -->
+        <div class="slide active" id="slide1">
+            <span class="emoji-big">📇</span>
+            <h1>第41课：超级名片——结构体入门</h1>
+            <p style="text-align:center;color:#666;">进阶阶段 | 课时：45分钟</p>
+            <p style="text-align:center;margin-top:25px;font-size:1.2em;">
+                把 <span class="badge">姓名</span> <span class="badge">年龄</span> <span class="badge">成绩</span> 打包在一起
+            </p>
+            <p style="text-align:center;margin-top:20px;color:#e67e22;">
+                ✨ 一个变量，管理所有信息 ✨
+            </p>
+        </div>
+
+        <!-- ============ 第2页：学习目标 ============ -->
+        <div class="slide" id="slide2">
+            <h2>🎯 学习目标</h2>
+            <p style="margin-bottom:15px;">通过本课学习，你将能够：</p>
+            <ul>
+                <li><strong>理解</strong>结构体（struct）的概念 —— 为什么需要它？</li>
+                <li><strong>掌握</strong> struct 的定义语法 —— 知道每一部分怎么写</li>
+                <li><strong>学会</strong>创建结构体变量，并用点运算符 <code>.</code> 访问成员</li>
+                <li><strong>能够</strong>用结构体组织复杂数据，写出更清晰、更优雅的代码</li>
+            </ul>
+            <div class="tip-box" style="margin-top:25px;">
+                <strong>💡 想一想：</strong>假设要管理全班40个同学的<strong>姓名、年龄、语文、数学、英语成绩</strong>，没有结构体需要多少个变量？有了结构体又需要多少个？
+            </div>
+            <p style="margin-top:15px;color:#e67e22;text-align:center;">
+                答案：没有结构体 = 200个变量 😱 | 有了结构体 = 40个变量 😊
+            </p>
+        </div>
+
+        <!-- ============ 第3页：核心知识 ============ -->
+        <div class="slide" id="slide3">
+            <h2>📖 核心知识</h2>
+
+            <h3>🔍 什么是结构体？</h3>
+            <p>结构体就像一个<strong>超级名片</strong> —— 它可以把<strong>不同类型</strong>的信息（姓名、年龄、成绩）打包在一起，用一个变量统一管理！</p>
+
+            <table style="margin: 10px 0;">
+                <tr><th>没有结构体 ❌</th><th>有了结构体 ✅</th></tr>
+                <tr><td>信息分散在多个独立变量</td><td>一个学生的信息打包在一个变量里</td></tr>
+                <tr><td>不容易看出数据之间的关联</td><td>一眼看出哪些信息属于同一个人</td></tr>
+                <tr><td>修改和传递很麻烦</td><td>只需传一个结构体变量</td></tr>
+            </table>
+
+            <h3>📝 定义语法</h3>
+            <div class="code-block">struct Student {        // Student 是结构体名称（可自定义）
+    string name;       // 姓名 —— 字符串类型
+    int age;           // 年龄 —— 整数类型
+    double score;      // 成绩 —— 小数类型
+};                     // ⚠️ 注意：末尾必须加分号！</div>
+
+            <h3>🔧 创建与使用</h3>
+            <div class="code-block">Student s1;              // 创建一个学生变量（像 int a; 一样）
+s1.name = "小明";        // 用 . 给 name 赋值
+s1.age = 12;            // 用 . 给 age 赋值
+s1.score = 95.5;        // 用 . 给 score 赋值</div>
+
+            <div class="tip-box"><strong>💡 记忆口诀：</strong>点运算符 <code>.</code> 就像一把钥匙，打开结构体这个"百宝箱"，取出或放入数据！"变量名<strong>点</strong>成员名"</div>
+            <div class="highlight-box"><strong>⚠️ 最易错点：</strong>结构体定义末尾的<strong>分号 <code>;</code></strong> 绝对不能忘！这是新手最容易犯的错误！</div>
+        </div>
+
+        <!-- ============ 第4页：示例代码 ============ -->
+        <div class="slide" id="slide4">
+            <h2>💻 示例代码 —— 学生信息卡</h2>
+            <p style="margin-bottom:10px;">完整程序：创建学生、输出信息、修改成绩</p>
+            <div class="code-block">#include &lt;iostream&gt;
+#include &lt;string&gt;
+using namespace std;
+
+// 定义学生结构体
+struct Student {
+    string name;      // 姓名
+    int age;          // 年龄
+    double score;     // 成绩
+};
+
+int main() {
+    // 花括号初始化 —— 按成员定义顺序
+    Student s1 = {"小明", 12, 95.5};
+
+    cout &lt;&lt; "===== 学生信息卡 =====" &lt;&lt; endl;
+    cout &lt;&lt; "姓名：" &lt;&lt; s1.name &lt;&lt; endl;
+    cout &lt;&lt; "年龄：" &lt;&lt; s1.age &lt;&lt; " 岁" &lt;&lt; endl;
+    cout &lt;&lt; "成绩：" &lt;&lt; s1.score &lt;&lt; " 分" &lt;&lt; endl;
+
+    // 修改成绩：直接赋值即可
+    s1.score = 98.0;
+    cout &lt;&lt; "进步后成绩：" &lt;&lt; s1.score &lt;&lt; " 分" &lt;&lt; endl;
+
+    // 结构体赋值：整体复制
+    Student s2 = s1;
+    s2.name = "小明副本";
+    cout &lt;&lt; "原姓名：" &lt;&lt; s1.name &lt;&lt; endl;   // 小明
+    cout &lt;&lt; "副本姓名：" &lt;&lt; s2.name &lt;&lt; endl; // 小明副本
+
+    return 0;
+}</div>
+
+            <h3>🏃 运行结果</h3>
+            <div class="code-block" style="background:#2d2d2d; color:#f8f8f2;">===== 学生信息卡 =====
+姓名：小明
+年龄：12 岁
+成绩：95.5 分
+进步后成绩：98 分
+原姓名：小明
+副本姓名：小明副本</div>
+
+            <div class="tip-box"><strong>💡 发现：</strong>修改 <code>s2.name</code> 不影响 <code>s1.name</code>！结构体赋值是<strong>值复制</strong>，就像复印了一张名片 —— 在复印件上写字不会影响原件。</div>
+        </div>
+
+        <!-- ============ 第5页：趣味练习 ============ -->
+        <div class="slide" id="slide5">
+            <h2>🎮 趣味练习</h2>
+
+            <h3>📋 练习1：创建你的宠物信息卡（简单）</h3>
+            <p>定义 <code>Pet</code> 结构体，包含：<code>name</code>（名字）、<code>type</code>（种类）、<code>age</code>（年龄）。创建一只你最喜欢的宠物，输出信息。</p>
+
+            <h3>🛒 练习2：商品总价计算（中等）</h3>
+            <p>定义 <code>Product</code> 结构体（name, price, quantity）。创建"铅笔"（2.5元×100支）和"橡皮"（1.5元×80块），计算所有商品的总价值。</p>
+
+            <h3>📐 练习3：结构体值复制（思考）</h3>
+            <div class="code-block">Point p1 = {3, 5};
+Point p2 = p1;
+p2.x = 10;  p2.y = 20;
+// 问：p1.x 和 p1.y 的值是多少？</div>
+
+            <div class="highlight-box" style="margin-top:20px;">
+                <strong>🏆 挑战任务 —— 成绩排行榜：</strong><br>
+                创建3个学生（小明88.5分、小红96分、小刚91分）。<br>
+                ① 找出成绩最高的学生<br>
+                ② 计算三人平均成绩<br>
+                ③ 按成绩从高到低输出排行榜<br>
+                <em>提示：可以比较 <code>s1.score</code> 和 <code>s2.score</code> 的大小！</em>
+            </div>
+        </div>
+
+        <!-- ============ 第6页：本课小结 ============ -->
+        <div class="slide" id="slide6">
+            <h2>📝 本课小结</h2>
+
+            <table>
+                <tr><th>知识点</th><th>说明</th></tr>
+                <tr><td>🚩 结构体概念</td><td>把不同数据类型打包在一起，形成一个新的数据类型</td></tr>
+                <tr><td>📐 定义语法</td><td><code>struct 名称 { 成员列表 };</code> —— <strong>末尾分号不能忘！</strong></td></tr>
+                <tr><td>🆕 创建变量</td><td><code>结构体名 变量名;</code> —— 就像声明普通变量一样</td></tr>
+                <tr><td>🔑 访问成员</td><td>使用点运算符 <code>.</code>，格式：<code>变量名.成员名</code></td></tr>
+                <tr><td>✨ 初始化</td><td>花括号 <code>{}</code> 按成员顺序初始化：<code>Student s = {"小明", 12, 95.5};</code></td></tr>
+                <tr><td>📋 整体赋值</td><td>同类型结构体直接 <code>=</code> 赋值：<code>s2 = s1;</code>（值复制）</td></tr>
+            </table>
+
+            <div class="tip-box" style="margin-top:20px;">
+                <strong>🔮 下节课预告：</strong><br>
+                <strong>第42课：排排坐吃果果 —— 冒泡排序</strong><br>
+                我们将学习如何给数据"排排队"，让杂乱的数据变得井井有条！
+            </div>
+
+            <ul style="margin-top:15px;">
+                <li>✅ 结构体用 <code>struct</code> 关键字定义</li>
+                <li>✅ 不同类型的数据打包在一起，一个变量管理</li>
+                <li>✅ 点运算符 <code>.</code> 是访问成员的钥匙</li>
+                <li>✅ 定义末尾的分号 <code>;</code> 一定不能忘</li>
+                <li>✅ 结构体是学习"类"和"面向对象编程"的重要基础</li>
+            </ul>
+
+            <p style="text-align:center;margin-top:25px;color:#e67e22;font-size:1.3em;">
+                🎉 恭喜完成第41课！你离编程高手又近了一步！
+            </p>
+        </div>
+
+        <!-- ============ 导航按钮 ============ -->
+        <div class="nav-buttons">
+            <button class="nav-btn" onclick="prevSlide()" disabled>◀ 上一页</button>
+            <span class="page-indicator" id="pageIndicator">1 / 6</span>
+            <button class="nav-btn" onclick="nextSlide()">下一页 ▶</button>
+        </div>
+    </div>
+
+    <script>
+        let currentSlide = 0;
+        const slides = document.querySelectorAll('.slide');
+        const totalSlides = slides.length;
+        const indicator = document.getElementById('pageIndicator');
+        function showSlide(n) {
+            slides[currentSlide].classList.remove('active');
+            currentSlide = (n + totalSlides) % totalSlides;
+            slides[currentSlide].classList.add('active');
+            indicator.textContent = (currentSlide + 1) + ' / ' + totalSlides;
+            document.querySelectorAll('.nav-btn')[0].disabled = currentSlide === 0;
+            document.querySelectorAll('.nav-btn')[1].disabled = currentSlide === totalSlides - 1;
+        }
+        function nextSlide() { showSlide(currentSlide + 1); }
+        function prevSlide() { showSlide(currentSlide - 1); }
+        document.addEventListener('keydown', function(e) {
+            if (e.key === 'ArrowRight' || e.key === ' ') { e.preventDefault(); nextSlide(); }
+            else if (e.key === 'ArrowLeft') { e.preventDefault(); prevSlide(); }
+        });
+        indicator.textContent = (currentSlide + 1) + ' / ' + totalSlides;
+    </script>
+</body>
+</html>

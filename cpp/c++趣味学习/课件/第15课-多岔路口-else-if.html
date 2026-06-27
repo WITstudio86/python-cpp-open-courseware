@@ -1,0 +1,262 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>第15课：多岔路口——else if</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            font-family: 'PingFang SC', 'Microsoft YaHei', sans-serif;
+            background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+            min-height: 100vh;
+            display: flex; justify-content: center; align-items: center;
+        }
+        .slides-container {
+            width: 90%; max-width: 900px; min-height: 550px;
+            background: white; border-radius: 25px; padding: 40px;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+            position: relative;
+        }
+        .slide { display: none; animation: fadeIn 0.5s; }
+        .slide.active { display: block; }
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
+        h1 { color: #c43c7a; font-size: 2.2em; margin-bottom: 20px; }
+        h2 { color: #e8573a; font-size: 1.8em; margin-bottom: 15px; }
+        h3 { color: #2c7a4a; font-size: 1.4em; margin: 15px 0 10px; }
+        p, li { font-size: 1.15em; line-height: 1.8; color: #333; }
+        ul { padding-left: 30px; margin: 10px 0; }
+        .code-block {
+            background: #1e1e2e; color: #cdd6f4; padding: 20px;
+            border-radius: 12px; font-family: 'Courier New', monospace;
+            font-size: 0.95em; line-height: 1.6; overflow-x: auto;
+            margin: 15px 0; white-space: pre-wrap; word-break: break-all;
+        }
+        .code-block .keyword { color: #cba6f7; }
+        .code-block .string { color: #a6e3a1; }
+        .code-block .comment { color: #6c7086; font-style: italic; }
+        .code-block .number { color: #fab387; }
+        .nav-buttons {
+            position: absolute; bottom: 20px; left: 40px; right: 40px;
+            display: flex; justify-content: space-between;
+        }
+        .nav-btn {
+            background: linear-gradient(135deg, #f093fb, #f5576c);
+            color: white; border: none; padding: 12px 30px;
+            border-radius: 30px; font-size: 1.1em; cursor: pointer;
+            transition: transform 0.2s, box-shadow 0.2s;
+            font-family: 'PingFang SC', 'Microsoft YaHei', sans-serif;
+        }
+        .nav-btn:hover { transform: scale(1.05); box-shadow: 0 5px 20px rgba(240,147,251,0.4); }
+        .nav-btn:disabled { opacity: 0.4; cursor: default; transform: none; }
+        .page-indicator { font-size: 1.1em; color: #c43c7a; align-self: center; }
+        .emoji-big { font-size: 3em; text-align: center; display: block; margin: 15px 0; }
+        .badge { display: inline-block; background: #fce4ec; color: #c43c7a; padding: 5px 15px; border-radius: 20px; font-size: 0.9em; margin: 3px; }
+        table { width: 100%; border-collapse: collapse; margin: 15px 0; }
+        th, td { border: 2px solid #ddd; padding: 10px; text-align: left; }
+        th { background: #f093fb; color: white; }
+        .highlight-box { background: #fff3cd; border-left: 5px solid #ffc107; padding: 15px; border-radius: 8px; margin: 15px 0; }
+        .tip-box { background: #d4edda; border-left: 5px solid #28a745; padding: 15px; border-radius: 8px; margin: 15px 0; }
+        .brick-block { background: #f3e5f5; border: 2px dashed #ab47bc; border-radius: 10px; padding: 12px; margin: 8px 0; text-align: center; }
+        .danger-box { background: #fde8e8; border-left: 5px solid #e53e3e; padding: 15px; border-radius: 8px; margin: 15px 0; }
+        @media (max-width: 600px) {
+            .slides-container { padding: 25px; }
+            h1 { font-size: 1.5em; }
+            .code-block { font-size: 0.75em; }
+        }
+    </style>
+</head>
+<body>
+    <div class="slides-container">
+        <!-- Slide 1: Title Page -->
+        <div class="slide active" id="slide1">
+            <span class="emoji-big">🎪</span>
+            <h1>第15课：多岔路口——else if</h1>
+            <p style="text-align:center; color:#666;">第三单元：选择与决策 | 课时：45分钟</p>
+            <p style="text-align:center; margin-top:20px; font-size:1.3em;">🎪 趣味项目：成绩等级评定系统</p>
+            <div style="text-align:center; margin-top:30px;">
+                <span class="badge">if-else if-else</span>
+                <span class="badge">条件顺序</span>
+                <span class="badge">多分支选择</span>
+            </div>
+            <div class="tip-box" style="margin-top:25px;">
+                <strong>💡 想一想：</strong><br>
+                放学回家的路上有三个岔路口，你该怎么选？人生的选择往往不止两个，程序也一样！
+            </div>
+        </div>
+
+        <!-- Slide 2: Learning Objectives -->
+        <div class="slide" id="slide2">
+            <h2>🎯 学习目标</h2>
+            <ul>
+                <li>掌握 <strong>if-else if-else</strong> 多分支选择结构的语法</li>
+                <li>理解<strong>条件判断的顺序</strong>对结果的关键影响</li>
+                <li>能够根据实际问题设计<strong>多分支选择结构</strong></li>
+            </ul>
+            <div class="highlight-box" style="margin-top:25px;">
+                <strong>🔑 本课核心：</strong><br>
+                条件排列有讲究，<strong>从高到低</strong>来排序！<br>
+                最特殊的排前面，最一般的放后面！
+            </div>
+            <table style="margin-top:20px;">
+                <tr><th>场景</th><th>需要几个分支？</th></tr>
+                <tr><td>二选一（是否及格）</td><td>2个 — if-else 就够</td></tr>
+                <tr><td>成绩等级（ABCDE）</td><td>5个 — 需要 else if！</td></tr>
+                <tr><td>季节判断（春夏秋冬）</td><td>4个 — 需要 else if！</td></tr>
+            </table>
+        </div>
+
+        <!-- Slide 3: Core Knowledge -->
+        <div class="slide" id="slide3">
+            <h2>📖 多岔路口——if-else if-else 阶梯</h2>
+
+            <p>多分支结构就像一个<strong>层层过滤的筛子</strong>——从最严格的条件开始，一层层往下筛选：</p>
+
+            <div class="brick-block">
+                <strong>🔝 第1级：if (条件1)</strong><br>
+                → 条件1成立？执行代码1，结束！不成立？往下走 ↓
+            </div>
+            <div class="brick-block">
+                <strong>📊 第2级：else if (条件2)</strong><br>
+                → 条件2成立？执行代码2，结束！不成立？继续往下 ↓
+            </div>
+            <div class="brick-block">
+                <strong>📊 第3级：else if (条件3)</strong><br>
+                → 条件3成立？执行代码3，结束！不成立？继续往下 ↓
+            </div>
+            <div class="brick-block">
+                <strong>🔄 最后：else</strong><br>
+                → 前面都不成立？执行这里的代码（兜底）
+            </div>
+
+            <div class="danger-box">
+                <strong>⚠️ 条件顺序为什么重要？</strong><br>
+                <strong>反例：</strong>if (score >= 60) ... else if (score >= 90) ...<br>
+                95分满足 >=60，先被拦截，永远看不到后面的 >=90！<br>
+                <strong>✅ 正确：</strong>if (score >= 90) ... else if (score >= 80) ... （从高到低）
+            </div>
+
+            <div class="tip-box">
+                <strong>🌍 生活例子：</strong><br>
+                🚦 <strong>红绿灯：</strong>红灯停、绿灯行、黄灯等一等 → 三种情况的判断<br>
+                📋 <strong>菜单选择：</strong>看菜单选菜 → 第一页没有想吃的看第二页 → 都没有就随便点（兜底）
+            </div>
+        </div>
+
+        <!-- Slide 4: Example Code -->
+        <div class="slide" id="slide4">
+            <h2>💻 示例代码：成绩等级评定系统</h2>
+            <div class="code-block">#include &lt;iostream&gt;
+using namespace std;
+
+int main() {
+    int score;
+    cout &lt;&lt; "请输入考试分数（0-100）：";
+    cin &gt;&gt; score;
+
+    // ✅ 正确的条件顺序：从高到低！
+    if (score &gt;= 90) {
+        cout &lt;&lt; "等级：A（优秀）🎉" &lt;&lt; endl;
+    } else if (score &gt;= 80) {
+        cout &lt;&lt; "等级：B（良好）💪" &lt;&lt; endl;
+    } else if (score &gt;= 70) {
+        cout &lt;&lt; "等级：C（中等）📚" &lt;&lt; endl;
+    } else if (score &gt;= 60) {
+        cout &lt;&lt; "等级：D（及格）✏️" &lt;&lt; endl;
+    } else {
+        cout &lt;&lt; "等级：E（需努力）📖" &lt;&lt; endl;
+    }
+    return 0;
+}</div>
+
+            <h3>⚠️ 常见错误写法对比</h3>
+            <div class="code-block">// ❌ 错误：从低到高 — 95分也会判为"及格"！
+if (score &gt;= 60) { ... }
+else if (score &gt;= 90) { ... }  // 永远执行不到！
+
+// ✅ 正确：从高到低
+if (score &gt;= 90) { ... }
+else if (score &gt;= 60) { ... }  // 正确！</div>
+            <p style="color:#e53e3e;"><strong>记住：</strong>条件要从<strong>最特殊到最一般</strong>排列，就像排队——个子高的站前面！</p>
+        </div>
+
+        <!-- Slide 5: Practice -->
+        <div class="slide" id="slide5">
+            <h2>🎮 趣味练习</h2>
+
+            <h3>练习1：成绩等级评定 ✏️</h3>
+            <p>编写程序输出：90-100→"A"，80-89→"B"，70-79→"C"，60-69→"D"，60以下→"E"。</p>
+            <div class="tip-box">
+                <strong>✅ 提示：</strong>从高到低排列：<code>if (score >= 90)</code> → <code>else if (score >= 80)</code> → ...
+            </div>
+
+            <h3>练习2：季节判断器 🍂</h3>
+            <p>输入月份（1-12），输出对应季节（春3-5，夏6-8，秋9-11，冬12-2）。</p>
+            <div class="tip-box">
+                <strong>✅ 提示：</strong>使用逻辑运算符：<code>month >= 3 && month <= 5</code> 判断春季。
+            </div>
+
+            <h3>练习3：找茬大侦探 🔍</h3>
+            <p>下面代码有什么问题？</p>
+            <div class="code-block">int score = 95;
+if (score >= 60) cout << "及格";
+else if (score >= 90) cout << "优秀";</div>
+            <div class="danger-box">
+                <strong>🔍 答案：</strong>条件顺序错误！<code>>=60</code> 包含了所有 >=90 的分数，后面的 <code>>=90</code> 永远不会执行。应该把 <code>>=90</code> 放前面！
+            </div>
+        </div>
+
+        <!-- Slide 6: Summary -->
+        <div class="slide" id="slide6">
+            <h2>📝 本课小结</h2>
+            <table>
+                <tr><th>知识点</th><th>说明</th></tr>
+                <tr><td>多分支语法</td><td><code>if(){} else if(){} else{}</code></td></tr>
+                <tr><td>执行规则</td><td>从上到下依次检查，第一个成立的就执行，后面跳过</td></tr>
+                <tr><td>条件顺序</td><td>从最特殊到最一般排列（从高到低）</td></tr>
+                <tr><td>else的妙用</td><td>兜底处理，所有条件都不满足时执行</td></tr>
+                <tr><td>逻辑运算符</td><td><code>&&</code>（与）、<code>||</code>（或）精确限定范围</td></tr>
+            </table>
+            <div class="highlight-box" style="margin-top:20px;">
+                <strong>🔑 记住口诀：</strong><br>
+                多岔路口有导航，if-else-if 来帮忙！<br>
+                条件顺序最关键，从高到低不迷路；<br>
+                层层筛选往下走，只走一条不回头！
+            </div>
+            <p style="text-align:center; margin-top:20px; font-size:1.3em;">🎉 下一课预告：万能开关——switch语句 🍔</p>
+        </div>
+
+        <!-- Navigation -->
+        <div class="nav-buttons">
+            <button class="nav-btn" onclick="prevSlide()">◀ 上一页</button>
+            <span class="page-indicator" id="pageIndicator">1 / 6</span>
+            <button class="nav-btn" onclick="nextSlide()">下一页 ▶</button>
+        </div>
+    </div>
+
+    <script>
+        let currentSlide = 0;
+        const slides = document.querySelectorAll('.slide');
+        const totalSlides = slides.length;
+        const indicator = document.getElementById('pageIndicator');
+
+        function showSlide(n) {
+            slides[currentSlide].classList.remove('active');
+            currentSlide = (n + totalSlides) % totalSlides;
+            slides[currentSlide].classList.add('active');
+            indicator.textContent = (currentSlide + 1) + ' / ' + totalSlides;
+            document.querySelectorAll('.nav-btn')[0].disabled = currentSlide === 0;
+            document.querySelectorAll('.nav-btn')[1].disabled = currentSlide === totalSlides - 1;
+        }
+        function nextSlide() { showSlide(currentSlide + 1); }
+        function prevSlide() { showSlide(currentSlide - 1); }
+
+        document.addEventListener('keydown', function(e) {
+            if (e.key === 'ArrowRight' || e.key === ' ') { e.preventDefault(); nextSlide(); }
+            else if (e.key === 'ArrowLeft') { e.preventDefault(); prevSlide(); }
+        });
+
+        indicator.textContent = (currentSlide + 1) + ' / ' + totalSlides;
+    </script>
+</body>
+</html>

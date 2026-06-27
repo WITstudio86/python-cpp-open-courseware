@@ -1,0 +1,208 @@
+# ============================================================
+# 第15节：综合练习：猜数字游戏
+# 学习目标：综合运用条件判断 + random 模块 + and/or/not
+# 适合年龄：10-12岁
+# ============================================================
+
+import random  # 导入随机数模块
+
+print("=" * 50)
+print("🎮 第15节：综合练习 —— 猜数字游戏")
+print("=" * 50)
+
+# ============ 第一部分：认识 random ============
+print("\n📝 一、认识 random 模块")
+print("-" * 30)
+
+# random.randint(a, b) 生成 a 到 b 之间的随机整数
+print("生成 3 个 1-100 的随机数：")
+print("  第1个：", random.randint(1, 100))
+print("  第2个：", random.randint(1, 100))
+print("  第3个：", random.randint(1, 100))
+print("每次运行结果都不同哦！")
+
+# ============ 第二部分：认识 and/or/not ============
+print("\n📝 二、认识 and / or / not")
+print("-" * 30)
+
+# and：两个条件都要成立
+age = 12
+print(f"年龄 {age}：")
+print(f"  是青少年吗？（6-18岁）{age >= 6 and age <= 18}")  # True
+
+# or：只要一个条件成立
+score = 95
+print(f"\n分数 {score}：")
+print(f"  是 A 或 B 吗？{score >= 80 or score >= 90}")  # True
+
+# not：取反
+is_raining = False
+print(f"\n下雨了吗？{is_raining}")
+print(f"  没下雨吗？{not is_raining}")  # True
+
+# ============ 第三部分：猜数字游戏 1.0 ============
+print("\n" + "=" * 50)
+print("🎯 项目：猜数字游戏")
+print("=" * 50)
+
+# 生成 1-100 的随机数
+secret_number = random.randint(1, 100)
+guess_count = 0  # 猜的次数
+
+print("我想好了一个 1-100 之间的秘密数字！")
+print("来猜猜看吧~")
+
+while True:
+    # 获取玩家输入
+    guess = int(input("\n请输入你猜的数字："))
+    guess_count += 1
+
+    # 检查输入是否合法（1-100之间）
+    if guess < 1 or guess > 100:
+        print("⚠️ 要猜 1 到 100 之间的数字哦！这次不算，请重猜~")
+        guess_count -= 1  # 不合法的输入不计次数
+        continue
+
+    # 判断大小
+    if guess > secret_number:
+        print("📈 猜大了！往小一点猜~")
+    elif guess < secret_number:
+        print("📉 猜小了！往大一点猜~")
+    else:
+        # 猜对了！
+        print(f"\n🎉🎉🎉 恭喜你猜对了！秘密数字就是 {secret_number}！")
+        print(f"你一共猜了 {guess_count} 次")
+
+        # 根据次数给评价
+        if guess_count == 1:
+            print("🏆 一发入魂！你是天才吧！")
+        elif guess_count <= 3:
+            print("🌟 太厉害了！3次以内就猜中了！")
+        elif guess_count <= 7:
+            print("👍 不错哦，表现很好！")
+        elif guess_count <= 10:
+            print("😊 还可以，下次争取更快！")
+        else:
+            print("💪 终于猜中了，继续加油！")
+
+        break  # 猜对了，退出循环
+
+# ============ 练习题1：难度选择 ============
+print("\n" + "=" * 50)
+print("✏️ 练习1：带难度选择的猜数字游戏")
+print("=" * 50)
+
+print("请选择难度：")
+print("  1 = 简单（1-50）")
+print("  2 = 普通（1-100）")
+print("  3 = 困难（1-200）")
+
+difficulty = input("请输入难度编号：")
+
+if difficulty == "1":
+    max_num = 50
+    print("你选了【简单】模式，数字范围 1-50")
+elif difficulty == "2":
+    max_num = 100
+    print("你选了【普通】模式，数字范围 1-100")
+elif difficulty == "3":
+    max_num = 200
+    print("你选了【困难】模式，数字范围 1-200")
+else:
+    max_num = 100
+    print("输入有误，默认【普通】模式")
+
+# 生成对应范围的随机数
+secret2 = random.randint(1, max_num)
+tries = 0
+low_hint = 1
+high_hint = max_num
+
+while True:
+    guess2 = int(input(f"请猜一个 1-{max_num} 的数字："))
+    tries += 1
+
+    if guess2 < 1 or guess2 > max_num:
+        print(f"请猜 1-{max_num} 之间的数字~")
+        tries -= 1
+        continue
+
+    if guess2 > secret2:
+        print("📈 猜大了！")
+        if guess2 < high_hint:
+            high_hint = guess2
+    elif guess2 < secret2:
+        print("📉 猜小了！")
+        if guess2 > low_hint:
+            low_hint = guess2
+    else:
+        print(f"🎉 猜对了！就是 {secret2}！你用了 {tries} 次")
+        break
+
+    # 猜了5次后给范围提示
+    if tries >= 5:
+        print(f"💡 提示：秘密数字在 {low_hint} 到 {high_hint} 之间~")
+
+# ============ 练习题2：and/or 练习 ============
+print("\n" + "=" * 50)
+print("✏️ 练习2：and/or 判断练习")
+print("=" * 50)
+
+# 判断闰年（能被4整除但不能被100整除，或者能被400整除）
+year = int(input("请输入一个年份："))
+
+if (year % 4 == 0 and year % 100 != 0) or (year % 400 == 0):
+    print(f"{year} 年是闰年！2月有29天~")
+else:
+    print(f"{year} 年不是闰年，2月只有28天")
+
+# ============ 练习题3：范围判断 ============
+print("\n" + "=" * 50)
+print("✏️ 练习3：判断一个数是否在范围内")
+print("=" * 50)
+
+num = int(input("请输入一个数字："))
+
+# 判断是否在 10 到 50 之间
+if num >= 10 and num <= 50:
+    print(f"✅ {num} 在 10 到 50 之间")
+else:
+    print(f"❌ {num} 不在 10 到 50 之间")
+
+# 判断是否小于10 或 大于50
+if num < 10 or num > 50:
+    print(f"   （{num} 在范围之外）")
+
+# ============ 综合小挑战 ============
+print("\n" + "=" * 50)
+print("🏆 综合挑战：石头剪刀布")
+print("=" * 50)
+
+print("来玩石头剪刀布！")
+print("  1 = ✊ 石头")
+print("  2 = ✌️ 剪刀")
+print("  3 = 🖐️ 布")
+
+player = input("请出拳（1/2/3）：")
+computer = random.randint(1, 3)
+
+# 显示电脑出拳
+choices = {1: "石头 ✊", 2: "剪刀 ✌️", 3: "布 🖐️"}
+if player in ["1", "2", "3"]:
+    print(f"你出了：{choices[int(player)]}")
+    print(f"电脑出了：{choices[computer]}")
+
+    p = int(player)
+    # 判断输赢
+    if p == computer:
+        print("🤝 平局！")
+    elif (p == 1 and computer == 2) or (p == 2 and computer == 3) or (p == 3 and computer == 1):
+        print("🎉 你赢了！")
+    else:
+        print("😢 电脑赢了！")
+else:
+    print("输入有误，请重新运行~")
+
+print("\n" + "🎉" * 10)
+print("恭喜完成第15节的学习！综合运用了所有条件判断知识！")
+print("🎉" * 10)

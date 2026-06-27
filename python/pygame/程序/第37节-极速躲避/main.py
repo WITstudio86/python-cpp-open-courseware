@@ -1,0 +1,495 @@
+"""
+极速躲避 - 跑酷游戏
+玩家驾驶红色汽车在道路上躲避来往车辆，坚持越久分数越高。
+操作：← → 方向键切换车道，R 键重新开始，ESC 退出。
+"""
+
+import pygame
+import random
+import sys
+
+# ==================== 初始化 Pygame ====================
+pygame.init()
+
+# ==================== 常量定义 ====================
+
+# --- 窗口尺寸（竖屏比例，适合道路跑酷） ---
+SCREEN_WIDTH = 400
+SCREEN_HEIGHT = 700
+
+# --- 颜色定义（RGB 元组） ---
+COLOR_BLACK = (0, 0, 0)
+COLOR_WHITE = (255, 255, 255)
+COLOR_RED = (220, 50, 50)              # 玩家车辆主色
+COLOR_DARK_RED = (170, 30, 30)         # 玩家车辆暗色细节
+COLOR_BLUE = (50, 100, 220)            # 障碍车辆颜色之一
+COLOR_YELLOW = (220, 200, 50)          # 障碍车辆颜色之一
+COLOR_ORANGE = (255, 150, 30)          # 障碍车辆颜色之一
+COLOR_PURPLE = (150, 50, 200)          # 障碍车辆颜色之一
+COLOR_CYAN = (50, 190, 200)            # 障碍车辆颜色之一
+COLOR_GREEN_TEAL = (50, 180, 100)      # 障碍车辆颜色之一
+COLOR_PINK = (220, 60, 140)            # 障碍车辆颜色之一
+COLOR_BROWN = (180, 120, 50)           # 障碍车辆颜色之一
+COLOR_GRASS = (50, 160, 50)            # 草地绿色
+COLOR_GRASS_DARK = (35, 130, 35)       # 草地边缘深绿色
+COLOR_ROAD = (85, 85, 85)              # 道路深灰色
+COLOR_WINDOW = (120, 200, 255)         # 车窗浅蓝色
+COLOR_HINT = (180, 180, 180)           # 提示文字灰色
+
+# --- 道路布局参数 ---
+ROAD_LEFT = 60                          # 道路左边界 X 坐标
+ROAD_RIGHT = 340                        # 道路右边界 X 坐标
+ROAD_WIDTH = ROAD_RIGHT - ROAD_LEFT     # 道路宽度 = 280px
+NUM_LANES = 4                           # 车道数量（3-4 条）
+LANE_WIDTH = ROAD_WIDTH // NUM_LANES    # 每条车道宽度 = 70px
+
+# 每个车道的中心 X 坐标（用于放置车辆）
+LANE_CENTERS = [
+    ROAD_LEFT + LANE_WIDTH // 2 + i * LANE_WIDTH
+    for i in range(NUM_LANES)
+]  # 结果：[95, 165, 235, 305]
+
+# 车道分隔线的 X 坐标（白色虚线位置）
+LANE_DIVIDER_X = [
+    ROAD_LEFT + i * LANE_WIDTH
+    for i in range(1, NUM_LANES)
+]  # 结果：[130, 200, 270]
+
+# --- 车辆尺寸 ---
+CAR_WIDTH = 44                          # 车辆宽度
+CAR_HEIGHT = 74                         # 车辆高度
+
+# --- 玩家车辆初始参数 ---
+PLAYER_START_LANE = 1                   # 初始车道索引（从左数第 2 条）
+PLAYER_Y = SCREEN_HEIGHT - CAR_HEIGHT - 35  # 玩家车辆 Y 坐标（屏幕底部）
+
+# --- 道路虚线参数 ---
+DASH_WIDTH = 3                          # 虚线宽度
+DASH_HEIGHT = 28                        # 虚线每段长度
+DASH_GAP = 24                           # 虚线间隔
+DASH_PATTERN = DASH_HEIGHT + DASH_GAP   # 完整周期 = 52px
+
+# --- 障碍车辆颜色池（随机选取，增加视觉多样性） ---
+OBSTACLE_COLORS = [
+    COLOR_BLUE, COLOR_YELLOW, COLOR_ORANGE, COLOR_PURPLE,
+    COLOR_CYAN, COLOR_GREEN_TEAL, COLOR_PINK, COLOR_BROWN,
+    (100, 140, 210), (200, 80, 80)
+]
+
+# --- 游戏参数 ---
+FPS = 60                                # 帧率
+BASE_SPEED = 3.0                        # 初始滚动速度（像素/帧）
+SPEED_INCREMENT = 0.4                   # 每次加速的增量
+SPEED_INCREASE_INTERVAL = 10 * FPS      # 加速间隔：每 10 秒（600 帧）
+MAX_SPEED = 12.0                        # 最大速度上限
+
+BASE_SPAWN_INTERVAL = 55                # 初始障碍车生成间隔（帧数）
+MIN_SPAWN_INTERVAL = 24                 # 最小生成间隔（最快生成速度）
+
+# --- 预加载字体资源（避免每帧重复创建） ---
+FONT_SCORE = pygame.font.SysFont("Arial", 22, bold=True)
+FONT_TITLE = pygame.font.SysFont("Arial", 50, bold=True)
+FONT_MEDIUM = pygame.font.SysFont("Arial", 28, bold=True)
+FONT_SMALL = pygame.font.SysFont("Arial", 20)
+
+# ==================== 全局游戏状态变量 ====================
+game_state = "playing"                  # 游戏状态："playing" 或 "game_over"
+player_lane = PLAYER_START_LANE         # 玩家当前车道索引（0 ~ NUM_LANES-1）
+obstacles = []                          # 障碍车辆列表，每项为包含 rect/lane/color/y_float 的字典
+score = 0                               # 分数（存活帧数累计）
+scroll_offset = 0.0                     # 道路标线滚动偏移量（浮点数，保证平滑滚动）
+current_speed = BASE_SPEED              # 当前游戏速度
+spawn_timer = 0                         # 障碍车生成计时器（帧数累计）
+spawn_interval = BASE_SPAWN_INTERVAL    # 当前障碍车生成间隔
+last_speed_increase_score = 0           # 上次加速时的分数值
+
+
+# ==================== 辅助函数 ====================
+
+def get_player_rect():
+    """返回玩家车辆的矩形碰撞区域（pygame.Rect）"""
+    x = LANE_CENTERS[player_lane] - CAR_WIDTH // 2
+    return pygame.Rect(x, PLAYER_Y, CAR_WIDTH, CAR_HEIGHT)
+
+
+def spawn_obstacle():
+    """在合适的车道生成一辆新的障碍车辆
+
+    优先选择上方没有障碍车的车道，避免同一车道车辆过于密集。
+    如果所有车道上方都有障碍车，则随机选择一个车道生成。
+    """
+    # 随机打乱车道顺序，优先选择空闲车道
+    available_lanes = list(range(NUM_LANES))
+    random.shuffle(available_lanes)
+
+    for lane in available_lanes:
+        # 检查该车道上方 150px 内是否已有障碍车
+        too_close = any(
+            obs["lane"] == lane and obs["y_float"] < 150
+            for obs in obstacles
+        )
+        if not too_close:
+            _create_obstacle_in_lane(lane)
+            return
+
+    # 所有车道都被占用时，随机选一个车道生成
+    lane = random.randint(0, NUM_LANES - 1)
+    _create_obstacle_in_lane(lane)
+
+
+def _create_obstacle_in_lane(lane):
+    """在指定车道创建一辆障碍车（内部辅助函数）"""
+    x = LANE_CENTERS[lane] - CAR_WIDTH // 2
+    # 从屏幕上方随机偏移出现，避免所有障碍车同时出现
+    y_float = float(-CAR_HEIGHT - random.randint(10, 200))
+    color = random.choice(OBSTACLE_COLORS)
+    obstacles.append({
+        "rect": pygame.Rect(x, int(y_float), CAR_WIDTH, CAR_HEIGHT),
+        "y_float": y_float,   # 浮点 Y 坐标，保证平滑移动
+        "lane": lane,
+        "color": color
+    })
+
+
+def reset_game():
+    """重置游戏状态到初始值"""
+    global game_state, player_lane, obstacles, score, scroll_offset
+    global current_speed, spawn_timer, spawn_interval, last_speed_increase_score
+
+    game_state = "playing"
+    player_lane = PLAYER_START_LANE
+    obstacles.clear()
+    score = 0
+    scroll_offset = 0.0
+    current_speed = BASE_SPEED
+    spawn_timer = 0
+    spawn_interval = BASE_SPAWN_INTERVAL
+    last_speed_increase_score = 0
+
+
+# ==================== 绘制函数 ====================
+
+def draw_background(screen):
+    """绘制背景：两侧绿色草地 + 中间深灰色道路"""
+    # 左侧草地
+    pygame.draw.rect(screen, COLOR_GRASS, (0, 0, ROAD_LEFT, SCREEN_HEIGHT))
+    # 右侧草地
+    pygame.draw.rect(screen, COLOR_GRASS,
+                     (ROAD_RIGHT, 0, SCREEN_WIDTH - ROAD_RIGHT, SCREEN_HEIGHT))
+    # 草地与道路的分隔线（深绿色边缘）
+    pygame.draw.line(screen, COLOR_GRASS_DARK, (ROAD_LEFT, 0),
+                     (ROAD_LEFT, SCREEN_HEIGHT), 4)
+    pygame.draw.line(screen, COLOR_GRASS_DARK, (ROAD_RIGHT, 0),
+                     (ROAD_RIGHT, SCREEN_HEIGHT), 4)
+
+    # 深灰色道路
+    pygame.draw.rect(screen, COLOR_ROAD,
+                     (ROAD_LEFT, 0, ROAD_WIDTH, SCREEN_HEIGHT))
+    # 道路两侧的白色实线（路肩）
+    pygame.draw.line(screen, COLOR_WHITE, (ROAD_LEFT, 0),
+                     (ROAD_LEFT, SCREEN_HEIGHT), 3)
+    pygame.draw.line(screen, COLOR_WHITE, (ROAD_RIGHT, 0),
+                     (ROAD_RIGHT, SCREEN_HEIGHT), 3)
+
+
+def draw_lane_dividers(screen):
+    """绘制滚动的车道分隔虚线
+
+    使用 scroll_offset 取模运算实现无限循环的向下滚动效果。
+    当虚线移出屏幕底部时，取模运算自动将其重置回屏幕顶部。
+    """
+    for line_x in LANE_DIVIDER_X:
+        # 从偏移位置开始，回退一个周期确保覆盖屏幕上方
+        y = (scroll_offset % DASH_PATTERN) - DASH_PATTERN
+        while y < SCREEN_HEIGHT:
+            # 只绘制在屏幕内可见的虚线
+            if y + DASH_HEIGHT > 0:
+                pygame.draw.rect(
+                    screen, COLOR_WHITE,
+                    (line_x - DASH_WIDTH // 2, int(y),
+                     DASH_WIDTH, DASH_HEIGHT)
+                )
+            y += DASH_PATTERN
+
+
+def draw_player_car(screen):
+    """绘制玩家车辆（红色车身 + 车窗 + 四个车轮）
+
+    使用 pygame 基本图形绘制，不依赖任何外部图片资源。
+    """
+    rect = get_player_rect()
+
+    # --- 车身主体 ---
+    pygame.draw.rect(screen, COLOR_RED, rect, border_radius=6)
+    pygame.draw.rect(screen, COLOR_DARK_RED, rect, width=2, border_radius=6)
+
+    # --- 前挡风玻璃（上方车窗） ---
+    windshield = pygame.Rect(
+        rect.x + 7, rect.y + 10,
+        rect.width - 14, rect.height // 3
+    )
+    pygame.draw.rect(screen, COLOR_WINDOW, windshield, border_radius=3)
+    pygame.draw.rect(screen, COLOR_DARK_RED, windshield, width=1, border_radius=3)
+
+    # --- 后挡风玻璃（下方车窗） ---
+    rear_window = pygame.Rect(
+        rect.x + 7, rect.y + rect.height // 2 + 4,
+        rect.width - 14, rect.height // 3 - 4
+    )
+    pygame.draw.rect(screen, COLOR_WINDOW, rear_window, border_radius=3)
+    pygame.draw.rect(screen, COLOR_DARK_RED, rear_window, width=1, border_radius=3)
+
+    # --- 四个车轮（黑色小矩形，略微突出车身两侧） ---
+    wheel_w, wheel_h = 9, 13
+    # 左前轮
+    pygame.draw.rect(screen, COLOR_BLACK,
+                     (rect.x - 4, rect.y + 4, wheel_w, wheel_h), border_radius=2)
+    # 右前轮
+    pygame.draw.rect(screen, COLOR_BLACK,
+                     (rect.x + rect.width - wheel_w + 4, rect.y + 4,
+                      wheel_w, wheel_h), border_radius=2)
+    # 左后轮
+    pygame.draw.rect(screen, COLOR_BLACK,
+                     (rect.x - 4, rect.y + rect.height - wheel_h - 4,
+                      wheel_w, wheel_h), border_radius=2)
+    # 右后轮
+    pygame.draw.rect(screen, COLOR_BLACK,
+                     (rect.x + rect.width - wheel_w + 4,
+                      rect.y + rect.height - wheel_h - 4,
+                      wheel_w, wheel_h), border_radius=2)
+
+
+def draw_obstacle_cars(screen):
+    """绘制所有障碍车辆，每辆车使用不同的随机颜色"""
+    for obs in obstacles:
+        rect = obs["rect"]
+        color = obs["color"]
+        # 根据主色生成暗色和亮色变体用于细节
+        dark_color = tuple(max(0, c - 50) for c in color)
+        light_color = tuple(min(255, c + 40) for c in color)
+
+        # --- 车身主体 ---
+        pygame.draw.rect(screen, color, rect, border_radius=6)
+        pygame.draw.rect(screen, dark_color, rect, width=2, border_radius=6)
+
+        # --- 车窗 ---
+        window = pygame.Rect(
+            rect.x + 7, rect.y + rect.height // 2 + 2,
+            rect.width - 14, rect.height // 3
+        )
+        pygame.draw.rect(screen, light_color, window, border_radius=3)
+        pygame.draw.rect(screen, dark_color, window, width=1, border_radius=3)
+
+        # --- 四个车轮 ---
+        wheel_w, wheel_h = 9, 13
+        pygame.draw.rect(screen, COLOR_BLACK,
+                         (rect.x - 4, rect.y + 4, wheel_w, wheel_h),
+                         border_radius=2)
+        pygame.draw.rect(screen, COLOR_BLACK,
+                         (rect.x + rect.width - wheel_w + 4, rect.y + 4,
+                          wheel_w, wheel_h), border_radius=2)
+        pygame.draw.rect(screen, COLOR_BLACK,
+                         (rect.x - 4, rect.y + rect.height - wheel_h - 4,
+                          wheel_w, wheel_h), border_radius=2)
+        pygame.draw.rect(screen, COLOR_BLACK,
+                         (rect.x + rect.width - wheel_w + 4,
+                          rect.y + rect.height - wheel_h - 4,
+                          wheel_w, wheel_h), border_radius=2)
+
+
+def draw_score_ui(screen):
+    """绘制顶部 UI：显示存活时间和当前速度"""
+    seconds = score // FPS
+    text = f"时间: {seconds} 秒  |  速度: {current_speed:.1f}"
+
+    text_surface = FONT_SCORE.render(text, True, COLOR_WHITE)
+
+    # 半透明黑色背景面板
+    bg_rect = text_surface.get_rect()
+    bg_rect.topleft = (ROAD_LEFT + 5, 8)
+    bg_rect.width += 20
+    bg_rect.height += 10
+
+    bg_surface = pygame.Surface((bg_rect.width, bg_rect.height))
+    bg_surface.set_alpha(160)
+    bg_surface.fill(COLOR_BLACK)
+    screen.blit(bg_surface, bg_rect.topleft)
+
+    # 白色边框
+    pygame.draw.rect(screen, COLOR_WHITE, bg_rect, width=2)
+    # 文字
+    screen.blit(text_surface, (bg_rect.x + 10, bg_rect.y + 5))
+
+
+def draw_game_over_screen(screen):
+    """绘制游戏结束画面：遮罩 + 标题 + 分数 + 操作提示"""
+    # 半透明黑色遮罩层，覆盖整个窗口
+    overlay = pygame.Surface((SCREEN_WIDTH, SCREEN_HEIGHT))
+    overlay.set_alpha(185)
+    overlay.fill(COLOR_BLACK)
+    screen.blit(overlay, (0, 0))
+
+    center_x = SCREEN_WIDTH // 2
+    center_y = SCREEN_HEIGHT // 2
+
+    # "游戏结束" 标题
+    title_surface = FONT_TITLE.render("游戏结束", True, COLOR_RED)
+    title_rect = title_surface.get_rect(center=(center_x, center_y - 50))
+    screen.blit(title_surface, title_rect)
+
+    # 最终分数
+    seconds = score // FPS
+    score_text = f"最终得分: {seconds} 秒  (速度 {current_speed:.1f})"
+    score_surface = FONT_MEDIUM.render(score_text, True, COLOR_WHITE)
+    score_rect = score_surface.get_rect(center=(center_x, center_y + 15))
+    screen.blit(score_surface, score_rect)
+
+    # 重新开始提示
+    hint_r_surface = FONT_SMALL.render("按 R 键重新开始", True, COLOR_YELLOW)
+    hint_r_rect = hint_r_surface.get_rect(center=(center_x, center_y + 65))
+    screen.blit(hint_r_surface, hint_r_rect)
+
+    # 退出提示
+    hint_esc_surface = FONT_SMALL.render("按 ESC 退出游戏", True, COLOR_HINT)
+    hint_esc_rect = hint_esc_surface.get_rect(center=(center_x, center_y + 95))
+    screen.blit(hint_esc_surface, hint_esc_rect)
+
+
+# ==================== 更新逻辑 ====================
+
+def update():
+    """每帧更新游戏逻辑：滚动、生成障碍、移动、碰撞检测、难度递增"""
+    global scroll_offset, score, current_speed, spawn_timer
+    global spawn_interval, last_speed_increase_score, game_state
+
+    if game_state != "playing":
+        return
+
+    # 1. 更新道路标线滚动偏移（实现道路向下的视觉效果）
+    scroll_offset += current_speed
+
+    # 2. 每存活 1 帧加 1 分
+    score += 1
+
+    # 3. 难度递增：每 SPEED_INCREASE_INTERVAL 帧加速一次
+    if score - last_speed_increase_score >= SPEED_INCREASE_INTERVAL:
+        if current_speed < MAX_SPEED:
+            current_speed += SPEED_INCREMENT
+            # 确保不超过最大速度
+            if current_speed > MAX_SPEED:
+                current_speed = MAX_SPEED
+            last_speed_increase_score = score
+
+            # 根据当前速度调整障碍车生成间隔（速度越快，生成越频繁）
+            speed_ratio = (current_speed - BASE_SPEED) / (MAX_SPEED - BASE_SPEED)
+            spawn_interval = BASE_SPAWN_INTERVAL - int(
+                speed_ratio * (BASE_SPAWN_INTERVAL - MIN_SPAWN_INTERVAL)
+            )
+
+    # 4. 障碍车生成逻辑
+    spawn_timer += 1
+    if spawn_timer >= spawn_interval:
+        spawn_obstacle()
+        spawn_timer = 0
+
+    # 5. 移动所有障碍车（向下移动，使用浮点坐标保证平滑）
+    player_rect = get_player_rect()
+    for obs in obstacles[:]:  # 用切片遍历，确保安全删除
+        obs["y_float"] += current_speed
+        obs["rect"].y = int(obs["y_float"])
+
+        # 完全移出屏幕底部后从列表中移除
+        if obs["y_float"] > SCREEN_HEIGHT + 50:
+            obstacles.remove(obs)
+            continue  # 已移除的跳过碰撞检测
+
+        # 6. 碰撞检测：使用 pygame.Rect 的 colliderect 方法
+        if player_rect.colliderect(obs["rect"]):
+            game_state = "game_over"
+            return
+
+
+# ==================== 事件处理 ====================
+
+def handle_events():
+    """处理键盘输入和窗口关闭事件"""
+    global player_lane, game_state
+
+    for event in pygame.event.get():
+        # 窗口关闭按钮
+        if event.type == pygame.QUIT:
+            pygame.quit()
+            sys.exit()
+
+        # 键盘按下事件
+        if event.type == pygame.KEYDOWN:
+            # ESC 键：随时退出游戏
+            if event.key == pygame.K_ESCAPE:
+                pygame.quit()
+                sys.exit()
+
+            # 游戏中：← → 或 A D 键瞬间切换车道
+            if game_state == "playing":
+                if event.key == pygame.K_LEFT or event.key == pygame.K_a:
+                    if player_lane > 0:
+                        player_lane -= 1
+                elif event.key == pygame.K_RIGHT or event.key == pygame.K_d:
+                    if player_lane < NUM_LANES - 1:
+                        player_lane += 1
+
+            # 游戏结束：R 键重新开始
+            elif game_state == "game_over":
+                if event.key == pygame.K_r:
+                    reset_game()
+
+
+# ==================== 主函数 ====================
+
+def main():
+    """游戏主入口：创建窗口，运行游戏主循环"""
+    # 创建游戏窗口
+    screen = pygame.display.set_mode((SCREEN_WIDTH, SCREEN_HEIGHT))
+    pygame.display.set_caption("极速躲避 - 跑酷游戏")
+    clock = pygame.time.Clock()
+
+    # 初始化游戏状态
+    reset_game()
+
+    # ===== 游戏主循环 =====
+    while True:
+        # --- 事件处理 ---
+        handle_events()
+
+        # --- 逻辑更新 ---
+        update()
+
+        # --- 绘制阶段（从底层到顶层依次绘制） ---
+        # 第 1 层：草地 + 道路背景
+        draw_background(screen)
+
+        # 第 2 层：车道分隔虚线（滚动效果）
+        draw_lane_dividers(screen)
+
+        # 第 3 层：障碍车辆
+        draw_obstacle_cars(screen)
+
+        # 第 4 层：玩家车辆
+        draw_player_car(screen)
+
+        # 第 5 层：UI（分数和速度显示）
+        draw_score_ui(screen)
+
+        # 第 6 层（最上层）：游戏结束画面
+        if game_state == "game_over":
+            draw_game_over_screen(screen)
+
+        # 刷新屏幕缓冲区
+        pygame.display.flip()
+
+        # 控制帧率为 60 FPS
+        clock.tick(FPS)
+
+
+# ==================== 程序入口 ====================
+if __name__ == "__main__":
+    main()

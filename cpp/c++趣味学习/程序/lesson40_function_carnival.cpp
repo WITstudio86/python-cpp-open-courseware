@@ -1,0 +1,1051 @@
+/*
+ * ============================================================
+ * 第40课：函数嘉年华 —— 函数综合应用
+ * C++趣味学习课程 · 第10阶段（函数基础）收官课
+ * ============================================================
+ *
+ * 本课学习内容：
+ *   1. 模块化编程 —— 把大问题拆分成小函数来解决
+ *   2. 多函数协作 —— 函数之间通过调用、参数、返回值配合工作
+ *   3. 菜单驱动设计 —— 用户通过菜单选择来调用不同功能
+ *   4. 嵌套函数调用 —— 函数内部调用其他函数
+ *   5. 聚合模式 —— 一个函数调用多个子函数汇总结果
+ *
+ * 本文件包含以下程序：
+ *   程序1：独立工具函数演示 —— 多个互不依赖的工具函数各自工作
+ *   程序2：函数嘉年华工具箱（主程序）—— 完整的菜单驱动交互式应用
+ *          包含 5 大工具：计算器、温度转换、字符串反转、
+ *          ASCII艺术、数学小工具
+ *   程序3：嵌套调用深度演示 —— 展示函数调函数的调用链
+ *   程序4：练习题参考答案 —— 包含所有课堂练习的答案代码
+ *
+ * 工具箱功能一览：
+ *   工具1. 🧮 四则运算计算器 —— 支持 + - * /
+ *   工具2. 🌡️ 温度转换器 —— 摄氏度 ↔ 华氏度
+ *   工具3. 🔤 字符串反转器 —— 反转字符串 + 回文检测
+ *   工具4. 🎨 ASCII艺术打印机 —— 正方形/三角形/菱形/分隔线
+ *   工具5. 📐 数学小工具 —— 素数判断、阶乘计算、素数列表
+ *
+ * 编译方式（以 g++ 为例）：
+ *   g++ -std=c++11 lesson40_function_carnival.cpp -o lesson40
+ *   ./lesson40
+ *
+ * ============================================================
+ */
+
+#include <iostream>
+#include <string>
+#include <cmath>
+#include <algorithm>
+#include <iomanip>
+using namespace std;
+
+// ============================================================
+// 全局辅助函数 —— 被多个程序复用
+// ============================================================
+
+/*
+ * 打印带标题的分隔线
+ * 参数 title：分隔线的标题文字
+ * 这是一个典型的工具函数，被工具箱和演示程序共同使用
+ */
+void printSeparator(string title) {
+    cout << "\n============================================================" << endl;
+    cout << "  " << title << endl;
+    cout << "============================================================" << endl;
+}
+
+/*
+ * 打印简洁的分隔线（无标题）
+ * 函数重载：同名但参数不同
+ */
+void printSeparator() {
+    cout << "------------------------------------------------------------" << endl;
+}
+
+/*
+ * 暂停程序，等待用户按 Enter 键继续
+ * 用于在演示程序之间提供暂停，让用户有足够时间阅读输出
+ */
+void pauseAndWait() {
+    cout << "\n按 Enter 键继续...";
+    cin.get();  // 消耗之前可能遗留的换行符
+    cin.get();  // 等待用户按下 Enter
+}
+
+// ============================================================
+// 程序1：独立工具函数演示
+// 展示多个互相独立、各自完成特定任务的工具函数
+// 重点：模块化编程 —— 每个函数只做一件事，做好了即可
+// ============================================================
+
+/*
+ * 工具函数：计算矩形面积
+ * 展示了接受两个参数、返回一个数值的基本模式
+ */
+double rectArea(double width, double height) {
+    return width * height;
+}
+
+/*
+ * 工具函数：判断闰年
+ * 闰年规则：
+ *   能被4整除但不能被100整除，或者能被400整除
+ */
+bool isLeapYear(int year) {
+    return (year % 4 == 0 && year % 100 != 0) || (year % 400 == 0);
+}
+
+/*
+ * 工具函数：获取成绩等级
+ * 展示了多分支条件判断的函数写法
+ */
+string getGrade(int score) {
+    if (score >= 90)      return "优秀";
+    else if (score >= 80) return "良好";
+    else if (score >= 70) return "中等";
+    else if (score >= 60) return "及格";
+    else                  return "需努力";
+}
+
+/*
+ * 工具函数：计算圆的周长
+ */
+double circlePerimeter(double radius) {
+    const double PI = 3.1415926535;
+    return 2 * PI * radius;
+}
+
+/*
+ * 工具函数：计算圆的面积
+ */
+double circleArea(double radius) {
+    const double PI = 3.1415926535;
+    return PI * radius * radius;
+}
+
+/*
+ * 演示1：矩形面积计算
+ * 独立演示函数 —— 它只关心自己的演示逻辑
+ */
+void demoRectArea() {
+    cout << "\n--- 【矩形面积计算器】 ---" << endl;
+    cout << "宽 5, 高 3   → 面积 = " << rectArea(5, 3) << endl;
+    cout << "宽 7.5, 高 2 → 面积 = " << rectArea(7.5, 2) << endl;
+    cout << "宽 10, 高 10 → 面积 = " << rectArea(10, 10) << "（正方形！）" << endl;
+}
+
+/*
+ * 演示2：闰年判断
+ */
+void demoLeapYear() {
+    cout << "\n--- 【闰年判断器】 ---" << endl;
+    int years[] = {2024, 2025, 2000, 1900, 2100, 2028};
+    for (int i = 0; i < 6; i++) {
+        cout << years[i] << "年 → "
+             << (isLeapYear(years[i]) ? "是闰年 ✅" : "不是闰年 ❌") << endl;
+    }
+    cout << "（规则：能被4整除且不能被100整除，或能被400整除）" << endl;
+}
+
+/*
+ * 演示3：成绩等级评定
+ */
+void demoGrade() {
+    cout << "\n--- 【成绩等级评定】 ---" << endl;
+    int scores[] = {95, 82, 75, 60, 45};
+    for (int i = 0; i < 5; i++) {
+        cout << "成绩 " << scores[i] << " 分 → "
+             << getGrade(scores[i]) << endl;
+    }
+}
+
+/*
+ * 演示4：圆的计算
+ */
+void demoCircle() {
+    cout << "\n--- 【圆形计算器】 ---" << endl;
+    double r = 5.0;
+    cout << "半径 " << r << " 的圆：" << endl;
+    cout << "  周长 = " << circlePerimeter(r) << endl;
+    cout << "  面积 = " << circleArea(r) << endl;
+}
+
+/*
+ * 聚合演示：一次性运行所有独立工具演示
+ * 重要！这是一个"聚合函数"——它调用了多个子函数来汇总展示
+ * 这就是多函数协作中的"聚合模式"
+ */
+void runAllDemos() {
+    printSeparator("【程序1】独立工具函数演示");
+    cout << "> 以下演示展示了多个功能独立的工具函数。" << endl;
+    cout << "> 每个函数只负责一个简单任务，组合起来就很强大！" << endl;
+
+    demoRectArea();
+    demoLeapYear();
+    demoGrade();
+    demoCircle();
+
+    printSeparator();
+    cout << "> 程序1演示完毕！共展示了 " << 4 << " 组独立工具函数。" << endl;
+    cout << "> 注意：每个演示函数都是独立的，互不依赖。" << endl;
+}
+
+// ============================================================
+// 程序2：函数嘉年华工具箱 —— 本课的核心程序！
+// 这是一个完整的菜单驱动交互式应用程序
+// 重点：
+//   1. 菜单系统设计（do-while + switch）
+//   2. 每个工具都是独立函数
+//   3. 工具内部存在嵌套调用（函数调用函数）
+//   4. 聚合模式收集多个子函数结果
+// ============================================================
+
+// ---- 工具箱菜单显示 ----
+
+/*
+ * 显示工具箱主菜单
+ * 这是用户看到的第一个界面，列出了所有可用工具
+ */
+void showToolboxMenu() {
+    cout << "\n";
+    cout << "  ╔══════════════════════════════════════════╗" << endl;
+    cout << "  ║     🎡 函数嘉年华 —— 多功能工具箱 🎡    ║" << endl;
+    cout << "  ╠══════════════════════════════════════════╣" << endl;
+    cout << "  ║  1. 🧮 四则运算计算器                    ║" << endl;
+    cout << "  ║  2. 🌡️ 温度转换器（°C ↔ °F）            ║" << endl;
+    cout << "  ║  3. 🔤 字符串反转器                      ║" << endl;
+    cout << "  ║  4. 🎨 ASCII 艺术打印机                  ║" << endl;
+    cout << "  ║  5. 📐 数学小工具（素数 & 阶乘）         ║" << endl;
+    cout << "  ║  0. 🚪 退出工具箱                        ║" << endl;
+    cout << "  ╚══════════════════════════════════════════╝" << endl;
+    cout << "  请输入你的选择 (0-5)：";
+}
+
+// ---- 工具1 的辅助函数：四则运算计算器 ----
+
+/*
+ * 执行一次加法运算
+ * 这是一个底层的"原子"函数
+ */
+double add(double a, double b) { return a + b; }
+
+/*
+ * 执行一次减法运算
+ */
+double subtract(double a, double b) { return a - b; }
+
+/*
+ * 执行一次乘法运算
+ */
+double multiply(double a, double b) { return a * b; }
+
+/*
+ * 执行一次除法运算（包含除零检查）
+ * 返回值 -1 表示出错（实际应用中更好的做法是抛出异常）
+ */
+double divide(double a, double b) {
+    if (b == 0) {
+        cout << "  ⚠️  错误：除数不能为零！" << endl;
+        return 0;
+    }
+    return a / b;
+}
+
+/*
+ * 四则运算计算器 —— 工具箱工具1
+ *
+ * 协作模式：calculator() 调用 add/subtract/multiply/divide
+ * 这展示了"函数调用其子函数"的嵌套协作
+ */
+void calculator() {
+    printSeparator("【工具1】🧮 四则运算计算器");
+
+    double a, b;
+    char op;
+
+    cout << "  请输入算式（格式：数字 运算符 数字，如 3 + 5）：" << endl;
+    cout << "  支持的运算符：+  -  *  /" << endl;
+    cout << "  > ";
+    cin >> a >> op >> b;
+
+    cout << "  " << a << " " << op << " " << b << " = ";
+
+    // 根据运算符调用对应的子函数 —— 嵌套调用的体现！
+    switch (op) {
+        case '+':
+            cout << add(a, b) << endl;
+            break;
+        case '-':
+            cout << subtract(a, b) << endl;
+            break;
+        case '*':
+            cout << multiply(a, b) << endl;
+            break;
+        case '/':
+            if (b != 0) {
+                cout << divide(a, b) << endl;
+            }
+            break;
+        default:
+            cout << "不支持的运算符！请使用 + - * /" << endl;
+    }
+}
+
+// ---- 工具2 的辅助函数：温度转换器 ----
+
+/*
+ * 摄氏温度转华氏温度
+ * 公式：°F = °C × 9/5 + 32
+ */
+double celsiusToFahrenheit(double celsius) {
+    return celsius * 9.0 / 5.0 + 32;
+}
+
+/*
+ * 华氏温度转摄氏温度
+ * 公式：°C = (°F - 32) × 5/9
+ */
+double fahrenheitToCelsius(double fahrenheit) {
+    return (fahrenheit - 32) * 5.0 / 9.0;
+}
+
+/*
+ * 温度转换器 —— 工具箱工具2
+ *
+ * 协作模式：tempConverter() 调用 celsiusToFahrenheit() 或 fahrenheitToCelsius()
+ */
+void tempConverter() {
+    printSeparator("【工具2】🌡️ 温度转换器");
+
+    cout << "  请选择转换方向：" << endl;
+    cout << "    1. 摄氏度 (°C) → 华氏度 (°F)" << endl;
+    cout << "    2. 华氏度 (°F) → 摄氏度 (°C)" << endl;
+    cout << "  > ";
+    int dir;
+    cin >> dir;
+
+    double temp;
+    if (dir == 1) {
+        cout << "  请输入摄氏温度：";
+        cin >> temp;
+        cout << "  " << temp << " °C = " << celsiusToFahrenheit(temp) << " °F" << endl;
+        cout << "  （公式：°F = °C × 9/5 + 32）" << endl;
+    } else if (dir == 2) {
+        cout << "  请输入华氏温度：";
+        cin >> temp;
+        cout << "  " << temp << " °F = " << fahrenheitToCelsius(temp) << " °C" << endl;
+        cout << "  （公式：°C = (°F - 32) × 5/9）" << endl;
+    } else {
+        cout << "  ⚠️  无效选择！" << endl;
+    }
+
+    // 趣味参考：展示几个常见的温度对照
+    cout << "\n  📌 常见温度参考：" << endl;
+    cout << "    水结冰：0°C = " << celsiusToFahrenheit(0) << "°F" << endl;
+    cout << "    人体温：37°C = " << celsiusToFahrenheit(37) << "°F" << endl;
+    cout << "    水沸腾：100°C = " << celsiusToFahrenheit(100) << "°F" << endl;
+}
+
+// ---- 工具3 的辅助函数：字符串反转器 ----
+
+/*
+ * 手动获取字符串长度（不使用 .length() 方法）
+ * 通过遍历字符直到遇到 '\0'（字符串结束符）
+ * 这是为了教学目的 —— 展示底层原理
+ */
+int manualLength(string str) {
+    int len = 0;
+    while (str[len] != '\0') {
+        len++;
+    }
+    return len;
+}
+
+/*
+ * 手动反转字符串（不使用 reverse() 算法）
+ * 通过首尾字符交换实现反转
+ * 这是为了教学目的 —— 展示反转的底层逻辑
+ */
+string manualReverse(string str) {
+    int len = manualLength(str);  // 嵌套调用 manualLength()！
+    for (int i = 0; i < len / 2; i++) {
+        // 交换第 i 个字符和第 len-1-i 个字符
+        char temp = str[i];
+        str[i] = str[len - 1 - i];
+        str[len - 1 - i] = temp;
+    }
+    return str;
+}
+
+/*
+ * 字符串反转器 —— 工具箱工具3
+ *
+ * 协作模式：stringReverser() → manualReverse() → manualLength()
+ * 这是三层嵌套调用！stringReverser → manualReverse → manualLength
+ */
+void stringReverser() {
+    printSeparator("【工具3】🔤 字符串反转器");
+
+    cout << "  请输入一个字符串（不含空格）：" << endl;
+    cout << "  > ";
+    string input;
+    cin >> input;
+
+    cout << "  原字符串 ：" << input << endl;
+    cout << "  反转结果 ：" << manualReverse(input) << endl;
+
+    // 使用 C++ 标准库的 reverse 函数也反转一次作为对比
+    string stdRev = input;
+    reverse(stdRev.begin(), stdRev.end());
+    cout << "  （标准库反转：" << stdRev << " —— 结果应一致）" << endl;
+
+    // 回文检测——正读反读都一样
+    if (input == manualReverse(input)) {
+        cout << "\n  🎉 恭喜！「" << input << "」是一个回文字符串！" << endl;
+        cout << "     回文：正着读和反着读完全一样的字符串。" << endl;
+    }
+}
+
+// ---- 工具4 的辅助函数：ASCII 艺术打印机 ----
+
+/*
+ * 打印指定字符组成的一行
+ * 参数 ch：要打印的字符
+ * 参数 count：打印多少个
+ * 这是最底层的"原子"函数 —— 被多个上层函数调用
+ */
+void printCharLine(char ch, int count) {
+    for (int i = 0; i < count; i++) {
+        cout << ch;
+    }
+    cout << endl;
+}
+
+/*
+ * 打印直角三角形
+ * 例如 height=4：
+ *    *
+ *    **
+ *    ***
+ *    ****
+ */
+void printRightTriangle(int height) {
+    for (int i = 1; i <= height; i++) {
+        printCharLine('*', i);  // 嵌套调用 printCharLine！
+    }
+}
+
+/*
+ * 打印等腰三角形
+ * 例如 height=4：
+ *       *
+ *      ***
+ *     *****
+ *    *******
+ */
+void printIsoscelesTriangle(int height) {
+    for (int i = 1; i <= height; i++) {
+        // 打印前置空格
+        for (int j = 1; j <= height - i; j++) {
+            cout << " ";
+        }
+        // 打印星号
+        printCharLine('*', 2 * i - 1);  // 嵌套调用！
+    }
+}
+
+/*
+ * 打印菱形
+ * 上半部分是逐行递增的等腰三角形
+ * 下半部分是逐行递减的等腰三角形（倒过来）
+ */
+void printDiamond(int halfHeight) {
+    // 上半部分（从1行到halfHeight行逐行递增）
+    for (int i = 1; i <= halfHeight; i++) {
+        for (int j = 1; j <= halfHeight - i; j++) {
+            cout << " ";
+        }
+        printCharLine('*', 2 * i - 1);  // 嵌套调用！
+    }
+    // 下半部分（从halfHeight-1行到1行逐行递减）
+    for (int i = halfHeight - 1; i >= 1; i--) {
+        for (int j = 1; j <= halfHeight - i; j++) {
+            cout << " ";
+        }
+        printCharLine('*', 2 * i - 1);  // 嵌套调用！
+    }
+}
+
+/*
+ * 打印正方形
+ */
+void printSquare(int size) {
+    for (int i = 0; i < size; i++) {
+        printCharLine('*', size);  // 嵌套调用！
+    }
+}
+
+/*
+ * ASCII 艺术打印机 —— 工具箱工具4
+ *
+ * 协作模式：
+ *   asciiPrinter() → printSquare / printIsoscelesTriangle /
+ *                    printDiamond / printCharLine
+ *   而这些被调用的函数内部还调用了 printCharLine()！
+ *   形成了多层嵌套结构
+ */
+void asciiPrinter() {
+    printSeparator("【工具4】🎨 ASCII 艺术打印机");
+
+    cout << "  请选择要打印的图案：" << endl;
+    cout << "    1. ■ 实心正方形" << endl;
+    cout << "    2. ◣ 直角三角形" << endl;
+    cout << "    3. ▲ 等腰三角形" << endl;
+    cout << "    4. ◆ 菱形" << endl;
+    cout << "    5. — 分隔线" << endl;
+    cout << "  > ";
+    int choice;
+    cin >> choice;
+
+    int size;
+    switch (choice) {
+        case 1:
+            cout << "  请输入正方形边长：";
+            cin >> size;
+            cout << endl;
+            printSquare(size);       // 嵌套调用 → printSquare → printCharLine
+            break;
+        case 2:
+            cout << "  请输入三角形高度：";
+            cin >> size;
+            cout << endl;
+            printRightTriangle(size);  // 嵌套调用 → printRightTriangle → printCharLine
+            break;
+        case 3:
+            cout << "  请输入三角形高度：";
+            cin >> size;
+            cout << endl;
+            printIsoscelesTriangle(size);
+            break;
+        case 4:
+            cout << "  请输入菱形半高（上半部分行数）：";
+            cin >> size;
+            cout << endl;
+            printDiamond(size);       // 嵌套调用 → printDiamond → printCharLine
+            break;
+        case 5:
+            cout << "  请输入分隔线长度：";
+            cin >> size;
+            printCharLine('=', size); // 直接调用最底层函数
+            cout << "  ↑ 这就是一条由 printCharLine() 绘制的分隔线 ↑" << endl;
+            break;
+        default:
+            cout << "  ⚠️  无效选择！" << endl;
+    }
+}
+
+// ---- 工具5 的辅助函数：数学小工具 ----
+
+/*
+ * 判断一个数是否为素数
+ * 算法：检查 2 到 sqrt(n) 之间是否存在因数
+ */
+bool isPrime(int n) {
+    if (n < 2) return false;     // 0 和 1 不是素数
+    if (n == 2) return true;     // 2 是最小的素数
+    if (n % 2 == 0) return false; // 偶数（除了2）都不是素数
+
+    // 只需检查到 sqrt(n)，因为因数成对出现
+    for (int i = 3; i * i <= n; i += 2) {
+        if (n % i == 0) {
+            return false;
+        }
+    }
+    return true;
+}
+
+/*
+ * 计算阶乘：n! = 1 × 2 × 3 × ... × n
+ * 使用 long long 类型以支持更大的结果（但仍有上限）
+ */
+long long factorial(int n) {
+    if (n < 0) return -1;  // 负数没有阶乘
+    long long result = 1;
+    for (int i = 1; i <= n; i++) {
+        result *= i;
+    }
+    return result;
+}
+
+/*
+ * 列出 2 到 limit 之间的所有素数
+ * 内部循环调用 isPrime() —— 嵌套调用的又一个例子
+ */
+void listPrimes(int limit) {
+    int count = 0;
+    cout << "  ";
+    for (int i = 2; i <= limit; i++) {
+        if (isPrime(i)) {       // 嵌套调用 isPrime！
+            cout << i;
+            count++;
+            if (count % 10 == 0) {
+                cout << endl << "  ";  // 每10个换行，保持美观
+            } else {
+                cout << " ";
+            }
+        }
+    }
+    cout << endl;
+    cout << "  （共找到 " << count << " 个素数）" << endl;
+}
+
+/*
+ * 数学小工具 —— 工具箱工具5
+ *
+ * 聚合模式：mathTools() 在一个函数内调用了 isPrime()、factorial()、listPrimes()
+ *           listPrimes() 内部又调用了 isPrime()
+ *           这是"聚合 + 嵌套"的混合协作模式
+ */
+void mathTools() {
+    printSeparator("【工具5】📐 数学小工具");
+
+    int num;
+    cout << "  请输入一个正整数：";
+    cin >> num;
+
+    if (num <= 0) {
+        cout << "  ⚠️  请输入正整数！" << endl;
+        return;
+    }
+
+    // 1. 素数判断
+    cout << "\n  【素数判断】" << endl;
+    cout << "  " << num << " → "
+         << (isPrime(num) ? "是素数 ✅" : "不是素数 ❌") << endl;
+
+    // 2. 阶乘计算
+    cout << "\n  【阶乘计算】" << endl;
+    if (num <= 20) {
+        cout << "  " << num << "! = " << factorial(num) << endl;
+    } else {
+        cout << "  " << num << " 太大了，阶乘结果超出显示范围！" << endl;
+    }
+
+    // 3. 素数列表
+    cout << "\n  【素数列表】（2 ~ " << num << "）" << endl;
+    listPrimes(num);  // listPrimes 内部又调用了 isPrime —— 嵌套调用的精彩体现！
+
+    // 4. 趣味统计（聚合展示）
+    cout << "\n  【综合统计】" << endl;
+    cout << "  数字 " << num << " 的平方：" << num * num << endl;
+    cout << "  数字 " << num << " 的立方：" << num * num * num << endl;
+    if (isPrime(num)) {
+        cout << "  🎉 " << num << " 是一个素数，很特别哦！" << endl;
+    }
+}
+
+// ---- 工具箱主控流程 ----
+
+/*
+ * 函数嘉年华工具箱 —— 主程序入口
+ *
+ * 这是整个程序中最重要的"调度函数"。
+ * 它不自己做具体工作，而是像一个聪明的经理：
+ *   - 展示菜单（showToolboxMenu）
+ *   - 接收用户指令（cin >> choice）
+ *   - 分派任务给对应的"员工"（各个工具函数）
+ *   - 循环往复，直到用户说"下班"（选择0）
+ *
+ * 设计模式：do-while 保证菜单至少出现一次
+ *          switch 实现多路分发
+ *          case 0 作为退出条件
+ */
+void runToolbox() {
+    printSeparator("【程序2】🎡 函数嘉年华工具箱 —— 交互式多功能应用");
+
+    cout << "  🎪 欢迎来到函数嘉年华！" << endl;
+    cout << "  📋 本工具箱包含 5 个实用工具，由 14+ 个函数协作实现。" << endl;
+    cout << "  🧩 这正是「模块化编程」的魔力 —— 每个函数都是一个积木块！" << endl;
+
+    int choice;
+    do {
+        showToolboxMenu();
+        cin >> choice;
+        cin.get();  // 消耗换行符，防止影响后续的 getline/pause 操作
+
+        switch (choice) {
+            case 1:
+                calculator();     // 调度到工具1
+                break;
+            case 2:
+                tempConverter();  // 调度到工具2
+                break;
+            case 3:
+                stringReverser(); // 调度到工具3
+                break;
+            case 4:
+                asciiPrinter();   // 调度到工具4
+                break;
+            case 5:
+                mathTools();      // 调度到工具5
+                break;
+            case 0:
+                cout << "\n";
+                printCharLine('*', 56);  // 嵌套调用！用 asciiPrinter 的底层函数来欢庆
+                cout << "  感谢你参加函数嘉年华！" << endl;
+                cout << "  你已经学会了模块化编程和多函数协作的精髓！" << endl;
+                cout << "  期待在下一阶段（结构体与排序）与你再会！" << endl;
+                printCharLine('*', 56);
+                cout << endl;
+                break;
+            default:
+                cout << "  ⚠️  无效选择！请输入 0-5 之间的数字。" << endl;
+                cout << "  按 Enter 键继续...";
+                cin.get();
+        }
+    } while (choice != 0);
+}
+
+// ============================================================
+// 程序3：嵌套调用深度演示
+// 用一组简单的函数展示函数调用链（Call Chain）
+// ============================================================
+
+/*
+ * 最底层函数：将数字乘以 2
+ */
+int doubleIt(int x) {
+    return x * 2;
+}
+
+/*
+ * 中层函数：将数字翻倍后再加 10
+ * 内部调用了 doubleIt() —— 发生嵌套调用
+ */
+int doubleThenAdd10(int x) {
+    int doubled = doubleIt(x);  // 嵌套调用 doubleIt
+    return doubled + 10;
+}
+
+/*
+ * 上层函数：将数字翻倍、加10、再求平方
+ * 内部调用了 doubleThenAdd10() —— 又发生嵌套调用
+ * doubleThenAdd10 又调用了 doubleIt —— 形成三层调用链！
+ */
+int complexTransform(int x) {
+    int step1 = doubleThenAdd10(x);  // 嵌套调用 doubleThenAdd10
+    return step1 * step1;            // 结果再平方
+}
+
+/*
+ * 顶层演示函数：展示整个调用链
+ *
+ * 调用链：demonstrateCallChain → complexTransform → doubleThenAdd10 → doubleIt
+ *        这是四层嵌套！
+ */
+void demonstrateCallChain() {
+    printSeparator("【程序3】嵌套调用深度演示");
+
+    int input = 5;
+    cout << "  原始输入：x = " << input << endl;
+    cout << "  ───────────────────────────────" << endl;
+
+    // 逐层展示
+    cout << "  第1步：doubleIt(" << input << ") = " << doubleIt(input) << endl;
+
+    cout << "  第2步：doubleThenAdd10(" << input << ")" << endl;
+    cout << "         = doubleIt(" << input << ") + 10" << endl;
+    cout << "         = " << doubleIt(input) << " + 10" << endl;
+    cout << "         = " << doubleThenAdd10(input) << endl;
+
+    cout << "  第3步：complexTransform(" << input << ")" << endl;
+    cout << "         = doubleThenAdd10(" << input << ") ^ 2" << endl;
+    cout << "         = " << doubleThenAdd10(input) << " ^ 2" << endl;
+    cout << "         = " << complexTransform(input) << endl;
+
+    cout << "  ───────────────────────────────" << endl;
+    cout << "  最终结果：" << complexTransform(input) << endl;
+
+    // 画出调用链
+    cout << "\n  📊 调用链图示：" << endl;
+    cout << "  demonstrateCallChain()" << endl;
+    cout << "       │" << endl;
+    cout << "       └──→ complexTransform(" << input << ")" << endl;
+    cout << "               │" << endl;
+    cout << "               └──→ doubleThenAdd10(" << input << ")" << endl;
+    cout << "                       │" << endl;
+    cout << "                       └──→ doubleIt(" << input << ")" << endl;
+    cout << "                               │" << endl;
+    cout << "                               └──→ 返回 " << doubleIt(input) << endl;
+
+    // 多组测试
+    cout << "\n  🧪 多组测试：" << endl;
+    int testValues[] = {1, 3, 5, 10};
+    cout << "  " << left << setw(8) << "输入 x"
+         << setw(15) << "doubleIt(x)"
+         << setw(20) << "doubleThenAdd10(x)"
+         << "complexTransform(x)" << endl;
+    cout << "  " << string(60, '-') << endl;
+    for (int i = 0; i < 4; i++) {
+        int x = testValues[i];
+        cout << "  " << left << setw(8) << x
+             << setw(15) << doubleIt(x)
+             << setw(20) << doubleThenAdd10(x)
+             << complexTransform(x) << endl;
+    }
+
+    cout << "\n  💡 小结：一个函数可以调用另一个函数，" << endl;
+    cout << "     而被调用的函数内部还可以再调用第三个函数，" << endl;
+    cout << "     形成一条「调用链」——这就是嵌套调用的本质！" << endl;
+}
+
+// ============================================================
+// 程序4：练习题参考答案
+// 包含课堂练习和挑战任务的完整解答
+// ============================================================
+
+/*
+ * 练习一：函数协作填空 —— 数字分析器
+ *
+ * analyzeNumber() 是一个聚合函数，它调用多个子函数来全面分析一个数字
+ * 子函数包括：checkEvenOdd、calcSquare、digitSum
+ */
+int calcSquare(int n) {
+    return n * n;  // ② 返回 n 的平方
+}
+
+string checkEvenOdd(int n) {
+    if (n % 2 == 0) {  // ① 判断是否能被2整除
+        return "偶数";
+    } else {
+        return "奇数";
+    }
+}
+
+int digitSum(int n) {
+    int sum = 0;
+    while (n > 0) {
+        sum += n % 10;   // ③ n % 10 取出个位数字
+        n = n / 10;      // ④ n / 10 去掉个位
+    }
+    return sum;
+}
+
+/*
+ * 聚合函数：数字综合分析
+ * 调用 checkEvenOdd、calcSquare、digitSum 来汇总分析一个数字
+ * 这就是多函数协作中的"聚合模式"
+ */
+void analyzeNumber(int n) {
+    cout << "  ===== 数字 " << n << " 的分析报告 =====" << endl;
+    cout << "  奇偶性       ：" << checkEvenOdd(n) << endl;
+    cout << "  平方值       ：" << calcSquare(n) << endl;
+    cout << "  各位数字之和 ：" << digitSum(n) << endl;
+    cout << "  （计算过程：" << n << " 的各位为 ";
+    int temp = n;
+    while (temp > 0) {
+        cout << temp % 10;
+        temp /= 10;
+    }
+    cout << "，和为 " << digitSum(n) << "）" << endl;
+}
+
+/*
+ * 练习二：纠错 —— 迷你菜单程序（正确版本）
+ *
+ * 修正了原代码中的4个错误：
+ *   1. 补充了 showMenu 函数定义
+ *   2. cin >> choice 加了分号
+ *   3. if (choice = 1) 改成了 if (choice == 1)
+ *   4. greetEnglish 加了括号
+ */
+void correctMenuProgram() {
+    cout << "\n  --- 练习二：迷你菜单程序（正确版本） ---" << endl;
+    cout << "  （修正了原代码中的4处错误）" << endl;
+
+    // 这里用一个内部函数来演示正确的版本
+    // 注意：这是正确答案的展示，不是可交互的程序
+
+    cout << "  【错误1修复】补充了 void showMenu() 函数定义" << endl;
+    cout << "  【错误2修复】cin >> choice; 加了分号" << endl;
+    cout << "  【错误3修复】if (choice == 1) 使用比较运算符" << endl;
+    cout << "  【错误4修复】greetEnglish(); 加了调用括号" << endl;
+
+    cout << "\n  正确代码的调用链：" << endl;
+    cout << "  main() → showMenu() → 显示菜单" << endl;
+    cout << "         → cin >> choice → 获取选择" << endl;
+    cout << "         → if (choice == 1) → greetEnglish() → 输出 Hello!" << endl;
+    cout << "         → else if (choice == 2) → greetChinese() → 输出 你好!" << endl;
+}
+
+/*
+ * 练习三：嵌套调用分析 —— doubleThenTriple
+ *
+ * 展示调用链：printResult → doubleThenTriple → triple
+ * 分析每个函数的输入输出
+ */
+void analyzeNestedCalls() {
+    cout << "\n  --- 练习三：嵌套调用分析 ---" << endl;
+
+    // 定义局部函数的内联版本
+    auto triple = [](int x) -> int { return x * 3; };
+    auto doubleThenTriple = [&triple](int x) -> int {
+        int doubled = x * 2;
+        return triple(doubled);  // 嵌套调用 triple
+    };
+
+    cout << "  输入：5" << endl;
+    cout << "  调用链分析：" << endl;
+    cout << "    1. printResult(5) 被调用" << endl;
+    cout << "    2.   内部调用 doubleThenTriple(5)" << endl;
+    cout << "    3.     内部计算 doubled = 5 * 2 = 10" << endl;
+    cout << "    4.     调用 triple(10) ← 这就是嵌套调用！" << endl;
+    cout << "    5.       triple(10) 返回 10 * 3 = 30" << endl;
+    cout << "    6.     doubleThenTriple 返回 30" << endl;
+    cout << "    7.  printResult 输出：5 先翻倍再乘三 = 30" << endl;
+    cout << "  最终输出：" << doubleThenTriple(5) << endl;
+}
+
+/*
+ * 挑战任务展示：一个完整的迷你工具箱示例
+ *
+ * 这是一个独立的演示，展示如何用至少4个函数构建一个完整的小程序
+ * 主题：个人健康小助手
+ */
+void challengeTaskDemo() {
+    printSeparator("【程序4】练习题参考答案 + 挑战任务演示");
+
+    // ---- 练习一：数字分析器 ----
+    cout << "\n  >> 练习一：数字分析器 <<" << endl;
+    analyzeNumber(123);
+    cout << endl;
+    analyzeNumber(2024);
+
+    // ---- 练习二：纠错分析 ----
+    correctMenuProgram();
+
+    // ---- 练习三：嵌套调用分析 ----
+    analyzeNestedCalls();
+
+    // ---- 挑战任务：个人健康小助手 ----
+    cout << "\n  >> 🏆 挑战任务：个人健康小助手（至少4个函数的完整程序） <<" << endl;
+
+    // 注：这里展示的是挑战任务的实现框架
+    // BMI计算函数
+    auto calcBMI = [](double weight, double height) -> double {
+        return weight / (height * height);  // BMI = 体重/身高²
+    };
+
+    // BMI等级判断函数
+    auto getBMICategory = [](double bmi) -> string {
+        if (bmi < 18.5)       return "偏瘦";
+        else if (bmi < 24.0)  return "正常";
+        else if (bmi < 28.0)  return "偏胖";
+        else                  return "肥胖";
+    };
+
+    // 计算理想体重范围（按BMI 18.5~24计算）
+    auto idealWeightRange = [](double height) -> string {
+        double minWeight = 18.5 * height * height;
+        double maxWeight = 24.0 * height * height;
+        string result = to_string((int)(minWeight * 10) / 10.0)
+                      + " ~ "
+                      + to_string((int)(maxWeight * 10) / 10.0);
+        return result;
+    };
+
+    // 健康建议函数 —— 聚合模式：调用多个子函数
+    auto showHealthAdvice = [&](double weight, double height) {
+        double bmi = calcBMI(weight, height);  // 嵌套调用1
+        string category = getBMICategory(bmi);  // 嵌套调用2
+        string ideal = idealWeightRange(height); // 嵌套调用3
+
+        cout << "\n  🏥 ===== 健康分析报告 =====" << endl;
+        cout << "  身高：" << height << " 米" << endl;
+        cout << "  体重：" << weight << " 公斤" << endl;
+        cout << "  BMI 指数：" << bmi << endl;
+        cout << "  体重等级：" << category << endl;
+        cout << "  理想体重范围：" << ideal << " 公斤" << endl;
+        if (category == "正常") {
+            cout << "  ✅ 你的体重在正常范围内，请保持！" << endl;
+        } else {
+            cout << "  💡 建议：注意饮食均衡，适当增加运动量！" << endl;
+        }
+    };
+
+    // 使用挑战任务的小助手分析几个案例
+    cout << "\n  这个挑战任务实现了 " << 4 << " 个函数：calcBMI, getBMICategory, idealWeightRange, showHealthAdvice" << endl;
+    cout << "  其中 showHealthAdvice 是一个「聚合函数」，内部调用了前3个子函数。" << endl;
+
+    showHealthAdvice(65, 1.75);   // 案例1：正常体重
+    showHealthAdvice(50, 1.65);   // 案例2：偏瘦
+    showHealthAdvice(85, 1.70);   // 案例3：偏胖
+
+    cout << "\n  💡 这就是完整的挑战任务实现！你的工具箱由4个函数协作完成。" << endl;
+    cout << "     尝试自己也做一个这样的小程序吧！" << endl;
+}
+
+// ============================================================
+// main 函数 —— 整个程序的总统筹
+// ============================================================
+
+int main() {
+    // 程序启动横幅
+    cout << "╔══════════════════════════════════════════════════════════╗" << endl;
+    cout << "║     🎡 第40课：函数嘉年华 —— 函数综合应用 🎡          ║" << endl;
+    cout << "║     第10阶段（函数基础）收官课                          ║" << endl;
+    cout << "║     C++ 趣味学习课程                                    ║" << endl;
+    cout << "╚══════════════════════════════════════════════════════════╝" << endl;
+
+    cout << "\n  本程序将依次运行以下内容：" << endl;
+    cout << "  ┌────────────────────────────────────────────┐" << endl;
+    cout << "  │ 程序1：独立工具函数演示                     │" << endl;
+    cout << "  │ 程序2：🎡 函数嘉年华工具箱（交互式主程序）  │" << endl;
+    cout << "  │ 程序3：嵌套调用深度演示                     │" << endl;
+    cout << "  │ 程序4：练习题参考答案 + 挑战任务演示        │" << endl;
+    cout << "  └────────────────────────────────────────────┘" << endl;
+    cout << endl;
+
+    // ========== 程序1：独立工具演示 ==========
+    runAllDemos();
+
+    cout << "\n  按 Enter 键进入函数嘉年华工具箱（程序2）...";
+    cin.get();  // 等待用户
+
+    // ========== 程序2：函数嘉年华工具箱（交互式主程序）==========
+    runToolbox();
+
+    cout << "\n  按 Enter 键观看嵌套调用演示（程序3）...";
+    cin.get();
+    cin.get();  // 双保险
+
+    // ========== 程序3：嵌套调用演示 ==========
+    demonstrateCallChain();
+
+    cout << "\n  按 Enter 键观看练习题答案（程序4）...";
+    cin.get();
+
+    // ========== 程序4：练习题 + 挑战任务 ==========
+    challengeTaskDemo();
+
+    // ========== 程序结束 ==========
+    cout << "\n╔══════════════════════════════════════════════════════════╗" << endl;
+    cout << "║                                                          ║" << endl;
+    cout << "║   🎉 第10阶段（函数基础）全部课程学习完毕！🎉            ║" << endl;
+    cout << "║                                                          ║" << endl;
+    cout << "║   回顾你学到的：                                         ║" << endl;
+    cout << "║   第37课 → 函数定义与调用（魔法配方）                    ║" << endl;
+    cout << "║   第38课 → 参数与返回值（邮递员送信）                    ║" << endl;
+    cout << "║   第39课 → 变量作用域（变量的小天地）                    ║" << endl;
+    cout << "║   第40课 → 综合应用（函数嘉年华）🎡                      ║" << endl;
+    cout << "║                                                          ║" << endl;
+    cout << "║   你已经从「代码编写者」成长为「模块设计师」！           ║" << endl;
+    cout << "║                                                          ║" << endl;
+    cout << "║   下一阶段预告：第11阶段 —— 结构体与排序                ║" << endl;
+    cout << "║   第41课：超级名片 —— 结构体入门 👤                      ║" << endl;
+    cout << "║                                                          ║" << endl;
+    cout << "╚══════════════════════════════════════════════════════════╝" << endl;
+
+    return 0;
+}

@@ -1,0 +1,685 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>第40课：背包问题（下）与区间DP — CSP-J 备考课程</title>
+<style>
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+body {
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "PingFang SC", "Microsoft YaHei", sans-serif;
+    background: #f5f5f5;
+    color: #333;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    min-height: 100vh;
+}
+
+/* 顶部标题栏 */
+.header-bar {
+    width: 100%;
+    background: #1a237e;
+    color: #fff;
+    text-align: center;
+    padding: 12px 16px;
+    font-size: 18px;
+    font-weight: 700;
+    letter-spacing: 2px;
+    position: sticky;
+    top: 0;
+    z-index: 100;
+}
+.header-bar span { color: #ffd600; }
+
+/* 幻灯片容器 */
+.slides-container {
+    width: 100%;
+    max-width: 960px;
+    margin: 20px auto;
+    padding: 0 16px;
+    flex: 1;
+}
+
+/* 单张幻灯片 */
+.slide {
+    display: none;
+    background: #fff;
+    border-radius: 12px;
+    box-shadow: 0 4px 20px rgba(0,0,0,0.1);
+    padding: 40px 48px;
+    min-height: 480px;
+    animation: fadeIn 0.3s ease;
+}
+.slide.active { display: block; }
+
+@keyframes fadeIn {
+    from { opacity: 0; transform: translateY(10px); }
+    to   { opacity: 1; transform: translateY(0); }
+}
+
+/* 幻灯片标题 */
+.slide h1 {
+    color: #1a237e;
+    font-size: 28px;
+    border-bottom: 3px solid #ffd600;
+    padding-bottom: 12px;
+    margin-bottom: 24px;
+}
+.slide h2 {
+    color: #1a237e;
+    font-size: 22px;
+    margin-bottom: 16px;
+}
+.slide h3 {
+    color: #283593;
+    font-size: 18px;
+    margin-top: 20px;
+    margin-bottom: 10px;
+}
+
+/* 正文段落 */
+.slide p, .slide li {
+    font-size: 16px;
+    line-height: 1.8;
+    margin-bottom: 8px;
+}
+.slide ul, .slide ol {
+    padding-left: 24px;
+    margin-bottom: 12px;
+}
+
+/* 代码块 */
+.code-block {
+    background: #1e1e1e;
+    color: #d4d4d4;
+    font-family: "Consolas", "Monaco", "Courier New", monospace;
+    font-size: 14px;
+    padding: 16px 20px;
+    border-radius: 8px;
+    overflow-x: auto;
+    white-space: pre;
+    line-height: 1.6;
+    margin: 12px 0;
+}
+.code-block .kw { color: #569cd6; }
+.code-block .dt { color: #4ec9b0; }
+.code-block .fn { color: #dcdcaa; }
+.code-block .nu { color: #b5cea8; }
+.code-block .cm { color: #6a9955; }
+.code-block .op { color: #d4d4d4; }
+.code-block .st { color: #ce9178; }
+.code-block .pp { color: #c586c0; }
+
+/* 公式 */
+.math { font-style: italic; color: #1a237e; }
+
+/* 考试技巧提示框 */
+.tip-box {
+    background: #fffde7;
+    border-left: 5px solid #ffd600;
+    border-top: 1px solid #ffe082;
+    border-right: 1px solid #ffe082;
+    border-bottom: 1px solid #ffe082;
+    border-radius: 6px;
+    padding: 14px 18px;
+    margin: 16px 0;
+    font-size: 15px;
+    color: #5d4037;
+}
+.tip-box strong { color: #e65100; }
+.tip-box::before { content: "💡 考试技巧："; font-weight: bold; color: #ff8f00; }
+
+/* 警告框 */
+.warn-box {
+    background: #fff3e0;
+    border-left: 5px solid #ff9800;
+    border-radius: 6px;
+    padding: 14px 18px;
+    margin: 16px 0;
+    font-size: 15px;
+    color: #bf360c;
+}
+.warn-box strong { color: #d84315; }
+
+/* 表格 */
+.data-table {
+    width: 100%;
+    border-collapse: collapse;
+    margin: 16px 0;
+    font-size: 14px;
+}
+.data-table th {
+    background: #1a237e;
+    color: #fff;
+    padding: 10px 14px;
+    text-align: center;
+}
+.data-table td {
+    border: 1px solid #e0e0e0;
+    padding: 8px 14px;
+    text-align: center;
+}
+.data-table tr:nth-child(even) { background: #f5f5ff; }
+
+/* 导航按钮 */
+.nav-buttons {
+    display: flex;
+    justify-content: center;
+    gap: 16px;
+    margin: 20px 0 40px;
+}
+.nav-btn {
+    background: #1a237e;
+    color: #fff;
+    border: none;
+    padding: 10px 28px;
+    border-radius: 6px;
+    font-size: 15px;
+    cursor: pointer;
+    transition: background 0.2s;
+}
+.nav-btn:hover { background: #283593; }
+.nav-btn:disabled {
+    background: #9fa8da;
+    cursor: not-allowed;
+}
+
+/* 页码指示器 */
+.page-indicator {
+    text-align: center;
+    color: #666;
+    font-size: 14px;
+    margin-bottom: 8px;
+}
+
+/* 标题页特殊样式 */
+.title-slide {
+    text-align: center;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    min-height: 480px;
+}
+.title-slide h1 {
+    font-size: 36px;
+    border-bottom: none;
+    margin-bottom: 16px;
+}
+.title-slide .subtitle {
+    font-size: 20px;
+    color: #ffd600;
+    background: #1a237e;
+    display: inline-block;
+    padding: 6px 24px;
+    border-radius: 20px;
+    margin-bottom: 24px;
+}
+.title-slide .info {
+    color: #666;
+    font-size: 15px;
+    line-height: 2;
+}
+
+/* 响应式 */
+@media (max-width: 768px) {
+    .slide { padding: 24px 20px; min-height: auto; }
+    .slide h1 { font-size: 22px; }
+    .slide h2 { font-size: 18px; }
+    .code-block { font-size: 12px; padding: 10px 14px; }
+    .nav-btn { padding: 8px 20px; font-size: 14px; }
+}
+
+/* 内联代码 */
+.inline-code {
+    background: #e8eaf6;
+    color: #1a237e;
+    font-family: "Consolas", "Monaco", monospace;
+    padding: 1px 6px;
+    border-radius: 3px;
+    font-size: 0.92em;
+}
+
+/* 高亮框 */
+.highlight-box {
+    background: #e8eaf6;
+    border-left: 5px solid #1a237e;
+    border-radius: 6px;
+    padding: 14px 18px;
+    margin: 16px 0;
+    font-size: 15px;
+}
+
+/* 口诀大框 */
+.motto-box {
+    background: linear-gradient(135deg, #1a237e 0%, #283593 100%);
+    color: #ffd600;
+    font-size: 24px;
+    font-weight: 700;
+    text-align: center;
+    padding: 20px;
+    border-radius: 12px;
+    margin: 16px 0;
+    letter-spacing: 4px;
+}
+</style>
+</head>
+<body>
+
+<div class="header-bar">
+    <span>CSP-J</span> 备考课程 — 第40课：背包问题（下）与区间DP
+</div>
+
+<div class="slides-container">
+
+<!-- ============ 幻灯片 1：标题页 ============ -->
+<div class="slide active title-slide" id="slide-1">
+    <h1>第40课：背包问题（下）与区间DP</h1>
+    <div class="subtitle">CSP-J 备考课程</div>
+    <div class="info">
+        <p>多重背包 — 二进制优化，化繁为简</p>
+        <p>分组背包 — 每组最多选一个，循环顺序是关键</p>
+        <p>区间DP — 石子合并，从小区间推大区间</p>
+    </div>
+</div>
+
+<!-- ============ 幻灯片 2：背包问题回顾 ============ -->
+<div class="slide" id="slide-2">
+    <h1>一、背包问题全景回顾</h1>
+
+    <h2>四大背包类型</h2>
+    <table class="data-table">
+        <tr><th>类型</th><th>物品选择</th><th>核心技巧</th><th>遍历方向</th></tr>
+        <tr><td><strong>01背包</strong></td><td>每个最多选<strong>1</strong>次</td><td>一维滚动数组</td><td>容量<strong>倒序</strong></td></tr>
+        <tr><td><strong>完全背包</strong></td><td>每个可选<strong>无限</strong>次</td><td>一维正序遍历</td><td>容量<strong>正序</strong></td></tr>
+        <tr><td><strong>多重背包</strong></td><td>每个有数量上限<strong>c[i]</strong></td><td><strong>二进制拆分</strong>→01背包</td><td>拆分后倒序</td></tr>
+        <tr><td><strong>分组背包</strong></td><td>每组最多选<strong>1</strong>个</td><td>容量外循环</td><td>容量<strong>倒序</strong></td></tr>
+    </table>
+
+    <p style="margin-top:16px;">本课重点：<strong>多重背包</strong>（二进制优化）和 <strong>分组背包</strong>（循环顺序）</p>
+
+    <div class="tip-box">
+        多种背包变种的本质都是对01背包的扩展。只要掌握了01背包的倒序原理，多重和分组都能轻松理解！
+    </div>
+</div>
+
+<!-- ============ 幻灯片 3：多重背包 — 问题定义与朴素做法 ============ -->
+<div class="slide" id="slide-3">
+    <h1>二、多重背包 — 问题与朴素做法</h1>
+
+    <h2>问题描述</h2>
+    <p>有 <strong>N</strong> 种物品，容量 <strong>W</strong>。第 i 种物品重量 <span class="math">w[i]</span>，价值 <span class="math">v[i]</span>，数量上限 <span class="math">c[i]</span>。每种物品最多选 c[i] 次。求最大价值。</p>
+
+    <h2>朴素做法：三重循环</h2>
+    <div class="code-block"><span class="kw">for</span> (<span class="kw">int</span> i = <span class="nu">1</span>; i &lt;= N; i++) {
+    <span class="kw">for</span> (<span class="kw">int</span> j = W; j &gt;= <span class="nu">0</span>; j--) {
+        <span class="kw">for</span> (<span class="kw">int</span> k = <span class="nu">0</span>; k &lt;= c[i] &amp;&amp; k * w[i] &lt;= j; k++) {
+            dp[j] = max(dp[j], dp[j - k * w[i]] + k * v[i]);
+        }
+    }
+}</div>
+
+    <h2>复杂度分析</h2>
+    <p>时间复杂度：<span class="math">O(N × W × max(c[i]))</span></p>
+    <p>当 c[i] 较大时（如 c[i] = 10000），总计算量可达 <strong>10⁸ ~ 10⁹</strong>，必然超时！</p>
+
+    <div class="warn-box">
+        <strong>问题：</strong>能否把多重背包转化为我们熟悉的01背包，同时不增加太多物品数？答案是——<strong>二进制优化</strong>！
+    </div>
+</div>
+
+<!-- ============ 幻灯片 4：多重背包 — 二进制优化 ============ -->
+<div class="slide" id="slide-4">
+    <h1>三、多重背包 — 二进制优化（核心重点）</h1>
+
+    <h2>核心思想</h2>
+    <p>将 c[i] 个相同物品按 <strong>1, 2, 4, 8, ...</strong> 的二进制方式打包，使得这些"打包物品"能组合出 <strong>0 ~ c[i]</strong> 之间的任意数量。</p>
+
+    <h2>拆分示例</h2>
+    <table class="data-table">
+        <tr><th>原始数量 c</th><th>拆分为</th><th>可组合范围</th><th>打包物品数</th></tr>
+        <tr><td>7</td><td>1 + 2 + 4</td><td>0 ~ 7</td><td>3 个</td></tr>
+        <tr><td>13</td><td>1 + 2 + 4 + 6</td><td>0 ~ 13</td><td>4 个</td></tr>
+        <tr><td>1000</td><td>1+2+4+...+256+489</td><td>0 ~ 1000</td><td>约 10 个</td></tr>
+    </table>
+
+    <h2>拆分代码模板</h2>
+    <div class="code-block"><span class="kw">for</span> (<span class="kw">int</span> k = <span class="nu">1</span>; k &lt;= c; k &lt;&lt;= <span class="nu">1</span>) {  <span class="cm">// k = 1,2,4,8,...</span>
+    new_w[++cnt] = k * w;           <span class="cm">// 打包k个物品</span>
+    new_v[cnt] = k * v;
+    c -= k;
+}
+<span class="kw">if</span> (c &gt; <span class="nu">0</span>) {                         <span class="cm">// 剩余部分（不够2^k）</span>
+    new_w[++cnt] = c * w;
+    new_v[cnt] = c * v;
+}</div>
+
+    <h2>复杂度对比</h2>
+    <p>朴素：<span class="math">O(N × W × c[i])</span> → 二进制优化：<span class="math">O(W × N × log c[i])</span></p>
+    <p>c[i]=1000：1000次循环 → <strong>10次</strong>循环！效率提升 <strong>100倍</strong>！</p>
+
+    <div class="tip-box">
+        拆分后的"打包物品"每个最多选一次 → 完美转化为01背包！后面直接套用01背包倒序遍历即可。
+    </div>
+</div>
+
+<!-- ============ 幻灯片 5：分组背包 — 问题与循环结构 ============ -->
+<div class="slide" id="slide-5">
+    <h1>四、分组背包 — 每组最多选一个</h1>
+
+    <h2>问题描述</h2>
+    <p>有 <strong>G</strong> 组物品，每组内有若干物品。从每组中<strong>最多选一个</strong>物品放入背包。求最大价值。</p>
+    <p style="color:#d84315;">核心约束：同一组内的物品<strong>互斥</strong> — 选了A就不能选B。</p>
+
+    <h2>标准代码（三层循环）</h2>
+    <div class="code-block"><span class="kw">for</span> (<span class="kw">int</span> g = <span class="nu">1</span>; g &lt;= G; g++) {           <span class="cm">// 第一层：枚举组</span>
+    <span class="kw">for</span> (<span class="kw">int</span> j = W; j &gt;= <span class="nu">0</span>; j--) {        <span class="cm">// 第二层：枚举容量（倒序）</span>
+        <span class="kw">for</span> (<span class="kw">int</span> k = <span class="nu">0</span>; k &lt; group[g].size(); k++) {  <span class="cm">// 第三层：组内物品</span>
+            <span class="kw">if</span> (j &gt;= w)
+                dp[j] = max(dp[j], dp[j - w] + v);
+        }
+    }
+}</div>
+
+    <h2>为什么容量循环必须在外面？</h2>
+    <div class="highlight-box">
+        <p>如果<strong>物品循环在外面</strong>（对于每个物品遍历容量），同组内的多个物品可能在<strong>同一轮DP中被选中</strong> — dp[j-w1]更新后，处理物品2时可能用到已包含物品1的信息。</p>
+        <p style="margin-top:8px;"><strong>容量循环在外面</strong>意味着：对于每个容量 j，在所有物品中只选出<strong>最优的那一个</strong>来更新 — 恰好实现"每组最多选一个"！</p>
+    </div>
+
+    <div class="motto-box">分组容量外</div>
+</div>
+
+<!-- ============ 幻灯片 6：分组背包 — 循环顺序对比 ============ -->
+<div class="slide" id="slide-6">
+    <h1>五、分组背包 — 正确 vs 错误对比</h1>
+
+    <h2>示例数据：2组，容量10</h2>
+    <p>第1组：A(3kg, 5元), B(4kg, 6元) | 第2组：C(2kg, 3元), D(5kg, 8元)</p>
+    <p style="color:#d84315;">理论最大值：选B+D = 9kg, 14元</p>
+
+    <table class="data-table">
+        <tr><th>写法</th><th>循环顺序</th><th>结果</th><th>判断</th></tr>
+        <tr>
+            <td style="color:#2e7d32;">正确</td>
+            <td>组 → <strong>容量（倒序）</strong> → 物品</td>
+            <td style="color:#2e7d32;">14</td>
+            <td style="color:#2e7d32;">✓ 每组最多1个</td>
+        </tr>
+        <tr>
+            <td style="color:#c62828;">错误</td>
+            <td>组 → <strong>物品</strong> → 容量（正序）</td>
+            <td style="color:#c62828;">19</td>
+            <td style="color:#c62828;">✗ 同组多选！</td>
+        </tr>
+    </table>
+
+    <h2>错误写法的后果</h2>
+    <p>物品外循环 + 正序容量 → 变成完全背包 → 同组的A和B都被选中，得到(3+4=7kg, 5+6=11元)，再加上C或D，结果远超正确值。</p>
+
+    <div class="warn-box">
+        <strong>分组背包最常见错误：</strong>把循环写成 组 → 物品 → 容量。这会导致同一组内多个物品被选中，违反核心约束！必须记住：<strong>容量在物品外面</strong>。
+    </div>
+</div>
+
+<!-- ============ 幻灯片 7：区间DP基础 ============ -->
+<div class="slide" id="slide-7">
+    <h1>六、区间DP — 从线段到区间</h1>
+
+    <h2>什么是区间DP？</h2>
+    <p>定义 <span class="math">dp[i][j]</span> = 区间 [i, j] 范围内的最优解。通过枚举分割点 <strong>k</strong>，将大区间分解为两个小区间，先子问题再合并。</p>
+
+    <h2>通用框架（三层循环）</h2>
+    <div class="code-block"><span class="cm">// 1. 初始化：长度为1的区间</span>
+<span class="kw">for</span> (<span class="kw">int</span> i = <span class="nu">1</span>; i &lt;= N; i++) dp[i][i] = 初始值;
+
+<span class="cm">// 2. 枚举区间长度（从小到大，必须最外层！）</span>
+<span class="kw">for</span> (<span class="kw">int</span> len = <span class="nu">2</span>; len &lt;= N; len++) {
+    <span class="kw">for</span> (<span class="kw">int</span> i = <span class="nu">1</span>; i + len - <span class="nu">1</span> &lt;= N; i++) {
+        <span class="kw">int</span> j = i + len - <span class="nu">1</span>;  <span class="cm">// 区间终点</span>
+        <span class="cm">// 3. 枚举分割点，将[i,j]分为[i,k]和[k+1,j]</span>
+        <span class="kw">for</span> (<span class="kw">int</span> k = i; k &lt; j; k++) {
+            dp[i][j] = min(dp[i][j],
+                dp[i][k] + dp[k+<span class="nu">1</span>][j] + 合并代价);
+        }
+    }
+}</div>
+
+    <h2>为什么 len 必须在最外层？</h2>
+    <div class="highlight-box">
+        <p>长区间的计算<strong>依赖于</strong>短区间。当 len=x 时，所有长度小于 x 的区间都已计算完毕。dp[i][k] 和 dp[k+1][j] 的长度都严格小于 len，保证子问题已求解。</p>
+    </div>
+</div>
+
+<!-- ============ 幻灯片 8：石子合并 ============ -->
+<div class="slide" id="slide-8">
+    <h1>七、石子合并 — 区间DP经典模板</h1>
+
+    <h2>问题描述</h2>
+    <p>N 堆石子排成一排，第 i 堆有 a[i] 个。每次合并<strong>相邻</strong>两堆，代价为两堆石子数之和。求合并成一堆的<strong>最小总代价</strong>。</p>
+
+    <h2>状态定义与转移</h2>
+    <p><span class="math">dp[i][j]</span> = 将区间 [i, j] 合并为一堆的最小代价</p>
+    <p class="math" style="font-size: 18px; text-align: center; margin: 16px 0;">
+        dp[i][j] = min{ dp[i][k] + dp[k+1][j] } + (a[i] + ... + a[j])
+    </p>
+
+    <h2>AC代码（含前缀和优化）</h2>
+    <div class="code-block"><span class="pp">#include</span> <span class="st">&lt;iostream&gt;</span>
+<span class="pp">#include</span> <span class="st">&lt;cstring&gt;</span>
+<span class="kw">using namespace std</span>;
+
+<span class="kw">const int</span> N = <span class="nu">305</span>, INF = <span class="nu">0x3f3f3f3f</span>;
+<span class="kw">int</span> a[N], pre[N], dp[N][N];
+
+<span class="kw">int</span> <span class="fn">main</span>() {
+    <span class="kw">int</span> n; cin &gt;&gt; n;
+    <span class="kw">for</span> (<span class="kw">int</span> i = <span class="nu">1</span>; i &lt;= n; i++) {
+        cin &gt;&gt; a[i]; pre[i] = pre[i-<span class="nu">1</span>] + a[i];
+    }
+    <span class="fn">memset</span>(dp, <span class="nu">0x3f</span>, <span class="kw">sizeof</span>(dp));
+    <span class="kw">for</span> (<span class="kw">int</span> i = <span class="nu">1</span>; i &lt;= n; i++) dp[i][i] = <span class="nu">0</span>;
+
+    <span class="kw">for</span> (<span class="kw">int</span> len = <span class="nu">2</span>; len &lt;= n; len++)
+        <span class="kw">for</span> (<span class="kw">int</span> i = <span class="nu">1</span>; i + len - <span class="nu">1</span> &lt;= n; i++) {
+            <span class="kw">int</span> j = i + len - <span class="nu">1</span>;
+            <span class="kw">for</span> (<span class="kw">int</span> k = i; k &lt; j; k++)
+                dp[i][j] = min(dp[i][j],
+                    dp[i][k] + dp[k+<span class="nu">1</span>][j] + pre[j] - pre[i-<span class="nu">1</span>]);
+        }
+    cout &lt;&lt; dp[<span class="nu">1</span>][n];
+}</div>
+
+    <div class="warn-box">
+        <strong>常见错误：</strong>忘记初始化 dp[i][i] = 0！长度为1的区间不需要合并，代价为0。若初始化为INF，整个DP结果都会出错。
+    </div>
+</div>
+
+<!-- ============ 幻灯片 9：真题1 — 庆功会 ============ -->
+<div class="slide" id="slide-9">
+    <h1>八、真题1：庆功会（多重背包模板）</h1>
+
+    <h2>题目描述</h2>
+    <p>N 种奖品，每种有价格 w[i]、价值 v[i] 和数量上限 c[i]。预算 W 元，求最大总价值。</p>
+    <p style="color:#666;">1 ≤ N ≤ 100, 1 ≤ W ≤ 6000, 1 ≤ c[i] ≤ 10</p>
+
+    <h3>样例</h3>
+    <p>输入：<code>5 1000</code>，5种奖品，预算1000<br>
+       奖品1：80元 20价值 ×4 | 奖品2：40元 50价值 ×9<br>
+       奖品3：30元 50价值 ×7 | 奖品4：40元 30价值 ×6<br>
+       奖品5：20元 20价值 ×1</p>
+    <p>输出：<code>1040</code></p>
+
+    <h3>AC代码（二进制优化）</h3>
+    <div class="code-block"><span class="pp">#include</span> <span class="st">&lt;iostream&gt;</span>
+<span class="pp">#include</span> <span class="st">&lt;algorithm&gt;</span>
+<span class="kw">using namespace std</span>;
+
+<span class="kw">const int</span> MAXW = <span class="nu">6005</span>;
+<span class="kw">int</span> dp[MAXW], w[<span class="nu">2005</span>], v[<span class="nu">2005</span>];
+
+<span class="kw">int</span> <span class="fn">main</span>() {
+    <span class="kw">int</span> N, W, cnt = <span class="nu">0</span>; cin &gt;&gt; N &gt;&gt; W;
+    <span class="kw">for</span> (<span class="kw">int</span> i = <span class="nu">1</span>; i &lt;= N; i++) {
+        <span class="kw">int</span> wt, val, c; cin &gt;&gt; wt &gt;&gt; val &gt;&gt; c;
+        <span class="kw">for</span> (<span class="kw">int</span> k = <span class="nu">1</span>; k &lt;= c; k &lt;&lt;= <span class="nu">1</span>) {
+            w[++cnt] = k * wt; v[cnt] = k * val;
+            c -= k;
+        }
+        <span class="kw">if</span> (c &gt; <span class="nu">0</span>) { w[++cnt] = c * wt; v[cnt] = c * val; }
+    }
+    <span class="kw">for</span> (<span class="kw">int</span> i = <span class="nu">1</span>; i &lt;= cnt; i++)
+        <span class="kw">for</span> (<span class="kw">int</span> j = W; j &gt;= w[i]; j--)  <span class="cm">// 倒序01背包</span>
+            dp[j] = max(dp[j], dp[j - w[i]] + v[i]);
+    cout &lt;&lt; dp[W];
+}</div>
+
+    <div class="tip-box">
+        二进制拆分 → 01背包，两步走，思路清晰。即使c[i]只有10，形成好习惯总是好的，比赛时遇到c[i]=10⁵也不怕。
+    </div>
+</div>
+
+<!-- ============ 幻灯片 10：真题2 — 石子合并 ============ -->
+<div class="slide" id="slide-10">
+    <h1>九、真题2：石子合并（区间DP模板）</h1>
+
+    <h2>题目描述</h2>
+    <p>N 堆石子排成一排，第 i 堆 a[i] 个。每次合并相邻两堆，代价为两堆石子数之和。求最小总代价。</p>
+    <p style="color:#666;">1 ≤ N ≤ 300, 1 ≤ a[i] ≤ 1000</p>
+
+    <h3>样例</h3>
+    <p>输入：<code>4</code>（4堆）<br> 石子：<code>1 3 5 2</code></p>
+    <p>输出：<code>22</code></p>
+
+    <h3>样例分析</h3>
+    <div class="highlight-box">
+        <p>最优合并顺序：</p>
+        <p style="margin-top:8px;">
+            (1, 3) → 4，代价 4<br>
+            (5, 2) → 7，代价 7<br>
+            (4, 7) → 11，代价 11<br>
+            <strong>总代价 = 4 + 7 + 11 = 22</strong>
+        </p>
+    </div>
+
+    <h3>复杂度</h3>
+    <p>O(N³)：N=300 → 约 4.5 × 10⁶ 次运算，现代计算机可轻松秒过。</p>
+    <p>前缀和 sum(i,j) = pre[j] - pre[i-1] → O(1) 查询区间和。</p>
+
+    <div class="warn-box">
+        <strong>注意：</strong>dp[i][i] 必须初始化为 0！区间DP的<strong>memset(0x3f)</strong> 和 <strong>dp[i][i]=0</strong> 缺一不可。
+    </div>
+</div>
+
+<!-- ============ 幻灯片 11：易错点汇总 ============ -->
+<div class="slide" id="slide-11">
+    <h1>十、易错点汇总</h1>
+
+    <h2>三大常见错误</h2>
+
+    <h3>错误1：多重背包二进制拆分不完整</h3>
+    <p>拆分循环结束后，如果还有剩余数量 <span class="inline-code">c > 0</span>，必须单独作为一个打包物品加入。例如 c=13 拆分为 1+2+4 后还剩 6，必须把 6 也加入。</p>
+
+    <h3>错误2：分组背包循环顺序写反</h3>
+    <table class="data-table">
+        <tr><th>正确</th><th>错误</th></tr>
+        <tr>
+            <td style="color:#2e7d32;">组 → 容量 → 物品</td>
+            <td style="color:#c62828;">组 → 物品 → 容量</td>
+        </tr>
+    </table>
+    <p>写成错误顺序会导致同一组内多个物品被选中，违反"每组最多选一个"。</p>
+
+    <h3>错误3：区间DP初始化不当</h3>
+    <p>求最小值要用 <span class="inline-code">memset(dp, 0x3f)</span> 初始化为 INF，然后 <span class="inline-code">dp[i][i] = 0</span>。长度最外层循环不能乱！</p>
+
+    <div class="motto-box">多重二进制拆，分组容量外。区间先长度，石子并着走。</div>
+</div>
+
+<!-- ============ 幻灯片 12：本课总结 ============ -->
+<div class="slide" id="slide-12">
+    <h1>十一、本课总结</h1>
+
+    <h2>核心技能清单</h2>
+    <table class="data-table">
+        <tr><th>知识点</th><th>核心要点</th><th>记忆口诀</th></tr>
+        <tr><td>多重背包</td><td>按1,2,4,8...拆分 c[i] → 转化为01背包</td>
+        <td><strong>多重二进制拆</strong></td></tr>
+        <tr><td>分组背包</td><td>组→容量(倒序)→物品，容量循环必须在物品外面</td>
+        <td><strong>分组容量外</strong></td></tr>
+        <tr><td>区间DP</td><td>dp[i][j]表示区间[i,j]最优解，三层循环len→i→k</td>
+        <td><strong>区间先长度</strong></td></tr>
+        <tr><td>石子合并</td><td>dp[i][j]=min(dp[i][k]+dp[k+1][j])+sum(i,j)</td>
+        <td><strong>石子并着走</strong></td></tr>
+    </table>
+
+    <h2>解题路线图</h2>
+    <ol>
+        <li><strong>识别问题类型</strong>：每个物品能选几次？区间是否可分解？</li>
+        <li><strong>多重背包</strong>：二进制拆分 → 01背包</li>
+        <li><strong>分组背包</strong>：检查循环顺序，容量必须在外</li>
+        <li><strong>区间DP</strong>：dp[i][i]=0，然后 len → i → k 三层循环</li>
+    </ol>
+
+    <div class="motto-box">多重二进制拆，分组容量外。区间先长度，石子并着走。</div>
+
+    <p style="text-align:center; margin-top:16px; color:#1a237e; font-weight:bold;">
+        从本课开始，动态规划进入更深层次。背包问题各种变种和区间DP都是 CSP-J 高频考点，务必通过大量练习熟练掌握！
+    </p>
+</div>
+
+</div><!-- .slides-container -->
+
+<!-- 页面指示器 + 导航按钮 -->
+<div class="page-indicator" id="page-indicator">1 / 12</div>
+<div class="nav-buttons">
+    <button class="nav-btn" id="prev-btn" onclick="prevSlide()" disabled>上一页</button>
+    <button class="nav-btn" id="next-btn" onclick="nextSlide()">下一页</button>
+</div>
+
+<script>
+let currentSlide = 0;
+const slides = document.querySelectorAll('.slide');
+const totalSlides = slides.length;
+const indicator = document.getElementById('page-indicator');
+const prevBtn = document.getElementById('prev-btn');
+const nextBtn = document.getElementById('next-btn');
+
+function showSlide(index) {
+    slides.forEach(s => s.classList.remove('active'));
+    slides[index].classList.add('active');
+    indicator.textContent = (index + 1) + ' / ' + totalSlides;
+    prevBtn.disabled = (index === 0);
+    nextBtn.disabled = (index === totalSlides - 1);
+}
+
+function nextSlide() {
+    if (currentSlide < totalSlides - 1) {
+        currentSlide++;
+        showSlide(currentSlide);
+    }
+}
+
+function prevSlide() {
+    if (currentSlide > 0) {
+        currentSlide--;
+        showSlide(currentSlide);
+    }
+}
+
+// 键盘导航
+document.addEventListener('keydown', function(e) {
+    if (e.key === 'ArrowRight' || e.key === 'ArrowDown' || e.key === ' ') {
+        e.preventDefault();
+        nextSlide();
+    } else if (e.key === 'ArrowLeft' || e.key === 'ArrowUp') {
+        e.preventDefault();
+        prevSlide();
+    }
+});
+</script>
+
+</body>
+</html>

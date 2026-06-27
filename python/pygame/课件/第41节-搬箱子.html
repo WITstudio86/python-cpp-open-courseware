@@ -1,0 +1,517 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>第41节：搬箱子 - 推箱子游戏核心逻辑</title>
+<style>
+  :root {
+    --bg: #1a1a2e;
+    --fg: #e0e0e0;
+    --accent: #f0a500;
+    --accent2: #e85d04;
+    --code-bg: #0d1117;
+    --card-bg: #16213e;
+    --highlight: #00d2ff;
+    --success: #06d6a0;
+    --wall: #5c3d2e;
+  }
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  body {
+    font-family: 'PingFang SC', 'Microsoft YaHei', 'Noto Sans SC', sans-serif;
+    background: var(--bg);
+    color: var(--fg);
+    overflow: hidden;
+    width: 100vw;
+    height: 100vh;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+
+  #slides {
+    width: 100%;
+    height: 100%;
+    position: relative;
+  }
+
+  .slide {
+    display: none;
+    width: 100%;
+    height: 100%;
+    padding: 60px 80px;
+    flex-direction: column;
+    justify-content: center;
+    position: absolute;
+    top: 0; left: 0;
+    transition: opacity 0.3s ease;
+  }
+  .slide.active { display: flex; }
+
+  /* Typography */
+  h1 { font-size: 3.5rem; color: var(--accent); margin-bottom: 0.5em; font-weight: 900; }
+  h2 { font-size: 2.8rem; color: var(--accent); margin-bottom: 0.8em; font-weight: 800; }
+  h3 { font-size: 2rem; color: var(--accent2); margin-bottom: 0.6em; font-weight: 700; }
+  p, li { font-size: 1.8rem; line-height: 1.7; margin-bottom: 0.5em; }
+  ul { padding-left: 2em; }
+
+  .subtitle { font-size: 2rem; color: var(--highlight); margin-top: 0.3em; }
+  .difficulty { font-size: 2.5rem; color: var(--accent2); font-weight: 900; margin-top: 0.8em; }
+  .small { font-size: 1.4rem; color: #888; margin-top: 1em; }
+
+  /* Flow chart */
+  .flow { display: flex; flex-direction: column; align-items: center; gap: 8px; font-size: 1.4rem; }
+  .flow .box { background: var(--card-bg); border: 2px solid var(--accent); padding: 10px 24px; border-radius: 10px; text-align: center; min-width: 300px; font-size: 1.4rem; }
+  .flow .arrow { font-size: 2rem; color: var(--accent); }
+  .flow .branch { display: flex; gap: 40px; justify-content: center; flex-wrap: wrap; }
+  .flow .branch-item { background: var(--card-bg); border: 2px solid var(--accent2); padding: 10px 20px; border-radius: 10px; text-align: center; min-width: 200px; font-size: 1.3rem; }
+
+  /* Code */
+  pre { background: var(--code-bg); border-radius: 12px; padding: 24px 28px; font-size: 1.3rem; line-height: 1.7; overflow-x: auto; margin: 12px 0; border: 1px solid #333; }
+  code { font-family: 'JetBrains Mono', 'Fira Code', 'Consolas', 'Monaco', monospace; }
+  .keyword { color: #ff7b72; }
+  .func { color: #d2a8ff; }
+  .string { color: #a5d6ff; }
+  .comment { color: #8b949e; }
+  .number { color: #79c0ff; }
+  .builtin { color: #ffa657; }
+
+  /* Table */
+  table { border-collapse: collapse; font-size: 1.6rem; margin: 16px 0; width: 100%; max-width: 900px; }
+  th { background: var(--accent2); color: #fff; padding: 12px 16px; text-align: left; font-weight: 700; }
+  td { padding: 10px 16px; border-bottom: 1px solid #333; }
+  tr:nth-child(even) td { background: rgba(255,255,255,0.03); }
+
+  /* Grid display */
+  .map-grid { display: inline-grid; grid-template-columns: repeat(10, 52px); grid-template-rows: repeat(10, 52px); gap: 2px; margin: 12px 0; }
+  .map-cell { border-radius: 6px; display: flex; align-items: center; justify-content: center; font-size: 1.6rem; font-weight: 700; }
+
+  /* Cards */
+  .card-row { display: flex; gap: 30px; flex-wrap: wrap; justify-content: center; }
+  .card { background: var(--card-bg); border-radius: 16px; padding: 30px; flex: 1; min-width: 280px; max-width: 450px; border: 2px solid transparent; }
+  .card.highlight { border-color: var(--accent); }
+  .card h3 { margin-bottom: 12px; }
+
+  /* Nav hints */
+  .nav-hint { position: fixed; bottom: 20px; right: 30px; font-size: 1.1rem; color: #555; }
+  .slide-number { position: fixed; bottom: 20px; left: 30px; font-size: 1.3rem; color: #666; }
+
+  /* Exercise */
+  .task-box { background: var(--card-bg); border-left: 6px solid var(--accent); padding: 16px 24px; margin: 12px 0; border-radius: 0 12px 12px 0; }
+
+  /* Special colors for game elements */
+  .cell-floor { background: #d4c5a9; color: #d4c5a9; }
+  .cell-wall { background: #5c3d2e; color: #5c3d2e; }
+  .cell-box { background: #f0a500; color: #f0a500; }
+  .cell-target { background: #e85d04; color: #e85d04; border-radius: 50%; }
+  .cell-player { background: #00d2ff; color: #00d2ff; border-radius: 50%; }
+  .cell-done { background: #06d6a0; color: #06d6a0; }
+
+  .highlight-box { background: var(--code-bg); border-left: 4px solid var(--accent); padding: 12px 20px; border-radius: 0 8px 8px 0; margin: 8px 0; font-size: 1.6rem; }
+
+  .centered { text-align: center; }
+  .step-title { font-size: 2rem; color: var(--highlight); margin-bottom: 0.3em; }
+</style>
+</head>
+<body>
+
+<div id="slides">
+
+  <!-- Slide 1: Title -->
+  <div class="slide active" data-slide="1">
+    <div class="centered">
+      <h1>🧱 搬箱子</h1>
+      <p class="subtitle">推箱子游戏核心逻辑</p>
+      <p class="difficulty">难度 ★★★★★</p>
+      <p style="margin-top: 1.5em; font-size: 1.8rem; color: #888;">第 41 节 · Pygame 游戏开发</p>
+      <p class="small">按 ← → 方向键翻页</p>
+    </div>
+  </div>
+
+  <!-- Slide 2: What we'll build -->
+  <div class="slide" data-slide="2">
+    <h2>📋 本节课目标</h2>
+    <div class="card-row" style="margin-top: 30px;">
+      <div class="card highlight">
+        <h3>🎮 要做什么</h3>
+        <p>从零开发一个完整的<br>推箱子游戏</p>
+      </div>
+      <div class="card">
+        <h3>🧠 核心知识</h3>
+        <ul>
+          <li>二维列表地图编码</li>
+          <li>推箱子碰撞检测</li>
+          <li>撤销功能设计</li>
+          <li>状态管理与深拷贝</li>
+        </ul>
+      </div>
+      <div class="card">
+        <h3>⚙️ 功能清单</h3>
+        <ul>
+          <li>方向键移动 + 推箱子</li>
+          <li>U 键撤销（无限步）</li>
+          <li>R 键重新开始</li>
+          <li>胜利检测 + 步数统计</li>
+        </ul>
+      </div>
+    </div>
+  </div>
+
+  <!-- Slide 3: Map Encoding -->
+  <div class="slide" data-slide="3">
+    <h2>🗺️ 地图编码系统</h2>
+    <p style="margin-bottom:12px;">用 <strong style="color:var(--accent)">6 个数字</strong> 代表地图上的所有元素</p>
+    <table>
+      <tr><th>编码</th><th>含义</th><th>颜色</th><th>说明</th></tr>
+      <tr><td><code style="font-size:1.8rem;color:var(--highlight)">0</code></td><td>地板</td><td style="color:#d4c5a9">■ 浅灰</td><td>空地，可以走</td></tr>
+      <tr><td><code style="font-size:1.8rem;color:#ff7b72">1</code></td><td>墙</td><td style="color:#5c3d2e">■ 深棕</td><td>障碍，不能通过</td></tr>
+      <tr><td><code style="font-size:1.8rem;color:#f0a500">2</code></td><td>箱子</td><td style="color:#f0a500">■ 橙色</td><td>可以被推动</td></tr>
+      <tr><td><code style="font-size:1.8rem;color:#e85d04">3</code></td><td>目标点</td><td style="color:#e85d04">● 红色</td><td>箱子要推到这里</td></tr>
+      <tr><td><code style="font-size:1.8rem;color:#00d2ff">4</code></td><td>玩家</td><td style="color:#00d2ff">● 蓝色</td><td>你控制的人物</td></tr>
+      <tr><td><code style="font-size:1.8rem;color:#06d6a0">5</code></td><td>箱子到位</td><td style="color:#06d6a0">■ 绿色</td><td>箱子在目标点上</td></tr>
+    </table>
+    <div class="highlight-box" style="margin-top:16px;">
+      <strong>💡 思考：</strong>为什么要用数字而不是文字？<br>
+      → 数字比较快，方便用 <code style="color:var(--accent)">== 0, == 2</code> 做判断！
+    </div>
+  </div>
+
+  <!-- Slide 4: Map as 2D List -->
+  <div class="slide" data-slide="4">
+    <h2>🗺️ 地图 = 二维列表</h2>
+    <div style="display:flex; gap:40px; align-items:center; flex-wrap:wrap;">
+      <div>
+        <p style="font-size:1.6rem; margin-bottom:10px;">每一行是一个列表，<br>10 行组成 10×10 的地图</p>
+        <div class="map-grid">
+          <!-- Row 0 -->
+          <div class="map-cell cell-wall">1</div><div class="map-cell cell-wall">1</div><div class="map-cell cell-wall">1</div><div class="map-cell cell-wall">1</div><div class="map-cell cell-wall">1</div><div class="map-cell cell-wall">1</div><div class="map-cell cell-wall">1</div><div class="map-cell cell-wall">1</div><div class="map-cell cell-wall">1</div><div class="map-cell cell-wall">1</div>
+          <!-- Row 1 -->
+          <div class="map-cell cell-wall">1</div><div class="map-cell cell-floor">0</div><div class="map-cell cell-floor">0</div><div class="map-cell cell-floor">0</div><div class="map-cell cell-floor">0</div><div class="map-cell cell-floor">0</div><div class="map-cell cell-floor">0</div><div class="map-cell cell-box">2</div><div class="map-cell cell-floor">0</div><div class="map-cell cell-wall">1</div>
+          <!-- Row 2 -->
+          <div class="map-cell cell-wall">1</div><div class="map-cell cell-floor">0</div><div class="map-cell cell-floor">0</div><div class="map-cell cell-floor">0</div><div class="map-cell cell-floor">0</div><div class="map-cell cell-floor">0</div><div class="map-cell cell-floor">0</div><div class="map-cell cell-floor">0</div><div class="map-cell cell-floor">0</div><div class="map-cell cell-wall">1</div>
+          <!-- Row 3 -->
+          <div class="map-cell cell-wall">1</div><div class="map-cell cell-floor">0</div><div class="map-cell cell-target">3</div><div class="map-cell cell-floor">0</div><div class="map-cell cell-wall">1</div><div class="map-cell cell-floor">0</div><div class="map-cell cell-floor">0</div><div class="map-cell cell-floor">0</div><div class="map-cell cell-floor">0</div><div class="map-cell cell-wall">1</div>
+          <!-- Row 4 -->
+          <div class="map-cell cell-wall">1</div><div class="map-cell cell-floor">0</div><div class="map-cell cell-floor">0</div><div class="map-cell cell-floor">0</div><div class="map-cell cell-floor">0</div><div class="map-cell cell-floor">0</div><div class="map-cell cell-floor">0</div><div class="map-cell cell-floor">0</div><div class="map-cell cell-floor">0</div><div class="map-cell cell-wall">1</div>
+          <!-- Row 5 -->
+          <div class="map-cell cell-wall">1</div><div class="map-cell cell-wall">1</div><div class="map-cell cell-wall">1</div><div class="map-cell cell-floor">0</div><div class="map-cell cell-floor">0</div><div class="map-cell cell-player">4</div><div class="map-cell cell-floor">0</div><div class="map-cell cell-floor">0</div><div class="map-cell cell-wall">1</div><div class="map-cell cell-wall">1</div>
+          <!-- Row 6 -->
+          <div class="map-cell cell-wall">1</div><div class="map-cell cell-floor">0</div><div class="map-cell cell-floor">0</div><div class="map-cell cell-floor">0</div><div class="map-cell cell-floor">0</div><div class="map-cell cell-floor">0</div><div class="map-cell cell-floor">0</div><div class="map-cell cell-floor">0</div><div class="map-cell cell-floor">0</div><div class="map-cell cell-wall">1</div>
+          <!-- Row 7 -->
+          <div class="map-cell cell-wall">1</div><div class="map-cell cell-floor">0</div><div class="map-cell cell-box">2</div><div class="map-cell cell-floor">0</div><div class="map-cell cell-floor">0</div><div class="map-cell cell-floor">0</div><div class="map-cell cell-target">3</div><div class="map-cell cell-floor">0</div><div class="map-cell cell-floor">0</div><div class="map-cell cell-wall">1</div>
+          <!-- Row 8 -->
+          <div class="map-cell cell-wall">1</div><div class="map-cell cell-floor">0</div><div class="map-cell cell-floor">0</div><div class="map-cell cell-floor">0</div><div class="map-cell cell-floor">0</div><div class="map-cell cell-floor">0</div><div class="map-cell cell-floor">0</div><div class="map-cell cell-floor">0</div><div class="map-cell cell-floor">0</div><div class="map-cell cell-wall">1</div>
+          <!-- Row 9 -->
+          <div class="map-cell cell-wall">1</div><div class="map-cell cell-wall">1</div><div class="map-cell cell-wall">1</div><div class="map-cell cell-wall">1</div><div class="map-cell cell-wall">1</div><div class="map-cell cell-wall">1</div><div class="map-cell cell-wall">1</div><div class="map-cell cell-wall">1</div><div class="map-cell cell-wall">1</div><div class="map-cell cell-wall">1</div>
+        </div>
+        <p style="margin-top:8px; font-size:1.3rem; color:#888;">访问方式：<code style="color:var(--accent)">map[y][x]</code>（先行后列）</p>
+      </div>
+      <div>
+        <pre style="font-size:1.1rem; line-height:1.5; max-height:500px; overflow-y:auto;"><code><span class="comment"># 10x10 推箱子地图</span>
+<span class="comment"># 0=地板 1=墙 2=箱子</span>
+<span class="comment"># 3=目标 4=玩家 5=箱子到位</span>
+level_map = [
+  [1,1,1,1,1,1,1,1,1,1],
+  [1,0,0,0,0,0,0,<span class="number">2</span>,0,1],
+  [1,0,0,0,0,0,0,0,0,1],
+  [1,0,<span class="number">3</span>,0,1,0,0,0,0,1],
+  [1,0,0,0,0,0,0,0,0,1],
+  [1,1,1,0,0,<span class="number">4</span>,0,0,1,1],
+  [1,0,0,0,0,0,0,0,0,1],
+  [1,0,<span class="number">2</span>,0,0,0,<span class="number">3</span>,0,0,1],
+  [1,0,0,0,0,0,0,0,0,1],
+  [1,1,1,1,1,1,1,1,1,1],
+]</code></pre>
+      </div>
+    </div>
+  </div>
+
+  <!-- Slide 5: Logic Flow -->
+  <div class="slide" data-slide="5">
+    <h2>🔀 推箱子判断流程</h2>
+    <div class="flow">
+      <div class="box">玩家按下方向键（如：向右 →）</div>
+      <div class="arrow">↓</div>
+      <div class="box">检查玩家前方一格是什么？</div>
+      <div class="arrow">↙ ↘</div>
+      <div class="branch">
+        <div class="branch-item">
+          <strong>是墙 (1)</strong><br>
+          → 无法通过<br>
+          ✋ 原地不动
+        </div>
+        <div class="branch-item" style="border-color: var(--success);">
+          <strong>是地板 (0) / 目标点 (3)</strong><br>
+          → 可以直接走<br>
+          🚶 玩家移动过去
+        </div>
+        <div class="branch-item" style="border-color: var(--accent);">
+          <strong>是箱子 (2) / 箱子到位 (5)</strong><br>
+          → 检查箱子前方一格<br>
+          🔍 再次判断…
+        </div>
+      </div>
+      <div class="arrow" style="margin-top:10px;">↓（箱子前方判断）</div>
+      <div class="branch">
+        <div class="branch-item">是墙 / 箱子 → ✋ 推不动</div>
+        <div class="branch-item" style="border-color: var(--success);">是地板 / 目标点 → 🎯 推！箱子+玩家同时移动</div>
+      </div>
+    </div>
+    <div class="highlight-box centered" style="margin-top:20px;">
+      💡 核心思想：<strong style="color:var(--accent)">先看再走</strong> —— 移动前检查两层（玩家前方 + 箱子前方）
+    </div>
+  </div>
+
+  <!-- Slide 6: Code - Movement Logic -->
+  <div class="slide" data-slide="6">
+    <h2>💻 核心代码：移动逻辑 (1/2)</h2>
+    <pre><code><span class="keyword">def</span> <span class="func">try_move</span>(dx, dy):
+    <span class="comment">"""尝试向(dx,dy)方向移动"""</span>
+    <span class="keyword">global</span> player_x, player_y, game_map, steps
+
+    <span class="comment"># 1. 计算玩家前方的坐标</span>
+    next_x = player_x + dx
+    next_y = player_y + dy
+    front = game_map[next_y][next_x]  <span class="comment"># 前面是什么？</span>
+
+    <span class="comment"># 2. 前面是地板(0)或目标点(3) → 直接走</span>
+    <span class="keyword">if</span> front == <span class="number">0</span> <span class="keyword">or</span> front == <span class="number">3</span>:
+        save_state()              <span class="comment"># 保存快照（撤销用）</span>
+        <span class="comment"># 清空玩家原位置</span>
+        game_map[player_y][player_x] = <span class="number">3</span> \
+            <span class="keyword">if</span> (player_x,player_y) <span class="keyword">in</span> targets <span class="keyword">else</span> <span class="number">0</span>
+        <span class="comment"># 玩家移到新位置</span>
+        player_x, player_y = next_x, next_y
+        game_map[player_y][player_x] = <span class="number">4</span>
+        steps += <span class="number">1</span></code></pre>
+    <p style="font-size:1.4rem; color:#888; margin-top:10px;">参数说明：dx=1,dy=0 向右 | dx=-1,dy=0 向左 | dx=0,dy=1 向下 | dx=0,dy=-1 向上</p>
+  </div>
+
+  <!-- Slide 7: Code - Push Box Logic -->
+  <div class="slide" data-slide="7">
+    <h2>💻 核心代码：推箱子逻辑 (2/2)</h2>
+    <pre><code>    <span class="comment"># 3. 前面是箱子(2)或箱子到位(5) → 尝试推</span>
+    <span class="keyword">elif</span> front == <span class="number">2</span> <span class="keyword">or</span> front == <span class="number">5</span>:
+        <span class="comment"># 计算箱子前方坐标</span>
+        box_next_x = next_x + dx
+        box_next_y = next_y + dy
+        beyond = game_map[box_next_y][box_next_x]
+
+        <span class="comment"># 箱子前方是空地或目标点 → 可以推！</span>
+        <span class="keyword">if</span> beyond == <span class="number">0</span> <span class="keyword">or</span> beyond == <span class="number">3</span>:
+            save_state()
+
+            <span class="comment"># 1) 清空玩家原位置</span>
+            game_map[player_y][player_x] = <span class="number">3</span> \
+                <span class="keyword">if</span> (player_x,player_y) <span class="keyword">in</span> targets <span class="keyword">else</span> <span class="number">0</span>
+
+            <span class="comment"># 2) 箱子移到新位置（判断是否到位）</span>
+            game_map[box_next_y][box_next_x] = <span class="number">5</span> \
+                <span class="keyword">if</span> beyond == <span class="number">3</span> <span class="keyword">else</span> <span class="number">2</span>
+
+            <span class="comment"># 3) 玩家站到箱子原来位置</span>
+            player_x, player_y = next_x, next_y
+            game_map[player_y][player_x] = <span class="number">4</span>
+            steps += <span class="number">1</span></code></pre>
+    <div class="highlight-box" style="margin-top:12px;">
+      <strong>⚠️ 关键细节：</strong>如果箱子前方是目标点(3)，推过去后变成 <code style="color:var(--success)">5</code>（到位）；如果是地板(0)，变成 <code style="color:var(--accent)">2</code>
+    </div>
+  </div>
+
+  <!-- Slide 8: Code - Undo -->
+  <div class="slide" data-slide="8">
+    <h2>↩️ 撤销功能实现</h2>
+    <pre><code><span class="comment"># 全局变量：记录每一步的「快照」</span>
+move_history = []  <span class="comment"># [{player_x, player_y, game_map, steps}, ...]</span>
+
+
+<span class="keyword">def</span> <span class="func">save_state</span>():
+    <span class="comment">"""走一步之前，先拍照存档"""</span>
+    snapshot = {
+        <span class="string">'player_x'</span>: player_x,
+        <span class="string">'player_y'</span>: player_y,
+        <span class="string">'game_map'</span>: [row[:] <span class="keyword">for</span> row <span class="keyword">in</span> game_map],  <span class="comment"># 深拷贝！</span>
+        <span class="string">'steps'</span>: steps
+    }
+    move_history.append(snapshot)  <span class="comment"># 存入历史</span>
+
+
+<span class="keyword">def</span> <span class="func">undo</span>():
+    <span class="comment">"""按 U 键 → 恢复到最后一张快照"""</span>
+    <span class="keyword">global</span> player_x, player_y, game_map, steps
+    <span class="keyword">if</span> move_history:
+        snap = move_history.pop()        <span class="comment"># 取出最后一步</span>
+        player_x = snap[<span class="string">'player_x'</span>]      <span class="comment"># 恢复玩家坐标</span>
+        player_y = snap[<span class="string">'player_y'</span>]
+        game_map = [row[:] <span class="keyword">for</span> row <span class="keyword">in</span> snap[<span class="string">'game_map'</span>]]
+        steps = snap[<span class="string">'steps'</span>]              <span class="comment"># 恢复步数</span></code></pre>
+    <div class="highlight-box" style="margin-top:12px;">
+      <strong>🔑 深拷贝陷阱：</strong>不能用 <code style="color:#ff7b72">game_map = snap['game_map']</code>（浅拷贝），<br>必须用 <code style="color:var(--success)">[row[:] for row in ...]</code> 复制每一行！
+    </div>
+  </div>
+
+  <!-- Slide 9: Code - Win Detection & Restart -->
+  <div class="slide" data-slide="9">
+    <h2>🏆 胜利检测 &amp; 重新开始</h2>
+    <pre><code><span class="keyword">def</span> <span class="func">check_win</span>():
+    <span class="comment">"""遍历地图，看还有没有空目标点(3)"""</span>
+    <span class="keyword">for</span> row <span class="keyword">in</span> game_map:
+        <span class="keyword">if</span> <span class="number">3</span> <span class="keyword">in</span> row:          <span class="comment"># 只要还有一个空目标点</span>
+            <span class="keyword">return</span> <span class="builtin">False</span>       <span class="comment"># 就还没赢
+</span>    <span class="keyword">return</span> <span class="builtin">True</span>            <span class="comment"># 所有目标点都有箱子 = 胜利！</span>
+
+
+<span class="keyword">def</span> <span class="func">restart</span>():
+    <span class="comment">"""按 R 键 → 重置游戏"""</span>
+    <span class="keyword">global</span> player_x, player_y, game_map, steps, move_history
+
+    <span class="comment"># 从原始地图深拷贝回来</span>
+    game_map = [row[:] <span class="keyword">for</span> row <span class="keyword">in</span> ORIGINAL_MAP]
+    <span class="comment"># 找到玩家初始位置</span>
+    <span class="keyword">for</span> y <span class="keyword">in</span> <span class="builtin">range</span>(<span class="number">10</span>):
+        <span class="keyword">for</span> x <span class="keyword">in</span> <span class="builtin">range</span>(<span class="number">10</span>):
+            <span class="keyword">if</span> game_map[y][x] == <span class="number">4</span>:
+                player_x, player_y = x, y
+    steps = <span class="number">0</span>           <span class="comment"># 步数归零</span>
+    move_history = []  <span class="comment"># 清空历史</span></code></pre>
+    <div class="highlight-box" style="margin-top:8px;">
+      <strong>💡 判断逻辑：</strong>找不到 3 → 所有箱子都在目标点上 → <span style="color:var(--success);font-weight:700;">恭喜通关！</span>
+    </div>
+  </div>
+
+  <!-- Slide 10: Drawing the Map -->
+  <div class="slide" data-slide="10">
+    <h2>🎨 绘制地图（pygame 绘图）</h2>
+    <pre><code><span class="comment"># 单元格大小</span>
+CELL = <span class="number">64</span>
+
+<span class="keyword">def</span> <span class="func">draw_map</span>(screen, game_map):
+    <span class="keyword">for</span> y <span class="keyword">in</span> <span class="builtin">range</span>(<span class="number">10</span>):
+        <span class="keyword">for</span> x <span class="keyword">in</span> <span class="builtin">range</span>(<span class="number">10</span>):
+            rect = (x * CELL, y * CELL, CELL, CELL)
+            cell = game_map[y][x]
+
+            <span class="keyword">if</span> cell == <span class="number">0</span>:    <span class="comment"># 地板 → 浅灰</span>
+                pygame.draw.rect(screen, (<span class="number">200</span>,<span class="number">190</span>,<span class="number">170</span>), rect)
+            <span class="keyword">elif</span> cell == <span class="number">1</span>:  <span class="comment"># 墙 → 深棕</span>
+                pygame.draw.rect(screen, (<span class="number">80</span>,<span class="number">60</span>,<span class="number">40</span>), rect)
+            <span class="keyword">elif</span> cell == <span class="number">2</span>:  <span class="comment"># 箱子 → 橙色</span>
+                pygame.draw.rect(screen, (<span class="number">240</span>,<span class="number">165</span>,<span class="number">0</span>), rect)
+                pygame.draw.rect(screen, (<span class="number">180</span>,<span class="number">120</span>,<span class="number">0</span>), rect, <span class="number">2</span>)
+            <span class="comment"># ... 目标点(3)、玩家(4)、箱子到位(5) 都用圆/矩形绘制</span></code></pre>
+    <div class="highlight-box" style="margin-top:8px;">
+      <strong>🎯 不需外部图片！</strong>全部用 pygame.draw 绘制 —— 矩形、圆形、线条组合即可
+    </div>
+  </div>
+
+  <!-- Slide 11: Exercise -->
+  <div class="slide" data-slide="11">
+    <h2>✏️ 课堂练习（25分钟）</h2>
+    <div class="task-box">
+      <h3>基础任务 1：完成移动逻辑（10min）</h3>
+      <ul>
+        <li>补全 <code>try_move()</code> 函数，支持四个方向移动</li>
+        <li>实现推箱子功能（箱子到目标点变色）</li>
+        <li>测试：能正常移动、推动箱子吗？</li>
+      </ul>
+    </div>
+    <div class="task-box">
+      <h3>基础任务 2：实现撤销功能（5min）</h3>
+      <ul>
+        <li>在移动前保存地图快照到 move_history</li>
+        <li>绑定 U 键触发 undo() 函数</li>
+        <li>测试：连续按 U 能回到初始状态吗？</li>
+      </ul>
+    </div>
+    <div class="task-box">
+      <h3>基础任务 3：胜利检测（5min）</h3>
+      <ul>
+        <li>实现 check_win()，所有目标点有箱子则胜利</li>
+        <li>胜利后用字体显示「恭喜通关！」</li>
+      </ul>
+    </div>
+    <div class="task-box" style="border-left-color: var(--highlight);">
+      <h3>🌟 挑战任务（选做，5min）</h3>
+      <ul>
+        <li>设计第二关地图 → 过关自动切换</li>
+        <li>记录最少步数 → 显示「最佳记录：X 步」</li>
+      </ul>
+    </div>
+  </div>
+
+  <!-- Slide 12: Summary -->
+  <div class="slide" data-slide="12">
+    <h2>📝 本节课总结</h2>
+    <div class="card-row" style="margin-top:20px;">
+      <div class="card highlight">
+        <h3>1. 地图编码</h3>
+        <p>用 0~5 的数字表示<br>地板、墙、箱子、目标、<br>玩家、箱子到位</p>
+        <p style="color:var(--accent);">二维列表 map[y][x]</p>
+      </div>
+      <div class="card highlight">
+        <h3>2. 推箱子逻辑</h3>
+        <p>「先看再走」<br>检查玩家前方 → 前面是箱子<br>再检查箱子前方</p>
+        <p style="color:var(--accent);">两层判断链</p>
+      </div>
+      <div class="card highlight">
+        <h3>3. 撤销功能</h3>
+        <p>每步前「拍照存档」<br>按 U 键恢复最后一张照片</p>
+        <p style="color:var(--accent);">深拷贝是关键！</p>
+      </div>
+    </div>
+    <div class="highlight-box centered" style="margin-top:30px;">
+      <strong style="font-size:2rem;">🏠 课后作业</strong><br>
+      1. 自己设计一关新地图（修改 level_map）<br>
+      2. 尝试添加音效（pygame.mixer）<br>
+      3. （选做）实现 Redo 重做功能
+    </div>
+  </div>
+
+</div>
+
+<div class="slide-number" id="slideNum">1 / 12</div>
+<div class="nav-hint">← → 翻页</div>
+
+<script>
+  const slides = document.querySelectorAll('.slide');
+  const totalSlides = slides.length;
+  let current = 0;
+
+  function showSlide(index) {
+    slides.forEach(s => s.classList.remove('active'));
+    slides[index].classList.add('active');
+    document.getElementById('slideNum').textContent = (index + 1) + ' / ' + totalSlides;
+  }
+
+  document.addEventListener('keydown', (e) => {
+    if (e.key === 'ArrowRight' || e.key === 'ArrowDown' || e.key === ' ') {
+      e.preventDefault();
+      current = Math.min(current + 1, totalSlides - 1);
+      showSlide(current);
+    } else if (e.key === 'ArrowLeft' || e.key === 'ArrowUp') {
+      e.preventDefault();
+      current = Math.max(current - 1, 0);
+      showSlide(current);
+    } else if (e.key === 'Home') {
+      current = 0; showSlide(current);
+    } else if (e.key === 'End') {
+      current = totalSlides - 1; showSlide(current);
+    }
+  });
+
+  // Touch support
+  let touchStartX = 0;
+  document.addEventListener('touchstart', e => { touchStartX = e.touches[0].clientX; });
+  document.addEventListener('touchend', e => {
+    const diff = touchStartX - e.changedTouches[0].clientX;
+    if (diff > 50) { current = Math.min(current + 1, totalSlides - 1); showSlide(current); }
+    else if (diff < -50) { current = Math.max(current - 1, 0); showSlide(current); }
+  });
+
+  showSlide(0);
+</script>
+
+</body>
+</html>

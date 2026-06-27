@@ -1,0 +1,209 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>第30课：矩阵总动员——二维数组遍历</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font-family: 'PingFang SC', 'Microsoft YaHei', sans-serif; background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%); min-height: 100vh; display: flex; justify-content: center; align-items: center; }
+        .slides-container { width: 90%; max-width: 900px; min-height: 550px; background: white; border-radius: 25px; padding: 40px; box-shadow: 0 20px 60px rgba(0,0,0,0.3); position: relative; padding-bottom: 90px; }
+        .slide { display: none; animation: fadeIn 0.5s; }
+        .slide.active { display: block; }
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
+        h1 { color: #0d47a1; font-size: 2.2em; margin-bottom: 20px; }
+        h2 { color: #1565c0; font-size: 1.8em; margin-bottom: 15px; }
+        h3 { color: #2e7d32; font-size: 1.4em; margin: 15px 0 10px; }
+        p, li { font-size: 1.15em; line-height: 1.8; color: #333; }
+        ul, ol { padding-left: 30px; margin: 10px 0; }
+        .code-block { background: #1e1e2e; color: #cdd6f4; padding: 20px; border-radius: 12px; font-family: 'Courier New', monospace; font-size: 0.95em; line-height: 1.6; overflow-x: auto; margin: 15px 0; white-space: pre-wrap; word-break: break-all; }
+        .nav-buttons { position: absolute; bottom: 20px; left: 40px; right: 40px; display: flex; justify-content: space-between; }
+        .nav-btn { background: linear-gradient(135deg, #4facfe, #00f2fe); color: white; border: none; padding: 12px 30px; border-radius: 30px; font-size: 1.1em; cursor: pointer; transition: transform 0.2s; font-family: 'PingFang SC', 'Microsoft YaHei', sans-serif; }
+        .nav-btn:hover { transform: scale(1.05); }
+        .nav-btn:disabled { opacity: 0.4; cursor: default; transform: none; }
+        .page-indicator { font-size: 1.1em; color: #1565c0; align-self: center; }
+        .emoji-big { font-size: 3em; text-align: center; display: block; margin: 15px 0; }
+        .badge { display: inline-block; background: #e3f2fd; color: #0d47a1; padding: 5px 15px; border-radius: 20px; font-size: 0.9em; margin: 3px; }
+        table { width: 100%; border-collapse: collapse; margin: 15px 0; }
+        th, td { border: 2px solid #ddd; padding: 10px; text-align: left; }
+        th { background: #4facfe; color: white; }
+        .highlight-box { background: #fff3cd; border-left: 5px solid #ffc107; padding: 15px; border-radius: 8px; margin: 15px 0; }
+        .tip-box { background: #d4edda; border-left: 5px solid #28a745; padding: 15px; border-radius: 8px; margin: 15px 0; }
+        @media (max-width: 600px) { .slides-container { padding: 25px; } h1 { font-size: 1.5em; } .code-block { font-size: 0.75em; } }
+    </style>
+</head>
+<body>
+    <div class="slides-container">
+        <!-- Slide 1: Title Page -->
+        <div class="slide active" id="slide1">
+            <span class="emoji-big">📐</span>
+            <h1>第30课：矩阵总动员——二维数组遍历</h1>
+            <p style="text-align:center; color:#1565c0; font-size:1.1em;">第三单元：数据的组织 | 课时：45分钟</p>
+            <p style="text-align:center; margin-top:20px; font-size:1.3em;">矩阵行列表</p>
+            <div style="text-align:center; margin-top:25px;">
+                <span class="badge">嵌套循环</span>
+                <span class="badge">行求和</span>
+                <span class="badge">列求和</span>
+                <span class="badge">格式化输出</span>
+            </div>
+        </div>
+
+        <!-- Slide 2: Learning Objectives -->
+        <div class="slide" id="slide2">
+            <h2>🎯 学习目标</h2>
+            <ul>
+                <li>掌握用<strong>嵌套循环</strong>遍历二维数组的每一个元素</li>
+                <li>理解<strong>外行内列</strong>的遍历模式（外层i控制行，内层j控制列）</li>
+                <li>学会计算二维数组的<strong>行和、列和与总和</strong></li>
+                <li>能够用<code>setw()</code>格式化输出美观的<strong>矩阵行列表</strong></li>
+            </ul>
+            <div class="tip-box" style="margin-top:30px;">
+                <strong>💡 先想一想：</strong><br>
+                老师拿到一张全班成绩表，怎么快速算出每个同学的总分？怎么算出每门课的平均分？这些都需要"遍历"表格中每一个格子！
+            </div>
+        </div>
+
+        <!-- Slide 3: Core Knowledge -->
+        <div class="slide" id="slide3">
+            <h2>📖 核心知识：嵌套循环遍历</h2>
+
+            <h3>🔁 外行内列——标准遍历模式</h3>
+            <div class="code-block">int arr[3][4] = {
+    {1, 2, 3, 4},
+    {5, 6, 7, 8},
+    {9,10,11,12}
+};
+
+// 外行内列：i控制行，j控制列
+for (int i = 0; i &lt; 3; i++) {       // 外层：行
+    for (int j = 0; j &lt; 4; j++) {   // 内层：列
+        cout &lt;&lt; arr[i][j] &lt;&lt; " ";
+    }
+    cout &lt;&lt; endl;                  // 每行结束换行
+}</div>
+
+            <h3>📊 执行过程（像扫地一样）</h3>
+            <table>
+                <tr><th>外层i</th><th>内层j</th><th>访问元素</th><th>动作</th></tr>
+                <tr><td>0</td><td>0→1→2→3</td><td>1,2,3,4</td><td>扫完第0行→换行</td></tr>
+                <tr><td>1</td><td>0→1→2→3</td><td>5,6,7,8</td><td>扫完第1行→换行</td></tr>
+                <tr><td>2</td><td>0→1→2→3</td><td>9,10,11,12</td><td>扫完第2行→换行</td></tr>
+            </table>
+
+            <div class="highlight-box">
+                <strong>🔑 关键规则：</strong>外层走一步，内层走一轮！<br>
+                行和 → 固定 i，遍历 j；列和 → 固定 j，遍历 i。
+            </div>
+        </div>
+
+        <!-- Slide 4: Code Example -->
+        <div class="slide" id="slide4">
+            <h2>💻 代码示例：矩阵行列表</h2>
+            <div class="code-block">#include &lt;iostream&gt;
+#include &lt;iomanip&gt;    // setw() 需要这个
+using namespace std;
+
+int main() {
+    int m[3][4] = {{12,25,8,19},{33,7,41,15},{22,18,5,30}};
+
+    cout &lt;&lt; "      列1 列2 列3 列4 行和" &lt;&lt; endl;
+    for (int i = 0; i &lt; 3; i++) {
+        cout &lt;&lt; "行" &lt;&lt; i+1 &lt;&lt; " |";
+        int rowSum = 0;
+        for (int j = 0; j &lt; 4; j++) {
+            cout &lt;&lt; setw(4) &lt;&lt; m[i][j];
+            rowSum += m[i][j];
+        }
+        cout &lt;&lt; " | " &lt;&lt; rowSum &lt;&lt; endl;
+    }
+    // ... 列和部分省略
+    return 0;
+}</div>
+            <p><strong>输出效果：</strong>带行和列的矩阵表格，右下角显示总和！</p>
+            <p>🔍 <code>setw(n)</code> 设置输出宽度为n，让数字对齐。需要 <code>#include &lt;iomanip&gt;</code>。</p>
+        </div>
+
+        <!-- Slide 5: Practice -->
+        <div class="slide" id="slide5">
+            <h2>🎮 趣味练习</h2>
+
+            <h3>练习1：填空补全 ✏️</h3>
+            <p>补全代码，计算3×3矩阵对角线元素之和：</p>
+            <div class="code-block">int m[3][3] = {{2,5,8},{3,7,1},{6,4,9}};
+int sum = 0;
+for (int i = 0; i &lt; 3; i++) {
+    sum += m[___][___];  // 对角线！
+}
+cout &lt;&lt; sum;  // 应该输出18</div>
+
+            <h3>练习2：纠错小侦探 🔍</h3>
+            <p>以下代码想算每行和，哪里有错？</p>
+            <div class="code-block">int d[2][3] = {{1,2,3},{4,5,6}};
+for (int i = 0; i &lt;= 2; i++) {  // ❌ 循环条件？
+    int sum;                     // ❌ 初始化？
+    for (int j = 0; j &lt; 3; j++) {
+        sum += d[j][i];          // ❌ 下标顺序？
+    }
+}</div>
+
+            <h3>🎯 挑战任务：矩阵行列表</h3>
+            <p>创建5×5矩阵，以表格形式展示，附加每行每列的和，找出最大行和与最小列和。</p>
+
+            <div class="tip-box">
+                <strong>✅ 提示：</strong>练习1填 m[i][i]（行=列就是对线）。练习2：①i&lt;2 ②int sum=0 ③d[i][j]。
+            </div>
+        </div>
+
+        <!-- Slide 6: Summary -->
+        <div class="slide" id="slide6">
+            <h2>📝 本课小结</h2>
+            <table>
+                <tr><th>知识点</th><th>内容</th></tr>
+                <tr><td>遍历模式</td><td><strong>外行内列</strong>：<code>for(i) for(j)</code> — 最常用</td></tr>
+                <tr><td>逐行求和</td><td>固定行号i，内层循环累加该行所有列 <code>arr[i][j]</code></td></tr>
+                <tr><td>逐列求和</td><td>固定列号j，内层循环累加该列所有行 <code>arr[i][j]</code></td></tr>
+                <tr><td>总和/平均值</td><td>在遍历中累加所有元素，总个数 = 行数 × 列数</td></tr>
+                <tr><td>格式化输出</td><td>用 <code>setw(n)</code> 控制列宽（需 <code>#include &lt;iomanip&gt;</code>）</td></tr>
+                <tr><td>对角线</td><td>主对角线：行下标 = 列下标（i == j）</td></tr>
+            </table>
+            <div class="highlight-box" style="margin-top:20px;">
+                <strong>🔑 记住口诀：</strong><br>
+                二维数组像张表，嵌套循环来横扫。<br>
+                外层走行内走列，外动一次内动全。<br>
+                行和固定行不动，列和固定列不变。<br>
+                setw对齐真美观，行列统计一把抓！
+            </div>
+            <p style="text-align:center; margin-top:20px; font-size:1.2em;">🎉 恭喜！你已经成为二维数组处理大师！</p>
+        </div>
+
+        <!-- Navigation -->
+        <div class="nav-buttons">
+            <button class="nav-btn" onclick="prevSlide()">◀ 上一页</button>
+            <span class="page-indicator" id="pageIndicator">1 / 6</span>
+            <button class="nav-btn" onclick="nextSlide()">下一页 ▶</button>
+        </div>
+    </div>
+
+    <script>
+        let currentSlide = 0;
+        const slides = document.querySelectorAll('.slide');
+        const totalSlides = slides.length;
+        const indicator = document.getElementById('pageIndicator');
+        function showSlide(n) {
+            slides[currentSlide].classList.remove('active');
+            currentSlide = (n + totalSlides) % totalSlides;
+            slides[currentSlide].classList.add('active');
+            indicator.textContent = (currentSlide + 1) + ' / ' + totalSlides;
+            document.querySelectorAll('.nav-btn')[0].disabled = currentSlide === 0;
+            document.querySelectorAll('.nav-btn')[1].disabled = currentSlide === totalSlides - 1;
+        }
+        function nextSlide() { showSlide(currentSlide + 1); }
+        function prevSlide() { showSlide(currentSlide - 1); }
+        document.addEventListener('keydown', function(e) {
+            if (e.key === 'ArrowRight' || e.key === ' ') { e.preventDefault(); nextSlide(); }
+            else if (e.key === 'ArrowLeft') { e.preventDefault(); prevSlide(); }
+        });
+        indicator.textContent = (currentSlide + 1) + ' / ' + totalSlides;
+    </script>
+</body>
+</html>

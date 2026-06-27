@@ -1,0 +1,718 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>第40课：动态规划综合练习</title>
+    <style>
+        :root {
+            --bg-primary: #1a1a2e;
+            --bg-secondary: #16213e;
+            --bg-card: rgba(255,255,255,0.05);
+            --text-primary: #e0e0e0;
+            --text-secondary: #a0a0b0;
+            --accent: #e94560;
+            --accent-glow: rgba(233, 69, 96, 0.3);
+            --code-bg: #0d1117;
+            --border: rgba(255,255,255,0.1);
+            --shadow: 0 8px 32px rgba(0,0,0,0.4);
+            --success: #7ee787;
+            --warning: #ffa657;
+            --info: #79c0ff;
+        }
+
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "PingFang SC", "Microsoft YaHei", "Noto Sans SC", sans-serif;
+            background: linear-gradient(135deg, #0f0c29 0%, #302b63 50%, #24243e 100%);
+            min-height: 100vh;
+            color: var(--text-primary);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            overflow-x: hidden;
+        }
+
+        /* Slide Container */
+        .slideshow-container {
+            width: 100%;
+            max-width: 960px;
+            min-height: 600px;
+            position: relative;
+            padding: 20px;
+        }
+
+        /* Individual Slide */
+        .slide {
+            display: none;
+            animation: fadeIn 0.5s ease-in-out;
+            background: var(--bg-card);
+            border: 1px solid var(--border);
+            border-radius: 16px;
+            padding: 40px 50px;
+            min-height: 550px;
+            box-shadow: var(--shadow);
+            backdrop-filter: blur(10px);
+        }
+        .slide.active { display: block; }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        /* Slide Title */
+        .slide-title {
+            font-size: 2em;
+            color: var(--accent);
+            margin-bottom: 20px;
+            padding-bottom: 12px;
+            border-bottom: 2px solid var(--accent-glow);
+            text-shadow: 0 0 15px var(--accent-glow);
+        }
+
+        /* Title Slide */
+        .title-slide {
+            text-align: center;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+        }
+        .title-slide h1 {
+            font-size: 3em;
+            color: var(--accent);
+            text-shadow: 0 0 30px var(--accent-glow);
+            margin-bottom: 15px;
+        }
+        .title-slide .subtitle-big {
+            font-size: 1.4em;
+            color: var(--text-secondary);
+            margin-bottom: 30px;
+        }
+        .title-slide .lesson-info {
+            color: var(--text-secondary);
+            font-size: 1em;
+            opacity: 0.7;
+        }
+        .dp-icon {
+            font-size: 5em;
+            margin-bottom: 20px;
+            animation: pulse 2s infinite;
+        }
+        @keyframes pulse {
+            0%, 100% { transform: scale(1); opacity: 0.8; }
+            50% { transform: scale(1.1); opacity: 1; }
+        }
+
+        /* Content Styles */
+        .content-block {
+            line-height: 1.9;
+            font-size: 1.05em;
+            color: var(--text-primary);
+            margin-bottom: 15px;
+        }
+        .content-block strong {
+            color: var(--accent);
+        }
+        .content-block ul {
+            list-style: none;
+            padding-left: 0;
+        }
+        .content-block ul li {
+            padding: 6px 0 6px 24px;
+            position: relative;
+        }
+        .content-block ul li::before {
+            content: "▸";
+            color: var(--accent);
+            position: absolute;
+            left: 0;
+        }
+
+        /* Step Cards */
+        .step-list {
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+            margin: 15px 0;
+        }
+        .step-item {
+            display: flex;
+            align-items: flex-start;
+            gap: 15px;
+            padding: 12px 16px;
+            background: rgba(233, 69, 96, 0.06);
+            border-left: 3px solid var(--accent);
+            border-radius: 0 8px 8px 0;
+            transition: all 0.3s;
+        }
+        .step-item:hover {
+            background: rgba(233, 69, 96, 0.12);
+        }
+        .step-num {
+            width: 36px;
+            height: 36px;
+            min-width: 36px;
+            border-radius: 50%;
+            background: var(--accent);
+            color: white;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: bold;
+            font-size: 0.95em;
+        }
+        .step-text {
+            flex: 1;
+            font-size: 0.95em;
+            line-height: 1.7;
+        }
+        .step-text strong {
+            color: var(--accent);
+        }
+
+        /* DP Type Table */
+        .dp-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 15px 0;
+            font-size: 0.88em;
+        }
+        .dp-table th {
+            background: rgba(233, 69, 96, 0.2);
+            padding: 10px 12px;
+            text-align: left;
+            color: var(--accent);
+            border: 1px solid var(--border);
+            font-size: 0.9em;
+        }
+        .dp-table td {
+            padding: 9px 12px;
+            border: 1px solid var(--border);
+            color: var(--text-primary);
+            line-height: 1.5;
+        }
+        .dp-table tr:nth-child(even) td {
+            background: rgba(255,255,255,0.03);
+        }
+
+        /* Info Grid */
+        .info-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+            gap: 15px;
+            margin: 20px 0;
+        }
+        .info-card {
+            background: rgba(233, 69, 96, 0.08);
+            border: 1px solid var(--accent-glow);
+            border-radius: 12px;
+            padding: 20px;
+            text-align: center;
+            transition: transform 0.3s, box-shadow 0.3s;
+        }
+        .info-card:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 6px 20px var(--accent-glow);
+        }
+        .info-card .card-number {
+            font-size: 2em;
+            font-weight: bold;
+            color: var(--accent);
+            margin-bottom: 8px;
+        }
+        .info-card .card-title {
+            font-size: 1.1em;
+            font-weight: bold;
+            margin-bottom: 8px;
+        }
+        .info-card .card-desc {
+            font-size: 0.9em;
+            color: var(--text-secondary);
+            line-height: 1.5;
+        }
+
+        /* Code Block */
+        .code-block {
+            background: var(--code-bg);
+            border: 1px solid #30363d;
+            border-radius: 8px;
+            padding: 18px 22px;
+            margin: 15px 0;
+            overflow-x: auto;
+            font-family: "JetBrains Mono", "Fira Code", "Cascadia Code", "SF Mono", Consolas, monospace;
+            font-size: 0.85em;
+            line-height: 1.7;
+            position: relative;
+            white-space: pre;
+        }
+        .code-block::before {
+            content: "CPP";
+            position: absolute;
+            top: 8px;
+            right: 14px;
+            font-size: 0.7em;
+            color: var(--text-secondary);
+            opacity: 0.5;
+        }
+
+        /* Syntax Colors */
+        .kw { color: #ff7b72; }
+        .tp { color: #ffa657; }
+        .fn { color: #d2a8ff; }
+        .str { color: #a5d6ff; }
+        .num { color: #79c0ff; }
+        .cm { color: #8b949e; font-style: italic; }
+        .op { color: #ff7b72; }
+        .pp { color: #79c0ff; }
+
+        /* Triangle Visualization */
+        .triangle-vis {
+            font-family: "JetBrains Mono", "Fira Code", monospace;
+            text-align: center;
+            font-size: 1.1em;
+            line-height: 1.8;
+            margin: 15px 0;
+            color: var(--info);
+        }
+        .triangle-vis .path {
+            color: var(--accent);
+            font-weight: bold;
+        }
+        .triangle-vis .arrow {
+            color: var(--text-secondary);
+            font-size: 0.8em;
+        }
+
+        /* DP Table Visualization */
+        .dp-table-vis {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 15px 0;
+            font-family: "JetBrains Mono", "Fira Code", monospace;
+            font-size: 0.85em;
+            text-align: center;
+        }
+        .dp-table-vis th {
+            background: rgba(233, 69, 96, 0.2);
+            padding: 8px 10px;
+            color: var(--accent);
+            border: 1px solid var(--border);
+        }
+        .dp-table-vis td {
+            padding: 6px 10px;
+            border: 1px solid var(--border);
+            color: var(--text-primary);
+        }
+        .dp-table-vis .highlight-cell {
+            background: rgba(233, 69, 96, 0.25);
+            color: var(--accent);
+            font-weight: bold;
+        }
+
+        /* Summary Grid */
+        .summary-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 15px;
+            margin: 15px 0;
+        }
+        .summary-card {
+            background: rgba(255,255,255,0.04);
+            border: 1px solid var(--border);
+            border-radius: 10px;
+            padding: 18px;
+            transition: transform 0.3s;
+        }
+        .summary-card:hover {
+            transform: translateY(-2px);
+            border-color: var(--accent-glow);
+        }
+        .summary-card h4 {
+            color: var(--accent);
+            margin-bottom: 8px;
+            font-size: 1em;
+        }
+        .summary-card p {
+            font-size: 0.9em;
+            color: var(--text-secondary);
+            line-height: 1.6;
+        }
+
+        /* Navigation */
+        .nav-container {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            gap: 30px;
+            margin-top: 20px;
+            padding: 10px;
+        }
+        .nav-btn {
+            background: rgba(233, 69, 96, 0.15);
+            border: 1px solid var(--accent);
+            color: var(--accent);
+            padding: 10px 28px;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 1em;
+            font-weight: bold;
+            transition: all 0.3s;
+            font-family: inherit;
+        }
+        .nav-btn:hover {
+            background: var(--accent);
+            color: white;
+            box-shadow: 0 4px 15px var(--accent-glow);
+        }
+        .nav-btn:disabled {
+            opacity: 0.3;
+            cursor: not-allowed;
+            pointer-events: none;
+        }
+        .slide-counter {
+            color: var(--text-secondary);
+            font-size: 1em;
+            min-width: 60px;
+            text-align: center;
+        }
+        .dot-nav {
+            display: flex;
+            gap: 8px;
+            justify-content: center;
+        }
+        .dot {
+            width: 10px;
+            height: 10px;
+            border-radius: 50%;
+            background: rgba(255,255,255,0.2);
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+        .dot.active {
+            background: var(--accent);
+            box-shadow: 0 0 10px var(--accent-glow);
+            transform: scale(1.3);
+        }
+
+        /* Responsive */
+        @media (max-width: 768px) {
+            .slideshow-container { padding: 10px; }
+            .slide { padding: 25px 20px; min-height: auto; }
+            .slide-title { font-size: 1.4em; }
+            .title-slide h1 { font-size: 2em; }
+            .info-grid { grid-template-columns: 1fr; }
+            .summary-grid { grid-template-columns: 1fr; }
+            .dp-table { font-size: 0.7em; }
+            .dp-table-vis { font-size: 0.7em; }
+            .code-block { font-size: 0.7em; padding: 12px 14px; }
+            .step-item { padding: 8px 12px; }
+            .nav-btn { padding: 8px 18px; font-size: 0.9em; }
+        }
+    </style>
+</head>
+<body>
+
+<div class="slideshow-container">
+
+    <!-- Slide 1: Title -->
+    <div class="slide title-slide active">
+        <div class="dp-icon">&#x1F9E9;</div>
+        <h1>动态规划综合练习</h1>
+        <p class="subtitle-big">系统回顾与实战演练</p>
+        <p class="lesson-info">第40课 | C++ 算法提高</p>
+    </div>
+
+    <!-- Slide 2: DP六步法 -->
+    <div class="slide">
+        <div class="slide-title">DP 解题六步法回顾</div>
+        <div class="content-block">
+            <p>经过第35~39课的学习，我们将DP方法统一归纳为<strong>六个步骤</strong>：</p>
+        </div>
+        <div class="step-list">
+            <div class="step-item">
+                <div class="step-num">1</div>
+                <div class="step-text"><strong>分析问题：</strong>识别是否具有重叠子问题与最优子结构。这是判断一个问题能否用DP解决的核心标准。</div>
+            </div>
+            <div class="step-item">
+                <div class="step-num">2</div>
+                <div class="step-text"><strong>定义状态：</strong>明确 dp[...] 的含义。这是DP最关键的一步 —— 状态定义直接决定后续转移方程的复杂度。</div>
+            </div>
+            <div class="step-item">
+                <div class="step-num">3</div>
+                <div class="step-text"><strong>找转移方程：</strong>思考当前状态可以由哪些子状态推导而来。例如 dp[i][j] = max(dp[i+1][j], dp[i+1][j+1]) + a[i][j]。</div>
+            </div>
+            <div class="step-item">
+                <div class="step-num">4</div>
+                <div class="step-text"><strong>确定边界：</strong>递推需要起点 —— dp[0] 或 dp[n-1] 等初始值。边界条件处理不当会导致数组越界或逻辑错误。</div>
+            </div>
+            <div class="step-item">
+                <div class="step-num">5</div>
+                <div class="step-text"><strong>计算顺序：</strong>确保计算 dp[i][j] 时，依赖的所有子状态都已算好。一维正序、01背包逆序、区间DP按长度递增。</div>
+            </div>
+            <div class="step-item">
+                <div class="step-num">6</div>
+                <div class="step-text"><strong>确定答案：</strong>dp 数组计算完毕后，答案可能在 dp[n-1]、dp[n][C]、dp[1][n] 或 max(dp[...]) 中 —— 这一步常被忽略。</div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Slide 3: DP类型总结 -->
+    <div class="slide">
+        <div class="slide-title">DP 类型总结（第35~39课）</div>
+        <table class="dp-table">
+            <thead>
+                <tr>
+                    <th>DP 类型</th>
+                    <th>课程</th>
+                    <th>状态定义特点</th>
+                    <th>核心思想 / 转移特点</th>
+                    <th>经典问题</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr>
+                    <td><strong>记忆化搜索</strong></td>
+                    <td>第35课</td>
+                    <td>递归 + memo[n]</td>
+                    <td>自顶向下，重叠子问题查表返回</td>
+                    <td>斐波那契、爬楼梯</td>
+                </tr>
+                <tr>
+                    <td><strong>线性DP（一维）</strong></td>
+                    <td>第36课</td>
+                    <td>dp[i] 表示以 i 结尾的最优值</td>
+                    <td>dp[i] 仅依赖前序 dp[j] (j &lt; i)</td>
+                    <td>最大子段和、LIS</td>
+                </tr>
+                <tr>
+                    <td><strong>01背包</strong></td>
+                    <td>第37课</td>
+                    <td>dp[i][j] = 前 i 个物品、容量 j</td>
+                    <td>选或不选，反向遍历保证只用一次</td>
+                    <td>采药、装箱问题</td>
+                </tr>
+                <tr>
+                    <td><strong>完全背包</strong></td>
+                    <td>第38课</td>
+                    <td>同01背包，但物品无限取</td>
+                    <td>正向遍历允许重复选用</td>
+                    <td>硬币找零</td>
+                </tr>
+                <tr>
+                    <td><strong>区间DP</strong></td>
+                    <td>第39课</td>
+                    <td>dp[i][j] = 区间 [i, j] 上的最优解</td>
+                    <td>枚举分割点 k，合并子区间</td>
+                    <td>石子合并、矩阵链乘</td>
+                </tr>
+            </tbody>
+        </table>
+    </div>
+
+    <!-- Slide 4: 数字三角形 -->
+    <div class="slide">
+        <div class="slide-title">数字三角形 —— 自底向上DP</div>
+        <div class="content-block">
+            <p><strong>问题：</strong>给定一个 n 行的数字三角形，从顶部出发，每次可以向左下或右下走，求到底部的最大路径和。</p>
+        </div>
+        <div class="triangle-vis">
+                        <span class="path">7</span><br>
+                      <span class="arrow">↙   ↘</span><br>
+                    <span class="path">3</span>       8<br>
+                  <span class="arrow">↙   ↘</span>   <span class="arrow">↙   ↘</span><br>
+                8       1       0<br>
+              <span class="arrow">↙   ↘</span>   <span class="arrow">↙   ↘</span>   <span class="arrow">↙   ↘</span><br>
+            2       <span class="path">7</span>       4       4<br>
+          <span class="arrow">↙   ↘</span>   <span class="arrow">↙   ↘</span>   <span class="arrow">↙   ↘</span>   <span class="arrow">↙   ↘</span><br>
+        4       <span class="path">5</span>       2       6       5
+        </div>
+        <div class="content-block" style="text-align:center;color:var(--accent);margin-top:5px;">
+            最优路径：7 → 3 → 8 → 7 → 5 = <strong>30</strong>
+        </div>
+        <div class="content-block">
+            <p><strong>状态定义：</strong>dp[i][j] = 从底部走到 (i, j) 的最大和</p>
+            <p><strong>转移方程：</strong><code style="color:var(--accent);">dp[i][j] = max(dp[i+1][j], dp[i+1][j+1]) + a[i][j]</code></p>
+            <p><strong>边界：</strong>dp[n-1][j] = a[n-1][j]（最后一行的 dp 值等于自身）</p>
+            <p><strong>答案：</strong>dp[0][0]</p>
+        </div>
+        <div class="code-block"><span class="kw">int</span> <span class="fn">numberTriangle</span>(<span class="kw">int</span> n) {
+    <span class="cm">// 初始化最后一行</span>
+    <span class="kw">for</span> (<span class="kw">int</span> j = <span class="num">0</span>; j &lt; n; j++)
+        dp[n<span class="num">-1</span>][j] = a[n<span class="num">-1</span>][j];
+    <span class="cm">// 自底向上递推</span>
+    <span class="kw">for</span> (<span class="kw">int</span> i = n - <span class="num">2</span>; i &gt;= <span class="num">0</span>; i--)
+        <span class="kw">for</span> (<span class="kw">int</span> j = <span class="num">0</span>; j &lt;= i; j++)
+            dp[i][j] = <span class="fn">max</span>(dp[i<span class="num">+1</span>][j], dp[i<span class="num">+1</span>][j<span class="num">+1</span>]) + a[i][j];
+    <span class="kw">return</span> dp[<span class="num">0</span>][<span class="num">0</span>];
+}</div>
+    </div>
+
+    <!-- Slide 5: 编辑距离 -->
+    <div class="slide">
+        <div class="slide-title">编辑距离 —— 双字符串DP</div>
+        <div class="content-block">
+            <p><strong>问题：</strong>通过<strong>插入、删除、替换</strong>三种操作，将字符串 A 转换为 B，求最少操作次数。</p>
+        </div>
+        <div class="content-block">
+            <p><strong>状态定义：</strong>dp[i][j] = 将 A[0..i-1] 转换为 B[0..j-1] 的最少操作次数</p>
+            <p><strong>转移方程：</strong></p>
+            <div class="code-block" style="font-size:0.8em;"><span class="kw">if</span> (A[i<span class="num">-1</span>] == B[j<span class="num">-1</span>])
+    dp[i][j] = dp[i<span class="num">-1</span>][j<span class="num">-1</span>];          <span class="cm">// 相同无需操作</span>
+<span class="kw">else</span>
+    dp[i][j] = <span class="fn">min</span>({
+        dp[i<span class="num">-1</span>][j] + <span class="num">1</span>,      <span class="cm">// 删除 A[i-1]</span>
+        dp[i][j<span class="num">-1</span>] + <span class="num">1</span>,      <span class="cm">// 插入 B[j-1]</span>
+        dp[i<span class="num">-1</span>][j<span class="num">-1</span>] + <span class="num">1</span>  <span class="cm">// 替换</span>
+    });</div>
+        </div>
+        <div style="text-align:center;margin:15px 0;color:var(--text-secondary);">
+            示例："sunday" → "saturday"，最少操作次数 = <strong style="color:var(--accent);font-size:1.2em;">3</strong>
+        </div>
+        <table class="dp-table-vis">
+            <thead>
+                <tr><th></th><th>" "</th><th>s</th><th>a</th><th>t</th><th>u</th><th>r</th><th>d</th><th>a</th><th>y</th></tr>
+            </thead>
+            <tbody>
+                <tr><td><strong>" "</strong></td><td>0</td><td>1</td><td>2</td><td>3</td><td>4</td><td>5</td><td>6</td><td>7</td><td>8</td></tr>
+                <tr><td><strong>s</strong></td><td>1</td><td>0</td><td>1</td><td>2</td><td>3</td><td>4</td><td>5</td><td>6</td><td>7</td></tr>
+                <tr><td><strong>u</strong></td><td>2</td><td>1</td><td>1</td><td>2</td><td>2</td><td>3</td><td>4</td><td>5</td><td>6</td></tr>
+                <tr><td><strong>n</strong></td><td>3</td><td>2</td><td>2</td><td>2</td><td>3</td><td>3</td><td>4</td><td>5</td><td>6</td></tr>
+                <tr><td><strong>d</strong></td><td>4</td><td>3</td><td>3</td><td>3</td><td>3</td><td>4</td><td>3</td><td>4</td><td>5</td></tr>
+                <tr><td><strong>a</strong></td><td>5</td><td>4</td><td>3</td><td>4</td><td>4</td><td>4</td><td>4</td><td>3</td><td>4</td></tr>
+                <tr><td><strong>y</strong></td><td>6</td><td>5</td><td>4</td><td>4</td><td>5</td><td>5</td><td>5</td><td>4</td><td class="highlight-cell">3</td></tr>
+            </tbody>
+        </table>
+        <div class="content-block" style="text-align:center;font-size:0.85em;color:var(--text-secondary);">
+            边界：dp[i][0] = i（全部删除），dp[0][j] = j（全部插入）
+        </div>
+    </div>
+
+    <!-- Slide 6: 本课小结与展望 -->
+    <div class="slide">
+        <div class="slide-title">本课小结与展望</div>
+        <div class="summary-grid">
+            <div class="summary-card">
+                <h4>六步法框架</h4>
+                <p>分析问题 → 定义状态 → 找转移方程 → 确定边界 → 计算顺序 → 确定答案。这套方法论适用于所有DP问题。</p>
+            </div>
+            <div class="summary-card">
+                <h4>自底向上 vs 自顶向下</h4>
+                <p>数字三角形中自底向上避免了边界判断，代码更简洁。记忆化搜索则是自顶向下的代表。</p>
+            </div>
+            <div class="summary-card">
+                <h4>二维DP建模</h4>
+                <p>数字三角形和编辑距离都是二维DP的经典模型。二维DP通常用双重循环，注意循环的顺序和边界。</p>
+            </div>
+            <div class="summary-card">
+                <h4>空间换时间</h4>
+                <p>DP的核心哲学：用额外的存储空间记录子问题解，避免重复计算。从指数级到多项式级，性能飞跃。</p>
+            </div>
+        </div>
+        <div class="content-block" style="margin-top:20px;text-align:center;">
+            <p style="color:var(--accent);font-size:1.1em;">DP 不是死记硬背的模板，而是系统化的问题分解与递推求解方法论。</p>
+            <p style="color:var(--text-secondary);margin-top:10px;">下一阶段，我们将进入<strong>图论算法</strong>的学习 —— 认识图的基本概念、存储方式与遍历算法。</p>
+        </div>
+        <div class="info-grid" style="margin-top:20px;">
+            <div class="info-card">
+                <div class="card-number">35-39</div>
+                <div class="card-title">已学 DP 课时</div>
+                <div class="card-desc">记忆化搜索 → 线性DP → 01背包 → 完全背包 → 区间DP</div>
+            </div>
+            <div class="info-card">
+                <div class="card-number">O(n²)</div>
+                <div class="card-title">典型复杂度</div>
+                <div class="card-desc">数字三角形 O(n²)，编辑距离 O(|A|×|B|)</div>
+            </div>
+            <div class="info-card">
+                <div class="card-number">6</div>
+                <div class="card-title">解题步骤</div>
+                <div class="card-desc">分析→定义→转移→边界→顺序→答案</div>
+            </div>
+        </div>
+    </div>
+
+</div>
+
+<!-- Navigation -->
+<div class="nav-container">
+    <button class="nav-btn" id="prevBtn" onclick="changeSlide(-1)">&#x2B05; 上一页</button>
+    <div style="text-align:center;">
+        <div class="slide-counter" id="slideCounter">1/6</div>
+        <div class="dot-nav" id="dotNav"></div>
+    </div>
+    <button class="nav-btn" id="nextBtn" onclick="changeSlide(1)">下一页 &#x27A1;</button>
+</div>
+
+<script>
+    let currentSlide = 0;
+    const slides = document.querySelectorAll('.slide');
+    const totalSlides = slides.length;
+    const dotNav = document.getElementById('dotNav');
+    const slideCounter = document.getElementById('slideCounter');
+    const prevBtn = document.getElementById('prevBtn');
+    const nextBtn = document.getElementById('nextBtn');
+
+    // Create dots
+    for (let i = 0; i < totalSlides; i++) {
+        const dot = document.createElement('span');
+        dot.className = 'dot' + (i === 0 ? ' active' : '');
+        dot.onclick = () => goToSlide(i);
+        dotNav.appendChild(dot);
+    }
+
+    function showSlide(index) {
+        slides.forEach((s, i) => {
+            s.classList.toggle('active', i === index);
+        });
+        const dots = dotNav.querySelectorAll('.dot');
+        dots.forEach((d, i) => {
+            d.classList.toggle('active', i === index);
+        });
+        slideCounter.textContent = (index + 1) + '/' + totalSlides;
+        prevBtn.disabled = (index === 0);
+        nextBtn.disabled = (index === totalSlides - 1);
+    }
+
+    function changeSlide(delta) {
+        const newIndex = currentSlide + delta;
+        if (newIndex >= 0 && newIndex < totalSlides) {
+            currentSlide = newIndex;
+            showSlide(currentSlide);
+        }
+    }
+
+    function goToSlide(index) {
+        currentSlide = index;
+        showSlide(currentSlide);
+    }
+
+    // Keyboard navigation
+    document.addEventListener('keydown', (e) => {
+        if (e.key === 'ArrowRight' || e.key === 'ArrowDown') changeSlide(1);
+        if (e.key === 'ArrowLeft' || e.key === 'ArrowUp') changeSlide(-1);
+        if (e.key === 'Home') goToSlide(0);
+        if (e.key === 'End') goToSlide(totalSlides - 1);
+    });
+
+    // Touch swipe support
+    let touchStartX = 0;
+    document.addEventListener('touchstart', (e) => {
+        touchStartX = e.changedTouches[0].screenX;
+    });
+    document.addEventListener('touchend', (e) => {
+        const diff = e.changedTouches[0].screenX - touchStartX;
+        if (Math.abs(diff) > 50) {
+            changeSlide(diff < 0 ? 1 : -1);
+        }
+    });
+
+    // Initialize
+    showSlide(0);
+</script>
+
+</body>
+</html>

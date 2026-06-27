@@ -1,0 +1,290 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>第39课：组合数学基础</title>
+<style>
+* { margin: 0; padding: 0; box-sizing: border-box; }
+body {
+    font-family: 'Segoe UI', 'Microsoft YaHei', 'PingFang SC', sans-serif;
+    background: #0d1117;
+    color: #c9d1d9;
+    display: flex; justify-content: center; align-items: center;
+    min-height: 100vh;
+}
+#app {
+    width: 95%; max-width: 1000px;
+    background: #161b22;
+    border-radius: 16px;
+    padding: 40px;
+    box-shadow: 0 0 40px rgba(0,0,0,0.5);
+    position: relative;
+}
+.slide { display: none; }
+.slide.active { display: block; }
+h1 { font-size: 2.2em; color: #58a6ff; margin-bottom: 16px; border-bottom: 2px solid #30363d; padding-bottom: 12px; }
+h2 { font-size: 1.6em; color: #79c0ff; margin: 20px 0 12px; }
+h3 { font-size: 1.3em; color: #d2a8ff; margin: 16px 0 8px; }
+p, li { font-size: 1.08em; line-height: 1.85; margin-bottom: 8px; }
+ul, ol { margin-left: 24px; margin-bottom: 12px; }
+.highlight { color: #ff7b72; font-weight: bold; }
+.accent { color: #7ee787; font-weight: bold; }
+.info { color: #a5d6ff; }
+pre { background: #0d1117; border: 1px solid #30363d; border-radius: 8px; padding: 18px; overflow-x: auto; margin: 12px 0; font-size: 0.88em; line-height: 1.65; }
+code { font-family: 'Fira Code', 'Cascadia Code', 'Consolas', 'Monaco', monospace; }
+.kw { color: #ff7b72; } .type { color: #ffa657; } .func { color: #d2a8ff; }
+.num { color: #79c0ff; } .str { color: #a5d6ff; } .cmt { color: #8b949e; font-style: italic; }
+.op { color: #ff7b72; } .macro { color: #f0883e; }
+.nav { display: flex; justify-content: space-between; align-items: center; margin-top: 30px; }
+.nav button {
+    background: #21262d; color: #c9d1d9; border: 1px solid #30363d;
+    padding: 10px 24px; border-radius: 8px; cursor: pointer; font-size: 1em;
+    transition: background 0.2s;
+}
+.nav button:hover { background: #30363d; }
+.nav .page-indicator { font-size: 1em; color: #8b949e; }
+.title-slide { text-align: center; padding-top: 40px; }
+.title-slide h1 { font-size: 2.8em; border: none; }
+.title-slide .subtitle { font-size: 1.3em; color: #8b949e; margin: 16px 0; }
+.title-slide .tags { margin-top: 24px; }
+.tag { display: inline-block; background: #1f6feb33; color: #58a6ff; padding: 4px 14px; border-radius: 20px; margin: 4px; font-size: 0.92em; border: 1px solid #1f6feb55; }
+.tree { font-family: 'Fira Code', 'Consolas', monospace; white-space: pre; background: #0d1117; padding: 16px; border-radius: 6px; border: 1px solid #30363d; line-height: 1.5; font-size: 0.85em; }
+.formula { font-family: 'Fira Code', 'Consolas', monospace; color: #d2a8ff; font-size: 1.1em; margin: 8px 0; }
+table { width: 100%; border-collapse: collapse; margin: 12px 0; font-size: 0.95em; }
+th, td { padding: 8px 12px; border: 1px solid #30363d; text-align: left; }
+th { background: #21262d; color: #58a6ff; }
+td { background: #0d1117; }
+</style>
+</head>
+<body>
+<div id="app">
+
+<!-- ==================== 第1页：标题页 ==================== -->
+<div class="slide active" id="s1">
+<div class="title-slide">
+<h1>第39课：组合数学基础</h1>
+<p class="subtitle">排列组合 · 卡特兰数 · 卢卡斯定理 · 容斥原理</p>
+<div class="tags">
+<span class="tag">CSP-S 数学基础</span>
+<span class="tag">计数问题</span>
+<span class="tag">O(1) 组合数查询</span>
+<span class="tag">卡特兰数经典应用</span>
+</div>
+<p style="margin-top:30px; color:#8b949e">掌握组合数学核心公式与模板，从容应对计数类题目</p>
+</div>
+</div>
+
+<!-- ==================== 第2页：排列组合基础 ==================== -->
+<div class="slide" id="s2">
+<h1>📖 排列组合基础</h1>
+
+<h2>核心公式</h2>
+<p class="formula">排列 P(n,k) = n! / (n-k)! = n×(n-1)×...×(n-k+1)</p>
+<p class="formula">组合 C(n,k) = n! / (k! × (n-k)!)</p>
+
+<h2>三条黄金性质</h2>
+<ol>
+<li><span class="highlight">对称性：</span><span class="formula">C(n,k) = C(n, n-k)</span></li>
+<li><span class="highlight">递推公式（杨辉三角）：</span><span class="formula">C(n,k) = C(n-1,k-1) + C(n-1,k)</span></li>
+<li><span class="highlight">边界条件：</span>C(n,0) = C(n,n) = 1</li>
+</ol>
+
+<h2>杨辉三角（前6行）</h2>
+<div class="tree">
+n=0:           1
+n=1:         1   1
+n=2:       1   2   1
+n=3:     1   3   3   1
+n=4:   1   4   6   4   1
+n=5: 1   5  10  10   5   1
+</div>
+<p style="margin-top:12px">递推复杂度 <span class="accent">O(n²)</span>，适合 n ≤ 5000；更大规模需要阶乘+逆元</p>
+</div>
+
+<!-- ==================== 第3页：阶乘+逆元 O(1) 组合数 ==================== -->
+<div class="slide" id="s3">
+<h1>📖 阶乘预处理 + 逆元求组合数</h1>
+
+<h2>O(1) 查询的奥秘</h2>
+<p class="formula">C(n,k) = fact[n] × inv_fact[k] × inv_fact[n-k] (mod MOD)</p>
+
+<h3>预处理三步骤</h3>
+<ol>
+<li>预处理 <span class="func">fact[i] = fact[i-1] × i % MOD</span>（正推）</li>
+<li>用费马小定理求 <span class="func">inv_fact[n] = pow(fact[n], MOD-2)</span></li>
+<li>倒推 <span class="func">inv_fact[i-1] = inv_fact[i] × i % MOD</span></li>
+</ol>
+
+<pre><span class="cmt">// 核心代码 — O(n) 预处理，O(1) 查询</span>
+<span class="kw">void</span> <span class="func">precompute</span>(<span class="type">int</span> n) {
+    fact[<span class="num">0</span>] = <span class="num">1</span>;
+    <span class="kw">for</span> (<span class="type">int</span> i = <span class="num">1</span>; i &lt;= n; i++)
+        fact[i] = fact[i-<span class="num">1</span>] * i % MOD;
+    inv_fact[n] = <span class="func">qpow</span>(fact[n], MOD - <span class="num">2</span>);
+    <span class="kw">for</span> (<span class="type">int</span> i = n; i &gt;= <span class="num">1</span>; i--)
+        inv_fact[i-<span class="num">1</span>] = inv_fact[i] * i % MOD;
+}
+<span class="type">ll</span> <span class="func">C</span>(<span class="type">int</span> n, <span class="type">int</span> k) {
+    <span class="kw">if</span> (k &lt; <span class="num">0</span> || k &gt; n) <span class="kw">return</span> <span class="num">0</span>;
+    <span class="kw">return</span> fact[n] * inv_fact[k] % MOD * inv_fact[n-k] % MOD;
+}</pre>
+
+<h3>⚠ 前提条件</h3>
+<p>MOD 必须是<span class="highlight">质数</span>且 n <span class="highlight">&lt; MOD</span>。若 n ≥ MOD，需使用<span class="accent">卢卡斯定理</span></p>
+</div>
+
+<!-- ==================== 第4页：卡特兰数精讲 ==================== -->
+<div class="slide" id="s4">
+<h1>📖 卡特兰数精讲（Catalan Number）</h1>
+
+<h2>定义公式</h2>
+<p class="formula">Hₙ = C(2n, n) / (n+1) = C(2n, n) − C(2n, n−1)</p>
+<p>前几项：<span class="num">1, 1, 2, 5, 14, 42, 132, 429, 1430, 4862, 16796</span></p>
+
+<h3>递推公式（二选一）</h3>
+<p>卷积型：<span class="formula">Hₙ = ΣHᵢ · Hₙ₋₁₋ᵢ</span>（O(n²)）</p>
+<p>线性型：<span class="formula">Hₙ = Hₙ₋₁ · (4n−2) / (n+1)</span>（O(n)，推荐）</p>
+
+<h3>四大经典应用（CSP-S 高频）</h3>
+<table>
+<tr><th>应用场景</th><th>卡特兰项</th><th>举例</th></tr>
+<tr><td>合法括号序列</td><td>Hₙ</td><td>n=3: ()(), (())(), (()()), ((())), ()()()</td></tr>
+<tr><td>出栈序列数</td><td>Hₙ</td><td>n=3: 123,132,213,231,321（5种）</td></tr>
+<tr><td>二叉树形态数</td><td>Hₙ</td><td>n=3: 5种不同形态的二叉搜索树</td></tr>
+<tr><td>凸多边形三角剖分</td><td>Hₙ₋₂</td><td>六边形(n+2=6)有 H₄=14 种剖分</td></tr>
+</table>
+
+<pre><span class="cmt">// 线性递推求卡特兰数（取模）</span>
+<span class="type">ll</span> <span class="func">catalan</span>(<span class="type">int</span> n) {
+    <span class="type">ll</span> h = <span class="num">1</span>;
+    <span class="kw">for</span> (<span class="type">int</span> i = <span class="num">1</span>; i &lt;= n; i++)
+        h = h * (<span class="num">4</span>*i - <span class="num">2</span>) % MOD * <span class="func">inv</span>(i+<span class="num">1</span>) % MOD;
+    <span class="kw">return</span> h;
+}</pre>
+</div>
+
+<!-- ==================== 第5页：卢卡斯定理 + 容斥原理 ==================== -->
+<div class="slide" id="s5">
+<h1>📖 卢卡斯定理与容斥原理</h1>
+
+<h2>卢卡斯定理（Lucas Theorem）</h2>
+<p><span class="info">适用场景：</span>n 和 k 极大（≤ 10¹⁸），模数 p 较小且为质数</p>
+<p class="formula">C(n, k) ≡ C(n mod p, k mod p) · C(n/p, k/p) (mod p)</p>
+
+<pre><span class="type">ll</span> <span class="func">lucas</span>(<span class="type">ll</span> n, <span class="type">ll</span> k, <span class="type">ll</span> p) {
+    <span class="kw">if</span> (k == <span class="num">0</span>) <span class="kw">return</span> <span class="num">1</span>;
+    <span class="kw">return</span> <span class="func">smallC</span>(n % p, k % p) * <span class="func">lucas</span>(n / p, k / p, p) % p;
+}</pre>
+
+<hr style="border-color:#30363d; margin:20px 0">
+
+<h2>容斥原理（Inclusion-Exclusion）</h2>
+<p><span class="info">奇加偶减：</span>奇数个集合交 → 加，偶数个集合交 → 减</p>
+<p class="formula">|A ∪ B| = |A| + |B| − |A ∩ B|</p>
+<p class="formula">|A ∪ B ∪ C| = |A|+|B|+|C| − |A∩B|−|A∩C|−|B∩C| + |A∩B∩C|</p>
+
+<h3>经典应用：1~n 中与 m 互质的数</h3>
+<ol>
+<li>对 m 做<span class="accent">质因子分解</span>，得到质因子集合 P</li>
+<li><span class="accent">二进制枚举</span>质因子子集，容斥求和</li>
+<li>答案 = n − |∪Aᵢ|（全集减去能被任一质因子整除的）</li>
+<li>复杂度：<span class="accent">O(2ᵏ)</span>，k 为质因子个数（通常 ≤ 10）</li>
+</ol>
+</div>
+
+<!-- ==================== 第6页：真题精练 ==================== -->
+<div class="slide" id="s6">
+<h1>📝 真题精练</h1>
+
+<h3>真题一：出栈序列计数（卡特兰数）</h3>
+<p><span class="info">题目：</span>n 个元素依次入栈，求合法出栈序列数，对 1e9+7 取模</p>
+<p><span class="info">数据范围：</span>n ≤ 10⁵</p>
+<p><span class="highlight">答案：</span>Hₙ = C(2n, n) × inv(n+1)</p>
+
+<pre><span class="cmt">// 核心代码</span>
+<span class="type">ll</span> <span class="func">solve</span>(<span class="type">int</span> n) {
+    <span class="kw">return</span> <span class="func">C</span>(<span class="num">2</span>*n, n) * <span class="func">qpow</span>(n+<span class="num">1</span>, MOD-<span class="num">2</span>) % MOD;
+}
+<span class="cmt">// 其中 C(n,k) 使用阶乘+逆元 O(1) 查询</span></pre>
+
+<h3 style="margin-top:20px">真题二：区间容斥计数</h3>
+<p><span class="info">题目：</span>求 [a, b] 中能被质数集合 {p₁,...,pₖ} 中至少一个整除的数的个数</p>
+<p><span class="info">数据范围：</span>a,b ≤ 10⁹，k ≤ 10</p>
+
+<pre><span class="cmt">// 先求 f(x) = [1,x] 中能被至少一个整除的个数（容斥）</span>
+<span class="cmt">// 答案 = f(b) - f(a-1)</span>
+<span class="type">ll</span> ans = <span class="func">f</span>(b, primes) - <span class="func">f</span>(a-<span class="num">1</span>, primes);
+<span class="cmt">// f(x) 内部：二进制枚举子集，奇加偶减，注意防溢出</span></pre>
+
+<h3 style="margin-top:20px">关键注意事项</h3>
+<ul>
+<li><span class="highlight">组合数取模</span> → MOD 必须为质数，n < MOD</li>
+<li><span class="highlight">容斥溢出</span> → 乘积超过 x 时直接跳过（贡献为 0）</li>
+<li><span class="highlight">卡特兰数</span> → 分母 (n+1) 在取模下用逆元</li>
+</ul>
+</div>
+
+<!-- ==================== 第7页：总结 ==================== -->
+<div class="slide" id="s7">
+<h1>🎯 本课小结</h1>
+<div style="display:grid; grid-template-columns:1fr 1fr; gap:16px; margin-top:20px">
+<div style="background:#0d1117; padding:18px; border-radius:8px; border:1px solid #30363d">
+<h3>组合数计算方法</h3>
+<p>杨辉三角 — <span class="accent">O(n²)</span> 预处理</p>
+<p>阶乘+逆元 — <span class="accent">O(1)</span> 查询</p>
+<p>卢卡斯定理 — <span class="accent">大n小p</span></p>
+</div>
+<div style="background:#0d1117; padding:18px; border-radius:8px; border:1px solid #30363d">
+<h3>卡特兰数四大应用</h3>
+<p>括号序列 · 出栈序列</p>
+<p>二叉树形态 · 三角剖分</p>
+<p>公式：<span class="accent">Hₙ=C(2n,n)/(n+1)</span></p>
+</div>
+<div style="background:#0d1117; padding:18px; border-radius:8px; border:1px solid #30363d">
+<h3>容斥原理核心</h3>
+<p><span class="highlight">奇加偶减</span></p>
+<p>二进制枚举子集</p>
+<p>质因子分解预处理</p>
+<p>注意乘法溢出保护</p>
+</div>
+<div style="background:#0d1117; padding:18px; border-radius:8px; border:1px solid #30363d">
+<h3>常见错误</h3>
+<p>MOD 非质数用了逆元</p>
+<p>n ≥ MOD 未用 Lucas</p>
+<p>容斥乘法溢出 long long</p>
+<p>卡特兰数忘记 inv(n+1)</p>
+</div>
+</div>
+</div>
+
+<!-- ==================== 导航 ==================== -->
+<div class="nav">
+<button onclick="prevSlide()">◀ 上一页</button>
+<span class="page-indicator" id="pageNum">1 / 7</span>
+<button onclick="nextSlide()">下一页 ▶</button>
+</div>
+</div>
+
+<script>
+let current = 0;
+const slides = document.querySelectorAll('.slide');
+const total = slides.length;
+
+function showSlide(n) {
+    slides[current].classList.remove('active');
+    current = ((n % total) + total) % total;
+    slides[current].classList.add('active');
+    document.getElementById('pageNum').textContent = (current + 1) + ' / ' + total;
+}
+
+function nextSlide() { showSlide(current + 1); }
+function prevSlide() { showSlide(current - 1); }
+
+document.addEventListener('keydown', function(e) {
+    if (e.key === 'ArrowRight' || e.key === 'ArrowDown') nextSlide();
+    if (e.key === 'ArrowLeft' || e.key === 'ArrowUp') prevSlide();
+});
+</script>
+</body>
+</html>

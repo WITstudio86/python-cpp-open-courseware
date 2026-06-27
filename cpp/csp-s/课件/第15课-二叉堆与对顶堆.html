@@ -1,0 +1,197 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>第15课：二叉堆与对顶堆</title>
+<style>
+* { margin: 0; padding: 0; box-sizing: border-box; }
+body { font-family: 'Segoe UI', 'Microsoft YaHei', sans-serif; background: #0d1117; color: #c9d1d9; display: flex; justify-content: center; align-items: center; min-height: 100vh; }
+#app { width: 95%; max-width: 1000px; background: #161b22; border-radius: 16px; padding: 40px; box-shadow: 0 0 40px rgba(0,0,0,0.5); }
+.slide { display: none; } .slide.active { display: block; }
+h1 { font-size: 2.2em; color: #58a6ff; margin-bottom: 16px; border-bottom: 2px solid #30363d; padding-bottom: 12px; }
+h2 { font-size: 1.6em; color: #79c0ff; margin: 20px 0 12px; }
+h3 { font-size: 1.3em; color: #d2a8ff; margin: 16px 0 8px; }
+p, li { font-size: 1.08em; line-height: 1.85; margin-bottom: 8px; }
+ul, ol { margin-left: 24px; margin-bottom: 12px; }
+.highlight { color: #ff7b72; font-weight: bold; } .accent { color: #7ee787; font-weight: bold; } .info { color: #a5d6ff; }
+pre { background: #0d1117; border: 1px solid #30363d; border-radius: 8px; padding: 18px; overflow-x: auto; margin: 12px 0; font-size: 0.88em; line-height: 1.6; }
+code { font-family: 'Fira Code', 'Consolas', monospace; }
+.kw { color: #ff7b72; } .type { color: #ffa657; } .func { color: #d2a8ff; }
+.num { color: #79c0ff; } .cmt { color: #8b949e; font-style: italic; }
+.nav { display: flex; justify-content: space-between; align-items: center; margin-top: 30px; }
+.nav button { background: #21262d; color: #c9d1d9; border: 1px solid #30363d; padding: 10px 24px; border-radius: 8px; cursor: pointer; font-size: 1em; transition: background 0.2s; }
+.nav button:hover { background: #30363d; } .nav .page-indicator { font-size: 1em; color: #8b949e; }
+.title-slide { text-align: center; padding-top: 40px; }
+.title-slide h1 { font-size: 2.8em; border: none; }
+.title-slide .subtitle { font-size: 1.3em; color: #8b949e; margin: 16px 0; }
+.tag { display: inline-block; background: #1f6feb33; color: #58a6ff; padding: 4px 14px; border-radius: 20px; margin: 4px; font-size: 0.92em; border: 1px solid #1f6feb55; }
+</style>
+</head>
+<body>
+<div id="app">
+<div class="slide active" id="s1">
+<div class="title-slide">
+<h1>第15课：二叉堆与对顶堆</h1>
+<p class="subtitle">Binary Heap & Double Heap（Median Finder）</p>
+<div class="tags">
+<span class="tag">CSP-S 数据结构</span><span class="tag">O(log n)</span><span class="tag">对顶堆</span><span class="tag">中位数</span><span class="tag">堆排序</span>
+</div>
+<p style="margin-top:30px; color:#8b949e">从堆的基本操作到对顶堆维护动态中位数</p>
+</div>
+</div>
+
+<div class="slide" id="s2">
+<h1>📖 知识精讲 — 二叉堆结构</h1>
+<h2>完全二叉树 + 堆序性质</h2>
+<p>用<span class="highlight">数组存储完全二叉树</span>，下标从 1 开始</p>
+<ul><li>父节点：i/2 | 左子：2i | 右子：2i+1</li></ul>
+
+<h3>大根堆 vs 小根堆</h3>
+<p><span class="highlight">大根堆</span>：父 ≥ 子（根最大）| <span class="accent">小根堆</span>：父 ≤ 子（根最小）</p>
+
+<h3 style="margin-top:16px">两大核心操作</h3>
+<table style="width:100%; border-collapse:collapse; margin:8px 0">
+<tr style="border-bottom:1px solid #30363d"><td style="padding:6px;width:80px"><span class="highlight">swim（上浮）</span></td><td style="padding:6px">插入：新元素放末尾，向上比较交换 → O(log n)</td></tr>
+<tr><td style="padding:6px"><span class="accent">sink（下沉）</span></td><td style="padding:6px">删除堆顶：末尾元素放堆顶，向下比较交换 → O(log n)</td></tr>
+</table>
+
+<h3 style="margin-top:16px">O(n) 堆化（heapify）</h3>
+<p>从最后一个非叶子节点 n/2 开始，依次 sink → <span class="accent">O(n)</span> 建堆</p>
+</div>
+
+<div class="slide" id="s3">
+<h1>📖 知识精讲 — 对顶堆与动态中位数</h1>
+<h2>对顶堆 = 大根堆 + 小根堆</h2>
+
+<div style="text-align:center; margin:16px 0; padding:12px; background:#0d1117; border-radius:8px; border:1px solid #30363d">
+<span style="color:#ff7b72;font-size:1.2em">[MaxHeap: 较小的一半]</span>
+<span style="margin:0 12px;font-size:1.5em"> ... </span>
+<span style="color:#7ee787;font-size:1.2em">[MinHeap: 较大的一半]</span>
+</div>
+
+<h3>不变式</h3>
+<ul>
+<li>MaxHeap.size() == MinHeap.size() <span class="info">或</span> MaxHeap.size() == MinHeap.size() + 1</li>
+<li>MaxHeap 的所有元素 ≤ MinHeap 的所有元素</li>
+</ul>
+
+<h3 style="margin-top:12px">操作复杂度</h3>
+<p>插入：<span class="accent">O(log n)</span> | 查询中位数：<span class="accent">O(1)</span></p>
+</div>
+
+<div class="slide" id="s4">
+<h1>💻 代码模板</h1>
+<h3>对顶堆（动态中位数）</h3>
+<pre><span class="type">void</span> <span class="func">addNum</span>(<span class="type">int</span> x) {
+    <span class="kw">if</span> (maxHeap.empty() || x &lt;= maxHeap.top())
+        maxHeap.push(x);
+    <span class="kw">else</span>
+        minHeap.push(x);
+    <span class="cmt">// 平衡两个堆</span>
+    <span class="kw">if</span> (maxHeap.size() &gt; minHeap.size() + <span class="num">1</span>) {
+        minHeap.push(maxHeap.top()); maxHeap.pop();
+    } <span class="kw">else</span> <span class="kw">if</span> (minHeap.size() &gt; maxHeap.size()) {
+        maxHeap.push(minHeap.top()); minHeap.pop();
+    }
+}</pre>
+
+<h3 style="margin-top:16px">小根堆核心实现</h3>
+<pre><span class="cmt">// sink: 堆顶下沉</span>
+<span class="type">void</span> <span class="func">sink</span>(<span class="type">int</span> i) {
+    <span class="kw">while</span> (<span class="num">2</span> * i &lt;= sz) {
+        <span class="type">int</span> j = <span class="num">2</span> * i;
+        <span class="kw">if</span> (j &lt; sz && heap[j+<span class="num">1</span>] &lt; heap[j]) j++; <span class="cmt">// 选更小的儿子</span>
+        <span class="kw">if</span> (heap[i] &lt;= heap[j]) <span class="kw">break</span>;
+        <span class="func">swap</span>(heap[i], heap[j]); i = j;
+    }
+}</pre>
+</div>
+
+<div class="slide" id="s5">
+<h1>⚠️ 易错点与优化技巧</h1>
+<ul>
+<li><span class="highlight">⚠ 下标从 1 开始</span> — 方便父子计算，0 下标需偏移公式</li>
+<li><span class="highlight">⚠ sink 选对儿子</span> — 小根堆选小的，大根堆选大的</li>
+<li><span class="highlight">⚠ 对顶堆平衡</span> — 插入后必须调整保持 size 约束</li>
+<li><span class="highlight">⚠ 取模运算</span> — 堆排序不稳定，不保证相同元素的相对顺序</li>
+<li><span class="accent">✔ STL priority_queue 默认大根堆</span></li>
+<li><span class="accent">✔ 小根堆：greater&lt;T&gt; 或存负数</span></li>
+<li><span class="accent">✔ 合并果子 → 贪心 + 小根堆 → Huffman</span></li>
+<li><span class="accent">✔ 堆化 O(n) 优于逐个插入 O(n log n)</span></li>
+</ul>
+</div>
+
+<div class="slide" id="s6">
+<h1>📝 真题精练</h1>
+<h3>真题一：动态中位数</h3>
+<p><span class="info">在线查询奇数位置的中位数 | M ≤ 10⁵</span></p>
+<p>对顶堆：插入 O(log M)，查询 O(1)，总 O(M log M)</p>
+
+<h3 style="margin-top:20px">真题二：合并果子（Huffman 编码）</h3>
+<p><span class="info">n 堆果子，每次合并两堆，代价 = 重量和 | n ≤ 10⁴</span></p>
+<p>贪心：每次选最小两堆合并 → 小根堆 → O(n log n)</p>
+
+<h3 style="margin-top:20px">堆排序</h3>
+<p>原地 O(n log n)，不稳定。建堆 O(n) + 排序 O(n log n)</p>
+<div style="background:#0d1117; padding:14px; border-radius:8px; border:1px solid #30363d; margin-top:12px">
+<p><span class="accent">堆 vs 快排：</span>堆排序原地但常数大、不稳定；快速排序常数小但不稳定；归并排序稳定但需 O(n) 空间</p>
+</div>
+</div>
+
+<div class="slide" id="s7">
+<h1>🎯 本课小结</h1>
+<div style="display:grid; grid-template-columns:1fr 1fr; gap:16px; margin-top:20px">
+<div style="background:#0d1117; padding:18px; border-radius:8px; border:1px solid #30363d">
+<h3>二叉堆</h3>
+<p>完全二叉树 + 数组</p>
+<p>swim（上浮）插入</p>
+<p>sink（下沉）删除</p>
+<p>heapify: O(n) 建堆</p>
+</div>
+<div style="background:#0d1117; padding:18px; border-radius:8px; border:1px solid #30363d">
+<h3>对顶堆</h3>
+<p>大根堆 + 小根堆</p>
+<p>O(1) 查询中位数</p>
+<p>O(log n) 插入</p>
+</div>
+<div style="background:#0d1117; padding:18px; border-radius:8px; border:1px solid #30363d">
+<h3>堆排序</h3>
+<p>O(n log n)</p>
+<p>原地排序</p>
+<p>不稳定</p>
+</div>
+<div style="background:#0d1117; padding:18px; border-radius:8px; border:1px solid #30363d">
+<h3>下一课</h3>
+<p>可并堆（左偏树）</p>
+<p>合并操作 O(log n)</p>
+<p>猴子打架问题</p>
+</div>
+</div>
+</div>
+
+<div class="nav">
+<button onclick="prevSlide()">◀ 上一页</button>
+<span class="page-indicator" id="pageNum">1 / 7</span>
+<button onclick="nextSlide()">下一页 ▶</button>
+</div>
+</div>
+<script>
+let current = 0;
+const slides = document.querySelectorAll('.slide');
+const total = slides.length;
+function showSlide(n) {
+    slides[current].classList.remove('active');
+    current = ((n % total) + total) % total;
+    slides[current].classList.add('active');
+    document.getElementById('pageNum').textContent = (current + 1) + ' / ' + total;
+}
+function nextSlide() { showSlide(current + 1); }
+function prevSlide() { showSlide(current - 1); }
+document.addEventListener('keydown', function(e) {
+    if (e.key === 'ArrowRight' || e.key === 'ArrowDown') nextSlide();
+    if (e.key === 'ArrowLeft' || e.key === 'ArrowUp') prevSlide();
+});
+</script>
+</body>
+</html>

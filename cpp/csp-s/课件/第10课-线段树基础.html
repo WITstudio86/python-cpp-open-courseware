@@ -1,0 +1,218 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>第10课：线段树基础（Segment Tree）</title>
+<style>
+* { margin: 0; padding: 0; box-sizing: border-box; }
+body {
+    font-family: 'Segoe UI', 'Microsoft YaHei', 'PingFang SC', sans-serif;
+    background: #0d1117; color: #c9d1d9;
+    display: flex; justify-content: center; align-items: center; min-height: 100vh;
+}
+#app {
+    width: 95%; max-width: 1000px; background: #161b22;
+    border-radius: 16px; padding: 40px; box-shadow: 0 0 40px rgba(0,0,0,0.5);
+}
+.slide { display: none; }
+.slide.active { display: block; }
+h1 { font-size: 2.2em; color: #58a6ff; margin-bottom: 16px; border-bottom: 2px solid #30363d; padding-bottom: 12px; }
+h2 { font-size: 1.6em; color: #79c0ff; margin: 20px 0 12px; }
+h3 { font-size: 1.3em; color: #d2a8ff; margin: 16px 0 8px; }
+p, li { font-size: 1.08em; line-height: 1.85; margin-bottom: 8px; }
+ul, ol { margin-left: 24px; margin-bottom: 12px; }
+.highlight { color: #ff7b72; font-weight: bold; }
+.accent { color: #7ee787; font-weight: bold; }
+.info { color: #a5d6ff; }
+pre { background: #0d1117; border: 1px solid #30363d; border-radius: 8px; padding: 18px; overflow-x: auto; margin: 12px 0; font-size: 0.88em; line-height: 1.6; }
+code { font-family: 'Fira Code', 'Cascadia Code', 'Consolas', monospace; }
+.kw { color: #ff7b72; } .type { color: #ffa657; } .func { color: #d2a8ff; }
+.num { color: #79c0ff; } .str { color: #a5d6ff; } .cmt { color: #8b949e; font-style: italic; }
+.nav { display: flex; justify-content: space-between; align-items: center; margin-top: 30px; }
+.nav button {
+    background: #21262d; color: #c9d1d9; border: 1px solid #30363d;
+    padding: 10px 24px; border-radius: 8px; cursor: pointer; font-size: 1em;
+    transition: background 0.2s;
+}
+.nav button:hover { background: #30363d; }
+.nav .page-indicator { font-size: 1em; color: #8b949e; }
+.title-slide { text-align: center; padding-top: 40px; }
+.title-slide h1 { font-size: 2.8em; border: none; }
+.title-slide .subtitle { font-size: 1.3em; color: #8b949e; margin: 16px 0; }
+.tag { display: inline-block; background: #1f6feb33; color: #58a6ff; padding: 4px 14px; border-radius: 20px; margin: 4px; font-size: 0.92em; border: 1px solid #1f6feb55; }
+.tree { font-family: 'Fira Code', 'Consolas', monospace; white-space: pre; background: #0d1117; padding: 16px; border-radius: 6px; border: 1px solid #30363d; line-height: 1.4; font-size: 0.8em; overflow-x: auto; }
+</style>
+</head>
+<body>
+<div id="app">
+<div class="slide active" id="s1">
+<div class="title-slide">
+<h1>第10课：线段树基础</h1>
+<p class="subtitle">Segment Tree — 区间操作利器</p>
+<div class="tags">
+<span class="tag">CSP-S 数据结构核心</span><span class="tag">O(log n)</span><span class="tag">懒标记</span><span class="tag">区间和</span><span class="tag">RMQ</span>
+</div>
+<p style="margin-top:30px; color:#8b949e">从建树到懒标记，全面掌握线段树基础操作</p>
+</div>
+</div>
+
+<div class="slide" id="s2">
+<h1>📖 知识精讲 — 线段树结构</h1>
+<h2>堆式存储（完全二叉树）</h2>
+<p>根节点编号 <span class="num">1</span>，节点 p 的左子 <span class="num">2p</span>，右子 <span class="num">2p+1</span></p>
+<p>节点 p 管理的区间：[<span class="info">l, r</span>]，mid = (l+r)/2</p>
+<p>空间大小：<span class="highlight">4 × n</span>（最稳妥）</p>
+
+<div class="tree">
+                    [1, 8] (1)
+                   /         \
+            [1, 4] (2)      [5, 8] (3)
+           /        \        /        \
+      [1, 2] (4)  [3, 4] (5) [5, 6] (6) [7, 8] (7)
+      /    \      /    \     /    \    /    \
+   [1,1] [2,2] [3,3] [4,4] [5,5] [6,6] [7,7] [8,8]
+</div>
+<p style="margin-top:12px">每个叶子节点代表数组中的<span class="accent">一个元素</span>，内部节点代表<span class="accent">一段区间</span></p>
+</div>
+
+<div class="slide" id="s3">
+<h1>📖 知识精讲 — 三大核心操作</h1>
+<h3>1. 建树 <span class="accent">build(p, l, r)</span></h3>
+<p>递归构建：叶子 = a[l]，父节点 = <span class="func">pushup</span>(左子 + 右子)</p>
+
+<h3>2. 单点修改 <span class="accent">update(p, l, r, x, v)</span></h3>
+<p>递归找到叶子 x → 修改 → 回溯时 pushup 更新祖先</p>
+
+<h3>3. 区间查询 <span class="accent">query(p, l, r, ql, qr)</span></h3>
+<p>若节点区间被 <span class="highlight">完全覆盖</span> → 直接返回</p>
+<p>否则分裂查询左右子树 → 合并结果</p>
+
+<h3 style="margin-top:18px">关键性质</h3>
+<p>任意区间 [ql, qr] 可被分解为 <span class="accent">O(log n)</span> 个线段树节点，<br>每个节点代表一个连续的不相交子区间</p>
+</div>
+
+<div class="slide" id="s4">
+<h1>💻 代码模板 — 懒标记与区间修改</h1>
+<h3>懒标记 <span class="accent">Lazy Tag</span> 机制</h3>
+<p>遇到完全覆盖 → 打标记，<span class="highlight">不下传</span>，实现延迟更新</p>
+
+<pre><span class="cmt">// pushdown：访问子节点前必须下传标记</span>
+<span class="type">void</span> <span class="func">pushdown</span>(<span class="type">int</span> p, <span class="type">int</span> l, <span class="type">int</span> r) {
+    <span class="kw">if</span> (lazy[p]) {
+        <span class="type">int</span> mid = (l + r) >> <span class="num">1</span>;
+        tree[p&lt;&lt;<span class="num">1</span>] += lazy[p] * (mid - l + <span class="num">1</span>);
+        tree[p&lt;&lt;<span class="num">1</span>|<span class="num">1</span>] += lazy[p] * (r - mid);
+        lazy[p&lt;&lt;<span class="num">1</span>] += lazy[p];
+        lazy[p&lt;&lt;<span class="num">1</span>|<span class="num">1</span>] += lazy[p];
+        lazy[p] = <span class="num">0</span>;
+    }
+}
+
+<span class="cmt">// 区间加法修改</span>
+<span class="type">void</span> <span class="func">update</span>(<span class="type">int</span> p, <span class="type">int</span> l, <span class="type">int</span> r, <span class="type">int</span> ql, <span class="type">int</span> qr, <span class="type">int</span> v) {
+    <span class="kw">if</span> (ql &lt;= l && r &lt;= qr) {
+        tree[p] += v * (r - l + <span class="num">1</span>);
+        lazy[p] += v;
+        <span class="kw">return</span>;
+    }
+    <span class="func">pushdown</span>(p, l, r);
+    <span class="type">int</span> mid = (l + r) >> <span class="num">1</span>;
+    <span class="kw">if</span> (ql &lt;= mid) <span class="func">update</span>(p&lt;&lt;<span class="num">1</span>, l, mid, ql, qr, v);
+    <span class="kw">if</span> (qr &gt; mid) <span class="func">update</span>(p&lt;&lt;<span class="num">1</span>|<span class="num">1</span>, mid+<span class="num">1</span>, r, ql, qr, v);
+    <span class="func">pushup</span>(p);
+}</pre>
+</div>
+
+<div class="slide" id="s5">
+<h1>⚠️ 易错点与优化技巧</h1>
+<ul>
+<li><span class="highlight">⚠️ 空间开 4 倍</span> — tree[4*MAXN]，开 2 倍可能 RE</li>
+<li><span class="highlight">⚠️ pushdown 时机</span> — 访问子节点前必须 pushdown！</li>
+<li><span class="highlight">⚠️ 懒标记叠加</span> — lazy[p] += v，不是 = v</li>
+<li><span class="highlight">⚠️ 区间长度乘法</span> — tree += v × 区间长度</li>
+<li><span class="accent">✔ mid 使用位运算</span> — (l+r)>>1 比 (l+r)/2 更快</li>
+<li><span class="accent">✔ 子节点位运算</span> — p<<1 和 p<<1|1</li>
+<li><span class="accent">✔ 动态开点</span> — 值域 10⁹ 但操作少时使用</li>
+<li><span class="accent">✔ 递归 vs 迭代</span> — zkw 线段树（非递归）常数更小</li>
+<li><span class="accent">✔ 使用 struct/class 封装</span> — 易于复用和调试</li>
+</ul>
+</div>
+
+<div class="slide" id="s6">
+<h1>📝 真题精练</h1>
+<h3>真题一：区间修改 + 区间查询</h3>
+<p><span class="info">题目：</span>区间加法 + 区间求和 | n, m ≤ 10⁵</p>
+<p>使用懒标记线段树，每次操作 O(log n)</p>
+
+<h3 style="margin-top:20px">真题二：区间最大值（RMQ）</h3>
+<p><span class="info">题目：</span>单点修改 + 区间最大值查询 | n, m ≤ 2×10⁵</p>
+<p>无需懒标记，仅需 pushup 维护 max</p>
+
+<div style="background:#0d1117; padding:14px; border-radius:8px; border:1px solid #30363d; margin-top:16px">
+<p><span class="accent">复杂度分析：</span></p>
+<p>建树 O(n) | 单次修改/查询 O(log n) | 总复杂度 O((n+m) log n)</p>
+</div>
+</div>
+
+<div class="slide" id="s7">
+<h1>🎯 本课小结</h1>
+<div style="display:grid; grid-template-columns:1fr 1fr; gap:16px; margin-top:20px">
+<div style="background:#0d1117; padding:18px; border-radius:8px; border:1px solid #30363d">
+<h3>核心函数</h3>
+<p><code class="func">build</code> — 递归建树</p>
+<p><code class="func">pushup</code> — 子→父合并</p>
+<p><code class="func">pushdown</code> — 父→子传递</p>
+<p><code class="func">update</code> — 区间修改</p>
+<p><code class="func">query</code> — 区间查询</p>
+</div>
+<div style="background:#0d1117; padding:18px; border-radius:8px; border:1px solid #30363d">
+<h3>关键要点</h3>
+<p>开 4N 空间</p>
+<p>懒标记 = 延迟更新</p>
+<p>访问子节点前 pushdown</p>
+<p>回溯时 pushup</p>
+<p>完全覆盖即返回</p>
+</div>
+<div style="background:#0d1117; padding:18px; border-radius:8px; border:1px solid #30363d">
+<h3>复杂度</h3>
+<p>建树：<span class="accent">O(n)</span></p>
+<p>修改/查询：<span class="accent">O(log n)</span></p>
+<p>区间修改：<span class="accent">O(log n)</span>（有懒标记）</p>
+</div>
+<div style="background:#0d1117; padding:18px; border-radius:8px; border:1px solid #30363d">
+<h3>下节预告</h3>
+<p>多懒标记</p>
+<p>权值线段树</p>
+<p>线段树合并</p>
+<p>第K小数查询</p>
+</div>
+</div>
+</div>
+
+<div class="nav">
+<button onclick="prevSlide()">◀ 上一页</button>
+<span class="page-indicator" id="pageNum">1 / 7</span>
+<button onclick="nextSlide()">下一页 ▶</button>
+</div>
+</div>
+
+<script>
+let current = 0;
+const slides = document.querySelectorAll('.slide');
+const total = slides.length;
+function showSlide(n) {
+    slides[current].classList.remove('active');
+    current = ((n % total) + total) % total;
+    slides[current].classList.add('active');
+    document.getElementById('pageNum').textContent = (current + 1) + ' / ' + total;
+}
+function nextSlide() { showSlide(current + 1); }
+function prevSlide() { showSlide(current - 1); }
+document.addEventListener('keydown', function(e) {
+    if (e.key === 'ArrowRight' || e.key === 'ArrowDown') nextSlide();
+    if (e.key === 'ArrowLeft' || e.key === 'ArrowUp') prevSlide();
+});
+</script>
+</body>
+</html>

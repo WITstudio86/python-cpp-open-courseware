@@ -1,0 +1,555 @@
+"""
+2048 游戏 — 完整版
+使用 Pygame 实现，所有图形通过 pygame.draw 绘制，无需外部图片文件。
+适用年龄：10-15 岁学生，第 2 课时（完整项目课）。
+"""
+
+import pygame
+import random
+import copy
+import sys
+import os
+
+# ============================================================
+# 常量定义
+# ============================================================
+GRID_SIZE = 4                # 4×4 的棋盘
+CELL_SIZE = 100              # 每个格子的像素大小
+MARGIN = 10                  # 格子之间的间距
+TOP_AREA_HEIGHT = 100        # 顶部信息栏高度（分数、标题等）
+PADDING = 20                 # 棋盘距窗口边缘的留白
+
+# 根据常量计算窗口尺寸
+BOARD_PIXEL_SIZE = GRID_SIZE * CELL_SIZE + (GRID_SIZE + 1) * MARGIN
+WINDOW_WIDTH = BOARD_PIXEL_SIZE + PADDING * 2
+WINDOW_HEIGHT = BOARD_PIXEL_SIZE + TOP_AREA_HEIGHT + PADDING * 2
+
+# 颜色定义（标准 2048 配色方案）
+COLOR_BG = (250, 248, 239)           # 窗口背景
+COLOR_BOARD_BG = (187, 173, 160)     # 棋盘背景
+COLOR_EMPTY = (205, 193, 180)        # 空格子颜色
+COLOR_TEXT_DARK = (119, 110, 101)    # 深色文字（2 和 4 使用）
+COLOR_TEXT_LIGHT = (249, 246, 242)   # 浅色文字（大数字使用）
+COLOR_SCORE_TEXT = (119, 110, 101)   # 分数文字颜色
+
+# 各数字对应的背景色
+TILE_COLORS = {
+    2:    (238, 228, 218),
+    4:    (237, 224, 200),
+    8:    (242, 177, 121),
+    16:   (245, 149, 99),
+    32:   (246, 124, 95),
+    64:   (246, 94,  59),
+    128:  (237, 207, 114),
+    256:  (237, 204, 97),
+    512:  (237, 200, 80),
+    1024: (237, 197, 63),
+    2048: (237, 194, 46),
+}
+
+# 高分文件路径（与脚本同目录）
+SCORE_FILE = os.path.join(os.path.dirname(os.path.abspath(__file__)), "best_score.txt")
+
+
+# ============================================================
+# 初始化棋盘
+# ============================================================
+
+def create_board():
+    """创建一个空的 4×4 棋盘，所有格子初始值为 0"""
+    return [[0] * GRID_SIZE for _ in range(GRID_SIZE)]
+
+
+def get_empty_cells(board):
+    """获取棋盘中所有空格子的坐标列表，返回 [(行, 列), ...]"""
+    empty = []
+    for r in range(GRID_SIZE):
+        for c in range(GRID_SIZE):
+            if board[r][c] == 0:
+                empty.append((r, c))
+    return empty
+
+
+def add_new_number(board):
+    """
+    在随机一个空格子上添加新数字。
+    90% 概率生成 2，10% 概率生成 4。
+    如果棋盘已满则不添加。
+    """
+    empty = get_empty_cells(board)
+    if not empty:
+        return
+    r, c = random.choice(empty)
+    # 90% 概率出现 2，10% 概率出现 4
+    board[r][c] = 4 if random.random() < 0.1 else 2
+
+
+# ============================================================
+# 核心移动逻辑
+# ============================================================
+
+def move_left(board):
+    """
+    将棋盘所有行向左移动并合并。
+    返回本次移动获得的分数。
+
+    算法步骤（对每一行）：
+    1. 移除所有的 0，得到紧凑的数字列表
+    2. 从左边开始，相邻相同的数字合并为一个（值翻倍）
+    3. 合并后的空位用 0 补齐到 4 个格子
+    """
+    score = 0
+    for r in range(GRID_SIZE):
+        # 第一步：提取非零数字
+        row = [v for v in board[r] if v != 0]
+        # 第二步：合并相邻的相同数字
+        merged_row = []
+        i = 0
+        while i < len(row):
+            if i + 1 < len(row) and row[i] == row[i + 1]:
+                # 合并：值翻倍，计入分数
+                merged_value = row[i] * 2
+                merged_row.append(merged_value)
+                score += merged_value
+                i += 2  # 跳过下一个（已合并）
+            else:
+                merged_row.append(row[i])
+                i += 1
+        # 第三步：右边补 0 到长度为 GRID_SIZE
+        while len(merged_row) < GRID_SIZE:
+            merged_row.append(0)
+        board[r] = merged_row
+    return score
+
+
+def transpose(board):
+    """矩阵转置：行变列，列变行"""
+    return [[board[r][c] for r in range(GRID_SIZE)] for c in range(GRID_SIZE)]
+
+
+def reverse_rows(board):
+    """水平翻转矩阵：每行左右颠倒"""
+    return [list(reversed(row)) for row in board]
+
+
+def move_right(board):
+    """向右移动：每行反转 → 左移 → 再反转回来"""
+    # 反转每行，然后左移，再反转回来
+    temp = reverse_rows(board)
+    score = move_left(temp)
+    # 将结果写回 board（反转回来）
+    result = reverse_rows(temp)
+    for r in range(GRID_SIZE):
+        board[r] = result[r]
+    return score
+
+
+def move_up(board):
+    """向上移动：转置 → 左移 → 再转置回来"""
+    temp = transpose(board)
+    score = move_left(temp)
+    result = transpose(temp)
+    for r in range(GRID_SIZE):
+        board[r] = result[r]
+    return score
+
+
+def move_down(board):
+    """向下移动：转置 → 右移 → 再转置回来"""
+    temp = transpose(board)
+    score = move_right(temp)
+    result = transpose(temp)
+    for r in range(GRID_SIZE):
+        board[r] = result[r]
+    return score
+
+
+# ============================================================
+# 游戏状态检查
+# ============================================================
+
+def has_won(board):
+    """检查是否达到 2048（胜利条件）"""
+    for r in range(GRID_SIZE):
+        for c in range(GRID_SIZE):
+            if board[r][c] >= 2048:
+                return True
+    return False
+
+
+def can_move(board):
+    """
+    检查是否还能继续移动（失败条件）。
+    1. 如果有空格子 → 还能移动
+    2. 如果任意相邻（上下左右）格子有相同数字 → 还能移动
+    否则无法移动，游戏失败。
+    """
+    # 检查空格子
+    if get_empty_cells(board):
+        return True
+
+    # 检查水平方向相邻相同
+    for r in range(GRID_SIZE):
+        for c in range(GRID_SIZE - 1):
+            if board[r][c] == board[r][c + 1]:
+                return True
+
+    # 检查垂直方向相邻相同
+    for c in range(GRID_SIZE):
+        for r in range(GRID_SIZE - 1):
+            if board[r][c] == board[r + 1][c]:
+                return True
+
+    return False
+
+
+# ============================================================
+# 分数持久化
+# ============================================================
+
+def load_high_score():
+    """从文件中加载最高分。如果文件不存在则返回 0"""
+    try:
+        with open(SCORE_FILE, "r") as f:
+            return int(f.read().strip())
+    except (FileNotFoundError, ValueError):
+        return 0
+
+
+def save_high_score(score):
+    """将最高分保存到文件中"""
+    try:
+        with open(SCORE_FILE, "w") as f:
+            f.write(str(score))
+    except IOError:
+        pass  # 保存失败不影响游戏运行
+
+
+# ============================================================
+# 绘图函数
+# ============================================================
+
+def get_tile_color(value):
+    """根据数字获取对应的背景颜色"""
+    return TILE_COLORS.get(value, (60, 58, 50))  # 超 2048 用深色
+
+
+def get_text_color(value):
+    """根据数字大小返回深色或浅色文字颜色"""
+    if value <= 4:
+        return COLOR_TEXT_DARK
+    else:
+        return COLOR_TEXT_LIGHT
+
+
+def draw_rounded_rect(screen, color, rect, radius=8):
+    """绘制圆角矩形"""
+    x, y, w, h = rect
+    # 使用 pygame 的 draw.rect 绘制矩形，然后用圆形覆盖四角来模拟圆角
+    # 更简单的方法：直接绘制普通矩形（pygame 本身不直接支持圆角）
+    # 这里我们用长方形 + 四角画圆来近似圆角效果
+    pygame.draw.rect(screen, color, (x + radius, y, w - 2 * radius, h))
+    pygame.draw.rect(screen, color, (x, y + radius, w, h - 2 * radius))
+    pygame.draw.circle(screen, color, (x + radius, y + radius), radius)
+    pygame.draw.circle(screen, color, (x + w - radius, y + radius), radius)
+    pygame.draw.circle(screen, color, (x + radius, y + h - radius), radius)
+    pygame.draw.circle(screen, color, (x + w - radius, y + h - radius), radius)
+
+
+def draw_board(screen, board, score, high_score):
+    """
+    绘制整个游戏界面：
+    - 顶部标题栏（分数、最高分、标题）
+    - 4×4 棋盘和所有数字方块
+    """
+    screen.fill(COLOR_BG)
+
+    # ---------- 设置字体 ----------
+    # 尝试使用中文字体，如果系统中没有则回退到默认字体
+    title_font = None
+    score_font = None
+    tile_font = None
+    small_font = None
+
+    # 尝试多个中文字体名称
+    chinese_fonts = ["SimHei", "Microsoft YaHei", "PingFang SC", "Heiti SC",
+                     "STHeiti", "WenQuanYi Micro Hei", "Noto Sans CJK SC", "Arial Unicode MS"]
+
+    title_font_name = None
+    for font_name in chinese_fonts:
+        try:
+            test_font = pygame.font.SysFont(font_name, 36)
+            # 如果能渲染中文"游"字，说明字体可用
+            test_surf = test_font.render("游", True, (0, 0, 0))
+            title_font_name = font_name
+            break
+        except Exception:
+            continue
+
+    if title_font_name is None:
+        title_font_name = pygame.font.get_default_font()
+
+    title_font = pygame.font.SysFont(title_font_name, 40, bold=True)
+    score_label_font = pygame.font.SysFont(title_font_name, 18)
+    score_value_font = pygame.font.SysFont(title_font_name, 26, bold=True)
+    tile_font = pygame.font.SysFont(title_font_name, 40, bold=True)
+    small_tile_font = pygame.font.SysFont(title_font_name, 32, bold=True)
+    tiny_tile_font = pygame.font.SysFont(title_font_name, 28, bold=True)
+    button_font = pygame.font.SysFont(title_font_name, 20)
+
+    # ---------- 绘制顶部区域 ----------
+    # 标题
+    title_text = title_font.render("2048", True, COLOR_TEXT_DARK)
+    title_rect = title_text.get_rect()
+    title_rect.topleft = (PADDING, PADDING)
+    screen.blit(title_text, title_rect)
+
+    # 分数框
+    score_box_w = 120
+    score_box_h = 55
+    score_box_y = PADDING
+
+    # 当前分数
+    score_x = WINDOW_WIDTH - PADDING - score_box_w * 2 - 15
+    draw_rounded_rect(screen, COLOR_BOARD_BG, (score_x, score_box_y, score_box_w, score_box_h), 6)
+    score_label = score_label_font.render("分数", True, (238, 228, 218))
+    score_label_rect = score_label.get_rect()
+    score_label_rect.centerx = score_x + score_box_w // 2
+    score_label_rect.top = score_box_y + 6
+    screen.blit(score_label, score_label_rect)
+    score_text = score_value_font.render(str(score), True, COLOR_TEXT_LIGHT)
+    score_text_rect = score_text.get_rect()
+    score_text_rect.centerx = score_x + score_box_w // 2
+    score_text_rect.top = score_box_y + 24
+    screen.blit(score_text, score_text_rect)
+
+    # 最高分
+    high_x = WINDOW_WIDTH - PADDING - score_box_w
+    draw_rounded_rect(screen, COLOR_BOARD_BG, (high_x, score_box_y, score_box_w, score_box_h), 6)
+    high_label = score_label_font.render("最高分", True, (238, 228, 218))
+    high_label_rect = high_label.get_rect()
+    high_label_rect.centerx = high_x + score_box_w // 2
+    high_label_rect.top = score_box_y + 6
+    screen.blit(high_label, high_label_rect)
+    high_text = score_value_font.render(str(high_score), True, COLOR_TEXT_LIGHT)
+    high_text_rect = high_text.get_rect()
+    high_text_rect.centerx = high_x + score_box_w // 2
+    high_text_rect.top = score_box_y + 24
+    screen.blit(high_text, high_text_rect)
+
+    # 操作提示
+    tip_text = button_font.render("方向键移动 | R 重新开始", True, (175, 165, 155))
+    tip_rect = tip_text.get_rect()
+    tip_rect.topleft = (PADDING, PADDING + 58)
+    screen.blit(tip_text, tip_rect)
+
+    # ---------- 绘制棋盘背景 ----------
+    board_x = PADDING
+    board_y = TOP_AREA_HEIGHT + PADDING
+    board_bg_rect = (board_x, board_y, BOARD_PIXEL_SIZE, BOARD_PIXEL_SIZE)
+    draw_rounded_rect(screen, COLOR_BOARD_BG, board_bg_rect, 8)
+
+    # ---------- 绘制每个格子 ----------
+    for r in range(GRID_SIZE):
+        for c in range(GRID_SIZE):
+            value = board[r][c]
+            # 计算格子的像素位置
+            cell_x = board_x + MARGIN + c * (CELL_SIZE + MARGIN)
+            cell_y = board_y + MARGIN + r * (CELL_SIZE + MARGIN)
+
+            # 格子背景色
+            if value == 0:
+                color = COLOR_EMPTY
+            else:
+                color = get_tile_color(value)
+            draw_rounded_rect(screen, color, (cell_x, cell_y, CELL_SIZE, CELL_SIZE), 6)
+
+            # 数字文字
+            if value != 0:
+                # 根据数字位数选择字体大小
+                if value < 100:
+                    font_to_use = tile_font
+                elif value < 1000:
+                    font_to_use = small_tile_font
+                else:
+                    font_to_use = tiny_tile_font
+
+                text_color = get_text_color(value)
+                num_text = font_to_use.render(str(value), True, text_color)
+                num_rect = num_text.get_rect()
+                num_rect.center = (cell_x + CELL_SIZE // 2, cell_y + CELL_SIZE // 2)
+                screen.blit(num_text, num_rect)
+
+
+def draw_win_screen(screen):
+    """绘制胜利覆盖层（达到 2048），提示可以继续游戏"""
+    # 半透明黑色遮罩
+    overlay = pygame.Surface((WINDOW_WIDTH, WINDOW_HEIGHT))
+    overlay.set_alpha(180)
+    overlay.fill((255, 255, 200))
+    screen.blit(overlay, (0, 0))
+
+    # 尝试中文字体
+    font_name = get_chinese_font_name()
+    win_font = pygame.font.SysFont(font_name, 48, bold=True)
+    sub_font = pygame.font.SysFont(font_name, 24)
+
+    win_text = win_font.render("你赢了！", True, (119, 110, 101))
+    win_rect = win_text.get_rect()
+    win_rect.center = (WINDOW_WIDTH // 2, WINDOW_HEIGHT // 2 - 30)
+    screen.blit(win_text, win_rect)
+
+    sub_text = sub_font.render("按任意方向键继续游戏", True, (119, 110, 101))
+    sub_rect = sub_text.get_rect()
+    sub_rect.center = (WINDOW_WIDTH // 2, WINDOW_HEIGHT // 2 + 25)
+    screen.blit(sub_text, sub_rect)
+
+
+def draw_lose_screen(screen):
+    """绘制失败覆盖层（无法移动）"""
+    # 半透明黑色遮罩
+    overlay = pygame.Surface((WINDOW_WIDTH, WINDOW_HEIGHT))
+    overlay.set_alpha(180)
+    overlay.fill((200, 200, 200))
+    screen.blit(overlay, (0, 0))
+
+    font_name = get_chinese_font_name()
+    lose_font = pygame.font.SysFont(font_name, 48, bold=True)
+    sub_font = pygame.font.SysFont(font_name, 24)
+
+    lose_text = lose_font.render("游戏结束！", True, (119, 110, 101))
+    lose_rect = lose_text.get_rect()
+    lose_rect.center = (WINDOW_WIDTH // 2, WINDOW_HEIGHT // 2 - 30)
+    screen.blit(lose_text, lose_rect)
+
+    sub_text = sub_font.render("按 R 键重新开始", True, (119, 110, 101))
+    sub_rect = sub_text.get_rect()
+    sub_rect.center = (WINDOW_WIDTH // 2, WINDOW_HEIGHT // 2 + 25)
+    screen.blit(sub_text, sub_rect)
+
+
+def get_chinese_font_name():
+    """获取系统中可用的中文字体名称"""
+    chinese_fonts = ["SimHei", "Microsoft YaHei", "PingFang SC", "Heiti SC",
+                     "STHeiti", "WenQuanYi Micro Hei", "Noto Sans CJK SC", "Arial Unicode MS"]
+    for font_name in chinese_fonts:
+        try:
+            test_font = pygame.font.SysFont(font_name, 24)
+            test_surf = test_font.render("中", True, (0, 0, 0))
+            return font_name
+        except Exception:
+            continue
+    return pygame.font.get_default_font()
+
+
+# ============================================================
+# 主游戏循环
+# ============================================================
+
+def main():
+    """游戏主函数：初始化、事件处理、游戏循环"""
+    pygame.init()
+
+    screen = pygame.display.set_mode((WINDOW_WIDTH, WINDOW_HEIGHT))
+    pygame.display.set_caption("2048")
+
+    clock = pygame.time.Clock()
+
+    # ---------- 游戏状态变量 ----------
+    board = create_board()                         # 当前棋盘
+    score = 0                                       # 当前分数
+    high_score = load_high_score()                  # 加载历史最高分
+    game_over = False                               # 是否失败
+    game_won = False                                # 是否已达到 2048（胜利后仍可继续）
+    win_shown = False                               # 胜利画面是否显示过（只显示一次）
+
+    # 开局添加两个数字
+    add_new_number(board)
+    add_new_number(board)
+
+    # 移动方向映射（键盘按键 → 移动函数）
+    move_functions = {
+        pygame.K_LEFT:  ("left",  move_left),
+        pygame.K_RIGHT: ("right", move_right),
+        pygame.K_UP:    ("up",    move_up),
+        pygame.K_DOWN:  ("down",  move_down),
+    }
+
+    running = True
+    while running:
+        # ---------- 事件处理 ----------
+        for event in pygame.event.get():
+            if event.type == pygame.QUIT:
+                # 退出前保存最高分
+                save_high_score(high_score)
+                running = False
+                break
+
+            if event.type == pygame.KEYDOWN:
+                # R 键重新开始游戏
+                if event.key == pygame.K_r:
+                    board = create_board()
+                    score = 0
+                    game_over = False
+                    game_won = False
+                    win_shown = False
+                    add_new_number(board)
+                    add_new_number(board)
+                    continue
+
+                # 如果游戏已结束（失败），忽略方向键
+                if game_over:
+                    continue
+
+                # 处理方向键移动
+                if event.key in move_functions:
+                    # 关键步骤：移动前深拷贝棋盘，用于判断移动是否有效
+                    board_before = copy.deepcopy(board)
+
+                    # 执行移动
+                    move_name, move_func = move_functions[event.key]
+                    gained = move_func(board)
+
+                    # 判断棋盘是否发生变化（即移动是否有效）
+                    if board != board_before:
+                        # 有效移动：加分、添加新数字
+                        score += gained
+                        add_new_number(board)
+
+                        # 更新最高分
+                        if score > high_score:
+                            high_score = score
+                            save_high_score(high_score)
+
+                        # 检查是否胜利（首次达到 2048 显示一次胜利画面）
+                        if has_won(board) and not win_shown:
+                            game_won = True
+                            win_shown = True
+
+                        # 检查是否无法移动（失败）
+                        if not can_move(board):
+                            game_over = True
+
+        # ---------- 绘制界面 ----------
+        draw_board(screen, board, score, high_score)
+
+        # 胜利画面（叠加在棋盘之上）
+        if game_won and not game_over:
+            draw_win_screen(screen)
+
+        # 失败画面
+        if game_over:
+            draw_lose_screen(screen)
+
+        pygame.display.flip()
+        clock.tick(60)
+
+    pygame.quit()
+    sys.exit()
+
+
+# ============================================================
+# 程序入口
+# ============================================================
+if __name__ == "__main__":
+    main()

@@ -1,0 +1,179 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>第36节 · 密码管理器（下） · Python Tkinter 课程</title>
+<link rel="stylesheet" href="assets/fonts.css">
+<link rel="stylesheet" href="assets/base.css">
+<link rel="stylesheet" id="theme-link" href="assets/themes/soft-pastel.css">
+<link rel="stylesheet" href="assets/animations/animations.css">
+<link rel="stylesheet" href="style.css">
+</head>
+<body class="tpl-tkinter-course" data-themes="soft-pastel,rainbow-gradient,sunset-warm,minimal-white" data-theme-base="assets/themes/">
+<div class="deck">
+
+  <!-- 1. Cover -->
+  <section class="slide full" data-title="封面">
+    <p class="kicker">Python Tkinter · 第 36 节</p>
+    <h1 class="h1 mt-s">项目 9：密码管理器<em>（下）</em></h1>
+    <p class="lede mt-l" style="max-width:62ch">上节课我们学会了"添加账号"，这节课要给密码管理器装上三个新武器：账号列表、搜索过滤、一键复制密码！</p>
+    <div class="row mt-l" style="gap:16px">
+      <span class="pill-academic">~ 60 分钟</span>
+      <span class="pill-academic">难度 · ⭐⭐</span>
+      <span class="pill-academic">衔接 · 第 35 节</span>
+    </div>
+    <div class="deck-footer"><span>Python Tkinter 趣味编程课</span><span class="slide-number" data-current="1" data-total="6"></span></div>
+  </section>
+
+  <!-- 2. Objectives -->
+  <section class="slide" data-title="学习目标">
+    <aside class="sidebar">
+      <div class="brand">Tkinter 036</div>
+      <h5>学习目标</h5>
+      <ul class="obj-list">
+        <li class="current">用 Listbox 展示账号列表</li>
+        <li>实现搜索过滤功能</li>
+        <li>用 clipboard_append 复制密码</li>
+        <li>完成完整密码管理器</li>
+      </ul>
+      <h5>上节回顾</h5>
+      <p class="dim" style="font-size:13px">第 35 节：添加账号（输入框 + 保存） 🔙</p>
+    </aside>
+    <div class="main">
+      <p class="kicker">学习目标</p>
+      <h2 class="h2 mt-s">学完这节课，你将能够…</h2>
+      <div class="stack mt-l">
+        <div class="concept-box"><h4>① 用 Listbox 展示多条数据</h4><p class="dim">把保存的账号一行行列出来，还能滚动翻看。</p></div>
+        <div class="concept-box"><h4>② 实现实时搜索过滤</h4><p class="dim">输入关键词，列表自动筛选——比一个个翻快多了！</p></div>
+        <div class="concept-box"><h4>③ 一键复制密码到剪贴板</h4><p class="dim">用 <code>clipboard_append()</code> 写入系统剪贴板，Ctrl+V 就能粘贴。</p></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- 3. Listbox -->
+  <section class="slide" data-title="Listbox 账号列表">
+    <aside class="sidebar">
+      <div class="brand">Tkinter 036</div>
+      <h5>学习目标</h5>
+      <ul class="obj-list">
+        <li class="done">用 Listbox 展示账号列表</li>
+        <li class="current">实现搜索过滤功能</li>
+        <li>用 clipboard_append 复制密码</li>
+        <li>完成完整密码管理器</li>
+      </ul>
+      <h5>关键方法</h5>
+      <p class="dim" style="font-size:13px">insert · delete · curselection · get</p>
+    </aside>
+    <div class="main">
+      <p class="kicker">新控件</p>
+      <h2 class="h2 mt-s">Listbox —— 可滚动的名单列表</h2>
+      <p class="lede mt-m">Listbox 就像一个<b>可滚动的小本子</b>，每行写一条记录，用户可以点击选中。</p>
+      <div class="code mt-m"><pre style="margin:0"><span class="cmt"># 创建 Listbox</span>
+listbox = tk.<span class="fn">Listbox</span>(root, width=<span class="num">35</span>, height=<span class="num">12</span>,
+                       font=(<span class="str">"微软雅黑"</span>, <span class="num">11</span>),
+                       selectbackground=<span class="str">"#4a90d9"</span>)
+
+<span class="cmt"># 添加数据：tk.END 表示追加到末尾</span>
+listbox.<span class="fn">insert</span>(tk.END, <span class="str">"🌐 百度 — admin"</span>)
+listbox.<span class="fn">insert</span>(tk.END, <span class="str">"🌐 淘宝 — user123"</span>)
+
+<span class="cmt"># 获取选中的项</span>
+selected = listbox.<span class="fn">curselection</span>()  <span class="cmt"># 返回 (0,) 或空元组</span>
+<span class="kw">if</span> selected:
+    text = listbox.<span class="fn">get</span>(selected[<span class="num">0</span>])</pre></div>
+      <div class="callout mt-m">
+        <b>💡 记忆技巧：</b>Listbox 像 Python 的列表，行号从 <code>0</code> 开始。用 <code>curselection()</code> 问"你选了哪一行？"
+      </div>
+    </div>
+  </section>
+
+  <!-- 4. Search + Clipboard -->
+  <section class="slide" data-title="搜索过滤与复制剪贴板">
+    <aside class="sidebar">
+      <div class="brand">Tkinter 036</div>
+      <h5>学习目标</h5>
+      <ul class="obj-list">
+        <li class="done">用 Listbox 展示账号列表</li>
+        <li class="done">实现搜索过滤功能</li>
+        <li class="current">用 clipboard_append 复制密码</li>
+        <li>完成完整密码管理器</li>
+      </ul>
+      <h5>两个利器</h5>
+      <p class="dim" style="font-size:13px">KeyRelease 事件 · clipboard_append</p>
+    </aside>
+    <div class="main">
+      <p class="kicker">新技能</p>
+      <h2 class="h2 mt-s">搜索过滤 + 复制到剪贴板</h2>
+      <div class="grid g2 mt-m">
+        <div class="concept-box">
+          <h4>🔍 搜索过滤四步法</h4>
+          <p class="dim" style="font-size:13px;line-height:1.8">
+            ① 获取关键词 → search_entry.get()<br>
+            ② 清空列表 → listbox.delete(0, END)<br>
+            ③ 遍历匹配 → if keyword in site<br>
+            ④ 重新填入 → listbox.insert(END, ...)
+          </p>
+        </div>
+        <div class="concept-box">
+          <h4>📋 复制到剪贴板</h4>
+          <p class="dim" style="font-size:13px;line-height:1.8">
+            先清空 → root.clipboard_clear()<br>
+            再写入 → root.clipboard_append(密码)<br>
+            <b>⚠️ 必须先 clear！</b>append 是追加模式。
+          </p>
+        </div>
+      </div>
+      <div class="code mt-m"><pre style="margin:0"><span class="cmt"># 绑定搜索：每次按键松开就过滤</span>
+search_entry.<span class="fn">bind</span>(<span class="str">"&lt;KeyRelease&gt;"</span>, filter_list)
+
+<span class="cmt"># 复制密码到剪贴板（必须先 clear 再 append！）</span>
+root.<span class="fn">clipboard_clear</span>()
+root.<span class="fn">clipboard_append</span>(password)</pre></div>
+    </div>
+  </section>
+
+  <!-- 5. Try It -->
+  <section class="slide" data-title="动手试试">
+    <aside class="sidebar">
+      <div class="brand">Tkinter 036</div>
+      <h5>学习目标</h5>
+      <ul class="obj-list">
+        <li class="done">用 Listbox 展示账号列表</li>
+        <li class="done">实现搜索过滤功能</li>
+        <li class="done">用 clipboard_append 复制密码</li>
+        <li class="current">完成完整密码管理器</li>
+      </ul>
+      <h5>时间</h5>
+      <p class="dim" style="font-size:13px">~20 分钟 · 自己动手</p>
+    </aside>
+    <div class="main">
+      <p class="kicker">动手试试</p>
+      <h2 class="h2 mt-s">完善你的密码管理器</h2>
+      <div class="exercise mt-l">
+        <ol style="color:var(--text-2);line-height:1.9;margin:0;padding-left:20px;font-size:15px">
+          <li><b>添加账号</b>：输入 3~5 个常用网站的账号，观察列表变化</li>
+          <li><b>搜索测试</b>：在搜索框中输入"百"，列表是否只显示百度？</li>
+          <li><b>挑战</b>：给 Listbox 加上<b>双击复制</b>事件（提示：绑定 <code>&lt;Double-Button-1&gt;</code>）</li>
+        </ol>
+      </div>
+    </div>
+  </section>
+
+  <!-- 6. Summary -->
+  <section class="slide full" data-title="总结">
+    <p class="kicker">总结 · 第 36 节</p>
+    <h1 class="h1 mt-s">你学会了…</h1>
+    <div class="grid g2 mt-l">
+      <div class="concept-box"><h4>✓ Listbox 展示列表</h4><p class="dim">insert() 添加行、curselection() 获取选中、delete() 清空。</p></div>
+      <div class="concept-box"><h4>✓ 搜索过滤</h4><p class="dim">监听 KeyRelease 事件 → 清空重填 → 只显示匹配项。</p></div>
+      <div class="concept-box"><h4>✓ clipboard_append()</h4><p class="dim">先 clear() 再 append()，把密码写入系统剪贴板。</p></div>
+      <div class="concept-box"><h4>✓ 完整密码管理器</h4><p class="dim">添加 + 列表展示 + 搜索 + 复制，一个实用工具诞生！</p></div>
+    </div>
+    <div class="callout mt-l">
+      <b>下节预告 · 第 37 节：贪吃蛇游戏（上）。</b> 告别管理工具，我们来写游戏！用 Canvas 画出一条会动的蛇，用键盘控制它的方向——经典贪吃蛇的第一步！
+    </div>
+  </section>
+
+</div>
+<script src="assets/runtime.js"></script>
+</body></html>

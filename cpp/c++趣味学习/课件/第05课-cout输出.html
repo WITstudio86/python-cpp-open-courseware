@@ -1,0 +1,223 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>第05课：让电脑说话——cout输出</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            font-family: 'PingFang SC', 'Microsoft YaHei', sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            display: flex; justify-content: center; align-items: center;
+        }
+        .slides-container {
+            width: 90%; max-width: 900px; min-height: 550px;
+            background: white; border-radius: 25px; padding: 40px;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+            position: relative;
+        }
+        .slide { display: none; animation: fadeIn 0.5s; }
+        .slide.active { display: block; }
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
+        h1 { color: #5b3cc4; font-size: 2.2em; margin-bottom: 20px; }
+        h2 { color: #e8573a; font-size: 1.8em; margin-bottom: 15px; }
+        h3 { color: #2c7a4a; font-size: 1.4em; margin: 15px 0 10px; }
+        p, li { font-size: 1.15em; line-height: 1.8; color: #333; }
+        ul { padding-left: 30px; margin: 10px 0; }
+        .code-block {
+            background: #1e1e2e; color: #cdd6f4; padding: 20px;
+            border-radius: 12px; font-family: 'Courier New', monospace;
+            font-size: 0.95em; line-height: 1.6; overflow-x: auto;
+            margin: 15px 0; white-space: pre-wrap; word-break: break-all;
+        }
+        .code-block .keyword { color: #cba6f7; }
+        .code-block .string { color: #a6e3a1; }
+        .code-block .comment { color: #6c7086; font-style: italic; }
+        .code-block .number { color: #fab387; }
+        .nav-buttons {
+            position: absolute; bottom: 20px; left: 40px; right: 40px;
+            display: flex; justify-content: space-between;
+        }
+        .nav-btn {
+            background: linear-gradient(135deg, #667eea, #764ba2);
+            color: white; border: none; padding: 12px 30px;
+            border-radius: 30px; font-size: 1.1em; cursor: pointer;
+            transition: transform 0.2s, box-shadow 0.2s;
+            font-family: 'PingFang SC', 'Microsoft YaHei', sans-serif;
+        }
+        .nav-btn:hover { transform: scale(1.05); box-shadow: 0 5px 20px rgba(102,126,234,0.4); }
+        .nav-btn:disabled { opacity: 0.4; cursor: default; transform: none; }
+        .page-indicator { font-size: 1.1em; color: #764ba2; align-self: center; }
+        .emoji-big { font-size: 3em; text-align: center; display: block; margin: 15px 0; }
+        .badge { display: inline-block; background: #ede9fe; color: #5b3cc4; padding: 5px 15px; border-radius: 20px; font-size: 0.9em; margin: 3px; }
+        table { width: 100%; border-collapse: collapse; margin: 15px 0; }
+        th, td { border: 2px solid #ddd; padding: 10px; text-align: left; }
+        th { background: #667eea; color: white; }
+        .highlight-box { background: #fff3cd; border-left: 5px solid #ffc107; padding: 15px; border-radius: 8px; margin: 15px 0; }
+        .tip-box { background: #d4edda; border-left: 5px solid #28a745; padding: 15px; border-radius: 8px; margin: 15px 0; }
+        @media (max-width: 600px) {
+            .slides-container { padding: 25px; }
+            h1 { font-size: 1.5em; }
+            .code-block { font-size: 0.75em; }
+        }
+    </style>
+</head>
+<body>
+    <div class="slides-container">
+        <!-- Slide 1: Title Page -->
+        <div class="slide active" id="slide1">
+            <span class="emoji-big">🗣️</span>
+            <h1>第05课：让电脑说话——cout输出</h1>
+            <p style="text-align:center; color:#666;">第二阶段：变量与输入输出 | 课时：45分钟</p>
+            <p style="text-align:center; margin-top:20px; font-size:1.3em;">✨ 制作自我介绍卡片 ✨</p>
+            <div style="text-align:center; margin-top:30px;">
+                <span class="badge">cout输出</span>
+                <span class="badge">endl换行</span>
+                <span class="badge">转义字符</span>
+                <span class="badge">链式输出</span>
+            </div>
+        </div>
+
+        <!-- Slide 2: Learning Objectives -->
+        <div class="slide" id="slide2">
+            <h2>🎯 学习目标</h2>
+            <ul>
+                <li>深入理解 <strong>cout</strong>：输出文字、数字和表达式</li>
+                <li>掌握 <strong>endl</strong> 换行和 <strong>\n</strong> 转义字符</li>
+                <li>学会<strong>链式输出</strong>——用多个 &lt;&lt; 把内容串起来</li>
+                <li>能够制作一份漂亮的<strong>自我介绍卡片</strong></li>
+            </ul>
+            <div class="tip-box" style="margin-top:25px;">
+                <strong>💡 回顾：</strong><br>
+                cout = 电脑的"嘴巴"，通过 &lt;&lt; 把内容送到屏幕上。<br>
+                cout 住在 <code>&lt;iostream&gt;</code> 工具箱里哦！
+            </div>
+        </div>
+
+        <!-- Slide 3: Core Knowledge -->
+        <div class="slide" id="slide3">
+            <h2>📖 cout 的核心用法</h2>
+
+            <h3>1️⃣ 链式输出：串糖葫芦</h3>
+            <div class="code-block">cout &lt;&lt; "我叫" &lt;&lt; "小明" &lt;&lt; "，今年" &lt;&lt; 10 &lt;&lt; "岁。";
+// 输出：我叫小明，今年10岁。</div>
+
+            <h3>2️⃣ 换行方式对比</h3>
+            <table>
+                <tr><th>方式</th><th>写法</th><th>效果</th></tr>
+                <tr><td>endl</td><td><code>cout &lt;&lt; "你好" &lt;&lt; endl;</code></td><td>换行+刷新</td></tr>
+                <tr><td>\n</td><td><code>cout &lt;&lt; "你好\n";</code></td><td>只换行</td></tr>
+            </table>
+
+            <h3>3️⃣ 常用转义字符</h3>
+            <table>
+                <tr><th>代码</th><th>含义</th><th>效果</th></tr>
+                <tr><td>\n</td><td>换行</td><td>光标到下一行</td></tr>
+                <tr><td>\t</td><td>Tab</td><td>跳到下一个制表位</td></tr>
+                <tr><td>\\</td><td>反斜杠</td><td>输出 \</td></tr>
+                <tr><td>\"</td><td>双引号</td><td>在字符串中输出 "</td></tr>
+            </table>
+        </div>
+
+        <!-- Slide 4: Example Code -->
+        <div class="slide" id="slide4">
+            <h2>💻 示例代码</h2>
+
+            <h3>输出数字和计算</h3>
+            <div class="code-block">cout &lt;&lt; 100;          // 输出数字
+cout &lt;&lt; 10 + 5;       // 输出：15
+cout &lt;&lt; 7 * 8;        // 输出：56
+cout &lt;&lt; "10+5=" &lt;&lt; 10+5;  // 输出：10+5=15</div>
+
+            <h3>制作漂亮标题框</h3>
+            <div class="code-block">cout &lt;&lt; "****************" &lt;&lt; endl;
+cout &lt;&lt; "*  欢迎学习C++  *" &lt;&lt; endl;
+cout &lt;&lt; "****************" &lt;&lt; endl;</div>
+
+            <h3>用 \t 对齐表格</h3>
+            <div class="code-block">cout &lt;&lt; "姓名\t年龄\t成绩" &lt;&lt; endl;
+cout &lt;&lt; "小明\t10\t98" &lt;&lt; endl;
+cout &lt;&lt; "小红\t9\t95" &lt;&lt; endl;</div>
+
+            <div class="highlight-box">
+                <strong>🔑 注意：</strong>C++中的乘号是 <code>*</code>，除号是 <code>/</code>，和数学书不一样！
+            </div>
+        </div>
+
+        <!-- Slide 5: Practice -->
+        <div class="slide" id="slide5">
+            <h2>🎮 趣味练习</h2>
+
+            <h3>练习1：填词游戏 ✏️</h3>
+            <div class="code-block">string name = "小明";
+int age = 10;
+cout &lt;&lt; "我叫" &lt;&lt; ___ &lt;&lt; "，今年" &lt;&lt; ___ &lt;&lt; "岁";</div>
+            <p>空格处填什么？（答案：<code>name</code> 和 <code>age</code>）</p>
+
+            <h3>练习2：课程表设计师 📚</h3>
+            <p>用 cout + \t 设计一张课程表，要求有标题、边框、至少3天课程。</p>
+
+            <h3>练习3：算术小能手 🧮</h3>
+            <p>用 cout 输出：12+35、99-28、8×7、144÷12、17÷5的余数</p>
+
+            <div class="tip-box">
+                <strong>✅ 提示：</strong>乘号是 *，除号是 /，取余数是 %。别忘了用链式输出！
+            </div>
+        </div>
+
+        <!-- Slide 6: Summary -->
+        <div class="slide" id="slide6">
+            <h2>📝 本课小结</h2>
+            <table>
+                <tr><th>知识点</th><th>说明</th><th>例子</th></tr>
+                <tr><td>cout</td><td>电脑的"嘴巴"</td><td><code>cout &lt;&lt; "你好";</code></td></tr>
+                <tr><td>&lt;&lt;</td><td>输出运算符</td><td>像传送带，送到屏幕</td></tr>
+                <tr><td>链式输出</td><td>多个 &lt;&lt; 串联</td><td><code>"我叫" &lt;&lt; name &lt;&lt; "岁"</code></td></tr>
+                <tr><td>endl</td><td>换行+刷新</td><td><code>&lt;&lt; endl;</code></td></tr>
+                <tr><td>\n</td><td>字符串内换行</td><td><code>"你好\n世界"</code></td></tr>
+                <tr><td>\t</td><td>Tab对齐</td><td><code>"姓名\t年龄"</code></td></tr>
+            </table>
+            <div class="highlight-box" style="margin-top:20px;">
+                <strong>🔑 记住口诀：</strong><br>
+                cout张嘴说句话，双尖括号来传达；<br>
+                endl换行\n也一样，链式输出顶呱呱！
+            </div>
+            <p style="text-align:center; margin-top:20px; font-size:1.3em;">🎉 下一课预告：听电脑说话——变量入门</p>
+        </div>
+
+        <!-- Navigation -->
+        <div class="nav-buttons">
+            <button class="nav-btn" onclick="prevSlide()">◀ 上一页</button>
+            <span class="page-indicator" id="pageIndicator">1 / 6</span>
+            <button class="nav-btn" onclick="nextSlide()">下一页 ▶</button>
+        </div>
+    </div>
+
+    <script>
+        let currentSlide = 0;
+        const slides = document.querySelectorAll('.slide');
+        const totalSlides = slides.length;
+        const indicator = document.getElementById('pageIndicator');
+
+        function showSlide(n) {
+            slides[currentSlide].classList.remove('active');
+            currentSlide = (n + totalSlides) % totalSlides;
+            slides[currentSlide].classList.add('active');
+            indicator.textContent = (currentSlide + 1) + ' / ' + totalSlides;
+            document.querySelectorAll('.nav-btn')[0].disabled = currentSlide === 0;
+            document.querySelectorAll('.nav-btn')[1].disabled = currentSlide === totalSlides - 1;
+        }
+        function nextSlide() { showSlide(currentSlide + 1); }
+        function prevSlide() { showSlide(currentSlide - 1); }
+
+        document.addEventListener('keydown', function(e) {
+            if (e.key === 'ArrowRight' || e.key === ' ') { e.preventDefault(); nextSlide(); }
+            else if (e.key === 'ArrowLeft') { e.preventDefault(); prevSlide(); }
+        });
+
+        indicator.textContent = (currentSlide + 1) + ' / ' + totalSlides;
+    </script>
+</body>
+</html>

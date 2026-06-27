@@ -1,0 +1,1455 @@
+"""
+第32节：火力全开 — 弹幕射击游戏（完整版）
+==============================================
+本程序在第 31 节的基础上，添加了以下核心功能：
+  1. 道具掉落系统 — 击败敌人（尤其是 Boss）掉落道具
+  2. 武器状态切换 — 普通子弹 / 散弹 / 激光，三种模式
+  3. Boss 状态机 — 根据血量切换三个阶段的攻击模式
+  4. 爆炸特效 — 粒子飞溅 + 多层圆形扩散
+  5. 玩家生命值系统 — 3 条命 + 护盾保护
+
+操作说明：
+  - 方向键 ← → ↑ ↓：移动玩家飞机
+  - 空格键：发射子弹（按住连续射击）
+  - 击败 Boss 掉落强力道具，接住即可变强！
+
+知识点覆盖：
+  - Sprite 精灵类与精灵组管理
+  - 状态机设计（Boss 阶段切换、武器状态切换）
+  - 粒子系统（位置+速度+生命+透明度）
+  - 概率控制（道具掉落、随机类型）
+  - 计时器管理（武器持续时间、护盾时间）
+"""
+
+import pygame
+import sys
+import math
+import random
+
+# ==================== 初始化 Pygame ====================
+pygame.init()
+
+# ==================== 窗口设置 ====================
+WINDOW_WIDTH = 800
+WINDOW_HEIGHT = 600
+WINDOW_TITLE = "第32节：火力全开 — 弹幕射击"
+
+screen = pygame.display.set_mode((WINDOW_WIDTH, WINDOW_HEIGHT))
+pygame.display.set_caption(WINDOW_TITLE)
+
+# ==================== 帧率控制 ====================
+clock = pygame.time.Clock()
+FPS = 60
+
+# ==================== 颜色定义 ====================
+BLACK = (0, 0, 0)
+WHITE = (255, 255, 255)
+RED = (255, 60, 60)
+GREEN = (60, 255, 60)
+BLUE = (60, 120, 255)
+YELLOW = (255, 255, 0)
+ORANGE = (255, 165, 0)
+PURPLE = (180, 60, 255)
+CYAN = (0, 255, 255)
+PINK = (255, 100, 180)
+GRAY = (100, 100, 100)
+DARK_GRAY = (40, 40, 40)
+DARK_BLUE = (15, 15, 40)
+
+# 武器颜色
+WEAPON_COLORS = {
+    "normal": (0, 220, 255),    # 青色
+    "shotgun": (255, 200, 0),   # 金色
+    "laser": (255, 50, 50),     # 红色
+}
+
+# 爆炸颜色渐变（从中心到边缘）
+EXPLOSION_COLORS = [
+    (255, 255, 255),   # 白色 — 最热
+    (255, 255, 150),   # 亮黄
+    (255, 255, 0),     # 黄色
+    (255, 200, 0),     # 金黄
+    (255, 165, 0),     # 橙色
+    (255, 100, 0),     # 橙红
+    (255, 50, 0),      # 红色
+    (200, 30, 0),      # 暗红 — 冷却
+]
+
+# ==================== 字体设置 ====================
+font_small = pygame.font.Font(None, 24)
+font_normal = pygame.font.Font(None, 32)
+font_large = pygame.font.Font(None, 48)
+font_huge = pygame.font.Font(None, 72)
+
+
+# ==================== 精灵类定义 ====================
+
+class Player(pygame.sprite.Sprite):
+    """玩家飞机精灵
+
+    属性：
+        hp: 当前生命值（最多 3）
+        weapon_type: 当前武器类型 ("normal", "shotgun", "laser")
+        weapon_timer: 武器剩余时间（帧数）
+        shield_active: 护盾是否激活
+        shield_timer: 护盾剩余时间（帧数）
+        invincible_timer: 无敌时间（受伤后的保护时间）
+    """
+
+    def __init__(self, x, y):
+        super().__init__()
+
+        # ===== 绘制玩家飞机（用 Surface 绘制，不依赖外部图片）=====
+        self.image = pygame.Surface((40, 48), pygame.SRCALPHA)
+        # 机体（三角形机身）
+        pts_body = [(20, 0), (0, 36), (40, 36)]  # 上顶点、左底、右底
+        pygame.draw.polygon(self.image, (80, 180, 255), pts_body)
+        # 机翼（两个小三角）
+        pts_lwing = [(0, 36), (0, 48), (12, 38)]
+        pts_rwing = [(40, 36), (40, 48), (28, 38)]
+        pygame.draw.polygon(self.image, (60, 140, 220), pts_lwing)
+        pygame.draw.polygon(self.image, (60, 140, 220), pts_rwing)
+        # 驾驶舱（玻璃）
+        pygame.draw.circle(self.image, (150, 220, 255), (20, 18), 6)
+        # 引擎火焰
+        pygame.draw.rect(self.image, (255, 180, 50), (14, 36, 12, 6))
+        pygame.draw.rect(self.image, (255, 100, 20), (16, 38, 8, 4))
+
+        self.rect = self.image.get_rect()
+        self.rect.centerx = x
+        self.rect.centery = y
+
+        # ===== 移动属性 =====
+        self.speed = 5
+
+        # ===== 武器系统 =====
+        self.weapon_type = "normal"      # 当前武器类型
+        self.weapon_timer = 0            # 剩余帧数（0 表示使用默认武器）
+        self.shoot_cooldown = 0          # 射击冷却帧数
+        self.shoot_delay = 12            # 普通子弹发射间隔（帧）
+
+        # ===== 生命值与护盾 =====
+        self.hp = 3                      # 生命值
+        self.max_hp = 3                  # 最大生命值
+        self.shield_active = False       # 护盾是否激活
+        self.shield_timer = 0            # 护盾剩余帧数
+        self.invincible_timer = 0        # 无敌帧数（受伤后短暂无敌）
+
+
+    def update(self):
+        """每帧更新玩家状态"""
+        # === 武器倒计时 ===
+        if self.weapon_timer > 0:
+            self.weapon_timer -= 1
+            if self.weapon_timer <= 0:
+                self.weapon_type = "normal"
+
+        # === 护盾倒计时 ===
+        if self.shield_timer > 0:
+            self.shield_timer -= 1
+            if self.shield_timer <= 0:
+                self.shield_active = False
+
+        # === 无敌时间倒计时 ===
+        if self.invincible_timer > 0:
+            self.invincible_timer -= 1
+
+        # === 射击冷却 ===
+        if self.shoot_cooldown > 0:
+            self.shoot_cooldown -= 1
+
+        # === 键盘移动 ===
+        keys = pygame.key.get_pressed()
+        if keys[pygame.K_LEFT] or keys[pygame.K_a]:
+            self.rect.x -= self.speed
+        if keys[pygame.K_RIGHT] or keys[pygame.K_d]:
+            self.rect.x += self.speed
+        if keys[pygame.K_UP] or keys[pygame.K_w]:
+            self.rect.y -= self.speed
+        if keys[pygame.K_DOWN] or keys[pygame.K_s]:
+            self.rect.y += self.speed
+
+        # === 边界限制 ===
+        if self.rect.left < 0:
+            self.rect.left = 0
+        if self.rect.right > WINDOW_WIDTH:
+            self.rect.right = WINDOW_WIDTH
+        if self.rect.top < 0:
+            self.rect.top = 0
+        if self.rect.bottom > WINDOW_HEIGHT:
+            self.rect.bottom = WINDOW_HEIGHT
+
+
+    def shoot(self):
+        """发射子弹 —— 根据当前武器类型生成不同的子弹"""
+        bullets = []
+
+        if self.shoot_cooldown > 0:
+            return bullets  # 冷却中，不能射击
+
+        cx = self.rect.centerx
+        cy = self.rect.top
+
+        if self.weapon_type == "normal":
+            # 普通子弹：单发直线
+            bullets.append(Bullet(cx, cy, 0, -10, WEAPON_COLORS["normal"]))
+            self.shoot_cooldown = self.shoot_delay
+
+        elif self.weapon_type == "shotgun":
+            # 散弹：5 发呈扇形散射
+            angles = [-30, -15, 0, 15, 30]  # 散射角度（度）
+            bullet_speed = 8
+            for angle in angles:
+                rad = math.radians(angle)
+                vx = bullet_speed * math.sin(rad)
+                vy = -bullet_speed * math.cos(rad)
+                bullets.append(Bullet(cx, cy, vx, vy, WEAPON_COLORS["shotgun"]))
+            self.shoot_cooldown = 18  # 散弹稍慢
+
+        elif self.weapon_type == "laser":
+            # 激光：一条高速的粗光束子弹
+            laser = LaserBeam(cx, cy)
+            bullets.append(laser)
+            self.shoot_cooldown = 6  # 激光射速很快
+
+        return bullets
+
+
+    def take_damage(self):
+        """玩家受到伤害"""
+        if self.invincible_timer > 0:
+            return False  # 无敌中，不受伤害
+
+        if self.shield_active:
+            # 护盾吸收一次伤害
+            self.shield_active = False
+            self.shield_timer = 0
+            return False
+
+        self.hp -= 1
+        self.invincible_timer = 90  # 1.5 秒无敌（60 FPS）
+        return True
+
+
+    def is_alive(self):
+        """玩家是否还活着"""
+        return self.hp > 0
+
+
+    def activate_weapon(self, weapon_type, duration_seconds):
+        """激活特殊武器
+
+        参数:
+            weapon_type: "shotgun" 或 "laser"
+            duration_seconds: 持续时间（秒）
+        """
+        self.weapon_type = weapon_type
+        self.weapon_timer = duration_seconds * FPS
+
+
+    def activate_shield(self, duration_seconds):
+        """激活护盾"""
+        self.shield_active = True
+        self.shield_timer = duration_seconds * FPS
+
+
+    def heal(self, amount=1):
+        """恢复生命值"""
+        self.hp = min(self.hp + amount, self.max_hp)
+
+    def draw_ui(self, screen):
+        """绘制玩家状态 UI（生命值、武器、护盾）"""
+        # === 生命值（心形） ===
+        for i in range(self.max_hp):
+            heart_x = 15 + i * 35
+            heart_y = WINDOW_HEIGHT - 35
+            if i < self.hp:
+                color = RED  # 红心 = 有生命
+            else:
+                color = GRAY  # 灰心 = 已损失
+
+            # 用两个圆 + 一个三角画心形
+            pygame.draw.circle(screen, color, (heart_x + 7, heart_y), 7)
+            pygame.draw.circle(screen, color, (heart_x + 18, heart_y), 7)
+            pygame.draw.polygon(screen, color, [
+                (heart_x, heart_y + 2), (heart_x + 25, heart_y + 2),
+                (heart_x + 12, heart_y + 18)
+            ])
+
+        # === 武器状态显示 ===
+        weapon_texts = {
+            "normal": "武器：普通子弹",
+            "shotgun": "武器：散弹",
+            "laser": "武器：激光",
+        }
+        weapon_label = weapon_texts.get(self.weapon_type, "武器：---")
+        weapon_color = WEAPON_COLORS.get(self.weapon_type, WHITE)
+
+        weapon_surf = font_small.render(weapon_label, True, weapon_color)
+        screen.blit(weapon_surf, (15, 55))
+
+        if self.weapon_timer > 0:
+            seconds_left = self.weapon_timer / FPS
+            timer_text = f"剩余 {seconds_left:.1f} 秒"
+            timer_surf = font_small.render(timer_text, True, weapon_color)
+            screen.blit(timer_surf, (15, 78))
+
+        # === 护盾状态显示 ===
+        if self.shield_active:
+            shield_surf = font_small.render("🛡️ 护盾激活中", True, BLUE)
+            screen.blit(shield_surf, (15, 100))
+            if self.shield_timer > 0:
+                shield_time = font_small.render(
+                    f"剩余 {self.shield_timer / FPS:.1f} 秒", True, BLUE
+                )
+                screen.blit(shield_time, (15, 122))
+
+
+class Bullet(pygame.sprite.Sprite):
+    """玩家子弹精灵
+
+    属性:
+        vx, vy: 子弹速度分量
+    """
+
+    def __init__(self, x, y, vx, vy, color=CYAN):
+        super().__init__()
+        self.vx = vx
+        self.vy = vy
+
+        # 绘制子弹：一个小矩形
+        self.image = pygame.Surface((6, 12), pygame.SRCALPHA)
+        pygame.draw.rect(self.image, color, (1, 0, 4, 10))
+        pygame.draw.rect(self.image, (255, 255, 255, 180), (2, 0, 2, 6))  # 高光
+
+        self.rect = self.image.get_rect(center=(x, y))
+
+
+    def update(self):
+        """子弹飞行"""
+        self.rect.x += self.vx
+        self.rect.y += self.vy
+
+        # 飞出屏幕后删除
+        if (self.rect.bottom < 0 or self.rect.top > WINDOW_HEIGHT or
+                self.rect.right < 0 or self.rect.left > WINDOW_WIDTH):
+            self.kill()
+
+
+class LaserBeam(pygame.sprite.Sprite):
+    """激光束精灵 —— 比普通子弹更粗更快
+
+    激光实际上是一条竖直的粗线，从发射位置一直延伸到屏幕顶部，
+    长度会随着飞行逐渐缩短（模拟光束射出）。
+    """
+
+    def __init__(self, x, y):
+        super().__init__()
+        self.vy = -14  # 激光速度很快
+
+        # 绘制激光：一条长的竖直粗线
+        self.image = pygame.Surface((8, 30), pygame.SRCALPHA)
+        # 核心（亮白）
+        pygame.draw.rect(self.image, (255, 255, 255, 255), (3, 0, 2, 28))
+        # 光晕（红色渐变）
+        for i in range(4):
+            alpha = 100 - i * 20
+            pygame.draw.rect(self.image, (255, 50, 50, alpha), (1 + i, 2, 6 - i * 2, 24))
+
+        self.rect = self.image.get_rect(center=(x, y))
+
+
+    def update(self):
+        """激光飞行"""
+        self.rect.y += self.vy
+        if self.rect.bottom < 0:
+            self.kill()
+
+
+class Enemy(pygame.sprite.Sprite):
+    """普通敌人/小兵精灵
+
+    属性:
+        hp: 生命值
+        shoot_timer: 射击计时器
+    """
+
+    def __init__(self, x, y, enemy_type="normal"):
+        super().__init__()
+        self.enemy_type = enemy_type
+        self.hp = 2
+        self.shoot_timer = random.randint(30, 120)  # 随机射击时间
+
+        # 绘制敌机
+        self.image = pygame.Surface((30, 30), pygame.SRCALPHA)
+
+        if enemy_type == "normal":
+            main_color = (220, 80, 80)   # 红色敌机
+            wing_color = (180, 50, 50)
+        else:
+            main_color = (220, 150, 50)  # 橙色强化敌机
+            wing_color = (180, 120, 30)
+
+        # 机身（倒三角形）
+        pts = [(15, 30), (0, 0), (30, 0)]
+        pygame.draw.polygon(self.image, main_color, pts)
+        # 机翼
+        pygame.draw.polygon(self.image, wing_color, [(0, 0), (0, 8), (8, 2)])
+        pygame.draw.polygon(self.image, wing_color, [(30, 0), (30, 8), (22, 2)])
+        # 眼睛
+        pygame.draw.circle(self.image, (255, 255, 0), (15, 12), 4)
+        pygame.draw.circle(self.image, BLACK, (15, 12), 2)
+
+        self.rect = self.image.get_rect(center=(x, y))
+
+        # 移动方式
+        self.move_type = random.choice(["straight", "zigzag", "circle"])
+        self.move_timer = 0
+        self.start_x = x
+        self.speed_y = random.randint(1, 3)
+
+
+    def update(self):
+        """敌人移动 + 射击计时"""
+        self.move_timer += 1
+        self.rect.y += self.speed_y
+
+        # 不同的移动模式
+        if self.move_type == "zigzag":
+            # 左右摇摆
+            self.rect.x += int(2 * math.sin(self.move_timer * 0.1))
+        elif self.move_type == "circle":
+            # 小幅圆周运动
+            self.rect.x = self.start_x + int(20 * math.sin(self.move_timer * 0.05))
+
+        # 掉出屏幕底部删除
+        if self.rect.top > WINDOW_HEIGHT:
+            self.kill()
+
+        # 射击计时
+        self.shoot_timer -= 1
+
+
+    def try_shoot(self):
+        """尝试发射子弹"""
+        if self.shoot_timer <= 0:
+            self.shoot_timer = random.randint(60, 150)
+            # 朝向玩家方向发射
+            vx = random.uniform(-1.5, 1.5)
+            vy = random.uniform(3, 5)
+            return EnemyBullet(self.rect.centerx, self.rect.bottom, vx, vy)
+        return None
+
+
+    def take_damage(self, damage=1):
+        """受到伤害"""
+        self.hp -= damage
+        if self.hp <= 0:
+            self.kill()
+            return True  # 被消灭
+        return False
+
+
+class EnemyBullet(pygame.sprite.Sprite):
+    """敌人子弹精灵"""
+
+    def __init__(self, x, y, vx, vy, color=None):
+        super().__init__()
+        self.vx = vx
+        self.vy = vy
+
+        if color is None:
+            bullet_color = (255, 100, 100)  # 红色弹幕
+        else:
+            bullet_color = color
+
+        self.image = pygame.Surface((8, 8), pygame.SRCALPHA)
+        pygame.draw.circle(self.image, bullet_color, (4, 4), 4)
+        pygame.draw.circle(self.image, (255, 255, 255, 150), (3, 3), 2)  # 高光
+
+        self.rect = self.image.get_rect(center=(x, y))
+
+
+    def update(self):
+        """子弹飞行"""
+        self.rect.x += self.vx
+        self.rect.y += self.vy
+
+        if (self.rect.bottom < 0 or self.rect.top > WINDOW_HEIGHT or
+                self.rect.right < 0 or self.rect.left > WINDOW_WIDTH):
+            self.kill()
+
+
+class HomingBullet(EnemyBullet):
+    """追踪弹 —— 发射时锁定方向，沿锁定方向直线飞行
+
+    与普通子弹的区别：用特殊颜色（紫色）标记，让玩家能识别
+    """
+
+    def __init__(self, x, y, vx, vy):
+        super().__init__(x, y, vx, vy, color=(200, 50, 255))  # 紫色追踪弹
+        # 更大的追踪弹图像
+        self.image = pygame.Surface((12, 12), pygame.SRCALPHA)
+        pygame.draw.circle(self.image, (200, 50, 255), (6, 6), 6)
+        pygame.draw.circle(self.image, (255, 200, 255, 180), (5, 5), 3)
+        self.rect = self.image.get_rect(center=(x, y))
+
+
+class PowerUp(pygame.sprite.Sprite):
+    """道具精灵类
+
+    类型：
+        "weapon_shotgun" — 散弹武器升级
+        "weapon_laser"   — 激光武器升级
+        "heal"           — 生命恢复
+        "shield"         — 护盾
+    """
+
+    TYPE_WEAPON_SHOTGUN = "weapon_shotgun"
+    TYPE_WEAPON_LASER = "weapon_laser"
+    TYPE_HEAL = "heal"
+    TYPE_SHIELD = "shield"
+
+    # 各道具的配置
+    ITEM_CONFIG = {
+        TYPE_WEAPON_SHOTGUN: {
+            "color": (255, 200, 0), "label": "S", "desc": "散弹模式",
+            "bg_color": (80, 60, 0),
+        },
+        TYPE_WEAPON_LASER: {
+            "color": (255, 80, 40), "label": "L", "desc": "激光模式",
+            "bg_color": (80, 20, 0),
+        },
+        TYPE_HEAL: {
+            "color": (80, 255, 80), "label": "+", "desc": "生命恢复",
+            "bg_color": (0, 60, 0),
+        },
+        TYPE_SHIELD: {
+            "color": (80, 160, 255), "label": "护", "desc": "护盾",
+            "bg_color": (0, 30, 60),
+        },
+    }
+
+    def __init__(self, x, y, power_type):
+        super().__init__()
+        self.power_type = power_type
+        self.config = self.ITEM_CONFIG[power_type]
+
+        # 绘制道具外观
+        size = 28
+        self.image = pygame.Surface((size, size), pygame.SRCALPHA)
+
+        # 背景圆
+        pygame.draw.circle(self.image, self.config["bg_color"], (size // 2, size // 2), size // 2)
+        # 外圈
+        pygame.draw.circle(self.image, self.config["color"], (size // 2, size // 2), size // 2, 2)
+        # 内圈发光
+        pygame.draw.circle(self.image,
+                           (*self.config["color"][:3], 100),
+                           (size // 2, size // 2),
+                           size // 2 - 3)
+        # 文字标识
+        label_font = pygame.font.Font(None, 20)
+        label_surf = label_font.render(self.config["label"], True, WHITE)
+        label_rect = label_surf.get_rect(center=(size // 2, size // 2))
+        self.image.blit(label_surf, label_rect)
+
+        self.rect = self.image.get_rect(center=(x, y))
+        self.speed_y = 2  # 下落速度
+
+        # 脉冲动画参数
+        self.pulse_timer = 0
+        self.base_image = self.image.copy()
+
+
+    def update(self):
+        """道具下落 + 脉冲动画"""
+        self.rect.y += self.speed_y
+
+        # 脉冲动画：周期性缩放
+        self.pulse_timer += 0.1
+        scale = 1.0 + 0.08 * math.sin(self.pulse_timer)
+        new_size = int(28 * scale)
+        if new_size > 0:
+            self.image = pygame.transform.scale(self.base_image, (new_size, new_size))
+            old_center = self.rect.center
+            self.rect = self.image.get_rect()
+            self.rect.center = old_center
+
+        # 飞出屏幕底部删除
+        if self.rect.top > WINDOW_HEIGHT:
+            self.kill()
+
+
+def try_drop_item(x, y, is_boss=False):
+    """尝试在指定位置掉落道具
+
+    参数:
+        x, y: 掉落位置
+        is_boss: 是否来自 Boss（Boss 100% 掉落）
+
+    返回:
+        新创建的道具精灵，或 None
+    """
+    if is_boss:
+        drop_chance = 1.0  # Boss 100% 掉落
+    else:
+        drop_chance = 0.15  # 普通敌人 15% 掉落
+
+    if random.random() < drop_chance:
+        # 随机选择道具类型
+        roll = random.random()
+        if roll < 0.4:
+            # 40% 散弹
+            return PowerUp(x, y, PowerUp.TYPE_WEAPON_SHOTGUN)
+        elif roll < 0.7:
+            # 30% 激光
+            return PowerUp(x, y, PowerUp.TYPE_WEAPON_LASER)
+        elif roll < 0.85:
+            # 15% 生命恢复
+            return PowerUp(x, y, PowerUp.TYPE_HEAL)
+        else:
+            # 15% 护盾
+            return PowerUp(x, y, PowerUp.TYPE_SHIELD)
+
+    return None
+
+
+class Particle(pygame.sprite.Sprite):
+    """爆炸粒子精灵
+
+    三要素：
+        1. 位置 (x, y)
+        2. 速度 (vx, vy) — 随机方向
+        3. 生命 (life) — 渐隐用
+    """
+
+    def __init__(self, x, y, color, size=4):
+        super().__init__()
+        self.size = size
+        self.color = color
+
+        self.image = pygame.Surface((size * 2, size * 2), pygame.SRCALPHA)
+        pygame.draw.circle(self.image, color, (size, size), size)
+
+        self.rect = self.image.get_rect(center=(x, y))
+
+        # 随机速度方向
+        angle = random.uniform(0, 2 * math.pi)
+        speed = random.uniform(1.5, 6)
+        self.vx = speed * math.cos(angle)
+        self.vy = speed * math.sin(angle)
+
+        # 摩擦力（让粒子逐渐减速）
+        self.friction = 0.96
+
+        # 生命值（帧）
+        self.life = random.randint(20, 50)
+        self.max_life = self.life
+
+
+    def update(self):
+        """粒子运动 + 渐隐"""
+        self.rect.x += self.vx
+        self.rect.y += self.vy
+
+        # 摩擦力减速
+        self.vx *= self.friction
+        self.vy *= self.friction
+
+        # 生命递减
+        self.life -= 1
+
+        # 渐隐效果
+        alpha = int(255 * (self.life / self.max_life))
+        if alpha > 0:
+            self.image.set_alpha(alpha)
+
+        # 生命耗尽删除
+        if self.life <= 0:
+            self.kill()
+
+
+class BossExplosion:
+    """Boss 死亡时的多层圆形爆炸特效
+
+    多层的同心圆从中心向外扩散，颜色从白→黄→橙→红渐变，
+    同时整体逐渐缩小并渐隐消失。
+    """
+
+    def __init__(self, x, y):
+        self.x = x
+        self.y = y
+        self.life = 120          # 总生命（帧），约 2 秒
+        self.max_life = 120
+
+        # 定义多层圆圈
+        # 每层有：最大半径、当前半径、颜色、线宽
+        self.rings = [
+            {"max_radius": 220, "radius": 0, "color": (255, 255, 255), "width": 5},  # 白
+            {"max_radius": 180, "radius": 0, "color": (255, 255, 150), "width": 4},  # 亮黄
+            {"max_radius": 150, "radius": 0, "color": (255, 255, 0),   "width": 4},  # 黄
+            {"max_radius": 120, "radius": 0, "color": (255, 200, 0),   "width": 4},  # 金黄
+            {"max_radius": 100, "radius": 0, "color": (255, 165, 0),   "width": 3},  # 橙
+            {"max_radius": 80,  "radius": 0, "color": (255, 100, 0),   "width": 3},  # 橙红
+            {"max_radius": 60,  "radius": 0, "color": (255, 50, 0),    "width": 3},  # 红
+        ]
+
+
+    def update(self):
+        """更新：圆圈扩散"""
+        self.life -= 1
+
+        # 扩散进度：0（开始）→ 1（最大）
+        progress = 1.0 - (self.life / self.max_life)
+
+        # 扩散阶段（前 70% 扩散，后 30% 缩小）
+        if progress < 0.7:
+            expand_progress = progress / 0.7  # 0 → 1
+        else:
+            # 缩小阶段
+            expand_progress = 1.0 - (progress - 0.7) / 0.3  # 1 → 0
+
+        for ring in self.rings:
+            ring["radius"] = ring["max_radius"] * expand_progress
+
+
+    def draw(self, screen):
+        """绘制爆炸圆圈"""
+        if self.life <= 0:
+            return
+
+        # 整体透明度：随着生命递减
+        alpha = int(200 * (self.life / self.max_life))
+        if alpha <= 0:
+            return
+
+        for ring in self.rings:
+            r = int(ring["radius"])
+            if r <= 0:
+                continue
+
+            # 创建临时透明 surface 来绘制带透明度的圆圈
+            size = ring["max_radius"] * 2
+            temp = pygame.Surface((size, size), pygame.SRCALPHA)
+            center = ring["max_radius"]
+
+            color_with_alpha = (*ring["color"], alpha)
+            pygame.draw.circle(temp, color_with_alpha, (center, center), r, ring["width"])
+
+            screen.blit(temp, (self.x - center, self.y - center))
+
+
+    def is_finished(self):
+        """爆炸是否结束"""
+        return self.life <= 0
+
+
+class Boss(pygame.sprite.Sprite):
+    """Boss 精灵类
+
+    属性:
+        hp, max_hp: 生命值系统
+        phase: 当前阶段 (1/2/3)
+        shoot_timer: 弹幕发射计时
+        pattern_timer: 弹幕模式切换计时（阶段2使用）
+
+    阶段说明:
+        阶段1 (HP > 50%):  移动慢，扇形弹幕 3 发
+        阶段2 (HP 20~50%): 移动加快，扇形 5 发 + 圆形弹幕交替
+        阶段3 (HP ≤ 20%):  暴怒，密集扇形 7 发 + 追踪弹
+    """
+
+    PHASE_1 = 1
+    PHASE_2 = 2
+    PHASE_3 = 3
+
+    def __init__(self, x, y):
+        super().__init__()
+
+        self.max_hp = 100
+        self.hp = self.max_hp
+        self.phase = self.PHASE_1
+
+        # 弹幕计时
+        self.shoot_timer = 0
+        self.pattern_timer = 0  # 阶段2的模式切换计时
+
+        # 绘制 Boss（大型敌机）
+        size = 60
+        self.image = pygame.Surface((size, size), pygame.SRCALPHA)
+
+        # Boss 主体
+        pygame.draw.circle(self.image, (200, 50, 50), (size // 2, size // 2), size // 2)
+        # 装甲环
+        pygame.draw.circle(self.image, (150, 30, 30), (size // 2, size // 2), size // 2, 4)
+        pygame.draw.circle(self.image, (220, 80, 80), (size // 2, size // 2), size // 2 - 6, 2)
+        # 核心（发光点）
+        pygame.draw.circle(self.image, (255, 255, 200), (size // 2, size // 2), 10)
+        pygame.draw.circle(self.image, (255, 200, 100), (size // 2, size // 2), 6)
+        # "眼睛"装饰
+        pygame.draw.circle(self.image, (255, 255, 100), (size // 2 - 15, size // 2 - 10), 8)
+        pygame.draw.circle(self.image, (255, 255, 100), (size // 2 + 15, size // 2 - 10), 8)
+        pygame.draw.circle(self.image, BLACK, (size // 2 - 15, size // 2 - 10), 3)
+        pygame.draw.circle(self.image, BLACK, (size // 2 + 15, size // 2 - 10), 3)
+
+        self.rect = self.image.get_rect(center=(x, y))
+
+        # 移动参数
+        self.move_timer = 0
+        self.start_x = x
+        self.speed_x = 2  # 水平移动速度
+
+
+    def update_phase(self):
+        """根据血量更新 Boss 阶段"""
+        hp_percent = self.hp / self.max_hp
+
+        if hp_percent > 0.5:
+            self.phase = self.PHASE_1
+        elif hp_percent > 0.2:
+            self.phase = self.PHASE_2
+        else:
+            self.phase = self.PHASE_3
+
+
+    def update(self):
+        """Boss 移动逻辑"""
+        self.move_timer += 1
+        self.shoot_timer -= 1
+        self.pattern_timer += 1
+
+        # 水平来回移动（阶段越高移动越快）
+        if self.phase == self.PHASE_1:
+            move_speed = 1.5
+        elif self.phase == self.PHASE_2:
+            move_speed = 2.5
+        else:
+            move_speed = 3.5
+
+        self.rect.x += int(move_speed * math.sin(self.move_timer * 0.03))
+
+        # 边界限制
+        if self.rect.left < 20:
+            self.rect.left = 20
+        if self.rect.right > WINDOW_WIDTH - 20:
+            self.rect.right = WINDOW_WIDTH - 20
+
+
+    def shoot(self, player):
+        """根据当前阶段发射弹幕
+
+        参数:
+            player: 玩家精灵（追踪弹需要玩家位置）
+
+        返回:
+            子弹列表
+        """
+        bullets = []
+
+        # 设置射击间隔（阶段越高越密集）
+        if self.phase == self.PHASE_1:
+            shoot_interval = 40
+        elif self.phase == self.PHASE_2:
+            shoot_interval = 28
+        else:
+            shoot_interval = 18
+
+        if self.shoot_timer > 0:
+            return bullets
+        self.shoot_timer = shoot_interval
+
+        cx, cy = self.rect.centerx, self.rect.bottom + 10
+
+        if self.phase == self.PHASE_1:
+            # ===== 阶段1：扇形弹幕 3 发 =====
+            for angle_offset in [-20, 0, 20]:
+                angle_deg = 90 + angle_offset  # 90° 是正下方
+                rad = math.radians(angle_deg)
+                speed = 3
+                vx = speed * math.cos(rad)
+                vy = speed * math.sin(rad)
+                bullets.append(EnemyBullet(cx, cy, vx, vy))
+
+        elif self.phase == self.PHASE_2:
+            # ===== 阶段2：扇形弹幕 5 发 与 圆形弹幕交替 =====
+            cycle = (self.pattern_timer // 60) % 2  # 每 60 帧切换一次
+
+            if cycle == 0:
+                # 扇形弹幕 5 发
+                for angle_offset in [-40, -20, 0, 20, 40]:
+                    angle_deg = 90 + angle_offset
+                    rad = math.radians(angle_deg)
+                    speed = 4
+                    vx = speed * math.cos(rad)
+                    vy = speed * math.sin(rad)
+                    bullets.append(EnemyBullet(cx, cy, vx, vy))
+            else:
+                # 圆形弹幕 12 发（均匀分布）
+                for i in range(12):
+                    angle_deg = i * 30  # 360 / 12
+                    rad = math.radians(angle_deg)
+                    speed = 3.5
+                    vx = speed * math.cos(rad)
+                    vy = speed * math.sin(rad)
+                    bullets.append(EnemyBullet(cx, cy, vx, vy))
+
+        elif self.phase == self.PHASE_3:
+            # ===== 暴怒阶段：密集扇形 7 发 + 追踪弹 =====
+            # 密集扇形弹幕
+            for angle_offset in [-45, -30, -15, 0, 15, 30, 45]:
+                angle_deg = 90 + angle_offset
+                rad = math.radians(angle_deg)
+                speed = 5
+                vx = speed * math.cos(rad)
+                vy = speed * math.sin(rad)
+                bullets.append(EnemyBullet(cx, cy, vx, vy))
+
+            # 追踪弹：每 2 秒发射一枚
+            if self.pattern_timer % 120 < shoot_interval:
+                # 计算朝向玩家的方向
+                if player is not None:
+                    dx = player.rect.centerx - cx
+                    dy = player.rect.centery - cy
+                    dist = math.sqrt(dx**2 + dy**2)
+                    if dist > 0:
+                        homing_speed = 3.5
+                        vx = homing_speed * dx / dist
+                        vy = homing_speed * dy / dist
+                        bullets.append(HomingBullet(cx, cy, vx, vy))
+
+        return bullets
+
+
+    def take_damage(self, damage=1):
+        """Boss 受到伤害
+
+        返回:
+            (是否被消灭, 是否到达新阶段)
+        """
+        old_phase = self.phase
+        self.hp -= damage
+        self.update_phase()
+
+        phase_changed = (self.phase != old_phase)
+
+        if self.hp <= 0:
+            self.kill()
+            return True, phase_changed  # 被消灭
+
+        return False, phase_changed
+
+
+    def draw_hp_bar(self, screen):
+        """绘制 Boss 血条（在屏幕上方）"""
+        bar_width = 600
+        bar_height = 18
+        bar_x = (WINDOW_WIDTH - bar_width) // 2
+        bar_y = 10
+
+        hp_percent = self.hp / self.max_hp
+
+        # 背景（灰色底）
+        pygame.draw.rect(screen, DARK_GRAY, (bar_x, bar_y, bar_width, bar_height))
+        pygame.draw.rect(screen, GRAY, (bar_x, bar_y, bar_width, bar_height), 2)
+
+        # 血量（颜色随血量变化：绿 → 黄 → 红）
+        if hp_percent > 0.5:
+            hp_color = (80, 220, 80)   # 绿色
+        elif hp_percent > 0.2:
+            hp_color = (255, 200, 50)  # 黄色
+        else:
+            hp_color = (255, 60, 60)   # 红色
+
+        pygame.draw.rect(screen, hp_color, (bar_x, bar_y, int(bar_width * hp_percent), bar_height))
+
+        # Boss 名字
+        name_text = font_small.render("BOSS", True, WHITE)
+        screen.blit(name_text, (bar_x - 55, bar_y))
+
+        # 血量数字
+        hp_text = font_small.render(f"{self.hp}/{self.max_hp}", True, WHITE)
+        hp_text_rect = hp_text.get_rect(center=(bar_x + bar_width // 2, bar_y + bar_height // 2))
+        screen.blit(hp_text, hp_text_rect)
+
+        # 阶段标识
+        phase_names = {self.PHASE_1: "阶段1", self.PHASE_2: "阶段2", self.PHASE_3: "暴怒!"}
+        phase_text = font_small.render(phase_names.get(self.phase, ""), True, YELLOW)
+        screen.blit(phase_text, (bar_x + bar_width + 10, bar_y))
+
+
+def create_explosion_particles(x, y, count=40):
+    """创建爆炸粒子效果"""
+    particles = []
+    for _ in range(count):
+        color = random.choice(EXPLOSION_COLORS)
+        size = random.randint(2, 6)
+        particle = Particle(x, y, color, size)
+        particles.append(particle)
+    return particles
+
+
+# ==================== 游戏主类 ====================
+
+class Game:
+    """游戏主控制器"""
+
+    # 游戏状态
+    STATE_PLAYING = "playing"
+    STATE_BOSS = "boss"
+    STATE_VICTORY = "victory"
+    STATE_GAMEOVER = "gameover"
+
+    def __init__(self):
+        self.reset()
+
+
+    def reset(self):
+        """重置游戏到初始状态"""
+        # ===== 创建精灵组 =====
+        self.all_sprites = pygame.sprite.Group()
+        self.player_bullets = pygame.sprite.Group()
+        self.enemy_bullets = pygame.sprite.Group()
+        self.enemies = pygame.sprite.Group()
+        self.powerups = pygame.sprite.Group()
+        self.particles = pygame.sprite.Group()
+
+        # ===== 创建玩家 =====
+        self.player = Player(WINDOW_WIDTH // 2, WINDOW_HEIGHT - 80)
+        self.all_sprites.add(self.player)
+
+        # ===== 游戏状态 =====
+        self.state = self.STATE_PLAYING
+        self.score = 0
+        self.kill_count = 0          # 消灭敌人数
+        self.boss = None              # Boss 引用
+        self.boss_explosion = None    # Boss 爆炸特效
+        self.spawn_timer = 0          # 敌人生成计时器
+        self.boss_spawn_threshold = 15  # 消灭 15 个敌人后出 Boss
+
+        # ===== 屏幕震动参数 =====
+        self.shake_amount = 0
+        self.shake_decay = 0.9
+
+        # ===== 阶段切换提示 =====
+        self.phase_alert_text = ""
+        self.phase_alert_timer = 0
+
+
+    def spawn_enemy(self):
+        """生成一个普通敌人"""
+        x = random.randint(50, WINDOW_WIDTH - 50)
+        y = random.randint(-50, -10)
+
+        # 少量强化敌人
+        enemy_type = "strong" if random.random() < 0.2 else "normal"
+        enemy = Enemy(x, y, enemy_type)
+
+        self.enemies.add(enemy)
+        self.all_sprites.add(enemy)
+
+
+    def spawn_boss(self):
+        """生成 Boss"""
+        self.boss = Boss(WINDOW_WIDTH // 2, -60)
+        self.enemies.add(self.boss)
+        self.all_sprites.add(self.boss)
+        self.state = self.STATE_BOSS
+
+        # 显示阶段提示
+        self.show_phase_alert("BOSS 出现！")
+
+
+    def show_phase_alert(self, text):
+        """显示屏幕中央提示文字"""
+        self.phase_alert_text = text
+        self.phase_alert_timer = 120  # 显示 2 秒
+
+
+    def add_shake(self, amount=8):
+        """添加屏幕震动"""
+        self.shake_amount = max(self.shake_amount, amount)
+
+
+    def handle_player_shoot(self):
+        """处理玩家射击"""
+        keys = pygame.key.get_pressed()
+        if keys[pygame.K_SPACE]:
+            new_bullets = self.player.shoot()
+            for bullet in new_bullets:
+                self.player_bullets.add(bullet)
+                self.all_sprites.add(bullet)
+
+
+    def handle_collisions(self):
+        """处理所有碰撞检测"""
+
+        # === 1. 玩家子弹 vs 敌人 ===
+        hits = pygame.sprite.groupcollide(
+            self.player_bullets, self.enemies, True, False
+        )
+
+        for bullet, hit_enemies in hits.items():
+            for enemy in hit_enemies:
+                is_boss = (enemy == self.boss)
+
+                # 普通子弹伤害 1，激光伤害 3
+                damage = 3 if isinstance(bullet, LaserBeam) else 1
+
+                if is_boss:
+                    killed, phase_changed = enemy.take_damage(damage)
+
+                    if phase_changed and not killed:
+                        # Boss 进入新阶段
+                        phase_names = {Boss.PHASE_2: "Boss 变强了！", Boss.PHASE_3: "Boss 暴怒了！"}
+                        if enemy.phase in phase_names:
+                            self.show_phase_alert(phase_names[enemy.phase])
+                            self.add_shake(10)
+                            # 阶段切换时产生粒子效果
+                            new_particles = create_explosion_particles(
+                                enemy.rect.centerx, enemy.rect.centery, 25
+                            )
+                            for p in new_particles:
+                                self.particles.add(p)
+                                self.all_sprites.add(p)
+
+                    if killed:
+                        # Boss 被消灭！
+                        self.score += 500
+                        self.show_phase_alert("BOSS 击败！")
+                        self.add_shake(20)
+
+                        # 创建 Boss 大爆炸特效
+                        self.boss_explosion = BossExplosion(
+                            enemy.rect.centerx, enemy.rect.centery
+                        )
+
+                        # 粒子飞溅
+                        new_particles = create_explosion_particles(
+                            enemy.rect.centerx, enemy.rect.centery, 80
+                        )
+                        for p in new_particles:
+                            self.particles.add(p)
+                            self.all_sprites.add(p)
+
+                        # Boss 必定掉落道具（3 个！）
+                        for _ in range(3):
+                            drop_x = enemy.rect.centerx + random.randint(-40, 40)
+                            drop_y = enemy.rect.centery + random.randint(-20, 20)
+                            item = try_drop_item(drop_x, drop_y, is_boss=True)
+                            if item:
+                                self.powerups.add(item)
+                                self.all_sprites.add(item)
+
+                        self.boss = None
+                        self.state = self.STATE_VICTORY
+
+                else:
+                    # 普通敌人
+                    killed = enemy.take_damage(damage)
+
+                    if killed:
+                        self.score += 100
+                        self.kill_count += 1
+
+                        # 小爆炸粒子
+                        new_particles = create_explosion_particles(
+                            enemy.rect.centerx, enemy.rect.centery, 15
+                        )
+                        for p in new_particles:
+                            self.particles.add(p)
+                            self.all_sprites.add(p)
+
+                        # 尝试掉落道具
+                        item = try_drop_item(enemy.rect.centerx, enemy.rect.centery)
+                        if item:
+                            self.powerups.add(item)
+                            self.all_sprites.add(item)
+
+        # === 2. 敌人子弹 vs 玩家 ===
+        enemy_hits = pygame.sprite.spritecollide(
+            self.player, self.enemy_bullets, True
+        )
+        if enemy_hits:
+            for _ in enemy_hits:
+                hurt = self.player.take_damage()
+                if hurt:
+                    self.add_shake(6)
+                    # 受伤粒子
+                    new_particles = create_explosion_particles(
+                        self.player.rect.centerx, self.player.rect.centery, 8
+                    )
+                    for p in new_particles:
+                        self.particles.add(p)
+                        self.all_sprites.add(p)
+
+        # === 3. 敌人 vs 玩家（碰撞伤害）===
+        if self.state == self.STATE_PLAYING or self.state == self.STATE_BOSS:
+            enemy_hits = pygame.sprite.spritecollide(
+                self.player, self.enemies, False
+            )
+            if enemy_hits:
+                for _ in enemy_hits:
+                    hurt = self.player.take_damage()
+                    if hurt:
+                        self.add_shake(6)
+
+        # === 4. 玩家 vs 道具 ===
+        powerup_hits = pygame.sprite.spritecollide(
+            self.player, self.powerups, True
+        )
+        for item in powerup_hits:
+            if item.power_type == PowerUp.TYPE_WEAPON_SHOTGUN:
+                self.player.activate_weapon("shotgun", 8)
+            elif item.power_type == PowerUp.TYPE_WEAPON_LASER:
+                self.player.activate_weapon("laser", 6)
+            elif item.power_type == PowerUp.TYPE_HEAL:
+                self.player.heal(1)
+            elif item.power_type == PowerUp.TYPE_SHIELD:
+                self.player.activate_shield(10)
+
+        # === 5. 检查玩家死亡 ===
+        if not self.player.is_alive():
+            self.state = self.STATE_GAMEOVER
+            # 死亡大爆炸
+            self.add_shake(15)
+            new_particles = create_explosion_particles(
+                self.player.rect.centerx, self.player.rect.centery, 50
+            )
+            for p in new_particles:
+                self.particles.add(p)
+                self.all_sprites.add(p)
+            self.player.kill()
+
+
+    def handle_enemy_shooting(self):
+        """处理敌人射击"""
+        for enemy in self.enemies:
+            if enemy == self.boss:
+                # Boss 弹幕
+                new_bullets = enemy.shoot(self.player)
+                for bullet in new_bullets:
+                    self.enemy_bullets.add(bullet)
+                    self.all_sprites.add(bullet)
+            else:
+                # 普通敌人射击
+                bullet = enemy.try_shoot()
+                if bullet:
+                    self.enemy_bullets.add(bullet)
+                    self.all_sprites.add(bullet)
+
+
+    def update(self):
+        """游戏主更新循环"""
+        # === 屏幕震动衰减 ===
+        if self.shake_amount > 0.1:
+            self.shake_amount *= self.shake_decay
+        else:
+            self.shake_amount = 0
+
+        # === 阶段提示计时 ===
+        if self.phase_alert_timer > 0:
+            self.phase_alert_timer -= 1
+
+        if self.state == self.STATE_GAMEOVER or self.state == self.STATE_VICTORY:
+            # 游戏结束或胜利后，继续更新粒子等效果
+            self.particles.update()
+            if self.boss_explosion:
+                self.boss_explosion.update()
+            return
+
+        # === 敌人生成（普通阶段）===
+        if self.state == self.STATE_PLAYING:
+            self.spawn_timer += 1
+            spawn_rate = max(30, 90 - self.kill_count * 3)  # 随消灭数加速
+
+            if self.spawn_timer >= spawn_rate:
+                self.spawn_timer = 0
+                self.spawn_enemy()
+
+            # 消灭足够敌人后出 Boss
+            if self.kill_count >= self.boss_spawn_threshold and self.boss is None:
+                self.spawn_boss()
+
+        # === 更新所有精灵 ===
+        self.all_sprites.update()
+
+        # === 更新爆炸特效 ===
+        if self.boss_explosion:
+            self.boss_explosion.update()
+            if self.boss_explosion.is_finished():
+                self.boss_explosion = None
+
+        # === 敌人射击 ===
+        self.handle_enemy_shooting()
+
+        # === 玩家射击 ===
+        if self.state != self.STATE_GAMEOVER:
+            self.handle_player_shoot()
+
+        # === 碰撞检测 ===
+        self.handle_collisions()
+
+        # === 清理护盾过期的玩家 ===
+        # (护盾在 Player.update 中自动处理)
+
+
+    def draw(self, screen):
+        """绘制游戏画面"""
+        # === 背景 ===
+        screen.fill(DARK_BLUE)
+
+        # 画星空背景装饰
+        for i in range(50):
+            star_x = (i * 137 + 23) % WINDOW_WIDTH
+            star_y = (i * 97 + self.spawn_timer * 0.5) % WINDOW_HEIGHT
+            brightness = 80 + (i % 3) * 40
+            size = 1 + (i % 3)
+            pygame.draw.circle(screen, (brightness, brightness, brightness),
+                             (int(star_x), int(star_y)), size)
+
+        # === 屏幕震动偏移 ===
+        shake_x = 0
+        shake_y = 0
+        if self.shake_amount > 0.5:
+            shake_x = random.randint(-int(self.shake_amount), int(self.shake_amount))
+            shake_y = random.randint(-int(self.shake_amount), int(self.shake_amount))
+
+        # 创建临时 surface 来应用震动偏移
+        if shake_x != 0 or shake_y != 0:
+            temp_screen = pygame.Surface((WINDOW_WIDTH, WINDOW_HEIGHT))
+            temp_screen.blit(screen, (0, 0))
+            screen.fill(DARK_BLUE)
+
+        # === 绘制所有精灵 ===
+        for sprite in self.all_sprites:
+            if isinstance(sprite, (Particle,)):
+                # 粒子不用震动偏移（已经够乱了）
+                screen.blit(sprite.image, sprite.rect)
+            elif shake_x != 0 or shake_y != 0:
+                # 其他精灵应用震动偏移
+                if sprite != self.player or self.player.is_alive():
+                    offset_rect = sprite.rect.move(shake_x, shake_y)
+                    screen.blit(sprite.image, offset_rect)
+            else:
+                if sprite != self.player or self.player.is_alive():
+                    screen.blit(sprite.image, sprite.rect)
+
+        # === 绘制爆炸特效 ===
+        if self.boss_explosion:
+            self.boss_explosion.draw(screen)
+
+        # === 绘制 Boss 血条 ===
+        if self.boss and self.boss.alive():
+            self.boss.draw_hp_bar(screen)
+
+        # === 绘制玩家 UI ===
+        if self.player.is_alive():
+            self.player.draw_ui(screen)
+
+        # === 绘制分数 ===
+        score_text = font_normal.render(f"分数：{self.score}", True, WHITE)
+        screen.blit(score_text, (WINDOW_WIDTH - 160, 15))
+
+        kill_text = font_small.render(f"击杀：{self.kill_count}", True, GRAY)
+        screen.blit(kill_text, (WINDOW_WIDTH - 160, 47))
+
+        # === 阶段提示文字 ===
+        if self.phase_alert_timer > 0:
+            alert_surf = font_large.render(self.phase_alert_text, True, YELLOW)
+            # 带有缩放效果的提示
+            if self.phase_alert_timer > 100:
+                scale_factor = (120 - self.phase_alert_timer) / 20
+                alert_surf = pygame.transform.scale(
+                    alert_surf,
+                    (int(alert_surf.get_width() * (0.8 + 0.2 * scale_factor)),
+                     int(alert_surf.get_height() * (0.8 + 0.2 * scale_factor)))
+                )
+            alert_rect = alert_surf.get_rect(center=(WINDOW_WIDTH // 2, WINDOW_HEIGHT // 2 - 50))
+            # 加上半透明黑底
+            bg_rect = alert_rect.inflate(20, 10)
+            bg_surf = pygame.Surface((bg_rect.width, bg_rect.height), pygame.SRCALPHA)
+            bg_surf.fill((0, 0, 0, 150))
+            screen.blit(bg_surf, bg_rect)
+            screen.blit(alert_surf, alert_rect)
+
+        # === 游戏结束画面 ===
+        if self.state == self.STATE_GAMEOVER:
+            # 半透明遮罩
+            overlay = pygame.Surface((WINDOW_WIDTH, WINDOW_HEIGHT), pygame.SRCALPHA)
+            overlay.fill((0, 0, 0, 180))
+            screen.blit(overlay, (0, 0))
+
+            game_over_text = font_huge.render("游戏结束", True, RED)
+            text_rect = game_over_text.get_rect(center=(WINDOW_WIDTH // 2, WINDOW_HEIGHT // 2 - 50))
+            screen.blit(game_over_text, text_rect)
+
+            score_text = font_large.render(f"最终分数：{self.score}", True, WHITE)
+            score_rect = score_text.get_rect(center=(WINDOW_WIDTH // 2, WINDOW_HEIGHT // 2 + 30))
+            screen.blit(score_text, score_rect)
+
+            restart_text = font_normal.render("按 R 键重新开始", True, GRAY)
+            restart_rect = restart_text.get_rect(center=(WINDOW_WIDTH // 2, WINDOW_HEIGHT // 2 + 80))
+            screen.blit(restart_text, restart_rect)
+
+        # === 胜利画面 ===
+        if self.state == self.STATE_VICTORY:
+            victory_text = font_huge.render("胜利！", True, YELLOW)
+            text_rect = victory_text.get_rect(center=(WINDOW_WIDTH // 2, WINDOW_HEIGHT // 2 - 80))
+            screen.blit(victory_text, text_rect)
+
+            congrats_text = font_large.render("你击败了 Boss！", True, WHITE)
+            congrats_rect = congrats_text.get_rect(center=(WINDOW_WIDTH // 2, WINDOW_HEIGHT // 2 - 10))
+            screen.blit(congrats_text, congrats_rect)
+
+            score_text = font_normal.render(f"最终分数：{self.score}", True, CYAN)
+            score_rect = score_text.get_rect(center=(WINDOW_WIDTH // 2, WINDOW_HEIGHT // 2 + 45))
+            screen.blit(score_text, score_rect)
+
+            restart_text = font_normal.render("按 R 键重新开始", True, GRAY)
+            restart_rect = restart_text.get_rect(center=(WINDOW_WIDTH // 2, WINDOW_HEIGHT // 2 + 90))
+            screen.blit(restart_text, restart_rect)
+
+        # === 应用震动偏移 ===
+        if shake_x != 0 or shake_y != 0:
+            screen.blit(temp_screen, (0, 0))
+            # 重新绘制背景上的 UI（UI 不震动）
+            # ...简化处理，只保留核心逻辑
+
+
+# ==================== 主程序入口 ====================
+
+def main():
+    """游戏主函数"""
+    game = Game()
+    running = True
+
+    while running:
+        # ===== 事件处理 =====
+        for event in pygame.event.get():
+            if event.type == pygame.QUIT:
+                running = False
+            elif event.type == pygame.KEYDOWN:
+                if event.key == pygame.K_ESCAPE:
+                    running = False
+                elif event.key == pygame.K_r:
+                    # 重新开始游戏
+                    if game.state in (Game.STATE_GAMEOVER, Game.STATE_VICTORY):
+                        game.reset()
+
+        # ===== 游戏更新 =====
+        game.update()
+
+        # ===== 绘制画面 =====
+        game.draw(screen)
+
+        # ===== 刷新屏幕 =====
+        pygame.display.flip()
+        clock.tick(FPS)
+
+    pygame.quit()
+    sys.exit()
+
+
+if __name__ == "__main__":
+    main()

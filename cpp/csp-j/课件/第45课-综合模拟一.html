@@ -1,0 +1,778 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>CSP-J 备考课程 — 第45课：综合模拟（一）</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "Microsoft YaHei", "PingFang SC", sans-serif;
+            background: #0d1117;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            color: #333;
+        }
+
+        .title-bar {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 44px;
+            background: #1a237e;
+            color: #fff;
+            display: flex;
+            align-items: center;
+            padding: 0 24px;
+            font-size: 14px;
+            font-weight: 600;
+            z-index: 1000;
+            letter-spacing: 1px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.3);
+        }
+
+        .container {
+            width: 100%;
+            max-width: 960px;
+            margin: 60px auto 40px;
+            padding: 20px;
+        }
+
+        .slide {
+            display: none;
+            background: #ffffff;
+            border-radius: 16px;
+            padding: 48px 52px 40px;
+            box-shadow: 0 8px 40px rgba(0,0,0,0.15);
+            min-height: 520px;
+            animation: fadeIn 0.4s ease;
+        }
+
+        .slide.active {
+            display: block;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(12px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .slide h1 {
+            font-size: 32px;
+            color: #1a237e;
+            margin-bottom: 8px;
+            font-weight: 800;
+        }
+
+        .slide h2 {
+            font-size: 26px;
+            color: #1a237e;
+            margin-bottom: 24px;
+            padding-bottom: 12px;
+            border-bottom: 3px solid #ffd600;
+            display: inline-block;
+            font-weight: 700;
+        }
+
+        .slide h3 {
+            font-size: 20px;
+            color: #1a237e;
+            margin: 20px 0 10px;
+            font-weight: 700;
+        }
+
+        .slide p {
+            font-size: 17px;
+            line-height: 1.8;
+            color: #444;
+            margin-bottom: 12px;
+        }
+
+        .slide ul, .slide ol {
+            font-size: 17px;
+            line-height: 2;
+            color: #444;
+            margin-left: 24px;
+            margin-bottom: 16px;
+        }
+
+        .slide li {
+            margin-bottom: 4px;
+        }
+
+        .code-block {
+            background: #1e1e1e;
+            color: #d4d4d4;
+            border-radius: 8px;
+            padding: 16px 20px;
+            margin: 14px 0;
+            font-family: "Consolas", "Monaco", "Courier New", monospace;
+            font-size: 14px;
+            line-height: 1.6;
+            overflow-x: auto;
+            white-space: pre;
+            border-left: 4px solid #ffd600;
+        }
+
+        .code-inline {
+            background: #f0f0f0;
+            color: #c7254e;
+            padding: 2px 6px;
+            border-radius: 3px;
+            font-family: "Consolas", "Monaco", "Courier New", monospace;
+            font-size: 14px;
+        }
+
+        .keyword { color: #569cd6; }
+        .type { color: #4ec9b0; }
+        .string { color: #ce9178; }
+        .number { color: #b5cea8; }
+        .comment { color: #6a9955; }
+        .func { color: #dcdcaa; }
+
+        .tip-box {
+            background: #fff8e1;
+            border-left: 5px solid #ffd600;
+            border-radius: 6px;
+            padding: 14px 18px;
+            margin: 16px 0;
+            font-size: 15px;
+            color: #5d4037;
+            line-height: 1.7;
+        }
+
+        .tip-box.orange {
+            background: #fff3e0;
+            border-left-color: #ff9800;
+        }
+
+        .tip-box strong {
+            color: #e65100;
+        }
+
+        .table-wrap {
+            overflow-x: auto;
+            margin: 16px 0;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 15px;
+        }
+
+        table th {
+            background: #1a237e;
+            color: #fff;
+            padding: 10px 14px;
+            text-align: left;
+            font-weight: 600;
+        }
+
+        table td {
+            padding: 9px 14px;
+            border-bottom: 1px solid #e0e0e0;
+        }
+
+        table tr:nth-child(even) td {
+            background: #f5f5f5;
+        }
+
+        table tr:hover td {
+            background: #e8eaf6;
+        }
+
+        .badge {
+            display: inline-block;
+            background: #ffd600;
+            color: #1a237e;
+            font-weight: 700;
+            padding: 3px 10px;
+            border-radius: 12px;
+            font-size: 13px;
+            margin-right: 6px;
+        }
+
+        .highlight-num {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            width: 32px;
+            height: 32px;
+            background: #1a237e;
+            color: #ffd600;
+            border-radius: 50%;
+            font-weight: 700;
+            font-size: 15px;
+            margin-right: 8px;
+            flex-shrink: 0;
+        }
+
+        .step-item {
+            display: flex;
+            align-items: flex-start;
+            margin-bottom: 14px;
+            line-height: 1.7;
+        }
+
+        .nav {
+            position: fixed;
+            bottom: 24px;
+            left: 50%;
+            transform: translateX(-50%);
+            display: flex;
+            gap: 12px;
+            align-items: center;
+            z-index: 1000;
+        }
+
+        .nav button {
+            background: #1a237e;
+            color: #fff;
+            border: none;
+            padding: 10px 24px;
+            border-radius: 24px;
+            font-size: 15px;
+            cursor: pointer;
+            font-weight: 600;
+            transition: all 0.25s;
+            box-shadow: 0 4px 14px rgba(26,35,126,0.35);
+        }
+
+        .nav button:hover {
+            background: #283593;
+            box-shadow: 0 6px 20px rgba(26,35,126,0.45);
+            transform: translateY(-2px);
+        }
+
+        .nav button:disabled {
+            background: #9e9e9e;
+            cursor: not-allowed;
+            box-shadow: none;
+            transform: none;
+        }
+
+        .nav .page-indicator {
+            color: #fff;
+            font-size: 16px;
+            font-weight: 600;
+            min-width: 80px;
+            text-align: center;
+            background: rgba(255,255,255,0.12);
+            padding: 8px 16px;
+            border-radius: 20px;
+        }
+
+        .slide-number {
+            position: absolute;
+            top: 20px;
+            right: 24px;
+            color: #bbb;
+            font-size: 14px;
+            font-weight: 600;
+        }
+
+        .grid-2 {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 20px;
+        }
+
+        .grid-3 {
+            display: grid;
+            grid-template-columns: 1fr 1fr 1fr;
+            gap: 16px;
+        }
+
+        .card {
+            background: #f5f5f5;
+            border-radius: 10px;
+            padding: 20px;
+            border-top: 4px solid #ffd600;
+        }
+
+        .card h4 {
+            color: #1a237e;
+            margin-bottom: 8px;
+            font-size: 16px;
+        }
+
+        .card p {
+            font-size: 14px;
+            color: #555;
+            line-height: 1.6;
+        }
+
+        @media (max-width: 768px) {
+            .slide {
+                padding: 28px 22px 24px;
+                min-height: auto;
+            }
+            .slide h1 {
+                font-size: 24px;
+            }
+            .slide h2 {
+                font-size: 20px;
+            }
+            .grid-2, .grid-3 {
+                grid-template-columns: 1fr;
+            }
+            .nav button {
+                padding: 8px 16px;
+                font-size: 13px;
+            }
+        }
+    </style>
+</head>
+<body>
+
+<div class="title-bar">CSP-J 备考课程 — 第45课：综合模拟（一）</div>
+
+<div class="container">
+
+    <!-- ========== 第1页：标题页 ========== -->
+    <div class="slide active" id="slide1">
+        <div class="slide-number">1 / 10</div>
+        <div style="text-align:center; padding-top:60px;">
+            <h1 style="font-size:42px; margin-bottom:20px;">📝 第45课：综合模拟（一）</h1>
+            <p style="font-size:22px; color:#666;">选择题 + 程序阅读 + 程序填空 专项训练</p>
+            <div style="margin-top:32px;">
+                <span class="badge" style="font-size:16px; padding:6px 16px;">CSP-J 第一轮·全真模拟</span>
+            </div>
+            <div style="margin-top:36px;">
+                <span class="badge" style="font-size:14px;">计算机基础</span>
+                <span class="badge" style="font-size:14px;">进制转换</span>
+                <span class="badge" style="font-size:14px;">运算符</span>
+                <span class="badge" style="font-size:14px;">数组字符串</span>
+            </div>
+            <p style="margin-top:40px; color:#999; font-size:15px;">满分 100 分 | 考试时间 120 分钟</p>
+        </div>
+    </div>
+
+    <!-- ========== 第2页：考试策略总览 ========== -->
+    <div class="slide" id="slide2">
+        <div class="slide-number">2 / 10</div>
+        <h2>📋 第一轮考试策略总览</h2>
+
+        <h3>试卷结构</h3>
+        <div class="grid-3" style="margin-bottom:20px;">
+            <div class="card">
+                <h4>选择题</h4>
+                <p>15 题 × 2 分 = 30 分<br>建议用时：30-35 分钟</p>
+            </div>
+            <div class="card">
+                <h4>程序阅读</h4>
+                <p>5 题 × 6~7 分 ≈ 32 分<br>建议用时：35-40 分钟</p>
+            </div>
+            <div class="card">
+                <h4>程序填空</h4>
+                <p>5 题 × 6~7 分 ≈ 32 分<br>建议用时：30-35 分钟</p>
+            </div>
+        </div>
+
+        <h3>核心原则</h3>
+        <div class="tip-box orange">
+            <strong>⚠️ 准确率优先，时间分配合理</strong><br>
+            遇到卡壳超过 <span class="code-inline">3 分钟</span> 的题目，立即标记跳过，全部完成后再回头攻克。不要因一道题影响整体节奏！
+        </div>
+
+        <h3>时间分配建议</h3>
+        <table>
+            <tr><th>阶段</th><th>时间</th><th>任务</th></tr>
+            <tr><td>✅ 选择题</td><td>30-35 分钟</td><td>15 道，平均每题 2 分钟</td></tr>
+            <tr><td>✅ 程序阅读</td><td>35-40 分钟</td><td>5 道，平均每题 7-8 分钟</td></tr>
+            <tr><td>✅ 程序填空</td><td>30-35 分钟</td><td>5 道，平均每题 6-7 分钟</td></tr>
+            <tr><td>🔍 检查</td><td>10-15 分钟</td><td>重点检查不确定的题目</td></tr>
+        </table>
+    </div>
+
+    <!-- ========== 第3页：选择题答题技巧 ========== -->
+    <div class="slide" id="slide3">
+        <div class="slide-number">3 / 10</div>
+        <h2>🎯 选择题答题技巧</h2>
+
+        <div class="step-item">
+            <span class="highlight-num">1</span>
+            <div>
+                <strong>排除法</strong>
+                <p>逐个排除明显错误的选项，缩小选择范围。即便不确定正确答案，也能提高猜对的概率。</p>
+                <div class="code-block"><span class="comment">// 题目：5 & 3 的结果是？</span>
+<span class="keyword">int</span> a = <span class="number">5</span>, b = <span class="number">3</span>;
+cout &lt;&lt; (a &amp; b);
+<span class="comment">// 5(101) &amp; 3(011) = 1(001)</span>
+<span class="comment">// 排除法：结果不可能 &gt;5 → 排除 C、D</span>
+<span class="comment">//         5和3第0位都是1 → 排除 A(0)</span>
+<span class="comment">//         答案只能是 B(1) ✓</span></div>
+            </div>
+        </div>
+
+        <div class="step-item">
+            <span class="highlight-num">2</span>
+            <div>
+                <strong>代入验证法</strong>
+                <p>将选项反代回题目条件中验证。进制转换题尤其适用：已知十六进制 2F，快速计算 2×16+15=47，在选项中找 47。</p>
+            </div>
+        </div>
+
+        <div class="step-item">
+            <span class="highlight-num">3</span>
+            <div>
+                <strong>特殊值法</strong>
+                <p>代入 0、1、-1 等边界值快速验证。对于循环边界题，代入 n=1 看程序行为是否符合预期。</p>
+            </div>
+        </div>
+
+        <div class="tip-box">
+            <strong>💡 选择题得分目标：24 分以上（答对 12 题以上）</strong><br>
+            基础题（前 8 题）争取全对，偏难题（后 7 题）用排除法至少排除 2 个选项再选择。
+        </div>
+    </div>
+
+    <!-- ========== 第4页：程序阅读题技巧 ========== -->
+    <div class="slide" id="slide4">
+        <div class="slide-number">4 / 10</div>
+        <h2>🔍 程序阅读题技巧</h2>
+
+        <h3>核心方法：模拟执行法</h3>
+        <p>在草稿纸上建立<span class="code-inline">变量变化表</span>，逐行模拟执行过程。</p>
+
+        <div class="code-block"><span class="comment">// 例题：写出输出</span>
+<span class="keyword">int</span> a[<span class="number">5</span>] = {<span class="number">1</span>, <span class="number">2</span>, <span class="number">3</span>, <span class="number">4</span>, <span class="number">5</span>};
+<span class="keyword">int</span> s = <span class="number">0</span>;
+<span class="keyword">for</span> (<span class="keyword">int</span> i = <span class="number">0</span>; i &lt; <span class="number">5</span>; i++) {
+    <span class="keyword">if</span> (a[i] % <span class="number">2</span> == <span class="number">0</span>) s += a[i];
+    <span class="keyword">else</span> s -= a[i];
+}
+cout &lt;&lt; s;  <span class="comment">// 输出: -3</span></div>
+
+        <table>
+            <tr><th>i</th><th>a[i]</th><th>a[i]%2==0</th><th>s的变化</th><th>s的值</th></tr>
+            <tr><td>0</td><td>1</td><td>false</td><td>s = 0 - 1</td><td>-1</td></tr>
+            <tr><td>1</td><td>2</td><td>true</td><td>s = -1 + 2</td><td>1</td></tr>
+            <tr><td>2</td><td>3</td><td>false</td><td>s = 1 - 3</td><td>-2</td></tr>
+            <tr><td>3</td><td>4</td><td>true</td><td>s = -2 + 4</td><td>2</td></tr>
+            <tr><td>4</td><td>5</td><td>false</td><td>s = 2 - 5</td><td>-3</td></tr>
+        </table>
+
+        <h3>六大常见陷阱</h3>
+        <ul>
+            <li><strong>循环边界</strong>：<span class="code-inline">&lt;=</span> 比 <span class="code-inline">&lt;</span> 多执行一次</li>
+            <li><strong>自增自减</strong>：<span class="code-inline">i++</span> 先用后增，<span class="code-inline">++i</span> 先增后用</li>
+            <li><strong>整数除法</strong>：<span class="code-inline">5 / 2 = 2</span>，不是 2.5</li>
+            <li><strong>switch 穿透</strong>：没有 break 会继续执行下一个 case</li>
+            <li><strong>短路求值</strong>：<span class="code-inline">A && B</span> 中 A 为 false 则 B 不执行</li>
+            <li><strong>变量未初始化</strong>：局部变量默认值不确定</li>
+        </ul>
+    </div>
+
+    <!-- ========== 第5页：程序填空题方法 ========== -->
+    <div class="slide" id="slide5">
+        <div class="slide-number">5 / 10</div>
+        <h2>📝 程序填空题方法</h2>
+
+        <div class="step-item">
+            <span class="highlight-num">1</span>
+            <div>
+                <strong>整体阅读法</strong>
+                <p>不看空，先通读完整程序，理解程序的<strong>整体功能和算法思路</strong>。很多空可以通过上下文"推断"——前面有赋值，后面在使用，中间的空往往是对该变量的处理。</p>
+            </div>
+        </div>
+
+        <div class="step-item">
+            <span class="highlight-num">2</span>
+            <div>
+                <strong>对称法</strong>
+                <p>许多程序存在对称结构：二分查找的左右区间更新、交换两个变量的三行代码。利用对称性推断缺失内容。</p>
+            </div>
+        </div>
+
+        <div class="step-item">
+            <span class="highlight-num">3</span>
+            <div>
+                <strong>常见模式识别</strong>
+            </div>
+        </div>
+
+        <table>
+            <tr><th>模式</th><th>典型填空</th><th>示例</th></tr>
+            <tr><td>数组遍历</td><td>循环条件</td><td><span class="code-inline">for(int i=0; i&lt;n; i++)</span></td></tr>
+            <tr><td>求最大值</td><td>初始值</td><td><span class="code-inline">maxv = a[0]</span> 或 <span class="code-inline">INT_MIN</span></td></tr>
+            <tr><td>二分查找</td><td>区间更新</td><td><span class="code-inline">left = mid+1</span> / <span class="code-inline">right = mid-1</span></td></tr>
+            <tr><td>素数判断</td><td>循环上界</td><td><span class="code-inline">i &lt;= sqrt(n)</span></td></tr>
+            <tr><td>进制转换</td><td>取余存入</td><td><span class="code-inline">a[cnt] = n % base</span></td></tr>
+            <tr><td>字符串反转</td><td>交换位置</td><td><span class="code-inline">s[len-1-i]</span></td></tr>
+        </table>
+
+        <div class="tip-box">
+            <strong>💡 程序填空得分目标：18 分以上（至少答对 3 题）</strong><br>
+            常见套路：变量声明对应初始化后的使用，循环条件对应循环体内的变量变化。
+        </div>
+    </div>
+
+    <!-- ========== 第6页：重点知识速查 ========== -->
+    <div class="slide" id="slide6">
+        <div class="slide-number">6 / 10</div>
+        <h2>📚 重点知识速查</h2>
+
+        <h3>进制转换对照表</h3>
+        <table>
+            <tr><th>十进制</th><th>二进制</th><th>八进制</th><th>十六进制</th></tr>
+            <tr><td>0</td><td>0</td><td>0</td><td>0</td></tr>
+            <tr><td>10</td><td>1010</td><td>12</td><td>A</td></tr>
+            <tr><td>15</td><td>1111</td><td>17</td><td>F</td></tr>
+            <tr><td>16</td><td>10000</td><td>20</td><td>10</td></tr>
+            <tr><td>29</td><td><strong>11101</strong></td><td>35</td><td>1D</td></tr>
+            <tr><td>42</td><td>101010</td><td>52</td><td><strong>2A</strong></td></tr>
+            <tr><td>255</td><td>11111111</td><td>377</td><td>FF</td></tr>
+        </table>
+
+        <h3>快速转换技巧</h3>
+        <div class="tip-box">
+            <strong>二进制 → 八进制</strong>：从右向左每 <strong>3 位</strong>一组<br>
+            <strong>二进制 → 十六进制</strong>：从右向左每 <strong>4 位</strong>一组<br>
+            <strong>十六进制 → 二进制</strong>：每位展开为 4 位二进制<br>
+            例：<span class="code-inline">2A(16) = 0010 1010(2)</span>
+        </div>
+
+        <h3>运算符优先级口诀（高→低）</h3>
+        <p style="font-size:15px; line-height:2.2;">
+            <span class="code-inline">! ~ ++ --</span> (一元) &gt;
+            <span class="code-inline">* / %</span> &gt;
+            <span class="code-inline">+ -</span> &gt;
+            <span class="code-inline">&lt;&lt; &gt;&gt;</span> (移位) &gt;
+            <span class="code-inline">&lt; &lt;= &gt; &gt;=</span> &gt;
+            <span class="code-inline">== !=</span> &gt;
+            <span class="code-inline">&amp;</span> (按位与) &gt;
+            <span class="code-inline">^</span> &gt;
+            <span class="code-inline">|</span> &gt;
+            <span class="code-inline">&amp;&amp;</span> &gt;
+            <span class="code-inline">||</span> &gt;
+            <span class="code-inline">=</span> (赋值)
+        </p>
+    </div>
+
+    <!-- ========== 第7页：示例选择题详解 ========== -->
+    <div class="slide" id="slide7">
+        <div class="slide-number">7 / 10</div>
+        <h2>📋 示例选择题详解</h2>
+
+        <div class="tip-box orange">
+            <strong>第 7 题（经典陷阱）：以下程序段的输出是？</strong>
+            <div class="code-block"><span class="keyword">int</span> a = <span class="number">3</span>, b = <span class="number">5</span>;
+<span class="keyword">if</span> (a = b)
+    cout &lt;&lt; <span class="string">"Equal"</span>;
+<span class="keyword">else</span>
+    cout &lt;&lt; <span class="string">"Not Equal"</span>;
+<span class="comment">// A. Equal   B. Not Equal   C. 编译错误   D. 运行错误</span></div>
+            <strong>答案：A (Equal)</strong><br>
+            <span class="code-inline">if (a = b)</span> 是<strong>赋值</strong>而非比较！a = b 的值是 5，非零即 true。<br>
+            正确写法：<span class="code-inline">if (a == b)</span> —— 这是每年必考的陷阱！
+        </div>
+
+        <div class="tip-box orange">
+            <strong>第 11 题：关于 break 和 continue 的正确说法是？</strong>
+            <div style="margin-top:8px;">
+                A. break 跳过本次循环，continue 结束整个循环<br>
+                <strong>B. break 结束整个循环，continue 跳过本次循环的剩余部分 ✓</strong><br>
+                C. 两者作用完全相同<br>
+                D. break 只能用于 switch 语句中
+            </div>
+            <p style="margin-top:10px;"><strong>记法：</strong>break = "打破"整个循环；continue = "继续"下一次循环。</p>
+        </div>
+
+        <div class="tip-box orange">
+            <strong>第 8 题：以下运算符优先级最高的是？</strong>
+            <div style="margin-top:8px;">
+                A. <span class="code-inline">&amp;&amp;</span>&nbsp;&nbsp;
+                B. <span class="code-inline">==</span>&nbsp;&nbsp;
+                <strong>C. <span class="code-inline">!</span> ✓</strong>&nbsp;&nbsp;
+                D. <span class="code-inline">=</span>
+            </div>
+            <p style="margin-top:10px;"><strong>记法：</strong>一元运算符（!）优先级高于二元运算符（==, &amp;&amp;），赋值（=）优先级最低。</p>
+        </div>
+    </div>
+
+    <!-- ========== 第8页：switch穿透与常见陷阱 ========== -->
+    <div class="slide" id="slide8">
+        <div class="slide-number">8 / 10</div>
+        <h2>⚠️ 高频陷阱详解</h2>
+
+        <h3>1. Switch 穿透（每年必考）</h3>
+        <div class="code-block"><span class="keyword">int</span> x = <span class="number">2</span>;
+<span class="keyword">switch</span> (x) {
+    <span class="keyword">case</span> <span class="number">1</span>: cout &lt;&lt; <span class="string">"A"</span>;
+    <span class="keyword">case</span> <span class="number">2</span>: cout &lt;&lt; <span class="string">"B"</span>;  <span class="comment">// 匹配这里，但没有 break</span>
+    <span class="keyword">case</span> <span class="number">3</span>: cout &lt;&lt; <span class="string">"C"</span>; <span class="keyword">break</span>;  <span class="comment">// 穿透到这里才停止</span>
+    <span class="keyword">default</span>: cout &lt;&lt; <span class="string">"D"</span>;
+}
+<span class="comment">// 输出: BC（不是 B！）</span></div>
+
+        <h3>2. 整数除法截断</h3>
+        <div class="code-block"><span class="keyword">int</span> a = <span class="number">5</span> / <span class="number">2</span>;  <span class="comment">// a = 2，不是 2.5</span>
+<span class="keyword">double</span> b = <span class="number">5</span> / <span class="number">2</span>;  <span class="comment">// b = 2.0，因为右侧先做 int 除法</span>
+<span class="keyword">double</span> c = <span class="number">5.0</span> / <span class="number">2</span>;  <span class="comment">// c = 2.5（有一个操作数是浮点即可）</span></div>
+
+        <h3>3. 数组下标从 0 开始 &amp; 部分初始化</h3>
+        <div class="code-block"><span class="keyword">int</span> a[<span class="number">5</span>] = {<span class="number">1</span>, <span class="number">2</span>};  <span class="comment">// a[0]=1, a[1]=2, a[2]=0, a[3]=0, a[4]=0</span>
+<span class="keyword">int</span> b[<span class="number">5</span>];                <span class="comment">// 局部变量，值为随机值！</span></div>
+
+        <h3>4. 字符串结束符</h3>
+        <div class="code-block"><span class="keyword">char</span> s[] = <span class="string">"abc"</span>;  <span class="comment">// 实际占 4 字节: 'a','b','c','\0'</span>
+cout &lt;&lt; <span class="keyword">sizeof</span>(s);  <span class="comment">// 输出 4</span></div>
+    </div>
+
+    <!-- ========== 第9页：关键知识总结 ========== -->
+    <div class="slide" id="slide9">
+        <div class="slide-number">9 / 10</div>
+        <h2>🗂️ 关键知识总结</h2>
+
+        <div class="grid-2">
+            <div class="card">
+                <h4>📐 进制转换</h4>
+                <p>
+                    • 2→8: 每 3 位一组<br>
+                    • 2→16: 每 4 位一组<br>
+                    • 10→N: 除 N 取余，倒序排列<br>
+                    • N→10: 按权展开求和<br>
+                    • 29(10) = <strong>11101(2)</strong> = 35(8) = 1D(16)
+                </p>
+            </div>
+            <div class="card">
+                <h4>⚙️ 位运算</h4>
+                <p>
+                    • <span class="code-inline">x &amp; 1</span>：判断奇偶<br>
+                    • <span class="code-inline">x &amp; (x-1) == 0</span>：判断 2 的幂<br>
+                    • <span class="code-inline">x &lt;&lt; 1</span>：乘 2<br>
+                    • <span class="code-inline">x &gt;&gt; 1</span>：除 2
+                </p>
+            </div>
+            <div class="card">
+                <h4>🔄 数据类型</h4>
+                <p>
+                    • int: ±2.1×10⁹<br>
+                    • long long: ±9.2×10¹⁸<br>
+                    • char: -128~127<br>
+                    • bool: true(1)/false(0)<br>
+                    • string 不是基本类型！
+                </p>
+            </div>
+            <div class="card">
+                <h4>🔍 程序填空口诀</h4>
+                <p>
+                    • 循环边界看数组大小<br>
+                    • 初始值看累加/找最值<br>
+                    • 二分看区间更新方向<br>
+                    • 递归看终止条件和递推
+                </p>
+            </div>
+        </div>
+
+        <div class="tip-box" style="margin-top:20px;">
+            <strong>📊 各题型目标得分</strong><br>
+            选择题 24/30 + 程序阅读 24/32 + 程序填空 18/32 = <strong>66 分以上</strong>（大多数省份通过线在 50-60 分）
+        </div>
+    </div>
+
+    <!-- ========== 第10页：考前叮嘱 ========== -->
+    <div class="slide" id="slide10">
+        <div class="slide-number">10 / 10</div>
+        <div style="text-align:center; padding-top:40px;">
+            <h1 style="font-size:36px; color:#1a237e;">✅ 考前最后叮嘱</h1>
+
+            <div style="text-align:left; max-width:600px; margin:30px auto;">
+                <div class="step-item">
+                    <span class="highlight-num" style="background:#4caf50;">✓</span>
+                    <div><strong>带好草稿纸</strong>，程序阅读和填空必须在纸上模拟执行</div>
+                </div>
+                <div class="step-item">
+                    <span class="highlight-num" style="background:#4caf50;">✓</span>
+                    <div><strong>先易后难</strong>，选择题前 8 题是送分题，务必拿满</div>
+                </div>
+                <div class="step-item">
+                    <span class="highlight-num" style="background:#4caf50;">✓</span>
+                    <div><strong>绝不空题</strong>，不会的题目用排除法至少排除 2 个再猜</div>
+                </div>
+                <div class="step-item">
+                    <span class="highlight-num" style="background:#4caf50;">✓</span>
+                    <div><strong>留出检查时间</strong>，重点复查进制转换和运算符优先级题</div>
+                </div>
+                <div class="step-item">
+                    <span class="highlight-num" style="background:#4caf50;">✓</span>
+                    <div><strong>保持平常心</strong>，第一轮只是入门关，正常发挥即可</div>
+                </div>
+            </div>
+
+            <div class="tip-box orange" style="max-width:500px; margin:24px auto; text-align:center;">
+                <strong>📌 记住：程序阅读题的答案一定在程序里</strong><br>
+                不需要任何课外知识，所有信息都在代码中！
+            </div>
+
+            <p style="margin-top:30px; color:#1a237e; font-size:22px; font-weight:700;">
+                祝同学们考试顺利！🎉
+            </p>
+        </div>
+    </div>
+
+</div>
+
+<!-- 导航按钮 -->
+<div class="nav">
+    <button id="prevBtn" onclick="changeSlide(-1)">◀ 上一页</button>
+    <span class="page-indicator" id="pageIndicator">1 / 10</span>
+    <button id="nextBtn" onclick="changeSlide(1)">下一页 ▶</button>
+</div>
+
+<script>
+    let currentSlide = 1;
+    const totalSlides = 10;
+
+    function showSlide(n) {
+        const slides = document.querySelectorAll('.slide');
+        slides.forEach(s => s.classList.remove('active'));
+
+        if (n < 1) n = 1;
+        if (n > totalSlides) n = totalSlides;
+
+        currentSlide = n;
+        document.getElementById('slide' + n).classList.add('active');
+        document.getElementById('pageIndicator').textContent = n + ' / ' + totalSlides;
+
+        document.getElementById('prevBtn').disabled = (n === 1);
+        document.getElementById('nextBtn').disabled = (n === totalSlides);
+    }
+
+    function changeSlide(delta) {
+        showSlide(currentSlide + delta);
+    }
+
+    // 键盘导航
+    document.addEventListener('keydown', function(e) {
+        if (e.key === 'ArrowLeft' || e.key === 'ArrowUp') {
+            e.preventDefault();
+            changeSlide(-1);
+        } else if (e.key === 'ArrowRight' || e.key === 'ArrowDown' || e.key === ' ') {
+            e.preventDefault();
+            changeSlide(1);
+        } else if (e.key === 'Home') {
+            e.preventDefault();
+            showSlide(1);
+        } else if (e.key === 'End') {
+            e.preventDefault();
+            showSlide(totalSlides);
+        }
+    });
+
+    // 初始化
+    showSlide(1);
+</script>
+
+</body>
+</html>

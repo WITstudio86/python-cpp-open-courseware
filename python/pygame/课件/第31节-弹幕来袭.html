@@ -1,0 +1,558 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>第31节：弹幕来袭</title>
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body {
+    font-family: "PingFang SC", "Microsoft YaHei", "Noto Sans SC", sans-serif;
+    background: #1a1a2e;
+    color: #eee;
+    overflow: hidden;
+    height: 100vh;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+  }
+  .slide-container {
+    width: 95vw;
+    max-width: 1200px;
+    height: 90vh;
+    position: relative;
+  }
+  .slide {
+    position: absolute;
+    top: 0; left: 0;
+    width: 100%; height: 100%;
+    background: linear-gradient(135deg, #16213e 0%, #0f3460 50%, #1a1a2e 100%);
+    border-radius: 20px;
+    padding: 40px 60px;
+    display: none;
+    flex-direction: column;
+    box-shadow: 0 10px 40px rgba(0,0,0,0.5);
+    border: 2px solid #e94560;
+    overflow-y: auto;
+  }
+  .slide.active { display: flex; }
+  .slide-title {
+    font-size: 2.8em;
+    font-weight: bold;
+    color: #e94560;
+    border-bottom: 4px solid #e94560;
+    padding-bottom: 15px;
+    margin-bottom: 25px;
+    text-shadow: 0 0 20px rgba(233,69,96,0.5);
+  }
+  .slide-subtitle {
+    font-size: 1.6em;
+    color: #f0a500;
+    margin-bottom: 15px;
+  }
+  .slide-content {
+    font-size: 1.3em;
+    line-height: 1.8;
+    flex: 1;
+  }
+  .slide-content ul { padding-left: 30px; }
+  .slide-content li { margin-bottom: 8px; }
+  .code-block {
+    background: #0d1117;
+    border: 2px solid #30363d;
+    border-radius: 12px;
+    padding: 18px 22px;
+    margin: 15px 0;
+    font-family: "JetBrains Mono", "Fira Code", "SF Mono", "Consolas", monospace;
+    font-size: 0.85em;
+    line-height: 1.6;
+    overflow-x: auto;
+    white-space: pre;
+    color: #c9d1d9;
+  }
+  .code-block .keyword { color: #ff7b72; }
+  .code-block .func { color: #d2a8ff; }
+  .code-block .string { color: #a5d6ff; }
+  .code-block .comment { color: #8b949e; font-style: italic; }
+  .code-block .number { color: #79c0ff; }
+  .code-block .param { color: #ffa657; }
+  .highlight-box {
+    background: rgba(233,69,96,0.15);
+    border-left: 5px solid #e94560;
+    padding: 15px 20px;
+    margin: 15px 0;
+    border-radius: 0 8px 8px 0;
+    font-size: 1.15em;
+  }
+  .compare-table {
+    width: 100%;
+    border-collapse: collapse;
+    margin: 15px 0;
+    font-size: 1.1em;
+  }
+  .compare-table th {
+    background: #e94560;
+    color: #fff;
+    padding: 12px 15px;
+    text-align: left;
+  }
+  .compare-table td {
+    padding: 10px 15px;
+    border-bottom: 1px solid #30363d;
+    background: rgba(255,255,255,0.03);
+  }
+  .compare-table tr:hover td { background: rgba(233,69,96,0.1); }
+  .note-badge {
+    display: inline-block;
+    background: #f0a500;
+    color: #1a1a2e;
+    padding: 5px 14px;
+    border-radius: 20px;
+    font-weight: bold;
+    font-size: 0.9em;
+    margin: 3px;
+  }
+  .diagram {
+    background: rgba(0,0,0,0.3);
+    border-radius: 12px;
+    padding: 20px;
+    margin: 15px 0;
+    text-align: center;
+    font-family: monospace;
+    font-size: 1.1em;
+    line-height: 1.8;
+    color: #f0a500;
+  }
+  .page-num {
+    position: absolute;
+    bottom: 20px;
+    right: 30px;
+    font-size: 1em;
+    color: #8b949e;
+  }
+  .nav-hint {
+    position: absolute;
+    bottom: 20px;
+    left: 50%;
+    transform: translateX(-50%);
+    font-size: 0.9em;
+    color: #8b949e;
+    opacity: 0.7;
+  }
+  .big-emoji { font-size: 3em; display: block; text-align: center; margin: 10px 0; }
+  .section-header {
+    font-size: 1.5em;
+    color: #f0a500;
+    margin-top: 20px;
+    margin-bottom: 10px;
+  }
+  .grid-2col {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 25px;
+  }
+  .card {
+    background: rgba(255,255,255,0.05);
+    border-radius: 12px;
+    padding: 20px;
+    border: 1px solid #30363d;
+  }
+  .card h3 { color: #f0a500; margin-bottom: 10px; font-size: 1.3em; }
+</style>
+</head>
+<body>
+
+<div class="slide-container" id="slides-container">
+
+  <!-- Slide 1: 标题 -->
+  <div class="slide active">
+    <div style="flex:1; display:flex; flex-direction:column; justify-content:center; align-items:center; text-align:center;">
+      <span class="big-emoji">🎮</span>
+      <h1 style="font-size:4em; color:#e94560; text-shadow:0 0 30px rgba(233,69,96,0.6); margin:20px 0;">
+        第31节：弹幕来袭
+      </h1>
+      <p style="font-size:1.8em; color:#f0a500; margin:15px 0;">扇形弹幕 · 圆形弹幕 · Boss血条</p>
+      <div style="margin-top:40px; color:#8b949e; font-size:1.2em;">
+        <p>PyGame 游戏开发课程 · 第31节</p>
+        <p style="margin-top:10px;">⬅️ ➡️ 方向键翻页</p>
+      </div>
+    </div>
+    <div class="page-num">1 / 12</div>
+  </div>
+
+  <!-- Slide 2: 本节目标 -->
+  <div class="slide">
+    <h2 class="slide-title">🎯 本节目标</h2>
+    <div class="slide-content">
+      <ul>
+        <li style="font-size:1.3em; margin-bottom:15px;">🔫 <strong>弹幕生成函数</strong> — 传入角度和数量，批量生成子弹</li>
+        <li style="font-size:1.3em; margin-bottom:15px;">🪭 <strong>扇形弹幕</strong> — 像孔雀开屏向下展开</li>
+        <li style="font-size:1.3em; margin-bottom:15px;">🎆 <strong>圆形弹幕</strong> — 像烟花向 360° 绽放</li>
+        <li style="font-size:1.3em; margin-bottom:15px;">❤️ <strong>Boss 血条</strong> — 屏幕顶部大血条，颜色随血量变化</li>
+        <li style="font-size:1.3em; margin-bottom:15px;">🧠 <strong>代码复用思想</strong> — 一个函数，不同参数，不同效果</li>
+      </ul>
+    </div>
+    <div class="page-num">2 / 12</div>
+  </div>
+
+  <!-- Slide 3: 什么是弹幕？ -->
+  <div class="slide">
+    <h2 class="slide-title">❓ 什么是"弹幕"？</h2>
+    <div class="slide-content">
+      <div class="highlight-box">
+        <strong>弹幕</strong>（Bullet Curtain）= 从发射点按<strong>角度</strong>和<strong>数量</strong>生成的一组子弹
+      </div>
+      <div class="grid-2col" style="margin-top:20px;">
+        <div class="card">
+          <h3>🔫 普通子弹</h3>
+          <div class="diagram">
+            朝一个方向发射<br>
+            Boss → ●  →  →  →
+          </div>
+          <p>只发一颗，方向固定</p>
+          <span class="note-badge">简单</span>
+        </div>
+        <div class="card">
+          <h3>🎆 弹幕</h3>
+          <div class="diagram">
+            朝多个方向同时发射<br>
+               ●   ●   ●<br>
+               ╲  │  ╱<br>
+                Boss<br>
+               ╱  │  ╲<br>
+             ●   ●   ●
+          </div>
+          <p>一次发多颗，覆盖一片区域</p>
+          <span class="note-badge">华丽</span>
+        </div>
+      </div>
+      <div class="highlight-box" style="margin-top:20px; background:rgba(240,165,0,0.1); border-left-color:#f0a500;">
+        <strong>核心原理：</strong>在一个循环里，每次改变一个角度，生成一颗子弹 → 很多颗子弹就形成了弹幕！
+      </div>
+    </div>
+    <div class="page-num">3 / 12</div>
+  </div>
+
+  <!-- Slide 4: 弹幕生成函数 -->
+  <div class="slide">
+    <h2 class="slide-title">🏭 弹幕生成函数 — "子弹工厂"</h2>
+    <div class="slide-content">
+      <div class="code-block"><span class="comment"># 弹幕生成器 —— 一个函数，制造所有弹幕！</span>
+<span class="keyword">def</span> <span class="func">create_bullet_pattern</span>(cx, cy, start_angle, angle_range, count, speed, group, color):
+    <span class="comment">"""参数说明（像点菜一样简单）："""</span>
+    <span class="comment"># cx, cy       → 发射位置（烟花在哪炸开）</span>
+    <span class="comment"># start_angle  → 从哪个角度开始（0°=正右）</span>
+    <span class="comment"># angle_range  → 覆盖多大角度（扇形=60°, 圆形=360°）</span>
+    <span class="comment"># count        → 产生几颗子弹</span>
+    <span class="comment"># speed        → 子弹飞多快</span>
+    <span class="keyword">for</span> i <span class="keyword">in</span> <span class="func">range</span>(count):
+        <span class="comment"># 计算第 i 颗子弹的角度（均匀分布）</span>
+        angle = start_angle + angle_range * i / (count - <span class="number">1</span>)
+        rad = math.<span class="func">radians</span>(angle)        <span class="comment"># 角度→弧度</span>
+        vx = speed * math.<span class="func">cos</span>(rad)       <span class="comment"># cos管左右</span>
+        vy = speed * math.<span class="func">sin</span>(rad)       <span class="comment"># sin管上下</span>
+        bullet = <span class="func">Bullet</span>(cx, cy, vx, vy, color)  <span class="comment"># 创建子弹</span>
+        group.<span class="func">add</span>(bullet)                  <span class="comment"># 加入精灵组</span></div>
+      <div class="highlight-box">
+        <strong>关键公式：</strong><br>
+        第 i 颗子弹的角度 = start_angle + angle_range × i / (count - 1)<br>
+        例如：start=60°, range=60°, count=5 → 60°、75°、90°、105°、120°
+      </div>
+    </div>
+    <div class="page-num">4 / 12</div>
+  </div>
+
+  <!-- Slide 5: 扇形弹幕 -->
+  <div class="slide">
+    <h2 class="slide-title">🪭 扇形弹幕 — "孔雀开屏"</h2>
+    <div class="slide-content">
+      <div class="diagram" style="font-size:1.4em;">
+             Boss 👾<br>
+          ╱    |    ╲<br>
+         ╱     |     ╲<br>
+        ╱      |      ╲<br>
+      ●    ●   ●   ●    ●<br>
+      <span style="font-size:0.7em;">60°            120°</span>
+      </div>
+      <div class="code-block"><span class="keyword">def</span> <span class="func">fire_fan_pattern</span>(boss, bullet_group):
+    <span class="comment"># 扇形弹幕：像一把折扇向下展开</span>
+    create_bullet_pattern(
+        cx=boss.rect.centerx,          <span class="comment"># Boss的X中心</span>
+        cy=boss.rect.bottom,           <span class="comment"># 从Boss底部发出</span>
+        start_angle=<span class="number">60</span>,               <span class="comment"># 扇子左边 → 60°</span>
+        angle_range=<span class="number">60</span>,               <span class="comment"># 打开60°</span>
+        count=<span class="number">5</span>,                      <span class="comment"># 5颗子弹</span>
+        speed=<span class="number">5</span>,
+        group=bullet_group,
+        color=(<span class="number">255</span>,<span class="number">100</span>,<span class="number">100</span>)              <span class="comment"># 浅红色</span>
+    )</div>
+      <div class="highlight-box">
+        <strong>扇形弹幕 =</strong> 朝一个方向（下方），张开一个扇形角度（60°），均匀发射若干子弹（5颗）
+      </div>
+    </div>
+    <div class="page-num">5 / 12</div>
+  </div>
+
+  <!-- Slide 6: 圆形弹幕 -->
+  <div class="slide">
+    <h2 class="slide-title">🎆 圆形弹幕 — "烟花绽放"</h2>
+    <div class="slide-content">
+      <div class="diagram" style="font-size:1.4em;">
+           ●   ●   ●<br>
+        ●           ●<br>
+      ●     Boss     ●<br>
+        ●     👾    ●<br>
+      ●               ●<br>
+        ●           ●<br>
+           ●   ●   ●<br>
+        <span style="font-size:0.7em;">← 20颗子弹均匀分布在360° →</span>
+      </div>
+      <div class="code-block"><span class="keyword">def</span> <span class="func">fire_circle_pattern</span>(boss, bullet_group):
+    <span class="comment"># 圆形弹幕：像烟花一样360°绽放！</span>
+    create_bullet_pattern(
+        cx=boss.rect.centerx,          <span class="comment"># Boss中心</span>
+        cy=boss.rect.centery,          <span class="comment"># 从中心发出</span>
+        start_angle=<span class="number">0</span>,                <span class="comment"># 从0°开始</span>
+        angle_range=<span class="number">360</span>,              <span class="comment"># 转一整圈！</span>
+        count=<span class="number">20</span>,                     <span class="comment"># 20颗子弹</span>
+        speed=<span class="number">4</span>,
+        group=bullet_group,
+        color=(<span class="number">255</span>,<span class="number">200</span>,<span class="number">50</span>)            <span class="comment"># 金黄色</span>
+    )</div>
+      <div class="highlight-box">
+        <strong>圆形弹幕 =</strong> 角度范围 360°，均匀发射 20 颗子弹 → 四面八方同时开花！
+      </div>
+    </div>
+    <div class="page-num">6 / 12</div>
+  </div>
+
+  <!-- Slide 7: 扇形 vs 圆形 对比 -->
+  <div class="slide">
+    <h2 class="slide-title">📊 扇形弹幕 vs 圆形弹幕</h2>
+    <div class="slide-content">
+      <table class="compare-table">
+        <tr>
+          <th>对比项</th><th>🪭 扇形弹幕</th><th>🎆 圆形弹幕</th>
+        </tr>
+        <tr>
+          <td><strong>比喻</strong></td>
+          <td>孔雀开屏</td>
+          <td>烟花绽放</td>
+        </tr>
+        <tr>
+          <td><strong>发射方向</strong></td>
+          <td>只朝前方（下方）</td>
+          <td>四面八方（360°）</td>
+        </tr>
+        <tr>
+          <td><strong>start_angle</strong></td>
+          <td>60°（扇子左边）</td>
+          <td>0°</td>
+        </tr>
+        <tr>
+          <td><strong>angle_range</strong></td>
+          <td>60° ~ 90°</td>
+          <td>360°</td>
+        </tr>
+        <tr>
+          <td><strong>子弹数量</strong></td>
+          <td>5 ~ 7 颗</td>
+          <td>16 ~ 24 颗</td>
+        </tr>
+        <tr>
+          <td><strong>使用场景</strong></td>
+          <td>普通攻击</td>
+          <td>大招 / 半血狂暴</td>
+        </tr>
+        <tr>
+          <td><strong>躲避难度</strong></td>
+          <td>⭐⭐</td>
+          <td>⭐⭐⭐⭐</td>
+        </tr>
+      </table>
+      <div class="highlight-box" style="margin-top:20px;">
+        <strong>核心区别只有两个参数：</strong><code>angle_range</code> 和 <code>count</code>！<br>
+        改一个参数，弹幕效果完全不同 —— 这就是代码复用的威力！
+      </div>
+    </div>
+    <div class="page-num">7 / 12</div>
+  </div>
+
+  <!-- Slide 8: Boss血条 -->
+  <div class="slide">
+    <h2 class="slide-title">❤️ Boss 血条绘制</h2>
+    <div class="slide-content">
+      <div class="code-block"><span class="keyword">def</span> <span class="func">draw_boss_health_bar</span>(screen, boss, screen_width):
+    bar_width = screen_width - <span class="number">100</span>    <span class="comment"># 血条宽度（留边距）</span>
+    bar_height = <span class="number">25</span>                    <span class="comment"># 血条高度</span>
+    bar_x, bar_y = <span class="number">50</span>, <span class="number">10</span>             <span class="comment"># 屏幕左上角位置</span>
+
+    <span class="comment"># 1. 画背景（灰色底条 = 总血量）</span>
+    pygame.draw.<span class="func">rect</span>(screen, (<span class="number">60</span>,<span class="number">60</span>,<span class="number">60</span>),
+                     (bar_x, bar_y, bar_width, bar_height))
+
+    <span class="comment"># 2. 画边框（白色描边，更醒目）</span>
+    pygame.draw.<span class="func">rect</span>(screen, WHITE,
+                     (bar_x, bar_y, bar_width, bar_height), <span class="number">3</span>)
+
+    <span class="comment"># 3. 画当前血量</span>
+    hp_ratio = boss.hp / boss.max_hp     <span class="comment"># 血量比例 0.0~1.0</span>
+    current_w = <span class="func">int</span>(bar_width * hp_ratio)  <span class="comment"># 当前血量条宽度</span>
+
+    <span class="comment"># 4. 颜色随血量变化：满血绿 → 半血黄 → 残血红</span>
+    <span class="keyword">if</span> hp_ratio > <span class="number">0.5</span>:   color = (<span class="number">50</span>,<span class="number">255</span>,<span class="number">50</span>)    <span class="comment"># 安全</span>
+    <span class="keyword">elif</span> hp_ratio > <span class="number">0.25</span>: color = (<span class="number">255</span>,<span class="number">255</span>,<span class="number">50</span>)  <span class="comment"># 警告</span>
+    <span class="keyword">else</span>:            color = (<span class="number">255</span>,<span class="number">50</span>,<span class="number">50</span>)   <span class="comment"># 危险！</span>
+
+    pygame.draw.<span class="func">rect</span>(screen, color,
+                     (bar_x, bar_y, current_w, bar_height))</div>
+      <div class="highlight-box">
+        <strong>血条核心公式：</strong><code>当前宽度 = 总宽度 × (当前血量 / 最大血量)</code><br>
+        就像手机电量条：总宽度不变，绿色部分按比例缩短！
+      </div>
+    </div>
+    <div class="page-num">8 / 12</div>
+  </div>
+
+  <!-- Slide 9: Boss类与主循环结构 -->
+  <div class="slide">
+    <h2 class="slide-title">🤖 Boss 类与游戏结构</h2>
+    <div class="slide-content">
+      <div class="code-block"><span class="keyword">class</span> <span class="func">Boss</span>(pygame.sprite.Sprite):
+    <span class="keyword">def</span> <span class="func">__init__</span>(<span class="param">self</span>, x, y):
+        super().<span class="func">__init__</span>()
+        <span class="param">self</span>.image = <span class="func">create_boss_surface</span>()  <span class="comment"># 用Surface绘制</span>
+        <span class="param">self</span>.rect = <span class="param">self</span>.image.<span class="func">get_rect</span>(center=(x, y))
+        <span class="param">self</span>.hp = <span class="number">300</span>          <span class="comment"># Boss血量（玩家子弹10伤害→30枪）</span>
+        <span class="param">self</span>.max_hp = <span class="number">300</span>
+        <span class="param">self</span>.direction = <span class="number">1</span>    <span class="comment"># 左右移动方向</span>
+        <span class="param">self</span>.attack_timer = <span class="number">0</span>  <span class="comment"># 攻击计时器</span>
+
+    <span class="keyword">def</span> <span class="func">update</span>(<span class="param">self</span>):
+        <span class="comment"># Boss左右移动</span>
+        <span class="param">self</span>.rect.x += <span class="param">self</span>.direction * <span class="number">2</span>
+        <span class="keyword">if</span> <span class="param">self</span>.rect.right > WIDTH <span class="keyword">or</span> <span class="param">self</span>.rect.left < <span class="number">0</span>:
+            <span class="param">self</span>.direction *= -<span class="number">1</span>
+        <span class="comment"># 攻击计时器递增，每60帧发射一次扇形弹幕</span>
+        <span class="param">self</span>.attack_timer += <span class="number">1</span></div>
+      <div style="margin-top:15px;">
+        <span class="note-badge">Boss血量: 300</span>
+        <span class="note-badge">玩家伤害: 10/发</span>
+        <span class="note-badge">扇形弹幕: 每60帧</span>
+        <span class="note-badge">圆形弹幕: 半血后每120帧</span>
+      </div>
+    </div>
+    <div class="page-num">9 / 12</div>
+  </div>
+
+  <!-- Slide 10: 课堂练习 -->
+  <div class="slide">
+    <h2 class="slide-title">✏️ 课堂练习</h2>
+    <div class="slide-content">
+      <div class="section-header">🔵 基础任务（必做，15分钟）</div>
+      <ul>
+        <li><strong>任务1：</strong>跑通程序，用方向键操控飞机，观察三种弹幕</li>
+        <li><strong>任务2：</strong>修改扇形弹幕参数 — count从5→7, angle_range从60°→90°</li>
+        <li><strong>任务3：</strong>修改圆形弹幕参数 — count从20→30, speed从4→2</li>
+      </ul>
+      <div class="section-header">🟡 挑战任务（选做，10分钟）</div>
+      <ul>
+        <li><strong>挑战1：</strong>实现螺旋弹幕 — 每次旋转角度+15°</li>
+        <li><strong>挑战2：</strong>弹幕颜色渐变 — 彩虹弹幕效果</li>
+        <li><strong>挑战3：</strong>血量分段触发 — 半血后弹幕更密集</li>
+        <li><strong>挑战4：</strong>发射预警 — Boss闪烁3次后再放弹幕</li>
+      </ul>
+    </div>
+    <div class="page-num">10 / 12</div>
+  </div>
+
+  <!-- Slide 11: 知识点回顾 -->
+  <div class="slide">
+    <h2 class="slide-title">📚 知识点回顾</h2>
+    <div class="slide-content">
+      <table class="compare-table">
+        <tr><th>知识点</th><th>一句话总结</th></tr>
+        <tr><td>弹幕生成函数</td><td>传入（起点、角度、数量、速度）→ 循环生成子弹</td></tr>
+        <tr><td>扇形弹幕</td><td>固定角度范围（60°），向下展开，像孔雀开屏</td></tr>
+        <tr><td>圆形弹幕</td><td>角度范围 360°，均匀分布，像烟花绽放</td></tr>
+        <tr><td>Boss 血条</td><td>灰色底 + 彩色前景，宽度 = 总宽 × 血量比例</td></tr>
+        <tr><td>代码复用</td><td>同一个函数，不同参数 → 不同弹幕效果</td></tr>
+      </table>
+      <div class="highlight-box" style="margin-top:25px; font-size:1.2em; background:rgba(240,165,0,0.15); border-left-color:#f0a500;">
+        <strong>口诀：</strong><br>
+        弹幕不可怕，循环加上它；<br>
+        扇形画扇子，圆形画烟花；<br>
+        血条按比例，Boss 也不怕！
+      </div>
+    </div>
+    <div class="page-num">11 / 12</div>
+  </div>
+
+  <!-- Slide 12: 下一节预告 -->
+  <div class="slide">
+    <div style="flex:1; display:flex; flex-direction:column; justify-content:center; align-items:center; text-align:center;">
+      <span class="big-emoji">🚀</span>
+      <h2 style="font-size:3em; color:#e94560; margin:20px 0;">第32节：火力全开</h2>
+      <p style="font-size:1.6em; color:#f0a500; margin:15px 0;">武器升级 · 散弹 · 激光 · 追踪弹</p>
+      <div style="margin-top:30px; color:#8b949e; font-size:1.1em;">
+        <p>🎯 下节课预告：</p>
+        <p style="margin-top:10px;">玩家吃到道具后，武器从单发升级为散弹、激光、追踪弹</p>
+        <p>Boss 战利品系统，击败 Boss 后获得升级道具</p>
+      </div>
+    </div>
+    <div class="page-num">12 / 12</div>
+  </div>
+
+</div>
+
+<script>
+(function() {
+  var slides = document.querySelectorAll('.slide');
+  var current = 0;
+
+  function showSlide(index) {
+    if (index < 0) index = 0;
+    if (index >= slides.length) index = slides.length - 1;
+    slides[current].classList.remove('active');
+    slides[index].classList.add('active');
+    current = index;
+  }
+
+  document.addEventListener('keydown', function(e) {
+    if (e.key === 'ArrowRight' || e.key === 'ArrowDown' || e.key === ' ') {
+      e.preventDefault();
+      showSlide(current + 1);
+    } else if (e.key === 'ArrowLeft' || e.key === 'ArrowUp') {
+      e.preventDefault();
+      showSlide(current - 1);
+    } else if (e.key === 'Home') {
+      e.preventDefault();
+      showSlide(0);
+    } else if (e.key === 'End') {
+      e.preventDefault();
+      showSlide(slides.length - 1);
+    }
+  });
+
+  // Click on left/right edges to navigate
+  document.addEventListener('click', function(e) {
+    var w = window.innerWidth;
+    if (e.clientX < w * 0.2) showSlide(current - 1);
+    if (e.clientX > w * 0.8) showSlide(current + 1);
+  });
+
+  // Touch swipe support
+  var touchStartX = 0;
+  document.addEventListener('touchstart', function(e) {
+    touchStartX = e.touches[0].clientX;
+  });
+  document.addEventListener('touchend', function(e) {
+    var dx = e.changedTouches[0].clientX - touchStartX;
+    if (dx > 50) showSlide(current - 1);
+    if (dx < -50) showSlide(current + 1);
+  });
+})();
+</script>
+
+</body>
+</html>

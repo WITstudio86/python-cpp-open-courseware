@@ -1,0 +1,211 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>第29课：棋盘上的世界——二维数组入门</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font-family: 'PingFang SC', 'Microsoft YaHei', sans-serif; background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%); min-height: 100vh; display: flex; justify-content: center; align-items: center; }
+        .slides-container { width: 90%; max-width: 900px; min-height: 550px; background: white; border-radius: 25px; padding: 40px; box-shadow: 0 20px 60px rgba(0,0,0,0.3); position: relative; padding-bottom: 90px; }
+        .slide { display: none; animation: fadeIn 0.5s; }
+        .slide.active { display: block; }
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
+        h1 { color: #0d47a1; font-size: 2.2em; margin-bottom: 20px; }
+        h2 { color: #1565c0; font-size: 1.8em; margin-bottom: 15px; }
+        h3 { color: #2e7d32; font-size: 1.4em; margin: 15px 0 10px; }
+        p, li { font-size: 1.15em; line-height: 1.8; color: #333; }
+        ul, ol { padding-left: 30px; margin: 10px 0; }
+        .code-block { background: #1e1e2e; color: #cdd6f4; padding: 20px; border-radius: 12px; font-family: 'Courier New', monospace; font-size: 0.95em; line-height: 1.6; overflow-x: auto; margin: 15px 0; white-space: pre-wrap; word-break: break-all; }
+        .nav-buttons { position: absolute; bottom: 20px; left: 40px; right: 40px; display: flex; justify-content: space-between; }
+        .nav-btn { background: linear-gradient(135deg, #4facfe, #00f2fe); color: white; border: none; padding: 12px 30px; border-radius: 30px; font-size: 1.1em; cursor: pointer; transition: transform 0.2s; font-family: 'PingFang SC', 'Microsoft YaHei', sans-serif; }
+        .nav-btn:hover { transform: scale(1.05); }
+        .nav-btn:disabled { opacity: 0.4; cursor: default; transform: none; }
+        .page-indicator { font-size: 1.1em; color: #1565c0; align-self: center; }
+        .emoji-big { font-size: 3em; text-align: center; display: block; margin: 15px 0; }
+        .badge { display: inline-block; background: #e3f2fd; color: #0d47a1; padding: 5px 15px; border-radius: 20px; font-size: 0.9em; margin: 3px; }
+        table { width: 100%; border-collapse: collapse; margin: 15px 0; }
+        th, td { border: 2px solid #ddd; padding: 10px; text-align: left; }
+        th { background: #4facfe; color: white; }
+        .highlight-box { background: #fff3cd; border-left: 5px solid #ffc107; padding: 15px; border-radius: 8px; margin: 15px 0; }
+        .tip-box { background: #d4edda; border-left: 5px solid #28a745; padding: 15px; border-radius: 8px; margin: 15px 0; }
+        @media (max-width: 600px) { .slides-container { padding: 25px; } h1 { font-size: 1.5em; } .code-block { font-size: 0.75em; } }
+    </style>
+</head>
+<body>
+    <div class="slides-container">
+        <!-- Slide 1: Title Page -->
+        <div class="slide active" id="slide1">
+            <span class="emoji-big">♟️</span>
+            <h1>第29课：棋盘上的世界——二维数组入门</h1>
+            <p style="text-align:center; color:#1565c0; font-size:1.1em;">第三单元：数据的组织 | 课时：45分钟</p>
+            <p style="text-align:center; margin-top:20px; font-size:1.3em;">打造数字棋盘</p>
+            <div style="text-align:center; margin-top:25px;">
+                <span class="badge">二维数组声明</span>
+                <span class="badge">行与列</span>
+                <span class="badge">棋盘编程</span>
+                <span class="badge">座位表</span>
+            </div>
+        </div>
+
+        <!-- Slide 2: Learning Objectives -->
+        <div class="slide" id="slide2">
+            <h2>🎯 学习目标</h2>
+            <ul>
+                <li>理解<strong>二维数组</strong>的概念——从一维到二维的数据组织</li>
+                <li>掌握二维数组的<strong>声明和初始化</strong>方式（嵌套花括号）</li>
+                <li>学会用<strong>行下标和列下标</strong>访问二维数组元素</li>
+                <li>能够创建<strong>数字棋盘</strong>程序和教室座位表</li>
+            </ul>
+            <div class="tip-box" style="margin-top:30px;">
+                <strong>💡 先想一想：</strong><br>
+                教室的座位怎么编号？你坐在第几排第几列？国际象棋棋盘上的每个格子怎么表示？这些都需要两个坐标——这就是"二维"！
+            </div>
+        </div>
+
+        <!-- Slide 3: Core Knowledge -->
+        <div class="slide" id="slide3">
+            <h2>📖 核心知识：二维数组</h2>
+
+            <h3>🧩 声明与初始化</h3>
+            <div class="code-block">// 声明格式：类型 数组名[行数][列数];
+int grid[3][4] = {          // 3行4列的整数数组
+    {1,  2,  3,  4},        // 第0行
+    {5,  6,  7,  8},        // 第1行
+    {9, 10, 11, 12}         // 第2行
+};</div>
+
+            <h3>📍 下标访问</h3>
+            <div class="code-block">grid[0][0]  →  1    (第0行, 第0列)
+grid[1][2]  →  7    (第1行, 第2列)
+grid[2][3]  →  12   (第2行, 第3列)
+
+// 修改元素
+grid[1][1] = 100;   // 把第1行第1列改成100</div>
+
+            <h3>📐 可视化表格</h3>
+            <table>
+                <tr><th></th><th>列0</th><th>列1</th><th>列2</th><th>列3</th></tr>
+                <tr><td><strong>行0</strong></td><td>1</td><td>2</td><td>3</td><td>4</td></tr>
+                <tr><td><strong>行1</strong></td><td>5</td><td>6</td><td>7</td><td>8</td></tr>
+                <tr><td><strong>行2</strong></td><td>9</td><td>10</td><td>11</td><td>12</td></tr>
+            </table>
+
+            <div class="highlight-box">
+                <strong>🔑 核心规则：</strong>行和列的下标都<strong>从0开始</strong>！grid[第几行][第几列]。<br>
+                棋盘规律：(行+列) % 2 可以产生交替的0和1！
+            </div>
+        </div>
+
+        <!-- Slide 4: Code Example -->
+        <div class="slide" id="slide4">
+            <h2>💻 代码示例：打造数字棋盘</h2>
+            <div class="code-block">#include &lt;iostream&gt;
+using namespace std;
+
+int main() {
+    int board[8][8];    // 8×8棋盘
+
+    // 填充棋盘：交替填0和1
+    for (int i = 0; i &lt; 8; i++) {
+        for (int j = 0; j &lt; 8; j++) {
+            board[i][j] = (i + j) % 2;
+            // 行+列为偶数→0(白), 奇数→1(黑)
+        }
+    }
+
+    // 图形化显示
+    for (int i = 0; i &lt; 8; i++) {
+        for (int j = 0; j &lt; 8; j++) {
+            if (board[i][j] == 0)
+                cout &lt;&lt; "■ ";
+            else
+                cout &lt;&lt; "□ ";
+        }
+        cout &lt;&lt; endl;
+    }
+    return 0;
+}</div>
+            <p><strong>运行效果：</strong>一个8行8列的交替黑白方块棋盘！</p>
+            <p>🔍 <strong>核心技巧</strong>：<code>(i + j) % 2</code> 判断格子颜色。观察规律——相邻格子的行+列奇偶性必然相反！</p>
+        </div>
+
+        <!-- Slide 5: Practice -->
+        <div class="slide" id="slide5">
+            <h2>🎮 趣味练习</h2>
+
+            <h3>练习1：填空补全 ✏️</h3>
+            <p>补全代码，使3×4的表格正确初始化并输出第2行第3列的值（应为6）：</p>
+            <div class="code-block">int table[3][4] = {
+    {1, 2, 3, 4},
+    {2, 4, 6, ___},
+    {3, ___, 9, 12}
+};
+cout &lt;&lt; table[___][___];  // 输出6</div>
+
+            <h3>练习2：纠错小侦探 🔍</h3>
+            <p>找出以下代码的错误：</p>
+            <div class="code-block">int grid[3][4];
+grid[1, 2] = 10;          // ❌ 下标写法？
+cout &lt;&lt; grid[3][4];      // ❌ 越界？
+int arr[][] = {{1,2},{3,4}}; // ❌ 省略了什么？</div>
+
+            <h3>🎯 挑战任务：彩色数字棋盘</h3>
+            <p>创建8×8的字符二维数组，用'B'和'W'填充，用国际象棋风格（列a-h、行1-8）展示，并在棋盘上放置棋子字母！</p>
+
+            <div class="tip-box">
+                <strong>✅ 练习1答案：</strong>填8（第2行最后一个元素），下标为 table[1][2]。
+            </div>
+        </div>
+
+        <!-- Slide 6: Summary -->
+        <div class="slide" id="slide6">
+            <h2>📝 本课小结</h2>
+            <table>
+                <tr><th>知识点</th><th>内容</th></tr>
+                <tr><td>二维数组概念</td><td>按<strong>行和列</strong>组织数据，像表格/棋盘/座位表</td></tr>
+                <tr><td>声明方式</td><td><code>类型 数组名[行数][列数];</code> — 先行后列</td></tr>
+                <tr><td>下标规则</td><td>行和列都<strong>从0开始</strong>：<code>数组[行下标][列下标]</code></td></tr>
+                <tr><td>初始化</td><td>嵌套花括号：<code>{{行1}, {行2}, ...}</code></td></tr>
+                <tr><td>棋盘规律</td><td><code>(行+列) % 2</code> 产生交替的0和1</td></tr>
+            </table>
+            <div class="highlight-box" style="margin-top:20px;">
+                <strong>🔑 记住口诀：</strong><br>
+                一维变成线，二维变成面。<br>
+                先行后列记心间，两个下标定一点。<br>
+                棋盘座位都可以，二维数组是真便！
+            </div>
+            <p style="text-align:center; margin-top:20px; font-size:1.2em;">🎉 下一课预告：矩阵总动员——二维数组遍历</p>
+        </div>
+
+        <!-- Navigation -->
+        <div class="nav-buttons">
+            <button class="nav-btn" onclick="prevSlide()">◀ 上一页</button>
+            <span class="page-indicator" id="pageIndicator">1 / 6</span>
+            <button class="nav-btn" onclick="nextSlide()">下一页 ▶</button>
+        </div>
+    </div>
+
+    <script>
+        let currentSlide = 0;
+        const slides = document.querySelectorAll('.slide');
+        const totalSlides = slides.length;
+        const indicator = document.getElementById('pageIndicator');
+        function showSlide(n) {
+            slides[currentSlide].classList.remove('active');
+            currentSlide = (n + totalSlides) % totalSlides;
+            slides[currentSlide].classList.add('active');
+            indicator.textContent = (currentSlide + 1) + ' / ' + totalSlides;
+            document.querySelectorAll('.nav-btn')[0].disabled = currentSlide === 0;
+            document.querySelectorAll('.nav-btn')[1].disabled = currentSlide === totalSlides - 1;
+        }
+        function nextSlide() { showSlide(currentSlide + 1); }
+        function prevSlide() { showSlide(currentSlide - 1); }
+        document.addEventListener('keydown', function(e) {
+            if (e.key === 'ArrowRight' || e.key === ' ') { e.preventDefault(); nextSlide(); }
+            else if (e.key === 'ArrowLeft') { e.preventDefault(); prevSlide(); }
+        });
+        indicator.textContent = (currentSlide + 1) + ' / ' + totalSlides;
+    </script>
+</body>
+</html>

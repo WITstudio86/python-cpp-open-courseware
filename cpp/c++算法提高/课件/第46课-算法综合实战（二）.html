@@ -1,0 +1,391 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>第46课：算法综合实战（二）—— DP+图论综合</title>
+<style>
+/* ===== 全局 ===== */
+:root {
+  --bg:#1a1a2e; --card:#16213e; --code:#0f0f23; --text:#e0e0e0; --dim:#a0a0b8;
+  --accent:#e94560; --alight:#ff6b81; --adark:#c23152; --border:#2a2a4a;
+  --green:#00d2a0; --orange:#ffaa5c; --blue:#5b9bd5; --purple:#c084fc; --yellow:#ffd700;
+}
+* { margin:0;padding:0;box-sizing:border-box; }
+body { font-family:-apple-system,BlinkMacSystemFont,'PingFang SC','Microsoft YaHei',sans-serif; background:var(--bg); color:var(--text); min-height:100vh; display:flex; flex-direction:column; align-items:center; padding:20px; }
+.slideshow { width:100%; max-width:1000px; }
+.slides { position:relative; width:100%; min-height:620px; border-radius:20px; background:var(--card); box-shadow:0 10px 40px rgba(0,0,0,.5); overflow:hidden; }
+.slide { display:none; padding:48px 56px; animation:fadeIn .45s; }
+.slide.active { display:block; }
+@keyframes fadeIn { from{opacity:0;transform:translateY(14px);} to{opacity:1;transform:translateY(0);} }
+h1 { font-size:2.2em; color:var(--accent); margin-bottom:8px; }
+h2 { font-size:1.6em; color:var(--alight); margin:16px 0 10px; border-bottom:2px solid var(--accent); padding-bottom:6px; display:inline-block; }
+h3 { font-size:1.15em; color:var(--orange); margin:12px 0 6px; }
+p,li { line-height:1.8; }
+ul,ol { padding-left:22px; margin:6px 0; }
+li { margin:4px 0; }
+/* 徽章 */
+.badge { display:inline-block; padding:3px 12px; border-radius:12px; font-size:.82em; font-weight:700; margin-right:6px; }
+.ba { background:var(--accent); color:#fff; } .bg { background:var(--green); color:#1a1a2e; }
+.bo { background:var(--orange); color:#1a1a2e; } .bb { background:var(--blue); color:#fff; }
+.bp { background:var(--purple); color:#1a1a2e; } .by { background:var(--yellow); color:#1a1a2e; }
+/* 卡片 */
+.card { background:var(--bg); border:1px solid var(--border); border-radius:12px; padding:16px 20px; margin:10px 0; }
+.ca { border-left:4px solid var(--accent); } .cg { border-left:4px solid var(--green); }
+.co { border-left:4px solid var(--orange); } .cb { border-left:4px solid var(--blue); }
+/* 代码块 */
+pre { background:var(--code); border-radius:10px; padding:12px 16px; overflow-x:auto; margin:10px 0; font-size:.82em; line-height:1.6; border:1px solid var(--border); font-family:'Fira Code','Cascadia Code','Consolas',monospace; color:#7ec8e3; }
+.cm { color:#8b949e; font-style:italic; } .kw { color:#c084fc; } .dt { color:#5b9bd5; }
+.fn { color:#ffaa5c; } .nu { color:#ff6b81; }
+/* 两栏 */
+.row { display:flex; gap:18px; flex-wrap:wrap; }
+.col { flex:1; min-width:260px; }
+/* 表格 */
+table { width:100%; border-collapse:collapse; margin:10px 0; font-size:.9em; }
+th { background:var(--accent); color:#fff; padding:9px 12px; text-align:left; }
+td { padding:8px 12px; border-bottom:1px solid var(--border); background:var(--bg); }
+tr:nth-child(even) td { background:rgba(233,69,96,.03); }
+/* DP三角可视化 */
+.tri { text-align:center; line-height:2.2; font-family:'Fira Code',monospace; margin:8px 0; }
+.tri .c { display:inline-block; width:34px; height:34px; line-height:34px; margin:1px; border-radius:5px; font-weight:700; font-size:.88em; }
+.tcv { background:#2a3050; color:var(--text); border:1px solid var(--border); }
+.tcd { background:rgba(0,210,160,.15); color:var(--green); border:1px solid var(--green); }
+.tcb { background:var(--accent); color:#fff; }
+.tco { background:var(--orange); color:#1a1a2e; }
+/* 网格可视化 */
+.gv { display:inline-grid; gap:3px; margin:8px 0; }
+.gc { width:50px; height:36px; display:flex; align-items:center; justify-content:center; border-radius:5px; font-weight:600; font-size:.85em; }
+.gn { background:#2a3050; color:var(--text); border:1px solid var(--border); }
+.gp { background:rgba(255,170,92,.3); color:var(--orange); border:1px solid var(--orange); }
+.gs { background:var(--accent); color:#fff; } .ge { background:var(--green); color:#1a1a2e; }
+/* 流程 */
+.flow { display:flex; align-items:center; justify-content:center; gap:10px; flex-wrap:wrap; margin:12px 0; font-size:.9em; }
+.fs { background:var(--accent); color:#fff; padding:6px 14px; border-radius:20px; font-weight:700; }
+.fa { color:var(--accent); font-size:1.3em; font-weight:700; }
+/* 步骤编号 */
+.sl { counter-reset:s; list-style:none; padding:0; }
+.sl li { counter-increment:s; display:flex; gap:10px; margin:6px 0; padding:8px 12px; background:var(--bg); border-radius:8px; align-items:flex-start; }
+.sl li::before { content:counter(s); min-width:26px; height:26px; background:var(--accent); color:#fff; border-radius:50%; display:flex; align-items:center; justify-content:center; font-weight:700; font-size:.8em; flex-shrink:0; }
+/* 导航 */
+.navigation { display:flex; justify-content:center; align-items:center; gap:18px; margin:20px 0; }
+.nav-btn { background:var(--accent); color:#fff; border:none; padding:10px 28px; border-radius:8px; font-size:1em; cursor:pointer; transition:background .3s; font-family:inherit; }
+.nav-btn:hover { background:var(--adark); }
+.nav-btn:disabled { background:#555; cursor:not-allowed; }
+.pager { color:var(--dim); font-size:.9em; min-width:60px; text-align:center; }
+/* 响应式 */
+@media(max-width:768px) { .slide{padding:28px 22px;} h1{font-size:1.5em;} h2{font-size:1.2em;} .row{flex-direction:column;} pre{font-size:.72em;padding:10px;} .gc{width:38px;height:30px;font-size:.75em;} }
+</style>
+</head>
+<body>
+
+<div class="slideshow" id="slideshow">
+<div class="slides">
+
+<!-- ====== 第1页：标题 ====== -->
+<div class="slide active" id="slide1">
+<div style="text-align:center;padding-top:60px;">
+<h1 style="font-size:2.4em;border-bottom: none;">算法综合实战（二）</h1>
+<p style="font-size:1.2em;color:var(--dim);">DP + 图论综合</p>
+<div style="margin:28px 0;">
+<span class="badge ba">第 46 课</span>
+<span class="badge bp">动态规划</span>
+<span class="badge bb">图论</span>
+<span class="badge bg">综合运用</span>
+</div>
+<hr style="border:none;border-top:1px solid var(--border);width:60%;margin:24px auto;">
+<p style="color:var(--dim);font-size:1.05em;">
+当图论遇上动态规划：如何在 DAG 上做 DP？<br>
+网格路径、数字三角形与状态转移的统一视角
+</p>
+<div class="flow" style="margin-top:32px;">
+<span class="badge bp">DP 核心</span><span class="fa">+</span>
+<span class="badge bb">图论基础</span><span class="fa">→</span>
+<span class="badge bg">最优路径</span>
+</div>
+</div>
+</div>
+
+<!-- ====== 第2页：DP回顾 ====== -->
+<div class="slide" id="slide2">
+<h2>动态规划（DP）核心回顾</h2>
+<p>DP 的本质：<strong>将大问题拆解为子问题，记住子问题的答案，利用子问题的最优解构造全局最优解。</strong></p>
+
+<div class="card ca">
+<h3>DP 四步法</h3>
+<ol class="sl">
+<li><span><strong>确定状态</strong> — 用什么变量描述局面？dp[i][j] 表示什么意义？</span></li>
+<li><span><strong>转移方程</strong> — 当前状态如何从之前状态推导？dp[i][j] = min(...) / max(...)</span></li>
+<li><span><strong>边界条件</strong> — 初始状态（起点）的值是什么？dp[1][1] = ?</span></li>
+<li><span><strong>计算顺序</strong> — 按什么顺序递推？从前往后还是从后往前？</span></li>
+</ol>
+</div>
+
+<div class="row">
+<div class="col">
+<div class="card cg">
+<h3 style="margin-top:0;">DP 适用三条件</h3>
+<ul>
+<li><strong>最优子结构：</strong>最优解包含子问题最优解</li>
+<li><strong>无后效性：</strong>状态确定后不受后续决策影响</li>
+<li><strong>重叠子问题：</strong>同一子问题被多次计算</li>
+</ul>
+</div>
+</div>
+<div class="col">
+<div class="card cb">
+<h3 style="margin-top:0;">图论视角：DAG 上的 DP</h3>
+<ul>
+<li>有向无环图（DAG）= 天然无后效性</li>
+<li>拓扑排序 = DP 的计算顺序</li>
+<li>状态转移 = 沿边传播最优值</li>
+</ul>
+<div class="flow">
+<span class="badge bb">DAG</span><span class="fa">→</span><span class="badge bo">拓扑序</span><span class="fa">→</span><span class="badge bg">DP递推</span>
+</div>
+</div>
+</div>
+</div>
+</div>
+
+<!-- ====== 第3页：例题1-数字三角形 ====== -->
+<div class="slide" id="slide3">
+<h2>例题 1：数字三角形</h2>
+<p><span class="badge bp">经典DP</span> <span class="badge ba">最大路径和</span> <span class="badge bo">自底向上</span></p>
+
+<div class="card ca">
+<h3>问题描述</h3>
+<p>给定一个 N 行的数字三角形，从<strong>顶部</strong>出发，每次走到<strong>左下方或右下方</strong>，一直走到<strong>底部</strong>。求所有经过数字之和的<strong>最大值</strong>。</p>
+</div>
+
+<div class="row">
+<div class="col">
+<div class="card">
+<h3 style="margin-top:0;">三角形结构（N=5）</h3>
+<div class="tri">
+<div class="row"><span class="c tcv">7</span></div>
+<div class="row"><span class="c tcv">3</span><span class="c tcv">8</span></div>
+<div class="row"><span class="c tcv">8</span><span class="c tcv">1</span><span class="c tcv">0</span></div>
+<div class="row"><span class="c tcv">2</span><span class="c tcv">7</span><span class="c tcv">4</span><span class="c tcv">4</span></div>
+<div class="row"><span class="c tcv">4</span><span class="c tcv">5</span><span class="c tcv">2</span><span class="c tcv">6</span><span class="c tcv">5</span></div>
+</div>
+</div>
+</div>
+<div class="col">
+<div class="card cg">
+<h3 style="margin-top:0;">DP 分析（自底向上）</h3>
+<p><strong>状态：</strong>dp[i][j] = 从底部走到(i,j)的最大和</p>
+<p><strong>转移：</strong>dp[i][j] = a[i][j] + max(dp[i+1][j], dp[i+1][j+1])</p>
+<p><strong>边界：</strong>dp[n][j] = a[n][j]（最后一行）</p>
+<p><strong>答案：</strong>dp[1][1]</p>
+</div>
+</div>
+</div>
+
+<div class="row" style="justify-content:center;">
+<div class="tri">
+<div><span class="c tcb">7</span>&nbsp; → 最优路径（和=30）</div>
+<div class="row"><span class="c tcb">3</span><span class="c tcv">8</span></div>
+<div class="row"><span class="c tcb">8</span><span class="c tcv">1</span><span class="c tcv">0</span></div>
+<div class="row"><span class="c tcv">2</span><span class="c tcb">7</span><span class="c tcv">4</span><span class="c tcv">4</span></div>
+<div class="row"><span class="c tcv">4</span><span class="c tcv">5</span><span class="c tcv">2</span><span class="c tcb">6</span><span class="c tcv">5</span></div>
+<p style="font-size:.78em;color:var(--dim);">路径: 7→3→8→7→6 = 30</p>
+</div>
+</div>
+</div>
+
+<!-- ====== 第4页：例题2-最小路径和 ====== -->
+<div class="slide" id="slide4">
+<h2>例题 2：最小路径和</h2>
+<p><span class="badge bp">二维DP</span> <span class="badge bb">图论视角</span> <span class="badge bg">网格路径</span></p>
+
+<div class="card ca">
+<h3>问题描述</h3>
+<p>给定 N×M 网格，每个格子有权值。从<strong>左上角 (1,1)</strong> 走到<strong>右下角 (N,M)</strong>，每次只能<strong>向右或向下</strong>移动。求路径数字和的最小值。</p>
+</div>
+
+<div class="row">
+<div class="col">
+<div class="card">
+<h3 style="margin-top:0;">样例（3×3 网格）</h3>
+<div class="gv" style="grid-template-columns:repeat(3,50px);">
+<div class="gc gs">1</div><div class="gc gn">3</div><div class="gc gn">1</div>
+<div class="gc gp">1</div><div class="gc gn">5</div><div class="gc gn">1</div>
+<div class="gc gn">4</div><div class="gc gp">2</div><div class="gc ge">1</div>
+</div>
+<p style="font-size:.8em;color:var(--green);text-align:center;">最优路径: 1→3→1→1→1 = <strong>7</strong></p>
+</div>
+</div>
+<div class="col">
+<div class="card cb">
+<h3 style="margin-top:0;">DP 分析</h3>
+<p><strong>状态：</strong>dp[i][j] = 到达 (i,j) 的最小路径和</p>
+<p><strong>转移：</strong>dp[i][j] = grid[i][j] + min(dp[i-1][j], dp[i][j-1])</p>
+<p><strong>边界：</strong>dp[1][1] = grid[1][1]</p>
+<p><strong>答案：</strong>dp[N][M]</p>
+</div>
+</div>
+</div>
+
+<div class="card cg">
+<h3>DP 表格填充过程</h3>
+<div class="gv" style="grid-template-columns:repeat(3,52px);margin:8px auto;">
+<div class="gc gs">1</div><div class="gc" style="background:rgba(0,210,160,.2);color:var(--green);">4</div><div class="gc" style="background:rgba(0,210,160,.2);color:var(--green);">5</div>
+<div class="gc" style="background:rgba(0,210,160,.2);color:var(--green);">2</div><div class="gc" style="background:rgba(0,210,160,.2);color:var(--green);">7</div><div class="gc" style="background:rgba(0,210,160,.2);color:var(--green);">6</div>
+<div class="gc" style="background:rgba(0,210,160,.2);color:var(--green);">6</div><div class="gc" style="background:rgba(0,210,160,.2);color:var(--green);">8</div><div class="gc ge">7</div>
+</div>
+<p style="font-size:.8em;color:var(--dim);text-align:center;">每格 = grid[i][j] + min(上, 左)，从左上逐行填充到右下</p>
+</div>
+</div>
+
+<!-- ====== 第5页：代码实现 ====== -->
+<div class="slide" id="slide5">
+<h2>核心代码实现</h2>
+
+<div class="row">
+<div class="col">
+<div class="card bp">
+<h3 style="margin-top:0;">数字三角形（自底向上）</h3>
+<pre><span class="cm">// 初始化最底层</span>
+<span class="kw">for</span> (<span class="dt">int</span> j = <span class="nu">1</span>; j &lt;= n; j++)
+    dp[n][j] = a[n][j];
+
+<span class="cm">// 从下往上递推</span>
+<span class="kw">for</span> (<span class="dt">int</span> i = n-<span class="nu">1</span>; i &gt;= <span class="nu">1</span>; i--)
+    <span class="kw">for</span> (<span class="dt">int</span> j = <span class="nu">1</span>; j &lt;= i; j++)
+        dp[i][j] = a[i][j]
+                 + <span class="fn">max</span>(dp[i+<span class="nu">1</span>][j],
+                        dp[i+<span class="nu">1</span>][j+<span class="nu">1</span>]);
+
+cout &lt;&lt; dp[<span class="nu">1</span>][<span class="nu">1</span>] &lt;&lt; endl;</pre>
+</div>
+</div>
+<div class="col">
+<div class="card bb">
+<h3 style="margin-top:0;">最小路径和</h3>
+<pre><span class="cm">// 边界</span>
+dp[<span class="nu">1</span>][<span class="nu">1</span>] = grid[<span class="nu">1</span>][<span class="nu">1</span>];
+
+<span class="cm">// 从左上到右下逐行递推</span>
+<span class="kw">for</span> (<span class="dt">int</span> i = <span class="nu">1</span>; i &lt;= n; i++)
+    <span class="kw">for</span> (<span class="dt">int</span> j = <span class="nu">1</span>; j &lt;= m; j++) {
+        <span class="kw">if</span> (i==<span class="nu">1</span> && j==<span class="nu">1</span>) <span class="kw">continue</span>;
+        dp[i][j] = grid[i][j];
+        <span class="dt">int</span> up = i&gt;<span class="nu">1</span>? dp[i-<span class="nu">1</span>][j] : <span class="nu">1e9</span>;
+        <span class="dt">int</span> lf = j&gt;<span class="nu">1</span>? dp[i][j-<span class="nu">1</span>] : <span class="nu">1e9</span>;
+        dp[i][j] += <span class="fn">min</span>(up, lf);
+    }
+
+cout &lt;&lt; dp[n][m] &lt;&lt; endl;</pre>
+</div>
+</div>
+</div>
+
+<div class="card ca">
+<h3>空间优化技巧</h3>
+<p>两种问题都可以用<strong>滚动数组</strong>将空间从 O(N²) 优化到 O(N)：</p>
+<ul>
+<li><strong>数字三角形：</strong>只保留当前行和下一行的 DP 值，从下往上只用到 i+1 行</li>
+<li><strong>最小路径和：</strong>只保留上一行的 DP 值 + 当前行前一列，两次一维数组即可</li>
+</ul>
+</div>
+</div>
+
+<!-- ====== 第6页：算法对比 + DP+图论综合策略 ====== -->
+<div class="slide" id="slide6">
+<h2>两种路径 DP 对比与综合策略</h2>
+
+<div class="card ca">
+<table>
+<tr><th style="width:16%;">对比维度</th><th style="width:42%;">数字三角形</th><th style="width:42%;">最小路径和</th></tr>
+<tr><td><span class="badge bp">问题类型</span></td><td>三角形路径最大值</td><td>网格路径最小值</td></tr>
+<tr><td><span class="badge bb">移动方向</span></td><td>左下 / 右下（两个方向）</td><td>右 / 下（两个方向）</td></tr>
+<tr><td><span class="badge bg">递推方向</span></td><td>自底向上（推荐）</td><td>自顶向下 / 自左向右</td></tr>
+<tr><td><span class="badge bo">状态转移</span></td><td>dp[i][j]=a[i][j]+max(dp[i+1][j], dp[i+1][j+1])</td><td>dp[i][j]=grid[i][j]+min(dp[i-1][j], dp[i][j-1])</td></tr>
+<tr><td>时间复杂度</td><td>O(N²)</td><td>O(N×M)</td></tr>
+<tr><td>空间复杂度</td><td>O(N²)/可优化为 O(N)</td><td>O(N×M)/可优化为 O(min(N,M))</td></tr>
+</table>
+</div>
+
+<div class="card cg">
+<h3>DP + 图论综合解题策略</h3>
+<div class="flow">
+<span class="fs">1. 识别问题</span><span class="fa">→</span>
+<span class="fs">2. 建图/建状态</span><span class="fa">→</span>
+<span class="fs">3. 确定拓扑序</span><span class="fa">→</span>
+<span class="fs">4. 递推计算</span>
+</div>
+<ol class="sl">
+<li><span>判断问题能否建模为 DAG（无环 → 无后效性）</span></li>
+<li><span>确定状态：dp[节点] 或 dp[坐标] 表示到达该位置的最优值</span></li>
+<li><span>按拓扑序或坐标顺序递推（图论：拓扑排序；网格：逐行逐列）</span></li>
+<li><span>利用转移方程计算，注意边界条件和初始化极大/极小值</span></li>
+</ol>
+<div style="margin-top:8px;color:var(--dim);font-size:.88em;">
+<strong>核心思想：</strong>网格/三角形本质上是有向无环图（DAG），DP 递推顺序就是图的拓扑排序。理解了这一点，任何路径类问题都能用 DP + 图论的统一框架解决。
+</div>
+</div>
+</div>
+
+<!-- ====== 第7页：总结 ====== -->
+<div class="slide" id="slide7">
+<h2>本课小结与延伸</h2>
+
+<div class="card ca">
+<h3 style="margin-top:0;">核心收获</h3>
+<ol class="sl">
+<li><span><strong>DP 四步法</strong>是解决所有 DP 问题的通用框架：状态→转移→边界→顺序</span></li>
+<li><span><strong>自底向上</strong>递推比递归+记忆化更高效，是竞赛推荐写法，空间还可以用滚动数组优化</span></li>
+<li><span><strong>图论视角</strong>：网格/三角形 = DAG，DP 递推顺序 = 拓扑排序，这是理解路径 DP 的本质</span></li>
+<li><span><strong>DP + 图论结合</strong>是竞赛中的高频考点：最短路径计数、DAG 最长路、网格路径变种等</span></li>
+</ol>
+</div>
+
+<div class="card cg">
+<h3>延伸题型</h3>
+<table>
+<tr><th>题型</th><th>核心技巧</th><th>难度</th></tr>
+<tr><td>网格带障碍物</td><td>遇到障碍 dp[i][j]=0 或 INF</td><td><span class="badge by">★★</span></td></tr>
+<tr><td>DAG 最长路径</td><td>拓扑排序 + dp[v]=max(dp[v], dp[u]+w)</td><td><span class="badge bo">★★★</span></td></tr>
+<tr><td>最短路径计数</td><td>拓扑排序，dist 相同时累加 cnt</td><td><span class="badge ba">★★★</span></td></tr>
+<tr><td>双人路径</td><td>四维 DP 降为三维，同步推进</td><td><span class="badge bp">★★★★</span></td></tr>
+<tr><td>最大子矩阵和</td><td>压缩二维为一维 + 前缀和 + DP</td><td><span class="badge bb">★★★★</span></td></tr>
+</table>
+</div>
+
+<div style="text-align:center;margin-top:20px;padding:16px;background:var(--bg);border-radius:12px;">
+<p style="font-size:1.15em;color:var(--alight);"><strong>掌握了 DP + 图论的统一框架，你就掌握了算法竞赛中最强大的武器之一！</strong></p>
+<p style="color:var(--dim);font-size:.9em;margin-top:6px;">下一站：竞赛技巧与调试方法 → 第47课</p>
+</div>
+</div>
+
+</div><!-- .slides end -->
+
+<!-- 导航 -->
+<div class="navigation">
+<button class="nav-btn" id="prevBtn" onclick="changeSlide(-1)">◀ 上一页</button>
+<span class="pager" id="pager">1 / 7</span>
+<button class="nav-btn" id="nextBtn" onclick="changeSlide(1)">下一页 ▶</button>
+</div>
+
+</div><!-- .slideshow end -->
+
+<script>
+let cur=0; const slides=document.querySelectorAll('.slide'); const total=slides.length;
+function showSlide(i){
+  slides.forEach(s=>s.classList.remove('active'));
+  slides[i].classList.add('active');
+  document.getElementById('pager').textContent=(i+1)+' / '+total;
+  document.getElementById('prevBtn').disabled=(i===0);
+  document.getElementById('nextBtn').disabled=(i===total-1);
+}
+function changeSlide(d){ cur=Math.min(Math.max(cur+d,0),total-1); showSlide(cur); }
+document.addEventListener('keydown',e=>{
+  if(e.key==='ArrowRight'||e.key==='ArrowDown') changeSlide(1);
+  if(e.key==='ArrowLeft'||e.key==='ArrowUp') changeSlide(-1);
+});
+let tsX=0; document.addEventListener('touchstart',e=>{tsX=e.touches[0].clientX;});
+document.addEventListener('touchend',e=>{let d=tsX-e.changedTouches[0].clientX; if(Math.abs(d)>50) changeSlide(d>0?1:-1);});
+showSlide(0);
+</script>
+</body>
+</html>

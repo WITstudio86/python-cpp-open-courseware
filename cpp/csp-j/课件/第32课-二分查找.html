@@ -1,0 +1,377 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>CSP-J 备考课程 - 第32课：二分查找</title>
+<style>
+* { margin: 0; padding: 0; box-sizing: border-box; }
+body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Microsoft YaHei', sans-serif; background: #f0f2f5; display: flex; justify-content: center; align-items: center; min-height: 100vh; padding: 20px; }
+.container { max-width: 900px; width: 100%; background: white; border-radius: 16px; box-shadow: 0 8px 40px rgba(0,0,0,0.12); overflow: hidden; }
+.header { background: linear-gradient(135deg, #1a237e, #283593); color: white; padding: 16px 24px; display: flex; justify-content: space-between; align-items: center; }
+.header .course-tag { background: #ffd600; color: #1a237e; padding: 4px 12px; border-radius: 20px; font-size: 14px; font-weight: bold; }
+.slide-container { padding: 40px; min-height: 500px; }
+.slide { display: none; }
+.slide.active { display: block; animation: fadeIn 0.4s ease; }
+@keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+.slide h2 { color: #1a237e; font-size: 28px; margin-bottom: 20px; border-bottom: 3px solid #ffd600; padding-bottom: 10px; display: inline-block; }
+.slide h3 { color: #283593; font-size: 22px; margin: 20px 0 12px; }
+.slide p, .slide li { font-size: 17px; line-height: 1.8; color: #333; margin-bottom: 8px; }
+.slide ul, .slide ol { padding-left: 24px; margin-bottom: 16px; }
+.exam-tip { background: #fff8e1; border-left: 4px solid #ff8f00; border-radius: 8px; padding: 16px 20px; margin: 20px 0; font-size: 15px; }
+.exam-tip strong { color: #e65100; }
+.code-block { background: #1e1e1e; border-radius: 8px; padding: 16px; margin: 12px 0; overflow-x: auto; font-family: Consolas, Monaco, 'Courier New', monospace; font-size: 14px; line-height: 1.6; color: #d4d4d4; }
+.code-block code { white-space: pre; }
+.keyword { color: #569cd6; }
+.string { color: #ce9178; }
+.comment { color: #6a9955; }
+.number { color: #b5cea8; }
+.func { color: #dcdcaa; }
+.title-slide { text-align: center; padding-top: 80px; }
+.title-slide h1 { font-size: 42px; color: #1a237e; margin-bottom: 16px; }
+.title-slide .subtitle { font-size: 22px; color: #5c6bc0; margin-bottom: 40px; }
+.title-slide .badge { display: inline-block; background: #ffd600; color: #1a237e; padding: 8px 24px; border-radius: 30px; font-size: 18px; font-weight: bold; }
+.navigation { display: flex; justify-content: center; align-items: center; gap: 16px; padding: 20px; background: #fafafa; border-top: 1px solid #e0e0e0; }
+.nav-btn { background: #1a237e; color: white; border: none; padding: 10px 24px; border-radius: 8px; font-size: 16px; cursor: pointer; transition: background 0.3s; }
+.nav-btn:hover { background: #283593; }
+.nav-btn:disabled { background: #9fa8da; cursor: not-allowed; }
+.slide-indicator { font-size: 16px; color: #666; min-width: 60px; text-align: center; }
+.summary-box { background: #e8eaf6; border-radius: 12px; padding: 24px; margin: 16px 0; }
+.summary-box li { color: #1a237e; font-weight: 500; }
+table { border-collapse: collapse; width: 100%; margin: 16px 0; }
+th { background: #1a237e; color: white; padding: 10px; text-align: left; }
+td { padding: 8px 10px; border-bottom: 1px solid #e0e0e0; }
+tr:nth-child(even) td { background: #f5f5f5; }
+.info-box { background: #e3f2fd; border-left: 4px solid #1a237e; border-radius: 8px; padding: 16px 20px; margin: 20px 0; font-size: 16px; }
+.warn-box { background: #fce4ec; border-left: 4px solid #c62828; border-radius: 8px; padding: 16px 20px; margin: 20px 0; font-size: 16px; }
+.warn-box strong { color: #c62828; }
+@media (max-width: 600px) {
+  .slide-container { padding: 24px; }
+  .title-slide h1 { font-size: 28px; }
+  .title-slide .subtitle { font-size: 18px; }
+  .slide h2 { font-size: 24px; }
+}
+</style>
+</head>
+<body>
+<div class="container">
+  <div class="header">
+    <span style="font-weight:bold;font-size:18px;">第32课：二分查找</span>
+    <span class="course-tag">CSP-J 备考课程</span>
+  </div>
+  <div class="slide-container">
+
+    <!-- Slide 1: Title -->
+    <div class="slide active" id="slide1">
+      <div class="title-slide">
+        <h1>二分查找</h1>
+        <div class="subtitle">高效搜索的奥秘 — 从 O(n) 到 O(log n) 的飞跃</div>
+        <p style="font-size:18px;color:#555;">掌握二分查找的两种经典写法、STL 函数与二分答案的核心思想</p>
+        <div class="badge" style="margin-top:30px;">第 32 课</div>
+      </div>
+    </div>
+
+    <!-- Slide 2: 二分查找基础 -->
+    <div class="slide" id="slide2">
+      <h2>二分查找基础</h2>
+      <h3>核心前提：序列必须有序（升序或降序）</h3>
+
+      <h3>写法一：闭区间 while (l &lt;= r)</h3>
+      <ul>
+        <li><strong>搜索区间：</strong>[l, r]，左右均闭合。当 l &gt; r 时区间为空，搜索结束。</li>
+        <li><strong>mid 计算：</strong>mid = l + (r - l) / 2，或 mid = (l + r) / 2（无溢出风险时）。</li>
+        <li><strong>调整规则：</strong>a[mid] &lt; x 则 l = mid + 1；a[mid] &gt; x 则 r = mid - 1。</li>
+        <li><strong>优点：</strong>逻辑直观，容易理解边界条件。</li>
+      </ul>
+
+      <h3>写法二：左闭右开 while (l &lt; r)</h3>
+      <ul>
+        <li><strong>搜索区间：</strong>[l, r)，左闭右开。当 l == r 时区间为空。</li>
+        <li><strong>调整规则：</strong>a[mid] &lt; x 则 l = mid + 1；a[mid] &gt; x 则 r = mid。</li>
+        <li><strong>优点：</strong>与 C++ STL 迭代器区间风格一致，常用于查找下界。</li>
+      </ul>
+
+      <table>
+        <tr><th>对比项</th><th>闭区间 [l, r]</th><th>左闭右开 [l, r)</th></tr>
+        <tr><td>循环条件</td><td>while (l &lt;= r)</td><td>while (l &lt; r)</td></tr>
+        <tr><td>初始区间</td><td>l=0, r=n-1</td><td>l=0, r=n</td></tr>
+        <tr><td>找到目标</td><td>return mid</td><td>需要额外判断</td></tr>
+        <tr><td>未找到</td><td>l &gt; r 结束</td><td>l == r 结束</td></tr>
+      </table>
+
+      <div class="exam-tip">
+        <strong>📝 考试技巧：</strong> 推荐优先掌握<strong>闭区间写法</strong>，因为判断条件对称（l=mid+1, r=mid-1），边界不易出错。左闭右开写法的 r 更新为 mid（不-1），初学者容易混淆。
+      </div>
+    </div>
+
+    <!-- Slide 3: lower_bound / upper_bound -->
+    <div class="slide" id="slide3">
+      <h2>lower_bound / upper_bound</h2>
+      <h3>STL 提供的二分查找函数（头文件 &lt;algorithm&gt;）</h3>
+      <ul>
+        <li><strong>lower_bound(begin, end, x)：</strong>返回第一个 <strong>&ge; x</strong> 的元素位置（迭代器）。即第一个不小于 x 的位置。</li>
+        <li><strong>upper_bound(begin, end, x)：</strong>返回第一个 <strong>&gt; x</strong> 的元素位置（迭代器）。即第一个大于 x 的位置。</li>
+        <li><strong>返回类型：</strong>迭代器，减去 begin() 可得下标。若所有元素都小于 x，则返回 end()。</li>
+      </ul>
+
+      <pre class="code-block"><code><span class="comment">// 示例：有序数组 a = {1, 3, 3, 5, 7, 9, 9, 11}</span>
+<span class="keyword">int</span> a[] = {<span class="number">1</span>, <span class="number">3</span>, <span class="number">3</span>, <span class="number">5</span>, <span class="number">7</span>, <span class="number">9</span>, <span class="number">9</span>, <span class="number">11</span>};
+
+<span class="comment">// lower_bound(a, a+8, 3) → 下标1（第一个≥3的位置）</span>
+<span class="keyword">int</span> p1 = <span class="func">lower_bound</span>(a, a + <span class="number">8</span>, <span class="number">3</span>) - a;  <span class="comment">// p1 = 1</span>
+
+<span class="comment">// upper_bound(a, a+8, 3) → 下标3（第一个＞3的位置）</span>
+<span class="keyword">int</span> p2 = <span class="func">upper_bound</span>(a, a + <span class="number">8</span>, <span class="number">3</span>) - a;  <span class="comment">// p2 = 3</span>
+
+<span class="comment">// 元素 3 的出现次数 = upper_bound - lower_bound</span>
+<span class="keyword">int</span> cnt = p2 - p1;                     <span class="comment">// cnt = 2</span>
+
+<span class="comment">// 查找不存在的元素</span>
+<span class="keyword">int</span> p3 = <span class="func">lower_bound</span>(a, a + <span class="number">8</span>, <span class="number">4</span>) - a;  <span class="comment">// p3 = 3（第一个≥4的是a[3]=5）</span></code></pre>
+
+      <div class="info-box">
+        <strong>实用技巧：</strong>计算元素 x 在有序数组中的出现次数 = <code>upper_bound(begin, end, x) - lower_bound(begin, end, x)</code>。
+      </div>
+    </div>
+
+    <!-- Slide 4: 二分答案思想 -->
+    <div class="slide" id="slide4">
+      <h2>二分答案思想</h2>
+      <h3>当问题的答案具有"单调性"时，可以在答案范围上二分</h3>
+      <ul>
+        <li><strong>核心思路：</strong>答案在某个区间 [L, R] 内，存在一个分界点：分界点一侧都满足条件，另一侧都不满足。二分寻找这个分界点。</li>
+        <li><strong>check(mid) 函数：</strong>判断"如果答案是 mid，是否可行"。这是二分答案的关键——如何写出正确的 check 函数。</li>
+      </ul>
+
+      <h3>两种二分方向</h3>
+      <table>
+        <tr><th>目的</th><th>二分方向</th><th>模板</th></tr>
+        <tr><td>找<strong>最大值</strong></td><td>可行区域在左侧</td><td><code>if(check(mid)) l=mid; else r=mid-1;</code></td></tr>
+        <tr><td>找<strong>最小值</strong></td><td>可行区域在右侧</td><td><code>if(check(mid)) r=mid; else l=mid+1;</code></td></tr>
+      </table>
+
+      <pre class="code-block"><code><span class="comment">// 二分答案通用框架：在 [L, R] 上二分答案</span>
+<span class="keyword">int</span> l = L, r = R, ans = -<span class="number">1</span>;
+<span class="keyword">while</span> (l &lt;= r) {
+    <span class="keyword">int</span> mid = l + (r - l) / <span class="number">2</span>;
+    <span class="keyword">if</span> (<span class="func">check</span>(mid)) {      <span class="comment">// mid 可行</span>
+        ans = mid;          <span class="comment">// 记录当前最优答案</span>
+        r = mid - <span class="number">1</span>;        <span class="comment">// 尝试找更小/更大的可行解</span>
+    } <span class="keyword">else</span> {
+        l = mid + <span class="number">1</span>;
+    }
+}
+<span class="comment">// ans 即为最终答案</span></code></pre>
+
+      <div class="exam-tip">
+        <strong>📝 考试技巧：</strong> CSP-J 复赛第二题经常是二分答案应用题。关键在于将原问题转化成"判断 mid 是否可行"的形式。如果题目中有"最大值最小"或"最小值最大"的描述，大概率是二分答案！
+      </div>
+    </div>
+
+    <!-- Slide 5: 二分答案经典问题 - 砍树 -->
+    <div class="slide" id="slide5">
+      <h2>二分答案经典问题 — 砍树</h2>
+      <div class="info-box">
+        <strong>题目描述：</strong>有 n 棵树，每棵树高度为 h[i]。伐木工想砍下总长度至少为 M 米的木材。锯片设置成高度 H 时，能砍下所有高于 H 的部分（树高 &gt; H 的部分长度之和）。问：锯片最高能设置成多少米？<br>
+        <strong>输入：</strong>n=4, M=7, h[]={20, 15, 10, 17}<br>
+        <strong>条件：</strong>1 &le; n &le; 10⁶, 1 &le; M &le; 2×10⁹, h[i] &le; 10⁹
+      </div>
+
+      <h3>问题转化</h3>
+      <p>check(H) = 判断锯片高度为 H 时，能砍下的木材总长度是否 &ge; M。</p>
+      <p>H 越小 → 砍下的越多 → 越满足条件。因此满足条件的 H 都在左侧（小值），我们要找<strong>最大的满足条件的 H</strong>。</p>
+
+      <pre class="code-block"><code><span class="comment">// check 函数：高度 H 能否砍到至少 M 米</span>
+<span class="keyword">bool</span> <span class="func">check</span>(<span class="keyword">long</span> <span class="keyword">long</span> H) {
+    <span class="keyword">long</span> <span class="keyword">long</span> total = <span class="number">0</span>;
+    <span class="keyword">for</span> (<span class="keyword">int</span> i = <span class="number">0</span>; i &lt; n; i++) {
+        <span class="keyword">if</span> (h[i] &gt; H)
+            total += h[i] - H;
+        <span class="keyword">if</span> (total &gt;= M) <span class="keyword">return</span> <span class="keyword">true</span>;  <span class="comment">// 提前返回优化</span>
+    }
+    <span class="keyword">return</span> total &gt;= M;
+}</code></pre>
+
+      <h3>输入示例的二分过程</h3>
+      <p>h = [20, 15, 10, 17]，M = 7，答案范围 [0, 20]</p>
+      <table>
+        <tr><th>mid</th><th>砍下木材</th><th>check</th><th>操作</th></tr>
+        <tr><td>10</td><td>(20-10)+(15-10)+(17-10)=10+5+7=22</td><td>✅</td><td>l→11 记录答案</td></tr>
+        <tr><td>15</td><td>(20-15)+(17-15)=5+2=7</td><td>✅</td><td>l→16 记录答案</td></tr>
+        <tr><td>16</td><td>(20-16)+(17-16)=4+1=5</td><td>❌</td><td>r→15</td></tr>
+        <tr><td colspan="4"><strong>最终答案：H = 15（此时恰好砍下 7 米）</strong></td></tr>
+      </table>
+    </div>
+
+    <!-- Slide 6: 浮点数二分 -->
+    <div class="slide" id="slide6">
+      <h2>浮点数二分</h2>
+      <h3>当答案不是整数时，使用浮点二分</h3>
+      <ul>
+        <li><strong>核心区别：</strong>整数二分的边界是 l &gt; r 或 l == r，浮点数二分用精度控制 <code>while (r - l &gt; eps)</code>。</li>
+        <li><strong>eps 选择：</strong>一般取 1e-7 到 1e-9。如果题目要求保留 k 位小数，eps 设为 1e-(k+2)。</li>
+        <li><strong>mid 更新：</strong>直接 l = mid 或 r = mid（不需要 ±1）。</li>
+      </ul>
+
+      <h3>示例：求 x 的平方根（保留 6 位小数）</h3>
+      <pre class="code-block"><code><span class="keyword">double</span> <span class="func">mySqrt</span>(<span class="keyword">double</span> x) {
+    <span class="keyword">double</span> l = <span class="number">0</span>, r = x, eps = <span class="number">1e-8</span>;
+    <span class="keyword">if</span> (x &lt; <span class="number">1</span>) r = <span class="number">1</span>;  <span class="comment">// 处理 0&lt;x&lt;1 的情况</span>
+
+    <span class="keyword">while</span> (r - l &gt; eps) {
+        <span class="keyword">double</span> mid = (l + r) / <span class="number">2</span>;
+        <span class="keyword">if</span> (mid * mid &gt;= x)
+            r = mid;      <span class="comment">// 平方过大，缩小右边界</span>
+        <span class="keyword">else</span>
+            l = mid;      <span class="comment">// 平方过小，增大左边界</span>
+    }
+    <span class="keyword">return</span> l;  <span class="comment">// 或 return r，此时 l≈r</span>
+}
+<span class="comment">// 注意：mid*mid 可能溢出，实际可用 mid &gt; x/mid 代替</span></code></pre>
+
+      <div class="warn-box">
+        <strong>⚠️ 常见错误：</strong> 浮点数二分不能使用 <code>while(l &lt;= r)</code> 因为浮点数几乎永远不会精确相等。务必使用精度控制！如果固定迭代次数（如 100 次），可以保证结果精度达到 2^(-100)。
+      </div>
+    </div>
+
+    <!-- Slide 7: 代码模板 -->
+    <div class="slide" id="slide7">
+      <h2>代码模板汇总</h2>
+
+      <h3>模板一：整数二分查找（闭区间）</h3>
+      <pre class="code-block"><code><span class="comment">// 在有序数组 a[0..n-1] 中查找 x，返回下标，未找到返回 -1</span>
+<span class="keyword">int</span> <span class="func">binarySearch</span>(<span class="keyword">int</span> a[], <span class="keyword">int</span> n, <span class="keyword">int</span> x) {
+    <span class="keyword">int</span> l = <span class="number">0</span>, r = n - <span class="number">1</span>;
+    <span class="keyword">while</span> (l &lt;= r) {
+        <span class="keyword">int</span> mid = l + (r - l) / <span class="number">2</span>;
+        <span class="keyword">if</span> (a[mid] == x) <span class="keyword">return</span> mid;
+        <span class="keyword">if</span> (a[mid] &lt; x) l = mid + <span class="number">1</span>;
+        <span class="keyword">else</span> r = mid - <span class="number">1</span>;
+    }
+    <span class="keyword">return</span> -<span class="number">1</span>;
+}</code></pre>
+
+      <h3>模板二：二分答案（找最大可行解）</h3>
+      <pre class="code-block"><code><span class="keyword">int</span> l = L, r = R, ans = <span class="number">0</span>;
+<span class="keyword">while</span> (l &lt;= r) {
+    <span class="keyword">int</span> mid = l + (r - l) / <span class="number">2</span>;
+    <span class="keyword">if</span> (<span class="func">check</span>(mid)) {
+        ans = mid;        <span class="comment">// 记录可行解</span>
+        l = mid + <span class="number">1</span>;      <span class="comment">// 尝试更大的（找最大值）</span>
+    } <span class="keyword">else</span> {
+        r = mid - <span class="number">1</span>;
+    }
+}</code></pre>
+
+      <h3>模板三：浮点数二分</h3>
+      <pre class="code-block"><code><span class="keyword">double</span> l = L, r = R;
+<span class="keyword">const</span> <span class="keyword">double</span> eps = <span class="number">1e-8</span>;
+<span class="keyword">while</span> (r - l &gt; eps) {
+    <span class="keyword">double</span> mid = (l + r) / <span class="number">2</span>;
+    <span class="keyword">if</span> (<span class="func">check</span>(mid)) r = mid;
+    <span class="keyword">else</span> l = mid;
+}</code></pre>
+    </div>
+
+    <!-- Slide 8: 真题精练 - 砍树 -->
+    <div class="slide" id="slide8">
+      <h2>真题精练 — 砍树问题（完整 AC 代码）</h2>
+
+      <div class="info-box">
+        <strong>题目再现：</strong>n 棵树高度 h[i]，需要至少 M 米木材。锯片高度 H 能砍下所有高于 H 的部分。求锯片能设置的最大高度 H。
+      </div>
+
+      <h3>完整 AC 代码</h3>
+      <pre class="code-block"><code><span class="meta">#include &lt;iostream&gt;</span>
+<span class="keyword">using</span> <span class="keyword">namespace</span> std;
+<span class="keyword">typedef</span> <span class="keyword">long</span> <span class="keyword">long</span> ll;
+
+<span class="keyword">const</span> <span class="keyword">int</span> N = <span class="number">1e6</span> + <span class="number">5</span>;
+<span class="keyword">int</span> n, h[N];
+ll M;
+
+<span class="keyword">bool</span> <span class="func">check</span>(ll H) {
+    ll total = <span class="number">0</span>;
+    <span class="keyword">for</span> (<span class="keyword">int</span> i = <span class="number">0</span>; i &lt; n; i++) {
+        <span class="keyword">if</span> (h[i] &gt; H) total += h[i] - H;
+        <span class="keyword">if</span> (total &gt;= M) <span class="keyword">return</span> <span class="keyword">true</span>;
+    }
+    <span class="keyword">return</span> <span class="keyword">false</span>;
+}
+
+<span class="keyword">int</span> <span class="func">main</span>() {
+    cin &gt;&gt; n &gt;&gt; M;
+    ll maxH = <span class="number">0</span>;
+    <span class="keyword">for</span> (<span class="keyword">int</span> i = <span class="number">0</span>; i &lt; n; i++) {
+        cin &gt;&gt; h[i];
+        maxH = <span class="func">max</span>(maxH, (ll)h[i]);
+    }
+
+    ll l = <span class="number">0</span>, r = maxH, ans = <span class="number">0</span>;
+    <span class="keyword">while</span> (l &lt;= r) {
+        ll mid = l + (r - l) / <span class="number">2</span>;
+        <span class="keyword">if</span> (<span class="func">check</span>(mid)) {
+            ans = mid;
+            l = mid + <span class="number">1</span>;    <span class="comment">// 找更大的 H</span>
+        } <span class="keyword">else</span> {
+            r = mid - <span class="number">1</span>;
+        }
+    }
+    cout &lt;&lt; ans &lt;&lt; endl;
+    <span class="keyword">return</span> <span class="number">0</span>;
+}</code></pre>
+
+      <div class="exam-tip">
+        <strong>📝 考试技巧：</strong> 砍树问题数据范围可达 10⁹，要使用 <strong>long long</strong>！total 累加和 mid*mid 都可能溢出 int。在 CSP-J 中，涉及累加和的二分答案题，一律用 long long。
+      </div>
+    </div>
+
+    <!-- Slide 9: 本课小结 -->
+    <div class="slide" id="slide9">
+      <h2>本课小结</h2>
+      <div class="summary-box">
+        <ul style="font-size:17px;line-height:2.2;">
+          <li><strong>二分查找前提：</strong>序列有序。闭区间写法 <code>while(l &lt;= r)</code> 最推荐，边界清晰不易出错。</li>
+          <li><strong>STL 函数：</strong><code>lower_bound()</code> 找第一个 &ge;x 的位置，<code>upper_bound()</code> 找第一个 &gt;x 的位置。差值可得出现次数。</li>
+          <li><strong>二分答案：</strong>当答案区间有单调性时，二分答案值，通过 check(mid) 判断可行性。关键词："最大值最小"、"最小值最大"。</li>
+          <li><strong>check 函数设计：</strong>二分答案的核心！必须保证正确性和高效性（通常 O(n) 即可）。</li>
+          <li><strong>浮点数二分：</strong>用精度控制 <code>while(r-l &gt; eps)</code>，eps 一般为 1e-8。注意 mid*mid 溢出。</li>
+          <li><strong>类型安全：</strong>二分答案题数据范围大，养成用 <code>long long</code> 和 <code>mid = l + (r-l)/2</code> 防溢出的好习惯。</li>
+        </ul>
+      </div>
+      <h3>课程总结</h3>
+      <p>恭喜你完成了排序与查找的核心课程！从第 29 到 32 课，我们从 O(n²) 基础排序到 O(n log n) 的 STL sort，再到 O(log n) 的二分查找。这些知识是 CSP-J 算法体系的基础，也是复赛必备技能。</p>
+    </div>
+
+  </div>
+  <div class="navigation">
+    <button class="nav-btn" id="prevBtn" onclick="changeSlide(-1)">&#9664; 上一页</button>
+    <span class="slide-indicator" id="slideIndicator">1 / 9</span>
+    <button class="nav-btn" id="nextBtn" onclick="changeSlide(1)">下一页 &#9654;</button>
+  </div>
+</div>
+<script>
+let currentSlide = 1;
+const totalSlides = 9;
+
+function showSlide(n) {
+  document.querySelectorAll('.slide').forEach(s => s.classList.remove('active'));
+  document.getElementById('slide' + n).classList.add('active');
+  document.getElementById('slideIndicator').textContent = n + ' / ' + totalSlides;
+  document.getElementById('prevBtn').disabled = (n === 1);
+  document.getElementById('nextBtn').disabled = (n === totalSlides);
+  currentSlide = n;
+}
+
+function changeSlide(delta) {
+  let next = currentSlide + delta;
+  if (next >= 1 && next <= totalSlides) showSlide(next);
+}
+
+document.addEventListener('keydown', function(e) {
+  if (e.key === 'ArrowLeft') changeSlide(-1);
+  if (e.key === 'ArrowRight') changeSlide(1);
+});
+</script>
+</body>
+</html>

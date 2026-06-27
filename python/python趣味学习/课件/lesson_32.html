@@ -1,0 +1,303 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>第32节：综合练习：制作工具函数库</title>
+<link rel="stylesheet" href="assets/fonts.css">
+<link rel="stylesheet" href="assets/base.css">
+<link rel="stylesheet" href="assets/animations/animations.css">
+<link rel="stylesheet" href="style.css">
+<style>
+.tpl-course-module .slide{overflow-y:auto}
+.tpl-course-module .slide .main{overflow-y:auto;max-height:calc(100vh - 128px)}
+.tpl-course-module .slide.full{overflow-y:auto;display:flex;flex-direction:column;justify-content:flex-start;padding-top:64px}
+.tpl-course-module .h1{font-size:52px}
+.tpl-course-module .h2{font-size:32px}
+.tpl-course-module .slide{padding:44px 56px;gap:36px}
+.code-mini{background:#2a2418;color:#f4f1e8;border-radius:14px;padding:18px 22px;font-family:'JetBrains Mono',monospace;font-size:14px;line-height:1.7;margin:12px 0;overflow-x:auto}
+.code-mini .cmt{color:#8a7f68;font-style:italic}
+.code-mini .kw{color:#e8a770}
+.code-mini .str{color:#8ec6b2}
+.code-mini .fn{color:#c9a8e8}
+.code-mini .num{color:#e8c77a}
+</style>
+</head>
+<body class="tpl-course-module">
+<div class="deck">
+
+<!-- ═══ COVER ═══ -->
+<section class="slide full" data-title="封面">
+  <p class="kicker">第六单元 · 第32节 · 综合练习</p>
+  <h1 class="h1 mt-s">制作工具函数库<br><em>import 让代码复用</em></h1>
+  <p class="lede mt-l" style="max-width:60ch">把学过的数学计算、字符串处理、列表操作、字典功能封装成函数，创建自己的 <code class="code-inline">my_tools.py</code> 工具库，在主程序里 import 使用 —— 这是迈向"代码复用"的第一步！</p>
+  <div class="row mt-l" style="gap:12px;flex-wrap:wrap">
+    <span class="pill-academic">模块(module)</span><span class="pill-academic">import</span>
+    <span class="pill-academic">from...import</span><span class="pill-academic">my_tools.py</span>
+  </div>
+  <div class="deck-footer"><span>Python 趣味学习课程</span><span class="slide-number" data-current="1" data-total="7"></span></div>
+</section>
+
+<!-- ═══ 教学目标 ═══ -->
+<section class="slide" data-title="教学目标">
+  <aside class="sidebar"><div class="brand">Unit 6</div><h5>第 32 节</h5><p class="dim" style="font-size:12px">综合练习：制作工具函数库</p></aside>
+  <div class="main">
+    <p class="kicker">LEARNING OBJECTIVES</p>
+    <h2 class="h2 mt-s">教学目标</h2>
+    <ul class="obj-list mt-m">
+      <li>理解"模块"的概念 —— 一个 .py 文件就是一个模块</li>
+      <li>掌握 <code class="code-inline">import</code> 和 <code class="code-inline">from...import</code> 两种导入方式</li>
+      <li>学会创建自己的工具模块 my_tools.py</li>
+      <li>封装数学、字符串、列表、字典四大类工具函数</li>
+      <li>在主程序中导入并使用自己写的函数库</li>
+    </ul>
+  </div>
+</section>
+
+<!-- ═══ 重点概念 ═══ -->
+<section class="slide" data-title="重点概念">
+  <aside class="sidebar"><div class="brand">Unit 6</div><h5>第 32 节</h5><p class="dim" style="font-size:12px">重点概念</p></aside>
+  <div class="main">
+    <p class="kicker">KEY CONCEPTS</p>
+    <h2 class="h2 mt-s">模块与导入</h2>
+    <div class="grid g2 mt-m" style="display:grid;grid-template-columns:1fr 1fr;gap:16px">
+      <div class="concept-box">
+        <h4>模块（module）</h4>
+        <p class="dim">一个 .py 文件就是一个模块。把相关函数写在一起，就做成了一个"工具箱"。例如 <code class="code-inline">random.py</code>、<code class="code-inline">math.py</code>。</p>
+      </div>
+      <div class="concept-box">
+        <h4>import 模块名</h4>
+        <p class="dim">导入整个模块，使用时需要加模块名前缀。如 <code class="code-inline">import my_tools</code>，调用：<code class="code-inline">my_tools.add(3, 5)</code>。</p>
+      </div>
+      <div class="concept-box">
+        <h4>from...import</h4>
+        <p class="dim">从模块中导入指定的函数，使用时不需要前缀。如 <code class="code-inline">from my_tools import add, is_even</code>，直接写 <code class="code-inline">add(3, 5)</code>。</p>
+      </div>
+      <div class="concept-box">
+        <h4>__name__ 变量</h4>
+        <p class="dim">每个 .py 文件都有一个内置变量 <code class="code-inline">__name__</code>。直接运行时为 <code class="code-inline">"__main__"</code>，被导入时为模块名。常用来写测试代码。</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ═══ my_tools.py 完整代码 ═══ -->
+<section class="slide" data-title="my_tools.py 工具库">
+  <aside class="sidebar"><div class="brand">Unit 6</div><h5>第 32 节</h5><p class="dim" style="font-size:12px">my_tools.py 完整代码</p></aside>
+  <div class="main">
+    <p class="kicker">TOOL LIBRARY CODE</p>
+    <h2 class="h2 mt-s">创建 my_tools.py 工具函数库</h2>
+
+    <div class="code-mini mt-m"><pre style="margin:0"><span class="cmt"># ========== my_tools.py ==========</span>
+<span class="cmt"># 自己的 Python 工具函数库——四大类工具！</span>
+
+<span class="cmt"># ── 一、数学工具 ──</span>
+<span class="kw">def</span> <span class="fn">add</span>(a, b):
+    <span class="kw">return</span> a + b
+
+<span class="kw">def</span> <span class="fn">is_even</span>(n):
+    <span class="cmt">"""判断是否是偶数"""</span>
+    <span class="kw">return</span> n % <span class="num">2</span> == <span class="num">0</span>
+
+<span class="kw">def</span> <span class="fn">average</span>(numbers):
+    <span class="cmt">"""计算列表的平均数"""</span>
+    <span class="kw">if</span> <span class="kw">len</span>(numbers) == <span class="num">0</span>:
+        <span class="kw">return</span> <span class="num">0</span>
+    <span class="kw">return</span> <span class="kw">sum</span>(numbers) / <span class="kw">len</span>(numbers)
+
+<span class="kw">def</span> <span class="fn">is_prime</span>(n):
+    <span class="cmt">"""判断质数：只能被 1 和自己整除"""</span>
+    <span class="kw">if</span> n &lt; <span class="num">2</span>:
+        <span class="kw">return</span> <span class="kw">False</span>
+    <span class="kw">for</span> i <span class="kw">in</span> <span class="kw">range</span>(<span class="num">2</span>, <span class="kw">int</span>(n ** <span class="num">0.5</span>) + <span class="num">1</span>):
+        <span class="kw">if</span> n % i == <span class="num">0</span>:
+            <span class="kw">return</span> <span class="kw">False</span>
+    <span class="kw">return</span> <span class="kw">True</span>
+
+<span class="kw">def</span> <span class="fn">factorial</span>(n):
+    <span class="cmt">"""阶乘：5! = 5×4×3×2×1 = 120"""</span>
+    result = <span class="num">1</span>
+    <span class="kw">for</span> i <span class="kw">in</span> <span class="kw">range</span>(<span class="num">2</span>, n + <span class="num">1</span>):
+        result *= i
+    <span class="kw">return</span> result</pre></div>
+  </div>
+</section>
+
+<!-- ═══ my_tools.py 第二部分 + 导入使用 ═══ -->
+<section class="slide" data-title="my_tools.py 续 & import">
+  <aside class="sidebar"><div class="brand">Unit 6</div><h5>第 32 节</h5><p class="dim" style="font-size:12px">字符串/列表/字典工具</p></aside>
+  <div class="main">
+    <p class="kicker">TOOL LIBRARY CODE (CONTINUED)</p>
+    <h2 class="h2 mt-s">字符串 / 列表 / 字典工具</h2>
+
+    <div class="code-mini mt-m"><pre style="margin:0"><span class="cmt"># ── 二、字符串工具 ──</span>
+<span class="kw">def</span> <span class="fn">is_palindrome</span>(s):
+    <span class="cmt">"""回文判断：正读反读都一样，如 "上海自来水" """</span>
+    s = s.replace(<span class="str">" "</span>, <span class="str">""</span>)  <span class="cmt"># 去掉空格</span>
+    <span class="kw">return</span> s == s[::-<span class="num">1</span>]
+
+<span class="kw">def</span> <span class="fn">count_char</span>(s, ch):
+    <span class="cmt">"""统计某个字符出现次数"""</span>
+    <span class="kw">return</span> s.count(ch)
+
+<span class="kw">def</span> <span class="fn">reverse_string</span>(s):
+    <span class="cmt">"""反转字符串"""</span>
+    <span class="kw">return</span> s[::-<span class="num">1</span>]
+
+<span class="kw">def</span> <span class="fn">to_title</span>(s):
+    <span class="cmt">"""首字母大写，如 'hello world' → 'Hello World'"""</span>
+    <span class="kw">return</span> s.title()
+
+<span class="cmt"># ── 三、列表工具 ──</span>
+<span class="kw">def</span> <span class="fn">find_max</span>(lst):
+    <span class="kw">if</span> <span class="kw">len</span>(lst) == <span class="num">0</span>: <span class="kw">return</span> <span class="kw">None</span>
+    <span class="kw">return</span> <span class="kw">max</span>(lst)
+
+<span class="kw">def</span> <span class="fn">find_min</span>(lst):
+    <span class="kw">if</span> <span class="kw">len</span>(lst) == <span class="num">0</span>: <span class="kw">return</span> <span class="kw">None</span>
+    <span class="kw">return</span> <span class="kw">min</span>(lst)
+
+<span class="kw">def</span> <span class="fn">remove_duplicates</span>(lst):
+    <span class="cmt">"""去重：保留顺序，去掉重复"""</span>
+    result = []
+    <span class="kw">for</span> item <span class="kw">in</span> lst:
+        <span class="kw">if</span> item <span class="kw">not</span> <span class="kw">in</span> result:
+            result.append(item)
+    <span class="kw">return</span> result
+
+<span class="kw">def</span> <span class="fn">filter_even</span>(lst):
+    <span class="cmt">"""筛选出列表中的所有偶数"""</span>
+    <span class="kw">return</span> [x <span class="kw">for</span> x <span class="kw">in</span> lst <span class="kw">if</span> x % <span class="num">2</span> == <span class="num">0</span>]
+
+<span class="cmt"># ── 四、字典工具 ──</span>
+<span class="kw">def</span> <span class="fn">get_keys</span>(d):
+    <span class="cmt">"""获取字典所有键"""</span>
+    <span class="kw">return</span> <span class="kw">list</span>(d.keys())
+
+<span class="kw">def</span> <span class="fn">get_values</span>(d):
+    <span class="cmt">"""获取字典所有值"""</span>
+    <span class="kw">return</span> <span class="kw">list</span>(d.values())
+
+<span class="kw">def</span> <span class="fn">merge_dicts</span>(d1, d2):
+    <span class="cmt">"""合并两个字典，重复键以 d2 为准"""</span>
+    result = d1.copy()
+    result.update(d2)
+    <span class="kw">return</span> result
+
+<span class="kw">def</span> <span class="fn">find_key_by_value</span>(d, value):
+    <span class="cmt">"""根据值查找键（返回第一个匹配）"""</span>
+    <span class="kw">for</span> k, v <span class="kw">in</span> d.items():
+        <span class="kw">if</span> v == value:
+            <span class="kw">return</span> k
+    <span class="kw">return</span> <span class="kw">None</span></pre></div>
+  </div>
+</section>
+
+<!-- ═══ 导入与使用 ═══ -->
+<section class="slide" data-title="导入与使用">
+  <aside class="sidebar"><div class="brand">Unit 6</div><h5>第 32 节</h5><p class="dim" style="font-size:12px">导入与使用</p></aside>
+  <div class="main">
+    <p class="kicker">IMPORT &amp; USAGE</p>
+    <h2 class="h2 mt-s">在主程序中导入并使用</h2>
+
+    <div class="code-mini mt-m"><pre style="margin:0"><span class="cmt"># ========== main.py（主程序）==========</span>
+
+<span class="cmt"># 方式一：导入整个模块（推荐，不容易名字冲突）</span>
+<span class="kw">import</span> my_tools
+
+score_list = [<span class="num">85</span>, <span class="num">92</span>, <span class="num">78</span>, <span class="num">66</span>, <span class="num">88</span>]
+<span class="kw">print</span>(<span class="str">"最高分："</span>, my_tools.<span class="fn">find_max</span>(score_list))
+<span class="kw">print</span>(<span class="str">"平均分："</span>, my_tools.<span class="fn">average</span>(score_list))
+<span class="kw">print</span>(<span class="str">"92 是偶数吗？"</span>, my_tools.<span class="fn">is_even</span>(<span class="num">92</span>))
+
+<span class="cmt"># 方式二：导入指定函数（不用前缀，更方便）</span>
+<span class="kw">from</span> my_tools <span class="kw">import</span> is_palindrome, reverse_string
+
+<span class="kw">print</span>(<span class="str">'"上海自来水" 是回文吗？'</span>, is_palindrome(<span class="str">"上海自来水"</span>))
+<span class="kw">print</span>(reverse_string(<span class="str">"Python"</span>))  <span class="cmt"># 输出：nohtyP</span>
+
+<span class="cmt"># 方式三：导入所有（不推荐，可能导致名字冲突）</span>
+<span class="cmt"># from my_tools import *</span></pre></div>
+
+    <div class="callout mt-m"><b>运行结果示例：</b><br>
+    <span style="font-family:'JetBrains Mono',monospace;font-size:13px">
+    最高分： 92<br>
+    平均分： 81.8<br>
+    92 是偶数吗？ True<br>
+    "上海自来水" 是回文吗？ True<br>
+    nohtyP
+    </span></div>
+
+    <div class="concept-box mt-m">
+      <h4>import 的黄金法则</h4>
+      <ul style="margin:8px 0 0;padding-left:18px;color:var(--text-2);line-height:1.8">
+        <li>import 写在文件最上面，所有代码之前</li>
+        <li>my_tools.py 和 main.py 放在同一个文件夹里才能 import</li>
+        <li>被 import 的文件名不能以数字开头</li>
+        <li>模块名不用加 .py 后缀</li>
+      </ul>
+    </div>
+  </div>
+</section>
+
+<!-- ═══ 课堂练习 ═══ -->
+<section class="slide" data-title="课堂练习">
+  <aside class="sidebar"><div class="brand">Unit 6</div><h5>第 32 节</h5><p class="dim" style="font-size:12px">课堂练习</p></aside>
+  <div class="main">
+    <p class="kicker">EXERCISES</p>
+    <h2 class="h2 mt-s">课堂练习</h2>
+
+    <div class="exercise mt-m"><b>基础练习（必做）：</b>把 my_tools.py 完整代码打出来（复制也可以），再创建 main.py 导入并使用至少 3 个不同分类的函数，打印运行结果。确定 import 不会报错。</div>
+
+    <div class="exercise mt-m"><b>提高练习：</b>给 my_tools.py 增加 2 个新函数：
+    <ul style="margin:6px 0 0;padding-left:18px;color:var(--text-2);line-height:1.6;font-size:14px">
+      <li><code class="code-inline">count_words(text)</code> —— 统计句子中的单词数（提示：用 <code class="code-inline">.split()</code>）</li>
+      <li><code class="code-inline">shuffle_list(lst)</code> —— 随机打乱列表（提示：<code class="code-inline">import random</code>，用 <code class="code-inline">random.shuffle()</code>）</li>
+    </ul>
+    在主程序中测试这两个新函数。</div>
+
+    <div class="exercise mt-m"><b>挑战练习：</b>把 my_tools.py 拆成 4 个独立模块：<code class="code-inline">math_utils.py</code>、<code class="code-inline">str_utils.py</code>、<code class="code-inline">list_utils.py</code>、<code class="code-inline">dict_utils.py</code>。在主程序中分别 import 并调用各模块的函数。体会"分模块管理"的好处。</div>
+
+    <div class="exercise mt-m"><b>思考题：</b>如果你发现 my_tools.py 里有一个 bug（比如 is_prime(1) 返回 True），你只需要改几个地方？如果没用自己的工具库，每个程序里都写了同样的函数，又要改几个地方？</div>
+  </div>
+</section>
+
+<!-- ═══ 小结 ═══ -->
+<section class="slide full" data-title="小结">
+  <p class="kicker">SUMMARY</p>
+  <h2 class="h2 mt-s">学会了什么？</h2>
+  <div class="grid g2 mt-l" style="display:grid;grid-template-columns:1fr 1fr;gap:20px;max-width:80ch">
+    <div class="concept-box">
+      <h4>核心要点</h4>
+      <ul style="margin:8px 0 0;padding-left:18px;color:var(--text-2);line-height:1.8">
+        <li>一个 .py 文件 = 一个模块，是 Python 代码复用的基本单位</li>
+        <li><code class="code-inline">import 模块名</code> 导入整个模块（加前缀调用）</li>
+        <li><code class="code-inline">from 模块 import 函数</code> 导入指定函数（直接调用）</li>
+        <li>成功创建了包含 16 个工具函数的 my_tools.py</li>
+        <li>封装了数学、字符串、列表、字典四大类工具</li>
+        <li>体会了 DRY 原则：Don't Repeat Yourself</li>
+      </ul>
+    </div>
+    <div class="concept-box">
+      <h4>下节预告</h4>
+      <p class="dim">第33节：认识 Turtle —— 海龟画图</p>
+      <p class="dim" style="font-size:13px;margin-top:8px">函数学完了！从下节课开始进入可视化编程——用 Turtle 模块让一只小海龟在屏幕上画图。前进、转弯、画正方形，编程的魔法变成了看得见的图形！</p>
+    </div>
+  </div>
+
+  <div class="callout mt-m" style="max-width:80ch">
+    <b>本项目文件结构一览：</b>
+    <div class="code-mini" style="margin:8px 0 0"><pre style="margin:0"><span class="cmt">📁 项目文件夹/
+├── my_tools.py    ← 你的工具函数库（16+ 个函数）</span>
+<span class="cmt">│   ├── 数学工具：add, is_even, average, is_prime, factorial
+│   ├── 字符串工具：is_palindrome, count_char, reverse_string, to_title
+│   ├── 列表工具：find_max, find_min, remove_duplicates, filter_even
+│   └── 字典工具：get_keys, get_values, merge_dicts, find_key_by_value</span>
+<span class="cmt">└── main.py        ← 主程序，import my_tools 使用</span></pre></div>
+  </div>
+
+  <div class="deck-footer"><span>Python 趣味学习课程 · 第32节</span></div>
+</section>
+
+</div>
+<script src="assets/runtime.js"></script>
+</body></html>

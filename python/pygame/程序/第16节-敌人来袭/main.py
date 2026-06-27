@@ -1,0 +1,339 @@
+"""
+第16节：敌人来袭
+功能：敌机从顶部随机出现、子弹vs敌机碰撞、敌机vs玩家碰撞、
+      血条系统、Game Over判定、按R重新开始
+"""
+import pygame
+import sys
+import random
+
+# ==================== 初始化 ====================
+pygame.init()
+WIDTH, HEIGHT = 800, 600
+screen = pygame.display.set_mode((WIDTH, HEIGHT))
+pygame.display.set_caption("第16节 - 敌人来袭")
+clock = pygame.time.Clock()
+
+# ==================== 颜色常量 ====================
+BLACK = (5, 5, 25)
+WHITE = (255, 255, 255)
+YELLOW = (255, 255, 0)
+BLUE = (50, 150, 255)
+LIGHT_BLUE = (80, 180, 255)
+RED = (255, 50, 50)
+DARK_RED = (150, 0, 0)
+GREEN = (50, 255, 50)
+ORANGE = (255, 150, 0)
+PURPLE = (180, 50, 255)
+GRAY = (120, 120, 120)
+
+# ==================== 玩家飞机 ====================
+player_width = 50
+player_height = 60
+player_x = WIDTH // 2 - player_width // 2   # 水平居中
+player_y = HEIGHT - player_height - 30       # 靠近底部
+player_speed = 5
+
+# ==================== 子弹系统 ====================
+bullets = []              # 子弹列表
+bullet_width = 6
+bullet_height = 15
+bullet_speed = 8
+bullet_cooldown = 0
+COOLDOWN_MAX = 15
+
+# ==================== 敌机系统 ====================
+enemies = []               # 敌机列表，每个元素是一个字典
+enemy_width = 40
+enemy_height = 40
+enemy_speed = 3            # 敌机下落速度
+enemy_timer = 0            # 敌机生成计时器
+ENEMY_SPAWN_INTERVAL = 60  # 每60帧（约1秒）生成一架敌机
+
+# ==================== 得分 ====================
+score = 0
+
+# ==================== 生命值（HP）====================
+max_hp = 100               # 最大生命值
+hp = max_hp                 # 当前生命值
+
+# ==================== 游戏状态 ====================
+game_over = False
+
+# ==================== 字体 ====================
+font = pygame.font.SysFont("simhei", 24)
+big_font = pygame.font.SysFont("simhei", 72)
+medium_font = pygame.font.SysFont("simhei", 32)
+
+# ==================== 星星背景（预生成，避免每帧随机闪烁）====================
+stars = []
+for _ in range(100):
+    stars.append({
+        "x": random.randint(0, WIDTH),
+        "y": random.randint(0, HEIGHT),
+        "radius": random.randint(1, 3),
+        "brightness": random.randint(80, 200)
+    })
+
+
+def draw_player(x, y):
+    """绘制玩家飞机：蓝色机身 + 机翼 + 驾驶舱 + 尾焰"""
+    # 机身
+    pygame.draw.rect(screen, BLUE, (x, y, player_width, player_height), border_radius=4)
+    # 机翼
+    pygame.draw.polygon(screen, LIGHT_BLUE, [
+        (x - 18, y + player_height // 2),
+        (x + player_width + 18, y + player_height // 2),
+        (x + player_width // 2, y - 5)
+    ])
+    # 驾驶舱
+    pygame.draw.rect(screen, (150, 200, 255),
+                     (x + player_width // 2 - 8, y + 10, 16, 20), border_radius=4)
+    # 尾焰（冷却期间显示）
+    if bullet_cooldown > COOLDOWN_MAX - 5:
+        pygame.draw.rect(screen, YELLOW, (x + player_width // 2 - 5, y + player_height, 10, 12))
+        pygame.draw.rect(screen, RED, (x + player_width // 2 - 3, y + player_height + 4, 6, 8))
+
+
+def draw_enemy(x, y):
+    """绘制敌机：红色矩形 + 倒三角 + 眼睛"""
+    # 机身
+    ex, ey, ew, eh = x, y, enemy_width, enemy_height
+    pygame.draw.rect(screen, RED, (ex, ey, ew, eh), border_radius=3)
+    # 下方小三角（"嘴"）
+    pygame.draw.polygon(screen, DARK_RED, [
+        (ex + 5, ey + eh),
+        (ex + ew - 5, ey + eh),
+        (ex + ew // 2, ey + eh + 12)
+    ])
+    # 两只白色"眼睛"
+    eye_size = 6
+    pygame.draw.rect(screen, WHITE, (ex + 8, ey + 8, eye_size, eye_size))
+    pygame.draw.rect(screen, WHITE, (ex + ew - 14, ey + 8, eye_size, eye_size))
+
+
+def draw_hp_bar(x, y, w, h):
+    """绘制血条：红色底框 + 绿色填充 + 白色边框 + 文字"""
+    # 红色底框（血量背景）
+    pygame.draw.rect(screen, DARK_RED, (x, y, w, h))
+    # 绿色血量条（宽度按当前血量百分比缩放）
+    current_w = int(w * (hp / max_hp))
+    if current_w > 0:
+        # 血量越低颜色越红（从绿色渐变为红色）
+        ratio = hp / max_hp
+        bar_color = (
+            int(255 * (1 - ratio)),   # R: 血量越低越红
+            int(255 * ratio),          # G: 血量越低越暗
+            50                         # B: 微蓝
+        )
+        pygame.draw.rect(screen, bar_color, (x, y, current_w, h))
+    # 白色边框
+    pygame.draw.rect(screen, WHITE, (x, y, w, h), 2)
+    # 血条右侧显示数字
+    hp_text = font.render(f"HP: {hp}/{max_hp}", True, WHITE)
+    screen.blit(hp_text, (x + w + 10, y - 1))
+
+
+def draw_game_over():
+    """绘制 Game Over 画面：半透明遮罩 + 结束文字 + 得分 + 重新开始提示"""
+    # 半透明黑色遮罩
+    overlay = pygame.Surface((WIDTH, HEIGHT))
+    overlay.set_alpha(180)
+    overlay.fill((0, 0, 0))
+    screen.blit(overlay, (0, 0))
+
+    # "GAME OVER" 大字
+    go_text = big_font.render("GAME OVER", True, RED)
+    go_rect = go_text.get_rect(center=(WIDTH // 2, HEIGHT // 2 - 70))
+    screen.blit(go_text, go_rect)
+
+    # 最终得分
+    final_text = medium_font.render(f"最终得分: {score}", True, WHITE)
+    final_rect = final_text.get_rect(center=(WIDTH // 2, HEIGHT // 2 + 10))
+    screen.blit(final_text, final_rect)
+
+    # 重新开始提示
+    restart_text = font.render("按 R 键重新开始", True, GRAY)
+    restart_rect = restart_text.get_rect(center=(WIDTH // 2, HEIGHT // 2 + 60))
+    screen.blit(restart_text, restart_rect)
+
+    # 再画一个闪烁的提示框
+    if pygame.time.get_ticks() % 1000 < 700:  # 闪烁效果
+        tip_text = font.render(">>> 再来一局！ <<<", True, YELLOW)
+        tip_rect = tip_text.get_rect(center=(WIDTH // 2, HEIGHT // 2 + 100))
+        screen.blit(tip_text, tip_rect)
+
+
+def reset_game():
+    """重置所有游戏变量，重新开始"""
+    global player_x, player_y, score, hp, game_over, enemy_timer
+    global bullets, enemies, bullet_cooldown
+
+    bullets.clear()
+    enemies.clear()
+    player_x = WIDTH // 2 - player_width // 2
+    player_y = HEIGHT - player_height - 30
+    score = 0
+    hp = max_hp
+    enemy_timer = 0
+    bullet_cooldown = 0
+    game_over = False
+
+
+# ==================== 主循环 ====================
+running = True
+while running:
+    # ==================== 1. 事件处理 ====================
+    for event in pygame.event.get():
+        if event.type == pygame.QUIT:
+            running = False
+
+        if event.type == pygame.KEYDOWN:
+            # 重新开始（Game Over 状态下按 R）
+            if game_over and event.key == pygame.K_r:
+                reset_game()
+
+            # 空格键发射子弹（游戏未结束时）
+            if not game_over and event.key == pygame.K_SPACE and bullet_cooldown == 0:
+                new_bullet = {
+                    "x": player_x + player_width // 2 - bullet_width // 2,
+                    "y": player_y
+                }
+                bullets.append(new_bullet)
+                bullet_cooldown = COOLDOWN_MAX
+
+    # ==================== 2. 逻辑更新（仅在游戏未结束时）====================
+    if not game_over:
+        # --- 冷却计时 ---
+        if bullet_cooldown > 0:
+            bullet_cooldown -= 1
+
+        # --- 玩家移动 ---
+        keys = pygame.key.get_pressed()
+        if keys[pygame.K_LEFT] and player_x > 0:
+            player_x -= player_speed
+        if keys[pygame.K_RIGHT] and player_x < WIDTH - player_width:
+            player_x += player_speed
+        if keys[pygame.K_UP] and player_y > 0:
+            player_y -= player_speed
+        if keys[pygame.K_DOWN] and player_y < HEIGHT - player_height:
+            player_y += player_speed
+
+        # --- 敌机生成 ---
+        enemy_timer += 1
+        if enemy_timer >= ENEMY_SPAWN_INTERVAL:
+            enemy_timer = 0
+            new_enemy = {
+                "x": random.randint(0, WIDTH - enemy_width),
+                "y": -enemy_height  # 从屏幕上方外面出现
+            }
+            enemies.append(new_enemy)
+
+        # --- 更新子弹位置 ---
+        for bullet in bullets:
+            bullet["y"] -= bullet_speed
+
+        # 移除飞出屏幕顶部的子弹
+        bullets = [b for b in bullets if b["y"] + bullet_height > 0]
+
+        # --- 更新敌机位置 ---
+        for enemy in enemies:
+            enemy["y"] += enemy_speed
+
+        # --- 碰撞检测1：子弹 vs 敌机 ---
+        bullets_to_remove = []
+        enemies_to_remove = []
+
+        for bullet in bullets:
+            bullet_rect = pygame.Rect(bullet["x"], bullet["y"], bullet_width, bullet_height)
+            for enemy in enemies:
+                enemy_rect = pygame.Rect(enemy["x"], enemy["y"], enemy_width, enemy_height)
+                if bullet_rect.colliderect(enemy_rect):
+                    # 子弹击中了敌机！
+                    bullets_to_remove.append(bullet)
+                    enemies_to_remove.append(enemy)
+                    score += 10
+                    break  # 一颗子弹只消灭一架敌机
+
+        # 移除碰撞的子弹和敌机（安全删除法）
+        for b in bullets_to_remove:
+            if b in bullets:
+                bullets.remove(b)
+        for e in enemies_to_remove:
+            if e in enemies:
+                enemies.remove(e)
+
+        # --- 碰撞检测2：敌机 vs 玩家 ---
+        player_rect = pygame.Rect(player_x, player_y, player_width, player_height)
+        enemies_hit_player = []
+
+        for enemy in enemies:
+            enemy_rect = pygame.Rect(enemy["x"], enemy["y"], enemy_width, enemy_height)
+            if player_rect.colliderect(enemy_rect):
+                enemies_hit_player.append(enemy)
+                hp -= 20  # 撞到玩家扣20点血
+
+        # 移除撞到玩家的敌机
+        for e in enemies_hit_player:
+            if e in enemies:
+                enemies.remove(e)
+
+        # --- 移除飞出屏幕底部的敌机 ---
+        enemies = [e for e in enemies if e["y"] < HEIGHT + 50]
+
+        # --- Game Over 判定 ---
+        if hp <= 0:
+            hp = 0
+            game_over = True
+
+    # ==================== 3. 绘制画面 ====================
+    screen.fill(BLACK)
+
+    # 绘制星空背景
+    for star in stars:
+        pygame.draw.circle(screen, (star["brightness"], star["brightness"], star["brightness"]),
+                           (star["x"], star["y"]), star["radius"])
+
+    # 绘制玩家飞机
+    draw_player(player_x, player_y)
+
+    # 绘制所有子弹
+    for bullet in bullets:
+        pygame.draw.rect(screen, YELLOW,
+                         (bullet["x"], bullet["y"], bullet_width, bullet_height),
+                         border_radius=2)
+
+    # 绘制所有敌机
+    for enemy in enemies:
+        draw_enemy(enemy["x"], enemy["y"])
+
+    # 绘制血条
+    draw_hp_bar(15, 15, 200, 22)
+
+    # 显示得分（右上角）
+    score_text = font.render(f"得分: {score}", True, WHITE)
+    screen.blit(score_text, (WIDTH - 120, 15))
+
+    # 提示信息（底部）
+    if bullet_cooldown > 0:
+        cd_text = font.render(f"子弹冷却: {bullet_cooldown}", True, GRAY)
+        screen.blit(cd_text, (10, HEIGHT - 30))
+    else:
+        ready_text = font.render("按空格键发射！", True, YELLOW)
+        screen.blit(ready_text, (10, HEIGHT - 30))
+
+    # 敌机数量提示
+    enemy_count_text = font.render(f"敌机数: {len(enemies)}", True, ORANGE)
+    screen.blit(enemy_count_text, (WIDTH - 120, HEIGHT - 30))
+
+    # Game Over 画面（最后绘制，覆盖在所有内容之上）
+    if game_over:
+        draw_game_over()
+
+    # 刷新屏幕
+    pygame.display.flip()
+    clock.tick(60)
+
+# ==================== 退出 ====================
+pygame.quit()
+sys.exit()

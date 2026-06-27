@@ -1,0 +1,429 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>第46课：综合模拟赛（二）— 动态规划+数学综合</title>
+<style>
+* { margin: 0; padding: 0; box-sizing: border-box; }
+body {
+    font-family: 'Segoe UI', 'Microsoft YaHei', 'PingFang SC', sans-serif;
+    background: #0d1117;
+    color: #c9d1d9;
+    display: flex; justify-content: center; align-items: center;
+    min-height: 100vh;
+}
+#app {
+    width: 95%; max-width: 1050px;
+    background: #161b22;
+    border-radius: 16px;
+    padding: 40px 48px;
+    box-shadow: 0 0 40px rgba(0,0,0,0.5);
+    position: relative;
+    min-height: 500px;
+}
+.slide { display: none; }
+.slide.active { display: block; }
+h1 { font-size: 2em; color: #58a6ff; margin-bottom: 14px; border-bottom: 2px solid #30363d; padding-bottom: 10px; }
+h2 { font-size: 1.5em; color: #79c0ff; margin: 18px 0 10px; }
+h3 { font-size: 1.2em; color: #d2a8ff; margin: 14px 0 8px; }
+p, li { font-size: 1.04em; line-height: 1.8; margin-bottom: 6px; }
+ul, ol { margin-left: 22px; margin-bottom: 10px; }
+.highlight { color: #ff7b72; font-weight: bold; }
+.accent { color: #7ee787; font-weight: bold; }
+.info { color: #a5d6ff; }
+.warn { color: #d29922; }
+pre { background: #0d1117; border: 1px solid #30363d; border-radius: 8px; padding: 16px; overflow-x: auto; margin: 10px 0; font-size: 0.88em; line-height: 1.6; }
+code { font-family: 'Fira Code', 'Cascadia Code', 'Consolas', 'Monaco', monospace; }
+.kw { color: #ff7b72; } .type { color: #ffa657; } .func { color: #d2a8ff; }
+.num { color: #79c0ff; } .str { color: #a5d6ff; } .cmt { color: #8b949e; font-style: italic; }
+.op { color: #ff7b72; } .macro { color: #f0883e; }
+.nav { display: flex; justify-content: space-between; align-items: center; margin-top: 28px; }
+.nav button {
+    background: #21262d; color: #c9d1d9; border: 1px solid #30363d;
+    padding: 10px 24px; border-radius: 8px; cursor: pointer; font-size: 1em;
+    transition: background 0.2s;
+}
+.nav button:hover { background: #30363d; }
+.nav .page-indicator { font-size: 1em; color: #8b949e; }
+.title-slide { text-align: center; padding-top: 30px; }
+.title-slide h1 { font-size: 2.5em; border: none; }
+.title-slide .subtitle { font-size: 1.2em; color: #8b949e; margin: 14px 0; }
+.title-slide .tags { margin-top: 20px; }
+.tag { display: inline-block; background: #1f6feb33; color: #58a6ff; padding: 4px 14px; border-radius: 20px; margin: 4px; font-size: 0.9em; border: 1px solid #1f6feb55; }
+.two-col { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-top: 14px; }
+.card { background: #0d1117; padding: 16px; border-radius: 8px; border: 1px solid #30363d; }
+.problem-box { background: #0d1117; border: 1px solid #d29922; border-radius: 8px; padding: 16px; margin: 10px 0; }
+.diff-easy { color: #7ee787; }
+.diff-mid { color: #d29922; }
+.diff-hard { color: #ff7b72; }
+table { border-collapse: collapse; width: 100%; margin: 10px 0; }
+th, td { border: 1px solid #30363d; padding: 8px 12px; text-align: left; font-size: 0.95em; }
+th { background: #21262d; color: #58a6ff; }
+.formula { font-family: 'Fira Code', 'Consolas', monospace; background: #0d1117; padding: 8px 14px; border-radius: 6px; border: 1px solid #d29922; display: inline-block; margin: 4px 0; }
+@media (max-width: 768px) {
+    #app { padding: 20px; }
+    h1 { font-size: 1.5em; }
+    .two-col { grid-template-columns: 1fr; }
+}
+</style>
+</head>
+<body>
+<div id="app">
+
+<!-- 幻灯片 1：标题页 -->
+<div class="slide active" id="s1">
+<div class="title-slide">
+<h1>第46课：综合模拟赛（二）</h1>
+<p class="subtitle">动态规划 + 数学综合</p>
+<div class="tags">
+<span class="tag">CSP-S 模拟赛</span>
+<span class="tag">背包DP</span>
+<span class="tag">区间DP</span>
+<span class="tag">状压DP</span>
+<span class="tag">组合数学</span>
+<span class="tag">快速幂</span>
+</div>
+<p style="margin-top:30px; color:#8b949e">DP 与数学的深度融合，攻克 CSP-S 高阶难点</p>
+</div>
+</div>
+
+<!-- 幻灯片 2：模拟赛说明 -->
+<div class="slide" id="s2">
+<h1>📋 模拟赛说明</h1>
+<h3>本场主题：DP 体系 + 数学工具</h3>
+<p>动态规划是 CSP-S 中分值最高、变化最多的板块。本场模拟赛覆盖三大 DP 类型和组合数学的核心工具。</p>
+
+<h3>本场题目</h3>
+<table>
+<tr><th>题目</th><th>难度</th><th>知识点</th><th>预期时间</th></tr>
+<tr><td>T1</td><td class="diff-easy">简单</td><td>多重背包二进制优化</td><td>20~30 min</td></tr>
+<tr><td>T2</td><td class="diff-mid">中等</td><td>区间 DP（乘积代价合并）</td><td>30~45 min</td></tr>
+<tr><td>T3</td><td class="diff-mid">中等</td><td>状压 DP（TSP 旅行商）</td><td>30~50 min</td></tr>
+<tr><td>T4</td><td class="diff-hard">较难</td><td>组合数学 + DP + 快速幂</td><td>40~60 min</td></tr>
+</table>
+
+<h3>DP 解题心法</h3>
+<ul>
+<li><span class="accent">明确状态定义</span>：状态能唯一描述当前局面</li>
+<li><span class="accent">找递推关系</span>：状态如何从更小的子问题转移而来</li>
+<li><span class="accent">确定边界条件</span>：初始状态的特殊处理</li>
+<li><span class="accent">分析复杂度</span>：确保时间和空间在限制内</li>
+</ul>
+</div>
+
+<!-- 幻灯片 3：知识回顾—背包DP与区间DP -->
+<div class="slide" id="s3">
+<h1>📖 知识回顾 — 背包DP与区间DP</h1>
+<div class="two-col">
+<div class="card">
+<h3>背包类型对比</h3>
+<table>
+<tr><th>类型</th><th>容量遍历</th><th>复杂度</th></tr>
+<tr><td>01背包</td><td class="highlight">倒序</td><td>O(nV)</td></tr>
+<tr><td>完全背包</td><td class="accent">正序</td><td>O(nV)</td></tr>
+<tr><td>多重背包</td><td class="highlight">倒序</td><td>O(V·Σlog c)</td></tr>
+</table>
+</div>
+<div class="card">
+<h3>二进制拆分核心</h3>
+<pre><span class="type">int</span> k = <span class="num">1</span>;
+<span class="kw">while</span> (c >= k) {
+    <span class="cmt">// 拆出 k 个物品成一包</span>
+    <span class="kw">for</span> (j=V; j>=v*k; j--)
+        dp[j] = max(dp[j], dp[j-v*k]+w*k);
+    c -= k; k &lt;&lt;= <span class="num">1</span>;
+}
+<span class="kw">if</span> (c > <span class="num">0</span>) { <span class="cmt">// 剩余零头</span> }</pre>
+</div>
+</div>
+<h3>区间 DP 模板</h3>
+<pre><span class="cmt">// 经典三层循环</span>
+<span class="kw">for</span> (<span class="type">int</span> len = <span class="num">2</span>; len &lt;= n; len++)       <span class="cmt">// 1. 枚举长度</span>
+    <span class="kw">for</span> (<span class="type">int</span> l = <span class="num">1</span>; l+len-<span class="num">1</span> &lt;= n; l++)  <span class="cmt">// 2. 枚举起点</span>
+        <span class="kw">for</span> (<span class="type">int</span> k = l; k &lt; r; k++)     <span class="cmt">// 3. 枚举分割点</span>
+            dp[l][r] = min(dp[l][r], dp[l][k] + dp[k+<span class="num">1</span>][r] + cost);</pre>
+<p>时间复杂度：<span class="accent">O(n³)</span>，n ≤ 300 可接受</p>
+</div>
+
+<!-- 幻灯片 4：知识回顾—状压DP与数学 -->
+<div class="slide" id="s4">
+<h1>📖 知识回顾 — 状压DP与组合数学</h1>
+<div class="two-col">
+<div class="card">
+<h3>状压 DP 要点</h3>
+<ul>
+<li>n ≤ 20 时考虑，状态数 2ⁿ</li>
+<li><code class="func">mask & (1 &lt;&lt; i)</code> 检查第 i 位</li>
+<li><code class="func">mask | (1 &lt;&lt; j)</code> 设置第 j 位</li>
+<li>TSP 经典状态：<code class="func">dp[mask][i]</code></li>
+<li>枚举子集：<code>for(sub=mask; sub; sub=(sub-1)&mask)</code></li>
+</ul>
+</div>
+<div class="card">
+<h3>组合数工具函数</h3>
+<pre><span class="cmt">// 快速幂</span>
+<span class="type">ll</span> <span class="func">qpow</span>(<span class="type">ll</span> a, <span class="type">ll</span> b) {
+    <span class="type">ll</span> r=<span class="num">1</span>; a%=MOD;
+    <span class="kw">while</span>(b){<span class="kw">if</span>(b&<span class="num">1</span>)r=r*a%MOD;a=a*a%MOD;b>>=<span class="num">1</span>;}
+    <span class="kw">return</span> r;
+}
+<span class="cmt">// C(n,k) = n!/(k!(n-k)!)</span></pre>
+</div>
+</div>
+<h3>数学知识点速查</h3>
+<table>
+<tr><th>知识点</th><th>公式/方法</th><th>复杂度</th></tr>
+<tr><td>快速幂</td><td><code>a^b mod p</code>，二进制拆分</td><td>O(log b)</td></tr>
+<tr><td>组合数（递推）</td><td>C[n][k]=C[n-1][k-1]+C[n-1][k]</td><td>O(n²) 预处理</td></tr>
+<tr><td>组合数（逆元）</td><td>预处理阶乘+逆元</td><td>O(n) 预处理，O(1) 查询</td></tr>
+<tr><td>欧拉数</td><td>A(n,m)=(m+1)A(n-1,m)+(n-m)A(n-1,m-1)</td><td>O(n²)</td></tr>
+</table>
+</div>
+
+<!-- 幻灯片 5：T1 题目+分析+代码 -->
+<div class="slide" id="s5">
+<h1>📝 T1：多重背包 <span class="diff-easy">[简单]</span></h1>
+<div class="problem-box">
+<p><span class="info">数据范围</span>：n ≤ 100, V ≤ 40000, c[i] ≤ 10⁴</p>
+<p>每种物品有 c[i] 个，每个体积 v[i]，价值 w[i]，求最大总价值</p>
+</div>
+<h3>二进制拆分原理</h3>
+<p>将 c 个物品拆成 <span class="accent">1, 2, 4, 8, ..., 2ᵏ, c-2ᵏ⁺¹+1</span> 个"打包物品"，<br>每个打包物品视为独立的 01 背包物品。拆分后物品数 ≈ <span class="accent">log(c)</span>。</p>
+<h3>AC 代码</h3>
+<pre><span class="type">int</span> k = <span class="num">1</span>;
+<span class="kw">while</span> (c >= k) {
+    <span class="type">int</span> nv = v * k, nw = w * k;
+    <span class="kw">for</span> (<span class="type">int</span> j = V; j >= nv; j--)
+        dp[j] = max(dp[j], dp[j - nv] + nw);
+    c -= k; k &lt;&lt;= <span class="num">1</span>;
+}
+<span class="kw">if</span> (c > <span class="num">0</span>) { <span class="cmt">/* 处理剩余 */</span> }</pre>
+<p><span class="accent">复杂度：O(V × Σlog c[i]) ≈ 5.6×10⁷，可通过。</span></p>
+</div>
+
+<!-- 幻灯片 6：T2 题目+分析 -->
+<div class="slide" id="s6">
+<h1>📝 T2：区间DP — 乘积代价合并 <span class="diff-mid">[中等]</span></h1>
+<div class="problem-box">
+<p><span class="info">n 堆石子排成一排</span>，每次合并相邻两堆，代价为<span class="highlight">两堆石子数量的乘积</span></p>
+<p><span class="info">数据范围</span>：n ≤ 300, a[i] ≤ 100</p>
+<p><span class="info">求</span>：合并为一堆的最小总代价</p>
+</div>
+<h3>状态与转移</h3>
+<p>设 <code class="func">dp[l][r]</code> = 合并区间 [l, r] 的最小代价</p>
+<p>转移方程：</p>
+<p class="formula">dp[l][r] = min<sub>k=l..r-1</sub> { dp[l][k] + dp[k+1][r] + sum[l][k] × sum[k+1][r] }</p>
+<h3>AC 代码核心</h3>
+<pre><span class="cmt">// 区间 DP 三层循环</span>
+<span class="kw">for</span> (<span class="type">int</span> len = <span class="num">2</span>; len &lt;= n; len++)
+    <span class="kw">for</span> (<span class="type">int</span> l = <span class="num">1</span>; l+len-<span class="num">1</span> &lt;= n; l++)
+        <span class="kw">for</span> (<span class="type">int</span> k = l; k &lt; r; k++) {
+            <span class="type">ll</span> cost = sum(l,k) * sum(k+<span class="num">1</span>,r);
+            dp[l][r] = min(dp[l][r], dp[l][k] + dp[k+<span class="num">1</span>][r] + cost);
+        }</pre>
+<p><span class="accent">复杂度：O(n³) ≈ 2.7×10⁷，空间 O(n²)。</span></p>
+</div>
+
+<!-- 幻灯片 7：T3 题目+分析+代码 -->
+<div class="slide" id="s7">
+<h1>📝 T3：TSP 旅行商问题 <span class="diff-mid">[中等]</span></h1>
+<div class="problem-box">
+<p><span class="info">n 个城市</span>，从 1 出发，经过<span class="highlight">所有城市恰好一次</span>后回到 1</p>
+<p><span class="info">数据范围</span>：n ≤ 15, d[i][j] ∈ [0, 10⁶] 或 -1</p>
+<p><span class="info">求</span>：最短总距离，不可行输出 -1</p>
+</div>
+<h3>状压 DP 解法</h3>
+<p><code class="func">dp[mask][i]</code>：已访问城市集合为 mask，当前在城市 i 的最短距离</p>
+<p>转移：<code class="func">dp[mask|(1&lt;&lt;j)][j] = min(dp[mask|(1&lt;&lt;j)][j], dp[mask][i] + d[i][j])</code></p>
+<h3>AC 代码</h3>
+<pre><span class="kw">for</span> (<span class="type">int</span> mask = <span class="num">1</span>; mask &lt; (<span class="num">1</span>&lt;&lt;n); mask++)
+    <span class="kw">for</span> (<span class="type">int</span> i = <span class="num">0</span>; i &lt; n; i++) {
+        <span class="kw">if</span> (!(mask & (<span class="num">1</span>&lt;&lt;i)) || dp[mask][i] == INF) <span class="kw">continue</span>;
+        <span class="kw">for</span> (<span class="type">int</span> j = <span class="num">0</span>; j &lt; n; j++) {
+            <span class="kw">if</span> (mask & (<span class="num">1</span>&lt;&lt;j) || d[i][j] == -<span class="num">1</span>) <span class="kw">continue</span>;
+            <span class="type">int</span> nxt = mask | (<span class="num">1</span>&lt;&lt;j);
+            dp[nxt][j] = min(dp[nxt][j], dp[mask][i] + d[i][j]);
+        }
+    }
+<span class="cmt">// 答案 = min(dp[full][i] + d[i][0])</span></pre>
+<p><span class="accent">复杂度：O(n²×2ⁿ) ≈ 7.4×10⁶，n=15 轻松通过。</span></p>
+</div>
+
+<!-- 幻灯片 8：T4 题目+分析 -->
+<div class="slide" id="s8">
+<h1>📝 T4：组合数学+DP <span class="diff-hard">[较难]</span></h1>
+<div class="problem-box">
+<p><span class="info">长度为 n 的序列，值域 [1..k]</span>，求<span class="highlight">恰好 m 个上升位置</span>的序列个数</p>
+<p><span class="info">数据范围</span>：n ≤ 2000, k ≤ 10⁹, m &lt; n</p>
+<p><span class="info">取模</span>：10⁹ + 7</p>
+</div>
+<h3>核心思想 — 欧拉数</h3>
+<p>排列中上升位置个数的计数 = <span class="accent">欧拉数 A(n, m)</span></p>
+<p>递推公式：</p>
+<p class="formula">A(n, m) = (m+1)·A(n-1, m) + (n-m)·A(n-1, m-1)</p>
+<p>推广到值域 [1..k]（允许重复取值）：</p>
+<p class="formula">ans = Σ<sub>t=0</sub><sup>n-1-m</sup> C(k, m+t+1) × A(n, m+t)</p>
+<p>直观理解：m 个上升把序列分成 m+1 个非升段，段的"最大值"从 k 个值中选，段内用 multiset 填充。</p>
+</div>
+
+<!-- 幻灯片 9：T4 代码实现 -->
+<div class="slide" id="s9">
+<h1>📝 T4 代码实现</h1>
+<h3>Step 1：计算欧拉数 A(n, m)</h3>
+<pre><span class="type">ll</span> euler[MAXN][MAXN];
+euler[<span class="num">0</span>][<span class="num">0</span>] = <span class="num">1</span>;
+<span class="kw">for</span> (<span class="type">int</span> i = <span class="num">1</span>; i &lt;= n; i++) {
+    euler[i][<span class="num">0</span>] = <span class="num">1</span>;
+    <span class="kw">for</span> (<span class="type">int</span> j = <span class="num">1</span>; j &lt; i; j++)
+        euler[i][j] = ((j+<span class="num">1</span>)*euler[i-<span class="num">1</span>][j] + (i-j)*euler[i-<span class="num">1</span>][j-<span class="num">1</span>]) % MOD;
+}</pre>
+
+<h3>Step 2：推广到 k 值域</h3>
+<pre><span class="type">ll</span> ans = <span class="num">0</span>;
+<span class="kw">for</span> (<span class="type">int</span> t = <span class="num">0</span>; t &lt;= n-<span class="num">1</span>-m; t++) {
+    <span class="type">int</span> seg = m + t + <span class="num">1</span>;   <span class="cmt">// 需要的不同值的个数</span>
+    <span class="kw">if</span> (seg > k) <span class="kw">break</span>;
+    <span class="type">ll</span> comb = <span class="func">comb_large_n</span>(k, seg);  <span class="cmt">// C(k, seg) mod MOD</span>
+    ans = (ans + comb * euler[n][m+t]) % MOD;
+}</pre>
+<p><span class="accent">复杂度：O(n²) 欧拉数 + O(n) 组合数计算。n ≤ 2000，轻松通过。</span></p>
+</div>
+
+<!-- 幻灯片 10：易错点总结 -->
+<div class="slide" id="s10">
+<h1>⚠️ 易错点总结</h1>
+<div class="two-col">
+<div class="card">
+<h3>背包 DP</h3>
+<ul>
+<li><span class="highlight">01背包倒序</span>，完全背包正序！</li>
+<li>混淆内外循环顺序 → 0 分</li>
+<li>多重背包务必将 c[i] 正确拆分</li>
+</ul>
+</div>
+<div class="card">
+<h3>区间 DP</h3>
+<ul>
+<li><span class="highlight">先枚举 len，再枚举 l</span></li>
+<li>环形区间：复制数组到 2n</li>
+<li>cost 函数确保使用前缀和</li>
+<li>初始化：单元素区间 cost=0</li>
+</ul>
+</div>
+<div class="card">
+<h3>状压 DP</h3>
+<ul>
+<li>mask 从 0 到 2ⁿ-1，共 2ⁿ 个</li>
+<li><span class="highlight">n > 20 不能用状压</span></li>
+<li>初始化第几位对应哪个元素</li>
+<li>最终答案可能需遍历多种状态</li>
+</ul>
+</div>
+<div class="card">
+<h3>组合数学</h3>
+<ul>
+<li><span class="highlight">除法用乘法逆元</span></li>
+<li>每步都取模防止溢出</li>
+<li>减法取模：(a-b+MOD)%MOD</li>
+<li>大 n 小 k 时用乘积公式</li>
+</ul>
+</div>
+</div>
+</div>
+
+<!-- 幻灯片 11：得分策略 -->
+<div class="slide" id="s11">
+<h1>📊 得分策略与暴力分</h1>
+<div class="two-col">
+<div class="card">
+<h3>各题预期得分</h3>
+<table>
+<tr><th>题目</th><th>难度</th><th>算法</th><th>预期得分</th></tr>
+<tr><td>T1</td><td class="diff-easy">简单</td><td>多重背包二进制优化</td><td>100</td></tr>
+<tr><td>T2</td><td class="diff-mid">中等</td><td>区间DP（乘积代价）</td><td>100</td></tr>
+<tr><td>T3</td><td class="diff-mid">中等</td><td>状压DP（TSP）</td><td>100</td></tr>
+<tr><td>T4</td><td class="diff-hard">较难</td><td>欧拉数+组合推广</td><td>60-100</td></tr>
+</table>
+</div>
+<div class="card">
+<h3>暴力分技巧</h3>
+<ul>
+<li><span class="accent">T1</span>：直接多重背包（不用优化）可拿 30%</li>
+<li><span class="accent">T2</span>：暴力搜索合并顺序 O(2ⁿ) 可拿小数据</li>
+<li><span class="accent">T3</span>：全排列暴搜 O(n!) 可拿 n≤10 的 30%</li>
+<li><span class="accent">T4</span>：枚举所有 kⁿ 序列 O(kⁿ) 可拿极小的 10%</li>
+</ul>
+<h3>T4 部分分解法</h3>
+<ul>
+<li>k = 1：答案恒为 (m==0?1:0)</li>
+<li>k ≥ n：直接用欧拉数</li>
+<li>k = 2：特殊情况的组合公式</li>
+</ul>
+</div>
+</div>
+</div>
+
+<!-- 幻灯片 12：小结 -->
+<div class="slide" id="s12">
+<h1>🎯 本课小结</h1>
+<div class="two-col">
+<div class="card">
+<h3>DP 体系</h3>
+<p><span class="accent">背包 DP</span>：记住 01/完全/多重 的区别和遍历顺序</p>
+<p><span class="accent">区间 DP</span>：掌握 len→l→k 三层循环</p>
+<p><span class="accent">状压 DP</span>：n≤20 时用，二进制表示集合</p>
+</div>
+<div class="card">
+<h3>数学工具</h3>
+<p><span class="accent">快速幂</span>：a^b mod p 的 O(log b) 实现</p>
+<p><span class="accent">组合数</span>：阶乘+逆元 或 递推预处理</p>
+<p><span class="accent">欧拉数</span>：排列中上升个数计数</p>
+</div>
+<div class="card">
+<h3>核心技巧</h3>
+<p>DP 初始化：非法状态设为 ±INF</p>
+<p>取模运算：每一步都 % MOD</p>
+<p>二进制拆分：将 O(n) 降为 O(log n)</p>
+<p>状态压缩：将指数级枚举变为多项式</p>
+</div>
+<div class="card">
+<h3>综合能力</h3>
+<p>DP 与数学的组合是 CSP-S 难点</p>
+<p>从数据范围推断算法类型</p>
+<p>设计清晰的状态定义是关键</p>
+<p>多练习，多总结，提升建模能力</p>
+</div>
+</div>
+<p style="text-align:center; margin-top:18px; color:#8b949e">DP 体系 + 数学工具 = CSP-S 高分密码，扎实训练，冲击满分！</p>
+</div>
+
+<div class="nav">
+<button onclick="prevSlide()">◀ 上一页</button>
+<span class="page-indicator" id="pageNum">1 / 12</span>
+<button onclick="nextSlide()">下一页 ▶</button>
+</div>
+</div>
+
+<script>
+let current = 0;
+const slides = document.querySelectorAll('.slide');
+const total = slides.length;
+
+function showSlide(n) {
+    slides[current].classList.remove('active');
+    current = ((n % total) + total) % total;
+    slides[current].classList.add('active');
+    document.getElementById('pageNum').textContent = (current + 1) + ' / ' + total;
+}
+
+function nextSlide() { showSlide(current + 1); }
+function prevSlide() { showSlide(current - 1); }
+
+document.addEventListener('keydown', function(e) {
+    if (e.key === 'ArrowRight' || e.key === 'ArrowDown') nextSlide();
+    if (e.key === 'ArrowLeft' || e.key === 'ArrowUp') prevSlide();
+});
+</script>
+</body>
+</html>

@@ -1,0 +1,848 @@
+"""
+第26节：保卫地球 —— 完整的太空侵略者游戏
+============================================
+本程序在第25节基础上添加：
+1. 掩体系统 —— 使用 Surface.subsurface() 实现局部破坏效果
+2. 波次系统 —— 消灭全部外星人后进入下一波，难度递增
+3. 波次过渡动画 —— 屏幕中央显示 "Wave X!" 文字
+4. 生命值系统 —— 玩家有3条命，被外星人子弹击中扣命
+5. 外星人随机发射子弹
+
+知识点：
+- Surface.subsurface(Rect) —— 局部破坏效果
+- 波次管理系统（wave 变量控制数量和速度）
+- 波次过渡画面
+- pygame.sprite.Sprite 类和精灵组管理
+
+运行方式：python main.py
+"""
+
+import pygame
+import sys
+import random
+
+# ============================================
+# 1. 初始化 Pygame
+# ============================================
+pygame.init()
+
+# ============================================
+# 2. 游戏常量
+# ============================================
+SCREEN_WIDTH = 800
+SCREEN_HEIGHT = 600
+FPS = 60
+
+# 颜色 (R, G, B)
+BLACK = (0, 0, 0)
+WHITE = (255, 255, 255)
+GREEN = (0, 255, 0)
+RED = (255, 0, 0)
+BLUE = (0, 100, 255)
+YELLOW = (255, 255, 0)
+ORANGE = (255, 165, 0)
+GRAY = (128, 128, 128)
+DARK_GREEN = (0, 130, 0)
+CYAN = (0, 255, 255)
+PURPLE = (160, 32, 240)
+BRICK_COLOR = (0, 100, 0)
+
+# 创建窗口
+screen = pygame.display.set_mode((SCREEN_WIDTH, SCREEN_HEIGHT))
+pygame.display.set_caption("保卫地球 —— 太空侵略者")
+clock = pygame.time.Clock()
+
+# 字体（用于显示分数、生命、波次文字）
+font_small = pygame.font.Font(None, 28)
+font_medium = pygame.font.Font(None, 40)
+font_large = pygame.font.Font(None, 72)
+font_huge = pygame.font.Font(None, 96)
+
+
+# ============================================
+# 3. 精灵类定义
+# ============================================
+
+class Player(pygame.sprite.Sprite):
+    """
+    玩家飞船精灵
+
+    用 Surface 绘制三角形飞船（不依赖外部图片），
+    位于屏幕底部，用左右方向键控制移动，空格键发射子弹。
+    """
+
+    def __init__(self):
+        super().__init__()
+        # 创建透明的 Surface 来绘制飞船
+        self.image = pygame.Surface((50, 40), pygame.SRCALPHA)
+        self._draw_ship()
+        self.rect = self.image.get_rect()
+        self.rect.centerx = SCREEN_WIDTH // 2
+        self.rect.bottom = SCREEN_HEIGHT - 20
+        self.speed = 6          # 移动速度
+        self.lives = 3          # 生命值（3 条命）
+        self.shoot_timer = 0    # 射击冷却计时器
+
+    def _draw_ship(self):
+        """在 Surface 上绘制飞船（三角形 + 驾驶舱 + 引擎光）"""
+        self.image.fill((0, 0, 0, 0))  # 清空为透明
+        # 飞船主体 —— 三角形
+        nose = [(25, 0), (0, 35), (50, 35)]
+        pygame.draw.polygon(self.image, BLUE, nose)
+        # 驾驶舱（浅色椭圆）
+        pygame.draw.ellipse(self.image, CYAN, (17, 10, 16, 16))
+        # 引擎发光效果（底部两个橙色矩形）
+        pygame.draw.rect(self.image, ORANGE, (8, 32, 10, 6))
+        pygame.draw.rect(self.image, ORANGE, (32, 32, 10, 6))
+
+    def update(self):
+        """每帧更新：处理键盘输入和射击冷却"""
+        keys = pygame.key.get_pressed()
+        # 左右移动（边界限制，防止飞出屏幕）
+        if keys[pygame.K_LEFT] and self.rect.left > 0:
+            self.rect.x -= self.speed
+        if keys[pygame.K_RIGHT] and self.rect.right < SCREEN_WIDTH:
+            self.rect.x += self.speed
+        # 射击冷却递减
+        if self.shoot_timer > 0:
+            self.shoot_timer -= 1
+
+    def shoot(self):
+        """
+        发射子弹
+
+        返回：
+            Bullet 对象 —— 如果冷却完毕
+            None —— 如果还在冷却中
+        """
+        if self.shoot_timer <= 0:
+            self.shoot_timer = 18  # 设置冷却帧数（防止连发过快）
+            return Bullet(self.rect.centerx, self.rect.top, -8, YELLOW)
+        return None
+
+
+class Alien(pygame.sprite.Sprite):
+    """
+    外星人精灵
+
+    有三种类型，外观和分值不同：
+    - 类型 1（绿色）：普通外星人，10 分
+    - 类型 2（紫色）：较强外星人，20 分
+    - 类型 3（红色）：最强外星人，30 分
+    """
+
+    # 每种类型的分数
+    SCORES = {1: 10, 2: 20, 3: 30}
+
+    def __init__(self, x, y, alien_type=1):
+        super().__init__()
+        self.alien_type = alien_type
+        self.image = pygame.Surface((36, 30), pygame.SRCALPHA)
+        self.anim_toggle = False  # 动画切换标记（让外星人看起来在动）
+        self._draw()
+        self.rect = self.image.get_rect()
+        self.rect.x = x
+        self.rect.y = y
+
+    def _draw(self):
+        """根据类型和动画状态绘制外星人"""
+        self.image.fill((0, 0, 0, 0))
+        if self.alien_type == 1:
+            # 类型 1：经典小外星人（绿色）
+            body_color = GREEN
+            # 触角
+            pygame.draw.rect(self.image, body_color, (3, 8, 8, 4))
+            pygame.draw.rect(self.image, body_color, (25, 8, 8, 4))
+            # 头部
+            pygame.draw.rect(self.image, body_color, (11, 0, 14, 10))
+            # 身体
+            pygame.draw.rect(self.image, body_color, (7, 8, 22, 12))
+            # 眼睛 —— 动画会切换颜色
+            eye_color = BLACK if self.anim_toggle else WHITE
+            pygame.draw.circle(self.image, eye_color, (15, 12), 2)
+            pygame.draw.circle(self.image, eye_color, (21, 12), 2)
+            # 腿
+            leg_offset = 2 if self.anim_toggle else -2
+            pygame.draw.rect(self.image, body_color, (7 + leg_offset, 20, 6, 10))
+            pygame.draw.rect(self.image, body_color, (23 - leg_offset, 20, 6, 10))
+        elif self.alien_type == 2:
+            # 类型 2：中型外星人（紫色）
+            body_color = PURPLE
+            pygame.draw.rect(self.image, body_color, (9, 0, 18, 8))
+            pygame.draw.rect(self.image, body_color, (3, 6, 30, 14))
+            eye_color = BLACK if self.anim_toggle else WHITE
+            pygame.draw.circle(self.image, eye_color, (13, 10), 3)
+            pygame.draw.circle(self.image, eye_color, (23, 10), 3)
+            # 触角
+            pygame.draw.rect(self.image, body_color, (1, 4, 10, 3))
+            pygame.draw.rect(self.image, body_color, (25, 4, 10, 3))
+            leg_offset = 2 if self.anim_toggle else -2
+            pygame.draw.rect(self.image, body_color, (5 + leg_offset, 20, 6, 10))
+            pygame.draw.rect(self.image, body_color, (25 - leg_offset, 20, 6, 10))
+        else:
+            # 类型 3：大型外星人（红色）—— Boss 型
+            body_color = RED
+            pygame.draw.rect(self.image, body_color, (4, 2, 28, 8))
+            pygame.draw.ellipse(self.image, body_color, (0, 6, 36, 14))
+            eye_color = BLACK if self.anim_toggle else YELLOW
+            pygame.draw.circle(self.image, eye_color, (12, 10), 3)
+            pygame.draw.circle(self.image, eye_color, (24, 10), 3)
+            # 嘴巴
+            mouth_color = BLACK if self.anim_toggle else WHITE
+            pygame.draw.rect(self.image, mouth_color, (13, 14, 10, 3))
+            leg_offset = 2 if self.anim_toggle else -2
+            pygame.draw.rect(self.image, body_color, (4 + leg_offset, 20, 8, 10))
+            pygame.draw.rect(self.image, body_color, (24 - leg_offset, 20, 8, 10))
+
+    def toggle_animation(self):
+        """切换动画状态（让外星人看起来像在行走）"""
+        self.anim_toggle = not self.anim_toggle
+        self._draw()
+
+    @property
+    def score(self):
+        """击败该外星人的得分"""
+        return self.SCORES.get(self.alien_type, 10)
+
+
+class Bullet(pygame.sprite.Sprite):
+    """
+    子弹精灵
+
+    向上飞的子弹（玩家发射）和向下飞的子弹（外星人发射）
+    都使用这个类，区别在于 speed_y 的正负和颜色。
+    """
+
+    def __init__(self, x, y, speed_y, color):
+        super().__init__()
+        self.image = pygame.Surface((4, 14), pygame.SRCALPHA)
+        # 绘制带光晕的子弹
+        self.image.fill(color)
+        # 亮色尖端
+        tip_color = WHITE if speed_y < 0 else YELLOW
+        tip_y = 0 if speed_y < 0 else 10
+        pygame.draw.rect(self.image, tip_color, (0, tip_y, 4, 4))
+        self.rect = self.image.get_rect()
+        self.rect.centerx = x
+        self.rect.centery = y
+        self.speed_y = speed_y
+
+    def update(self):
+        """子弹移动，飞出屏幕后自动销毁"""
+        self.rect.y += self.speed_y
+        if self.rect.bottom < 0 or self.rect.top > SCREEN_HEIGHT:
+            self.kill()  # 从所有精灵组中移除
+
+
+class Bunker(pygame.sprite.Sprite):
+    """
+    掩体精灵 —— 保护玩家免受外星人子弹攻击
+
+    🔑 核心知识点：Surface.subsurface(Rect)
+    ---------------------------------------------------------------
+    当我们想实现「子弹打中掩体，只破坏击中位置附近的区域」
+    而不是整个掩体一起消失，就可以用 subsurface：
+
+    1. self.image 是整个掩体的 Surface（比如 100×50 像素）
+    2. 子弹命中位置是 (hit_x, hit_y)（相对于掩体的坐标）
+    3. 调用 self.image.subsurface(破坏区域_Rect) 获取一个"子视图"
+    4. 子视图和原 Surface 共享像素数据
+    5. 在子视图上绘制（如填充黑色），原 Surface 的对应位置也会变黑
+    6. 效果：掩体被打出一个"弹坑"！
+
+    这就是「局部破坏」的原理，比直接 kill() 精细得多。
+    """
+
+    def __init__(self, x, y):
+        super().__init__()
+        self.width = 100
+        self.height = 60
+        # 创建掩体的主 Surface
+        self.image = pygame.Surface((self.width, self.height))
+        self._draw_full_bunker()
+        self.rect = self.image.get_rect()
+        self.rect.x = x
+        self.rect.y = y
+        self.health = 100   # 掩体耐久度（0 时销毁）
+
+    def _draw_full_bunker(self):
+        """绘制完整掩体（砖块纹理）"""
+        self.image.fill(DARK_GREEN)
+        # 绘制砖块线，模拟防御工事的外观
+        for row in range(5):
+            offset = (row % 2) * 12  # 偶数行和奇数行错开，形成砖墙效果
+            for col in range(5):
+                bx = col * 22 + offset
+                by = row * 12 + 2
+                # 每块"砖"的边框
+                pygame.draw.rect(self.image, BRICK_COLOR, (bx, by, 18, 9), 1)
+        # 外边框
+        pygame.draw.rect(self.image, GREEN, (0, 0, self.width, self.height), 2)
+
+    def damage(self, hit_x, hit_y, blast_radius=10):
+        """
+        局部破坏掩体 —— 使用 subsurface 实现
+
+        参数:
+            hit_x: 命中点 X 坐标（相对于掩体左上角）
+            hit_y: 命中点 Y 坐标（相对于掩体左上角）
+            blast_radius: 爆炸半径（像素），越大破坏范围越大
+        """
+        # 计算破坏范围矩形（确保不超出掩体边界）
+        left = max(0, hit_x - blast_radius)
+        top = max(0, hit_y - blast_radius)
+        width = min(blast_radius * 2, self.width - left)
+        height = min(blast_radius * 2, self.height - top)
+
+        if width <= 0 or height <= 0:
+            return
+
+        damage_rect = pygame.Rect(left, top, width, height)
+
+        try:
+            # ============================================================
+            # 🔑 核心知识点：Surface.subsurface(Rect)
+            # ============================================================
+            # subsurface() 从 self.image 中"切出"一个矩形子区域
+            # 返回的 damaged 是一个新的 Surface，但它和 self.image
+            # 共享同一块像素内存 —— 所以在 damaged 上画东西，
+            # self.image 的对应位置也会改变！
+            # ============================================================
+            damaged = self.image.subsurface(damage_rect)
+
+            # 在破坏区域画一个黑色圆形（模拟弹坑）
+            # 也可以 fill(BLACK)，但画圆看起来更自然
+            pygame.draw.circle(
+                damaged,
+                BLACK,
+                (blast_radius, blast_radius),
+                blast_radius
+            )
+        except ValueError:
+            # 如果 damage_rect 不完全在 Surface 内，subsurface 会报错
+            # 这种情况理论上不会发生（我们已经在上面做了边界限制）
+            pass
+
+        # 减少耐久度
+        self.health -= 12
+        if self.health <= 0:
+            self.kill()  # 掩体被彻底摧毁
+
+
+class Explosion(pygame.sprite.Sprite):
+    """
+    爆炸特效精灵
+
+    外星人被击中时产生一个短暂的爆炸动画：
+    从大到小、从亮到暗的圆形扩散效果。
+    """
+
+    def __init__(self, x, y):
+        super().__init__()
+        self.size = 30
+        self.image = pygame.Surface((self.size * 2, self.size * 2), pygame.SRCALPHA)
+        self.image.fill((0, 0, 0, 0))
+        self.rect = self.image.get_rect(center=(x, y))
+        self.life = 12        # 持续帧数
+        self.max_life = 12
+
+    def update(self):
+        """每帧更新爆炸动画"""
+        self.life -= 1
+        if self.life <= 0:
+            self.kill()
+            return
+
+        # 重新绘制爆炸效果
+        self.image.fill((0, 0, 0, 0))
+        progress = self.life / self.max_life  # 1.0 → 0.0
+
+        # 外圈（逐渐缩小）
+        outer_r = int(self.size * progress)
+        if outer_r > 0:
+            alpha = int(200 * progress)
+            pygame.draw.circle(
+                self.image,
+                (*ORANGE, alpha),
+                (self.size, self.size),
+                outer_r
+            )
+
+        # 内圈（更亮）
+        inner_r = int(self.size * progress * 0.5)
+        if inner_r > 0:
+            alpha = int(255 * progress)
+            pygame.draw.circle(
+                self.image,
+                (*YELLOW, alpha),
+                (self.size, self.size),
+                inner_r
+            )
+
+
+# ============================================
+# 4. 游戏管理函数
+# ============================================
+
+def create_aliens(wave):
+    """
+    根据波次创建外星人编队
+
+    参数:
+        wave: 当前波次（1, 2, 3, ...）
+
+    返回:
+        pygame.sprite.Group —— 包含所有外星人的精灵组
+
+    波次影响：
+    - 外星人列数：7 + wave（最多 12 列）
+    - 外星人行数：3 + wave // 2（最多 5 行）
+    - 间距越小 → 越密集
+    """
+    aliens = pygame.sprite.Group()
+
+    # 波次影响编队规模
+    cols = min(8 + wave, 12)      # 列数随波次增加
+    rows = min(3 + wave // 2, 5)  # 行数随波次增加
+
+    # 计算编队的起始位置（居中）
+    alien_width = 36
+    alien_height = 30
+    spacing_x = 12   # 列间距
+    spacing_y = 10   # 行间距
+    total_width = cols * (alien_width + spacing_x) - spacing_x
+    start_x = (SCREEN_WIDTH - total_width) // 2
+    start_y = 60  # 距离顶部 60 像素
+
+    for row in range(rows):
+        for col in range(cols):
+            x = start_x + col * (alien_width + spacing_x)
+            y = start_y + row * (alien_height + spacing_y)
+
+            # 行越靠上，外星人类型越强（分值越高）
+            if row == 0:
+                alien_type = 3  # 红色 Boss 型，30 分
+            elif row <= 2:
+                alien_type = 2  # 紫色中型，20 分
+            else:
+                alien_type = 1  # 绿色普通型，10 分
+
+            alien = Alien(x, y, alien_type)
+            aliens.add(alien)
+
+    return aliens
+
+
+def create_bunkers():
+    """
+    创建 4 个掩体，均匀分布在屏幕底部
+
+    掩体位于玩家上方，用来阻挡外星人的子弹，
+    同时也会被玩家自己的子弹破坏（所以射击要小心！）
+    """
+    bunkers = pygame.sprite.Group()
+
+    # 4 个掩体均匀分布
+    bunker_width = 100
+    spacing = (SCREEN_WIDTH - bunker_width * 4) // 5
+    bunker_y = SCREEN_HEIGHT - 100
+
+    for i in range(4):
+        x = spacing + i * (bunker_width + spacing)
+        bunker = Bunker(x, bunker_y)
+        bunkers.add(bunker)
+
+    return bunkers
+
+
+def show_wave_transition(wave):
+    """
+    显示波次过渡画面
+
+    屏幕中央显示 "Wave X!" 文字，持续约 2 秒，
+    给玩家一个准备时间。
+    """
+    # 过渡持续时间（帧数）
+    duration = 120  # 2 秒 @ 60 FPS
+    start_ticks = pygame.time.get_ticks()
+
+    # 波次越大，文字颜色越"危险"
+    if wave <= 3:
+        wave_color = CYAN
+    elif wave <= 6:
+        wave_color = YELLOW
+    else:
+        wave_color = RED
+
+    while pygame.time.get_ticks() - start_ticks < duration * 1000 / 60:
+        # 处理退出事件（允许玩家在过渡期间退出）
+        for event in pygame.event.get():
+            if event.type == pygame.QUIT:
+                pygame.quit()
+                sys.exit()
+
+        elapsed = pygame.time.get_ticks() - start_ticks
+        progress = elapsed / (duration * 1000 / 60)  # 0.0 → 1.0
+
+        # 背景
+        screen.fill(BLACK)
+
+        # "Wave" 文字
+        wave_text = font_large.render("Wave", True, WHITE)
+        wave_rect = wave_text.get_rect(center=(SCREEN_WIDTH // 2, SCREEN_HEIGHT // 2 - 50))
+        screen.blit(wave_text, wave_rect)
+
+        # 波次数字（带缩放动画）
+        number_size = int(72 + 24 * (1 - abs(progress - 0.5) * 2))  # 先变大再变小
+        number_font = pygame.font.Font(None, number_size)
+        number_text = number_font.render(str(wave), True, wave_color)
+        number_rect = number_text.get_rect(center=(SCREEN_WIDTH // 2, SCREEN_HEIGHT // 2 + 30))
+        screen.blit(number_text, number_rect)
+
+        # "准备！" 提示
+        if progress > 0.3:
+            ready_alpha = min(255, int((progress - 0.3) / 0.7 * 255))
+            ready_text = font_medium.render("准备！", True, WHITE)
+            # 简单实现透明度效果：用不同颜色模拟
+            if ready_alpha > 128:
+                ready_rect = ready_text.get_rect(center=(SCREEN_WIDTH // 2, SCREEN_HEIGHT // 2 + 80))
+                screen.blit(ready_text, ready_rect)
+
+        pygame.display.flip()
+        clock.tick(FPS)
+
+
+def draw_ui(score, wave, lives):
+    """
+    绘制游戏界面 UI
+
+    显示：
+    - 左上角：分数
+    - 右上角：当前波次
+    - 屏幕底部中央：剩余生命数
+    """
+    # 分数（左上角）
+    score_text = font_small.render(f"分数: {score}", True, WHITE)
+    screen.blit(score_text, (15, 10))
+
+    # 波次（右上角）
+    wave_text = font_small.render(f"第 {wave} 波", True, YELLOW)
+    wave_rect = wave_text.get_rect(topright=(SCREEN_WIDTH - 15, 10))
+    screen.blit(wave_text, wave_rect)
+
+    # 生命值（底部中央）—— 用小飞船图标表示
+    lives_text = font_small.render("生命:", True, WHITE)
+    lives_rect = lives_text.get_rect(midright=(SCREEN_WIDTH // 2 - 15, SCREEN_HEIGHT - 12))
+    screen.blit(lives_text, lives_rect)
+
+    for i in range(lives):
+        # 画一个小三角形代表一条命
+        lx = SCREEN_WIDTH // 2 + i * 28
+        ly = SCREEN_HEIGHT - 20
+        points = [(lx + 10, ly), (lx, ly + 14), (lx + 20, ly + 14)]
+        pygame.draw.polygon(screen, BLUE, points)
+
+
+def draw_game_over(score, wave):
+    """绘制游戏结束画面"""
+    overlay = pygame.Surface((SCREEN_WIDTH, SCREEN_HEIGHT))
+    overlay.set_alpha(180)
+    overlay.fill(BLACK)
+    screen.blit(overlay, (0, 0))
+
+    # "游戏结束" 文字
+    go_text = font_huge.render("游戏结束", True, RED)
+    go_rect = go_text.get_rect(center=(SCREEN_WIDTH // 2, SCREEN_HEIGHT // 2 - 60))
+    screen.blit(go_text, go_rect)
+
+    # 最终分数
+    score_text = font_large.render(f"最终分数: {score}", True, WHITE)
+    score_rect = score_text.get_rect(center=(SCREEN_WIDTH // 2, SCREEN_HEIGHT // 2 + 20))
+    screen.blit(score_text, score_rect)
+
+    # 到达的波次
+    wave_text = font_medium.render(f"到达第 {wave} 波", True, YELLOW)
+    wave_rect = wave_text.get_rect(center=(SCREEN_WIDTH // 2, SCREEN_HEIGHT // 2 + 60))
+    screen.blit(wave_text, wave_rect)
+
+    # 重新开始提示
+    restart_text = font_small.render("按 R 键重新开始", True, WHITE)
+    restart_rect = restart_text.get_rect(center=(SCREEN_WIDTH // 2, SCREEN_HEIGHT // 2 + 110))
+    screen.blit(restart_text, restart_rect)
+
+
+def reset_game():
+    """
+    重置游戏状态，返回初始化的所有变量
+
+    返回一个字典，包含所有游戏状态的初始值
+    """
+    # 创建精灵组
+    player = Player()
+    all_sprites = pygame.sprite.Group()
+    player_bullets = pygame.sprite.Group()
+    alien_bullets = pygame.sprite.Group()
+    aliens = pygame.sprite.Group()
+    bunkers = pygame.sprite.Group()
+    explosions = pygame.sprite.Group()
+
+    all_sprites.add(player)
+
+    # 创建第 1 波外星人
+    aliens = create_aliens(1)
+    all_sprites.add(aliens)
+
+    # 创建掩体
+    bunkers = create_bunkers()
+    all_sprites.add(bunkers)
+
+    return {
+        "player": player,
+        "all_sprites": all_sprites,
+        "player_bullets": player_bullets,
+        "alien_bullets": alien_bullets,
+        "aliens": aliens,
+        "bunkers": bunkers,
+        "explosions": explosions,
+        "score": 0,
+        "wave": 1,
+        "alien_direction": 1,      # 外星人移动方向：1=右, -1=左
+        "alien_speed": 1.2,        # 外星人移动速度
+        "alien_move_timer": 0,     # 移动计时器
+        "alien_move_interval": 40, # 每多少帧移动一次
+        "alien_shoot_chance": 0.003,  # 每帧每个外星人射击概率
+        "game_over": False,
+        "transition_done": False,  # 当前波次过渡是否完成
+    }
+
+
+# ============================================
+# 5. 主游戏循环
+# ============================================
+
+def main():
+    """游戏主函数"""
+    # 初始化游戏状态
+    state = reset_game()
+
+    # 显示第 1 波过渡画面
+    show_wave_transition(1)
+
+    running = True
+    while running:
+        # ============================================
+        # 5.1 事件处理
+        # ============================================
+        for event in pygame.event.get():
+            if event.type == pygame.QUIT:
+                running = False
+
+            if event.type == pygame.KEYDOWN:
+                # 游戏结束时按 R 重新开始
+                if state["game_over"] and event.key == pygame.K_R:
+                    state = reset_game()
+                    show_wave_transition(1)
+
+                # 空格键发射子弹
+                if event.key == pygame.K_SPACE and not state["game_over"]:
+                    bullet = state["player"].shoot()
+                    if bullet:
+                        state["player_bullets"].add(bullet)
+                        state["all_sprites"].add(bullet)
+
+        # 如果游戏结束，只显示画面，不更新逻辑
+        if state["game_over"]:
+            screen.fill(BLACK)
+            state["all_sprites"].draw(screen)
+            draw_game_over(state["score"], state["wave"])
+            pygame.display.flip()
+            clock.tick(FPS)
+            continue
+
+        # ============================================
+        # 5.2 更新玩家
+        # ============================================
+        state["player"].update()
+
+        # 持续按空格也能开火
+        keys = pygame.key.get_pressed()
+        if keys[pygame.K_SPACE]:
+            bullet = state["player"].shoot()
+            if bullet:
+                state["player_bullets"].add(bullet)
+                state["all_sprites"].add(bullet)
+
+        # ============================================
+        # 5.3 更新外星人编队移动
+        # ============================================
+        state["alien_move_timer"] += 1
+        if state["alien_move_timer"] >= state["alien_move_interval"]:
+            state["alien_move_timer"] = 0
+
+            # 检查是否有外星人碰到屏幕边缘
+            hit_edge = False
+            for alien in state["aliens"]:
+                alien.toggle_animation()  # 切换外观（走路动画）
+                if (alien.rect.right >= SCREEN_WIDTH and state["alien_direction"] > 0) or \
+                   (alien.rect.left <= 0 and state["alien_direction"] < 0):
+                    hit_edge = True
+
+            if hit_edge:
+                # 碰边 → 反转方向，并整体下移
+                state["alien_direction"] *= -1
+                for alien in state["aliens"]:
+                    alien.rect.y += 20
+
+            # 移动所有外星人
+            for alien in state["aliens"]:
+                alien.rect.x += state["alien_direction"] * state["alien_speed"]
+
+        # ============================================
+        # 5.4 外星人随机发射子弹
+        # ============================================
+        for alien in state["aliens"]:
+            # 每个外星人有独立概率发射子弹（概率随波次增加）
+            if random.random() < state["alien_shoot_chance"]:
+                # 只有最下方没有外星人的那一排才能发射
+                can_shoot = True
+                for other in state["aliens"]:
+                    if other != alien and abs(other.rect.centerx - alien.rect.centerx) < 20 \
+                       and other.rect.bottom > alien.rect.bottom:
+                        can_shoot = False
+                        break
+                if can_shoot:
+                    bullet = Bullet(alien.rect.centerx, alien.rect.bottom, 5, RED)
+                    state["alien_bullets"].add(bullet)
+                    state["all_sprites"].add(bullet)
+
+        # ============================================
+        # 5.5 更新子弹和爆炸
+        # ============================================
+        state["player_bullets"].update()
+        state["alien_bullets"].update()
+        state["explosions"].update()
+
+        # ============================================
+        # 5.6 碰撞检测
+        # ============================================
+
+        # 5.6.1 玩家子弹 vs 外星人
+        hits = pygame.sprite.groupcollide(
+            state["player_bullets"], state["aliens"], True, False
+        )
+        for bullet, hit_aliens in hits.items():
+            for alien in hit_aliens:
+                # 加分
+                state["score"] += alien.score
+                # 爆炸特效
+                exp = Explosion(alien.rect.centerx, alien.rect.centery)
+                state["explosions"].add(exp)
+                state["all_sprites"].add(exp)
+                # 移除被击中的外星人
+                alien.kill()
+
+        # 5.6.2 外星人子弹 vs 玩家（撞到扣命）
+        player_hit_list = pygame.sprite.spritecollide(
+            state["player"], state["alien_bullets"], True
+        )
+        if player_hit_list:
+            state["player"].lives -= 1
+            # 玩家被击中后的闪烁效果（短暂无敌）
+            if state["player"].lives <= 0:
+                state["game_over"] = True
+
+        # 5.6.3 外星人碰到玩家 → 游戏结束
+        if pygame.sprite.spritecollide(state["player"], state["aliens"], False):
+            state["game_over"] = True
+
+        # 5.6.4 外星人到达屏幕底部 → 游戏结束
+        for alien in state["aliens"]:
+            if alien.rect.bottom >= SCREEN_HEIGHT - 50:
+                state["game_over"] = True
+                break
+
+        # 5.6.5 玩家子弹 vs 掩体（掩体被破坏）
+        for bullet in state["player_bullets"]:
+            hit_bunkers = pygame.sprite.spritecollide(bullet, state["bunkers"], False)
+            if hit_bunkers:
+                bullet.kill()
+                for bunker in hit_bunkers:
+                    # 计算命中位置（相对于掩体左上角）
+                    hit_x = bullet.rect.centerx - bunker.rect.x
+                    hit_y = bullet.rect.centery - bunker.rect.y
+                    bunker.damage(hit_x, hit_y)
+
+        # 5.6.6 外星人子弹 vs 掩体
+        for bullet in state["alien_bullets"]:
+            hit_bunkers = pygame.sprite.spritecollide(bullet, state["bunkers"], False)
+            if hit_bunkers:
+                bullet.kill()
+                for bunker in hit_bunkers:
+                    hit_x = bullet.rect.centerx - bunker.rect.x
+                    hit_y = bullet.rect.centery - bunker.rect.y
+                    bunker.damage(hit_x, hit_y)
+
+        # ============================================
+        # 5.7 检查波次完成
+        # ============================================
+        if len(state["aliens"]) == 0:
+            # 当前波次所有外星人被消灭 → 进入下一波
+            state["wave"] += 1
+
+            # 清空残留子弹
+            state["player_bullets"].empty()
+            state["alien_bullets"].empty()
+
+            # 显示波次过渡动画
+            show_wave_transition(state["wave"])
+
+            # 创建新一波外星人（更多、更快）
+            state["aliens"] = create_aliens(state["wave"])
+            state["all_sprites"].add(state["aliens"])
+
+            # 重置掩体（也可以保留受损状态，这里选择重建）
+            state["bunkers"].empty()
+            state["bunkers"] = create_bunkers()
+            state["all_sprites"].add(state["bunkers"])
+
+            # 递增难度
+            state["alien_speed"] = 1.2 + (state["wave"] - 1) * 0.4   # 速度增加
+            state["alien_move_interval"] = max(15, 40 - state["wave"] * 2)  # 移动更频繁
+            state["alien_shoot_chance"] = min(0.015, 0.003 + state["wave"] * 0.002)  # 子弹更密集
+
+        # ============================================
+        # 5.8 绘制画面
+        # ============================================
+        screen.fill(BLACK)
+
+        # 绘制星空背景（随机白点）
+        if not hasattr(draw_ui, "_stars"):
+            # 首次调用时生成固定星空
+            draw_ui._stars = [
+                (random.randint(0, SCREEN_WIDTH), random.randint(0, SCREEN_HEIGHT))
+                for _ in range(80)
+            ]
+        for sx, sy in draw_ui._stars:
+            brightness = random.randint(60, 200)
+            screen.set_at((sx, sy), (brightness, brightness, brightness))
+
+        # 绘制所有精灵
+        state["all_sprites"].draw(screen)
+
+        # 绘制 UI
+        draw_ui(state["score"], state["wave"], state["player"].lives)
+
+        # 刷新屏幕
+        pygame.display.flip()
+        clock.tick(FPS)
+
+    # ============================================
+    # 6. 退出游戏
+    # ============================================
+    pygame.quit()
+    sys.exit()
+
+
+# 程序入口
+if __name__ == "__main__":
+    main()

@@ -1,0 +1,526 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>第20课：Floyd 与传递闭包</title>
+    <style>
+        :root {
+            --bg: #0a1628;
+            --card: #162744;
+            --text: #e0e8f0;
+            --muted: #8ba4c0;
+            --accent: #5b9bd5;
+            --accent2: #4ec9b0;
+            --highlight: #f0c040;
+            --keyword: #569cd6;
+            --string: #6a9955;
+            --comment: #6a737d;
+            --func: #dcdcaa;
+            --number: #b5cea8;
+            --border: #1e3a5f;
+            --danger: #f44747;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "PingFang SC", "Microsoft YaHei", sans-serif;
+            background: var(--bg);
+            color: var(--text);
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+        }
+
+        .slide-container {
+            width: 100%;
+            max-width: 900px;
+            position: relative;
+        }
+
+        .slide {
+            display: none;
+            background: var(--card);
+            border: 1px solid var(--border);
+            border-radius: 16px;
+            padding: 48px 52px;
+            min-height: 520px;
+            box-shadow: 0 8px 40px rgba(0, 0, 0, 0.4);
+            animation: fadeSlide 0.5s ease;
+        }
+
+        .slide.active {
+            display: block;
+        }
+
+        @keyframes fadeSlide {
+            from {
+                opacity: 0;
+                transform: translateY(20px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .slide-title {
+            font-size: 2em;
+            font-weight: 700;
+            color: var(--accent);
+            margin-bottom: 8px;
+            border-left: 4px solid var(--accent2);
+            padding-left: 16px;
+        }
+
+        .slide-subtitle {
+            font-size: 1.1em;
+            color: var(--muted);
+            margin-bottom: 28px;
+        }
+
+        .slide-content {
+            font-size: 1.05em;
+            line-height: 1.8;
+        }
+
+        .slide-content h3 {
+            color: var(--accent2);
+            margin: 20px 0 8px;
+            font-size: 1.2em;
+        }
+
+        .slide-content ul {
+            padding-left: 24px;
+        }
+        .slide-content li {
+            margin: 6px 0;
+        }
+
+        .slide-content p {
+            margin: 8px 0;
+        }
+
+        .highlight-text {
+            color: var(--highlight);
+            font-weight: 600;
+        }
+
+        .info-box {
+            background: rgba(91, 155, 213, 0.08);
+            border: 1px solid rgba(91, 155, 213, 0.25);
+            border-radius: 10px;
+            padding: 16px 20px;
+            margin: 16px 0;
+        }
+
+        .danger-box {
+            background: rgba(244, 71, 71, 0.08);
+            border: 1px solid rgba(244, 71, 71, 0.25);
+            border-radius: 10px;
+            padding: 16px 20px;
+            margin: 16px 0;
+        }
+
+        .success-box {
+            background: rgba(78, 201, 176, 0.08);
+            border: 1px solid rgba(78, 201, 176, 0.25);
+            border-radius: 10px;
+            padding: 16px 20px;
+            margin: 16px 0;
+        }
+
+        .code-block {
+            background: #0d1b2a;
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            padding: 18px 22px;
+            margin: 12px 0;
+            overflow-x: auto;
+            font-family: "SF Mono", "Fira Code", "Consolas", "Courier New", monospace;
+            font-size: 0.9em;
+            line-height: 1.6;
+            white-space: pre;
+        }
+
+        .kw {
+            color: var(--keyword);
+        }
+        .st {
+            color: var(--string);
+        }
+        .cm {
+            color: var(--comment);
+            font-style: italic;
+        }
+        .fn {
+            color: var(--func);
+        }
+        .nu {
+            color: var(--number);
+        }
+        .op {
+            color: #d4d4d4;
+        }
+        .ty {
+            color: #4ec9b0;
+        }
+
+        .formula {
+            display: inline-block;
+            background: rgba(91, 155, 213, 0.12);
+            border-radius: 6px;
+            padding: 4px 12px;
+            font-family: "SF Mono", "Consolas", monospace;
+            font-size: 0.95em;
+            color: var(--accent);
+        }
+
+        .nav {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-top: 24px;
+            gap: 12px;
+        }
+
+        .nav-btn {
+            background: var(--card);
+            color: var(--text);
+            border: 1px solid var(--border);
+            padding: 10px 28px;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 0.95em;
+            transition: all 0.2s;
+        }
+
+        .nav-btn:hover {
+            background: var(--accent);
+            color: #fff;
+            border-color: var(--accent);
+        }
+        .nav-btn:disabled {
+            opacity: 0.4;
+            cursor: not-allowed;
+        }
+
+        .page-indicator {
+            font-size: 0.9em;
+            color: var(--muted);
+            min-width: 80px;
+            text-align: center;
+        }
+
+        @media (max-width: 768px) {
+            .slide {
+                padding: 28px 24px;
+                min-height: auto;
+            }
+            .slide-title {
+                font-size: 1.5em;
+            }
+            .code-block {
+                font-size: 0.78em;
+                padding: 12px 14px;
+            }
+        }
+
+        .cover-title {
+            font-size: 2.4em;
+            font-weight: 800;
+            color: var(--accent);
+            text-align: center;
+            margin-top: 40px;
+        }
+        .cover-subtitle {
+            font-size: 1.2em;
+            color: var(--muted);
+            text-align: center;
+            margin: 16px 0 32px;
+        }
+        .cover-list {
+            list-style: none;
+            padding: 0;
+            text-align: center;
+            font-size: 1.05em;
+            line-height: 2.2;
+        }
+        .cover-list li::before {
+            content: "▸ ";
+            color: var(--accent2);
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 16px 0;
+            font-size: 0.95em;
+        }
+        th, td {
+            border: 1px solid var(--border);
+            padding: 10px 14px;
+            text-align: left;
+        }
+        th {
+            background: rgba(91, 155, 213, 0.12);
+            color: var(--accent);
+        }
+    </style>
+</head>
+<body>
+
+<div class="slide-container" id="slideContainer">
+
+    <!-- ===== 幻灯片 0：标题页 ===== -->
+    <div class="slide active" data-index="0">
+        <div class="cover-title">Floyd 与传递闭包</div>
+        <div class="cover-subtitle">第 20 课 · 多源最短路径与动态规划</div>
+        <ul class="cover-list">
+            <li>Floyd-Warshall：O(V³) 全源最短路</li>
+            <li>DP 推导：dp[k][i][j] 状态与滚动数组</li>
+            <li>传递闭包：Warshall 算法与 bitset 优化</li>
+            <li>最小环：无向图与有向图的检测</li>
+        </ul>
+    </div>
+
+    <!-- ===== 幻灯片 1：知识精讲——Floyd 算法 ===== -->
+    <div class="slide" data-index="1">
+        <div class="slide-title">Floyd-Warshall 算法</div>
+        <div class="slide-subtitle">基于动态规划的全源最短路算法</div>
+        <div class="slide-content">
+            <h3>问题定义</h3>
+            <p>给定 n 个节点的有向图，求出 <span class="highlight-text">任意两点之间的最短距离</span>。允许负权边，但不允许负环。</p>
+
+            <h3>DP 状态定义</h3>
+            <p>设 <span class="formula">dp[k][i][j]</span> 表示从节点 i 到节点 j，<span class="highlight-text">仅经过编号为 1~k 的中间节点</span>时的最短距离。</p>
+
+            <h3>状态转移</h3>
+            <div class="formula" style="font-size:1em; padding:8px 20px; margin:12px 0;">
+                dp[k][i][j] = min( dp[k-1][i][j] , dp[k-1][i][k] + dp[k-1][k][j] )
+            </div>
+            <p>含义：i 到 j 的最短路，要么 <strong>不经过 k</strong>，要么 <strong>经过 k</strong>（拆为两段各自在 1..k-1 范围内的最短路）。</p>
+
+            <div class="info-box">
+                <strong>复杂度：</strong> 时间 O(V³)，空间 O(V²)（滚动数组优化后）。V ≤ 500~800 是实用范围。
+            </div>
+        </div>
+    </div>
+
+    <!-- ===== 幻灯片 2：原理推导——DP 视角 ===== -->
+    <div class="slide" data-index="2">
+        <div class="slide-title">DP 视角深入分析</div>
+        <div class="slide-subtitle">理解 k 循环位置、滚动数组与边界条件</div>
+        <div class="slide-content">
+            <h3>为什么 k 循环必须在最外层？</h3>
+            <p><span class="formula">dp[k][i][j]</span> 依赖的是 <span class="highlight-text">dp[k-1][i][k] 和 dp[k-1][k][j]</span>（上一阶段的值）。如果将 k 放在内层，可能使用了「本阶段已被更新过的 dist[i][k]」，破坏了 DP 的正确性。</p>
+
+            <div class="danger-box">
+                <strong>常见错误：</strong> 把 k 放在 i 或 j 的内层，导致最短路计算错误。在简单样例中可能碰巧正确，但在复杂图中会出错。
+            </div>
+
+            <h3>滚动数组优化原理</h3>
+            <p>观察到 <span class="formula">dp[k][i][k] = dp[k-1][i][k]</span>（终点就是 k，不会再用 k 本身作为中间节点），因此第一维可以省略，直接在二维数组上迭代更新。</p>
+
+            <h3>边界条件</h3>
+            <ul>
+                <li><span class="formula">dist[i][i] = 0</span>（自己到自己的距离必须初始化为 0）</li>
+                <li>无直接边 → INF（防止溢出时需用 <span class="formula">1e18</span>）</li>
+                <li>重边 → 取最小值</li>
+            </ul>
+        </div>
+    </div>
+
+    <!-- ===== 幻灯片 3：知识精讲——传递闭包 ===== -->
+    <div class="slide" data-index="3">
+        <div class="slide-title">传递闭包（Warshall 算法）</div>
+        <div class="slide-subtitle">判断任意两点间可达性</div>
+        <div class="slide-content">
+            <h3>问题定义</h3>
+            <p>在有向图中，判断 <strong>i 是否能到达 j</strong>（存在从 i 到 j 的路径）。输出一个 n×n 的 0/1 矩阵。</p>
+
+            <h3>算法——Floyd 的逻辑变体</h3>
+            <p>将 min 替换为逻辑或，加法替换为逻辑与：</p>
+            <div class="code-block"><span class="kw">for</span> (<span class="kw">int</span> k = <span class="nu">1</span>; k &lt;= n; k++)
+    <span class="kw">for</span> (<span class="kw">int</span> i = <span class="nu">1</span>; i &lt;= n; i++)
+        <span class="kw">for</span> (<span class="kw">int</span> j = <span class="nu">1</span>; j &lt;= n; j++)
+            reach[i][j] |= (reach[i][k] &amp; reach[k][j]);</div>
+
+            <h3>bitset 优化</h3>
+            <p>内层 j 循环替换为 bitset 按位或，复杂度从 <span class="formula">O(V³)</span> 降至 <span class="formula">O(V³ / 64)</span>。</p>
+            <div class="code-block"><span class="ty">bitset</span>&lt;MAXN&gt; reach[MAXN];
+<span class="kw">for</span> (k = <span class="nu">1</span>..n)
+    <span class="kw">for</span> (i = <span class="nu">1</span>..n)
+        <span class="kw">if</span> (reach[i][k])
+            reach[i] |= reach[k];</div>
+
+            <div class="success-box">
+                <strong>实战效果：</strong> V=2000 时，朴素 O(V³)=8×10⁹（不可过），bitset 优化后 ~1.25×10⁸（1s 内可过）。
+            </div>
+        </div>
+    </div>
+
+    <!-- ===== 幻灯片 4：代码模板 ===== -->
+    <div class="slide" data-index="4">
+        <div class="slide-title">Floyd 代码模板</div>
+        <div class="slide-subtitle">全源最短路 + 路径还原</div>
+        <div class="slide-content">
+            <div class="code-block"><span class="kw">void</span> <span class="fn">floyd</span>() {
+    <span class="kw">for</span> (<span class="kw">int</span> k = <span class="nu">1</span>; k &lt;= n; k++) {
+        <span class="kw">for</span> (<span class="kw">int</span> i = <span class="nu">1</span>; i &lt;= n; i++) {
+            <span class="kw">if</span> (dist[i][k] == INF) <span class="kw">continue</span>;
+            <span class="kw">for</span> (<span class="kw">int</span> j = <span class="nu">1</span>; j &lt;= n; j++) {
+                <span class="kw">if</span> (dist[k][j] == INF) <span class="kw">continue</span>;
+                <span class="kw">long long</span> nd = dist[i][k] + dist[k][j];
+                <span class="kw">if</span> (nd &lt; dist[i][j]) {
+                    dist[i][j] = nd;
+                    nxt[i][j] = nxt[i][k];  <span class="cm">// 路径还原</span>
+                }
+            }
+        }
+    }
+}</div>
+            <div class="info-box">
+                <strong>关键细节：</strong><br>
+                1. <span class="formula">k</span> 循环必须在最外层<br>
+                2. <span class="formula">dist[i][k] == INF</span> 时 continue 可剪枝<br>
+                3. 路径还原：<span class="formula">nxt[i][j]</span> 记录 i 到 j 的下一跳
+            </div>
+        </div>
+    </div>
+
+    <!-- ===== 幻灯片 5：真题精练 ===== -->
+    <div class="slide" data-index="5">
+        <div class="slide-title">真题精练</div>
+        <div class="slide-subtitle">经典题目与 AC 策略</div>
+        <div class="slide-content">
+            <h3>B3611 【模板】传递闭包</h3>
+            <ul>
+                <li><strong>题意：</strong>给定有向图的 0/1 邻接矩阵，求传递闭包</li>
+                <li><strong>数据范围：</strong>n ≤ 100</li>
+                <li><strong>策略：</strong>Warshall 三重循环 O(n³)，极其轻松</li>
+            </ul>
+
+            <div class="code-block"><span class="kw">for</span> (<span class="kw">int</span> k = <span class="nu">1</span>; k &lt;= n; k++)
+    <span class="kw">for</span> (<span class="kw">int</span> i = <span class="nu">1</span>; i &lt;= n; i++)
+        <span class="kw">for</span> (<span class="kw">int</span> j = <span class="nu">1</span>; j &lt;= n; j++)
+            reach[i][j] |= (reach[i][k] &amp; reach[k][j]);</div>
+
+            <h3>P6175 【模板】无向图最小环</h3>
+            <ul>
+                <li><strong>题意：</strong>给定 n ≤ 100 的无向有权图，求最小环权值和</li>
+                <li><strong>策略：</strong>Floyd 过程中，在更新前计算 dist[i][j] + g[i][k] + g[k][j]</li>
+                <li><strong>关键：</strong>i, j < k 保证环的中间节点都来自 1..k-1</li>
+            </ul>
+        </div>
+    </div>
+
+    <!-- ===== 幻灯片 6：优化技巧——最小环等 ===== -->
+    <div class="slide" data-index="6">
+        <div class="slide-title">优化技巧与进阶应用</div>
+        <div class="slide-subtitle">最小环、负环检测、INF 防溢出</div>
+        <div class="slide-content">
+
+            <h3>无向图最小环</h3>
+            <p>在 Floyd 的每一轮 k，在 <strong>更新之前</strong> 遍历 i, j &lt; k：</p>
+            <p><span class="formula">环权值 = dist[i][j] + g[i][k] + g[k][j]</span></p>
+            <p>其中 dist[i][j] 是基于 1..k-1 的最短路，保证环的中间节点 < k。</p>
+
+            <h3>有向图最小环</h3>
+            <p>跑完 Floyd 后检查 <span class="formula">min(dist[i][i])</span>（排除值为 0 的平凡情况）。若 dist[i][i] 为负值，说明 i 在负环上。</p>
+
+            <h3>INF 防溢出</h3>
+            <div class="danger-box">
+                计算 <span class="formula">dist[i][k] + dist[k][j]</span> 时，若两者都是 INF，相加会溢出为负数。<br>
+                <strong>推荐做法：</strong> 使用 <span class="formula">1e18</span> 作为 INF（long long），并在加法前用 <span class="formula">if</span> 判断。
+            </div>
+
+            <h3>其他应用</h3>
+            <ul>
+                <li><strong>判负环：</strong> Floyd 结束后检查 dist[i][i] &lt; 0</li>
+                <li><strong>直径：</strong> 全源最短路的最大值即为图的直径</li>
+                <li><strong>传递闭包 + 二分图匹配：</strong> 先求闭包，再跑匈牙利</li>
+            </ul>
+        </div>
+    </div>
+
+    <!-- ===== 幻灯片 7：总结页 ===== -->
+    <div class="slide" data-index="7">
+        <div class="slide-title">本课小结</div>
+        <div class="slide-subtitle">Floyd &amp; 传递闭包要点回顾</div>
+        <div class="slide-content">
+            <table>
+                <tr><th>知识点</th><th>核心要点</th></tr>
+                <tr><td>Floyd-Warshall</td><td>DP: dp[k][i][j] = min(dp[k-1][i][j], dp[k-1][i][k] + dp[k-1][k][j])</td></tr>
+                <tr><td>k 循环位置</td><td>必须最外层，否则 DP 顺序错误</td></tr>
+                <tr><td>传递闭包</td><td>Floyd 变体，bitset 优化至 O(V³/64)</td></tr>
+                <tr><td>无向图最小环</td><td>更新前计算 dist[i][j] + g[i][k] + g[k][j]</td></tr>
+                <tr><td>有向图最小环</td><td>Floyd 后检查 min(dist[i][i])</td></tr>
+                <tr><td>路径还原</td><td>维护 nxt[i][j]，更新时 nxt[i][j] = nxt[i][k]</td></tr>
+            </table>
+
+            <div class="info-box" style="margin-top:24px;">
+                <strong>一句话总结：</strong> Floyd 是解决多源最短路的经典 DP 算法，O(V³) 可处理 n≤800 的图。其 DP 思想可推广到传递闭包（bitset 优化至 V=2000）、最小环检测等问题。k 循环在最外层是正确性的关键保障。
+            </div>
+
+            <p style="text-align:center; margin-top:24px; color:var(--muted); font-size:0.9em;">
+                —— 第 20 课 结束 ——
+            </p>
+        </div>
+    </div>
+
+</div> <!-- .slide-container -->
+
+<!-- 导航 -->
+<div class="nav">
+    <button class="nav-btn" id="prevBtn" onclick="changeSlide(-1)">◀ 上一页</button>
+    <span class="page-indicator" id="pageIndicator">1 / 8</span>
+    <button class="nav-btn" id="nextBtn" onclick="changeSlide(1)">下一页 ▶</button>
+</div>
+
+<script>
+    let currentSlide = 0;
+    const slides = document.querySelectorAll('.slide');
+    const totalSlides = slides.length;
+
+    function showSlide(index) {
+        slides.forEach(s => s.classList.remove('active'));
+        slides[index].classList.add('active');
+        document.getElementById('pageIndicator').textContent = (index + 1) + ' / ' + totalSlides;
+        document.getElementById('prevBtn').disabled = (index === 0);
+        document.getElementById('nextBtn').disabled = (index === totalSlides - 1);
+    }
+
+    function changeSlide(delta) {
+        currentSlide = Math.max(0, Math.min(totalSlides - 1, currentSlide + delta));
+        showSlide(currentSlide);
+    }
+
+    // 键盘导航
+    document.addEventListener('keydown', function(e) {
+        if (e.key === 'ArrowRight' || e.key === 'ArrowDown') changeSlide(1);
+        if (e.key === 'ArrowLeft' || e.key === 'ArrowUp') changeSlide(-1);
+    });
+
+    // 触屏滑动
+    let touchStartX = 0;
+    document.addEventListener('touchstart', e => { touchStartX = e.changedTouches[0].screenX; });
+    document.addEventListener('touchend', e => {
+        const diff = touchStartX - e.changedTouches[0].screenX;
+        if (Math.abs(diff) > 50) changeSlide(diff > 0 ? 1 : -1);
+    });
+
+    // 初始化
+    showSlide(0);
+</script>
+
+</body>
+</html>

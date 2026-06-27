@@ -1,0 +1,569 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>第01课：时间复杂度分析与计算 - CSP-S 高级教练课件</title>
+<style>
+  :root {
+    --bg-primary: #1a1a2e;
+    --bg-secondary: #16213e;
+    --bg-card: #0f3460;
+    --text-primary: #e8e8e8;
+    --text-secondary: #a0a0b0;
+    --accent: #e94560;
+    --accent2: #0fcda9;
+    --accent3: #f5a623;
+    --code-bg: #0d1117;
+    --border: #2a2a4a;
+    --keyword: #569cd6;
+    --string: #6a9955;
+    --comment: #6a737d;
+    --function: #dcdcaa;
+    --number: #b5cea8;
+    --type: #4ec9b0;
+    --operator: #d4d4d4;
+  }
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'PingFang SC', 'Microsoft YaHei', sans-serif;
+    background: var(--bg-primary);
+    color: var(--text-primary);
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+  }
+
+  .presentation {
+    width: 100%;
+    max-width: 1000px;
+    min-height: 600px;
+    margin: 20px;
+    position: relative;
+  }
+
+  .slide {
+    display: none;
+    background: var(--bg-secondary);
+    border-radius: 16px;
+    padding: 48px 56px;
+    min-height: 580px;
+    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.4);
+    border: 1px solid var(--border);
+    animation: fadeIn 0.4s ease-in-out;
+    position: relative;
+  }
+
+  .slide.active { display: block; }
+
+  @keyframes fadeIn {
+    from { opacity: 0; transform: translateY(10px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+
+  /* ---- 导航条 ---- */
+  .nav-bar {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-top: 16px;
+    gap: 12px;
+  }
+
+  .nav-btn {
+    padding: 10px 24px;
+    border: 1px solid var(--accent);
+    background: transparent;
+    color: var(--accent);
+    border-radius: 8px;
+    cursor: pointer;
+    font-size: 15px;
+    transition: all 0.2s;
+    font-family: inherit;
+  }
+  .nav-btn:hover { background: var(--accent); color: #fff; }
+  .nav-btn:disabled { border-color: #555; color: #555; cursor: not-allowed; }
+  .nav-btn:disabled:hover { background: transparent; }
+
+  .page-indicator {
+    color: var(--text-secondary);
+    font-size: 14px;
+    min-width: 80px;
+    text-align: center;
+  }
+
+  /* ---- 内容样式 ---- */
+  h1 {
+    font-size: 36px;
+    color: var(--accent);
+    margin-bottom: 8px;
+    font-weight: 700;
+  }
+  h2 {
+    font-size: 26px;
+    color: var(--accent2);
+    margin-bottom: 16px;
+    border-bottom: 2px solid var(--accent2);
+    padding-bottom: 8px;
+  }
+  h3 {
+    font-size: 20px;
+    color: var(--accent3);
+    margin: 20px 0 10px;
+  }
+
+  p, li { font-size: 16px; line-height: 1.8; color: var(--text-primary); }
+
+  ul { padding-left: 24px; margin: 8px 0; }
+  li { margin-bottom: 6px; }
+
+  table {
+    width: 100%;
+    border-collapse: collapse;
+    margin: 12px 0;
+    font-size: 14px;
+  }
+  th, td {
+    padding: 8px 12px;
+    border: 1px solid var(--border);
+    text-align: center;
+  }
+  th { background: var(--bg-card); color: var(--accent3); font-weight: 600; }
+  td { color: var(--text-primary); }
+  tr:nth-child(even) td { background: rgba(255,255,255,0.03); }
+
+  .subtitle {
+    color: var(--text-secondary);
+    font-size: 18px;
+    margin-top: 4px;
+  }
+  .meta {
+    color: var(--text-secondary);
+    font-size: 14px;
+    margin-top: 20px;
+  }
+
+  /* ---- 代码块 ---- */
+  .code-block {
+    background: var(--code-bg);
+    border-radius: 10px;
+    padding: 20px 24px;
+    margin: 16px 0;
+    overflow-x: auto;
+    font-family: 'Fira Code', 'Cascadia Code', 'JetBrains Mono', 'SF Mono', 'Consolas', monospace;
+    font-size: 14px;
+    line-height: 1.7;
+    border: 1px solid var(--border);
+    white-space: pre-wrap;
+    word-break: break-all;
+  }
+
+  .code-block .kw { color: var(--keyword); }
+  .code-block .str { color: var(--string); }
+  .code-block .cm { color: var(--comment); font-style: italic; }
+  .code-block .fn { color: var(--function); }
+  .code-block .num { color: var(--number); }
+  .code-block .tp { color: var(--type); }
+  .code-block .op { color: var(--operator); }
+
+  /* ---- 高亮盒子 ---- */
+  .highlight-box {
+    background: rgba(233, 69, 96, 0.1);
+    border-left: 4px solid var(--accent);
+    padding: 12px 16px;
+    margin: 12px 0;
+    border-radius: 0 8px 8px 0;
+    font-size: 15px;
+  }
+  .highlight-box.green {
+    background: rgba(15, 205, 169, 0.1);
+    border-left-color: var(--accent2);
+  }
+  .highlight-box.yellow {
+    background: rgba(245, 166, 35, 0.1);
+    border-left-color: var(--accent3);
+  }
+
+  /* ---- 公式 ---- */
+  .formula {
+    background: rgba(255,255,255,0.05);
+    padding: 8px 16px;
+    border-radius: 8px;
+    display: inline-block;
+    margin: 4px 0;
+    font-style: italic;
+    color: var(--accent3);
+  }
+
+  /* ---- 两列布局 ---- */
+  .two-col {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 24px;
+    margin: 12px 0;
+  }
+
+  /* ---- 进度条 ---- */
+  .progress-bar {
+    display: flex;
+    gap: 4px;
+    justify-content: center;
+    margin-bottom: 8px;
+  }
+  .progress-dot {
+    width: 12px;
+    height: 12px;
+    border-radius: 50%;
+    background: var(--border);
+    transition: background 0.3s;
+  }
+  .progress-dot.active { background: var(--accent); }
+
+  /* ---- 响应式 ---- */
+  @media (max-width: 768px) {
+    .slide { padding: 24px 20px; min-height: auto; }
+    h1 { font-size: 24px; }
+    h2 { font-size: 20px; }
+    .two-col { grid-template-columns: 1fr; }
+    .code-block { font-size: 12px; padding: 12px; }
+    table { font-size: 11px; }
+    th, td { padding: 4px 6px; }
+  }
+</style>
+</head>
+<body>
+
+<div class="presentation" id="presentation">
+
+  <!-- 幻灯片 1：标题页 -->
+  <div class="slide active" id="slide1">
+    <div style="text-align:center; padding-top:60px;">
+      <div style="font-size:14px; color:var(--accent2); letter-spacing:4px; text-transform:uppercase; margin-bottom:20px;">
+        CSP-S 高级教练课程
+      </div>
+      <h1 style="font-size:44px;">时间复杂度分析与计算</h1>
+      <p class="subtitle">第01课：大O表示法 / 主定理 / 常见复杂度对比</p>
+      <div class="meta" style="margin-top:48px;">
+        <p>对应CSP-S考纲：算法复杂度分析（大O表示法、主定理）</p>
+        <p style="margin-top:4px;">核心能力：评估算法效率，选择合适的算法解决问题</p>
+      </div>
+      <div style="margin-top:60px; color:var(--text-secondary);">
+        <p>共计 7 页 | 预计学习时间 60 分钟</p>
+      </div>
+    </div>
+  </div>
+
+  <!-- 幻灯片 2：知识精讲 - 大O表示法 -->
+  <div class="slide" id="slide2">
+    <h2>一、大O表示法 (Big-O Notation)</h2>
+
+    <h3>1. 数学定义</h3>
+    <p>设 <em>f(n)</em> 为实际运行时间，<em>g(n)</em> 为参考函数（足够大的 n）：</p>
+
+    <div class="highlight-box green">
+      <strong>O(g(n)) - 上界：</strong>∃ c, n₀ 使得 ∀ n ≥ n₀ 有 0 ≤ f(n) ≤ c·g(n)<br>
+      <span style="color:var(--text-secondary);">描述率增长率的<em>上限</em>（≤）—— 最坏不会超过</span>
+    </div>
+
+    <div class="highlight-box yellow">
+      <strong>Ω(g(n)) - 下界：</strong>∃ c, n₀ 使得 ∀ n ≥ n₀ 有 0 ≤ c·g(n) ≤ f(n)<br>
+      <span style="color:var(--text-secondary);">描述率增长率的<em>下限</em>（≥）—— 最好不会低于</span>
+    </div>
+
+    <div class="highlight-box">
+      <strong>Θ(g(n)) - 紧确界：</strong>f(n) = O(g(n)) 且 f(n) = Ω(g(n))<br>
+      <span style="color:var(--text-secondary);">精确描述增长率 —— 恰好一样快</span>
+    </div>
+
+    <h3>2. 化简规则</h3>
+    <ul>
+      <li><strong>忽略常数因子：</strong>O(3n) = O(n)</li>
+      <li><strong>忽略低阶项：</strong>O(n² + n log n) = O(n²)</li>
+      <li><strong>加法法则：</strong>O(f) + O(g) = O(max(f, g))</li>
+      <li><strong>乘法法则：</strong>O(f) × O(g) = O(f × g)</li>
+    </ul>
+  </div>
+
+  <!-- 幻灯片 3：原理推导 - 主定理 -->
+  <div class="slide" id="slide3">
+    <h2>二、主定理 (Master Theorem)</h2>
+    <p>用于求解形如 <span class="formula">T(n) = a·T(n/b) + O(n^d)</span> 的递推式。</p>
+
+    <table style="margin-top:16px;">
+      <tr>
+        <th>情况</th>
+        <th>条件</th>
+        <th>结论</th>
+        <th>解释</th>
+      </tr>
+      <tr>
+        <td style="color:var(--accent2);">情况 1</td>
+        <td>d < log<sub>b</sub>a</td>
+        <td>T(n) = O(n<sup>log<sub>b</sub>a</sup>)</td>
+        <td>递归调用占主导</td>
+      </tr>
+      <tr>
+        <td style="color:var(--accent3);">情况 2</td>
+        <td>d = log<sub>b</sub>a</td>
+        <td>T(n) = O(n<sup>d</sup> log n)</td>
+        <td>递归与合并平衡</td>
+      </tr>
+      <tr>
+        <td style="color:var(--accent);">情况 3</td>
+        <td>d &gt; log<sub>b</sub>a</td>
+        <td>T(n) = O(n<sup>d</sup>)</td>
+        <td>合并开销占主导</td>
+      </tr>
+    </table>
+
+    <h3>经典实例</h3>
+    <div class="two-col">
+      <div>
+        <p><strong>归并排序</strong></p>
+        <p class="formula">T(n) = 2T(n/2) + O(n)</p>
+        <p>a=2, b=2, d=1</p>
+        <p>log₂2 = 1 = d → <strong>情况2</strong></p>
+        <p style="color:var(--accent3); font-size:18px;">➜ O(n log n)</p>
+      </div>
+      <div>
+        <p><strong>二分查找</strong></p>
+        <p class="formula">T(n) = T(n/2) + O(1)</p>
+        <p>a=1, b=2, d=0</p>
+        <p>log₂1 = 0 = d → <strong>情况2</strong></p>
+        <p style="color:var(--accent3); font-size:18px;">➜ O(log n)</p>
+      </div>
+    </div>
+
+    <div style="margin-top:12px;">
+      <p><strong>Strassen 矩阵乘法</strong>（情况1示例）</p>
+      <p class="formula">T(n) = 7T(n/2) + O(n²)</p>
+      <p>a=7, b=2, d=2 → log₂7 ≈ 2.81 &gt; 2 → <strong>情况1</strong> → O(n<sup>2.81</sup>)</p>
+    </div>
+  </div>
+
+  <!-- 幻灯片 4：代码模板 -->
+  <div class="slide" id="slide4">
+    <h2>三、代码模板：二分与排序的复杂度</h2>
+
+    <div class="two-col">
+      <div>
+        <h3 style="margin-top:0;">二分查找 O(log n)</h3>
+        <div class="code-block"><span class="kw">int</span> <span class="fn">binary_search</span>(<span class="tp">vector</span>&lt;<span class="kw">int</span>&gt;& arr, <span class="kw">int</span> target) {
+    <span class="kw">int</span> l = <span class="num">0</span>, r = arr.<span class="fn">size</span>() - <span class="num">1</span>;
+    <span class="kw">while</span> (l &lt;= r) {
+        <span class="kw">int</span> mid = l + (r - l) / <span class="num">2</span>;
+        <span class="kw">if</span> (arr[mid] == target)
+            <span class="kw">return</span> mid;
+        <span class="kw">else if</span> (arr[mid] &lt; target)
+            l = mid + <span class="num">1</span>;
+        <span class="kw">else</span>
+            r = mid - <span class="num">1</span>;
+    }
+    <span class="kw">return</span> -<span class="num">1</span>;
+}</div>
+      </div>
+      <div>
+        <h3 style="margin-top:0;">归并排序 O(n log n)</h3>
+        <div class="code-block"><span class="kw">void</span> <span class="fn">merge_sort</span>(<span class="tp">vector</span>&lt;<span class="kw">int</span>&gt;& arr,
+                    <span class="kw">int</span> l, <span class="kw">int</span> r) {
+    <span class="kw">if</span> (l &gt;= r) <span class="kw">return</span>;
+    <span class="kw">int</span> mid = l + (r - l) / <span class="num">2</span>;
+    <span class="fn">merge_sort</span>(arr, l, mid);
+    <span class="fn">merge_sort</span>(arr, mid + <span class="num">1</span>, r);
+    <span class="fn">merge</span>(arr, l, mid, r);
+    <span class="cm">// merge: 合并两个有序子数组 O(n)</span>
+}</div>
+      </div>
+    </div>
+
+    <div class="highlight-box green" style="margin-top:16px;">
+      <strong>易错提醒：</strong>
+      <ul style="margin-top:8px;">
+        <li>使用 <code>mid = l + (r - l) / 2</code> 而非 <code>(l + r) / 2</code>，防止 <strong>整数溢出</strong>！</li>
+        <li>外层 while 条件写 <code>l &lt;= r</code>（带等号），否则会漏掉边界情况</li>
+      </ul>
+    </div>
+  </div>
+
+  <!-- 幻灯片 5：真题精练 -->
+  <div class="slide" id="slide5">
+    <h2>四、真题精练：复杂度判断</h2>
+
+    <h3>题目：多重循环复杂度分析</h3>
+    <p>分析以下两段代码的时间复杂度，判断 n = 10⁵ 时能否在 1 秒内完成。</p>
+
+    <div class="two-col">
+      <div>
+        <p><strong>代码段 1</strong></p>
+        <div class="code-block"><span class="kw">for</span> (<span class="kw">int</span> i = <span class="num">1</span>; i &lt;= n; i++) {
+    <span class="kw">for</span> (<span class="kw">int</span> j = <span class="num">1</span>; j &lt;= n; j += i) {
+        ans++;
+    }
+}</div>
+        <div class="highlight-box green">
+          <strong>分析：</strong>内层步长为 i，总执行次数：<br>
+          Σ n/i ≈ n·H<sub>n</sub> = n·O(log n)<br>
+          ➜ <strong>O(n log n)</strong> ✅ 可行
+        </div>
+      </div>
+      <div>
+        <p><strong>代码段 2</strong></p>
+        <div class="code-block"><span class="kw">for</span> (<span class="kw">int</span> i = <span class="num">1</span>; i &lt;= n; i++) {
+    <span class="kw">for</span> (<span class="kw">int</span> j = <span class="num">1</span>; j &lt;= i; j *= <span class="num">2</span>) {
+        <span class="kw">for</span> (<span class="kw">int</span> k = <span class="num">1</span>; k &lt;= j; k++) {
+            ans++;
+        }
+    }
+}</div>
+        <div class="highlight-box">
+          <strong>分析：</strong>对于固定 i，中层执行 O(log i) 次，<br>
+          最内层执行 Σ 2^t &lt; 2i = O(i)<br>
+          Σ O(i) = <strong>O(n²)</strong> ❌ 不可行
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- 幻灯片 6：优化技巧 -->
+  <div class="slide" id="slide6">
+    <h2>五、复杂度对比表与应试策略</h2>
+
+    <table style="margin-bottom:20px;">
+      <tr>
+        <th>复杂度</th>
+        <th>n=10³</th>
+        <th>n=10⁴</th>
+        <th>n=10⁵</th>
+        <th>n=10⁶</th>
+        <th>1秒最大n</th>
+      </tr>
+      <tr><td style="color:var(--accent2);">O(log n)</td><td>~10</td><td>~13</td><td>~17</td><td>~20</td><td>—</td></tr>
+      <tr><td style="color:var(--accent2);">O(n)</td><td>10³</td><td>10⁴</td><td>10⁵</td><td>10⁶</td><td>10⁷</td></tr>
+      <tr><td style="color:var(--accent3);">O(n log n)</td><td>~10⁴</td><td>~1.3×10⁵</td><td>~1.7×10⁶</td><td>~2×10⁷</td><td>10⁶</td></tr>
+      <tr><td style="color:var(--accent3);">O(n√n)</td><td>~3×10⁴</td><td>10⁶</td><td>~3×10⁷</td><td>10⁹</td><td>10⁴</td></tr>
+      <tr><td style="color:var(--accent);">O(n²)</td><td>10⁶</td><td>10⁸</td><td>10¹⁰</td><td>10¹²</td><td>5000</td></tr>
+      <tr><td style="color:var(--accent);">O(2ⁿ)</td><td>—</td><td>—</td><td>—</td><td>—</td><td>25</td></tr>
+      <tr><td style="color:var(--accent);">O(n!)</td><td>—</td><td>—</td><td>—</td><td>—</td><td>10</td></tr>
+    </table>
+
+    <div class="highlight-box green">
+      <strong>应试核心诀窍：</strong>拿到题目 <strong>先看数据范围</strong>！数据范围决定了你能使用什么复杂度的算法。
+      <br>n ≤ 10 → 阶乘 | n ≤ 25 → 指数 | n ≤ 5000 → O(n²) | n ≤ 10⁶ → O(n log n)
+    </div>
+
+    <h3>STL 常用操作复杂度速查</h3>
+    <table>
+      <tr><th>操作</th><th>复杂度</th><th>说明</th></tr>
+      <tr><td><code>vector::push_back</code></td><td>均摊 O(1)</td><td>扩容时复制</td></tr>
+      <tr><td><code>set/map::insert</code></td><td>O(log n)</td><td>红黑树</td></tr>
+      <tr><td><code>sort(begin,end)</code></td><td>O(n log n)</td><td>内省排序</td></tr>
+      <tr><td><code>nth_element</code></td><td>O(n)</td><td>快速选择</td></tr>
+      <tr><td><code>priority_queue</code></td><td>O(log n)</td><td>堆操作</td></tr>
+    </table>
+  </div>
+
+  <!-- 幻灯片 7：本课小结 -->
+  <div class="slide" id="slide7">
+    <h2>六、本课小结</h2>
+
+    <div class="highlight-box green">
+      <strong>🎯 核心知识回顾</strong>
+    </div>
+
+    <ol style="padding-left:24px; line-height:2.2;">
+      <li><strong style="color:var(--accent2);">大O表示法</strong> —— 描述算法增长率的上界，忽略常数和低阶项</li>
+      <li><strong style="color:var(--accent2);">O / Ω / Θ</strong> —— 上界、下界、紧确界，O 是最常用的渐进符号</li>
+      <li><strong style="color:var(--accent2);">主定理</strong> —— 分治递归的三种情况：
+        <br>d &lt; log<sub>b</sub>a → O(n<sup>log<sub>b</sub>a</sup>)
+        &nbsp; | &nbsp; d = log<sub>b</sub>a → O(n<sup>d</sup> log n)
+        &nbsp; | &nbsp; d &gt; log<sub>b</sub>a → O(n<sup>d</sup>)
+      </li>
+      <li><strong style="color:var(--accent2);">复杂度金字塔</strong> ——
+        O(1) &lt; O(log n) &lt; O(√n) &lt; O(n) &lt; O(n log n) &lt; O(n²) &lt; O(2ⁿ) &lt; O(n!)</li>
+      <li><strong style="color:var(--accent2);">均摊分析</strong> —— 动态数组扩容是 O(1) 均摊的经典例子</li>
+    </ol>
+
+    <div class="highlight-box yellow" style="margin-top:24px;">
+      <strong>🔑 应试金句：</strong><br>
+      看到数据范围 n ≤ 10⁵ 且操作次数 q ≤ 10⁵？<br>
+      → 你需要 O((n+q) log n) 的算法，优先考虑 <strong>线段树 / 树状数组 / 排序 + 二分</strong>！
+    </div>
+
+    <p style="text-align:center; margin-top:32px; color:var(--text-secondary);">
+      —— 第01课结束，下一课预告：常数优化与剪枝技巧 ——
+    </p>
+  </div>
+
+</div>
+
+<!-- 导航控制 -->
+<div class="progress-bar" id="progressBar"></div>
+<div class="nav-bar">
+  <button class="nav-btn" id="prevBtn" onclick="changeSlide(-1)">上一页</button>
+  <span class="page-indicator" id="pageIndicator">1 / 7</span>
+  <button class="nav-btn" id="nextBtn" onclick="changeSlide(1)">下一页</button>
+</div>
+
+<script>
+(function() {
+  const slides = document.querySelectorAll('.slide');
+  const totalSlides = slides.length;
+  let currentSlide = 0;
+
+  // 创建进度点
+  const progressBar = document.getElementById('progressBar');
+  for (let i = 0; i < totalSlides; i++) {
+    const dot = document.createElement('span');
+    dot.className = 'progress-dot';
+    dot.setAttribute('data-index', i);
+    dot.onclick = function() { goToSlide(i); };
+    progressBar.appendChild(dot);
+  }
+
+  function updateUI() {
+    slides.forEach((s, i) => s.classList.toggle('active', i === currentSlide));
+    document.querySelectorAll('.progress-dot').forEach((d, i) => {
+      d.classList.toggle('active', i === currentSlide);
+    });
+    document.getElementById('pageIndicator').textContent =
+      (currentSlide + 1) + ' / ' + totalSlides;
+    document.getElementById('prevBtn').disabled = (currentSlide === 0);
+    document.getElementById('nextBtn').disabled = (currentSlide === totalSlides - 1);
+  }
+
+  window.changeSlide = function(delta) {
+    let next = currentSlide + delta;
+    if (next < 0) next = 0;
+    if (next >= totalSlides) next = totalSlides - 1;
+    if (next !== currentSlide) {
+      currentSlide = next;
+      updateUI();
+    }
+  };
+
+  window.goToSlide = function(index) {
+    if (index >= 0 && index < totalSlides && index !== currentSlide) {
+      currentSlide = index;
+      updateUI();
+    }
+  };
+
+  // 键盘导航
+  document.addEventListener('keydown', function(e) {
+    if (e.key === 'ArrowLeft' || e.key === 'ArrowUp') changeSlide(-1);
+    if (e.key === 'ArrowRight' || e.key === 'ArrowDown' || e.key === ' ') {
+      e.preventDefault();
+      changeSlide(1);
+    }
+  });
+
+  updateUI();
+})();
+</script>
+
+</body>
+</html>

@@ -1,0 +1,1153 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>第23节：扑腾的小鸟 —— Flappy Bird</title>
+<style>
+/* ==============================================
+   全局样式
+   ============================================== */
+* { margin: 0; padding: 0; box-sizing: border-box; }
+
+body {
+    font-family: "Microsoft YaHei", "PingFang SC", "Noto Sans SC", sans-serif;
+    background: #1a1a2e;
+    color: #e0e0e0;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    min-height: 100vh;
+    overflow: hidden;
+    user-select: none;
+}
+
+/* ==============================================
+   幻灯片容器
+   ============================================== */
+#slides-container {
+    width: 95vw;
+    max-width: 1100px;
+    height: 90vh;
+    max-height: 750px;
+    position: relative;
+    overflow: hidden;
+    border-radius: 16px;
+    box-shadow: 0 20px 60px rgba(0,0,0,0.5);
+}
+
+.slide {
+    position: absolute;
+    top: 0; left: 0; right: 0; bottom: 0;
+    background: linear-gradient(135deg, #16213e 0%, #0f3460 50%, #1a1a2e 100%);
+    padding: 50px 70px;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    opacity: 0;
+    transform: translateX(60px);
+    transition: opacity 0.4s ease, transform 0.4s ease;
+    pointer-events: none;
+    overflow-y: auto;
+}
+
+.slide.active {
+    opacity: 1;
+    transform: translateX(0);
+    pointer-events: auto;
+}
+
+.slide.exit-left {
+    opacity: 0;
+    transform: translateX(-60px);
+}
+
+/* ==============================================
+   标题样式
+   ============================================== */
+.slide-title {
+    font-size: 2.2em;
+    font-weight: 900;
+    color: #e94560;
+    margin-bottom: 20px;
+    border-left: 6px solid #e94560;
+    padding-left: 20px;
+    line-height: 1.3;
+}
+
+.slide-subtitle {
+    font-size: 1.3em;
+    color: #a0b4c8;
+    margin-bottom: 30px;
+}
+
+/* 封面特殊样式 */
+.cover-title {
+    font-size: 3em;
+    font-weight: 900;
+    color: #e94560;
+    text-align: center;
+    margin-bottom: 15px;
+    text-shadow: 2px 2px 8px rgba(233,69,96,0.3);
+}
+
+.cover-subtitle {
+    font-size: 1.5em;
+    color: #f0c040;
+    text-align: center;
+    margin-bottom: 40px;
+}
+
+.cover-meta {
+    text-align: center;
+    color: #a0b4c8;
+    font-size: 1.1em;
+    line-height: 2;
+}
+
+/* ==============================================
+   内容区
+   ============================================== */
+.content {
+    flex: 1;
+    font-size: 1.2em;
+    line-height: 1.8;
+    color: #c8d6e5;
+}
+
+.content p {
+    margin-bottom: 16px;
+}
+
+.content ul, .content ol {
+    margin-left: 28px;
+    margin-bottom: 16px;
+}
+
+.content li {
+    margin-bottom: 10px;
+    line-height: 1.7;
+}
+
+.content strong {
+    color: #f0c040;
+}
+
+.content em {
+    color: #e94560;
+    font-style: normal;
+}
+
+/* ==============================================
+   代码区域（深色主题 + Python 语法高亮）
+   ============================================== */
+.code-block {
+    background: #0d1117;
+    border: 1px solid #30363d;
+    border-radius: 10px;
+    padding: 20px 24px;
+    margin: 16px 0;
+    overflow-x: auto;
+    font-family: "JetBrains Mono", "Fira Code", "Cascadia Code", "Consolas", "Monaco", monospace;
+    font-size: 0.85em;
+    line-height: 1.6;
+    white-space: pre;
+    color: #c9d1d9;
+    position: relative;
+}
+
+.code-block .comment { color: #8b949e; font-style: italic; }
+.code-block .keyword { color: #ff7b72; }
+.code-block .string  { color: #a5d6ff; }
+.code-block .number  { color: #79c0ff; }
+.code-block .func    { color: #d2a8ff; }
+.code-block .builtin { color: #ffa657; }
+.code-block .op      { color: #ff7b72; }
+.code-block .var     { color: #ffa657; }
+.code-block .decorator { color: #d2a8ff; }
+.code-block .class   { color: #7ee787; }
+
+/* 代码块的标签（如 Python、伪代码等） */
+.code-label {
+    position: absolute;
+    top: 8px;
+    right: 12px;
+    font-size: 0.7em;
+    color: #8b949e;
+    font-family: inherit;
+    background: #161b22;
+    padding: 2px 8px;
+    border-radius: 4px;
+    border: 1px solid #30363d;
+}
+
+/* ==============================================
+   提示框
+   ============================================== */
+.note-box {
+    background: rgba(233, 69, 96, 0.1);
+    border-left: 4px solid #e94560;
+    padding: 14px 20px;
+    margin: 16px 0;
+    border-radius: 0 8px 8px 0;
+    font-size: 1em;
+}
+
+.tip-box {
+    background: rgba(240, 192, 64, 0.1);
+    border-left: 4px solid #f0c040;
+    padding: 14px 20px;
+    margin: 16px 0;
+    border-radius: 0 8px 8px 0;
+    font-size: 1em;
+}
+
+.info-box {
+    background: rgba(121, 192, 255, 0.1);
+    border-left: 4px solid #79c0ff;
+    padding: 14px 20px;
+    margin: 16px 0;
+    border-radius: 0 8px 8px 0;
+    font-size: 1em;
+}
+
+/* ==============================================
+   两栏布局
+   ============================================== */
+.two-col {
+    display: flex;
+    gap: 30px;
+    flex-wrap: wrap;
+}
+
+.two-col > div {
+    flex: 1;
+    min-width: 280px;
+}
+
+/* ==============================================
+   公式展示
+   ============================================== */
+.formula {
+    background: rgba(240, 192, 64, 0.08);
+    border: 2px dashed #f0c040;
+    border-radius: 12px;
+    padding: 20px 30px;
+    margin: 20px 0;
+    text-align: center;
+    font-family: "JetBrains Mono", "Fira Code", monospace;
+    font-size: 1.3em;
+    color: #f0c040;
+}
+
+.formula .arrow {
+    color: #e94560;
+    font-weight: bold;
+    margin: 0 12px;
+}
+
+/* ==============================================
+   表格
+   ============================================== */
+.table-wrap {
+    overflow-x: auto;
+    margin: 16px 0;
+}
+
+table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 0.95em;
+}
+
+th {
+    background: #1a3a5c;
+    color: #f0c040;
+    padding: 10px 14px;
+    text-align: left;
+    font-weight: 700;
+}
+
+td {
+    padding: 10px 14px;
+    border-bottom: 1px solid #30363d;
+    color: #c8d6e5;
+}
+
+tr:nth-child(even) td {
+    background: rgba(255,255,255,0.02);
+}
+
+/* ==============================================
+   导航
+   ============================================== */
+#nav-bar {
+    position: fixed;
+    bottom: 20px;
+    left: 50%;
+    transform: translateX(-50%);
+    display: flex;
+    gap: 12px;
+    align-items: center;
+    background: rgba(22, 33, 62, 0.95);
+    padding: 10px 24px;
+    border-radius: 30px;
+    box-shadow: 0 4px 20px rgba(0,0,0,0.4);
+    z-index: 100;
+}
+
+#nav-bar button {
+    background: #0f3460;
+    color: #c8d6e5;
+    border: 1px solid #30363d;
+    padding: 8px 18px;
+    border-radius: 20px;
+    cursor: pointer;
+    font-size: 1em;
+    font-family: inherit;
+    transition: all 0.2s;
+}
+
+#nav-bar button:hover {
+    background: #1a3a5c;
+    color: #fff;
+    border-color: #e94560;
+}
+
+#nav-bar button:disabled {
+    opacity: 0.3;
+    cursor: not-allowed;
+}
+
+#page-indicator {
+    color: #a0b4c8;
+    font-size: 1em;
+    min-width: 100px;
+    text-align: center;
+}
+
+/* ==============================================
+   键盘提示
+   ============================================== */
+#key-hint {
+    position: fixed;
+    top: 16px;
+    right: 24px;
+    color: #8b949e;
+    font-size: 0.85em;
+    z-index: 100;
+}
+
+.key {
+    display: inline-block;
+    background: #30363d;
+    color: #c9d1d9;
+    padding: 3px 8px;
+    border-radius: 4px;
+    margin: 0 3px;
+    font-family: monospace;
+    font-size: 0.9em;
+}
+
+/* ==============================================
+   步骤编号样式
+   ============================================== */
+.step-num {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 32px;
+    height: 32px;
+    background: #e94560;
+    color: #fff;
+    border-radius: 50%;
+    font-weight: 900;
+    font-size: 0.9em;
+    margin-right: 10px;
+    flex-shrink: 0;
+}
+
+/* ==============================================
+   渐变背景特殊页
+   ============================================== */
+.slide.summary-bg {
+    background: linear-gradient(135deg, #0d1117 0%, #1a1a2e 50%, #0f3460 100%);
+}
+
+</style>
+</head>
+<body>
+
+<div id="slides-container">
+
+<!-- ================================================
+     第1页：封面
+     ================================================ -->
+<div class="slide active">
+    <div class="cover-title">扑腾的小鸟</div>
+    <div class="cover-subtitle">用 Python 实现 Flappy Bird 核心玩法</div>
+    <div class="cover-meta">
+        <p>第 23 节 &nbsp;|&nbsp; Pygame 游戏开发 &nbsp;|&nbsp; 60 分钟</p>
+        <p style="margin-top: 30px; font-size: 0.9em;">本节课知识点：重力模拟 &nbsp;·&nbsp; 空格键控制 &nbsp;·&nbsp; 水管生成 &nbsp;·&nbsp; Surface 自绘素材</p>
+        <p style="margin-top: 40px; font-size: 0.9em; opacity: 0.7;">← 按键盘左右方向键翻页 →</p>
+    </div>
+</div>
+
+<!-- ================================================
+     第2页：什么是 Flappy Bird？
+     ================================================ -->
+<div class="slide">
+    <div class="slide-title">什么是 Flappy Bird？</div>
+    <div class="content">
+        <div class="two-col">
+            <div>
+                <p><strong>Flappy Bird</strong> 是 2013 年爆红的手机小游戏：</p>
+                <ul>
+                    <li>一只小鸟<strong>不停地往下掉</strong></li>
+                    <li>玩家<strong>点击屏幕</strong>让小鸟往上飞</li>
+                    <li>小鸟需要<strong>穿过水管间的空隙</strong></li>
+                    <li>碰到水管或地面 = 游戏结束</li>
+                    <li>每穿过一对水管，<strong>得 1 分</strong></li>
+                </ul>
+                <div class="note-box">
+                    <strong>数据：</strong>Flappy Bird 在 App Store 下载量超过 <strong>5000 万次</strong>，每天广告收入约 <strong>5 万美元</strong>！
+                </div>
+            </div>
+            <div style="text-align: center;">
+                <div style="background: #135; border-radius: 12px; padding: 20px; margin-top: 10px;">
+                    <p style="color: #f0c040; font-size: 1.1em;">游戏的核心要素</p>
+                    <table style="margin-top: 12px;">
+                        <tr><th>要素</th><th>实现方式</th></tr>
+                        <tr><td>重力</td><td>velocity += gravity</td></tr>
+                        <tr><td>跳跃</td><td>空格键 → velocity = -8</td></tr>
+                        <tr><td>障碍物</td><td>水管从右向左移动</td></tr>
+                        <tr><td>得分</td><td>穿过空隙 +1</td></tr>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- ================================================
+     第3页：本节课教学目标
+     ================================================ -->
+<div class="slide">
+    <div class="slide-title">本节课教学目标</div>
+    <div class="content">
+        <div class="two-col">
+            <div>
+                <p><span class="step-num">1</span> <strong>重力模拟</strong></p>
+                <p style="margin-left: 42px; color: #a0b4c8;">理解 <code style="color:#79c0ff;">velocity += gravity</code> 的物理原理</p>
+
+                <p><span class="step-num">2</span> <strong>空格键上升</strong></p>
+                <p style="margin-left: 42px; color: #a0b4c8;">使用 <code style="color:#79c0ff;">pygame.K_SPACE</code> 检测按键</p>
+
+                <p><span class="step-num">3</span> <strong>水管生成</strong></p>
+                <p style="margin-left: 42px; color: #a0b4c8;">用 Surface + draw.rect 自绘水管，不依赖图片</p>
+
+                <p><span class="step-num">4</span> <strong>水管移动</strong></p>
+                <p style="margin-left: 42px; color: #a0b4c8;">水管从右向左匀速移动，出界后重建</p>
+            </div>
+            <div>
+                <div class="tip-box">
+                    <strong>本节课不做的事：</strong><br>
+                    碰撞检测、死亡判断、游戏重置<br>
+                    <span style="color: #a0b4c8;">——这些留到第24节"水管森林"！</span>
+                </div>
+                <div class="info-box">
+                    <strong>课程特色：</strong><br>
+                    全部用代码画图，不下载任何图片文件！<br>
+                    小鸟 = 圆形 + 椭圆 + 三角形<br>
+                    水管 = 绿色矩形 + 深色边框
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- ================================================
+     第4页：核心概念 —— 重力
+     ================================================ -->
+<div class="slide">
+    <div class="slide-title">核心概念：重力模拟</div>
+    <div class="content">
+        <p>在真实世界中，物体下落时<strong>速度越来越快</strong>——这就是<strong>重力加速度</strong>的效果。</p>
+
+        <div class="formula">
+            velocity <span style="color:#79c0ff;">= 0</span>
+            <span class="arrow">&rarr;</span>
+            velocity <span style="color:#79c0ff;">+= gravity</span>
+            <span class="arrow">&rarr;</span>
+            y <span style="color:#79c0ff;">+= velocity</span>
+        </div>
+
+        <div class="two-col">
+            <div>
+                <p><strong>逐帧演示（GRAVITY = 0.5）：</strong></p>
+                <table>
+                    <tr><th>帧数</th><th>速度 (velocity)</th><th>位置 (y)</th></tr>
+                    <tr><td>第 0 帧</td><td>0.0</td><td>300.0</td></tr>
+                    <tr><td>第 1 帧</td><td>0.5</td><td>300.5</td></tr>
+                    <tr><td>第 2 帧</td><td>1.0</td><td>301.5</td></tr>
+                    <tr><td>第 3 帧</td><td>1.5</td><td>303.0</td></tr>
+                    <tr><td>第 4 帧</td><td>2.0</td><td>305.0</td></tr>
+                    <tr><td>第 10 帧</td><td>5.0</td><td>327.5</td></tr>
+                    <tr><td>第 20 帧</td><td>10.0</td><td>402.5</td></tr>
+                </table>
+            </div>
+            <div>
+                <div class="note-box">
+                    <strong>关键理解：</strong><br>
+                    <code style="color:#79c0ff;">GRAVITY = 0.5</code> 是<strong>加速度</strong>，不是速度本身。<br><br>
+                    它表示每一帧，速度增加 0.5。
+                </div>
+                <div class="tip-box">
+                    <strong>物理课上学的：</strong><br>
+                    匀加速运动公式<br>
+                    <code style="color:#79c0ff;">v = v₀ + a·t</code><br>
+                    这就是它的编程版本！<br>
+                    <code style="color:#79c0ff;">a = GRAVITY</code>，
+                    <code style="color:#79c0ff;">t = 帧数</code>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- ================================================
+     第5页：重力 —— 代码实现
+     ================================================ -->
+<div class="slide">
+    <div class="slide-title">重力：代码实现</div>
+    <div class="content">
+        <div class="code-block">
+<span class="comment"># --- 小鸟的物理属性 ---</span>
+<span class="var">bird_x</span> = <span class="number">100</span>
+<span class="var">bird_y</span> = HEIGHT // <span class="number">2</span>          <span class="comment"># 初始在屏幕中间</span>
+<span class="var">bird_velocity</span> = <span class="number">0</span>              <span class="comment"># 初始速度为零</span>
+
+<span class="comment"># --- 重力参数 ---</span>
+<span class="var">GRAVITY</span> = <span class="number">0.5</span>                 <span class="comment"># 每帧增加的速度</span>
+
+<span class="comment"># --- 在游戏循环中（每帧执行）---</span>
+<span class="var">bird_velocity</span> += <span class="var">GRAVITY</span>    <span class="comment"># ① 速度越来越大</span>
+<span class="var">bird_y</span> += <span class="var">bird_velocity</span>        <span class="comment"># ② 位置随速度改变</span></div>
+
+        <div class="two-col" style="margin-top: 16px;">
+            <div>
+                <p><strong>两行代码的事：</strong></p>
+                <ul>
+                    <li>第①行：重力让速度<strong>不断增加</strong></li>
+                    <li>第②行：速度让位置<strong>不断变化</strong></li>
+                    <li>结果：小鸟<strong>越来越快地往下掉</strong></li>
+                </ul>
+            </div>
+            <div>
+                <div class="tip-box">
+                    <strong>参数含义：</strong><br>
+                    <code style="color:#79c0ff;">GRAVITY</code> = 加速度<br>
+                    值越大 &rarr; 掉得越快<br>
+                    值越小 &rarr; 掉得越慢<br>
+                    试试改成 <code style="color:#79c0ff;">0.2</code> 或 <code style="color:#79c0ff;">1.0</code>！
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- ================================================
+     第6页：空格键让小鸟上升
+     ================================================ -->
+<div class="slide">
+    <div class="slide-title">空格键：让小鸟飞起来！</div>
+    <div class="content">
+        <div class="two-col">
+            <div>
+                <p><strong>事件检测代码：</strong></p>
+                <div class="code-block">
+<span class="keyword">for</span> <span class="var">event</span> <span class="keyword">in</span> <span class="func">pygame.event.get</span>():
+    <span class="keyword">if</span> <span class="var">event</span>.<span class="var">type</span> == <span class="var">pygame</span>.<span class="var">QUIT</span>:
+        <span class="var">running</span> = <span class="keyword">False</span>
+    <span class="keyword">elif</span> <span class="var">event</span>.<span class="var">type</span> == <span class="var">pygame</span>.<span class="var">KEYDOWN</span>:
+        <span class="keyword">if</span> <span class="var">event</span>.<span class="var">key</span> == <span class="var">pygame</span>.<span class="var">K_SPACE</span>:
+            <span class="var">bird_velocity</span> = <span class="var">JUMP_STRENGTH</span>  <span class="comment"># = -8</span></div>
+            </div>
+            <div>
+                <p><strong>关键：用 = 还是 += ？</strong></p>
+                <div class="note-box">
+                    <strong>错误写法：</strong><br>
+                    <code style="color:#e94560;">velocity <strong>+=</strong> JUMP_STRENGTH</code><br>
+                    连续按空格 → 速度累加 → 小鸟像火箭一样冲出屏幕！
+                </div>
+                <div class="tip-box">
+                    <strong>正确写法：</strong><br>
+                    <code style="color:#7ee787;">velocity <strong>=</strong> JUMP_STRENGTH</code><br>
+                    每次按空格 → 速度重置为 -8 → 每次弹跳高度相同
+                </div>
+                <p style="margin-top: 12px;"><strong>JUMP_STRENGTH = -8</strong> 为什么是负数？<br>
+                <span style="color: #a0b4c8;">在 Pygame 中，y 轴向下是正方向 → 向上移动需要负速度</span></p>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- ================================================
+     第7页：事件检测对比
+     ================================================ -->
+<div class="slide">
+    <div class="slide-title">事件检测：pygame.K_SPACE</div>
+    <div class="content">
+        <p>本节课新学的按键：<strong>空格键 = <code style="color:#79c0ff;">pygame.K_SPACE</code></strong></p>
+
+        <table>
+            <tr>
+                <th>事件类型</th>
+                <th>说明</th>
+                <th>本节课使用</th>
+            </tr>
+            <tr>
+                <td><code style="color:#79c0ff;">pygame.QUIT</code></td>
+                <td>点击关闭按钮</td>
+                <td>退出游戏</td>
+            </tr>
+            <tr>
+                <td><code style="color:#79c0ff;">pygame.KEYDOWN</code></td>
+                <td>键盘按下事件</td>
+                <td>检测按键</td>
+            </tr>
+            <tr>
+                <td><code style="color:#79c0ff;">pygame.K_SPACE</code></td>
+                <td>空格键</td>
+                <td><strong>小鸟跳跃（本节课新学）</strong></td>
+            </tr>
+        </table>
+
+        <div style="margin-top: 20px;">
+            <p><strong>回忆之前学过的按键：</strong></p>
+            <table>
+                <tr>
+                    <th>按键</th>
+                    <th>常量</th>
+                    <th>在哪节课用过</th>
+                </tr>
+                <tr>
+                    <td>上箭头</td>
+                    <td><code style="color:#79c0ff;">pygame.K_UP</code></td>
+                    <td>第3节、第9节（贪吃蛇）</td>
+                </tr>
+                <tr>
+                    <td>下箭头</td>
+                    <td><code style="color:#79c0ff;">pygame.K_DOWN</code></td>
+                    <td>第3节、第9节</td>
+                </tr>
+                <tr>
+                    <td>左箭头</td>
+                    <td><code style="color:#79c0ff;">pygame.K_LEFT</code></td>
+                    <td>第3节、第9节</td>
+                </tr>
+                <tr>
+                    <td>右箭头</td>
+                    <td><code style="color:#79c0ff;">pygame.K_RIGHT</code></td>
+                    <td>第3节、第9节</td>
+                </tr>
+                <tr style="background: rgba(233, 69, 96, 0.1);">
+                    <td><strong>空格键</strong></td>
+                    <td><code style="color:#e94560;">pygame.K_SPACE</code></td>
+                    <td><strong>第23节（本节课）</strong></td>
+                </tr>
+            </table>
+        </div>
+    </div>
+</div>
+
+<!-- ================================================
+     第8页：用 Surface 画小鸟
+     ================================================ -->
+<div class="slide">
+    <div class="slide-title">自绘素材：用代码画一只小鸟</div>
+    <div class="content">
+        <p>不下载图片，全部用 <code style="color:#79c0ff;">pygame.draw</code> 自己画！</p>
+
+        <div class="two-col">
+            <div>
+                <div class="code-block" style="font-size: 0.75em;">
+<span class="comment"># 创建透明背景的 Surface 画布</span>
+<span class="var">bird_surf</span> = <span class="func">pygame.Surface</span>((<span class="number">34</span>, <span class="number">34</span>), <span class="var">pygame.SRCALPHA</span>)
+
+<span class="comment"># ① 身体：黄色圆形</span>
+<span class="func">pygame.draw.circle</span>(<span class="var">bird_surf</span>, <span class="var">YELLOW</span>, (<span class="number">16</span>, <span class="number">16</span>), <span class="number">13</span>)
+
+<span class="comment"># ② 翅膀：深黄色小椭圆</span>
+<span class="func">pygame.draw.ellipse</span>(<span class="var">bird_surf</span>, <span class="var">WING_COLOR</span>,
+                    (<span class="number">2</span>, <span class="number">12</span>, <span class="number">12</span>, <span class="number">7</span>))
+
+<span class="comment"># ③ 眼睛：白色 + 黑色瞳孔</span>
+<span class="func">pygame.draw.circle</span>(<span class="var">bird_surf</span>, <span class="var">WHITE</span>, (<span class="number">22</span>, <span class="number">12</span>), <span class="number">5</span>)
+<span class="func">pygame.draw.circle</span>(<span class="var">bird_surf</span>, <span class="var">BLACK</span>, (<span class="number">23</span>, <span class="number">12</span>), <span class="number">2</span>)
+
+<span class="comment"># ④ 嘴巴：橙色三角形</span>
+<span class="func">pygame.draw.polygon</span>(<span class="var">bird_surf</span>, <span class="var">BEAK_COLOR</span>,
+    [(<span class="number">28</span>,<span class="number">14</span>), (<span class="number">34</span>,<span class="number">17</span>), (<span class="number">28</span>,<span class="number">20</span>)])</div>
+            </div>
+            <div>
+                <p><strong>图形组成拆解：</strong></p>
+                <ul>
+                    <li><code style="color:#79c0ff;">pygame.draw.circle</code> → 圆形（身体、眼睛）</li>
+                    <li><code style="color:#79c0ff;">pygame.draw.ellipse</code> → 椭圆（翅膀）</li>
+                    <li><code style="color:#79c0ff;">pygame.draw.polygon</code> → 多边形（三角形嘴巴）</li>
+                </ul>
+
+                <div class="info-box">
+                    <strong>SRCALPHA 的作用：</strong><br>
+                    <code style="color:#79c0ff;">pygame.SRCALPHA</code> 让 Surface 支持<strong>透明背景</strong>。<br>
+                    如果不用它，小鸟周围会有一个黑色方块。
+                </div>
+
+                <div class="tip-box">
+                    <strong>小技巧：</strong><br>
+                    坐标是相对于 Surface 的，不是屏幕坐标！<br>
+                    (16, 16) 是 Surface 内部的中心点，<br>
+                    不是屏幕上的 (16, 16)。
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- ================================================
+     第9页：水管生成逻辑
+     ================================================ -->
+<div class="slide">
+    <div class="slide-title">水管：生成逻辑</div>
+    <div class="content">
+        <p>每根水管由<strong>上水管 + 下水管</strong>组成，中间留一个<strong>随机高度的空隙</strong>让小鸟飞过。</p>
+
+        <div class="two-col">
+            <div>
+                <div class="code-block" style="font-size: 0.8em;">
+<span class="comment"># 随机空隙中心（150 ~ 450 之间）</span>
+<span class="var">gap_center</span> = <span class="func">random.randint</span>(<span class="number">150</span>, HEIGHT - <span class="number">150</span>)
+
+<span class="comment"># 空隙的上下边界</span>
+<span class="var">gap_top</span>    = <span class="var">gap_center</span> - PIPE_GAP // <span class="number">2</span>
+<span class="var">gap_bottom</span> = <span class="var">gap_center</span> + PIPE_GAP // <span class="number">2</span>
+
+<span class="comment"># 上水管：从屏幕顶部到空隙顶部</span>
+<span class="var">top_height</span>   = <span class="var">gap_top</span>
+
+<span class="comment"># 下水管：从空隙底部到屏幕底部</span>
+<span class="var">bottom_height</span> = HEIGHT - <span class="var">gap_bottom</span></div>
+            </div>
+            <div>
+                <div style="background: #135; border-radius: 10px; padding: 16px; text-align: center;">
+                    <p style="color: #f0c040; margin-bottom: 10px;">水管结构示意</p>
+                    <pre style="font-family: monospace; color: #c8d6e5; font-size: 0.85em; line-height: 1.5;">
+┌──────────┐  ← 屏幕顶部 (y=0)
+│ 上水管    │
+│          │
+│          │  ← gap_top（空隙开始）
+│          │
+│≋≋ 空隙 ≋≋│  ← 小鸟从这里飞过 (160px)
+│          │
+│          │  ← gap_bottom（空隙结束）
+│ 下水管    │
+│          │
+└──────────┘  ← 屏幕底部 (y=600)
+                    </pre>
+                </div>
+                <div class="info-box" style="margin-top: 12px;">
+                    <strong>PIPE_GAP = 160</strong>：空隙高度<br>
+                    值越大 → 游戏越简单<br>
+                    值越小 → 游戏越困难
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- ================================================
+     第10页：水管移动与生命周期
+     ================================================ -->
+<div class="slide">
+    <div class="slide-title">水管：移动与生命周期</div>
+    <div class="content">
+        <p>水管有自己的<strong>生命周期</strong>：<strong>生成 → 移动 → 移除</strong></p>
+
+        <div class="two-col">
+            <div>
+                <p><strong>① 生成（定时触发）</strong></p>
+                <div class="code-block" style="font-size: 0.8em;">
+<span class="keyword">if</span> <span class="var">frame_count</span> >= <span class="var">PIPE_SPAWN_INTERVAL</span>:
+    <span class="var">pipes</span>.<span class="func">append</span>(<span class="func">create_pipe</span>(WIDTH + <span class="number">50</span>))
+    <span class="var">frame_count</span> = <span class="number">0</span></div>
+
+                <p><strong>② 移动（每帧向左）</strong></p>
+                <div class="code-block" style="font-size: 0.8em;">
+<span class="keyword">for</span> <span class="var">pipe</span> <span class="keyword">in</span> <span class="var">pipes</span>:
+    <span class="var">pipe</span>[<span class="string">"x"</span>] -= <span class="var">PIPE_SPEED</span>  <span class="comment"># 向左移 3 像素/帧</span></div>
+
+                <p><strong>③ 移除（飞出屏幕后）</strong></p>
+                <div class="code-block" style="font-size: 0.8em;">
+<span class="var">pipes</span> = [<span class="var">p</span> <span class="keyword">for</span> <span class="var">p</span> <span class="keyword">in</span> <span class="var">pipes</span> <span class="keyword">if</span> <span class="var">p</span>[<span class="string">"x"</span>] > -<span class="var">PIPE_WIDTH</span>]</div>
+            </div>
+            <div>
+                <p><strong>生命周期图解：</strong></p>
+                <table>
+                    <tr><th>阶段</th><th>条件</th><th>操作</th></tr>
+                    <tr>
+                        <td><strong>生成</strong></td>
+                        <td>帧计数器 &ge; 90</td>
+                        <td style="color:#7ee787;">append 到列表</td>
+                    </tr>
+                    <tr>
+                        <td><strong>移动</strong></td>
+                        <td>每帧</td>
+                        <td style="color:#79c0ff;">x -= 3</td>
+                    </tr>
+                    <tr>
+                        <td><strong>移除</strong></td>
+                        <td>x &lt; -60</td>
+                        <td style="color:#e94560;">从列表删除</td>
+                    </tr>
+                </table>
+
+                <div class="tip-box" style="margin-top: 12px;">
+                    <strong>为什么要移除？</strong><br>
+                    水管飞出屏幕后，如果不删除：<br>
+                    ① 浪费内存<br>
+                    ② 列表越来越长<br>
+                    ③ 遍历越来越慢<br>
+                    ④ 游戏越来越卡
+                </div>
+
+                <div class="note-box">
+                    <strong>列表推导式复习：</strong><br>
+                    <code style="color:#79c0ff;">[p for p in pipes if p["x"] > -60]</code><br>
+                    = 保留 x 坐标还看得见的，删掉已经飞远的
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- ================================================
+     第11页：完整代码概览
+     ================================================ -->
+<div class="slide">
+    <div class="slide-title">完整游戏循环结构</div>
+    <div class="content">
+        <div class="code-block" style="font-size: 0.7em;">
+<span class="comment"># ===== 游戏主循环 =====</span>
+<span class="keyword">while</span> <span class="var">running</span>:
+
+    <span class="comment"># 1. 事件处理</span>
+    <span class="keyword">for</span> <span class="var">event</span> <span class="keyword">in</span> <span class="func">pygame.event.get</span>():
+        <span class="keyword">if</span>   <span class="var">event</span>.<span class="var">type</span> == <span class="var">pygame</span>.<span class="var">QUIT</span>:  <span class="var">running</span> = <span class="keyword">False</span>
+        <span class="keyword">elif</span> <span class="var">event</span>.<span class="var">type</span> == <span class="var">pygame</span>.<span class="var">KEYDOWN</span> <span class="keyword">and</span> <span class="var">event</span>.<span class="var">key</span> == <span class="var">pygame</span>.<span class="var">K_SPACE</span>:
+            <span class="var">bird_velocity</span> = <span class="var">JUMP_STRENGTH</span>
+
+    <span class="comment"># 2. 更新物理（重力 → 小鸟下落）</span>
+    <span class="var">bird_velocity</span> += <span class="var">GRAVITY</span>
+    <span class="var">bird_y</span> += <span class="var">bird_velocity</span>
+
+    <span class="comment"># 3. 更新水管（移动 → 移除 → 生成）</span>
+    <span class="keyword">for</span> <span class="var">pipe</span> <span class="keyword">in</span> <span class="var">pipes</span>:
+        <span class="var">pipe</span>[<span class="string">"x"</span>] -= <span class="var">PIPE_SPEED</span>
+    <span class="var">pipes</span> = [<span class="var">p</span> <span class="keyword">for</span> <span class="var">p</span> <span class="keyword">in</span> <span class="var">pipes</span> <span class="keyword">if</span> <span class="var">p</span>[<span class="string">"x"</span>] > -<span class="var">PIPE_WIDTH</span>]
+    <span class="keyword">if</span> <span class="var">frame_count</span> >= <span class="var">PIPE_SPAWN_INTERVAL</span>:
+        <span class="var">pipes</span>.<span class="func">append</span>(<span class="func">create_pipe</span>(<span class="var">WIDTH</span> + <span class="number">50</span>))
+
+    <span class="comment"># 4. 绘制画面</span>
+    <span class="var">screen</span>.<span class="func">fill</span>(<span class="var">SKY_BLUE</span>)                    <span class="comment"># 天空背景</span>
+    <span class="keyword">for</span> <span class="var">pipe</span> <span class="keyword">in</span> <span class="var">pipes</span>:                        <span class="comment"># 画水管</span>
+        <span class="var">screen</span>.<span class="func">blit</span>(<span class="var">pipe</span>[<span class="string">"top_surf"</span>], (<span class="var">pipe</span>[<span class="string">"x"</span>], <span class="number">0</span>))
+        <span class="var">screen</span>.<span class="func">blit</span>(<span class="var">pipe</span>[<span class="string">"bottom_surf"</span>], (<span class="var">pipe</span>[<span class="string">"x"</span>], <span class="var">pipe</span>[<span class="string">"bottom_rect"</span>].<span class="var">y</span>))
+    <span class="var">screen</span>.<span class="func">blit</span>(<span class="var">bird_image</span>, <span class="var">bird_rect</span>)   <span class="comment"># 画小鸟</span>
+    <span class="func">pygame.display.flip</span>()                     <span class="comment"># 刷新屏幕</span>
+    <span class="var">clock</span>.<span class="func">tick</span>(<span class="var">FPS</span>)</div>
+
+        <p style="margin-top: 12px; text-align: center; color: #f0c040;">
+            <strong>四大步骤：事件 → 更新 → 绘制 → 刷新</strong>
+        </p>
+    </div>
+</div>
+
+<!-- ================================================
+     第12页：参数调节表
+     ================================================ -->
+<div class="slide">
+    <div class="slide-title">参数调节：让游戏属于你自己</div>
+    <div class="content">
+        <p>修改这些参数，感受游戏玩法的变化：</p>
+
+        <table>
+            <tr>
+                <th>参数</th>
+                <th>默认值</th>
+                <th>作用</th>
+                <th>调大效果</th>
+                <th>调小效果</th>
+            </tr>
+            <tr>
+                <td><code style="color:#79c0ff;">GRAVITY</code></td>
+                <td>0.5</td>
+                <td>重力加速度</td>
+                <td style="color:#e94560;">掉得更快（更难）</td>
+                <td style="color:#7ee787;">掉得更慢（更简单）</td>
+            </tr>
+            <tr>
+                <td><code style="color:#79c0ff;">JUMP_STRENGTH</code></td>
+                <td>-8</td>
+                <td>跳跃力度</td>
+                <td style="color:#7ee787;">飞得更高（更简单）</td>
+                <td style="color:#e94560;">飞得较低（更难）</td>
+            </tr>
+            <tr>
+                <td><code style="color:#79c0ff;">PIPE_GAP</code></td>
+                <td>160</td>
+                <td>水管空隙高度</td>
+                <td style="color:#7ee787;">空隙大（更简单）</td>
+                <td style="color:#e94560;">空隙小（更难）</td>
+            </tr>
+            <tr>
+                <td><code style="color:#79c0ff;">PIPE_SPEED</code></td>
+                <td>3</td>
+                <td>水管移动速度</td>
+                <td style="color:#e94560;">移动快（更难）</td>
+                <td style="color:#7ee787;">移动慢（更简单）</td>
+            </tr>
+            <tr>
+                <td><code style="color:#79c0ff;">PIPE_SPAWN_INTERVAL</code></td>
+                <td>90</td>
+                <td>水管生成间隔（帧）</td>
+                <td style="color:#7ee787;">更稀疏（更简单）</td>
+                <td style="color:#e94560;">更密集（更难）</td>
+            </tr>
+            <tr>
+                <td><code style="color:#79c0ff;">FPS</code></td>
+                <td>60</td>
+                <td>帧率</td>
+                <td style="color:#7ee787;">更流畅</td>
+                <td style="color:#e94560;">更卡顿</td>
+            </tr>
+        </table>
+
+        <div class="tip-box" style="margin-top: 16px;">
+            <strong>试玩建议：</strong>调整参数后运行游戏，感受"手感"的变化。好的游戏设计，就是反复调整参数直到手感最舒服的过程！
+        </div>
+    </div>
+</div>
+
+<!-- ================================================
+     第13页：课堂练习
+     ================================================ -->
+<div class="slide">
+    <div class="slide-title">课堂练习（25分钟）</div>
+    <div class="content">
+        <div class="two-col">
+            <div>
+                <p><strong>基础任务（必须完成）</strong></p>
+                <p><span class="step-num">1</span> 让小鸟飞起来（10分钟）</p>
+                <ul style="margin-left: 42px;">
+                    <li>补全重力效果代码</li>
+                    <li>实现空格键跳跃</li>
+                    <li>测试：不按键 → 下落；按空格 → 上升</li>
+                </ul>
+
+                <p><span class="step-num">2</span> 生成水管（10分钟）</p>
+                <ul style="margin-left: 42px;">
+                    <li>实现 <code style="color:#79c0ff;">create_pipe()</code> 函数</li>
+                    <li>水管从右向左移动</li>
+                    <li>出界水管自动移除</li>
+                </ul>
+
+                <p><span class="step-num">3</span> 调整参数（5分钟）</p>
+                <ul style="margin-left: 42px;">
+                    <li>修改 GRAVITY、JUMP_STRENGTH</li>
+                    <li>修改 PIPE_GAP、PIPE_SPEED</li>
+                    <li>感受参数对"手感"的影响</li>
+                </ul>
+            </div>
+            <div>
+                <p><strong>挑战任务（学有余力）</strong></p>
+                <p><span class="step-num">A</span> <strong>小鸟动画</strong></p>
+                <ul style="margin-left: 42px;">
+                    <li>创建两帧小鸟图片</li>
+                    <li>空格按下时切换外观</li>
+                    <li>实现"拍翅膀"效果</li>
+                </ul>
+
+                <p><span class="step-num">B</span> <strong>云朵背景</strong></p>
+                <ul style="margin-left: 42px;">
+                    <li>用椭圆画几朵白云</li>
+                    <li>让云朵也向左慢慢移动</li>
+                    <li>视差滚动效果</li>
+                </ul>
+
+                <p><span class="step-num">C</span> <strong>分数系统</strong></p>
+                <ul style="margin-left: 42px;">
+                    <li>小鸟穿过一对水管 +1 分</li>
+                    <li>屏幕上方显示分数</li>
+                    <li>提示：水管 x 经过小鸟 x 时加分</li>
+                </ul>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- ================================================
+     第14页：总结
+     ================================================ -->
+<div class="slide summary-bg">
+    <div class="slide-title">本节课要点总结</div>
+    <div class="content">
+        <div class="two-col">
+            <div>
+                <table>
+                    <tr><th>知识点</th><th>核心代码</th></tr>
+                    <tr>
+                        <td>重力模拟</td>
+                        <td><code style="color:#79c0ff;">velocity += GRAVITY<br>y += velocity</code></td>
+                    </tr>
+                    <tr>
+                        <td>空格键控制</td>
+                        <td><code style="color:#79c0ff;">pygame.K_SPACE<br>velocity = JUMP_STRENGTH</code></td>
+                    </tr>
+                    <tr>
+                        <td>自绘小鸟</td>
+                        <td><code style="color:#79c0ff;">Surface + draw.circle<br>+ ellipse + polygon</code></td>
+                    </tr>
+                    <tr>
+                        <td>水管生成</td>
+                        <td><code style="color:#79c0ff;">random 空隙位置<br>创建上下水管 Rect</code></td>
+                    </tr>
+                    <tr>
+                        <td>水管移动</td>
+                        <td><code style="color:#79c0ff;">x -= PIPE_SPEED<br>出界后从列表移除</code></td>
+                    </tr>
+                </table>
+            </div>
+            <div>
+                <div class="info-box">
+                    <strong>下节课预告：第24节"水管森林"</strong><br><br>
+                    将学习的内容：<br>
+                    &bull; <strong>碰撞检测</strong> —— 小鸟碰到水管会死<br>
+                    &bull; <strong>游戏结束</strong> —— 死亡画面<br>
+                    &bull; <strong>重新开始</strong> —— 按 R 键重来<br>
+                    &bull; <strong>分数显示</strong> —— 完整计分系统
+                </div>
+
+                <div class="tip-box" style="margin-top: 12px;">
+                    <strong>课后作业：</strong><br>
+                    完整写出本节的扑腾小鸟程序！<br>
+                    包括：重力下落 + 空格跳跃 + 水管生成与移动
+                </div>
+            </div>
+        </div>
+
+        <div class="formula" style="margin-top: 20px;">
+            记住这四行：<br>
+            <span style="font-size: 0.85em;">
+            velocity += GRAVITY &nbsp;&nbsp;&rarr;&nbsp;&nbsp; y += velocity &nbsp;&nbsp;（重力下落）<br>
+            K_SPACE &nbsp;&rarr;&nbsp; velocity = -8 &nbsp;&nbsp;（空格跳跃）
+            </span>
+        </div>
+    </div>
+</div>
+
+<!-- ================================================
+     封面尾页
+     ================================================ -->
+<div class="slide" style="background: linear-gradient(135deg, #0d1117 0%, #0f3460 100%);">
+    <div class="cover-title" style="font-size: 2em;">下节课预告</div>
+    <div class="cover-subtitle" style="font-size: 1.3em;">第 24 节：水管森林</div>
+    <div class="cover-meta">
+        <p>碰撞检测 &nbsp;·&nbsp; 游戏结束 &nbsp;·&nbsp; 重新开始 &nbsp;·&nbsp; 分数系统</p>
+        <p style="margin-top: 30px; color: #a0b4c8;">完成一个完整的、可玩的 Flappy Bird 游戏！</p>
+    </div>
+</div>
+
+</div><!-- #slides-container -->
+
+<!-- ==============================================
+     导航栏
+     ============================================== -->
+<div id="nav-bar">
+    <button id="btn-prev" onclick="changeSlide(-1)">◀ 上一页</button>
+    <span id="page-indicator">1 / 15</span>
+    <button id="btn-next" onclick="changeSlide(1)">下一页 ▶</button>
+</div>
+
+<div id="key-hint">
+    按 <span class="key">&larr;</span> <span class="key">&rarr;</span> 键翻页
+</div>
+
+<script>
+/* ==============================================
+   幻灯片导航逻辑
+   ============================================== */
+const slides = document.querySelectorAll('.slide');
+const totalSlides = slides.length;
+let currentSlide = 0;
+
+function showSlide(index) {
+    // 边界检查
+    if (index < 0) index = 0;
+    if (index >= totalSlides) index = totalSlides - 1;
+
+    // 移除所有 active 状态
+    slides.forEach(s => {
+        s.classList.remove('active', 'exit-left');
+    });
+
+    // 设置当前页
+    slides[index].classList.add('active');
+    currentSlide = index;
+
+    // 更新页码指示器
+    document.getElementById('page-indicator').textContent =
+        (currentSlide + 1) + ' / ' + totalSlides;
+
+    // 更新按钮状态
+    document.getElementById('btn-prev').disabled = (currentSlide === 0);
+    document.getElementById('btn-next').disabled = (currentSlide === totalSlides - 1);
+}
+
+function changeSlide(delta) {
+    const newIndex = currentSlide + delta;
+    if (newIndex >= 0 && newIndex < totalSlides) {
+        showSlide(newIndex);
+    }
+}
+
+// 键盘事件
+document.addEventListener('keydown', function(e) {
+    if (e.key === 'ArrowRight' || e.key === 'ArrowDown' || e.key === ' ') {
+        e.preventDefault();
+        changeSlide(1);
+    } else if (e.key === 'ArrowLeft' || e.key === 'ArrowUp') {
+        e.preventDefault();
+        changeSlide(-1);
+    }
+});
+
+// 触摸滑动支持（平板/手机）
+let touchStartX = 0;
+document.addEventListener('touchstart', function(e) {
+    touchStartX = e.touches[0].clientX;
+});
+document.addEventListener('touchend', function(e) {
+    const touchEndX = e.changedTouches[0].clientX;
+    const diff = touchStartX - touchEndX;
+    if (Math.abs(diff) > 50) {
+        changeSlide(diff > 0 ? 1 : -1);
+    }
+});
+
+// 初始化
+showSlide(0);
+</script>
+
+</body>
+</html>

@@ -1,0 +1,370 @@
+# ============================================
+# 第 9 课：搜索与过滤 — 让备忘录更好用
+# ============================================
+
+import tkinter as tk
+from tkinter import ttk, messagebox
+import os
+
+# ==================== 配置 ====================
+
+DATA_FILE = "todos.txt"
+CATEGORIES = ["学习 📚", "生活 🏠", "娱乐 🎮", "其他 📌"]
+
+# ==================== 创建窗口 ====================
+
+window = tk.Tk()
+window.title("我的备忘录")
+window.geometry("500x700")
+
+# 设置主题
+style = ttk.Style()
+if "clam" in style.theme_names():
+    style.theme_use("clam")
+
+# 自定义样式
+style.configure("Title.TLabel", font=("微软雅黑", 20, "bold"), foreground="#333333")
+style.configure("Subtitle.TLabel", font=("微软雅黑", 10), foreground="#888888")
+style.configure("Status.TLabel", font=("微软雅黑", 9), foreground="#999999")
+
+# 窗口缩放配置
+window.grid_rowconfigure(5, weight=1)   # 列表行
+window.grid_columnconfigure(0, weight=1)
+
+# ==================== 数据结构 ====================
+
+todos = []
+search_var = tk.StringVar()  # 搜索框绑定的变量
+
+# ==================== 文件操作 ====================
+
+def save_todos():
+    with open(DATA_FILE, "w", encoding="utf-8") as file:
+        for todo in todos:
+            status = "1" if todo["done"] else "0"
+            category = todo.get("category", "其他 📌")
+            file.write(f"{status}|{category}|{todo['text']}\n")
+
+def load_todos():
+    if not os.path.exists(DATA_FILE):
+        return
+    with open(DATA_FILE, "r", encoding="utf-8") as file:
+        for line in file:
+            line = line.strip()
+            if not line:
+                continue
+            parts = line.split("|")
+            if len(parts) == 3:
+                status_str, category, text = parts
+            elif len(parts) == 2:
+                status_str, text = parts
+                category = "其他 📌"
+            else:
+                continue
+            todo = {"text": text, "done": status_str == "1", "category": category}
+            todos.append(todo)
+    print(f"📂 已从文件加载 {len(todos)} 条待办")
+
+# ==================== 界面：标题 ====================
+
+ttk.Label(window, text="📝 我的备忘录", style="Title.TLabel").grid(
+    row=0, column=0, pady=(15, 5), sticky="n"
+)
+ttk.Label(
+    window, text="输入即搜索 | 类别筛选 | 实时过滤 🔍",
+    style="Subtitle.TLabel"
+).grid(row=1, column=0, pady=(0, 5), sticky="n")
+
+# ==================== 界面：搜索栏（grid 第 2 行）====================
+
+search_frame = ttk.Frame(window)
+search_frame.grid(row=2, column=0, pady=(10, 5), padx=20, sticky="ew")
+
+ttk.Label(search_frame, text="🔍", font=("微软雅黑", 12)).pack(
+    side=tk.LEFT, padx=(0, 5)
+)
+
+search_entry = ttk.Entry(
+    search_frame,
+    textvariable=search_var,
+    font=("微软雅黑", 11),
+    width=18
+)
+search_entry.pack(side=tk.LEFT, fill=tk.X, expand=True, padx=(0, 5))
+
+def clear_search():
+    """清除搜索框内容"""
+    search_var.set("")
+    search_entry.focus()
+
+clear_search_btn = ttk.Button(search_frame, text="✕", width=3)
+clear_search_btn.pack(side=tk.LEFT, padx=(0, 10))
+clear_search_btn.config(command=clear_search)
+
+# 类别筛选
+ttk.Label(search_frame, text="筛选：", font=("微软雅黑", 9)).pack(
+    side=tk.LEFT, padx=(5, 3)
+)
+
+FILTER_VALUES = ["全部 📋"] + CATEGORIES
+filter_combo = ttk.Combobox(
+    search_frame,
+    values=FILTER_VALUES,
+    state="readonly",
+    font=("微软雅黑", 9),
+    width=10
+)
+filter_combo.pack(side=tk.LEFT)
+filter_combo.set("全部 📋")
+
+# ==================== 界面：输入区域（grid 第 3 行）====================
+
+input_frame = ttk.Frame(window)
+input_frame.grid(row=3, column=0, pady=10, padx=20, sticky="ew")
+input_frame.grid_columnconfigure(1, weight=1)
+
+ttk.Label(input_frame, text="类别：", font=("微软雅黑", 10)).grid(
+    row=0, column=0, padx=(0, 5), sticky="w"
+)
+
+category_combo = ttk.Combobox(
+    input_frame,
+    values=CATEGORIES,
+    state="readonly",
+    font=("微软雅黑", 10),
+    width=10
+)
+category_combo.grid(row=0, column=1, sticky="w")
+category_combo.set("学习 📚")
+
+entry = ttk.Entry(input_frame, font=("微软雅黑", 13))
+entry.grid(row=1, column=0, columnspan=2, pady=(8, 8), sticky="ew")
+
+btn_frame = ttk.Frame(input_frame)
+btn_frame.grid(row=2, column=0, columnspan=2, sticky="w")
+
+add_btn = ttk.Button(btn_frame, text="添加 ✅")
+add_btn.grid(row=0, column=0, padx=(0, 5))
+
+toggle_btn = ttk.Button(btn_frame, text="标记 ✔️")
+toggle_btn.grid(row=0, column=1, padx=(0, 5))
+
+delete_btn = ttk.Button(btn_frame, text="删除 ❌")
+delete_btn.grid(row=0, column=2, padx=(0, 5))
+
+clear_btn = ttk.Button(btn_frame, text="清空 🗑️")
+clear_btn.grid(row=0, column=3)
+
+# ==================== 界面：列表头（grid 第 4 行）====================
+
+header_frame = ttk.Frame(window)
+header_frame.grid(row=4, column=0, pady=(15, 0), padx=20, sticky="ew")
+ttk.Label(header_frame, text="📋 待办列表", font=("微软雅黑", 12, "bold")).pack(
+    side=tk.LEFT
+)
+ttk.Label(
+    header_frame,
+    text="（双击标记完成 | 右键更多操作）",
+    font=("微软雅黑", 8)
+).pack(side=tk.LEFT, padx=10)
+
+# ==================== 界面：列表（grid 第 5 行）====================
+
+list_frame = ttk.Frame(window)
+list_frame.grid(row=5, column=0, pady=5, padx=20, sticky="nsew")
+list_frame.grid_rowconfigure(0, weight=1)
+list_frame.grid_columnconfigure(0, weight=1)
+
+scrollbar = ttk.Scrollbar(list_frame, orient=tk.VERTICAL)
+scrollbar.grid(row=0, column=1, sticky="ns")
+
+listbox = tk.Listbox(
+    list_frame,
+    font=("微软雅黑", 12),
+    height=15,
+    selectbackground="#C8E6C9",
+    selectforeground="#333333",
+    yscrollcommand=scrollbar.set
+)
+listbox.grid(row=0, column=0, sticky="nsew")
+scrollbar.config(command=listbox.yview)
+
+# ==================== 界面：状态栏（grid 第 6 行）====================
+
+status_frame = ttk.Frame(window)
+status_frame.grid(row=6, column=0, pady=8, padx=20, sticky="ew")
+
+status_label = ttk.Label(
+    status_frame, text="共 0 条待办", style="Status.TLabel"
+)
+status_label.pack(side=tk.RIGHT)
+
+# ==================== 核心：过滤与显示 ====================
+
+def refresh_display():
+    """根据搜索词和类别筛选，刷新 Listbox 显示"""
+    keyword = search_var.get().strip().lower()
+    category_filter = filter_combo.get()
+
+    # 保存当前选中
+    selected_indices = listbox.curselection()
+    selected_display = None
+    if selected_indices:
+        selected_display = listbox.get(selected_indices[0])
+
+    # 清空并重建
+    listbox.delete(0, tk.END)
+
+    for todo in todos:
+        # 搜索词匹配（大小写不敏感）
+        text_match = (not keyword) or (keyword in todo["text"].lower())
+        # 类别匹配
+        category_match = (
+            category_filter == "全部 📋" or
+            category_filter == todo["category"]
+        )
+
+        if text_match and category_match:
+            display_text = f"[{todo['category']}] {todo['text']}"
+            listbox.insert(tk.END, display_text)
+
+            # 恢复完成样式
+            if todo["done"]:
+                idx = listbox.size() - 1
+                listbox.itemconfig(idx, fg="gray")
+                listbox.itemconfig(idx, font=("微软雅黑", 12, "overstrike"))
+
+            # 恢复选中
+            if selected_display and display_text == selected_display:
+                listbox.selection_set(listbox.size() - 1)
+
+    # 更新状态栏
+    update_status()
+
+    # 无结果提示
+    if listbox.size() == 0 and todos:
+        listbox.insert(tk.END, "（无匹配结果）")
+        listbox.itemconfig(0, fg="#AAAAAA")
+
+def update_status():
+    keyword = search_var.get().strip()
+    category_filter = filter_combo.get()
+
+    # 计算实际显示的条数（排除"无匹配结果"占位）
+    displayed = 0
+    for todo in todos:
+        text_match = (not keyword) or (keyword in todo["text"].lower())
+        category_match = (
+            category_filter == "全部 📋" or
+            category_filter == todo["category"]
+        )
+        if text_match and category_match:
+            displayed += 1
+
+    status_label.config(text=f"显示 {displayed} 条 / 共 {len(todos)} 条")
+
+# ==================== 核心：数据匹配 ====================
+
+def find_todo_by_display(display_text):
+    """根据显示文本找到对应的 todo 字典"""
+    if not display_text or display_text == "（无匹配结果）":
+        return None
+    for todo in todos:
+        expected = f"[{todo['category']}] {todo['text']}"
+        if expected == display_text:
+            return todo
+    return None
+
+def get_selected_todo():
+    """获取当前选中项对应的 todo 字典"""
+    selected = listbox.curselection()
+    if not selected:
+        return None
+    display_text = listbox.get(selected[0])
+    if display_text == "（无匹配结果）":
+        return None
+    return find_todo_by_display(display_text)
+
+# ==================== 核心：CRUD 操作 ====================
+
+def add_todo():
+    text = entry.get().strip()
+    if text:
+        category = category_combo.get()
+        todo = {"text": text, "done": False, "category": category}
+        todos.append(todo)
+        entry.delete(0, tk.END)
+        save_todos()
+        refresh_display()
+    else:
+        messagebox.showwarning("提示", "请输入待办事项！")
+
+def toggle_done():
+    todo = get_selected_todo()
+    if not todo:
+        if listbox.size() == 0 or listbox.get(0) != "（无匹配结果）":
+            messagebox.showwarning("提示", "请先选择要标记的事项！")
+        return
+
+    todo["done"] = not todo["done"]
+    save_todos()
+    refresh_display()
+
+def delete_todo():
+    todo = get_selected_todo()
+    if not todo:
+        messagebox.showwarning("提示", "请先选择要删除的事项！")
+        return
+
+    result = messagebox.askyesno("确认删除", f"确定要删除「{todo['text']}」吗？")
+    if result:
+        todos.remove(todo)
+        save_todos()
+        refresh_display()
+
+def clear_all():
+    if not todos:
+        return
+    result = messagebox.askyesno(
+        "确认清空",
+        f"数据中共有 {len(todos)} 条事项，确定全部清空吗？\n（清空后无法恢复！）"
+    )
+    if result:
+        todos.clear()
+        save_todos()
+        refresh_display()
+
+def on_closing():
+    save_todos()
+    window.destroy()
+
+# ==================== 绑定事件 ====================
+
+# 实时搜索：输入即过滤
+search_var.trace("w", lambda *args: refresh_display())
+
+# 类别筛选
+filter_combo.bind("<<ComboboxSelected>>", lambda e: refresh_display())
+
+# 按钮
+add_btn.config(command=add_todo)
+toggle_btn.config(command=toggle_done)
+delete_btn.config(command=delete_todo)
+clear_btn.config(command=clear_all)
+
+# 键盘
+entry.bind("<Return>", lambda e: add_todo())
+listbox.bind("<Double-1>", lambda e: toggle_done())
+window.bind("<Delete>", lambda e: delete_todo())
+window.bind_all("<Control-f>", lambda e: search_entry.focus())
+window.bind_all("<Control-l>", lambda e: clear_search())
+
+# 窗口关闭
+window.protocol("WM_DELETE_WINDOW", on_closing)
+
+# ==================== 启动 ====================
+
+load_todos()
+refresh_display()
+entry.focus()
+window.mainloop()

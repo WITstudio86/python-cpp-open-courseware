@@ -1,0 +1,557 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>第27节：瞄准发射</title>
+<style>
+  :root {
+    --bg: #1a1a2e;
+    --slide-bg: #16213e;
+    --accent: #e94560;
+    --accent2: #0f3460;
+    --text: #eee;
+    --code-bg: #0d1117;
+    --highlight: #f0a500;
+    --green: #4ecca3;
+    --blue: #3498db;
+    --purple: #9b59b6;
+    --orange: #e67e22;
+  }
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body {
+    font-family: "PingFang SC", "Microsoft YaHei", "Noto Sans SC", sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    display: flex; justify-content: center; align-items: center;
+    height: 100vh; overflow: hidden;
+    user-select: none;
+  }
+
+  #container { width: 1024px; height: 640px; position: relative; }
+  .slide {
+    position: absolute; inset: 0;
+    background: var(--slide-bg);
+    border-radius: 16px;
+    padding: 48px 56px;
+    display: none;
+    flex-direction: column;
+    box-shadow: 0 8px 32px rgba(0,0,0,.5);
+    overflow-y: auto;
+    border: 2px solid rgba(255,255,255,.08);
+  }
+  .slide.active { display: flex; }
+
+  .slide h1 {
+    font-size: 42px; color: var(--accent);
+    margin-bottom: 12px; border-bottom: 3px solid var(--accent);
+    padding-bottom: 12px;
+  }
+  .slide h2 {
+    font-size: 32px; color: var(--highlight);
+    margin: 20px 0 12px;
+  }
+  .slide h3 {
+    font-size: 26px; color: var(--green);
+    margin: 16px 0 8px;
+  }
+  .slide p, .slide li {
+    font-size: 22px; line-height: 1.7; margin-bottom: 6px;
+  }
+  .slide ul { padding-left: 28px; }
+  .slide li { margin-bottom: 8px; }
+
+  .badge {
+    display: inline-block; background: var(--accent);
+    color: #fff; padding: 4px 14px; border-radius: 20px;
+    font-size: 18px; font-weight: bold; margin-right: 8px;
+  }
+  .badge.green { background: var(--green); }
+  .badge.blue { background: var(--blue); }
+  .badge.purple { background: var(--purple); }
+
+  pre {
+    background: var(--code-bg);
+    border-radius: 10px; padding: 18px 22px;
+    font-family: "JetBrains Mono", "Fira Code", "Consolas", monospace;
+    font-size: 17px; line-height: 1.6;
+    overflow-x: auto; margin: 10px 0;
+    border: 1px solid rgba(255,255,255,.1);
+  }
+  code { font-family: "JetBrains Mono", "Fira Code", "Consolas", monospace; }
+  .keyword { color: #ff7b72; }
+  .builtin { color: #d2a8ff; }
+  .number { color: #79c0ff; }
+  .string { color: #a5d6ff; }
+  .comment { color: #8b949e; font-style: italic; }
+  .func { color: #d2a8ff; }
+  .op { color: #ff7b72; }
+
+  .tip-box {
+    background: rgba(240,165,0,.12);
+    border-left: 5px solid var(--highlight);
+    padding: 14px 18px; border-radius: 6px;
+    margin: 12px 0; font-size: 20px;
+  }
+  .question-box {
+    background: rgba(78,204,163,.12);
+    border-left: 5px solid var(--green);
+    padding: 14px 18px; border-radius: 6px;
+    margin: 12px 0; font-size: 20px;
+  }
+
+  .two-col { display: flex; gap: 28px; }
+  .two-col > div { flex: 1; }
+
+  table {
+    border-collapse: collapse; width: 100%; margin: 12px 0;
+    font-size: 20px;
+  }
+  th { background: var(--accent2); color: #fff; padding: 10px 14px; text-align: center; }
+  td { padding: 10px 14px; text-align: center; border-bottom: 1px solid rgba(255,255,255,.15); }
+  tr:nth-child(even) td { background: rgba(255,255,255,.03); }
+
+  .page-num {
+    position: absolute; bottom: 16px; right: 24px;
+    font-size: 16px; color: rgba(255,255,255,.35);
+  }
+  .hint {
+    position: absolute; bottom: 16px; left: 24px;
+    font-size: 15px; color: rgba(255,255,255,.3);
+  }
+  .ascii-art {
+    font-family: "JetBrains Mono", "Fira Code", monospace;
+    white-space: pre; line-height: 1.3; font-size: 15px;
+    color: var(--highlight); margin: 10px 0;
+  }
+  .big-emoji { font-size: 52px; text-align: center; margin: 10px 0; }
+  .arrow-cell { text-align: center; }
+  .grid-demo {
+    display: flex; justify-content: center; gap: 2px; flex-wrap: wrap;
+    margin: 14px 0;
+  }
+  .grid-dot {
+    width: 28px; height: 28px; border-radius: 50%;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 18px;
+  }
+</style>
+</head>
+<body>
+
+<div id="container">
+
+  <!-- Slide 1: 封面 -->
+  <div class="slide active" id="s1">
+    <div style="flex:1; display:flex; flex-direction:column; justify-content:center; align-items:center; text-align:center;">
+      <div style="font-size:72px; margin-bottom:12px;">🎯</div>
+      <h1 style="border:none; font-size:50px; text-align:center;">第27节：瞄准发射</h1>
+      <p style="font-size:26px; color:var(--highlight); margin-top:8px;">三角函数 + 方向计算 + 网格吸附</p>
+      <p style="font-size:20px; color:rgba(255,255,255,.4); margin-top:32px;">泡泡龙项目 · 第一节</p>
+    </div>
+    <div class="page-num">1 / 14</div>
+  </div>
+
+  <!-- Slide 2: 学习目标 -->
+  <div class="slide" id="s2">
+    <h1>🎯 教学目标</h1>
+    <p style="font-size:24px; margin-bottom:20px;">学完本节课，你将能够：</p>
+    <ul>
+      <li><span class="badge green">1</span> 理解弧度制与角度制的区别，掌握 <code>math.radians()</code> 用法</li>
+      <li><span class="badge green">2</span> 用 <code>math.sin()</code> 和 <code>math.cos()</code> 计算发射方向分量</li>
+      <li><span class="badge green">3</span> 实现发射器跟随鼠标旋转的瞄准交互</li>
+      <li><span class="badge green">4</span> 让泡泡沿瞄准方向飞行，遇到障碍物停下</li>
+      <li><span class="badge green">5</span> 理解六边形网格，实现泡泡停下的吸附</li>
+    </ul>
+    <div class="tip-box" style="margin-top:28px;">
+      <strong>💡 一句话总结：</strong>三角函数就是"方向翻译官"——把角度翻译成X和Y的变化量！
+    </div>
+    <div class="page-num">2 / 14</div>
+  </div>
+
+  <!-- Slide 3: 导入——泡泡龙怎么玩 -->
+  <div class="slide" id="s3">
+    <h1>🎮 泡泡龙怎么玩？</h1>
+    <div class="two-col">
+      <div>
+        <h3>玩法规则</h3>
+        <ul>
+          <li>底部有一个<strong>发射器</strong></li>
+          <li>用<strong>鼠标</strong>控制发射方向</li>
+          <li>按<strong>空格键</strong>发射泡泡</li>
+          <li>泡泡飞到<strong>顶部或碰到其他泡泡</strong>停下</li>
+          <li>3个同色相连就消除</li>
+        </ul>
+      </div>
+      <div>
+        <h3>今天要解决的核心问题</h3>
+        <div class="question-box">
+          <strong>❓ 怎么让泡泡沿着鼠标指向的方向飞？</strong>
+        </div>
+        <p style="margin-top:16px;">答案就是——<strong style="color:var(--accent); font-size:26px;">三角函数</strong>！</p>
+        <p>sin 和 cos 帮我们把<strong>角度</strong>变成<strong>速度</strong></p>
+      </div>
+    </div>
+    <div class="ascii-art">
+     🏹 你在这里                     🎯 目标方向
+      ╲
+       ╲  ← 泡泡沿这条线飞
+        ╲
+    </div>
+    <div class="page-num">3 / 14</div>
+  </div>
+
+  <!-- Slide 4: 三角函数——方向拆解器 -->
+  <div class="slide" id="s4">
+    <h1>🧮 三角函数：把角度"拆"成X和Y</h1>
+    <div class="two-col">
+      <div>
+        <h3>直观理解</h3>
+        <p>你射箭时瞄准了<strong style="color:var(--accent);">45°角</strong>的目标</p>
+        <p>但计算机只会说：<br>"往右走几个像素，往上走几个像素"</p>
+        <div class="ascii-art">
+              🎯
+             /|
+            / |
+           /  | ← sin = 对边/斜边
+          /___|
+          🏹
+          ^-- cos = 邻边/斜边
+        </div>
+        <div class="tip-box">
+          <strong>🔑 口诀：</strong><br>
+          <span style="color:var(--blue);font-size:22px;">cos 管左右</span> &nbsp;
+          <span style="color:var(--accent);font-size:22px;">sin 管上下</span>
+        </div>
+      </div>
+      <div>
+        <h3>代码翻译</h3>
+        <pre><span class="keyword">import</span> math
+
+<span class="comment"># 角度 → 弧度</span>
+angle = <span class="number">45</span>
+rad = math.radians(angle)
+<span class="comment"># 45° = π/4 ≈ 0.785 弧度</span>
+
+<span class="comment"># 拆解方向</span>
+speed = <span class="number">5</span>
+vx = speed * math.<span class="func">cos</span>(rad)   <span class="comment"># ≈ 3.54</span>
+vy = -speed * math.<span class="func">sin</span>(rad)  <span class="comment"># ≈ -3.54</span>
+<span class="comment">#    ↑ 负号！屏幕Y轴向下，向上飞要取负</span></pre>
+      </div>
+    </div>
+    <div class="page-num">4 / 14</div>
+  </div>
+
+  <!-- Slide 5: 各个方向的 sin/cos 值 -->
+  <div class="slide" id="s5">
+    <h1>🧭 各个方向的 sin / cos 值</h1>
+    <table>
+      <tr><th>角度</th><th>方向</th><th>cos</th><th>sin</th><th>vx（水平）</th><th>vy（垂直）</th></tr>
+      <tr><td>0°</td><td>→ 正右</td><td>1</td><td>0</td><td style="color:var(--green)">+5</td><td>0</td></tr>
+      <tr><td>45°</td><td>↗ 右上方</td><td>0.71</td><td>0.71</td><td style="color:var(--green)">+3.5</td><td style="color:var(--accent)">-3.5</td></tr>
+      <tr><td>90°</td><td>↑ 正上</td><td>0</td><td>1</td><td>0</td><td style="color:var(--accent)">-5</td></tr>
+      <tr><td>135°</td><td>↖ 左上方</td><td>-0.71</td><td>0.71</td><td style="color:var(--accent)">-3.5</td><td style="color:var(--accent)">-3.5</td></tr>
+      <tr><td>180°</td><td>← 正左</td><td>-1</td><td>0</td><td style="color:var(--accent)">-5</td><td>0</td></tr>
+      <tr><td>270°</td><td>↓ 正下</td><td>0</td><td>-1</td><td>0</td><td style="color:var(--green)">+5</td></tr>
+    </table>
+    <div class="tip-box" style="margin-top:18px;">
+      <strong>📌 规律：</strong>cos 0° = 1（最大，向右走）；cos 90° = 0（不向左也不向右）<br>
+      sin 0° = 0（不向上）；sin 90° = 1（最大，向上走）
+    </div>
+    <div class="page-num">5 / 14</div>
+  </div>
+
+  <!-- Slide 6: 弧度制——为什么不用角度 -->
+  <div class="slide" id="s6">
+    <h1>🥧 角度制 vs 弧度制</h1>
+    <div class="two-col">
+      <div>
+        <h3>角度制（°）</h3>
+        <p>把圆分成<strong>360</strong>份</p>
+        <p>一圈 = 360°</p>
+        <p>直角 = 90°</p>
+        <p style="margin-top:12px; color:rgba(255,255,255,.5);">人类觉得直观👍</p>
+        <p style="color:rgba(255,255,255,.5);">但计算机不认😢</p>
+      </div>
+      <div>
+        <h3>弧度制（rad）</h3>
+        <p>用<strong>半径</strong>丈量弧长</p>
+        <p>一圈 = 2π ≈ 6.28 弧度</p>
+        <p>直角 = π/2 ≈ 1.57 弧度</p>
+        <p style="margin-top:12px; color:var(--green);">计算机数学函数的语言👍</p>
+        <p style="color:var(--green);">sin/cos 都吃弧度👍</p>
+      </div>
+    </div>
+    <div class="tip-box" style="margin-top:12px;">
+      <strong>🍕 比萨饼类比：</strong>角度制就像把比萨切成360片（很细！）<br>
+      弧度制就像用比萨的半径去量饼边的弧长（很自然！）
+    </div>
+    <pre style="margin-top:10px;"><span class="comment"># 转换公式</span>
+弧度 = 角度 × π / <span class="number">180</span>
+<span class="comment"># Python 帮你做：</span>
+rad = math.<span class="func">radians</span>(<span class="number">45</span>)  <span class="comment"># 45° → 0.785 rad</span>
+deg = math.<span class="func">degrees</span>(rad)   <span class="comment"># 0.785 rad → 45°</span></pre>
+    <div class="page-num">6 / 14</div>
+  </div>
+
+  <!-- Slide 7: 发射器瞄准 -->
+  <div class="slide" id="s7">
+    <h1>🖱️ 发射器瞄准——atan2 求角度</h1>
+    <div class="two-col">
+      <div>
+        <h3>思路</h3>
+        <ol>
+          <li style="font-size:20px;">获取鼠标和发射器的坐标</li>
+          <li style="font-size:20px;">计算两点的差值 dx、dy</li>
+          <li style="font-size:20px;">用 <code>atan2()</code> 算角度</li>
+          <li style="font-size:20px;">画一条瞄准线</li>
+        </ol>
+        <div class="question-box">
+          <strong>🤔 atan 和 atan2 有什么区别？</strong><br>
+          <code>atan2(y, x)</code> 比 <code>atan()</code> 聪明——<br>能区分左右方向，返回 [-π, π]
+        </div>
+      </div>
+      <div>
+        <pre><span class="comment"># 发射器在底部中央</span>
+lx = WIDTH // <span class="number">2</span>
+ly = HEIGHT - <span class="number">60</span>
+
+<span class="comment"># 获取鼠标位置</span>
+mx, my = pygame.mouse.get_pos()
+
+<span class="comment"># atan2 求角度</span>
+dx = mx - lx
+dy = my - ly
+angle = math.<span class="func">atan2</span>(-dy, dx)
+<span class="comment">#        ↑ 负号！屏幕Y轴向下</span>
+
+<span class="comment"># 画瞄准线（虚线）</span>
+end_x = lx + <span class="number">100</span> * math.cos(angle)
+end_y = ly - <span class="number">100</span> * math.sin(angle)
+pygame.draw.line(scr, WHITE,
+    (lx, ly), (end_x, end_y), <span class="number">3</span>)</pre>
+      </div>
+    </div>
+    <div class="page-num">7 / 14</div>
+  </div>
+
+  <!-- Slide 8: 发射泡泡 -->
+  <div class="slide" id="s8">
+    <h1>🚀 发射！泡泡飞起来了</h1>
+    <div class="two-col">
+      <div>
+        <h3>发射（按空格时）</h3>
+        <pre><span class="keyword">if</span> event.key == K_SPACE \
+   <span class="keyword">and not</span> flying:
+    flying = <span class="builtin">True</span>
+    bx, by = lx, ly
+    speed = <span class="number">8</span>
+    <span class="comment"># 记下初速度</span>
+    vx = speed * math.cos(angle)
+    vy = -speed * math.sin(angle)</pre>
+      </div>
+      <div>
+        <h3>飞行（每帧更新）</h3>
+        <pre><span class="keyword">if</span> flying:
+    bx += vx   <span class="comment"># X方向移动</span>
+    by += vy   <span class="comment"># Y方向移动</span>
+
+    <span class="comment"># 碰到顶部 → 停下</span>
+    <span class="keyword">if</span> by - R &lt;= TOP:
+        flying = <span class="builtin">False</span>
+        snap_to_grid()
+
+    <span class="comment"># 碰到已有泡泡 → 停下</span>
+    <span class="keyword">for</span> b <span class="keyword">in</span> bubbles:
+        dist = math.hypot(bx-b.x, by-b.y)
+        <span class="keyword">if</span> dist &lt; <span class="number">2</span> * R:
+            flying = <span class="builtin">False</span>
+            snap_to_grid()</pre>
+      </div>
+    </div>
+    <div class="page-num">8 / 14</div>
+  </div>
+
+  <!-- Slide 9: 碰撞检测详解 -->
+  <div class="slide" id="s9">
+    <h1>💥 碰撞检测——泡泡什么时候停？</h1>
+    <p style="font-size:24px;">两种碰撞情况：</p>
+    <div class="two-col">
+      <div>
+        <h3>情况1：碰到顶部</h3>
+        <pre><span class="keyword">if</span> bubble.y - RADIUS &lt;= TOP_MARGIN:
+    <span class="comment"># 泡泡超出顶部了</span>
+    bubble.y = TOP_MARGIN + RADIUS
+    flying = <span class="builtin">False</span>
+    snap_to_grid()</pre>
+        <p style="font-size:18px; margin-top:8px;">简单！就是Y坐标太靠上了</p>
+      </div>
+      <div>
+        <h3>情况2：碰到已有泡泡</h3>
+        <pre><span class="keyword">for</span> other <span class="keyword">in</span> bubble_list:
+    <span class="comment"># 圆心距离 &lt; 直径 → 相碰</span>
+    dist = math.<span class="func">hypot</span>(
+        bubble.x - other.x,
+        bubble.y - other.y
+    )
+    <span class="keyword">if</span> dist &lt; <span class="number">2</span> * RADIUS:
+        flying = <span class="builtin">False</span>
+        snap_to_grid()</pre>
+        <p style="font-size:18px; margin-top:8px;">勾股定理：√(Δx² + Δy²)</p>
+      </div>
+    </div>
+    <div class="tip-box">
+      <strong>🧮 math.hypot(dx, dy)</strong> = √(dx² + dy²)，比手写 sqrt(dx*dx + dy*dy) 更简洁！
+    </div>
+    <div class="page-num">9 / 14</div>
+  </div>
+
+  <!-- Slide 10: 六边形网格 -->
+  <div class="slide" id="s10">
+    <h1>🔷 六边形网格——泡泡的家</h1>
+    <p style="font-size:22px; margin-bottom:8px;">泡泡龙中所有泡泡排列在六边形网格上，像蜂窝一样：</p>
+    <div class="two-col">
+      <div>
+        <h3>网格规则</h3>
+        <ul>
+          <li style="font-size:20px;">列间距 = 2 × R（紧密）</li>
+          <li style="font-size:20px;">行间距 = √3 × R ≈ 1.732R</li>
+          <li style="font-size:20px;"><strong style="color:var(--accent);">奇数行右移半个格子</strong></li>
+        </ul>
+        <pre>CELL_W = <span class="number">2</span> * RADIUS
+CELL_H = <span class="builtin">int</span>(RADIUS * math.sqrt(<span class="number">3</span>))
+
+<span class="comment"># 奇数行的X偏移</span>
+<span class="keyword">if</span> row % <span class="number">2</span> == <span class="number">1</span>:
+    x += CELL_W // <span class="number">2</span></pre>
+      </div>
+      <div>
+        <div class="ascii-art" style="font-size:17px;">
+  列0   列1   列2   列3
+  ⬤    ⬤    ⬤    ⬤    ← 行0(偶数)
+     ⬤    ⬤    ⬤    ⬤ ← 行1(奇数)
+  ⬤    ⬤    ⬤    ⬤    ← 行2(偶数)
+     ⬤    ⬤    ⬤    ⬤ ← 行3(奇数)
+        </div>
+        <p style="font-size:18px; text-align:center; color:var(--highlight);">像砖墙一样错落排列！</p>
+      </div>
+    </div>
+    <div class="page-num">10 / 14</div>
+  </div>
+
+  <!-- Slide 11: 网格吸附算法 -->
+  <div class="slide" id="s11">
+    <h1>🧲 网格吸附——泡泡"吸"到最近位置</h1>
+    <pre style="font-size:15px;"><span class="keyword">def</span> <span class="func">snap_to_grid</span>(bx, by):
+    <span class="comment"># 1️⃣ 找到最近的列</span>
+    col = <span class="builtin">round</span>(bx / CELL_W)
+    col = max(<span class="number">0</span>, <span class="builtin">min</span>(GRID_COLS - <span class="number">1</span>, col))
+
+    <span class="comment"># 2️⃣ 找到最近的行（奇数行有X偏移补偿）</span>
+    offset = (CELL_W // <span class="number">2</span>) <span class="keyword">if</span> col % <span class="number">2</span> == <span class="number">1</span> <span class="keyword">else</span> <span class="number">0</span>
+    row = <span class="builtin">round</span>((by - offset) / CELL_H)
+    row = max(<span class="number">0</span>, <span class="builtin">min</span>(GRID_ROWS - <span class="number">1</span>, row))
+
+    <span class="comment"># 3️⃣ 从下往上找第一个空位</span>
+    <span class="keyword">for</span> r <span class="keyword">in</span> <span class="builtin">range</span>(row, -<span class="number">1</span>, -<span class="number">1</span>):
+        <span class="keyword">if</span> grid[r][col] <span class="keyword">is</span> <span class="builtin">None</span>:
+            <span class="comment"># 计算准确的网格坐标</span>
+            gx = col * CELL_W + BUBBLE_R
+            gy = r * CELL_H + BUBBLE_R + TOP_MARGIN
+            <span class="keyword">if</span> col % <span class="number">2</span> == <span class="number">1</span>:
+                gx += CELL_W // <span class="number">2</span>  <span class="comment"># 奇数列右移</span>
+            grid[r][col] = bubble_color
+            <span class="keyword">return</span> gx, gy
+    <span class="keyword">return</span> bx, by  <span class="comment"># 没空位就停原处</span></pre>
+    <div class="tip-box">
+      <strong>🧲 吸附三步走：</strong>找列 → 找行 → 从下往上找空位（因为泡泡都是从上面落下来的）
+    </div>
+    <div class="page-num">11 / 14</div>
+  </div>
+
+  <!-- Slide 12: 练习 -->
+  <div class="slide" id="s12">
+    <h1>✏️ 课堂练习（25分钟）</h1>
+    <h3><span class="badge blue">基础任务</span>（必做，15min）</h3>
+    <ul>
+      <li>补全 <code>bubble_vx</code> 和 <code>bubble_vy</code> 的三角函数计算</li>
+      <li>实现飞行循环——泡泡按 vx、vy 每帧更新位置</li>
+      <li>添加顶部碰撞检测——碰到上边界即停止并吸附</li>
+      <li>验证瞄准线正确指向鼠标方向</li>
+    </ul>
+    <h3><span class="badge" style="background:var(--orange);">挑战任务</span>（选做，10min）</h3>
+    <ul>
+      <li>按住 Shift 键时，瞄准线变长、泡泡速度翻倍</li>
+      <li>限制发射角度在 10°~170°（防止水平发射），超限时瞄准线变红</li>
+      <li>发射时短暂闪烁发射器颜色（视觉反馈）</li>
+      <li>用半透明圆形可视化所有网格位置</li>
+    </ul>
+    <div class="page-num">12 / 14</div>
+  </div>
+
+  <!-- Slide 13: 总结 -->
+  <div class="slide" id="s13">
+    <h1>📝 知识总结</h1>
+    <table>
+      <tr><th style="width:180px;">知识点</th><th>核心内容</th></tr>
+      <tr><td>三角函数的本质</td><td>将<strong>角度</strong>"翻译"成 X和Y的变化量</td></tr>
+      <tr><td>cos（余弦）</td><td>= 邻边/斜边 → <strong style="color:var(--blue);">水平分量</strong>（"管左右"）</td></tr>
+      <tr><td>sin（正弦）</td><td>= 对边/斜边 → <strong style="color:var(--accent);">垂直分量</strong>（"管上下"）</td></tr>
+      <tr><td>弧度制</td><td><code>math.radians(角度)</code> —— 角度→弧度</td></tr>
+      <tr><td>两点求角度</td><td><code>math.atan2(-dy, dx)</code> —— 记住负号！</td></tr>
+      <tr><td>六边形网格</td><td>列间距=2R，行间距=√3R，奇数行偏移半个</td></tr>
+      <tr><td>网格吸附</td><td>找列→找行→从下往上找空位</td></tr>
+    </table>
+    <div class="tip-box" style="margin-top:14px;">
+      <strong>📅 下节预告：</strong>第28节——消除匹配！同色3连消、悬浮泡泡掉落
+    </div>
+    <div class="page-num">13 / 14</div>
+  </div>
+
+  <!-- Slide 14: 作业 -->
+  <div class="slide" id="s14">
+    <h1>📚 课后作业</h1>
+    <ol>
+      <li style="font-size:22px; margin-bottom:18px;">修改发射速度 <code>speed</code> 的值（如 3、5、10），<br>观察泡泡飞行速度的变化</li>
+      <li style="font-size:22px; margin-bottom:18px;">修改瞄准线长度，让它在靠近屏幕边缘时自动变短<br>（提示：用 <code>math.hypot(dx, dy)</code> 计算鼠标到发射器的距离）</li>
+      <li style="font-size:22px; margin-bottom:18px;"><strong>思考题：</strong>如果想让泡泡碰到左右墙壁后反弹，<br>代码要怎么写？（提示：反转 vx 的符号）</li>
+    </ol>
+    <div class="question-box" style="margin-top:28px;">
+      <strong>❓ 预习思考：</strong>泡泡停住后，怎么判断它周围有没有3个以上同色泡泡？
+    </div>
+    <div class="page-num">14 / 14</div>
+  </div>
+
+</div>
+
+<script>
+(function(){
+  var slides = document.querySelectorAll('.slide');
+  var total = slides.length;
+  var idx = 0;
+  function show(n){
+    n = ((n % total) + total) % total;
+    slides.forEach(function(s,i){ s.classList.toggle('active', i===n); });
+    idx = n;
+  }
+  document.addEventListener('keydown', function(e){
+    if(e.key==='ArrowRight' || e.key==='ArrowDown' || e.key===' '){
+      e.preventDefault();
+      if(idx < total-1) show(idx+1);
+    } else if(e.key==='ArrowLeft' || e.key==='ArrowUp'){
+      e.preventDefault();
+      if(idx > 0) show(idx-1);
+    }
+  });
+  // Click on slide advances too (except code blocks)
+  document.getElementById('container').addEventListener('click', function(e){
+    if(e.target.tagName==='PRE' || e.target.closest('pre')) return;
+    if(idx < total-1) show(idx+1);
+  });
+  show(0);
+})();
+</script>
+
+</body>
+</html>

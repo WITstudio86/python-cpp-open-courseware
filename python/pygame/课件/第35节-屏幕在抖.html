@@ -1,0 +1,380 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>第35节：屏幕在抖 —— 爆炸震动与粒子系统</title>
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body {
+    font-family: "Microsoft YaHei", "PingFang SC", "Noto Sans SC", sans-serif;
+    background: #1a1a2e;
+    color: #eee;
+    overflow: hidden;
+    user-select: none;
+  }
+  .slide-container {
+    width: 100vw; height: 100vh;
+    display: flex; align-items: center; justify-content: center;
+  }
+  .slide {
+    display: none;
+    width: 90vw; max-width: 1100px;
+    height: 85vh;
+    padding: 40px 50px;
+    border-radius: 16px;
+    background: linear-gradient(135deg, #16213e 0%, #0f3460 50%, #1a1a2e 100%);
+    box-shadow: 0 0 60px rgba(233, 69, 96, 0.15);
+    flex-direction: column;
+    position: relative;
+    overflow-y: auto;
+  }
+  .slide.active { display: flex; }
+  .slide h1 { font-size: 52px; margin-bottom: 15px; color: #e94560; }
+  .slide h2 { font-size: 38px; margin-bottom: 18px; color: #f5a623; border-bottom: 3px solid #f5a623; padding-bottom: 8px; }
+  .slide h3 { font-size: 28px; margin: 16px 0 10px; color: #ffd700; }
+  .slide p, .slide li { font-size: 24px; line-height: 1.8; margin-bottom: 8px; }
+  .slide ul { padding-left: 30px; }
+  .slide li { margin-bottom: 12px; }
+  .slide code {
+    font-family: "Fira Code", "Cascadia Code", "Consolas", monospace;
+    background: #2d2d3f; padding: 3px 8px; border-radius: 6px;
+    color: #ffd700; font-size: 20px;
+  }
+  pre {
+    background: #1e1e2e; border-radius: 12px; padding: 20px 24px;
+    font-family: "Fira Code", "Cascadia Code", "Consolas", monospace;
+    font-size: 18px; line-height: 1.7;
+    overflow-x: auto; border: 1px solid #333;
+    margin: 12px 0;
+  }
+  pre .kw { color: #c792ea; }    /* keyword */
+  pre .fn { color: #82aaff; }    /* function */
+  pre .cl { color: #ffcb6b; }    /* class */
+  pre .st { color: #c3e88d; }    /* string */
+  pre .co { color: #546e7a; }    /* comment */
+  pre .nb { color: #f78c6c; }    /* number/builtin */
+  pre .op { color: #89ddff; }    /* operator */
+  .formula-box {
+    background: #252540; border: 2px solid #f5a623; border-radius: 12px;
+    padding: 20px 30px; margin: 15px 0; text-align: center;
+  }
+  .formula-box .big { font-size: 32px; color: #ffd700; font-family: "Georgia", serif; }
+  .formula-box .note { font-size: 20px; color: #aaa; margin-top: 8px; }
+  .highlight-box {
+    background: #2a2a40; border-left: 6px solid #e94560;
+    padding: 16px 24px; border-radius: 0 12px 12px 0; margin: 15px 0;
+  }
+  .two-col { display: flex; gap: 30px; }
+  .two-col > div { flex: 1; }
+  .tag { display: inline-block; background: #e94560; color: #fff; padding: 4px 14px; border-radius: 20px; font-size: 18px; margin: 4px; }
+  .tag.green { background: #4caf50; }
+  .tag.blue { background: #2196f3; }
+  .tag.orange { background: #ff9800; }
+  .page-num {
+    position: absolute; bottom: 16px; right: 24px;
+    font-size: 18px; color: #666;
+  }
+  .nav-hint {
+    position: fixed; bottom: 20px; left: 50%; transform: translateX(-50%);
+    font-size: 18px; color: #555; letter-spacing: 2px;
+  }
+  .table-wrap { overflow-x: auto; margin: 12px 0; }
+  table { width: 100%; border-collapse: collapse; font-size: 22px; }
+  th { background: #e94560; color: #fff; padding: 12px 16px; text-align: left; }
+  td { padding: 10px 16px; border-bottom: 1px solid #333; }
+  tr:nth-child(even) td { background: rgba(255,255,255,0.03); }
+  .center { text-align: center; }
+  .emoji { font-size: 48px; }
+</style>
+</head>
+<body>
+
+<div class="slide-container">
+  <!-- 幻灯片1：标题页 -->
+  <div class="slide active"><div class="center" style="flex:1;display:flex;flex-direction:column;justify-content:center;align-items:center;">
+    <div class="emoji">💥</div>
+    <h1 style="font-size:64px;">第35节：屏幕在抖</h1>
+    <p style="font-size:32px;color:#aaa;margin-top:10px;">爆炸震动 &amp; 粒子系统</p>
+    <div style="margin-top:40px;">
+      <span class="tag">pygame</span>
+      <span class="tag green">粒子特效</span>
+      <span class="tag blue">屏幕震动</span>
+      <span class="tag orange">游戏开发</span>
+    </div>
+  </div><span class="page-num">1 / 11</span></div>
+
+  <!-- 幻灯片2：学习目标 -->
+  <div class="slide"><h2>🎯 学习目标</h2>
+    <div class="two-col" style="margin-top:20px;">
+      <div>
+        <h3>📖 知识目标</h3>
+        <ul>
+          <li>理解 <code>sin衰减震动</code> 的数学原理</li>
+          <li>理解粒子的"出生→运动→死亡"生命周期</li>
+          <li>掌握粒子池管理方法</li>
+        </ul>
+      </div>
+      <div>
+        <h3>🛠 技能目标</h3>
+        <ul>
+          <li>能创建<code>Particle</code>类并管理粒子池</li>
+          <li>能实现屏幕震动效果</li>
+          <li>能将粒子系统应用到游戏场景中</li>
+        </ul>
+      </div>
+    </div>
+    <div class="highlight-box" style="margin-top:30px;">
+      <p>🔑 <strong>核心问题</strong>：如何让游戏画面"抖"起来？如何让爆炸看起来真实？</p>
+    </div>
+  <span class="page-num">2 / 11</span></div>
+
+  <!-- 幻灯片3：屏幕震动原理 -->
+  <div class="slide"><h2>📐 屏幕震动原理</h2>
+    <p>屏幕震动的本质：<strong>把画面临时偏移，偏移量越来越小直到消失</strong></p>
+    <div class="formula-box">
+      <p style="font-size:22px;color:#ccc;margin-bottom:10px;">核心公式</p>
+      <p class="big">shake = sin(time &times; freq) &times; strength &times; e<sup>-time &times; decay</sup></p>
+      <p class="note">sin产生周期振动 &times; 初始振幅 &times; 指数衰减 = 逐渐减弱的震动</p>
+    </div>
+    <div class="two-col">
+      <div>
+        <h3>直观类比</h3>
+        <p>就像一根弹簧：用力拉一下松手 → 来回振荡 → 幅度越来越小 → 最终停下</p>
+      </div>
+      <div>
+        <h3>三个参数</h3>
+        <ul>
+          <li><code>freq=30</code>：震动快慢</li>
+          <li><code>strength=15</code>：初始强度（像素）</li>
+          <li><code>decay=3</code>：衰减速度</li>
+        </ul>
+      </div>
+    </div>
+  <span class="page-num">3 / 11</span></div>
+
+  <!-- 幻灯片4：震动代码实现 -->
+  <div class="slide"><h2>💻 震动代码实现</h2>
+<pre><span class="kw">import</span> math
+
+shake_start_time = -999  <span class="co"># 震动开始时间</span>
+shake_duration = 0.5     <span class="co"># 持续0.5秒</span>
+
+<span class="kw">def</span> <span class="fn">get_shake_offset</span>():
+    now = pygame.time.get_ticks() / 1000.0
+    elapsed = now - shake_start_time
+    <span class="kw">if</span> elapsed > shake_duration:
+        <span class="kw">return</span> 0, 0  <span class="co"># 震动结束</span>
+
+    decay = math.exp(-elapsed * 8.0)  <span class="co"># 指数衰减</span>
+    strength = 12.0 * decay            <span class="co"># 当前振幅</span>
+
+    ox = math.sin(elapsed * 40) * strength  <span class="co"># X偏移</span>
+    oy = math.cos(elapsed * 35) * strength  <span class="co"># Y偏移</span>
+    <span class="kw">return</span> ox, oy
+
+<span class="co"># 绘制时应用偏移</span>
+shake_x, shake_y = get_shake_offset()
+<span class="co"># 所有绘制坐标都要 +shake_x, +shake_y</span></pre>
+    <div class="highlight-box">
+      <p>💡 <strong>关键技巧</strong>：偏移量同时加到所有物体的绘制坐标上，让整个画面一起震动！</p>
+    </div>
+  <span class="page-num">4 / 11</span></div>
+
+  <!-- 幻灯片5：不同衰减效果 -->
+  <div class="slide"><h2>📊 不同衰减速度的效果</h2>
+    <div class="table-wrap">
+      <table>
+        <tr><th>衰减速度</th><th>效果描述</th><th>持续时间</th><th>应用场景</th></tr>
+        <tr><td>低 (1~2)</td><td>震动缓慢衰减</td><td>~1.5秒</td><td>大地震、大型爆炸</td></tr>
+        <tr><td>中 (3~5)</td><td>适中震感 ⭐</td><td>~0.5秒</td><td>击中反馈、普通爆炸</td></tr>
+        <tr><td>高 (6~10)</td><td>短促有力</td><td>~0.2秒</td><td>枪械后坐力、轻微碰撞</td></tr>
+      </table>
+    </div>
+    <div class="highlight-box" style="margin-top:20px;">
+      <p>🎮 <strong>游戏开发实战</strong>：大型Boss死亡 → 低衰减长震动；普通攻击命中 → 中衰减短震动；走路碰撞 → 高衰减微震。</p>
+    </div>
+  <span class="page-num">5 / 11</span></div>
+
+  <!-- 幻灯片6：粒子系统概念 -->
+  <div class="slide"><h2>✨ 粒子系统概念</h2>
+    <div class="highlight-box">
+      <p style="font-size:28px;text-align:center;">粒子系统 = 大量微小的、有生命周期的对象组成的动态效果系统</p>
+    </div>
+    <h3>粒子的"一生"</h3>
+    <div style="display:flex;gap:20px;text-align:center;margin:15px 0;">
+      <div style="flex:1;background:#252540;border-radius:12px;padding:20px;">
+        <div style="font-size:40px;">🐣</div>
+        <p style="font-size:22px;"><strong>出生</strong></p>
+        <p style="font-size:18px;color:#aaa;">在爆炸中心产生<br>获得随机速度和方向</p>
+      </div>
+      <div style="flex:1;background:#252540;border-radius:12px;padding:20px;">
+        <div style="font-size:40px;">🦋</div>
+        <p style="font-size:22px;"><strong>运动</strong></p>
+        <p style="font-size:18px;color:#aaa;">飞向四周<br>受重力和摩擦力影响</p>
+      </div>
+      <div style="flex:1;background:#252540;border-radius:12px;padding:20px;">
+        <div style="font-size:40px;">💀</div>
+        <p style="font-size:22px;"><strong>衰老 &amp; 死亡</strong></p>
+        <p style="font-size:18px;color:#aaa;">颜色变暗、大小缩小<br>生命归零，被移除</p>
+      </div>
+    </div>
+  <span class="page-num">6 / 11</span></div>
+
+  <!-- 幻灯片7：粒子类设计 -->
+  <div class="slide"><h2>🏗 粒子类设计</h2>
+<pre><span class="kw">class</span> <span class="cl">Particle</span>:
+    <span class="kw">def</span> <span class="fn">__init__</span>(<span class="nb">self</span>, x, y):
+        <span class="nb">self</span>.x = x                    <span class="co"># 位置</span>
+        <span class="nb">self</span>.y = y
+        angle = random.uniform(0, 2 * math.pi)
+        speed = random.uniform(2, 8)
+        <span class="nb">self</span>.vx = math.cos(angle) * speed  <span class="co"># X速度</span>
+        <span class="nb">self</span>.vy = math.sin(angle) * speed  <span class="co"># Y速度</span>
+        <span class="nb">self</span>.life = 1.0               <span class="co"># 生命值 (1.0→0.0)</span>
+        <span class="nb">self</span>.max_radius = random.randint(3, 8)
+        <span class="nb">self</span>.color_start = (255,255,100) <span class="co"># 亮黄</span>
+        <span class="nb">self</span>.color_end = (180,30,0)      <span class="co"># 暗红</span></pre>
+    <div class="two-col">
+      <div>
+        <h3>关键属性</h3>
+        <ul style="font-size:20px;">
+          <li><code>x, y</code> — 当前位置</li>
+          <li><code>vx, vy</code> — 运动速度</li>
+          <li><code>life</code> — 剩余寿命</li>
+          <li><code>color_start/end</code> — 颜色渐变</li>
+        </ul>
+      </div>
+      <div>
+        <h3>为什么用角度+速度？</h3>
+        <p style="font-size:20px;">用 <code>cos/sin</code> 把角度转为速度分量，保证粒子<strong>均匀向四周飞散</strong>，而不是只飞向四个角落。</p>
+      </div>
+    </div>
+  <span class="page-num">7 / 11</span></div>
+
+  <!-- 幻灯片8：粒子池管理 -->
+  <div class="slide"><h2>🗂 粒子池管理</h2>
+    <h3>为什么需要"池"？</h3>
+    <p>想象一个爆炸产生60个粒子，如果不及时清理死掉的粒子，运行几分钟后可能有几千个粒子占据内存！</p>
+<pre><span class="co"># 粒子池 — 用列表管理所有活跃粒子</span>
+particles = []
+
+<span class="co"># 生成粒子（爆炸时）</span>
+<span class="kw">def</span> <span class="fn">spawn_explosion</span>(x, y):
+    <span class="kw">for</span> _ <span class="kw">in</span> range(60):
+        particles.append(Particle(x, y))
+
+<span class="co"># 每帧更新 — 死亡粒子立即移除</span>
+<span class="kw">for</span> p <span class="kw">in</span> particles[:]:  <span class="co"># ← 遍历副本！</span>
+    p.update(dt)
+    <span class="kw">if</span> p.life <= 0:
+        particles.remove(p)</pre>
+    <div class="highlight-box">
+      <p>⚠️ <strong>注意</strong>：遍历 <code>particles[:]</code>（副本）而不是 <code>particles</code>（原列表），否则边遍历边删除会出错！</p>
+    </div>
+  <span class="page-num">8 / 11</span></div>
+
+  <!-- 幻灯片9：完整效果展示 -->
+  <div class="slide"><h2>🎬 完整效果演示</h2>
+    <p>运行程序你将看到：</p>
+    <div style="display:flex;gap:20px;flex-wrap:wrap;margin:15px 0;">
+      <div style="flex:1;min-width:200px;background:#252540;border-radius:12px;padding:20px;text-align:center;">
+        <div style="font-size:40px;">🧱</div>
+        <p style="font-size:20px;color:#ffd700;">砖块排列</p>
+        <p style="font-size:16px;color:#aaa;">多块彩色砖块等待点击</p>
+      </div>
+      <div style="flex:1;min-width:200px;background:#252540;border-radius:12px;padding:20px;text-align:center;">
+        <div style="font-size:40px;">💥</div>
+        <p style="font-size:20px;color:#ffd700;">点击爆炸</p>
+        <p style="font-size:16px;color:#aaa;">60个粒子从点击处飞散</p>
+      </div>
+      <div style="flex:1;min-width:200px;background:#252540;border-radius:12px;padding:20px;text-align:center;">
+        <div style="font-size:40px;">📳</div>
+        <p style="font-size:20px;color:#ffd700;">屏幕震动</p>
+        <p style="font-size:16px;color:#aaa;">画面随爆炸抖动0.5秒</p>
+      </div>
+      <div style="flex:1;min-width:200px;background:#252540;border-radius:12px;padding:20px;text-align:center;">
+        <div style="font-size:40px;">🎨</div>
+        <p style="font-size:20px;color:#ffd700;">颜色渐变</p>
+        <p style="font-size:16px;color:#aaa;">粒子从亮黄渐变为暗红</p>
+      </div>
+    </div>
+  <span class="page-num">9 / 11</span></div>
+
+  <!-- 幻灯片10：练习任务 -->
+  <div class="slide"><h2>✏️ 练习任务</h2>
+    <h3>基础任务 ✅</h3>
+    <ul>
+      <li>复现课堂代码，让爆炸+震动效果跑起来</li>
+      <li>修改爆炸粒子数量（50→100→200），观察性能变化</li>
+    </ul>
+    <h3>进阶挑战 🚀</h3>
+    <ul>
+      <li>把重力方向改成<strong>向上</strong>——做出烟花效果！</li>
+      <li>改变粒子颜色渐变（蓝→白 = 水花，绿→黄 = 魔法）</li>
+      <li>给不同砖块设置不同颜色，炸出不同颜色的火花</li>
+      <li>让粒子碰到屏幕边缘时<strong>反弹</strong></li>
+    </ul>
+    <div class="highlight-box">
+      <p>🏆 <strong>终极挑战</strong>：把粒子改成向上飞的烟花，加上重力，做出一个烟花秀！</p>
+    </div>
+  <span class="page-num">10 / 11</span></div>
+
+  <!-- 幻灯片11：总结 -->
+  <div class="slide"><h2>📝 本节总结</h2>
+    <div class="two-col">
+      <div>
+        <h3>屏幕震动</h3>
+        <ul>
+          <li>核心公式：<code>sin &times; 振幅 &times; 衰减</code></li>
+          <li>衰减用 <code>exp(-time &times; decay)</code></li>
+          <li>偏移量加到所有物体坐标上</li>
+        </ul>
+      </div>
+      <div>
+        <h3>粒子系统</h3>
+        <ul>
+          <li>粒子有"生老病死"四个阶段</li>
+          <li>用列表管理粒子池</li>
+          <li>死亡粒子及时移除</li>
+          <li>颜色和大小随生命渐变</li>
+        </ul>
+      </div>
+    </div>
+    <div class="highlight-box" style="margin-top:30px;">
+      <p style="font-size:28px;text-align:center;">🔮 <strong>下节预告</strong>：拖尾残影、淡入淡出、弹出文字动画——特效大赏！</p>
+    </div>
+    <p style="text-align:center;margin-top:20px;font-size:20px;color:#888;">粒子系统是游戏特效之魂，几乎所有视觉特效的底层都是它！</p>
+  <span class="page-num">11 / 11</span></div>
+</div>
+
+<div class="nav-hint">← → 方向键翻页 &nbsp;|&nbsp; 第 <span id="cur-page">1</span> / 11 页</div>
+
+<script>
+  let slides = document.querySelectorAll('.slide');
+  let cur = 0;
+  function show(n) {
+    slides[cur].classList.remove('active');
+    cur = (n + slides.length) % slides.length;
+    slides[cur].classList.add('active');
+    document.getElementById('cur-page').textContent = cur + 1;
+  }
+  document.addEventListener('keydown', e => {
+    if (e.key === 'ArrowRight' || e.key === 'ArrowDown' || e.key === ' ') { e.preventDefault(); show(cur + 1); }
+    if (e.key === 'ArrowLeft' || e.key === 'ArrowUp') { e.preventDefault(); show(cur - 1); }
+  });
+  // 点击翻页（左半边上一页，右半边下一页）
+  document.addEventListener('click', e => {
+    if (e.clientX < window.innerWidth / 2) show(cur - 1);
+    else show(cur + 1);
+  });
+  // 触摸滑动
+  let touchX = 0;
+  document.addEventListener('touchstart', e => { touchX = e.touches[0].clientX; });
+  document.addEventListener('touchend', e => {
+    let dx = e.changedTouches[0].clientX - touchX;
+    if (Math.abs(dx) > 50) show(dx < 0 ? cur + 1 : cur - 1);
+  });
+</script>
+</body>
+</html>

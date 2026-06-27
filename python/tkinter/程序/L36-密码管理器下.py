@@ -1,0 +1,409 @@
+import tkinter as tk
+from tkinter import messagebox
+
+# ========================================
+# 第 36 节：密码管理器（下）
+# 知识点：Listbox + 搜索过滤 + clipboard_append 复制密码
+#
+# 衔接第 35 节（密码管理器上）：
+#   第 35 节实现了"添加账号"功能（输入框 + 保存按钮）
+#   本节新增：账号列表展示、搜索过滤、一键复制密码/用户名
+# ========================================
+
+# 1. 创建主窗口
+root = tk.Tk()
+root.title("🔐 密码管理器 v2.0")          # 窗口标题
+root.geometry("720x520")                   # 窗口大小
+root.configure(bg="#f0f4f8")               # 背景色：浅灰蓝
+
+# ============================================
+# 2. 数据存储（与第 35 节衔接）
+# ============================================
+# 用列表存储所有账号，每个账号是一个字典
+# 字典结构：{"site": 网站名, "username": 用户名, "password": 密码}
+accounts = []
+
+
+# ============================================
+# 3. 左侧面板：添加新账号（第 35 节内容保留）
+# ============================================
+# 使用 LabelFrame 做一个"分组框"，把添加账号的控件包在一起
+left_frame = tk.LabelFrame(
+    root,
+    text="➕ 添加新账号",
+    font=("微软雅黑", 13, "bold"),
+    bg="#f0f4f8",
+    fg="#2c3e50",
+    padx=18, pady=15                       # 内边距
+)
+left_frame.pack(side="left", fill="y", padx=(15, 8), pady=15)
+
+# --- 网站输入框 ---
+tk.Label(left_frame, text="🌐 网站：",
+         font=("微软雅黑", 11),
+         bg="#f0f4f8", fg="#555555").pack(anchor="w", pady=(0, 2))
+site_entry = tk.Entry(left_frame, font=("微软雅黑", 11),
+                      width=22, relief="solid", bd=1)
+site_entry.pack(pady=(0, 12))
+
+# --- 用户名输入框 ---
+tk.Label(left_frame, text="👤 用户名：",
+         font=("微软雅黑", 11),
+         bg="#f0f4f8", fg="#555555").pack(anchor="w", pady=(0, 2))
+user_entry = tk.Entry(left_frame, font=("微软雅黑", 11),
+                      width=22, relief="solid", bd=1)
+user_entry.pack(pady=(0, 12))
+
+# --- 密码输入框 ---
+tk.Label(left_frame, text="🔑 密码：",
+         font=("微软雅黑", 11),
+         bg="#f0f4f8", fg="#555555").pack(anchor="w", pady=(0, 2))
+pass_entry = tk.Entry(left_frame, font=("微软雅黑", 11),
+                      width=22, relief="solid", bd=1, show="*")  # show="*" 隐藏密码
+pass_entry.pack(pady=(0, 5))
+
+# --- 显示/隐藏密码的复选框 ---
+show_pass_var = tk.BooleanVar(value=False)  # 默认不勾选（隐藏密码）
+
+
+def toggle_password():
+    """切换密码输入框的显示/隐藏状态"""
+    if show_pass_var.get():
+        pass_entry.config(show="")     # 显示真实密码
+    else:
+        pass_entry.config(show="*")    # 用 * 号隐藏
+
+
+show_pass_cb = tk.Checkbutton(
+    left_frame, text="显示密码",
+    variable=show_pass_var, command=toggle_password,
+    font=("微软雅黑", 10), bg="#f0f4f8", fg="#888888",
+    selectcolor="#f0f4f8", anchor="w"
+)
+show_pass_cb.pack(anchor="w", pady=(0, 10))
+
+
+# --- 保存按钮的回调函数 ---
+def add_account():
+    """添加新账号到列表（第 35 节的核心功能）"""
+    # 获取输入框的内容，.strip() 去掉首尾空格
+    site = site_entry.get().strip()
+    username = user_entry.get().strip()
+    password = pass_entry.get().strip()
+
+    # 验证：三个字段都不能为空
+    if not site or not username or not password:
+        messagebox.showwarning("提示", "请填写完整信息！网站、用户名和密码都不能为空哦～")
+        return
+
+    # 将新账号添加到列表中
+    accounts.append({
+        "site": site,          # 网站名
+        "username": username,  # 用户名
+        "password": password   # 密码
+    })
+
+    # 添加成功后，清空输入框
+    site_entry.delete(0, tk.END)
+    user_entry.delete(0, tk.END)
+    pass_entry.delete(0, tk.END)
+    site_entry.focus()  # 光标回到网站输入框，方便连续添加
+
+    # 刷新右侧账号列表，显示新添加的账号
+    refresh_list()
+
+    # 底部状态栏提示
+    status_label.config(text=f"✅ 已添加：{site}")
+
+
+# --- 保存按钮 ---
+add_btn = tk.Button(
+    left_frame, text="💾 保存账号",
+    command=add_account,
+    font=("微软雅黑", 12, "bold"),
+    bg="#27ae60", fg="white",               # 绿色按钮
+    activebackground="#219a52",             # 按下时的颜色
+    relief="flat", padx=20, pady=8,
+    cursor="hand2"                          # 鼠标悬停时显示手型
+)
+add_btn.pack(fill="x", pady=(5, 0))
+
+
+# ============================================
+# 4. 右侧面板：账号列表（本节新增！）
+# ============================================
+right_frame = tk.LabelFrame(
+    root,
+    text="📋 已保存的账号",
+    font=("微软雅黑", 13, "bold"),
+    bg="#f0f4f8",
+    fg="#2c3e50",
+    padx=18, pady=15
+)
+right_frame.pack(side="right", fill="both", expand=True, padx=(8, 15), pady=15)
+
+# --- 4a. 搜索框（本节新增知识点：搜索过滤）---
+tk.Label(right_frame, text="🔍 搜索过滤：",
+         font=("微软雅黑", 10),
+         bg="#f0f4f8", fg="#777777").pack(anchor="w")
+search_entry = tk.Entry(right_frame, font=("微软雅黑", 11),
+                         width=30, relief="solid", bd=1)
+search_entry.pack(fill="x", pady=(2, 10))
+
+# 在搜索框中插入灰色的提示文字（类似 placeholder 效果）
+search_entry.insert(0, "输入网站关键词过滤...")
+search_entry.config(fg="#aaaaaa")
+
+
+def on_search_focus_in(event):
+    """当搜索框获得焦点（鼠标点击进去）时，清空提示文字"""
+    if search_entry.get() == "输入网站关键词过滤...":
+        search_entry.delete(0, tk.END)
+        search_entry.config(fg="#333333")    # 恢复正常的黑色文字
+
+
+def on_search_focus_out(event):
+    """当搜索框失去焦点时，如果为空则恢复提示文字"""
+    if not search_entry.get().strip():
+        search_entry.insert(0, "输入网站关键词过滤...")
+        search_entry.config(fg="#aaaaaa")
+
+
+# 绑定焦点事件
+search_entry.bind("<FocusIn>", on_search_focus_in)
+search_entry.bind("<FocusOut>", on_search_focus_out)
+
+
+def filter_list(event=None):
+    """
+    搜索过滤函数（本节新增知识点！）
+    根据搜索框中的关键词，过滤 Listbox 中显示的账号
+    event=None 允许函数被其他方式（如按钮）调用
+    """
+    keyword = search_entry.get().strip().lower()
+
+    # 如果搜索框里是提示文字，当作空关键词（显示全部）
+    if keyword == "输入网站关键词过滤...":
+        keyword = ""
+
+    # 清空 Listbox
+    listbox.delete(0, tk.END)
+
+    # 遍历所有账号，只显示网站名包含关键词的
+    for i, acc in enumerate(accounts):
+        if not keyword or keyword in acc["site"].lower():
+            # 拼成一行显示文字
+            listbox.insert(tk.END, f"🌐 {acc['site']} — {acc['username']}")
+
+
+# 绑定事件：每次按键松开时，自动执行过滤
+search_entry.bind("<KeyRelease>", filter_list)
+
+
+# --- 4b. Listbox 账号列表（本节新增知识点！）---
+# 外层 Frame 用于容纳 Listbox 和滚动条
+listbox_frame = tk.Frame(right_frame, bg="#f0f4f8")
+listbox_frame.pack(fill="both", expand=True, pady=(0, 8))
+
+# 垂直滚动条
+scrollbar = tk.Scrollbar(listbox_frame)
+scrollbar.pack(side="right", fill="y")
+
+# Listbox：展示所有保存的账号
+listbox = tk.Listbox(
+    listbox_frame,
+    font=("微软雅黑", 11),
+    bg="white", fg="#333333",
+    selectbackground="#4a90d9",        # 选中项的背景色（蓝色）
+    selectforeground="white",          # 选中项的文字颜色（白色）
+    width=35, height=12,
+    yscrollcommand=scrollbar.set,      # 关联滚动条
+    relief="solid", bd=1
+)
+listbox.pack(side="left", fill="both", expand=True)
+scrollbar.config(command=listbox.yview)  # 滚动条控制 Listbox 的垂直滚动
+
+
+def on_select_account(event=None):
+    """
+    当用户在 Listbox 中选中某个账号时，显示详细信息
+    绑定到 <<ListboxSelect>> 事件
+    """
+    selected = listbox.curselection()   # 获取选中项的索引（元组）
+    if not selected:                     # 没有选中任何项
+        return
+
+    index = selected[0]                  # 取第一个（也是唯一一个）索引
+    if index >= len(accounts):           # 安全检查：索引不越界
+        return
+
+    acc = accounts[index]
+    # 在详情区域显示用户名和（隐藏的）密码
+    detail_label.config(
+        text=f"👤 用户名：{acc['username']}　　🔑 密码：{'*' * len(acc['password'])}"
+    )
+
+
+# 绑定选中事件：当用户在 Listbox 中点击某一行时触发
+listbox.bind("<<ListboxSelect>>", on_select_account)
+
+
+# --- 4c. 操作按钮（本节新增知识点：clipboard_append 复制到剪贴板）---
+btn_frame = tk.Frame(right_frame, bg="#f0f4f8")
+btn_frame.pack(fill="x", pady=(0, 2))
+
+
+def copy_password():
+    """
+    复制选中账号的密码到系统剪贴板
+    核心：使用 root.clipboard_append() 方法！
+    """
+    selected = listbox.curselection()
+    if not selected:
+        messagebox.showwarning("提示", "请先在列表中选中一个账号！")
+        return
+
+    index = selected[0]
+    if index >= len(accounts):
+        return
+
+    acc = accounts[index]
+    password = acc["password"]
+
+    # ★ 核心步骤：将密码写入系统剪贴板 ★
+    root.clipboard_clear()           # 第 1 步：清空剪贴板（防止之前的内容残留）
+    root.clipboard_append(password)  # 第 2 步：写入新内容
+
+    # 在底部状态栏显示提示
+    status_label.config(text=f"✅ 密码已复制到剪贴板！（{acc['site']}）")
+
+
+# "复制密码" 按钮
+copy_btn = tk.Button(
+    btn_frame, text="📋 复制密码",
+    command=copy_password,
+    font=("微软雅黑", 11),
+    bg="#4a90d9", fg="white",          # 蓝色按钮
+    activebackground="#357abd",
+    relief="flat", padx=12, pady=6,
+    cursor="hand2"
+)
+copy_btn.pack(side="left", padx=(0, 8))
+
+
+def copy_username():
+    """复制选中账号的用户名到系统剪贴板"""
+    selected = listbox.curselection()
+    if not selected:
+        messagebox.showwarning("提示", "请先在列表中选中一个账号！")
+        return
+
+    index = selected[0]
+    if index >= len(accounts):
+        return
+
+    acc = accounts[index]
+
+    # 复制用户名到剪贴板
+    root.clipboard_clear()
+    root.clipboard_append(acc["username"])
+
+    status_label.config(text=f"✅ 用户名已复制到剪贴板！（{acc['site']}）")
+
+
+# "复制用户名" 按钮
+user_copy_btn = tk.Button(
+    btn_frame, text="👤 复制用户名",
+    command=copy_username,
+    font=("微软雅黑", 11),
+    bg="#8e44ad", fg="white",          # 紫色按钮
+    activebackground="#7d3c98",
+    relief="flat", padx=12, pady=6,
+    cursor="hand2"
+)
+user_copy_btn.pack(side="left", padx=(0, 8))
+
+
+def delete_account():
+    """删除选中的账号（需要二次确认）"""
+    selected = listbox.curselection()
+    if not selected:
+        messagebox.showwarning("提示", "请先在列表中选中一个账号！")
+        return
+
+    index = selected[0]
+    if index >= len(accounts):
+        return
+
+    acc = accounts[index]
+
+    # 弹出确认对话框，防止误删
+    confirm = messagebox.askyesno("确认删除", f"确定要删除「{acc['site']}」的账号吗？")
+    if confirm:
+        del accounts[index]  # 从列表中删除
+        refresh_list()        # 刷新显示
+        detail_label.config(text="")  # 清空详情
+        status_label.config(text=f"🗑️ 已删除：{acc['site']}")
+
+
+# "删除" 按钮
+delete_btn = tk.Button(
+    btn_frame, text="🗑️ 删除",
+    command=delete_account,
+    font=("微软雅黑", 11),
+    bg="#e74c3c", fg="white",          # 红色按钮（警示色）
+    activebackground="#c0392b",
+    relief="flat", padx=12, pady=6,
+    cursor="hand2"
+)
+delete_btn.pack(side="left")
+
+
+# --- 刷新列表函数（被多个地方调用）---
+def refresh_list():
+    """清空 Listbox 并重新填入所有账号"""
+    listbox.delete(0, tk.END)          # 清空列表
+    for acc in accounts:
+        # 每行显示：🌐 网站名 — 用户名
+        listbox.insert(tk.END, f"🌐 {acc['site']} — {acc['username']}")
+
+    # 更新底部状态栏的账号数量
+    status_label.config(text=f"📊 共 {len(accounts)} 个账号")
+
+
+# --- 详情显示区 ---
+# 选中 Listbox 中的账号后，在这里显示详细信息
+detail_label = tk.Label(
+    right_frame,
+    text="💡 点击列表中的账号查看详情",
+    font=("微软雅黑", 11),
+    bg="#e8ecf1", fg="#555555",
+    anchor="w", justify="left",
+    relief="groove", bd=1,
+    padx=12, pady=8
+)
+detail_label.pack(fill="x", pady=(0, 8))
+
+
+# ============================================
+# 5. 底部状态栏
+# ============================================
+status_label = tk.Label(
+    root,
+    text="📊 还没有保存账号，快来添加第一个吧！",
+    font=("微软雅黑", 10),
+    bg="#d5dce4", fg="#555555",
+    anchor="w", padx=15, pady=6, relief="flat"
+)
+status_label.pack(side="bottom", fill="x")
+
+
+# ============================================
+# 6. 初始化：显示当前列表（空列表）
+# ============================================
+refresh_list()
+
+# ============================================
+# 7. 启动主循环（必须放在代码最后！）
+# ============================================
+root.mainloop()

@@ -1,0 +1,930 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>第8节：水果升级 — Pygame 课件</title>
+<style>
+  :root {
+    --bg-start: #e8f0fe;
+    --bg-mid: #dbeafe;
+    --bg-end: #bfdbfe;
+    --title: #1e40af;
+    --title-light: #2563eb;
+    --accent: #ea580c;
+    --accent-light: #f97316;
+    --text: #1e293b;
+    --text-light: #475569;
+    --card-bg: rgba(255,255,255,0.85);
+    --card-border: rgba(30,64,175,0.12);
+    --code-bg: #1e1e2e;
+    --code-text: #cdd6f4;
+    --code-comment: #6c7086;
+    --code-keyword: #cba6f7;
+    --code-string: #a6e3a1;
+    --code-number: #fab387;
+    --code-func: #89b4fa;
+    --nav-bg: rgba(255,255,255,0.92);
+    --shadow: 0 4px 24px rgba(30,64,175,0.10);
+    --shadow-lg: 0 8px 40px rgba(30,64,175,0.14);
+    --radius: 16px;
+    --radius-sm: 10px;
+    --transition: 0.35s cubic-bezier(0.4, 0, 0.2, 1);
+  }
+
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  html, body {
+    width: 100%; height: 100%;
+    overflow: hidden;
+    font-family: -apple-system, BlinkMacSystemFont, "PingFang SC", "Microsoft YaHei", "Noto Sans SC", sans-serif;
+    font-size: 22px;
+    line-height: 1.6;
+    color: var(--text);
+    background: linear-gradient(160deg, var(--bg-start) 0%, var(--bg-mid) 40%, var(--bg-end) 100%);
+    user-select: none;
+    -webkit-user-select: none;
+  }
+
+  /* ===== DECK CONTAINER ===== */
+  .deck {
+    width: 100%; height: 100%;
+    position: relative;
+    display: flex;
+    flex-direction: column;
+  }
+
+  /* ===== SLIDES WRAPPER ===== */
+  .slides-wrapper {
+    flex: 1;
+    position: relative;
+    overflow: hidden;
+    padding: 0 5vw;
+  }
+
+  /* ===== SINGLE SLIDE ===== */
+  .slide {
+    position: absolute;
+    inset: 0;
+    margin: 2vh 5vw;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    opacity: 0;
+    transform: translateY(18px);
+    transition: opacity var(--transition), transform var(--transition);
+    pointer-events: none;
+    padding: 2vh 0;
+  }
+  .slide.is-active {
+    opacity: 1;
+    transform: translateY(0);
+    pointer-events: auto;
+  }
+
+  /* ===== TITLE SLIDE (page 1) ===== */
+  .slide-cover {
+    align-items: center;
+    text-align: center;
+    justify-content: center;
+    gap: 2.5vh;
+  }
+  .slide-cover .lesson-num {
+    font-size: 1.4rem;
+    font-weight: 700;
+    color: var(--accent);
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+  }
+  .slide-cover h1 {
+    font-size: 4.2rem;
+    font-weight: 900;
+    color: var(--title);
+    line-height: 1.2;
+  }
+  .slide-cover .subtitle {
+    font-size: 1.8rem;
+    color: var(--text-light);
+    font-weight: 400;
+    margin-top: 0.5vh;
+  }
+  .slide-cover .decorations {
+    margin-top: 4vh;
+    display: flex;
+    gap: 20px;
+    flex-wrap: wrap;
+    justify-content: center;
+  }
+  .slide-cover .deco-fruit {
+    font-size: 3rem;
+    display: inline-block;
+    animation: float 3s ease-in-out infinite;
+  }
+  .slide-cover .deco-fruit:nth-child(1) { animation-delay: 0s; }
+  .slide-cover .deco-fruit:nth-child(2) { animation-delay: 0.5s; font-size: 3.5rem; }
+  .slide-cover .deco-fruit:nth-child(3) { animation-delay: 1s; }
+  .slide-cover .deco-fruit:nth-child(4) { animation-delay: 1.5s; font-size: 2.8rem; }
+  .slide-cover .deco-fruit:nth-child(5) { animation-delay: 2s; }
+
+  @keyframes float {
+    0%, 100% { transform: translateY(0); }
+    50% { transform: translateY(-14px); }
+  }
+
+  /* ===== CONTENT SLIDES ===== */
+  .slide-content {
+    justify-content: flex-start;
+    padding-top: 3vh;
+    gap: 2.5vh;
+  }
+  .slide-content h2 {
+    font-size: 3rem;
+    font-weight: 800;
+    color: var(--title);
+    line-height: 1.2;
+    display: flex;
+    align-items: center;
+    gap: 16px;
+  }
+  .slide-content h2 .icon {
+    font-size: 2.4rem;
+  }
+
+  /* Bullet list */
+  .bullet-list {
+    list-style: none;
+    padding: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 1.6vh;
+  }
+  .bullet-list li {
+    background: var(--card-bg);
+    border: 1px solid var(--card-border);
+    border-radius: var(--radius);
+    padding: 1.2vh 1.6vw;
+    font-size: 1.35rem;
+    font-weight: 500;
+    display: flex;
+    align-items: flex-start;
+    gap: 14px;
+    box-shadow: var(--shadow);
+    transition: transform 0.2s, box-shadow 0.2s;
+  }
+  .bullet-list li:hover {
+    transform: translateY(-2px);
+    box-shadow: var(--shadow-lg);
+  }
+  .bullet-list .bullet-icon {
+    font-size: 1.8rem;
+    flex-shrink: 0;
+    margin-top: 2px;
+  }
+  .bullet-list .bullet-text strong {
+    color: var(--accent);
+    font-weight: 700;
+  }
+
+  /* ===== CARD GRID (2-column) ===== */
+  .card-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 2vh 2vw;
+  }
+  .card-grid .card {
+    background: var(--card-bg);
+    border: 1px solid var(--card-border);
+    border-radius: var(--radius);
+    padding: 1.8vh 1.6vw;
+    box-shadow: var(--shadow);
+  }
+  .card-grid .card h3 {
+    font-size: 1.5rem;
+    color: var(--title);
+    margin-bottom: 0.8vh;
+    font-weight: 700;
+  }
+  .card-grid .card p {
+    font-size: 1.15rem;
+    color: var(--text-light);
+  }
+
+  /* ===== REVIEW BLOCK (slide 3) ===== */
+  .review-block {
+    background: var(--card-bg);
+    border: 1px solid var(--card-border);
+    border-radius: var(--radius);
+    padding: 2vh 2vw;
+    box-shadow: var(--shadow);
+    max-height: 50vh;
+    overflow-y: auto;
+  }
+  .review-block h3 {
+    font-size: 1.5rem;
+    color: var(--accent);
+    margin-bottom: 1.5vh;
+    font-weight: 700;
+  }
+  .review-block ul {
+    list-style: none;
+    padding: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 1vh;
+  }
+  .review-block ul li {
+    font-size: 1.2rem;
+    padding-left: 1.5em;
+    position: relative;
+    color: var(--text);
+  }
+  .review-block ul li::before {
+    content: "▸";
+    color: var(--accent);
+    position: absolute;
+    left: 0;
+    font-weight: 700;
+  }
+
+  /* ===== CODE BLOCK ===== */
+  .code-block {
+    background: var(--code-bg);
+    border-radius: var(--radius);
+    padding: 2vh 2vw;
+    font-family: "SF Mono", "Fira Code", "Cascadia Code", "Consolas", "Monaco", "Courier New", monospace;
+    font-size: 1.05rem;
+    line-height: 1.7;
+    color: var(--code-text);
+    overflow-x: auto;
+    overflow-y: auto;
+    max-height: 52vh;
+    box-shadow: 0 4px 20px rgba(0,0,0,0.3);
+    white-space: pre;
+    tab-size: 4;
+    position: relative;
+  }
+  .code-block .kw  { color: #cba6f7; font-weight: 600; }  /* keyword */
+  .code-block .str { color: #a6e3a1; }                     /* string */
+  .code-block .num { color: #fab387; }                     /* number */
+  .code-block .cmt { color: #6c7086; font-style: italic; } /* comment */
+  .code-block .fn  { color: #89b4fa; }                     /* function */
+  .code-block .op  { color: #89dceb; }                     /* operator */
+  .code-block .cls { color: #f9e2af; }                     /* class */
+  .code-block .var { color: #cdd6f4; }                     /* variable */
+  .code-block .builtin { color: #f38ba8; }                 /* builtin */
+
+  /* ===== KNOWLEDGE HIGHLIGHT BOX ===== */
+  .highlight-box {
+    background: linear-gradient(135deg, #fff7ed, #ffedd5);
+    border-left: 6px solid var(--accent);
+    border-radius: 0 var(--radius-sm) var(--radius-sm) 0;
+    padding: 1.5vh 1.5vw;
+    font-size: 1.3rem;
+    color: #7c2d12;
+    margin: 1vh 0;
+    box-shadow: var(--shadow);
+  }
+  .highlight-box strong {
+    color: var(--accent);
+  }
+
+  /* ===== FLOW ARROW (for state machine) ===== */
+  .flow-row {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 2vw;
+    flex-wrap: wrap;
+    margin: 2vh 0;
+  }
+  .flow-node {
+    background: var(--card-bg);
+    border: 2px solid var(--title);
+    border-radius: var(--radius);
+    padding: 1.5vh 2vw;
+    font-size: 1.3rem;
+    font-weight: 700;
+    color: var(--title);
+    box-shadow: var(--shadow);
+  }
+  .flow-node.accent {
+    border-color: var(--accent);
+    color: var(--accent);
+    background: #fff7ed;
+  }
+  .flow-arrow {
+    font-size: 2rem;
+    color: var(--accent);
+    font-weight: 700;
+  }
+
+  /* ===== EXERCISE SLIDE ===== */
+  .exercise-list {
+    list-style: none;
+    padding: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 1.5vh;
+  }
+  .exercise-list li {
+    background: var(--card-bg);
+    border: 1px solid var(--card-border);
+    border-radius: var(--radius);
+    padding: 1.4vh 1.6vw;
+    font-size: 1.25rem;
+    display: flex;
+    align-items: flex-start;
+    gap: 14px;
+    box-shadow: var(--shadow);
+  }
+  .exercise-list .ex-icon {
+    font-size: 1.8rem;
+    flex-shrink: 0;
+  }
+  .challenge-tag {
+    display: inline-block;
+    background: var(--accent);
+    color: #fff;
+    font-size: 0.85rem;
+    padding: 2px 12px;
+    border-radius: 999px;
+    font-weight: 700;
+    margin-left: 8px;
+    vertical-align: middle;
+  }
+
+  /* ===== BIG EMOJI ===== */
+  .big-icon {
+    font-size: 4rem;
+    text-align: center;
+    margin: 1vh 0;
+  }
+
+  /* ===== BOTTOM NAV BAR ===== */
+  .nav-bar {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 20px;
+    padding: 1.2vh 2vw;
+    background: var(--nav-bg);
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
+    border-top: 1px solid rgba(30,64,175,0.08);
+    flex-shrink: 0;
+    z-index: 10;
+  }
+  .nav-btn {
+    background: var(--title);
+    color: #fff;
+    border: none;
+    border-radius: 999px;
+    padding: 10px 28px;
+    font-size: 1.1rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: background 0.2s, transform 0.15s;
+    letter-spacing: 0.03em;
+  }
+  .nav-btn:hover {
+    background: var(--title-light);
+    transform: scale(1.04);
+  }
+  .nav-btn:active {
+    transform: scale(0.97);
+  }
+  .nav-btn:disabled {
+    background: #cbd5e1;
+    cursor: not-allowed;
+    transform: none;
+  }
+  .page-indicator {
+    font-size: 1.15rem;
+    font-weight: 600;
+    color: var(--text-light);
+    min-width: 80px;
+    text-align: center;
+    letter-spacing: 0.04em;
+  }
+
+  /* ===== PAGE NUMBER BADGE (top right) ===== */
+  .page-badge {
+    position: fixed;
+    top: 2vh;
+    right: 2.5vw;
+    background: rgba(30,64,175,0.12);
+    color: var(--title);
+    font-size: 0.95rem;
+    font-weight: 700;
+    padding: 6px 18px;
+    border-radius: 999px;
+    z-index: 20;
+    pointer-events: none;
+    letter-spacing: 0.04em;
+  }
+
+  /* ===== SECTION DIVIDER ===== */
+  .section-tag {
+    display: inline-block;
+    background: var(--accent);
+    color: #fff;
+    font-size: 0.9rem;
+    padding: 4px 16px;
+    border-radius: 999px;
+    font-weight: 700;
+    letter-spacing: 0.05em;
+    margin-bottom: 1vh;
+  }
+
+  /* Scrollbar styling */
+  ::-webkit-scrollbar { width: 6px; height: 6px; }
+  ::-webkit-scrollbar-track { background: transparent; }
+  ::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 999px; }
+  ::-webkit-scrollbar-thumb:hover { background: #94a3b8; }
+
+  /* ===== RESPONSIVE ===== */
+  @media (max-width: 900px) {
+    body { font-size: 18px; }
+    .slide-cover h1 { font-size: 2.8rem; }
+    .slide-cover .subtitle { font-size: 1.4rem; }
+    .slide-content h2 { font-size: 2.2rem; }
+    .bullet-list li { font-size: 1.1rem; }
+    .code-block { font-size: 0.85rem; }
+    .card-grid { grid-template-columns: 1fr; }
+  }
+  @media (min-width: 1600px) {
+    body { font-size: 26px; }
+    .slide-cover h1 { font-size: 5rem; }
+    .slide-content h2 { font-size: 3.5rem; }
+    .bullet-list li { font-size: 1.5rem; }
+    .code-block { font-size: 1.2rem; }
+  }
+</style>
+</head>
+<body>
+
+<div class="page-badge" id="pageBadge">1 / 13</div>
+
+<div class="deck">
+  <div class="slides-wrapper">
+
+    <!-- ============ SLIDE 1: TITLE ============ -->
+    <section class="slide slide-cover is-active" data-index="0">
+      <div class="lesson-num">Pygame 第 8 节</div>
+      <h1>水果升级</h1>
+      <p class="subtitle">让接水果游戏更精彩</p>
+      <div class="decorations">
+        <span class="deco-fruit">🍎</span>
+        <span class="deco-fruit">🍊</span>
+        <span class="deco-fruit">🍇</span>
+        <span class="deco-fruit">🍌</span>
+        <span class="deco-fruit">💣</span>
+      </div>
+    </section>
+
+    <!-- ============ SLIDE 2: LEARNING OBJECTIVES ============ -->
+    <section class="slide slide-content" data-index="1">
+      <span class="section-tag">学习目标</span>
+      <h2><span class="icon">🎯</span> 今天我们要学会</h2>
+      <ul class="bullet-list">
+        <li>
+          <span class="bullet-icon">📦</span>
+          <span class="bullet-text"><strong>字典存储属性</strong> — 用 dict 管理水果类型、分数、速度等多种信息，一个变量搞定所有属性</span>
+        </li>
+        <li>
+          <span class="bullet-icon">🎲</span>
+          <span class="bullet-text"><strong>概率控制</strong> — 使用 random.randint 控制炸弹和特殊道具的出现概率，让游戏充满惊喜</span>
+        </li>
+        <li>
+          <span class="bullet-icon">📈</span>
+          <span class="bullet-text"><strong>难度递增</strong> — 让下落速度随时间逐渐加快，游戏越来越有挑战性</span>
+        </li>
+        <li>
+          <span class="bullet-icon">🔄</span>
+          <span class="bullet-text"><strong>游戏状态机</strong> — 用 PLAYING / GAME_OVER 两种状态管理游戏流程</span>
+        </li>
+      </ul>
+    </section>
+
+    <!-- ============ SLIDE 3: REVIEW SECTION 7 ============ -->
+    <section class="slide slide-content" data-index="2">
+      <span class="section-tag">回顾</span>
+      <h2><span class="icon">📖</span> 第7节我们做了什么？</h2>
+      <div class="review-block">
+        <h3>简单版「接苹果」游戏回顾</h3>
+        <ul>
+          <li>用 pygame 创建游戏窗口（800×600）</li>
+          <li>用 Rect 表示玩家篮子和下落的苹果</li>
+          <li>键盘左右键控制篮子移动</li>
+          <li>苹果从顶部随机位置下落</li>
+          <li>用碰撞检测判断是否接到苹果</li>
+          <li>用 score 变量记录得分</li>
+          <li>用一个简单的游戏循环 while running:</li>
+        </ul>
+      </div>
+      <div class="highlight-box">
+        <strong>思考：</strong>如果我们要加入多种水果（苹果、橙子、香蕉……）和炸弹，第7节的代码够用吗？每个物品的属性（类型、分数、速度）要怎么管理？
+      </div>
+    </section>
+
+    <!-- ============ SLIDE 4: NEW KNOWLEDGE - DICT ============ -->
+    <section class="slide slide-content" data-index="3">
+      <span class="section-tag">新知识</span>
+      <h2><span class="icon">📦</span> 用字典存储物品属性</h2>
+      <div class="highlight-box">
+        <strong>为什么用字典？</strong> 一个水果有多项属性：类型、分数、速度、图片……用一个 dict 全部装在一起，比散落的一堆变量清晰多了！
+      </div>
+      <div class="card-grid">
+        <div class="card">
+          <h3>❌ 旧方法（散装变量）</h3>
+          <p style="font-family:monospace;font-size:1rem;line-height:1.9;color:var(--text);">
+            apple_type = "apple"<br>
+            apple_score = 10<br>
+            apple_speed = 3<br>
+            orange_type = "orange"<br>
+            orange_score = 15<br>
+            orange_speed = 4<br>
+            <span style="color:#94a3b8;">… 越来越多变量 😫</span>
+          </p>
+        </div>
+        <div class="card">
+          <h3>✅ 新方法（字典打包）</h3>
+          <p style="font-family:monospace;font-size:1rem;line-height:1.9;color:var(--text);">
+            item = {<br>
+            &nbsp;&nbsp;"type": "apple",<br>
+            &nbsp;&nbsp;"score": 10,<br>
+            &nbsp;&nbsp;"speed": 3<br>
+            }<br>
+            <span style="color:#16a34a;"># 一个变量，清爽！✨</span>
+          </p>
+        </div>
+      </div>
+    </section>
+
+    <!-- ============ SLIDE 5: CODE - FRUIT DICTS ============ -->
+    <section class="slide slide-content" data-index="4">
+      <span class="section-tag">代码示例</span>
+      <h2><span class="icon">💻</span> 定义多种水果的字典</h2>
+      <div class="code-block"><span class="cmt"># 定义水果类型配置</span>
+<span class="var">FRUIT_TYPES</span> = [
+    {<span class="str">"type"</span>: <span class="str">"apple"</span>,  <span class="str">"score"</span>: <span class="num">10</span>, <span class="str">"speed"</span>: <span class="num">3</span>, <span class="str">"color"</span>: (<span class="num">255</span>, <span class="num">0</span>, <span class="num">0</span>)},
+    {<span class="str">"type"</span>: <span class="str">"orange"</span>, <span class="str">"score"</span>: <span class="num">15</span>, <span class="str">"speed"</span>: <span class="num">4</span>, <span class="str">"color"</span>: (<span class="num">255</span>, <span class="num">165</span>, <span class="num">0</span>)},
+    {<span class="str">"type"</span>: <span class="str">"grape"</span>,  <span class="str">"score"</span>: <span class="num">20</span>, <span class="str">"speed"</span>: <span class="num">5</span>, <span class="str">"color"</span>: (<span class="num">128</span>, <span class="num">0</span>, <span class="num">128</span>)},
+    {<span class="str">"type"</span>: <span class="str">"banana"</span>, <span class="str">"score"</span>: <span class="num">12</span>, <span class="str">"speed"</span>: <span class="num">3</span>, <span class="str">"color"</span>: (<span class="num">255</span>, <span class="num">255</span>, <span class="num">0</span>)},
+    {<span class="str">"type"</span>: <span class="str">"bomb"</span>,   <span class="str">"score"</span>: <span class="num">-50</span>, <span class="str">"speed"</span>: <span class="num">6</span>, <span class="str">"color"</span>: (<span class="num">50</span>, <span class="num">50</span>, <span class="num">50</span>)},
+]
+
+<span class="cmt"># 生成一个新物品</span>
+<span class="kw">def</span> <span class="fn">spawn_item</span>():
+    fruit = random.choice(<span class="var">FRUIT_TYPES</span>).copy()
+    fruit[<span class="str">"rect"</span>] = pygame.Rect(random_x, <span class="num">0</span>, <span class="num">40</span>, <span class="num">40</span>)
+    <span class="kw">return</span> fruit</div>
+    </section>
+
+    <!-- ============ SLIDE 6: NEW KNOWLEDGE - PROBABILITY ============ -->
+    <section class="slide slide-content" data-index="5">
+      <span class="section-tag">新知识</span>
+      <h2><span class="icon">🎲</span> 概率控制</h2>
+      <div class="highlight-box">
+        <strong>核心思路：</strong>用 <code style="background:#fde68a;padding:2px 8px;border-radius:4px;font-weight:700;">random.randint(1, 100)</code> 生成随机数，根据数值范围决定生成什么物品。
+      </div>
+      <ul class="bullet-list">
+        <li>
+          <span class="bullet-icon">🍎</span>
+          <span class="bullet-text">生成一个 1~100 的随机整数</span>
+        </li>
+        <li>
+          <span class="bullet-icon">🎯</span>
+          <span class="bullet-text">如果数字 ≤ 10 → 生成<strong>炸弹</strong>（10% 概率）</span>
+        </li>
+        <li>
+          <span class="bullet-icon">⭐</span>
+          <span class="bullet-text">如果数字 ≤ 15 → 生成<strong>特殊道具</strong>（5% 概率）</span>
+        </li>
+        <li>
+          <span class="bullet-icon">🍊</span>
+          <span class="bullet-text">否则 → 随机生成<strong>普通水果</strong>（85% 概率）</span>
+        </li>
+      </ul>
+      <div class="highlight-box">
+        <strong>概率分配原则：</strong>所有概率加起来 = 100%。数字区间小的 = 出现概率低、更稀有！
+      </div>
+    </section>
+
+    <!-- ============ SLIDE 7: CODE - BOMB PROBABILITY ============ -->
+    <section class="slide slide-content" data-index="6">
+      <span class="section-tag">代码示例</span>
+      <h2><span class="icon">💻</span> 10% 概率生成炸弹</h2>
+      <div class="code-block"><span class="kw">import</span> random
+
+<span class="kw">def</span> <span class="fn">spawn_item_with_probability</span>():
+    roll = random.randint(<span class="num">1</span>, <span class="num">100</span>)
+
+    <span class="kw">if</span> roll <= <span class="num">10</span>:          <span class="cmt"># 10% 概率：炸弹 💣</span>
+        item_type = <span class="str">"bomb"</span>
+        score = -<span class="num">50</span>
+    <span class="kw">elif</span> roll <= <span class="num">15</span>:      <span class="cmt"># 5% 概率：金币 ⭐</span>
+        item_type = <span class="str">"coin"</span>
+        score = <span class="num">50</span>
+    <span class="kw">else</span>:                   <span class="cmt"># 85% 概率：普通水果 🍎</span>
+        fruit = random.choice([<span class="str">"apple"</span>, <span class="str">"orange"</span>, <span class="str">"grape"</span>])
+        item_type = fruit
+        score = <span class="num">10</span>
+
+    <span class="kw">return</span> {
+        <span class="str">"type"</span>: item_type,
+        <span class="str">"score"</span>: score,
+        <span class="str">"speed"</span>: random.randint(<span class="num">3</span>, <span class="num">6</span>)
+    }</div>
+    </section>
+
+    <!-- ============ SLIDE 8: NEW KNOWLEDGE - DIFFICULTY ============ -->
+    <section class="slide slide-content" data-index="7">
+      <span class="section-tag">新知识</span>
+      <h2><span class="icon">📈</span> 难度递增</h2>
+      <div class="highlight-box">
+        <strong>设计理念：</strong>游戏不能一直一个难度！随着时间的推移，物品下落速度越来越快，考验玩家的反应能力。
+      </div>
+      <ul class="bullet-list">
+        <li>
+          <span class="bullet-icon">⏱️</span>
+          <span class="bullet-text">使用 <strong>pygame.time.get_ticks()</strong> 获取游戏运行时间（毫秒）</span>
+        </li>
+        <li>
+          <span class="bullet-icon">📊</span>
+          <span class="bullet-text">设置一个 <strong>base_speed</strong>（基础速度），在此基础上逐渐增加</span>
+        </li>
+        <li>
+          <span class="bullet-icon">➕</span>
+          <span class="bullet-text">每隔一定时间（如 10 秒），全局速度增加 0.5</span>
+        </li>
+        <li>
+          <span class="bullet-icon">🎮</span>
+          <span class="bullet-text">同时可以增加<strong>生成频率</strong>，让水果掉得更密集</span>
+        </li>
+      </ul>
+      <div style="text-align:center;margin-top:1.5vh;">
+        <span style="font-size:1.3rem;">难度曲线：</span>
+        <span style="font-size:1.1rem;">🟢 简单 → 🟡 中等 → 🟠 困难 → 🔴 地狱</span>
+      </div>
+    </section>
+
+    <!-- ============ SLIDE 9: CODE - SPEED INCREASE ============ -->
+    <section class="slide slide-content" data-index="8">
+      <span class="section-tag">代码示例</span>
+      <h2><span class="icon">💻</span> 速度随时间逐渐加快</h2>
+      <div class="code-block"><span class="cmt"># 难度递增系统</span>
+<span class="var">base_speed</span> = <span class="num">3</span>
+<span class="var">speed_increment</span> = <span class="num">0.5</span>        <span class="cmt"># 每次增加 0.5</span>
+<span class="var">difficulty_interval</span> = <span class="num">10000</span>  <span class="cmt"># 每 10 秒（10000 毫秒）升级</span>
+<span class="var">last_difficulty_up</span> = <span class="num">0</span>
+
+<span class="cmt"># 在游戏主循环中：</span>
+<span class="var">current_time</span> = pygame.time.get_ticks()
+<span class="kw">if</span> current_time - <span class="var">last_difficulty_up</span> > <span class="var">difficulty_interval</span>:
+    <span class="var">base_speed</span> += <span class="var">speed_increment</span>
+    <span class="var">last_difficulty_up</span> = current_time
+    print(<span class="str">f"难度升级！当前速度: </span><span class="op">{</span><span class="var">base_speed</span><span class="op">}</span><span class="str">"</span>)
+
+<span class="cmt"># 生成物品时使用当前速度</span>
+<span class="kw">def</span> <span class="fn">spawn_item</span>():
+    speed = <span class="var">base_speed</span> + random.uniform(-<span class="num">1</span>, <span class="num">1</span>)
+    <span class="cmt"># ... 创建物品，使用 speed 作为下落速度</span></div>
+    </section>
+
+    <!-- ============ SLIDE 10: NEW KNOWLEDGE - STATE MACHINE ============ -->
+    <section class="slide slide-content" data-index="9">
+      <span class="section-tag">新知识</span>
+      <h2><span class="icon">🔄</span> 游戏状态机</h2>
+      <div class="highlight-box">
+        <strong>什么是状态机？</strong>游戏在不同「状态」之间切换，每个状态下执行不同的逻辑。就像红绿灯：红灯停、绿灯行，各有各的规则。
+      </div>
+      <div class="flow-row">
+        <div class="flow-node">🎮 PLAYING<br><small style="font-weight:400;font-size:0.85rem;">游戏中</small></div>
+        <span class="flow-arrow">→ 生命为 0 →</span>
+        <div class="flow-node accent">💀 GAME_OVER<br><small style="font-weight:400;font-size:0.85rem;">游戏结束</small></div>
+        <span class="flow-arrow">→ 按 R 键 →</span>
+        <div class="flow-node">🎮 PLAYING<br><small style="font-weight:400;font-size:0.85rem;">重新开始</small></div>
+      </div>
+      <ul class="bullet-list" style="margin-top:1.5vh;">
+        <li>
+          <span class="bullet-icon">🎮</span>
+          <span class="bullet-text"><strong>PLAYING 状态：</strong>正常更新位置、检测碰撞、计分、生成新物品</span>
+        </li>
+        <li>
+          <span class="bullet-icon">💀</span>
+          <span class="bullet-text"><strong>GAME_OVER 状态：</strong>停止更新、显示结束画面、等待玩家按 R 重新开始</span>
+        </li>
+      </ul>
+    </section>
+
+    <!-- ============ SLIDE 11: CODE - STATE MACHINE ============ -->
+    <section class="slide slide-content" data-index="10">
+      <span class="section-tag">代码示例</span>
+      <h2><span class="icon">💻</span> 状态机的实现</h2>
+      <div class="code-block"><span class="cmt"># 定义游戏状态</span>
+<span class="var">PLAYING</span> = <span class="str">"playing"</span>
+<span class="var">GAME_OVER</span> = <span class="str">"game_over"</span>
+<span class="var">game_state</span> = <span class="var">PLAYING</span>
+
+<span class="cmt"># 游戏主循环</span>
+<span class="kw">while</span> <span class="var">running</span>:
+    <span class="kw">for</span> event <span class="kw">in</span> pygame.event.get():
+        <span class="kw">if</span> event.type == pygame.QUIT:
+            <span class="var">running</span> = <span class="kw">False</span>
+        <span class="kw">if</span> event.type == pygame.KEYDOWN:
+            <span class="kw">if</span> event.key == pygame.K_r <span class="kw">and</span> <span class="var">game_state</span> == <span class="var">GAME_OVER</span>:
+                <span class="fn">reset_game</span>()  <span class="cmt"># 重新开始</span>
+
+    <span class="kw">if</span> <span class="var">game_state</span> == <span class="var">PLAYING</span>:
+        <span class="fn">update_game</span>()   <span class="cmt"># 更新物品位置、碰撞检测</span>
+        <span class="fn">draw_game</span>()     <span class="cmt"># 绘制所有游戏元素</span>
+    <span class="kw">elif</span> <span class="var">game_state</span> == <span class="var">GAME_OVER</span>:
+        <span class="fn">draw_game_over</span>()  <span class="cmt"># 只绘制结束画面</span></div>
+    </section>
+
+    <!-- ============ SLIDE 12: NEW FEATURE - LIVES ============ -->
+    <section class="slide slide-content" data-index="11">
+      <span class="section-tag">新增功能</span>
+      <h2><span class="icon">❤️</span> 生命值系统 &amp; 结束画面</h2>
+      <div class="card-grid">
+        <div class="card">
+          <h3>❤️ 生命值系统</h3>
+          <p>
+            <strong>初始生命：</strong>3 颗心<br>
+            <strong>接到炸弹：</strong>生命 -1<br>
+            <strong>接到水果：</strong>正常加分<br>
+            <strong>生命归零：</strong>进入 GAME_OVER
+          </p>
+        </div>
+        <div class="card">
+          <h3>💀 游戏结束画面</h3>
+          <p>
+            <strong>显示内容：</strong><br>
+            - 最终得分<br>
+            - 接到水果总数<br>
+            - "按 R 重新开始"<br>
+            - 半透明遮罩效果
+          </p>
+        </div>
+      </div>
+      <div class="highlight-box" style="margin-top:1.5vh;">
+        <strong>关键代码：</strong><code style="background:#fde68a;padding:2px 8px;border-radius:4px;">if item["type"] == "bomb": lives -= 1</code> &nbsp;&nbsp;|&nbsp;&nbsp;
+        <code style="background:#fde68a;padding:2px 8px;border-radius:4px;">if lives <= 0: game_state = GAME_OVER</code>
+      </div>
+    </section>
+
+    <!-- ============ SLIDE 13: EXERCISE ============ -->
+    <section class="slide slide-content" data-index="12">
+      <span class="section-tag">动手实践</span>
+      <h2><span class="icon">✏️</span> 课堂练习 &amp; 挑战任务</h2>
+      <ul class="exercise-list">
+        <li>
+          <span class="ex-icon">📝</span>
+          <span>
+            <strong>基础练习：</strong>在上一节"接苹果"代码的基础上，加入字典存储多种水果（至少3种），每种分数不同。
+          </span>
+        </li>
+        <li>
+          <span class="ex-icon">🎲</span>
+          <span>
+            <strong>概率控制：</strong>修改概率表，让苹果 50%、橙子 30%、葡萄 15%、炸弹 5%。
+          </span>
+        </li>
+        <li>
+          <span class="ex-icon">📈</span>
+          <span>
+            <strong>难度递增：</strong>实现每 15 秒速度增加 1，并测试游戏是否太难或太简单。
+          </span>
+        </li>
+        <li>
+          <span class="ex-icon">❤️</span>
+          <span>
+            <strong>生命系统：</strong>加入 3 条命，接到炸弹扣 1 命，生命归零显示 GAME_OVER。
+            <span class="challenge-tag">挑战</span>
+          </span>
+        </li>
+        <li>
+          <span class="ex-icon">⭐</span>
+          <span>
+            <strong>加分道具：</strong>加入"金币"道具（5%概率），接到后 +50 分，并显示特殊动画。
+            <span class="challenge-tag">挑战</span>
+          </span>
+        </li>
+      </ul>
+      <div class="highlight-box" style="margin-top:1vh;">
+        <strong>💡 提示：</strong>先完成基础练习，再逐个添加新功能。每加一个功能就跑一次，确认没问题再继续！
+      </div>
+    </section>
+
+  </div><!-- /slides-wrapper -->
+
+  <!-- ===== BOTTOM NAV BAR ===== -->
+  <nav class="nav-bar">
+    <button class="nav-btn" id="prevBtn" title="上一页 (← 键)">← 上一页</button>
+    <span class="page-indicator" id="pageIndicator">1 / 13</span>
+    <button class="nav-btn" id="nextBtn" title="下一页 (→ 键)">下一页 →</button>
+  </nav>
+</div><!-- /deck -->
+
+<script>
+(function() {
+  const slides = document.querySelectorAll('.slide');
+  const total = slides.length;
+  let current = 0;
+
+  const prevBtn = document.getElementById('prevBtn');
+  const nextBtn = document.getElementById('nextBtn');
+  const pageIndicator = document.getElementById('pageIndicator');
+  const pageBadge = document.getElementById('pageBadge');
+
+  function go(index) {
+    // Clamp index
+    index = Math.max(0, Math.min(total - 1, index));
+    if (index === current) return;
+
+    // Remove active from old slide
+    slides[current].classList.remove('is-active');
+    // Add active to new slide
+    slides[index].classList.add('is-active');
+
+    current = index;
+
+    // Update UI
+    const label = (current + 1) + ' / ' + total;
+    pageIndicator.textContent = label;
+    pageBadge.textContent = label;
+
+    // Update button states
+    prevBtn.disabled = (current === 0);
+    nextBtn.disabled = (current === total - 1);
+
+    // Update URL hash for deep-linking
+    history.replaceState(null, '', '#/' + (current + 1));
+  }
+
+  // Button handlers
+  prevBtn.addEventListener('click', function() { go(current - 1); });
+  nextBtn.addEventListener('click', function() { go(current + 1); });
+
+  // Keyboard handlers
+  document.addEventListener('keydown', function(e) {
+    if (e.key === 'ArrowRight' || e.key === ' ') {
+      e.preventDefault();
+      go(current + 1);
+    } else if (e.key === 'ArrowLeft') {
+      e.preventDefault();
+      go(current - 1);
+    } else if (e.key === 'PageDown') {
+      e.preventDefault();
+      go(current + 1);
+    } else if (e.key === 'PageUp') {
+      e.preventDefault();
+      go(current - 1);
+    } else if (e.key === 'Home') {
+      e.preventDefault();
+      go(0);
+    } else if (e.key === 'End') {
+      e.preventDefault();
+      go(total - 1);
+    }
+  });
+
+  // Touch swipe support
+  let touchStartX = 0;
+  let touchStartY = 0;
+  document.addEventListener('touchstart', function(e) {
+    touchStartX = e.touches[0].clientX;
+    touchStartY = e.touches[0].clientY;
+  }, { passive: true });
+  document.addEventListener('touchend', function(e) {
+    var dx = e.changedTouches[0].clientX - touchStartX;
+    var dy = e.changedTouches[0].clientY - touchStartY;
+    // Only trigger if horizontal swipe is dominant
+    if (Math.abs(dx) > Math.abs(dy) && Math.abs(dx) > 40) {
+      if (dx < 0) go(current + 1);
+      else go(current - 1);
+    }
+  });
+
+  // Deep-link: if URL has #/N, jump to that slide
+  function handleHash() {
+    var hash = window.location.hash;
+    var match = hash.match(/^#\/(\d+)$/);
+    if (match) {
+      var n = parseInt(match[1], 10) - 1;
+      if (n >= 0 && n < total) {
+        go(n);
+      }
+    }
+  }
+  handleHash();
+  window.addEventListener('hashchange', handleHash);
+
+  // Initialize button states
+  prevBtn.disabled = (current === 0);
+  nextBtn.disabled = (current === total - 1);
+})();
+</script>
+</body>
+</html>

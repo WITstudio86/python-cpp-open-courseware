@@ -1,0 +1,202 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>第26节：字典的增删改查</title>
+<link rel="stylesheet" href="assets/fonts.css">
+<link rel="stylesheet" href="assets/base.css">
+<link rel="stylesheet" href="assets/animations/animations.css">
+<link rel="stylesheet" href="style.css">
+<style>
+.tpl-course-module .slide{overflow-y:auto}
+.tpl-course-module .slide .main{overflow-y:auto;max-height:calc(100vh - 128px)}
+.tpl-course-module .slide.full{overflow-y:auto;display:flex;flex-direction:column;justify-content:flex-start;padding-top:64px}
+.tpl-course-module .h1{font-size:52px}
+.tpl-course-module .h2{font-size:32px}
+.tpl-course-module .slide{padding:44px 56px;gap:36px}
+.code-mini{background:#2a2418;color:#f4f1e8;border-radius:14px;padding:18px 22px;font-family:'JetBrains Mono',monospace;font-size:14px;line-height:1.7;margin:12px 0;overflow-x:auto}
+.code-mini .cmt{color:#8a7f68;font-style:italic}
+.code-mini .kw{color:#e8a770}
+.code-mini .str{color:#8ec6b2}
+</style>
+</head>
+<body class="tpl-course-module">
+<div class="deck">
+
+<!-- ═══ COVER ═══ -->
+<section class="slide full" data-title="封面">
+  <p class="kicker">第五单元 · 第26节</p>
+  <h1 class="h1 mt-s">字典的增删改查<br><em>玩转键值对</em></h1>
+  <p class="lede mt-l" style="max-width:60ch">学会对字典进行增、删、改、查四大操作，用 .get() 安全取值，用 .keys()/.values()/.items() 遍历字典！</p>
+  <div class="row mt-l" style="gap:12px;flex-wrap:wrap">
+    <span class="pill-academic">增删改查</span><span class="pill-academic">.get() 安全访问</span>
+    <span class="pill-academic">.keys() .values() .items()</span>
+  </div>
+  <div class="deck-footer"><span>Python 趣味学习课程</span><span class="slide-number" data-current="1" data-total="7"></span></div>
+</section>
+
+<!-- ═══ 教学目标 ═══ -->
+<section class="slide" data-title="教学目标">
+  <aside class="sidebar"><div class="brand">Unit 5</div><h5>第 26 节</h5><p class="dim" style="font-size:12px">字典的增删改查</p></aside>
+  <div class="main">
+    <p class="kicker">LEARNING OBJECTIVES</p>
+    <h2 class="h2 mt-s">教学目标</h2>
+    <ul class="obj-list mt-m">
+      <li>掌握字典的增、删、改、查四大基本操作</li>
+      <li>理解 .get() 安全取值与直接 [key] 的区别</li>
+      <li>学会使用 .keys()、.values()、.items() 遍历字典</li>
+      <li>独立完成"通讯录查询"小项目</li>
+    </ul>
+  </div>
+</section>
+
+<!-- ═══ 重点概念 ═══ -->
+<section class="slide" data-title="重点概念">
+  <aside class="sidebar"><div class="brand">Unit 5</div><h5>第 26 节</h5><p class="dim" style="font-size:12px">重点概念</p></aside>
+  <div class="main">
+    <p class="kicker">KEY CONCEPTS</p>
+    <h2 class="h2 mt-s">字典的 CRUD 四大操作</h2>
+    <div class="grid g2 mt-m" style="display:grid;grid-template-columns:1fr 1fr;gap:16px">
+      <div class="concept-box">
+        <h4>C —— 增 (Create)</h4>
+        <p class="dim">dict[新key] = 新value，直接赋值即可添加新键值对。如果 key 已存在，则变成"改"操作。</p>
+      </div>
+      <div class="concept-box">
+        <h4>R —— 查 (Read)</h4>
+        <p class="dim">dict[key] 直接取值（key 不存在会报错）；dict.get(key, 默认值) 安全取值（不存在返回 None 或默认值）。</p>
+      </div>
+      <div class="concept-box">
+        <h4>U —— 改 (Update)</h4>
+        <p class="dim">dict[已存在的key] = 新value，修改已有键的值。和"增"用的是同一种语法！</p>
+      </div>
+      <div class="concept-box">
+        <h4>D —— 删 (Delete)</h4>
+        <p class="dim">del dict[key] 删除指定键值对；dict.pop(key) 删除并返回该值；dict.clear() 清空整个字典。</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ═══ 核心讲解 1：增删操作 ═══ -->
+<section class="slide" data-title="增删操作">
+  <aside class="sidebar"><div class="brand">Unit 5</div><h5>第 26 节</h5><p class="dim" style="font-size:12px">增删操作</p></aside>
+  <div class="main">
+    <p class="kicker">CORE CONTENT</p>
+    <h2 class="h2 mt-s">字典的增与删</h2>
+
+    <div class="code-mini mt-m"><pre style="margin:0"><span class="cmt"># 初始字典</span>
+info = {<span class="str">"name"</span>: <span class="str">"小明"</span>, <span class="str">"age"</span>: <span class="str">12</span>}
+<span class="kw">print</span>(info)  <span class="cmt"># {'name': '小明', 'age': 12}</span>
+
+<span class="cmt"># ── 增：添加新键值对 ──</span>
+info[<span class="str">"phone"</span>] = <span class="str">"13800138000"</span>
+info[<span class="str">"grade"</span>] = <span class="str">"六年级"</span>
+<span class="kw">print</span>(info)
+<span class="cmt"># {'name': '小明', 'age': 12, 'phone': '13800138000', 'grade': '六年级'}</span>
+
+<span class="cmt"># ── 删：三种删除方式 ──</span>
+<span class="kw">del</span> info[<span class="str">"grade"</span>]       <span class="cmt"># 方式1: del 删除指定 key</span>
+phone_num = info.pop(<span class="str">"phone"</span>)  <span class="cmt"># 方式2: pop() 删除并返回</span>
+<span class="kw">print</span>(<span class="str">f"删除的电话号：{phone_num}"</span>)
+<span class="cmt"># info.clear()          # 方式3: clear() 清空整个字典</span>
+
+<span class="kw">print</span>(info)  <span class="cmt"># {'name': '小明', 'age': 12}</span></pre></div>
+
+    <div class="callout"><b>注意：</b>增和改用同一种语法 info[key] = value —— 如果 key 不存在就是"增"，如果 key 已经存在就是"改"！</div>
+  </div>
+</section>
+
+<!-- ═══ 核心讲解 2：查操作 ═══ -->
+<section class="slide" data-title="查操作">
+  <aside class="sidebar"><div class="brand">Unit 5</div><h5>第 26 节</h5><p class="dim" style="font-size:12px">查操作</p></aside>
+  <div class="main">
+    <p class="kicker">CORE CONTENT</p>
+    <h2 class="h2 mt-s">字典的查 —— .get() 安全访问</h2>
+
+    <div class="code-mini mt-m"><pre style="margin:0"><span class="cmt"># 字典</span>
+student = {<span class="str">"name"</span>: <span class="str">"小红"</span>, <span class="str">"age"</span>: <span class="str">11</span>, <span class="str">"score"</span>: <span class="str">95</span>}
+
+<span class="cmt"># ── 方式1: dict[key] 直接访问 ──</span>
+<span class="kw">print</span>(student[<span class="str">"name"</span>])   <span class="cmt"># 小红 ✅</span>
+<span class="cmt"># print(student["phone"])  # KeyError! ❌ 直接报错！</span>
+
+<span class="cmt"># ── 方式2: .get() 安全访问 ──</span>
+result1 = student.get(<span class="str">"name"</span>)
+<span class="kw">print</span>(result1)  <span class="cmt"># 小红 （key存在，返回对应的值）</span>
+
+result2 = student.get(<span class="str">"phone"</span>)
+<span class="kw">print</span>(result2)  <span class="cmt"># None （key不存在，返回 None 不报错！）</span>
+
+<span class="cmt"># .get(key, 默认值) —— 不存在时返回你指定的默认值</span>
+result3 = student.get(<span class="str">"phone"</span>, <span class="str">"暂无"</span>)
+<span class="kw">print</span>(result3)  <span class="cmt"># 暂无</span></pre></div>
+
+    <div class="callout"><b>对比总结：</b>dict[key] —— key 不存在就报错，适合"确定存在"的情况。.get(key, 默认值) —— key 不存在不报错，返回默认值，适合"不确定存不存在"的情况。</div>
+
+    <div class="callout"><b>判断 key 是否存在：</b>用 <code>if "phone" in student:</code> 来检查字典里有没有这个键。</div>
+
+    <h2 class="h2 mt-l">.keys() .values() .items() 遍历字典</h2>
+
+    <div class="code-mini mt-m"><pre style="margin:0">fruit_prices = {<span class="str">"苹果"</span>: <span class="str">5</span>, <span class="str">"香蕉"</span>: <span class="str">3</span>, <span class="str">"橙子"</span>: <span class="str">4</span>}
+
+<span class="cmt"># ── .keys() 遍历所有键 ──</span>
+<span class="kw">for</span> fruit <span class="kw">in</span> fruit_prices.keys():
+    <span class="kw">print</span>(fruit)         <span class="cmt"># 苹果  香蕉  橙子</span>
+
+<span class="cmt"># ── .values() 遍历所有值 ──</span>
+<span class="kw">for</span> price <span class="kw">in</span> fruit_prices.values():
+    <span class="kw">print</span>(price)         <span class="cmt"># 5  3  4</span>
+
+<span class="cmt"># ── .items() 同时遍历键和值（最常用！）──</span>
+<span class="kw">for</span> fruit, price <span class="kw">in</span> fruit_prices.items():
+    <span class="kw">print</span>(<span class="str">f"{fruit}：{price}元"</span>)
+<span class="cmt"># 苹果：5元  香蕉：3元  橙子：4元</span></pre></div>
+
+    <div class="callout"><b>最常用：</b><code>for key, value in dict.items()</code> 一次拿到键和值，是最常见的遍历字典方式。默认 <code>for key in dict</code> 等于 <code>for key in dict.keys()</code>。</div>
+  </div>
+</section>
+
+<!-- ═══ 课堂练习 ═══ -->
+<section class="slide" data-title="课堂练习">
+  <aside class="sidebar"><div class="brand">Unit 5</div><h5>第 26 节</h5><p class="dim" style="font-size:12px">课堂练习</p></aside>
+  <div class="main">
+    <p class="kicker">EXERCISES</p>
+    <h2 class="h2 mt-s">课堂练习</h2>
+
+    <div class="exercise mt-m"><b>基础练习：</b>创建自己的"个人信息字典"（姓名、年龄、爱好、星座），练习增（添加"最喜欢的食物"）、删（删除"爱好"）、改（修改"年龄"）、查（用 .get() 安全访问"星座"）。</div>
+
+    <div class="exercise mt-m"><b>遍历练习：</b>建立一份"成绩单字典"（语文:95, 数学:88, 英语:92, 科学:85），用 .items() 遍历打印每门课的成绩，再遍历 .values() 计算总分和平均分。</div>
+
+    <div class="exercise mt-m"><b>挑战练习：</b>做一个"通讯录查询系统"——先建一个通讯录字典（名字→电话），然后让用户输入名字，用 .get() 安全查询。如果找到就显示电话，找不到就提示"通讯录中没有此人"。</div>
+  </div>
+</section>
+
+<!-- ═══ 小结 ═══ -->
+<section class="slide full" data-title="小结">
+  <p class="kicker">SUMMARY</p>
+  <h2 class="h2 mt-s">学会了什么？</h2>
+  <div class="grid g2 mt-l" style="display:grid;grid-template-columns:1fr 1fr;gap:20px;max-width:80ch">
+    <div class="concept-box">
+      <h4>核心要点</h4>
+      <ul style="margin:8px 0 0;padding-left:18px;color:var(--text-2);line-height:1.8">
+        <li><b>增：</b>dict[新key] = value（key 已存在则变成改）</li>
+        <li><b>删：</b>del dict[key]、pop(key)、clear()</li>
+        <li><b>改：</b>dict[已存在key] = 新value</li>
+        <li><b>查：</b>dict[key]（可能报错）vs .get(key, 默认值)（安全）</li>
+        <li><b>判断存在：</b>if key in dict</li>
+        <li><b>遍历：</b>.keys()仅键、.values()仅值、.items()键值一起</li>
+        <li><b>最常用：</b>for k, v in dict.items()</li>
+      </ul>
+    </div>
+    <div class="concept-box">
+      <h4>下节预告</h4>
+      <p class="dim">第27节：综合练习 —— 通讯录小管家</p>
+      <p class="dim" style="font-size:13px;margin-top:8px">学完了字典的增删改查，下节课做一个完整的通讯录管理程序！综合运用列表里放字典、while 循环菜单、增删改查全部操作，打造属于自己的通讯录小管家。</p>
+    </div>
+  </div>
+  <div class="deck-footer"><span>Python 趣味学习课程 · 第26节</span></div>
+</section>
+
+</div>
+<script src="assets/runtime.js"></script>
+</body></html>

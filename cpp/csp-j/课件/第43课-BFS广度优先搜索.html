@@ -1,0 +1,587 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>第43课：BFS 广度优先搜索 — CSP-J 备考课程</title>
+<style>
+* { margin: 0; padding: 0; box-sizing: border-box; }
+
+body {
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "PingFang SC", "Microsoft YaHei", "Helvetica Neue", sans-serif;
+    background: #f5f5f5;
+    color: #212121;
+    overflow: hidden;
+}
+
+/* 顶部标题栏 */
+.title-bar {
+    background: #1a237e;
+    color: #ffffff;
+    padding: 12px 24px;
+    font-size: 18px;
+    font-weight: 700;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    z-index: 100;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.2);
+}
+.title-bar .badge {
+    background: #ffd600;
+    color: #1a237e;
+    padding: 2px 10px;
+    border-radius: 12px;
+    font-size: 13px;
+    font-weight: 600;
+}
+
+/* 幻灯片容器 */
+.slides-container {
+    position: absolute;
+    top: 50px;
+    left: 0;
+    right: 0;
+    bottom: 60px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 16px;
+}
+
+.slide {
+    display: none;
+    background: #ffffff;
+    border-radius: 12px;
+    box-shadow: 0 4px 24px rgba(0,0,0,0.10);
+    max-width: 960px;
+    width: 100%;
+    max-height: 100%;
+    overflow-y: auto;
+    padding: 32px 40px;
+    position: relative;
+}
+.slide.active { display: block; }
+
+.slide h1 {
+    font-size: 28px;
+    color: #1a237e;
+    margin-bottom: 8px;
+    border-bottom: 3px solid #ffd600;
+    padding-bottom: 10px;
+    display: inline-block;
+}
+.slide h2 {
+    font-size: 22px;
+    color: #1a237e;
+    margin: 20px 0 10px;
+}
+.slide h3 {
+    font-size: 18px;
+    color: #283593;
+    margin: 14px 0 8px;
+}
+.slide p, .slide li {
+    font-size: 15px;
+    line-height: 1.75;
+    color: #333;
+    margin-bottom: 6px;
+}
+.slide ul, .slide ol {
+    padding-left: 24px;
+    margin-bottom: 10px;
+}
+
+/* 代码块 */
+.code-block {
+    background: #1e1e1e;
+    color: #d4d4d4;
+    border-radius: 8px;
+    padding: 14px 18px;
+    margin: 10px 0 16px;
+    font-family: "Consolas", "Monaco", "Courier New", monospace;
+    font-size: 13px;
+    line-height: 1.6;
+    overflow-x: auto;
+    white-space: pre-wrap;
+    word-break: break-word;
+}
+.code-block .keyword { color: #569cd6; }
+.code-block .func   { color: #dcdcaa; }
+.code-block .number { color: #b5cea8; }
+.code-block .string { color: #ce9178; }
+.code-block .comment { color: #6a9955; font-style: italic; }
+.code-block .preprocessor { color: #c586c0; }
+.code-block .type { color: #4ec9b0; }
+
+/* 考试技巧提示框 */
+.tip-box {
+    border-left: 4px solid #ffd600;
+    background: #fffde7;
+    padding: 12px 16px;
+    margin: 12px 0;
+    border-radius: 0 8px 8px 0;
+    font-size: 14px;
+}
+.tip-box strong {
+    color: #f57f17;
+}
+
+/* 警告框 */
+.warn-box {
+    border-left: 4px solid #ff9800;
+    background: #fff3e0;
+    padding: 12px 16px;
+    margin: 12px 0;
+    border-radius: 0 8px 8px 0;
+    font-size: 14px;
+}
+.warn-box strong {
+    color: #e65100;
+}
+
+/* 对比表格 */
+.compare-table {
+    width: 100%;
+    border-collapse: collapse;
+    margin: 12px 0 16px;
+    font-size: 14px;
+}
+.compare-table th {
+    background: #1a237e;
+    color: #ffffff;
+    padding: 8px 12px;
+    text-align: left;
+}
+.compare-table td {
+    padding: 8px 12px;
+    border-bottom: 1px solid #e0e0e0;
+}
+.compare-table tr:nth-child(even) td {
+    background: #fafafa;
+}
+
+/* 步骤编号 */
+.step-num {
+    display: inline-block;
+    background: #1a237e;
+    color: #fff;
+    width: 26px;
+    height: 26px;
+    line-height: 26px;
+    text-align: center;
+    border-radius: 50%;
+    font-size: 13px;
+    font-weight: bold;
+    margin-right: 6px;
+}
+
+/* 底部导航 */
+.nav-bar {
+    position: fixed;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    height: 60px;
+    background: #ffffff;
+    border-top: 1px solid #e0e0e0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 20px;
+    z-index: 100;
+}
+.nav-btn {
+    background: #1a237e;
+    color: #ffffff;
+    border: none;
+    padding: 8px 24px;
+    border-radius: 20px;
+    font-size: 14px;
+    cursor: pointer;
+    font-weight: 600;
+    transition: background 0.2s;
+}
+.nav-btn:hover {
+    background: #283593;
+}
+.nav-btn:disabled {
+    background: #bdbdbd;
+    cursor: not-allowed;
+}
+.nav-btn.gold {
+    background: #ffd600;
+    color: #1a237e;
+}
+.nav-btn.gold:hover {
+    background: #fdd835;
+}
+.slide-indicator {
+    font-size: 14px;
+    color: #666;
+    min-width: 60px;
+    text-align: center;
+}
+
+/* 响应式 */
+@media (max-width: 768px) {
+    .slide { padding: 20px 16px; }
+    .slide h1 { font-size: 22px; }
+    .slide h2 { font-size: 18px; }
+    .code-block { font-size: 11px; padding: 10px; }
+}
+</style>
+</head>
+<body>
+
+<!-- 标题栏 -->
+<div class="title-bar">
+    <span>CSP-J 备考课程</span>
+    <span class="badge">第43课</span>
+    <span>BFS 广度优先搜索</span>
+</div>
+
+<!-- 幻灯片容器 -->
+<div class="slides-container">
+
+    <!-- ========== 第1页：标题页 ========== -->
+    <div class="slide active" id="slide1">
+        <h1>第43课：BFS 广度优先搜索</h1>
+        <h3>Breadth-First Search</h3>
+        <br>
+        <p><strong>考纲对应：</strong>图的遍历算法 — 广度优先搜索（BFS）</p>
+        <p><strong>核心内容：</strong>队列实现 | 最短路径 | 网格搜索 | DFS vs BFS</p>
+        <br>
+        <div class="tip-box">
+            <strong>本课目标：</strong>掌握BFS标准框架，能独立解决无权图最短路径、迷宫类问题，理解BFS与DFS的适用场景差异。
+        </div>
+        <br>
+        <p style="color:#888; font-size:13px;">使用方向键 ← → 或点击下方按钮切换幻灯片</p>
+    </div>
+
+    <!-- ========== 第2页：BFS 核心思想 ========== -->
+    <div class="slide" id="slide2">
+        <h1>一、BFS 核心思想与队列框架</h1>
+
+        <h3>1.1 什么是 BFS？</h3>
+        <p>BFS — 广度优先搜索，<strong>逐层扩展：先近后远</strong>。从起点出发，先访问所有距离为1的节点，再访问所有距离为2的节点……类似水波纹从中心向外扩散。</p>
+
+        <h3>1.2 为什么用队列？</h3>
+        <p>BFS 需要保证"<strong>先被发现的节点先被访问</strong>" — 这是典型的 FIFO（先进先出）特性，恰好对应队列（queue）的行为。</p>
+
+        <div class="code-block">
+<span class="keyword">#include</span> <span class="string">&lt;queue&gt;</span>
+<span class="keyword">using</span> <span class="keyword">namespace</span> std;
+
+queue&lt;<span class="type">int</span>&gt; q;
+q.<span class="func">push</span>(x);      <span class="comment">// 入队</span>
+q.<span class="func">pop</span>();           <span class="comment">// 出队</span>
+q.<span class="func">front</span>();         <span class="comment">// 访问队首</span>
+q.<span class="func">empty</span>();         <span class="comment">// 判空</span>
+q.<span class="func">size</span>();          <span class="comment">// 队列大小</span></div>
+
+        <h3>1.3 BFS 标准框架</h3>
+        <div class="code-block"><span class="keyword">void</span> <span class="func">bfs</span>(<span class="type">int</span> start) {
+    queue&lt;<span class="type">int</span>&gt; q;
+    q.<span class="func">push</span>(start);          <span class="comment">// 1. 起点入队</span>
+    vis[start] = <span class="keyword">true</span>;        <span class="comment">// 2. 标记已访问</span>
+    dist[start] = <span class="number">0</span>;           <span class="comment">// 3. 起点距离为0</span>
+
+    <span class="keyword">while</span> (!q.<span class="func">empty</span>()) {     <span class="comment">// 4. 队列非空就继续</span>
+        <span class="type">int</span> u = q.<span class="func">front</span>();      <span class="comment">// 5. 取队首</span>
+        q.<span class="func">pop</span>();                  <span class="comment">// 6. 出队</span>
+        <span class="keyword">for</span> (<span class="type">int</span> v : G[u]) {     <span class="comment">// 7. 遍历邻接点</span>
+            <span class="keyword">if</span> (!vis[v]) {        <span class="comment">// 8. 未访问？</span>
+                vis[v] = <span class="keyword">true</span>;    <span class="comment">// 9. 标记</span>
+                dist[v] = dist[u] + <span class="number">1</span>; <span class="comment">// 10. 更新距离</span>
+                q.<span class="func">push</span>(v);          <span class="comment">// 11. 入队</span>
+            }
+        }
+    }
+}</div>
+        <div class="warn-box">
+            <strong>关键：</strong>必须在入队时标记 vis，不是在出队时！否则同一节点会被重复入队多次，导致 TLE/MLE。
+        </div>
+    </div>
+
+    <!-- ========== 第3页：BFS 求最短路径 ========== -->
+    <div class="slide" id="slide3">
+        <h1>二、BFS 求最短路径</h1>
+
+        <h3>核心性质（常考）</h3>
+        <p><strong>在无权图中，BFS 天然求出的是起点到各点的最短路径（经过边数最少）。</strong></p>
+        <p>证明思路：BFS 按层扩展，第 k 层扩展到的所有节点距离起点恰好为 k。如果一个节点在第 k 层被首次访问，不存在更短路径。</p>
+
+        <h3>路径回溯：记录前驱节点</h3>
+        <div class="code-block"><span class="type">int</span> pre[MAXN];  <span class="comment">// 记录每个节点的前驱</span>
+
+<span class="keyword">for</span> (<span class="type">int</span> v : G[u]) {
+    <span class="keyword">if</span> (!vis[v]) {
+        vis[v] = <span class="keyword">true</span>;
+        dist[v] = dist[u] + <span class="number">1</span>;
+        pre[v] = u;  <span class="comment">// 记录前驱节点</span>
+        q.<span class="func">push</span>(v);
+    }
+}
+
+<span class="comment">// 回溯路径：从终点沿pre数组倒推到起点</span>
+<span class="keyword">void</span> <span class="func">print_path</span>(<span class="type">int</span> start, <span class="type">int</span> end) {
+    <span class="keyword">if</span> (start == end) { cout &lt;&lt; start; <span class="keyword">return</span>; }
+    <span class="func">print_path</span>(start, pre[end]);
+    cout &lt;&lt; <span class="string">" -&gt; "</span> &lt;&lt; end;
+}</div>
+
+        <h3>时间复杂度</h3>
+        <p>邻接表 BFS：<strong>O(V + E)</strong> — 每个节点入队一次、出队一次，每条边被检查一次。</p>
+        <p>邻接矩阵 BFS：<strong>O(V²)</strong> — 大规模数据会导致超时，<strong>强烈建议使用邻接表</strong>。</p>
+
+        <div class="tip-box">
+            <strong>考试技巧：</strong>dist 数组初始化为 -1，可以同时承担"距离记录"和"访问标记"两个功能（-1 = 未访问，>= 0 = 已访问且记录距离）。省掉一个 vis 数组。
+        </div>
+    </div>
+
+    <!-- ========== 第4页：网格 BFS ========== -->
+    <div class="slide" id="slide4">
+        <h1>三、网格 BFS（迷宫问题）</h1>
+
+        <p>CSP-J 最常见的一类 BFS 应用。给定 n*m 网格，有些格子是墙，求从 S 到 E 的最短步数。</p>
+
+        <h3>网格 BFS 框架</h3>
+        <div class="code-block"><span class="type">int</span> dx[<span class="number">4</span>] = {<span class="number">0</span>, <span class="number">0</span>, <span class="number">1</span>, -<span class="number">1</span>};  <span class="comment">// 四个方向：右左下上</span>
+<span class="type">int</span> dy[<span class="number">4</span>] = {<span class="number">1</span>, -<span class="number">1</span>, <span class="number">0</span>, <span class="number">0</span>};
+
+<span class="keyword">struct</span> <span class="type">Node</span> { <span class="type">int</span> x, y; };
+queue&lt;Node&gt; q;
+q.<span class="func">push</span>({sx, sy});
+vis[sx][sy] = <span class="keyword">true</span>;
+dist[sx][sy] = <span class="number">0</span>;
+
+<span class="keyword">while</span> (!q.<span class="func">empty</span>()) {
+    Node cur = q.<span class="func">front</span>(); q.<span class="func">pop</span>();
+    <span class="keyword">if</span> (cur.x == ex &amp;&amp; cur.y == ey) <span class="keyword">return</span> dist[cur.x][cur.y];
+
+    <span class="keyword">for</span> (<span class="type">int</span> i = <span class="number">0</span>; i &lt; <span class="number">4</span>; i++) {
+        <span class="type">int</span> nx = cur.x + dx[i];
+        <span class="type">int</span> ny = cur.y + dy[i];
+        <span class="comment">// 边界检查 必须 在内容检查之前！</span>
+        <span class="keyword">if</span> (nx &gt;= <span class="number">0</span> &amp;&amp; nx &lt; n &amp;&amp; ny &gt;= <span class="number">0</span> &amp;&amp; ny &lt; m
+            &amp;&amp; grid[nx][ny] != <span class="string">'#'</span> &amp;&amp; !vis[nx][ny]) {
+            vis[nx][ny] = <span class="keyword">true</span>;
+            dist[nx][ny] = dist[cur.x][cur.y] + <span class="number">1</span>;
+            q.<span class="func">push</span>({nx, ny});
+        }
+    }
+}</div>
+
+        <div class="warn-box">
+            <strong>易错点：</strong>边界检查必须在内容检查之前！<code>grid[nx][ny] != '#'</code> 放在 <code>nx >= 0 && nx < n</code> 之后，利用短路求值避免越界访问导致 RE（运行时错误）。
+        </div>
+    </div>
+
+    <!-- ========== 第5页：DFS vs BFS ========== -->
+    <div class="slide" id="slide5">
+        <h1>四、DFS 与 BFS 的选择</h1>
+
+        <table class="compare-table">
+            <tr>
+                <th>特性</th>
+                <th>DFS（深度优先）</th>
+                <th>BFS（广度优先）</th>
+            </tr>
+            <tr>
+                <td>数据结构</td>
+                <td>栈（递归 / 显式stack）</td>
+                <td>队列（queue）</td>
+            </tr>
+            <tr>
+                <td>空间复杂度</td>
+                <td>O(深度) — 链状图可能很深</td>
+                <td>O(宽度) — 星形图可能很大</td>
+            </tr>
+            <tr>
+                <td>最短路径</td>
+                <td>不能保证</td>
+                <td>无权图天然最短</td>
+            </tr>
+            <tr>
+                <td>求所有解</td>
+                <td>适合（回溯枚举）</td>
+                <td>不方便</td>
+            </tr>
+            <tr>
+                <td>连通性判断</td>
+                <td>适合（递归标记）</td>
+                <td>适合（队列标记）</td>
+            </tr>
+            <tr>
+                <td>拓扑排序</td>
+                <td>适合（后序遍历）</td>
+                <td>适合（Kahn算法）</td>
+            </tr>
+        </table>
+
+        <h3>选择策略（记住口诀）</h3>
+        <div class="tip-box">
+            <strong>"最短看 BFS，全部看 DFS，连通看哪个都行。"</strong>
+        </div>
+
+        <ul>
+            <li><strong>求最短路径 / 最少步数</strong> → 首选 BFS</li>
+            <li><strong>求所有可能的路径 / 方案</strong> → 首选 DFS</li>
+            <li><strong>判断连通性 / 能否到达</strong> → DFS 和 BFS 均可，DFS 递归更简洁</li>
+            <li><strong>图特别深</strong>（链状图）→ BFS 更安全（DFS 可能爆栈）</li>
+            <li><strong>图特别宽</strong>（星形图）→ DFS 更安全（BFS 队列可能过大）</li>
+            <li><strong>需要按层处理</strong> → BFS（层序遍历特性）</li>
+        </ul>
+    </div>
+
+    <!-- ========== 第6页：真题演练 ========== -->
+    <div class="slide" id="slide6">
+        <h1>五、真题演练：迷宫逃脱</h1>
+
+        <p><strong>题目描述：</strong>给定 n*m 迷宫，'.' 为空地，'#' 为墙壁，'S' 为起点，'E' 为终点。每次可向上下左右移动一格。求从 S 到 E 的最短步数，不可达则输出 "Impossible"。</p>
+
+        <h3>输入样例</h3>
+        <div class="code-block"><span class="number">5</span> <span class="number">5</span>
+S.#..
+.#...
+..#..
+...#.
+....E</div>
+
+        <h3>AC 代码</h3>
+        <div class="code-block"><span class="keyword">#include</span> <span class="string">&lt;iostream&gt;</span>
+<span class="keyword">#include</span> <span class="string">&lt;queue&gt;</span>
+<span class="keyword">using</span> <span class="keyword">namespace</span> std;
+
+<span class="type">char</span> grid[<span class="number">105</span>][<span class="number">105</span>];
+<span class="type">bool</span> vis[<span class="number">105</span>][<span class="number">105</span>];
+<span class="type">int</span> dist[<span class="number">105</span>][<span class="number">105</span>];
+<span class="type">int</span> dx[<span class="number">4</span>] = {<span class="number">0</span>, <span class="number">0</span>, <span class="number">1</span>, -<span class="number">1</span>};
+<span class="type">int</span> dy[<span class="number">4</span>] = {<span class="number">1</span>, -<span class="number">1</span>, <span class="number">0</span>, <span class="number">0</span>};
+<span class="keyword">struct</span> <span class="type">Node</span> { <span class="type">int</span> x, y; };
+
+<span class="type">int</span> <span class="func">main</span>() {
+    <span class="type">int</span> n, m, sx, sy, ex, ey;
+    cin &gt;&gt; n &gt;&gt; m;
+    <span class="keyword">for</span> (<span class="type">int</span> i = <span class="number">0</span>; i &lt; n; i++) {
+        cin &gt;&gt; grid[i];
+        <span class="keyword">for</span> (<span class="type">int</span> j = <span class="number">0</span>; j &lt; m; j++) {
+            <span class="keyword">if</span> (grid[i][j] == <span class="string">'S'</span>) { sx = i; sy = j; }
+            <span class="keyword">if</span> (grid[i][j] == <span class="string">'E'</span>) { ex = i; ey = j; }
+        }
+    }
+
+    queue&lt;Node&gt; q;
+    q.<span class="func">push</span>({sx, sy});
+    vis[sx][sy] = <span class="keyword">true</span>;
+    <span class="type">int</span> ans = -<span class="number">1</span>;
+
+    <span class="keyword">while</span> (!q.<span class="func">empty</span>()) {
+        Node cur = q.<span class="func">front</span>(); q.<span class="func">pop</span>();
+        <span class="keyword">if</span> (cur.x == ex &amp;&amp; cur.y == ey) {
+            ans = dist[cur.x][cur.y]; <span class="keyword">break</span>;
+        }
+        <span class="keyword">for</span> (<span class="type">int</span> i = <span class="number">0</span>; i &lt; <span class="number">4</span>; i++) {
+            <span class="type">int</span> nx = cur.x + dx[i], ny = cur.y + dy[i];
+            <span class="keyword">if</span> (nx &gt;= <span class="number">0</span> &amp;&amp; nx &lt; n
+                &amp;&amp; ny &gt;= <span class="number">0</span> &amp;&amp; ny &lt; m
+                &amp;&amp; grid[nx][ny] != <span class="string">'#'</span> &amp;&amp; !vis[nx][ny]) {
+                vis[nx][ny] = <span class="keyword">true</span>;
+                dist[nx][ny] = dist[cur.x][cur.y] + <span class="number">1</span>;
+                q.<span class="func">push</span>({nx, ny});
+            }
+        }
+    }
+    <span class="keyword">if</span> (ans == -<span class="number">1</span>) cout &lt;&lt; <span class="string">"Impossible"</span>;
+    <span class="keyword">else</span> cout &lt;&lt; ans;
+}</div>
+        <p><strong>输出结果：</strong><code>8</code></p>
+    </div>
+
+    <!-- ========== 第7页：本课小结 ========== -->
+    <div class="slide" id="slide7">
+        <h1>本课小结</h1>
+
+        <ol>
+            <li><strong>BFS 核心思想：</strong>逐层扩展，先近后远。队列实现 FIFO。</li>
+            <li><strong>标准框架（必须熟记）：</strong>初始化队列 → while(!empty) → front+pop → 遍历邻接点 → 未访问则标记并入队。</li>
+            <li><strong>最短路径：</strong>无权图中 BFS 天然求最短路径（最少步数），这是 BFS 最重要的性质。</li>
+            <li><strong>标记时机：</strong>必须在<strong>入队时</strong>标记 vis，不是在出队时。否则同一节点重复入队导致 TLE/MLE。</li>
+            <li><strong>网格 BFS：</strong>四个方向遍历，边界检查必须在内容检查之前（短路求值）。</li>
+            <li><strong>DFS vs BFS：</strong>"最短看 BFS，全部看 DFS，连通看哪个都行。"</li>
+            <li><strong>时间复杂度：</strong>O(V + E)（邻接表），O(V²)（邻接矩阵），优先使用邻接表。</li>
+        </ol>
+
+        <div class="tip-box">
+            <strong>课后练习建议：</strong>动手写一遍 BFS 标准框架和网格 BFS 模板代码，确保能脱稿写出。尝试修改代码实现多源 BFS 和记录路径的 BFS。
+        </div>
+    </div>
+
+</div><!-- /slides-container -->
+
+<!-- 底部导航 -->
+<div class="nav-bar">
+    <button class="nav-btn" id="prevBtn" onclick="changeSlide(-1)">◀ 上一页</button>
+    <span class="slide-indicator" id="slideIndicator">1 / 7</span>
+    <button class="nav-btn gold" id="nextBtn" onclick="changeSlide(1)">下一页 ▶</button>
+</div>
+
+<script>
+var currentSlide = 0;
+var slides = document.querySelectorAll('.slide');
+var totalSlides = slides.length;
+
+function showSlide(index) {
+    slides.forEach(function(slide) { slide.classList.remove('active'); });
+    slides[index].classList.add('active');
+    document.getElementById('slideIndicator').textContent = (index + 1) + ' / ' + totalSlides;
+    document.getElementById('prevBtn').disabled = (index === 0);
+    document.getElementById('nextBtn').disabled = (index === totalSlides - 1);
+}
+
+function changeSlide(delta) {
+    var next = currentSlide + delta;
+    if (next >= 0 && next < totalSlides) {
+        currentSlide = next;
+        showSlide(currentSlide);
+    }
+}
+
+// 键盘导航
+document.addEventListener('keydown', function(e) {
+    if (e.key === 'ArrowRight' || e.key === 'ArrowDown') {
+        changeSlide(1);
+    } else if (e.key === 'ArrowLeft' || e.key === 'ArrowUp') {
+        changeSlide(-1);
+    } else if (e.key === 'Home') {
+        currentSlide = 0;
+        showSlide(currentSlide);
+    } else if (e.key === 'End') {
+        currentSlide = totalSlides - 1;
+        showSlide(currentSlide);
+    }
+});
+
+// 触摸滑动支持
+var touchStartX = 0;
+document.addEventListener('touchstart', function(e) {
+    touchStartX = e.changedTouches[0].screenX;
+});
+document.addEventListener('touchend', function(e) {
+    var diff = touchStartX - e.changedTouches[0].screenX;
+    if (Math.abs(diff) > 50) {
+        changeSlide(diff > 0 ? 1 : -1);
+    }
+});
+
+// 初始化
+showSlide(0);
+</script>
+
+</body>
+</html>

@@ -1,0 +1,705 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>第4节：鼠标与图片 — Pygame 课程</title>
+<style>
+/* ===== CSS Reset & Base ===== */
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+:root {
+  --blue:       #1976D2;
+  --blue-light: #42A5F5;
+  --orange:     #E65100;
+  --orange-lt:  #FF9800;
+  --green:      #2E7D32;
+  --green-lt:   #66BB6A;
+  --purple:     #7B1FA2;
+  --pink:       #D81B60;
+  --bg:         #FAFAFA;
+  --card:       #FFFFFF;
+  --text:       #333333;
+  --text-light: #666666;
+  --code-bg:    #1E1E1E;
+  --code-text:  #D4D4D4;
+  --code-kw:    #569CD6;
+  --code-str:   #CE9178;
+  --code-fn:    #DCDCAA;
+  --code-num:   #B5CEA8;
+  --code-cmt:   #6A9955;
+  --shadow:     0 4px 24px rgba(0,0,0,.12);
+}
+
+html, body {
+  width: 100%; height: 100%;
+  font-family: "PingFang SC", "Microsoft YaHei", "Noto Sans SC", "Heiti SC", sans-serif;
+  background: var(--bg);
+  color: var(--text);
+  overflow: hidden;
+  user-select: none;
+}
+
+/* ===== Slide Container ===== */
+#slideshow {
+  width: 100vw; height: 100vh;
+  position: relative;
+}
+
+.slide {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 60px 80px;
+  opacity: 0;
+  transform: translateX(60px);
+  transition: opacity 0.35s ease, transform 0.35s ease;
+  pointer-events: none;
+  overflow-y: auto;
+}
+.slide.active {
+  opacity: 1;
+  transform: translateX(0);
+  pointer-events: auto;
+  z-index: 1;
+}
+
+/* ===== Slide Inner Layout ===== */
+.slide-inner {
+  max-width: 1100px;
+  width: 100%;
+}
+
+/* ===== Typography ===== */
+h1 {
+  font-size: 56px;
+  font-weight: 900;
+  color: var(--blue);
+  line-height: 1.3;
+  margin-bottom: 16px;
+}
+h2 {
+  font-size: 44px;
+  font-weight: 800;
+  color: var(--blue);
+  margin-bottom: 20px;
+  line-height: 1.3;
+}
+h3 {
+  font-size: 32px;
+  font-weight: 700;
+  color: var(--orange);
+  margin: 24px 0 12px;
+}
+p, li {
+  font-size: 28px;
+  line-height: 1.7;
+  color: var(--text);
+}
+ul, ol { padding-left: 1.6em; margin-top: 8px; }
+li { margin-bottom: 6px; }
+
+.subtitle {
+  font-size: 32px;
+  color: var(--orange);
+  font-weight: 600;
+  margin-top: 8px;
+}
+
+/* ===== Cards ===== */
+.card {
+  background: var(--card);
+  border-radius: 16px;
+  padding: 28px 36px;
+  margin: 16px 0;
+  box-shadow: var(--shadow);
+  border-left: 6px solid var(--blue-light);
+}
+.card.orange { border-left-color: var(--orange-lt); }
+.card.green  { border-left-color: var(--green-lt); }
+.card.purple { border-left-color: var(--purple); }
+
+.row { display: flex; gap: 28px; align-items: flex-start; flex-wrap: wrap; }
+.row > * { flex: 1; min-width: 280px; }
+
+/* ===== Code Blocks ===== */
+pre {
+  background: var(--code-bg);
+  color: var(--code-text);
+  font-family: "JetBrains Mono", "SF Mono", "Fira Code", "Cascadia Code", "Consolas", "Monaco", monospace;
+  font-size: 20px;
+  line-height: 1.55;
+  padding: 24px 28px;
+  border-radius: 12px;
+  overflow-x: auto;
+  white-space: pre-wrap;
+  word-break: break-word;
+  margin: 16px 0;
+  box-shadow: var(--shadow);
+}
+code {
+  font-family: "JetBrains Mono", "SF Mono", "Fira Code", "Cascadia Code", "Consolas", "Monaco", monospace;
+}
+
+.kw  { color: var(--code-kw); }
+.str { color: var(--code-str); }
+.fn  { color: var(--code-fn); }
+.num { color: var(--code-num); }
+.cmt { color: var(--code-cmt); }
+
+/* ===== Inline Highlight ===== */
+.hl-blue  { color: var(--blue-light); font-weight: 700; }
+.hl-orange{ color: var(--orange-lt); font-weight: 700; }
+.hl-green { color: var(--green-lt); font-weight: 700; }
+.hl-pink  { color: var(--pink); font-weight: 700; }
+
+/* ===== Emoji / Icon Bullet ===== */
+.icon-bullet {
+  display: inline-block;
+  width: 36px;
+  text-align: center;
+}
+
+/* ===== Title Slide Special ===== */
+.slide-title { background: linear-gradient(135deg, #E3F2FD 0%, #BBDEFB 100%); }
+.slide-title h1 { font-size: 64px; color: #0D47A1; margin-bottom: 12px; }
+.slide-title .subtitle { font-size: 36px; color: #E65100; }
+.slide-title .emoji-hero { font-size: 80px; margin-bottom: 16px; display: block; }
+
+/* ===== Navigation ===== */
+#nav-bar {
+  position: fixed;
+  bottom: 20px;
+  left: 50%;
+  transform: translateX(-50%);
+  display: flex;
+  align-items: center;
+  gap: 18px;
+  z-index: 100;
+  background: rgba(255,255,255,.92);
+  backdrop-filter: blur(10px);
+  padding: 10px 26px;
+  border-radius: 40px;
+  box-shadow: 0 2px 16px rgba(0,0,0,.15);
+}
+#nav-bar button {
+  width: 48px; height: 48px;
+  border-radius: 50%;
+  border: none;
+  background: var(--blue);
+  color: #fff;
+  font-size: 22px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: background 0.2s, transform 0.15s;
+}
+#nav-bar button:hover  { background: var(--blue-light); }
+#nav-bar button:active { transform: scale(0.92); }
+#nav-bar button:disabled { background: #ccc; cursor: default; }
+#slide-indicator {
+  font-size: 22px;
+  font-weight: 700;
+  color: var(--text);
+  min-width: 90px;
+  text-align: center;
+}
+
+/* ===== Progress Dots ===== */
+#progress-dots {
+  position: fixed;
+  top: 16px;
+  left: 50%;
+  transform: translateX(-50%);
+  display: flex;
+  gap: 10px;
+  z-index: 100;
+}
+#progress-dots .dot {
+  width: 14px; height: 14px;
+  border-radius: 50%;
+  background: #ccc;
+  cursor: pointer;
+  transition: background 0.25s, transform 0.2s;
+}
+#progress-dots .dot.active { background: var(--blue); transform: scale(1.35); }
+#progress-dots .dot:hover   { background: var(--blue-light); }
+
+/* ===== Keyboard Hint ===== */
+#key-hint {
+  position: fixed;
+  top: 60px;
+  right: 24px;
+  z-index: 100;
+  font-size: 16px;
+  color: #aaa;
+  display: flex;
+  gap: 12px;
+}
+#key-hint kbd {
+  background: #eee;
+  border: 1px solid #ccc;
+  border-radius: 5px;
+  padding: 2px 8px;
+  font-size: 14px;
+  font-family: monospace;
+}
+
+/* ===== Responsive ===== */
+@media (max-width: 800px) {
+  .slide { padding: 30px 24px; }
+  h1 { font-size: 36px; }
+  h2 { font-size: 30px; }
+  h3 { font-size: 24px; }
+  p, li { font-size: 20px; }
+  pre { font-size: 15px; padding: 16px; }
+}
+</style>
+</head>
+<body>
+
+<div id="key-hint">
+  <kbd>&larr;</kbd> <span>上一页</span>
+  <kbd>&rarr;</kbd> <span>下一页</span>
+</div>
+
+<div id="progress-dots"></div>
+
+<div id="slideshow">
+
+<!-- ===================== SLIDE 1: 封面 ===================== -->
+<div class="slide slide-title active" data-slide="1">
+  <div class="slide-inner" style="text-align:center;">
+    <span class="emoji-hero">🖱️🎨</span>
+    <h1>第4节：鼠标与图片</h1>
+    <p class="subtitle">Pygame 趣味编程课程</p>
+    <p style="margin-top:28px; font-size:26px; color:#666;">
+      学习用鼠标控制角色，让图片动起来！
+    </p>
+  </div>
+</div>
+
+<!-- ===================== SLIDE 2: 回顾 ===================== -->
+<div class="slide" data-slide="2">
+  <div class="slide-inner">
+    <h2>📖 上节课回顾：键盘控制</h2>
+    <div class="row">
+      <div class="card">
+        <h3>我们学到了</h3>
+        <ul>
+          <li><span class="hl-blue">pygame.KEYDOWN</span> — 检测按键按下</li>
+          <li><span class="hl-blue">pygame.K_LEFT / K_RIGHT</span> — 方向键</li>
+          <li>用键盘控制角色在屏幕上移动</li>
+          <li>游戏主循环 <span class="hl-orange">while running:</span> 的基本结构</li>
+        </ul>
+      </div>
+      <div class="card orange">
+        <h3>⚠️ 容易忘记的地方</h3>
+        <ul>
+          <li>别忘了 <span class="hl-blue">pygame.init()</span> 初始化</li>
+          <li>循环结束前要 <span class="hl-blue">pygame.quit()</span></li>
+          <li>每次循环都要更新屏幕 <span class="hl-orange">pygame.display.flip()</span></li>
+        </ul>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ===================== SLIDE 3: pygame.draw 绘图 ===================== -->
+<div class="slide" data-slide="3">
+  <div class="slide-inner">
+    <h2>🎨 绘制基本图形 — pygame.draw</h2>
+    <p>Pygame 提供了丰富的绘图函数，可以直接在屏幕上画出各种形状。</p>
+    <div class="row">
+      <div class="card">
+        <h3>常用绘图函数</h3>
+        <ul>
+          <li><span class="hl-blue">pygame.draw.rect()</span> — 矩形</li>
+          <li><span class="hl-blue">pygame.draw.circle()</span> — 圆形</li>
+          <li><span class="hl-blue">pygame.draw.line()</span> — 线段</li>
+          <li><span class="hl-blue">pygame.draw.ellipse()</span> — 椭圆</li>
+          <li><span class="hl-blue">pygame.draw.polygon()</span> — 多边形</li>
+        </ul>
+      </div>
+      <div class="card green">
+        <h3>参数说明</h3>
+        <ul>
+          <li><b>surface</b> — 画在哪个表面上</li>
+          <li><b>color</b> — 颜色 (R, G, B)</li>
+          <li><b>位置/大小</b> — rect 或坐标</li>
+          <li><b>width</b> — 线宽，0 表示填充</li>
+        </ul>
+      </div>
+    </div>
+    <pre><span class="cmt"># 画一个红色填充矩形</span>
+<span class="fn">pygame.draw.rect</span>(screen, (<span class="num">255</span>, <span class="num">0</span>, <span class="num">0</span>), (<span class="num">100</span>, <span class="num">100</span>, <span class="num">200</span>, <span class="num">150</span>))
+
+<span class="cmt"># 画一个蓝色空心圆</span>
+<span class="fn">pygame.draw.circle</span>(screen, (<span class="num">0</span>, <span class="num">100</span>, <span class="num">255</span>), (<span class="num">400</span>, <span class="num">300</span>), <span class="num">80</span>, <span class="num">3</span>)
+
+<span class="cmt"># 画一条绿色线段</span>
+<span class="fn">pygame.draw.line</span>(screen, (<span class="num">0</span>, <span class="num">200</span>, <span class="num">0</span>), (<span class="num">50</span>, <span class="num">50</span>), (<span class="num">500</span>, <span class="num">400</span>), <span class="num">5</span>)</pre>
+  </div>
+</div>
+
+<!-- ===================== SLIDE 4: Surface  ===================== -->
+<div class="slide" data-slide="4">
+  <div class="slide-inner">
+    <h2>🧩 创建自己的图片 — pygame.Surface</h2>
+    <p><span class="hl-blue">Surface</span> 就像一张透明的画纸，我们可以在上面任意绘制，然后当作一张图片使用。</p>
+    <div class="row">
+      <div class="card">
+        <h3>创建方法</h3>
+        <pre><span class="cmt"># 创建一个 200x200 的 Surface</span>
+my_surface = <span class="fn">pygame.Surface</span>((<span class="num">200</span>, <span class="num">200</span>))
+
+<span class="cmt"># 填充背景色（白色）</span>
+<span class="fn">my_surface.fill</span>((<span class="num">255</span>, <span class="num">255</span>, <span class="num">255</span>))
+
+<span class="cmt"># 在 Surface 上画图</span>
+<span class="fn">pygame.draw.circle</span>(my_surface, ...)</pre>
+      </div>
+      <div class="card orange">
+        <h3>💡 为什么要用 Surface？</h3>
+        <ul>
+          <li>把多个图形“打包”成一张图</li>
+          <li>可以整体移动、复制</li>
+          <li>方便使用 <span class="hl-blue">blit()</span> 显示到屏幕上</li>
+        </ul>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ===================== SLIDE 5: 笑脸  ===================== -->
+<div class="slide" data-slide="5">
+  <div class="slide-inner">
+    <h2>😊 动手画一个可爱的笑脸</h2>
+    <p>只用代码，不用任何图片文件，我们画出一个会笑的表情！</p>
+    <pre><span class="kw">def</span> <span class="fn">draw_smiley</span>():
+    face = <span class="fn">pygame.Surface</span>((<span class="num">200</span>, <span class="num">200</span>), pygame.SRCALPHA)
+
+    <span class="cmt"># 大圆脸（黄色）</span>
+    <span class="fn">pygame.draw.circle</span>(face, (<span class="num">255</span>, <span class="num">220</span>, <span class="num">50</span>), (<span class="num">100</span>, <span class="num">100</span>), <span class="num">90</span>)
+
+    <span class="cmt"># 左眼（白色 + 黑色瞳孔）</span>
+    <span class="fn">pygame.draw.circle</span>(face, (<span class="num">255</span>, <span class="num">255</span>, <span class="num">255</span>), (<span class="num">70</span>, <span class="num">80</span>), <span class="num">22</span>)
+    <span class="fn">pygame.draw.circle</span>(face, (<span class="num">0</span>, <span class="num">0</span>, <span class="num">0</span>),   (<span class="num">70</span>, <span class="num">80</span>), <span class="num">10</span>)
+
+    <span class="cmt"># 右眼</span>
+    <span class="fn">pygame.draw.circle</span>(face, (<span class="num">255</span>, <span class="num">255</span>, <span class="num">255</span>), (<span class="num">130</span>, <span class="num">80</span>), <span class="num">22</span>)
+    <span class="fn">pygame.draw.circle</span>(face, (<span class="num">0</span>, <span class="num">0</span>, <span class="num">0</span>),   (<span class="num">130</span>, <span class="num">80</span>), <span class="num">10</span>)
+
+    <span class="cmt"># 微笑的嘴巴（圆弧）</span>
+    <span class="fn">pygame.draw.arc</span>(face, (<span class="num">0</span>, <span class="num">0</span>, <span class="num">0</span>),
+                     (<span class="num">60</span>, <span class="num">90</span>, <span class="num">80</span>, <span class="num">60</span>), <span class="num">3.14</span>, <span class="num">0</span>, <span class="num">4</span>)
+
+    <span class="kw">return</span> face</pre>
+  </div>
+</div>
+
+<!-- ===================== SLIDE 6: image.load & blit  ===================== -->
+<div class="slide" data-slide="6">
+  <div class="slide-inner">
+    <h2>🖼️ 加载和显示图片 — load() 与 blit()</h2>
+    <p>除了自己用代码画，我们也可以加载电脑里的图片文件。</p>
+    <div class="row">
+      <div class="card">
+        <h3>load() — 加载图片</h3>
+        <pre><span class="cmt"># 加载一张图片</span>
+player_img = <span class="fn">pygame.image.load</span>(<span class="str">"player.png"</span>)
+
+<span class="cmt"># 支持 PNG、JPG、GIF 等格式</span></pre>
+      </div>
+      <div class="card green">
+        <h3>blit() — 画到屏幕上</h3>
+        <pre><span class="cmt"># 把图片"贴"到屏幕的 (x, y) 位置</span>
+<span class="fn">screen.blit</span>(player_img, (x, y))</pre>
+        <p style="margin-top:12px;">💡 <b>blit</b> = <b>B</b>lock <b>L</b>mage <b>T</b>ransfer（块图像传输）</p>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ===================== SLIDE 7: convert_alpha  ===================== -->
+<div class="slide" data-slide="7">
+  <div class="slide-inner">
+    <h2>⚡ 让游戏更流畅 — convert_alpha()</h2>
+    <p>加载图片后，建议做一步格式转换，Pygame 就能更快地处理它。</p>
+    <div class="row">
+      <div class="card">
+        <h3>标准写法</h3>
+        <pre><span class="cmt"># 最好的加载方式</span>
+player_img = <span class="fn">pygame.image.load</span>(<span class="str">"player.png"</span>)
+            <span class="fn">.convert_alpha</span>()</pre>
+      </div>
+      <div class="card orange">
+        <h3>对比</h3>
+        <table style="font-size:24px; width:100%; border-collapse:collapse; margin-top:8px;">
+          <tr style="background:#FFF3E0;">
+            <td style="padding:10px 14px;"><b>.convert()</b></td>
+            <td style="padding:10px 14px;">不带透明通道，适合背景图</td>
+          </tr>
+          <tr>
+            <td style="padding:10px 14px;"><b>.convert_alpha()</b></td>
+            <td style="padding:10px 14px;">保留透明通道，适合角色图片</td>
+          </tr>
+        </table>
+      </div>
+    </div>
+    <div class="card purple" style="margin-top:12px;">
+      <p>🎯 <span class="hl-pink">记住：</span>如果图片有透明背景（PNG），一定要用 <span class="hl-blue">convert_alpha()</span>，否则透明部分会变成黑色！</p>
+    </div>
+  </div>
+</div>
+
+<!-- ===================== SLIDE 8: MOUSEMOTION  ===================== -->
+<div class="slide" data-slide="8">
+  <div class="slide-inner">
+    <h2>🖱️ 追踪鼠标位置 — MOUSEMOTION</h2>
+    <p>当鼠标在游戏窗口内移动时，Pygame 会发出 <span class="hl-blue">MOUSEMOTION</span> 事件。</p>
+    <pre><span class="kw">for</span> event <span class="kw">in</span> <span class="fn">pygame.event.get</span>():
+    <span class="kw">if</span> event.type == pygame.<span class="fn">MOUSEMOTION</span>:
+        <span class="cmt"># event.pos 就是鼠标的 (x, y) 坐标</span>
+        mouse_x, mouse_y = event.<span class="fn">pos</span>
+        <span class="fn">print</span>(<span class="str">f"鼠标位置: ({mouse_x}, {mouse_y})"</span>)</pre>
+    <div class="card green" style="margin-top:16px;">
+      <h3>也可以直接获取</h3>
+      <pre><span class="cmt"># 不需要等事件，随时可以获取鼠标位置</span>
+mouse_x, mouse_y = <span class="fn">pygame.mouse.get_pos</span>()</pre>
+    </div>
+  </div>
+</div>
+
+<!-- ===================== SLIDE 9: MOUSEBUTTONDOWN  ===================== -->
+<div class="slide" data-slide="9">
+  <div class="slide-inner">
+    <h2>👆 检测鼠标点击 — MOUSEBUTTONDOWN</h2>
+    <p>按下鼠标按钮时，Pygame 发出 <span class="hl-blue">MOUSEBUTTONDOWN</span> 事件。</p>
+    <pre><span class="kw">for</span> event <span class="kw">in</span> <span class="fn">pygame.event.get</span>():
+    <span class="kw">if</span> event.type == pygame.<span class="fn">MOUSEBUTTONDOWN</span>:
+        <span class="kw">if</span> event.<span class="fn">button</span> == <span class="num">1</span>:   <span class="cmt"># 左键</span>
+            <span class="fn">print</span>(<span class="str">"左键点击！"</span>)
+        <span class="kw">elif</span> event.<span class="fn">button</span> == <span class="num">2</span>: <span class="cmt"># 中键（滚轮）</span>
+            <span class="fn">print</span>(<span class="str">"中键点击！"</span>)
+        <span class="kw">elif</span> event.<span class="fn">button</span> == <span class="num">3</span>: <span class="cmt"># 右键</span>
+            <span class="fn">print</span>(<span class="str">"右键点击！"</span>)</pre>
+    <div class="card orange" style="margin-top:16px;">
+      <h3>🖱️ 鼠标按钮编号</h3>
+      <div style="display:flex;gap:28px;font-size:26px;margin-top:8px;">
+        <span><b>1</b> = 左键 🖱️</span>
+        <span><b>2</b> = 中键 🎡</span>
+        <span><b>3</b> = 右键 🖱️</span>
+        <span><b>4</b> = 滚轮上滚 🔼</span>
+        <span><b>5</b> = 滚轮下滚 🔽</span>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ===================== SLIDE 10: transform.scale  ===================== -->
+<div class="slide" data-slide="10">
+  <div class="slide-inner">
+    <h2>🔍 缩放图片 — transform.scale()</h2>
+    <p>图片太大或太小？用 <span class="hl-blue">transform.scale()</span> 轻松调整大小。</p>
+    <pre><span class="cmt"># 加载原始图片</span>
+big_img = <span class="fn">pygame.image.load</span>(<span class="str">"player.png"</span>)<span class="fn">.convert_alpha</span>()
+
+<span class="cmt"># 缩放到 80x80 像素</span>
+small_img = <span class="fn">pygame.transform.scale</span>(big_img, (<span class="num">80</span>, <span class="num">80</span>))
+
+<span class="cmt"># 放大到原来的 1.5 倍</span>
+w = <span class="fn">big_img.get_width</span>()
+h = <span class="fn">big_img.get_height</span>()
+large_img = <span class="fn">pygame.transform.scale</span>(big_img, (<span class="fn">int</span>(w * <span class="num">1.5</span>), <span class="fn">int</span>(h * <span class="num">1.5</span>)))</pre>
+    <div class="row" style="margin-top:16px;">
+      <div class="card">
+        <h3>还有这些变换</h3>
+        <ul>
+          <li><span class="hl-blue">rotate()</span> — 旋转图片</li>
+          <li><span class="hl-blue">flip()</span> — 水平/垂直翻转</li>
+          <li><span class="hl-blue">scale2x()</span> — 快速放大2倍</li>
+          <li><span class="hl-blue">smoothscale()</span> — 平滑缩放（更精细）</li>
+        </ul>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ===================== SLIDE 11: 完整代码  ===================== -->
+<div class="slide" data-slide="11">
+  <div class="slide-inner">
+    <h2>💻 完整代码 — 笑脸跟随鼠标</h2>
+    <p>综合运用本节课所学知识，做一个笑脸跟随鼠标移动的小程序。</p>
+    <pre style="max-height:58vh; overflow-y:auto;"><span class="kw">import</span> pygame
+<span class="kw">import</span> sys
+
+pygame.<span class="fn">init</span>()
+screen = <span class="fn">pygame.display.set_mode</span>((<span class="num">800</span>, <span class="num">600</span>))
+pygame.<span class="fn">display.set_caption</span>(<span class="str">"笑脸跟随鼠标"</span>)
+clock = <span class="fn">pygame.time.Clock</span>()
+
+<span class="cmt"># --- 绘制笑脸 ---</span>
+<span class="kw">def</span> <span class="fn">make_smiley</span>(size):
+    face = <span class="fn">pygame.Surface</span>((size, size), pygame.SRCALPHA)
+    r = size // <span class="num">2</span>
+    cx = cy = r
+    <span class="fn">pygame.draw.circle</span>(face, (<span class="num">255</span>, <span class="num">220</span>, <span class="num">50</span>), (cx, cy), r)
+    <span class="fn">pygame.draw.circle</span>(face, (<span class="num">255</span>, <span class="num">255</span>, <span class="num">255</span>), (cx - <span class="num">30</span>, cy - <span class="num">25</span>), r // <span class="num">4</span>)
+    <span class="fn">pygame.draw.circle</span>(face, (<span class="num">0</span>, <span class="num">0</span>, <span class="num">0</span>), (cx - <span class="num">30</span>, cy - <span class="num">25</span>), r // <span class="num">8</span>)
+    <span class="fn">pygame.draw.circle</span>(face, (<span class="num">255</span>, <span class="num">255</span>, <span class="num">255</span>), (cx + <span class="num">30</span>, cy - <span class="num">25</span>), r // <span class="num">4</span>)
+    <span class="fn">pygame.draw.circle</span>(face, (<span class="num">0</span>, <span class="num">0</span>, <span class="num">0</span>), (cx + <span class="num">30</span>, cy - <span class="num">25</span>), r // <span class="num">8</span>)
+    <span class="fn">pygame.draw.arc</span>(face, (<span class="num">0</span>, <span class="num">0</span>, <span class="num">0</span>), (cx - <span class="num">40</span>, cy - <span class="num">10</span>, <span class="num">80</span>, <span class="num">50</span>), <span class="num">3.14</span>, <span class="num">0</span>, <span class="num">4</span>)
+    <span class="kw">return</span> face
+
+smiley = <span class="fn">make_smiley</span>(<span class="num">120</span>)
+mx, my = <span class="num">400</span>, <span class="num">300</span>   <span class="cmt"># 笑脸初始位置</span>
+
+running = <span class="kw">True</span>
+<span class="kw">while</span> running:
+    <span class="kw">for</span> event <span class="kw">in</span> <span class="fn">pygame.event.get</span>():
+        <span class="kw">if</span> event.<span class="kw">type</span> == pygame.QUIT:
+            running = <span class="kw">False</span>
+        <span class="kw">elif</span> event.<span class="kw">type</span> == pygame.MOUSEMOTION:
+            mx, my = event.<span class="fn">pos</span>
+
+    <span class="fn">screen.fill</span>((<span class="num">240</span>, <span class="num">248</span>, <span class="num">255</span>))
+    <span class="fn">screen.blit</span>(smiley, (mx - <span class="num">60</span>, my - <span class="num">60</span>))
+    <span class="fn">pygame.display.flip</span>()
+    clock.<span class="fn">tick</span>(<span class="num">60</span>)
+
+pygame.<span class="fn">quit</span>()
+<span class="fn">sys.exit</span>()</pre>
+  </div>
+</div>
+
+<!-- ===================== SLIDE 12: 总结  ===================== -->
+<div class="slide" data-slide="12">
+  <div class="slide-inner">
+    <h2>📝 本节课总结</h2>
+    <div class="row">
+      <div class="card">
+        <h3>✅ 新知识</h3>
+        <ul>
+          <li>用 <span class="hl-blue">pygame.draw</span> 绘制基本图形</li>
+          <li>用 <span class="hl-blue">pygame.Surface</span> 创建自定义图片</li>
+          <li>用 <span class="hl-blue">image.load() + convert_alpha()</span> 加载图片</li>
+          <li>用 <span class="hl-blue">blit()</span> 把图片画到屏幕上</li>
+        </ul>
+      </div>
+      <div class="card green">
+        <h3>🖱️ 鼠标交互</h3>
+        <ul>
+          <li><span class="hl-blue">MOUSEMOTION</span> — 追踪鼠标移动</li>
+          <li><span class="hl-blue">MOUSEBUTTONDOWN</span> — 检测鼠标点击</li>
+          <li><span class="hl-blue">mouse.get_pos()</span> — 获取鼠标坐标</li>
+        </ul>
+      </div>
+    </div>
+    <div class="card orange" style="margin-top:20px;">
+      <h3>🎯 课后练习</h3>
+      <ol>
+        <li>修改笑脸程序，点击鼠标左键时切换笑脸的颜色</li>
+        <li>加载一张自己的图片，让图片跟随鼠标移动</li>
+        <li>挑战：点击鼠标时，在点击位置留下一个逐渐变小消失的圆点（反弹效果）</li>
+      </ol>
+    </div>
+    <p style="text-align:center; font-size:32px; font-weight:700; color:var(--blue); margin-top:28px;">
+      🚀 下一节预告：第5节 — 精灵与碰撞检测！
+    </p>
+  </div>
+</div>
+
+</div><!-- end #slideshow -->
+
+<!-- ===== Navigation Bar ===== -->
+<div id="nav-bar">
+  <button id="btn-prev" title="上一页 (←)">&larr;</button>
+  <span id="slide-indicator">1 / 12</span>
+  <button id="btn-next" title="下一页 (→)">&rarr;</button>
+</div>
+
+<script>
+(function() {
+  var slides = document.querySelectorAll('.slide');
+  var total   = slides.length;
+  var current = 0;
+
+  // --- Build progress dots ---
+  var dotsContainer = document.getElementById('progress-dots');
+  for (var i = 0; i < total; i++) {
+    var dot = document.createElement('span');
+    dot.className = 'dot' + (i === 0 ? ' active' : '');
+    dot.setAttribute('data-index', i);
+    dot.addEventListener('click', (function(idx) {
+      return function() { goTo(idx); };
+    })(i));
+    dotsContainer.appendChild(dot);
+  }
+  var dots = dotsContainer.querySelectorAll('.dot');
+
+  // --- DOM refs ---
+  var indicator = document.getElementById('slide-indicator');
+  var btnPrev   = document.getElementById('btn-prev');
+  var btnNext   = document.getElementById('btn-next');
+
+  // --- Navigate ---
+  function goTo(idx) {
+    if (idx < 0 || idx >= total || idx === current) return;
+    slides[current].classList.remove('active');
+    dots[current].classList.remove('active');
+    current = idx;
+    slides[current].classList.add('active');
+    dots[current].classList.add('active');
+    updateUI();
+  }
+
+  function updateUI() {
+    indicator.textContent = (current + 1) + ' / ' + total;
+    btnPrev.disabled = (current === 0);
+    btnNext.disabled = (current === total - 1);
+  }
+
+  btnPrev.addEventListener('click', function() { goTo(current - 1); });
+  btnNext.addEventListener('click', function() { goTo(current + 1); });
+
+  // --- Keyboard ---
+  document.addEventListener('keydown', function(e) {
+    if (e.key === 'ArrowRight' || e.key === 'Right' || e.key === ' ' || e.key === 'Spacebar') {
+      e.preventDefault();
+      goTo(current + 1);
+    } else if (e.key === 'ArrowLeft' || e.key === 'Left') {
+      e.preventDefault();
+      goTo(current - 1);
+    } else if (e.key === 'Home') {
+      e.preventDefault();
+      goTo(0);
+    } else if (e.key === 'End') {
+      e.preventDefault();
+      goTo(total - 1);
+    }
+  });
+
+  // --- Touch swipe support ---
+  var touchStartX = 0;
+  document.addEventListener('touchstart', function(e) {
+    touchStartX = e.touches[0].clientX;
+  });
+  document.addEventListener('touchend', function(e) {
+    var dx = e.changedTouches[0].clientX - touchStartX;
+    if (Math.abs(dx) > 50) {
+      goTo(current + (dx < 0 ? 1 : -1));
+    }
+  });
+
+  // --- Init ---
+  updateUI();
+})();
+</script>
+
+</body>
+</html>

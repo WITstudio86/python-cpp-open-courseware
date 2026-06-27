@@ -1,0 +1,198 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>第13课：并查集基础（DSU）</title>
+<style>
+* { margin: 0; padding: 0; box-sizing: border-box; }
+body { font-family: 'Segoe UI', 'Microsoft YaHei', sans-serif; background: #0d1117; color: #c9d1d9; display: flex; justify-content: center; align-items: center; min-height: 100vh; }
+#app { width: 95%; max-width: 1000px; background: #161b22; border-radius: 16px; padding: 40px; box-shadow: 0 0 40px rgba(0,0,0,0.5); }
+.slide { display: none; } .slide.active { display: block; }
+h1 { font-size: 2.2em; color: #58a6ff; margin-bottom: 16px; border-bottom: 2px solid #30363d; padding-bottom: 12px; }
+h2 { font-size: 1.6em; color: #79c0ff; margin: 20px 0 12px; }
+h3 { font-size: 1.3em; color: #d2a8ff; margin: 16px 0 8px; }
+p, li { font-size: 1.08em; line-height: 1.85; margin-bottom: 8px; }
+ul, ol { margin-left: 24px; margin-bottom: 12px; }
+.highlight { color: #ff7b72; font-weight: bold; } .accent { color: #7ee787; font-weight: bold; } .info { color: #a5d6ff; }
+pre { background: #0d1117; border: 1px solid #30363d; border-radius: 8px; padding: 18px; overflow-x: auto; margin: 12px 0; font-size: 0.88em; line-height: 1.6; }
+code { font-family: 'Fira Code', 'Consolas', monospace; }
+.kw { color: #ff7b72; } .type { color: #ffa657; } .func { color: #d2a8ff; }
+.num { color: #79c0ff; } .cmt { color: #8b949e; font-style: italic; }
+.nav { display: flex; justify-content: space-between; align-items: center; margin-top: 30px; }
+.nav button { background: #21262d; color: #c9d1d9; border: 1px solid #30363d; padding: 10px 24px; border-radius: 8px; cursor: pointer; font-size: 1em; transition: background 0.2s; }
+.nav button:hover { background: #30363d; } .nav .page-indicator { font-size: 1em; color: #8b949e; }
+.title-slide { text-align: center; padding-top: 40px; }
+.title-slide h1 { font-size: 2.8em; border: none; }
+.title-slide .subtitle { font-size: 1.3em; color: #8b949e; margin: 16px 0; }
+.tag { display: inline-block; background: #1f6feb33; color: #58a6ff; padding: 4px 14px; border-radius: 20px; margin: 4px; font-size: 0.92em; border: 1px solid #1f6feb55; }
+</style>
+</head>
+<body>
+<div id="app">
+<div class="slide active" id="s1">
+<div class="title-slide">
+<h1>第13课：并查集基础</h1>
+<p class="subtitle">Union-Find / Disjoint Set Union（DSU）</p>
+<div class="tags">
+<span class="tag">CSP-S 数据结构</span><span class="tag">O(α(n)) ≈ O(1)</span><span class="tag">路径压缩</span><span class="tag">按秩合并</span>
+</div>
+<p style="margin-top:30px; color:#8b949e">近乎 O(1) 的合并与查询，竞赛中最常用的数据结构之一</p>
+</div>
+</div>
+
+<div class="slide" id="s2">
+<h1>📖 知识精讲 — 基本概念</h1>
+<h2>并查集维护什么？</h2>
+<p>维护<span class="highlight">不相交集合</span>的森林结构</p>
+<ul><li>每个集合用一棵<span class="accent">有根树</span>表示</li><li>根节点是该集合的代表元素</li></ul>
+
+<h2>两种核心操作</h2>
+<table style="width:100%; border-collapse:collapse; margin:12px 0">
+<tr style="border-bottom:1px solid #30363d"><td style="padding:6px;width:100px"><span class="highlight">Find(x)</span></td><td style="padding:6px">查找 x 所属集合的代表元素（根）</td></tr>
+<tr style="border-bottom:1px solid #30363d"><td style="padding:6px"><span class="accent">Union(x,y)</span></td><td style="padding:6px">合并 x 和 y 所在的两个集合</td></tr>
+</table>
+
+<h3 style="margin-top:16px">两个关键优化</h3>
+<p><span class="highlight">路径压缩</span>：find 时将沿路节点直接连到根</p>
+<p><span class="accent">按大小/秩合并</span>：将小树合并到大树，保持平衡</p>
+<p>同时使用两者 → 复杂度 <span class="highlight">O(α(n)) ≈ O(1)</span></p>
+</div>
+
+<div class="slide" id="s3">
+<h1>📖 知识精讲 — 实现细节</h1>
+<h3>路径压缩（递归版）</h3>
+<pre><span class="type">int</span> <span class="func">find</span>(<span class="type">int</span> x) {
+    <span class="kw">return</span> fa[x] == x ? x : fa[x] = <span class="func">find</span>(fa[x]);
+}  <span class="cmt">// 顺便把路径上所有节点直接指向根！</span></pre>
+
+<h3>按大小合并</h3>
+<pre><span class="type">bool</span> <span class="func">unite</span>(<span class="type">int</span> x, <span class="type">int</span> y) {
+    x = <span class="func">find</span>(x); y = <span class="func">find</span>(y);
+    <span class="kw">if</span> (x == y) <span class="kw">return false</span>;     <span class="cmt">// 已经在同一集合</span>
+    <span class="kw">if</span> (sz[x] &lt; sz[y]) <span class="func">swap</span>(x, y); <span class="cmt">// 小挂大</span>
+    fa[y] = x;
+    sz[x] += sz[y];
+    <span class="kw">return true</span>;
+}</pre>
+
+<h3>反阿克曼函数 α(n)</h3>
+<p>α(10⁶) ≈ 4，α(10¹⁰⁰) ≈ 5 → 竞赛中视为 <span class="accent">常数</span></p>
+</div>
+
+<div class="slide" id="s4">
+<h1>💻 代码模板 — 完整 DSU 结构体</h1>
+<pre><span class="kw">struct</span> <span class="type">DSU</span> {
+    vector&lt;<span class="type">int</span>&gt; fa, sz;
+    <span class="type">int</span> comp;  <span class="cmt">// 连通块数量</span>
+
+    <span class="func">DSU</span>(<span class="type">int</span> n) : <span class="func">fa</span>(n+<span class="num">1</span>), <span class="func">sz</span>(n+<span class="num">1</span>, <span class="num">1</span>), <span class="func">comp</span>(n) {
+        <span class="kw">for</span> (<span class="type">int</span> i = <span class="num">1</span>; i &lt;= n; i++) fa[i] = i;
+    }
+
+    <span class="type">int</span> <span class="func">find</span>(<span class="type">int</span> x) {
+        <span class="kw">return</span> fa[x] == x ? x : fa[x] = <span class="func">find</span>(fa[x]);
+    }
+
+    <span class="type">bool</span> <span class="func">unite</span>(<span class="type">int</span> x, <span class="type">int</span> y) {
+        x = <span class="func">find</span>(x); y = <span class="func">find</span>(y);
+        <span class="kw">if</span> (x == y) <span class="kw">return false</span>;
+        <span class="kw">if</span> (sz[x] &lt; sz[y]) <span class="func">swap</span>(x, y);
+        fa[y] = x; sz[x] += sz[y]; comp--;
+        <span class="kw">return true</span>;
+    }
+
+    <span class="type">bool</span> <span class="func">same</span>(<span class="type">int</span> x, <span class="type">int</span> y) { <span class="kw">return</span> <span class="func">find</span>(x) == <span class="func">find</span>(y); }
+    <span class="type">int</span>  <span class="func">size</span>(<span class="type">int</span> x) { <span class="kw">return</span> sz[<span class="func">find</span>(x)]; }
+};</pre>
+</div>
+
+<div class="slide" id="s5">
+<h1>⚠️ 易错点与经典应用</h1>
+<h3>常见错误</h3>
+<ul>
+<li><span class="highlight">⚠ 忘记初始化 fa[i] = i</span></li>
+<li><span class="highlight">⚠ 递归 find 可能爆栈</span> — n 很大时使用迭代版</li>
+<li><span class="highlight">⚠ unite 中未 find 就去比较</span></li>
+<li><span class="highlight">⚠ 按大小合并写反</span> — 小树挂大树</li>
+</ul>
+
+<h3 style="margin-top:16px">经典应用场景</h3>
+<ul>
+<li><span class="accent">✔ 连通块计数</span> — 初始 n，每次 unite 减 1</li>
+<li><span class="accent">✔ Kruskal 最小生成树</span> — 判断边是否形成环</li>
+<li><span class="accent">✔ 离线删边转加边</span> — 反向处理</li>
+<li><span class="accent">✔ 动态连通性</span> — 在线查询两点是否连通</li>
+</ul>
+</div>
+
+<div class="slide" id="s6">
+<h1>📝 真题精练</h1>
+<h3>真题一：连通块维护</h3>
+<p><span class="info">操作：</span>M x y（加边）、Q x y（查询连通 + 连通块总数）</p>
+<p><span class="info">n, m ≤ 2×10⁵</span> | <span class="accent">O(m·α(n))</span></p>
+
+<h3 style="margin-top:20px">真题二：离线删边求连通块</h3>
+<p><span class="info">场景：</span>动态删边，每次删边后求连通块数</p>
+<p><span class="info">技巧：</span><span class="highlight">离线 + 反向 = 加边</span></p>
+<p>先建出所有未删除的边 → 逆序加回被删边 → 记录连通块数</p>
+<p><span class="accent">O((m+k)·α(n))</span></p>
+
+<div style="background:#0d1117; padding:14px; border-radius:8px; border:1px solid #30363d; margin-top:16px">
+<p><span class="accent">思想：</span>删边难，加边易。将问题逆序转化为加边问题。</p>
+</div>
+</div>
+
+<div class="slide" id="s7">
+<h1>🎯 本课小结</h1>
+<div style="display:grid; grid-template-columns:1fr 1fr; gap:16px; margin-top:20px">
+<div style="background:#0d1117; padding:18px; border-radius:8px; border:1px solid #30363d">
+<h3>两大优化</h3>
+<p>路径压缩：fa[x] = find(fa[x])</p>
+<p>按大小合并：小树挂大树</p>
+</div>
+<div style="background:#0d1117; padding:18px; border-radius:8px; border:1px solid #30363d">
+<h3>复杂度</h3>
+<p>单次操作：<span class="accent">O(α(n)) ≈ O(1)</span></p>
+<p>竞赛范围：α(n) ≤ 4</p>
+</div>
+<div style="background:#0d1117; padding:18px; border-radius:8px; border:1px solid #30363d">
+<h3>经典应用</h3>
+<p>连通性 · 连通块</p>
+<p>Kruskal MST</p>
+<p>离线逆序处理</p>
+</div>
+<div style="background:#0d1117; padding:18px; border-radius:8px; border:1px solid #30363d">
+<h3>下节预告</h3>
+<p>带权并查集</p>
+<p>扩展域并查集</p>
+<p>食物链问题</p>
+</div>
+</div>
+</div>
+
+<div class="nav">
+<button onclick="prevSlide()">◀ 上一页</button>
+<span class="page-indicator" id="pageNum">1 / 7</span>
+<button onclick="nextSlide()">下一页 ▶</button>
+</div>
+</div>
+<script>
+let current = 0;
+const slides = document.querySelectorAll('.slide');
+const total = slides.length;
+function showSlide(n) {
+    slides[current].classList.remove('active');
+    current = ((n % total) + total) % total;
+    slides[current].classList.add('active');
+    document.getElementById('pageNum').textContent = (current + 1) + ' / ' + total;
+}
+function nextSlide() { showSlide(current + 1); }
+function prevSlide() { showSlide(current - 1); }
+document.addEventListener('keydown', function(e) {
+    if (e.key === 'ArrowRight' || e.key === 'ArrowDown') nextSlide();
+    if (e.key === 'ArrowLeft' || e.key === 'ArrowUp') prevSlide();
+});
+</script>
+</body>
+</html>

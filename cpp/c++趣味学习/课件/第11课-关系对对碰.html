@@ -1,0 +1,248 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>第11课：关系对对碰——比较运算符</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            font-family: 'PingFang SC', 'Microsoft YaHei', sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            display: flex; justify-content: center; align-items: center;
+        }
+        .slides-container {
+            width: 90%; max-width: 900px; min-height: 550px;
+            background: white; border-radius: 25px; padding: 40px;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+            position: relative;
+        }
+        .slide { display: none; animation: fadeIn 0.5s; }
+        .slide.active { display: block; }
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
+        h1 { color: #5b3cc4; font-size: 2.2em; margin-bottom: 20px; }
+        h2 { color: #e8573a; font-size: 1.8em; margin-bottom: 15px; }
+        h3 { color: #2c7a4a; font-size: 1.4em; margin: 15px 0 10px; }
+        p, li { font-size: 1.15em; line-height: 1.8; color: #333; }
+        ul { padding-left: 30px; margin: 10px 0; }
+        .code-block {
+            background: #1e1e2e; color: #cdd6f4; padding: 20px;
+            border-radius: 12px; font-family: 'Courier New', monospace;
+            font-size: 0.95em; line-height: 1.6; overflow-x: auto;
+            margin: 15px 0; white-space: pre-wrap; word-break: break-all;
+        }
+        .code-block .keyword { color: #cba6f7; }
+        .code-block .string { color: #a6e3a1; }
+        .code-block .comment { color: #6c7086; font-style: italic; }
+        .code-block .number { color: #fab387; }
+        .nav-buttons {
+            position: absolute; bottom: 20px; left: 40px; right: 40px;
+            display: flex; justify-content: space-between;
+        }
+        .nav-btn {
+            background: linear-gradient(135deg, #667eea, #764ba2);
+            color: white; border: none; padding: 12px 30px;
+            border-radius: 30px; font-size: 1.1em; cursor: pointer;
+            transition: transform 0.2s, box-shadow 0.2s;
+            font-family: 'PingFang SC', 'Microsoft YaHei', sans-serif;
+        }
+        .nav-btn:hover { transform: scale(1.05); box-shadow: 0 5px 20px rgba(102,126,234,0.4); }
+        .nav-btn:disabled { opacity: 0.4; cursor: default; transform: none; }
+        .page-indicator { font-size: 1.1em; color: #764ba2; align-self: center; }
+        .emoji-big { font-size: 3em; text-align: center; display: block; margin: 15px 0; }
+        .badge { display: inline-block; background: #fdf6e3; color: #b58900; padding: 5px 15px; border-radius: 20px; font-size: 0.9em; margin: 3px; }
+        table { width: 100%; border-collapse: collapse; margin: 15px 0; }
+        th, td { border: 2px solid #ddd; padding: 10px; text-align: left; }
+        th { background: #667eea; color: white; }
+        .highlight-box { background: #fff3cd; border-left: 5px solid #ffc107; padding: 15px; border-radius: 8px; margin: 15px 0; }
+        .tip-box { background: #d4edda; border-left: 5px solid #28a745; padding: 15px; border-radius: 8px; margin: 15px 0; }
+        .danger-box { background: #f8d7da; border-left: 5px solid #dc3545; padding: 15px; border-radius: 8px; margin: 15px 0; }
+        @media (max-width: 600px) {
+            .slides-container { padding: 25px; }
+            h1 { font-size: 1.5em; }
+            .code-block { font-size: 0.75em; }
+        }
+    </style>
+</head>
+<body>
+    <div class="slides-container">
+        <!-- Slide 1: Title Page -->
+        <div class="slide active" id="slide1">
+            <span class="emoji-big">⚖️</span>
+            <h1>第11课：关系对对碰——比较运算符</h1>
+            <p style="text-align:center; color:#666;">第二单元：运算小当家 | 课时：45分钟</p>
+            <p style="text-align:center; margin-top:20px; font-size:1.3em;">⚖️ 数字比大小擂台</p>
+            <div style="text-align:center; margin-top:30px;">
+                <span class="badge">> < >=</span>
+                <span class="badge">< <= ==</span>
+                <span class="badge">!= true/false</span>
+            </div>
+        </div>
+
+        <!-- Slide 2: Learning Objectives -->
+        <div class="slide" id="slide2">
+            <h2>🎯 学习目标</h2>
+            <ul>
+                <li>认识C++<strong>六种比较运算符</strong>：>、<、>=、<=、==、!=</li>
+                <li>理解比较运算的结果是<strong>布尔值</strong>（true/false，即1/0）</li>
+                <li>能运用比较运算符解决<strong>判断大小</strong>的实际问题</li>
+            </ul>
+            <div class="tip-box" style="margin-top:25px;">
+                <strong>💡 先想一想：</strong><br>
+                你和同学比身高的时候，会怎么说？"我比他高"、"他比我矮"。电脑也要做这样的判断——这就是比较运算符的工作！
+            </div>
+            <div class="danger-box" style="margin-top:15px;">
+                <strong>⚠️ 课前警告：</strong><br>
+                <code>=</code> 和 <code>==</code> 是完全不同的东西！一个等号是<strong>赋值</strong>，两个等号才是<strong>比较</strong>。这是初学者最容易犯的错！
+            </div>
+        </div>
+
+        <!-- Slide 3: Core Knowledge -->
+        <div class="slide" id="slide3">
+            <h2>📖 核心知识：六位比较裁判</h2>
+
+            <h3>⚖️ 数字比大小擂台</h3>
+            <p>两个数字上台PK，比较运算符就是<strong>公正的裁判</strong>！裁判给出结果：对（true/1）或错（false/0）。</p>
+
+            <table>
+                <tr><th>运算符</th><th>名称</th><th>例子</th><th>结果</th><th>含义</th></tr>
+                <tr><td><code>></code></td><td>大于</td><td>8 > 5</td><td>true (1)</td><td>8比5大</td></tr>
+                <tr><td><code><</code></td><td>小于</td><td>3 < 10</td><td>true (1)</td><td>3比10小</td></tr>
+                <tr><td><code>>=</code></td><td>大于等于</td><td>7 >= 7</td><td>true (1)</td><td>7不小于7（相等也行）</td></tr>
+                <tr><td><code><=</code></td><td>小于等于</td><td>5 <= 8</td><td>true (1)</td><td>5不大于8</td></tr>
+                <tr><td><code>==</code></td><td>等于</td><td>10 == 10</td><td>true (1)</td><td>左右两边相等</td></tr>
+                <tr><td><code>!=</code></td><td>不等于</td><td>4 != 9</td><td>true (1)</td><td>左右两边不同</td></tr>
+            </table>
+
+            <div class="highlight-box">
+                <strong>🔑 比较结果只有两种：</strong><br>
+                对 → true → <strong>1</strong> &nbsp;&nbsp;|&nbsp;&nbsp; 错 → false → <strong>0</strong>
+            </div>
+        </div>
+
+        <!-- Slide 4: Example Code -->
+        <div class="slide" id="slide4">
+            <h2>💻 示例代码</h2>
+
+            <h3>比大小擂台——六种运算符全演示</h3>
+            <div class="code-block">#include &lt;iostream&gt;
+using namespace std;
+
+int main() {
+    int a = 8, b = 5;
+
+    cout &lt;&lt; a &lt;&lt; " >  " &lt;&lt; b &lt;&lt; " ? " &lt;&lt; (a > b)  &lt;&lt; endl;
+    cout &lt;&lt; a &lt;&lt; " <  " &lt;&lt; b &lt;&lt; " ? " &lt;&lt; (a < b)  &lt;&lt; endl;
+    cout &lt;&lt; a &lt;&lt; " >= " &lt;&lt; b &lt;&lt; " ? " &lt;&lt; (a >= b) &lt;&lt; endl;
+    cout &lt;&lt; a &lt;&lt; " <= " &lt;&lt; b &lt;&lt; " ? " &lt;&lt; (a <= b) &lt;&lt; endl;
+    cout &lt;&lt; a &lt;&lt; " == " &lt;&lt; b &lt;&lt; " ? " &lt;&lt; (a == b) &lt;&lt; endl;
+    cout &lt;&lt; a &lt;&lt; " != " &lt;&lt; b &lt;&lt; " ? " &lt;&lt; (a != b) &lt;&lt; endl;
+    return 0;
+}</div>
+
+            <h3>⚠️ = 和 == 的区别（极其重要！）</h3>
+            <div class="code-block">int score = 60;      // ← = 是赋值：把60放进去
+
+if (score == 100) {   // ← == 是比较：问"等于100吗？"
+    cout &lt;&lt; "满分！";
+}
+
+// ❌ 错误写法！千万别这样写：
+// if (score = 100) {  // 这是赋值不是比较！score会变成100！</div>
+
+            <div class="danger-box">
+                <strong>🚨 记忆口诀：</strong>一个等号是"变成"，两个等号才是"等于吗？"
+            </div>
+        </div>
+
+        <!-- Slide 5: Practice & Challenge -->
+        <div class="slide" id="slide5">
+            <h2>🎮 趣味练习 & 挑战任务</h2>
+
+            <h3>练习1：火眼金睛 🔍</h3>
+            <p>判断对错——下列比较的结果是true还是false？</p>
+            <table>
+                <tr><td>8 > 5</td><td>→ ?</td><td>3 == 4</td><td>→ ?</td><td>7 <= 7</td><td>→ ?</td></tr>
+                <tr><td>10 != 9</td><td>→ ?</td><td>15 >= 20</td><td>→ ?</td><td>100 == 100</td><td>→ ?</td></tr>
+            </table>
+
+            <h3>练习2：找茬大侦探 🕵️</h3>
+            <p>下面的代码有什么问题？</p>
+            <div class="code-block">int a = 5;
+if (a = 3) {           // ← 发现问题了吗？
+    cout &lt;&lt; "相等";
+}</div>
+            <p style="color:#dc3545;"><strong>答案：</strong><code>if (a = 3)</code> 用的是赋值<code>=</code>而不是比较<code>==</code>！应该写成 <code>if (a == 3)</code>。</p>
+
+            <h3>🏆 挑战任务：数字比大小擂台</h3>
+            <p>输入三个整数，使用比较运算符找出<strong>最大值</strong>并输出。如果三个数都相等，输出"三位选手打平！"</p>
+            <div class="tip-box">
+                <strong>💡 提示：</strong>先比较前两个数找出较大的，再跟第三个数比！
+            </div>
+        </div>
+
+        <!-- Slide 6: Summary -->
+        <div class="slide" id="slide6">
+            <h2>📝 本课小结</h2>
+            <table>
+                <tr><th>运算符</th><th>名称</th><th>例子</th><th>结果为true时</th></tr>
+                <tr><td><code>></code></td><td>大于</td><td>8 > 5</td><td>左边大于右边</td></tr>
+                <tr><td><code><</code></td><td>小于</td><td>3 < 10</td><td>左边小于右边</td></tr>
+                <tr><td><code>>=</code></td><td>大于等于</td><td>7 >= 7</td><td>左边不小于右边</td></tr>
+                <tr><td><code><=</code></td><td>小于等于</td><td>5 <= 8</td><td>左边不大于右边</td></tr>
+                <tr><td><code>==</code></td><td>等于</td><td>10 == 10</td><td>左右两边相等</td></tr>
+                <tr><td><code>!=</code></td><td>不等于</td><td>4 != 9</td><td>左右两边不同</td></tr>
+            </table>
+
+            <div class="danger-box" style="margin-top:15px;">
+                <strong>🚨 重中之重：</strong><br>
+                <code>=</code> 是<strong>赋值</strong>（把东西放进去），<code>==</code> 是<strong>比较</strong>（问相等吗？）<br>
+                比较结果是布尔值：<strong>真（1）</strong>或<strong>假（0）</strong>
+            </div>
+
+            <div class="highlight-box" style="margin-top:15px;">
+                <strong>🔑 记住口诀：</strong><br>
+                比较运算有六种，大于小于两兄弟；<br>
+                等于用两个等号，一个等号是赋值！<br>
+                比较结果只有真和假，true就是1，false就是0！
+            </div>
+            <p style="text-align:center; margin-top:20px; font-size:1.3em;">🔎 下一课预告：逻辑大侦探——逻辑运算符</p>
+        </div>
+
+        <!-- Navigation -->
+        <div class="nav-buttons">
+            <button class="nav-btn" onclick="prevSlide()">◀ 上一页</button>
+            <span class="page-indicator" id="pageIndicator">1 / 6</span>
+            <button class="nav-btn" onclick="nextSlide()">下一页 ▶</button>
+        </div>
+    </div>
+
+    <script>
+        let currentSlide = 0;
+        const slides = document.querySelectorAll('.slide');
+        const totalSlides = slides.length;
+        const indicator = document.getElementById('pageIndicator');
+
+        function showSlide(n) {
+            slides[currentSlide].classList.remove('active');
+            currentSlide = (n + totalSlides) % totalSlides;
+            slides[currentSlide].classList.add('active');
+            indicator.textContent = (currentSlide + 1) + ' / ' + totalSlides;
+            document.querySelectorAll('.nav-btn')[0].disabled = currentSlide === 0;
+            document.querySelectorAll('.nav-btn')[1].disabled = currentSlide === totalSlides - 1;
+        }
+        function nextSlide() { showSlide(currentSlide + 1); }
+        function prevSlide() { showSlide(currentSlide - 1); }
+
+        // Keyboard navigation
+        document.addEventListener('keydown', function(e) {
+            if (e.key === 'ArrowRight' || e.key === ' ') { e.preventDefault(); nextSlide(); }
+            else if (e.key === 'ArrowLeft') { e.preventDefault(); prevSlide(); }
+        });
+
+        // Init
+        indicator.textContent = (currentSlide + 1) + ' / ' + totalSlides;
+    </script>
+</body>
+</html>

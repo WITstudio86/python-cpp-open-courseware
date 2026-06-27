@@ -1,0 +1,798 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>第10节：完整贪吃蛇</title>
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body {
+    font-family: "PingFang SC", "Microsoft YaHei", "SimHei", sans-serif;
+    background: #1a1a2e;
+    color: #eee;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    min-height: 100vh;
+    user-select: none;
+    overflow: hidden;
+  }
+  #container {
+    width: 100vw;
+    height: 100vh;
+    position: relative;
+  }
+  .slide {
+    display: none;
+    width: 100%;
+    height: 100%;
+    padding: 50px 80px;
+    flex-direction: column;
+    justify-content: flex-start;
+    position: absolute;
+    top: 0; left: 0;
+  }
+  .slide.active { display: flex; }
+
+  /* 封面样式 */
+  .slide.cover {
+    justify-content: center;
+    align-items: center;
+    text-align: center;
+    background: linear-gradient(135deg, #0f3460, #16213e, #1a1a2e);
+  }
+  .slide.cover .lesson-num {
+    font-size: 4rem;
+    font-weight: 900;
+    color: #e94560;
+    text-shadow: 0 0 30px rgba(233,69,96,0.5);
+  }
+  .slide.cover h1 {
+    font-size: 3.5rem;
+    margin: 20px 0;
+    color: #fff;
+    text-shadow: 0 2px 10px rgba(0,0,0,0.3);
+  }
+  .slide.cover .subtitle {
+    font-size: 1.8rem;
+    color: #00d2ff;
+    margin-top: 30px;
+  }
+  .slide.cover .upgrade-badge {
+    display: inline-block;
+    background: linear-gradient(135deg, #e94560, #ff6b6b);
+    color: #fff;
+    padding: 8px 24px;
+    border-radius: 20px;
+    font-size: 1.6rem;
+    font-weight: bold;
+    margin-top: 20px;
+  }
+
+  /* 内容页通用 */
+  .slide h2 {
+    font-size: 2.8rem;
+    color: #00d2ff;
+    margin-bottom: 25px;
+    border-bottom: 4px solid #e94560;
+    padding-bottom: 15px;
+  }
+  .slide h3 {
+    font-size: 2rem;
+    color: #ffd460;
+    margin: 20px 0 10px 0;
+  }
+  .slide p, .slide li {
+    font-size: 1.6rem;
+    line-height: 1.8;
+    margin-bottom: 8px;
+  }
+  .slide ul, .slide ol {
+    margin-left: 30px;
+    margin-bottom: 15px;
+  }
+  .slide li {
+    margin-bottom: 12px;
+  }
+
+  /* 代码块 */
+  .code-block {
+    background: #1e1e2e;
+    border: 2px solid #333;
+    border-radius: 12px;
+    padding: 15px 20px;
+    margin: 10px 0;
+    font-family: "JetBrains Mono", "Fira Code", "Cascadia Code", "Consolas", monospace;
+    font-size: 1.3rem;
+    line-height: 1.7;
+    overflow-x: auto;
+    white-space: pre;
+    color: #cdd6f4;
+    tab-size: 4;
+  }
+  .code-block .keyword { color: #cba6f7; }
+  .code-block .string { color: #a6e3a1; }
+  .code-block .comment { color: #6c7086; font-style: italic; }
+  .code-block .number { color: #fab387; }
+  .code-block .func { color: #89b4fa; }
+  .code-block .builtin { color: #f9e2af; }
+
+  /* 高亮卡片 */
+  .highlight-box {
+    background: rgba(0,210,255,0.1);
+    border-left: 6px solid #00d2ff;
+    border-radius: 8px;
+    padding: 15px 20px;
+    margin: 15px 0;
+    font-size: 1.5rem;
+  }
+  .warn-box {
+    background: rgba(233,69,96,0.1);
+    border-left: 6px solid #e94560;
+    border-radius: 8px;
+    padding: 15px 20px;
+    margin: 15px 0;
+    font-size: 1.5rem;
+  }
+  .tip-box {
+    background: rgba(255,212,96,0.1);
+    border-left: 6px solid #ffd460;
+    border-radius: 8px;
+    padding: 15px 20px;
+    margin: 15px 0;
+    font-size: 1.5rem;
+  }
+
+  /* 两栏布局 */
+  .two-col {
+    display: flex;
+    gap: 30px;
+    flex: 1;
+  }
+  .two-col > div { flex: 1; }
+
+  /* 边界图 */
+  .boundary-diagram {
+    display: flex;
+    justify-content: center;
+    margin: 15px 0;
+  }
+  .boundary-diagram .b-box {
+    width: 350px;
+    height: 240px;
+    border: 3px solid #00d2ff;
+    position: relative;
+    background: rgba(0,210,255,0.05);
+    border-radius: 8px;
+  }
+  .boundary-diagram .b-label {
+    position: absolute;
+    font-size: 1.3rem;
+    color: #e94560;
+    font-weight: bold;
+  }
+  .b-label.top { top: -30px; left: 50%; transform: translateX(-50%); }
+  .b-label.bottom { bottom: -30px; left: 50%; transform: translateX(-50%); }
+  .b-label.left { left: -100px; top: 50%; transform: translateY(-50%); }
+  .b-label.right { right: -100px; top: 50%; transform: translateY(-50%); }
+
+  /* 比较表格 */
+  .compare-table {
+    border-collapse: collapse;
+    width: 100%;
+    font-size: 1.5rem;
+    margin: 15px 0;
+  }
+  .compare-table th {
+    background: rgba(0,210,255,0.2);
+    padding: 12px;
+    text-align: center;
+    border: 2px solid rgba(0,210,255,0.3);
+  }
+  .compare-table td {
+    padding: 12px;
+    text-align: center;
+    border: 2px solid rgba(255,255,255,0.1);
+  }
+
+  /* 导航 */
+  #nav {
+    position: fixed;
+    bottom: 20px;
+    right: 30px;
+    display: flex;
+    gap: 12px;
+    z-index: 100;
+  }
+  #nav button {
+    background: rgba(255,255,255,0.1);
+    color: #fff;
+    border: 2px solid rgba(255,255,255,0.3);
+    border-radius: 10px;
+    padding: 10px 20px;
+    font-size: 1.2rem;
+    cursor: pointer;
+    transition: all 0.2s;
+  }
+  #nav button:hover {
+    background: rgba(0,210,255,0.3);
+    border-color: #00d2ff;
+  }
+  #page-indicator {
+    position: fixed;
+    bottom: 25px;
+    left: 30px;
+    font-size: 1.3rem;
+    color: #888;
+    z-index: 100;
+  }
+
+  /* 游戏结束模拟 */
+  .game-over-demo {
+    background: rgba(0,0,0,0.7);
+    border: 3px solid #e94560;
+    border-radius: 16px;
+    padding: 30px;
+    text-align: center;
+    margin: 10px auto;
+    width: 400px;
+  }
+  .game-over-demo .go-title {
+    font-size: 2.5rem;
+    color: #e94560;
+    font-weight: bold;
+  }
+  .game-over-demo .go-score {
+    font-size: 1.8rem;
+    color: #fff;
+    margin: 15px 0;
+  }
+  .game-over-demo .go-hint {
+    font-size: 1.4rem;
+    color: #a6e3a1;
+  }
+</style>
+</head>
+<body>
+<div id="container">
+
+<!-- ==================== 第1页：封面 ==================== -->
+<div class="slide cover active" data-index="0">
+  <div class="snake-emoji" style="font-size:5rem;">&#x1F40D;&#x2B50;</div>
+  <div class="lesson-num">第10节</div>
+  <h1>完整贪吃蛇</h1>
+  <div class="subtitle">碰撞检测 + 分数显示 + 重新开始</div>
+  <div class="upgrade-badge">&#x1F4E6; v1.0 → v2.0 升级！</div>
+</div>
+
+<!-- ==================== 第2页：上节回顾 ==================== -->
+<div class="slide" data-index="1">
+  <h2>&#x1F504; 上节回顾：v1.0 有什么不足？</h2>
+  <div class="two-col">
+    <div>
+      <h3>已实现的功能</h3>
+      <ul>
+        <li>✅ 蛇能移动（列表 + 头插尾删）</li>
+        <li>✅ 方向键控制（dx/dy）</li>
+        <li>✅ 食物随机生成</li>
+        <li>✅ 吃到食物变长</li>
+      </ul>
+    </div>
+    <div>
+      <h3>还缺什么？</h3>
+      <ul>
+        <li>❌ 碰到墙不会死</li>
+        <li>❌ 碰到自己不会死</li>
+        <li>❌ 没有分数显示</li>
+        <li>❌ 不能重新开始</li>
+      </ul>
+    </div>
+  </div>
+  <div class="highlight-box" style="margin-top:15px;">
+    <b>&#x1F3AF; 今天目标：</b>贪吃蛇 v1.0 + 碰撞检测 + 分数面板 + 重新开始 = <b style="color:#e94560;">贪吃蛇 v2.0</b>
+  </div>
+</div>
+
+<!-- ==================== 第3页：reset_game() ==================== -->
+<div class="slide" data-index="2">
+  <h2>&#x1F527; 第一步：提取 reset_game() 函数</h2>
+  <div class="two-col">
+    <div>
+      <h3>为什么要这样做？</h3>
+      <p>把所有初始化代码集中到一个函数里，方便重新开始游戏时一键重置。</p>
+      <div class="tip-box">
+        <b>好处：</b>按R重新开始时，只需一行<br>
+        <code style="color:#a6e3a1;">reset_game()</code> 就够了！
+      </div>
+    </div>
+    <div>
+      <div class="code-block" style="font-size:1.15rem;">
+<span class="comment"># 全局变量</span>
+snake = []
+dx, dy = 0, 0
+food = []
+score = 0
+game_over = <span class="builtin">False</span>
+
+<span class="keyword">def</span> <span class="func">reset_game</span>():
+    <span class="string">"""重置游戏状态"""</span>
+    <span class="keyword">global</span> snake, dx, dy, food
+    <span class="keyword">global</span> score, game_over
+
+    snake = [[400,300],[380,300],[360,300]]
+    dx, dy = GRID_SIZE, 0    <span class="comment"># 初始向右</span>
+    food = generate_food(snake)
+    score = 0
+    game_over = <span class="builtin">False</span>
+
+<span class="comment"># 程序启动时调用一次</span>
+reset_game()
+      </div>
+    </div>
+  </div>
+  <div class="warn-box" style="margin-top:10px;">
+    &#x26A0;&#xFE0F; <b>注意：</b>在函数里修改全局变量，必须用 <code style="color:#cba6f7;">global</code> 关键字声明！
+  </div>
+</div>
+
+<!-- ==================== 第4页：碰墙检测 ==================== -->
+<div class="slide" data-index="3">
+  <h2>&#x1F9F1; 碰撞检测（一）：碰到墙壁</h2>
+  <div class="two-col">
+    <div>
+      <h3>判断逻辑</h3>
+      <p>蛇头坐标超出屏幕范围 = 死亡</p>
+      <div class="boundary-diagram">
+        <div class="b-box">
+          <span class="b-label top">y &lt; 0 碰上方 &#x2620;</span>
+          <span class="b-label bottom">y &gt;= 600 碰下方 &#x2620;</span>
+          <span class="b-label left">x &lt; 0<br>碰左边 &#x2620;</span>
+          <span class="b-label right">x &gt;= 800<br>碰右边 &#x2620;</span>
+          <div style="color:#a6e3a1; position:absolute; top:50%; left:50%; transform:translate(-50%,-50%); font-size:1.3rem;">&#x2705; 安全区域</div>
+        </div>
+      </div>
+    </div>
+    <div>
+      <h3>代码实现</h3>
+      <div class="code-block">
+<span class="keyword">def</span> <span class="func">check_wall_collision</span>(head):
+    <span class="string">"""检查蛇头是否碰到墙壁"""</span>
+    x, y = head[0], head[1]
+    <span class="keyword">return</span> (x &lt; 0 <span class="keyword">or</span>
+            x &gt;= WIDTH <span class="keyword">or</span>
+            y &lt; 0 <span class="keyword">or</span>
+            y &gt;= HEIGHT)
+
+<span class="comment"># 在移动后立即检查</span>
+<span class="keyword">if</span> check_wall_collision(snake[0]):
+    game_over = <span class="builtin">True</span>
+      </div>
+      <div class="highlight-box">
+        <b>4个条件，满足任意1个就死：</b><br>
+        左墙 x&lt;0 | 右墙 x&gt;=800<br>
+        上墙 y&lt;0 | 下墙 y&gt;=600
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ==================== 第5页：碰自身检测 ==================== -->
+<div class="slide" data-index="4">
+  <h2>&#x1F500; 碰撞检测（二）：碰到自己</h2>
+  <div class="two-col">
+    <div>
+      <h3>方法一：列表 in 判断（推荐理解）</h3>
+      <div class="code-block">
+<span class="keyword">def</span> <span class="func">check_self_collision</span>(snake):
+    <span class="string">"""蛇头是否碰到身体"""</span>
+    <span class="keyword">return</span> snake[0] <span class="keyword">in</span> snake[1:]
+      </div>
+      <div class="visual-demo" style="margin-top:10px;">
+        <div style="font-size:1.3rem;">
+          snake[0] = <span style="color:#00ff88;">新蛇头位置</span><br>
+          snake[1:] = <span style="color:#ffd460;">身体所有位置（不含头）</span>
+        </div>
+      </div>
+      <div class="tip-box">
+        &#x1F4A1; <code>in</code> 运算符检查"蛇头坐标"是否出现在"身体坐标列表"中
+      </div>
+    </div>
+    <div>
+      <h3>方法二：Rect.collidelist()（进阶）</h3>
+      <div class="code-block" style="font-size:1.2rem;">
+<span class="keyword">def</span> <span class="func">check_self_collision</span>(snake):
+    <span class="comment"># 蛇头转成Rect</span>
+    head_rect = pygame.Rect(
+        snake[0][0], snake[0][1],
+        GRID_SIZE, GRID_SIZE)
+    <span class="comment"># 身体每节都转成Rect</span>
+    body_rects = []
+    <span class="keyword">for</span> seg <span class="keyword">in</span> snake[1:]:
+        body_rects.append(
+            pygame.Rect(seg[0], seg[1],
+                        GRID_SIZE, GRID_SIZE))
+    <span class="comment"># collidelist返回-1=没碰撞</span>
+    <span class="keyword">return</span> head_rect.collidelist(body_rects) != -1
+      </div>
+      <div class="highlight-box">
+        <b>collidelist()</b> 是Pygame的批量碰撞检测函数，高效又好用！
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ==================== 第6页：分数面板 ==================== -->
+<div class="slide" data-index="5">
+  <h2>&#x1F4CA; 分数显示与居中技巧</h2>
+  <div class="two-col">
+    <div>
+      <h3>1. 创建字体</h3>
+      <div class="code-block">
+<span class="comment"># 在程序开头创建</span>
+font = pygame.font.SysFont(<span class="string">"simhei"</span>, 32)
+big_font = pygame.font.SysFont(<span class="string">"simhei"</span>, 60)
+      </div>
+      <h3 style="margin-top:20px;">2. 左上角显示分数</h3>
+      <div class="code-block">
+<span class="keyword">def</span> <span class="func">draw_score</span>(screen, score):
+    text = font.render(
+        <span class="string">f"分数: {score}"</span>,
+        <span class="builtin">True</span>, WHITE)
+    screen.blit(text, (10, 10))
+      </div>
+      <div style="font-size:1.4rem; color:#a6e3a1; margin-top:10px;">
+        效果：<span style="background:#111;padding:4px 12px;border-radius:6px;">分数: 30</span>
+      </div>
+    </div>
+    <div>
+      <h3>3. 游戏结束画面</h3>
+      <div class="game-over-demo">
+        <div class="go-title">游戏结束</div>
+        <div class="go-score">最终得分: 50</div>
+        <div class="go-hint">按 R 键重新开始</div>
+      </div>
+      <div class="highlight-box" style="margin-top:15px;">
+        <b>&#x1F4A1; 文字居中的核心代码：</b>
+        <div class="code-block" style="margin:8px 0 0 0;">
+<span class="comment"># get_rect(center=...) 自动计算位置</span>
+text_rect = text_surface.get_rect(
+    center=(WIDTH//2, HEIGHT//2))
+screen.blit(text_surface, text_rect)
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ==================== 第7页：重新开始 ==================== -->
+<div class="slide" data-index="6">
+  <h2>&#x1F504; 重新开始：按R键一键重置</h2>
+  <div class="two-col">
+    <div>
+      <h3>事件处理</h3>
+      <div class="code-block">
+<span class="comment"># 在事件循环中</span>
+<span class="keyword">elif</span> event.type == pygame.KEYDOWN:
+    <span class="comment"># 方向键处理...</span>
+
+    <span class="comment"># R键：重新开始（仅游戏结束时有效）</span>
+    <span class="keyword">if</span> event.key == pygame.K_r \
+       <span class="keyword">and</span> game_over:
+        reset_game()
+      </div>
+      <div class="highlight-box">
+        <b>关键点：</b>只有在 game_over==True 时才响应R键，避免游戏中误按导致重置！
+      </div>
+    </div>
+    <div>
+      <h3>完整流程图</h3>
+      <div style="font-size:1.4rem; line-height:2.2;">
+        <span style="color:#e94560;">&#x25CF; 游戏结束</span><br>
+        &nbsp;&nbsp;&#x2514; 显示"游戏结束"画面<br>
+        &nbsp;&nbsp;&#x2514; 显示"按R重新开始"<br>
+        &nbsp;&nbsp;&#x2514; 等待玩家按R键<br>
+        <span style="color:#a6e3a1;">&#x25CF; 按下R键</span><br>
+        &nbsp;&nbsp;&#x2514; reset_game()<br>
+        &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&#x2514; snake = 初始3节<br>
+        &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&#x2514; score = 0<br>
+        &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&#x2514; game_over = False<br>
+        <span style="color:#00d2ff;">&#x25CF; 游戏重新开始！</span>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ==================== 第8页：游戏循环完整结构 ==================== -->
+<div class="slide" data-index="7">
+  <h2>&#x1F504; 游戏主循环的完整逻辑</h2>
+  <div class="code-block" style="font-size:1.1rem;">
+reset_game()   <span class="comment"># 初始化（或重置）</span>
+
+<span class="keyword">while</span> running:
+    <span class="comment"># ===== 1. 事件处理 =====</span>
+    <span class="keyword">for</span> event <span class="keyword">in</span> pygame.event.get():
+        <span class="keyword">if</span> event.type == pygame.QUIT: running = <span class="builtin">False</span>
+        <span class="keyword">elif</span> event.type == pygame.KEYDOWN:
+            <span class="keyword">if not</span> game_over:
+                <span class="comment"># 方向键（游戏进行中）</span>
+                ...
+            <span class="keyword">if</span> event.key == pygame.K_r <span class="keyword">and</span> game_over:
+                reset_game()              <span class="comment"># R键重新开始</span>
+
+    <span class="comment"># ===== 2. 游戏逻辑（非结束状态） =====</span>
+    <span class="keyword">if not</span> game_over:
+        <span class="comment"># 移动蛇</span>
+        new_head = [snake[0][0]+dx, snake[0][1]+dy]
+        snake.insert(0, new_head)
+
+        <span class="comment"># 检查食物</span>
+        <span class="keyword">if</span> snake[0] == food:
+            food = generate_food(snake); score += 10
+        <span class="keyword">else</span>:
+            snake.pop()
+
+        <span class="comment"># 检查碰撞（墙 + 自身）</span>
+        <span class="keyword">if</span> check_wall(snake[0]) <span class="keyword">or</span> check_self(snake):
+            game_over = <span class="builtin">True</span>
+
+    <span class="comment"># ===== 3. 绘制画面 =====</span>
+    screen.fill(BLACK)
+    <span class="comment"># 画食物、画蛇、画分数</span>
+    <span class="keyword">if</span> game_over: draw_game_over(screen)
+    pygame.display.flip()
+    clock.tick(FPS)
+  </div>
+  <div class="highlight-box" style="margin-top:10px;">
+    &#x1F4CC; <b>关键结构：</b>游戏逻辑放在 <code style="color:#a6e3a1;">if not game_over:</code> 里面，绘制始终执行
+  </div>
+</div>
+
+<!-- ==================== 第9页：第9节 vs 第10节 ==================== -->
+<div class="slide" data-index="8">
+  <h2>&#x1F4CA; v1.0 vs v2.0 对比</h2>
+  <table class="compare-table">
+    <tr>
+      <th>功能</th>
+      <th style="color:#ffd460;">第9节 v1.0</th>
+      <th style="color:#a6e3a1;">第10节 v2.0</th>
+    </tr>
+    <tr>
+      <td>蛇身列表</td>
+      <td>✅ 实现</td>
+      <td>✅ 保留</td>
+    </tr>
+    <tr>
+      <td>头插尾删</td>
+      <td>✅ 实现</td>
+      <td>✅ 保留</td>
+    </tr>
+    <tr>
+      <td>方向控制</td>
+      <td>✅ 实现</td>
+      <td>✅ 保留</td>
+    </tr>
+    <tr>
+      <td>食物生成</td>
+      <td>✅ 实现</td>
+      <td>✅ 保留</td>
+    </tr>
+    <tr>
+      <td>吃到变长</td>
+      <td>✅ 实现</td>
+      <td>✅ 保留</td>
+    </tr>
+    <tr style="background:rgba(233,69,96,0.1);">
+      <td style="color:#e94560;">碰墙死亡</td>
+      <td style="color:#e94560;">❌ 没有</td>
+      <td style="color:#a6e3a1;">✅ 新增</td>
+    </tr>
+    <tr style="background:rgba(233,69,96,0.1);">
+      <td style="color:#e94560;">碰自己死亡</td>
+      <td style="color:#e94560;">❌ 没有</td>
+      <td style="color:#a6e3a1;">✅ 新增</td>
+    </tr>
+    <tr style="background:rgba(233,69,96,0.1);">
+      <td style="color:#e94560;">分数显示</td>
+      <td style="color:#e94560;">❌ 没有</td>
+      <td style="color:#a6e3a1;">✅ 新增</td>
+    </tr>
+    <tr style="background:rgba(233,69,96,0.1);">
+      <td style="color:#e94560;">重新开始</td>
+      <td style="color:#e94560;">❌ 没有</td>
+      <td style="color:#a6e3a1;">✅ 新增</td>
+    </tr>
+  </table>
+  <div class="highlight-box" style="margin-top:15px;">
+    &#x2705; <b>v2.0 是 v1.0 的增强版</b>——所有v1.0的代码都保留，只增加了新的判断逻辑
+  </div>
+</div>
+
+<!-- ==================== 第10页：游戏结束画面详解 ==================== -->
+<div class="slide" data-index="9">
+  <h2>&#x1F3AE; 游戏结束画面的实现</h2>
+  <div class="two-col">
+    <div>
+      <h3>绘制步骤</h3>
+      <div class="code-block" style="font-size:1.15rem;">
+<span class="keyword">def</span> <span class="func">draw_game_over</span>(screen):
+    <span class="comment"># 1. 半透明遮罩</span>
+    overlay = pygame.Surface((WIDTH, HEIGHT))
+    overlay.set_alpha(128)
+    overlay.fill(BLACK)
+    screen.blit(overlay, (0, 0))
+
+    <span class="comment"># 2. "游戏结束"大字</span>
+    t1 = big_font.render(<span class="string">"游戏结束"</span>, <span class="builtin">True</span>, RED)
+    r1 = t1.get_rect(center=(WIDTH//2, HEIGHT//2-50))
+    screen.blit(t1, r1)
+
+    <span class="comment"># 3. 最终得分</span>
+    t2 = font.render(<span class="string">f"得分: {score}"</span>, <span class="builtin">True</span>, WHITE)
+    r2 = t2.get_rect(center=(WIDTH//2, HEIGHT//2+20))
+    screen.blit(t2, r2)
+
+    <span class="comment"># 4. 重新开始提示</span>
+    t3 = font.render(<span class="string">"按R重新开始"</span>, <span class="builtin">True</span>, GREEN)
+    r3 = t3.get_rect(center=(WIDTH//2, HEIGHT//2+70))
+    screen.blit(t3, r3)
+      </div>
+    </div>
+    <div>
+      <h3>效果预览</h3>
+      <div class="game-over-demo" style="width:auto;">
+        <div class="go-title">游戏结束</div>
+        <div class="go-score">最终得分: 80</div>
+        <div class="go-hint">按 R 键重新开始</div>
+      </div>
+      <div class="tip-box" style="margin-top:20px;">
+        <b>set_alpha(128)：</b>让遮罩半透明<br>
+        0 = 完全透明，255 = 完全不透明<br>
+        128 = 半透明，可以看到后面的蛇
+      </div>
+      <div class="highlight-box" style="margin-top:10px;">
+        <b>get_rect(center=(x,y))</b> 是居中的关键！<br>
+        无需手工计算文字宽高，Pygame自动搞定
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ==================== 第11页：常见错误 ==================== -->
+<div class="slide" data-index="10">
+  <h2>&#x1F41B; 常见 Bug 与排查</h2>
+  <table style="font-size:1.3rem; border-collapse:collapse; width:100%;">
+    <tr style="background:rgba(233,69,96,0.2);">
+      <th style="padding:10px;text-align:left;">&#x274C; 问题现象</th>
+      <th style="padding:10px;text-align:left;">&#x1F50D; 可能原因</th>
+      <th style="padding:10px;text-align:left;">&#x2705; 解决方法</th>
+    </tr>
+    <tr style="background:rgba(255,255,255,0.03);">
+      <td style="padding:10px;">蛇走到边缘没死</td>
+      <td style="padding:10px;">边界条件用错了</td>
+      <td style="padding:10px;">x>=WIDTH 必须是 >= ，不能是 ></td>
+    </tr>
+    <tr style="background:rgba(255,255,255,0.06);">
+      <td style="padding:10px;">永远不会撞到自己</td>
+      <td style="padding:10px;">碰撞检测在 insert 之前执行了</td>
+      <td style="padding:10px;">必须在 insert(0) 之后检查</td>
+    </tr>
+    <tr style="background:rgba(255,255,255,0.03);">
+      <td style="padding:10px;">游戏结束后蛇还在动</td>
+      <td style="padding:10px;">逻辑代码没放到 if not game_over: 里面</td>
+      <td style="padding:10px;">用 if not game_over: 包裹游戏逻辑</td>
+    </tr>
+    <tr style="background:rgba(255,255,255,0.06);">
+      <td style="padding:10px;">按R键没反应</td>
+      <td style="padding:10px;">按键判断在方向键的 elif 后面</td>
+      <td style="padding:10px;">R键判断用独立的 if，不要连在 elif 上</td>
+    </tr>
+    <tr style="background:rgba(255,255,255,0.03);">
+      <td style="padding:10px;">文字不显示或乱码</td>
+      <td style="padding:10px;">字体名称不存在</td>
+      <td style="padding:10px;">先用 pygame.font.get_default_font() 测试</td>
+    </tr>
+    <tr style="background:rgba(255,255,255,0.06);">
+      <td style="padding:10px;">重新开始后分数没归零</td>
+      <td style="padding:10px;">reset_game() 里没写 score = 0</td>
+      <td style="padding:10px;">检查 global score + score = 0</td>
+    </tr>
+  </table>
+  <div class="warn-box" style="margin-top:15px;">
+    &#x26A0;&#xFE0F; <b>调试技巧：</b>在碰撞检测函数里加一句 <code>print("撞墙了!")</code>，看控制台输出，确认检测是否触发。
+  </div>
+</div>
+
+<!-- ==================== 第12页：总结与作业 ==================== -->
+<div class="slide" data-index="11">
+  <h2>&#x1F4DD; 总结与课后任务</h2>
+  <div class="two-col">
+    <div>
+      <h3>&#x1F4CC; 今日知识要点</h3>
+      <div class="highlight-box" style="font-size:1.4rem;">
+        1. <b>reset_game()</b> — 集中初始化，方便重置<br>
+        2. <b>碰墙死亡</b> — x&lt;0 或 x&gt;=800 或 y&lt;0 或 y&gt;=600<br>
+        3. <b>碰自己死亡</b> — snake[0] in snake[1:]<br>
+        4. <b>分数显示</b> — font.render() + get_rect(center=...)<br>
+        5. <b>重新开始</b> — 按R键 → reset_game()
+      </div>
+      <h3 style="margin-top:25px;">&#x1F3C6; 作品展示</h3>
+      <p>恭喜！你现在已经完成了一个<b style="color:#e94560;">完整的贪吃蛇游戏</b>，包含所有核心功能！</p>
+    </div>
+    <div>
+      <h3>&#x270F;&#xFE0F; 课后任务</h3>
+      <p style="font-weight:bold;color:#ffd460;">基础任务（必须完成）</p>
+      <ol>
+        <li>补全碰撞检测代码</li>
+        <li>实现分数显示和结束画面</li>
+        <li>实现R键重新开始</li>
+      </ol>
+      <p style="font-weight:bold;color:#ffd460;margin-top:15px;">挑战任务（选做）</p>
+      <ol>
+        <li>&#x1F3AF; 每吃5个食物，速度变快一点</li>
+        <li>&#x1F3C6; 显示最高分记录</li>
+        <li>&#x23F8;&#xFE0F; 按P键暂停/继续游戏</li>
+      </ol>
+      <div class="tip-box" style="margin-top:15px;">
+        <b>&#x1F389; 你做到了！</b><br>
+        从零开始，用Python和Pygame完成了一个经典游戏。这就是编程的魔力！
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ==================== 导航按钮 ==================== -->
+<div id="nav">
+  <button onclick="prevSlide()">&#x25C0; 上一页</button>
+  <button onclick="nextSlide()">下一页 &#x25B6;</button>
+</div>
+<div id="page-indicator">1 / 12</div>
+
+</div><!-- /container -->
+
+<script>
+  let slides = document.querySelectorAll('.slide');
+  let current = 0;
+  let total = slides.length;
+
+  function showSlide(index) {
+    slides.forEach(s => s.classList.remove('active'));
+    slides[index].classList.add('active');
+    document.getElementById('page-indicator').textContent = (index + 1) + ' / ' + total;
+    current = index;
+  }
+
+  function nextSlide() {
+    if (current < total - 1) showSlide(current + 1);
+  }
+  function prevSlide() {
+    if (current > 0) showSlide(current - 1);
+  }
+
+  document.addEventListener('keydown', function(e) {
+    if (e.key === 'ArrowRight' || e.key === 'ArrowDown' || e.key === ' ') {
+      e.preventDefault();
+      nextSlide();
+    } else if (e.key === 'ArrowLeft' || e.key === 'ArrowUp') {
+      e.preventDefault();
+      prevSlide();
+    } else if (e.key === 'Home') {
+      e.preventDefault();
+      showSlide(0);
+    } else if (e.key === 'End') {
+      e.preventDefault();
+      showSlide(total - 1);
+    }
+  });
+
+  let touchStartX = 0;
+  document.addEventListener('touchstart', function(e) {
+    touchStartX = e.touches[0].clientX;
+  });
+  document.addEventListener('touchend', function(e) {
+    let dx = e.changedTouches[0].clientX - touchStartX;
+    if (dx < -50) nextSlide();
+    else if (dx > 50) prevSlide();
+  });
+</script>
+</body>
+</html>

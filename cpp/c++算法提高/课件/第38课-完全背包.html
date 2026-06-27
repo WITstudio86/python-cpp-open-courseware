@@ -1,0 +1,707 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>第38课：背包问题（二）——完全背包</title>
+<style>
+  :root {
+    --bg: #1a1a2e;
+    --surface: #16213e;
+    --primary: #e94560;
+    --secondary: #0f3460;
+    --text: #eee;
+    --text-secondary: #ccc;
+    --code-bg: #0d1117;
+    --highlight: #f0c040;
+    --green: #5cb85c;
+    --border: #333;
+    --max-width: 900px;
+  }
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  body {
+    font-family: "PingFang SC", "Hiragino Sans GB", "Microsoft YaHei", "Noto Sans SC", sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    min-height: 100vh;
+    overflow-x: hidden;
+  }
+
+  .progress-bar {
+    position: fixed;
+    top: 0; left: 0;
+    height: 4px;
+    background: var(--primary);
+    transition: width 0.4s ease;
+    z-index: 100;
+  }
+
+  .slides-container {
+    width: 100%;
+    max-width: var(--max-width);
+    padding: 40px 20px 20px;
+    flex: 1;
+  }
+
+  .slide {
+    display: none;
+    animation: fadeSlideIn 0.5s ease;
+  }
+
+  .slide.active { display: block; }
+
+  @keyframes fadeSlideIn {
+    from { opacity: 0; transform: translateY(24px); }
+    to   { opacity: 1; transform: translateY(0); }
+  }
+
+  .slide-number {
+    display: inline-block;
+    background: var(--primary);
+    color: #fff;
+    font-size: 0.8rem;
+    padding: 2px 10px;
+    border-radius: 12px;
+    margin-bottom: 16px;
+  }
+
+  h1 {
+    font-size: 2.2rem;
+    color: var(--primary);
+    margin-bottom: 12px;
+    line-height: 1.3;
+  }
+
+  h2 {
+    font-size: 1.5rem;
+    color: var(--primary);
+    margin: 20px 0 10px;
+    padding-bottom: 6px;
+    border-bottom: 2px solid var(--secondary);
+  }
+
+  h3 {
+    font-size: 1.1rem;
+    color: var(--highlight);
+    margin: 14px 0 6px;
+  }
+
+  p, li {
+    font-size: 1rem;
+    line-height: 1.8;
+    color: var(--text-secondary);
+  }
+
+  ul, ol { padding-left: 22px; margin: 8px 0; }
+  li { margin-bottom: 4px; }
+
+  .highlight-box {
+    background: var(--surface);
+    border-left: 4px solid var(--primary);
+    padding: 14px 18px;
+    margin: 12px 0;
+    border-radius: 0 6px 6px 0;
+  }
+
+  .info-box {
+    background: var(--secondary);
+    border-left: 4px solid var(--highlight);
+    padding: 14px 18px;
+    margin: 12px 0;
+    border-radius: 0 6px 6px 0;
+  }
+
+  pre {
+    background: var(--code-bg);
+    padding: 16px;
+    border-radius: 8px;
+    overflow-x: auto;
+    margin: 10px 0;
+    font-size: 0.88rem;
+    line-height: 1.6;
+    position: relative;
+  }
+
+  code {
+    font-family: "JetBrains Mono", "Fira Code", "Cascadia Code", "Consolas", monospace;
+    color: #e0e0e0;
+  }
+
+  .code-cpp { color: #abb2bf; }
+  .code-keyword { color: #c678dd; }
+  .code-func { color: #61afef; }
+  .code-str { color: #98c379; }
+  .code-num { color: #d19a66; }
+  .code-comment { color: #5c6370; font-style: italic; }
+  .code-type { color: #e5c07b; }
+
+  .table-wrap {
+    overflow-x: auto;
+    margin: 12px 0;
+  }
+
+  table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 0.92rem;
+  }
+
+  th {
+    background: var(--secondary);
+    color: var(--primary);
+    padding: 10px 14px;
+    text-align: left;
+    border: 1px solid var(--border);
+  }
+
+  td {
+    background: var(--surface);
+    padding: 10px 14px;
+    border: 1px solid var(--border);
+    color: var(--text-secondary);
+  }
+
+  .vs-table td:first-child { font-weight: bold; color: var(--highlight); }
+
+  .tag {
+    display: inline-block;
+    padding: 2px 8px;
+    border-radius: 4px;
+    font-size: 0.8rem;
+    font-weight: bold;
+    margin: 2px;
+  }
+  .tag-red { background: var(--primary); color: #fff; }
+  .tag-green { background: var(--green); color: #fff; }
+  .tag-yellow { background: #f0ad4e; color: #111; }
+
+  .direction-illustration {
+    display: flex;
+    gap: 16px;
+    flex-wrap: wrap;
+    margin: 16px 0;
+  }
+
+  .direction-card {
+    flex: 1 1 280px;
+    background: var(--surface);
+    border-radius: 8px;
+    padding: 16px;
+    border: 1px solid var(--border);
+    min-width: 260px;
+  }
+
+  .direction-card h4 {
+    font-size: 1rem;
+    margin-bottom: 8px;
+  }
+
+  .direction-card .arrow {
+    font-size: 1.5rem;
+    color: var(--primary);
+    margin: 6px 0;
+  }
+
+  .key-point {
+    color: var(--highlight);
+    font-weight: bold;
+  }
+
+  .controls {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    gap: 12px;
+    padding: 16px 20px;
+    background: var(--surface);
+    border-top: 1px solid var(--border);
+    position: sticky;
+    bottom: 0;
+    width: 100%;
+    max-width: 100%;
+  }
+
+  button {
+    background: var(--primary);
+    color: #fff;
+    border: none;
+    padding: 10px 22px;
+    border-radius: 6px;
+    cursor: pointer;
+    font-size: 0.95rem;
+    font-weight: 600;
+    transition: all 0.2s;
+  }
+
+  button:hover { background: #d63a52; transform: translateY(-1px); }
+  button:active { transform: translateY(0); }
+  button:disabled { background: #555; cursor: not-allowed; transform: none; }
+
+  .page-indicator {
+    font-size: 0.9rem;
+    color: var(--text-secondary);
+    min-width: 80px;
+    text-align: center;
+  }
+
+  .dot-nav {
+    display: flex;
+    gap: 6px;
+  }
+
+  .dot {
+    width: 10px; height: 10px;
+    border-radius: 50%;
+    background: var(--border);
+    cursor: pointer;
+    transition: all 0.2s;
+  }
+
+  .dot.active { background: var(--primary); transform: scale(1.3); }
+  .dot:hover { background: #666; }
+
+  .slide-title-section {
+    text-align: center;
+    padding-top: 60px;
+  }
+
+  .slide-title-section h1 {
+    font-size: 2.8rem;
+    margin-bottom: 16px;
+  }
+
+  .slide-title-section .subtitle {
+    font-size: 1.2rem;
+    color: var(--text-secondary);
+    margin-bottom: 30px;
+  }
+
+  .slide-title-section .tags { margin: 20px 0; }
+
+  .header-with-icon {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin-bottom: 12px;
+  }
+
+  .formula-display {
+    display: inline-block;
+    background: var(--code-bg);
+    padding: 6px 14px;
+    border-radius: 6px;
+    font-family: "JetBrains Mono", monospace;
+    font-size: 0.95rem;
+    color: var(--highlight);
+    margin: 4px 0;
+  }
+
+  .cmp-illustration {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin: 8px 0;
+    font-family: "JetBrains Mono", monospace;
+    font-size: 0.85rem;
+    flex-wrap: wrap;
+    padding: 10px;
+    background: var(--code-bg);
+    border-radius: 6px;
+  }
+
+  .cmp-illustration .loop-dir { color: var(--primary); }
+  .cmp-illustration .loop-rev { color: var(--green); }
+
+  .summary-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+    gap: 12px;
+    margin: 16px 0;
+  }
+
+  .summary-card {
+    background: var(--surface);
+    border-radius: 8px;
+    padding: 16px;
+    border: 1px solid var(--border);
+    text-align: center;
+  }
+
+  .summary-card .num {
+    font-size: 1.8rem;
+    color: var(--primary);
+    font-weight: bold;
+  }
+
+  .summary-card .label {
+    font-size: 0.85rem;
+    color: var(--text-secondary);
+    margin-top: 4px;
+  }
+
+  @media (max-width: 600px) {
+    .slides-container { padding: 20px 12px; }
+    h1 { font-size: 1.6rem; }
+    .slide-title-section h1 { font-size: 2rem; }
+    button { padding: 8px 14px; font-size: 0.85rem; }
+  }
+</style>
+</head>
+<body>
+
+<div class="progress-bar" id="progressBar"></div>
+
+<div class="slides-container">
+
+  <!-- ========== Slide 1: Title ========== -->
+  <div class="slide active" data-slide="0">
+    <div class="slide-title-section">
+      <span class="slide-number">第38课</span>
+      <h1>背包问题（二）<br>完全背包</h1>
+      <p class="subtitle">Complete Knapsack Problem</p>
+      <div class="tags">
+        <span class="tag tag-red">动态规划</span>
+        <span class="tag tag-green">完全背包</span>
+        <span class="tag tag-yellow">算法提高</span>
+      </div>
+      <div class="info-box" style="text-align:left; margin-top:32px;">
+        <h3>本课要点预览</h3>
+        <ul>
+          <li>完全背包与01背包的区别 —— 每种物品可以选<strong>无限次</strong></li>
+          <li>一维DP + 正向遍历 —— <code class="code-keyword">for j = w[i] to C</code></li>
+          <li>货币系统问题 —— 计数型完全背包变体</li>
+        </ul>
+      </div>
+    </div>
+  </div>
+
+  <!-- ========== Slide 2: 完全背包 vs 01背包 ========== -->
+  <div class="slide" data-slide="1">
+    <span class="slide-number">1 / 5</span>
+    <h2>完全背包 vs 01背包</h2>
+
+    <div class="highlight-box">
+      <strong>核心差异</strong>：01背包每种物品只有<strong>1个</strong>（选或不选），完全背包每种物品有<strong>无限个</strong>（可以选0次、1次、2次……）。
+    </div>
+
+    <table class="vs-table">
+      <tr>
+        <th>对比维度</th>
+        <th>01背包</th>
+        <th>完全背包</th>
+      </tr>
+      <tr>
+        <td>物品数量</td>
+        <td>每种1个</td>
+        <td>每种无限个</td>
+      </tr>
+      <tr>
+        <td>状态定义</td>
+        <td>dp[j]：容量j的最大价值</td>
+        <td>dp[j]：容量j的最大价值</td>
+      </tr>
+      <tr>
+        <td>转移方程</td>
+        <td><span class="formula-display">dp[j] = max(dp[j], dp[j-w]+v)</span></td>
+        <td><span class="formula-display">dp[j] = max(dp[j], dp[j-w]+v)</span></td>
+      </tr>
+      <tr>
+        <td>遍历方向</td>
+        <td><span class="tag tag-red">逆向 ↓</span> j=C→w</td>
+        <td><span class="tag tag-green">正向 ↑</span> j=w→C</td>
+      </tr>
+      <tr>
+        <td>原因</td>
+        <td>dp[j-w]来自上一轮，保证物品只用一次</td>
+        <td>dp[j-w]可能来自当前轮，允许重复使用</td>
+      </tr>
+    </table>
+
+    <div class="info-box">
+      <strong>关键发现</strong>：转移方程完全相同！唯一的区别就是 <strong>循环方向</strong>。这就是本节最重要的知识点。
+    </div>
+  </div>
+
+  <!-- ========== Slide 3: 正向遍历的原理 ========== -->
+  <div class="slide" data-slide="2">
+    <span class="slide-number">2 / 5</span>
+    <h2>正向遍历的原理</h2>
+
+    <p style="margin-bottom:12px;">以 <strong>w=2, v=3, C=4</strong> 为例，直观理解为什么方向决定重复选取：</p>
+
+    <div class="direction-illustration">
+      <div class="direction-card">
+        <h4 style="color:var(--green);">01背包 — 逆向遍历</h4>
+        <div class="cmp-illustration">
+          <span class="loop-rev">for j = 4 → 2:</span>
+        </div>
+        <pre style="font-size:0.82rem; margin-top:8px;">
+j=4: dp[4]=max(<span style="color:#d19a66">0</span>, dp[2]+3)=3
+j=3: dp[3]=max(0, dp[1]+3)=3
+j=2: dp[2]=max(0, dp[0]+3)=3
+结果: dp=[0,0,3,3,3] 价值=3 ✓</pre>
+        <p style="font-size:0.85rem; margin-top:4px;">
+          <span class="key-point">dp[4]用到的dp[2]还是0</span>（旧值，未包含当前物品）<br>
+          → 所以最多选1次
+        </p>
+      </div>
+
+      <div class="direction-card">
+        <h4 style="color:var(--primary);">完全背包 — 正向遍历</h4>
+        <div class="cmp-illustration">
+          <span class="loop-dir">for j = 2 → 4:</span>
+        </div>
+        <pre style="font-size:0.82rem; margin-top:8px;">
+j=2: dp[2]=max(0, dp[0]+3)=3
+j=3: dp[3]=max(0, dp[1]+3)=3
+j=4: dp[4]=max(0, <span style="color:#e94560">dp[2]</span>+3)=<span style="color:#e94560">6</span>
+结果: dp=[0,0,3,3,6] 价值=6 ✓</pre>
+        <p style="font-size:0.85rem; margin-top:4px;">
+          <span class="key-point">dp[4]用到的dp[2]已经是3了！</span>（新值，已包含当前物品）<br>
+          → 相当于选了第2个物品！
+        </p>
+      </div>
+    </div>
+
+    <div class="highlight-box" style="text-align: center;">
+      <strong style="font-size:1.1rem;">正向遍历 → dp[j-w]可能已被更新 → 实现重复选取</strong><br>
+      <span style="font-size:0.9rem;">这就是完全背包用正向遍历的根本原因</span>
+    </div>
+  </div>
+
+  <!-- ========== Slide 4: 货币系统问题 ========== -->
+  <div class="slide" data-slide="3">
+    <span class="slide-number">3 / 5</span>
+    <h2>货币系统问题</h2>
+    <h3 style="color:var(--text-secondary);">硬币找零方案数 —— 计数型完全背包</h3>
+
+    <div class="highlight-box">
+      <strong>问题</strong>：有n种面值硬币，每种无限个。要凑出金额m，有多少种<strong>不同的组合方式</strong>？（顺序不同的算同一种）
+    </div>
+
+    <h3>状态定义与转移</h3>
+    <table>
+      <tr><td style="width:100px;">状态</td><td><code>dp[j]</code> = 凑出金额 j 的方案数</td></tr>
+      <tr><td>初始化</td><td><code>dp[0] = 1</code>（凑0元有一种方案：什么都不选）</td></tr>
+      <tr><td>转移</td><td><code>dp[j] += dp[j - coin[i]]</code>（累加，不是取max！）</td></tr>
+      <tr><td>遍历</td><td>外层硬币 → 内层金额（正向），保证组合无序性</td></tr>
+    </table>
+
+    <h3>代码实现</h3>
+    <pre><code><span class="code-type">vector&lt;int&gt;</span> <span class="code-func">dp</span>(amount + 1, <span class="code-num">0</span>);
+dp[0] = 1;                         <span class="code-comment">// 凑0元一种方案</span>
+<span class="code-keyword">for</span> (<span class="code-type">int</span> coin : coins) {
+    <span class="code-keyword">for</span> (<span class="code-type">int</span> j = coin; j <= amount; j++) {
+        dp[j] += dp[j - coin];     <span class="code-comment">// 累加新方案</span>
+    }
+}</code></pre>
+
+    <div class="info-box">
+      <strong>为什么外层循环是硬币？</strong><br>
+      这样保证 <code>{1,2,5}</code> 和 <code>{5,2,1}</code> 被视为<strong>同一种方案</strong>（组合）。如果外层是金额，内层是硬币，计算的就是排列数了。
+    </div>
+  </div>
+
+  <!-- ========== Slide 5: 例题实战 ========== -->
+  <div class="slide" data-slide="4">
+    <span class="slide-number">4 / 5</span>
+    <h2>例题实战</h2>
+
+    <h3>例题1：完全背包求最大价值</h3>
+    <div class="highlight-box">
+      <strong>输入</strong>：3 10 → 物品(2,3) (3,4) (4,5)<br>
+      <strong>输出</strong>：<span class="tag tag-red">14</span>（3个物品1 + 1个物品3 = 3×3 + 5 = 14）
+    </div>
+
+    <h3>例题2：硬币找零方案数</h3>
+    <div class="highlight-box">
+      <strong>输入</strong>：3 10 → 硬币面值 1, 2, 5<br>
+      <strong>输出</strong>：<span class="tag tag-green">10</span> 种方案
+    </div>
+
+    <h3 style="margin-top:16px;">例题2 DP过程演示</h3>
+    <div class="table-wrap">
+      <table style="font-size:0.82rem;">
+        <tr>
+          <th>金额 j</th><td>0</td><td>1</td><td>2</td><td>3</td><td>4</td>
+          <td>5</td><td>6</td><td>7</td><td>8</td><td>9</td><td>10</td>
+        </tr>
+        <tr>
+          <th>初始</th>
+          <td style="color:var(--primary);">1</td>
+          <td>0</td><td>0</td><td>0</td><td>0</td>
+          <td>0</td><td>0</td><td>0</td><td>0</td><td>0</td><td>0</td>
+        </tr>
+        <tr>
+          <th>coin=1后</th>
+          <td>1</td><td>1</td><td>1</td><td>1</td><td>1</td>
+          <td>1</td><td>1</td><td>1</td><td>1</td><td>1</td><td>1</td>
+        </tr>
+        <tr>
+          <th>coin=2后</th>
+          <td>1</td><td>1</td><td style="color:var(--highlight);">2</td>
+          <td>2</td><td style="color:var(--highlight);">3</td>
+          <td>3</td><td style="color:var(--highlight);">4</td>
+          <td>4</td>
+          <td style="color:var(--highlight);">5</td><td>5</td>
+          <td style="color:var(--highlight);">6</td>
+        </tr>
+        <tr>
+          <th>coin=5后</th>
+          <td>1</td><td>1</td><td>2</td><td>2</td><td>3</td>
+          <td style="color:var(--primary);">4</td><td>5</td><td>6</td><td>7</td>
+          <td>8</td><td style="color:var(--primary); font-weight:bold;">10</td>
+        </tr>
+      </table>
+    </div>
+    <p style="text-align:center; font-size:0.85rem; color:var(--text-secondary);">
+      最终答案：dp[10] = <span class="tag tag-red">10</span> 种方案
+    </p>
+  </div>
+
+  <!-- ========== Slide 6: 本课小结 ========== -->
+  <div class="slide" data-slide="5">
+    <span class="slide-number">5 / 5</span>
+    <h2>本课小结</h2>
+
+    <div class="summary-grid">
+      <div class="summary-card">
+        <div class="num">01</div>
+        <div class="label">转移方程相同<br><code style="font-size:0.8rem;">dp[j]=max(dp[j], dp[j-w]+v)</code></div>
+      </div>
+      <div class="summary-card">
+        <div class="num">→</div>
+        <div class="label">正向遍历<br>保证物品可重复选用</div>
+      </div>
+      <div class="summary-card">
+        <div class="num">←</div>
+        <div class="label">逆向遍历<br>保证物品最多用一次</div>
+      </div>
+      <div class="summary-card">
+        <div class="num">O(nC)</div>
+        <div class="label">时间复杂度<br>与01背包相同</div>
+      </div>
+    </div>
+
+    <div class="highlight-box" style="text-align:center; margin-top:16px;">
+      <strong style="font-size:1.3rem;">记忆口诀</strong><br>
+      <span style="font-size:1.5rem; color:var(--primary);">正向重复，逆向唯一！</span>
+    </div>
+
+    <div class="info-box" style="margin-top:16px;">
+      <h3>扩展思考</h3>
+      <ul>
+        <li><strong>计数型完全背包</strong>：<code>dp[j] += dp[j-coin[i]]</code>，求方案数而非最大值</li>
+        <li><strong>多重背包</strong>：每种物品有限个（介于01和完全之间），可以用二进制优化或单调队列优化</li>
+        <li><strong>混合背包</strong>：部分物品01、部分完全、部分多重，分类处理即可</li>
+      </ul>
+    </div>
+
+    <p style="text-align:center; margin-top:24px; color:var(--text-secondary);">
+      下一课：多重背包 —— 每种物品有数量限制，如何使用二进制拆分优化？
+    </p>
+  </div>
+
+</div>
+
+<!-- ======== Controls ======== -->
+<div class="controls">
+  <button id="prevBtn" onclick="goPrev()">&#9664; 上一页</button>
+  <div class="page-indicator">
+    <span id="currentPage">1</span> / <span id="totalPages">6</span>
+  </div>
+  <div class="dot-nav" id="dotNav"></div>
+  <button id="nextBtn" onclick="goNext()">下一页 &#9654;</button>
+</div>
+
+<script>
+  (function() {
+    var slides = document.querySelectorAll('.slide');
+    var total = slides.length;
+    var current = 0;
+
+    var progressBar = document.getElementById('progressBar');
+    var currentPage = document.getElementById('currentPage');
+    var totalPages = document.getElementById('totalPages');
+    var dotNav = document.getElementById('dotNav');
+    var prevBtn = document.getElementById('prevBtn');
+    var nextBtn = document.getElementById('nextBtn');
+
+    totalPages.textContent = total;
+
+    // Build dots
+    for (var i = 0; i < total; i++) {
+      (function(idx) {
+        var dot = document.createElement('span');
+        dot.className = 'dot' + (idx === 0 ? ' active' : '');
+        dot.onclick = function() { goTo(idx); };
+        dotNav.appendChild(dot);
+      })(i);
+    }
+
+    function updateUI() {
+      slides.forEach(function(s, i) {
+        s.classList.toggle('active', i === current);
+      });
+      var dots = dotNav.querySelectorAll('.dot');
+      dots.forEach(function(d, i) {
+        d.classList.toggle('active', i === current);
+      });
+      currentPage.textContent = current + 1;
+      progressBar.style.width = ((current + 1) / total * 100) + '%';
+
+      prevBtn.disabled = (current === 0);
+      nextBtn.disabled = (current === total - 1);
+    }
+
+    window.goTo = function(idx) {
+      if (idx < 0 || idx >= total) return;
+      current = idx;
+      updateUI();
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+    };
+
+    window.goPrev = function() { goTo(current - 1); };
+    window.goNext = function() { goTo(current + 1); };
+
+    // Keyboard navigation
+    document.addEventListener('keydown', function(e) {
+      if (e.key === 'ArrowRight' || e.key === 'ArrowDown' || e.key === ' ') {
+        e.preventDefault();
+        goNext();
+      } else if (e.key === 'ArrowLeft' || e.key === 'ArrowUp') {
+        e.preventDefault();
+        goPrev();
+      } else if (e.key === 'Home') {
+        e.preventDefault();
+        goTo(0);
+      } else if (e.key === 'End') {
+        e.preventDefault();
+        goTo(total - 1);
+      }
+    });
+
+    // Touch swipe support
+    var touchStartX = 0;
+    document.addEventListener('touchstart', function(e) {
+      touchStartX = e.touches[0].clientX;
+    });
+    document.addEventListener('touchend', function(e) {
+      var dx = e.changedTouches[0].clientX - touchStartX;
+      if (Math.abs(dx) > 50) {
+        if (dx < 0) goNext();
+        else goPrev();
+      }
+    });
+
+    updateUI();
+  })();
+</script>
+
+</body>
+</html>

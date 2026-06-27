@@ -1,0 +1,423 @@
+/*
+ * 第27课：线性DP经典模型
+ * 考纲知识点：最大子段和、数字三角形、路径计数DP、最大子矩阵和
+ *
+ * 本文件包含以下完整实现：
+ *   1. 最大子段和（Kadane算法） O(n) / O(1)
+ *   2. 环形最大子段和 O(n) / O(1)
+ *   3. 最大子段积 O(n) / O(1)
+ *   4. 数字三角形（逆推法） O(n²) / O(n²)
+ *   5. 路径计数DP（含障碍物） O(mn) / O(mn)
+ *   6. 最大子矩阵和（枚举上下边界 + Kadane） O(n³) / O(n)
+ *   7. 真题1：P1719 最大加权矩形 O(n³)
+ *   8. 真题2：数字三角形变体（模运算可行性DP） O(n²×100)
+ *
+ * 每个函数均配有详细的注释和独立的 main 测试入口。
+ */
+
+#include <bits/stdc++.h>
+using namespace std;
+using ll = long long;
+
+// ============================ 常量定义 ============================
+const ll INF = 1e18;                // 大数，表示无穷
+const int MOD = 1e9 + 7;            // 常用取模数
+
+// ==================================================================
+// 1. 最大子段和（Kadane算法）
+//    状态定义：cur = 以当前元素结尾的最大子段和
+//    转移：cur = max(x, cur + x)
+//    复杂度：时间 O(n)，空间 O(1)
+// ==================================================================
+ll max_subarray_sum(const vector<ll>& a) {
+    if (a.empty()) return 0;
+    ll cur = 0;                     // 以当前元素结尾的最大子段和
+    ll best = -INF;                 // 全局最优解，初始化为极小值以处理全负数
+
+    for (ll x : a) {
+        // 决策：要么从 x 重新开始，要么接上之前的子段
+        cur = max(x, cur + x);
+        best = max(best, cur);
+    }
+    return best;
+}
+
+// ==================================================================
+// 2. 环形最大子段和
+//    两种情况：
+//      A) 不跨越边界 → 普通 Kadane
+//      B) 跨越边界   → total - min_subarray_sum
+//    答案 = max(A, B)
+//    注意全负数特判：此时 total - min_sum == 0，应返回 max_normal
+//    复杂度：时间 O(n)，空间 O(1)
+// ==================================================================
+ll max_circular_subarray_sum(const vector<ll>& a) {
+    if (a.empty()) return 0;
+
+    // 情况A：不跨越边界的最大子段和
+    ll max_normal = max_subarray_sum(a);
+
+    // 情况B：跨越边界需要求最小子段和
+    ll total = accumulate(a.begin(), a.end(), 0LL);
+    ll cur_min = 0;                 // 以当前元素结尾的最小字段和
+    ll min_sum = 0;                 // 全局最小子段和（初始 0 表示可以取空段）
+
+    for (ll x : a) {
+        cur_min = min(x, cur_min + x);
+        min_sum = min(min_sum, cur_min);
+    }
+
+    // 全负数特判：此时 max_normal < 0，total - min_sum = 0（因为 min_sum == total）
+    if (max_normal < 0) return max_normal;
+
+    return max(max_normal, total - min_sum);
+}
+
+// ==================================================================
+// 3. 最大子段积
+//    由于负数 × 负数 = 正数，需要同时维护以 i 结尾的：
+//      max_dp[i] = 最大乘积
+//      min_dp[i] = 最小乘积（可能是负数，未来乘以负数翻身）
+//    转移：考虑三种情况 —— 只取自身、接上之前的 max_dp、接上之前的 min_dp
+//    复杂度：时间 O(n)，空间 O(1)
+// ==================================================================
+ll max_product_subarray(const vector<ll>& a) {
+    if (a.empty()) return 0;
+    if (a.size() == 1) return a[0];
+
+    ll max_cur = a[0];              // 以当前元素结尾的最大乘积
+    ll min_cur = a[0];              // 以当前元素结尾的最小乘积
+    ll ans = a[0];                  // 全局最优
+
+    for (size_t i = 1; i < a.size(); ++i) {
+        ll x = a[i];
+        // 需要同时用到旧的 max_cur 和 min_cur，先暂存
+        ll new_max = max({x, max_cur * x, min_cur * x});
+        ll new_min = min({x, max_cur * x, min_cur * x});
+        max_cur = new_max;
+        min_cur = new_min;
+        ans = max(ans, max_cur);
+    }
+    return ans;
+}
+
+// ==================================================================
+// 4. 数字三角形（逆推法 / 自底向上）
+//    dp[i][j] = a[i][j] + max(dp[i+1][j], dp[i+1][j+1])
+//    从倒数第二行向上推，最终答案在 dp[0][0]
+//    逆推优势：无需处理边界条件
+//    复杂度：时间 O(n²)，空间 O(n²)
+// ==================================================================
+int triangle_max_path(const vector<vector<int>>& tri) {
+    if (tri.empty()) return 0;
+    int n = tri.size();
+    // dp 复制三角形的值，作为底部初始值
+    vector<vector<int>> dp = tri;
+
+    // 从倒数第二行开始向上
+    for (int i = n - 2; i >= 0; --i) {
+        for (int j = 0; j <= i; ++j) {
+            dp[i][j] += max(dp[i+1][j], dp[i+1][j+1]);
+        }
+    }
+    return dp[0][0];
+}
+
+// 空间优化版本：只用一维数组
+int triangle_max_path_optimized(const vector<vector<int>>& tri) {
+    if (tri.empty()) return 0;
+    int n = tri.size();
+    vector<int> dp = tri[n - 1];    // 初始化为最后一行的值
+
+    for (int i = n - 2; i >= 0; --i) {
+        for (int j = 0; j <= i; ++j) {
+            // dp[j] 此时还存着上一轮（i+1 行）第 j 列的值
+            // dp[j+1] 存着上一轮第 j+1 列的值
+            dp[j] = tri[i][j] + max(dp[j], dp[j+1]);
+        }
+    }
+    return dp[0];
+}
+
+// ==================================================================
+// 5. 路径计数DP（含障碍物）
+//    网格中 0 表示可通过，1 表示障碍物
+//    dp[i][j] = 0（若 grid[i][j] == 1）
+//             = dp[i-1][j] + dp[i][j-1]（否则）
+//    复杂度：时间 O(mn)，空间 O(mn)（可优化到 O(n)）
+// ==================================================================
+int count_paths_with_obstacles(const vector<vector<int>>& grid) {
+    if (grid.empty() || grid[0].empty()) return 0;
+    int m = grid.size(), n = grid[0].size();
+
+    // 如果起点或终点是障碍物，直接返回 0
+    if (grid[0][0] == 1 || grid[m-1][n-1] == 1) return 0;
+
+    vector<vector<int>> dp(m, vector<int>(n, 0));
+
+    // 初始化起点
+    dp[0][0] = 1;
+
+    for (int i = 0; i < m; ++i) {
+        for (int j = 0; j < n; ++j) {
+            if (grid[i][j] == 1) {
+                dp[i][j] = 0;
+                continue;
+            }
+            if (i > 0) dp[i][j] = (dp[i][j] + dp[i-1][j]) % MOD;
+            if (j > 0) dp[i][j] = (dp[i][j] + dp[i][j-1]) % MOD;
+        }
+    }
+    return dp[m-1][n-1];
+}
+
+// 空间优化版本：一维滚动数组
+int count_paths_optimized(const vector<vector<int>>& grid) {
+    if (grid.empty() || grid[0].empty()) return 0;
+    int m = grid.size(), n = grid[0].size();
+    if (grid[0][0] == 1 || grid[m-1][n-1] == 1) return 0;
+
+    vector<int> dp(n, 0);
+    dp[0] = 1;
+
+    for (int i = 0; i < m; ++i) {
+        for (int j = 0; j < n; ++j) {
+            if (grid[i][j] == 1) {
+                dp[j] = 0;
+            } else if (j > 0) {
+                dp[j] = (dp[j] + dp[j-1]) % MOD;
+            }
+            // j == 0 且 grid[i][0] != 1 时，dp[0] 保持原值（只能从上方来）
+        }
+    }
+    return dp[n-1];
+}
+
+// ==================================================================
+// 6. 最大子矩阵和 O(n³)
+//    核心思想：枚举上下边界 top, bottom
+//             将 [top, bottom] 行的每一列压缩为一维数组
+//             对该一维数组运行 Kadane
+//    优化：当 m > n 时先转置矩阵，确保枚举的是较短的维度
+//    复杂度：时间 O(m²·n)，空间 O(n)
+// ==================================================================
+ll max_submatrix_sum(const vector<vector<ll>>& mat) {
+    if (mat.empty() || mat[0].empty()) return 0;
+    int m = mat.size(), n = mat[0].size();
+    ll ans = -INF;
+
+    // 如果要枚举的维度较大，先转置以优化
+    if (m > n) {
+        // 转置矩阵
+        vector<vector<ll>> transposed(n, vector<ll>(m));
+        for (int i = 0; i < m; ++i)
+            for (int j = 0; j < n; ++j)
+                transposed[j][i] = mat[i][j];
+        return max_submatrix_sum(transposed);  // 递归调用（转置后的矩阵满足 m <= n）
+    }
+
+    // 枚举上边界
+    for (int top = 0; top < m; ++top) {
+        vector<ll> compressed(n, 0);   // 压缩数组：每列的和
+
+        // 枚举下边界（逐渐向下扩展）
+        for (int bottom = top; bottom < m; ++bottom) {
+            // 将第 bottom 行的值累加到压缩数组
+            for (int j = 0; j < n; ++j) {
+                compressed[j] += mat[bottom][j];
+            }
+
+            // 在压缩数组上运行 Kadane（O(n)）
+            ll cur = 0, best = -INF;
+            for (ll x : compressed) {
+                cur = max(x, cur + x);
+                best = max(best, cur);
+            }
+            ans = max(ans, best);
+        }
+    }
+    return ans;
+}
+
+// ==================================================================
+// 7. 真题1：P1719 最大加权矩形
+//    题目：给定 n×n 矩阵，求最大子矩阵和
+//    约束：1 ≤ n ≤ 120, |a_ij| ≤ 100
+//    解法：最大子矩阵和 O(n³)
+// ==================================================================
+void solve_luogu_p1719() {
+    int n; cin >> n;
+    vector<vector<ll>> mat(n, vector<ll>(n));
+    for (int i = 0; i < n; ++i)
+        for (int j = 0; j < n; ++j)
+            cin >> mat[i][j];
+
+    cout << max_submatrix_sum(mat) << "\n";
+}
+
+// ==================================================================
+// 8. 真题2：数字三角形变体（模运算下的最值）
+//    题目：n 行数字三角形，求路径和模 100 的最大值
+//    约束：1 ≤ n ≤ 100, 0 ≤ a_ij ≤ 99
+//    解法：可行性 DP — dp[i][j][k] 表示到达 (i,j) 时路径和%100=k 是否可行
+//    由于模运算不满足单调性，不能直接对 DP 值取模后比较
+//    复杂度：时间 O(n²·M)，空间 O(n²·M)，其中 M=100
+// ==================================================================
+void solve_triangle_mod100() {
+    int n; cin >> n;
+    vector<vector<int>> a(n, vector<int>(n));
+    for (int i = 0; i < n; ++i)
+        for (int j = 0; j <= i; ++j)
+            cin >> a[i][j];
+
+    const int M = 100;
+
+    // dp[i][j][k]：到达 (i,j) 时路径和%100=k 是否可达
+    // 使用三维 vector<bool>
+    vector<vector<vector<bool>>> dp(n,
+        vector<vector<bool>>(n, vector<bool>(M, false)));
+
+    // 初始化：起点
+    dp[0][0][a[0][0] % M] = true;
+
+    // 逐行递推
+    for (int i = 0; i < n - 1; ++i) {
+        for (int j = 0; j <= i; ++j) {
+            for (int k = 0; k < M; ++k) {
+                if (!dp[i][j][k]) continue;
+
+                // 向左下走：到 (i+1, j)
+                int nk = (k + a[i+1][j]) % M;
+                dp[i+1][j][nk] = true;
+
+                // 向右下走：到 (i+1, j+1)
+                nk = (k + a[i+1][j+1]) % M;
+                dp[i+1][j+1][nk] = true;
+            }
+        }
+    }
+
+    // 在最后一行找最大的可达模值
+    int ans = 0;
+    for (int j = 0; j < n; ++j) {
+        for (int k = 0; k < M; ++k) {
+            if (dp[n-1][j][k]) {
+                ans = max(ans, k);
+            }
+        }
+    }
+    cout << ans << "\n";
+}
+
+// ==================================================================
+// 主函数：调用各个测试
+// ==================================================================
+int main() {
+    ios::sync_with_stdio(false);
+    cin.tie(nullptr);
+
+    cout << "===== 第27课：线性DP经典模型 测试程序 =====\n\n";
+
+    // ---- 测试 1：最大子段和 ----
+    {
+        cout << "【测试1】最大子段和\n";
+        vector<ll> a = {-2, 1, -3, 4, -1, 2, 1, -5, 4};
+        cout << "  数组: ";
+        for (ll x : a) cout << x << " ";
+        cout << "\n  最大子段和 = " << max_subarray_sum(a) << "（期望 6）\n\n";
+    }
+
+    // ---- 测试 2：环形最大子段和 ----
+    {
+        cout << "【测试2】环形最大子段和\n";
+        vector<ll> a = {5, -3, 5};
+        cout << "  数组: 5 -3 5\n";
+        cout << "  环形最大子段和 = " << max_circular_subarray_sum(a) << "（期望 10）\n";
+        vector<ll> b = {-3, -2, -3};
+        cout << "  全负数测试: -3 -2 -3\n";
+        cout << "  环形最大子段和 = " << max_circular_subarray_sum(b) << "（期望 -2）\n\n";
+    }
+
+    // ---- 测试 3：最大子段积 ----
+    {
+        cout << "【测试3】最大子段积\n";
+        vector<ll> a = {2, 3, -2, 4};
+        cout << "  数组: 2 3 -2 4\n";
+        cout << "  最大子段积 = " << max_product_subarray(a) << "（期望 6）\n";
+        vector<ll> b = {-2, 0, -1};
+        cout << "  含零测试: -2 0 -1\n";
+        cout << "  最大子段积 = " << max_product_subarray(b) << "（期望 0）\n\n";
+    }
+
+    // ---- 测试 4：数字三角形 ----
+    {
+        cout << "【测试4】数字三角形\n";
+        vector<vector<int>> tri = {
+            {7},
+            {3, 8},
+            {8, 1, 0},
+            {2, 7, 4, 4},
+            {4, 5, 2, 6, 5}
+        };
+        cout << "  最大路径和（标准） = " << triangle_max_path(tri) << "（期望 30）\n";
+        cout << "  最大路径和（优化） = " << triangle_max_path_optimized(tri) << "（期望 30）\n\n";
+    }
+
+    // ---- 测试 5：路径计数DP（含障碍物） ----
+    {
+        cout << "【测试5】路径计数DP\n";
+        vector<vector<int>> grid = {
+            {0, 0, 0},
+            {0, 1, 0},
+            {0, 0, 0}
+        };
+        cout << "  3x3 网格，中间有障碍\n";
+        cout << "  路径数（标准） = " << count_paths_with_obstacles(grid) << "（期望 2）\n";
+        cout << "  路径数（优化） = " << count_paths_optimized(grid) << "（期望 2）\n\n";
+    }
+
+    // ---- 测试 6：最大子矩阵和 ----
+    {
+        cout << "【测试6】最大子矩阵和\n";
+        vector<vector<ll>> mat = {
+            { 0, -2, -7,  0},
+            { 9,  2, -6,  2},
+            {-4,  1, -4,  1},
+            {-1,  8,  0, -2}
+        };
+        cout << "  4x4 矩阵\n";
+        cout << "  最大子矩阵和 = " << max_submatrix_sum(mat) << "（期望 15）\n\n";
+    }
+
+    // ---- 测试 7 & 8：用户交互入口 ----
+    cout << "===== 交互模式 =====\n";
+    cout << "选项:\n";
+    cout << "  0 - 退出\n";
+    cout << "  1 - 最大子段和（自定义输入）\n";
+    cout << "  2 - P1719 最大加权矩形\n";
+    cout << "  3 - 数字三角形模100变体\n";
+    cout << "  4 - 运行全部内置测试\n";
+    cout << "请输入选项: ";
+
+    int opt; cin >> opt;
+
+    if (opt == 1) {
+        cout << "输入 n 和 n 个数: ";
+        int n; cin >> n;
+        vector<ll> a(n);
+        for (int i = 0; i < n; ++i) cin >> a[i];
+        cout << "最大子段和 = " << max_subarray_sum(a) << "\n";
+    } else if (opt == 2) {
+        cout << "（P1719）输入 n 和 n×n 矩阵:\n";
+        solve_luogu_p1719();
+    } else if (opt == 3) {
+        cout << "输入 n 和数字三角形的 n 行:\n";
+        solve_triangle_mod100();
+    } else if (opt == 4) {
+        cout << "全部内置测试已在上方运行完毕。\n";
+    } else {
+        cout << "程序结束。\n";
+    }
+
+    return 0;
+}

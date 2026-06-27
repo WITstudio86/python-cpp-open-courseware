@@ -1,0 +1,382 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>第35课：字符串神探——字符串操作</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            font-family: 'PingFang SC', 'Microsoft YaHei', sans-serif;
+            background: linear-gradient(135deg, #1a1a2e 0%, #16213e 50%, #0f3460 100%);
+            min-height: 100vh;
+            display: flex; justify-content: center; align-items: center;
+        }
+        .slides-container {
+            width: 90%; max-width: 950px; min-height: 560px;
+            background: linear-gradient(180deg, #fefefe 0%, #f9f7f1 100%);
+            border-radius: 25px; padding: 40px;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.4);
+            position: relative;
+            border: 3px solid #c9a96e;
+        }
+        .slide { display: none; animation: fadeIn 0.5s; }
+        .slide.active { display: block; }
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
+        h1 { color: #8b4513; font-size: 2.2em; margin-bottom: 20px; border-bottom: 3px solid #c9a96e; padding-bottom: 10px; }
+        h2 { color: #c0392b; font-size: 1.8em; margin-bottom: 15px; }
+        h3 { color: #2c7a4a; font-size: 1.4em; margin: 15px 0 10px; }
+        p, li { font-size: 1.15em; line-height: 1.8; color: #333; }
+        ul { padding-left: 30px; margin: 10px 0; }
+        ol { padding-left: 30px; margin: 10px 0; }
+        .code-block {
+            background: #1e1e2e; color: #cdd6f4; padding: 20px;
+            border-radius: 12px; font-family: 'Courier New', 'Source Code Pro', monospace;
+            font-size: 0.92em; line-height: 1.7; overflow-x: auto;
+            margin: 15px 0; white-space: pre-wrap; word-break: break-all;
+            border-left: 4px solid #c9a96e;
+        }
+        .code-block .keyword { color: #cba6f7; }
+        .code-block .string { color: #a6e3a1; }
+        .code-block .comment { color: #6c7086; font-style: italic; }
+        .code-block .number { color: #fab387; }
+        .code-block .type { color: #89b4fa; }
+        .nav-buttons {
+            position: absolute; bottom: 20px; left: 40px; right: 40px;
+            display: flex; justify-content: space-between;
+        }
+        .nav-btn {
+            background: linear-gradient(135deg, #8b4513, #a0522d);
+            color: #fefae0; border: none; padding: 12px 30px;
+            border-radius: 30px; font-size: 1.1em; cursor: pointer;
+            transition: transform 0.2s, box-shadow 0.2s;
+            font-family: 'PingFang SC', 'Microsoft YaHei', sans-serif;
+        }
+        .nav-btn:hover { transform: scale(1.05); box-shadow: 0 5px 20px rgba(139,69,19,0.5); }
+        .nav-btn:disabled { opacity: 0.4; cursor: default; transform: none; box-shadow: none; }
+        .page-indicator { font-size: 1.1em; color: #8b4513; align-self: center; font-weight: bold; }
+        .emoji-big { font-size: 3em; text-align: center; display: block; margin: 15px 0; }
+        .badge { display: inline-block; background: #fdf6e3; color: #8b4513; padding: 5px 15px; border-radius: 20px; font-size: 0.9em; margin: 3px; border: 1px solid #c9a96e; }
+        table { width: 100%; border-collapse: collapse; margin: 15px 0; }
+        th, td { border: 2px solid #c9a96e; padding: 10px; text-align: left; }
+        th { background: #8b4513; color: #fefae0; }
+        tr:nth-child(even) { background: #fdf6e3; }
+        .highlight-box { background: #fff3cd; border-left: 5px solid #f39c12; padding: 15px; border-radius: 8px; margin: 15px 0; }
+        .tip-box { background: #d4efdf; border-left: 5px solid #27ae60; padding: 15px; border-radius: 8px; margin: 15px 0; }
+        .warn-box { background: #fadbd8; border-left: 5px solid #e74c3c; padding: 15px; border-radius: 8px; margin: 15px 0; }
+        .detective-theme {
+            background: linear-gradient(135deg, #fef9e7, #fdebd0);
+            border: 2px dashed #c9a96e;
+            border-radius: 12px;
+            padding: 15px;
+            margin: 15px 0;
+        }
+        .tool-card {
+            display: inline-block;
+            width: 45%;
+            background: white;
+            border: 2px solid #c9a96e;
+            border-radius: 10px;
+            padding: 12px;
+            margin: 5px;
+            vertical-align: top;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+        }
+        .tool-card h4 {
+            color: #8b4513;
+            margin-bottom: 5px;
+            font-size: 1.1em;
+        }
+        .tool-card p {
+            font-size: 0.95em;
+            line-height: 1.5;
+        }
+        @media (max-width: 700px) {
+            .slides-container { padding: 20px; }
+            h1 { font-size: 1.5em; }
+            h2 { font-size: 1.3em; }
+            .code-block { font-size: 0.7em; padding: 12px; }
+            .tool-card { display: block; width: 100%; margin: 8px 0; }
+        }
+    </style>
+</head>
+<body>
+    <div class="slides-container">
+        <!-- ==================== Slide 1: Title Page ==================== -->
+        <div class="slide active" id="slide1">
+            <span class="emoji-big">🕵️</span>
+            <h1>第35课：字符串神探——字符串操作</h1>
+            <p style="text-align:center; color:#8b4513; font-size:1.1em;">第三阶段：数据结构初探 | 课时：45分钟</p>
+            <p style="text-align:center; margin-top:20px; font-size:1.3em;">🔍 length、索引访问、子串——文字侦探游戏</p>
+            <div style="text-align:center; margin-top:30px;">
+                <span class="badge">📏 length()</span>
+                <span class="badge">🔢 [] 索引</span>
+                <span class="badge">✂️ substr()</span>
+                <span class="badge">🔎 find()</span>
+            </div>
+            <div class="detective-theme" style="margin-top:25px;">
+                <p style="text-align:center; font-size:1.05em;">
+                    💼 今天的身份：<strong>文字神探</strong><br>
+                    🧰 工具箱：length、[]、substr、find<br>
+                    🎯 任务：破译密码、追踪线索、抓捕嫌疑人！
+                </p>
+            </div>
+        </div>
+
+        <!-- ==================== Slide 2: Learning Objectives ==================== -->
+        <div class="slide" id="slide2">
+            <h2>🎯 学习目标</h2>
+            <ul>
+                <li>掌握 <strong>length()</strong> 方法，像用尺子一样丈量字符串的长度</li>
+                <li>学会使用 <strong>索引 []</strong> 访问字符串中的每一个字符，像点名一样揪出任意位置的字符</li>
+                <li>理解 <strong>substr()</strong> 子串提取和 <strong>find()</strong> 查找操作，截取关键片段、搜索重要线索</li>
+                <li>能综合运用四种字符串操作，<strong>独立创作一个文字侦探游戏</strong></li>
+            </ul>
+
+            <div class="tip-box" style="margin-top:25px;">
+                <strong>💡 先想一想：</strong><br>
+                假如你收到一张神秘纸条，上面写着"山猫雨狗风鱼雪鸟"——你需要每隔一个字取一个，才能还原密码。你会用什么方法来完成这个任务？
+            </div>
+
+            <div style="text-align:center; margin-top:20px;">
+                <div class="tool-card">
+                    <h4>📏 length() — 丈量工具</h4>
+                    <p>str.length()<br>返回字符串中字符的个数</p>
+                </div>
+                <div class="tool-card">
+                    <h4>🔢 [] — 点名工具</h4>
+                    <p>str[i]<br>访问第 i 个位置的字符（从0开始）</p>
+                </div>
+                <div class="tool-card">
+                    <h4>✂️ substr() — 截取工具</h4>
+                    <p>str.substr(pos, len)<br>从 pos 开始截取 len 个字符</p>
+                </div>
+                <div class="tool-card">
+                    <h4>🔎 find() — 搜索工具</h4>
+                    <p>str.find(key)<br>查找关键词，返回第一次出现的位置</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- ==================== Slide 3: Core Knowledge ==================== -->
+        <div class="slide" id="slide3">
+            <h2>📖 核心知识：神探四大工具</h2>
+
+            <h3>🔢 索引：字符的"座位号"</h3>
+            <p>字符串就像一排座位，每个字符都有自己的<strong>座位号（索引）</strong>。在C++中，索引从 <strong>0</strong> 开始！</p>
+            <table>
+                <tr><th>字符</th><td>侦</td><td>探</td><td>柯</td><td>南</td></tr>
+                <tr><th>索引</th><td>0</td><td>1</td><td>2</td><td>3</td></tr>
+            </table>
+            <div class="warn-box">
+                <strong>⚠️ 注意：</strong>索引从0开始，最后一个字符的索引是 <code>length() - 1</code>！访问越界索引会得到未定义的值。
+            </div>
+
+            <h3>四大工具速查表</h3>
+            <table>
+                <tr><th>工具</th><th>语法</th><th>作用</th><th>示例</th></tr>
+                <tr>
+                    <td><strong>length()</strong></td>
+                    <td>str.length()</td>
+                    <td>获取字符串长度</td>
+                    <td>"Hello".length() → 5</td>
+                </tr>
+                <tr>
+                    <td><strong>[] 索引</strong></td>
+                    <td>str[i]</td>
+                    <td>访问第 i 个字符</td>
+                    <td>name[0] → '侦'</td>
+                </tr>
+                <tr>
+                    <td><strong>substr()</strong></td>
+                    <td>str.substr(pos, len)</td>
+                    <td>截取子串</td>
+                    <td>substr(2,3) → "柯南"</td>
+                </tr>
+                <tr>
+                    <td><strong>find()</strong></td>
+                    <td>str.find(key)</td>
+                    <td>搜索关键词位置</td>
+                    <td>find("柯") → 2</td>
+                </tr>
+            </table>
+
+            <div class="detective-theme">
+                <strong>🕵️ 神探案例1：</strong><br>
+                截获消息：<code>"密码是473829"</code><br>
+                用 <code>substr(4)</code> 提取密码 → <strong>"473829"</strong> ✅
+            </div>
+
+            <div class="detective-theme">
+                <strong>🕵️ 神探案例2：</strong><br>
+                目击报告：<code>"穿红色外套的人进入大楼"</code><br>
+                用 <code>find("红色")</code> 搜索线索 → 位置 <strong>1</strong> ✅
+            </div>
+        </div>
+
+        <!-- ==================== Slide 4: Code Examples ==================== -->
+        <div class="slide" id="slide4">
+            <h2>💻 代码演示：密码破译器</h2>
+
+            <h3>示例1：隔字取码——破解加密纸条</h3>
+            <p>纸条内容每隔2个字符取一个字，还原密码。</p>
+            <div class="code-block">#include &lt;iostream&gt;
+#include &lt;string&gt;
+using namespace std;
+
+int main() {
+    string secret = "山猫雨狗风鱼雪鸟云虫雷蛙";
+    string password = "";
+
+    cout &lt;&lt; "🔍 破译中..." &lt;&lt; endl;
+
+    // 每隔2个字符取一个（索引 0, 2, 4, 6...）
+    for (int i = 0; i &lt; secret.length(); i += 2) {
+        password += secret[i];  // 拼接破译出的字
+    }
+
+    cout &lt;&lt; "密码：" &lt;&lt; password &lt;&lt; endl;
+    // 输出：密码：山雨风雪云雷
+    return 0;
+}</div>
+
+            <h3>示例2：substr() 与 find() 综合破案</h3>
+            <div class="code-block">string report = "嫌疑人在图书馆三楼";
+string location = report.substr(4, 3);  // 从索引4取3个字
+cout &lt;&lt; "地点：" &lt;&lt; location &lt;&lt; endl;  // "图书馆"
+
+int pos = report.find("三楼");
+if (pos != string::npos) {
+    cout &lt;&lt; "在哪层？" &lt;&lt; report.substr(pos, 2) &lt;&lt; endl;  // "三楼"
+}</div>
+
+            <div class="tip-box">
+                <strong>💡 关键技巧：</strong><br>
+                • <code>find()</code> 找不到时返回 <code>string::npos</code>，记得用 <code>!= npos</code> 检查<br>
+                • <code>substr(4)</code> 只写一个参数 = 从索引4取到末尾<br>
+                • 循环中用 <code>+=</code> 可以逐个拼接字符
+            </div>
+        </div>
+
+        <!-- ==================== Slide 5: Practice & Challenge ==================== -->
+        <div class="slide" id="slide5">
+            <h2>🎮 趣味练习 & 挑战任务</h2>
+
+            <h3>练习1：字符统计员 📊</h3>
+            <p>输入一段文字，输出它的长度，并逐个打印每个字符。</p>
+            <div class="code-block">string text;
+getline(cin, text);
+cout &lt;&lt; "长度：" &lt;&lt; text.length() &lt;&lt; endl;
+for (int i = 0; i &lt; text.length(); i++) {
+    cout &lt;&lt; "第" &lt;&lt; i &lt;&lt; "个：" &lt;&lt; text[i] &lt;&lt; endl;
+}</div>
+
+            <h3>练习2：姓名拆分器 👤</h3>
+            <p>输入全名，用 <code>substr()</code> 拆分姓氏和名字。</p>
+            <div class="code-block">string surname = fullName.substr(0, 1);  // 姓（第1个字）
+string givenName = fullName.substr(1);    // 名（第2个字开始）</div>
+
+            <h3>练习3：关键词加密器 🔒</h3>
+            <p>把句子中的关键词全部替换为 <code>[已加密]</code>，用 <code>find()</code> + <code>replace()</code>。</p>
+
+            <div class="highlight-box" style="margin-top:20px;">
+                <h3>🏆 挑战任务：信息加密与破译系统</h3>
+                <p><strong>加密：</strong>用户输入原始消息 → 在每个字符间插入随机噪音字母 → 输出密文（带长度标记）</p>
+                <p><strong>破译：</strong>解析长度标记 → 隔一个字符取一个 → 还原原始消息</p>
+                <p style="font-size:0.95em;"><strong>示例：</strong> "你好" → 加密 → "L2:你X好" → 破译 → "你好"</p>
+            </div>
+        </div>
+
+        <!-- ==================== Slide 6: Summary ==================== -->
+        <div class="slide" id="slide6">
+            <h2>📝 本课小结</h2>
+
+            <table>
+                <tr><th>工具</th><th>作用</th><th>关键点</th></tr>
+                <tr>
+                    <td><strong>📏 length()</strong></td>
+                    <td>丈量字符串长度</td>
+                    <td>返回值是字符个数；中文字符也按1个计</td>
+                </tr>
+                <tr>
+                    <td><strong>🔢 [] 索引</strong></td>
+                    <td>访问指定位置字符</td>
+                    <td>索引从<strong>0开始</strong>；末位=length()-1</td>
+                </tr>
+                <tr>
+                    <td><strong>✂️ substr()</strong></td>
+                    <td>截取子串</td>
+                    <td>substr(pos, len)；省略len取到末尾</td>
+                </tr>
+                <tr>
+                    <td><strong>🔎 find()</strong></td>
+                    <td>搜索关键词</td>
+                    <td>返回位置或 string::npos（没找到）</td>
+                </tr>
+                <tr>
+                    <td><strong>🔄 遍历</strong></td>
+                    <td>逐个处理字符</td>
+                    <td>for(i=0; i&lt;len; i++) 配合 []</td>
+                </tr>
+            </table>
+
+            <div class="highlight-box" style="margin-top:20px;">
+                <strong>🔑 神探口诀：</strong><br>
+                length 测量有多长，<br>
+                索引方括取字符。<br>
+                substr 截取关键段，<br>
+                find 搜索找线索。<br>
+                <br>
+                四大工具都精通，<br>
+                <strong>文字神探就是你！</strong> 🕵️
+            </div>
+
+            <div class="tip-box">
+                <strong>📌 常见错误提醒：</strong><br>
+                • 忘记索引从0开始，访问了 length() 位置→越界！<br>
+                • find() 找不到没检查 npos，当成有效位置用→出错！<br>
+                • substr 参数写反了→截出来的内容和预期完全不同！
+            </div>
+
+            <p style="text-align:center; margin-top:20px; font-size:1.2em; color:#8b4513;">
+                🎉 下一课预告：文件的奥秘——文件读写操作
+            </p>
+        </div>
+
+        <!-- ==================== Navigation ==================== -->
+        <div class="nav-buttons">
+            <button class="nav-btn" onclick="prevSlide()">◀ 上一页</button>
+            <span class="page-indicator" id="pageIndicator">1 / 6</span>
+            <button class="nav-btn" onclick="nextSlide()">下一页 ▶</button>
+        </div>
+    </div>
+
+    <script>
+        let currentSlide = 0;
+        const slides = document.querySelectorAll('.slide');
+        const totalSlides = slides.length;
+        const indicator = document.getElementById('pageIndicator');
+
+        function showSlide(n) {
+            slides[currentSlide].classList.remove('active');
+            currentSlide = (n + totalSlides) % totalSlides;
+            slides[currentSlide].classList.add('active');
+            indicator.textContent = (currentSlide + 1) + ' / ' + totalSlides;
+            document.querySelectorAll('.nav-btn')[0].disabled = currentSlide === 0;
+            document.querySelectorAll('.nav-btn')[1].disabled = currentSlide === totalSlides - 1;
+        }
+        function nextSlide() { showSlide(currentSlide + 1); }
+        function prevSlide() { showSlide(currentSlide - 1); }
+
+        // Keyboard navigation
+        document.addEventListener('keydown', function(e) {
+            if (e.key === 'ArrowRight' || e.key === ' ') { e.preventDefault(); nextSlide(); }
+            else if (e.key === 'ArrowLeft') { e.preventDefault(); prevSlide(); }
+        });
+
+        // Init
+        indicator.textContent = (currentSlide + 1) + ' / ' + totalSlides;
+        document.querySelectorAll('.nav-btn')[0].disabled = true;
+    </script>
+</body>
+</html>

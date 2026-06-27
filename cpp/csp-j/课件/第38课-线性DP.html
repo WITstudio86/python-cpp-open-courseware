@@ -1,0 +1,733 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>第38课：线性DP — CSP-J 备考课程</title>
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, "Microsoft YaHei", "PingFang SC", sans-serif;
+    background: #f5f5f5;
+    color: #333;
+    min-height: 100vh;
+  }
+
+  /* ===== 顶部标题栏 ===== */
+  .title-bar {
+    background: linear-gradient(135deg, #1a237e, #283593);
+    color: #fff;
+    padding: 10px 20px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    position: sticky;
+    top: 0;
+    z-index: 1000;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.3);
+  }
+  .title-bar .course-name {
+    font-size: 1em;
+    font-weight: 700;
+    letter-spacing: 2px;
+  }
+  .title-bar .course-name span { color: #ffd600; }
+  .title-bar .lesson-info { font-size: 0.9em; opacity: 0.9; }
+  .title-bar .slide-dots { display: flex; gap: 6px; }
+  .title-bar .slide-dots .dot {
+    width: 10px; height: 10px;
+    border-radius: 50%;
+    background: rgba(255,255,255,0.3);
+    transition: all 0.3s;
+    cursor: pointer;
+  }
+  .title-bar .slide-dots .dot.active {
+    background: #ffd600;
+    transform: scale(1.3);
+  }
+
+  /* ===== 主内容区域 ===== */
+  .main-container {
+    max-width: 960px;
+    margin: 0 auto;
+    padding: 30px 20px 100px;
+  }
+
+  /* ===== 幻灯片 ===== */
+  .slide {
+    display: none;
+    background: #fff;
+    border-radius: 16px;
+    padding: 40px 50px;
+    box-shadow: 0 8px 30px rgba(0,0,0,0.08);
+    animation: fadeIn 0.4s ease;
+    min-height: 500px;
+  }
+  .slide.active { display: block; }
+
+  @keyframes fadeIn {
+    from { opacity: 0; transform: translateY(15px); }
+    to   { opacity: 1; transform: translateY(0); }
+  }
+
+  .slide h2 {
+    font-size: 2em;
+    color: #1a237e;
+    margin-bottom: 8px;
+    padding-bottom: 12px;
+    border-bottom: 3px solid #ffd600;
+    display: inline-block;
+  }
+  .slide h3 {
+    font-size: 1.35em;
+    color: #283593;
+    margin: 20px 0 10px;
+  }
+  .slide p, .slide li {
+    font-size: 1.05em;
+    line-height: 1.8;
+    margin-bottom: 10px;
+  }
+  .slide ul, .slide ol {
+    padding-left: 24px;
+    margin-bottom: 16px;
+  }
+  .slide ul li, .slide ol li { margin-bottom: 6px; }
+
+  /* 代码块 */
+  .code-block {
+    background: #1e1e1e;
+    color: #d4d4d4;
+    border-radius: 10px;
+    padding: 20px 24px;
+    margin: 16px 0;
+    overflow-x: auto;
+    font-family: "Consolas", "Monaco", "Courier New", monospace;
+    font-size: 0.9em;
+    line-height: 1.7;
+    white-space: pre;
+    box-shadow: inset 0 0 10px rgba(0,0,0,0.5);
+  }
+  .code-block .kw  { color: #569cd6; } /* 关键字 */
+  .code-block .fn  { color: #dcdcaa; } /* 函数名 */
+  .code-block .num { color: #b5cea8; } /* 数字 */
+  .code-block .str { color: #ce9178; } /* 字符串 */
+  .code-block .cmt { color: #6a9955; } /* 注释 */
+  .code-block .pp  { color: #c586c0; } /* 预处理 */
+
+  /* 提示框 */
+  .tip-box {
+    background: #fffde7;
+    border-left: 5px solid #ffd600;
+    border-radius: 8px;
+    padding: 16px 20px;
+    margin: 16px 0;
+    font-size: 1em;
+  }
+  .tip-box strong { color: #e65100; }
+
+  .warning-box {
+    background: #fff3e0;
+    border: 2px solid #ff9800;
+    border-radius: 8px;
+    padding: 16px 20px;
+    margin: 16px 0;
+    font-size: 1em;
+  }
+  .warning-box strong { color: #e65100; }
+
+  /* 算法卡片 */
+  .algo-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
+    gap: 14px;
+    margin: 16px 0;
+  }
+  .algo-card {
+    background: #e8eaf6;
+    border-radius: 10px;
+    padding: 18px;
+    border-left: 4px solid #1a237e;
+    transition: all 0.3s;
+  }
+  .algo-card:hover { transform: translateY(-2px); box-shadow: 0 4px 12px rgba(0,0,0,0.12); }
+  .algo-card h4 { color: #1a237e; margin-bottom: 6px; }
+  .algo-card p { font-size: 0.9em; color: #555; line-height: 1.6; margin: 0; }
+  .algo-card code {
+    background: #fff;
+    color: #c62828;
+    padding: 2px 6px;
+    border-radius: 4px;
+    font-size: 0.9em;
+  }
+
+  /* 对比表 */
+  .compare-table {
+    width: 100%;
+    border-collapse: collapse;
+    margin: 16px 0;
+    font-size: 0.95em;
+  }
+  .compare-table th {
+    background: #1a237e;
+    color: #fff;
+    padding: 12px 16px;
+    text-align: left;
+  }
+  .compare-table td {
+    padding: 10px 16px;
+    border-bottom: 1px solid #e0e0e0;
+  }
+  .compare-table tr:nth-child(even) td { background: #fafafa; }
+
+  /* ===== 标题页特殊样式 ===== */
+  .title-slide {
+    text-align: center;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    min-height: 500px;
+  }
+  .title-slide .lesson-number {
+    font-size: 6em;
+    font-weight: 900;
+    color: #1a237e;
+    line-height: 1;
+    margin-bottom: 10px;
+  }
+  .title-slide .lesson-title {
+    font-size: 2.2em;
+    font-weight: 700;
+    color: #333;
+    margin-bottom: 10px;
+  }
+  .title-slide .lesson-subtitle {
+    font-size: 1.1em;
+    color: #666;
+    margin-bottom: 20px;
+  }
+  .title-slide .keyword-tags {
+    display: flex;
+    gap: 10px;
+    flex-wrap: wrap;
+    justify-content: center;
+  }
+  .title-slide .keyword-tags span {
+    background: #ffd600;
+    color: #1a237e;
+    padding: 6px 16px;
+    border-radius: 20px;
+    font-weight: 700;
+    font-size: 0.9em;
+  }
+
+  /* ===== 总结页 ===== */
+  .summary-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
+    gap: 14px;
+    margin: 16px 0;
+  }
+  .summary-item {
+    background: linear-gradient(135deg, #e8eaf6, #c5cae9);
+    border-radius: 10px;
+    padding: 18px;
+    border-left: 4px solid #1a237e;
+  }
+  .summary-item h4 {
+    color: #1a237e;
+    margin-bottom: 6px;
+    font-size: 1.05em;
+  }
+  .summary-item p {
+    font-size: 0.9em;
+    color: #555;
+    line-height: 1.6;
+    margin: 0;
+  }
+
+  /* ===== 转移方程高亮框 ===== */
+  .formula-box {
+    background: linear-gradient(135deg, #e8eaf6, #f5f5ff);
+    border: 2px solid #3949ab;
+    border-radius: 12px;
+    padding: 20px 24px;
+    margin: 16px 0;
+    text-align: center;
+    font-family: "Consolas", "Monaco", monospace;
+    font-size: 1.1em;
+    color: #1a237e;
+    letter-spacing: 0.5px;
+  }
+
+  /* ===== 导航按钮 ===== */
+  .nav-bar {
+    position: fixed;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    background: rgba(26,35,126,0.95);
+    backdrop-filter: blur(10px);
+    padding: 12px 20px;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    gap: 20px;
+    z-index: 999;
+    box-shadow: 0 -2px 12px rgba(0,0,0,0.2);
+  }
+  .nav-bar button {
+    background: transparent;
+    border: 2px solid rgba(255,255,255,0.5);
+    color: #fff;
+    padding: 10px 24px;
+    border-radius: 25px;
+    cursor: pointer;
+    font-size: 0.95em;
+    font-weight: 600;
+    transition: all 0.3s;
+    letter-spacing: 1px;
+  }
+  .nav-bar button:hover {
+    background: rgba(255,255,255,0.15);
+    border-color: #ffd600;
+    color: #ffd600;
+  }
+  .nav-bar button:disabled {
+    opacity: 0.35;
+    cursor: not-allowed;
+    border-color: rgba(255,255,255,0.25);
+    color: rgba(255,255,255,0.5);
+  }
+  .nav-bar .page-indicator {
+    color: #fff;
+    font-size: 0.95em;
+    min-width: 80px;
+    text-align: center;
+    font-weight: 600;
+  }
+
+  /* 响应式 */
+  @media (max-width: 768px) {
+    .main-container { padding: 20px 12px 90px; }
+    .slide { padding: 24px 20px; border-radius: 10px; }
+    .slide h2 { font-size: 1.5em; }
+    .title-slide .lesson-number { font-size: 4em; }
+    .title-slide .lesson-title { font-size: 1.5em; }
+    .code-block { font-size: 0.78em; padding: 14px 16px; }
+    .algo-grid { grid-template-columns: 1fr; }
+  }
+  @media (max-width: 480px) {
+    .title-slide .lesson-number { font-size: 3em; }
+    .title-slide .lesson-title { font-size: 1.2em; }
+    .nav-bar button { padding: 8px 16px; font-size: 0.85em; }
+  }
+</style>
+</head>
+<body>
+
+<!-- ========== 顶部标题栏 ========== -->
+<div class="title-bar">
+  <div class="course-name"><span>CSP-J</span> 备考课程</div>
+  <div class="slide-dots" id="slideDots"></div>
+  <div class="lesson-info">第38课</div>
+</div>
+
+<!-- ========== 主内容 ========== -->
+<div class="main-container">
+
+  <!-- 幻灯片 1：标题页 -->
+  <div class="slide active" id="slide1">
+    <div class="title-slide">
+      <div class="lesson-number">38</div>
+      <div class="lesson-title">线性DP</div>
+      <div class="lesson-subtitle">第10阶段 · 动态规划入门</div>
+      <div class="keyword-tags">
+        <span>LIS</span>
+        <span>LCS</span>
+        <span>最大子段和</span>
+        <span>编辑距离</span>
+      </div>
+      <p style="margin-top:30px; color:#888; font-size:0.9em;">⏱ 建议学习时长：60分钟 ｜ 课程难度：★★★☆☆</p>
+    </div>
+  </div>
+
+  <!-- 幻灯片 2：LIS 最长上升子序列 -->
+  <div class="slide" id="slide2">
+    <h2>一、最长上升子序列（LIS）</h2>
+
+    <h3>问题描述</h3>
+    <p>给定长度为n的序列，求<strong>最长的严格递增子序列</strong>的长度。子序列不要求连续，但要保持原始顺序。</p>
+    <p>例：[3, 1, 4, 1, 5, 9, 2, 6] 的 LIS 长度为 4（如 [1, 4, 5, 9]）</p>
+
+    <h3>状态定义与转移</h3>
+    <div class="algo-grid">
+      <div class="algo-card">
+        <h4>状态定义</h4>
+        <p><code>dp[i]</code> = 以第i个元素<strong>结尾</strong>的LIS长度</p>
+        <p style="font-size:0.85em;color:#999;margin-top:4px;">注意：必须是「以a[i]结尾」</p>
+      </div>
+      <div class="algo-card">
+        <h4>转移方程</h4>
+        <p><code>dp[i] = max(dp[j] + 1)</code></p>
+        <p style="font-size:0.85em;color:#999;margin-top:4px;">对所有 j < i 且 a[j] < a[i]</p>
+      </div>
+      <div class="algo-card">
+        <h4>答案位置</h4>
+        <p><code>ans = max(dp[1..n])</code></p>
+        <p style="font-size:0.85em;color:#e65100;margin-top:4px;">不是dp[n]！</p>
+      </div>
+    </div>
+
+    <div class="code-block"><span class="kw">int</span> ans = <span class="num">0</span>;
+<span class="kw">for</span> (<span class="kw">int</span> i = <span class="num">1</span>; i &lt;= n; i++) {
+    dp[i] = <span class="num">1</span>;  <span class="cmt">// 自身成序列</span>
+    <span class="kw">for</span> (<span class="kw">int</span> j = <span class="num">1</span>; j &lt; i; j++)
+        <span class="kw">if</span> (a[j] &lt; a[i])
+            dp[i] = <span class="fn">max</span>(dp[i], dp[j] + <span class="num">1</span>);
+    ans = <span class="fn">max</span>(ans, dp[i]);
+}</div>
+
+    <div class="warning-box">
+      <strong>高频易错：</strong>LIS的答案是 <code>max(dp[1..n])</code>，不是 <code>dp[n]</code>！因为最长上升子序列不一定以最后一个元素结尾。
+    </div>
+  </div>
+
+  <!-- 幻灯片 3：LCS 最长公共子序列 -->
+  <div class="slide" id="slide3">
+    <h2>二、最长公共子序列（LCS）</h2>
+
+    <h3>问题描述</h3>
+    <p>给定两个字符串A和B，求它们的<strong>最长公共子序列</strong>的长度。子序列不要求连续，但顺序必须保持。</p>
+
+    <h3>状态定义</h3>
+    <p><code>dp[i][j]</code> 表示 A的前i个字符 与 B的前j个字符 的LCS长度</p>
+
+    <h3>转移方程（核心，必须背诵）</h3>
+    <div class="formula-box">
+      <p>若 A[i] == B[j]：dp[i][j] = dp[i-1][j-1] + 1</p>
+      <p>若 A[i] != B[j]：dp[i][j] = max(dp[i-1][j], dp[i][j-1])</p>
+    </div>
+
+    <h3>完整代码</h3>
+    <div class="code-block"><span class="kw">for</span> (<span class="kw">int</span> i = <span class="num">1</span>; i &lt;= n; i++) {
+    <span class="kw">for</span> (<span class="kw">int</span> j = <span class="num">1</span>; j &lt;= m; j++) {
+        <span class="kw">if</span> (a[i] == b[j])
+            dp[i][j] = dp[i-<span class="num">1</span>][j-<span class="num">1</span>] + <span class="num">1</span>;
+        <span class="kw">else</span>
+            dp[i][j] = <span class="fn">max</span>(dp[i-<span class="num">1</span>][j], dp[i][j-<span class="num">1</span>]);
+    }
+}
+cout &lt;&lt; dp[n][m];  <span class="cmt">// 答案在 dp[n][m]</span></div>
+
+    <h3>转移方程理解</h3>
+    <table class="compare-table">
+      <tr><th>情况</th><th>逻辑</th><th>公式</th></tr>
+      <tr><td>A[i] == B[j]</td><td>这对字符可同时选入LCS</td><td>dp[i-1][j-1] + 1</td></tr>
+      <tr><td>A[i] != B[j]</td><td>至少舍弃其中一个字符</td><td>max(dp[i-1][j], dp[i][j-1])</td></tr>
+    </table>
+  </div>
+
+  <!-- 幻灯片 4：最大子段和 Kadane -->
+  <div class="slide" id="slide4">
+    <h2>三、最大子段和（Kadane算法）</h2>
+
+    <h3>问题描述</h3>
+    <p>给定整数序列（可含负数），求连续子段的最大和。</p>
+    <p>例：[-2, 1, -3, <strong>4, -1, 2, 1</strong>, -5, 4] 的最大子段和为 6</p>
+
+    <h3>DP状态与转移</h3>
+    <p><strong>状态：</strong><code>dp[i]</code> = 以第i个元素<strong>结尾</strong>的最大子段和</p>
+    <div class="formula-box">
+      <p>dp[i] = max(dp[i-1] + a[i], a[i])</p>
+    </div>
+    <p>理解：要么把a[i]接在前面的子段后面，要么a[i]自己独立成段。</p>
+
+    <h3>空间优化至 O(1)</h3>
+    <div class="code-block"><span class="kw">int</span> <span class="fn">maxSubArray</span>(vector&lt;<span class="kw">int</span>&gt;&amp; a) {
+    <span class="kw">int</span> cur = <span class="num">0</span>, ans = INT_MIN;
+    <span class="kw">for</span> (<span class="kw">int</span> x : a) {
+        cur = <span class="fn">max</span>(cur + x, x);   <span class="cmt">// 当前位置结尾的最大和</span>
+        ans = <span class="fn">max</span>(ans, cur);       <span class="cmt">// 更新全局最大值</span>
+    }
+    <span class="kw">return</span> ans;
+}</div>
+
+    <div class="warning-box">
+      <strong>高频易错：</strong><code>ans</code> 必须初始化为 <code>INT_MIN</code>（而非0），因为数组可能全为负数。如果全是负数，最大子段和应是最大的那个负数，而不是表示空子段的0。
+    </div>
+
+    <h3>变种扩展</h3>
+    <ul>
+      <li><strong>环形数组最大子段和</strong>：max(普通最大子段和, 总和 - 最小子段和)</li>
+      <li><strong>长度至少为k的最大子段和</strong>：前缀和 + 滑动窗口</li>
+    </ul>
+  </div>
+
+  <!-- 幻灯片 5：编辑距离 -->
+  <div class="slide" id="slide5">
+    <h2>四、编辑距离入门</h2>
+
+    <h3>问题描述</h3>
+    <p>将一个字符串转换为另一个字符串所需的最少操作次数。操作包括：<strong>插入、删除、替换</strong>。</p>
+    <p>例："kitten" → "sitting" 编辑距离为 3</p>
+
+    <h3>状态定义</h3>
+    <p><code>dp[i][j]</code> = 将A的前i个字符转换为B的前j个字符的最少操作数</p>
+
+    <h3>转移方程</h3>
+    <div class="formula-box">
+      <p>若 A[i] == B[j]：dp[i][j] = dp[i-1][j-1]</p>
+      <p>若 A[i] != B[j]：dp[i][j] = min(dp[i-1][j-1], dp[i-1][j], dp[i][j-1]) + 1</p>
+    </div>
+
+    <p><strong>三种操作对应：</strong></p>
+    <ul>
+      <li><code>dp[i-1][j-1] + 1</code> → 替换 A[i] 为 B[j]</li>
+      <li><code>dp[i-1][j] + 1</code> → 删除 A[i]</li>
+      <li><code>dp[i][j-1] + 1</code> → 在A的i位置后插入 B[j]</li>
+    </ul>
+
+    <div class="code-block"><span class="cmt">// 边界初始化</span>
+<span class="kw">for</span> (<span class="kw">int</span> i = <span class="num">0</span>; i &lt;= n; i++) dp[i][<span class="num">0</span>] = i;  <span class="cmt">// 删除i个</span>
+<span class="kw">for</span> (<span class="kw">int</span> j = <span class="num">0</span>; j &lt;= m; j++) dp[<span class="num">0</span>][j] = j;  <span class="cmt">// 插入j个</span>
+
+<span class="kw">for</span> (<span class="kw">int</span> i = <span class="num">1</span>; i &lt;= n; i++) {
+    <span class="kw">for</span> (<span class="kw">int</span> j = <span class="num">1</span>; j &lt;= m; j++) {
+        <span class="kw">if</span> (a[i-<span class="num">1</span>] == b[j-<span class="num">1</span>])
+            dp[i][j] = dp[i-<span class="num">1</span>][j-<span class="num">1</span>];
+        <span class="kw">else</span>
+            dp[i][j] = <span class="fn">min</span>({dp[i-<span class="num">1</span>][j-<span class="num">1</span>], dp[i-<span class="num">1</span>][j], dp[i][j-<span class="num">1</span>]}) + <span class="num">1</span>;
+    }
+}</div>
+
+    <div class="tip-box">
+      <strong>与LCS的对比：</strong>编辑距离和LCS有相同的二维dp结构，都依赖左、上、左上三个方向。CSP-J阶段重点是LCS，编辑距离作为拓展了解即可。
+    </div>
+  </div>
+
+  <!-- 幻灯片 6：代码模板汇总 -->
+  <div class="slide" id="slide6">
+    <h2>五、核心代码模板汇总</h2>
+
+    <h3>模板1：LIS O(n²)</h3>
+    <div class="code-block"><span class="kw">int</span> ans = <span class="num">0</span>;
+<span class="kw">for</span> (<span class="kw">int</span> i = <span class="num">1</span>; i &lt;= n; i++) {
+    dp[i] = <span class="num">1</span>;
+    <span class="kw">for</span> (<span class="kw">int</span> j = <span class="num">1</span>; j &lt; i; j++)
+        <span class="kw">if</span> (a[j] &lt; a[i]) dp[i] = <span class="fn">max</span>(dp[i], dp[j] + <span class="num">1</span>);
+    ans = <span class="fn">max</span>(ans, dp[i]);
+}</div>
+
+    <h3>模板2：LCS O(n*m)</h3>
+    <div class="code-block"><span class="kw">for</span> (<span class="kw">int</span> i = <span class="num">1</span>; i &lt;= n; i++)
+    <span class="kw">for</span> (<span class="kw">int</span> j = <span class="num">1</span>; j &lt;= m; j++)
+        <span class="kw">if</span> (a[i] == b[j]) dp[i][j] = dp[i-<span class="num">1</span>][j-<span class="num">1</span>] + <span class="num">1</span>;
+        <span class="kw">else</span> dp[i][j] = <span class="fn">max</span>(dp[i-<span class="num">1</span>][j], dp[i][j-<span class="num">1</span>]);
+<span class="cmt">// 答案: dp[n][m]</span></div>
+
+    <h3>模板3：Kadane O(n)</h3>
+    <div class="code-block"><span class="kw">int</span> cur = <span class="num">0</span>, ans = INT_MIN;
+<span class="kw">for</span> (<span class="kw">int</span> x : a) {
+    cur = <span class="fn">max</span>(cur + x, x);
+    ans = <span class="fn">max</span>(ans, cur);
+}</div>
+
+    <div class="tip-box">
+      <strong>考试建议：</strong>这三个模板是CSP-J线性DP的「三板斧」，必须能熟练默写。考场上看到序列型问题，优先匹配这三个模型。
+    </div>
+  </div>
+
+  <!-- 幻灯片 7：真题精讲 -->
+  <div class="slide" id="slide7">
+    <h2>六、真题精讲</h2>
+
+    <h3>真题1：最长上升子序列</h3>
+    <p>给定N（1≤N≤5000）个整数，求最长严格上升子序列长度。</p>
+
+    <div class="code-block"><span class="pp">#include</span> <span class="str">&lt;bits/stdc++.h&gt;</span>
+<span class="kw">using</span> <span class="kw">namespace</span> std;
+<span class="kw">const</span> <span class="kw">int</span> MAXN = <span class="num">5005</span>;
+<span class="kw">int</span> a[MAXN], dp[MAXN];
+
+<span class="kw">int</span> <span class="fn">main</span>() {
+    <span class="kw">int</span> n; cin &gt;&gt; n;
+    <span class="kw">for</span> (<span class="kw">int</span> i = <span class="num">1</span>; i &lt;= n; i++) cin &gt;&gt; a[i];
+    <span class="kw">int</span> ans = <span class="num">0</span>;
+    <span class="kw">for</span> (<span class="kw">int</span> i = <span class="num">1</span>; i &lt;= n; i++) {
+        dp[i] = <span class="num">1</span>;
+        <span class="kw">for</span> (<span class="kw">int</span> j = <span class="num">1</span>; j &lt; i; j++)
+            <span class="kw">if</span> (a[j] &lt; a[i] && dp[j] + <span class="num">1</span> &gt; dp[i])
+                dp[i] = dp[j] + <span class="num">1</span>;
+        ans = <span class="fn">max</span>(ans, dp[i]);
+    }
+    cout &lt;&lt; ans &lt;&lt; <span class="str">'\n'</span>;
+    <span class="kw">return</span> <span class="num">0</span>;
+}</div>
+
+    <h3>真题2：最大子段和</h3>
+    <p>给定整数序列（可含负数），求连续子段的最大和。</p>
+
+    <div class="code-block"><span class="kw">int</span> cur = <span class="num">0</span>, ans = INT_MIN;
+<span class="kw">for</span> (<span class="kw">int</span> i = <span class="num">0</span>; i &lt; n; i++) {
+    <span class="kw">int</span> x; cin &gt;&gt; x;
+    cur = <span class="fn">max</span>(cur + x, x);
+    ans = <span class="fn">max</span>(ans, cur);
+}
+cout &lt;&lt; ans &lt;&lt; <span class="str">'\n'</span>;</div>
+
+    <div class="warning-box">
+      <strong>注意：</strong>如果题目要求子段长度至少为1（不允许空子段），ans必须初始化为INT_MIN。如果允许空子段（和为0），则ans初始化为0。
+    </div>
+  </div>
+
+  <!-- 幻灯片 8：总结 -->
+  <div class="slide" id="slide8">
+    <h2>本课总结</h2>
+
+    <div class="summary-grid">
+      <div class="summary-item">
+        <h4>LIS（最长上升子序列）</h4>
+        <p>dp[i] = 以a[i]结尾的LIS长度<br>O(n²)：扫描前面所有j<br><strong>答案：max(dp[1..n])</strong></p>
+      </div>
+      <div class="summary-item">
+        <h4>LCS（最长公共子序列）</h4>
+        <p>dp[i][j] = A前i个与B前j个的LCS<br>相等：dp[i-1][j-1]+1<br>不等：max(上方, 左方)<br><strong>答案：dp[n][m]</strong></p>
+      </div>
+      <div class="summary-item">
+        <h4>Kadane（最大子段和）</h4>
+        <p>cur = max(cur+x, x)<br>O(n)时间，O(1)空间<br><strong>ans初始化为INT_MIN</strong><br>可扩展到环形数组</p>
+      </div>
+      <div class="summary-item">
+        <h4>编辑距离</h4>
+        <p>dp[i][j] = 最小操作数<br>三种操作取min<br>与LCS结构类似<br>作为拓展了解</p>
+      </div>
+    </div>
+
+    <table class="compare-table" style="margin-top:20px;">
+      <tr>
+        <th>算法</th>
+        <th>状态维度</th>
+        <th>时间复杂度</th>
+        <th>答案位置</th>
+        <th>CSP-J考频</th>
+      </tr>
+      <tr>
+        <td><strong>LIS</strong></td>
+        <td>一维</td>
+        <td>O(n²)</td>
+        <td>max(dp[1..n])</td>
+        <td>★★★</td>
+      </tr>
+      <tr>
+        <td><strong>LCS</strong></td>
+        <td>二维</td>
+        <td>O(n*m)</td>
+        <td>dp[n][m]</td>
+        <td>★★★</td>
+      </tr>
+      <tr>
+        <td><strong>最大子段和</strong></td>
+        <td>一维（可O(1)空间）</td>
+        <td>O(n)</td>
+        <td>max(dp[1..n])</td>
+        <td>★★★</td>
+      </tr>
+      <tr>
+        <td><strong>编辑距离</strong></td>
+        <td>二维</td>
+        <td>O(n*m)</td>
+        <td>dp[n][m]</td>
+        <td>★☆☆</td>
+      </tr>
+    </table>
+
+    <div class="tip-box" style="margin-top:20px;">
+      <strong>课后作业：</strong>① 默写LIS、LCS、Kadane三个模板代码；② 完成LIS和LCS的真题练习；③ 思考：如何输出LIS/LCS的具体序列内容（而不只是长度）？④ 尝试用Kadane思想解决环形数组最大子段和问题。
+    </div>
+  </div>
+
+</div>
+
+<!-- ========== 底部导航栏 ========== -->
+<div class="nav-bar">
+  <button id="prevBtn" onclick="goPrev()">◀ 上一页</button>
+  <span class="page-indicator" id="pageIndicator">1 / 8</span>
+  <button id="nextBtn" onclick="goNext()">下一页 ▶</button>
+</div>
+
+<!-- ========== JavaScript 幻灯片控制 ========== -->
+<script>
+(function() {
+  var slides = document.querySelectorAll('.slide');
+  var totalSlides = slides.length;
+  var currentSlide = 0;
+  var prevBtn = document.getElementById('prevBtn');
+  var nextBtn = document.getElementById('nextBtn');
+  var pageIndicator = document.getElementById('pageIndicator');
+  var slideDots = document.getElementById('slideDots');
+
+  // 创建圆点指示器
+  for (var i = 0; i < totalSlides; i++) {
+    var dot = document.createElement('span');
+    dot.className = 'dot' + (i === 0 ? ' active' : '');
+    dot.setAttribute('data-index', i);
+    dot.onclick = (function(idx) {
+      return function() { showSlide(idx); };
+    })(i);
+    slideDots.appendChild(dot);
+  }
+
+  function showSlide(index) {
+    slides[currentSlide].classList.remove('active');
+    currentSlide = index;
+    slides[currentSlide].classList.add('active');
+
+    prevBtn.disabled = (currentSlide === 0);
+    nextBtn.disabled = (currentSlide === totalSlides - 1);
+
+    pageIndicator.textContent = (currentSlide + 1) + ' / ' + totalSlides;
+
+    var dots = slideDots.querySelectorAll('.dot');
+    for (var i = 0; i < dots.length; i++) {
+      dots[i].classList.toggle('active', i === currentSlide);
+    }
+
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  }
+
+  window.goNext = function() {
+    if (currentSlide < totalSlides - 1) showSlide(currentSlide + 1);
+  };
+
+  window.goPrev = function() {
+    if (currentSlide > 0) showSlide(currentSlide - 1);
+  };
+
+  // 键盘导航
+  document.addEventListener('keydown', function(e) {
+    if (e.key === 'ArrowRight' || e.key === 'ArrowDown') {
+      e.preventDefault(); goNext();
+    } else if (e.key === 'ArrowLeft' || e.key === 'ArrowUp') {
+      e.preventDefault(); goPrev();
+    }
+  });
+
+  // 触摸滑动
+  var touchStartX = 0;
+  document.addEventListener('touchstart', function(e) {
+    touchStartX = e.touches[0].clientX;
+  });
+  document.addEventListener('touchend', function(e) {
+    var diff = touchStartX - e.changedTouches[0].clientX;
+    if (Math.abs(diff) > 50) {
+      if (diff > 0) goNext(); else goPrev();
+    }
+  });
+})();
+</script>
+
+</body>
+</html>

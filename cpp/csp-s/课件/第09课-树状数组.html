@@ -1,0 +1,222 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>第09课：树状数组（Fenwick Tree）</title>
+<style>
+* { margin: 0; padding: 0; box-sizing: border-box; }
+body {
+    font-family: 'Segoe UI', 'Microsoft YaHei', 'PingFang SC', sans-serif;
+    background: #0d1117;
+    color: #c9d1d9;
+    display: flex; justify-content: center; align-items: center;
+    min-height: 100vh;
+}
+#app {
+    width: 95%; max-width: 1000px;
+    background: #161b22;
+    border-radius: 16px;
+    padding: 40px;
+    box-shadow: 0 0 40px rgba(0,0,0,0.5);
+    position: relative;
+}
+.slide { display: none; }
+.slide.active { display: block; }
+h1 { font-size: 2.2em; color: #58a6ff; margin-bottom: 16px; border-bottom: 2px solid #30363d; padding-bottom: 12px; }
+h2 { font-size: 1.6em; color: #79c0ff; margin: 20px 0 12px; }
+h3 { font-size: 1.3em; color: #d2a8ff; margin: 16px 0 8px; }
+p, li { font-size: 1.08em; line-height: 1.85; margin-bottom: 8px; }
+ul, ol { margin-left: 24px; margin-bottom: 12px; }
+.highlight { color: #ff7b72; font-weight: bold; }
+.accent { color: #7ee787; font-weight: bold; }
+.info { color: #a5d6ff; }
+pre { background: #0d1117; border: 1px solid #30363d; border-radius: 8px; padding: 18px; overflow-x: auto; margin: 12px 0; font-size: 0.92em; line-height: 1.65; }
+code { font-family: 'Fira Code', 'Cascadia Code', 'Consolas', 'Monaco', monospace; }
+.kw { color: #ff7b72; } .type { color: #ffa657; } .func { color: #d2a8ff; }
+.num { color: #79c0ff; } .str { color: #a5d6ff; } .cmt { color: #8b949e; font-style: italic; }
+.op { color: #ff7b72; } .macro { color: #f0883e; }
+.nav { display: flex; justify-content: space-between; align-items: center; margin-top: 30px; }
+.nav button {
+    background: #21262d; color: #c9d1d9; border: 1px solid #30363d;
+    padding: 10px 24px; border-radius: 8px; cursor: pointer; font-size: 1em;
+    transition: background 0.2s;
+}
+.nav button:hover { background: #30363d; }
+.nav .page-indicator { font-size: 1em; color: #8b949e; }
+.title-slide { text-align: center; padding-top: 40px; }
+.title-slide h1 { font-size: 2.8em; border: none; }
+.title-slide .subtitle { font-size: 1.3em; color: #8b949e; margin: 16px 0; }
+.title-slide .tags { margin-top: 24px; }
+.tag { display: inline-block; background: #1f6feb33; color: #58a6ff; padding: 4px 14px; border-radius: 20px; margin: 4px; font-size: 0.92em; border: 1px solid #1f6feb55; }
+.tree { font-family: 'Fira Code', 'Consolas', monospace; white-space: pre; background: #0d1117; padding: 16px; border-radius: 6px; border: 1px solid #30363d; line-height: 1.5; font-size: 0.85em; }
+</style>
+</head>
+<body>
+<div id="app">
+<div class="slide active" id="s1">
+<div class="title-slide">
+<h1>第09课：树状数组</h1>
+<p class="subtitle">Fenwick Tree / Binary Indexed Tree</p>
+<div class="tags">
+<span class="tag">CSP-S 高级数据结构</span>
+<span class="tag">O(log n) 操作</span>
+<span class="tag">二进制拆分</span>
+<span class="tag">逆序对计数</span>
+</div>
+<p style="margin-top:30px; color:#8b949e">利用二进制拆分，实现高效的前缀和信息维护</p>
+</div>
+</div>
+
+<div class="slide" id="s2">
+<h1>📖 知识精讲 — 核心概念</h1>
+<h2>什么是 lowbit？</h2>
+<p><code class="func">lowbit(x) = x & (-x)</code> — 取出 x 二进制最低位的 1</p>
+<p>例如：<span class="num">lowbit(6) = 2</span>（6 = 110₂，最低位 1 在 2¹ 位置）</p>
+
+<h2>BIT 的存储结构</h2>
+<p><span class="highlight">c[i]</span> 维护区间 <span class="info">[i - lowbit(i) + 1, i]</span> 上的元素和</p>
+<div class="tree">
+c[1] → a[1]
+c[2] → a[1] + a[2]
+c[3] → a[3]
+c[4] → a[1] + a[2] + a[3] + a[4]
+c[5] → a[5]
+c[6] → a[5] + a[6]
+c[7] → a[7]
+c[8] → a[1] + a[2] + a[3] + a[4] + a[5] + a[6] + a[7] + a[8]
+</div>
+<p style="margin-top:12px">每个区间的长度 = <span class="accent">lowbit(i)</span>，c[i] 恰好覆盖了长度为 lowbit(i) 的一段</p>
+</div>
+
+<div class="slide" id="s3">
+<h1>📖 知识精讲 — 核心操作</h1>
+<h2>单点修改 <span class="accent">add(x, v)</span></h2>
+<p>修改 a[x] 后，需要更新所有<span class="highlight">覆盖 x</span> 的 c 节点：</p>
+<p>x → x + lowbit(x) → x + lowbit(x) + lowbit(...) 持续向上跳</p>
+
+<h2>前缀查询 <span class="accent">sum(x)</span></h2>
+<p>求 a[1..x] 的和，从 x 出发持续去掉最低位：</p>
+<p>x → x - lowbit(x) → x - lowbit(x) - lowbit(...) 持续向下跳</p>
+
+<h2>区间查询</h2>
+<p><span class="info">sum[l, r] = sum(r) - sum(l - 1)</span></p>
+
+<h3>示例：查询 sum(7)</h3>
+<p style="font-family:monospace">
+sum(7) = c[7] + c[6] + c[4]<br>
+7 (111₂) → 6 (110₂) → 4 (100₂) → 0
+</p>
+</div>
+
+<div class="slide" id="s4">
+<h1>💻 代码模板 — 差分 BIT 与逆序对</h1>
+<h3>差分 BIT（区间修改 + 单点查询）</h3>
+<pre><span class="cmt">// 区间 [l, r] 全部加 v</span>
+<span class="type">void</span> <span class="func">range_add</span>(<span class="type">int</span> l, <span class="type">int</span> r, <span class="type">int</span> v) {
+    <span class="func">add</span>(l, v);
+    <span class="func">add</span>(r + <span class="num">1</span>, -v);
+}
+
+<span class="cmt">// 单点查询 a[x] → 查询差分数组前缀和</span>
+<span class="type">int</span> <span class="func">point_query</span>(<span class="type">int</span> x) {
+    <span class="kw">return</span> <span class="func">sum</span>(x);
+}</pre>
+
+<h3>逆序对计数</h3>
+<pre><span class="cmt">// 从右向左遍历，BIT 维护已访问元素的出现次数</span>
+<span class="type">long long</span> ans = <span class="num">0</span>;
+<span class="kw">for</span> (<span class="type">int</span> i = n - <span class="num">1</span>; i >= <span class="num">0</span>; i--) {
+    ans += <span class="func">sum</span>(a[i] - <span class="num">1</span>);  <span class="cmt">// 比 a[i] 小的、已在右边的元素</span>
+    <span class="func">add</span>(a[i], <span class="num">1</span>);
+}</pre>
+</div>
+
+<div class="slide" id="s5">
+<h1>⚠️ 易错点与优化技巧</h1>
+<ul>
+<li><span class="highlight">⚠ 下标从 1 开始</span> — lowbit(0) = 0 会导致死循环！</li>
+<li><span class="highlight">⚠ 数据溢出</span> — n ≤ 5×10⁵ 时使用 <code class="type">long long</code></li>
+<li><span class="highlight">⚠ 离散化</span> — 值域很大时必须先离散化再使用 BIT</li>
+<li><span class="accent">✔ 树状数组 vs 线段树</span> — BIT 常数仅为线段树的 1/5~1/3</li>
+<li><span class="accent">✔ 能用 BIT 不用线段树</span> — 代码量少、常數小、不易出错</li>
+<li><span class="accent">✔ 二维 BIT 谨慎</span> — n,m ≤ 2000 才安全，否则 MLE</li>
+<li><span class="accent">✔ 倍增求第K小</span> — O(log n) 替代二分+前缀和的 O(log² n)</li>
+</ul>
+</div>
+
+<div class="slide" id="s6">
+<h1>📝 真题精练</h1>
+<h3>真题一：逆序对计数（排列版）</h3>
+<p><span class="info">数据范围：</span>n ≤ 5×10⁵，a 为 1..n 的排列</p>
+<p>从右向左遍历，BIT 维护已访问元素的出现次数，<br>
+对每个 a[i]，查询 <code class="func">sum(a[i]-1)</code> 即为逆序对贡献</p>
+<p><span class="accent">时间复杂度：O(n log n)，空间：O(n)</span></p>
+
+<h3 style="margin-top:20px">真题二：二维矩阵操作</h3>
+<p><span class="info">数据范围：</span>n, m ≤ 1000，操作数 q ≤ 10⁵</p>
+<p>支持单点修改和子矩阵求和，<br>
+利用二维 BIT 的前缀和思想与容斥原理</p>
+<p><span class="accent">时间复杂度：O(q · log n · log m)</span></p>
+</div>
+
+<div class="slide" id="s7">
+<h1>🎯 本课小结</h1>
+<div style="display:grid; grid-template-columns:1fr 1fr; gap:16px; margin-top:20px">
+<div style="background:#0d1117; padding:18px; border-radius:8px; border:1px solid #30363d">
+<h3>核心函数</h3>
+<p><code class="func">lowbit(x)</code> — x & (-x)</p>
+<p><code class="func">add(x, v)</code> — 向上跳，修改</p>
+<p><code class="func">sum(x)</code> — 向下跳，查询</p>
+</div>
+<div style="background:#0d1117; padding:18px; border-radius:8px; border:1px solid #30363d">
+<h3>高级应用</h3>
+<p>差分 BIT — 区间修改</p>
+<p>二维 BIT — 矩阵操作</p>
+<p>逆序对 — 离散化 + BIT</p>
+<p>第 K 小 — 倍增查找</p>
+</div>
+<div style="background:#0d1117; padding:18px; border-radius:8px; border:1px solid #30363d">
+<h3>复杂度</h3>
+<p>所有操作：<span class="accent">O(log n)</span></p>
+<p>二维操作：<span class="accent">O(log n · log m)</span></p>
+</div>
+<div style="background:#0d1117; padding:18px; border-radius:8px; border:1px solid #30363d">
+<h3>常见错误</h3>
+<p>下标从 0 开始</p>
+<p>int 溢出未用 long long</p>
+<p>未离散化直接 BIT</p>
+<p>lowbit 写成宏忘记加括号</p>
+</div>
+</div>
+</div>
+
+<div class="nav">
+<button onclick="prevSlide()">◀ 上一页</button>
+<span class="page-indicator" id="pageNum">1 / 7</span>
+<button onclick="nextSlide()">下一页 ▶</button>
+</div>
+</div>
+
+<script>
+let current = 0;
+const slides = document.querySelectorAll('.slide');
+const total = slides.length;
+
+function showSlide(n) {
+    slides[current].classList.remove('active');
+    current = ((n % total) + total) % total;
+    slides[current].classList.add('active');
+    document.getElementById('pageNum').textContent = (current + 1) + ' / ' + total;
+}
+
+function nextSlide() { showSlide(current + 1); }
+function prevSlide() { showSlide(current - 1); }
+
+document.addEventListener('keydown', function(e) {
+    if (e.key === 'ArrowRight' || e.key === 'ArrowDown') nextSlide();
+    if (e.key === 'ArrowLeft' || e.key === 'ArrowUp') prevSlide();
+});
+</script>
+</body>
+</html>

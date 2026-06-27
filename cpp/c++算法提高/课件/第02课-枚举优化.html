@@ -1,0 +1,226 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>第02课：枚举优化——减少搜索空间</title>
+<style>
+* { margin:0;padding:0;box-sizing:border-box; }
+body { font-family:'PingFang SC','Microsoft YaHei',sans-serif; background:#1a1a2e; color:#e0e0e0; min-height:100vh; display:flex; flex-direction:column; align-items:center; }
+.slideshow { width:100%; max-width:960px; margin:20px auto; position:relative; }
+.slide { display:none; background:#16213e; border-radius:12px; padding:40px; min-height:540px; box-shadow:0 8px 32px rgba(0,0,0,.4); animation:fadeIn .4s; }
+.slide.active { display:block; }
+@keyframes fadeIn { from{opacity:0;transform:translateY(12px);} to{opacity:1;transform:translateY(0);} }
+h1 { font-size:2em; color:#e94560; margin-bottom:16px; border-bottom:2px solid #e94560; padding-bottom:10px; }
+h2 { font-size:1.5em; color:#0f3460; background:#e94560; display:inline-block; padding:6px 18px; border-radius:6px; margin-bottom:18px; }
+h3 { color:#f5c518; margin:12px 0 6px; }
+ul { margin:12px 0; padding-left:24px; }
+li { margin:8px 0; line-height:1.7; }
+pre { background:#0d1b2a; border-radius:8px; padding:16px; overflow-x:auto; margin:10px 0; font-size:.85em; border-left:4px solid #e94560; }
+code { font-family:'Cascadia Code','Fira Code','Consolas',monospace; color:#7ec8e3; }
+.label { color:#f5c518; font-weight:bold; }
+.note { color:#aaa; font-size:.85em; }
+.navigation { display:flex; justify-content:center; gap:16px; margin:20px 0; }
+.nav-btn { background:#e94560; color:#fff; border:none; padding:10px 28px; border-radius:8px; font-size:1em; cursor:pointer; transition:background .3s; }
+.nav-btn:hover { background:#c73a52; }
+.nav-btn:disabled { background:#555; cursor:not-allowed; }
+.page-indicator { color:#aaa; font-size:.9em; align-self:center; }
+.highlight { color:#f5c518; font-weight:bold; }
+.step-box { background:#0d1b2a; border-left:4px solid #f5c518; padding:12px 16px; margin:8px 0; border-radius:4px; }
+.ascii-box { font-family:'Courier New',monospace; background:#0d1b2a; padding:14px; border-radius:6px; line-height:1.6; white-space:pre; font-size:.82em; color:#a8d8a8; }
+.strategy-grid { display:grid; grid-template-columns:1fr 1fr; gap:12px; margin:16px 0; }
+@media(max-width:640px) { .slide{padding:20px;} .strategy-grid{grid-template-columns:1fr;} h1{font-size:1.4em;} }
+</style>
+</head>
+<body>
+
+<div class="slideshow" id="slideshow">
+
+<!-- 幻灯片1：标题页 -->
+<div class="slide active" id="slide1">
+<h1>⚡ 第02课：枚举优化</h1>
+<h2>减少搜索空间 —— 更聪明地穷举</h2>
+<div style="margin:30px 0;">
+<p style="font-size:1.15em;line-height:2;">
+📌 <span class="highlight">核心问题：</span>如何在不遗漏解的前提下，减少枚举次数？<br>
+📌 <span class="highlight">四大策略：</span>缩小范围 | 剪枝 | 减少嵌套 | 利用对称<br>
+📌 <span class="highlight">经典问题：</span>完美立方、回文平方数
+</p>
+</div>
+<div class="step-box">
+<strong>💡 想一想：</strong>百钱买百鸡，如果三层循环 100×100×100=100万次，优化后 20×33=660次——效率提升 <span class="highlight">1500倍</span>！
+</div>
+</div>
+
+<!-- 幻灯片2：优化策略页 -->
+<div class="slide" id="slide2">
+<h2>📖 枚举优化四大策略</h2>
+<div class="strategy-grid">
+<div class="step-box">
+<h3>🎯 策略一：缩小范围</h3>
+<p>用数学分析找更紧的上下界<br>
+<span class="note">公鸡 ∈ [0,20] 而非 [0,100]</span></p>
+</div>
+<div class="step-box">
+<h3>✂️ 策略二：剪枝 break</h3>
+<p>不可能满足条件时提前终止<br>
+<span class="note">b³ ≥ a³ 就 break</span></p>
+</div>
+<div class="step-box">
+<h3>📐 策略三：减少嵌套</h3>
+<p>用等式推导，少写一层循环<br>
+<span class="note">xiao = 100 - gong - mu</span></p>
+</div>
+<div class="step-box">
+<h3>🔄 策略四：利用对称性</h3>
+<p>约定顺序，避免排列重复<br>
+<span class="note">b ≤ c ≤ d，减少到1/6</span></p>
+</div>
+</div>
+
+<h3>剪枝可视化</h3>
+<div class="ascii-box">
+        枚举树                    剪枝后
+       /  |  \                  /  |  \
+     1   2   3 ...    →       1   2   ✂  (3不符合，整枝剪掉！)
+    / \                     / \
+   1   2                   1   2
+   ✂   ✓                  ✂   ✓ (找到解)
+</div>
+</div>
+
+<!-- 幻灯片3：代码实现页 -->
+<div class="slide" id="slide3">
+<h2>💻 完美立方 —— 四重循环优化</h2>
+
+<h3>问题描述</h3>
+<p>a³ = b³ + c³ + d³，其中 1 &lt; b ≤ c ≤ d &lt; a ≤ N</p>
+
+<h3>剪枝策略详解</h3>
+<div class="ascii-box">
+for a ← 2 to N:
+  a³ 预计算
+  for b ← 2 to a-1:
+    ✂ b³ ≥ a³ → break     ← 剪枝点1
+    for c ← b to a-1:
+      ✂ b³+c³ ≥ a³ → break ← 剪枝点2
+      for d ← c to a-1:
+        检查 b³+c³+d³ == a³
+        ✂ sum > a³ → break ← 剪枝点3
+</div>
+
+<pre><code>// 关键代码段
+for (int d = c; d < a; d++) {
+    int sum = b3 + c3 + d3;
+    if (sum == a3) { /* 找到解！ */ }
+    if (sum > a3) break;  // 剪枝：d再大更不可能
+}</code></pre>
+
+<div class="step-box">
+<strong>📊 效果：</strong>从朴素 O(N⁴) ≈ 1亿次 → 优化后实际约10万次，<span class="highlight">提升1000+倍</span>
+</div>
+</div>
+
+<!-- 幻灯片4：例题页 -->
+<div class="slide" id="slide4">
+<h2>🏋️ 例题：回文平方数</h2>
+
+<h3>回文数判断算法</h3>
+<div class="ascii-box">
+判断 12321 是否回文：
+  原数: 12321
+  反转: ↓
+       第1步: 取出1 → reversed = 0×10 + 1 = 1,  n = 1232
+       第2步: 取出2 → reversed = 1×10 + 2 = 12, n = 123
+       第3步: 取出3 → reversed = 12×10 + 3 = 123, n = 12
+       第4步: 取出2 → reversed = 123×10 + 2 = 1232, n = 1
+       第5步: 取出1 → reversed = 1232×10 + 1 = 12321, n = 0
+  比较: 12321 == 12321 ✓ 是回文数！
+</div>
+
+<pre><code>// 回文判断函数
+bool isPalindrome(int n) {
+    int original = n, reversed = 0;
+    while (n > 0) {
+        reversed = reversed * 10 + n % 10;
+        n /= 10;
+    }
+    return original == reversed;
+}</code></pre>
+
+<div class="step-box" style="margin-top:12px;">
+<strong>🎯 1~30的回文平方数：</strong>1²=1, 2²=4, 3²=9, 11²=121, 22²=484, 26²=676
+</div>
+</div>
+
+<!-- 幻灯片5：小结页 -->
+<div class="slide" id="slide5">
+<h2>📝 本课小结</h2>
+
+<div style="display:grid; grid-template-columns:1fr; gap:14px; margin:20px 0;">
+<div class="step-box">
+<h3 style="color:#4ecdc4;">🎯 优化技巧速记</h3>
+<ul>
+<li><span class="highlight">范围缩小：</span>买鸡上限100/5=20，而非100</li>
+<li><span class="highlight">break剪枝：</span>当b³已经≥a³，后面的b更大，直接break</li>
+<li><span class="highlight">continue跳过：</span>当不满足某条件时，跳过一次循环</li>
+<li><span class="highlight">顺序约定：</span>b≤c≤d，把组合变成排列，减少到1/6</li>
+</ul>
+</div>
+<div class="step-box">
+<h3 style="color:#f5c518;">⚡ 优化效果对比（完美立方 N=100）</h3>
+<table style="width:100%; text-align:center; border-collapse:collapse;">
+<tr style="color:#f5c518;"><td>算法</td><td>理论复杂度</td><td>实际枚举次数</td></tr>
+<tr><td>朴素枚举</td><td>O(N⁴)</td><td>≈ 100,000,000</td></tr>
+<tr><td>优化枚举</td><td>O(N⁴) 但剪枝</td><td>≈ 100,000</td></tr>
+<tr style="color:#4ecdc4;"><td colspan="3">效率提升 1000 倍！</td></tr>
+</table>
+</div>
+</div>
+
+<div class="ascii-box" style="text-align:center;font-size:1.05em;">
+  聪明的暴力 > 暴力的聪明
+  能不枚举就不枚举，能少枚举就少枚举！
+</div>
+<div class="step-box" style="margin-top:16px;">
+<strong>📌 下节预告：</strong>第03课——排列枚举：全排列问题，学习多重循环排列枚举与标记数组！
+</div>
+</div>
+
+</div><!-- slideshow end -->
+
+<div class="navigation">
+<button class="nav-btn" id="prevBtn" onclick="changeSlide(-1)">&#9664; 上一页</button>
+<span class="page-indicator" id="pageIndicator">1 / 5</span>
+<button class="nav-btn" id="nextBtn" onclick="changeSlide(1)">下一页 &#9654;</button>
+</div>
+
+<script>
+let currentSlide = 0;
+const slides = document.querySelectorAll('.slide');
+const totalSlides = slides.length;
+function showSlide(index) {
+    slides.forEach(s => s.classList.remove('active'));
+    slides[index].classList.add('active');
+    document.getElementById('pageIndicator').textContent = (index+1) + ' / ' + totalSlides;
+    document.getElementById('prevBtn').disabled = (index === 0);
+    document.getElementById('nextBtn').disabled = (index === totalSlides - 1);
+}
+function changeSlide(delta) {
+    currentSlide = Math.min(Math.max(currentSlide + delta, 0), totalSlides - 1);
+    showSlide(currentSlide);
+}
+document.addEventListener('keydown', function(e) {
+    if (e.key === 'ArrowRight' || e.key === 'ArrowDown') changeSlide(1);
+    if (e.key === 'ArrowLeft' || e.key === 'ArrowUp') changeSlide(-1);
+});
+let touchStartX = 0;
+document.addEventListener('touchstart', e => { touchStartX = e.touches[0].clientX; });
+document.addEventListener('touchend', e => {
+    let diff = touchStartX - e.changedTouches[0].clientX;
+    if (Math.abs(diff) > 50) changeSlide(diff > 0 ? 1 : -1);
+});
+showSlide(0);
+</script>
+</body>
+</html>

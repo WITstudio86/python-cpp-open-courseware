@@ -1,0 +1,627 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>第27课：线性DP经典模型</title>
+<style>
+  :root {
+    --bg-primary: #1a1a2e;
+    --bg-secondary: #16213e;
+    --bg-tertiary: #0f3460;
+    --text-primary: #e0e0e0;
+    --text-secondary: #b0b0b0;
+    --accent: #e94560;
+    --accent2: #53a8b6;
+    --code-bg: #0d1117;
+    --keyword: #569cd6;
+    --string: #6a9955;
+    --comment: #6a737d;
+    --number: #ce9178;
+    --function: #dcdcaa;
+    --highlight: #f08c49;
+  }
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "PingFang SC", "Microsoft YaHei", sans-serif;
+    background: var(--bg-primary);
+    color: var(--text-primary);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    min-height: 100vh;
+    padding: 20px;
+  }
+
+  .container {
+    width: 100%;
+    max-width: 960px;
+    background: var(--bg-secondary);
+    border-radius: 16px;
+    box-shadow: 0 8px 40px rgba(0,0,0,0.5);
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
+    min-height: 85vh;
+  }
+
+  .slide-area {
+    flex: 1;
+    padding: 40px 48px 30px;
+    overflow-y: auto;
+    position: relative;
+  }
+
+  .slide {
+    display: none;
+    animation: fadeSlide 0.4s ease;
+  }
+
+  .slide.active {
+    display: block;
+  }
+
+  @keyframes fadeSlide {
+    from { opacity: 0; transform: translateY(12px); }
+    to   { opacity: 1; transform: translateY(0); }
+  }
+
+  /* ---- Typography ---- */
+  h1 {
+    font-size: 2.4em;
+    color: var(--accent);
+    margin-bottom: 16px;
+    line-height: 1.3;
+    border-bottom: 3px solid var(--accent);
+    padding-bottom: 12px;
+  }
+
+  h2 {
+    font-size: 1.8em;
+    color: var(--accent2);
+    margin: 24px 0 12px;
+    padding-left: 8px;
+    border-left: 4px solid var(--accent2);
+  }
+
+  h3 {
+    font-size: 1.3em;
+    color: #ccc;
+    margin: 18px 0 8px;
+  }
+
+  p, li {
+    font-size: 1.05em;
+    line-height: 1.8;
+    color: var(--text-primary);
+    margin: 6px 0;
+  }
+
+  li { margin-left: 20px; }
+
+  .subtitle {
+    font-size: 1.2em;
+    color: var(--text-secondary);
+    margin: 8px 0 20px;
+  }
+
+  .badge {
+    display: inline-block;
+    background: var(--accent);
+    color: #fff;
+    padding: 4px 12px;
+    border-radius: 12px;
+    font-size: 0.85em;
+    font-weight: 600;
+    margin-right: 8px;
+    margin-bottom: 4px;
+  }
+
+  /* ---- Table ---- */
+  table {
+    width: 100%;
+    border-collapse: collapse;
+    margin: 16px 0;
+    font-size: 0.95em;
+  }
+
+  th, td {
+    border: 1px solid #334;
+    padding: 10px 14px;
+    text-align: left;
+  }
+
+  th {
+    background: var(--bg-tertiary);
+    color: var(--accent2);
+    font-weight: 700;
+  }
+
+  tr:nth-child(even) { background: rgba(255,255,255,0.03); }
+
+  /* ---- Code ---- */
+  pre {
+    background: var(--code-bg);
+    border: 1px solid #30363d;
+    border-radius: 8px;
+    padding: 16px 20px;
+    overflow-x: auto;
+    margin: 12px 0;
+    font-family: "Fira Code", "Cascadia Code", "JetBrains Mono", "SF Mono", "Consolas", monospace;
+    font-size: 0.88em;
+    line-height: 1.6;
+    tab-size: 4;
+  }
+
+  code {
+    font-family: "Fira Code", "Cascadia Code", "JetBrains Mono", "SF Mono", "Consolas", monospace;
+  }
+
+  /* Syntax highlighting classes */
+  .kw  { color: var(--keyword); font-weight: bold; }
+  .str { color: var(--string); }
+  .cm  { color: var(--comment); font-style: italic; }
+  .num { color: var(--number); }
+  .fn  { color: var(--function); }
+  .hl  { color: var(--highlight); }
+
+  .math-block {
+    background: rgba(83,168,182,0.08);
+    border-left: 3px solid var(--accent2);
+    padding: 12px 20px;
+    margin: 12px 0;
+    border-radius: 0 8px 8px 0;
+    font-family: "Fira Code", "Cascadia Code", monospace;
+    font-size: 1em;
+  }
+
+  /* ---- Tip / Warning boxes ---- */
+  .tip-box {
+    background: rgba(83,168,182,0.1);
+    border: 1px solid rgba(83,168,182,0.4);
+    border-radius: 10px;
+    padding: 14px 20px;
+    margin: 16px 0;
+  }
+
+  .warn-box {
+    background: rgba(233,69,96,0.1);
+    border: 1px solid rgba(233,69,96,0.4);
+    border-radius: 10px;
+    padding: 14px 20px;
+    margin: 16px 0;
+  }
+
+  /* ---- Summary grid ---- */
+  .summary-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+    gap: 14px;
+    margin: 16px 0;
+  }
+
+  .summary-card {
+    background: var(--bg-tertiary);
+    border-radius: 10px;
+    padding: 16px;
+    border: 1px solid #345;
+  }
+
+  .summary-card h3 {
+    color: var(--accent);
+    margin: 0 0 8px;
+    font-size: 1em;
+  }
+
+  .summary-card p {
+    font-size: 0.9em;
+    color: #bbb;
+    line-height: 1.6;
+    margin: 2px 0;
+  }
+
+  /* ---- Navigation ---- */
+  .nav-bar {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 16px 48px;
+    background: var(--bg-tertiary);
+    border-top: 1px solid #345;
+  }
+
+  .nav-btn {
+    background: var(--accent);
+    color: #fff;
+    border: none;
+    padding: 10px 24px;
+    border-radius: 8px;
+    cursor: pointer;
+    font-size: 1em;
+    font-weight: 600;
+    transition: background 0.2s, transform 0.1s;
+  }
+
+  .nav-btn:hover { background: #d03550; }
+  .nav-btn:active { transform: scale(0.97); }
+  .nav-btn:disabled {
+    background: #555;
+    cursor: not-allowed;
+  }
+
+  .page-indicator {
+    display: flex;
+    gap: 8px;
+    align-items: center;
+  }
+
+  .dot {
+    width: 10px;
+    height: 10px;
+    border-radius: 50%;
+    background: #555;
+    transition: all 0.25s;
+    cursor: pointer;
+  }
+
+  .dot.active {
+    background: var(--accent);
+    transform: scale(1.4);
+    box-shadow: 0 0 8px var(--accent);
+  }
+
+  .slide-num {
+    color: var(--text-secondary);
+    font-size: 0.9em;
+    min-width: 80px;
+    text-align: center;
+  }
+
+  /* ---- Responsive ---- */
+  @media (max-width: 768px) {
+    .container { border-radius: 0; }
+    .slide-area { padding: 24px 20px; }
+    .nav-bar { padding: 12px 20px; flex-wrap: wrap; gap: 10px; }
+    h1 { font-size: 1.6em; }
+    h2 { font-size: 1.3em; }
+    pre { font-size: 0.75em; padding: 10px; }
+    .summary-grid { grid-template-columns: 1fr; }
+  }
+</style>
+</head>
+<body>
+<div class="container">
+  <div class="slide-area">
+
+    <!-- ============== Slide 0：标题页 ============== -->
+    <div class="slide active" data-index="0">
+      <h1>第27课：线性DP经典模型</h1>
+      <p class="subtitle">CSP-S 提高组 · 动态规划专题</p>
+      <br>
+      <div>
+        <span class="badge">最大子段和</span>
+        <span class="badge">数字三角形</span>
+        <span class="badge">路径计数DP</span>
+        <span class="badge">最大子矩阵和</span>
+        <span class="badge">环形子段和</span>
+        <span class="badge">最大子段积</span>
+      </div>
+      <br><br>
+      <p>线性DP是动态规划中最基础、最高频的模型。本课将系统讲解<span style="color:var(--accent2)">四种经典线性DP模型</span>及其变体，帮助你在CSP-S中快速拿下DP基础分。</p>
+      <br>
+      <p style="color:var(--text-secondary); font-size:0.9em;">使用键盘 ← → 或点击下方按钮翻页 | 共 <strong>8</strong> 页</p>
+    </div>
+
+    <!-- ============== Slide 1：最大子段和 ============== -->
+    <div class="slide" data-index="1">
+      <h2>1. 最大子段和 — Kadane算法</h2>
+
+      <h3>问题描述</h3>
+      <p>给定长度为 <em>n</em> 的整数序列，求连续子段的最大和。</p>
+
+      <h3>状态定义与转移</h3>
+      <div class="math-block">
+        dp[i] = max(a[i], dp[i-1] + a[i])
+      </div>
+      <p>含义：要么从当前元素重新开始，要么接上前面的子段。</p>
+
+      <h3>核心代码（滚动优化 O(1) 空间）</h3>
+      <pre><span class="kw">using</span> ll = <span class="kw">long long</span>;
+
+<span class="fn">ll</span> <span class="fn">max_subarray_sum</span>(<span class="kw">const</span> <span class="fn">vector</span>&lt;<span class="fn">ll</span>&gt;&amp; a) {
+    <span class="fn">ll</span> cur = <span class="num">0</span>, best = <span class="fn">LLONG_MIN</span>;
+    <span class="kw">for</span> (<span class="fn">ll</span> x : a) {
+        cur = <span class="fn">max</span>(x, cur + x);
+        best = <span class="fn">max</span>(best, cur);
+    }
+    <span class="kw">return</span> best;
+}</pre>
+
+      <table>
+        <tr><th>指标</th><th>值</th></tr>
+        <tr><td>时间复杂度</td><td>O(n)</td></tr>
+        <tr><td>空间复杂度</td><td>O(1)</td></tr>
+        <tr><td>关键技巧</td><td>用单个变量代替 dp 数组（滚动优化）</td></tr>
+      </table>
+
+      <div class="warn-box">
+        <strong>易错点：</strong>如果数组全为负数，必须用 <code>LLONG_MIN</code> 初始化 best，否则 <code>cur=0</code> 会导致结果错误地为 0。
+      </div>
+    </div>
+
+    <!-- ============== Slide 2：数字三角形 ============== -->
+    <div class="slide" data-index="2">
+      <h2>2. 数字三角形 — 逆推法</h2>
+
+      <h3>问题描述</h3>
+      <p>给定 <em>n</em> 行数字三角形，每次只能向左下或右下走，求从顶部到底部的最大路径和。</p>
+
+      <h3>逆推法（自底向上）</h3>
+      <div class="math-block">
+        dp[i][j] = a[i][j] + max(dp[i+1][j], dp[i+1][j+1])
+      </div>
+
+      <h3>代码</h3>
+      <pre><span class="kw">int</span> <span class="fn">triangle_max_path</span>(<span class="kw">const</span> <span class="fn">vector</span>&lt;<span class="fn">vector</span>&lt;<span class="kw">int</span>&gt;&gt;&amp; tri) {
+    <span class="kw">int</span> n = tri.<span class="fn">size</span>();
+    <span class="kw">auto</span> dp = tri;  <span class="cm">// 复制最后一行作为初始值</span>
+    <span class="kw">for</span> (<span class="kw">int</span> i = n - <span class="num">2</span>; i &gt;= <span class="num">0</span>; --i)
+        <span class="kw">for</span> (<span class="kw">int</span> j = <span class="num">0</span>; j &lt;= i; ++j)
+            dp[i][j] += <span class="fn">max</span>(dp[i+<span class="num">1</span>][j], dp[i+<span class="num">1</span>][j+<span class="num">1</span>]);
+    <span class="kw">return</span> dp[<span class="num">0</span>][<span class="num">0</span>];
+}</pre>
+
+      <div class="tip-box">
+        <strong>为什么推荐逆推？</strong><br>
+        顺推时第一列和最后一列需要特殊处理边界（j-1 可能为 -1），而逆推法天然规避了所有边界问题，代码更简洁、不易出错。
+      </div>
+
+      <table>
+        <tr><th>时间复杂度</th><td>O(n²)</td></tr>
+        <tr><th>空间优化</th><td>可使用一维数组优化到 O(n)</td></tr>
+      </table>
+    </div>
+
+    <!-- ============== Slide 3：路径计数DP ============== -->
+    <div class="slide" data-index="3">
+      <h2>3. 路径计数DP（含障碍物）</h2>
+
+      <h3>问题描述</h3>
+      <p>在 <em>m×n</em> 网格中从左上角走到右下角，每次只能向右或向下。某些格子有障碍物，不能经过。求不同路径数。</p>
+
+      <h3>状态转移</h3>
+      <div class="math-block">
+        dp[i][j] = 0（若为障碍）<br>
+        dp[i][j] = dp[i-1][j] + dp[i][j-1]（否则）
+      </div>
+
+      <h3>代码</h3>
+      <pre><span class="kw">const</span> <span class="kw">int</span> MOD = <span class="num">1e9</span> + <span class="num">7</span>;
+
+<span class="kw">int</span> <span class="fn">count_paths</span>(<span class="kw">const</span> <span class="fn">vector</span>&lt;<span class="fn">vector</span>&lt;<span class="kw">int</span>&gt;&gt;&amp; grid) {
+    <span class="kw">int</span> m = grid.<span class="fn">size</span>(), n = grid[<span class="num">0</span>].<span class="fn">size</span>();
+    <span class="fn">vector</span>&lt;<span class="fn">vector</span>&lt;<span class="kw">int</span>&gt;&gt; <span class="fn">dp</span>(m, <span class="fn">vector</span>&lt;<span class="kw">int</span>&gt;(n, <span class="num">0</span>));
+    dp[<span class="num">0</span>][<span class="num">0</span>] = (grid[<span class="num">0</span>][<span class="num">0</span>] == <span class="num">0</span>) ? <span class="num">1</span> : <span class="num">0</span>;
+    <span class="kw">for</span> (<span class="kw">int</span> i = <span class="num">0</span>; i &lt; m; ++i)
+        <span class="kw">for</span> (<span class="kw">int</span> j = <span class="num">0</span>; j &lt; n; ++j) {
+            <span class="kw">if</span> (grid[i][j] == <span class="num">1</span>) { dp[i][j] = <span class="num">0</span>; <span class="kw">continue</span>; }
+            <span class="kw">if</span> (i &gt; <span class="num">0</span>) dp[i][j] = (dp[i][j] + dp[i-<span class="num">1</span>][j]) % MOD;
+            <span class="kw">if</span> (j &gt; <span class="num">0</span>) dp[i][j] = (dp[i][j] + dp[i][j-<span class="num">1</span>]) % MOD;
+        }
+    <span class="kw">return</span> dp[m-<span class="num">1</span>][n-<span class="num">1</span>];
+}</pre>
+
+      <div class="warn-box">
+        <strong>关键细节：</strong>
+        <ul>
+          <li>每次加法后都要取模，防止溢出</li>
+          <li>起点或终点是障碍物时直接返回 0</li>
+          <li>空间可优化到 O(n)（滚动数组）</li>
+        </ul>
+      </div>
+    </div>
+
+    <!-- ============== Slide 4：最大子矩阵和 ============== -->
+    <div class="slide" data-index="4">
+      <h2>4. 最大子矩阵和 O(n³)</h2>
+
+      <h3>核心思想：压缩降维</h3>
+      <p>
+        <span class="badge">1</span> 枚举上边界 <code>top</code><br>
+        <span class="badge">2</span> 枚举下边界 <code>bottom</code>（向下扩展）<br>
+        <span class="badge">3</span> 将 [top, bottom] 的每一列求和，压缩为一维数组<br>
+        <span class="badge">4</span> 对一维数组运行 Kadane 算法
+      </p>
+
+      <h3>代码</h3>
+      <pre><span class="fn">ll</span> <span class="fn">max_submatrix_sum</span>(<span class="kw">const</span> <span class="fn">vector</span>&lt;<span class="fn">vector</span>&lt;<span class="fn">ll</span>&gt;&gt;&amp; mat) {
+    <span class="kw">int</span> m = mat.<span class="fn">size</span>(), n = mat[<span class="num">0</span>].<span class="fn">size</span>();
+    <span class="fn">ll</span> ans = <span class="fn">LLONG_MIN</span>;
+    <span class="kw">for</span> (<span class="kw">int</span> top = <span class="num">0</span>; top &lt; m; ++top) {
+        <span class="fn">vector</span>&lt;<span class="fn">ll</span>&gt; <span class="fn">compressed</span>(n, <span class="num">0</span>);
+        <span class="kw">for</span> (<span class="kw">int</span> bot = top; bot &lt; m; ++bot) {
+            <span class="kw">for</span> (<span class="kw">int</span> j = <span class="num">0</span>; j &lt; n; ++j)
+                compressed[j] += mat[bot][j];
+            <span class="cm">// Kadane on compressed array</span>
+            <span class="fn">ll</span> cur = <span class="num">0</span>, best = <span class="fn">LLONG_MIN</span>;
+            <span class="kw">for</span> (<span class="fn">ll</span> x : compressed) {
+                cur = <span class="fn">max</span>(x, cur + x);
+                best = <span class="fn">max</span>(best, cur);
+            }
+            ans = <span class="fn">max</span>(ans, best);
+        }
+    }
+    <span class="kw">return</span> ans;
+}</pre>
+
+      <table>
+        <tr><th>时间复杂度</th><td>O(m²·n)</td></tr>
+        <tr><th>空间复杂度</th><td>O(n)</td></tr>
+        <tr><th>优化技巧</th><td>若 m &gt; n，先转置矩阵再计算</td></tr>
+      </table>
+    </div>
+
+    <!-- ============== Slide 5：变体：环形 + 子段积 ============== -->
+    <div class="slide" data-index="5">
+      <h2>5. 变体：环形最大子段和 &amp; 最大子段积</h2>
+
+      <h3>环形最大子段和</h3>
+      <p>序列首尾相接，子段可以跨越边界。</p>
+      <div class="math-block">
+        答案 = max(普通最大子段和, total - 最小子段和)
+      </div>
+      <div class="warn-box">
+        <strong>全负数特判：</strong>如果 <code>max_normal &lt; 0</code>，说明数组全为负数，此时 <code>total - min_sum = 0</code> 是不合法的，应直接返回 <code>max_normal</code>。
+      </div>
+
+      <h3>最大子段积</h3>
+      <p>负数乘以负数会变成正数，需要同时维护以 i 结尾的<strong>最大值和最小值</strong>。</p>
+      <div class="math-block">
+        max_dp[i] = max(a[i], max_dp[i-1]×a[i], min_dp[i-1]×a[i])<br>
+        min_dp[i] = min(a[i], max_dp[i-1]×a[i], min_dp[i-1]×a[i])
+      </div>
+
+      <pre><span class="fn">ll</span> <span class="fn">max_product_subarray</span>(<span class="kw">const</span> <span class="fn">vector</span>&lt;<span class="fn">ll</span>&gt;&amp; a) {
+    <span class="fn">ll</span> max_cur = a[<span class="num">0</span>], min_cur = a[<span class="num">0</span>], ans = a[<span class="num">0</span>];
+    <span class="kw">for</span> (<span class="kw">int</span> i = <span class="num">1</span>; i &lt; a.<span class="fn">size</span>(); ++i) {
+        <span class="fn">ll</span> x = a[i];
+        <span class="fn">ll</span> nm = <span class="fn">max</span>({x, max_cur * x, min_cur * x});
+        <span class="fn">ll</span> nmin = <span class="fn">min</span>({x, max_cur * x, min_cur * x});
+        max_cur = nm; min_cur = nmin;
+        ans = <span class="fn">max</span>(ans, max_cur);
+    }
+    <span class="kw">return</span> ans;
+}</pre>
+    </div>
+
+    <!-- ============== Slide 6：真题精练 ============== -->
+    <div class="slide" data-index="6">
+      <h2>6. 真题精练</h2>
+
+      <h3>真题1：最大子矩阵和（P1719）</h3>
+      <p>给定 n×n 矩阵（n ≤ 120），求最大子矩阵和。</p>
+      <p><strong>解法：</strong>枚举上下边界 + 压缩为一维 + Kadane，O(n³)。</p>
+      <p><strong>核心代码：</strong>见本课配套 C++ 程序。</p>
+      <br>
+
+      <h3>真题2：数字三角形变体（模运算）</h3>
+      <p>求数字三角形路径和 <strong>模 100 的最大值</strong>。</p>
+      <div class="tip-box">
+        <strong>关键思路：</strong>模运算不满足单调性，不能直接对 DP 值取模后比较大小。<br>
+        应当使用<strong>可行性 DP</strong>：<br>
+        <code>dp[i][j][k]</code> = 到达 (i,j) 时路径和 % 100 = k 是否可达。<br>
+        最后在最后一行的所有可达 k 中取最大值。
+      </div>
+      <p><strong>复杂度：</strong>O(n² × 100)，n=100 时约 10⁶ 次操作。</p>
+    </div>
+
+    <!-- ============== Slide 7：本课小结 ============== -->
+    <div class="slide" data-index="7">
+      <h2>7. 本课小结</h2>
+
+      <div class="summary-grid">
+        <div class="summary-card">
+          <h3>最大子段和</h3>
+          <p>dp[i]=max(a[i],dp[i-1]+a[i])</p>
+          <p>O(n)时间 / O(1)空间</p>
+          <p>滚动变量</p>
+        </div>
+        <div class="summary-card">
+          <h3>环形子段和</h3>
+          <p>max(normal, total-min_sum)</p>
+          <p>O(n)时间 / O(1)空间</p>
+          <p>注意全负数特判</p>
+        </div>
+        <div class="summary-card">
+          <h3>数字三角形</h3>
+          <p>逆推法自底向上</p>
+          <p>O(n²)时间</p>
+          <p>无需处理边界</p>
+        </div>
+        <div class="summary-card">
+          <h3>路径计数DP</h3>
+          <p>dp[i][j]=dp[i-1][j]+dp[i][j-1]</p>
+          <p>O(mn)时间</p>
+          <p>障碍物直接置0</p>
+        </div>
+        <div class="summary-card">
+          <h3>最大子矩阵和</h3>
+          <p>枚举上下界+Kadane</p>
+          <p>O(m²n)时间</p>
+          <p>压缩降维核心技巧</p>
+        </div>
+        <div class="summary-card">
+          <h3>最大子段积</h3>
+          <p>同时维护max_dp和min_dp</p>
+          <p>O(n)时间</p>
+          <p>负数翻转机制</p>
+        </div>
+      </div>
+
+      <br>
+      <div class="tip-box">
+        <strong>核心思想总结：</strong><br>
+        1. <strong>线性DP</strong>核心是「以第 i 个元素结尾」的状态定义<br>
+        2. <strong>压缩降维</strong>是高维问题的重要转化手段<br>
+        3. <strong>滚动数组</strong>是DP空间优化的基本功<br>
+        4. 遇到「模运算下的最值」，考虑<strong>可行性DP</strong>而非直接取模
+      </div>
+    </div>
+
+  </div><!-- /.slide-area -->
+
+  <!-- Navigation bar -->
+  <div class="nav-bar">
+    <button class="nav-btn" id="prevBtn" onclick="changeSlide(-1)">← 上一页</button>
+    <div class="page-indicator" id="dotsContainer"></div>
+    <div class="slide-num" id="slideNum">1 / 8</div>
+    <button class="nav-btn" id="nextBtn" onclick="changeSlide(1)">下一页 →</button>
+  </div>
+</div>
+
+<script>
+(function() {
+  const slides = document.querySelectorAll('.slide');
+  const total = slides.length;
+  let current = 0;
+
+  // Build dots
+  const dotsContainer = document.getElementById('dotsContainer');
+  for (let i = 0; i < total; ++i) {
+    const dot = document.createElement('span');
+    dot.className = 'dot' + (i === 0 ? ' active' : '');
+    dot.setAttribute('data-index', i);
+    dot.addEventListener('click', () => goTo(i));
+    dotsContainer.appendChild(dot);
+  }
+
+  function goTo(index) {
+    if (index < 0 || index >= total) return;
+    slides[current].classList.remove('active');
+    dotsContainer.children[current].classList.remove('active');
+    current = index;
+    slides[current].classList.add('active');
+    dotsContainer.children[current].classList.add('active');
+    document.getElementById('slideNum').textContent = (current + 1) + ' / ' + total;
+    document.getElementById('prevBtn').disabled = (current === 0);
+    document.getElementById('nextBtn').disabled = (current === total - 1);
+  }
+
+  window.changeSlide = function(delta) {
+    goTo(current + delta);
+  };
+
+  // Keyboard navigation
+  document.addEventListener('keydown', function(e) {
+    if (e.key === 'ArrowLeft' || e.key === 'ArrowUp') { e.preventDefault(); changeSlide(-1); }
+    if (e.key === 'ArrowRight' || e.key === 'ArrowDown') { e.preventDefault(); changeSlide(1); }
+  });
+
+  // Initial state
+  document.getElementById('prevBtn').disabled = true;
+})();
+</script>
+</body>
+</html>

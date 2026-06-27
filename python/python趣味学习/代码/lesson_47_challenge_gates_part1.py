@@ -1,0 +1,372 @@
+# -*- coding: utf-8 -*-
+"""
+课程编号：lesson_47
+课程标题：综合闯关挑战（上）—— 数学计算关 + 密码破译关
+学习目标：
+    1. 综合运用之前学过的 Python 知识（输入输出、变量、循环、条件判断、字符串处理）
+    2. 学会设计一个"闯关游戏"的程序框架
+    3. 复习数学运算和字符串操作
+    4. 体验用编程制作互动游戏的成就感
+"""
+
+import random   # 用来生成随机数学题
+import time     # 用来记录时间（可选用在限时功能中）
+
+# ==================== 全局变量 ====================
+
+player_name = ""        # 玩家姓名
+total_score = 0         # 总得分
+level_scores = {}       # 记录每关得分，{"第一关": 得分, ...}
+
+
+# ==================== 工具函数 ====================
+
+def print_line(char="=", length=50):
+    """打印分隔线"""
+    print(char * length)
+
+
+def print_title(text):
+    """打印居中的标题"""
+    print_line("=", 50)
+    print(text.center(50))
+    print_line("=", 50)
+
+
+# ==================== 第一关：数学计算关 ====================
+
+def gate_1_math():
+    """
+    第一关：数学计算关
+    随机出 5 道四则运算题，判断对错
+    至少答对 3 题才能过关
+    返回：本关得分（满分 50 分，每题 10 分）
+    """
+    global total_score
+
+    print_title("🧮 第一关：数学计算关")
+    print()
+    print("规则：一共 5 道数学题，每题 10 分，至少答对 3 题才能过关！")
+    print("题目包括加、减、乘、除（除法请保留两位小数）")
+    print()
+    input("准备好了吗？按 Enter 键开始...")
+    print()
+
+    correct_count = 0  # 答对的题数
+    score = 0           # 本关得分
+
+    for i in range(1, 6):
+        # --- 随机出题 ---
+        # 随机选择运算类型（+、-、×、÷）
+        op_type = random.randint(1, 4)
+
+        if op_type == 1:
+            # 加法题
+            a = random.randint(1, 100)
+            b = random.randint(1, 100)
+            question = f"{a} + {b} = ?"
+            correct_answer = a + b
+        elif op_type == 2:
+            # 减法题（确保结果不为负数）
+            a = random.randint(10, 100)
+            b = random.randint(1, a)
+            question = f"{a} - {b} = ?"
+            correct_answer = a - b
+        elif op_type == 3:
+            # 乘法题
+            a = random.randint(1, 12)
+            b = random.randint(1, 12)
+            question = f"{a} × {b} = ?"
+            correct_answer = a * b
+        else:
+            # 除法题（确保能整除）
+            b = random.randint(1, 10)
+            result = random.randint(1, 10)
+            a = b * result
+            question = f"{a} ÷ {b} = ?"
+            correct_answer = result
+
+        # --- 显示题目并获取答案 ---
+        print(f"  第 {i} 题：{question}")
+
+        try:
+            user_answer = float(input("  你的答案：").strip())
+        except ValueError:
+            print("  ❌ 输入无效，本题计 0 分\n")
+            continue
+
+        # --- 判断对错 ---
+        # 使用一个很小的误差范围来判断（浮点数比较）
+        if abs(user_answer - correct_answer) < 0.001:
+            print("  ✅ 回答正确！+10 分\n")
+            correct_count += 1
+            score += 10
+        else:
+            print(f"  ❌ 回答错误！正确答案是 {correct_answer}\n")
+
+    # --- 检查过关条件 ---
+    print_line("-", 50)
+    print(f"你答对了 {correct_count} / 5 题，本关得分：{score} 分")
+    total_score += score
+    level_scores["第一关"] = score
+
+    if correct_count >= 3:
+        print("🎉 恭喜！你通过了第一关！")
+        return True
+    else:
+        print("😢 很遗憾，你没能通过第一关（需要至少答对 3 题）")
+        return False
+
+
+# ==================== 第二关：密码破译关 ====================
+
+def caesar_encrypt(text, shift=3):
+    """
+    凯撒密码加密：每个字母向后移动 shift 位
+    例如：'abc' 偏移 3 位 → 'def'
+    只处理英文字母，其他字符不变
+    """
+    result = ""
+    for ch in text:
+        if ch.isalpha():  # 判断是不是英文字母
+            # 确定字母表的起始位置（大写 A=65，小写 a=97）
+            base = ord('A') if ch.isupper() else ord('a')
+            # 偏移：(当前位置 - 起始 + 偏移量) % 26 + 起始
+            new_ch = chr((ord(ch) - base + shift) % 26 + base)
+            result += new_ch
+        else:
+            result += ch
+    return result
+
+
+def caesar_decrypt(text, shift=3):
+    """
+    凯撒密码解密：每个字母向前移动 shift 位（即向后移动 -shift 位）
+    """
+    return caesar_encrypt(text, -shift)
+
+
+def reverse_string(text):
+    """
+    反转字符串：'hello' → 'olleh'
+    """
+    return text[::-1]  # 切片反转
+
+
+def gate_2_cipher():
+    """
+    第二关：密码破译关
+    包含两个子任务：
+      任务 A：反转字符串
+      任务 B：凯撒密码解密
+    必须两个任务都完成才能过关
+    返回：本关得分（满分 50 分，每个任务 25 分）
+    """
+    global total_score
+
+    print_title("🔐 第二关：密码破译关")
+    print()
+    print("规则：你需要完成两个密码破译任务，每个 25 分。")
+    print("必须两个任务全部答对才能过关！")
+    print()
+    input("准备好了吗？按 Enter 键开始...")
+    print()
+
+    score = 0
+    passed_a = False
+    passed_b = False
+
+    # ---- 任务 A：反转字符串 ----
+    print("==" * 25)
+    print("  任务 A：字符串反转")
+    print("  说明：下面是一段被反转的密文，请将它还原。")
+    print("  例如：'olleh' 反转后是 'hello'")
+    print()
+
+    original_word = random.choice([
+        "python", "coding", "challenge", "program",
+        "computer", "keyboard", "learning", "creative"
+    ])
+    scrambled = reverse_string(original_word)
+
+    print(f"  密文：{scrambled}")
+    user_answer = input("  请输入还原后的文字：").strip().lower()
+
+    if user_answer == original_word:
+        print("  ✅ 正确！+25 分\n")
+        score += 25
+        passed_a = True
+    else:
+        print(f"  ❌ 错误！正确答案是：{original_word}\n")
+
+    # ---- 任务 B：凯撒密码解密 ----
+    print("==" * 25)
+    print("  任务 B：凯撒密码破译")
+    print("  说明：下面有一段用凯撒密码加密的文字（偏移 3 位）。")
+    print("  请将它解密还原。")
+    print("  凯撒密码规则：每个字母向后移了 3 位")
+    print("  例如：'d' 是 'a' 移 3 位的结果，所以 'd' 解密后是 'a'")
+    print()
+
+    original_messages = [
+        "hello world",
+        "python is fun",
+        "i love coding",
+        "keep learning",
+        "never give up",
+    ]
+    original_msg = random.choice(original_messages)
+    encrypted_msg = caesar_encrypt(original_msg, shift=3)
+
+    print(f"  密文：{encrypted_msg}")
+    print('  （提示：每个字母往"前"移 3 位就能解密）')
+    user_answer = input("  请输入解密后的文字：").strip()
+
+    if user_answer.lower() == original_msg:
+        print("  ✅ 正确！+25 分\n")
+        score += 25
+        passed_b = True
+    else:
+        print(f"  ❌ 错误！正确答案是：{original_msg}\n")
+
+    # --- 检查过关条件 ---
+    print_line("-", 50)
+    print(f"本关得分：{score} 分")
+    total_score += score
+    level_scores["第二关"] = score
+
+    if passed_a and passed_b:
+        print("🎉 恭喜！你通过了第二关！")
+        return True
+    else:
+        print("😢 很遗憾，你需要两个任务全部答对才能过关")
+        return False
+
+
+# ==================== 闯关框架 ====================
+
+def show_status():
+    """显示当前闯关状态"""
+    print()
+    print_line("=", 50)
+    print(f"  玩家：{player_name}")
+    print(f"  当前总分：{total_score} 分")
+    if level_scores:
+        for gate_name, gate_score in level_scores.items():
+            print(f"  {gate_name}：{gate_score} 分")
+    else:
+        print("  尚未开始闯关")
+    print_line("=", 50)
+    print()
+
+
+def main():
+    """
+    主程序：闯关游戏框架
+    """
+    global player_name, total_score, level_scores
+
+    print_title("🏰 Python 闯关大挑战")
+    print()
+    print("欢迎来到 Python 闯关大挑战！")
+    print("这里有多道关卡等着你来挑战，准备好了吗？")
+    print()
+
+    # 获取玩家姓名
+    player_name = input("请输入你的名字：").strip()
+    if not player_name:
+        player_name = "小勇士"
+    print(f"\n你好，{player_name}！让我们开始闯关吧！\n")
+    time.sleep(1)
+
+    # 重置分数
+    total_score = 0
+    level_scores = {}
+
+    # ---- 第一关 ----
+    passed_1 = gate_1_math()
+    show_status()
+
+    if not passed_1:
+        print("虽然第一关没有通过，但你仍然可以尝试第二关！\n")
+        choice = input("要继续挑战第二关吗？（y/n）：").strip().lower()
+        if choice != "y":
+            print("\n感谢参与！下次加油！")
+            return
+
+    # ---- 第二关 ----
+    passed_2 = gate_2_cipher()
+    show_status()
+
+    # ---- 汇总 ----
+    print()
+    print_title("📊 上半场闯关汇总")
+    print()
+    print(f"  玩家：{player_name}")
+    print(f"  第一关：{'✅ 通过' if passed_1 else '❌ 未通过'}（{level_scores.get('第一关', 0)} 分）")
+    print(f"  第二关：{'✅ 通过' if passed_2 else '❌ 未通过'}（{level_scores.get('第二关', 0)} 分）")
+    print(f"  上半场总分：{total_score} 分")
+    print()
+    print("下半场关卡将在下一课揭晓，敬请期待！")
+    print_line("=", 50)
+
+
+if __name__ == "__main__":
+    main()
+
+
+# ==================== 练习题 ====================
+
+"""
+练习一：增加关卡说明（开场故事）
+---------------------------------------------------
+在每一关开始前，增加一段"剧情描述"或"关卡背景故事"，
+让闯关更有代入感。
+例如：
+  第一关背景："你来到了一座古老城堡的大门前，守门人出题考验你的智慧..."
+  第二关背景："进入城堡后，你发现了一本加密的魔法书..."
+提示：写一个 show_story(gate_number) 函数来显示对应的故事。
+
+练习二：增加限时功能
+---------------------------------------------------
+给每个关卡增加时间限制，让闯关更刺激！
+提示：
+  - 在关卡开始时用 time.time() 记录开始时间
+  - 在玩家每次答题前检查是否超时
+  - 例如：数学关限时 60 秒，密码关限时 90 秒
+  - 超时则自动结束本关，只计算已答对的题目
+
+练习三：增加更多数学题型
+---------------------------------------------------
+目前第一关只有加减乘除四种题型。请扩展更多题型：
+  - 混合运算：如 "3 × 5 + 2 = ?"
+  - 求余数：如 "17 ÷ 5 的余数是多少？"
+  - 比大小：如 "3² 和 2³ 哪个更大？"
+  - 甚至是应用题：如 "小明有 12 颗糖，吃掉 3 颗，又买了 5 颗，还剩几颗？"
+提示：给每种新题型写一个独立的出题函数，然后在主循环中随机选择。
+"""
+
+
+# ==================== 综合小挑战 ====================
+
+"""
+综合挑战：设计你自己的"关卡编辑器"
+---------------------------------------------------
+写一个程序，让用户可以自定义闯关题库：
+
+要求：
+1. 程序启动时有一个"编辑器模式"和"闯关模式"的选择
+2. 编辑器模式下：
+   - 用户可以添加自己的数学题（输入题目、答案）
+   - 用户可以添加自定义的加密任务（选择一个单词或句子，程序自动加密）
+   - 所有题目保存在一个列表中，退出编辑时可以选择保存到文件
+3. 闯关模式下：
+   - 使用用户自定义的题库来闯关
+   - 如果没有自定义题库，则使用默认题库
+
+提示：
+  - 用列表来存储题目：[("题目1", 答案1), ("题目2", 答案2), ...]
+  - 保存到文件可以使用 open() 和 write()
+  - 从文件读取可以用 open() 和 read()
+  - 这是对"文件操作"知识的很好练习！
+"""

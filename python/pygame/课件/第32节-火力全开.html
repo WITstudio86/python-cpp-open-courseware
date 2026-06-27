@@ -1,0 +1,487 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>第32节：火力全开</title>
+<style>
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+body {
+  font-family: "Microsoft YaHei", "PingFang SC", "Noto Sans SC", sans-serif;
+  background: #1a1a2e;
+  color: #eee;
+  overflow: hidden;
+  height: 100vh;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  user-select: none;
+}
+.slides-container { width: 100vw; height: 100vh; position: relative; }
+.slide {
+  position: absolute; top: 0; left: 0;
+  width: 100%; height: 100%;
+  display: flex; flex-direction: column;
+  justify-content: center; align-items: center;
+  padding: 80px 100px;
+  opacity: 0; transition: opacity 0.35s ease;
+  pointer-events: none;
+}
+.slide.active { opacity: 1; pointer-events: auto; }
+.slide h1 { font-size: 60px; color: #f7d94e; margin-bottom: 30px; text-align: center; }
+.slide h2 { font-size: 48px; color: #00d4ff; margin-bottom: 25px; text-align: center; }
+.slide h3 { font-size: 36px; color: #ff6b9d; margin-bottom: 20px; }
+.slide p { font-size: 32px; line-height: 1.7; text-align: center; margin-bottom: 15px; }
+.slide ul { font-size: 30px; line-height: 1.9; text-align: left; padding-left: 40px; list-style: none; }
+.slide ul li::before { content: "▸ "; color: #f7d94e; font-weight: bold; }
+.slide ul li { margin-bottom: 8px; }
+.slide ol { font-size: 30px; line-height: 1.9; text-align: left; padding-left: 60px; }
+.slide ol li { margin-bottom: 8px; }
+.code-block {
+  background: #0d1117; color: #c9d1d9;
+  border-radius: 12px; padding: 30px 40px;
+  font-family: "JetBrains Mono", "Fira Code", "Consolas", monospace;
+  font-size: 24px; line-height: 1.6;
+  text-align: left; width: 90%; max-width: 1050px;
+  white-space: pre; overflow-x: auto;
+  border-left: 6px solid #f7d94e;
+  margin: 15px 0;
+}
+.code-block .kw { color: #ff7b72; }
+.code-block .fn { color: #d2a8ff; }
+.code-block .num { color: #a5d6ff; }
+.code-block .cmt { color: #8b949e; font-style: italic; }
+.code-block .str { color: #a5d6ff; }
+.code-block .op { color: #ff7b72; }
+.big-num { font-size: 120px; font-weight: bold; color: #f7d94e; }
+.em { color: #ff6b9d; font-weight: bold; }
+.em2 { color: #00d4ff; font-weight: bold; }
+.em3 { color: #7bed9f; font-weight: bold; }
+.page-num {
+  position: absolute; bottom: 30px; right: 50px;
+  font-size: 24px; color: #888;
+}
+.nav-hint {
+  position: absolute; bottom: 30px; left: 50px;
+  font-size: 22px; color: #666;
+}
+.split { display: flex; gap: 40px; width: 100%; justify-content: center; align-items: flex-start; }
+.split > div { flex: 1; }
+.split-3 { display: flex; gap: 30px; width: 100%; justify-content: center; align-items: flex-start; }
+.split-3 > div { flex: 1; text-align: center; }
+.diagram {
+  background: #0d1117; border-radius: 12px; padding: 30px;
+  font-family: monospace; font-size: 22px; line-height: 1.5;
+  width: 90%; max-width: 900px; text-align: left;
+  white-space: pre; color: #a5d6ff;
+}
+.phase-box {
+  background: #0d1117; border: 3px solid #f7d94e; border-radius: 12px;
+  padding: 25px; text-align: center; width: 100%;
+}
+.phase-box h3 { margin-bottom: 10px; }
+.phase-box p { font-size: 22px; line-height: 1.5; margin-bottom: 5px; }
+.arrow-down { font-size: 40px; color: #f7d94e; text-align: center; margin: 10px 0; }
+.comparison-table { width: 90%; max-width: 1000px; border-collapse: collapse; font-size: 28px; }
+.comparison-table th { background: #f7d94e; color: #1a1a2e; padding: 12px 20px; text-align: center; }
+.comparison-table td { border: 2px solid #444; padding: 12px 20px; text-align: center; }
+.comparison-table tr:nth-child(even) td { background: rgba(255,255,255,0.05); }
+.icon-big { font-size: 80px; margin-bottom: 20px; }
+</style>
+</head>
+<body>
+
+<div class="slides-container">
+
+<!-- 第1页：封面 -->
+<div class="slide active">
+  <div class="icon-big">💥</div>
+  <h1>第32节：火力全开</h1>
+  <p style="font-size:36px; color:#aaa;">弹幕射击项目 · 第2节课</p>
+  <p style="font-size:28px; color:#666; margin-top:40px;">Pygame 游戏开发课程</p>
+  <span class="page-num">1 / 13</span>
+</div>
+
+<!-- 第2页：今日目标 -->
+<div class="slide">
+  <h1>🎯 今日目标</h1>
+  <ul>
+    <li>实现<span class="em">道具掉落系统</span> — 打败Boss掉道具</li>
+    <li>掌握<span class="em">武器状态切换</span> — 普通 / 散弹 / 激光</li>
+    <li>理解<span class="em">Boss 状态机</span> — 血量越低越疯狂</li>
+    <li>学会<span class="em">爆炸特效</span> — 粒子 + 多层圆形</li>
+  </ul>
+  <p style="margin-top:50px; font-size:40px; color:#00d4ff;">🔥 给游戏加四个"超能力"</p>
+  <p style="font-size:30px; color:#888;">让弹幕射击游戏完整起来！</p>
+  <span class="page-num">2 / 13</span>
+</div>
+
+<!-- 第3页：回顾上节 -->
+<div class="slide">
+  <h2>📖 上节课我们做了什么？</h2>
+  <ul>
+    <li>扇形弹幕 — 子弹像扇子一样散开</li>
+    <li>圆形弹幕 — 360° 全方位发射</li>
+    <li>Boss 出现 — 大大的血条在屏幕上方</li>
+  </ul>
+  <div style="margin-top:40px; padding:25px 40px; background:rgba(255,107,157,0.15); border-radius:12px; border-left:5px solid #ff6b9d;">
+    <p style="font-size:30px; text-align:left;">🤔 但是……</p>
+    <p style="font-size:28px; text-align:left; color:#ccc;">
+      玩家只能发一种子弹<br>
+      Boss 从头到尾打法一样<br>
+      打败 Boss 后啥也没有……
+    </p>
+  </div>
+  <p style="margin-top:30px; font-size:36px; color:#f7d94e;">今天，让游戏"火力全开"！</p>
+  <span class="page-num">3 / 13</span>
+</div>
+
+<!-- 第4页：四大新功能预览 -->
+<div class="slide">
+  <h2>🆕 今天要加的四个功能</h2>
+  <div class="split-3" style="margin-top:20px;">
+    <div class="phase-box" style="border-color:#ffa502;">
+      <div style="font-size:50px;">🎁</div>
+      <h3 style="color:#ffa502;">道具掉落</h3>
+      <p style="font-size:22px;">打败敌人掉道具<br>接住即可变强</p>
+    </div>
+    <div class="phase-box" style="border-color:#ff6b9d;">
+      <div style="font-size:50px;">🔫</div>
+      <h3 style="color:#ff6b9d;">武器切换</h3>
+      <p style="font-size:22px;">散弹 / 激光<br>火力瞬间提升</p>
+    </div>
+    <div class="phase-box" style="border-color:#00d4ff;">
+      <div style="font-size:50px;">👹</div>
+      <h3 style="color:#00d4ff;">Boss变身</h3>
+      <p style="font-size:22px;">血量越低越疯狂<br>三个阶段逐级增强</p>
+    </div>
+  </div>
+  <div style="margin-top:30px;" class="phase-box" style="border-color:#7bed9f;">
+    <div style="font-size:50px;">💥</div>
+    <h3 style="color:#7bed9f;">+ 爆炸特效</h3>
+    <p style="font-size:22px;">粒子飞溅 + 多层圆形扩散 + 颜色渐变</p>
+  </div>
+  <span class="page-num">4 / 13</span>
+</div>
+
+<!-- 第5页：道具掉落系统 - 概念 -->
+<div class="slide">
+  <h2>🎁 道具掉落系统 — 工作原理</h2>
+  <div class="diagram" style="font-size:26px; line-height:2;">
+敌人被消灭
+    │
+    ▼
+<span class="em">roll = random.random()</span>   ← 生成 0~1 随机数
+    │
+    ├── roll &lt; <span class="em2">0.15</span>（小兵15%）    → 掉落道具！
+    │
+    ├── roll &lt; <span class="em3">1.00</span>（Boss 100%）  → 必定掉落！
+    │
+    ▼
+随机选择道具类型：
+  🔫 武器升级（50%）  |  💚 生命恢复（30%）  |  🛡️ 护盾（20%）
+    │
+    ▼
+道具从敌人位置下落 → 玩家碰到 → 拾取生效！
+  </div>
+  <p style="margin-top:25px; font-size:26px; color:#888;">核心思想：<span class="em">概率控制</span> + <span class="em">随机类型</span></p>
+  <span class="page-num">5 / 13</span>
+</div>
+
+<!-- 第6页：道具掉落 - 代码 -->
+<div class="slide">
+  <h2>🎁 道具掉落 — 代码实现</h2>
+  <div class="code-block">
+<span class="cmt"># 道具精灵类</span>
+<span class="kw">class</span> <span class="fn">PowerUp</span>(pygame.sprite.Sprite):
+    <span class="kw">def</span> <span class="fn">__init__</span>(<span class="kw">self</span>, x, y, power_type):
+        <span class="kw">super</span>().__init__()
+        <span class="cmt"># 根据类型绘制不同颜色</span>
+        <span class="kw">if</span> power_type == <span class="str">"weapon"</span>:
+            color = (<span class="num">255</span>, <span class="num">200</span>, <span class="num">0</span>)   <span class="cmt"># 金色</span>
+        <span class="kw">elif</span> power_type == <span class="str">"heal"</span>:
+            color = (<span class="num">100</span>, <span class="num">255</span>, <span class="num">100</span>) <span class="cmt"># 绿色</span>
+        <span class="kw">else</span>:
+            color = (<span class="num">100</span>, <span class="num">180</span>, <span class="num">255</span>) <span class="cmt"># 蓝色</span>
+        <span class="cmt"># ... 绘制圆形道具 ...</span>
+        <span class="kw">self</span>.speed_y = <span class="num">2</span>  <span class="cmt"># 下落速度</span>
+
+<span class="kw">def</span> <span class="fn">try_drop_item</span>(x, y, is_boss=<span class="kw">False</span>):
+    <span class="kw">if</span> is_boss <span class="kw">or</span> random.random() &lt; <span class="num">0.15</span>:
+        roll = random.random()
+        <span class="kw">if</span> roll &lt; <span class="num">0.5</span>:
+            <span class="kw">return</span> <span class="fn">PowerUp</span>(x, y, <span class="str">"weapon"</span>)
+        <span class="kw">elif</span> roll &lt; <span class="num">0.8</span>:
+            <span class="kw">return</span> <span class="fn">PowerUp</span>(x, y, <span class="str">"heal"</span>)
+        <span class="kw">else</span>:
+            <span class="kw">return</span> <span class="fn">PowerUp</span>(x, y, <span class="str">"shield"</span>)
+    <span class="kw">return</span> <span class="kw">None</span>
+  </div>
+  <span class="page-num">6 / 13</span>
+</div>
+
+<!-- 第7页：武器切换 -->
+<div class="slide">
+  <h2>🔫 武器状态切换 — 三种模式</h2>
+  <table class="comparison-table" style="margin-top:20px;">
+    <tr>
+      <th>武器</th>
+      <th>效果</th>
+      <th>子弹数</th>
+      <th>持续时间</th>
+    </tr>
+    <tr>
+      <td>🔹 普通子弹</td>
+      <td>单发直射</td>
+      <td>1</td>
+      <td>永久（默认）</td>
+    </tr>
+    <tr>
+      <td>🔶 散弹</td>
+      <td>扇形散射 5 发</td>
+      <td>5</td>
+      <td>8 秒</td>
+    </tr>
+    <tr>
+      <td>🔴 激光</td>
+      <td>持续粗光束</td>
+      <td>1（高速）</td>
+      <td>6 秒</td>
+    </tr>
+  </table>
+  <div class="code-block" style="margin-top:30px; font-size:22px;">
+<span class="kw">if</span> <span class="kw">self</span>.weapon_type == <span class="str">"shotgun"</span>:
+    <span class="cmt"># 散弹：5 发扇形，间隔 15°</span>
+    <span class="kw">for</span> angle <span class="kw">in</span> [<span class="num">-30</span>, <span class="num">-15</span>, <span class="num">0</span>, <span class="num">15</span>, <span class="num">30</span>]:
+        rad = math.<span class="fn">radians</span>(angle)
+        vx = <span class="num">8</span> * math.<span class="fn">sin</span>(rad)
+        vy = -<span class="num">8</span> * math.<span class="fn">cos</span>(rad)
+  </div>
+  <p style="margin-top:15px; font-size:26px; color:#ff6b9d;">计时器倒计时 → 时间到 → 恢复普通武器</p>
+  <span class="page-num">7 / 13</span>
+</div>
+
+<!-- 第8页：Boss 状态机 - 概念 -->
+<div class="slide">
+  <h2>👹 Boss 状态机 — 血量越低越疯狂</h2>
+  <div class="split-3" style="margin-top:30px;">
+    <div class="phase-box" style="border-color:#7bed9f;">
+      <h3 style="color:#7bed9f;">🐢 阶段1</h3>
+      <p style="font-size:20px;">血量 &gt; 50%</p>
+      <hr style="border-color:#444; margin:10px 0;">
+      <p style="font-size:18px;">移动速度：慢</p>
+      <p style="font-size:18px;">弹幕：扇形 3 发</p>
+      <p style="font-size:18px;">间隔：较慢</p>
+    </div>
+    <div class="phase-box" style="border-color:#ffa502;">
+      <h3 style="color:#ffa502;">🐆 阶段2</h3>
+      <p style="font-size:20px;">血量 20%~50%</p>
+      <hr style="border-color:#444; margin:10px 0;">
+      <p style="font-size:18px;">移动速度：加快</p>
+      <p style="font-size:18px;">弹幕：扇形+圆形交替</p>
+      <p style="font-size:18px;">间隔：加快</p>
+    </div>
+    <div class="phase-box" style="border-color:#ff4757;">
+      <h3 style="color:#ff4757;">🔥 暴怒阶段</h3>
+      <p style="font-size:20px;">血量 ≤ 20%</p>
+      <hr style="border-color:#444; margin:10px 0;">
+      <p style="font-size:18px;">弹幕：极密 7 发</p>
+      <p style="font-size:18px;">+ 追踪弹 🎯</p>
+      <p style="font-size:18px;">间隔：极快</p>
+    </div>
+  </div>
+  <p style="margin-top:30px; font-size:26px; color:#888;">核心思想：用 <span class="em">if-elif-else</span> 根据血量切换行为</p>
+  <span class="page-num">8 / 13</span>
+</div>
+
+<!-- 第9页：Boss 状态机 - 代码 -->
+<div class="slide">
+  <h2>👹 Boss 状态机 — 代码实现</h2>
+  <div class="code-block" style="font-size:21px;">
+<span class="kw">def</span> <span class="fn">update_phase</span>(<span class="kw">self</span>):
+    <span class="cmt"># 根据血量百分比判断当前阶段</span>
+    percent = <span class="kw">self</span>.hp / <span class="kw">self</span>.max_hp
+    <span class="kw">if</span> percent &gt; <span class="num">0.5</span>:
+        <span class="kw">self</span>.phase = <span class="num">1</span>    <span class="cmt"># 阶段1：轻松模式</span>
+    <span class="kw">elif</span> percent &gt; <span class="num">0.2</span>:
+        <span class="kw">self</span>.phase = <span class="num">2</span>    <span class="cmt"># 阶段2：加强模式</span>
+    <span class="kw">else</span>:
+        <span class="kw">self</span>.phase = <span class="num">3</span>    <span class="cmt"># 暴怒阶段：终极模式</span>
+
+<span class="kw">def</span> <span class="fn">shoot</span>(<span class="kw">self</span>):
+    <span class="kw">if</span> <span class="kw">self</span>.phase == <span class="num">1</span>:
+        <span class="cmt"># 扇形弹幕 3 发</span>
+    <span class="kw">elif</span> <span class="kw">self</span>.phase == <span class="num">2</span>:
+        <span class="cmt"># 扇形 5 发 + 圆形弹交替</span>
+    <span class="kw">elif</span> <span class="kw">self</span>.phase == <span class="num">3</span>:
+        <span class="cmt"># 密集扇形 + 追踪弹</span>
+        <span class="cmt"># 追踪弹：计算朝向玩家的方向向量</span>
+        dx = player.rect.centerx - <span class="kw">self</span>.rect.centerx
+        dy = player.rect.centery - <span class="kw">self</span>.rect.centery
+        dist = math.<span class="fn">sqrt</span>(dx**<span class="num">2</span> + dy**<span class="num">2</span>)
+        vx = <span class="num">3</span> * dx / dist
+        vy = <span class="num">3</span> * dy / dist
+  </div>
+  <span class="page-num">9 / 13</span>
+</div>
+
+<!-- 第10页：爆炸特效 - 粒子 -->
+<div class="slide">
+  <h2>💥 爆炸特效 ① — 粒子飞溅</h2>
+  <div class="split">
+    <div>
+      <p style="font-size:28px; text-align:left; line-height:2;">
+        <span class="em">粒子三要素：</span><br>
+        ▸ <span class="em2">位置</span> (x, y)<br>
+        ▸ <span class="em2">速度</span> (vx, vy) — 随机方向<br>
+        ▸ <span class="em2">生命</span> (life) — 逐帧递减
+      </p>
+      <p style="font-size:28px; text-align:left; margin-top:20px; line-height:2;">
+        <span class="em">颜色渐变：</span><br>
+        白 → 黄 → 橙 → 红<br>
+        <span style="font-size:22px; color:#888;">中心最热、边缘冷却</span>
+      </p>
+    </div>
+    <div>
+      <div class="code-block" style="font-size:20px;">
+<span class="kw">class</span> <span class="fn">Particle</span>(Sprite):
+    <span class="kw">def</span> <span class="fn">update</span>(<span class="kw">self</span>):
+        <span class="kw">self</span>.rect.x += <span class="kw">self</span>.vx
+        <span class="kw">self</span>.rect.y += <span class="kw">self</span>.vy
+        <span class="kw">self</span>.life -= <span class="num">1</span>
+        <span class="cmt"># 渐隐：透明度降低</span>
+        alpha = <span class="num">255</span> * (<span class="kw">self</span>.life / <span class="kw">self</span>.max_life)
+        <span class="kw">self</span>.image.<span class="fn">set_alpha</span>(alpha)
+  <span class="kw">if</span> <span class="kw">self</span>.life &lt;= <span class="num">0</span>:
+            <span class="kw">self</span>.<span class="fn">kill</span>()
+      </div>
+    </div>
+  </div>
+  <p style="margin-top:20px; font-size:26px; color:#ff6b9d;">关键：<span class="em">set_alpha()</span> 控制透明度 → 粒子慢慢消失</p>
+  <span class="page-num">10 / 13</span>
+</div>
+
+<!-- 第11页：爆炸特效 - 多层圆形 -->
+<div class="slide">
+  <h2>💥 爆炸特效 ② — 多层圆形扩散</h2>
+  <div class="code-block" style="font-size:21px;">
+<span class="cmt"># Boss 死亡大爆炸：4 层圆圈从中心向外扩散</span>
+rings = [
+    {<span class="str">"color"</span>: (<span class="num">255</span>, <span class="num">255</span>, <span class="num">255</span>), <span class="str">"max_r"</span>: <span class="num">200</span>},  <span class="cmt"># 白 ← 最外层</span>
+    {<span class="str">"color"</span>: (<span class="num">255</span>, <span class="num">255</span>,   <span class="num">0</span>), <span class="str">"max_r"</span>: <span class="num">160</span>},  <span class="cmt"># 黄</span>
+    {<span class="str">"color"</span>: (<span class="num">255</span>, <span class="num">165</span>,   <span class="num">0</span>), <span class="str">"max_r"</span>: <span class="num">120</span>},  <span class="cmt"># 橙</span>
+    {<span class="str">"color"</span>: (<span class="num">255</span>,   <span class="num">0</span>,   <span class="num">0</span>), <span class="str">"max_r"</span>:  <span class="num">80</span>},  <span class="cmt"># 红 ← 最内层</span>
+]
+<span class="kw">for</span> ring <span class="kw">in</span> rings:
+    progress = <span class="num">1</span> - (life / max_life)   <span class="cmt"># 扩散进度 0→1</span>
+    radius = ring[<span class="str">"max_r"</span>] * progress
+    <span class="cmt"># 用 SRCALPHA 创建透明 surface</span>
+    temp = pygame.<span class="fn">Surface</span>((w, h), pygame.<span class="op">SRCALPHA</span>)
+    pygame.draw.<span class="fn">circle</span>(temp, color_with_alpha, center, radius, <span class="num">4</span>)
+  </div>
+  <p style="margin-top:20px; font-size:26px; color:#7bed9f;">4 层 × 扩散 + 渐隐 = 逼真爆炸效果！</p>
+  <span class="page-num">11 / 13</span>
+</div>
+
+<!-- 第12页：课堂练习 -->
+<div class="slide">
+  <h2>✏️ 课堂练习</h2>
+  <h3 style="color:#7bed9f; margin-top:20px;">基础任务（所有人）</h3>
+  <ol style="font-size:26px; line-height:2;">
+    <li>在敌人被消灭时调用 <span class="em">try_drop_item()</span></li>
+    <li>实现玩家碰到道具 → 拾取 → 效果生效</li>
+    <li>完成 <span class="em">shotgun</span> 散弹的发射逻辑</li>
+    <li>在屏幕显示当前武器和剩余时间</li>
+  </ol>
+  <h3 style="color:#ffa502; margin-top:25px;">挑战任务（学有余力）</h3>
+  <ol style="font-size:26px; line-height:2;">
+    <li>实现 Boss 第三阶段的<span class="em">追踪弹</span></li>
+    <li>给玩家受伤添加"<span class="em2">闪烁</span>"无敌效果</li>
+    <li>给道具添加"<span class="em3">脉冲</span>"缩放动画</li>
+  </ol>
+  <span class="page-num">12 / 13</span>
+</div>
+
+<!-- 第13页：总结 -->
+<div class="slide">
+  <h1>📋 本节小结</h1>
+  <div class="split" style="margin-top:20px;">
+    <div>
+      <ul style="font-size:26px; line-height:2.2;">
+        <li><span class="em">道具掉落</span> — 概率 + 随机类型</li>
+        <li><span class="em">武器切换</span> — 计时器倒计时</li>
+        <li><span class="em">Boss 状态机</span> — 血量驱动阶段</li>
+        <li><span class="em">爆炸特效</span> — 粒子 + 多层圆</li>
+      </ul>
+    </div>
+    <div>
+      <p style="font-size:28px; text-align:left; line-height:2;">
+        <span class="em2">课后作业：</span><br>
+        1. 完成基础任务<br>
+        2. 思考：如何设计<br>
+        &nbsp;&nbsp;&nbsp;"冰冻道具"？<br>
+        3.（选做）给Boss加<br>
+        &nbsp;&nbsp;&nbsp;血量&lt;5%的终极技能
+      </p>
+    </div>
+  </div>
+  <p style="margin-top:35px; font-size:36px; color:#00d4ff;">🎮 下节预告：跑和跳 — 马里奥风格平台跳跃！</p>
+  <span class="page-num">13 / 13</span>
+</div>
+
+</div>
+
+<script>
+(function() {
+  const slides = document.querySelectorAll('.slide');
+  let current = 0;
+
+  function showSlide(i) {
+    if (i < 0 || i >= slides.length) return;
+    slides[current].classList.remove('active');
+    slides[i].classList.add('active');
+    current = i;
+  }
+
+  document.addEventListener('keydown', function(e) {
+    if (e.key === 'ArrowRight' || e.key === 'ArrowDown' || e.key === ' ') {
+      e.preventDefault();
+      showSlide(current + 1);
+    } else if (e.key === 'ArrowLeft' || e.key === 'ArrowUp') {
+      e.preventDefault();
+      showSlide(current - 1);
+    } else if (e.key === 'Home') {
+      e.preventDefault();
+      showSlide(0);
+    } else if (e.key === 'End') {
+      e.preventDefault();
+      showSlide(slides.length - 1);
+    }
+  });
+
+  // Click to advance
+  document.querySelector('.slides-container').addEventListener('click', function(e) {
+    const containerWidth = this.offsetWidth;
+    if (e.clientX > containerWidth / 2) {
+      showSlide(current + 1);
+    } else {
+      showSlide(current - 1);
+    }
+  });
+
+  // Touch swipe support
+  let touchStartX = 0;
+  document.addEventListener('touchstart', function(e) {
+    touchStartX = e.touches[0].clientX;
+  });
+  document.addEventListener('touchend', function(e) {
+    const diff = e.changedTouches[0].clientX - touchStartX;
+    if (Math.abs(diff) > 50) {
+      showSlide(current + (diff < 0 ? 1 : -1));
+    }
+  });
+})();
+</script>
+
+</body>
+</html>

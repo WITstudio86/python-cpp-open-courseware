@@ -1,0 +1,577 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>第14节：配对消除 —— 记忆翻牌游戏完成</title>
+<style>
+* { margin: 0; padding: 0; box-sizing: border-box; }
+body {
+    font-family: "Microsoft YaHei", "PingFang SC", "Noto Sans SC", sans-serif;
+    background: #1a1a2e;
+    color: #e0e0e0;
+    overflow: hidden;
+    height: 100vh;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+.slide {
+    display: none;
+    width: 90vw;
+    max-width: 1100px;
+    height: 85vh;
+    padding: 40px 50px;
+    background: linear-gradient(145deg, #16213e, #0f3460);
+    border-radius: 20px;
+    box-shadow: 0 20px 60px rgba(0,0,0,0.5);
+    flex-direction: column;
+    overflow-y: auto;
+}
+.slide.active { display: flex; }
+
+h1 { font-size: 48px; color: #e94560; margin-bottom: 15px; text-align: center; }
+h2 { font-size: 36px; color: #f5c518; margin-bottom: 20px; border-bottom: 3px solid #e94560; padding-bottom: 10px; }
+h3 { font-size: 28px; color: #0fc9e7; margin: 15px 0 10px; }
+
+p, li { font-size: 24px; line-height: 1.6; margin-bottom: 8px; }
+ul, ol { padding-left: 40px; margin-bottom: 15px; }
+
+.code-block {
+    background: #0d1117;
+    border: 1px solid #30363d;
+    border-radius: 12px;
+    padding: 20px 25px;
+    margin: 12px 0;
+    overflow-x: auto;
+    font-size: 17px;
+    line-height: 1.5;
+}
+.code-block pre {
+    margin: 0;
+    font-family: "Fira Code", "Cascadia Code", "Consolas", "Monaco", monospace;
+    color: #c9d1d9;
+    white-space: pre-wrap;
+    word-break: break-all;
+}
+
+.kw { color: #ff7b72; }
+.fn { color: #d2a8ff; }
+.str { color: #a5d6ff; }
+.num { color: #79c0ff; }
+.cm { color: #8b949e; }
+.op { color: #ff7b72; }
+
+.highlight-box {
+    background: rgba(233, 69, 96, 0.15);
+    border-left: 5px solid #e94560;
+    padding: 15px 20px;
+    margin: 15px 0;
+    border-radius: 0 10px 10px 0;
+    font-size: 22px;
+}
+.info-box {
+    background: rgba(15, 201, 231, 0.1);
+    border: 2px solid #0fc9e7;
+    padding: 15px 20px;
+    margin: 15px 0;
+    border-radius: 10px;
+    font-size: 22px;
+}
+.success-box {
+    background: rgba(68, 204, 68, 0.15);
+    border: 2px solid #44cc44;
+    padding: 15px 20px;
+    margin: 15px 0;
+    border-radius: 10px;
+    font-size: 22px;
+}
+.warn-box {
+    background: rgba(245, 197, 24, 0.15);
+    border: 2px solid #f5c518;
+    padding: 15px 20px;
+    margin: 15px 0;
+    border-radius: 10px;
+    font-size: 22px;
+}
+
+.arrow-hint {
+    position: fixed;
+    bottom: 25px;
+    left: 50%;
+    transform: translateX(-50%);
+    font-size: 20px;
+    color: #8b949e;
+    background: rgba(0,0,0,0.5);
+    padding: 8px 20px;
+    border-radius: 20px;
+}
+.page-num {
+    position: fixed;
+    top: 15px;
+    right: 30px;
+    font-size: 18px;
+    color: #8b949e;
+}
+
+.state-machine {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 8px;
+    margin: 20px 0;
+}
+.sm-box {
+    background: #0d1117;
+    border: 2px solid #30363d;
+    padding: 10px 14px;
+    border-radius: 10px;
+    font-size: 16px;
+    text-align: center;
+    min-width: 100px;
+}
+.sm-box.active { border-color: #e94560; background: rgba(233,69,96,0.25); }
+.sm-box.success { border-color: #44cc44; background: rgba(68,204,68,0.2); }
+.sm-box.warn { border-color: #f5c518; background: rgba(245,197,24,0.2); }
+.sm-arrow { color: #f5c518; font-size: 24px; font-weight: bold; }
+.sm-arrow-down { color: #f5c518; font-size: 20px; text-align: center; width: 100%; }
+
+table {
+    border-collapse: collapse;
+    margin: 10px auto;
+    font-size: 20px;
+    width: 100%;
+}
+th, td {
+    border: 2px solid #30363d;
+    padding: 10px 16px;
+    text-align: center;
+}
+th { background: #e94560; color: white; font-weight: bold; }
+
+.flex-row { display: flex; gap: 20px; flex-wrap: wrap; justify-content: center; align-items: flex-start; }
+.flex-col { flex: 1; min-width: 280px; }
+
+.demo-cards {
+    display: flex;
+    gap: 20px;
+    justify-content: center;
+    margin: 15px 0;
+}
+.demo-card {
+    width: 90px; height: 90px;
+    border-radius: 12px;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 32px; font-weight: bold;
+}
+</style>
+</head>
+<body>
+
+<div id="slides">
+
+<!-- 第1页：标题页 -->
+<div class="slide active">
+    <div style="flex:1; display:flex; flex-direction:column; align-items:center; justify-content:center; text-align:center;">
+        <h1 style="font-size:64px; margin-bottom:10px;">第14节</h1>
+        <h1 style="font-size:56px; color:#f5c518;">配对消除</h1>
+        <h2 style="font-size:32px; color:#0fc9e7; border:none; margin-top:20px;">翻两张牌 · 判断匹配 · 延迟翻回 · 胜利判定</h2>
+        <div class="demo-cards" style="margin-top:35px;">
+            <div class="demo-card" style="background:#ff4444;">♥</div>
+            <div class="demo-card" style="background:#4a4a6a; border:3px solid #7a7aaa; color:#aaa;">?</div>
+            <div class="demo-card" style="background:#4a4a6a; border:3px solid #7a7aaa; color:#aaa;">?</div>
+            <div class="demo-card" style="background:#ff4444;">♥</div>
+        </div>
+        <p style="margin-top:20px; font-size:22px; color:#44cc44;">配对成功！</p>
+    </div>
+</div>
+
+<!-- 第2页：学习目标 -->
+<div class="slide">
+    <h2>学习目标</h2>
+    <ul>
+        <li>理解<strong style="color:#f5c518;">游戏状态机</strong>的概念，用状态变量控制游戏流程</li>
+        <li>实现<strong style="color:#0fc9e7;">翻两张牌→判断匹配</strong>的完整逻辑</li>
+        <li>使用 <code style="color:#d2a8ff;">pygame.time.delay()</code> 实现<strong style="color:#f5c518;">延迟翻回</strong>效果</li>
+        <li>添加<strong style="color:#44cc44;">步数统计</strong>和<strong style="color:#44cc44;">配对计数器</strong></li>
+        <li>实现全部配对成功后的<strong style="color:#e94560;">胜利判定</strong></li>
+    </ul>
+    <div class="success-box" style="margin-top:20px;">
+        <strong>今天的目标：</strong>把上节课的"翻开看看"升级为完整的记忆翻牌游戏！
+    </div>
+</div>
+
+<!-- 第3页：回顾上节课 -->
+<div class="slide">
+    <h2>上节课我们做了什么？</h2>
+    <div class="flex-row">
+        <div class="flex-col">
+            <div class="info-box">
+                <strong>已有功能：</strong>
+                <ul style="margin-top:8px;">
+                    <li>4x4 卡牌网格（16张牌）</li>
+                    <li>8种颜色，每种2张</li>
+                    <li>随机洗牌排列</li>
+                    <li>点击翻开卡牌</li>
+                    <li>三种状态：hidden / revealed / matched</li>
+                </ul>
+            </div>
+        </div>
+        <div class="flex-col">
+            <div class="warn-box">
+                <strong>今天要加的：</strong>
+                <ul style="margin-top:8px;">
+                    <li>翻两张后比较颜色</li>
+                    <li>相同 → 消除！</li>
+                    <li>不同 → 翻回去（延迟0.5秒）</li>
+                    <li>记录步数</li>
+                    <li>全部消除 → 胜利！</li>
+                </ul>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- 第4页：游戏状态机 -->
+<div class="slide">
+    <h2>核心知识一：游戏状态机</h2>
+    <p>程序在不同<strong style="color:#f5c518;">"阶段"</strong>之间切换，每个阶段做不同的事</p>
+
+    <div class="state-machine">
+        <div class="sm-box active">等待<br>第一张牌</div>
+        <div class="sm-arrow">→</div>
+        <div class="sm-box active">等待<br>第二张牌</div>
+        <div class="sm-arrow">→</div>
+        <div class="sm-box warn">检查<br>是否匹配</div>
+        <div class="sm-arrow-down"><span style="display:inline-block;">↙ 匹配成功 &nbsp;&nbsp;&nbsp;&nbsp; 不匹配 ↘</span></div>
+        <div style="display:flex; gap:10px; width:100%; justify-content:center; flex-wrap:wrap;">
+            <div class="sm-box success">变成 matched<br>（消除）</div>
+            <div class="sm-box warn">延迟 0.5s<br>翻回 hidden</div>
+        </div>
+        <div class="sm-arrow-down" style="margin-top:10px;">↓</div>
+        <div class="sm-box" style="margin-top:5px;">判断：8对全消除？</div>
+        <div class="sm-arrow-down">↙ 是 &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; 否 ↘</div>
+        <div style="display:flex; gap:10px; width:100%; justify-content:center;">
+            <div class="sm-box success" style="font-size:20px;">显示胜利！</div>
+            <div class="sm-box active">回到等待<br>第一张牌</div>
+        </div>
+    </div>
+
+    <div class="info-box">
+        <strong>生活类比：</strong>你做一道菜 —— "准备食材" → "开火炒菜" → "装盘出锅"。每个阶段只做该阶段的事。
+    </div>
+</div>
+
+<!-- 第5页：定义状态变量 -->
+<div class="slide">
+    <h2>用变量记录当前状态</h2>
+    <div class="code-block">
+<pre>
+<span class="cm"># 定义4个游戏状态（用大写常量，不易打错）</span>
+STATE_WAIT_FIRST  = <span class="str">"wait_first"</span>    <span class="cm"># 等待翻第一张牌</span>
+STATE_WAIT_SECOND = <span class="str">"wait_second"</span>   <span class="cm"># 等待翻第二张牌</span>
+STATE_CHECKING    = <span class="str">"checking"</span>       <span class="cm"># 正在检查匹配</span>
+STATE_GAME_OVER   = <span class="str">"game_over"</span>      <span class="cm"># 游戏结束（胜利）</span>
+
+<span class="cm"># 当前游戏状态（初始为等待第一张）</span>
+game_state = STATE_WAIT_FIRST
+
+<span class="cm"># 记录选中的两张牌的位置</span>
+first_card = <span class="kw">None</span>    <span class="cm"># (row, col) 或 None</span>
+second_card = <span class="kw">None</span>
+
+<span class="cm"># 统计信息</span>
+steps = <span class="num">0</span>            <span class="cm"># 翻了几"对"牌（每翻两张算一步）</span>
+pairs_found = <span class="num">0</span>     <span class="cm"># 已经成功配对的牌对数</span>
+</pre>
+    </div>
+    <div class="highlight-box">
+        <strong>为什么需要这些变量？</strong> <br>
+        程序需要"记住"现在该做什么、刚才翻了哪张牌、还剩多少配对。
+    </div>
+</div>
+
+<!-- 第6页：修改点击逻辑 -->
+<div class="slide">
+    <h2>知识二：根据状态处理点击</h2>
+    <p>同一个"点击"动作，在不同状态下做不同的事！</p>
+    <div class="code-block">
+<pre>
+<span class="kw">elif</span> event.type == pygame.MOUSEBUTTONDOWN:
+    row, col = get_card_at_pos(event.pos[<span class="num">0</span>], event.pos[<span class="num">1</span>])
+    card = board[row][col]
+
+    <span class="cm"># ── 状态1：等待翻第一张牌 ──</span>
+    <span class="kw">if</span> game_state == STATE_WAIT_FIRST:
+        <span class="kw">if</span> card[<span class="str">"state"</span>] == <span class="str">"hidden"</span>:
+            card[<span class="str">"state"</span>] = <span class="str">"revealed"</span>
+            first_card = (row, col)          <span class="cm"># 记下位置</span>
+            game_state = STATE_WAIT_SECOND    <span class="cm"># 切换状态！</span>
+
+    <span class="cm"># ── 状态2：等待翻第二张牌 ──</span>
+    <span class="kw">elif</span> game_state == STATE_WAIT_SECOND:
+        <span class="kw">if</span> card[<span class="str">"state"</span>] == <span class="str">"hidden"</span>:
+            card[<span class="str">"state"</span>] = <span class="str">"revealed"</span>
+            second_card = (row, col)         <span class="cm"># 记下位置</span>
+            steps += <span class="num">1</span>                      <span class="cm"># 步数+1</span>
+            game_state = STATE_CHECKING       <span class="cm"># 进入检查！</span>
+</pre>
+    </div>
+    <div class="warn-box">
+        <strong>注意：</strong> 不能点已经翻开的牌！<code>if card["state"] == "hidden"</code> 是关键判断。
+    </div>
+</div>
+
+<!-- 第7页：判断匹配 -->
+<div class="slide">
+    <h2>知识三：比较两张牌是否相同</h2>
+    <div class="code-block">
+<pre>
+<span class="cm"># 在主循环中处理"检查匹配"状态</span>
+<span class="kw">if</span> game_state == STATE_CHECKING:
+    r1, c1 = first_card
+    r2, c2 = second_card
+    card1 = board[r1][c1]
+    card2 = board[r2][c2]
+
+    <span class="cm"># ═══ 比较颜色是否相同 ═══</span>
+    <span class="kw">if</span> card1[<span class="str">"color"</span>] == card2[<span class="str">"color"</span>]:
+        <span class="cm"># ✅ 匹配成功！</span>
+        card1[<span class="str">"state"</span>] = <span class="str">"matched"</span>
+        card2[<span class="str">"state"</span>] = <span class="str">"matched"</span>
+        pairs_found += <span class="num">1</span>
+
+        <span class="kw">if</span> pairs_found == <span class="num">8</span>:           <span class="cm"># 8对全找到了</span>
+            game_state = STATE_GAME_OVER
+        <span class="kw">else</span>:
+            game_state = STATE_WAIT_FIRST   <span class="cm"># 继续找</span>
+
+    <span class="kw">else</span>:
+        <span class="cm"># ❌ 不匹配！先刷新显示，再延迟翻回</span>
+        pygame.display.flip()          <span class="cm"># ⚠️ 先让玩家看到第二张牌</span>
+        pygame.time.delay(<span class="num">500</span>)       <span class="cm"># 等500毫秒（0.5秒）</span>
+        card1[<span class="str">"state"</span>] = <span class="str">"hidden"</span>     <span class="cm"># 翻回第一张</span>
+        card2[<span class="str">"state"</span>] = <span class="str">"hidden"</span>     <span class="cm"># 翻回第二张</span>
+        game_state = STATE_WAIT_FIRST   <span class="cm"># 重新开始</span>
+
+    <span class="cm"># 清空记录</span>
+    first_card = <span class="kw">None</span>
+    second_card = <span class="kw">None</span>
+</pre>
+    </div>
+</div>
+
+<!-- 第8页：延迟翻回详解 -->
+<div class="slide">
+    <h2>为什么需要延迟？pygame.time.delay()</h2>
+    <div class="flex-row">
+        <div class="flex-col">
+            <h3 style="color:#e94560;">❌ 如果不加延迟：</h3>
+            <p>翻第二张牌 → 颜色闪过（太快看不见！）→ 立刻翻回</p>
+            <p>玩家根本来不及记住牌的位置！</p>
+        </div>
+        <div class="flex-col">
+            <h3 style="color:#44cc44;">✅ 加上延迟：</h3>
+            <p>翻第二张牌 → 显示两张牌 → 等0.5秒 → 翻回</p>
+            <p>玩家有足够时间看清并记忆！</p>
+        </div>
+    </div>
+
+    <div class="highlight-box" style="margin-top:15px;">
+        <strong>关键顺序（非常重要！）：</strong> <br>
+        <code>pygame.display.flip()</code> <strong style="color:#e94560;">必须在</strong> <code>pygame.time.delay(500)</code> <strong style="color:#e94560;">前面</strong><br>
+        因为 delay 会暂停整个程序——如果不先 flip（刷新显示），屏幕上就看不到第二张牌！
+    </div>
+
+    <div class="code-block">
+<pre>
+<span class="cm"># ✅ 正确顺序</span>
+pygame.display.flip()    <span class="cm"># 1. 先把画面刷新到屏幕上</span>
+pygame.time.delay(<span class="num">500</span>)   <span class="cm"># 2. 再暂停0.5秒让玩家看</span>
+
+<span class="cm"># ❌ 错误顺序（先暂停再刷新——什么都看不到）</span>
+<span class="cm"># pygame.time.delay(500)</span>
+<span class="cm"># pygame.display.flip()</span>
+</pre>
+    </div>
+</div>
+
+<!-- 第9页：显示UI信息 -->
+<div class="slide">
+    <h2>知识四：显示步数和配对进度</h2>
+    <div class="code-block">
+<pre>
+<span class="kw">def</span> <span class="fn">draw_ui</span>(screen, steps, pairs_found, game_state):
+    font = pygame.font.Font(<span class="kw">None</span>, <span class="num">36</span>)       <span class="cm"># 默认字体，36号</span>
+    big_font = pygame.font.Font(<span class="kw">None</span>, <span class="num">60</span>)   <span class="cm"># 胜利用的大字体</span>
+
+    <span class="cm"># 左上角：步数</span>
+    text1 = font.render(<span class="str">f"步数: {steps}"</span>, <span class="kw">True</span>, (<span class="num">255</span>,<span class="num">255</span>,<span class="num">255</span>))
+    screen.blit(text1, (<span class="num">20</span>, <span class="num">20</span>))
+
+    <span class="cm"># 右上角：配对进度</span>
+    text2 = font.render(<span class="str">f"配对: {pairs_found} / 8"</span>, <span class="kw">True</span>, (<span class="num">255</span>,<span class="num">255</span>,<span class="num">255</span>))
+    screen.blit(text2, (SCREEN_W - <span class="num">200</span>, <span class="num">20</span>))
+
+    <span class="cm"># 胜利画面</span>
+    <span class="kw">if</span> game_state == STATE_GAME_OVER:
+        <span class="cm"># 半透明黑色遮罩</span>
+        overlay = pygame.Surface((SCREEN_W, SCREEN_H))
+        overlay.set_alpha(<span class="num">180</span>)
+        overlay.fill((<span class="num">0</span>, <span class="num">0</span>, <span class="num">0</span>))
+        screen.blit(overlay, (<span class="num">0</span>, <span class="num">0</span>))
+
+        <span class="cm"># 胜利文字（居中）</span>
+        win_text = big_font.render(<span class="str">"恭喜你赢了！"</span>, <span class="kw">True</span>, (<span class="num">255</span>,<span class="num">215</span>,<span class="num">0</span>))
+        rect = win_text.get_rect(center=(SCREEN_W//<span class="num">2</span>, SCREEN_H//<span class="num">2</span> - <span class="num">30</span>))
+        screen.blit(win_text, rect)
+
+        <span class="cm"># 显示步数</span>
+        final_text = font.render(<span class="str">f"你用了 {steps} 步！按 R 键重玩"</span>, <span class="kw">True</span>, (<span class="num">255</span>,<span class="num">255</span>,<span class="num">255</span>))
+        rect2 = final_text.get_rect(center=(SCREEN_W//<span class="num">2</span>, SCREEN_H//<span class="num">2</span> + <span class="num">30</span>))
+        screen.blit(final_text, rect2)
+</pre>
+    </div>
+</div>
+
+<!-- 第10页：重置游戏 -->
+<div class="slide">
+    <h2>按R键重新开始</h2>
+    <div class="code-block">
+<pre>
+<span class="cm"># 在事件处理中加入按键检测</span>
+<span class="kw">elif</span> event.type == pygame.KEYDOWN:
+    <span class="kw">if</span> event.key == pygame.K_r:
+        <span class="cm"># 重新初始化所有变量！</span>
+        board = create_board()             <span class="cm"># 重新洗牌</span>
+        game_state = STATE_WAIT_FIRST      <span class="cm"># 重置状态</span>
+        first_card = <span class="kw">None</span>
+        second_card = <span class="kw">None</span>
+        steps = <span class="num">0</span>                         <span class="cm"># 步数归零</span>
+        pairs_found = <span class="num">0</span>                   <span class="cm"># 配对数归零</span>
+        print(<span class="str">"游戏重新开始！"</span>)
+</pre>
+    </div>
+    <div class="info-box">
+        <strong>重置 = 把所有变量恢复到初始值</strong> <br>
+        就像玩桌游时把牌全部翻回去、打乱、重新开始一样。
+    </div>
+</div>
+
+<!-- 第11页：完整游戏架构 -->
+<div class="slide">
+    <h2>完整游戏架构图</h2>
+    <table style="font-size:18px;">
+        <tr><th style="width:20%;">步骤</th><th>做什么</th></tr>
+        <tr><td>初始化</td><td>创建棋盘（洗牌）、设置状态变量、创建窗口</td></tr>
+        <tr><td>事件处理</td><td>QUIT退 / MOUSEBUTTONDOWN点击翻牌 / KEYDOWN按R重开</td></tr>
+        <tr><td>状态机逻辑</td><td>WAIT_FIRST → WAIT_SECOND → CHECKING → WAIT_FIRST (或 GAME_OVER)</td></tr>
+        <tr><td>比较颜色</td><td>card1["color"] == card2["color"] ? 匹配 : 不匹配</td></tr>
+        <tr><td>延迟翻回</td><td>不匹配时 flip() + delay(500) 再翻回去</td></tr>
+        <tr><td>胜利判断</td><td>pairs_found == 8 → GAME_OVER</td></tr>
+        <tr><td>绘制界面</td><td>draw_board() + draw_ui() + flip()</td></tr>
+    </table>
+</div>
+
+<!-- 第12页：常见错误 -->
+<div class="slide">
+    <h2>写代码时注意这些坑！</h2>
+    <ul>
+        <li><strong style="color:#e94560;">flip() 和 delay() 的顺序</strong> —— 必须先 flip 再 delay，否则看不到牌</li>
+        <li><strong style="color:#e94560;">点了同一个位置两次</strong> —— 要判断第二张牌和第一张不是同一张</li>
+        <li><strong style="color:#e94560;">状态没切换回来</strong> —— CHECKING 结束后必须回到 WAIT_FIRST 或 GAME_OVER</li>
+        <li><strong style="color:#e94560;">重复翻已翻的牌</strong> —— 只处理 state == "hidden" 的牌</li>
+        <li><strong style="color:#e94560;">R键重置不完整</strong> —— 忘了重置某个变量，导致游戏状态混乱</li>
+        <li><strong style="color:#f5c518;">行和列搞反</strong> —— first_card = (row, col)，使用时也要 (row, col) 的顺序</li>
+    </ul>
+</div>
+
+<!-- 第13页：课堂任务 -->
+<div class="slide">
+    <h2>课堂任务</h2>
+    <h3 style="color:#f5c518;">基础任务（都要完成）</h3>
+    <ol>
+        <li><strong>添加状态机</strong> —— 定义4个状态常量，用 game_state 控制流程</li>
+        <li><strong>实现两牌比较</strong> —— 翻第一张→翻第二张→比较颜色→匹配/不匹配处理</li>
+        <li><strong>添加统计和胜利</strong> —— 步数显示、配对进度、8对全配对视胜利</li>
+    </ol>
+    <h3 style="color:#0fc9e7; margin-top:15px;">挑战任务（选做）</h3>
+    <ul>
+        <li><strong>最佳成绩</strong> —— 用最少步数完成，打破记录会有提示</li>
+        <li><strong>评分系统</strong> —— 8步⭐⭐⭐ / 9-12步⭐⭐ / 13-16步⭐</li>
+        <li><strong>倒计时</strong> —— 限时60秒，超时显示"时间到！"</li>
+        <li><strong>难度升级</strong> —— 6x6棋盘（36张牌，18对）</li>
+    </ul>
+</div>
+
+<!-- 第14页：总结 -->
+<div class="slide">
+    <h2>本节要点回顾</h2>
+    <table style="width:100%;">
+        <tr><th style="width:30%;">知识点</th><th>核心内容</th></tr>
+        <tr><td>状态机</td><td>等待第一张 → 等待第二张 → 检查匹配 → 返回</td></tr>
+        <tr><td>两张牌比较</td><td><code>card1["color"] == card2["color"]</code> 判断是否匹配</td></tr>
+        <tr><td>延迟翻回</td><td><code>flip()</code> 在 <code>delay(500)</code> 前面，不匹配时翻回 hidden</td></tr>
+        <tr><td>步数统计</td><td>每翻一对牌 steps += 1，显示在左上角</td></tr>
+        <tr><td>配对计数</td><td>匹配成功 pairs_found += 1，显示配对进度</td></tr>
+        <tr><td>胜利判断</td><td>pairs_found == 8 → 显示胜利画面</td></tr>
+        <tr><td>重启游戏</td><td>按R键重新洗牌，所有变量归零</td></tr>
+    </table>
+    <div class="success-box" style="margin-top:20px; text-align:center;">
+        <strong style="font-size:26px;">恭喜！你已经完成了一个完整的记忆翻牌游戏！</strong><br>
+        <span style="font-size:20px;">从二维列表、卡牌绘制，到状态机、配对逻辑——你已经掌握了很多编程技能！</span>
+    </div>
+</div>
+
+</div><!-- /slides -->
+
+<div class="page-num" id="pageNum">1 / 14</div>
+<div class="arrow-hint">← 键盘左右方向键翻页 →</div>
+
+<script>
+(function() {
+    var slides = document.querySelectorAll('.slide');
+    var current = 0;
+    var total = slides.length;
+    var pageNum = document.getElementById('pageNum');
+
+    function showSlide(n) {
+        slides.forEach(function(s) { s.classList.remove('active'); });
+        slides[n].classList.add('active');
+        pageNum.textContent = (n + 1) + ' / ' + total;
+    }
+
+    document.addEventListener('keydown', function(e) {
+        if (e.key === 'ArrowRight' || e.key === 'ArrowDown' || e.key === ' ') {
+            e.preventDefault();
+            if (current < total - 1) { current++; showSlide(current); }
+        } else if (e.key === 'ArrowLeft' || e.key === 'ArrowUp') {
+            e.preventDefault();
+            if (current > 0) { current--; showSlide(current); }
+        } else if (e.key === 'Home') {
+            e.preventDefault(); current = 0; showSlide(current);
+        } else if (e.key === 'End') {
+            e.preventDefault(); current = total - 1; showSlide(current);
+        }
+    });
+
+    document.addEventListener('click', function(e) {
+        if (e.clientX > window.innerWidth * 0.7) {
+            if (current < total - 1) { current++; showSlide(current); }
+        } else if (e.clientX < window.innerWidth * 0.3) {
+            if (current > 0) { current--; showSlide(current); }
+        }
+    });
+
+    var touchStartX = 0;
+    document.addEventListener('touchstart', function(e) { touchStartX = e.touches[0].clientX; });
+    document.addEventListener('touchend', function(e) {
+        var dx = e.changedTouches[0].clientX - touchStartX;
+        if (dx < -50 && current < total - 1) { current++; showSlide(current); }
+        else if (dx > 50 && current > 0) { current--; showSlide(current); }
+    });
+})();
+</script>
+</body>
+</html>

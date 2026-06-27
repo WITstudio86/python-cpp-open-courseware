@@ -1,0 +1,559 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>第13节：翻开看看 —— 4x4卡牌网格</title>
+<style>
+* { margin: 0; padding: 0; box-sizing: border-box; }
+body {
+    font-family: "Microsoft YaHei", "PingFang SC", "Noto Sans SC", sans-serif;
+    background: #1a1a2e;
+    color: #e0e0e0;
+    overflow: hidden;
+    height: 100vh;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+.slide {
+    display: none;
+    width: 90vw;
+    max-width: 1100px;
+    height: 85vh;
+    padding: 40px 50px;
+    background: linear-gradient(145deg, #16213e, #0f3460);
+    border-radius: 20px;
+    box-shadow: 0 20px 60px rgba(0,0,0,0.5);
+    flex-direction: column;
+    overflow-y: auto;
+}
+.slide.active { display: flex; }
+
+h1 { font-size: 48px; color: #e94560; margin-bottom: 15px; text-align: center; }
+h2 { font-size: 36px; color: #f5c518; margin-bottom: 20px; border-bottom: 3px solid #e94560; padding-bottom: 10px; }
+h3 { font-size: 28px; color: #0fc9e7; margin: 15px 0 10px; }
+
+p, li { font-size: 24px; line-height: 1.6; margin-bottom: 8px; }
+ul, ol { padding-left: 40px; margin-bottom: 15px; }
+
+.code-block {
+    background: #0d1117;
+    border: 1px solid #30363d;
+    border-radius: 12px;
+    padding: 20px 25px;
+    margin: 12px 0;
+    overflow-x: auto;
+    font-size: 18px;
+    line-height: 1.5;
+}
+.code-block pre {
+    margin: 0;
+    font-family: "Fira Code", "Cascadia Code", "Consolas", "Monaco", monospace;
+    color: #c9d1d9;
+    white-space: pre-wrap;
+    word-break: break-all;
+}
+
+/* 语法高亮 */
+.kw { color: #ff7b72; }       /* 关键字 */
+.fn { color: #d2a8ff; }       /* 函数名 */
+.str { color: #a5d6ff; }      /* 字符串 */
+.num { color: #79c0ff; }      /* 数字 */
+.cm { color: #8b949e; }       /* 注释 */
+.op { color: #ff7b72; }       /* 运算符 */
+
+.highlight-box {
+    background: rgba(233, 69, 96, 0.15);
+    border-left: 5px solid #e94560;
+    padding: 15px 20px;
+    margin: 15px 0;
+    border-radius: 0 10px 10px 0;
+    font-size: 22px;
+}
+.info-box {
+    background: rgba(15, 201, 231, 0.1);
+    border: 2px solid #0fc9e7;
+    padding: 15px 20px;
+    margin: 15px 0;
+    border-radius: 10px;
+    font-size: 22px;
+}
+.grid-demo {
+    display: grid;
+    grid-template-columns: repeat(4, 80px);
+    gap: 10px;
+    justify-content: center;
+    margin: 15px 0;
+}
+.card-demo {
+    width: 80px; height: 80px;
+    border-radius: 10px;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 14px; font-weight: bold; color: white;
+}
+.card-hidden { background: #4a4a6a; border: 3px solid #7a7aaa; }
+.card-reveal-red { background: #ff4444; }
+.card-reveal-blue { background: #4488ff; }
+.card-reveal-green { background: #44cc44; }
+.card-reveal-yellow { background: #ddcc00; }
+.card-reveal-purple { background: #cc44cc; }
+.card-reveal-orange { background: #ff8844; }
+.card-reveal-cyan { background: #44cccc; }
+.card-reveal-pink { background: #ff88aa; }
+
+.arrow-hint {
+    position: fixed;
+    bottom: 25px;
+    left: 50%;
+    transform: translateX(-50%);
+    font-size: 20px;
+    color: #8b949e;
+    background: rgba(0,0,0,0.5);
+    padding: 8px 20px;
+    border-radius: 20px;
+}
+.page-num {
+    position: fixed;
+    top: 15px;
+    right: 30px;
+    font-size: 18px;
+    color: #8b949e;
+}
+
+.state-flow {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 12px;
+    margin: 15px 0;
+    font-size: 20px;
+}
+.state-box {
+    background: #0d1117;
+    border: 2px solid #30363d;
+    padding: 8px 16px;
+    border-radius: 8px;
+}
+.state-box.current { border-color: #e94560; background: rgba(233,69,96,0.2); }
+.state-arrow { color: #f5c518; font-size: 22px; }
+
+table {
+    border-collapse: collapse;
+    margin: 10px auto;
+    font-size: 22px;
+}
+th, td {
+    border: 2px solid #30363d;
+    padding: 10px 16px;
+    text-align: center;
+}
+th { background: #e94560; color: white; font-weight: bold; }
+td { background: rgba(255,255,255,0.05); }
+
+.flex-center { display: flex; align-items: center; justify-content: center; gap: 30px; flex-wrap: wrap; }
+</style>
+</head>
+<body>
+
+<!-- 幻灯片容器 -->
+<div id="slides">
+
+<!-- 第1页：标题页 -->
+<div class="slide active">
+    <div style="flex:1; display:flex; flex-direction:column; align-items:center; justify-content:center; text-align:center;">
+        <h1 style="font-size:64px; margin-bottom:10px;">第13节</h1>
+        <h1 style="font-size:56px; color:#f5c518;">翻开看看</h1>
+        <h2 style="font-size:32px; color:#0fc9e7; border:none; margin-top:20px;">4x4卡牌网格 · 点击翻牌 · 状态管理</h2>
+        <div class="grid-demo" style="margin-top:30px;">
+            <div class="card-demo card-hidden">?</div>
+            <div class="card-demo card-hidden">?</div>
+            <div class="card-demo card-reveal-red"></div>
+            <div class="card-demo card-hidden">?</div>
+            <div class="card-demo card-hidden">?</div>
+            <div class="card-demo card-reveal-blue"></div>
+            <div class="card-demo card-hidden">?</div>
+            <div class="card-demo card-hidden">?</div>
+            <div class="card-demo card-hidden">?</div>
+            <div class="card-demo card-hidden">?</div>
+            <div class="card-demo card-reveal-green"></div>
+            <div class="card-demo card-hidden">?</div>
+            <div class="card-demo card-hidden">?</div>
+            <div class="card-demo card-hidden">?</div>
+            <div class="card-demo card-hidden">?</div>
+            <div class="card-demo card-reveal-purple"></div>
+        </div>
+    </div>
+</div>
+
+<!-- 第2页：学习目标 -->
+<div class="slide">
+    <h2>学习目标</h2>
+    <ul>
+        <li>理解<strong style="color:#f5c518;">二维列表</strong>的概念，用 <code style="color:#d2a8ff;">board[row][col]</code> 存储卡牌数据</li>
+        <li>使用 <code style="color:#d2a8ff;">pygame.draw.rect</code> 配合<strong style="color:#0fc9e7;">不同颜色</strong>绘制卡牌网格</li>
+        <li>根据鼠标点击坐标<strong style="color:#f5c518;">换算</strong>出卡牌的行列位置</li>
+        <li>实现卡牌的 <strong style="color:#e94560;">三种状态</strong>管理：隐藏、翻开、已匹配</li>
+        <li>完成一个 4x4 = 16张卡牌的点击翻开游戏！</li>
+    </ul>
+    <div class="info-box" style="margin-top:20px;">
+        本节课是"记忆翻牌游戏"系列的第1节课，今天我们先把牌翻开！
+    </div>
+</div>
+
+<!-- 第3页：什么是二维列表 -->
+<div class="slide">
+    <h2>知识一：二维列表 —— 让数据排成表格</h2>
+    <div class="highlight-box">
+        <strong>一句话解释：</strong>二维列表就是"列表的列表"，像一个有行有列的表格。
+    </div>
+    <div class="code-block">
+<pre>
+<span class="cm"># 普通列表（一维）：一排数据</span>
+colors = [<span class="str">"红"</span>, <span class="str">"蓝"</span>, <span class="str">"绿"</span>, <span class="str">"黄"</span>]
+
+<span class="cm"># 二维列表：一个表格！4行 x 4列</span>
+board = [
+    [<span class="str">"红"</span>, <span class="str">"蓝"</span>, <span class="str">"绿"</span>, <span class="str">"黄"</span>],  <span class="cm"># 第0行</span>
+    [<span class="str">"红"</span>, <span class="str">"蓝"</span>, <span class="str">"绿"</span>, <span class="str">"黄"</span>],  <span class="cm"># 第1行</span>
+    [<span class="str">"红"</span>, <span class="str">"蓝"</span>, <span class="str">"绿"</span>, <span class="str">"黄"</span>],  <span class="cm"># 第2行</span>
+    [<span class="str">"红"</span>, <span class="str">"蓝"</span>, <span class="str">"绿"</span>, <span class="str">"黄"</span>]   <span class="cm"># 第3行</span>
+]
+
+<span class="cm"># 访问第2行、第3列（注意：从0开始！）</span>
+card = board[<span class="num">2</span>][<span class="num">3</span>]   <span class="cm"># 得到 "黄"</span>
+</pre>
+    </div>
+    <div class="info-box">
+        <strong>生活类比：</strong>教室座位 —— 第3排第5列坐着小明 <br>
+        <code style="font-size:20px;">seats[3][5] = "小明"</code> 就是二维列表！
+    </div>
+</div>
+
+<!-- 第4页：创建棋盘 -->
+<div class="slide">
+    <h2>如何创建4x4的棋盘？</h2>
+    <p>16张牌 = <strong style="color:#f5c518;">8对</strong>相同颜色，随机分布</p>
+    <div class="code-block">
+<pre>
+<span class="kw">import</span> random
+
+COLORS = [
+    (<span class="num">255</span>, <span class="num">0</span>, <span class="num">0</span>),    <span class="cm"># 红</span>
+    (<span class="num">0</span>, <span class="num">130</span>, <span class="num">255</span>),  <span class="cm"># 蓝</span>
+    (<span class="num">0</span>, <span class="num">200</span>, <span class="num">0</span>),    <span class="cm"># 绿</span>
+    (<span class="num">255</span>, <span class="num">200</span>, <span class="num">0</span>),  <span class="cm"># 黄</span>
+    (<span class="num">200</span>, <span class="num">0</span>, <span class="num">255</span>),  <span class="cm"># 紫</span>
+    (<span class="num">255</span>, <span class="num">130</span>, <span class="num">0</span>),  <span class="cm"># 橙</span>
+    (<span class="num">0</span>, <span class="num">200</span>, <span class="num">200</span>),  <span class="cm"># 青</span>
+    (<span class="num">255</span>, <span class="num">100</span>, <span class="num">180</span>) <span class="cm"># 粉</span>
+]
+
+<span class="kw">def</span> <span class="fn">create_board</span>():
+    <span class="cm"># 1. 生成8对颜色编号: 0,0,1,1,2,2,...,7,7</span>
+    pairs = []
+    <span class="kw">for</span> i <span class="kw">in</span> <span class="fn">range</span>(<span class="num">8</span>):
+        pairs.append(i)
+        pairs.append(i)
+
+    <span class="cm"># 2. 洗牌！打乱顺序</span>
+    random.shuffle(pairs)
+
+    <span class="cm"># 3. 填入4x4的二维列表</span>
+    board = []
+    <span class="kw">for</span> row <span class="kw">in</span> <span class="fn">range</span>(<span class="num">4</span>):
+        current_row = []
+        <span class="kw">for</span> col <span class="kw">in</span> <span class="fn">range</span>(<span class="num">4</span>):
+            color_index = pairs[row * <span class="num">4</span> + col]
+            current_row.append(COLORS[color_index])
+        board.append(current_row)
+    <span class="kw">return</span> board
+</pre>
+    </div>
+    <div class="highlight-box">
+        <strong>关键公式：</strong> <code>row * 4 + col</code> —— 跳过前面整行，加上当前列
+    </div>
+</div>
+
+<!-- 第5页：三种状态管理 -->
+<div class="slide">
+    <h2>知识二：卡牌的三种状态</h2>
+    <p>每张牌需要一个 <strong style="color:#f5c518;">状态标签</strong>，告诉程序该怎么画它、能不能点它。</p>
+
+    <table style="margin-top:20px;">
+        <tr><th>状态</th><th>含义</th><th>显示效果</th><th>能点击吗？</th></tr>
+        <tr><td style="color:#8b949e;">"hidden"</td><td>隐藏（牌背朝上）</td><td>灰色方块</td><td>✅ 能</td></tr>
+        <tr><td style="color:#0fc9e7;">"revealed"</td><td>已翻开</td><td>显示颜色</td><td>❌ 不能</td></tr>
+        <tr><td style="color:#44cc44;">"matched"</td><td>已配对</td><td>颜色变暗</td><td>❌ 不能</td></tr>
+    </table>
+
+    <div class="state-flow" style="margin-top:20px;">
+        <div class="state-box current">hidden<br>隐藏</div>
+        <div class="state-arrow">→ 点击翻开 →</div>
+        <div class="state-box current">revealed<br>翻开</div>
+        <div class="state-arrow">→ 下节：配对 →</div>
+        <div class="state-box current">matched<br>消除</div>
+    </div>
+
+    <div class="code-block" style="margin-top:15px;">
+<pre>
+<span class="cm"># 每张牌是一个字典（dictionary），存颜色和状态</span>
+card = {
+    <span class="str">"color"</span>: (<span class="num">255</span>, <span class="num">0</span>, <span class="num">0</span>),    <span class="cm"># 红色</span>
+    <span class="str">"state"</span>: <span class="str">"hidden"</span>         <span class="cm"># 初始都是隐藏</span>
+}
+
+<span class="cm"># 翻开：修改状态</span>
+card[<span class="str">"state"</span>] = <span class="str">"revealed"</span>
+</pre>
+    </div>
+</div>
+
+<!-- 第6页：绘制卡牌网格 -->
+<div class="slide">
+    <h2>知识三：用 pygame.draw.rect 画牌</h2>
+    <div class="code-block">
+<pre>
+<span class="cm"># 卡牌尺寸</span>
+CARD_W = <span class="num">120</span>
+CARD_H = <span class="num">120</span>
+GAP = <span class="num">20</span>            <span class="cm"># 间隙</span>
+
+<span class="cm"># 计算4x4网格总宽高，并居中</span>
+GRID_W = <span class="num">4</span> * CARD_W + <span class="num">3</span> * GAP
+OFFSET_X = (SCREEN_W - GRID_W) // <span class="num">2</span>
+
+<span class="kw">def</span> <span class="fn">draw_board</span>(screen, board):
+    <span class="kw">for</span> row <span class="kw">in</span> <span class="fn">range</span>(<span class="num">4</span>):
+        <span class="kw">for</span> col <span class="kw">in</span> <span class="fn">range</span>(<span class="num">4</span>):
+            <span class="cm"># 计算屏幕坐标</span>
+            x = OFFSET_X + col * (CARD_W + GAP)
+            y = OFFSET_Y + row * (CARD_H + GAP)
+
+            card = board[row][col]
+            <span class="kw">if</span> card[<span class="str">"state"</span>] == <span class="str">"hidden"</span>:
+                color = (<span class="num">80</span>, <span class="num">80</span>, <span class="num">120</span>)      <span class="cm"># 灰色牌背</span>
+            <span class="kw">elif</span> card[<span class="str">"state"</span>] == <span class="str">"revealed"</span>:
+                color = card[<span class="str">"color"</span>]       <span class="cm"># 显示真实颜色</span>
+
+            pygame.draw.rect(screen, color, (x, y, CARD_W, CARD_H))
+</pre>
+    </div>
+    <div class="highlight-box">
+        <strong>坐标公式：</strong><br>
+        每张牌的位置 = 偏移量 + 列号 x (牌宽 + 间隙)<br>
+        <code>x = OFFSET_X + col * (CARD_W + GAP)</code>
+    </div>
+</div>
+
+<!-- 第7页：点击换算 -->
+<div class="slide">
+    <h2>知识四：鼠标坐标 → 卡牌行列</h2>
+    <p>鼠标点的是屏幕像素（x, y），需要换算成"第几行第几列"。</p>
+
+    <div class="code-block">
+<pre>
+<span class="kw">def</span> <span class="fn">get_card_at_pos</span>(mouse_x, mouse_y):
+    <span class="cm"># 核心公式：整数除法 // 把连续坐标变成格子编号</span>
+    col = (mouse_x - OFFSET_X) // (CARD_W + GAP)
+    row = (mouse_y - OFFSET_Y) // (CARD_H + GAP)
+
+    <span class="cm"># 检查是否在有效范围（0~3）</span>
+    <span class="kw">if</span> <span class="num">0</span> <= row < <span class="num">4</span> <span class="kw">and</span> <span class="num">0</span> <= col < <span class="num">4</span>:
+        <span class="kw">return</span> (row, col)
+    <span class="kw">else</span>:
+        <span class="kw">return</span> <span class="kw">None</span>   <span class="cm"># 点到了空白处</span>
+</pre>
+    </div>
+
+    <div class="info-box">
+        <strong>整数除法 <code>//</code> 的魔法：</strong> <br>
+        • 如果 0 ≤ x < 140 → col = 0（第一列）<br>
+        • 如果 140 ≤ x < 280 → col = 1（第二列）<br>
+        • 如果 280 ≤ x < 420 → col = 2（第三列）<br>
+        • 如果 420 ≤ x < 560 → col = 3（第四列）<br>
+        <br>
+        类比：你在 Excel 里点击一个格子，程序怎么知道是第几行第几列？
+    </div>
+</div>
+
+<!-- 第8页：完整主循环 -->
+<div class="slide">
+    <h2>把它们拼起来：游戏主循环</h2>
+    <div class="code-block">
+<pre>
+board = create_board()
+running = <span class="kw">True</span>
+
+<span class="kw">while</span> running:
+    <span class="kw">for</span> event <span class="kw">in</span> pygame.event.get():
+        <span class="kw">if</span> event.type == pygame.QUIT:
+            running = <span class="kw">False</span>
+
+        <span class="kw">elif</span> event.type == pygame.MOUSEBUTTONDOWN:
+            result = get_card_at_pos(event.pos[<span class="num">0</span>], event.pos[<span class="num">1</span>])
+            <span class="kw">if</span> result <span class="kw">is</span> <span class="kw">not</span> <span class="kw">None</span>:
+                row, col = result
+                <span class="cm"># 只有隐藏的牌才能翻开</span>
+                <span class="kw">if</span> board[row][col][<span class="str">"state"</span>] == <span class="str">"hidden"</span>:
+                    board[row][col][<span class="str">"state"</span>] = <span class="str">"revealed"</span>
+
+    draw_board(screen, board)
+    pygame.display.flip()
+</pre>
+    </div>
+    <div class="highlight-box">
+        <strong>核心逻辑：</strong><br>
+        1. 检测鼠标点击<br>
+        2. 坐标换算成行列<br>
+        3. 检查状态（只有 hidden 才能翻）<br>
+        4. 修改状态 → 重新绘制
+    </div>
+</div>
+
+<!-- 第9页：卡牌设计展示 -->
+<div class="slide">
+    <h2>8种颜色的卡牌，8对配对</h2>
+    <p style="margin-bottom:20px;">每张牌翻开后显示不同颜色，配对的两张颜色相同</p>
+    <div class="flex-center">
+        <div style="text-align:center;">
+            <div class="card-demo card-reveal-red" style="width:100px;height:100px;border-radius:15px;"></div>
+            <p>红色</p>
+        </div>
+        <div style="text-align:center;">
+            <div class="card-demo card-reveal-blue" style="width:100px;height:100px;border-radius:15px;"></div>
+            <p>蓝色</p>
+        </div>
+        <div style="text-align:center;">
+            <div class="card-demo card-reveal-green" style="width:100px;height:100px;border-radius:15px;"></div>
+            <p>绿色</p>
+        </div>
+        <div style="text-align:center;">
+            <div class="card-demo card-reveal-yellow" style="width:100px;height:100px;border-radius:15px;"></div>
+            <p>黄色</p>
+        </div>
+    </div>
+    <div class="flex-center">
+        <div style="text-align:center;">
+            <div class="card-demo card-reveal-purple" style="width:100px;height:100px;border-radius:15px;"></div>
+            <p>紫色</p>
+        </div>
+        <div style="text-align:center;">
+            <div class="card-demo card-reveal-orange" style="width:100px;height:100px;border-radius:15px;"></div>
+            <p>橙色</p>
+        </div>
+        <div style="text-align:center;">
+            <div class="card-demo card-reveal-cyan" style="width:100px;height:100px;border-radius:15px;"></div>
+            <p>青色</p>
+        </div>
+        <div style="text-align:center;">
+            <div class="card-demo card-reveal-pink" style="width:100px;height:100px;border-radius:15px;"></div>
+            <p>粉色</p>
+        </div>
+    </div>
+</div>
+
+<!-- 第10页：常见错误提醒 -->
+<div class="slide">
+    <h2>写代码时注意这些！</h2>
+    <ul>
+        <li><strong style="color:#e94560;">坐标没减偏移量</strong> —— offset_x 忘了减，点击位置就偏了</li>
+        <li><strong style="color:#e94560;">忘了检查状态</strong> —— 已经翻开的牌还能点，不符合游戏规则</li>
+        <li><strong style="color:#e94560;">索引越界</strong> —— row 或 col 超过了 3，记得用 <code>if 0 <= row < 4</code> 保护</li>
+        <li><strong style="color:#e94560;">颜色全一样</strong> —— 检查 pairs 列表是否生成了 8 对</li>
+        <li><strong style="color:#f5c518;">忘记 flip()</strong> —— 画了但没刷新屏幕，等于白画</li>
+    </ul>
+    <div class="info-box" style="margin-top:20px;">
+        <strong>调试技巧：</strong> 用 <code>print(row, col)</code> 输出点击位置，看看坐标换算对不对！
+    </div>
+</div>
+
+<!-- 第11页：课堂任务 -->
+<div class="slide">
+    <h2>课堂任务</h2>
+    <h3 style="color:#f5c518;">基础任务（都要完成）</h3>
+    <ol>
+        <li><strong>创建棋盘</strong> —— 实现 create_board()，生成4x4二维列表，8对颜色随机分布</li>
+        <li><strong>绘制卡牌</strong> —— 实现 draw_board()，hidden 灰色、revealed 显示颜色，居中排列</li>
+        <li><strong>点击翻牌</strong> —— 实现坐标换算，点击 hidden 牌变为 revealed</li>
+    </ol>
+    <h3 style="color:#0fc9e7; margin-top:20px;">挑战任务（选做）</h3>
+    <ul>
+        <li>在 hidden 牌上显示 "?" 号</li>
+        <li>添加"已翻开 X 张牌"计数器</li>
+        <li>给不同颜色的牌画不同形状（红色◆、蓝色●、绿色▲）</li>
+        <li>尝试 6x6 = 36张牌的版本！</li>
+    </ul>
+</div>
+
+<!-- 第12页：总结 -->
+<div class="slide">
+    <h2>本节要点回顾</h2>
+    <table style="width:100%;">
+        <tr><th style="width:30%;">知识点</th><th>核心内容</th></tr>
+        <tr><td>二维列表</td><td><code>board[row][col]</code> 存储网格数据，像教室座位表</td></tr>
+        <tr><td>洗牌算法</td><td><code>random.shuffle(pairs)</code> 打乱顺序，每次不一样</td></tr>
+        <tr><td>坐标换算</td><td><code>col = (x - OFFSET_X) // (CARD_W + GAP)</code></td></tr>
+        <tr><td>三种状态</td><td>hidden（隐藏）→ revealed（翻开）→ matched（消除）</td></tr>
+        <tr><td>状态控制</td><td>只有 hidden 状态的牌才能被点击翻开</td></tr>
+    </table>
+    <div class="highlight-box" style="margin-top:20px; text-align:center;">
+        <strong style="font-size:24px;">下节预告：配对消除！</strong><br>
+        翻两张牌 → 判断颜色是否相同 → 相同就消除，不同就翻回去！
+    </div>
+</div>
+
+</div><!-- /slides -->
+
+<div class="page-num" id="pageNum">1 / 12</div>
+<div class="arrow-hint">← 键盘左右方向键翻页 →</div>
+
+<script>
+(function() {
+    var slides = document.querySelectorAll('.slide');
+    var current = 0;
+    var total = slides.length;
+    var pageNum = document.getElementById('pageNum');
+
+    function showSlide(n) {
+        slides.forEach(function(s) { s.classList.remove('active'); });
+        slides[n].classList.add('active');
+        pageNum.textContent = (n + 1) + ' / ' + total;
+    }
+
+    document.addEventListener('keydown', function(e) {
+        if (e.key === 'ArrowRight' || e.key === 'ArrowDown' || e.key === ' ') {
+            e.preventDefault();
+            if (current < total - 1) { current++; showSlide(current); }
+        } else if (e.key === 'ArrowLeft' || e.key === 'ArrowUp') {
+            e.preventDefault();
+            if (current > 0) { current--; showSlide(current); }
+        } else if (e.key === 'Home') {
+            e.preventDefault(); current = 0; showSlide(current);
+        } else if (e.key === 'End') {
+            e.preventDefault(); current = total - 1; showSlide(current);
+        }
+    });
+
+    // 点击页面左右边缘翻页
+    document.addEventListener('click', function(e) {
+        if (e.clientX > window.innerWidth * 0.7) {
+            if (current < total - 1) { current++; showSlide(current); }
+        } else if (e.clientX < window.innerWidth * 0.3) {
+            if (current > 0) { current--; showSlide(current); }
+        }
+    });
+
+    // 触屏滑动
+    var touchStartX = 0;
+    document.addEventListener('touchstart', function(e) { touchStartX = e.touches[0].clientX; });
+    document.addEventListener('touchend', function(e) {
+        var dx = e.changedTouches[0].clientX - touchStartX;
+        if (dx < -50 && current < total - 1) { current++; showSlide(current); }
+        else if (dx > 50 && current > 0) { current--; showSlide(current); }
+    });
+})();
+</script>
+</body>
+</html>

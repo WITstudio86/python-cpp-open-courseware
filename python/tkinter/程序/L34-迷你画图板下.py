@@ -1,0 +1,235 @@
+import tkinter as tk
+from tkinter import colorchooser, messagebox
+
+# ========================================
+# 第 34 节：迷你画图板（下）
+# 知识点：颜色选择器 + 橡皮擦 + 清空画布 + 保存图片
+# 说明：本课在第 33 节画图板（上）的基础上，
+#       增加了颜色选择、橡皮擦、清空和保存功能，
+#       让画图板变成一个完整的小工具。
+# ========================================
+
+# 尝试导入 Pillow 库（用于保存 PNG 图片）
+# 如果导入失败，has_pil 为 False，后续会使用 postscript 备选方案
+try:
+    from PIL import ImageGrab
+    has_pil = True
+except ImportError:
+    has_pil = False
+
+# ---------- 全局变量 ----------
+current_color = "#000000"  # 当前画笔颜色，默认黑色
+# 后面颜色选择器、橡皮擦都会修改这个变量
+
+# ---------- 1. 创建主窗口 ----------
+root = tk.Tk()
+root.title("迷你画图板")          # 窗口标题
+root.geometry("800x600")          # 窗口大小：宽800，高600
+root.configure(bg="#d9d9d9")      # 窗口背景色（工具栏底色）
+
+# ---------- 2. 创建顶部工具栏 ----------
+# 工具栏放在窗口顶部，里面放各种功能按钮
+toolbar = tk.Frame(root, bg="#f0f0f0", height=50)
+toolbar.pack(side="top", fill="x")  # fill="x" 让工具栏横向填满
+toolbar.pack_propagate(False)       # 防止工具栏被内部控件撑小
+
+# ---------- 2a. 颜色选择按钮 ----------
+def choose_color():
+    """
+    弹出系统颜色选择器，让用户选择画笔颜色。
+    askcolor() 返回一个元组：((R, G, B), "#hex")
+    如果用户点击"取消"，返回值是 (None, None)
+    """
+    global current_color  # 声明要修改全局变量
+
+    # 弹出颜色选择器，默认颜色为当前画笔颜色
+    result = colorchooser.askcolor(
+        color=current_color,
+        title="选择画笔颜色"
+    )
+
+    # 判断用户是否选择了颜色（没点取消）
+    if result[1] is not None:
+        current_color = result[1]       # 更新画笔颜色为选中的十六进制值
+        color_btn.configure(bg=current_color)  # 让按钮也变成这个颜色
+
+        # 根据颜色亮度自动调整按钮上的文字颜色
+        # 深色背景用白色文字，浅色背景用黑色文字
+        r, g, b = result[0]  # 取 RGB 值（0~255）
+        brightness = (r * 299 + g * 587 + b * 114) / 1000  # 亮度公式
+        if brightness < 128:
+            color_btn.configure(fg="white")
+        else:
+            color_btn.configure(fg="black")
+
+# 创建"选颜色"按钮
+color_btn = tk.Button(
+    toolbar,
+    text="🎨 选颜色",
+    command=choose_color,
+    bg=current_color,        # 按钮背景色就是当前画笔颜色
+    fg="white",              # 默认黑色背景配白色文字
+    font=("Microsoft YaHei", 10),
+    relief="flat",           # 扁平样式
+    padx=12, pady=5,
+    cursor="hand2"           # 鼠标悬停显示手型
+)
+color_btn.pack(side="left", padx=5, pady=8)
+
+# ---------- 2b. 橡皮擦按钮 ----------
+def use_eraser():
+    """
+    切换到橡皮擦模式：把画笔颜色设为白色（和画布背景一样）。
+    因为画布背景是白色，所以白色画笔覆盖上去，看起来就像被擦掉了！
+    """
+    global current_color
+    current_color = "#ffffff"          # 白色 = 橡皮擦颜色
+    color_btn.configure(bg="#ffffff", fg="black")  # 按钮也变成白色
+
+eraser_btn = tk.Button(
+    toolbar,
+    text="🧹 橡皮擦",
+    command=use_eraser,
+    font=("Microsoft YaHei", 10),
+    relief="flat",
+    padx=12, pady=5,
+    cursor="hand2"
+)
+eraser_btn.pack(side="left", padx=5, pady=8)
+
+# ---------- 2c. 快速黑色画笔按钮 ----------
+def use_black():
+    """一键切换回黑色画笔"""
+    global current_color
+    current_color = "#000000"
+    color_btn.configure(bg="#000000", fg="white")
+
+black_btn = tk.Button(
+    toolbar,
+    text="🖊 黑色",
+    command=use_black,
+    font=("Microsoft YaHei", 10),
+    relief="flat",
+    padx=12, pady=5,
+    cursor="hand2"
+)
+black_btn.pack(side="left", padx=5, pady=8)
+
+# ---------- 2d. 清空画布按钮 ----------
+def clear_canvas():
+    """
+    清空画布上的所有内容。
+    canvas.delete("all") 会删除画布上所有图形（线条、圆、文字等）。
+    注意：清空了就无法撤销，所以先弹出确认框。
+    """
+    if messagebox.askyesno("确认清空", "确定要清空画布吗？此操作不可撤销！"):
+        canvas.delete("all")  # 删除全部画布元素
+
+clear_btn = tk.Button(
+    toolbar,
+    text="🗑 清空",
+    command=clear_canvas,
+    font=("Microsoft YaHei", 10),
+    relief="flat",
+    padx=12, pady=5,
+    cursor="hand2"
+)
+clear_btn.pack(side="left", padx=5, pady=8)
+
+# ---------- 2e. 画笔粗细滑块 ----------
+# Scale 是一个滑动条控件，用户拖动滑块来调节画笔粗细
+pen_size = tk.Scale(
+    toolbar,
+    from_=1,                   # 最小值
+    to=10,                     # 最大值
+    orient="horizontal",       # 横向放置
+    label="画笔粗细",          # 标签文字
+    length=130,                # 滑条长度（像素）
+    font=("Microsoft YaHei", 9),
+    bg="#f0f0f0"               # 背景色与工具栏一致
+)
+pen_size.set(2)  # 默认粗细为 2
+pen_size.pack(side="left", padx=10, pady=5)
+
+# ---------- 2f. 保存图片按钮 ----------
+def save_image():
+    """
+    将画布内容保存为图片文件。
+    优先使用 Pillow (ImageGrab) 保存 PNG 格式，
+    如果 Pillow 未安装，则降级使用 Canvas 自带的 postscript 功能（保存 .ps 文件）。
+    """
+    if has_pil:
+        # ---------- 方法 A：使用 Pillow 的 ImageGrab 保存 PNG ----------
+        # winfo_rootx() / winfo_rooty() 获取画布在屏幕上的绝对坐标
+        x = root.winfo_rootx() + canvas.winfo_x()
+        y = root.winfo_rooty() + canvas.winfo_y()
+        w = x + canvas.winfo_width()
+        h = y + canvas.winfo_height()
+
+        # ImageGrab.grab(bbox=(左, 上, 右, 下)) 截取屏幕指定矩形区域
+        img = ImageGrab.grab(bbox=(x, y, w, h))
+
+        # 保存为 PNG 图片
+        img.save("my_drawing.png", "PNG")
+        messagebox.showinfo("保存成功", "画布已保存为 my_drawing.png ✅\n文件在程序所在的文件夹里。")
+    else:
+        # ---------- 方法 B：使用 Canvas 自带的 postscript（备选） ----------
+        # postscript 保存的是矢量格式 .ps 文件（不是常见的图片格式）
+        # 可以用在线转换工具把 .ps 转成 .png
+        canvas.postscript(file="my_drawing.ps")
+        messagebox.showinfo(
+            "保存成功",
+            "Pillow 库未安装，已保存为 my_drawing.ps 文件。\n"
+            "你可以用在线工具（如 CloudConvert）将 .ps 转成 PNG。\n\n"
+            "💡 提示：在终端运行 pip install Pillow 即可安装 Pillow 库。"
+        )
+
+save_btn = tk.Button(
+    toolbar,
+    text="💾 保存",
+    command=save_image,
+    font=("Microsoft YaHei", 10),
+    relief="flat",
+    padx=12, pady=5,
+    cursor="hand2"
+)
+save_btn.pack(side="left", padx=5, pady=8)
+
+# ---------- 3. 创建画布 ----------
+canvas = tk.Canvas(
+    root,
+    bg="white",        # 画布背景色：白色（橡皮擦也是白色，所以能"擦掉"）
+    cursor="pencil",   # 鼠标在画布上时显示铅笔光标
+    highlightthickness=0  # 去掉 Canvas 默认的边框
+)
+canvas.pack(fill="both", expand=True)  # 画布填满工具栏下方的所有剩余空间
+
+# ---------- 4. 画图核心函数 ----------
+def draw(event):
+    """
+    当鼠标在画布上拖动时，根据当前画笔颜色和粗细，
+    在鼠标位置画一个圆点。连续拖动就形成了线条！
+
+    参数 event 由 tkinter 自动传入，包含鼠标位置信息：
+    - event.x：鼠标在画布上的 X 坐标
+    - event.y：鼠标在画布上的 Y 坐标
+    """
+    r = pen_size.get()          # 获取当前画笔粗细（滑块的值）
+    x, y = event.x, event.y    # 当前鼠标位置
+
+    # create_oval 画一个实心圆点
+    # 左上角 (x-r, y-r)，右下角 (x+r, y+r)
+    # fill 和 outline 都设为当前颜色，画出来的就是实心圆
+    canvas.create_oval(
+        x - r, y - r, x + r, y + r,
+        fill=current_color,      # 填充颜色 = 当前画笔颜色
+        outline=current_color,   # 边框颜色 = 当前画笔颜色
+        width=0                  # 边框宽度为 0（不要边框线）
+    )
+
+# 绑定鼠标拖拽事件：按住鼠标左键并移动时，连续调用 draw() 函数
+# <B1-Motion> 表示"鼠标左键按住并拖动"
+canvas.bind("<B1-Motion>", draw)
+
+# ---------- 5. 启动主循环 ----------
+root.mainloop()

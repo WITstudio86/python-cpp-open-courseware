@@ -1,0 +1,317 @@
+import tkinter as tk
+import requests
+
+# ========================================
+# 第 30 节：项目 6 — 天气预报查询（美化版）
+# 功能：卡片式布局、emoji 天气图标、多城市切换
+# ========================================
+
+# 1. 创建主窗口
+root = tk.Tk()
+root.title("天气预报查询 🌤️")
+root.geometry("550x620")
+root.configure(bg="#e8f4fd")  # 淡蓝色天空背景
+
+# ========================================
+# 2. 工具函数
+# ========================================
+
+def get_weather_emoji(desc):
+    """根据天气描述文字返回对应的 emoji 图标"""
+    d = desc.lower()
+    if any(w in d for w in ["晴", "sunny", "clear"]):
+        return "☀️"
+    elif any(w in d for w in ["云", "cloud", "overcast"]):
+        return "⛅"
+    elif any(w in d for w in ["雨", "rain", "drizzle", "shower"]):
+        return "🌧️"
+    elif any(w in d for w in ["雪", "snow"]):
+        return "❄️"
+    elif any(w in d for w in ["雾", "mist", "fog", "haze"]):
+        return "🌫️"
+    elif any(w in d for w in ["风", "wind"]):
+        return "💨"
+    else:
+        return "🌤️"
+
+
+def get_weather_data(city):
+    """调用 wttr.in API 获取天气 JSON 数据"""
+    try:
+        url = f"https://wttr.in/{city}?format=j1"
+        response = requests.get(url, timeout=5)
+        response.raise_for_status()
+        return response.json()
+    except Exception:
+        return None
+
+
+# ========================================
+# 3. 查询与界面更新
+# ========================================
+
+def search(city_name=None):
+    """
+    查询天气并更新界面
+    参数 city_name：如果指定了城市名则直接使用，否则从输入框获取
+    """
+    if city_name is None:
+        city_name = entry.get().strip()
+
+    if not city_name:
+        city_label.config(text="⚠️ 请输入城市名", fg="#c0392b")
+        temp_label.config(text="--°C")
+        feels_label.config(text="")
+        desc_label.config(text="")
+        humidity_label.config(text="💧 湿度\n--%")
+        wind_label.config(text="💨 风速\n-- km/h")
+        return
+
+    # 显示加载状态
+    city_label.config(text=f"🔄 查询中...", fg="#7f8c8d")
+    temp_label.config(text="...")
+    root.update()
+
+    # 调用 API
+    data = get_weather_data(city_name)
+
+    if data is None:
+        city_label.config(text="❌ 网络连接失败", fg="#c0392b")
+        temp_label.config(text="--°C")
+        feels_label.config(text="请检查网络后重试")
+        desc_label.config(text="")
+        humidity_label.config(text="💧 湿度\n--%")
+        wind_label.config(text="💨 风速\n-- km/h")
+        return
+
+    # 解析并显示天气数据
+    try:
+        current = data["current_condition"][0]
+
+        temp = current["temp_C"]
+        feels = current["FeelsLikeC"]
+        desc = current["weatherDesc"][0]["value"]
+        humidity = current["humidity"]
+        wind_speed = current["windspeedKmph"]
+        wind_dir = current["winddir16Point"]
+
+        emoji = get_weather_emoji(desc)
+
+        # 更新各个标签
+        city_label.config(text=f"{emoji}  {city_name}", fg="#2c3e50")
+        temp_label.config(text=f"{temp}°C")
+        feels_label.config(text=f"体感温度 {feels}°C")
+        desc_label.config(text=desc)
+        humidity_label.config(text=f"💧 湿度\n{humidity}%")
+        wind_label.config(text=f"💨 风速\n{wind_speed} km/h\n{wind_dir}")
+
+    except (KeyError, IndexError):
+        city_label.config(text="❌ 未找到该城市", fg="#c0392b")
+        temp_label.config(text="--°C")
+        feels_label.config(text="请检查城市名是否正确")
+        desc_label.config(text="")
+        humidity_label.config(text="💧 湿度\n--%")
+        wind_label.config(text="💨 风速\n-- km/h")
+
+
+def on_city_select(event):
+    """Listbox 选中城市时的回调：自动填入并查询"""
+    selection = city_listbox.curselection()
+    if selection:
+        city = city_listbox.get(selection[0])
+        # 填入输入框
+        entry.delete(0, tk.END)
+        entry.insert(0, city)
+        # 自动查询
+        search(city)
+
+
+# ========================================
+# 4. 界面布局
+# ========================================
+
+# --- 顶部标题 ---
+title_label = tk.Label(
+    root,
+    text="🌤️  天气预报查询",
+    font=("微软雅黑", 24, "bold"),
+    bg="#e8f4fd",
+    fg="#1a5276"
+)
+title_label.pack(pady=(20, 5))
+
+# --- 输入行 ---
+input_frame = tk.Frame(root, bg="#e8f4fd")
+input_frame.pack(pady=8)
+
+entry = tk.Entry(
+    input_frame,
+    font=("微软雅黑", 14),
+    width=16,
+    justify="center",
+    relief="solid",
+    bd=1
+)
+entry.pack(side=tk.LEFT, padx=(0, 5))
+
+# 绑定回车键
+entry.bind("<Return>", lambda event: search())
+
+search_btn = tk.Button(
+    input_frame,
+    text="🔍 查询",
+    command=search,
+    font=("微软雅黑", 12, "bold"),
+    bg="#3498db",
+    fg="white",
+    padx=15,
+    relief="flat",
+    cursor="hand2"
+)
+search_btn.pack(side=tk.LEFT)
+
+# --- 常用城市列表 ---
+city_hint = tk.Label(
+    root,
+    text="📍 常用城市（点击自动查询）",
+    font=("微软雅黑", 10),
+    bg="#e8f4fd",
+    fg="#95a5a6"
+)
+city_hint.pack(pady=(15, 2))
+
+city_listbox = tk.Listbox(
+    root,
+    font=("微软雅黑", 11),
+    height=4,
+    width=22,
+    bg="white",
+    relief="solid",
+    bd=1,
+    selectbackground="#3498db",
+    selectforeground="white"
+)
+city_listbox.pack(pady=5)
+
+# 常用城市列表
+cities = ["北京", "上海", "广州", "深圳", "杭州", "成都", "Tokyo", "London", "New York"]
+for city in cities:
+    city_listbox.insert(tk.END, city)
+
+# 绑定选中事件
+city_listbox.bind("<<ListboxSelect>>", on_city_select)
+
+# --- 分隔线 ---
+separator = tk.Frame(root, height=1, width=400, bg="#d5e8f0")
+separator.pack(pady=(10, 5))
+
+# --- 天气信息展示区 ---
+
+# 城市名 + emoji
+city_label = tk.Label(
+    root,
+    text="请输入城市名",
+    font=("微软雅黑", 20, "bold"),
+    bg="#e8f4fd",
+    fg="#2c3e50"
+)
+city_label.pack(pady=(10, 0))
+
+# 天气描述文字
+desc_label = tk.Label(
+    root,
+    text="",
+    font=("微软雅黑", 13),
+    bg="#e8f4fd",
+    fg="#7f8c8d"
+)
+desc_label.pack()
+
+# 温度（超大字，视觉焦点）
+temp_label = tk.Label(
+    root,
+    text="--°C",
+    font=("微软雅黑", 54, "bold"),
+    bg="#e8f4fd",
+    fg="#e67e22"  # 橙色
+)
+temp_label.pack(pady=(5, 0))
+
+# 体感温度
+feels_label = tk.Label(
+    root,
+    text="",
+    font=("微软雅黑", 11),
+    bg="#e8f4fd",
+    fg="#bdc3c7"
+)
+feels_label.pack()
+
+# --- 湿度 + 风速 卡片区 ---
+cards_frame = tk.Frame(root, bg="#e8f4fd")
+cards_frame.pack(pady=20)
+
+# 湿度卡片（蓝色主题）
+humidity_card = tk.Frame(
+    cards_frame,
+    bg="white",
+    relief="solid",
+    bd=1,
+    padx=30,
+    pady=15
+)
+humidity_card.pack(side=tk.LEFT, padx=12)
+
+humidity_label = tk.Label(
+    humidity_card,
+    text="💧 湿度\n--%",
+    font=("微软雅黑", 14),
+    bg="white",
+    fg="#3498db",  # 蓝色
+    justify=tk.CENTER
+)
+humidity_label.pack()
+
+# 风速卡片（绿色主题）
+wind_card = tk.Frame(
+    cards_frame,
+    bg="white",
+    relief="solid",
+    bd=1,
+    padx=30,
+    pady=15
+)
+wind_card.pack(side=tk.LEFT, padx=12)
+
+wind_label = tk.Label(
+    wind_card,
+    text="💨 风速\n-- km/h",
+    font=("微软雅黑", 14),
+    bg="white",
+    fg="#27ae60",  # 绿色
+    justify=tk.CENTER
+)
+wind_label.pack()
+
+# --- 底部数据来源 ---
+footer_label = tk.Label(
+    root,
+    text="数据来源：wttr.in（免费 API）",
+    font=("微软雅黑", 9),
+    bg="#e8f4fd",
+    fg="#bdc3c7"
+)
+footer_label.pack(side=tk.BOTTOM, pady=10)
+
+# ========================================
+# 5. 启动主循环
+# ========================================
+
+# 让输入框自动获得焦点
+entry.focus_set()
+
+# 默认显示北京的天气（给学生一个直观的效果）
+entry.insert(0, "北京")
+search("北京")
+
+root.mainloop()

@@ -1,0 +1,220 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>第04课：小小翻译官——C++程序的运行</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            font-family: 'PingFang SC', 'Microsoft YaHei', sans-serif;
+            background: linear-gradient(135deg, #ffecd2 0%, #fcb69f 100%);
+            min-height: 100vh;
+            display: flex; justify-content: center; align-items: center;
+        }
+        .slides-container {
+            width: 90%; max-width: 900px; min-height: 550px;
+            background: white; border-radius: 25px; padding: 40px;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+            position: relative;
+        }
+        .slide { display: none; animation: fadeIn 0.5s; }
+        .slide.active { display: block; }
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
+        h1 { color: #d97706; font-size: 2.2em; margin-bottom: 20px; }
+        h2 { color: #e8573a; font-size: 1.8em; margin-bottom: 15px; }
+        h3 { color: #2c7a4a; font-size: 1.4em; margin: 15px 0 10px; }
+        p, li { font-size: 1.15em; line-height: 1.8; color: #333; }
+        ul { padding-left: 30px; margin: 10px 0; }
+        .code-block {
+            background: #1e1e2e; color: #cdd6f4; padding: 20px;
+            border-radius: 12px; font-family: 'Courier New', monospace;
+            font-size: 0.95em; line-height: 1.6; overflow-x: auto;
+            margin: 15px 0; white-space: pre-wrap; word-break: break-all;
+        }
+        .code-block .keyword { color: #cba6f7; }
+        .code-block .string { color: #a6e3a1; }
+        .code-block .comment { color: #6c7086; font-style: italic; }
+        .code-block .number { color: #fab387; }
+        .nav-buttons {
+            position: absolute; bottom: 20px; left: 40px; right: 40px;
+            display: flex; justify-content: space-between;
+        }
+        .nav-btn {
+            background: linear-gradient(135deg, #f97316, #ea580c);
+            color: white; border: none; padding: 12px 30px;
+            border-radius: 30px; font-size: 1.1em; cursor: pointer;
+            transition: transform 0.2s, box-shadow 0.2s;
+            font-family: 'PingFang SC', 'Microsoft YaHei', sans-serif;
+        }
+        .nav-btn:hover { transform: scale(1.05); box-shadow: 0 5px 20px rgba(249,115,22,0.4); }
+        .nav-btn:disabled { opacity: 0.4; cursor: default; transform: none; }
+        .page-indicator { font-size: 1.1em; color: #d97706; align-self: center; }
+        .emoji-big { font-size: 3em; text-align: center; display: block; margin: 15px 0; }
+        .badge { display: inline-block; background: #fff7ed; color: #d97706; padding: 5px 15px; border-radius: 20px; font-size: 0.9em; margin: 3px; }
+        table { width: 100%; border-collapse: collapse; margin: 15px 0; }
+        th, td { border: 2px solid #ddd; padding: 10px; text-align: left; }
+        th { background: #f97316; color: white; }
+        .highlight-box { background: #fff3cd; border-left: 5px solid #ffc107; padding: 15px; border-radius: 8px; margin: 15px 0; }
+        .tip-box { background: #d4edda; border-left: 5px solid #28a745; padding: 15px; border-radius: 8px; margin: 15px 0; }
+        .flow-arrow { text-align: center; font-size: 2em; color: #f97316; padding: 5px 0; }
+        .flow-box { background: #fff7ed; border: 2px solid #f97316; border-radius: 10px; padding: 15px; text-align: center; margin: 5px 0; }
+        @media (max-width: 600px) {
+            .slides-container { padding: 25px; }
+            h1 { font-size: 1.5em; }
+            .code-block { font-size: 0.75em; }
+        }
+    </style>
+</head>
+<body>
+    <div class="slides-container">
+        <!-- Slide 1: Title Page -->
+        <div class="slide active" id="slide1">
+            <span class="emoji-big">🔍</span>
+            <h1>第04课：小小翻译官</h1>
+            <p style="text-align:center; color:#666;">第一阶段：C++初体验 | 课时：45分钟</p>
+            <p style="text-align:center; margin-top:20px; font-size:1.3em;">✨ 帮电脑找Bug大冒险 ✨</p>
+            <div style="text-align:center; margin-top:30px;">
+                <span class="badge">编译</span>
+                <span class="badge">运行</span>
+                <span class="badge">错误信息</span>
+                <span class="badge">调试</span>
+            </div>
+        </div>
+
+        <!-- Slide 2: Learning Objectives -->
+        <div class="slide" id="slide2">
+            <h2>🎯 学习目标</h2>
+            <ul>
+                <li>理解从<strong>源代码</strong>到<strong>可执行程序</strong>的完整过程</li>
+                <li>认识<strong>编译器</strong>的作用：把代码翻译成机器语言</li>
+                <li>学会阅读<strong>编译错误信息</strong>，快速定位问题</li>
+                <li>掌握基本的<strong>调试</strong>思路："找Bug大冒险"</li>
+            </ul>
+            <div class="tip-box" style="margin-top:25px;">
+                <strong>💡 Bug的故事：</strong><br>
+                1947年，一只真的飞蛾飞进了电脑，导致故障。从此程序错误就叫"Bug"，找错误就叫"Debug"！
+            </div>
+        </div>
+
+        <!-- Slide 3: Core Knowledge -->
+        <div class="slide" id="slide3">
+            <h2>📖 从代码到程序：神奇的旅程</h2>
+
+            <div class="flow-box"><strong>📝 源代码（.cpp文件）</strong> — 你写的代码</div>
+            <div class="flow-arrow">⬇️</div>
+            <div class="flow-box"><strong>🔧 编译器</strong> — "翻译官"翻译成机器语言</div>
+            <div class="flow-arrow">⬇️</div>
+            <div class="flow-box"><strong>📦 目标文件（.o/.obj）</strong> — 翻译后的零件</div>
+            <div class="flow-arrow">⬇️</div>
+            <div class="flow-box"><strong>🔗 链接器</strong> — 组装所有零件</div>
+            <div class="flow-arrow">⬇️</div>
+            <div class="flow-box"><strong>🚀 可执行程序</strong> — 可以运行啦！</div>
+
+            <div class="highlight-box" style="margin-top:15px;">
+                <strong>🔑 口诀：</strong>写代码 → 编译 → 运行 → 看结果！
+            </div>
+        </div>
+
+        <!-- Slide 4: Example Code -->
+        <div class="slide" id="slide4">
+            <h2>💻 常见编译错误速查表</h2>
+            <table>
+                <tr><th>错误症状</th><th>编译报错</th><th>解决方法</th></tr>
+                <tr><td>忘记分号</td><td><code>expected ';'</code></td><td>在语句末尾加 <code>;</code></td></tr>
+                <tr><td>拼写错误</td><td><code>'xxx' was not declared</code></td><td>检查拼写！</td></tr>
+                <tr><td>变量未定义</td><td><code>undeclared identifier</code></td><td>先定义，再使用</td></tr>
+                <tr><td>缺少引号</td><td>各种奇怪报错</td><td>字符串加 <code>" "</code></td></tr>
+                <tr><td>少花括号</td><td><code>expected '}'</code></td><td>检查 { } 是否配对</td></tr>
+                <tr><td>忘头文件</td><td><code>cout was not declared</code></td><td>加 <code>#include &lt;iostream&gt;</code></td></tr>
+            </table>
+
+            <h3>调试五步法</h3>
+            <ol>
+                <li><strong>读错误信息</strong> — 编译器说了什么？</li>
+                <li><strong>定位问题</strong> — 哪一行出错了？</li>
+                <li><strong>分析原因</strong> — 为什么会出错？</li>
+                <li><strong>修改代码</strong> — 改正它！</li>
+                <li><strong>重新编译</strong> — 修好了吗？</li>
+            </ol>
+        </div>
+
+        <!-- Slide 5: Practice -->
+        <div class="slide" id="slide5">
+            <h2>🎮 趣味练习</h2>
+
+            <h3>练习1：Bug侦探 🔍</h3>
+            <p>下面的程序有4个错误，找出来！</p>
+            <div class="code-block">cout &lt;&lt; "Bug侦探" &lt;&lt; endl   // Bug1
+int score = 100                  // Bug2
+cout &lt;&lt; score &lt;&lt; end;           // Bug3
+retrun 0;                        // Bug4</div>
+
+            <h3>练习2：编译器翻译官 🗣️</h3>
+            <p>猜猜这些报错是什么意思：</p>
+            <ul>
+                <li><code>expected ';'</code> → <span style="color:#2c7a4a;">少了分号</span></li>
+                <li><code>'cout' was not declared</code> → <span style="color:#2c7a4a;">忘了头文件</span></li>
+                <li><code>expected '}'</code> → <span style="color:#2c7a4a;">少了个花括号</span></li>
+            </ul>
+
+            <div class="tip-box">
+                <strong>✅ 练习1答案：</strong><br>
+                Bug1: 第1行少分号 | Bug2: 第2行少分号 | Bug3: end应该是endl | Bug4: retrun应该是return
+            </div>
+        </div>
+
+        <!-- Slide 6: Summary -->
+        <div class="slide" id="slide6">
+            <h2>📝 本课小结</h2>
+            <table>
+                <tr><th>概念</th><th>说明</th></tr>
+                <tr><td>源代码</td><td>你写的 .cpp 文件</td></tr>
+                <tr><td>编译器</td><td>"翻译官"，C++ → 机器语言</td></tr>
+                <tr><td>链接器</td><td>"组装工"，拼成可执行程序</td></tr>
+                <tr><td>编译错误</td><td>翻译时发现的问题</td></tr>
+                <tr><td>Bug</td><td>程序中的错误（源自1947年！）</td></tr>
+                <tr><td>调试</td><td>找到并修复Bug的过程</td></tr>
+            </table>
+            <div class="highlight-box" style="margin-top:20px;">
+                <strong>🔑 记住口诀：</strong><br>
+                写代码、存文件、编译器来翻译；<br>
+                找Bug、读信息、小小侦探真仔细！
+            </div>
+            <p style="text-align:center; margin-top:20px; font-size:1.3em;">🎉 下一课预告：让电脑说话——cout输出</p>
+        </div>
+
+        <!-- Navigation -->
+        <div class="nav-buttons">
+            <button class="nav-btn" onclick="prevSlide()">◀ 上一页</button>
+            <span class="page-indicator" id="pageIndicator">1 / 6</span>
+            <button class="nav-btn" onclick="nextSlide()">下一页 ▶</button>
+        </div>
+    </div>
+
+    <script>
+        let currentSlide = 0;
+        const slides = document.querySelectorAll('.slide');
+        const totalSlides = slides.length;
+        const indicator = document.getElementById('pageIndicator');
+
+        function showSlide(n) {
+            slides[currentSlide].classList.remove('active');
+            currentSlide = (n + totalSlides) % totalSlides;
+            slides[currentSlide].classList.add('active');
+            indicator.textContent = (currentSlide + 1) + ' / ' + totalSlides;
+            document.querySelectorAll('.nav-btn')[0].disabled = currentSlide === 0;
+            document.querySelectorAll('.nav-btn')[1].disabled = currentSlide === totalSlides - 1;
+        }
+        function nextSlide() { showSlide(currentSlide + 1); }
+        function prevSlide() { showSlide(currentSlide - 1); }
+
+        document.addEventListener('keydown', function(e) {
+            if (e.key === 'ArrowRight' || e.key === ' ') { e.preventDefault(); nextSlide(); }
+            else if (e.key === 'ArrowLeft') { e.preventDefault(); prevSlide(); }
+        });
+
+        indicator.textContent = (currentSlide + 1) + ' / ' + totalSlides;
+    </script>
+</body>
+</html>

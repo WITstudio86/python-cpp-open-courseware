@@ -1,0 +1,244 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>第03课：电脑的记忆——注释与代码规范</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            font-family: 'PingFang SC', 'Microsoft YaHei', sans-serif;
+            background: linear-gradient(135deg, #a8edea 0%, #fed6e3 100%);
+            min-height: 100vh;
+            display: flex; justify-content: center; align-items: center;
+        }
+        .slides-container {
+            width: 90%; max-width: 900px; min-height: 550px;
+            background: white; border-radius: 25px; padding: 40px;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+            position: relative;
+        }
+        .slide { display: none; animation: fadeIn 0.5s; }
+        .slide.active { display: block; }
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
+        h1 { color: #0891b2; font-size: 2.2em; margin-bottom: 20px; }
+        h2 { color: #e8573a; font-size: 1.8em; margin-bottom: 15px; }
+        h3 { color: #2c7a4a; font-size: 1.4em; margin: 15px 0 10px; }
+        p, li { font-size: 1.15em; line-height: 1.8; color: #333; }
+        ul { padding-left: 30px; margin: 10px 0; }
+        .code-block {
+            background: #1e1e2e; color: #cdd6f4; padding: 20px;
+            border-radius: 12px; font-family: 'Courier New', monospace;
+            font-size: 0.95em; line-height: 1.6; overflow-x: auto;
+            margin: 15px 0; white-space: pre-wrap; word-break: break-all;
+        }
+        .code-block .keyword { color: #cba6f7; }
+        .code-block .string { color: #a6e3a1; }
+        .code-block .comment { color: #6c7086; font-style: italic; }
+        .code-block .number { color: #fab387; }
+        .nav-buttons {
+            position: absolute; bottom: 20px; left: 40px; right: 40px;
+            display: flex; justify-content: space-between;
+        }
+        .nav-btn {
+            background: linear-gradient(135deg, #0891b2, #0d9488);
+            color: white; border: none; padding: 12px 30px;
+            border-radius: 30px; font-size: 1.1em; cursor: pointer;
+            transition: transform 0.2s, box-shadow 0.2s;
+            font-family: 'PingFang SC', 'Microsoft YaHei', sans-serif;
+        }
+        .nav-btn:hover { transform: scale(1.05); box-shadow: 0 5px 20px rgba(8,145,178,0.4); }
+        .nav-btn:disabled { opacity: 0.4; cursor: default; transform: none; }
+        .page-indicator { font-size: 1.1em; color: #0891b2; align-self: center; }
+        .emoji-big { font-size: 3em; text-align: center; display: block; margin: 15px 0; }
+        .badge { display: inline-block; background: #ecfeff; color: #0891b2; padding: 5px 15px; border-radius: 20px; font-size: 0.9em; margin: 3px; }
+        table { width: 100%; border-collapse: collapse; margin: 15px 0; }
+        th, td { border: 2px solid #ddd; padding: 10px; text-align: left; }
+        th { background: #0891b2; color: white; }
+        .highlight-box { background: #fff3cd; border-left: 5px solid #ffc107; padding: 15px; border-radius: 8px; margin: 15px 0; }
+        .tip-box { background: #d4edda; border-left: 5px solid #28a745; padding: 15px; border-radius: 8px; margin: 15px 0; }
+        .compare-box { display: flex; gap: 15px; margin: 15px 0; flex-wrap: wrap; }
+        .compare-item { flex: 1; min-width: 250px; padding: 15px; border-radius: 10px; }
+        .good { background: #d4edda; border: 2px solid #28a745; }
+        .bad { background: #f8d7da; border: 2px solid #dc3545; }
+        @media (max-width: 600px) {
+            .slides-container { padding: 25px; }
+            h1 { font-size: 1.5em; }
+            .code-block { font-size: 0.75em; }
+        }
+    </style>
+</head>
+<body>
+    <div class="slides-container">
+        <!-- Slide 1: Title Page -->
+        <div class="slide active" id="slide1">
+            <span class="emoji-big">✍️</span>
+            <h1>第03课：注释与代码规范</h1>
+            <p style="text-align:center; color:#666;">第一阶段：C++初体验 | 课时：45分钟</p>
+            <p style="text-align:center; margin-top:20px; font-size:1.3em;">✨ 给程序写说明书 ✨</p>
+            <div style="text-align:center; margin-top:30px;">
+                <span class="badge">单行注释</span>
+                <span class="badge">多行注释</span>
+                <span class="badge">缩进</span>
+                <span class="badge">命名规则</span>
+            </div>
+        </div>
+
+        <!-- Slide 2: Learning Objectives -->
+        <div class="slide" id="slide2">
+            <h2>🎯 学习目标</h2>
+            <ul>
+                <li>理解<strong>注释</strong>是什么 —— 写在代码旁边的"备忘条"</li>
+                <li>掌握<strong>单行注释</strong>（//）和<strong>多行注释</strong>（斜杠星号...星号斜杠）</li>
+                <li>学习<strong>代码缩进</strong>和命名规范，养成好习惯</li>
+            </ul>
+            <div class="tip-box" style="margin-top:25px;">
+                <strong>💡 想一想：</strong><br>
+                你有没有在课本上划过重点、做过笔记？注释就是代码里的"笔记"！
+                编译器会忽略注释，但它们能让代码变得超级好懂。
+            </div>
+        </div>
+
+        <!-- Slide 3: Core Knowledge -->
+        <div class="slide" id="slide3">
+            <h2>📖 注释的种类</h2>
+
+            <h3>1️⃣ 单行注释：//</h3>
+            <div class="code-block">// 这是单行注释
+cout &lt;&lt; "Hello!";  // 也可以写在代码后面</div>
+
+            <h3>2️⃣ 多行注释：/* 开始，*/ 结束</h3>
+            <div class="code-block">/* 这是多行注释
+   可以写很多行
+   编译器全都会忽略 */</div>
+
+            <h3>3️⃣ 缩进：让代码有层次</h3>
+            <div class="compare-box">
+                <div class="compare-item bad">
+                    <strong>❌ 没有缩进</strong>
+                    <div class="code-block" style="font-size:0.8em;">int main() {
+cout &lt;&lt; "A";
+{
+cout &lt;&lt; "B";
+}
+}</div>
+                </div>
+                <div class="compare-item good">
+                    <strong>✅ 有缩进</strong>
+                    <div class="code-block" style="font-size:0.8em;">int main() {
+    cout &lt;&lt; "A";
+    {
+        cout &lt;&lt; "B";
+    }
+}</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Slide 4: Example Code -->
+        <div class="slide" id="slide4">
+            <h2>💻 好命名 vs 坏命名</h2>
+            <table>
+                <tr><th>❌ 坏名字</th><th>✅ 好名字</th><th>说明</th></tr>
+                <tr><td><code>a, b, c</code></td><td><code>age, score, name</code></td><td>名字要有意义</td></tr>
+                <tr><td><code>x1, x2</code></td><td><code>studentAge, maxScore</code></td><td>见名知意</td></tr>
+                <tr><td><code>1name</code></td><td><code>name1</code></td><td>不能数字开头</td></tr>
+            </table>
+
+            <h3>命名规则速记</h3>
+            <ul>
+                <li>只能使用 <strong>字母、数字、下划线</strong></li>
+                <li>第一个字符<strong>不能是数字</strong></li>
+                <li><strong>区分大小写</strong>（age 和 Age 不同）</li>
+                <li>使用<strong>驼峰式</strong>（myAge）或<strong>下划线式</strong>（my_age）</li>
+            </ul>
+
+            <div class="highlight-box">
+                <strong>🔑 口诀：</strong>双斜杠写单行，星号斜杠包多行；
+                缩进对齐层次清，好名字让代码自己会说话！
+            </div>
+        </div>
+
+        <!-- Slide 5: Practice -->
+        <div class="slide" id="slide5">
+            <h2>🎮 趣味练习</h2>
+
+            <h3>练习1：注释找茬 🔍</h3>
+            <p>下面多行注释少了一样东西，你发现了吗？</p>
+            <div class="code-block">/* 这是一个多行注释
+cout &lt;&lt; "hello";
+ ← 少了什么？</div>
+            <p style="color:#dc3545;">答案：缺少结束标记 <code>*/</code>！</p>
+
+            <h3>练习2：命名大改造 ✏️</h3>
+            <p>把下面的坏名字改成好名字：</p>
+            <table>
+                <tr><th>坏名字</th><th>含义</th><th>→ 好名字</th></tr>
+                <tr><td><code>x</code></td><td>年龄</td><td><code>age</code></td></tr>
+                <tr><td><code>y</code></td><td>身高</td><td><code>height</code></td></tr>
+                <tr><td><code>z</code></td><td>分数</td><td><code>score</code></td></tr>
+            </table>
+
+            <h3>练习3：给代码"化妆" 💄</h3>
+            <p>帮下面乱糟糟的代码加上缩进！</p>
+            <div class="code-block" style="font-size:0.85em;">int main() {
+cout &lt;&lt; "A";
+{
+cout &lt;&lt; "B";
+}
+return 0;
+}</div>
+        </div>
+
+        <!-- Slide 6: Summary -->
+        <div class="slide" id="slide6">
+            <h2>📝 本课小结</h2>
+            <table>
+                <tr><th>知识点</th><th>语法</th><th>比喻</th></tr>
+                <tr><td>单行注释</td><td><code>// 注释</code></td><td>📝 便签条</td></tr>
+                <tr><td>多行注释</td><td><code>/* 注释 */</code></td><td>📄 说明书</td></tr>
+                <tr><td>缩进</td><td>4个空格/Tab</td><td>📏 分层书架</td></tr>
+                <tr><td>命名</td><td>有意义的名字</td><td>🏷️ 标签</td></tr>
+            </table>
+            <div class="highlight-box" style="margin-top:20px;">
+                <strong>🔑 记住口诀：</strong><br>
+                双斜杠写单行，星号斜杠包多行；<br>
+                缩进对齐层次清，好名字让代码自己会说话！
+            </div>
+            <p style="text-align:center; margin-top:20px; font-size:1.3em;">🎉 下一课预告：小小翻译官——C++程序的运行</p>
+        </div>
+
+        <!-- Navigation -->
+        <div class="nav-buttons">
+            <button class="nav-btn" onclick="prevSlide()">◀ 上一页</button>
+            <span class="page-indicator" id="pageIndicator">1 / 6</span>
+            <button class="nav-btn" onclick="nextSlide()">下一页 ▶</button>
+        </div>
+    </div>
+
+    <script>
+        let currentSlide = 0;
+        const slides = document.querySelectorAll('.slide');
+        const totalSlides = slides.length;
+        const indicator = document.getElementById('pageIndicator');
+
+        function showSlide(n) {
+            slides[currentSlide].classList.remove('active');
+            currentSlide = (n + totalSlides) % totalSlides;
+            slides[currentSlide].classList.add('active');
+            indicator.textContent = (currentSlide + 1) + ' / ' + totalSlides;
+            document.querySelectorAll('.nav-btn')[0].disabled = currentSlide === 0;
+            document.querySelectorAll('.nav-btn')[1].disabled = currentSlide === totalSlides - 1;
+        }
+        function nextSlide() { showSlide(currentSlide + 1); }
+        function prevSlide() { showSlide(currentSlide - 1); }
+
+        document.addEventListener('keydown', function(e) {
+            if (e.key === 'ArrowRight' || e.key === ' ') { e.preventDefault(); nextSlide(); }
+            else if (e.key === 'ArrowLeft') { e.preventDefault(); prevSlide(); }
+        });
+
+        indicator.textContent = (currentSlide + 1) + ' / ' + totalSlides;
+    </script>
+</body>
+</html>

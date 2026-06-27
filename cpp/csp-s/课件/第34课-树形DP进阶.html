@@ -1,0 +1,543 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>第34课：树形DP进阶 — CSP-S 竞赛培训</title>
+<style>
+/* ===== CSS Reset & Variables ===== */
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --bg:#0d1b2a;--bg-soft:#111f33;--surface:#152238;--surface-2:#1a2d45;
+  --border:rgba(100,181,246,.15);--border-strong:rgba(100,181,246,.3);
+  --text-1:#e8edf3;--text-2:#a0b8d0;--text-3:#6a8098;
+  --accent:#64b5f6;--accent-2:#ffb74d;--accent-3:#ef5350;
+  --grad:linear-gradient(135deg,#0d1b2a,#152238);
+  --code-bg:#0a1628;--code-text:#c9d1d9;
+  --radius:12px;--radius-lg:18px;
+  --shadow:0 8px 32px rgba(0,0,0,.4);
+  --font:'Inter','Noto Sans SC','PingFang SC','Microsoft YaHei',sans-serif;
+  --mono:'JetBrains Mono','Fira Code','Consolas',monospace;
+}
+html,body{height:100%;overflow:hidden;font-family:var(--font);background:var(--bg);color:var(--text-1)}
+.deck{width:100%;height:100%;position:relative}
+
+/* ===== Slide ===== */
+.slide{
+  position:absolute;inset:0;display:none;
+  padding:clamp(28px,5vh,56px) clamp(36px,7vw,88px);
+  overflow-y:auto;flex-direction:column;justify-content:center;
+  opacity:0;transition:opacity .4s ease;
+}
+.slide.is-active{display:flex;opacity:1}
+.slide.cover{align-items:center;text-align:center}
+.slide.split{display:grid;grid-template-columns:240px 1fr;gap:40px;align-content:start}
+
+/* ===== Typography ===== */
+.kicker{color:var(--accent-2);font-size:13px;font-weight:700;letter-spacing:.12em;text-transform:uppercase}
+h1{font-size:clamp(30px,4.5vw,56px);line-height:1.15;font-weight:800;letter-spacing:-.02em;color:var(--text-1)}
+h1 em{color:var(--accent);font-style:normal}
+h2{font-size:clamp(22px,3vw,40px);line-height:1.2;font-weight:700;color:var(--text-1)}
+h2 em{color:var(--accent);font-style:normal}
+h3{font-size:clamp(16px,1.8vw,22px);font-weight:600;color:var(--text-1)}
+h4{font-size:15px;font-weight:600;color:var(--text-1)}
+.lede{font-size:clamp(14px,1.4vw,18px);color:var(--text-2);line-height:1.7}
+.sub{font-size:14px;color:var(--text-3);line-height:1.6}
+.dim{color:var(--text-3)}
+
+/* ===== Layout Helpers ===== */
+.mt-s{margin-top:10px}.mt-m{margin-top:20px}.mt-l{margin-top:32px}.mt-xl{margin-top:48px}
+.gap-s{gap:10px}.gap-m{gap:16px}.gap-l{gap:24px}
+.row{display:flex;flex-wrap:wrap;align-items:center}
+.grid{display:grid}.g2{grid-template-columns:1fr 1fr}.g3{grid-template-columns:1fr 1fr 1fr}
+.stack{display:flex;flex-direction:column}
+
+/* ===== Components ===== */
+.card{
+  background:var(--surface);border:1px solid var(--border);
+  border-radius:var(--radius);padding:20px 24px;box-shadow:var(--shadow);
+  transition:transform .2s,border-color .2s;
+}
+.card:hover{transform:translateY(-2px);border-color:var(--accent)}
+.card h4{color:var(--accent);margin-bottom:6px}
+.card p{color:var(--text-2);line-height:1.6;font-size:13px}
+.card.accent{border-left:3px solid var(--accent-2)}
+
+.callout{
+  border-left:4px solid var(--accent-2);background:var(--surface-2);
+  padding:16px 20px;border-radius:0 var(--radius) var(--radius) 0;
+  color:var(--text-2);line-height:1.6;font-size:14px;
+}
+.callout b{color:var(--accent-2)}
+
+.tag{
+  display:inline-block;padding:4px 12px;border-radius:4px;
+  background:var(--surface-2);border:1px solid var(--border);
+  font-size:12px;color:var(--text-2);font-family:var(--mono);
+}
+
+/* ===== Code Block ===== */
+.code-block{
+  background:var(--code-bg);color:var(--code-text);
+  border-radius:var(--radius);padding:16px 20px;
+  font-family:var(--mono);font-size:12px;line-height:1.65;
+  overflow-x:auto;white-space:pre;border:1px solid var(--border);
+}
+.code-block .kw{color:#c792ea}
+.code-block .dt{color:#82aaff}
+.code-block .fn{color:#82aaff}
+.code-block .str{color:#c3e88d}
+.code-block .cmt{color:#546e7a;font-style:italic}
+.code-block .num{color:#f78c6c}
+.code-block .op{color:#89ddff}
+.code-block .pp{color:#c792ea}
+
+/* ===== Formula ===== */
+.formula{
+  background:var(--surface-2);border:1px solid var(--border);
+  border-radius:var(--radius);padding:14px 20px;
+  font-family:var(--mono);font-size:13px;line-height:1.7;
+  color:var(--accent);white-space:pre;
+}
+.formula b{color:var(--accent-2)}
+
+/* ===== Sidebar ===== */
+.sidebar{
+  border-right:1px solid var(--border);padding-right:20px;
+  display:flex;flex-direction:column;gap:6px;
+}
+.sidebar .brand{font-size:17px;font-weight:700;color:var(--accent)}
+.sidebar h5{font-size:11px;font-weight:700;text-transform:uppercase;
+  letter-spacing:.1em;color:var(--text-3);margin-top:16px;}
+.progress-list{list-style:none;display:flex;flex-direction:column;gap:3px}
+.progress-list li{font-size:12px;color:var(--text-3);padding:4px 0 4px 16px;
+  position:relative;border-bottom:1px dashed var(--border)}
+.progress-list li::before{content:"○";position:absolute;left:0;font-size:9px;color:var(--text-3)}
+.progress-list li.done{color:var(--text-2)}
+.progress-list li.done::before{content:"●";color:var(--accent)}
+.progress-list li.current{color:var(--text-1);font-weight:600}
+.progress-list li.current::before{content:"▸";color:var(--accent-2)}
+
+/* ===== Comparison Table ===== */
+.cmp-table{
+  width:100%;border-collapse:collapse;margin-top:12px;
+  font-size:13px;
+}
+.cmp-table th{
+  background:var(--surface-2);color:var(--accent);
+  padding:10px 14px;text-align:left;font-weight:600;
+  border-bottom:2px solid var(--border);
+}
+.cmp-table td{
+  padding:10px 14px;border-bottom:1px solid var(--border);
+  color:var(--text-2);
+}
+.cmp-table tr:hover td{background:var(--surface-2)}
+
+/* ===== Nav ===== */
+.nav-bar{
+  position:fixed;bottom:0;left:0;right:0;z-index:100;
+  background:rgba(13,27,42,.92);backdrop-filter:blur(12px);
+  border-top:1px solid var(--border);padding:12px 24px;
+  display:flex;align-items:center;justify-content:space-between;
+}
+.nav-btn{
+  background:var(--surface);border:1px solid var(--border);
+  color:var(--text-1);padding:8px 20px;border-radius:8px;
+  cursor:pointer;font-size:14px;font-weight:500;
+  transition:background .2s,border-color .2s;
+  font-family:var(--font);
+}
+.nav-btn:hover{background:var(--surface-2);border-color:var(--accent)}
+.nav-btn:disabled{opacity:.3;cursor:default}
+.nav-btn:disabled:hover{background:var(--surface);border-color:var(--border)}
+.slide-counter{font-size:13px;color:var(--text-3);font-family:var(--mono)}
+.progress-dots{display:flex;gap:6px}
+.dot{width:8px;height:8px;border-radius:50%;background:var(--border);transition:all .3s;cursor:pointer}
+.dot.active{background:var(--accent);width:24px;border-radius:4px}
+
+/* ===== Responsive ===== */
+@media(max-width:768px){
+  .slide.split{grid-template-columns:1fr;gap:20px}
+  .sidebar{border-right:none;border-bottom:1px solid var(--border);padding-bottom:14px;padding-right:0}
+  h1{font-size:26px}h2{font-size:20px}
+  .g2,.g3{grid-template-columns:1fr}
+  .slide{padding:20px 16px}
+  .cmp-table{font-size:11px}
+  .cmp-table th,.cmp-table td{padding:6px 8px}
+}
+</style>
+</head>
+<body>
+<div class="deck">
+
+<!-- ===== Slide 1: Cover ===== -->
+<section class="slide cover is-active" data-index="0">
+  <p class="kicker">CSP-S 竞赛培训 · 第34课</p>
+  <h1 class="mt-s">树形DP<em>进阶</em></h1>
+  <p class="lede mt-m" style="max-width:700px">
+    在基础模型之上，掌握<strong>树的直径</strong>（两种方法）、<strong>树上背包</strong>（依赖选课问题）
+    与<strong>换根DP</strong>（二次扫描法）三大进阶模型。
+  </p>
+  <div class="row mt-l gap-m">
+    <span class="tag">难度：提高级 ~ 省选</span>
+    <span class="tag">前置：第33课 树形DP基础</span>
+    <span class="tag">语言：C++</span>
+  </div>
+  <p class="dim mt-m" style="font-size:13px">预计时长 75 分钟 · 包含 3 道经典例题</p>
+</section>
+
+<!-- ===== Slide 2: Tree Diameter ===== -->
+<section class="slide split" data-index="1">
+  <aside class="sidebar">
+    <div class="brand">CSP-S 进阶</div>
+    <h5>本课要点</h5>
+    <ul class="progress-list">
+      <li class="current">树的直径</li>
+      <li>树上背包</li>
+      <li>换根DP</li>
+      <li>复杂度分析</li>
+      <li>真题精练</li>
+    </ul>
+    <h5>两种方法</h5>
+    <p class="dim" style="font-size:12px">① 两次DFS（仅非负权）<br>② 树形DP（可负权）</p>
+  </aside>
+  <div class="main">
+    <p class="kicker">模型一</p>
+    <h2 class="mt-s">树的<em>直径</em></h2>
+    <p class="lede mt-m">
+      直径定义为树上任意两点间的最长简单路径长度。
+    </p>
+
+    <div class="grid g2 gap-m mt-m">
+      <div class="card accent">
+        <h4 style="color:var(--accent-2)">方法1：两次DFS</h4>
+        <p>从任意点找最远点A，再从A找最远点B。dist(A,B)即为直径。</p>
+        <p style="font-size:11px;color:var(--text-3);margin-top:4px">
+          仅适用于边权非负 | O(n)
+        </p>
+      </div>
+      <div class="card accent">
+        <h4 style="color:var(--accent-2)">方法2：树形DP</h4>
+        <p>维护每个节点向下最长路径d1和次长路径d2。diameter = max(d1[i] + d2[i])。</p>
+        <p style="font-size:11px;color:var(--text-3);margin-top:4px">
+          可处理负权边 | O(n) | 一次DFS
+        </p>
+      </div>
+    </div>
+
+    <div class="formula mt-m"><b>方法2核心代码：</b>
+<span class="dt">int</span> diameter = <span class="num">0</span>;
+<span class="dt">int</span> <span class="fn">dfs</span>(<span class="dt">int</span> u, <span class="dt">int</span> fa) {
+    <span class="dt">int</span> d1 = <span class="num">0</span>, d2 = <span class="num">0</span>;
+    <span class="kw">for</span> (<span class="kw">auto</span> [v, w] : g[u]) {
+        <span class="kw">if</span> (v <span class="op">==</span> fa) <span class="kw">continue</span>;
+        <span class="dt">int</span> d = <span class="fn">dfs</span>(v, u) <span class="op">+</span> w;
+        <span class="kw">if</span> (d <span class="op">&gt;</span> d1) { d2 <span class="op">=</span> d1; d1 <span class="op">=</span> d; }
+        <span class="kw">else</span> <span class="kw">if</span> (d <span class="op">&gt;</span> d2) d2 <span class="op">=</span> d;
+    }
+    diameter <span class="op">=</span> <span class="fn">max</span>(diameter, d1 <span class="op">+</span> d2);
+    <span class="kw">return</span> d1;
+}</div>
+  </div>
+</section>
+
+<!-- ===== Slide 3: Tree Knapsack ===== -->
+<section class="slide split" data-index="2">
+  <aside class="sidebar">
+    <div class="brand">CSP-S 进阶</div>
+    <h5>本课要点</h5>
+    <ul class="progress-list">
+      <li class="done">树的直径</li>
+      <li class="current">树上背包</li>
+      <li>换根DP</li>
+      <li>复杂度分析</li>
+      <li>真题精练</li>
+    </ul>
+    <h5>对应题目</h5>
+    <p class="dim" style="font-size:12px">洛谷 P2014<br>CTSC 1997 选课</p>
+  </aside>
+  <div class="main">
+    <p class="kicker">模型二</p>
+    <h2 class="mt-s">树上<em>背包</em> — 选课问题</h2>
+    <p class="lede mt-m">
+      n 门课，每门有学分和先修课。选 m 门课，若选某课则其先修课也必须选。求最大总学分。
+    </p>
+
+    <div class="card accent mt-m">
+      <h4 style="color:var(--accent-2)">建模思路</h4>
+      <p style="font-size:13px">
+        ① 添加虚拟根节点 0（学分为 0）<br>
+        ② 所有无先修课的课程父节点设为 0 → 构建有根树<br>
+        ③ 问题转化为：在树上选 m+1 个节点（含虚拟根），父节点必选，最大化学分<br>
+        ④ 使用<strong>分组背包</strong>模型进行 DP 转移
+      </p>
+    </div>
+
+    <div class="code-block mt-m"><span class="cmt">// 核心转移（分组背包）</span>
+<span class="dt">void</span> <span class="fn">dfs</span>(<span class="dt">int</span> u) {
+    sz[u] = <span class="num">1</span>; dp[u][<span class="num">1</span>] = score[u];
+    <span class="kw">for</span> (<span class="dt">int</span> v : g[u]) {
+        <span class="fn">dfs</span>(v);
+        <span class="cmt">// j 逆序，上限取 min(m, sz[u]+sz[v])</span>
+        <span class="kw">for</span> (<span class="dt">int</span> j <span class="op">=</span> <span class="fn">min</span>(m, sz[u] <span class="op">+</span> sz[v]); j <span class="op">&gt;=</span> <span class="num">1</span>; j<span class="op">--</span>)
+            <span class="kw">for</span> (<span class="dt">int</span> k <span class="op">=</span> <span class="fn">max</span>(<span class="num">1</span>, j <span class="op">-</span> sz[u]); k <span class="op">&lt;=</span> <span class="fn">min</span>(j<span class="op">-</span><span class="num">1</span>, sz[v]); k<span class="op">++</span>)
+                dp[u][j] <span class="op">=</span> <span class="fn">max</span>(dp[u][j], dp[u][j<span class="op">-</span>k] <span class="op">+</span> dp[v][k]);
+        sz[u] <span class="op">+=</span> sz[v];
+    }
+}</div>
+    <div class="callout mt-m">
+      <b>复杂度优化：</b> 利用子树大小 sz 剪枝，j 的上界取已处理大小而非 m，
+      可将复杂度从 O(nm²) 优化到 <b>O(nm)</b>。
+    </div>
+  </div>
+</section>
+
+<!-- ===== Slide 4: Rerooting DP ===== -->
+<section class="slide split" data-index="3">
+  <aside class="sidebar">
+    <div class="brand">CSP-S 进阶</div>
+    <h5>本课要点</h5>
+    <ul class="progress-list">
+      <li class="done">树的直径</li>
+      <li class="done">树上背包</li>
+      <li class="current">换根DP</li>
+      <li>复杂度分析</li>
+      <li>真题精练</li>
+    </ul>
+    <h5>对应题目</h5>
+    <p class="dim" style="font-size:12px">洛谷 P3478<br>POI 2008 STA-Station</p>
+  </aside>
+  <div class="main">
+    <p class="kicker">模型三</p>
+    <h2 class="mt-s">换根<em>DP</em> — 二次扫描法</h2>
+    <p class="lede mt-m">
+      有时需要求<strong>以每个节点为根</strong>时的某种 DP 值。
+      若对每个根都重新计算，复杂度 O(n²)。换根 DP 可在 <b>O(n)</b> 内完成。
+    </p>
+
+    <div class="grid g2 gap-m mt-m">
+      <div class="card">
+        <h4>第一次扫描（后序）</h4>
+        <p>固定根为 1，计算每个节点的<strong>子树信息</strong>：子树大小 size[u]、子树内深度和 dp_down[u]。</p>
+        <div class="formula" style="margin-top:6px;font-size:11px">size[u] = 1 + Σ size[v]
+dp_down[u] = Σ (dp_down[v] + size[v])</div>
+      </div>
+      <div class="card">
+        <h4>第二次扫描（先序）</h4>
+        <p>利用父节点答案推导子节点答案。从 u 换根到 v 的<strong>递推公式</strong>：</p>
+        <div class="formula" style="margin-top:6px;font-size:13px"><b>ans[v] = ans[u] + n - 2×size[v]</b></div>
+      </div>
+    </div>
+
+    <div class="card accent mt-m">
+      <h4 style="color:var(--accent-2)">换根公式的直观理解</h4>
+      <p style="font-size:13px">
+        从以 u 为根切换到以 v 为根时：<br>
+        • 子树 v 中的 size[v] 个点到新根的距离<b>减 1</b><br>
+        • 其余 n - size[v] 个点到新根的距离<b>加 1</b><br>
+        因此：ans[v] = ans[u] - size[v] + (n - size[v])
+      </p>
+    </div>
+  </div>
+</section>
+
+<!-- ===== Slide 5: Comparison & Complexity ===== -->
+<section class="slide split" data-index="4">
+  <aside class="sidebar">
+    <div class="brand">CSP-S 进阶</div>
+    <h5>本课要点</h5>
+    <ul class="progress-list">
+      <li class="done">树的直径</li>
+      <li class="done">树上背包</li>
+      <li class="done">换根DP</li>
+      <li class="current">复杂度分析</li>
+      <li>真题精练</li>
+    </ul>
+    <h5>关键技巧</h5>
+    <p class="dim" style="font-size:12px">树上背包剪枝<br>换根递推公式</p>
+  </aside>
+  <div class="main">
+    <p class="kicker">对比与总结</p>
+    <h2 class="mt-s">三种模型的<em>对比</em></h2>
+
+    <table class="cmp-table mt-m">
+      <thead><tr><th>模型</th><th>核心思想</th><th>复杂度</th><th>关键技巧</th></tr></thead>
+      <tbody>
+        <tr>
+          <td style="color:var(--accent);font-weight:600">树的直径</td>
+          <td>最长路径以某节点为"拐点"</td>
+          <td>O(n)</td>
+          <td>两次DFS（非负权）<br>树形DP（可负权）</td>
+        </tr>
+        <tr>
+          <td style="color:var(--accent);font-weight:600">树上背包</td>
+          <td>子树 = 分组背包的"组"</td>
+          <td>O(nm)</td>
+          <td>子树大小剪枝<br>j上限取已处理大小</td>
+        </tr>
+        <tr>
+          <td style="color:var(--accent);font-weight:600">换根DP</td>
+          <td>先固定根求子树信息<br>再利用父节点推导全局</td>
+          <td>O(n)</td>
+          <td>找到换根递推公式<br>两次DFS扫描</td>
+        </tr>
+      </tbody>
+    </table>
+
+    <div class="callout mt-m">
+      <b>树上背包复杂度 O(nm) 原理（简要）：</b>
+      任意两个节点 a、b 只在其 LCA（最近公共祖先）处被枚举一次。
+      利用子树大小剪枝是关键——j 的枚举上界取 <code>min(m, size_now)</code>
+      而非总是 <code>m</code>，避免大量无效状态的枚举。
+    </div>
+  </div>
+</section>
+
+<!-- ===== Slide 6: Practice Problems ===== -->
+<section class="slide split" data-index="5">
+  <aside class="sidebar">
+    <div class="brand">CSP-S 进阶</div>
+    <h5>本课要点</h5>
+    <ul class="progress-list">
+      <li class="done">树的直径</li>
+      <li class="done">树上背包</li>
+      <li class="done">换根DP</li>
+      <li class="done">复杂度分析</li>
+      <li class="current">真题精练</li>
+    </ul>
+    <h5>推荐练习</h5>
+    <p class="dim" style="font-size:12px">
+      洛谷 P2014 选课<br>
+      洛谷 P3478 STA<br>
+      洛谷 P3047 Nearby Cows<br>
+      AcWing 1073 树的中心<br>
+      洛谷 P1273 有线电视网
+    </p>
+  </aside>
+  <div class="main">
+    <p class="kicker">真题精练</p>
+    <h2 class="mt-s">三道经典<em>例题</em></h2>
+
+    <div class="card accent mt-m">
+      <h4 style="color:var(--accent-2)">题1：树的直径</h4>
+      <p style="font-size:13px;margin:4px 0">
+        给定 n 个节点的树，边有正整数长度。求最长路径长度。<br>
+        <span style="color:var(--text-3);font-size:11px">n ≤ 100000 · 方法：两次DFS 或 树形DP</span>
+      </p>
+    </div>
+
+    <div class="card accent mt-m">
+      <h4 style="color:var(--accent-2)">题2：选课问题 [CTSC1997]</h4>
+      <p style="font-size:13px;margin:4px 0">
+        n 门课有学分和先修课，选 m 门课。选课需先修先修课。求最大总学分。<br>
+        <span style="color:var(--text-3);font-size:11px">n ≤ 300, m ≤ n · 树上分组背包 O(nm)</span>
+      </p>
+    </div>
+
+    <div class="card accent mt-m">
+      <h4 style="color:var(--accent-2)">题3：STA-Station [POI2008]</h4>
+      <p style="font-size:13px;margin:4px 0">
+        求一个节点为根，使得所有节点深度之和最大。多解输出编号最小的。<br>
+        <span style="color:var(--text-3);font-size:11px">n ≤ 10⁶ · 换根DP: ans[v] = ans[u] + n - 2×size[v]</span>
+      </p>
+    </div>
+
+    <div class="callout mt-m">
+      <b>AC代码：</b> 完整实现见 <code>程序/lesson34_tree_dp_advanced.cpp</code>
+    </div>
+  </div>
+</section>
+
+<!-- ===== Slide 7: Summary ===== -->
+<section class="slide cover" data-index="6">
+  <p class="kicker">本课小结 · 第34课</p>
+  <h1 class="mt-s">树形DP<em>进阶</em>总结</h1>
+  <div class="grid g3 mt-l gap-m" style="max-width:960px;margin-left:auto;margin-right:auto;text-align:left">
+    <div class="card"><h4>✓ 树的直径</h4><p>两次DFS（非负权，简洁）或树形DP维护 d1+d2（可负权）。均为 O(n)。</p></div>
+    <div class="card"><h4>✓ 树上背包</h4><p>将子树视为分组背包的"组"。利用子树大小剪枝优化到 O(nm)。</p></div>
+    <div class="card"><h4>✓ 换根DP</h4><p>固定根 → 子树信息 → 利用父节点递推。核心是找到换根公式。</p></div>
+  </div>
+  <div class="callout mt-l" style="max-width:700px;margin-left:auto;margin-right:auto;text-align:left">
+    <b>CSP-S 考试要点：</b> 树的直径是高频考点（优先两次DFS）；
+    树上背包关注复杂度剪枝；换根DP掌握两次扫描框架。
+    <strong>识别题目中的树结构是第一步！</strong>
+  </div>
+</section>
+
+</div>
+
+<!-- ===== Navigation Bar ===== -->
+<nav class="nav-bar">
+  <button class="nav-btn" id="prevBtn" onclick="goPrev()">← 上一页</button>
+  <div style="display:flex;align-items:center;gap:12px">
+    <div class="progress-dots" id="dots"></div>
+    <span class="slide-counter" id="counter">1 / 7</span>
+  </div>
+  <button class="nav-btn" id="nextBtn" onclick="goNext()">下一页 →</button>
+</nav>
+
+<script>
+/* ===== Slide Navigation ===== */
+let current = 0;
+const slides = document.querySelectorAll('.slide');
+const total = slides.length;
+const prevBtn = document.getElementById('prevBtn');
+const nextBtn = document.getElementById('nextBtn');
+const counter = document.getElementById('counter');
+const dotsContainer = document.getElementById('dots');
+
+/* Build progress dots */
+for (let i = 0; i < total; i++) {
+  const dot = document.createElement('span');
+  dot.className = 'dot' + (i === 0 ? ' active' : '');
+  dot.onclick = () => goTo(i);
+  dotsContainer.appendChild(dot);
+}
+
+function showSlide(idx) {
+  slides.forEach((s,i) => {
+    s.classList.toggle('is-active', i === idx);
+  });
+  document.querySelectorAll('.dot').forEach((d,i) => {
+    d.classList.toggle('active', i === idx);
+  });
+  prevBtn.disabled = idx === 0;
+  nextBtn.disabled = idx === total - 1;
+  counter.textContent = (idx + 1) + ' / ' + total;
+}
+
+function goTo(idx) {
+  current = Math.max(0, Math.min(total - 1, idx));
+  showSlide(current);
+}
+
+function goNext() { goTo(current + 1); }
+function goPrev() { goTo(current - 1); }
+
+/* Keyboard navigation */
+document.addEventListener('keydown', e => {
+  if (e.key === 'ArrowRight' || e.key === 'ArrowDown' || e.key === ' ') {
+    e.preventDefault(); goNext();
+  } else if (e.key === 'ArrowLeft' || e.key === 'ArrowUp') {
+    e.preventDefault(); goPrev();
+  } else if (e.key === 'Home') {
+    e.preventDefault(); goTo(0);
+  } else if (e.key === 'End') {
+    e.preventDefault(); goTo(total - 1);
+  }
+});
+
+/* Touch swipe support */
+let touchStartX = 0;
+document.addEventListener('touchstart', e => { touchStartX = e.touches[0].clientX; });
+document.addEventListener('touchend', e => {
+  const diff = touchStartX - e.changedTouches[0].clientX;
+  if (Math.abs(diff) > 50) { diff > 0 ? goNext() : goPrev(); }
+});
+
+/* Initialize */
+showSlide(0);
+</script>
+</body>
+</html>

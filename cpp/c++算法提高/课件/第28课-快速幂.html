@@ -1,0 +1,393 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>第28课：快速幂——高效的指数运算</title>
+<style>
+* { margin: 0; padding: 0; box-sizing: border-box; }
+body { font-family: 'PingFang SC','Microsoft YaHei',sans-serif; background:#1a1a2e; color:#e0e0e0; min-height:100vh; display:flex; flex-direction:column; align-items:center; }
+.slideshow { width:100%; max-width:960px; margin:20px auto; position:relative; }
+.slide { display:none; background:#16213e; border-radius:12px; padding:40px; min-height:540px; box-shadow:0 8px 32px rgba(0,0,0,.4); animation:fadeIn .4s; }
+.slide.active { display:block; }
+@keyframes fadeIn { from{opacity:0;transform:translateY(12px);} to{opacity:1;transform:translateY(0);} }
+h1 { font-size:2em; color:#e94560; margin-bottom:16px; border-bottom:2px solid #e94560; padding-bottom:10px; }
+h2 { font-size:1.5em; color:#0f3460; background:#e94560; display:inline-block; padding:6px 18px; border-radius:6px; margin-bottom:18px; }
+h3 { color:#f5c518; margin:12px 0 6px; }
+ul { margin:12px 0; padding-left:24px; }
+li { margin:8px 0; line-height:1.7; }
+pre { background:#0d1b2a; border-radius:8px; padding:16px; overflow-x:auto; margin:12px 0; font-size:.88em; border-left:4px solid #e94560; }
+code { font-family:'Cascadia Code','Fira Code','Consolas',monospace; color:#7ec8e3; }
+.label { color:#f5c518; font-weight:bold; }
+.note { color:#aaa; font-size:.9em; }
+.navigation { display:flex; justify-content:center; gap:16px; margin:20px 0; }
+.nav-btn { background:#e94560; color:#fff; border:none; padding:10px 28px; border-radius:8px; font-size:1em; cursor:pointer; transition:background .3s; }
+.nav-btn:hover { background:#c73a52; }
+.nav-btn:disabled { background:#555; cursor:not-allowed; }
+.page-indicator { color:#aaa; font-size:.9em; align-self:center; }
+.highlight { color:#f5c518; font-weight:bold; }
+.step-box { background:#0d1b2a; border-left:4px solid #f5c518; padding:12px 16px; margin:8px 0; border-radius:4px; }
+.ascii-box { font-family:'Courier New',monospace; background:#0d1b2a; padding:14px; border-radius:6px; line-height:1.5; white-space:pre; font-size:.85em; color:#a8d8a8; }
+.diagram-row { display:flex; justify-content:center; gap:20px; margin:10px 0; flex-wrap:wrap; }
+.diagram-item { background:#1a1a3e; padding:12px 20px; border-radius:8px; border:2px solid #e94560; min-width:80px; text-align:center; }
+.diagram-item.mu { border-color:#f5c518; }
+.diagram-item.xiao { border-color:#7ec8e3; }
+.diagram-label { font-size:.8em; color:#aaa; }
+.diagram-result { background:#0d1b2a; padding:12px 20px; border-radius:8px; border:2px solid #4ecdc4; display:inline-block; margin-top:10px; }
+
+/* 新增：二分计算步骤图 */
+.exp-split { display:flex; flex-direction:column; gap:8px; margin:12px 0; }
+.exp-row { display:flex; align-items:center; gap:12px; flex-wrap:wrap; }
+.exp-step { background:#1a1a3e; padding:8px 16px; border-radius:6px; border-left:3px solid #e94560; font-family:'Courier New',monospace; font-size:.9em; }
+.exp-arrow { color:#e94560; font-weight:bold; font-size:1.2em; }
+.exp-result { background:#0f3460; padding:8px 16px; border-radius:6px; border:2px solid #4ecdc4; font-family:'Courier New',monospace; }
+
+/* 矩阵展示 */
+.matrix-display { display:inline-grid; grid-template-columns:1fr 1fr; gap:2px; background:#e94560; padding:2px; border-radius:4px; margin:8px; }
+.matrix-cell { background:#0d1b2a; padding:10px 16px; text-align:center; font-family:'Courier New',monospace; color:#7ec8e3; font-size:.9em; }
+
+/* 复杂度对比图 */
+.bar-chart { display:flex; align-items:flex-end; gap:20px; justify-content:center; margin:20px 0; height:180px; }
+.bar { width:60px; border-radius:6px 6px 0 0; position:relative; transition:height .8s; }
+.bar-label { text-align:center; margin-top:8px; font-size:.85em; color:#aaa; }
+.bar-value { position:absolute; top:-24px; width:100%; text-align:center; font-weight:bold; font-size:.8em; }
+.bar-o1 { background:linear-gradient(180deg, #e94560, #a83048); }
+.bar-on { background:linear-gradient(180deg, #f5c518, #b89700); }
+.bar-olog { background:linear-gradient(180deg, #4ecdc4, #2d8a84); }
+
+@media(max-width:640px) { .slide { padding:20px; } h1 { font-size:1.4em; } }
+</style>
+</head>
+<body>
+
+<div class="slideshow" id="slideshow">
+
+<!-- 幻灯片1：标题页 -->
+<div class="slide active" id="slide1">
+<h1>第28课：快速幂</h1>
+<h2>高效的指数运算 —— 从 O(n) 到 O(log n) 的飞跃</h2>
+<div style="margin:30px 0;">
+<p style="font-size:1.2em;line-height:2;">
+  <span class="highlight">核心思想：</span>将指数二进制拆分，每次将问题规模减半<br>
+  <span class="highlight">时间复杂度：</span>O(log n)，远优于朴素算法的 O(n)<br>
+  <span class="highlight">应用场景：</span>大数取模、矩阵快速幂、密码学<br>
+  <span class="highlight">前置知识：</span>二进制、递归、矩阵乘法
+</p>
+</div>
+<div class="step-box">
+<strong> 生活中的类比：</strong><br>
+计算 3<sup>100</sup> —— 朴素方法需要做99次乘法；快速幂只需做约7次！效率提升<span class="highlight">10倍以上</span>。
+</div>
+</div>
+
+<!-- 幻灯片2：问题引入 -->
+<div class="slide" id="slide2">
+<h2> 问题引入：指数爆炸的挑战</h2>
+
+<h3>一个看似简单的问题</h3>
+<p>计算 <span class="highlight">a<sup>b</sup> mod m</span>，其中 a、b、m 都是非常大的整数。<br>例如：计算 2<sup>1000000000</sup> mod (10<sup>9</sup>+7)，直接循环 10<sup>9</sup> 次？</p>
+
+<div class="step-box">
+<strong>⏱️ 朴素算法的困境：</strong><br>
+<pre style="background:transparent;border:none;padding:8px 0;margin:0;font-size:.95em;"><code>// 朴素方法：O(b) —— b 次循环！
+long long result = 1;
+for (int i = 0; i < b; i++) {
+    result = (result * a) % m;  // 每次模运算防止溢出
+}
+// 当 b = 10^9 时，需要 10^9 次循环，约 1 秒（勉强）
+// 当 b = 10^18 时，需要 10^18 次循环，约 30 亿年！</code></pre>
+</div>
+
+<h3>为什么需要快速幂？</h3>
+<div style="display:grid; grid-template-columns:1fr 1fr; gap:16px; margin:16px 0;">
+<div class="step-box">
+<span class="highlight">算法竞赛</span><br>
+<div class="note">时间限制通常 1s，O(b) 在 b&gt;10<sup>7</sup> 时就会超时</div>
+</div>
+<div class="step-box">
+<span class="highlight">密码学</span><br>
+<div class="note">RSA 等算法需要计算 a<sup>b</sup> mod m，b 可达 2<sup>2048</sup></div>
+</div>
+</div>
+
+<div class="note"> 核心洞察：利用指数的"可拆分性"，将 b 次乘法减少到 log<sub>2</sub>(b) 次！</div>
+</div>
+
+<!-- 幻灯片3：二分幂思想 -->
+<div class="slide" id="slide3">
+<h2>🧠 二分幂思想：指数拆分</h2>
+
+<h3>核心递推关系</h3>
+<div class="ascii-box" style="text-align:center;font-size:1.05em;">
+┌─────────────────────────────────────────────────┐
+│          a^b 的二分拆分策略                       │
+│                                                  │
+│  当 b 为偶数时:  a^b = (a^(b/2))^2               │
+│  当 b 为奇数时:  a^b = (a^(b/2))^2 × a           │
+│                                                  │
+│  每次将指数折半，复杂度从 O(b) 降为 O(log b)      │
+└─────────────────────────────────────────────────┘
+</div>
+
+<h3>图解：计算 3<sup>13</sup> 的完整过程</h3>
+<div style="background:#0d1b2a;border-radius:8px;padding:20px;margin:12px 0;">
+
+<div class="exp-split">
+<div class="exp-row">
+  <div class="exp-step">13 是奇数</div>
+  <div class="exp-arrow">→</div>
+  <div class="exp-step">3<sup>13</sup> = (3<sup>6</sup>)<sup>2</sup> × 3</div>
+  <div class="note">拆分出 3</div>
+</div>
+<div class="exp-row">
+  <div class="exp-step">6 是偶数</div>
+  <div class="exp-arrow">→</div>
+  <div class="exp-step">3<sup>6</sup> = (3<sup>3</sup>)<sup>2</sup></div>
+  <div class="note">直接平方</div>
+</div>
+<div class="exp-row">
+  <div class="exp-step">3 是奇数</div>
+  <div class="exp-arrow">→</div>
+  <div class="exp-step">3<sup>3</sup> = (3<sup>1</sup>)<sup>2</sup> × 3</div>
+  <div class="note">拆分出 3</div>
+</div>
+<div class="exp-row">
+  <div class="exp-step">1 是奇数</div>
+  <div class="exp-arrow">→</div>
+  <div class="exp-step">3<sup>1</sup> = (3<sup>0</sup>)<sup>2</sup> × 3</div>
+  <div class="note">拆分出 3</div>
+</div>
+<div class="exp-row">
+  <div class="exp-step">0 递归结束</div>
+  <div class="exp-arrow">→</div>
+  <div class="exp-step">3<sup>0</sup> = 1</div>
+</div>
+</div>
+
+<div class="exp-result" style="display:block;text-align:center;margin-top:16px;">
+<strong>结果还原：</strong><br>
+3<sup>13</sup> = ((3<sup>0</sup>)<sup>2</sup> × 3)<sup>2</sup> × 3)<sup>2</sup> × 3)<sup>2</sup> × 3<br>
+= 1 → ×3(=3) → ²(=9) → ×3(=27) → ²(=729) → ×3(=2187) → ²(=4782969) → ×3(=1594323)<br>
+<strong>正确答案：</strong>3<sup>13</sup> = 1,594,323 ✅
+</div>
+</div>
+
+<div class="ascii-box" style="margin-top:12px;">
+  13 的二进制 = 1101₂ = 8 + 4 + 0 + 1
+  3^13 = 3^(8+4+0+1) = 3^8 × 3^4 × 3^0 × 3^1 = 6561 × 81 × 1 × 3 = 1,594,323
+  <span class="note"> 二进制 1 的位置对应需要乘的因子！</span>
+</div>
+</div>
+
+<!-- 幻灯片4：快速幂代码实现 -->
+<div class="slide" id="slide4">
+<h2> 快速幂代码实现</h2>
+
+<h3>版本一：递归实现</h3>
+<pre><code>// 递归快速幂 (带取模)
+long long qpow_recursive(long long a, long long b, long long m) {
+    if (b == 0) return 1 % m;           // 任何数的0次方 = 1
+    long long half = qpow_recursive(a, b / 2, m);
+    half = (half * half) % m;           // 先平方
+    if (b % 2 == 1)                     // 奇数多乘一个a
+        half = (half * a) % m;
+    return half;
+}
+// 调用: qpow_recursive(2, 10, 1000000007) → 1024</code></pre>
+
+<h3>版本二：迭代实现（推荐）</h3>
+<pre><code>// 迭代快速幂 —— 更高效，无递归栈开销
+long long qpow(long long a, long long b, long long m) {
+    long long result = 1 % m;           // 初始化结果
+    a = a % m;                          // 先取模，防溢出
+    while (b > 0) {
+        if (b & 1)                      // b 的最低位是 1
+            result = (result * a) % m;  // 奇数时乘入答案
+        a = (a * a) % m;                // a 自乘，对应指数翻倍
+        b >>= 1;                        // b 右移一位（等价于 b/2）
+    }
+    return result;
+}
+// 调用: qpow(2, 10, 1000000007) → 1024</code></pre>
+
+<div class="step-box">
+<strong> 位运算技巧说明：</strong><br>
+<code>b & 1</code> → 判断 b 的二进制最低位是否为 1（等价于 b % 2 == 1）<br>
+<code>b >>= 1</code> → b 右移一位（等价于 b / 2），每次循环指数减半
+</div>
+</div>
+
+<!-- 幻灯片5：矩阵快速幂入门 -->
+<div class="slide" id="slide5">
+<h2> 矩阵快速幂入门</h2>
+
+<h3>将快速幂思想扩展到矩阵</h3>
+<p>矩阵乘法也有结合律：<span class="highlight">(A × B) × C = A × (B × C)</span>，因此快速幂同样适用！</p>
+
+<h3>斐波那契数列与矩阵</h3>
+<div class="ascii-box" style="text-align:center;">
+┌──────────────────────────────────────────────┐
+│  Fibonacci 的矩阵形式（n ≥ 2）：               │
+│                                               │
+│  ┌        ┐     ┌        ┐^n    ┌      ┐     │
+│  │ F(n+1) │  =  │ 1   1  │   ×  │ F(1) │     │
+│  │ F(n)   │     │ 1   0  │      │ F(0) │     │
+│  └        ┘     └        ┘      └      ┘     │
+│                                               │
+│  其中 F(0) = 0, F(1) = 1                     │
+└──────────────────────────────────────────────┘
+</div>
+
+<h3>矩阵快速幂代码（2×2 矩阵）</h3>
+<pre><code>struct Matrix {
+    long long m[2][2];
+    Matrix() { m[0][0]=m[0][1]=m[1][0]=m[1][1]=0; }
+};
+
+Matrix mul(Matrix a, Matrix b, long long mod) {
+    Matrix c;
+    for (int i = 0; i < 2; i++)
+        for (int j = 0; j < 2; j++)
+            for (int k = 0; k < 2; k++)
+                c.m[i][j] = (c.m[i][j] + a.m[i][k] * b.m[k][j]) % mod;
+    return c;
+}
+
+Matrix mat_qpow(Matrix a, long long n, long long mod) {
+    Matrix res;
+    res.m[0][0] = res.m[1][1] = 1 % mod;  // 单位矩阵
+    while (n > 0) {
+        if (n & 1) res = mul(res, a, mod);
+        a = mul(a, a, mod);
+        n >>= 1;
+    }
+    return res;
+}
+
+// 求第 n 项斐波那契数：F(n) = mat_qpow(base, n, mod).m[0][1]</code></pre>
+
+<div class="step-box" style="margin-top:12px;">
+<strong> 矩阵快速幂的威力：</strong><br>
+普通递推求 F(10<sup>9</sup>) → O(n)，完全不可行<br>
+矩阵快速幂求 F(10<sup>9</sup>) → O(log n)，<span class="highlight">约 30 次矩阵乘法即可！</span>
+</div>
+</div>
+
+<!-- 幻灯片6：复杂度对比与总结 -->
+<div class="slide" id="slide6">
+<h2> 复杂度对比与总结</h2>
+
+<h3>时间复杂度对比表</h3>
+<div style="overflow-x:auto;margin:16px 0;">
+<table style="width:100%;border-collapse:collapse;text-align:center;font-size:.9em;">
+<tr style="background:#0f3460;">
+  <th style="padding:10px;color:#e94560;">n 的大小</th>
+  <th style="padding:10px;color:#e94560;">朴素 O(n)</th>
+  <th style="padding:10px;color:#e94560;">快速幂 O(log n)</th>
+  <th style="padding:10px;color:#e94560;">加速倍数</th>
+</tr>
+<tr style="background:#1a1a3e;">
+  <td style="padding:10px;">n = 10<sup>6</sup></td>
+  <td style="padding:10px;">1,000,000 次</td>
+  <td style="padding:10px;color:#4ecdc4;">≈ 20 次</td>
+  <td style="padding:10px;color:#f5c518;">~50,000×</td>
+</tr>
+<tr style="background:#16213e;">
+  <td style="padding:10px;">n = 10<sup>9</sup></td>
+  <td style="padding:10px;">1,000,000,000 次</td>
+  <td style="padding:10px;color:#4ecdc4;">≈ 30 次</td>
+  <td style="padding:10px;color:#f5c518;">~33,000,000×</td>
+</tr>
+<tr style="background:#1a1a3e;">
+  <td style="padding:10px;">n = 10<sup>18</sup></td>
+  <td style="padding:10px;color:#e94560;">不可行！</td>
+  <td style="padding:10px;color:#4ecdc4;">≈ 60 次</td>
+  <td style="padding:10px;color:#f5c518;">天文级</td>
+</tr>
+</table>
+</div>
+
+<h3>核心口诀</h3>
+<div class="ascii-box" style="text-align:center;font-size:1.1em;">
+┌──────────────────────────────────────────────────┐
+│    快速幂，真巧妙，指数拆成二进制瞧：              │
+│    最低位是 1 就乘上，底数平方不能忘；            │
+│    指数右移减一半，log 级别飞一样！               │
+│    矩阵快速幂同理，Fib 第 n 项秒出结果不用慌。    │
+└──────────────────────────────────────────────────┘
+</div>
+
+<div style="display:grid; grid-template-columns:1fr 1fr; gap:16px; margin:20px 0;">
+<div class="step-box">
+<h3 style="color:#4ecdc4;"> 算法要点</h3>
+<ul>
+  <li>指数 b → 二进制 → 每位的 1 决定是否乘入</li>
+  <li>底数 a 不断自乘（平方）</li>
+  <li>迭代版用位运算更高效</li>
+  <li>记得每一步取模防止溢出</li>
+  <li>矩阵快速幂 = 快速幂 + 矩阵乘法</li>
+</ul>
+</div>
+<div class="step-box">
+<h3 style="color:#e94560;">⚠️ 易错点</h3>
+<ul>
+  <li>忘记初始取模：a = a % m</li>
+  <li>result 初始化为 1 % m（非 1），防 m=1 的情况</li>
+  <li>矩阵乘法注意取模和顺序</li>
+  <li>递归版中 b 为奇数时不要漏乘 a</li>
+  <li>long long 也可能溢出？考虑 __int128</li>
+</ul>
+</div>
+</div>
+
+<div class="step-box" style="margin-top:20px;">
+<strong> 拓展方向：</strong>
+  矩阵快速幂求递推式（如 Fib、走楼梯、铺瓷砖问题）| 快速幂在 RSA 加密中的应用 | 模逆元计算（费马小定理 + 快速幂）
+</div>
+</div>
+
+</div><!-- slideshow end -->
+
+<div class="navigation">
+<button class="nav-btn" id="prevBtn" onclick="changeSlide(-1)"> 上一页</button>
+<span class="page-indicator" id="pageIndicator">1 / 6</span>
+<button class="nav-btn" id="nextBtn" onclick="changeSlide(1)">下一页 </button>
+</div>
+
+<script>
+let currentSlide = 0;
+const slides = document.querySelectorAll('.slide');
+const totalSlides = slides.length;
+
+function showSlide(index) {
+    slides.forEach(s => s.classList.remove('active'));
+    slides[index].classList.add('active');
+    document.getElementById('pageIndicator').textContent = (index+1) + ' / ' + totalSlides;
+    document.getElementById('prevBtn').disabled = (index === 0);
+    document.getElementById('nextBtn').disabled = (index === totalSlides - 1);
+}
+
+function changeSlide(delta) {
+    currentSlide = Math.min(Math.max(currentSlide + delta, 0), totalSlides - 1);
+    showSlide(currentSlide);
+}
+
+// 键盘导航
+document.addEventListener('keydown', function(e) {
+    if (e.key === 'ArrowRight' || e.key === 'ArrowDown') changeSlide(1);
+    if (e.key === 'ArrowLeft' || e.key === 'ArrowUp') changeSlide(-1);
+});
+
+// 触摸滑动支持
+let touchStartX = 0;
+document.addEventListener('touchstart', e => { touchStartX = e.touches[0].clientX; });
+document.addEventListener('touchend', e => {
+    let diff = touchStartX - e.changedTouches[0].clientX;
+    if (Math.abs(diff) > 50) changeSlide(diff > 0 ? 1 : -1);
+});
+
+// 初始化
+showSlide(0);
+</script>
+</body>
+</html>

@@ -1,0 +1,303 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>第44课：终极排序大赛——排序综合</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            font-family: 'PingFang SC', 'Microsoft YaHei', sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            display: flex; justify-content: center; align-items: center;
+        }
+        .slides-container {
+            width: 90%; max-width: 900px; min-height: 550px;
+            background: white; border-radius: 25px; padding: 40px;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+            position: relative;
+        }
+        .slide { display: none; animation: fadeIn 0.5s; }
+        .slide.active { display: block; }
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
+        h1 { color: #5b2c8e; font-size: 2.2em; margin-bottom: 20px; }
+        h2 { color: #764ba2; font-size: 1.8em; margin-bottom: 15px; }
+        h3 { color: #2c7a4a; font-size: 1.4em; margin: 15px 0 10px; }
+        p, li { font-size: 1.15em; line-height: 1.8; color: #333; }
+        ul { padding-left: 30px; margin: 10px 0; }
+        .code-block {
+            background: #1e1e2e; color: #cdd6f4; padding: 20px;
+            border-radius: 12px; font-family: 'Courier New', monospace;
+            font-size: 0.9em; line-height: 1.6; overflow-x: auto;
+            margin: 15px 0; white-space: pre-wrap; word-break: break-all;
+        }
+        .code-block .keyword { color: #cba6f7; }
+        .code-block .string { color: #a6e3a1; }
+        .code-block .comment { color: #6c7086; font-style: italic; }
+        .code-block .number { color: #fab387; }
+        .nav-buttons {
+            position: absolute; bottom: 20px; left: 40px; right: 40px;
+            display: flex; justify-content: space-between;
+        }
+        .nav-btn {
+            background: linear-gradient(135deg, #667eea, #764ba2);
+            color: white; border: none; padding: 12px 30px;
+            border-radius: 30px; font-size: 1.1em; cursor: pointer;
+            transition: transform 0.2s, box-shadow 0.2s;
+            font-family: 'PingFang SC', 'Microsoft YaHei', sans-serif;
+        }
+        .nav-btn:hover { transform: scale(1.05); box-shadow: 0 5px 20px rgba(102,126,234,0.4); }
+        .nav-btn:disabled { opacity: 0.4; cursor: default; transform: none; }
+        .page-indicator { font-size: 1.1em; color: #5b2c8e; align-self: center; }
+        .emoji-big { font-size: 3em; text-align: center; display: block; margin: 15px 0; }
+        .badge { display: inline-block; background: #ede9fe; color: #5b2c8e; padding: 5px 15px; border-radius: 20px; font-size: 0.9em; margin: 3px; }
+        table { width: 100%; border-collapse: collapse; margin: 15px 0; font-size: 0.95em; }
+        th, td { border: 2px solid #ddd; padding: 8px 10px; text-align: left; }
+        th { background: #667eea; color: white; }
+        .highlight-box { background: #fff3cd; border-left: 5px solid #ffc107; padding: 15px; border-radius: 8px; margin: 15px 0; }
+        .tip-box { background: #d4edda; border-left: 5px solid #28a745; padding: 15px; border-radius: 8px; margin: 15px 0; }
+        .info-box { background: #dbeafe; border-left: 5px solid #3b82f6; padding: 15px; border-radius: 8px; margin: 15px 0; }
+        tr:nth-child(even) { background: #f8f5ff; }
+        @media (max-width: 600px) {
+            .slides-container { padding: 25px; }
+            h1 { font-size: 1.5em; }
+            .code-block { font-size: 0.7em; }
+            table { font-size: 0.8em; }
+        }
+    </style>
+</head>
+<body>
+    <div class="slides-container">
+        <!-- Slide 1: Title Page -->
+        <div class="slide active" id="slide1">
+            <span class="emoji-big">🏅</span>
+            <h1>第44课：终极排序大赛——排序综合</h1>
+            <p style="text-align:center; color:#666;">进阶阶段：结构体与排序 | 课时：45分钟</p>
+            <p style="text-align:center; margin-top:20px; font-size:1.3em;">📊 成绩排名大比拼</p>
+            <div style="text-align:center; margin-top:30px;">
+                <span class="badge">排序对比</span>
+                <span class="badge">结构体排序</span>
+                <span class="badge">多条件排序</span>
+                <span class="badge">成绩排名</span>
+            </div>
+            <div class="info-box" style="margin-top:25px;">
+                <strong>📌 课前回顾：</strong><br>
+                第42课学了冒泡排序（相邻两两比较），第43课学了选择排序（找最值交换）。<br>
+                今天我们要让这两种排序来一场"王者对决"！
+            </div>
+        </div>
+
+        <!-- Slide 2: Learning Objectives -->
+        <div class="slide" id="slide2">
+            <h2>🎯 学习目标</h2>
+            <ul>
+                <li>对比<strong>冒泡排序和选择排序</strong>的优缺点 —— 比较次数、交换次数、稳定性</li>
+                <li>掌握<strong>结构体数组的排序方法</strong> —— 比较成员，交换整体</li>
+                <li>学会根据<strong>不同条件对结构体排序</strong> —— 多条件排序的实现</li>
+                <li>能够完成<strong>成绩排名</strong>等实际应用 —— 学以致用</li>
+            </ul>
+            <div class="highlight-box" style="margin-top:25px;">
+                <strong>🔑 核心问题：</strong><br>
+                两种排序的比较次数一样吗？为什么选择排序的交换次数更少？<br>
+                如果一个同学有姓名、年龄、成绩三个信息，怎么按成绩给他排名？
+            </div>
+            <div class="tip-box">
+                <strong>💡 想一想：</strong><br>
+                学校运动会要排名次，如果两个人金牌数一样多，怎么办？<br>
+                这就是我们今天要学的——<strong>多条件排序</strong>！
+            </div>
+        </div>
+
+        <!-- Slide 3: Core Knowledge -->
+        <div class="slide" id="slide3">
+            <h2>📖 核心知识</h2>
+
+            <h3>🔬 两种排序对比</h3>
+            <table>
+                <tr><th>对比维度</th><th>冒泡排序</th><th>选择排序</th></tr>
+                <tr><td>比较次数</td><td>n(n-1)/2</td><td>n(n-1)/2</td></tr>
+                <tr><td>交换次数（最坏）</td><td>n(n-1)/2 次</td><td>n-1 次</td></tr>
+                <tr><td>是否稳定</td><td>✅ 稳定</td><td>❌ 不稳定</td></tr>
+                <tr><td>能否提前结束</td><td>✅ 可以</td><td>❌ 不能</td></tr>
+                <tr><td>优点</td><td>稳定，可提前结束</td><td>交换次数少</td></tr>
+                <tr><td>缺点</td><td>交换次数多</td><td>不稳定</td></tr>
+            </table>
+
+            <h3>🏗️ 结构体排序的核心秘诀</h3>
+            <div class="highlight-box">
+                <strong>比较的是结构体的某个成员，但交换的是整个结构体！</strong><br>
+                就像给一叠名片排序——按电话号码排序，但移动的是整张名片。<br>
+                名片上的姓名、地址、公司都要跟着一起移动！
+            </div>
+            <div class="code-block">// 比较成员 score，交换整个 Student
+if (students[j].score &lt; students[j+1].score) {
+    Student temp = students[j];        // 交换整个结构体！
+    students[j] = students[j+1];
+    students[j+1] = temp;
+}</div>
+
+            <h3>🔀 多条件排序</h3>
+            <p>用 <code>if ... else if ...</code> 实现分层判断：</p>
+            <div class="code-block">// 先按成绩降序，成绩相同按年龄升序
+if (students[j].score &lt; students[j+1].score) {
+    交换;  // 主条件：成绩
+} else if (students[j].score == students[j+1].score) {
+    if (students[j].age &gt; students[j+1].age) {
+        交换;  // 次条件：年龄
+    }
+}</div>
+        </div>
+
+        <!-- Slide 4: Example Code -->
+        <div class="slide" id="slide4">
+            <h2>💻 示例代码：学生成绩排名</h2>
+            <p style="margin-bottom:8px;">使用<strong>结构体数组 + 冒泡排序</strong>，按成绩从高到低排名：</p>
+            <div class="code-block">#include &lt;iostream&gt;
+#include &lt;string&gt;
+using namespace std;
+
+struct Student {
+    string name;      // 姓名
+    int age;          // 年龄
+    double score;     // 成绩
+};
+
+int main() {
+    Student stu[5] = {
+        {"小明", 12, 88.5},
+        {"小红", 11, 95.0},
+        {"小刚", 12, 76.0},
+        {"小丽", 11, 95.0},  // 和小红同分！
+        {"小华", 13, 82.5}
+    };
+
+    // 冒泡排序：按成绩降序
+    for (int i = 0; i &lt; 4; i++) {
+        for (int j = 0; j &lt; 4 - i; j++) {
+            <strong>if (stu[j].score &lt; stu[j+1].score) {</strong>
+                <strong>Student temp = stu[j];</strong>    // 交换整个结构体
+                <strong>stu[j] = stu[j+1];</strong>
+                <strong>stu[j+1] = temp;</strong>
+            }
+        }
+    }
+
+    // 输出排行榜
+    cout &lt;&lt; "🏅 成绩排行榜：" &lt;&lt; endl;
+    for (int i = 0; i &lt; 5; i++) {
+        cout &lt;&lt; "第" &lt;&lt; i+1 &lt;&lt; "名：" &lt;&lt; stu[i].name
+             &lt;&lt; " " &lt;&lt; stu[i].score &lt;&lt; "分" &lt;&lt; endl;
+    }
+    return 0;
+}</div>
+            <div class="tip-box">
+                <strong>▶ 运行结果：</strong><br>
+                第1名：小红 95分 &nbsp; 第2名：小丽 95分 &nbsp; 第3名：小明 88.5分<br>
+                第4名：小华 82.5分 &nbsp; 第5名：小刚 76分<br>
+                <strong>注意：</strong>小红和小丽都是95分，但小红排前面 → 冒泡排序是<strong>稳定的</strong>！
+            </div>
+        </div>
+
+        <!-- Slide 5: Practice -->
+        <div class="slide" id="slide5">
+            <h2>🎮 趣味练习</h2>
+
+            <h3>练习1：商品按价格排序 🛒</h3>
+            <p>定义 <code>Product</code> 结构体（name, price），创建4个商品（铅笔2.5元、橡皮1.5元、尺子3.0元、本子4.0元），用冒泡排序按<strong>价格从低到高</strong>排列输出。</p>
+            <div class="tip-box"><strong>✅ 提示：</strong>升序条件用 <code>products[j].price > products[j+1].price</code></div>
+
+            <h3>练习2：比较次数计算 🔢</h3>
+            <p>数组 <code>{9,7,5,3,1}</code>（完全倒序，5个元素）：</p>
+            <table>
+                <tr><th>排序方法</th><th>比较次数</th><th>交换次数</th></tr>
+                <tr><td>冒泡排序</td><td>4+3+2+1 = <strong>10次</strong></td><td>每次都交换 = <strong>10次</strong></td></tr>
+                <tr><td>选择排序</td><td>4+3+2+1 = <strong>10次</strong></td><td>每轮1次 = <strong>4次</strong></td></tr>
+            </table>
+            <p style="color:#764ba2;"><strong>结论：</strong>比较次数相同，但选择排序的交换次数远少于冒泡排序！</p>
+
+            <h3>🏆 挑战任务：运动会成绩排行榜</h3>
+            <div class="highlight-box">
+                <p>创建 <code>Athlete</code> 结构体（name, classId, gold, silver, bronze, total）。6个运动员，按以下规则排序：</p>
+                <p>🥇 金牌从高到低 → 🥈 金牌相同看银牌 → 🥉 银牌相同看铜牌</p>
+                <p><strong>提示：</strong>多条件排序需要 <code>if...else if...else if...</code> 三层嵌套判断！</p>
+            </div>
+        </div>
+
+        <!-- Slide 6: Summary -->
+        <div class="slide" id="slide6">
+            <h2>📝 本课小结</h2>
+            <table>
+                <tr><th>知识点</th><th>核心要点</th></tr>
+                <tr>
+                    <td>🔬 两种排序对比</td>
+                    <td>比较次数<strong>相同</strong>，但冒泡交换多、<strong>稳定</strong>；选择交换少、<strong>不稳定</strong></td>
+                </tr>
+                <tr>
+                    <td>🏗️ 结构体排序</td>
+                    <td>比较的是某个<strong>成员</strong>（如 .score），交换的是<strong>整个结构体</strong></td>
+                </tr>
+                <tr>
+                    <td>🔀 多条件排序</td>
+                    <td>用 <strong>if...else if</strong> 分层判断：主条件 → 次条件 → 再次条件</td>
+                </tr>
+                <tr>
+                    <td>📈 升序/降序</td>
+                    <td>升序用 <strong>&gt;</strong>（大的往后移），降序用 <strong>&lt;</strong>（小的往后移）</td>
+                </tr>
+                <tr>
+                    <td>🛠️ 选择指南</td>
+                    <td>需稳定选<strong>冒泡</strong>，追求效率选<strong>选择</strong>；初学者以冒泡为主</td>
+                </tr>
+            </table>
+
+            <div class="highlight-box" style="margin-top:20px;">
+                <strong>🔑 记忆口诀：</strong><br>
+                冒泡相邻两两换，选择一找一个准；<br>
+                结构排序看成员，交换要把整体搬；<br>
+                多条条件层层判，成绩排名我最棒！
+            </div>
+
+            <div class="info-box" style="margin-top:15px;">
+                <strong>🔗 知识链接：</strong><br>
+                第41课（结构体）+ 第42课（冒泡排序）+ 第43课（选择排序）<br>
+                → 第44课学完，<strong>结构体与排序模块全部完成！</strong> 🎉
+            </div>
+
+            <p style="text-align:center; margin-top:20px; font-size:1.3em;">🎉 下一阶段：综合趣味项目——猜数字、石头剪刀布、知识问答王！</p>
+        </div>
+
+        <!-- Navigation -->
+        <div class="nav-buttons">
+            <button class="nav-btn" onclick="prevSlide()">◀ 上一页</button>
+            <span class="page-indicator" id="pageIndicator">1 / 6</span>
+            <button class="nav-btn" onclick="nextSlide()">下一页 ▶</button>
+        </div>
+    </div>
+
+    <script>
+        let currentSlide = 0;
+        const slides = document.querySelectorAll('.slide');
+        const totalSlides = slides.length;
+        const indicator = document.getElementById('pageIndicator');
+
+        function showSlide(n) {
+            slides[currentSlide].classList.remove('active');
+            currentSlide = (n + totalSlides) % totalSlides;
+            slides[currentSlide].classList.add('active');
+            indicator.textContent = (currentSlide + 1) + ' / ' + totalSlides;
+            document.querySelectorAll('.nav-btn')[0].disabled = currentSlide === 0;
+            document.querySelectorAll('.nav-btn')[1].disabled = currentSlide === totalSlides - 1;
+        }
+        function nextSlide() { showSlide(currentSlide + 1); }
+        function prevSlide() { showSlide(currentSlide - 1); }
+
+        document.addEventListener('keydown', function(e) {
+            if (e.key === 'ArrowRight' || e.key === ' ') { e.preventDefault(); nextSlide(); }
+            else if (e.key === 'ArrowLeft') { e.preventDefault(); prevSlide(); }
+        });
+
+        indicator.textContent = (currentSlide + 1) + ' / ' + totalSlides;
+    </script>
+</body>
+</html>

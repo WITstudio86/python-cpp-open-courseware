@@ -1,0 +1,534 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>第47课：竞赛技巧与调试方法</title>
+<style>
+  /* ========== Reset & Base ========== */
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  body {
+    font-family: "PingFang SC", "Microsoft YaHei", "Noto Sans SC", sans-serif;
+    background: #1a1a2e;
+    color: #e0e0e0;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    min-height: 100vh;
+    padding: 20px;
+  }
+
+  .slideshow {
+    width: 100%;
+    max-width: 960px;
+    position: relative;
+    background: #16213e;
+    border-radius: 16px;
+    overflow: hidden;
+    box-shadow: 0 8px 40px rgba(0,0,0,0.5);
+  }
+
+  /* ========== Hidden Radio Buttons ========== */
+  .slide-radio { display: none; }
+
+  /* ========== Slides Container ========== */
+  .slides { position: relative; }
+
+  .slide {
+    display: none;
+    padding: 50px 60px;
+    min-height: 540px;
+  }
+
+  /* ========== Slide Switching Logic ========== */
+  #s1:checked ~ .slides .slide:nth-child(1),
+  #s2:checked ~ .slides .slide:nth-child(2),
+  #s3:checked ~ .slides .slide:nth-child(3),
+  #s4:checked ~ .slides .slide:nth-child(4),
+  #s5:checked ~ .slides .slide:nth-child(5),
+  #s6:checked ~ .slides .slide:nth-child(6),
+  #s7:checked ~ .slides .slide:nth-child(7) {
+    display: block;
+  }
+
+  /* ========== Navigation Controls ========== */
+  .controls {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 16px 60px 24px;
+    background: #0f3460;
+  }
+
+  .nav-btn {
+    background: #e94560;
+    color: white;
+    border: none;
+    padding: 10px 28px;
+    border-radius: 8px;
+    font-size: 15px;
+    cursor: pointer;
+    transition: background 0.2s, transform 0.1s;
+    font-family: inherit;
+  }
+
+  .nav-btn:hover { background: #c73652; }
+  .nav-btn:active { transform: scale(0.96); }
+  .nav-btn.hidden { visibility: hidden; }
+
+  .slide-counter {
+    font-size: 14px;
+    color: #a0a0c0;
+    font-weight: 500;
+  }
+
+  /* ========== Content Styling ========== */
+  .slide h2 {
+    font-size: 28px;
+    color: #e94560;
+    margin-bottom: 8px;
+    border-bottom: 2px solid #e94560;
+    padding-bottom: 12px;
+  }
+
+  .slide h3 {
+    font-size: 20px;
+    color: #f0c060;
+    margin-top: 22px;
+    margin-bottom: 8px;
+  }
+
+  .slide .subtitle {
+    color: #a0a0c0;
+    font-size: 14px;
+    margin-top: 4px;
+    margin-bottom: 18px;
+  }
+
+  .slide p, .slide li {
+    line-height: 1.8;
+    font-size: 15px;
+  }
+
+  .slide ul, .slide ol {
+    padding-left: 24px;
+    margin: 8px 0;
+  }
+
+  .slide ul li { margin-bottom: 4px; }
+
+  .slide .title-slide { text-align: center; padding-top: 140px; }
+  .slide .title-slide h1 { font-size: 38px; color: #e94560; margin-bottom: 16px; }
+  .slide .title-slide .desc { font-size: 16px; color: #b0b0d0; }
+
+  /* ========== Code Blocks ========== */
+  pre {
+    background: #0d1117;
+    border: 1px solid #30363d;
+    border-radius: 8px;
+    padding: 14px 18px;
+    overflow-x: auto;
+    font-size: 13px;
+    line-height: 1.6;
+    margin: 10px 0;
+  }
+
+  code { font-family: "Fira Code", "Cascadia Code", "Consolas", monospace; }
+
+  /* syntax: red for buggy, green for fixed */
+  .code-bug { color: #ff6b6b; }
+  .code-fix { color: #51cf66; }
+  .code-keyword { color: #c792ea; }
+  .code-comment { color: #8b949e; font-style: italic; }
+  .code-number { color: #79c0ff; }
+  .code-string { color: #a5d6ff; }
+  .code-func { color: #d2a8ff; }
+  .code-type { color: #ffa657; }
+
+  /* ========== Table ========== */
+  table {
+    width: 100%;
+    border-collapse: collapse;
+    margin: 14px 0;
+    font-size: 14px;
+  }
+
+  th {
+    background: #e94560;
+    color: white;
+    padding: 10px 12px;
+    text-align: center;
+    font-weight: 600;
+  }
+
+  td {
+    background: #0f3460;
+    padding: 8px 12px;
+    border-bottom: 1px solid #16213e;
+    text-align: center;
+  }
+
+  tr:nth-child(even) td { background: #16213e; }
+
+  /* ========== Callout Boxes ========== */
+  .box-tip {
+    background: rgba(233, 69, 96, 0.12);
+    border-left: 4px solid #e94560;
+    padding: 12px 16px;
+    margin: 14px 0;
+    border-radius: 0 6px 6px 0;
+    font-size: 14px;
+  }
+
+  .box-warn {
+    background: rgba(240, 192, 96, 0.12);
+    border-left: 4px solid #f0c060;
+    padding: 12px 16px;
+    margin: 14px 0;
+    border-radius: 0 6px 6px 0;
+    font-size: 14px;
+  }
+
+  /* ========== Flow Diagram (CSS) ========== */
+  .flow {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 10px;
+    margin: 20px 0;
+    flex-wrap: wrap;
+  }
+
+  .flow-box {
+    background: #0f3460;
+    border: 2px solid #e94560;
+    border-radius: 10px;
+    padding: 14px 16px;
+    text-align: center;
+    font-size: 13px;
+    min-width: 90px;
+    color: #e0e0e0;
+  }
+
+  .flow-arrow {
+    font-size: 22px;
+    color: #e94560;
+    font-weight: bold;
+  }
+
+  /* ========== Responsive ========== */
+  @media (max-width: 700px) {
+    .slide { padding: 30px 24px; min-height: auto; }
+    .controls { padding: 12px 24px 20px; }
+    .slide .title-slide { padding-top: 80px; }
+    .slide .title-slide h1 { font-size: 26px; }
+    .slide h2 { font-size: 22px; }
+    table { font-size: 12px; }
+    th, td { padding: 6px 8px; }
+  }
+</style>
+</head>
+<body>
+
+<div class="slideshow">
+
+  <!-- ==================== Radio Buttons for Slide Switching ==================== -->
+  <input type="radio" name="slide" class="slide-radio" id="s1" checked>
+  <input type="radio" name="slide" class="slide-radio" id="s2">
+  <input type="radio" name="slide" class="slide-radio" id="s3">
+  <input type="radio" name="slide" class="slide-radio" id="s4">
+  <input type="radio" name="slide" class="slide-radio" id="s5">
+  <input type="radio" name="slide" class="slide-radio" id="s6">
+  <input type="radio" name="slide" class="slide-radio" id="s7">
+
+  <!-- ==================== Slides ==================== -->
+  <div class="slides">
+
+    <!-- Slide 1: Title -->
+    <div class="slide">
+      <div class="title-slide">
+        <h1>第47课：竞赛技巧与调试方法</h1>
+        <p class="desc">C++ 算法提高 · 竞赛必备的调试与验证技巧</p>
+        <p style="margin-top:40px;color:#a0a0c0;">
+          📍 常见错误分析 &nbsp;|&nbsp; 🔍 调试方法 &nbsp;|&nbsp; ⏱ 时间复杂度 &nbsp;|&nbsp; 🔄 对拍系统
+        </p>
+      </div>
+    </div>
+
+    <!-- Slide 2: Common Mistakes -->
+    <div class="slide">
+      <h2>常见错误分析</h2>
+      <p class="subtitle">竞赛中最容易犯的 5 类错误，看看你中招了几个？</p>
+
+      <h3>🐛 1. 数组越界</h3>
+      <pre><code><span class="code-bug">for (int i = 0; i <= n; i++)  // ❌ 访问 a[n] 越界！</span>
+<span class="code-fix">for (int i = 0; i < n; i++)   // ✅ 下标范围 0 ~ n-1</span></code></pre>
+
+      <h3>🐛 2. 未初始化变量</h3>
+      <pre><code><span class="code-bug">int sum; sum += a[i];  // ❌ sum 是随机垃圾值</span>
+<span class="code-fix">int sum = 0;           // ✅ 显式初始化为 0</span></code></pre>
+
+      <h3>🐛 3. 整数溢出</h3>
+      <pre><code><span class="code-bug">int c = 100000 * 100000;  // ❌ 溢出! int ~2e9</span>
+<span class="code-fix">long long c = 100000LL * 100000;  // ✅ long long ~9e18</span></code></pre>
+
+      <h3>🐛 4. 边界差一 (Off-by-One)</h3>
+      <pre><code><span class="code-bug">while (left < right) { ... }  // ❌ 漏掉 left==right</span>
+<span class="code-fix">while (left <= right) { ... } // ✅ 遍历所有情况</span></code></pre>
+
+      <h3>🐛 5. 死循环</h3>
+      <pre><code><span class="code-bug">while (x > 0) { x++; }  // ❌ x 永远 > 0</span>
+<span class="code-fix">while (x <= 10) { x++; } // ✅ 有终止条件</span></code></pre>
+
+    </div>
+
+    <!-- Slide 3: Debugging Techniques -->
+    <div class="slide">
+      <h2>调试方法</h2>
+      <p class="subtitle">三种实用的调试技巧，帮你快速定位 Bug</p>
+
+      <h3>🖨 打印调试 (Print Debugging)</h3>
+      <pre><code><span class="code-keyword">#define</span> <span class="code-func">debug</span>(x) cerr << #x << <span class="code-string">" = "</span> << x << endl;
+<span class="code-func">debug</span>(a[i]);   <span class="code-comment">// 输出到 cerr，不影响 cout 答案</span>
+<span class="code-comment">// 提交时注释掉 #define 即可关闭所有调试输出</span></code></pre>
+
+      <h3>🛡 断言 (assert)</h3>
+      <pre><code><span class="code-keyword">#include</span> <span class="code-string">&lt;cassert&gt;</span>
+<span class="code-func">assert</span>(n >= <span class="code-number">1</span> && n <= <span class="code-number">100000</span>);  <span class="code-comment">// 检查输入范围</span>
+<span class="code-func">assert</span>(ans >= <span class="code-number">0</span>);               <span class="code-comment">// 检查答案合理性</span>
+<span class="code-comment">// 条件为假时程序终止，报告文件和行号</span></code></pre>
+
+      <h3>🐞 GDB 调试器</h3>
+      <pre><code>gdb ./program      <span class="code-comment">// 启动调试</span>
+(gdb) b <span class="code-number">42</span>         <span class="code-comment">// 在第 42 行设断点</span>
+(gdb) r             <span class="code-comment">// 运行程序</span>
+(gdb) n             <span class="code-comment">// 单步执行（不进入函数）</span>
+(gdb) s             <span class="code-comment">// 单步执行（进入函数）</span>
+(gdb) p 变量名      <span class="code-comment">// 打印变量值</span>
+(gdb) bt            <span class="code-comment">// 查看调用栈（崩溃时必用）</span></code></pre>
+
+      <div class="box-tip">
+        💡 <strong>小贴士</strong>：程序崩溃（RE）时，GDB 的 <code>bt</code> 命令可以直接告诉你哪一行出了错！
+      </div>
+    </div>
+
+    <!-- Slide 4: Time Complexity -->
+    <div class="slide">
+      <h2>时间复杂度估算</h2>
+      <p class="subtitle">根据数据范围选择算法 — 竞赛必备技能</p>
+
+      <table>
+        <thead>
+          <tr>
+            <th>数据范围 N</th>
+            <th>可接受复杂度</th>
+            <th>典型算法</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr><td>N ≤ 10</td><td>O(N!)</td><td>全排列、回溯</td></tr>
+          <tr><td>N ≤ 15</td><td>O(2<sup>N</sup>)</td><td>子集枚举</td></tr>
+          <tr><td>N ≤ 20</td><td>O(N·2<sup>N</sup>)</td><td>状态压缩 DP</td></tr>
+          <tr><td>N ≤ 100</td><td>O(N<sup>3</sup>)</td><td>Floyd-Warshall</td></tr>
+          <tr><td>N ≤ 500</td><td>O(N<sup>3</sup>)</td><td>三重循环</td></tr>
+          <tr><td>N ≤ 2000</td><td>O(N<sup>2</sup>)</td><td>简单 DP</td></tr>
+          <tr><td>N ≤ 10<sup>5</sup></td><td>O(N log N)</td><td>排序、二分、堆</td></tr>
+          <tr><td>N ≤ 10<sup>6</sup></td><td>O(N log N) / O(N)</td><td>线性筛、贪心</td></tr>
+          <tr><td>N ≤ 10<sup>7</sup></td><td>O(N)</td><td>前缀和、双指针</td></tr>
+          <tr><td>N ≤ 10<sup>8</sup></td><td>O(log N) / O(1)</td><td>公式、二分</td></tr>
+        </tbody>
+      </table>
+
+      <div class="box-warn">
+        ⚡ <strong>经验法则</strong>：现代评测机大约 <strong>10<sup>8</sup> 次操作 / 秒</strong><br>
+        例：N=10<sup>5</sup>，O(N<sup>2</sup>) = 10<sup>10</sup> 次 → 约 100 秒 → <span style="color:#e94560;">超时 (TLE)</span><br>
+        例：N=10<sup>5</sup>，O(N log N) ≈ 1.7×10<sup>6</sup> 次 → <span style="color:#51cf66;">瞬间完成</span>
+      </div>
+    </div>
+
+    <!-- Slide 5: Duipai (对拍) -->
+    <div class="slide">
+      <h2>对拍系统 (Duipai)</h2>
+      <p class="subtitle">比赛中最强大的验证技巧 — 用暴力验证优化</p>
+
+      <h3>对拍工作流程</h3>
+      <div class="flow">
+        <div class="flow-box">随机数据<br>生成器</div>
+        <div class="flow-arrow">→</div>
+        <div class="flow-box">暴力解法<br>O(N²) 保证正确</div>
+        <div class="flow-arrow">→</div>
+        <div class="flow-box">结果<br>比较器</div>
+        <div class="flow-arrow">→</div>
+        <div class="flow-box">一致 ✅ 通过<br>不同 ❌ 报错</div>
+      </div>
+      <div class="flow">
+        <div class="flow-box">随机数据<br>生成器</div>
+        <div class="flow-arrow">→</div>
+        <div class="flow-box">优化解法<br>O(N) 待验证</div>
+      </div>
+
+      <h3>核心步骤</h3>
+      <ol>
+        <li>写一个<strong>暴力解法</strong>（保证正确，允许慢）</li>
+        <li>写一个<strong>优化解法</strong>（快速，需要验证）</li>
+        <li>写一个<strong>随机数据生成器</strong></li>
+        <li>循环：生成数据 → 分别运行 → 比较结果</li>
+        <li>结果不一致 → 打印出错的输入（Bug 定位！）</li>
+        <li>全部一致 → 优化解法的正确性得到充分验证</li>
+      </ol>
+
+      <div class="box-tip">
+        💡 <strong>重要</strong>：对拍使用小数据（N ≤ 100），暴力解法也能瞬间完成。2000 轮测试足以发现 95% 以上的 Bug。
+      </div>
+    </div>
+
+    <!-- Slide 6: Practice / Example -->
+    <div class="slide">
+      <h2>实战演练：最大子段和 对拍</h2>
+      <p class="subtitle">完整演示暴力解法 vs Kadane 算法的对拍过程</p>
+
+      <h3>问题描述</h3>
+      <p>给定数组 [-2, 1, -3, 4, -1, 2, 1, -5, 4]，求最大子段和。</p>
+      <p><strong>答案</strong>：6（子数组 [4, -1, 2, 1]）</p>
+
+      <h3>暴力解法 O(N²)</h3>
+      <pre><code><span class="code-keyword">for</span> (<span class="code-type">int</span> i = <span class="code-number">0</span>; i &lt; n; i++) {
+    <span class="code-type">int</span> sum = <span class="code-number">0</span>;
+    <span class="code-keyword">for</span> (<span class="code-type">int</span> j = i; j &lt; n; j++) {
+        sum += a[j];
+        max_sum = <span class="code-func">max</span>(max_sum, sum);
+    }
+}</code></pre>
+
+      <h3>优化解法 O(N) — Kadane 算法</h3>
+      <pre><code><span class="code-type">int</span> max_ending = <span class="code-number">0</span>, max_so_far = INT_MIN;
+<span class="code-keyword">for</span> (<span class="code-type">int</span> x : a) {
+    max_ending = <span class="code-func">max</span>(x, max_ending + x); <span class="code-comment">// DP 转移</span>
+    max_so_far = <span class="code-func">max</span>(max_so_far, max_ending);
+}</code></pre>
+
+      <h3>对拍结果</h3>
+      <table>
+        <tr><th>测试轮数</th><th>最大 N</th><th>值范围</th><th>结果</th></tr>
+        <tr><td>1000</td><td>100</td><td>±100</td><td style="color:#51cf66;">全部通过 ✅</td></tr>
+        <tr><td>5000</td><td>50</td><td>±1000</td><td style="color:#51cf66;">全部通过 ✅</td></tr>
+      </table>
+
+      <div class="box-tip">
+        📌 <strong>配套程序</strong>：详见 <code>lesson47_debug_skills.cpp</code>，运行选项 8 即可自动执行对拍。
+      </div>
+    </div>
+
+    <!-- Slide 7: Summary -->
+    <div class="slide">
+      <h2>📝 本课小结</h2>
+      <p class="subtitle">回顾核心知识点，构建竞赛技巧体系</p>
+
+      <table>
+        <tr><th>模块</th><th>核心内容</th></tr>
+        <tr><td>🐛 常见错误</td><td>数组越界 · 未初始化 · 整数溢出 · Off-by-One · 死循环</td></tr>
+        <tr><td>🔍 调试方法</td><td>打印调试 (cerr) · assert 断言 · GDB 调试器</td></tr>
+        <tr><td>⏱ 时间估算</td><td>10⁸ 次/秒经验法则 · 根据数据范围反推算法复杂度</td></tr>
+        <tr><td>🔄 对拍验证</td><td>暴力解法 + 优化解法 + 随机数据 → 自动比较</td></tr>
+      </table>
+
+      <div style="margin-top:30px;">
+        <h3>🎯 竞赛调试口诀</h3>
+        <div class="box-tip" style="font-size:16px;text-align:center;">
+          <strong>写完代码先自查，数组边界要注意<br>
+          变量初值要赋好，long long 防溢别忘记<br>
+          遇到 WA 不要慌，打印断言帮定位<br>
+          最后祭出对拍器，随机数据验真假</strong>
+        </div>
+      </div>
+
+      <p style="margin-top:24px;color:#a0a0c0;text-align:center;">
+        📖 下一课：第48课 · 课程总结与进阶之路
+      </p>
+    </div>
+
+  </div><!-- end .slides -->
+
+  <!-- ==================== Navigation ==================== -->
+  <div class="controls">
+    <label class="nav-btn" for="s1">◀ 上一页</label>
+    <span class="slide-counter">第47课：竞赛技巧与调试方法</span>
+    <label class="nav-btn" for="s2">下一页 ▶</label>
+  </div>
+
+</div><!-- end .slideshow -->
+
+<!-- Simple JS for dynamic slide navigation -->
+<script>
+(function() {
+  const totalSlides = 7;
+  const radios = [];
+  for (let i = 1; i <= totalSlides; i++) {
+    radios.push(document.getElementById('s' + i));
+  }
+
+  function getCurrent() {
+    for (let i = 0; i < radios.length; i++) {
+      if (radios[i].checked) return i;
+    }
+    return 0;
+  }
+
+  function navigate(delta) {
+    const cur = getCurrent();
+    const next = (cur + delta + totalSlides) % totalSlides;
+    radios[next].checked = true;
+  }
+
+  // Update button labels and counters
+  function updateUI() {
+    const cur = getCurrent() + 1;
+    const counterEl = document.querySelector('.slide-counter');
+    if (counterEl) {
+      counterEl.textContent = '第 ' + cur + ' / ' + totalSlides + ' 页';
+    }
+    const prevBtn = document.querySelectorAll('.nav-btn')[0];
+    const nextBtn = document.querySelectorAll('.nav-btn')[1];
+    if (prevBtn) {
+      prevBtn.setAttribute('for', 's' + ((cur - 2 + totalSlides) % totalSlides + 1));
+    }
+    if (nextBtn) {
+      nextBtn.setAttribute('for', 's' + ((cur % totalSlides) + 1));
+    }
+  }
+
+  // Listen to radio changes
+  radios.forEach(function(r) {
+    r.addEventListener('change', updateUI);
+  });
+
+  // Keyboard navigation
+  document.addEventListener('keydown', function(e) {
+    if (e.key === 'ArrowRight' || e.key === 'ArrowDown' || e.key === ' ') {
+      e.preventDefault();
+      navigate(1);
+    } else if (e.key === 'ArrowLeft' || e.key === 'ArrowUp') {
+      e.preventDefault();
+      navigate(-1);
+    }
+  });
+
+  // Click on slide area: left half = prev, right half = next
+  document.querySelector('.slides').addEventListener('click', function(e) {
+    const rect = this.getBoundingClientRect();
+    const x = e.clientX - rect.left;
+    if (x < rect.width * 0.3) {
+      navigate(-1);
+    } else if (x > rect.width * 0.7) {
+      navigate(1);
+    }
+  });
+
+  // Initial UI state
+  updateUI();
+})();
+</script>
+
+</body>
+</html>

@@ -1,0 +1,601 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>第38课：筛法与素数 — CSP-S 数论专题</title>
+<style>
+  :root {
+    --bg: #0d1b2a;
+    --slide-bg: #1b2838;
+    --text: #e0e6ed;
+    --accent: #4da6ff;
+    --gold: #f0c040;
+    --green: #5cdb5c;
+    --red: #e06060;
+    --code-bg: #0a1628;
+    --code-keyword: #66b2ff;
+    --code-string: #7ec87e;
+    --code-comment: #778899;
+    --code-number: #f0a060;
+    --code-func: #c0a0ff;
+    --border: #2a3a4e;
+    --nav-bg: #152535;
+    --shadow: 0 8px 32px rgba(0,0,0,0.4);
+  }
+  * { margin:0; padding:0; box-sizing:border-box; }
+  body {
+    font-family: "PingFang SC", "Microsoft YaHei", "Noto Sans SC", sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    display: flex; flex-direction: column; align-items: center;
+    justify-content: center; min-height: 100vh;
+  }
+  .container {
+    width: 100%; max-width: 1100px; margin: 0 auto; padding: 20px;
+  }
+  .slide {
+    display: none;
+    background: var(--slide-bg);
+    border-radius: 16px;
+    padding: 48px 56px;
+    min-height: 580px;
+    box-shadow: var(--shadow);
+    border: 1px solid var(--border);
+    position: relative;
+    animation: fadeIn 0.4s ease;
+  }
+  .slide.active { display: block; }
+  @keyframes fadeIn { from { opacity:0; transform: translateY(12px); } to { opacity:1; transform: translateY(0); } }
+
+  .slide h1 {
+    font-size: 2.4em; margin-bottom: 16px;
+    background: linear-gradient(135deg, var(--accent), #80d0ff);
+    -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+  }
+  .slide h2 {
+    font-size: 1.6em; margin-bottom: 20px; color: var(--accent);
+    border-left: 4px solid var(--accent); padding-left: 16px;
+  }
+  .slide h3 {
+    font-size: 1.2em; margin: 20px 0 10px; color: var(--gold);
+  }
+  .slide p, .slide li { font-size: 1.05em; line-height: 1.8; margin-bottom: 8px; }
+  .slide ul { padding-left: 24px; margin-bottom: 16px; }
+  .slide ul li::marker { color: var(--accent); }
+
+  /* 代码区域 */
+  .code-block {
+    background: var(--code-bg);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 18px 22px;
+    margin: 14px 0;
+    overflow-x: auto;
+    font-family: "JetBrains Mono", "Fira Code", "Consolas", "Courier New", monospace;
+    font-size: 0.88em;
+    line-height: 1.65;
+    white-space: pre;
+    color: var(--text);
+  }
+  .kw { color: var(--code-keyword); }
+  .st { color: var(--code-string); }
+  .cm { color: var(--code-comment); }
+  .nu { color: var(--code-number); }
+  .fn { color: var(--code-func); }
+  .op { color: var(--gold); }
+
+  /* 公式区域 */
+  .formula {
+    background: rgba(77,166,255,0.08);
+    border-left: 3px solid var(--accent);
+    padding: 14px 20px; margin: 14px 0; border-radius: 0 8px 8px 0;
+    font-family: "Georgia", "Times New Roman", serif;
+    font-size: 1.15em; color: var(--gold);
+  }
+
+  /* 表格 */
+  table { width: 100%; border-collapse: collapse; margin: 14px 0; font-size: 0.92em; }
+  th { background: rgba(77,166,255,0.15); color: var(--accent); }
+  th, td { border: 1px solid var(--border); padding: 8px 12px; text-align: left; }
+  tr:nth-child(even) { background: rgba(255,255,255,0.02); }
+
+  /* 小标签 */
+  .tag {
+    display: inline-block; padding: 3px 12px; border-radius: 14px;
+    font-size: 0.85em; margin-right: 6px;
+  }
+  .tag-accent { background: rgba(77,166,255,0.2); color: var(--accent); }
+  .tag-gold { background: rgba(240,192,64,0.2); color: var(--gold); }
+  .tag-green { background: rgba(92,219,92,0.2); color: var(--green); }
+
+  /* 导航 */
+  .nav {
+    display: flex; justify-content: space-between; align-items: center;
+    margin-top: 20px; gap: 16px;
+  }
+  .nav button {
+    background: var(--nav-bg); color: var(--text);
+    border: 1px solid var(--border); border-radius: 10px;
+    padding: 12px 28px; font-size: 1em; cursor: pointer;
+    transition: all 0.2s;
+    font-family: inherit;
+  }
+  .nav button:hover { background: var(--accent); color: #fff; border-color: var(--accent); }
+  .nav button:disabled { opacity: 0.3; cursor: not-allowed; }
+  .page-indicator { font-size: 0.95em; color: var(--code-comment); }
+
+  /* 标题页 */
+  .title-slide { text-align: center; display: flex; flex-direction: column; justify-content: center; align-items: center; }
+  .title-slide h1 { font-size: 3em; margin-bottom: 20px; }
+  .title-slide .subtitle { font-size: 1.3em; color: var(--code-comment); margin-bottom: 30px; }
+  .title-slide .badges { margin-top: 20px; }
+
+  /* 两列 */
+  .two-col { display: flex; gap: 28px; margin: 14px 0; }
+  .two-col > div { flex: 1; }
+
+  /* 动画筛法演示区域 */
+  .sieve-anim {
+    background: var(--code-bg);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 14px 18px;
+    margin: 14px 0;
+    font-family: "JetBrains Mono", monospace;
+    font-size: 0.8em;
+    line-height: 1.5;
+    text-align: center;
+    letter-spacing: 1px;
+  }
+  .sieve-cell {
+    display: inline-block;
+    width: 28px; height: 28px;
+    line-height: 28px;
+    margin: 1px;
+    border-radius: 4px;
+    font-size: 0.7em;
+    transition: background 0.3s;
+  }
+  .cell-prime { background: rgba(92,219,92,0.3); color: var(--green); }
+  .cell-comp { background: rgba(224,96,96,0.2); color: var(--red); }
+  .cell-unset { background: rgba(255,255,255,0.04); color: var(--code-comment); }
+
+  /* 响应式 */
+  @media (max-width: 768px) {
+    .two-col { flex-direction: column; }
+    .slide { padding: 32px 24px; }
+    .slide h1 { font-size: 1.6em; }
+    .slide h2 { font-size: 1.2em; }
+    .sieve-cell { width: 22px; height: 22px; line-height: 22px; font-size: 0.6em; }
+  }
+
+  .highlight { color: var(--gold); font-weight: bold; }
+  .note-box {
+    background: rgba(240,192,64,0.08);
+    border: 1px solid rgba(240,192,64,0.3);
+    border-radius: 8px;
+    padding: 12px 18px; margin: 14px 0;
+  }
+</style>
+</head>
+<body>
+<div class="container">
+
+<!-- ==================== 幻灯片1：标题页 ==================== -->
+<div class="slide active title-slide" data-index="0">
+  <div class="badges">
+    <span class="tag tag-accent">CSP-S 考纲</span>
+    <span class="tag tag-gold">数论</span>
+    <span class="tag tag-green">第38课</span>
+  </div>
+  <h1>筛法与素数</h1>
+  <p class="subtitle">Sieve Methods &amp; Prime Numbers</p>
+  <p style="color: var(--code-comment); font-size: 1.1em;">
+    素数判定 · 埃氏筛 · 欧拉筛（线性筛） · 区间筛 · 欧拉函数
+  </p>
+  <p style="margin-top:24px; color: var(--code-comment);">按 → 或点击按钮翻页 | 共 7 页</p>
+</div>
+
+<!-- ==================== 幻灯片2：素数判定 ==================== -->
+<div class="slide" data-index="1">
+  <h2>一、素数判定：从 O(&#8730;n) 到 6k±1 优化</h2>
+
+  <div class="two-col">
+    <div>
+      <h3>朴素试除法 O(&#8730;n)</h3>
+      <div class="code-block"><span class="kw">bool</span> <span class="fn">isPrime</span>(<span class="kw">int</span> n) {
+    <span class="kw">if</span> (n < <span class="nu">2</span>) <span class="kw">return false</span>;
+    <span class="kw">for</span> (<span class="kw">int</span> i = <span class="nu">2</span>; i*i <= n; i++)
+        <span class="kw">if</span> (n % i == <span class="nu">0</span>) <span class="kw">return false</span>;
+    <span class="kw">return true</span>;
+}</div>
+      <p>从 2 到 &radic;n 逐一试除，简单可靠</p>
+    </div>
+    <div>
+      <h3>6k±1 优化</h3>
+      <p><strong>原理：</strong>所有大于 3 的素数都可表示为 <span class="highlight">6k ± 1</span></p>
+      <p>只需试除 2、3 和 6k±1 形式的数，<br>常数优化约 <strong>3 倍</strong></p>
+      <div class="code-block"><span class="kw">bool</span> <span class="fn">isPrimeFast</span>(<span class="kw">int</span> n) {
+    <span class="kw">if</span> (n < <span class="nu">2</span>) <span class="kw">return false</span>;
+    <span class="kw">if</span> (n <= <span class="nu">3</span>) <span class="kw">return true</span>;
+    <span class="kw">if</span> (n%<span class="nu">2</span>==<span class="nu">0</span> || n%<span class="nu">3</span>==<span class="nu">0</span>) <span class="kw">return false</span>;
+    <span class="kw">for</span> (<span class="kw">int</span> i=<span class="nu">5</span>; i*i<=n; i+=<span class="nu">6</span>)
+        <span class="kw">if</span> (n%i==<span class="nu">0</span> || n%(i+<span class="nu">2</span>)==<span class="nu">0</span>)
+            <span class="kw">return false</span>;
+    <span class="kw">return true</span>;
+}</div>
+    </div>
+  </div>
+
+  <div class="note-box">
+    <strong>注意：</strong>试除法仅适用于单点判定（n &le; 10<sup>12</sup>）。
+    大规模筛素数需使用筛法。
+  </div>
+</div>
+
+<!-- ==================== 幻灯片3：埃氏筛原理 ==================== -->
+<div class="slide" data-index="2">
+  <h2>二、埃拉托色尼筛法（埃氏筛）O(n log log n)</h2>
+
+  <h3>算法思想：从 2 开始，标记每个素数的所有倍数为合数</h3>
+
+  <div class="two-col">
+    <div>
+      <p><strong>步骤演示 (n=30)：</strong></p>
+      <div class="sieve-anim" id="sieveDemo">
+        <!-- 由 JS 动态生成 -->
+      </div>
+      <br>
+      <button onclick="stepSieve()" style="background:var(--accent); color:#fff; border:none; border-radius:8px; padding:8px 20px; cursor:pointer; font-family:inherit;">
+        † 逐步筛（点击推进）
+      </button>
+      <span id="sieveStepLabel" style="margin-left:12px; color:var(--code-comment); font-size:0.9em;"></span>
+    </div>
+    <div>
+      <h3>代码实现</h3>
+      <div class="code-block" style="font-size:0.82em;"><span class="kw">int</span> <span class="fn">eratosthenes</span>(<span class="kw">int</span> n) {
+    <span class="fn">fill</span>(isPrime, isPrime+n+<span class="nu">1</span>, <span class="kw">true</span>);
+    isPrime[<span class="nu">0</span>] = isPrime[<span class="nu">1</span>] = <span class="kw">false</span>;
+    <span class="kw">int</span> cnt = <span class="nu">0</span>;
+    <span class="kw">for</span> (<span class="kw">int</span> i=<span class="nu">2</span>; i<=n; i++) {
+        <span class="kw">if</span> (isPrime[i]) {
+            cnt++;
+            <span class="cm">// 从 i*i 开始标记（优化）</span>
+            <span class="kw">if</span> ((<span class="kw">ll</span>)i*i <= n)
+                <span class="kw">for</span> (<span class="kw">int</span> j=i*i; j<=n; j+=i)
+                    isPrime[j] = <span class="kw">false</span>;
+        }
+    }
+    <span class="kw">return</span> cnt;
+}</div>
+      <p><strong>关键优化：</strong>内层从 i&sup2; 开始（2i 到 (i-1)i 已被更小的素数筛过）</p>
+      <p><strong>时间复杂度：</strong>调和级数 &Sigma;(n/p) ≈ <span class="highlight">n ln ln n</span></p>
+    </div>
+  </div>
+
+  <p style="margin-top:8px;">n=10<sup>6</sup> 时约 78498 个素数，埃氏筛约 0.1 秒即可完成。</p>
+</div>
+
+<!-- ==================== 幻灯片4：欧拉筛（线性筛）精讲 ==================== -->
+<div class="slide" data-index="3">
+  <h2>三、欧拉筛（线性筛）O(n) — 重点算法</h2>
+
+  <h3>核心思想：<span class="highlight">每个合数只被其最小质因子筛掉一次</span></h3>
+
+  <div class="two-col">
+    <div>
+      <p><strong>算法流程：</strong></p>
+      <ol style="padding-left:20px; line-height:1.9;">
+        <li>维护 <code style="color:var(--gold)">primes[]</code> 素数列表</li>
+        <li>遍历 i = 2..n：若为素数则加入列表</li>
+        <li>对每个素数 p = primes[j]：
+          <ul style="margin:4px 0 4px 16px;">
+            <li>标记 i×p 为合数</li>
+            <li><span class="highlight">若 i % p == 0，立即 break</span></li>
+          </ul>
+        </li>
+      </ol>
+      <div class="note-box" style="margin-top:12px;">
+        <strong>为什么 break？</strong><br>
+        i % p == 0 说明 p 是 i 的最小质因子。<br>
+        对于更大的素数 p'，i&times;p' 的最小质因子仍是 p，<br>
+        应在后面由 p 筛掉，现在跳过以保证每个合数只被筛一次。
+      </div>
+    </div>
+    <div>
+      <div class="code-block" style="font-size:0.8em;"><span class="kw">int</span> primes[MAXN], cnt = <span class="nu">0</span>;
+
+<span class="kw">int</span> <span class="fn">eulerSieve</span>(<span class="kw">int</span> n) {
+    <span class="fn">fill</span>(isPrime, isPrime+n+<span class="nu">1</span>, <span class="kw">true</span>);
+    isPrime[<span class="nu">0</span>] = isPrime[<span class="nu">1</span>] = <span class="kw">false</span>;
+    <span class="kw">for</span> (<span class="kw">int</span> i=<span class="nu">2</span>; i<=n; i++) {
+        <span class="kw">if</span> (isPrime[i])
+            primes[cnt++] = i;
+
+        <span class="kw">for</span> (<span class="kw">int</span> j=<span class="nu">0</span>; j<cnt; j++) {
+            <span class="kw">int</span> p = primes[j];
+            <span class="kw">if</span> ((<span class="kw">ll</span>)i * p > n) <span class="kw">break</span>;
+            isPrime[i * p] = <span class="kw">false</span>;
+
+            <span class="cm">// 关键！p 是 i 的最小质因子</span>
+            <span class="kw">if</span> (i % p == <span class="nu">0</span>) <span class="kw">break</span>;
+        }
+    }
+    <span class="kw">return</span> cnt;
+}</div>
+      <p><strong>复杂度分析：</strong></p>
+      <table style="font-size:0.85em;">
+        <tr><th>项目</th><th>欧拉筛</th><th>埃氏筛</th></tr>
+        <tr><td>时间</td><td style="color:var(--green)">O(n)</td><td>O(n log log n)</td></tr>
+        <tr><td>空间</td><td>O(n)</td><td>O(n)</td></tr>
+        <tr><td>常熟</td><td>略大</td><td>较小</td></tr>
+      </table>
+    </div>
+  </div>
+</div>
+
+<!-- ==================== 幻灯片5：区间筛 ==================== -->
+<div class="slide" data-index="4">
+  <h2>四、区间筛：大范围、小间距</h2>
+
+  <h3>问题场景：b 很大（如 10<sup>12</sup>）但 b-a 较小（如 10<sup>6</sup>）</h3>
+
+  <div class="two-col">
+    <div>
+      <p><strong>策略：</strong></p>
+      <ol style="padding-left:20px; line-height:1.9;">
+        <li>先用欧拉筛求出 <span class="highlight">[2, &radic;b]</span> 的所有素数</li>
+        <li>用这些素数去筛 [a, b] 区间内的合数</li>
+        <li>统计区间内未被标记的数</li>
+      </ol>
+
+      <p style="margin-top:16px;"><strong>技巧：向上取整</strong></p>
+      <div class="formula">
+        start = ceil(a / p) * p = (a + p - 1) / p * p
+      </div>
+      <p>但不能小于 p&sup2;（更小的倍数已在筛 sqrt(b) 时处理）</p>
+    </div>
+    <div>
+      <div class="code-block" style="font-size:0.75em;"><span class="kw">ll</span> <span class="fn">segmentSieve</span>(<span class="kw">ll</span> a, <span class="kw">ll</span> b) {
+    <span class="kw">ll</span> limit = <span class="fn">sqrt</span>(b);
+    <span class="kw">int</span> cnt = <span class="fn">eulerSieve</span>(limit);
+    <span class="fn">vector</span><<span class="kw">bool</span>> isSeg(b-a+<span class="nu">1</span>, <span class="kw">true</span>);
+    <span class="kw">if</span> (a == <span class="nu">1</span>) isSeg[<span class="nu">0</span>] = <span class="kw">false</span>;
+
+    <span class="kw">for</span> (<span class="kw">int</span> i=<span class="nu">0</span>; i<cnt; i++) {
+        <span class="kw">ll</span> p = primes[i];
+        <span class="kw">if</span> (p * p > b) <span class="kw">break</span>;
+        <span class="kw">ll</span> start = max(p*p, (a+p-<span class="nu">1</span>)/p * p);
+        <span class="kw">for</span> (<span class="kw">ll</span> j = start; j <= b; j += p)
+            isSeg[j - a] = <span class="kw">false</span>;
+    }
+
+    <span class="kw">ll</span> ans = <span class="nu">0</span>;
+    <span class="kw">for</span> (<span class="kw">ll</span> i=a; i<=b; i++)
+        <span class="kw">if</span> (isSeg[i-a]) ans++;
+    <span class="kw">return</span> ans;
+}</div>
+    </div>
+  </div>
+
+  <div class="note-box">
+    <strong>例题：</strong>求 [10<sup>11</sup>, 10<sup>11</sup>+100] 区间的素数个数。<br>
+    复杂度：O((b-a) log log &radic;b + &radic;b)，可轻松处理。
+  </div>
+</div>
+
+<!-- ==================== 幻灯片6：欧拉函数 ==================== -->
+<div class="slide" data-index="5">
+  <h2>五、欧拉函数 &phi;(n) 与线性筛求欧拉函数</h2>
+
+  <div class="two-col">
+    <div>
+      <h3>定义与公式</h3>
+      <p>&phi;(n)：小于 n 且与 n 互质的正整数个数。</p>
+      <div class="formula">
+        φ(n) = n · ∏<sub>p|n</sub> (1 - 1/p)
+      </div>
+      <p><strong>性质：</strong></p>
+      <ul style="font-size:0.92em;">
+        <li>质数：&phi;(p) = p - 1</li>
+        <li>积性：gcd(a,b)=1 → &phi;(ab) = &phi;(a)&phi;(b)</li>
+        <li>质数幂：&phi;(p<sup>k</sup>) = p<sup>k</sup> - p<sup>k-1</sup></li>
+        <li>求和：&Sigma;<sub>d|n</sub> &phi;(d) = n</li>
+      </ul>
+    </div>
+    <div>
+      <h3>线性筛同时求 &phi;(1..n)</h3>
+      <p>在欧拉筛的过程中，利用积性递推：</p>
+      <div class="code-block" style="font-size:0.78em;"><span class="kw">void</span> <span class="fn">eulerSieveWithPhi</span>(<span class="kw">int</span> n) {
+    <span class="fn">fill</span>(isPrime, isPrime+n+<span class="nu">1</span>, <span class="kw">true</span>);
+    phi[<span class="nu">1</span>] = <span class="nu">1</span>;
+    <span class="kw">int</span> cnt = <span class="nu">0</span>;
+    <span class="kw">for</span> (<span class="kw">int</span> i=<span class="nu">2</span>; i<=n; i++) {
+        <span class="kw">if</span> (isPrime[i]) {
+            primes[cnt++] = i;
+            phi[i] = i - <span class="nu">1</span>;  <span class="cm">// 质数</span>
+        }
+        <span class="kw">for</span> (<span class="kw">int</span> j=<span class="nu">0</span>; j<cnt; j++) {
+            <span class="kw">int</span> p = primes[j];
+            <span class="kw">if</span> (i*p > n) <span class="kw">break</span>;
+            isPrime[i*p] = <span class="kw">false</span>;
+            <span class="kw">if</span> (i % p == <span class="nu">0</span>) {
+                phi[i*p] = phi[i] * p;  <span class="cm">// p|i</span>
+                <span class="kw">break</span>;
+            }
+            <span class="kw">else</span> phi[i*p] = phi[i] * (p-<span class="nu">1</span>); <span class="cm">// p⊥i</span>
+        }
+    }
+}</div>
+      <p style="margin-top:8px;"><strong>关键区分：</strong></p>
+      <ul style="font-size:0.9em;">
+        <li>p | i → &phi;(i·p) = &phi;(i) · p</li>
+        <li>p ⟂ i → &phi;(i·p) = &phi;(i) · (p-1)</li>
+      </ul>
+    </div>
+  </div>
+</div>
+
+<!-- ==================== 幻灯片7：总结页 ==================== -->
+<div class="slide" data-index="6">
+  <h2>六、CSP-S 考点总结 &amp; 真题方向</h2>
+
+  <div class="two-col">
+    <div>
+      <h3>筛法对比</h3>
+      <table style="font-size:0.88em;">
+        <tr><th>算法</th><th>时间复杂度</th><th>n 上限</th><th>额外能力</th></tr>
+        <tr><td>试除法 6k±1</td><td>O(&#8730;n)</td><td>10<sup>12</sup></td><td>单点判定</td></tr>
+        <tr><td>埃氏筛</td><td>O(n log log n)</td><td>10<sup>7</sup></td><td>筛素数表</td></tr>
+        <tr><td>欧拉筛</td><td style="color:var(--green)">O(n)</td><td>10<sup>7</sup>~10<sup>8</sup></td><td>筛素数+积性函数</td></tr>
+        <tr><td>区间筛</td><td>O((b-a)log log&#8730;b)</td><td>b &#8804; 10<sup>12</sup></td><td>大范围小间距</td></tr>
+        <tr><td>线筛+&phi;</td><td>O(n)</td><td>10<sup>7</sup></td><td>批量求欧拉函数</td></tr>
+      </table>
+    </div>
+    <div>
+      <h3>真题方向</h3>
+      <ul>
+        <li><span class="highlight">素数密度</span> — 区间筛典型应用</li>
+        <li><span class="highlight">欧拉函数求和</span> — &Sigma;&phi;(i) 前缀和</li>
+        <li>质因数分解 / 最小质因子</li>
+        <li>莫比乌斯函数 &mu;(n) 筛法</li>
+        <li>积性函数批量计算</li>
+      </ul>
+      <div class="note-box" style="margin-top:16px;">
+        <strong>真题示例：</strong><br>
+        1. 求 [a, b] 内素数个数（b &le; 10<sup>12</sup>, b-a &le; 10<sup>6</sup>）<br>
+        2. 求 &Sigma;&phi;(i) (i=1..n, n &le; 10<sup>7</sup>)
+      </div>
+    </div>
+  </div>
+
+  <div style="margin-top:30px; text-align:center;">
+    <p style="font-size:1.3em; color:var(--accent);">线性筛 = 数论积性函数的基石</p>
+    <p style="color:var(--code-comment);">对应程序文件：<code>程序/lesson38_sieve_prime.cpp</code></p>
+  </div>
+</div>
+
+<!-- ==================== 导航 ==================== -->
+<div class="nav">
+  <button id="prevBtn" onclick="changeSlide(-1)">← 上一页</button>
+  <span class="page-indicator" id="pageInd">1 / 7</span>
+  <button id="nextBtn" onclick="changeSlide(1)">下一页 →</button>
+</div>
+
+</div>
+
+<script>
+// ========== 幻灯片导航 ==========
+let currentSlide = 0;
+const totalSlides = 7;
+const slides = document.querySelectorAll('.slide');
+
+function updateSlide() {
+  slides.forEach((s, i) => s.classList.toggle('active', i === currentSlide));
+  document.getElementById('pageInd').textContent = (currentSlide + 1) + ' / ' + totalSlides;
+  document.getElementById('prevBtn').disabled = currentSlide === 0;
+  document.getElementById('nextBtn').disabled = currentSlide === totalSlides - 1;
+}
+
+function changeSlide(delta) {
+  currentSlide = Math.max(0, Math.min(totalSlides - 1, currentSlide + delta));
+  updateSlide();
+}
+
+document.addEventListener('keydown', (e) => {
+  if (e.key === 'ArrowRight' || e.key === 'ArrowDown' || e.key === ' ') {
+    e.preventDefault(); changeSlide(1);
+  } else if (e.key === 'ArrowLeft' || e.key === 'ArrowUp') {
+    e.preventDefault(); changeSlide(-1);
+  }
+});
+
+let touchStartX = 0;
+document.addEventListener('touchstart', e => { touchStartX = e.touches[0].clientX; });
+document.addEventListener('touchend', e => {
+  const diff = touchStartX - e.changedTouches[0].clientX;
+  if (Math.abs(diff) > 60) changeSlide(diff > 0 ? 1 : -1);
+});
+
+// ========== 埃氏筛动画演示 ==========
+let sieveData = null;
+let sieveStep = 0;
+const SIEVE_N = 30;
+
+function initSieveData() {
+  sieveData = [];
+  for (let i = 1; i <= SIEVE_N; i++) {
+    sieveData.push({ num: i, state: 'unset' });
+  }
+  sieveData[0].state = 'comp'; // 1 不是素数
+  sieveStep = 0;
+}
+
+function renderSieve() {
+  const container = document.getElementById('sieveDemo');
+  if (!container) return;
+  let html = '';
+  for (let i = 0; i < sieveData.length; i++) {
+    let cls = 'sieve-cell ';
+    if (sieveData[i].state === 'prime') cls += 'cell-prime';
+    else if (sieveData[i].state === 'comp') cls += 'cell-comp';
+    else cls += 'cell-unset';
+    html += '<span class="' + cls + '">' + sieveData[i].num + '</span>';
+  }
+  container.innerHTML = html;
+}
+
+function stepSieve() {
+  if (!sieveData) initSieveData();
+
+  const stepLabels = [
+    '初始状态（标记 1 为合数）',
+    '2 是素数，筛掉 4,6,8,...,30',
+    '3 是素数，筛掉 9,15,21,27',
+    '4 已被筛掉，跳过',
+    '5 是素数，筛掉 25',
+    '筛法完成 ✓'
+  ];
+
+  if (sieveStep === 0) {
+    // 初始
+  } else if (sieveStep === 1) {
+    // 筛 2
+    sieveData[1].state = 'prime';
+    for (let j = 3; j < SIEVE_N; j += 2) sieveData[j].state = 'comp';
+  } else if (sieveStep === 2) {
+    // 筛 3
+    sieveData[2].state = 'prime';
+    for (let j = 8; j < SIEVE_N; j += 3) {
+      if (sieveData[j].num % 3 === 0) sieveData[j].state = 'comp';
+    }
+  } else if (sieveStep === 3) {
+    // 4 已被筛（skip）
+    sieveData[3].state = 'comp';
+  } else if (sieveStep === 4) {
+    // 5
+    sieveData[4].state = 'prime';
+    for (let j = 24; j < SIEVE_N; j += 5) sieveData[j].state = 'comp';
+  } else if (sieveStep >= 5) {
+    // 完成：标记剩余素数
+    for (let i = 2; i < SIEVE_N; i++) {
+      if (sieveData[i].state === 'unset') sieveData[i].state = 'prime';
+    }
+  }
+
+  document.getElementById('sieveStepLabel').textContent =
+    stepLabels[Math.min(sieveStep, stepLabels.length - 1)];
+  renderSieve();
+  sieveStep++;
+}
+
+// 初始化动画数据
+initSieveData();
+renderSieve();
+document.getElementById('sieveStepLabel').textContent = '点击按钮逐步演示埃氏筛过程';
+
+updateSlide();
+</script>
+</body>
+</html>

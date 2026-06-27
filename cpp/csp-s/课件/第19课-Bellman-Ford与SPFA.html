@@ -1,0 +1,537 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>第19课：Bellman-Ford 与 SPFA</title>
+    <style>
+        :root {
+            --bg: #0a1628;
+            --card: #162744;
+            --text: #e0e8f0;
+            --muted: #8ba4c0;
+            --accent: #5b9bd5;
+            --accent2: #4ec9b0;
+            --highlight: #f0c040;
+            --keyword: #569cd6;
+            --string: #6a9955;
+            --comment: #6a737d;
+            --func: #dcdcaa;
+            --number: #b5cea8;
+            --border: #1e3a5f;
+            --danger: #f44747;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "PingFang SC", "Microsoft YaHei", sans-serif;
+            background: var(--bg);
+            color: var(--text);
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+        }
+
+        .slide-container {
+            width: 100%;
+            max-width: 900px;
+            position: relative;
+        }
+
+        .slide {
+            display: none;
+            background: var(--card);
+            border: 1px solid var(--border);
+            border-radius: 16px;
+            padding: 48px 52px;
+            min-height: 520px;
+            box-shadow: 0 8px 40px rgba(0, 0, 0, 0.4);
+            animation: fadeSlide 0.5s ease;
+        }
+
+        .slide.active {
+            display: block;
+        }
+
+        @keyframes fadeSlide {
+            from {
+                opacity: 0;
+                transform: translateY(20px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .slide-title {
+            font-size: 2em;
+            font-weight: 700;
+            color: var(--accent);
+            margin-bottom: 8px;
+            border-left: 4px solid var(--accent2);
+            padding-left: 16px;
+        }
+
+        .slide-subtitle {
+            font-size: 1.1em;
+            color: var(--muted);
+            margin-bottom: 28px;
+        }
+
+        .slide-content {
+            font-size: 1.05em;
+            line-height: 1.8;
+        }
+
+        .slide-content h3 {
+            color: var(--accent2);
+            margin: 20px 0 8px;
+            font-size: 1.2em;
+        }
+
+        .slide-content ul {
+            padding-left: 24px;
+        }
+        .slide-content li {
+            margin: 6px 0;
+        }
+
+        .slide-content p {
+            margin: 8px 0;
+        }
+
+        .highlight-text {
+            color: var(--highlight);
+            font-weight: 600;
+        }
+
+        .info-box {
+            background: rgba(91, 155, 213, 0.08);
+            border: 1px solid rgba(91, 155, 213, 0.25);
+            border-radius: 10px;
+            padding: 16px 20px;
+            margin: 16px 0;
+        }
+
+        .danger-box {
+            background: rgba(244, 71, 71, 0.08);
+            border: 1px solid rgba(244, 71, 71, 0.25);
+            border-radius: 10px;
+            padding: 16px 20px;
+            margin: 16px 0;
+        }
+
+        .success-box {
+            background: rgba(78, 201, 176, 0.08);
+            border: 1px solid rgba(78, 201, 176, 0.25);
+            border-radius: 10px;
+            padding: 16px 20px;
+            margin: 16px 0;
+        }
+
+        /* 代码块 */
+        .code-block {
+            background: #0d1b2a;
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            padding: 18px 22px;
+            margin: 12px 0;
+            overflow-x: auto;
+            font-family: "SF Mono", "Fira Code", "Consolas", "Courier New", monospace;
+            font-size: 0.9em;
+            line-height: 1.6;
+            white-space: pre;
+        }
+
+        .kw {
+            color: var(--keyword);
+        }
+        .st {
+            color: var(--string);
+        }
+        .cm {
+            color: var(--comment);
+            font-style: italic;
+        }
+        .fn {
+            color: var(--func);
+        }
+        .nu {
+            color: var(--number);
+        }
+        .op {
+            color: #d4d4d4;
+        }
+        .ty {
+            color: #4ec9b0;
+        }
+
+        /* 公式 */
+        .formula {
+            display: inline-block;
+            background: rgba(91, 155, 213, 0.12);
+            border-radius: 6px;
+            padding: 4px 12px;
+            font-family: "SF Mono", "Consolas", monospace;
+            font-size: 0.95em;
+            color: var(--accent);
+        }
+
+        /* 导航 */
+        .nav {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-top: 24px;
+            gap: 12px;
+        }
+
+        .nav-btn {
+            background: var(--card);
+            color: var(--text);
+            border: 1px solid var(--border);
+            padding: 10px 28px;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 0.95em;
+            transition: all 0.2s;
+        }
+
+        .nav-btn:hover {
+            background: var(--accent);
+            color: #fff;
+            border-color: var(--accent);
+        }
+        .nav-btn:disabled {
+            opacity: 0.4;
+            cursor: not-allowed;
+        }
+
+        .page-indicator {
+            font-size: 0.9em;
+            color: var(--muted);
+            min-width: 80px;
+            text-align: center;
+        }
+
+        /* 响应式 */
+        @media (max-width: 768px) {
+            .slide {
+                padding: 28px 24px;
+                min-height: auto;
+            }
+            .slide-title {
+                font-size: 1.5em;
+            }
+            .code-block {
+                font-size: 0.78em;
+                padding: 12px 14px;
+            }
+        }
+
+        /* 标题页特殊样式 */
+        .cover-title {
+            font-size: 2.4em;
+            font-weight: 800;
+            color: var(--accent);
+            text-align: center;
+            margin-top: 40px;
+        }
+        .cover-subtitle {
+            font-size: 1.2em;
+            color: var(--muted);
+            text-align: center;
+            margin: 16px 0 32px;
+        }
+        .cover-list {
+            list-style: none;
+            padding: 0;
+            text-align: center;
+            font-size: 1.05em;
+            line-height: 2.2;
+        }
+        .cover-list li::before {
+            content: "▸ ";
+            color: var(--accent2);
+        }
+
+        /* 表格 */
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 16px 0;
+            font-size: 0.95em;
+        }
+        th, td {
+            border: 1px solid var(--border);
+            padding: 10px 14px;
+            text-align: left;
+        }
+        th {
+            background: rgba(91, 155, 213, 0.12);
+            color: var(--accent);
+        }
+    </style>
+</head>
+<body>
+
+<div class="slide-container" id="slideContainer">
+
+    <!-- ===== 幻灯片 0：标题页 ===== -->
+    <div class="slide active" data-index="0">
+        <div class="cover-title">Bellman-Ford 与 SPFA</div>
+        <div class="cover-subtitle">第 19 课 · 最短路径算法（二）—— 处理负权边与负环</div>
+        <ul class="cover-list">
+            <li>Bellman-Ford：V-1轮松弛，O(VE)</li>
+            <li>负环检测：第 V 轮仍松弛</li>
+            <li>SPFA：队列优化，期望 O(kE)</li>
+            <li>SLF 优化与卡SPFA策略</li>
+        </ul>
+    </div>
+
+    <!-- ===== 幻灯片 1：知识精讲——Bellman-Ford ===== -->
+    <div class="slide" data-index="1">
+        <div class="slide-title">Bellman-Ford 算法</div>
+        <div class="slide-subtitle">处理负权边的基础算法</div>
+        <div class="slide-content">
+            <h3>核心思想</h3>
+            <p>进行 <span class="highlight-text">V-1 轮</span> 对所有边的松弛操作。第 <span class="formula">k</span> 轮后，<span class="formula">dist[v]</span> 表示从源点出发经过 <span class="highlight-text">不超过 k 条边</span> 的最短距离。</p>
+
+            <div class="info-box">
+                <strong>松弛操作：</strong> 对边 (u, v, w)，若 <span class="formula">dist[u] + w &lt; dist[v]</span>，则更新 <span class="formula">dist[v] = dist[u] + w</span>
+            </div>
+
+            <h3>为什么是 V-1 轮？</h3>
+            <p>在无负环的图中，任意两点间的最短路径 <span class="highlight-text">最多经过 V-1 条边</span>（不会重复经过同一个点）。V-1 轮松弛足以找出所有最短路。</p>
+
+            <h3>复杂度</h3>
+            <table>
+                <tr><th>项目</th><th>复杂度</th></tr>
+                <tr><td>时间复杂度</td><td>O(VE)</td></tr>
+                <tr><td>空间复杂度（边集数组）</td><td>O(V)</td></tr>
+                <tr><td>适用场景</td><td>含有负权边、需检测负环</td></tr>
+            </table>
+        </div>
+    </div>
+
+    <!-- ===== 幻灯片 2：知识精讲——SPFA ===== -->
+    <div class="slide" data-index="2">
+        <div class="slide-title">SPFA 算法</div>
+        <div class="slide-subtitle">Shortest Path Faster Algorithm —— 队列优化的 Bellman-Ford</div>
+        <div class="slide-content">
+            <h3>优化动机</h3>
+            <p>Bellman-Ford 每轮遍历所有边，但 <span class="highlight-text">只有上一轮被更新的节点</span>，其出边才可能引起新的松弛。因此用队列维护这些节点，避免无效遍历。</p>
+
+            <h3>算法流程</h3>
+            <ul>
+                <li>初始化 <span class="formula">dist[s] = 0</span>，源点入队</li>
+                <li>取出队首 u，遍历其出边进行松弛</li>
+                <li>若 v 被更新且不在队列中，则 <strong>v 入队</strong></li>
+                <li>队列为空时算法结束</li>
+            </ul>
+
+            <div class="info-box">
+                <strong>复杂度：</strong> 期望 <span class="highlight-text">O(kE)</span>（随机图 k≤2），最坏 <span class="highlight-text">O(VE)</span>
+            </div>
+
+            <div class="danger-box">
+                <strong>注意：</strong> SPFA 可能被卡退化为 O(VE)。网格图、蒲公英图是经典卡法。无负权边时优先使用 Dijkstra。
+            </div>
+        </div>
+    </div>
+
+    <!-- ===== 幻灯片 3：原理推导——负环检测 ===== -->
+    <div class="slide" data-index="3">
+        <div class="slide-title">负环检测原理</div>
+        <div class="slide-subtitle">Bellman-Ford 与 SPFA 两种检测方法</div>
+        <div class="slide-content">
+            <h3>方法一：第 V 轮松弛法（Bellman-Ford）</h3>
+            <p>进行第 V 轮松弛：若仍有边可以被松弛，说明存在 <span class="highlight-text">经过 ≥ V 条边的最短路径</span>。由抽屉原理，这条路径必定重复经过某顶点，形成负环。</p>
+
+            <div class="code-block"><span class="cm">// 第 V 轮检测负环</span>
+<span class="kw">for</span> (<span class="kw">int</span> j = <span class="nu">1</span>; j &lt;= m; j++) {
+    <span class="kw">if</span> (dist[u] != INF && dist[u] + w &lt; dist[v])
+        <span class="kw">return false</span>;  <span class="cm">// 存在负环</span>
+}</div>
+
+            <h3>方法二：路径边数法（SPFA 推荐）</h3>
+            <p>维护 <span class="formula">cnt[v]</span> = 从源点到 v 的最短路径经历的<strong>边数</strong>。若 <span class="highlight-text">cnt[v] ≥ V</span>，则路径经过了 V+1 个顶点，必存在负环。</p>
+
+            <div class="success-box">
+                <strong>全局负环检测：</strong> 若图不连通，负环可能不在源点可达范围内。解决方法：将所有节点的初始距离设为 0，全部入队。此时能从任意节点出发检测负环。
+            </div>
+        </div>
+    </div>
+
+    <!-- ===== 幻灯片 4：代码模板 ===== -->
+    <div class="slide" data-index="4">
+        <div class="slide-title">SPFA 代码模板</div>
+        <div class="slide-subtitle">邻接表 + 队列 + 负环检测</div>
+        <div class="slide-content">
+            <div class="code-block"><span class="kw">bool</span> <span class="fn">spfa</span>(<span class="kw">int</span> s) {
+    fill(dist, dist + n + <span class="nu">1</span>, INF);
+    fill(cnt, cnt + n + <span class="nu">1</span>, <span class="nu">0</span>);
+    <span class="ty">queue</span>&lt;<span class="kw">int</span>&gt; q;
+    dist[s] = <span class="nu">0</span>; q.push(s); inq[s] = <span class="kw">true</span>;
+
+    <span class="kw">while</span> (!q.empty()) {
+        <span class="kw">int</span> u = q.front(); q.pop();
+        inq[u] = <span class="kw">false</span>;
+        <span class="kw">for</span> (<span class="kw">auto</span> &e : g[u]) {
+            <span class="kw">int</span> v = e.first;
+            <span class="kw">long long</span> w = e.second;
+            <span class="kw">if</span> (dist[u] + w &lt; dist[v]) {
+                dist[v] = dist[u] + w;
+                cnt[v] = cnt[u] + <span class="nu">1</span>;
+                <span class="kw">if</span> (cnt[v] &gt;= n)
+                    <span class="kw">return false</span>;  <span class="cm">// 负环!</span>
+                <span class="kw">if</span> (!inq[v]) { q.push(v); inq[v] = <span class="kw">true</span>; }
+            }
+        }
+    }
+    <span class="kw">return true</span>;
+}</div>
+            <div class="info-box">
+                <strong>关键实现细节：</strong><br>
+                1. <span class="formula">cnt[v] = cnt[u] + 1</span> 记录路径边数<br>
+                2. 节点出队时 <span class="formula">inq[v] = false</span>，允许再次入队<br>
+                3. INF 建议使用 <span class="formula">1e18</span>（long long），防止 <span class="formula">INF + w</span> 溢出
+            </div>
+        </div>
+    </div>
+
+    <!-- ===== 幻灯片 5：真题精练 ===== -->
+    <div class="slide" data-index="5">
+        <div class="slide-title">真题精练</div>
+        <div class="slide-subtitle">经典题目与 AC 策略</div>
+        <div class="slide-content">
+            <h3>P3385 【模板】负环</h3>
+            <ul>
+                <li><strong>题意：</strong>判断有向图是否存在负环（图可能不连通）</li>
+                <li><strong>策略：</strong>全局入队 + cnt[v] ≥ n 判负环</li>
+                <li><strong>复杂度：</strong>最坏 O(VE)，n≤2000, m≤6000 可行</li>
+            </ul>
+
+            <div class="code-block"><span class="kw">bool</span> <span class="fn">spfa_detect_all</span>() {
+    <span class="cm">// 所有点初始入队，dist 设为 0</span>
+    <span class="kw">for</span> (<span class="kw">int</span> i = <span class="nu">1</span>; i &lt;= n; i++) {
+        q.push(i); inq[i] = <span class="kw">true</span>;
+    }
+    <span class="cm">// ... 松弛过程同 spfa，cnt[v] >= n 即返回 true</span>
+}</div>
+
+            <h3>P3371 【模板】单源最短路径（弱化版）</h3>
+            <ul>
+                <li><strong>题意：</strong>n≤10⁴, m≤5×10⁵，有负权边，求最短路</li>
+                <li><strong>策略：</strong>SPFA，若数据未刻意卡可通过</li>
+                <li><strong>注意：</strong>不可达节点按题目要求输出 2147483647</li>
+            </ul>
+        </div>
+    </div>
+
+    <!-- ===== 幻灯片 6：优化技巧——SLF / LLL / 卡SPFA ===== -->
+    <div class="slide" data-index="6">
+        <div class="slide-title">优化技巧与卡 SPFA 策略</div>
+        <div class="slide-subtitle">SLF、LLL 优化原理及防御思路</div>
+        <div class="slide-content">
+            <h3>SLF（Small Label First）</h3>
+            <p>入队时，若 <span class="formula">dist[v] &lt; dist[q.front()]</span>，将 v 插入 <strong>队首</strong>（使用 deque）。距离更小的节点优先处理，加速收敛。</p>
+
+            <div class="code-block"><span class="kw">if</span> (!q.empty() && dist[v] &lt; dist[q.front()])
+    q.push_front(v);
+<span class="kw">else</span>
+    q.push_back(v);</div>
+
+            <h3>LLL（Large Label Last）</h3>
+            <p>出队时，若队首距离 &gt; 队列平均值，移回队尾。实际竞赛中 SLF 更常用，LLL 效果不稳定。</p>
+
+            <div class="danger-box">
+                <strong>卡 SPFA 攻击原理：</strong> 构造<strong>网格图</strong>或<strong>蒲公英图</strong>，使节点更新顺序与 SPFA 的遍历顺序高度不一致，每个节点被松弛 O(V) 次，退化为 O(VE)。
+            </div>
+
+            <div class="success-box">
+                <strong>应对策略：</strong> 无负权边 → Dijkstra；有负权但不确定是否卡 → SLF + 随机化边表；稠密图 → Floyd 或朴素 Bellman-Ford。
+            </div>
+        </div>
+    </div>
+
+    <!-- ===== 幻灯片 7：总结页 ===== -->
+    <div class="slide" data-index="7">
+        <div class="slide-title">本课小结</div>
+        <div class="slide-subtitle">Bellman-Ford &amp; SPFA 要点回顾</div>
+        <div class="slide-content">
+            <table>
+                <tr><th>知识点</th><th>核心要点</th></tr>
+                <tr><td>Bellman-Ford</td><td>V-1轮松弛，第k轮dist表示不超过k条边的最短路</td></tr>
+                <tr><td>负环检测</td><td>第V轮仍松弛 → 负环；SPFA中cnt[v] ≥ n → 负环</td></tr>
+                <tr><td>SPFA</td><td>队列优化，期望O(kE)，最坏O(VE)</td></tr>
+                <tr><td>SLF优化</td><td>dist[v] &lt; 队首则插入队首，使用deque</td></tr>
+                <tr><td>卡SPFA</td><td>网格图/蒲公英图构造；优先用Dijkstra</td></tr>
+            </table>
+
+            <div class="info-box" style="margin-top:24px;">
+                <strong>一句话总结：</strong> Bellman-Ford 可以处理负权边，SPFA 是其队列优化版，在随机图上很快但可能被卡退化为 O(VE)。竞赛中无负权边优先选 Dijkstra，有负权边再考虑 SPFA。
+            </div>
+
+            <p style="text-align:center; margin-top:24px; color:var(--muted); font-size:0.9em;">
+                —— 第 19 课 结束 ——
+            </p>
+        </div>
+    </div>
+
+</div> <!-- .slide-container -->
+
+<!-- 导航 -->
+<div class="nav">
+    <button class="nav-btn" id="prevBtn" onclick="changeSlide(-1)">◀ 上一页</button>
+    <span class="page-indicator" id="pageIndicator">1 / 8</span>
+    <button class="nav-btn" id="nextBtn" onclick="changeSlide(1)">下一页 ▶</button>
+</div>
+
+<script>
+    let currentSlide = 0;
+    const slides = document.querySelectorAll('.slide');
+    const totalSlides = slides.length;
+
+    function showSlide(index) {
+        slides.forEach(s => s.classList.remove('active'));
+        slides[index].classList.add('active');
+        document.getElementById('pageIndicator').textContent = (index + 1) + ' / ' + totalSlides;
+        document.getElementById('prevBtn').disabled = (index === 0);
+        document.getElementById('nextBtn').disabled = (index === totalSlides - 1);
+    }
+
+    function changeSlide(delta) {
+        currentSlide = Math.max(0, Math.min(totalSlides - 1, currentSlide + delta));
+        showSlide(currentSlide);
+    }
+
+    // 键盘导航
+    document.addEventListener('keydown', function(e) {
+        if (e.key === 'ArrowRight' || e.key === 'ArrowDown') changeSlide(1);
+        if (e.key === 'ArrowLeft' || e.key === 'ArrowUp') changeSlide(-1);
+    });
+
+    // 触屏滑动
+    let touchStartX = 0;
+    document.addEventListener('touchstart', e => { touchStartX = e.changedTouches[0].screenX; });
+    document.addEventListener('touchend', e => {
+        const diff = touchStartX - e.changedTouches[0].screenX;
+        if (Math.abs(diff) > 50) changeSlide(diff > 0 ? 1 : -1);
+    });
+
+    // 初始化
+    showSlide(0);
+</script>
+
+</body>
+</html>

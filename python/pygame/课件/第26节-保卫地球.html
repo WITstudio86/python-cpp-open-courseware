@@ -1,0 +1,1068 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>第26节：保卫地球 —— 太空侵略者</title>
+<style>
+/* ============================================
+   全局样式 —— 活泼明快，适合中小学生
+   ============================================ */
+* { margin: 0; padding: 0; box-sizing: border-box; }
+
+body {
+    font-family: "PingFang SC", "Microsoft YaHei", "Noto Sans SC", sans-serif;
+    background: #0a0a2e;
+    color: #e0e0e0;
+    overflow: hidden;
+    user-select: none;
+}
+
+/* 幻灯片容器 */
+.slides-container {
+    width: 100vw;
+    height: 100vh;
+    position: relative;
+}
+
+.slide {
+    width: 100%;
+    height: 100%;
+    position: absolute;
+    top: 0; left: 0;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 60px 80px;
+    opacity: 0;
+    transition: opacity 0.4s ease;
+    pointer-events: none;
+}
+
+.slide.active {
+    opacity: 1;
+    pointer-events: auto;
+    z-index: 10;
+}
+
+/* 页码指示器 */
+.page-indicator {
+    position: fixed;
+    bottom: 20px;
+    right: 30px;
+    font-size: 18px;
+    color: #888;
+    z-index: 100;
+    background: rgba(0,0,0,0.5);
+    padding: 6px 16px;
+    border-radius: 20px;
+}
+
+/* 导航提示 */
+.nav-hint {
+    position: fixed;
+    bottom: 20px;
+    left: 30px;
+    font-size: 16px;
+    color: #666;
+    z-index: 100;
+}
+
+/* ============================================
+   封面页样式
+   ============================================ */
+.cover {
+    background: linear-gradient(135deg, #0a0a2e 0%, #1a1a4e 30%, #0d0d3a 60%, #0a0a2e 100%);
+}
+
+.cover .title-badge {
+    background: linear-gradient(135deg, #ff6b35, #f7c948);
+    color: #0a0a2e;
+    font-size: 28px;
+    font-weight: bold;
+    padding: 8px 30px;
+    border-radius: 30px;
+    margin-bottom: 30px;
+    letter-spacing: 4px;
+}
+
+.cover h1 {
+    font-size: 72px;
+    color: #fff;
+    text-shadow: 0 0 40px rgba(255,200,50,0.6), 0 0 80px rgba(255,100,30,0.4);
+    margin-bottom: 20px;
+    letter-spacing: 8px;
+}
+
+.cover .subtitle {
+    font-size: 32px;
+    color: #ffcc00;
+    margin-bottom: 40px;
+}
+
+.cover .info {
+    font-size: 22px;
+    color: #aaa;
+    line-height: 2;
+}
+
+.cover .stars {
+    position: absolute;
+    width: 100%;
+    height: 100%;
+    top: 0; left: 0;
+    pointer-events: none;
+}
+
+.star {
+    position: absolute;
+    background: white;
+    border-radius: 50%;
+    animation: twinkle 2s infinite alternate;
+}
+
+@keyframes twinkle {
+    0% { opacity: 0.3; }
+    100% { opacity: 1; }
+}
+
+/* ============================================
+   内容页通用样式
+   ============================================ */
+.content-slide {
+    background: linear-gradient(180deg, #0d0d3a 0%, #111148 100%);
+    justify-content: flex-start;
+    padding-top: 40px;
+}
+
+.slide-title {
+    font-size: 46px;
+    color: #ffcc00;
+    margin-bottom: 40px;
+    text-shadow: 0 0 20px rgba(255,200,0,0.4);
+    text-align: center;
+    width: 100%;
+    padding-bottom: 15px;
+    border-bottom: 3px solid rgba(255,200,0,0.3);
+}
+
+.slide-content {
+    width: 100%;
+    max-width: 1000px;
+    flex: 1;
+    overflow-y: auto;
+}
+
+/* ============================================
+   列表和文字样式
+   ============================================ */
+.big-list {
+    list-style: none;
+    font-size: 28px;
+    line-height: 2.2;
+}
+
+.big-list li {
+    padding: 8px 0;
+    padding-left: 40px;
+    position: relative;
+}
+
+.big-list li::before {
+    content: "▸";
+    position: absolute;
+    left: 0;
+    color: #ffcc00;
+    font-size: 24px;
+}
+
+.highlight {
+    color: #ffcc00;
+    font-weight: bold;
+}
+
+.keyword {
+    color: #ff6b35;
+    font-weight: bold;
+}
+
+.code-inline {
+    background: rgba(255,255,255,0.1);
+    color: #7ec8e3;
+    padding: 2px 10px;
+    border-radius: 4px;
+    font-family: "JetBrains Mono", "Fira Code", "Courier New", monospace;
+    font-size: 0.9em;
+}
+
+/* ============================================
+   代码展示区
+   ============================================ */
+.code-block {
+    background: #1a1a2e;
+    border: 1px solid #333;
+    border-radius: 10px;
+    margin: 20px 0;
+    overflow: hidden;
+}
+
+.code-block .code-header {
+    background: #252540;
+    padding: 8px 20px;
+    font-size: 16px;
+    color: #888;
+    border-bottom: 1px solid #333;
+}
+
+.code-block pre {
+    margin: 0;
+    padding: 20px 24px;
+    font-size: 20px;
+    line-height: 1.7;
+    font-family: "JetBrains Mono", "Fira Code", "Courier New", monospace;
+    overflow-x: auto;
+    color: #d4d4d4;
+}
+
+/* 语法高亮颜色 */
+.code-keyword { color: #569cd6; }    /* import, def, class, if, for */
+.code-func    { color: #dcdcaa; }    /* 函数名 */
+.code-string  { color: #ce9178; }    /* 字符串 */
+.code-comment { color: #6a9955; }    /* 注释 */
+.code-number  { color: #b5cea8; }    /* 数字 */
+.code-builtin { color: #4ec9b0; }    /* 内置函数/类 */
+.code-param   { color: #9cdcfe; }    /* 参数 */
+.code-self    { color: #569cd6; }    /* self */
+.code-op      { color: #d4d4d4; }    /* 运算符 */
+
+/* ============================================
+   卡片和表格
+   ============================================ */
+.card-row {
+    display: flex;
+    gap: 24px;
+    margin: 20px 0;
+    flex-wrap: wrap;
+    justify-content: center;
+}
+
+.card {
+    background: rgba(255,255,255,0.06);
+    border: 1px solid rgba(255,255,255,0.15);
+    border-radius: 14px;
+    padding: 28px 32px;
+    flex: 1;
+    min-width: 240px;
+    max-width: 320px;
+    text-align: center;
+    transition: transform 0.2s, border-color 0.2s;
+}
+
+.card:hover {
+    transform: translateY(-4px);
+    border-color: #ffcc00;
+}
+
+.card .card-icon {
+    font-size: 48px;
+    margin-bottom: 16px;
+}
+
+.card .card-title {
+    font-size: 26px;
+    color: #ffcc00;
+    margin-bottom: 10px;
+    font-weight: bold;
+}
+
+.card .card-desc {
+    font-size: 18px;
+    color: #bbb;
+    line-height: 1.6;
+}
+
+/* 表格 */
+.info-table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 24px;
+    margin: 16px 0;
+}
+
+.info-table th {
+    background: rgba(255,200,0,0.15);
+    color: #ffcc00;
+    padding: 12px 18px;
+    text-align: center;
+    border: 1px solid rgba(255,255,255,0.1);
+}
+
+.info-table td {
+    padding: 10px 18px;
+    text-align: center;
+    border: 1px solid rgba(255,255,255,0.08);
+    color: #e0e0e0;
+}
+
+.info-table tr:hover td {
+    background: rgba(255,255,255,0.05);
+}
+
+/* ============================================
+   对比框
+   ============================================ */
+.compare-row {
+    display: flex;
+    gap: 30px;
+    margin: 20px 0;
+}
+
+.compare-box {
+    flex: 1;
+    padding: 24px 28px;
+    border-radius: 12px;
+    font-size: 24px;
+    line-height: 1.8;
+}
+
+.compare-box.good {
+    background: rgba(0,255,0,0.08);
+    border: 1px solid rgba(0,255,0,0.3);
+}
+
+.compare-box.good::before {
+    content: "✅ 正确做法";
+    display: block;
+    font-size: 22px;
+    color: #4caf50;
+    font-weight: bold;
+    margin-bottom: 10px;
+}
+
+.compare-box.bad {
+    background: rgba(255,0,0,0.08);
+    border: 1px solid rgba(255,0,0,0.3);
+}
+
+.compare-box.bad::before {
+    content: "❌ 常见错误";
+    display: block;
+    font-size: 22px;
+    color: #f44336;
+    font-weight: bold;
+    margin-bottom: 10px;
+}
+
+/* ============================================
+   步骤编号
+   ============================================ */
+.step-list {
+    list-style: none;
+    counter-reset: step;
+}
+
+.step-list li {
+    counter-increment: step;
+    font-size: 26px;
+    line-height: 2;
+    padding-left: 60px;
+    position: relative;
+    margin-bottom: 12px;
+}
+
+.step-list li::before {
+    content: counter(step);
+    position: absolute;
+    left: 0;
+    top: 6px;
+    width: 40px;
+    height: 40px;
+    background: linear-gradient(135deg, #ff6b35, #f7c948);
+    color: #0a0a2e;
+    font-size: 22px;
+    font-weight: bold;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+/* ============================================
+   subsurface 原理图
+   ============================================ */
+.diagram {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 30px;
+    margin: 24px 0;
+    flex-wrap: wrap;
+}
+
+.diagram-box {
+    background: rgba(0,130,0,0.2);
+    border: 2px solid #0a0;
+    border-radius: 8px;
+    padding: 16px;
+    text-align: center;
+    font-size: 20px;
+    min-width: 140px;
+}
+
+.diagram-arrow {
+    font-size: 36px;
+    color: #ffcc00;
+}
+
+.diagram-result {
+    background: rgba(0,0,0,0.3);
+    border: 2px dashed #f00;
+    border-radius: 8px;
+    padding: 16px;
+    text-align: center;
+    font-size: 20px;
+    min-width: 140px;
+}
+
+/* ============================================
+   练习任务卡片
+   ============================================ */
+.task-card {
+    background: linear-gradient(135deg, rgba(255,107,53,0.1), rgba(247,201,72,0.1));
+    border: 1px solid rgba(255,107,53,0.3);
+    border-radius: 14px;
+    padding: 24px 28px;
+    margin: 16px 0;
+}
+
+.task-card h3 {
+    color: #ff6b35;
+    font-size: 28px;
+    margin-bottom: 12px;
+}
+
+.task-card p {
+    font-size: 22px;
+    line-height: 1.7;
+    color: #ddd;
+}
+
+.badge {
+    display: inline-block;
+    padding: 4px 14px;
+    border-radius: 14px;
+    font-size: 16px;
+    font-weight: bold;
+    margin-right: 8px;
+}
+
+.badge-basic {
+    background: #4caf50;
+    color: white;
+}
+
+.badge-challenge {
+    background: #ff6b35;
+    color: white;
+}
+
+/* ============================================
+   响应式调整
+   ============================================ */
+@media (max-width: 900px) {
+    .slide { padding: 30px 24px; }
+    .slide-title { font-size: 32px; }
+    .big-list { font-size: 22px; }
+    .code-block pre { font-size: 16px; }
+    .card { min-width: 180px; }
+    .card .card-title { font-size: 22px; }
+}
+</style>
+</head>
+<body>
+
+<div class="slides-container">
+
+    <!-- ============================================ -->
+    <!-- 第 1 页：封面 -->
+    <!-- ============================================ -->
+    <div class="slide cover active" data-index="0">
+        <div class="stars" id="stars-container"></div>
+        <div class="title-badge">第 26 节</div>
+        <h1>保卫地球</h1>
+        <div class="subtitle">—— 太空侵略者（下）</div>
+        <div class="info">
+            掩体局部破坏 &nbsp;|&nbsp; 波次系统 &nbsp;|&nbsp; 难度递增<br>
+            知识点：Surface.subsurface() &nbsp;|&nbsp; 波次管理 &nbsp;|&nbsp; 过渡动画
+        </div>
+    </div>
+
+    <!-- ============================================ -->
+    <!-- 第 2 页：教学目标 -->
+    <!-- ============================================ -->
+    <div class="slide content-slide" data-index="1">
+        <div class="slide-title">🎯 本节目标</div>
+        <div class="slide-content">
+            <ul class="big-list">
+                <li>学会用 <span class="code-inline">Surface.subsurface(Rect)</span> 实现<span class="highlight">掩体局部破坏</span></li>
+                <li>掌握<span class="highlight">波次系统</span>的设计 —— 用 <span class="code-inline">wave</span> 变量控制难度</li>
+                <li>实现<span class="highlight">波次过渡动画</span> —— "Wave 2!" 画面</li>
+                <li>综合运用 Sprite 类和精灵组，完成<span class="highlight">完整游戏</span></li>
+                <li>理解<span class="keyword">游戏难度曲线</span>的设计思路</li>
+            </ul>
+        </div>
+    </div>
+
+    <!-- ============================================ -->
+    <!-- 第 3 页：上节回顾 -->
+    <!-- ============================================ -->
+    <div class="slide content-slide" data-index="2">
+        <div class="slide-title">📋 上节回顾 —— 外星人军团</div>
+        <div class="slide-content">
+            <div class="card-row">
+                <div class="card">
+                    <div class="card-icon">👾</div>
+                    <div class="card-title">Sprite 类</div>
+                    <div class="card-desc">把图像、位置、更新逻辑打包在一起，每个游戏角色都是一个 Sprite</div>
+                </div>
+                <div class="card">
+                    <div class="card-icon">📦</div>
+                    <div class="card-title">精灵组 Group</div>
+                    <div class="card-desc">批量管理精灵：一次 update() 更新全部，一次 draw() 绘制全部</div>
+                </div>
+                <div class="card">
+                    <div class="card-icon">⬅➡</div>
+                    <div class="card-title">编队移动</div>
+                    <div class="card-desc">整排统一移动 → 触边换向 → 下移一行</div>
+                </div>
+            </div>
+            <p style="font-size: 28px; text-align: center; margin-top: 30px; color: #ffcc00;">
+                今天，我们要把这变成一个<span class="highlight">真正可以玩</span>的游戏！
+            </p>
+        </div>
+    </div>
+
+    <!-- ============================================ -->
+    <!-- 第 4 页：本节新内容概览 -->
+    <!-- ============================================ -->
+    <div class="slide content-slide" data-index="3">
+        <div class="slide-title">🆕 今天要加入的三样新东西</div>
+        <div class="slide-content">
+            <div class="card-row">
+                <div class="card">
+                    <div class="card-icon">🏰</div>
+                    <div class="card-title">1. 掩体系统</div>
+                    <div class="card-desc">
+                        用 Surface 画砖块防御工事<br>
+                        子弹命中 → <span class="highlight">局部破坏</span><br>
+                        关键技术：<span class="code-inline">subsurface()</span>
+                    </div>
+                </div>
+                <div class="card">
+                    <div class="card-icon">🌊</div>
+                    <div class="card-title">2. 波次系统</div>
+                    <div class="card-desc">
+                        消灭全部敌人 → 下一波<br>
+                        敌人<span class="keyword">更多</span>、<span class="keyword">更快</span><br>
+                        一个 <span class="code-inline">wave</span> 变量控制一切
+                    </div>
+                </div>
+                <div class="card">
+                    <div class="card-icon">❤️</div>
+                    <div class="card-title">3. 生命值</div>
+                    <div class="card-desc">
+                        玩家有 <span class="highlight">3 条命</span><br>
+                        被子弹击中扣一条命<br>
+                        0 条命 = 游戏结束
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- ============================================ -->
+    <!-- 第 5 页：掩体的创建 -->
+    <!-- ============================================ -->
+    <div class="slide content-slide" data-index="4">
+        <div class="slide-title">🏰 知识点 1：创建掩体</div>
+        <div class="slide-content">
+            <p style="font-size: 26px; color: #ccc; margin-bottom: 16px;">
+                掩体用 <span class="code-inline">pygame.Surface</span> 绘制砖块纹理，不依赖外部图片。
+            </p>
+            <div class="code-block">
+                <div class="code-header">Python — 掩体的绘制方法</div>
+                <pre><span class="code-keyword">def</span> <span class="code-func">_draw_full_bunker</span>(<span class="code-self">self</span>):
+    <span class="code-comment"># 深绿色底</span>
+    <span class="code-self">self</span>.image.fill((<span class="code-number">0</span>, <span class="code-number">130</span>, <span class="code-number">0</span>))
+
+    <span class="code-comment"># 画砖块线 —— 交错排列</span>
+    <span class="code-keyword">for</span> row <span class="code-keyword">in</span> <span class="code-builtin">range</span>(<span class="code-number">5</span>):
+        offset = (row % <span class="code-number">2</span>) * <span class="code-number">12</span>
+        <span class="code-keyword">for</span> col <span class="code-keyword">in</span> <span class="code-builtin">range</span>(<span class="code-number">5</span>):
+            bx = col * <span class="code-number">22</span> + offset
+            by = row * <span class="code-number">12</span> + <span class="code-number">2</span>
+            pygame.draw.rect(<span class="code-self">self</span>.image,
+                (<span class="code-number">0</span>,<span class="code-number">100</span>,<span class="code-number">0</span>), (bx, by, <span class="code-number">18</span>, <span class="code-number">9</span>), <span class="code-number">1</span>)</pre>
+            </div>
+            <div class="card-row">
+                <div class="card">
+                    <div class="card-title">4 个掩体</div>
+                    <div class="card-desc">均匀分布在屏幕底部<br>玩家和敌人之间</div>
+                </div>
+                <div class="card">
+                    <div class="card-title">100×60 像素</div>
+                    <div class="card-desc">每个掩体的大小<br>5 行 × 5 列砖块</div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- ============================================ -->
+    <!-- 第 6 页：subsurface 原理 -->
+    <!-- ============================================ -->
+    <div class="slide content-slide" data-index="5">
+        <div class="slide-title">🔑 知识点 2：subsurface 局部破坏原理</div>
+        <div class="slide-content">
+            <p style="font-size: 26px; color: #ffcc00; margin-bottom: 12px; text-align: center;">
+                subsurface = 在一张纸上剪一个方框，然后在方框里涂黑
+            </p>
+
+            <div class="diagram">
+                <div class="diagram-box">
+                    完整的掩体<br>
+                    <span style="font-size:40px;">🟩</span><br>
+                    100×60 Surface
+                </div>
+                <div class="diagram-arrow">→</div>
+                <div class="diagram-box">
+                    子弹命中位置<br>
+                    <span style="font-size:40px;">💥</span><br>
+                    (hit_x, hit_y)
+                </div>
+                <div class="diagram-arrow">→</div>
+                <div class="diagram-box">
+                    subsurface(Rect)<br>
+                    <span style="font-size:40px;">✂️</span><br>
+                    切出 20×20 子区域
+                </div>
+                <div class="diagram-arrow">→</div>
+                <div class="diagram-result">
+                    涂黑子区域<br>
+                    <span style="font-size:40px;">⬛</span><br>
+                    原图也变黑了！
+                </div>
+            </div>
+
+            <div class="card-row" style="margin-top: 20px;">
+                <div class="card">
+                    <div class="card-title">共享内存</div>
+                    <div class="card-desc" style="text-align: left; font-size: 20px;">
+                        subsurface 返回的子 Surface<br>
+                        和原 Surface <span class="highlight">共享同一块像素数据</span><br>
+                        修改子 = 同时修改父
+                    </div>
+                </div>
+                <div class="card">
+                    <div class="card-title">⚠️ 注意</div>
+                    <div class="card-desc" style="text-align: left; font-size: 20px;">
+                        Rect 必须<span class="keyword">完全在</span><br>
+                        父 Surface 范围内部<br>
+                        否则报 ValueError
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- ============================================ -->
+    <!-- 第 7 页：subsurface 代码实现 -->
+    <!-- ============================================ -->
+    <div class="slide content-slide" data-index="6">
+        <div class="slide-title">💻 代码实现：掩体局部破坏</div>
+        <div class="slide-content">
+            <div class="code-block">
+                <div class="code-header">Python — Bunker.damage() 方法</div>
+                <pre><span class="code-keyword">def</span> <span class="code-func">damage</span>(<span class="code-self">self</span>, hit_x, hit_y, blast_radius=<span class="code-number">10</span>):
+    <span class="code-comment"># 第 1 步：计算破坏区域（确保不越界）</span>
+    left = <span class="code-builtin">max</span>(<span class="code-number">0</span>, hit_x - blast_radius)
+    top = <span class="code-builtin">max</span>(<span class="code-number">0</span>, hit_y - blast_radius)
+    width = <span class="code-builtin">min</span>(blast_radius * <span class="code-number">2</span>, <span class="code-self">self</span>.width - left)
+    height = <span class="code-builtin">min</span>(blast_radius * <span class="code-number">2</span>, <span class="code-self">self</span>.height - top)
+    damage_rect = pygame.Rect(left, top, width, height)
+
+    <span class="code-comment"># 第 2 步：🔑 subsurface 切出子区域</span>
+    <span class="code-comment"># damaged 和 self.image 共享同一块内存！</span>
+    damaged = <span class="code-self">self</span>.image.subsurface(damage_rect)
+
+    <span class="code-comment"># 第 3 步：在子区域上画弹坑</span>
+    pygame.draw.circle(damaged, (<span class="code-number">0</span>,<span class="code-number">0</span>,<span class="code-number">0</span>),
+        (blast_radius, blast_radius), blast_radius)
+
+    <span class="code-comment"># 减少耐久度</span>
+    <span class="code-self">self</span>.health -= <span class="code-number">12</span>
+    <span class="code-keyword">if</span> <span class="code-self">self</span>.health <= <span class="code-number">0</span>:
+        <span class="code-self">self</span>.kill()</pre>
+            </div>
+            <p style="font-size: 26px; color: #ffcc00; text-align: center; margin-top: 16px;">
+                碰撞检测 → 计算命中位置 → subsurface 切出 → 涂黑 → 耐久度减少
+            </p>
+        </div>
+    </div>
+
+    <!-- ============================================ -->
+    <!-- 第 8 页：波次系统 -->
+    <!-- ============================================ -->
+    <div class="slide content-slide" data-index="7">
+        <div class="slide-title">🌊 知识点 3：波次管理系统</div>
+        <div class="slide-content">
+            <p style="font-size: 26px; color: #ccc; margin-bottom: 14px;">
+                一个 <span class="code-inline">wave</span> 变量，控制 <span class="highlight">三个维度的难度</span>：
+            </p>
+
+            <table class="info-table">
+                <tr>
+                    <th>波次</th>
+                    <th>列数×行数</th>
+                    <th>总敌人数</th>
+                    <th>移动速度</th>
+                    <th>子弹概率</th>
+                </tr>
+                <tr><td>1</td><td>9×3</td><td>27</td><td>1.2</td><td>0.3%</td></tr>
+                <tr><td>2</td><td>10×4</td><td>40</td><td>1.6</td><td>0.5%</td></tr>
+                <tr><td>3</td><td>11×4</td><td>44</td><td>2.0</td><td>0.7%</td></tr>
+                <tr><td>5</td><td>12×5</td><td>60</td><td>2.8</td><td>1.5%</td></tr>
+            </table>
+
+            <div class="card-row" style="margin-top: 20px;">
+                <div class="card">
+                    <div class="card-title">数量递增</div>
+                    <div class="card-desc">
+                        <span class="code-inline">cols = min(8+wave, 12)</span><br>
+                        <span class="code-inline">rows = min(3+wave//2, 5)</span>
+                    </div>
+                </div>
+                <div class="card">
+                    <div class="card-title">速度递增</div>
+                    <div class="card-desc">
+                        <span class="code-inline">speed = 1.2+(wave-1)*0.4</span><br>
+                        移动间隔也缩短
+                    </div>
+                </div>
+                <div class="card">
+                    <div class="card-title">子弹递增</div>
+                    <div class="card-desc">
+                        <span class="code-inline">chance = 0.003+wave*0.002</span><br>
+                        越来越密集的弹幕
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- ============================================ -->
+    <!-- 第 9 页：波次切换代码 -->
+    <!-- ============================================ -->
+    <div class="slide content-slide" data-index="8">
+        <div class="slide-title">💻 代码实现：波次切换</div>
+        <div class="slide-content">
+            <div class="code-block">
+                <div class="code-header">Python — 主循环中的波次检测</div>
+                <pre><span class="code-comment"># 检查是否消灭了所有外星人</span>
+<span class="code-keyword">if</span> <span class="code-builtin">len</span>(aliens) == <span class="code-number">0</span>:
+    wave += <span class="code-number">1</span>  <span class="code-comment"># 🔑 进入下一波</span>
+
+    <span class="code-comment"># 清空屏幕上的残留子弹</span>
+    player_bullets.empty()
+    alien_bullets.empty()
+
+    <span class="code-comment"># 🎬 显示过渡动画</span>
+    show_wave_transition(wave)
+
+    <span class="code-comment"># 创建新一波外星人（更多更密）</span>
+    aliens = create_aliens(wave)
+
+    <span class="code-comment"># 📈 更新难度参数</span>
+    alien_speed = <span class="code-number">1.2</span> + (wave - <span class="code-number">1</span>) * <span class="code-number">0.4</span>
+    alien_shoot_chance = <span class="code-builtin">min</span>(<span class="code-number">0.015</span>, <span class="code-number">0.003</span> + wave * <span class="code-number">0.002</span>)
+
+    <span class="code-comment"># 重建掩体</span>
+    bunkers.empty()
+    bunkers = create_bunkers()</pre>
+            </div>
+        </div>
+    </div>
+
+    <!-- ============================================ -->
+    <!-- 第 10 页：波次过渡动画 -->
+    <!-- ============================================ -->
+    <div class="slide content-slide" data-index="9">
+        <div class="slide-title">🎬 知识点 4：波次过渡动画</div>
+        <div class="slide-content">
+            <div class="card-row">
+                <div class="card">
+                    <div class="card-title">⏱️ 持续时间</div>
+                    <div class="card-desc">约 2 秒（120 帧）<br>给玩家准备时间</div>
+                </div>
+                <div class="card">
+                    <div class="card-title">📐 内容布局</div>
+                    <div class="card-desc">
+                        "Wave" 文字（上方）<br>
+                        波次数字（中间，缩放动画）<br>
+                        "准备！" 提示（下方）
+                    </div>
+                </div>
+                <div class="card">
+                    <div class="card-title">🎨 颜色变化</div>
+                    <div class="card-desc">
+                        波次 ≤3：青色<br>
+                        波次 ≤6：黄色<br>
+                        波次 >6：<span style="color:#f55">红色危险！</span>
+                    </div>
+                </div>
+            </div>
+            <div class="code-block" style="margin-top: 16px;">
+                <div class="code-header">Python — 过渡动画核心逻辑</div>
+                <pre><span class="code-comment"># 波次数字缩放动画（先变大再变小）</span>
+progress = elapsed / max_elapsed  <span class="code-comment"># 0.0 → 1.0</span>
+scale = <span class="code-number">1.0</span> + <span class="code-number">0.3</span> * (<span class="code-number">1</span> - <span class="code-builtin">abs</span>(progress - <span class="code-number">0.5</span>) * <span class="code-number">2</span>)
+<span class="code-comment"># progress=0.5 时 scale 最大（1.3 倍）</span>
+<span class="code-comment"># progress=0 或 1 时 scale 最小（1.0 倍）</span></pre>
+            </div>
+        </div>
+    </div>
+
+    <!-- ============================================ -->
+    <!-- 第 11 页：完整游戏架构 -->
+    <!-- ============================================ -->
+    <div class="slide content-slide" data-index="10">
+        <div class="slide-title">🏗️ 完整的游戏架构</div>
+        <div class="slide-content">
+            <table class="info-table">
+                <tr>
+                    <th>组件</th>
+                    <th>精灵类</th>
+                    <th>精灵组</th>
+                    <th>职责</th>
+                </tr>
+                <tr><td>玩家</td><td><span class="code-inline">Player</span></td><td>all_sprites</td><td>移动 + 射击</td></tr>
+                <tr><td>外星人</td><td><span class="code-inline">Alien</span></td><td>aliens + all_sprites</td><td>编队移动 + 随机射击</td></tr>
+                <tr><td>玩家子弹</td><td><span class="code-inline">Bullet</span></td><td>player_bullets + all_sprites</td><td>向上飞</td></tr>
+                <tr><td>敌人子弹</td><td><span class="code-inline">Bullet</span></td><td>alien_bullets + all_sprites</td><td>向下飞</td></tr>
+                <tr><td>掩体</td><td><span class="code-inline">Bunker</span></td><td>bunkers + all_sprites</td><td>subsurface 局部破坏</td></tr>
+                <tr><td>爆炸</td><td><span class="code-inline">Explosion</span></td><td>explosions + all_sprites</td><td>动画特效</td></tr>
+            </table>
+
+            <div style="display: flex; justify-content: center; margin-top: 20px; font-size: 24px; color: #ffcc00; line-height: 2;">
+                <div style="text-align: center;">
+                    主循环流程<br>
+                    <span style="font-size: 18px; color: #ccc;">
+                    事件处理 → 更新玩家 → 更新外星人<br>
+                    → 碰撞检测（6 种碰撞）<br>
+                    → 检查波次完成 → 绘制画面
+                    </span>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- ============================================ -->
+    <!-- 第 12 页：碰撞检测全景 -->
+    <!-- ============================================ -->
+    <div class="slide content-slide" data-index="11">
+        <div class="slide-title">💥 6 种碰撞检测</div>
+        <div class="slide-content">
+            <table class="info-table">
+                <tr><th>#</th><th>碰撞对</th><th>结果</th><th>关键函数</th></tr>
+                <tr><td>1</td><td>玩家子弹 vs 外星人</td><td>外星人消失 + 加分 + 爆炸</td><td><span class="code-inline">groupcollide()</span></td></tr>
+                <tr><td>2</td><td>外星人子弹 vs 玩家</td><td>扣一条命</td><td><span class="code-inline">spritecollide()</span></td></tr>
+                <tr><td>3</td><td>外星人 vs 玩家</td><td>游戏直接结束</td><td><span class="code-inline">spritecollide()</span></td></tr>
+                <tr><td>4</td><td>外星人 vs 屏幕底部</td><td>游戏结束</td><td>rect.bottom 检查</td></tr>
+                <tr><td>5</td><td>玩家子弹 vs 掩体</td><td>掩体局部破坏</td><td><span class="code-inline">spritecollide() + subsurface</span></td></tr>
+                <tr><td>6</td><td>外星人子弹 vs 掩体</td><td>掩体局部破坏</td><td><span class="code-inline">spritecollide() + subsurface</span></td></tr>
+            </table>
+            <p style="font-size: 24px; text-align: center; margin-top: 20px; color: #ffcc00;">
+                ⚠️ 注意：玩家子弹也会破坏自己的掩体，射击要小心！
+            </p>
+        </div>
+    </div>
+
+    <!-- ============================================ -->
+    <!-- 第 13 页：课堂练习 -->
+    <!-- ============================================ -->
+    <div class="slide content-slide" data-index="12">
+        <div class="slide-title">✏️ 课堂练习（25 分钟）</div>
+        <div class="slide-content">
+            <div class="task-card">
+                <h3><span class="badge badge-basic">基础</span> 任务 1：调整掩体参数（5min）</h3>
+                <p>修改 <span class="code-inline">blast_radius</span>（10→20）、<span class="code-inline">health</span>（100→200）、掩体数量（4→3/5），感受参数对游戏的影响。</p>
+            </div>
+            <div class="task-card">
+                <h3><span class="badge badge-basic">基础</span> 任务 2：波次过渡优化（10min）</h3>
+                <p>过渡持续时间改为 3 秒；过渡画面显示当前分数；让波次数字颜色渐变。</p>
+            </div>
+            <div class="task-card">
+                <h3><span class="badge badge-challenge">挑战</span> 任务 3：不同波次不同颜色敌人</h3>
+                <p>第 3 波起第一行全部是红色 Boss 型外星人。修改 <span class="code-inline">create_aliens(wave)</span>。</p>
+            </div>
+            <div class="task-card">
+                <h3><span class="badge badge-challenge">挑战</span> 任务 4：护盾道具</h3>
+                <p>随机生成 "S" 护盾道具，玩家碰到后 2 秒无敌（被击中不掉血）。</p>
+            </div>
+            <div class="task-card">
+                <h3><span class="badge badge-challenge">挑战</span> 任务 5：敌人下降加速</h3>
+                <p>外星人下降到 y>300 时速度自动翻倍，营造「最后防线」的紧张感。</p>
+            </div>
+        </div>
+    </div>
+
+    <!-- ============================================ -->
+    <!-- 第 14 页：总结 -->
+    <!-- ============================================ -->
+    <div class="slide content-slide" data-index="13">
+        <div class="slide-title">📝 总结与作业</div>
+        <div class="slide-content">
+            <table class="info-table">
+                <tr>
+                    <th>知识点</th>
+                    <th>关键代码</th>
+                    <th>作用</th>
+                </tr>
+                <tr>
+                    <td><span class="highlight">subsurface</span></td>
+                    <td><span class="code-inline">img.subsurface(rect)</span></td>
+                    <td>局部破坏，精准控制</td>
+                </tr>
+                <tr>
+                    <td><span class="highlight">波次系统</span></td>
+                    <td><span class="code-inline">wave += 1</span></td>
+                    <td>难度递增，保持挑战</td>
+                </tr>
+                <tr>
+                    <td><span class="highlight">过渡动画</span></td>
+                    <td><span class="code-inline">show_wave_transition(wave)</span></td>
+                    <td>给玩家准备时间</td>
+                </tr>
+            </table>
+
+            <div style="margin-top: 24px; font-size: 24px; line-height: 2;">
+                <p><strong>📌 subsurface 三要素：</strong></p>
+                <ul class="big-list">
+                    <li>获取子 Surface → <span class="code-inline">parent.subsurface(Rect)</span></li>
+                    <li>子 Surface 和父 Surface <span class="keyword">共享内存</span></li>
+                    <li>修改子 Surface → 父 Surface 也变了</li>
+                </ul>
+            </div>
+
+            <div style="margin-top: 20px; padding: 16px 24px; background: rgba(255,200,0,0.08); border-radius: 10px;">
+                <p style="font-size: 22px; color: #ffcc00;">📖 作业：完成基础任务 1 和 2，选做挑战任务。</p>
+                <p style="font-size: 22px; color: #ffcc00;">🔮 下节预告：泡泡龙 —— 发射彩色泡泡！</p>
+            </div>
+        </div>
+    </div>
+
+</div>
+
+<!-- 页码指示器 -->
+<div class="page-indicator" id="pageIndicator">1 / 14</div>
+<div class="nav-hint">←  →  键翻页</div>
+
+<script>
+// ============================================
+// 幻灯片导航系统
+// ============================================
+(function() {
+    const slides = document.querySelectorAll('.slide');
+    const totalSlides = slides.length;
+    let currentIndex = 0;
+    const pageIndicator = document.getElementById('pageIndicator');
+
+    function showSlide(index) {
+        // 确保索引在有效范围内
+        if (index < 0) index = 0;
+        if (index >= totalSlides) index = totalSlides - 1;
+
+        // 移除所有 active 类
+        slides.forEach(s => s.classList.remove('active'));
+        // 添加当前 active 类
+        slides[index].classList.add('active');
+
+        currentIndex = index;
+        pageIndicator.textContent = (currentIndex + 1) + ' / ' + totalSlides;
+    }
+
+    // 键盘导航
+    document.addEventListener('keydown', function(e) {
+        if (e.key === 'ArrowRight' || e.key === 'ArrowDown' || e.key === ' ') {
+            e.preventDefault();
+            showSlide(currentIndex + 1);
+        } else if (e.key === 'ArrowLeft' || e.key === 'ArrowUp') {
+            e.preventDefault();
+            showSlide(currentIndex - 1);
+        } else if (e.key === 'Home') {
+            e.preventDefault();
+            showSlide(0);
+        } else if (e.key === 'End') {
+            e.preventDefault();
+            showSlide(totalSlides - 1);
+        }
+    });
+
+    // 触摸滑动支持（移动端）
+    let touchStartX = 0;
+    let touchStartY = 0;
+
+    document.addEventListener('touchstart', function(e) {
+        touchStartX = e.touches[0].clientX;
+        touchStartY = e.touches[0].clientY;
+    });
+
+    document.addEventListener('touchend', function(e) {
+        const dx = e.changedTouches[0].clientX - touchStartX;
+        const dy = e.changedTouches[0].clientY - touchStartY;
+
+        if (Math.abs(dx) > Math.abs(dy) && Math.abs(dx) > 50) {
+            if (dx < 0) {
+                showSlide(currentIndex + 1);
+            } else {
+                showSlide(currentIndex - 1);
+            }
+        }
+    });
+
+    // 点击幻灯片空白区域也可以前进
+    document.querySelector('.slides-container').addEventListener('click', function(e) {
+        // 只在点击容器本身（非子元素）时前进
+        if (e.target === this) {
+            showSlide(currentIndex + 1);
+        }
+    });
+
+    // 初始化显示第一页
+    showSlide(0);
+})();
+
+// ============================================
+// 封面星空生成
+// ============================================
+(function() {
+    const container = document.getElementById('stars-container');
+    if (!container) return;
+
+    for (let i = 0; i < 100; i++) {
+        const star = document.createElement('div');
+        star.classList.add('star');
+        const size = Math.random() * 3 + 1;
+        star.style.width = size + 'px';
+        star.style.height = size + 'px';
+        star.style.left = Math.random() * 100 + '%';
+        star.style.top = Math.random() * 100 + '%';
+        star.style.animationDelay = Math.random() * 3 + 's';
+        star.style.animationDuration = (Math.random() * 2 + 1.5) + 's';
+        container.appendChild(star);
+    }
+})();
+</script>
+
+</body>
+</html>

@@ -1,0 +1,285 @@
+# ============================================
+# 第 8 课：美化界面 — ttk 主题和 grid 布局
+# ============================================
+
+import tkinter as tk
+from tkinter import ttk, messagebox
+import os
+
+# ==================== 配置 ====================
+
+DATA_FILE = "todos.txt"
+
+# ==================== 创建窗口 ====================
+
+window = tk.Tk()
+window.title("我的备忘录")
+window.geometry("500x650")
+
+# 尝试使用 clam 主题（跨平台最现代的主题）
+style = ttk.Style()
+available_themes = style.theme_names()
+if "clam" in available_themes:
+    style.theme_use("clam")
+    print(f"🎨 使用主题：clam")
+else:
+    print(f"🎨 可用主题：{available_themes}")
+
+# 自定义样式
+style.configure("Title.TLabel", font=("微软雅黑", 20, "bold"), foreground="#333333")
+style.configure("Subtitle.TLabel", font=("微软雅黑", 10), foreground="#888888")
+style.configure("Add.TButton", font=("微软雅黑", 11), padding=6)
+style.configure("Toggle.TButton", font=("微软雅黑", 11), padding=6)
+style.configure("Delete.TButton", font=("微软雅黑", 11), padding=6)
+style.configure("Clear.TButton", font=("微软雅黑", 9), padding=5)
+style.configure("Status.TLabel", font=("微软雅黑", 9), foreground="#999999")
+
+# 让窗口可缩放
+window.grid_rowconfigure(4, weight=1)   # 列表行可拉伸
+window.grid_columnconfigure(0, weight=1) # 唯一列可拉伸
+
+# ==================== 数据结构 ====================
+
+todos = []
+# 格式：[{"text": "内容", "done": False, "category": "学习 📚"}, ...]
+
+# ==================== 文件操作 ====================
+
+def save_todos():
+    """保存到文件（格式：状态|类别|内容）"""
+    with open(DATA_FILE, "w", encoding="utf-8") as file:
+        for todo in todos:
+            status = "1" if todo["done"] else "0"
+            category = todo.get("category", "其他 📌")
+            file.write(f"{status}|{category}|{todo['text']}\n")
+
+def load_todos():
+    """从文件加载（兼容旧格式）"""
+    if not os.path.exists(DATA_FILE):
+        print("📂 数据文件不存在，创建新的备忘录")
+        return
+
+    with open(DATA_FILE, "r", encoding="utf-8") as file:
+        for line in file:
+            line = line.strip()
+            if not line:
+                continue
+            parts = line.split("|")
+            if len(parts) == 3:
+                status_str, category, text = parts
+            elif len(parts) == 2:
+                # 兼容旧格式（没有类别字段）
+                status_str, text = parts
+                category = "其他 📌"
+            else:
+                continue
+
+            todo = {"text": text, "done": status_str == "1", "category": category}
+            todos.append(todo)
+
+            display_text = f"[{category}] {text}"
+            listbox.insert(tk.END, display_text)
+
+            if todo["done"]:
+                idx = listbox.size() - 1
+                listbox.itemconfig(idx, fg="gray")
+                listbox.itemconfig(idx, font=("微软雅黑", 12, "overstrike"))
+
+    print(f"📂 已从文件加载 {len(todos)} 条待办")
+
+# ==================== 标题区域（grid 第 0-1 行）====================
+
+title_label = ttk.Label(window, text="📝 我的备忘录", style="Title.TLabel")
+title_label.grid(row=0, column=0, pady=(15, 5), sticky="n")
+
+subtitle_label = ttk.Label(
+    window,
+    text="美化升级版！支持类别标签 🏷️",
+    style="Subtitle.TLabel"
+)
+subtitle_label.grid(row=1, column=0, pady=(0, 10), sticky="n")
+
+# ==================== 输入区域（grid 第 2 行）====================
+
+input_frame = ttk.Frame(window)
+input_frame.grid(row=2, column=0, pady=10, padx=20, sticky="ew")
+input_frame.grid_columnconfigure(1, weight=1)
+
+# 类别下拉框
+ttk.Label(input_frame, text="类别：", font=("微软雅黑", 10)).grid(
+    row=0, column=0, padx=(0, 5), sticky="w"
+)
+
+CATEGORIES = ["学习 📚", "生活 🏠", "娱乐 🎮", "其他 📌"]
+category_combo = ttk.Combobox(
+    input_frame,
+    values=CATEGORIES,
+    state="readonly",
+    font=("微软雅黑", 10),
+    width=10
+)
+category_combo.grid(row=0, column=1, sticky="w")
+category_combo.set("学习 📚")
+
+# 输入框
+entry = ttk.Entry(input_frame, font=("微软雅黑", 13))
+entry.grid(row=1, column=0, columnspan=2, pady=(8, 8), sticky="ew")
+
+# 按钮栏
+btn_frame = ttk.Frame(input_frame)
+btn_frame.grid(row=2, column=0, columnspan=2, sticky="w")
+
+add_btn = ttk.Button(btn_frame, text="添加 ✅", style="Add.TButton")
+add_btn.grid(row=0, column=0, padx=(0, 5))
+
+toggle_btn = ttk.Button(btn_frame, text="标记 ✔️", style="Toggle.TButton")
+toggle_btn.grid(row=0, column=1, padx=(0, 5))
+
+delete_btn = ttk.Button(btn_frame, text="删除 ❌", style="Delete.TButton")
+delete_btn.grid(row=0, column=2, padx=(0, 5))
+
+clear_btn = ttk.Button(btn_frame, text="清空 🗑️", style="Clear.TButton")
+clear_btn.grid(row=0, column=3)
+
+# ==================== 列表头（grid 第 3 行）====================
+
+header_frame = ttk.Frame(window)
+header_frame.grid(row=3, column=0, pady=(15, 0), padx=20, sticky="ew")
+
+ttk.Label(
+    header_frame, text="📋 待办列表",
+    font=("微软雅黑", 12, "bold")
+).pack(side=tk.LEFT)
+
+ttk.Label(
+    header_frame,
+    text="（双击标记完成，右键更多操作）",
+    font=("微软雅黑", 8)
+).pack(side=tk.LEFT, padx=10)
+
+# ==================== 列表区域（grid 第 4 行）====================
+
+list_frame = ttk.Frame(window)
+list_frame.grid(row=4, column=0, pady=5, padx=20, sticky="nsew")
+list_frame.grid_rowconfigure(0, weight=1)
+list_frame.grid_columnconfigure(0, weight=1)
+
+scrollbar = ttk.Scrollbar(list_frame, orient=tk.VERTICAL)
+scrollbar.grid(row=0, column=1, sticky="ns")
+
+listbox = tk.Listbox(
+    list_frame,
+    font=("微软雅黑", 12),
+    height=15,
+    selectbackground="#C8E6C9",
+    selectforeground="#333333",
+    yscrollcommand=scrollbar.set
+)
+listbox.grid(row=0, column=0, sticky="nsew")
+scrollbar.config(command=listbox.yview)
+
+# ==================== 底部状态栏（grid 第 5 行）====================
+
+status_frame = ttk.Frame(window)
+status_frame.grid(row=5, column=0, pady=8, padx=20, sticky="ew")
+
+status_label = ttk.Label(
+    status_frame, text="共 0 条待办", style="Status.TLabel"
+)
+status_label.pack(side=tk.RIGHT)
+
+# ==================== 核心功能 ====================
+
+def update_status():
+    total = len(todos)
+    status_label.config(text=f"共 {total} 条待办")
+
+def add_todo():
+    text = entry.get().strip()
+    if text:
+        category = category_combo.get()
+        todo = {"text": text, "done": False, "category": category}
+        todos.append(todo)
+        display_text = f"[{category}] {text}"
+        listbox.insert(tk.END, display_text)
+        entry.delete(0, tk.END)
+        save_todos()
+        update_status()
+    else:
+        messagebox.showwarning("提示", "请输入待办事项！")
+
+def toggle_done():
+    if listbox.size() == 0:
+        return
+    selected = listbox.curselection()
+    if not selected:
+        messagebox.showwarning("提示", "请先选择要标记的事项！")
+        return
+
+    index = selected[0]
+    todo = todos[index]
+    todo["done"] = not todo["done"]
+
+    if todo["done"]:
+        listbox.itemconfig(index, fg="gray")
+        listbox.itemconfig(index, font=("微软雅黑", 12, "overstrike"))
+    else:
+        listbox.itemconfig(index, fg="black")
+        listbox.itemconfig(index, font=("微软雅黑", 12))
+
+    save_todos()
+    update_status()
+
+def delete_todo():
+    if listbox.size() == 0:
+        messagebox.showwarning("提示", "列表为空！")
+        return
+    selected = listbox.curselection()
+    if not selected:
+        messagebox.showwarning("提示", "请先选择要删除的事项！")
+        return
+
+    index = selected[0]
+    todo = todos[index]
+    result = messagebox.askyesno("确认删除", f"确定要删除「{todo['text']}」吗？")
+    if result:
+        listbox.delete(index)
+        todos.pop(index)
+        save_todos()
+        update_status()
+
+def clear_all():
+    if listbox.size() == 0:
+        return
+    result = messagebox.askyesno(
+        "确认清空",
+        f"列表中有 {listbox.size()} 条事项，确定全部清空吗？"
+    )
+    if result:
+        listbox.delete(0, tk.END)
+        todos.clear()
+        save_todos()
+        update_status()
+
+def on_closing():
+    save_todos()
+    window.destroy()
+
+# ==================== 绑定事件 ====================
+
+add_btn.config(command=add_todo)
+toggle_btn.config(command=toggle_done)
+delete_btn.config(command=delete_todo)
+clear_btn.config(command=clear_all)
+
+entry.bind("<Return>", lambda e: add_todo())
+listbox.bind("<Double-1>", lambda e: toggle_done())
+window.bind("<Delete>", lambda e: delete_todo())
+window.protocol("WM_DELETE_WINDOW", on_closing)
+
+# ==================== 启动 ====================
+
+load_todos()
+update_status()
+entry.focus()
+window.mainloop()

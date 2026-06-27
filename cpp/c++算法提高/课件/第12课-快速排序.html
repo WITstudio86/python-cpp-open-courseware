@@ -1,0 +1,847 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>第12课：快速排序——分治的威力 | C++ 算法提高</title>
+    <style>
+        :root {
+            --bg-primary: #0f0c29;
+            --bg-secondary: #1a1a2e;
+            --bg-card: rgba(255,255,255,0.05);
+            --text-primary: #e0e0e0;
+            --text-secondary: #a0a0b0;
+            --text-muted: #888;
+            --accent: #e94560;
+            --accent-dim: rgba(233, 69, 96, 0.3);
+            --code-bg: #1e1e3a;
+            --border: rgba(255,255,255,0.1);
+            --success: #4caf50;
+            --warning: #ff9800;
+            --info: #2196f3;
+        }
+
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "PingFang SC", "Microsoft YaHei", sans-serif;
+            background: linear-gradient(135deg, #0f0c29, #302b63, #24243e);
+            min-height: 100vh;
+            color: var(--text-primary);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            user-select: none;
+        }
+
+        /* ── Header ── */
+        .header {
+            width: 100%;
+            background: linear-gradient(135deg, #1a1a2e, #16213e);
+            padding: 18px 20px;
+            text-align: center;
+            border-bottom: 2px solid var(--accent);
+            position: sticky;
+            top: 0;
+            z-index: 100;
+        }
+        .header .lesson-num {
+            font-size: 0.9em;
+            color: var(--accent);
+            font-weight: bold;
+        }
+        .header h1 {
+            font-size: 1.8em;
+            color: var(--accent);
+            margin: 4px 0;
+            text-shadow: 0 0 15px rgba(233, 69, 96, 0.4);
+        }
+        .header .subtitle {
+            font-size: 0.95em;
+            color: var(--text-secondary);
+        }
+
+        /* ── Progress Bar ── */
+        .progress-bar {
+            width: 100%;
+            height: 4px;
+            background: rgba(255,255,255,0.1);
+        }
+        .progress-fill {
+            height: 100%;
+            background: var(--accent);
+            transition: width 0.4s ease;
+        }
+
+        /* ── Slides Container ── */
+        .slides-container {
+            width: 100%;
+            max-width: 900px;
+            padding: 20px;
+            flex: 1;
+        }
+        .slide {
+            display: none;
+            animation: fadeIn 0.35s ease;
+        }
+        .slide.active {
+            display: block;
+        }
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(12px); }
+            to   { opacity: 1; transform: translateY(0); }
+        }
+
+        /* ── Slide Card ── */
+        .slide-card {
+            background: var(--bg-card);
+            border: 1px solid var(--border);
+            border-radius: 14px;
+            padding: 28px 32px;
+            margin-bottom: 16px;
+        }
+        .slide-card h2 {
+            color: var(--accent);
+            font-size: 1.6em;
+            margin-bottom: 16px;
+            padding-bottom: 10px;
+            border-bottom: 2px solid var(--accent-dim);
+        }
+        .slide-card h3 {
+            color: #f0d080;
+            font-size: 1.2em;
+            margin: 20px 0 10px;
+        }
+        .slide-card p, .slide-card li {
+            color: var(--text-secondary);
+            line-height: 1.9;
+            font-size: 1.02em;
+        }
+        .slide-card ul, .slide-card ol {
+            margin: 10px 0 10px 24px;
+        }
+        .slide-card li {
+            margin-bottom: 6px;
+        }
+
+        /* ── Code Block ── */
+        .code-block {
+            background: var(--code-bg);
+            border: 1px solid rgba(255,255,255,0.08);
+            border-radius: 8px;
+            padding: 16px 20px;
+            margin: 14px 0;
+            overflow-x: auto;
+            font-family: "SF Mono", "Fira Code", "Consolas", "Courier New", monospace;
+            font-size: 0.88em;
+            line-height: 1.65;
+            white-space: pre-wrap;
+            word-break: break-all;
+        }
+        .code-block .keyword { color: #c678dd; }
+        .code-block .type    { color: #e5c07b; }
+        .code-block .func    { color: #61afef; }
+        .code-block .comment { color: #5c8a5c; font-style: italic; }
+        .code-block .number  { color: #d19a66; }
+        .code-block .string  { color: #98c379; }
+        .code-block .preprocessor { color: #c678dd; }
+
+        /* ── Inline Code ── */
+        code {
+            background: rgba(233, 69, 96, 0.15);
+            color: #f0a0a0;
+            padding: 1px 6px;
+            border-radius: 4px;
+            font-family: "SF Mono", "Consolas", monospace;
+            font-size: 0.9em;
+        }
+
+        /* ── Algorithm Viz ── */
+        .algo-viz {
+            margin: 14px 0;
+        }
+        .array-row {
+            display: flex;
+            gap: 4px;
+            margin: 6px 0;
+            flex-wrap: wrap;
+            align-items: flex-start;
+        }
+        .array-cell {
+            width: 44px;
+            height: 44px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border-radius: 6px;
+            font-weight: bold;
+            font-size: 0.9em;
+            font-family: "SF Mono", "Consolas", monospace;
+            transition: all 0.3s ease;
+            position: relative;
+        }
+        .cell-normal { background: rgba(255,255,255,0.08); border: 1px solid rgba(255,255,255,0.12); color: #ccc; }
+        .cell-pivot { background: rgba(233,69,96,0.25); border: 2px solid var(--accent); color: #fff; }
+        .cell-small { background: rgba(76,175,80,0.2); border: 1px solid rgba(76,175,80,0.4); color: #a5d6a7; }
+        .cell-large { background: rgba(255,152,0,0.2); border: 1px solid rgba(255,152,0,0.4); color: #ffcc80; }
+        .cell-current { background: rgba(33,150,243,0.25); border: 2px solid #2196f3; color: #90caf9; }
+        .cell-sorted { background: rgba(76,175,80,0.3); border: 1px solid rgba(76,175,80,0.5); color: #c8e6c9; }
+        .cell-swap { animation: cellPulse 0.6s ease; }
+        @keyframes cellPulse {
+            0%,100% { transform: scale(1); }
+            50% { transform: scale(1.2); }
+        }
+
+        .array-index {
+            display: flex;
+            gap: 4px;
+            margin-bottom: 2px;
+            flex-wrap: wrap;
+        }
+        .index-cell {
+            width: 44px;
+            text-align: center;
+            font-size: 0.72em;
+            color: var(--text-muted);
+        }
+
+        .pointer-info {
+            display: flex;
+            gap: 20px;
+            flex-wrap: wrap;
+            margin: 8px 0;
+            font-size: 0.88em;
+            color: var(--text-secondary);
+        }
+        .pointer-info span {
+            background: rgba(255,255,255,0.06);
+            padding: 4px 10px;
+            border-radius: 6px;
+        }
+        .pointer-info .pivot-label { color: #e94560; }
+        .pointer-info .i-label     { color: #2196f3; }
+        .pointer-info .j-label     { color: #ff9800; }
+
+        .step-desc {
+            background: rgba(255,255,255,0.04);
+            border-left: 3px solid var(--accent);
+            padding: 10px 14px;
+            margin: 10px 0;
+            font-size: 0.92em;
+            color: var(--text-secondary);
+            border-radius: 0 8px 8px 0;
+        }
+
+        /* ── Timing Diagram ── */
+        .recursion-tree {
+            font-family: "SF Mono", "Consolas", monospace;
+            font-size: 0.78em;
+            line-height: 1.5;
+            white-space: pre;
+            background: rgba(0,0,0,0.25);
+            padding: 14px 18px;
+            border-radius: 8px;
+            overflow-x: auto;
+            color: #90caf9;
+            margin: 12px 0;
+        }
+
+        /* ── Comparison Table ── */
+        .compare-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 14px 0;
+            font-size: 0.9em;
+        }
+        .compare-table th {
+            background: rgba(233,69,96,0.15);
+            color: var(--accent);
+            padding: 10px 14px;
+            border: 1px solid var(--border);
+            text-align: center;
+        }
+        .compare-table td {
+            padding: 8px 14px;
+            border: 1px solid var(--border);
+            text-align: center;
+            color: var(--text-secondary);
+        }
+        .compare-table tr:nth-child(even) td {
+            background: rgba(255,255,255,0.02);
+        }
+        .compare-table .highlight-col {
+            background: rgba(233,69,96,0.08) !important;
+            font-weight: bold;
+        }
+
+        /* ── Buttons ── */
+        .nav-bar {
+            width: 100%;
+            max-width: 900px;
+            padding: 0 20px 20px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            gap: 10px;
+            flex-wrap: wrap;
+        }
+        .nav-btn {
+            background: rgba(255,255,255,0.06);
+            border: 1px solid var(--border);
+            color: var(--text-primary);
+            padding: 10px 22px;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 0.95em;
+            transition: all 0.25s;
+        }
+        .nav-btn:hover {
+            background: rgba(233,69,96,0.15);
+            border-color: var(--accent);
+        }
+        .nav-btn:disabled {
+            opacity: 0.3;
+            cursor: not-allowed;
+        }
+        .slide-indicator {
+            display: flex;
+            gap: 6px;
+            align-items: center;
+        }
+        .dot {
+            width: 10px;
+            height: 10px;
+            border-radius: 50%;
+            background: rgba(255,255,255,0.2);
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+        .dot.active {
+            background: var(--accent);
+            box-shadow: 0 0 8px var(--accent);
+        }
+
+        /* ── Stepper ── */
+        .stepper-controls {
+            display: flex;
+            gap: 8px;
+            flex-wrap: wrap;
+            margin: 10px 0;
+        }
+        .stepper-btn {
+            background: rgba(233,69,96,0.12);
+            border: 1px solid var(--accent-dim);
+            color: var(--accent);
+            padding: 8px 16px;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 0.88em;
+            transition: all 0.25s;
+        }
+        .stepper-btn:hover {
+            background: rgba(233,69,96,0.25);
+        }
+        .stepper-btn:disabled {
+            opacity: 0.35;
+            cursor: not-allowed;
+        }
+
+        /* ── Responsive ── */
+        @media (max-width: 768px) {
+            .header h1 { font-size: 1.3em; }
+            .slide-card { padding: 16px 18px; }
+            .code-block { font-size: 0.75em; padding: 12px; }
+            .array-cell { width: 36px; height: 36px; font-size: 0.75em; }
+            .index-cell { width: 36px; }
+            .compare-table { font-size: 0.75em; }
+            .compare-table th, .compare-table td { padding: 6px 8px; }
+        }
+        @media (max-width: 480px) {
+            .header h1 { font-size: 1.1em; }
+            .slide-card h2 { font-size: 1.2em; }
+            .array-cell { width: 30px; height: 30px; font-size: 0.7em; }
+            .index-cell { width: 30px; }
+            .nav-btn { padding: 8px 14px; font-size: 0.8em; }
+        }
+    </style>
+</head>
+<body>
+
+    <!-- Header -->
+    <div class="header">
+        <div class="lesson-num">C++ 算法提高 · 第12课</div>
+        <h1>快速排序——分治的威力</h1>
+        <div class="subtitle">核心思想：选基准 → 分区 → 递归排序 | 平均 O(n log n)</div>
+    </div>
+    <div class="progress-bar"><div class="progress-fill" id="progressFill"></div></div>
+
+    <!-- Slides -->
+    <div class="slides-container" id="slidesContainer">
+
+        <!-- Slide 1: 课程导入 -->
+        <div class="slide active" id="slide1">
+            <div class="slide-card">
+                <h2>🎯 学习目标</h2>
+                <ul>
+                    <li>理解<strong>快速排序的分治思想</strong>：选取基准元素，将数组分为左右两部分，递归排序</li>
+                    <li>掌握快速排序的<strong>基准选择</strong>和<strong>分区（partition）操作</strong></li>
+                    <li>能够利用快速排序解决<strong>第k大的数</strong>等问题</li>
+                </ul>
+                <h3>📌 本课要点</h3>
+                <div class="compare-table">
+                    <table>
+                        <tr><th>算法</th><th>时间复杂度（平均）</th><th>核心思想</th><th>稳定性</th></tr>
+                        <tr><td>冒泡排序</td><td>O(n²)</td><td>相邻交换</td><td>稳定</td></tr>
+                        <tr><td>选择排序</td><td>O(n²)</td><td>选最小放前面</td><td>不稳定</td></tr>
+                        <tr><td>插入排序</td><td>O(n²)</td><td>插入有序区</td><td>稳定</td></tr>
+                        <tr class="highlight-col"><td><strong>快速排序</strong></td><td><strong>O(n log n)</strong></td><td><strong>分治+分区</strong></td><td>不稳定</td></tr>
+                    </table>
+                </div>
+                <p>快速排序由英国计算机科学家 <strong>Tony Hoare</strong> 在1960年提出，至今仍是最常用的排序算法之一。C++ 的 <code>sort()</code> 函数底层就采用了快速排序的优化版本。</p>
+            </div>
+        </div>
+
+        <!-- Slide 2: 分治思想 & 算法三步 -->
+        <div class="slide" id="slide2">
+            <div class="slide-card">
+                <h2>📖 快速排序的"三步走"</h2>
+                <p>快速排序的核心策略叫做 <strong>分治（Divide and Conquer）</strong>——把一个大问题拆解成若干个相似的子问题。</p>
+                <div class="code-block"><span class="comment">// 快速排序的算法框架</span>
+<span class="keyword">void</span> <span class="func">quickSort</span>(arr, left, right) {
+    <span class="keyword">if</span> (left >= right) <span class="keyword">return</span>;  <span class="comment">// 递归终止</span>
+
+    <span class="comment">// 第1步：选基准 — 选一个"标杆"元素</span>
+    pivot = 选基准(arr, left, right);
+
+    <span class="comment">// 第2步：分区 — 小的放左边，大的放右边</span>
+    pivotIndex = <span class="func">partition</span>(arr, left, right);
+
+    <span class="comment">// 第3步：递归 — 对左右两边重复以上操作</span>
+    <span class="func">quickSort</span>(arr, left, pivotIndex - 1);
+    <span class="func">quickSort</span>(arr, pivotIndex + 1, right);
+}</div>
+                <h3>🔑 基准选择策略</h3>
+                <div class="compare-table">
+                    <table>
+                        <tr><th>策略</th><th>方法</th><th>优点</th><th>缺点</th></tr>
+                        <tr><td>固定位置</td><td>永远选第一个/最后一个</td><td>实现简单</td><td>已有序时退化为 O(n²)</td></tr>
+                        <tr><td>随机选择</td><td><code>rand() % (right-left+1)</code></td><td>期望性能好</td><td>略有额外开销</td></tr>
+                        <tr><td>三数取中</td><td>选 left/mid/right 的中间值</td><td>实践中表现最好</td><td>实现稍复杂</td></tr>
+                    </table>
+                </div>
+                <p style="margin-top:8px; color:#f0d080;">💡 本课采用「随机选择法」——实现简单且效果很好！</p>
+            </div>
+        </div>
+
+        <!-- Slide 3: 分区操作详解 (Algorithm Visualization) -->
+        <div class="slide" id="slide3">
+            <div class="slide-card">
+                <h2>🔍 分区操作详解 — 双指针法</h2>
+                <p>分区（Partition）是快速排序<strong>最核心</strong>的操作。我们用「双指针法」来演示：</p>
+                <p style="color:#f0d080;">选定基准 pivot = <strong>10</strong>（最右边的元素）</p>
+
+                <!-- Algorithm Visualization -->
+                <div class="algo-viz" id="partitionViz">
+                    <div class="array-index" id="vizIndices"></div>
+                    <div class="array-row" id="vizArray"></div>
+                    <div class="pointer-info" id="vizPointers">
+                        <span class="pivot-label">🔴 pivot = <strong id="pivotVal">10</strong></span>
+                        <span class="i-label">🔵 i = <strong id="iVal">-1</strong></span>
+                        <span class="j-label">🟠 j = <strong id="jVal">0</strong></span>
+                    </div>
+                    <div class="step-desc" id="stepDesc">准备开始分区... 基准=10，i=-1，j=0</div>
+                </div>
+
+                <div class="stepper-controls">
+                    <button class="stepper-btn" onclick="prevStep()" id="prevStepBtn" disabled>◀ 上一步</button>
+                    <button class="stepper-btn" onclick="nextStep()" id="nextStepBtn">下一步 ▶</button>
+                    <button class="stepper-btn" onclick="resetViz()">↺ 重新开始</button>
+                </div>
+
+                <h3 style="margin-top:16px;">分区算法要点</h3>
+                <ul>
+                    <li><strong>指针 i</strong>：指向"小于基准区域"的最后一个元素</li>
+                    <li><strong>指针 j</strong>：遍历扫描，寻找小于基准的元素</li>
+                    <li>遍历结束后，将基准放到 <code>i+1</code> 的位置</li>
+                    <li>时间复杂度：<strong>O(n)</strong> | 空间复杂度：<strong>O(1)</strong></li>
+                </ul>
+            </div>
+        </div>
+
+        <!-- Slide 4: 递归过程 & 完整排序演示 -->
+        <div class="slide" id="slide4">
+            <div class="slide-card">
+                <h2>🌳 递归调用过程</h2>
+                <p>分区之后，pivot 元素已经处于最终正确位置。接下来分别递归排序左右两部分：</p>
+                <div class="recursion-tree">
+                    快速排序([38,27,43,3,9,82,55,10])
+                    │
+                    ├─ 分区: pivot=10 → 位置2
+                    │  [3, 9, <strong style="color:#e94560">10</strong>, 38, 27, 82, 55, 43]
+                    │
+                    ├─ 左: 快速排序([3, 9])
+                    │  └─ 分区: pivot=9 → 位置1
+                    │     [3, <strong style="color:#e94560">9</strong>]  ← 左半完成 ✓
+                    │
+                    └─ 右: 快速排序([38,27,82,55,43])
+                       └─ 分区: pivot=43 → 位置6
+                          [38, 27, <strong style="color:#e94560">43</strong>, 55, 82]
+                          │
+                          ├─ 左: 快速排序([38,27])
+                          │  └─ 分区: pivot=27 → 位置3
+                          │     [27, 38]  ← 完成 ✓
+                          │
+                          └─ 右: 快速排序([55,82])
+                             └─ 分区: pivot=82 → 位置6
+                                [55, 82]  ← 完成 ✓
+                </div>
+                <p style="color: var(--success); margin-top: 8px;">
+                    ✅ 最终排序结果：<strong>[3, 9, 10, 27, 38, 43, 55, 82]</strong>
+                </p>
+                <h3>递归终止条件</h3>
+                <p>当 <code>left >= right</code> 时（区间只有一个元素或为空），无需再排序，递归结束。</p>
+                <p style="color:#f0d080;">💡 快速排序每次只让<strong>一个</strong>元素（pivot）归位，然后"分而治之"。</p>
+            </div>
+        </div>
+
+        <!-- Slide 5: 快速选择算法 -->
+        <div class="slide" id="slide5">
+            <div class="slide-card">
+                <h2>🚀 快速选择算法（QuickSelect）</h2>
+                <p>快速选择是快速排序分区思想的巧妙应用。问题：在无序数组中<strong>找第k大的元素</strong>。</p>
+
+                <h3>算法思路</h3>
+                <ol>
+                    <li>进行一次分区操作，pivot 得到确定的排名 rank</li>
+                    <li>如果 rank == k → pivot 就是答案</li>
+                    <li>如果 rank > k → 答案在左半部分，递归左边</li>
+                    <li>如果 rank < k → 答案在右半部分，递归右边</li>
+                </ol>
+
+                <h3>示例：在 [3, 1, 4, 1, 5, 9] 中找第2大</h3>
+                <div class="code-block"><span class="comment">// "第k大" = "第(n-k+1)小"</span>
+<span class="comment">// 第2大 = 第(6-2+1) = 第5小</span>
+数组: [3, 1, 4, 1, 5, 9]
+分区: [1, 1, 3, 4, 5, 9]  pivot=3  rank=3
+rank(3) > k(5th小)?  否!
+rank(3) < k(5th小)?  → 看右边 [4, 5, 9]
+在 [4,5,9] 中找第(5-3)=2小 → 5 ✓</div>
+
+                <div class="compare-table">
+                    <table>
+                        <tr><th>方法</th><th>思想</th><th>时间复杂度</th></tr>
+                        <tr><td>先排序再取第k个</td><td>完全排序</td><td>O(n log n)</td></tr>
+                        <tr class="highlight-col"><td><strong>快速选择</strong></td><td><strong>只递归一边</strong></td><td><strong>O(n) 平均</strong></td></tr>
+                    </table>
+                </div>
+                <p style="color:var(--success);">⚡ 快速选择比全排序快了一个 log n 倍！</p>
+            </div>
+        </div>
+
+        <!-- Slide 6: 复杂度分析 -->
+        <div class="slide" id="slide6">
+            <div class="slide-card">
+                <h2>📊 复杂度分析</h2>
+                <div class="compare-table">
+                    <table>
+                        <tr><th>项目</th><th>最好情况</th><th>平均情况</th><th>最坏情况</th></tr>
+                        <tr>
+                            <td><strong>时间复杂度</strong></td>
+                            <td style="color:var(--success);">O(n log n)</td>
+                            <td style="color:var(--success);">O(n log n)</td>
+                            <td style="color:var(--accent);">O(n²)</td>
+                        </tr>
+                        <tr>
+                            <td><strong>空间复杂度</strong></td>
+                            <td colspan="3">O(log n) —— 递归调用栈的深度</td>
+                        </tr>
+                        <tr>
+                            <td><strong>稳定性</strong></td>
+                            <td colspan="3">不稳定 —— 分区时相同元素可能被交换</td>
+                        </tr>
+                    </table>
+                </div>
+
+                <h3>为什么最坏是 O(n²)？</h3>
+                <p>如果每次分区的基准都是数组中最大/最小的元素（比如数组已排序且固定选第一个），那么：</p>
+                <div class="code-block"><span class="comment">// 每次分区只"切掉"一个元素</span>
+递归深度：n → n-1 → n-2 → ... → 1
+总操作量 ≈ n + (n-1) + (n-2) + ... + 1 = n(n+1)/2 = <strong style="color:#e94560">O(n²)</strong></div>
+                <p style="color:#f0d080;">💡 解决办法：<strong>随机选基准</strong>或<strong>三数取中</strong>，将最坏概率降到极低！</p>
+
+                <h3>为什么空间是 O(log n)？</h3>
+                <p>递归调用栈的深度 ≈ log₂n（每次分区将数组均匀分为两半）。最坏情况下（没有随机化）递归深度可达 n。</p>
+            </div>
+        </div>
+
+        <!-- Slide 7: 代码实现 -->
+        <div class="slide" id="slide7">
+            <div class="slide-card">
+                <h2>💻 核心代码实现</h2>
+                <h3>partition 函数</h3>
+                <div class="code-block"><span class="comment">// 分区函数：小的放左边，大的放右边，返回 pivot 的最终位置</span>
+<span class="keyword">int</span> <span class="func">partition</span>(<span class="keyword">int</span> arr[], <span class="keyword">int</span> left, <span class="keyword">int</span> right) {
+    <span class="comment">// 随机选择基准，避免最坏情况</span>
+    <span class="keyword">int</span> rIdx = left + rand() % (right - left + 1);
+    swap(arr[rIdx], arr[right]);  <span class="comment">// 将基准换到最右边</span>
+
+    <span class="keyword">int</span> pivot = arr[right];
+    <span class="keyword">int</span> i = left - 1;            <span class="comment">// 小于区域的边界</span>
+
+    <span class="keyword">for</span> (<span class="keyword">int</span> j = left; j < right; j++) {
+        <span class="keyword">if</span> (arr[j] < pivot) {       <span class="comment">// 找到了一个小元素</span>
+            i++;
+            swap(arr[i], arr[j]);  <span class="comment">// 交换到小于区域</span>
+        }
+    }
+    swap(arr[i + 1], arr[right]);  <span class="comment">// 基准放到正确位置</span>
+    <span class="keyword">return</span> i + 1;                 <span class="comment">// 返回基准位置</span>
+}</div>
+                <h3>quickSort 函数</h3>
+                <div class="code-block"><span class="keyword">void</span> <span class="func">quickSort</span>(<span class="keyword">int</span> arr[], <span class="keyword">int</span> left, <span class="keyword">int</span> right) {
+    <span class="keyword">if</span> (left >= right) <span class="keyword">return</span>;  <span class="comment">// 递归终止</span>
+    <span class="keyword">int</span> p = <span class="func">partition</span>(arr, left, right);
+    <span class="func">quickSort</span>(arr, left, p - 1);   <span class="comment">// 递归左边</span>
+    <span class="func">quickSort</span>(arr, p + 1, right);  <span class="comment">// 递归右边</span>
+}</div>
+            </div>
+        </div>
+
+        <!-- Slide 8: 例题1 - 第k大的数 -->
+        <div class="slide" id="slide8">
+            <div class="slide-card">
+                <h2>🏋️ 例题1：第k大的数</h2>
+                <p><strong>题目描述</strong>：给定 n 个整数，找出其中第 k 大的数（k 从 1 开始）。</p>
+                <p><strong>输入</strong>：第一行 n 和 k，第二行 n 个整数。</p>
+                <p><strong>输出</strong>：第 k 大的数。</p>
+                <div class="code-block"><span class="comment">// 样例输入</span>
+6 2
+3 1 4 1 5 9
+
+<span class="comment">// 样例输出</span>
+5
+<span class="comment">// 解释：排序后 [1,1,3,4,5,9]，第2大是5</span></div>
+
+                <h3>核心代码 — quickSelect</h3>
+                <div class="code-block"><span class="keyword">int</span> <span class="func">quickSelect</span>(<span class="keyword">int</span> arr[], <span class="keyword">int</span> left, <span class="keyword">int</span> right, <span class="keyword">int</span> k) {
+    <span class="keyword">if</span> (left == right) <span class="keyword">return</span> arr[left];
+    <span class="keyword">int</span> p = <span class="func">partition</span>(arr, left, right);
+    <span class="keyword">int</span> rank = p - left + 1;  <span class="comment">// pivot 的排名（从1开始）</span>
+
+    <span class="keyword">if</span> (rank == k) <span class="keyword">return</span> arr[p];       <span class="comment">// 找到了！</span>
+    <span class="keyword">else if</span> (rank > k)
+        <span class="keyword">return</span> <span class="func">quickSelect</span>(arr, left, p - 1, k);  <span class="comment">// 看左边</span>
+    <span class="keyword">else</span>
+        <span class="keyword">return</span> <span class="func">quickSelect</span>(arr, p + 1, right, k - rank);  <span class="comment">// 看右边</span>
+}
+
+<span class="comment">// 调用：第k大 = 第 (n-k+1) 小</span>
+ans = <span class="func">quickSelect</span>(arr, 0, n-1, n - k + 1);</div>
+            </div>
+        </div>
+
+        <!-- Slide 9: 例题2 + 小结 -->
+        <div class="slide" id="slide9">
+            <div class="slide-card">
+                <h2>🏋️ 例题2：快速排序实现 + 📝 本课小结</h2>
+
+                <h3>例题2</h3>
+                <p>使用快速排序对 n 个整数从小到大排序。</p>
+                <div class="code-block"><span class="comment">// 样例</span>
+输入: 5
+     38 27 43 3 9
+输出: 3 9 27 38 43</div>
+
+                <h3>📝 本课小结</h3>
+                <ol>
+                    <li><strong>快速排序的核心是分治</strong>：选基准 → 分区 → 递归排序左右两半</li>
+                    <li><strong>partition 是关键</strong>：双指针 i/j，O(n) 时间完成分区</li>
+                    <li><strong>随机化基准</strong>可以避免 O(n²) 退化，保证平均 O(n log n)</li>
+                    <li><strong>快速选择</strong>（quickSelect）借用了分区思想，平均 O(n) 找第k大/小</li>
+                    <li>快速排序是 <strong>C++ sort() 的底层算法</strong>，是实际应用最广的排序</li>
+                </ol>
+
+                <h3>🔗 后续课程预告</h3>
+                <p>下一课我们将学习<strong>归并排序</strong>——另一种 O(n log n) 的分治排序算法，它稳定且可以轻松求"逆序对"。</p>
+
+                <p style="text-align:center; color:var(--accent); margin-top:20px; font-size:1.1em;">
+                    🎉 恭喜完成第12课！你已掌握了算法领域最优雅的排序之一！
+                </p>
+            </div>
+        </div>
+
+    </div>
+
+    <!-- Navigation Bar -->
+    <div class="nav-bar">
+        <button class="nav-btn" id="prevBtn" onclick="changeSlide(-1)">◀ 上一页</button>
+        <div class="slide-indicator" id="slideIndicator"></div>
+        <button class="nav-btn" id="nextBtn" onclick="changeSlide(1)">下一页 ▶</button>
+    </div>
+
+    <script>
+        // ================================================================
+        // Slide Navigation
+        // ================================================================
+        let currentSlide = 0;
+        const slides = document.querySelectorAll('.slide');
+        const totalSlides = slides.length;
+
+        function updateSlide() {
+            slides.forEach((s, i) => {
+                s.classList.toggle('active', i === currentSlide);
+            });
+            // Update dots
+            document.querySelectorAll('.dot').forEach((d, i) => {
+                d.classList.toggle('active', i === currentSlide);
+            });
+            // Update buttons
+            document.getElementById('prevBtn').disabled = (currentSlide === 0);
+            document.getElementById('nextBtn').disabled = (currentSlide === totalSlides - 1);
+            // Update progress bar
+            document.getElementById('progressFill').style.width =
+                ((currentSlide + 1) / totalSlides * 100) + '%';
+            // Scroll to top
+            window.scrollTo({ top: 0, behavior: 'smooth' });
+        }
+
+        function changeSlide(delta) {
+            currentSlide += delta;
+            if (currentSlide < 0) currentSlide = 0;
+            if (currentSlide >= totalSlides) currentSlide = totalSlides - 1;
+            updateSlide();
+        }
+
+        function goToSlide(n) {
+            currentSlide = n;
+            updateSlide();
+        }
+
+        // Create slide indicator dots
+        (function createDots() {
+            const container = document.getElementById('slideIndicator');
+            for (let i = 0; i < totalSlides; i++) {
+                const dot = document.createElement('span');
+                dot.className = 'dot' + (i === 0 ? ' active' : '');
+                dot.onclick = () => goToSlide(i);
+                container.appendChild(dot);
+            }
+            updateSlide();
+        })();
+
+        // Keyboard navigation
+        document.addEventListener('keydown', (e) => {
+            if (e.key === 'ArrowRight' || e.key === 'ArrowDown') {
+                e.preventDefault(); changeSlide(1);
+            } else if (e.key === 'ArrowLeft' || e.key === 'ArrowUp') {
+                e.preventDefault(); changeSlide(-1);
+            }
+        });
+
+        // Touch swipe for mobile
+        let touchStartX = 0;
+        document.addEventListener('touchstart', (e) => { touchStartX = e.touches[0].clientX; });
+        document.addEventListener('touchend', (e) => {
+            const diff = touchStartX - e.changedTouches[0].clientX;
+            if (Math.abs(diff) > 60) changeSlide(diff > 0 ? 1 : -1);
+        });
+
+        // ================================================================
+        // Partition Visualization (Slide 3)
+        // ================================================================
+        const initialArray = [38, 27, 43, 3, 9, 82, 55, 10];
+        const PIVOT_VALUE = 10;
+        let arrayState = [...initialArray];
+        let vizStep = 0;
+        let iPointer = -1;  // left = 0, so i = left - 1 = -1
+        let jPointer = 0;
+        let pivotIndex = 7; // initially at rightmost
+
+        // Pre-defined steps for the visualization
+        const partitionSteps = [
+            { step: 0, desc: '初始状态：准备分区。pivot=10（最右边），i=-1（小于区域为空），j=0 开始扫描。',
+              i: -1, j: 0, pivotPos: 7, swaps: [], result: [38,27,43,3,9,82,55,10] },
+            { step: 1, desc: 'j=0: arr[0]=38 >= 10，不交换。大于等于 pivot 的元素留在原地。',
+              i: -1, j: 1, pivotPos: 7, swaps: [], result: [38,27,43,3,9,82,55,10] },
+            { step: 2, desc: 'j=1: arr[1]=27 >= 10，不交换。',
+              i: -1, j: 2, pivotPos: 7, swaps: [], result: [38,27,43,3,9,82,55,10] },
+            { step: 3, desc: 'j=2: arr[2]=43 >= 10，不交换。',
+              i: -1, j: 3, pivotPos: 7, swaps: [], result: [38,27,43,3,9,82,55,10] },
+            { step: 4, desc: 'j=3: arr[3]=3 < 10 → i 右移(i=0)，交换 arr[0]↔arr[3]！小元素 3 被移到前面。',
+              i: 0, j: 4, pivotPos: 7, swaps: [[0,3]], result: [3,27,43,38,9,82,55,10] },
+            { step: 5, desc: 'j=4: arr[4]=9 < 10 → i 右移(i=1)，交换 arr[1]↔arr[4]！小元素 9 被移到前面。',
+              i: 1, j: 5, pivotPos: 7, swaps: [[1,4]], result: [3,9,43,38,27,82,55,10] },
+            { step: 6, desc: 'j=5: arr[5]=82 >= 10，不交换。',
+              i: 1, j: 6, pivotPos: 7, swaps: [], result: [3,9,43,38,27,82,55,10] },
+            { step: 7, desc: 'j=6: arr[6]=55 >= 10，不交换。',
+              i: 1, j: 7, pivotPos: 7, swaps: [], result: [3,9,43,38,27,82,55,10] },
+            { step: 8, desc: '✅ 扫描完毕！将 pivot=10 交换到位置 i+1=2。pivot 已归位！左边[3,9]都<10，右边[43,38,27,82,55]都>=10。',
+              i: 1, j: 7, pivotPos: 2, swaps: [[2,7]], result: [3,9,10,38,27,82,55,43] },
+        ];
+
+        function renderViz() {
+            const step = partitionSteps[vizStep];
+            const array = step.result;
+
+            // Render indices
+            let idxHTML = '';
+            for (let idx = 0; idx < array.length; idx++) {
+                idxHTML += `<div class="index-cell">${idx}</div>`;
+            }
+            document.getElementById('vizIndices').innerHTML = idxHTML;
+
+            // Render array cells
+            let arrHTML = '';
+            for (let idx = 0; idx < array.length; idx++) {
+                let cls = 'cell-normal';
+                if (idx === step.pivotPos) cls = 'cell-pivot';
+                else if ((step.i >= 0 && idx <= step.i) || (vizStep === 8 && idx < step.pivotPos)) cls = 'cell-small';
+                else if (vizStep >= 4 && idx > step.i && idx !== step.pivotPos) cls = 'cell-large';
+                if (idx === step.j && vizStep < 8) cls = 'cell-current';
+                if (step.swaps.some(s => s[0] === idx || s[1] === idx)) cls += ' cell-swap';
+                arrHTML += `<div class="array-cell ${cls}">${array[idx]}</div>`;
+            }
+            document.getElementById('vizArray').innerHTML = arrHTML;
+
+            // Update pointer values
+            document.getElementById('pivotVal').textContent = PIVOT_VALUE;
+            document.getElementById('iVal').textContent = step.i;
+            document.getElementById('jVal').textContent = (step.j >= 7 ? 'done' : step.j);
+
+            // Update description
+            document.getElementById('stepDesc').textContent = step.desc;
+
+            // Update button states
+            document.getElementById('prevStepBtn').disabled = (vizStep === 0);
+            document.getElementById('nextStepBtn').disabled = (vizStep === partitionSteps.length - 1);
+        }
+
+        function nextStep() {
+            if (vizStep < partitionSteps.length - 1) {
+                vizStep++;
+                renderViz();
+            }
+        }
+
+        function prevStep() {
+            if (vizStep > 0) {
+                vizStep--;
+                renderViz();
+            }
+        }
+
+        function resetViz() {
+            vizStep = 0;
+            arrayState = [...initialArray];
+            iPointer = -1;
+            jPointer = 0;
+            pivotIndex = 7;
+            renderViz();
+        }
+
+        // Initialize viz on load
+        renderViz();
+    </script>
+
+</body>
+</html>

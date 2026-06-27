@@ -1,0 +1,553 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>第36课：线性DP——一维动态规划</title>
+<style>
+/* ========== Reset & Base ========== */
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+html, body { height: 100%; overflow: hidden; }
+body {
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "PingFang SC",
+               "Microsoft YaHei", "Helvetica Neue", sans-serif;
+  background: #1a1a2e;
+  color: #e0e0e0;
+}
+
+/* ========== Slide Container ========== */
+.slideshow {
+  width: 100%;
+  height: 100vh;
+  display: flex;
+  flex-direction: column;
+  position: relative;
+}
+
+/* ========== Individual Slide ========== */
+.slide {
+  display: none;
+  flex: 1;
+  padding: 60px 80px;
+  flex-direction: column;
+  justify-content: center;
+  overflow-y: auto;
+}
+.slide.active { display: flex; }
+
+.slide h1 {
+  font-size: 2.8em;
+  color: #e94560;
+  margin-bottom: 30px;
+  border-bottom: 3px solid #e94560;
+  padding-bottom: 15px;
+}
+.slide h2 {
+  font-size: 2em;
+  color: #e94560;
+  margin-bottom: 20px;
+  margin-top: 30px;
+}
+.slide h2:first-of-type { margin-top: 0; }
+.slide h3 {
+  font-size: 1.4em;
+  color: #f0a0b0;
+  margin-bottom: 12px;
+  margin-top: 20px;
+}
+.slide p, .slide li {
+  font-size: 1.15em;
+  line-height: 1.8;
+  margin-bottom: 8px;
+}
+.slide ul, .slide ol {
+  padding-left: 28px;
+  margin-bottom: 16px;
+}
+.slide ul li { list-style-type: "▸ "; }
+.slide .highlight { color: #e94560; font-weight: bold; }
+
+/* ========== Code Blocks ========== */
+.slide pre {
+  background: #16213e;
+  border: 1px solid #0f3460;
+  border-left: 4px solid #e94560;
+  border-radius: 8px;
+  padding: 20px 24px;
+  overflow-x: auto;
+  margin: 12px 0 20px 0;
+  font-size: 0.95em;
+  line-height: 1.7;
+}
+.slide code { font-family: "Fira Code", "Cascadia Code", "Consolas", "Source Code Pro", monospace; }
+.slide .code-keyword { color: #c792ea; }
+.slide .code-func { color: #82aaff; }
+.slide .code-num { color: #f78c6c; }
+.slide .code-comment { color: #546e7a; font-style: italic; }
+.slide .code-str { color: #c3e88d; }
+
+/* ========== Info Box ========== */
+.info-box {
+  background: rgba(233, 69, 96, 0.1);
+  border: 1px solid rgba(233, 69, 96, 0.3);
+  border-radius: 10px;
+  padding: 20px 24px;
+  margin: 16px 0;
+}
+.info-box p { margin-bottom: 6px; }
+
+/* ========== Framework Box ========== */
+.framework {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 16px;
+  margin: 20px 0;
+}
+.framework .step {
+  background: #16213e;
+  border: 1px solid #0f3460;
+  border-radius: 10px;
+  padding: 20px;
+}
+.framework .step .step-num {
+  display: inline-block;
+  background: #e94560;
+  color: #fff;
+  width: 32px; height: 32px;
+  text-align: center; line-height: 32px;
+  border-radius: 50%;
+  font-weight: bold;
+  margin-bottom: 10px;
+}
+.framework .step h4 { color: #e94560; margin-bottom: 6px; }
+
+/* ========== Array Visualization ========== */
+.array-row {
+  display: flex;
+  gap: 4px;
+  margin: 10px 0;
+  flex-wrap: wrap;
+}
+.array-cell {
+  width: 44px; height: 44px;
+  display: flex; align-items: center; justify-content: center;
+  background: #16213e;
+  border: 1px solid #0f3460;
+  border-radius: 6px;
+  font-size: 0.95em;
+  font-weight: bold;
+}
+.array-cell.active { background: #e94560; color: #fff; border-color: #e94560; }
+.array-label {
+  font-size: 0.85em;
+  color: #888;
+  margin-bottom: 4px;
+}
+
+/* ========== Table ========== */
+.slide table {
+  border-collapse: collapse;
+  width: 100%;
+  margin: 16px 0;
+  font-size: 1em;
+}
+.slide th {
+  background: #e94560;
+  color: #fff;
+  padding: 10px 14px;
+  text-align: center;
+}
+.slide td {
+  background: #16213e;
+  padding: 8px 14px;
+  text-align: center;
+  border: 1px solid #0f3460;
+}
+
+/* ========== Step Table ========== */
+.step-table { width: 100%; margin: 16px 0; border-collapse: collapse; }
+.step-table th { background: #e94560; color: #fff; padding: 8px 10px; font-size: 0.9em; }
+.step-table td { background: #16213e; padding: 8px 10px; border: 1px solid #0f3460; font-size: 0.9em; }
+.step-table .ans-row td { background: rgba(233, 69, 96, 0.2); font-weight: bold; }
+
+/* ========== Controls Bar ========== */
+.controls {
+  height: 56px;
+  background: #16213e;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 20px;
+  border-top: 2px solid #0f3460;
+  flex-shrink: 0;
+}
+.controls button {
+  background: transparent;
+  color: #e0e0e0;
+  border: 1px solid #0f3460;
+  border-radius: 8px;
+  padding: 8px 20px;
+  font-size: 1em;
+  cursor: pointer;
+  transition: all 0.2s;
+  font-family: inherit;
+}
+.controls button:hover { background: #e94560; border-color: #e94560; color: #fff; }
+.controls button:disabled { opacity: 0.3; cursor: not-allowed; }
+.controls button:disabled:hover { background: transparent; border-color: #0f3460; color: #e0e0e0; }
+.controls .counter {
+  font-size: 0.95em;
+  color: #888;
+  min-width: 80px;
+  text-align: center;
+}
+
+/* ========== Two-Column Layout ========== */
+.two-col {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 24px;
+}
+.two-col .col { display: flex; flex-direction: column; }
+
+/* ========== Big Title ========== */
+.slide.title-slide {
+  align-items: center;
+  text-align: center;
+}
+.slide.title-slide h1 {
+  font-size: 3.5em;
+  border-bottom: none;
+  margin-bottom: 16px;
+}
+.slide.title-slide .subtitle {
+  font-size: 1.6em;
+  color: #888;
+  margin-bottom: 20px;
+}
+.slide.title-slide .lesson-num {
+  display: inline-block;
+  background: #e94560;
+  color: #fff;
+  padding: 6px 18px;
+  border-radius: 20px;
+  font-size: 1.1em;
+  margin-bottom: 30px;
+}
+
+/* ========== Summary Grid ========== */
+.summary-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 20px;
+  margin: 20px 0;
+}
+.summary-card {
+  background: #16213e;
+  border: 1px solid #0f3460;
+  border-radius: 12px;
+  padding: 24px;
+}
+.summary-card h3 { color: #e94560; margin-bottom: 10px; margin-top: 0; }
+
+/* ========== Responsive ========== */
+@media (max-width: 768px) {
+  .slide { padding: 30px 24px; }
+  .slide h1 { font-size: 1.8em; }
+  .slide h2 { font-size: 1.4em; }
+  .framework { grid-template-columns: 1fr; }
+  .two-col { grid-template-columns: 1fr; }
+  .summary-grid { grid-template-columns: 1fr; }
+}
+</style>
+</head>
+<body>
+
+<div class="slideshow">
+  <!-- ======== Slide 1: Title ======== -->
+  <div class="slide active title-slide" data-index="0">
+    <span class="lesson-num">Lesson 36</span>
+    <h1>线性DP——一维动态规划</h1>
+    <p class="subtitle">状态定义 · 转移方程 · 递推求解</p>
+    <div class="info-box" style="max-width:600px;">
+      <p><strong>本节课重点</strong></p>
+      <p>最大子段和（O(n)） | 最长上升子序列（O(n²) / O(n log n)）</p>
+      <p>DP 四步框架：状态定义 → 转移方程 → 初始状态 → 计算顺序</p>
+    </div>
+  </div>
+
+  <!-- ======== Slide 2: DP核心概念 ======== -->
+  <div class="slide" data-index="1">
+    <h1>DP 核心概念</h1>
+    <h2>动态规划解题四步框架</h2>
+
+    <div class="framework">
+      <div class="step">
+        <span class="step-num">1</span>
+        <h4>状态定义</h4>
+        <p>明确 <code>dp[i]</code> 表示的含义。</p>
+        <p style="color:#e94560;margin-top:8px;">例：dp[i] = 以第 i 个元素结尾的最大子段和</p>
+      </div>
+      <div class="step">
+        <span class="step-num">2</span>
+        <h4>状态转移方程</h4>
+        <p>找到 dp[i] 与 dp[j] (j &lt; i) 的递推关系。</p>
+        <p style="color:#e94560;margin-top:8px;">例：dp[i] = max(a[i], dp[i-1] + a[i])</p>
+      </div>
+      <div class="step">
+        <span class="step-num">3</span>
+        <h4>初始状态</h4>
+        <p>确定递推的起点，给 dp[0] 赋值。</p>
+        <p style="color:#e94560;margin-top:8px;">例：dp[0] = a[0]</p>
+      </div>
+      <div class="step">
+        <span class="step-num">4</span>
+        <h4>计算顺序</h4>
+        <p>从小到大依次递推，确保依赖已算出。</p>
+        <p style="color:#e94560;margin-top:8px;">例：for i = 1 to n-1</p>
+      </div>
+    </div>
+
+    <div class="info-box">
+      <p><strong>核心思想：</strong>动态规划的本质是 <span class="highlight">记住已经解决过的子问题的答案</span>，避免重复计算。每个子问题的解只计算一次并存储起来，后续需要时直接使用。</p>
+    </div>
+  </div>
+
+  <!-- ======== Slide 3: 最大子段和 ======== -->
+  <div class="slide" data-index="2">
+    <h1>最大子段和（Maximum Subarray Sum）</h1>
+
+    <div class="two-col">
+      <div class="col">
+        <h3>算法思想</h3>
+        <p><strong>状态定义：</strong>dp[i] = 以第 i 个元素结尾的最大子段和</p>
+        <p><strong>转移方程：</strong></p>
+        <pre>dp[i] = max(a[i], dp[i-1] + a[i])</pre>
+        <p><strong>答案：</strong>max(dp[0..n-1])</p>
+        <p><strong>复杂度：</strong>O(n) 时间，O(1) 空间</p>
+      </div>
+      <div class="col">
+        <h3>示例数组</h3>
+        <p class="array-label">a = [−2, 1, −3, 4, −1, 2, 1, −5, 4]</p>
+        <div class="array-row">
+          <div class="array-cell">−2</div><div class="array-cell">1</div>
+          <div class="array-cell">−3</div><div class="array-cell">4</div>
+          <div class="array-cell">−1</div><div class="array-cell">2</div>
+          <div class="array-cell">1</div><div class="array-cell">−5</div>
+          <div class="array-cell">4</div>
+        </div>
+      </div>
+    </div>
+
+    <h3>逐项推导过程</h3>
+    <table class="step-table">
+      <tr><th>i</th><th>a[i]</th><th>决策</th><th>dp[i]</th><th>说明</th></tr>
+      <tr><td>0</td><td>−2</td><td>独自成段</td><td>−2</td><td>只有一个元素</td></tr>
+      <tr><td>1</td><td>1</td><td>max(1, −2+1)=1</td><td>1</td><td>另起炉灶</td></tr>
+      <tr><td>2</td><td>−3</td><td>max(−3, 1−3)=−2</td><td>−2</td><td>接上更大</td></tr>
+      <tr><td>3</td><td>4</td><td>max(4, −2+4)=4</td><td>4</td><td>另起炉灶</td></tr>
+      <tr><td>4</td><td>−1</td><td>max(−1, 4−1)=3</td><td>3</td><td>接上更大</td></tr>
+      <tr><td>5</td><td>2</td><td>max(2, 3+2)=5</td><td>5</td><td>接上更大</td></tr>
+      <tr class="ans-row"><td>6</td><td>1</td><td>max(1, 5+1)=6</td><td style="color:#e94560;">6 ← 最大!</td><td>接上更大</td></tr>
+      <tr><td>7</td><td>−5</td><td>max(−5, 6−5)=1</td><td>1</td><td>接上更大</td></tr>
+      <tr><td>8</td><td>4</td><td>max(4, 1+4)=5</td><td>5</td><td>接上更大</td></tr>
+    </table>
+
+    <h3>代码实现</h3>
+    <pre><span class="code-keyword">int</span> <span class="code-func">maxSubarraySum</span>(vector&lt;<span class="code-keyword">int</span>&gt;& a) {
+    <span class="code-keyword">int</span> curMax = a[<span class="code-num">0</span>], ans = a[<span class="code-num">0</span>];
+    <span class="code-keyword">for</span> (<span class="code-keyword">int</span> i = <span class="code-num">1</span>; i &lt; a.size(); i++) {
+        curMax = max(a[i], curMax + a[i]);  <span class="code-comment">// 状态转移</span>
+        ans = max(ans, curMax);            <span class="code-comment">// 更新全局最优</span>
+    }
+    <span class="code-keyword">return</span> ans;
+}</pre>
+  </div>
+
+  <!-- ======== Slide 4: 最长上升子序列 ======== -->
+  <div class="slide" data-index="3">
+    <h1>最长上升子序列（LIS）</h1>
+
+    <div class="two-col">
+      <div class="col">
+        <h3>算法思想</h3>
+        <p><strong>状态定义：</strong>dp[i] = 以第 i 个元素结尾的LIS长度</p>
+        <p><strong>转移方程：</strong></p>
+        <pre>dp[i] = max(dp[j] + 1)
+        (j &lt; i, a[j] &lt; a[i])</pre>
+        <p><strong>复杂度：</strong>O(n²) 时间，O(n) 空间</p>
+      </div>
+      <div class="col">
+        <h3>示例数组</h3>
+        <p class="array-label">a = [3, 1, 4, 1, 5, 9, 2, 6]</p>
+        <div class="array-row">
+          <div class="array-cell">3</div><div class="array-cell">1</div>
+          <div class="array-cell">4</div><div class="array-cell">1</div>
+          <div class="array-cell">5</div><div class="array-cell">9</div>
+          <div class="array-cell">2</div><div class="array-cell">6</div>
+        </div>
+      </div>
+    </div>
+
+    <h3>逐项推导过程</h3>
+    <table class="step-table">
+      <tr><th>i</th><th>a[i]</th><th>检查 j&lt;i, a[j]&lt;a[i]</th><th>候选 dp[j]+1</th><th>dp[i]</th></tr>
+      <tr><td>0</td><td>3</td><td>—</td><td>—</td><td>1</td></tr>
+      <tr><td>1</td><td>1</td><td>无</td><td>—</td><td>1</td></tr>
+      <tr><td>2</td><td>4</td><td>j=0:3&lt;4 ✓; j=1:1&lt;4 ✓</td><td>2,2</td><td>2</td></tr>
+      <tr><td>3</td><td>1</td><td>无</td><td>—</td><td>1</td></tr>
+      <tr><td>4</td><td>5</td><td>j=0,1,2,3 (a[2]=4&lt;5)</td><td>max=dp[2]+1</td><td>3</td></tr>
+      <tr><td>5</td><td>9</td><td>j=0..4 (dp[4]=3)</td><td>3+1=4</td><td>4</td></tr>
+      <tr><td>6</td><td>2</td><td>j=1,3 (a=1&lt;2)</td><td>2,2</td><td>2</td></tr>
+      <tr class="ans-row"><td>7</td><td>6</td><td>j=0,1,2,3,4 (dp[4]=3)</td><td>3+1=4</td><td style="color:#e94560;">4 ← 最大!</td></tr>
+    </table>
+
+    <h3>O(n log n) 优化思路</h3>
+    <div class="info-box">
+      <p><strong>贪心 + 二分：</strong>维护 <code>tails</code> 数组，tails[k] = 长度为 k+1 的上升子序列的<strong>最小末尾</strong>。遍历每个元素 x，在 tails 中二分查找第一个 `>= x` 的位置并替换。tails 最终长度 = LIS 长度。</p>
+    </div>
+
+    <h3>核心代码 (O(n²))</h3>
+    <pre>vector&lt;<span class="code-keyword">int</span>&gt; dp(n, <span class="code-num">1</span>);  <span class="code-comment">// 初始：每个元素自身长为 1</span>
+<span class="code-keyword">for</span> (<span class="code-keyword">int</span> i = <span class="code-num">1</span>; i &lt; n; i++)
+    <span class="code-keyword">for</span> (<span class="code-keyword">int</span> j = <span class="code-num">0</span>; j &lt; i; j++)
+        <span class="code-keyword">if</span> (a[j] &lt; a[i])
+            dp[i] = max(dp[i], dp[j] + <span class="code-num">1</span>);</pre>
+  </div>
+
+  <!-- ======== Slide 5: 复杂度分析 ======== -->
+  <div class="slide" data-index="4">
+    <h1>复杂度分析与对比</h1>
+
+    <table>
+      <tr><th>算法</th><th>时间复杂度</th><th>空间复杂度</th><th>说明</th></tr>
+      <tr><td>最大子段和 (DP)</td><td style="color:#c3e88d;">O(n)</td><td style="color:#c3e88d;">O(1)</td><td>一次遍历，滚动变量优化空间</td></tr>
+      <tr><td>LIS (DP)</td><td>O(n²)</td><td>O(n)</td><td>双重循环枚举所有 j &lt; i</td></tr>
+      <tr><td>LIS (贪心+二分)</td><td style="color:#c3e88d;">O(n log n)</td><td>O(n)</td><td>tails 数组 + lower_bound 二分</td></tr>
+    </table>
+
+    <h2>为什么 DP 必须包含当前元素？</h2>
+    <div class="info-box">
+      <p>如果 <code>dp[i]</code> 不强制包含 <code>a[i]</code>，那么无法从 <code>dp[i-1]</code> 递推出 <code>dp[i]</code>，因为缺少了"连续性"的约束。定义 <code>dp[i]</code> 为 <strong>"以 i 结尾"</strong> 是线性 DP 中最常用的技巧。</p>
+      <p style="margin-top:8px;"><strong>答案取 max(dp[0..n-1])</strong> 而非 dp[n-1]，因为最优解不一定以最后一个元素结尾。</p>
+    </div>
+
+    <h2>DP 常见优化方向</h2>
+    <ul>
+      <li><strong>滚动数组：</strong>dp[i] 只依赖 dp[i-1] 时，用变量替代数组（如最大子段和）</li>
+      <li><strong>贪心 + 二分：</strong>利用单调性减少状态转移的枚举（如 LIS 的 tails 优化）</li>
+      <li><strong>数据结构优化：</strong>用线段树/树状数组加速区间查询（后续课程）</li>
+    </ul>
+  </div>
+
+  <!-- ======== Slide 6: 本课小结 ======== -->
+  <div class="slide" data-index="5">
+    <h1>本课小结</h1>
+
+    <div class="summary-grid">
+      <div class="summary-card">
+        <h3>核心框架</h3>
+        <p>DP 四步法：</p>
+        <ol>
+          <li>状态定义 — dp[i] 的含义</li>
+          <li>转移方程 — 递推关系</li>
+          <li>初始状态 — 递推起点</li>
+          <li>计算顺序 — 从小到大</li>
+        </ol>
+      </div>
+      <div class="summary-card">
+        <h3>经典问题</h3>
+        <p><strong>最大子段和：</strong>O(n)</p>
+        <p><code>dp[i] = max(a[i], dp[i-1] + a[i])</code></p>
+        <p style="margin-top:12px;"><strong>最长上升子序列：</strong>O(n²)</p>
+        <p><code>dp[i] = max(dp[j] + 1), a[j] &lt; a[i]</code></p>
+      </div>
+      <div class="summary-card">
+        <h3>关键技巧</h3>
+        <ul>
+          <li>dp[i] 强制"以 i 结尾"</li>
+          <li>答案取 max(dp[0..n-1])</li>
+          <li>空间优化：滚动变量</li>
+          <li>时间优化：贪心 + 二分</li>
+        </ul>
+      </div>
+      <div class="summary-card">
+        <h3>下节课预告</h3>
+        <p><strong>第37课：二维线性DP</strong></p>
+        <ul>
+          <li>最长公共子序列 (LCS)</li>
+          <li>编辑距离</li>
+          <li>棋盘路径计数</li>
+          <li>dp[i][j] 的状态定义与转移</li>
+        </ul>
+      </div>
+    </div>
+
+    <div class="info-box" style="margin-top:20px; text-align:center;">
+      <p style="font-size:1.2em;">掌握一维DP，是通向多维DP、背包问题、区间DP的基石。</p>
+      <p style="margin-top:6px;">课后请多加练习，熟练运用<strong>四步框架</strong>解决各类DP问题！</p>
+    </div>
+  </div>
+
+  <!-- ======== Control Bar ======== -->
+  <div class="controls">
+    <button id="prevBtn" onclick="changeSlide(-1)">◀ 上一页</button>
+    <span class="counter" id="slideCounter">1 / 6</span>
+    <button id="nextBtn" onclick="changeSlide(1)">下一页 ▶</button>
+  </div>
+</div>
+
+<script>
+(function() {
+  var slides = document.querySelectorAll('.slide');
+  var counter = document.getElementById('slideCounter');
+  var prevBtn = document.getElementById('prevBtn');
+  var nextBtn = document.getElementById('nextBtn');
+  var current = 0;
+  var total = slides.length;
+
+  function showSlide(index) {
+    if (index < 0 || index >= total) return;
+    slides[current].classList.remove('active');
+    current = index;
+    slides[current].classList.add('active');
+    counter.textContent = (current + 1) + ' / ' + total;
+    prevBtn.disabled = (current === 0);
+    nextBtn.disabled = (current === total - 1);
+  }
+
+  // Expose globally for onclick
+  window.changeSlide = function(delta) {
+    showSlide(current + delta);
+  };
+
+  // Keyboard navigation
+  document.addEventListener('keydown', function(e) {
+    if (e.key === 'ArrowRight' || e.key === 'ArrowDown' || e.key === ' ') {
+      e.preventDefault();
+      changeSlide(1);
+    } else if (e.key === 'ArrowLeft' || e.key === 'ArrowUp') {
+      e.preventDefault();
+      changeSlide(-1);
+    }
+  });
+
+  // Touch swipe support
+  var touchStartX = 0;
+  document.addEventListener('touchstart', function(e) {
+    touchStartX = e.changedTouches[0].screenX;
+  });
+  document.addEventListener('touchend', function(e) {
+    var diff = e.changedTouches[0].screenX - touchStartX;
+    if (Math.abs(diff) > 60) {
+      changeSlide(diff < 0 ? 1 : -1);
+    }
+  });
+
+  // Initialize
+  showSlide(0);
+})();
+</script>
+
+</body>
+</html>

@@ -1,0 +1,635 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>CSP-J 备考课程 - 第41课：图论基础</title>
+    <style>
+        :root {
+            --primary: #1a237e;
+            --primary-light: #283593;
+            --accent: #ffd600;
+            --accent-light: #ffea00;
+            --bg: #ffffff;
+            --text: #212121;
+            --text-light: #616161;
+            --code-bg: #1e1e1e;
+            --code-text: #d4d4d4;
+            --slide-radius: 12px;
+            --shadow: 0 4px 24px rgba(0,0,0,0.12);
+            --tip-border: #ff8f00;
+            --tip-bg: #fff8e1;
+        }
+
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "PingFang SC", "Microsoft YaHei", sans-serif;
+            background: #f0f2f5;
+            color: var(--text);
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+
+        /* Title Bar */
+        .title-bar {
+            width: 100%;
+            background: var(--primary);
+            color: white;
+            padding: 14px 32px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.15);
+            position: sticky;
+            top: 0;
+            z-index: 100;
+        }
+        .title-bar .course-name {
+            font-size: 18px;
+            font-weight: 700;
+            letter-spacing: 1px;
+        }
+        .title-bar .lesson-info {
+            font-size: 14px;
+            opacity: 0.9;
+        }
+        .title-bar .progress {
+            font-size: 14px;
+            background: rgba(255,255,255,0.2);
+            padding: 4px 14px;
+            border-radius: 20px;
+        }
+
+        /* Main Container */
+        .container {
+            width: 100%;
+            max-width: 1000px;
+            padding: 32px 20px;
+            flex: 1;
+        }
+
+        /* Slide */
+        .slide {
+            display: none;
+            background: var(--bg);
+            border-radius: var(--slide-radius);
+            box-shadow: var(--shadow);
+            padding: 48px 56px;
+            min-height: 520px;
+            animation: fadeSlideIn 0.4s ease;
+        }
+        .slide.active {
+            display: block;
+        }
+
+        @keyframes fadeSlideIn {
+            from { opacity: 0; transform: translateY(20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        /* Slide Content Styles */
+        .slide h1 {
+            font-size: 36px;
+            color: var(--primary);
+            margin-bottom: 16px;
+            border-bottom: 3px solid var(--accent);
+            padding-bottom: 12px;
+            display: inline-block;
+        }
+        .slide h2 {
+            font-size: 28px;
+            color: var(--primary);
+            margin-bottom: 20px;
+            margin-top: 8px;
+        }
+        .slide h3 {
+            font-size: 22px;
+            color: var(--primary-light);
+            margin-bottom: 12px;
+            margin-top: 24px;
+        }
+        .slide p {
+            font-size: 17px;
+            line-height: 1.8;
+            margin-bottom: 16px;
+            color: #333;
+        }
+        .slide ul, .slide ol {
+            font-size: 17px;
+            line-height: 2;
+            margin-left: 24px;
+            margin-bottom: 16px;
+            color: #333;
+        }
+        .slide ul li::marker {
+            color: var(--accent);
+        }
+
+        /* Title Slide */
+        .slide-title {
+            text-align: center;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            min-height: 520px;
+        }
+        .slide-title .lesson-number {
+            font-size: 72px;
+            font-weight: 900;
+            color: var(--primary);
+            margin-bottom: 8px;
+        }
+        .slide-title .lesson-title {
+            font-size: 32px;
+            color: var(--primary-light);
+            margin-bottom: 24px;
+        }
+        .slide-title .subtitle {
+            font-size: 18px;
+            color: var(--text-light);
+            margin-bottom: 8px;
+        }
+        .slide-title .accent-bar {
+            width: 80px;
+            height: 4px;
+            background: var(--accent);
+            margin: 20px auto;
+            border-radius: 2px;
+        }
+
+        /* Code Blocks */
+        pre {
+            background: var(--code-bg);
+            border-radius: 8px;
+            padding: 20px 24px;
+            overflow-x: auto;
+            margin: 16px 0;
+            font-size: 14px;
+            line-height: 1.6;
+        }
+        code {
+            font-family: "Consolas", "Monaco", "Courier New", monospace;
+            color: var(--code-text);
+        }
+        .code-inline {
+            background: #f5f5f5;
+            color: #c62828;
+            padding: 2px 8px;
+            border-radius: 4px;
+            font-size: 15px;
+            border: 1px solid #e0e0e0;
+        }
+
+        /* Syntax Highlighting */
+        .kw { color: #569cd6; } /* keyword */
+        .ty { color: #4ec9b0; } /* type */
+        .fn { color: #dcdcaa; } /* function */
+        .nu { color: #b5cea8; } /* number */
+        .st { color: #ce9178; } /* string */
+        .cm { color: #6a9955; } /* comment */
+        .op { color: #d4d4d4; } /* operator */
+
+        /* Tip Box */
+        .tip-box {
+            border-left: 4px solid var(--tip-border);
+            background: var(--tip-bg);
+            padding: 16px 20px;
+            margin: 20px 0;
+            border-radius: 0 8px 8px 0;
+            font-size: 15px;
+        }
+        .tip-box .tip-title {
+            font-weight: 700;
+            color: #e65100;
+            margin-bottom: 6px;
+        }
+        .tip-box.warning {
+            border-left-color: #c62828;
+            background: #ffebee;
+        }
+        .tip-box.warning .tip-title {
+            color: #c62828;
+        }
+        .tip-box.success {
+            border-left-color: #2e7d32;
+            background: #e8f5e9;
+        }
+        .tip-box.success .tip-title {
+            color: #2e7d32;
+        }
+
+        /* Table */
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 16px 0;
+            font-size: 15px;
+        }
+        th {
+            background: var(--primary);
+            color: white;
+            padding: 10px 16px;
+            text-align: left;
+        }
+        td {
+            padding: 10px 16px;
+            border-bottom: 1px solid #e0e0e0;
+        }
+        tr:nth-child(even) td {
+            background: #fafafa;
+        }
+
+        /* Grid */
+        .grid-2 {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 24px;
+            margin: 16px 0;
+        }
+        .grid-2 .card {
+            background: #f5f7ff;
+            border-radius: 8px;
+            padding: 20px;
+            border: 1px solid #e8eaf6;
+        }
+        .grid-2 .card h3 {
+            margin-top: 0;
+        }
+
+        /* Navigation */
+        .nav-bar {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 20px;
+            padding: 20px 0;
+        }
+        .nav-btn {
+            background: var(--primary);
+            color: white;
+            border: none;
+            padding: 10px 28px;
+            border-radius: 24px;
+            font-size: 15px;
+            cursor: pointer;
+            transition: all 0.2s;
+            font-weight: 600;
+        }
+        .nav-btn:hover {
+            background: var(--primary-light);
+            transform: translateY(-1px);
+            box-shadow: 0 4px 12px rgba(26,35,126,0.3);
+        }
+        .nav-btn:disabled {
+            background: #bdbdbd;
+            cursor: not-allowed;
+            transform: none;
+            box-shadow: none;
+        }
+        .slide-dots {
+            display: flex;
+            gap: 8px;
+        }
+        .dot {
+            width: 10px;
+            height: 10px;
+            border-radius: 50%;
+            background: #ccc;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+        .dot.active {
+            background: var(--primary);
+            width: 28px;
+            border-radius: 12px;
+        }
+        .dot:hover {
+            background: var(--primary-light);
+        }
+
+        /* Keywords highlighted */
+        .highlight {
+            background: linear-gradient(180deg, transparent 60%, var(--accent) 60%);
+            padding: 0 4px;
+        }
+
+        /* Summary Slide */
+        .summary-list li {
+            padding: 8px 0;
+            font-size: 18px;
+        }
+        .summary-list li strong {
+            color: var(--primary);
+        }
+
+        /* Responsive */
+        @media (max-width: 768px) {
+            .slide {
+                padding: 32px 24px;
+            }
+            .slide h1 { font-size: 26px; }
+            .slide h2 { font-size: 22px; }
+            .slide p, .slide li { font-size: 15px; }
+            .grid-2 { grid-template-columns: 1fr; }
+            .slide-title .lesson-number { font-size: 48px; }
+            .slide-title .lesson-title { font-size: 24px; }
+        }
+    </style>
+</head>
+<body>
+
+    <!-- Title Bar -->
+    <div class="title-bar">
+        <span class="course-name">CSP-J 备考课程</span>
+        <span class="lesson-info">第41课：图论基础</span>
+        <span class="progress" id="progressText">1 / 7</span>
+    </div>
+
+    <div class="container">
+
+        <!-- Slide 1: Title -->
+        <div class="slide slide-title active" id="slide1">
+            <div class="lesson-number">41</div>
+            <div class="lesson-title">图论基础</div>
+            <div class="accent-bar"></div>
+            <p class="subtitle">Graph Theory Fundamentals</p>
+            <p class="subtitle">顶点 | 边 | 有向图 | 邻接矩阵 | 邻接表</p>
+        </div>
+
+        <!-- Slide 2: 图的定义与分类 -->
+        <div class="slide" id="slide2">
+            <h2>一、图的定义与分类</h2>
+            <p><strong>图 G = (V, E)</strong> 由顶点集合 V 和边集合 E 构成。顶点编号通常从 1 到 n。</p>
+
+            <div class="grid-2">
+                <div class="card">
+                    <h3>无向图</h3>
+                    <ul>
+                        <li>边没有方向</li>
+                        <li>(u, v) 等价于 (v, u)</li>
+                        <li>好比 <span class="highlight">双向道路</span></li>
+                        <li>存图需双向存储</li>
+                    </ul>
+                    <pre><code><span class="cm">// 无向图加边</span>
+<span class="fn">g</span>[u].<span class="fn">push_back</span>(v);
+<span class="fn">g</span>[v].<span class="fn">push_back</span>(u);</code></pre>
+                </div>
+                <div class="card">
+                    <h3>有向图</h3>
+                    <ul>
+                        <li>边有方向</li>
+                        <li>(u, v) 只能 u → v</li>
+                        <li>好比 <span class="highlight">单行道</span></li>
+                        <li>只存一个方向</li>
+                    </ul>
+                    <pre><code><span class="cm">// 有向图加边</span>
+<span class="fn">g</span>[u].<span class="fn">push_back</span>(v);</code></pre>
+                </div>
+            </div>
+
+            <div class="tip-box">
+                <div class="tip-title">考试要点</div>
+                <p>无向图的边数 m 如果很大（接近 n²），称为<strong>稠密图</strong>；边数很小（接近 n）则为<strong>稀疏图</strong>。存储方式的选择取决于图的稠密程度！</p>
+            </div>
+        </div>
+
+        <!-- Slide 3: 存储方式对比 -->
+        <div class="slide" id="slide3">
+            <h2>二、图的存储方式</h2>
+            <p>这是 CSP-J 考试的重中之重！两种存储方式必须烂熟于心。</p>
+
+            <h3>1. 邻接矩阵 g[i][j]</h3>
+            <pre><code><span class="kw">int</span> <span class="fn">g</span>[<span class="nu">1005</span>][<span class="nu">1005</span>];
+<span class="kw">memset</span>(g, <span class="nu">0</span>, <span class="kw">sizeof</span>(g));
+g[u][v] = <span class="nu">1</span>;              <span class="cm">// 无权图</span>
+g[u][v] = w;              <span class="cm">// 带权图</span></code></pre>
+            <p>判断边是否存在：<span class="code-inline">if (g[u][v])</span> — <strong>O(1)</strong></p>
+
+            <h3>2. 邻接表 vector&lt;int&gt; g[N]</h3>
+            <pre><code><span class="kw">vector</span>&lt;<span class="kw">int</span>&gt; <span class="fn">g</span>[<span class="nu">N</span>];
+g[u].<span class="fn">push_back</span>(v);
+<span class="cm">// 遍历邻接点</span>
+<span class="kw">for</span> (<span class="kw">int</span> v : g[u]) { ... }</code></pre>
+
+            <table>
+                <tr><th>特性</th><th>邻接矩阵</th><th>邻接表</th></tr>
+                <tr><td>空间复杂度</td><td>O(n²)</td><td>O(n+m)</td></tr>
+                <tr><td>判断边</td><td>O(1)</td><td>O(度数)</td></tr>
+                <tr><td>遍历邻接点</td><td>O(n)</td><td>O(度数)</td></tr>
+                <tr><td>适用场景</td><td>n ≤ 1000 稠密图</td><td>n 可达 10⁵ 稀疏图</td></tr>
+            </table>
+
+            <div class="tip-box warning">
+                <div class="tip-title">易错警告</div>
+                <p>如果 n = 100000 还用邻接矩阵 <span class="code-inline">g[100000][100000]</span>，内存直接爆炸（约 40GB）！必须用邻接表。</p>
+            </div>
+        </div>
+
+        <!-- Slide 4: 顶点度与路径 -->
+        <div class="slide" id="slide4">
+            <h2>三、顶点的度与路径回路</h2>
+
+            <div class="grid-2">
+                <div>
+                    <h3>顶点的度</h3>
+                    <ul>
+                        <li><strong>度 (Degree)</strong>：与该顶点相连的边数</li>
+                        <li><strong>入度</strong>：指向该顶点的边数（有向图）</li>
+                        <li><strong>出度</strong>：从该顶点出发的边数（有向图）</li>
+                    </ul>
+                    <div class="tip-box success">
+                        <div class="tip-title">重要性质</div>
+                        <p>无向图：度数之和 = 2m<br>
+                        有向图：入度和 = 出度和 = m</p>
+                    </div>
+                </div>
+                <div>
+                    <h3>路径与回路</h3>
+                    <ul>
+                        <li><strong>路径</strong>：顶点序列 v₀→v₁→...→vₖ</li>
+                        <li><strong>简单路径</strong>：顶点不重复</li>
+                        <li><strong>回路（环）</strong>：起点 = 终点</li>
+                        <li><strong>连通图</strong>：任意两点间有路径</li>
+                    </ul>
+                </div>
+            </div>
+
+            <pre><code><span class="cm">// 计算入度和出度</span>
+<span class="kw">int</span> indeg[<span class="nu">N</span>] = {<span class="nu">0</span>}, outdeg[<span class="nu">N</span>] = {<span class="nu">0</span>};
+<span class="kw">for</span> (<span class="kw">int</span> u = <span class="nu">1</span>; u &lt;= n; u++) {
+    <span class="kw">for</span> (<span class="kw">int</span> v : g[u]) {
+        outdeg[u]++;
+        indeg[v]++;
+    }
+}</code></pre>
+
+            <p>图的遍历是后续 DFS/BFS 算法的基础，需要用一个 <span class="code-inline">bool vis[N]</span> 数组标记已访问的顶点，防止重复访问和死循环。</p>
+        </div>
+
+        <!-- Slide 5: 真题训练1 -->
+        <div class="slide" id="slide5">
+            <h2>四、真题精练 1：图的存储与度数统计</h2>
+            <p><strong>题目：</strong>给定一个包含 n 个顶点和 m 条边的<strong>无向图</strong>，输出每个顶点的度数，以及度数最大的顶点编号。</p>
+
+            <div class="tip-box">
+                <div class="tip-title">输入样例</div>
+                <pre style="margin:8px 0"><code>5 4
+1 2
+2 3
+3 4
+4 5</code></pre>
+                <p><strong>输出：</strong><br>
+                1 2 2 2 1<br>
+                3</p>
+            </div>
+
+            <pre><code><span class="cm">// AC代码要点</span>
+<span class="kw">for</span> (<span class="kw">int</span> i = <span class="nu">0</span>; i &lt; m; i++) {
+    <span class="kw">int</span> u, v; cin &gt;&gt; u &gt;&gt; v;
+    g[u].<span class="fn">push_back</span>(v);
+    g[v].<span class="fn">push_back</span>(u);   <span class="cm">// 无向图：双向存储！</span>
+    deg[u]++; deg[v]++;      <span class="cm">// 度数+1</span>
+}
+<span class="kw">int</span> maxDeg = -<span class="nu">1</span>, ans = <span class="nu">1</span>;
+<span class="kw">for</span> (<span class="kw">int</span> i = <span class="nu">1</span>; i &lt;= n; i++)
+    <span class="kw">if</span> (deg[i] &gt; maxDeg)
+        maxDeg = deg[i], ans = i;</code></pre>
+
+            <div class="tip-box warning">
+                <div class="tip-title">注意</div>
+                <p>有多解时输出编号最小的：因为代码中只在 <span class="code-inline">deg[i] > maxDeg</span> 时更新（不是 >=），所以自动保留了最小编号。</p>
+            </div>
+        </div>
+
+        <!-- Slide 6: 真题训练2 -->
+        <div class="slide" id="slide6">
+            <h2>五、真题精练 2：邻接矩阵判断边</h2>
+            <p><strong>题目：</strong>给定一个有向图，q 次询问 u→v 是否有边。n ≤ 1000，因此适合使用<strong>邻接矩阵</strong>。</p>
+
+            <pre><code><span class="kw">int</span> g[<span class="nu">1005</span>][<span class="nu">1005</span>] = {<span class="nu">0</span>};
+<span class="kw">int</span> n, m, q; cin &gt;&gt; n &gt;&gt; m &gt;&gt; q;
+
+<span class="cm">// 读入边</span>
+<span class="kw">for</span> (<span class="kw">int</span> i = <span class="nu">0</span>; i &lt; m; i++) {
+    <span class="kw">int</span> u, v; cin &gt;&gt; u &gt;&gt; v;
+    g[u][v] = <span class="nu">1</span>;              <span class="cm">// 有向图只存一个方向</span>
+}
+
+<span class="cm">// 处理询问</span>
+<span class="kw">while</span> (q--) {
+    <span class="kw">int</span> u, v; cin &gt;&gt; u &gt;&gt; v;
+    <span class="kw">if</span> (g[u][v]) cout &lt;&lt; <span class="st">"Yes"</span> &lt;&lt; endl;
+    <span class="kw">else</span> cout &lt;&lt; <span class="st">"No"</span> &lt;&lt; endl;
+}</code></pre>
+
+            <div class="tip-box success">
+                <div class="tip-title">选择策略总结</div>
+                <table style="margin:8px 0">
+                    <tr><th>条件</th><th>选择</th></tr>
+                    <tr><td>n > 5000（稀疏图）</td><td>✅ 邻接表 vector</td></tr>
+                    <tr><td>n ≤ 1000 且频繁判边</td><td>✅ 邻接矩阵 g[i][j]</td></tr>
+                    <tr><td>n ≤ 1000 且只需遍历</td><td>✅ 两者皆可</td></tr>
+                </table>
+            </div>
+        </div>
+
+        <!-- Slide 7: Summary -->
+        <div class="slide" id="slide7">
+            <h2>六、本课小结</h2>
+            <ul class="summary-list">
+                <li><strong>图的构成</strong>：顶点 V + 边 E，记作 G = (V, E)</li>
+                <li><strong>四种分类</strong>：有向/无向、带权/无权</li>
+                <li><strong>邻接矩阵 g[i][j]</strong>：空间 O(n²)，判边 O(1)，适合<strong>稠密图</strong></li>
+                <li><strong>邻接表 vector g[N]</strong>：空间 O(n+m)，适合<strong>稀疏图</strong>（绝大多数情况）</li>
+                <li><strong>顶点的度</strong>：入度/出度，总度数 = 2m（无向图）</li>
+                <li><strong>路径与回路</strong>：连通性判断是图遍历的基础</li>
+                <li><strong>选择铁律</strong>：n > 5000 必用邻接表；n ≤ 1000 且需频繁判边用邻接矩阵</li>
+            </ul>
+
+            <div class="accent-bar" style="margin: 32px auto 0;"></div>
+            <p style="text-align:center; color: var(--text-light); margin-top: 16px;">
+                下一课预习：深度优先搜索 DFS — "一条路走到黑"
+            </p>
+        </div>
+
+    </div>
+
+    <!-- Navigation Bar -->
+    <div class="nav-bar">
+        <button class="nav-btn" id="prevBtn" disabled onclick="prevSlide()">← 上一页</button>
+        <div class="slide-dots" id="slideDots"></div>
+        <button class="nav-btn" id="nextBtn" onclick="nextSlide()">下一页 →</button>
+    </div>
+
+    <script>
+        const totalSlides = 7;
+        let currentSlide = 1;
+
+        // Generate dots
+        const dotsContainer = document.getElementById('slideDots');
+        for (let i = 1; i <= totalSlides; i++) {
+            const dot = document.createElement('span');
+            dot.className = 'dot' + (i === 1 ? ' active' : '');
+            dot.onclick = () => goToSlide(i);
+            dotsContainer.appendChild(dot);
+        }
+
+        function showSlide(n) {
+            document.querySelectorAll('.slide').forEach(s => s.classList.remove('active'));
+            const slide = document.getElementById('slide' + n);
+            if (slide) slide.classList.add('active');
+
+            document.querySelectorAll('.dot').forEach((d, i) => {
+                d.classList.toggle('active', i + 1 === n);
+            });
+
+            document.getElementById('prevBtn').disabled = (n === 1);
+            document.getElementById('nextBtn').disabled = (n === totalSlides);
+
+            document.getElementById('progressText').textContent = n + ' / ' + totalSlides;
+            currentSlide = n;
+        }
+
+        function nextSlide() {
+            if (currentSlide < totalSlides) showSlide(currentSlide + 1);
+        }
+
+        function prevSlide() {
+            if (currentSlide > 1) showSlide(currentSlide - 1);
+        }
+
+        function goToSlide(n) {
+            showSlide(n);
+        }
+
+        // Keyboard navigation
+        document.addEventListener('keydown', function(e) {
+            if (e.key === 'ArrowRight' || e.key === 'ArrowDown' || e.key === ' ') {
+                e.preventDefault();
+                nextSlide();
+            } else if (e.key === 'ArrowLeft' || e.key === 'ArrowUp') {
+                e.preventDefault();
+                prevSlide();
+            }
+        });
+
+        // Touch swipe support
+        let touchStartX = 0;
+        document.addEventListener('touchstart', (e) => {
+            touchStartX = e.changedTouches[0].screenX;
+        });
+        document.addEventListener('touchend', (e) => {
+            const diff = touchStartX - e.changedTouches[0].screenX;
+            if (Math.abs(diff) > 50) {
+                if (diff > 0) nextSlide();
+                else prevSlide();
+            }
+        });
+    </script>
+
+</body>
+</html>

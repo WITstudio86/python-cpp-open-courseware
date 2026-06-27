@@ -1,0 +1,287 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>CSP-J 备考课程 - 第29课：冒泡排序与选择排序</title>
+<style>
+* { margin: 0; padding: 0; box-sizing: border-box; }
+body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Microsoft YaHei', sans-serif; background: #f0f2f5; display: flex; justify-content: center; align-items: center; min-height: 100vh; padding: 20px; }
+.container { max-width: 900px; width: 100%; background: white; border-radius: 16px; box-shadow: 0 8px 40px rgba(0,0,0,0.12); overflow: hidden; }
+.header { background: linear-gradient(135deg, #1a237e, #283593); color: white; padding: 16px 24px; display: flex; justify-content: space-between; align-items: center; }
+.header .course-tag { background: #ffd600; color: #1a237e; padding: 4px 12px; border-radius: 20px; font-size: 14px; font-weight: bold; }
+.slide-container { padding: 40px; min-height: 500px; }
+.slide { display: none; }
+.slide.active { display: block; animation: fadeIn 0.4s ease; }
+@keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+.slide h2 { color: #1a237e; font-size: 28px; margin-bottom: 20px; border-bottom: 3px solid #ffd600; padding-bottom: 10px; display: inline-block; }
+.slide h3 { color: #283593; font-size: 22px; margin: 20px 0 12px; }
+.slide p, .slide li { font-size: 17px; line-height: 1.8; color: #333; margin-bottom: 8px; }
+.slide ul, .slide ol { padding-left: 24px; margin-bottom: 16px; }
+.exam-tip { background: #fff8e1; border-left: 4px solid #ff8f00; border-radius: 8px; padding: 16px 20px; margin: 20px 0; font-size: 15px; }
+.exam-tip strong { color: #e65100; }
+.code-block { background: #1e1e1e; border-radius: 8px; padding: 16px; margin: 12px 0; overflow-x: auto; font-family: Consolas, Monaco, 'Courier New', monospace; font-size: 14px; line-height: 1.6; color: #d4d4d4; }
+.code-block code { white-space: pre; }
+.keyword { color: #569cd6; }
+.string { color: #ce9178; }
+.comment { color: #6a9955; }
+.number { color: #b5cea8; }
+.func { color: #dcdcaa; }
+.title-slide { text-align: center; padding-top: 80px; }
+.title-slide h1 { font-size: 42px; color: #1a237e; margin-bottom: 16px; }
+.title-slide .subtitle { font-size: 22px; color: #5c6bc0; margin-bottom: 40px; }
+.title-slide .badge { display: inline-block; background: #ffd600; color: #1a237e; padding: 8px 24px; border-radius: 30px; font-size: 18px; font-weight: bold; }
+.navigation { display: flex; justify-content: center; align-items: center; gap: 16px; padding: 20px; background: #fafafa; border-top: 1px solid #e0e0e0; }
+.nav-btn { background: #1a237e; color: white; border: none; padding: 10px 24px; border-radius: 8px; font-size: 16px; cursor: pointer; transition: background 0.3s; }
+.nav-btn:hover { background: #283593; }
+.nav-btn:disabled { background: #9fa8da; cursor: not-allowed; }
+.slide-indicator { font-size: 16px; color: #666; min-width: 60px; text-align: center; }
+.summary-box { background: #e8eaf6; border-radius: 12px; padding: 24px; margin: 16px 0; }
+.summary-box li { color: #1a237e; font-weight: 500; }
+table { border-collapse: collapse; width: 100%; margin: 16px 0; }
+th { background: #1a237e; color: white; padding: 10px; text-align: left; }
+td { padding: 8px 10px; border-bottom: 1px solid #e0e0e0; }
+tr:nth-child(even) td { background: #f5f5f5; }
+.info-box { background: #e3f2fd; border-left: 4px solid #1a237e; border-radius: 8px; padding: 16px 20px; margin: 20px 0; font-size: 16px; }
+@media (max-width: 600px) {
+  .slide-container { padding: 24px; }
+  .title-slide h1 { font-size: 28px; }
+  .title-slide .subtitle { font-size: 18px; }
+  .slide h2 { font-size: 24px; }
+}
+</style>
+</head>
+<body>
+<div class="container">
+  <div class="header">
+    <span style="font-weight:bold;font-size:18px;">第29课：冒泡排序与选择排序</span>
+    <span class="course-tag">CSP-J 备考课程</span>
+  </div>
+  <div class="slide-container">
+
+    <!-- Slide 1: Title -->
+    <div class="slide active" id="slide1">
+      <div class="title-slide">
+        <h1>冒泡排序与选择排序</h1>
+        <div class="subtitle">基础排序算法 — 理解排序的本质与优化</div>
+        <p style="font-size:18px;color:#555;">掌握两种经典 O(n²) 排序算法的原理、代码实现与对比分析</p>
+        <div class="badge" style="margin-top:30px;">第 29 课</div>
+      </div>
+    </div>
+
+    <!-- Slide 2: 冒泡排序原理 -->
+    <div class="slide" id="slide2">
+      <h2>冒泡排序 (Bubble Sort)</h2>
+      <h3>核心思想：相邻比较，逐步交换，大数"浮"到末尾</h3>
+      <ul>
+        <li><strong>执行过程：</strong>从第一个元素开始，依次比较相邻两个元素，如果前大后小则交换。每完成一轮，最大的元素会"浮"到数组末尾。</li>
+        <li><strong>轮次规律：</strong>n 个元素的数组，需要 n-1 轮扫描即可完成排序。</li>
+        <li><strong>优化技巧 — swapped 标志：</strong>如果某一轮中没有发生任何交换，说明数组已经有序，可以提前终止。最好情况（已有序）只需一轮 O(n)。</li>
+      </ul>
+
+      <h3>执行过程演示 — 数组 [5, 3, 8, 1, 2]</h3>
+      <table>
+        <tr><th>轮次</th><th>比较过程</th><th>本轮结果</th><th>交换次数</th></tr>
+        <tr><td>第 1 轮</td><td>5↔3, 5↔8(不换), 8↔1, 8↔2</td><td>[3, 5, 1, 2, <strong>8</strong>]</td><td>3 次</td></tr>
+        <tr><td>第 2 轮</td><td>3↔5(不换), 5↔1, 5↔2</td><td>[3, 1, 2, <strong>5, 8</strong>]</td><td>2 次</td></tr>
+        <tr><td>第 3 轮</td><td>3↔1, 3↔2</td><td>[1, 2, <strong>3, 5, 8</strong>]</td><td>2 次</td></tr>
+        <tr><td>第 4 轮</td><td>1↔2(不换)</td><td>[1, 2, <strong>3, 5, 8</strong>]</td><td>0 次(可提前终止)</td></tr>
+      </table>
+
+      <div class="exam-tip">
+        <strong>📝 考试技巧：</strong> CSP-J 初赛中常考排序过程模拟题——给一个数组，要求写出某轮排序后的结果。注意：每轮冒泡完成后，末尾已排好序的元素不再参与比较！
+      </div>
+    </div>
+
+    <!-- Slide 3: 选择排序原理 -->
+    <div class="slide" id="slide3">
+      <h2>选择排序 (Selection Sort)</h2>
+      <h3>核心思想：每轮在未排序部分中选择最小元素，放到已排序部分的末尾</h3>
+      <ul>
+        <li><strong>执行过程：</strong>第 i 轮在区间 [i, n-1] 中找到最小元素的下标，将其与位置 i 的元素交换。每轮确定一个位置。</li>
+        <li><strong>与冒泡排序的区别：</strong>冒泡通过相邻交换"冒泡"，每轮可能交换多次；选择排序每轮只交换一次（找到最小值后再交换）。</li>
+        <li><strong>固定比较次数：</strong>无论数据如何，比较次数固定为 n(n-1)/2，交换次数固定为 n-1 次。</li>
+      </ul>
+
+      <h3>执行过程演示 — 数组 [5, 3, 8, 1, 2]</h3>
+      <table>
+        <tr><th>轮次</th><th>查找范围</th><th>最小值</th><th>交换</th><th>本轮结果</th></tr>
+        <tr><td>第 1 轮</td><td>[0,4]</td><td>a[3]=1</td><td>a[0]↔a[3]</td><td>[<strong>1</strong>, 3, 8, 5, 2]</td></tr>
+        <tr><td>第 2 轮</td><td>[1,4]</td><td>a[4]=2</td><td>a[1]↔a[4]</td><td>[<strong>1, 2</strong>, 8, 5, 3]</td></tr>
+        <tr><td>第 3 轮</td><td>[2,4]</td><td>a[4]=3</td><td>a[2]↔a[4]</td><td>[<strong>1, 2, 3</strong>, 5, 8]</td></tr>
+        <tr><td>第 4 轮</td><td>[3,4]</td><td>a[3]=5</td><td>不交换</td><td>[<strong>1, 2, 3, 5, 8</strong>]</td></tr>
+      </table>
+    </div>
+
+    <!-- Slide 4: 排序稳定性 -->
+    <div class="slide" id="slide4">
+      <h2>排序稳定性</h2>
+      <h3>什么是排序稳定性？</h3>
+      <p>稳定排序：值相等的元素在排序前后，它们的相对顺序保持不变。不稳定排序：值相等的元素在排序后相对顺序可能改变。</p>
+
+      <h3>冒泡排序 — 稳定</h3>
+      <p>冒泡排序只在 a[j] &gt; a[j+1] 时交换，相等时不交换，因此相等元素的相对顺序不变，是<strong>稳定排序</strong>。</p>
+
+      <h3>选择排序 — 不稳定</h3>
+      <p>选择排序最小值的"跳跃式交换"会破坏顺序。例如：</p>
+      <div class="info-box">
+        <strong>示例：</strong>数组 [(5, A), <strong>(5, B)</strong>, 3] 执行选择排序<br>
+        第一轮找最小值 3 (下标2)，将 a[0] 与 a[2] 交换 → [3, <strong>(5, B)</strong>, (5, A)]<br>
+        (5, A) 从前面跳到了后面，相对顺序改变 → <strong>不稳定</strong>
+      </div>
+
+      <pre class="code-block"><code><span class="comment">// 冒泡排序（稳定）：相等不交换</span>
+<span class="keyword">if</span> (a[j] &gt; a[j + <span class="number">1</span>]) { <span class="func">swap</span>(a[j], a[j + <span class="number">1</span>]); }
+
+<span class="comment">// 选择排序（不稳定）：跨元素交换破坏顺序</span>
+<span class="keyword">int</span> minIdx = i;
+<span class="keyword">for</span> (<span class="keyword">int</span> j = i + <span class="number">1</span>; j &lt; n; j++)
+    <span class="keyword">if</span> (a[j] &lt; a[minIdx]) minIdx = j;
+<span class="func">swap</span>(a[i], a[minIdx]);  <span class="comment">// 跳跃交换 → 不稳定</span></code></pre>
+
+      <div class="exam-tip">
+        <strong>📝 考试技巧：</strong> CSP-J 中常考"哪些排序算法是稳定的？"答案：<strong>冒泡、插入、归并和计数排序是稳定的</strong>，<strong>选择、快速和堆排序是不稳定的</strong>。口诀：<strong>"冒插归计稳如山，快选堆序容易翻"</strong>。
+      </div>
+    </div>
+
+    <!-- Slide 5: 比较与交换次数分析 -->
+    <div class="slide" id="slide5">
+      <h2>比较与交换次数分析</h2>
+      <h3>时间复杂度 O(n²) 的两种实现</h3>
+      <table>
+        <tr><th>算法</th><th>比较次数</th><th>交换次数</th><th>最好情况</th><th>最坏情况</th><th>稳定性</th></tr>
+        <tr><td>冒泡排序</td><td>n(n-1)/2（最坏）</td><td>0~n(n-1)/2</td><td>O(n) 优化版</td><td>O(n²)</td><td>✅ 稳定</td></tr>
+        <tr><td>选择排序</td><td>n(n-1)/2（固定）</td><td>n-1（固定）</td><td>O(n²)</td><td>O(n²)</td><td>❌ 不稳定</td></tr>
+      </table>
+
+      <h3>详细分析</h3>
+      <ul>
+        <li><strong>冒泡排序：</strong>比较次数 = (n-1) + (n-2) + ... + 1 = n(n-1)/2。加入 swapped 优化标志后，最好情况（已有序）只需一轮比较 n-1 次，时间复杂度 O(n)。</li>
+        <li><strong>选择排序：</strong>无论数据如何，比较次数始终为 n(n-1)/2。交换次数固定为 n-1 次，这在元素移动代价高（如交换大型结构体）时有优势。</li>
+        <li><strong>空间复杂度：</strong>两者都是 O(1)，原地排序。</li>
+      </ul>
+
+      <div class="exam-tip">
+        <strong>📝 考试技巧：</strong> 选择题中若问"对 n 个元素排序，比较次数与初始排列无关的是？"答案：<strong>选择排序</strong>。因为无论数据怎样，选择排序的比较次数永远是 n(n-1)/2，不会减少。
+      </div>
+    </div>
+
+    <!-- Slide 6: 代码模板 -->
+    <div class="slide" id="slide6">
+      <h2>代码模板</h2>
+
+      <h3>冒泡排序模板（含优化与计数器）</h3>
+      <pre class="code-block"><code><span class="comment">// 冒泡排序 — 优化版（含比较/交换计数器）</span>
+<span class="keyword">void</span> <span class="func">bubbleSort</span>(<span class="keyword">int</span> a[], <span class="keyword">int</span> n) {
+    <span class="keyword">int</span> cmpCnt = <span class="number">0</span>, swpCnt = <span class="number">0</span>;
+    <span class="keyword">for</span> (<span class="keyword">int</span> i = <span class="number">0</span>; i &lt; n - <span class="number">1</span>; i++) {
+        <span class="keyword">bool</span> swapped = <span class="keyword">false</span>;
+        <span class="keyword">for</span> (<span class="keyword">int</span> j = <span class="number">0</span>; j &lt; n - <span class="number">1</span> - i; j++) {
+            cmpCnt++;
+            <span class="keyword">if</span> (a[j] &gt; a[j + <span class="number">1</span>]) {
+                <span class="func">swap</span>(a[j], a[j + <span class="number">1</span>]);
+                swpCnt++;
+                swapped = <span class="keyword">true</span>;
+            }
+        }
+        <span class="keyword">if</span> (!swapped) <span class="keyword">break</span>;  <span class="comment">// 提前终止</span>
+    }
+    <span class="comment">// cmpCnt: 比较次数, swpCnt: 交换次数</span>
+}</code></pre>
+
+      <h3>选择排序模板（含计数器）</h3>
+      <pre class="code-block"><code><span class="comment">// 选择排序（含比较/交换计数器）</span>
+<span class="keyword">void</span> <span class="func">selectionSort</span>(<span class="keyword">int</span> a[], <span class="keyword">int</span> n) {
+    <span class="keyword">int</span> cmpCnt = <span class="number">0</span>, swpCnt = <span class="number">0</span>;
+    <span class="keyword">for</span> (<span class="keyword">int</span> i = <span class="number">0</span>; i &lt; n - <span class="number">1</span>; i++) {
+        <span class="keyword">int</span> minIdx = i;
+        <span class="keyword">for</span> (<span class="keyword">int</span> j = i + <span class="number">1</span>; j &lt; n; j++) {
+            cmpCnt++;
+            <span class="keyword">if</span> (a[j] &lt; a[minIdx]) minIdx = j;
+        }
+        <span class="keyword">if</span> (minIdx != i) {
+            <span class="func">swap</span>(a[i], a[minIdx]);
+            swpCnt++;
+        }
+    }
+}</code></pre>
+    </div>
+
+    <!-- Slide 7: 真题精练 -->
+    <div class="slide" id="slide7">
+      <h2>真题精练 — 排序过程模拟</h2>
+
+      <h3>题目：模拟排序过程</h3>
+      <div class="info-box">
+        <strong>题目描述：</strong>给定数组 <code>a[6] = {29, 18, 35, 12, 27, 14}</code>，请分别写出使用冒泡排序和选择排序时，<strong>前三轮排序后</strong>的数组结果。
+      </div>
+
+      <h3>冒泡排序（每轮"浮"出最大值到末尾）</h3>
+      <table>
+        <tr><th>轮次</th><th>结果</th></tr>
+        <tr><td>初始状态</td><td>[29, 18, 35, 12, 27, 14]</td></tr>
+        <tr><td>第 1 轮后</td><td>[18, 29, 12, 27, 14, <strong>35</strong>]</td></tr>
+        <tr><td>第 2 轮后</td><td>[18, 12, 27, 14, <strong>29, 35</strong>]</td></tr>
+        <tr><td>第 3 轮后</td><td>[12, 18, 14, <strong>27, 29, 35</strong>]</td></tr>
+      </table>
+
+      <h3>选择排序（每轮选最小值放到前面）</h3>
+      <table>
+        <tr><th>轮次</th><th>结果</th></tr>
+        <tr><td>初始状态</td><td>[29, 18, 35, 12, 27, 14]</td></tr>
+        <tr><td>第 1 轮后</td><td>[<strong>12</strong>, 18, 35, 29, 27, 14] &nbsp; &larr; 找到 12 放 a[0]</td></tr>
+        <tr><td>第 2 轮后</td><td>[<strong>12, 14</strong>, 35, 29, 27, 18] &nbsp; &larr; 找到 14 放 a[1]</td></tr>
+        <tr><td>第 3 轮后</td><td>[<strong>12, 14, 18</strong>, 29, 27, 35] &nbsp; &larr; 找到 18 放 a[2]</td></tr>
+      </table>
+
+      <p style="margin-top:16px;"><strong>思考题：</strong>如果要求在冒泡排序中统计总共的交换次数，上述数组从初始到完全排序需要多少次交换？<em>（答案：共 7 次交换）</em></p>
+    </div>
+
+    <!-- Slide 8: 本课小结 -->
+    <div class="slide" id="slide8">
+      <h2>本课小结</h2>
+      <div class="summary-box">
+        <ul style="font-size:17px;line-height:2.2;">
+          <li><strong>冒泡排序</strong>：相邻比较交换，每轮最大值"浮"到末尾。加入 swapped 标志可优化到最好情况 O(n)。</li>
+          <li><strong>选择排序</strong>：每轮选未排序部分的最小值，与当前位置交换。比较次数固定 O(n²)，交换次数固定 n-1。</li>
+          <li><strong>稳定性</strong>：冒泡稳定（相等不交换），选择不稳定（跳跃交换破坏顺序）。</li>
+          <li><strong>时间复杂度</strong>：两者均为 O(n²)，空间复杂度 O(1)。</li>
+          <li><strong>实用建议</strong>：实际竞赛中<strong>不推荐手写这两种排序</strong>，直接用 <code>sort()</code> 更高效，但初赛模拟题必考，需熟练掌握过程。</li>
+        </ul>
+      </div>
+      <h3>下节预告</h3>
+      <p>第 30 课将学习<strong>插入排序与计数排序</strong>——插入排序在基本有序数据时接近 O(n)，计数排序可达线性时间 O(n+k)。</p>
+    </div>
+
+  </div>
+  <div class="navigation">
+    <button class="nav-btn" id="prevBtn" onclick="changeSlide(-1)">&#9664; 上一页</button>
+    <span class="slide-indicator" id="slideIndicator">1 / 8</span>
+    <button class="nav-btn" id="nextBtn" onclick="changeSlide(1)">下一页 &#9654;</button>
+  </div>
+</div>
+<script>
+let currentSlide = 1;
+const totalSlides = 8;
+
+function showSlide(n) {
+  document.querySelectorAll('.slide').forEach(s => s.classList.remove('active'));
+  document.getElementById('slide' + n).classList.add('active');
+  document.getElementById('slideIndicator').textContent = n + ' / ' + totalSlides;
+  document.getElementById('prevBtn').disabled = (n === 1);
+  document.getElementById('nextBtn').disabled = (n === totalSlides);
+  currentSlide = n;
+}
+
+function changeSlide(delta) {
+  let next = currentSlide + delta;
+  if (next >= 1 && next <= totalSlides) showSlide(next);
+}
+
+document.addEventListener('keydown', function(e) {
+  if (e.key === 'ArrowLeft') changeSlide(-1);
+  if (e.key === 'ArrowRight') changeSlide(1);
+});
+</script>
+</body>
+</html>

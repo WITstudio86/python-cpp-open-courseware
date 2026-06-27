@@ -1,0 +1,1060 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>第17课：二分查找的边界处理</title>
+    <style>
+        /* ============================================================
+           全局样式 & 深色主题
+           ============================================================ */
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+
+        :root {
+            --accent: #e94560;
+            --accent-dim: rgba(233, 69, 96, 0.3);
+            --bg-dark: #0f0c29;
+            --bg-mid: #1a1a2e;
+            --bg-light: #24243e;
+            --text: #e0e0e0;
+            --text-dim: #a0a0b0;
+            --text-bright: #f0f0f0;
+            --code-bg: #0d1117;
+            --code-border: #30363d;
+            --keyword-color: #ff79c6;
+            --type-color: #8be9fd;
+            --func-color: #50fa7b;
+            --string-color: #f1fa8c;
+            --number-color: #bd93f9;
+            --comment-color: #6272a4;
+            --operator-color: #ff79c6;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "PingFang SC", "Microsoft YaHei", sans-serif;
+            background: linear-gradient(135deg, #0f0c29 0%, #1a1a2e 30%, #16213e 60%, #24243e 100%);
+            min-height: 100vh;
+            color: var(--text);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            overflow-x: hidden;
+        }
+
+        /* ============================================================
+           幻灯片容器
+           ============================================================ */
+        .slideshow-container {
+            width: 100%;
+            max-width: 960px;
+            padding: 20px;
+            position: relative;
+        }
+
+        .slide {
+            display: none;
+            background: rgba(255, 255, 255, 0.03);
+            border: 1px solid rgba(255, 255, 255, 0.08);
+            border-radius: 16px;
+            padding: 40px 44px;
+            min-height: 520px;
+            box-shadow: 0 8px 40px rgba(0, 0, 0, 0.4);
+            animation: fadeSlideIn 0.45s ease-out;
+            position: relative;
+        }
+
+        .slide.active {
+            display: block;
+        }
+
+        @keyframes fadeSlideIn {
+            from {
+                opacity: 0;
+                transform: translateY(18px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        /* ============================================================
+           幻灯片1：封面
+           ============================================================ */
+        .slide-cover {
+            text-align: center;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .slide-cover .lesson-badge {
+            display: inline-block;
+            background: var(--accent);
+            color: #fff;
+            font-size: 0.9em;
+            font-weight: bold;
+            padding: 6px 20px;
+            border-radius: 20px;
+            margin-bottom: 20px;
+            letter-spacing: 2px;
+        }
+
+        .slide-cover h1 {
+            font-size: 3em;
+            color: var(--accent);
+            margin-bottom: 16px;
+            text-shadow: 0 0 30px rgba(233, 69, 96, 0.5);
+            line-height: 1.3;
+        }
+
+        .slide-cover .subtitle {
+            font-size: 1.3em;
+            color: var(--text-dim);
+            margin-bottom: 30px;
+        }
+
+        .slide-cover .stage-info {
+            display: flex;
+            gap: 24px;
+            flex-wrap: wrap;
+            justify-content: center;
+        }
+
+        .slide-cover .stage-tag {
+            background: rgba(255, 255, 255, 0.06);
+            border: 1px solid rgba(255, 255, 255, 0.12);
+            border-radius: 8px;
+            padding: 10px 18px;
+            font-size: 0.95em;
+            color: var(--text-dim);
+        }
+
+        .slide-cover .stage-tag span {
+            color: var(--accent);
+            font-weight: bold;
+        }
+
+        .slide-cover .accent-line {
+            width: 80px;
+            height: 3px;
+            background: var(--accent);
+            margin: 20px auto;
+            border-radius: 2px;
+        }
+
+        /* ============================================================
+           幻灯片2：原理讲解
+           ============================================================ */
+        .slide-principle h2 {
+            font-size: 2em;
+            color: var(--accent);
+            margin-bottom: 24px;
+            padding-bottom: 12px;
+            border-bottom: 2px solid var(--accent-dim);
+        }
+
+        .slide-principle .comparison {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 20px;
+            margin-bottom: 24px;
+        }
+
+        .slide-principle .box {
+            background: rgba(255, 255, 255, 0.04);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 12px;
+            padding: 20px;
+        }
+
+        .slide-principle .box h3 {
+            font-size: 1.3em;
+            margin-bottom: 12px;
+        }
+
+        .slide-principle .box.lower h3 {
+            color: #50fa7b;
+        }
+
+        .slide-principle .box.upper h3 {
+            color: #8be9fd;
+        }
+
+        .slide-principle .box .def {
+            font-size: 0.95em;
+            color: var(--text-dim);
+            margin-bottom: 10px;
+        }
+
+        .slide-principle .box .key {
+            font-family: "SF Mono", "Fira Code", "Consolas", monospace;
+            background: var(--code-bg);
+            padding: 4px 10px;
+            border-radius: 4px;
+            font-size: 0.92em;
+            color: var(--keyword-color);
+            display: inline-block;
+            margin: 2px 0;
+        }
+
+        .slide-principle .array-viz {
+            display: flex;
+            gap: 0;
+            margin: 16px 0;
+            justify-content: center;
+            flex-wrap: wrap;
+        }
+
+        .slide-principle .array-cell {
+            width: 48px;
+            height: 48px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            background: rgba(255, 255, 255, 0.06);
+            border: 1px solid rgba(255, 255, 255, 0.12);
+            font-family: "SF Mono", "Fira Code", "Consolas", monospace;
+            font-size: 0.9em;
+            position: relative;
+        }
+
+        .slide-principle .array-cell .idx {
+            font-size: 0.65em;
+            color: var(--text-dim);
+            position: absolute;
+            top: 2px;
+            left: 4px;
+        }
+
+        .slide-principle .array-cell.highlight-lb {
+            border-color: #50fa7b;
+            box-shadow: 0 0 10px rgba(80, 250, 123, 0.4);
+            background: rgba(80, 250, 123, 0.12);
+        }
+
+        .slide-principle .array-cell.highlight-ub {
+            border-color: #8be9fd;
+            box-shadow: 0 0 10px rgba(139, 233, 253, 0.4);
+            background: rgba(139, 233, 253, 0.12);
+        }
+
+        .slide-principle .legend {
+            display: flex;
+            gap: 20px;
+            justify-content: center;
+            margin-top: 8px;
+            font-size: 0.85em;
+            color: var(--text-dim);
+        }
+
+        .slide-principle .legend .dot {
+            display: inline-block;
+            width: 12px;
+            height: 12px;
+            border-radius: 3px;
+            margin-right: 4px;
+            vertical-align: middle;
+        }
+
+        .slide-principle .legend .dot.green {
+            background: #50fa7b;
+        }
+
+        .slide-principle .legend .dot.blue {
+            background: #8be9fd;
+        }
+
+        /* ============================================================
+           幻灯片3：代码
+           ============================================================ */
+        .slide-code h2 {
+            font-size: 2em;
+            color: var(--accent);
+            margin-bottom: 20px;
+            padding-bottom: 12px;
+            border-bottom: 2px solid var(--accent-dim);
+        }
+
+        .slide-code .code-tabs {
+            display: flex;
+            gap: 4px;
+            margin-bottom: 0;
+        }
+
+        .slide-code .code-tab {
+            background: rgba(255, 255, 255, 0.04);
+            border: 1px solid rgba(255, 255, 255, 0.08);
+            border-bottom: none;
+            border-radius: 8px 8px 0 0;
+            padding: 8px 20px;
+            cursor: pointer;
+            font-size: 0.9em;
+            color: var(--text-dim);
+            transition: all 0.2s;
+        }
+
+        .slide-code .code-tab.active {
+            background: var(--code-bg);
+            color: var(--accent);
+            border-color: var(--code-border);
+        }
+
+        .slide-code .code-panel {
+            display: none;
+            background: var(--code-bg);
+            border: 1px solid var(--code-border);
+            border-radius: 0 8px 8px 8px;
+            padding: 18px 20px;
+            font-family: "SF Mono", "Fira Code", "Consolas", "Courier New", monospace;
+            font-size: 0.82em;
+            line-height: 1.7;
+            overflow-x: auto;
+            white-space: pre;
+            max-height: 370px;
+            overflow-y: auto;
+        }
+
+        .slide-code .code-panel.active {
+            display: block;
+        }
+
+        .slide-code .code-comment {
+            color: var(--comment-color);
+            font-style: italic;
+        }
+
+        .slide-code .code-keyword {
+            color: var(--keyword-color);
+        }
+
+        .slide-code .code-type {
+            color: var(--type-color);
+        }
+
+        .slide-code .code-func {
+            color: var(--func-color);
+        }
+
+        .slide-code .code-number {
+            color: var(--number-color);
+        }
+
+        .slide-code .code-operator {
+            color: var(--operator-color);
+        }
+
+        .slide-code .code-string {
+            color: var(--string-color);
+        }
+
+        /* ============================================================
+           幻灯片4：例题
+           ============================================================ */
+        .slide-example h2 {
+            font-size: 2em;
+            color: var(--accent);
+            margin-bottom: 20px;
+            padding-bottom: 12px;
+            border-bottom: 2px solid var(--accent-dim);
+        }
+
+        .slide-example .problem-title {
+            font-size: 1.3em;
+            color: var(--text-bright);
+            margin-bottom: 8px;
+        }
+
+        .slide-example .problem-desc {
+            font-size: 0.95em;
+            color: var(--text-dim);
+            line-height: 1.7;
+            margin-bottom: 16px;
+        }
+
+        .slide-example .io-box {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 14px;
+            margin-bottom: 16px;
+        }
+
+        .slide-example .io-box .io {
+            background: rgba(255, 255, 255, 0.04);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 8px;
+            padding: 14px;
+        }
+
+        .slide-example .io-box .io h4 {
+            font-size: 0.85em;
+            color: var(--accent);
+            margin-bottom: 8px;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+
+        .slide-example .io-box .io pre {
+            font-family: "SF Mono", "Fira Code", "Consolas", monospace;
+            font-size: 0.82em;
+            color: var(--text-bright);
+            line-height: 1.6;
+        }
+
+        .slide-example .steps {
+            margin-top: 10px;
+        }
+
+        .slide-example .step {
+            display: flex;
+            align-items: flex-start;
+            gap: 12px;
+            margin-bottom: 10px;
+            padding: 10px 14px;
+            background: rgba(255, 255, 255, 0.03);
+            border-radius: 8px;
+            border-left: 3px solid var(--accent);
+        }
+
+        .slide-example .step .step-num {
+            background: var(--accent);
+            color: #fff;
+            border-radius: 50%;
+            width: 26px;
+            height: 26px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 0.8em;
+            font-weight: bold;
+            flex-shrink: 0;
+        }
+
+        .slide-example .step .step-text {
+            font-size: 0.9em;
+            color: var(--text);
+            line-height: 1.6;
+        }
+
+        .slide-example .step .step-text code {
+            background: rgba(255, 255, 255, 0.08);
+            padding: 1px 6px;
+            border-radius: 3px;
+            font-size: 0.92em;
+            color: var(--func-color);
+        }
+
+        /* ============================================================
+           幻灯片5：总结
+           ============================================================ */
+        .slide-summary h2 {
+            font-size: 2em;
+            color: var(--accent);
+            margin-bottom: 24px;
+            padding-bottom: 12px;
+            border-bottom: 2px solid var(--accent-dim);
+        }
+
+        .slide-summary .summary-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 16px;
+        }
+
+        .slide-summary .summary-card {
+            background: rgba(255, 255, 255, 0.04);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 12px;
+            padding: 18px 20px;
+            transition: all 0.3s;
+        }
+
+        .slide-summary .summary-card:hover {
+            border-color: var(--accent);
+            background: rgba(233, 69, 96, 0.06);
+        }
+
+        .slide-summary .summary-card h3 {
+            font-size: 1.1em;
+            color: var(--accent);
+            margin-bottom: 8px;
+        }
+
+        .slide-summary .summary-card p {
+            font-size: 0.88em;
+            color: var(--text-dim);
+            line-height: 1.6;
+        }
+
+        .slide-summary .key-formula {
+            text-align: center;
+            margin-top: 22px;
+            padding: 16px;
+            background: rgba(233, 69, 96, 0.08);
+            border: 1px dashed var(--accent-dim);
+            border-radius: 10px;
+            font-family: "SF Mono", "Fira Code", "Consolas", monospace;
+            font-size: 1.1em;
+            color: var(--accent);
+        }
+
+        /* ============================================================
+           导航
+           ============================================================ */
+        .nav-bar {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 20px;
+            margin-top: 24px;
+            padding: 0 20px;
+        }
+
+        .nav-btn {
+            background: rgba(255, 255, 255, 0.06);
+            border: 1px solid rgba(255, 255, 255, 0.14);
+            color: var(--text);
+            padding: 10px 24px;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 0.95em;
+            transition: all 0.25s;
+            user-select: none;
+        }
+
+        .nav-btn:hover {
+            background: var(--accent);
+            border-color: var(--accent);
+            color: #fff;
+        }
+
+        .nav-btn:disabled {
+            opacity: 0.3;
+            cursor: not-allowed;
+        }
+
+        .nav-btn:disabled:hover {
+            background: rgba(255, 255, 255, 0.06);
+            border-color: rgba(255, 255, 255, 0.14);
+            color: var(--text);
+        }
+
+        .slide-counter {
+            font-size: 1em;
+            color: var(--text-dim);
+            min-width: 70px;
+            text-align: center;
+            user-select: none;
+        }
+
+        .slide-counter .current {
+            color: var(--accent);
+            font-weight: bold;
+            font-size: 1.2em;
+        }
+
+        .slide-dots {
+            display: flex;
+            gap: 6px;
+            justify-content: center;
+        }
+
+        .slide-dot {
+            width: 10px;
+            height: 10px;
+            border-radius: 50%;
+            background: rgba(255, 255, 255, 0.15);
+            cursor: pointer;
+            transition: all 0.25s;
+        }
+
+        .slide-dot.active {
+            background: var(--accent);
+            box-shadow: 0 0 8px var(--accent);
+            width: 28px;
+            border-radius: 5px;
+        }
+
+        /* ============================================================
+           键盘提示
+           ============================================================ */
+        .kbd-hint {
+            text-align: center;
+            color: #555;
+            font-size: 0.78em;
+            margin-top: 8px;
+        }
+
+        .kbd-hint kbd {
+            background: rgba(255, 255, 255, 0.08);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            border-radius: 4px;
+            padding: 2px 7px;
+            font-family: inherit;
+            font-size: 0.9em;
+        }
+
+        /* ============================================================
+           响应式
+           ============================================================ */
+        @media (max-width: 768px) {
+            .slide {
+                padding: 28px 22px;
+                min-height: auto;
+                border-radius: 12px;
+            }
+
+            .slide-cover h1 {
+                font-size: 2em;
+            }
+
+            .slide-principle .comparison {
+                grid-template-columns: 1fr;
+            }
+
+            .slide-summary .summary-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .slide-example .io-box {
+                grid-template-columns: 1fr;
+            }
+
+            .slide-principle .array-cell {
+                width: 36px;
+                height: 36px;
+                font-size: 0.75em;
+            }
+
+            .slide-code .code-panel {
+                font-size: 0.72em;
+                max-height: 280px;
+            }
+        }
+
+        @media (max-width: 480px) {
+            .slide {
+                padding: 20px 16px;
+            }
+
+            .slide-cover h1 {
+                font-size: 1.6em;
+            }
+
+            .nav-btn {
+                padding: 8px 14px;
+                font-size: 0.82em;
+            }
+
+            .slide-code .code-panel {
+                font-size: 0.66em;
+                padding: 12px;
+            }
+
+            .slide-principle .array-cell {
+                width: 30px;
+                height: 30px;
+                font-size: 0.7em;
+            }
+        }
+    </style>
+</head>
+<body>
+
+<div class="slideshow-container">
+
+    <!-- ==========================================================
+         幻灯片 1：封面
+         ========================================================== -->
+    <div class="slide slide-cover active" data-index="0">
+        <div class="lesson-badge">第 17 课</div>
+        <h1>二分查找的边界处理</h1>
+        <div class="accent-line"></div>
+        <p class="subtitle">lower_bound 与 upper_bound 的深入理解</p>
+        <div class="stage-info">
+            <div class="stage-tag">阶段：<span>查找与二分</span>（第4阶段）</div>
+            <div class="stage-tag">难度：<span>★★★☆☆</span></div>
+            <div class="stage-tag">前置：<span>基本二分查找</span></div>
+        </div>
+    </div>
+
+    <!-- ==========================================================
+         幻灯片 2：原理讲解
+         ========================================================== -->
+    <div class="slide slide-principle" data-index="1">
+        <h2>lower_bound vs upper_bound</h2>
+
+        <div class="comparison">
+            <div class="box lower">
+                <h3>lower_bound(x)</h3>
+                <p class="def">查找第一个 <strong>≥ x</strong> 的元素位置</p>
+                <p>判断条件：<span class="key">a[mid] &gt;= x</span></p>
+                <p class="def" style="margin-top:8px;">即：找到"不小于 x"的第一个位置<br>也称"下界"</p>
+            </div>
+            <div class="box upper">
+                <h3>upper_bound(x)</h3>
+                <p class="def">查找第一个 <strong>&gt; x</strong> 的元素位置</p>
+                <p>判断条件：<span class="key">a[mid] &gt; x</span></p>
+                <p class="def" style="margin-top:8px;">即：找到"严格大于 x"的第一个位置<br>也称"上界"</p>
+            </div>
+        </div>
+
+        <p style="text-align:center; color:var(--text-dim); margin-bottom:14px;">
+            示例数组：<code style="color:var(--text-bright);">1, 2, 2, 3, 3, 3, 5, 7</code> &nbsp; 查询 x = <strong style="color:var(--accent);">3</strong>
+        </p>
+
+        <div class="array-viz">
+            <div class="array-cell"><span class="idx">0</span>1</div>
+            <div class="array-cell"><span class="idx">1</span>2</div>
+            <div class="array-cell"><span class="idx">2</span>2</div>
+            <div class="array-cell highlight-lb"><span class="idx">3</span>3</div>
+            <div class="array-cell"><span class="idx">4</span>3</div>
+            <div class="array-cell"><span class="idx">5</span>3</div>
+            <div class="array-cell highlight-ub"><span class="idx">6</span>5</div>
+            <div class="array-cell"><span class="idx">7</span>7</div>
+        </div>
+
+        <div class="legend">
+            <span><span class="dot green"></span> lower_bound(3) = 3（第一个 ≥3 的位置）</span>
+            <span><span class="dot blue"></span> upper_bound(3) = 6（第一个 &gt;3 的位置）</span>
+        </div>
+
+        <p style="text-align:center; margin-top:16px; color:var(--text-dim); font-size:0.92em;">
+            因此，<strong style="color:var(--accent);">3 在数组中出现了 6 - 3 = 3 次</strong>，
+            范围是 <strong style="color:var(--accent);">[3, 5]</strong>
+        </p>
+    </div>
+
+    <!-- ==========================================================
+         幻灯片 3：代码实现
+         ========================================================== -->
+    <div class="slide slide-code" data-index="2">
+        <h2>代码实现</h2>
+
+        <div class="code-tabs">
+            <div class="code-tab active" onclick="showCodeTab(0)">lower_bound</div>
+            <div class="code-tab" onclick="showCodeTab(1)">upper_bound</div>
+            <div class="code-tab" onclick="showCodeTab(2)">数的范围</div>
+        </div>
+
+        <div class="code-panel active"><span class="code-comment">/**
+ * lower_bound：在升序数组中查找第一个 &gt;= x 的位置
+ * @param a  升序数组
+ * @param n  数组长度
+ * @param x  目标值
+ * @return   第一个 &gt;= x 的元素下标；若不存在则返回 n
+ */</span>
+<span class="code-type">int</span> <span class="code-func">lower_bound</span>(<span class="code-type">int</span> a[], <span class="code-type">int</span> n, <span class="code-type">int</span> x) {
+    <span class="code-type">int</span> left = <span class="code-number">0</span>, right = n - <span class="code-number">1</span>;
+    <span class="code-type">int</span> ans = n;  <span class="code-comment">// 默认答案：不存在</span>
+
+    <span class="code-keyword">while</span> (left &lt;= right) {            <span class="code-comment">// 闭区间 [left, right]</span>
+        <span class="code-type">int</span> mid = left + (right - left) / <span class="code-number">2</span>;
+
+        <span class="code-keyword">if</span> (a[mid] &gt;= x) {           <span class="code-comment">// 找到了一个候选</span>
+            ans = mid;               <span class="code-comment">// 记录当前位置</span>
+            right = mid - <span class="code-number">1</span>;          <span class="code-comment">// 向左继续找更靠前的</span>
+        } <span class="code-keyword">else</span> {
+            left = mid + <span class="code-number">1</span>;           <span class="code-comment">// a[mid] &lt; x，去右边找</span>
+        }
+    }
+    <span class="code-keyword">return</span> ans;
+}</div>
+
+        <div class="code-panel"><span class="code-comment">/**
+ * upper_bound：在升序数组中查找第一个 &gt; x 的位置
+ * 与 lower_bound 只有一处不同：判断条件从 &gt;= 变成 &gt;
+ */</span>
+<span class="code-type">int</span> <span class="code-func">upper_bound</span>(<span class="code-type">int</span> a[], <span class="code-type">int</span> n, <span class="code-type">int</span> x) {
+    <span class="code-type">int</span> left = <span class="code-number">0</span>, right = n - <span class="code-number">1</span>;
+    <span class="code-type">int</span> ans = n;
+
+    <span class="code-keyword">while</span> (left &lt;= right) {
+        <span class="code-type">int</span> mid = left + (right - left) / <span class="code-number">2</span>;
+
+        <span class="code-keyword">if</span> (a[mid] &gt; x) {            <span class="code-comment">// ⬅ 唯一的区别！</span>
+            ans = mid;
+            right = mid - <span class="code-number">1</span>;
+        } <span class="code-keyword">else</span> {
+            left = mid + <span class="code-number">1</span>;
+        }
+    }
+    <span class="code-keyword">return</span> ans;
+}</div>
+
+        <div class="code-panel"><span class="code-comment">/**
+ * 利用 lower_bound + upper_bound 解决"数的范围"
+ * first = lower_bound(x)     → 起始位置
+ * last  = upper_bound(x) - 1 → 终止位置
+ */</span>
+<span class="code-type">void</span> <span class="code-func">find_range</span>(<span class="code-type">int</span> a[], <span class="code-type">int</span> n, <span class="code-type">int</span> x,
+                  <span class="code-type">int</span>&amp; first, <span class="code-type">int</span>&amp; last) {
+    first = <span class="code-func">lower_bound</span>(a, n, x);
+
+    <span class="code-comment">// 检查 x 是否存在</span>
+    <span class="code-keyword">if</span> (first == n || a[first] != x) {
+        first = last = <span class="code-number">-1</span>;
+        <span class="code-keyword">return</span>;
+    }
+
+    last = <span class="code-func">upper_bound</span>(a, n, x) - <span class="code-number">1</span>;
+}
+
+<span class="code-comment">// 核心关系：
+// 出现次数 = upper_bound(x) - lower_bound(x)
+// 起始位置 = lower_bound(x)
+// 终止位置 = upper_bound(x) - 1</span></div>
+    </div>
+
+    <!-- ==========================================================
+         幻灯片 4：例题 —— 数的范围
+         ========================================================== -->
+    <div class="slide slide-example" data-index="3">
+        <h2>例题：数的范围</h2>
+
+        <div class="problem-title">题目描述</div>
+        <div class="problem-desc">
+            给定一个升序数组，对于每次查询 x，输出 x 在数组中的<strong>起始位置</strong>和<strong>终止位置</strong>。
+            如果 x 不存在，输出 "-1 -1"。
+        </div>
+
+        <div class="io-box">
+            <div class="io">
+                <h4>输入</h4>
+                <pre>8 4
+1 2 2 3 3 3 5 7
+3
+4
+2
+7</pre>
+            </div>
+            <div class="io">
+                <h4>输出</h4>
+                <pre>3 5
+-1 -1
+1 2
+7 7</pre>
+            </div>
+        </div>
+
+        <div class="problem-title" style="font-size:1.1em; margin-top:8px;">逐步演示：查询 x = 3</div>
+        <div class="steps">
+            <div class="step">
+                <div class="step-num">1</div>
+                <div class="step-text">
+                    调用 <code>lower_bound(a, n, 3)</code> → 二分查找第一个 <strong>≥ 3</strong> 的位置
+                    → 返回 <strong>3</strong>（a[3] = 3 ✓）
+                </div>
+            </div>
+            <div class="step">
+                <div class="step-num">2</div>
+                <div class="step-text">
+                    检查 a[3] 是否真的等于 3？→ <strong>是</strong>，确认 3 存在
+                </div>
+            </div>
+            <div class="step">
+                <div class="step-num">3</div>
+                <div class="step-text">
+                    调用 <code>upper_bound(a, n, 3)</code> → 二分查找第一个 <strong>&gt; 3</strong> 的位置
+                    → 返回 <strong>6</strong>（a[6] = 5 &gt; 3）
+                </div>
+            </div>
+            <div class="step">
+                <div class="step-num">4</div>
+                <div class="step-text">
+                    终止位置 = upper_bound - 1 = 6 - 1 = <strong>5</strong>
+                    → 输出：<strong>3 5</strong> ✓
+                </div>
+            </div>
+        </div>
+
+        <p style="margin-top:12px; font-size:0.88em; color:var(--text-dim); text-align:center;">
+            查询 x = 4：lower_bound → 6（a[6]=5≠4），判断不存在 → 输出 "-1 -1"
+        </p>
+    </div>
+
+    <!-- ==========================================================
+         幻灯片 5：本课小结
+         ========================================================== -->
+    <div class="slide slide-summary" data-index="4">
+        <h2>本课小结</h2>
+
+        <div class="summary-grid">
+            <div class="summary-card">
+                <h3>lower_bound — 下界</h3>
+                <p>查找第一个 <strong>≥ x</strong> 的位置。条件：a[mid] ≥ x 时记录答案并左移。返回 x 的"起始位置"。</p>
+            </div>
+            <div class="summary-card">
+                <h3>upper_bound — 上界</h3>
+                <p>查找第一个 <strong>&gt; x</strong> 的位置。条件：a[mid] &gt; x 时记录答案并左移。返回 x 的"结束边界+1"。</p>
+            </div>
+            <div class="summary-card">
+                <h3>边界细节</h3>
+                <p>while 用 <strong>left ≤ right</strong>（闭区间）确保每个元素都被检查。用 <strong>ans</strong> 变量记录候选答案，即使没匹配也能正确返回。</p>
+            </div>
+            <div class="summary-card">
+                <h3>防溢出写法</h3>
+                <p>mid = <strong>left + (right - left) / 2</strong>，不写 (left+right)/2，避免整数溢出，是二分查找的好习惯。</p>
+            </div>
+        </div>
+
+        <div class="key-formula">
+            ✦ 核心公式 ✦<br><br>
+            出现次数 = upper_bound(x) &minus; lower_bound(x)<br>
+            起始位置 = lower_bound(x)&emsp;|&emsp;终止位置 = upper_bound(x) &minus; 1<br><br>
+            判断 x 是否存在：lower_bound(x) &lt; n &amp;&amp; a[lower_bound(x)] == x
+        </div>
+
+        <p style="text-align:center; margin-top:14px; color:var(--text-dim); font-size:0.9em;">
+            二分查找看似简单，边界细节是关键 —— 多动手写几遍，做到"闭眼写出"！
+        </p>
+    </div>
+
+</div>
+
+<!-- ==========================================================
+     导航栏
+     ========================================================== -->
+<div class="nav-bar">
+    <button class="nav-btn" id="prevBtn" onclick="changeSlide(-1)">◀ 上一页</button>
+
+    <div style="display:flex; flex-direction:column; align-items:center;">
+        <div class="slide-counter">
+            <span class="current" id="currentSlide">1</span> / <span id="totalSlides">5</span>
+        </div>
+        <div class="slide-dots" id="slideDots"></div>
+    </div>
+
+    <button class="nav-btn" id="nextBtn" onclick="changeSlide(1)">下一页 ▶</button>
+</div>
+
+<p class="kbd-hint">
+    提示：使用键盘 <kbd>←</kbd> <kbd>→</kbd> 方向键或 <kbd>空格</kbd> 键翻页
+</p>
+
+<!-- ==========================================================
+     JavaScript
+     ========================================================== -->
+<script>
+    (function() {
+        // ---- 状态 ----
+        var slides = document.querySelectorAll('.slide');
+        var total = slides.length;
+        var current = 0;
+
+        // ---- 缓存 DOM ----
+        var prevBtn = document.getElementById('prevBtn');
+        var nextBtn = document.getElementById('nextBtn');
+        var currentSpan = document.getElementById('currentSlide');
+        var totalSpan = document.getElementById('totalSlides');
+        var dotsContainer = document.getElementById('slideDots');
+
+        // ---- 初始化 ----
+        totalSpan.textContent = total;
+
+        // 生成圆点导航
+        for (var i = 0; i < total; i++) {
+            (function(idx) {
+                var dot = document.createElement('span');
+                dot.className = 'slide-dot' + (idx === 0 ? ' active' : '');
+                dot.addEventListener('click', function() { goToSlide(idx); });
+                dotsContainer.appendChild(dot);
+            })(i);
+        }
+
+        function updateUI() {
+            // 更新幻灯片显示
+            for (var i = 0; i < slides.length; i++) {
+                slides[i].classList.remove('active');
+            }
+            slides[current].classList.add('active');
+
+            // 更新计数器
+            currentSpan.textContent = current + 1;
+
+            // 更新圆点
+            var dots = dotsContainer.querySelectorAll('.slide-dot');
+            for (var j = 0; j < dots.length; j++) {
+                dots[j].classList.remove('active');
+            }
+            dots[current].classList.add('active');
+
+            // 更新按钮状态
+            prevBtn.disabled = (current === 0);
+            nextBtn.disabled = (current === total - 1);
+        }
+
+        window.changeSlide = function(delta) {
+            var next = current + delta;
+            if (next >= 0 && next < total) {
+                current = next;
+                updateUI();
+            }
+        };
+
+        window.goToSlide = function(idx) {
+            if (idx >= 0 && idx < total) {
+                current = idx;
+                updateUI();
+            }
+        };
+
+        // ---- 键盘控制 ----
+        document.addEventListener('keydown', function(e) {
+            if (e.key === 'ArrowRight' || e.key === ' ') {
+                e.preventDefault();
+                changeSlide(1);
+            } else if (e.key === 'ArrowLeft') {
+                e.preventDefault();
+                changeSlide(-1);
+            } else if (e.key === 'Home') {
+                e.preventDefault();
+                goToSlide(0);
+            } else if (e.key === 'End') {
+                e.preventDefault();
+                goToSlide(total - 1);
+            }
+        });
+
+        // ---- 代码 Tab 切换 ----
+        window.showCodeTab = function(idx) {
+            var tabs = document.querySelectorAll('.slide-code .code-tab');
+            var panels = document.querySelectorAll('.slide-code .code-panel');
+            for (var i = 0; i < tabs.length; i++) {
+                tabs[i].classList.remove('active');
+                panels[i].classList.remove('active');
+            }
+            tabs[idx].classList.add('active');
+            panels[idx].classList.add('active');
+        };
+
+        // ---- 触摸滑动支持（移动端） ----
+        var touchStartX = 0;
+        var touchEndX = 0;
+
+        document.addEventListener('touchstart', function(e) {
+            touchStartX = e.changedTouches[0].screenX;
+        }, { passive: true });
+
+        document.addEventListener('touchend', function(e) {
+            touchEndX = e.changedTouches[0].screenX;
+            var diff = touchStartX - touchEndX;
+            if (Math.abs(diff) > 50) {
+                if (diff > 0) {
+                    changeSlide(1);  // 左滑 → 下一页
+                } else {
+                    changeSlide(-1); // 右滑 → 上一页
+                }
+            }
+        }, { passive: true });
+
+        // ---- 初始 UI 更新 ----
+        updateUI();
+    })();
+</script>
+
+</body>
+</html>

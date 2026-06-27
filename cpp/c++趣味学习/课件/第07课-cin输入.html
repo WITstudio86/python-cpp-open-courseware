@@ -1,0 +1,234 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>第07课：电脑的问答机——cin输入</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            font-family: 'PingFang SC', 'Microsoft YaHei', sans-serif;
+            background: linear-gradient(135deg, #43e97b 0%, #38f9d7 100%);
+            min-height: 100vh;
+            display: flex; justify-content: center; align-items: center;
+        }
+        .slides-container {
+            width: 90%; max-width: 900px; min-height: 550px;
+            background: white; border-radius: 25px; padding: 40px;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+            position: relative;
+        }
+        .slide { display: none; animation: fadeIn 0.5s; }
+        .slide.active { display: block; }
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
+        h1 { color: #047857; font-size: 2.2em; margin-bottom: 20px; }
+        h2 { color: #e8573a; font-size: 1.8em; margin-bottom: 15px; }
+        h3 { color: #2c7a4a; font-size: 1.4em; margin: 15px 0 10px; }
+        p, li { font-size: 1.15em; line-height: 1.8; color: #333; }
+        ul { padding-left: 30px; margin: 10px 0; }
+        .code-block {
+            background: #1e1e2e; color: #cdd6f4; padding: 20px;
+            border-radius: 12px; font-family: 'Courier New', monospace;
+            font-size: 0.95em; line-height: 1.6; overflow-x: auto;
+            margin: 15px 0; white-space: pre-wrap; word-break: break-all;
+        }
+        .code-block .keyword { color: #cba6f7; }
+        .code-block .string { color: #a6e3a1; }
+        .code-block .comment { color: #6c7086; font-style: italic; }
+        .code-block .number { color: #fab387; }
+        .nav-buttons {
+            position: absolute; bottom: 20px; left: 40px; right: 40px;
+            display: flex; justify-content: space-between;
+        }
+        .nav-btn {
+            background: linear-gradient(135deg, #059669, #10b981);
+            color: white; border: none; padding: 12px 30px;
+            border-radius: 30px; font-size: 1.1em; cursor: pointer;
+            transition: transform 0.2s, box-shadow 0.2s;
+            font-family: 'PingFang SC', 'Microsoft YaHei', sans-serif;
+        }
+        .nav-btn:hover { transform: scale(1.05); box-shadow: 0 5px 20px rgba(5,150,105,0.4); }
+        .nav-btn:disabled { opacity: 0.4; cursor: default; transform: none; }
+        .page-indicator { font-size: 1.1em; color: #047857; align-self: center; }
+        .emoji-big { font-size: 3em; text-align: center; display: block; margin: 15px 0; }
+        .badge { display: inline-block; background: #d1fae5; color: #047857; padding: 5px 15px; border-radius: 20px; font-size: 0.9em; margin: 3px; }
+        table { width: 100%; border-collapse: collapse; margin: 15px 0; }
+        th, td { border: 2px solid #ddd; padding: 10px; text-align: left; }
+        th { background: #059669; color: white; }
+        .highlight-box { background: #fff3cd; border-left: 5px solid #ffc107; padding: 15px; border-radius: 8px; margin: 15px 0; }
+        .tip-box { background: #d4edda; border-left: 5px solid #28a745; padding: 15px; border-radius: 8px; margin: 15px 0; }
+        @media (max-width: 600px) {
+            .slides-container { padding: 25px; }
+            h1 { font-size: 1.5em; }
+            .code-block { font-size: 0.75em; }
+        }
+    </style>
+</head>
+<body>
+    <div class="slides-container">
+        <!-- Slide 1: Title Page -->
+        <div class="slide active" id="slide1">
+            <span class="emoji-big">🤖</span>
+            <h1>第07课：电脑的问答机——cin输入</h1>
+            <p style="text-align:center; color:#666;">第二阶段：变量与输入输出 | 课时：45分钟</p>
+            <p style="text-align:center; margin-top:20px; font-size:1.3em;">✨ 制作智能问答机器人 ✨</p>
+            <div style="text-align:center; margin-top:30px;">
+                <span class="badge">cin输入</span>
+                <span class="badge">交互式程序</span>
+                <span class="badge">用户对话</span>
+            </div>
+        </div>
+
+        <!-- Slide 2: Learning Objectives -->
+        <div class="slide" id="slide2">
+            <h2>🎯 学习目标</h2>
+            <ul>
+                <li>理解 <strong>cin</strong> 的作用：从键盘获取用户输入</li>
+                <li>掌握 <code>cin &gt;&gt;</code> 的基本用法</li>
+                <li>能够编写<strong>交互式程序</strong>：让电脑和用户"对话"</li>
+                <li>制作一个<strong>智能问答机器人</strong></li>
+            </ul>
+            <div class="tip-box" style="margin-top:25px;">
+                <strong>💡 cout vs cin：</strong><br>
+                cout = 电脑的<strong>嘴巴</strong>（输出，说话）<br>
+                cin = 电脑的<strong>耳朵</strong>（输入，听话）<br>
+                注意箭头方向：cout <strong>&lt;&lt;</strong>，cin <strong>&gt;&gt;</strong> —— 方向相反！
+            </div>
+        </div>
+
+        <!-- Slide 3: Core Knowledge -->
+        <div class="slide" id="slide3">
+            <h2>📖 cin 核心用法</h2>
+
+            <h3>基本语法</h3>
+            <div class="code-block">int age;
+cout &lt;&lt; "请输入年龄：";   // 提示
+cin &gt;&gt; age;               // 等待输入并存入age
+cout &lt;&lt; "你" &lt;&lt; age &lt;&lt; "岁"; // 使用输入的值</div>
+
+            <h3>cout 和 cin 对比</h3>
+            <table>
+                <tr><th></th><th>cout</th><th>cin</th></tr>
+                <tr><td>全称</td><td>character output</td><td>character input</td></tr>
+                <tr><td>方向</td><td>电脑 → 屏幕</td><td>键盘 → 电脑</td></tr>
+                <tr><td>运算符</td><td>&lt;&lt;</td><td>&gt;&gt;</td></tr>
+                <tr><td>比喻</td><td>嘴巴（说话）</td><td>耳朵（听话）</td></tr>
+                <tr><td>后面跟</td><td>要输出的内容</td><td>要存入的变量</td></tr>
+            </table>
+
+            <h3>链式输入</h3>
+            <div class="code-block">int a, b;
+cin &gt;&gt; a &gt;&gt; b;  // 一次输入两个数（空格分隔）</div>
+
+            <div class="highlight-box">
+                <strong>⚠️ 注意：</strong>cin 遇到空格就停止读取字符串！<br>
+                输入"Xiao Ming" → 只读到"Xiao"
+            </div>
+        </div>
+
+        <!-- Slide 4: Example Code -->
+        <div class="slide" id="slide4">
+            <h2>💻 交互式程序示例</h2>
+
+            <h3>简易计算器</h3>
+            <div class="code-block">int num1, num2;
+cout &lt;&lt; "输入第一个数：";
+cin &gt;&gt; num1;
+cout &lt;&lt; "输入第二个数：";
+cin &gt;&gt; num2;
+cout &lt;&lt; num1 &lt;&lt; "+" &lt;&lt; num2
+     &lt;&lt; "=" &lt;&lt; num1 + num2;</div>
+
+            <h3>猜数字游戏</h3>
+            <div class="code-block">int secret = 7, guess;
+cout &lt;&lt; "猜一个1-10的数：";
+cin &gt;&gt; guess;
+if (guess == secret)
+    cout &lt;&lt; "猜对了！🎉";
+else
+    cout &lt;&lt; "答案是" &lt;&lt; secret;</div>
+
+            <h3>个人信息收集</h3>
+            <div class="code-block">string name; int age; string hobby;
+cout &lt;&lt; "姓名："; cin &gt;&gt; name;
+cout &lt;&lt; "年龄："; cin &gt;&gt; age;
+cout &lt;&lt; "爱好："; cin &gt;&gt; hobby;
+cout &lt;&lt; name &lt;&lt; "," &lt;&lt; age &lt;&lt; "岁,喜欢" &lt;&lt; hobby;</div>
+        </div>
+
+        <!-- Slide 5: Practice -->
+        <div class="slide" id="slide5">
+            <h2>🎮 趣味练习</h2>
+
+            <h3>练习1：填空补全 ✏️</h3>
+            <div class="code-block">string userName;
+cout &lt;&lt; "你叫什么？" &lt;&lt; endl;
+___ &gt;&gt; userName;           // 填什么？
+cout &lt;&lt; "你好，" &lt;&lt; ___;   // 填什么？</div>
+            <p>答案：<code>cin</code> 和 <code>userName</code></p>
+
+            <h3>练习2：年龄计算器 📅</h3>
+            <p>输入出生年份，用 2026 - 出生年份 = 年龄</p>
+
+            <h3>练习3：餐厅点餐 🍽️</h3>
+            <p>输入菜品和数量，计算总价（单价自定）</p>
+
+            <div class="tip-box">
+                <strong>✅ 提示：</strong>每个 cin 之前都要用 cout 提示用户输入什么！
+            </div>
+        </div>
+
+        <!-- Slide 6: Summary -->
+        <div class="slide" id="slide6">
+            <h2>📝 本课小结</h2>
+            <table>
+                <tr><th>知识点</th><th>说明</th></tr>
+                <tr><td>cin</td><td>电脑的"耳朵"，接收键盘输入</td></tr>
+                <tr><td>cin &gt;&gt;</td><td>输入运算符，数据流入变量</td></tr>
+                <tr><td>交互式程序</td><td>程序能接收用户输入并回应</td></tr>
+                <tr><td>提示信息</td><td>cin之前用cout提示输入什么</td></tr>
+                <tr><td>链式输入</td><td>cin &gt;&gt; a &gt;&gt; b; 一次多值</td></tr>
+                <tr><td>cin小脾气</td><td>遇空格停止（用getline读整行）</td></tr>
+            </table>
+            <div class="highlight-box" style="margin-top:20px;">
+                <strong>🔑 记住口诀：</strong><br>
+                cout说话cin听话，箭头方向反着画；<br>
+                cin后面跟变量，用户输入全靠它！
+            </div>
+            <p style="text-align:center; margin-top:20px; font-size:1.3em;">🎉 下一课预告：数字的多样性——变量类型</p>
+        </div>
+
+        <!-- Navigation -->
+        <div class="nav-buttons">
+            <button class="nav-btn" onclick="prevSlide()">◀ 上一页</button>
+            <span class="page-indicator" id="pageIndicator">1 / 6</span>
+            <button class="nav-btn" onclick="nextSlide()">下一页 ▶</button>
+        </div>
+    </div>
+
+    <script>
+        let currentSlide = 0;
+        const slides = document.querySelectorAll('.slide');
+        const totalSlides = slides.length;
+        const indicator = document.getElementById('pageIndicator');
+
+        function showSlide(n) {
+            slides[currentSlide].classList.remove('active');
+            currentSlide = (n + totalSlides) % totalSlides;
+            slides[currentSlide].classList.add('active');
+            indicator.textContent = (currentSlide + 1) + ' / ' + totalSlides;
+            document.querySelectorAll('.nav-btn')[0].disabled = currentSlide === 0;
+            document.querySelectorAll('.nav-btn')[1].disabled = currentSlide === totalSlides - 1;
+        }
+        function nextSlide() { showSlide(currentSlide + 1); }
+        function prevSlide() { showSlide(currentSlide - 1); }
+
+        document.addEventListener('keydown', function(e) {
+            if (e.key === 'ArrowRight' || e.key === ' ') { e.preventDefault(); nextSlide(); }
+            else if (e.key === 'ArrowLeft') { e.preventDefault(); prevSlide(); }
+        });
+
+        indicator.textContent = (currentSlide + 1) + ' / ' + totalSlides;
+    </script>
+</body>
+</html>

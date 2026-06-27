@@ -1,0 +1,522 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>第33节：跑和跳 —— 重力、跳跃与平台碰撞</title>
+<style>
+* { margin: 0; padding: 0; box-sizing: border-box; }
+
+body {
+    font-family: "Microsoft YaHei", "PingFang SC", "Noto Sans SC", sans-serif;
+    background: #1a1a2e;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    height: 100vh;
+    overflow: hidden;
+    user-select: none;
+}
+
+.slide-container {
+    width: 960px;
+    height: 640px;
+    background: linear-gradient(135deg, #0f0f23 0%, #1a1a3e 100%);
+    border-radius: 16px;
+    box-shadow: 0 0 40px rgba(99, 102, 241, 0.3), 0 0 80px rgba(99, 102, 241, 0.1);
+    position: relative;
+    overflow: hidden;
+}
+
+.slide {
+    position: absolute;
+    top: 0; left: 0; width: 100%; height: 100%;
+    display: none;
+    flex-direction: column;
+    padding: 50px 60px;
+    color: #e0e0e0;
+}
+
+.slide.active { display: flex; }
+
+/* Page indicator */
+.page-indicator {
+    position: absolute;
+    bottom: 20px; right: 30px;
+    font-size: 14px;
+    color: #888;
+    z-index: 10;
+}
+
+/* Navigation hint */
+.nav-hint {
+    position: absolute;
+    bottom: 18px; left: 30px;
+    font-size: 13px;
+    color: #666;
+    z-index: 10;
+}
+
+/* === Slide Types === */
+
+/* Title Slide */
+.slide-title {
+    justify-content: center;
+    align-items: center;
+    text-align: center;
+    background: linear-gradient(135deg, #0f0f23 0%, #1e1e4a 50%, #0f0f23 100%);
+}
+.slide-title .chapter {
+    font-size: 22px;
+    color: #818cf8;
+    letter-spacing: 4px;
+    margin-bottom: 20px;
+}
+.slide-title h1 {
+    font-size: 48px;
+    color: #ffffff;
+    margin-bottom: 16px;
+    text-shadow: 0 0 20px rgba(99, 102, 241, 0.6);
+}
+.slide-title .subtitle {
+    font-size: 22px;
+    color: #a5b4fc;
+    margin-bottom: 40px;
+}
+.slide-title .info {
+    font-size: 16px;
+    color: #888;
+}
+
+/* Content Slide */
+.slide-content h2 {
+    font-size: 36px;
+    color: #818cf8;
+    margin-bottom: 30px;
+    padding-bottom: 12px;
+    border-bottom: 3px solid #3730a3;
+}
+.slide-content ul {
+    list-style: none;
+    padding-left: 0;
+}
+.slide-content ul li {
+    font-size: 24px;
+    line-height: 1.8;
+    padding: 6px 0;
+    padding-left: 36px;
+    position: relative;
+}
+.slide-content ul li::before {
+    content: "▸";
+    position: absolute; left: 0;
+    color: #818cf8;
+    font-size: 20px;
+}
+.slide-content ul li.highlight {
+    color: #fbbf24;
+    font-weight: bold;
+}
+
+/* Concept Slide */
+.slide-concept h2 {
+    font-size: 36px;
+    color: #818cf8;
+    margin-bottom: 20px;
+    padding-bottom: 12px;
+    border-bottom: 3px solid #3730a3;
+}
+.slide-concept .concept-box {
+    background: rgba(55, 48, 163, 0.2);
+    border: 2px solid #3730a3;
+    border-radius: 12px;
+    padding: 24px 30px;
+    margin-bottom: 20px;
+}
+.slide-concept .concept-box h3 {
+    font-size: 26px;
+    color: #fbbf24;
+    margin-bottom: 10px;
+}
+.slide-concept .concept-box p {
+    font-size: 22px;
+    line-height: 1.7;
+    color: #d1d5db;
+}
+.slide-concept .formula {
+    background: #1a1a3e;
+    radius: 8px;
+    padding: 12px 20px;
+    font-size: 24px;
+    color: #34d399;
+    font-family: "Consolas", "Courier New", monospace;
+    text-align: center;
+    margin-top: 8px;
+}
+
+/* Table Slide */
+.slide-table h2 {
+    font-size: 36px; color: #818cf8; margin-bottom: 24px;
+    padding-bottom: 12px; border-bottom: 3px solid #3730a3;
+}
+.slide-table table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 20px;
+}
+.slide-table th {
+    background: #3730a3;
+    color: #fff;
+    padding: 12px 16px;
+    text-align: left;
+    font-size: 22px;
+}
+.slide-table td {
+    padding: 12px 16px;
+    border-bottom: 1px solid #2e2e5e;
+    color: #d1d5db;
+}
+.slide-table tr:nth-child(even) td {
+    background: rgba(55, 48, 163, 0.1);
+}
+
+/* Code block */
+.code-block {
+    background: #0d1117;
+    border: 2px solid #30363d;
+    border-radius: 10px;
+    padding: 20px 24px;
+    font-family: "Consolas", "Courier New", "Source Code Pro", monospace;
+    font-size: 17px;
+    line-height: 1.7;
+    overflow-x: auto;
+    white-space: pre;
+    color: #e6edf3;
+}
+.code-block .kw { color: #ff7b72; }
+.code-block .fn { color: #d2a8ff; }
+.code-block .num { color: #79c0ff; }
+.code-block .cmt { color: #8b949e; font-style: italic; }
+.code-block .str { color: #a5d6ff; }
+.code-block .op { color: #ff7b72; }
+
+/* Timeline diagram */
+.timeline {
+    display: flex; align-items: center; gap: 10px;
+    margin: 16px 0; font-size: 16px; flex-wrap: wrap;
+}
+.timeline .frame {
+    background: #1e1e4a; border: 1px solid #3730a3;
+    border-radius: 8px; padding: 8px 12px;
+    text-align: center; min-width: 70px;
+}
+.timeline .frame .val { color: #fbbf24; font-size: 20px; font-weight: bold; }
+.timeline .frame .lbl { color: #8b949e; font-size: 12px; }
+.timeline .arrow { color: #818cf8; font-size: 20px; }
+
+/* Two columns */
+.two-col {
+    display: flex; gap: 30px; flex: 1;
+}
+.two-col > div { flex: 1; }
+
+/* Emphasis */
+.em { color: #fbbf24; font-weight: bold; }
+.em2 { color: #34d399; font-weight: bold; }
+.em3 { color: #f87171; font-weight: bold; }
+.big { font-size: 28px; }
+
+/* Summary tags */
+.tag {
+    display: inline-block;
+    background: #3730a3; color: #fff;
+    padding: 4px 14px; border-radius: 20px;
+    font-size: 18px; margin: 4px;
+}
+.tag.green { background: #065f46; }
+.tag.yellow { background: #713f12; }
+</style>
+</head>
+<body>
+
+<div class="slide-container" id="slideContainer">
+
+<!-- Slide 0: Title -->
+<div class="slide slide-title active">
+    <div class="chapter">第 33 节</div>
+    <h1>跑 和 跳</h1>
+    <div class="subtitle">重力、跳跃与平台碰撞</div>
+    <div class="info">Pygame 游戏开发课程 | 适用年龄 10-15 岁</div>
+</div>
+
+<!-- Slide 1: 学习目标 -->
+<div class="slide slide-content">
+    <h2>学习目标</h2>
+    <ul>
+        <li>理解游戏中<span class="em">重力</span>的模拟方法</li>
+        <li>掌握<span class="em">跳跃</span>的物理原理</li>
+        <li>学会<span class="em">三种平台碰撞</span>的处理方式</li>
+        <li>能够创建多个平台组成的小关卡</li>
+    </ul>
+</div>
+
+<!-- Slide 2: 重力物理概念 -->
+<div class="slide slide-concept">
+    <h2>重力 —— 让角色"掉下来"</h2>
+    <div class="concept-box">
+        <h3>现实中的重力</h3>
+        <p>地球重力让一切物体往下掉。扔一个球，它会先上升、减速、再加速下落。</p>
+    </div>
+    <div class="concept-box">
+        <h3>游戏中的重力（超级简单！）</h3>
+        <p>每帧做两件事：</p>
+        <div class="formula">vy = vy + GRAVITY    （速度不断增加）</div>
+        <div class="formula">y = y + vy            （位置跟着改变）</div>
+    </div>
+    <p style="margin-top:12px;font-size:20px;color:#d1d5db;">
+        💡 <span class="em">vy</span>是垂直速度，<span class="em">GRAVITY</span>是重力加速度（比如 0.8）
+    </p>
+</div>
+
+<!-- Slide 3: 跳跃物理 -->
+<div class="slide slide-concept">
+    <h2>跳跃 —— 给角色一个"向上的推力"</h2>
+    <div class="concept-box">
+        <h3>跳跃的本质</h3>
+        <p>按下空格键 → 把 <span class="em">vy</span> 设置成一个很大的<span class="em">负数</span></p>
+        <div class="formula">if 按下空格 且 站在地上:
+    vy = -15   ← 负数 = 向上飞！</div>
+    </div>
+    <div class="concept-box">
+        <h3>为什么是负数？</h3>
+        <p>Pygame 中 y 坐标<span class="em">从上往下增大</span></p>
+        <p>→ 向上移动 = y 减小 = vy 为<span class="em3">负数</span></p>
+        <p>→ 向下移动 = y 增大 = vy 为<span class="em2">正数</span></p>
+    </div>
+</div>
+
+<!-- Slide 4: 跳跃过程时间线 -->
+<div class="slide slide-content">
+    <h2>跳跃过程时间线</h2>
+    <div class="timeline">
+        <div class="frame"><div class="val">-15</div><div class="lbl">帧1: 起飞!</div></div>
+        <div class="arrow">→</div>
+        <div class="frame"><div class="val">-10</div><div class="lbl">帧5: 上升中</div></div>
+        <div class="arrow">→</div>
+        <div class="frame"><div class="val">0</div><div class="lbl">帧12: 最高点</div></div>
+        <div class="arrow">→</div>
+        <div class="frame"><div class="val">+8</div><div class="lbl">帧18: 下落中</div></div>
+        <div class="arrow">→</div>
+        <div class="frame"><div class="val">+15</div><div class="lbl">帧25: 着地!</div></div>
+    </div>
+    <p style="margin-top:20px;font-size:20px;color:#d1d5db;">
+        🔑 关键：<span class="em">vy</span> 从 -15 慢慢变成 +15 —— 这就是"先上升再下落"
+    </p>
+</div>
+
+<!-- Slide 5: 平台碰撞 - 类型1 -->
+<div class="slide slide-concept">
+    <h2>平台碰撞类型一：站在上面</h2>
+    <div class="concept-box" style="border-color:#34d399;">
+        <h3 style="color:#34d399;">从上方落在平台上</h3>
+        <p>角色下落时，脚碰到平台顶部 → <span class="em2">站住！</span></p>
+    </div>
+    <div class="code-block"><span class="cmt"># 检测条件：角色正在下落 + 脚碰到平台顶</span>
+<span class="kw">if</span> vy > <span class="num">0</span> <span class="kw">and</span> prev_bottom <= platform.top <span class="kw">and</span> cur_bottom >= platform.top:
+    player.bottom = platform.top  <span class="cmt"># 放在平台上面</span>
+    vy = <span class="num">0</span>                       <span class="cmt"># 停止下落</span>
+    on_ground = <span class="kw">True</span>              <span class="cmt"># 标记：站在地上</span></div>
+    <p style="margin-top:10px;font-size:20px;">
+        🎯 就像你<span class="em">跳到桌子上</span> —— 脚碰到桌面就停住了
+    </p>
+</div>
+
+<!-- Slide 6: 平台碰撞 - 类型2 -->
+<div class="slide slide-concept">
+    <h2>平台碰撞类型二：从下方穿透</h2>
+    <div class="concept-box" style="border-color:#fbbf24;">
+        <h3 style="color:#fbbf24;">单向平台（One-Way Platform）</h3>
+        <p>从下面跳起来 → <span class="em">穿过去！</span></p>
+        <p>从上面落下来 → <span class="em2">站住！</span></p>
+    </div>
+    <div class="code-block"><span class="cmt"># 秘诀：只在下落时检测碰撞！</span>
+<span class="kw">if</span> vy > <span class="num">0</span>:   <span class="cmt"># ← 只有下落才管平台</span>
+    <span class="cmt"># ... 碰撞检测代码 ...</span>
+<span class="cmt"># 如果 vy <= 0（上升中），直接忽略 → 穿过去！</span></div>
+    <p style="margin-top:10px;font-size:20px;">
+        🎯 就像<span class="em">单向栅栏门</span> —— 从下面轻松穿过，从上面被挡住
+    </p>
+</div>
+
+<!-- Slide 7: 平台碰撞 - 类型3 -->
+<div class="slide slide-concept">
+    <h2>平台碰撞类型三：侧面挡住</h2>
+    <div class="concept-box" style="border-color:#f87171;">
+        <h3 style="color:#f87171;">水平方向碰到平台</h3>
+        <p>角色左右移动时，撞到平台侧面 → <span class="em3">被挡住！</span></p>
+    </div>
+    <div class="code-block"><span class="cmt"># 水平碰撞检测</span>
+<span class="kw">if</span> player.colliderect(platform):
+    <span class="kw">if</span> prev_right <= platform.left:  <span class="cmt"># 从左边撞来</span>
+        player.right = platform.left  <span class="cmt"># 挡住，不让穿过</span>
+    <span class="kw">elif</span> prev_left >= platform.right: <span class="cmt"># 从右边撞来</span>
+        player.left = platform.right  <span class="cmt"># 挡住，不让穿过</span></div>
+    <p style="margin-top:10px;font-size:20px;">
+        🎯 就像<span class="em">走路撞到墙</span> —— 被挡住了，不能穿过去
+    </p>
+</div>
+
+<!-- Slide 8: 三种碰撞总结 -->
+<div class="slide slide-table">
+    <h2>三种碰撞类型总结</h2>
+    <table>
+        <tr><th>碰撞方向</th><th>规则</th><th>生活类比</th></tr>
+        <tr><td>⬇ 从上方（站）</td><td>角色停住，站在平台上</td><td>跳到桌子上</td></tr>
+        <tr><td>⬆ 从下方（穿）</td><td>角色穿过（单向平台）</td><td>单向栅栏门</td></tr>
+        <tr><td>⬅➡ 从侧面（挡）</td><td>角色被挡住</td><td>走路撞墙</td></tr>
+    </table>
+    <p style="margin-top:30px;font-size:22px;text-align:center;">
+        每一帧都要对<span class="em">每个平台</span>做这三种检测！
+    </p>
+</div>
+
+<!-- Slide 9: 代码示例 -->
+<div class="slide slide-content">
+    <h2>完整代码结构</h2>
+    <div class="code-block"><span class="cmt"># 1. 初始化</span>
+<span class="kw">import</span> pygame
+GRAVITY = <span class="num">0.8</span>
+JUMP_FORCE = -<span class="num">15</span>
+player_x, player_y = <span class="num">100</span>, <span class="num">400</span>
+vy = <span class="num">0</span>
+platforms = [...]  <span class="cmt"># 平台列表</span>
+
+<span class="cmt"># 2. 游戏循环</span>
+<span class="kw">while</span> running:
+    <span class="cmt"># 键盘输入</span>
+    keys = pygame.key.get_pressed()
+    <span class="kw">if</span> keys[K_LEFT]:  player_x -= <span class="num">5</span>
+    <span class="kw">if</span> keys[K_RIGHT]: player_x += <span class="num">5</span>
+    <span class="kw">if</span> keys[K_SPACE] <span class="kw">and</span> on_ground:
+        vy = JUMP_FORCE
+
+    <span class="cmt"># 重力</span>
+    vy += GRAVITY
+    player_y += vy
+
+    <span class="cmt"># 碰撞检测（三种类型）</span>
+    on_ground = <span class="kw">False</span>
+    <span class="kw">for</span> p <span class="kw">in</span> platforms:
+        <span class="cmt"># 类型一+二：垂直碰撞</span>
+        <span class="kw">if</span> vy > <span class="num">0</span>: check_landing(p)
+        <span class="cmt"># 类型三：水平碰撞</span>
+        check_side_collision(p)
+
+    <span class="cmt"># 绘制</span>
+    draw_everything()
+    pygame.display.flip()</div>
+</div>
+
+<!-- Slide 10: 练习任务 -->
+<div class="slide slide-content">
+    <h2>练习任务</h2>
+    <h3 style="color:#fbbf24;margin:16px 0 8px;">基础任务（必做）</h3>
+    <ul>
+        <li>运行基础代码，观察重力和跳跃效果</li>
+        <li>修改 GRAVITY 的值，感受下落速度变化</li>
+        <li>修改 JUMP_FORCE，看看角色能跳多高</li>
+    </ul>
+    <h3 style="color:#fbbf24;margin:16px 0 8px;">进阶任务（选做）</h3>
+    <ul>
+        <li>添加更多的平台，尝试不同的位置</li>
+        <li>给平台加上不同的颜色</li>
+        <li>给角色加上移动动画（变色）</li>
+    </ul>
+    <h3 style="color:#f87171;margin:16px 0 8px;">挑战任务（高阶）</h3>
+    <ul>
+        <li>实现"移动平台"——让平台来回移动</li>
+        <li>添加"弹簧平台"——踩上去弹得更高</li>
+    </ul>
+</div>
+
+<!-- Slide 11: 总结 -->
+<div class="slide slide-content">
+    <h2>本课总结</h2>
+    <div style="display:flex;flex-wrap:wrap;gap:12px;margin-bottom:24px;">
+        <span class="tag">重力 vy += GRAVITY</span>
+        <span class="tag">跳跃 vy = -15</span>
+        <span class="tag">站在平台上</span>
+        <span class="tag yellow">从下穿透</span>
+        <span class="tag green">侧面挡住</span>
+        <span class="tag">单向平台</span>
+    </div>
+    <ul>
+        <li>重力公式：<span class="em">vy += GRAVITY</span>，<span class="em">y += vy</span></li>
+        <li>跳跃：按下空格 → <span class="em">vy = JUMP_FORCE</span>（负数）</li>
+        <li>三种平台碰撞：<span class="em2">站在上面</span> / <span class="em">从下穿透</span> / <span class="em3">侧面挡住</span></li>
+    </ul>
+    <p style="margin-top:30px;font-size:22px;color:#818cf8;text-align:center;">
+        这就是所有平台跳跃游戏的<span class="em">底层原理</span>！
+    </p>
+    <p style="font-size:18px;color:#888;text-align:center;">
+        下节预告：相机卷轴 + Tile Map + 敌人 = 完整闯关游戏 🎮
+    </p>
+</div>
+
+<!-- Page indicator and nav hint -->
+<div class="page-indicator" id="pageIndicator">1 / 12</div>
+<div class="nav-hint">← → 方向键翻页 | Home / End 跳转首尾</div>
+
+</div>
+
+<script>
+(function() {
+    var slides = document.querySelectorAll('.slide');
+    var indicator = document.getElementById('pageIndicator');
+    var total = slides.length;
+    var current = 0;
+
+    function showSlide(index) {
+        if (index < 0) index = 0;
+        if (index >= total) index = total - 1;
+
+        slides.forEach(function(s, i) {
+            s.classList.toggle('active', i === index);
+        });
+        current = index;
+        indicator.textContent = (current + 1) + ' / ' + total;
+    }
+
+    document.addEventListener('keydown', function(e) {
+        if (e.key === 'ArrowRight' || e.key === 'ArrowDown' || e.key === ' ') {
+            e.preventDefault();
+            showSlide(current + 1);
+        } else if (e.key === 'ArrowLeft' || e.key === 'ArrowUp') {
+            e.preventDefault();
+            showSlide(current - 1);
+        } else if (e.key === 'Home') {
+            e.preventDefault();
+            showSlide(0);
+        } else if (e.key === 'End') {
+            e.preventDefault();
+            showSlide(total - 1);
+        }
+    });
+
+    // Click navigation on edges
+    document.getElementById('slideContainer').addEventListener('click', function(e) {
+        var rect = this.getBoundingClientRect();
+        var clickX = e.clientX - rect.left;
+        if (clickX < rect.width * 0.3) {
+            showSlide(current - 1);
+        } else if (clickX > rect.width * 0.7) {
+            showSlide(current + 1);
+        }
+    });
+
+    showSlide(0);
+})();
+</script>
+
+</body>
+</html>

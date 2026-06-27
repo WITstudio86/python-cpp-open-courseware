@@ -1,0 +1,522 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>第37课：背包问题（一）——01背包</title>
+<style>
+  :root {
+    --bg: #1a1a2e;
+    --surface: #16213e;
+    --accent: #e94560;
+    --text: #e0e0e0;
+    --text-secondary: #a0a0b0;
+    --border: #2a2a4a;
+    --code-bg: #0d1117;
+    --table-header: #1f4068;
+    --table-cell: #1b2a45;
+    --success: #4ecca3;
+    --warn: #f0a500;
+  }
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "PingFang SC", "Microsoft YaHei", sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    min-height: 100vh;
+    overflow-x: hidden;
+  }
+
+  /* Slide Container */
+  .slideshow {
+    width: 90vw;
+    max-width: 900px;
+    min-height: 520px;
+    background: var(--surface);
+    border-radius: 16px;
+    box-shadow: 0 8px 40px rgba(233, 69, 96, 0.15);
+    padding: 48px 42px 36px;
+    display: flex;
+    flex-direction: column;
+    position: relative;
+    transition: opacity 0.3s ease;
+  }
+
+  .slide {
+    display: none;
+    flex-direction: column;
+    flex: 1;
+  }
+  .slide.active {
+    display: flex;
+  }
+
+  .slide h1 {
+    font-size: 2rem;
+    color: var(--accent);
+    margin-bottom: 16px;
+    border-bottom: 2px solid var(--accent);
+    padding-bottom: 12px;
+  }
+  .slide h2 {
+    font-size: 1.4rem;
+    color: var(--accent);
+    margin: 14px 0 10px;
+  }
+  .slide h3 {
+    font-size: 1.15rem;
+    color: var(--warn);
+    margin: 10px 0 6px;
+  }
+  .slide p, .slide li {
+    font-size: 0.95rem;
+    line-height: 1.75;
+    color: var(--text);
+    margin-bottom: 6px;
+  }
+  .slide ul, .slide ol {
+    padding-left: 22px;
+  }
+  .slide ul li::marker {
+    color: var(--accent);
+  }
+
+  /* Code blocks */
+  .code-block {
+    background: var(--code-bg);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 14px 18px;
+    margin: 10px 0;
+    overflow-x: auto;
+    font-family: "Fira Code", "Cascadia Code", "JetBrains Mono", "SF Mono", Consolas, monospace;
+    font-size: 0.82rem;
+    line-height: 1.6;
+    white-space: pre-wrap;
+    word-break: break-all;
+  }
+  .code-block .keyword { color: #ff79c6; }
+  .code-block .type { color: #8be9fd; }
+  .code-block .comment { color: #6272a4; font-style: italic; }
+  .code-block .number { color: #bd93f9; }
+  .code-block .func { color: #50fa7b; }
+  .code-block .string { color: #f1fa8c; }
+
+  /* Tables */
+  table.dp-table {
+    border-collapse: collapse;
+    width: 100%;
+    margin: 10px 0;
+    font-size: 0.88rem;
+    font-family: "Fira Code", monospace;
+  }
+  table.dp-table th, table.dp-table td {
+    border: 1px solid var(--border);
+    padding: 6px 8px;
+    text-align: center;
+  }
+  table.dp-table th {
+    background: var(--table-header);
+    color: var(--accent);
+    font-weight: 600;
+  }
+  table.dp-table td {
+    background: var(--table-cell);
+  }
+  table.dp-table td.highlight {
+    background: rgba(233, 69, 96, 0.25);
+    font-weight: bold;
+  }
+
+  /* Highlight box */
+  .highlight-box {
+    background: rgba(233, 69, 96, 0.1);
+    border-left: 4px solid var(--accent);
+    border-radius: 0 8px 8px 0;
+    padding: 12px 16px;
+    margin: 10px 0;
+    font-weight: 500;
+  }
+
+  .formula {
+    display: inline-block;
+    background: rgba(233, 69, 96, 0.08);
+    border: 1px solid rgba(233, 69, 96, 0.3);
+    border-radius: 6px;
+    padding: 6px 12px;
+    font-family: "Fira Code", monospace;
+    font-size: 0.9rem;
+    color: var(--accent);
+    margin: 4px 0;
+  }
+
+  .tag {
+    display: inline-block;
+    background: var(--accent);
+    color: #fff;
+    border-radius: 4px;
+    padding: 2px 8px;
+    font-size: 0.78rem;
+    font-weight: 600;
+    margin: 2px 4px;
+  }
+
+  /* Navigation */
+  .nav {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 18px;
+    margin-top: 20px;
+  }
+  .nav button {
+    background: var(--surface);
+    color: var(--text);
+    border: 1px solid var(--accent);
+    border-radius: 8px;
+    padding: 10px 22px;
+    font-size: 0.95rem;
+    cursor: pointer;
+    transition: all 0.2s;
+  }
+  .nav button:hover {
+    background: var(--accent);
+    color: #fff;
+  }
+  .nav button:disabled {
+    opacity: 0.35;
+    cursor: not-allowed;
+  }
+  .nav button:disabled:hover {
+    background: var(--surface);
+    color: var(--text);
+  }
+  .nav .counter {
+    font-size: 0.9rem;
+    color: var(--text-secondary);
+    min-width: 60px;
+    text-align: center;
+  }
+
+  /* Slide-specific: Title */
+  .slide-title {
+    text-align: center;
+    justify-content: center;
+    align-items: center;
+  }
+  .slide-title h1 {
+    font-size: 2.4rem;
+    border-bottom: none;
+    margin-bottom: 10px;
+  }
+  .slide-title .subtitle {
+    font-size: 1.15rem;
+    color: var(--text-secondary);
+    margin-bottom: 20px;
+  }
+  .slide-title .tags {
+    margin-top: 18px;
+  }
+
+  /* Problem visual */
+  .vis-row {
+    display: flex;
+    gap: 14px;
+    align-items: flex-end;
+    margin: 12px 0;
+    flex-wrap: wrap;
+  }
+  .item-card {
+    background: var(--table-cell);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 12px 18px;
+    text-align: center;
+  }
+  .item-card .item-icon { font-size: 2rem; }
+  .item-card .item-label { font-size: 0.8rem; color: var(--text-secondary); }
+  .item-card .item-value { font-size: 0.95rem; color: var(--accent); font-weight: 600; }
+
+  /* Responsive */
+  @media (max-width: 640px) {
+    .slideshow {
+      padding: 28px 20px 24px;
+      width: 95vw;
+      min-height: 400px;
+    }
+    .slide h1 { font-size: 1.5rem; }
+    .slide h2 { font-size: 1.15rem; }
+    table.dp-table { font-size: 0.72rem; }
+  }
+
+  /* Fade transition */
+  .fade-enter {
+    animation: fadeIn 0.35s ease;
+  }
+  @keyframes fadeIn {
+    from { opacity: 0; transform: translateY(8px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+</style>
+</head>
+<body>
+
+<div class="slideshow" id="slideshow">
+
+  <!-- Slide 1: Title -->
+  <div class="slide active slide-title fade-enter" data-index="0">
+    <h1>第37课 背包问题（一）——01背包</h1>
+    <p class="subtitle">动态规划经典入门 · 每个物品选或不选</p>
+    <div class="tags">
+      <span class="tag">动态规划</span>
+      <span class="tag">背包问题</span>
+      <span class="tag">空间优化</span>
+    </div>
+    <p style="color:var(--text-secondary); margin-top: 16px;">
+      n 个物品 · 容量 C · 每件最多一次 · 最大化总价值
+    </p>
+  </div>
+
+  <!-- Slide 2: Problem Definition -->
+  <div class="slide" data-index="1">
+    <h2>01背包问题定义</h2>
+    <p>给定 <strong>n</strong> 个物品和一个容量为 <strong>C</strong> 的背包：</p>
+    <ul>
+      <li>第 i 个物品重量为 <strong>w[i]</strong>，价值为 <strong>v[i]</strong></li>
+      <li>每个物品<strong>要么取（1）、要么不取（0）</strong>，不能分割</li>
+      <li>求不超过背包容量的前提下，能获得的最大总价值</li>
+    </ul>
+
+    <h3>示例数据</h3>
+    <div class="vis-row">
+      <div class="item-card">
+        <div class="item-icon">📦</div>
+        <div class="item-label">物品 1</div>
+        <div class="item-value">w=2, v=3</div>
+      </div>
+      <div class="item-card">
+        <div class="item-icon">🎒</div>
+        <div class="item-label">物品 2</div>
+        <div class="item-value">w=3, v=4</div>
+      </div>
+      <div class="item-card">
+        <div class="item-icon">💎</div>
+        <div class="item-label">物品 3</div>
+        <div class="item-value">w=4, v=5</div>
+      </div>
+      <div class="item-card" style="background:rgba(233,69,96,0.12);border-color:var(--accent);">
+        <div class="item-icon">👜</div>
+        <div class="item-label">背包容量</div>
+        <div class="item-value">C = 8</div>
+      </div>
+    </div>
+
+    <div class="highlight-box" style="margin-top:14px;">
+      问题本质：在 <strong>2^n</strong> 种可能的选法中，找出满足容量约束、总价值最大的方案。
+      暴力枚举不可行（指数级），需要用<strong>动态规划</strong>。
+    </div>
+  </div>
+
+  <!-- Slide 3: 2D DP -->
+  <div class="slide" data-index="2">
+    <h2>二维DP解法</h2>
+
+    <h3>状态定义</h3>
+    <p><code>dp[i][j]</code> = 考虑前 <strong>i</strong> 个物品，容量为 <strong>j</strong> 时的最大价值</p>
+
+    <h3>状态转移方程</h3>
+    <div class="formula" style="display:block;text-align:center;">
+      dp[i][j] = max( dp[i-1][j] , dp[i-1][j-w[i]] + v[i] )
+    </div>
+    <p style="text-align:center; font-size:0.85rem; color:var(--text-secondary);">
+      不选 ↑ &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;选 ↑ (前提: j ≥ w[i])
+    </p>
+
+    <h3>DP 表演示（3个物品，C=8）</h3>
+    <table class="dp-table">
+      <tr>
+        <th></th><th>j=0</th><th>j=1</th><th>j=2</th><th>j=3</th><th>j=4</th><th>j=5</th><th>j=6</th><th>j=7</th><th>j=8</th>
+      </tr>
+      <tr>
+        <th>初始</th>
+        <td>0</td><td>0</td><td>0</td><td>0</td><td>0</td><td>0</td><td>0</td><td>0</td><td>0</td>
+      </tr>
+      <tr>
+        <th>物品1<br/>(2,3)</th>
+        <td>0</td><td>0</td><td>3</td><td>3</td><td>3</td><td>3</td><td>3</td><td>3</td><td>3</td>
+      </tr>
+      <tr>
+        <th>物品2<br/>(3,4)</th>
+        <td>0</td><td>0</td><td>3</td><td>4</td><td>4</td><td>7</td><td>7</td><td>7</td><td>7</td>
+      </tr>
+      <tr>
+        <th>物品3<br/>(4,5)</th>
+        <td>0</td><td>0</td><td>3</td><td>4</td><td>5</td><td>7</td><td>8</td><td>9</td><td class="highlight">9</td>
+      </tr>
+    </table>
+
+    <div class="highlight-box" style="margin-top:10px;">
+      答案：<strong>dp[3][8] = 9</strong>（选物品2+物品3：重量 3+4=7 ≤ 8，价值 4+5=9；选物品1+物品3：2+4=6，价值 3+5=8；选物品1+物品2：2+3=5，价值 3+4=7。全选重量 9 > 8 不可行，最优为 9）
+    </div>
+  </div>
+
+  <!-- Slide 4: 1D Optimization -->
+  <div class="slide" data-index="3">
+    <h2>一维空间优化</h2>
+
+    <h3>观察</h3>
+    <p>dp[i][j] 只依赖于上一行 dp[i-1][...]，可以压缩为一维数组：</p>
+    <div class="formula" style="display:block;text-align:center;">
+      dp[j] = max( dp[j] , dp[j - w[i]] + v[i] )
+    </div>
+
+    <h3>关键：为什么反向遍历？</h3>
+    <div class="code-block">
+<span class="comment">// ✅ 正确：反向遍历（j从C递减到w[i]）</span>
+<span class="keyword">for</span> (<span class="type">int</span> j = C; j >= w[i]; j--)
+    dp[j] = <span class="func">max</span>(dp[j], dp[j - w[i]] + v[i]);
+
+<span class="comment">// ❌ 错误：正序遍历会导致同一物品被多次使用</span>
+<span class="comment">// 因为 dp[j-w[i]] 可能已经在当前轮被更新过了！</span></div>
+
+    <div class="highlight-box">
+      <strong>原理：</strong>反向遍历时，dp[j - w[i]] 还是<strong>上一轮（i-1）</strong>的旧值，
+      保证第 i 个物品最多只被用一次。正序遍历时 dp[j - w[i]]
+      可能已经被第 i 个物品更新过，就会多用——变成<strong>完全背包</strong>。
+    </div>
+
+    <h3>一维DP代码（核心）</h3>
+    <div class="code-block">
+<span class="type">int</span> dp[MAXC] = {<span class="number">0</span>};
+<span class="keyword">for</span> (<span class="type">int</span> i = <span class="number">1</span>; i &lt;= n; i++) {
+    <span class="keyword">for</span> (<span class="type">int</span> j = C; j &gt;= w[i]; j--) {
+        dp[j] = <span class="func">max</span>(dp[j], dp[j - w[i]] + v[i]);
+    }
+}
+<span class="keyword">return</span> dp[C];</div>
+
+    <table style="margin:8px 0;width:100%;">
+      <tr>
+        <th style="color:var(--success);">空间复杂度</th>
+        <th style="color:var(--accent);">时间复杂度</th>
+      </tr>
+      <tr>
+        <td style="text-align:center;font-size:1.2rem;font-weight:600;">O(C)</td>
+        <td style="text-align:center;font-size:1.2rem;font-weight:600;">O(n × C)</td>
+      </tr>
+    </table>
+  </div>
+
+  <!-- Slide 5: Example Problems -->
+  <div class="slide" data-index="4">
+    <h2>例题解析</h2>
+
+    <h3>例题1：采药问题 🏥</h3>
+    <p>n 株草药，每株需 t[i] 时间采摘、价值 v[i]，共 T 时间，求最大总价值。</p>
+    <div class="highlight-box">
+      <strong>转化：</strong>时间 = 重量，价值 = 价值 → 标准 01 背包<br/>
+      <strong>样例：</strong>T=70, n=3：草药 (71,100) (69,1) (1,2) → 答案 3<br/>
+      <strong>解释：</strong>选第2株(69,1) + 第3株(1,2) = 时间70，价值3
+    </div>
+
+    <h3 style="margin-top:14px;">例题2：装箱问题 📦</h3>
+    <p>箱子容量 V，n 个物品体积 v[i]，求最小剩余空间。</p>
+    <div class="highlight-box">
+      <strong>转化：</strong>体积 = 重量 = 价值 → 01背包求最大装入体积<br/>
+      答案 = V - dp[V]（总容量减去最大装入体积）<br/>
+      <strong>样例：</strong>V=24, n=6, 体积={8,3,12,7,9,7} → 答案 0<br/>
+      <strong>解释：</strong>选 8+3+12+1? 不对——选 12+3+9+? → 实际上能装满：8+7+9 = 24
+    </div>
+
+    <div class="code-block" style="margin-top:10px;">
+<span class="comment">// 装箱问题核心代码</span>
+<span class="keyword">for</span> (<span class="type">int</span> j = V; j &gt;= vol; j--)
+    dp[j] = <span class="func">max</span>(dp[j], dp[j - vol] + vol);
+ans = V - dp[V];  <span class="comment">// 最小剩余空间</span></div>
+  </div>
+
+  <!-- Slide 6: Summary -->
+  <div class="slide" data-index="5">
+    <h2>本课小结</h2>
+
+    <h3>核心思想</h3>
+    <ul>
+      <li><strong>状态定义：</strong>dp[i][j] = 前 i 个物品、容量 j 的最大价值</li>
+      <li><strong>转移方程：</strong>dp[i][j] = max(dp[i-1][j], dp[i-1][j-w[i]] + v[i])</li>
+      <li><strong>二维 → 一维：</strong>dp[j] 反向遍历保证每件物品只用一次</li>
+    </ul>
+
+    <h3>解题模板</h3>
+    <div class="code-block">
+<span class="comment">// 01背包一维模板</span>
+<span class="type">int</span> dp[C+<span class="number">1</span>] = {<span class="number">0</span>};
+<span class="keyword">for</span> (<span class="type">int</span> i = <span class="number">0</span>; i &lt; n; i++)
+    <span class="keyword">for</span> (<span class="type">int</span> j = C; j &gt;= w[i]; j--)
+        dp[j] = <span class="func">max</span>(dp[j], dp[j - w[i]] + v[i]);</div>
+
+    <h3>常见变体</h3>
+    <table style="width:100%; margin-top:8px;">
+      <tr><td style="padding:6px;"><span class="tag">采药问题</span></td><td>时间=重量，价值=价值</td></tr>
+      <tr><td style="padding:6px;"><span class="tag">装箱问题</span></td><td>体积=重量=价值</td></tr>
+      <tr><td style="padding:6px;"><span class="tag">Subset Sum</span></td><td>重量=价值，判断是否存在恰好填满</td></tr>
+    </table>
+
+    <div class="highlight-box" style="text-align:center;margin-top:12px;">
+      <strong>01 背包是动态规划的基石，下一课我们将学习完全背包！</strong>
+    </div>
+  </div>
+
+</div>
+
+<!-- Navigation -->
+<div class="nav">
+  <button id="prevBtn" onclick="prevSlide()">◀ 上一页</button>
+  <span class="counter" id="slideCounter">1 / 6</span>
+  <button id="nextBtn" onclick="nextSlide()">下一页 ▶</button>
+</div>
+
+<script>
+  let currentSlide = 0;
+  const slides = document.querySelectorAll('.slide');
+  const totalSlides = slides.length;
+
+  function showSlide(index) {
+    slides.forEach(s => s.classList.remove('active', 'fade-enter'));
+    slides[index].classList.add('active', 'fade-enter');
+    document.getElementById('slideCounter').textContent = (index + 1) + ' / ' + totalSlides;
+    document.getElementById('prevBtn').disabled = (index === 0);
+    document.getElementById('nextBtn').disabled = (index === totalSlides - 1);
+  }
+
+  function nextSlide() {
+    if (currentSlide < totalSlides - 1) {
+      currentSlide++;
+      showSlide(currentSlide);
+    }
+  }
+
+  function prevSlide() {
+    if (currentSlide > 0) {
+      currentSlide--;
+      showSlide(currentSlide);
+    }
+  }
+
+  // Keyboard navigation
+  document.addEventListener('keydown', function(e) {
+    if (e.key === 'ArrowRight' || e.key === 'ArrowDown') nextSlide();
+    if (e.key === 'ArrowLeft' || e.key === 'ArrowUp') prevSlide();
+  });
+
+  // Initialize
+  showSlide(0);
+</script>
+
+</body>
+</html>

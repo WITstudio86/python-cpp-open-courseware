@@ -1,0 +1,537 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>第22节：人机对战 - Pong (2)</title>
+<style>
+*, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
+body {
+  font-family: "Microsoft YaHei", "PingFang SC", "Noto Sans SC", sans-serif;
+  background: #1a1a2e;
+  color: #eaeaea;
+  overflow: hidden;
+  height: 100vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+#app {
+  width: 100vw;
+  height: 100vh;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+}
+.slide {
+  display: none;
+  width: 90vw;
+  max-width: 1100px;
+  height: 85vh;
+  flex-direction: column;
+  justify-content: center;
+  padding: 2rem 3rem;
+  border-radius: 16px;
+  background: #16213e;
+  box-shadow: 0 8px 40px rgba(0,0,0,0.5);
+}
+.slide.active { display: flex; }
+
+h1 { font-size: 3rem; color: #ff6b6b; margin-bottom: 0.8rem; text-align: center; }
+h2 { font-size: 2.2rem; color: #ff6b6b; margin-bottom: 1.2rem; text-align: center; border-bottom: 3px solid #e94560; padding-bottom: 0.5rem; }
+h3 { font-size: 1.6rem; color: #feca57; margin: 1rem 0 0.5rem; }
+p, li { font-size: 1.5rem; line-height: 2; }
+ul, ol { padding-left: 2.5rem; }
+li { margin-bottom: 0.4rem; }
+
+.code-block {
+  background: #0d1117;
+  border-radius: 12px;
+  padding: 1.2rem 1.8rem;
+  margin: 0.8rem 0;
+  overflow-x: auto;
+  font-family: "SF Mono", "Fira Code", "Cascadia Code", "Consolas", monospace;
+  font-size: 1.25rem;
+  line-height: 1.7;
+  border: 1px solid #30363d;
+}
+.code-block .kw { color: #ff7b72; }
+.code-block .fn { color: #d2a8ff; }
+.code-block .str { color: #a5d6ff; }
+.code-block .num { color: #79c0ff; }
+.code-block .cm { color: #8b949e; font-style: italic; }
+.code-block .op { color: #ff7b72; }
+.code-block .var { color: #ffa657; }
+
+.highlight-box {
+  background: rgba(233, 69, 96, 0.15);
+  border-left: 6px solid #e94560;
+  padding: 1rem 1.5rem;
+  margin: 1rem 0;
+  border-radius: 0 8px 8px 0;
+  font-size: 1.4rem;
+}
+.info-box {
+  background: rgba(254, 202, 87, 0.1);
+  border-left: 6px solid #feca57;
+  padding: 1rem 1.5rem;
+  margin: 1rem 0;
+  border-radius: 0 8px 8px 0;
+  font-size: 1.4rem;
+}
+
+.nav-hint {
+  position: fixed;
+  bottom: 1.5rem;
+  left: 50%;
+  transform: translateX(-50%);
+  font-size: 1.1rem;
+  color: #555;
+}
+.slide-num {
+  position: fixed;
+  top: 1rem;
+  right: 2rem;
+  font-size: 1.3rem;
+  color: #555;
+}
+
+/* grid layout helper */
+.row { display: flex; gap: 2rem; align-items: flex-start; }
+.col { flex: 1; }
+
+.emoji-icon { font-size: 2rem; margin-right: 0.5rem; }
+
+.diagram {
+  background: #0d1117;
+  border-radius: 12px;
+  padding: 2rem;
+  text-align: center;
+  font-family: monospace;
+  font-size: 1.15rem;
+  line-height: 1.8;
+  white-space: pre;
+  border: 1px solid #30363d;
+  margin: 1rem 0;
+}
+</style>
+</head>
+<body>
+<div id="app">
+
+<!-- Slide 0: 标题页 -->
+<div class="slide active" data-index="0">
+  <h1>🎮 第22节：人机对战</h1>
+  <h2 style="border:none; color:#feca57;">Pong 项目 · 第二节课</h2>
+  <div style="text-align:center; margin-top:2rem;">
+    <p style="font-size:1.8rem; color:#aaa;">让电脑成为你的对手！</p>
+    <p style="font-size:1.4rem; color:#666; margin-top:2rem;">60分钟面授课 ｜ 10-15岁中小学生</p>
+  </div>
+</div>
+
+<!-- Slide 1: 回顾双人对战 -->
+<div class="slide" data-index="1">
+  <h2>📖 回顾：双人对战 Pong</h2>
+  <div class="row">
+    <div class="col">
+      <h3>上节课我们做了什么？</h3>
+      <ul>
+        <li>两个球拍：玩家1 (W/S)  vs  玩家2 (↑/↓)</li>
+        <li>球的移动和反弹</li>
+        <li>球拍碰撞检测</li>
+        <li>用 Surface 绘制所有图形</li>
+      </ul>
+    </div>
+    <div class="col">
+      <h3>今天我们要升级！</h3>
+      <ul>
+        <li>🤖 <strong>AI对手</strong>替代玩家2</li>
+        <li>📊 <strong>计分系统</strong>（11分制）</li>
+        <li>⏸️ <strong>暂停功能</strong>（按P键）</li>
+        <li>🎨 <strong>半透明中线和虚线网</strong></li>
+      </ul>
+    </div>
+  </div>
+  <div class="highlight-box">
+    <strong>核心问题：</strong>AI怎么知道球拍该往哪移动？
+  </div>
+</div>
+
+<!-- Slide 2: AI设计思路 -->
+<div class="slide" data-index="2">
+  <h2>🤖 AI 设计思路</h2>
+  <div class="row">
+    <div class="col">
+      <h3>人类玩家怎么玩？</h3>
+      <ul>
+        <li>👀 眼睛看到球的位置</li>
+        <li>🧠 大脑判断该往哪移动</li>
+        <li>🤚 手指按键盘</li>
+        <li>⏱️ 有<strong>反应时间</strong></li>
+      </ul>
+    </div>
+    <div class="col">
+      <h3>AI 怎么模拟？</h3>
+      <ul>
+        <li>👀 直接读取球的 y 坐标</li>
+        <li>🧠 比较球和球拍的位置</li>
+        <li>🤖 自动移动球拍</li>
+        <li>🐌 速度稍慢，<strong>模拟反应时间</strong></li>
+      </ul>
+    </div>
+  </div>
+  <div class="diagram">
+┌──────────────────────────────────────┐
+│         AI 追踪 = 简单追踪算法        │
+│                                      │
+│   球在上方 → AI球拍向上移             │
+│   球在下方 → AI球拍向下移             │
+│   移动速度 &lt; 球速 → 有可能接不到     │
+└──────────────────────────────────────┘
+  </div>
+</div>
+
+<!-- Slide 3: AI追踪算法 -->
+<div class="slide" data-index="3">
+  <h2>🧮 AI 追踪算法（核心代码）</h2>
+  <h3>算法思路</h3>
+  <ul>
+    <li>比较 <strong>AI球拍中心点 y</strong> 和 <strong>球的 y</strong></li>
+    <li>球在上方 → AI移上去；球在下方 → AI移下去</li>
+    <li>速度比球慢 → 给人"反应时间"的感觉</li>
+  </ul>
+  <div class="code-block">
+<pre><span class="cm"># AI追踪逻辑：让AI球拍中心向球的y坐标靠近</span>
+<span class="kw">ai_speed</span> = <span class="num">4</span>  <span class="cm"># AI移动速度（比球速慢，模拟反应时间）</span>
+
+<span class="cm"># 计算AI球拍中心点</span>
+<span class="var">ai_center</span> = <span class="var">ai_paddle_y</span> + <span class="var">paddle_height</span> // <span class="num">2</span>
+
+<span class="kw">if</span> <span class="var">ai_center</span> < <span class="var">ball_y</span>:        <span class="cm"># 球在下方</span>
+    <span class="var">ai_paddle_y</span> += <span class="kw">ai_speed</span>
+<span class="kw">elif</span> <span class="var">ai_center</span> > <span class="var">ball_y</span>:    <span class="cm"># 球在上方</span>
+    <span class="var">ai_paddle_y</span> -= <span class="kw">ai_speed</span></pre>
+  </div>
+  <div class="info-box">
+    <strong>思考：</strong>如果把 ai_speed 改成 10 会怎样？改成 2 呢？这和游戏难度有什么关系？
+  </div>
+</div>
+
+<!-- Slide 4: 计分系统 -->
+<div class="slide" data-index="4">
+  <h2>📊 计分系统</h2>
+  <div class="row">
+    <div class="col">
+      <h3>计分规则</h3>
+      <ul>
+        <li>球出<strong>左边界</strong> → AI得1分</li>
+        <li>球出<strong>右边界</strong> → 玩家得1分</li>
+        <li><strong>先到11分者胜</strong></li>
+        <li>每次得分后 → 重新发球</li>
+      </ul>
+    </div>
+    <div class="col">
+      <h3>判断胜负</h3>
+      <div class="code-block" style="font-size:1.1rem;">
+<pre><span class="kw">WIN_SCORE</span> = <span class="num">11</span>
+
+<span class="kw">if</span> <span class="var">player_score</span> >= <span class="kw">WIN_SCORE</span>:
+    <span class="var">game_over</span> = <span class="kw">True</span>
+    <span class="var">winner</span> = <span class="str">"玩家"</span>
+<span class="kw">elif</span> <span class="var">ai_score</span> >= <span class="kw">WIN_SCORE</span>:
+    <span class="var">game_over</span> = <span class="kw">True</span>
+    <span class="var">winner</span> = <span class="str">"AI"</span></pre>
+      </div>
+    </div>
+  </div>
+  <h3>重新发球（reset）</h3>
+  <div class="code-block">
+<pre><span class="kw">def</span> <span class="fn">reset_ball</span>():
+    <span class="kw">global</span> <span class="var">ball_x</span>, <span class="var">ball_y</span>, <span class="var">ball_dx</span>, <span class="var">ball_dy</span>
+    <span class="var">ball_x</span> = <span class="num">400</span>          <span class="cm"># 回到屏幕中心</span>
+    <span class="var">ball_y</span> = <span class="num">250</span>
+    <span class="var">ball_dx</span> = random.choice([<span class="num">-4</span>, <span class="num">4</span>])  <span class="cm"># 随机左右</span>
+    <span class="var">ball_dy</span> = random.choice([<span class="num">-3</span>, <span class="num">3</span>])  <span class="cm"># 随机上下</span></pre>
+  </div>
+</div>
+
+<!-- Slide 5: 暂停功能 -->
+<div class="slide" data-index="5">
+  <h2>⏸️ 暂停功能</h2>
+  <h3>核心思想：用一个布尔变量控制游戏是否更新</h3>
+  <div class="code-block">
+<pre><span class="var">paused</span> = <span class="kw">False</span>  <span class="cm"># 暂停状态变量</span>
+
+<span class="cm"># 事件处理：按P键切换暂停</span>
+<span class="kw">for</span> <span class="var">event</span> <span class="kw">in</span> <span class="var">pygame</span>.<span class="var">event</span>.<span class="fn">get</span>():
+    <span class="kw">if</span> <span class="var">event</span>.<span class="var">type</span> == <span class="var">pygame</span>.<span class="var">KEYDOWN</span>:
+        <span class="kw">if</span> <span class="var">event</span>.<span class="var">key</span> == <span class="var">pygame</span>.<span class="var">K_p</span>:
+            <span class="var">paused</span> = <span class="op">not</span> <span class="var">paused</span>  <span class="cm"># 切换状态</span>
+
+<span class="cm"># 游戏更新：只在非暂停时执行</span>
+<span class="kw">if</span> <span class="op">not</span> <span class="var">paused</span> <span class="op">and</span> <span class="op">not</span> <span class="var">game_over</span>:
+    <span class="fn">update_ball</span>()
+    <span class="fn">update_ai</span>()
+    <span class="fn">check_score</span>()</pre>
+  </div>
+  <div class="highlight-box">
+    <strong>关键点：</strong><code>paused = not paused</code> 是最简洁的状态切换写法。<br>
+    暂停时<strong>只绘制不更新</strong> — 画面冻结但不消失。
+  </div>
+</div>
+
+<!-- Slide 6: 半透明中线 -->
+<div class="slide" data-index="6">
+  <h2>🎨 半透明中线和虚线网</h2>
+  <div class="row">
+    <div class="col">
+      <h3>方法1：半透明实线</h3>
+      <div class="code-block" style="font-size:1.05rem;">
+<pre><span class="cm"># 创建带透明度的 Surface</span>
+<span class="var">mid_line</span> = <span class="var">pygame</span>.<span class="var">Surface</span>(
+    (<span class="num">4</span>, <span class="var">HEIGHT</span>),
+    <span class="var">pygame</span>.<span class="var">SRCALPHA</span>     <span class="cm"># 关键！</span>
+)
+<span class="var">mid_line</span>.<span class="fn">fill</span>((<span class="num">255</span>,<span class="num">255</span>,<span class="num">255</span>))
+<span class="var">mid_line</span>.<span class="fn">set_alpha</span>(<span class="num">80</span>)   <span class="cm"># 0=全透 255=不透明</span>
+<span class="var">screen</span>.<span class="fn">blit</span>(<span class="var">mid_line</span>,
+            (<span class="num">398</span>, <span class="num">0</span>))</pre>
+      </div>
+      <p style="font-size:1.1rem; color:#8b949e; margin-top:0.5rem;">
+        <code>pygame.SRCALPHA</code> = 创建支持透明的画布<br>
+        <code>set_alpha(80)</code> = 整张画布半透明
+      </p>
+    </div>
+    <div class="col">
+      <h3>方法2：虚线网</h3>
+      <div class="code-block" style="font-size:1.05rem;">
+<pre><span class="cm"># 画虚线：循环画短矩形</span>
+<span class="var">dash</span> = <span class="num">20</span>   <span class="cm"># 每段长度</span>
+<span class="var">gap</span> = <span class="num">15</span>    <span class="cm"># 间隔</span>
+<span class="kw">for</span> <span class="var">y</span> <span class="kw">in</span> <span class="fn">range</span>(
+    <span class="num">0</span>, <span class="var">HEIGHT</span>,
+    <span class="var">dash</span> + <span class="var">gap</span>
+):
+    <span class="var">pygame</span>.<span class="var">draw</span>.<span class="fn">rect</span>(
+        <span class="var">screen</span>,
+        (<span class="num">200</span>,<span class="num">200</span>,<span class="num">200</span>),
+        (<span class="num">398</span>, <span class="var">y</span>, <span class="num">4</span>, <span class="var">dash</span>)
+    )</pre>
+      </div>
+      <p style="font-size:1.1rem; color:#8b949e; margin-top:0.5rem;">
+        虚线 = 多个小矩形 + 跳过间隔<br>
+        也可给虚线加透明度
+      </p>
+    </div>
+  </div>
+</div>
+
+<!-- Slide 7: 游戏主循环结构 -->
+<div class="slide" data-index="7">
+  <h2>🔄 游戏主循环结构</h2>
+  <div class="code-block" style="font-size:1.05rem;">
+<pre><span class="kw">while</span> <span class="var">running</span>:
+    <span class="cm"># 1. 事件处理</span>
+    <span class="kw">for</span> <span class="var">event</span> <span class="kw">in</span> <span class="var">pygame</span>.<span class="var">event</span>.<span class="fn">get</span>():
+        <span class="kw">if</span> <span class="var">event</span>.<span class="var">type</span> == <span class="var">QUIT</span>: <span class="kw">running</span> = <span class="kw">False</span>
+        <span class="kw">if</span> <span class="var">event</span>.<span class="var">type</span> == <span class="var">KEYDOWN</span>:
+            <span class="kw">if</span> <span class="var">event</span>.<span class="var">key</span> == <span class="var">K_p</span>: <span class="var">paused</span> = <span class="op">not</span> <span class="var">paused</span>
+            <span class="kw">if</span> <span class="var">event</span>.<span class="var">key</span> == <span class="var">K_r</span> <span class="op">and</span> <span class="var">game_over</span>: <span class="fn">reset_game</span>()
+
+    <span class="cm"># 2. 获取按键状态（玩家控制）</span>
+    <span class="var">keys</span> = <span class="var">pygame</span>.<span class="var">key</span>.<span class="fn">get_pressed</span>()
+    <span class="kw">if</span> <span class="var">keys</span>[<span class="var">K_w</span>]: <span class="var">player_y</span> -= <span class="var">speed</span>
+    <span class="kw">if</span> <span class="var">keys</span>[<span class="var">K_s</span>]: <span class="var">player_y</span> += <span class="var">speed</span>
+
+    <span class="cm"># 3. 更新游戏逻辑（非暂停 + 未结束）</span>
+    <span class="kw">if</span> <span class="op">not</span> <span class="var">paused</span> <span class="op">and</span> <span class="op">not</span> <span class="var">game_over</span>:
+        <span class="fn">update_ball</span>()      <span class="cm"># 移动球</span>
+        <span class="fn">update_ai</span>()        <span class="cm"># AI追踪</span>
+        <span class="fn">check_bounce</span>()     <span class="cm"># 碰撞反弹</span>
+        <span class="fn">check_score</span>()      <span class="cm"># 得分检测</span>
+
+    <span class="cm"># 4. 绘制画面（无论什么状态都要画）</span>
+    <span class="var">screen</span>.<span class="fn">fill</span>(<span class="var">BLACK</span>)
+    <span class="fn">draw_net</span>()          <span class="cm"># 虚线网</span>
+    <span class="fn">draw_paddles</span>()      <span class="cm"># 球拍</span>
+    <span class="fn">draw_ball</span>()         <span class="cm"># 球</span>
+    <span class="fn">draw_score</span>()        <span class="cm"># 比分</span>
+    <span class="fn">draw_status</span>()       <span class="cm"># 暂停/结束提示</span>
+    <span class="var">pygame</span>.<span class="var">display</span>.<span class="fn">update</span>()</pre>
+  </div>
+</div>
+
+<!-- Slide 8: 完整游戏运行效果 -->
+<div class="slide" data-index="8">
+  <h2>🎯 游戏运行效果</h2>
+  <div class="diagram">
+┌──────────────────────────────────────────────────┐
+│                    玩家  0:2  AI                  │
+│                                                  │
+│   ┃         ·                                   │
+│   ┃        ·                                    │
+│   ┃       ·  ○                                  │
+│   ┃      ·                                      │
+│   ┃     ·                                       │
+│   ┃    ·                                        │
+│   ┃                                              │
+│   ██                         ██                  │
+│   ██                         ██                  │
+│   ██  ← 玩家球拍             ██  ← AI球拍        │
+│   ██  (W/S 控制)             ██  (自动追踪)       │
+│   ██                         ██                  │
+│   ██                         ██                  │
+│                                                  │
+│  操作提示:  W/S移动  P暂停  ESC退出              │
+└──────────────────────────────────────────────────┘
+  </div>
+  <ul style="margin-top:1rem;">
+    <li>左侧球拍：玩家用 <strong>W/S</strong> 控制</li>
+    <li>右侧球拍：<strong>AI自动追踪</strong>球的位置</li>
+    <li>顶部显示比分，中间虚线分隔</li>
+    <li>按 <strong>P</strong> 暂停，按 <strong>R</strong> 重新开始</li>
+  </ul>
+</div>
+
+<!-- Slide 9: 动手练习 -->
+<div class="slide" data-index="9">
+  <h2>✍️ 课堂练习（25分钟）</h2>
+  <h3>基础任务（必须完成）✅</h3>
+  <ol>
+    <li>复制上一节双人Pong代码作为基础</li>
+    <li>将右侧球拍改为AI控制（实现追踪逻辑）</li>
+    <li>实现计分系统（先到11分胜）</li>
+    <li>得分后重新发球（随机方向）</li>
+    <li>画出半透明中线和虚线网</li>
+  </ol>
+  <h3>进阶挑战 🚀</h3>
+  <ul>
+    <li>添加暂停功能（按P键）</li>
+    <li>游戏结束显示"按R键重新开始"</li>
+    <li>添加难度选择（数字键1/2/3切换AI速度）</li>
+    <li>球碰撞球拍时略微随机改变角度</li>
+  </ul>
+</div>
+
+<!-- Slide 10: 常见问题 -->
+<div class="slide" data-index="10">
+  <h2>💡 常见问题与调试</h2>
+  <table style="width:100%; border-collapse:collapse; font-size:1.25rem; margin-top:1rem;">
+    <thead>
+      <tr style="background:#e94560; color:#fff;">
+        <th style="padding:0.8rem; text-align:left;">问题</th>
+        <th style="padding:0.8rem; text-align:left;">原因</th>
+        <th style="padding:0.8rem; text-align:left;">解决</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr style="background:rgba(255,255,255,0.05);">
+        <td style="padding:0.8rem;">AI球拍抖动</td>
+        <td style="padding:0.8rem;">速度太大，在目标附近反复振荡</td>
+        <td style="padding:0.8rem;">减小AI速度，或添加"死区"</td>
+      </tr>
+      <tr>
+        <td style="padding:0.8rem;">球穿透球拍</td>
+        <td style="padding:0.8rem;">球速>球拍宽度，一帧越过</td>
+        <td style="padding:0.8rem;">降低球速，或扩大碰撞检测范围</td>
+      </tr>
+      <tr style="background:rgba(255,255,255,0.05);">
+        <td style="padding:0.8rem;">分数不变化</td>
+        <td style="padding:0.8rem;">出界检测条件写错</td>
+        <td style="padding:0.8rem;">检查边界坐标和判断方向</td>
+      </tr>
+      <tr>
+        <td style="padding:0.8rem;">半透明不生效</td>
+        <td style="padding:0.8rem;">忘了加 SRCALPHA</td>
+        <td style="padding:0.8rem;">创建Surface时传入 pygame.SRCALPHA</td>
+      </tr>
+      <tr style="background:rgba(255,255,255,0.05);">
+        <td style="padding:0.8rem;">重新发球后不动</td>
+        <td style="padding:0.8rem;">没有随机化方向</td>
+        <td style="padding:0.8rem;">检查 reset_ball() 中的 dx/dy 赋值</td>
+      </tr>
+    </tbody>
+  </table>
+</div>
+
+<!-- Slide 11: 总结 -->
+<div class="slide" data-index="11">
+  <h2>📝 本节总结</h2>
+  <div style="display:grid; grid-template-columns:1fr 1fr; gap:1.5rem; margin-top:1rem;">
+    <div class="highlight-box">
+      <h3 style="margin-top:0;">🤖 AI追踪</h3>
+      <p>球拍中心向球的y坐标靠近<br>
+      速度控制难度<br>
+      <span style="font-size:1.1rem;color:#8b949e;">球在上→上移，球在下→下移</span></p>
+    </div>
+    <div class="highlight-box">
+      <h3 style="margin-top:0;">📊 计分系统</h3>
+      <p>检测出界→加分→判断胜负<br>
+      11分制·重新发球<br>
+      <span style="font-size:1.1rem;color:#8b949e;">random.choice 随机方向</span></p>
+    </div>
+    <div class="highlight-box">
+      <h3 style="margin-top:0;">⏸️ 暂停</h3>
+      <p>布尔变量控制更新<br>
+      paused = not paused<br>
+      <span style="font-size:1.1rem;color:#8b949e;">暂停时只绘制不更新</span></p>
+    </div>
+    <div class="highlight-box">
+      <h3 style="margin-top:0;">🎨 半透明</h3>
+      <p>Surface + SRCALPHA<br>
+      set_alpha(0-255)<br>
+      <span style="font-size:1.1rem;color:#8b949e;">虚线=循环画短矩形</span></p>
+    </div>
+  </div>
+  <div class="info-box" style="margin-top:1.5rem; text-align:center;">
+    <strong>下节预告：</strong>更多游戏机制 — 道具系统、多球模式，或全新游戏项目！
+  </div>
+</div>
+
+</div>
+
+<div class="slide-num" id="slideNum">1 / 12</div>
+<div class="nav-hint">← → 方向键翻页 ｜ Home 首页 ｜ End 末页</div>
+
+<script>
+(function() {
+  var slides = document.querySelectorAll('.slide');
+  var total = slides.length;
+  var current = 0;
+
+  function showSlide(idx) {
+    if (idx < 0) idx = 0;
+    if (idx >= total) idx = total - 1;
+    slides.forEach(function(s, i) { s.classList.toggle('active', i === idx); });
+    current = idx;
+    document.getElementById('slideNum').textContent = (current + 1) + ' / ' + total;
+  }
+
+  document.addEventListener('keydown', function(e) {
+    if (e.key === 'ArrowRight' || e.key === 'ArrowDown' || e.key === ' ') {
+      e.preventDefault();
+      showSlide(current + 1);
+    } else if (e.key === 'ArrowLeft' || e.key === 'ArrowUp') {
+      e.preventDefault();
+      showSlide(current - 1);
+    } else if (e.key === 'Home') {
+      e.preventDefault();
+      showSlide(0);
+    } else if (e.key === 'End') {
+      e.preventDefault();
+      showSlide(total - 1);
+    }
+  });
+
+  // Touch support
+  var touchStartX = 0;
+  document.addEventListener('touchstart', function(e) { touchStartX = e.touches[0].clientX; });
+  document.addEventListener('touchend', function(e) {
+    var dx = e.changedTouches[0].clientX - touchStartX;
+    if (Math.abs(dx) > 40) showSlide(current + (dx < 0 ? 1 : -1));
+  });
+})();
+</script>
+</body>
+</html>

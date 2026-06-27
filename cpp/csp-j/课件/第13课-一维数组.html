@@ -1,0 +1,601 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>第13课：一维数组 — CSP-J 备考课程</title>
+    <style>
+        /* ========== 全局基础样式 ========== */
+        *, *::before, *::after {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        :root {
+            --primary: #1a237e;
+            --primary-light: #283593;
+            --accent: #ffd600;
+            --accent-dark: #c7a500;
+            --bg-white: #ffffff;
+            --bg-light: #f5f5f5;
+            --text-dark: #212121;
+            --text-medium: #424242;
+            --text-light: #757575;
+            --code-bg: #1e1e1e;
+            --code-text: #d4d4d4;
+            --success: #2e7d32;
+            --warning: #e65100;
+            --info: #1565c0;
+            --border: #e0e0e0;
+            --shadow: 0 4px 20px rgba(0, 0, 0, 0.15);
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "PingFang SC", "Microsoft YaHei", "Hiragino Sans GB", sans-serif;
+            background: #e8eaf6;
+            color: var(--text-dark);
+            line-height: 1.7;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        /* ========== 幻灯片容器 ========== */
+        .deck {
+            width: 100%;
+            max-width: 960px;
+            background: var(--bg-white);
+            border-radius: 16px;
+            box-shadow: var(--shadow);
+            overflow: hidden;
+            position: relative;
+        }
+
+        /* ========== 标题栏 ========== */
+        .titlebar {
+            background: var(--primary);
+            color: #ffffff;
+            padding: 10px 24px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            font-size: 14px;
+            letter-spacing: 0.5px;
+        }
+        .titlebar .course-name {
+            font-weight: 700;
+        }
+        .titlebar .lesson-num {
+            opacity: 0.85;
+        }
+
+        /* ========== 幻灯片区域 ========== */
+        .slides-container {
+            position: relative;
+            min-height: 520px;
+        }
+        .slide {
+            display: none;
+            padding: 40px 48px 32px;
+            animation: fadeSlideIn 0.4s ease;
+        }
+        .slide.active {
+            display: block;
+        }
+
+        @keyframes fadeSlideIn {
+            from { opacity: 0; transform: translateY(12px); }
+            to   { opacity: 1; transform: translateY(0); }
+        }
+
+        /* ========== 标题页特殊样式 ========== */
+        .slide-title {
+            text-align: center;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            min-height: 480px;
+            background: linear-gradient(135deg, var(--primary) 0%, var(--primary-light) 100%);
+            color: #ffffff;
+            border-radius: 0;
+        }
+        .slide-title h1 {
+            font-size: 42px;
+            font-weight: 900;
+            margin-bottom: 16px;
+            letter-spacing: 2px;
+        }
+        .slide-title h2 {
+            font-size: 22px;
+            font-weight: 400;
+            opacity: 0.9;
+            margin-bottom: 8px;
+        }
+        .slide-title .subtitle {
+            font-size: 16px;
+            opacity: 0.7;
+            margin-top: 12px;
+        }
+        .slide-title .accent-line {
+            width: 80px;
+            height: 4px;
+            background: var(--accent);
+            margin: 20px auto 0;
+            border-radius: 2px;
+        }
+
+        /* ========== 内容页通用样式 ========== */
+        .slide h2 {
+            font-size: 28px;
+            font-weight: 700;
+            color: var(--primary);
+            margin-bottom: 20px;
+            padding-bottom: 10px;
+            border-bottom: 3px solid var(--accent);
+            display: inline-block;
+        }
+        .slide h3 {
+            font-size: 20px;
+            font-weight: 600;
+            color: var(--primary-light);
+            margin: 18px 0 10px;
+        }
+        .slide p {
+            margin-bottom: 10px;
+            color: var(--text-medium);
+            font-size: 15px;
+        }
+        .slide ul, .slide ol {
+            margin: 8px 0 12px 24px;
+            color: var(--text-medium);
+        }
+        .slide li {
+            margin-bottom: 6px;
+            font-size: 15px;
+        }
+
+        /* ========== 代码块 ========== */
+        .code-block {
+            background: var(--code-bg);
+            color: var(--code-text);
+            border-radius: 8px;
+            padding: 16px 20px;
+            margin: 12px 0;
+            font-family: "Consolas", "Fira Code", "Source Code Pro", "Courier New", monospace;
+            font-size: 14px;
+            line-height: 1.6;
+            overflow-x: auto;
+            white-space: pre;
+            tab-size: 4;
+        }
+
+        /* 语法高亮关键词 */
+        .keyword { color: #569cd6; font-weight: bold; }
+        .type { color: #4ec9b0; }
+        .number { color: #b5cea8; }
+        .string { color: #ce9178; }
+        .comment { color: #6a9955; font-style: italic; }
+        .func { color: #dcdcaa; }
+        .macro { color: #c586c0; }
+        .op { color: #d4d4d4; }
+
+        /* ========== 提示框 ========== */
+        .tip-box {
+            border-left: 4px solid var(--accent);
+            background: #fffde7;
+            padding: 12px 16px;
+            margin: 14px 0;
+            border-radius: 0 8px 8px 0;
+            font-size: 14px;
+            color: #5d4037;
+        }
+        .tip-box .tip-title {
+            font-weight: 700;
+            color: var(--warning);
+            margin-bottom: 4px;
+            font-size: 15px;
+        }
+        .warning-box {
+            border-left: 4px solid #e65100;
+            background: #fff3e0;
+        }
+        .warning-box .tip-title {
+            color: #e65100;
+        }
+        .info-box {
+            border-left: 4px solid #1565c0;
+            background: #e3f2fd;
+        }
+        .info-box .tip-title {
+            color: #1565c0;
+        }
+
+        /* ========== 表格 ========== */
+        .styled-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 12px 0;
+            font-size: 14px;
+        }
+        .styled-table th {
+            background: var(--primary);
+            color: #ffffff;
+            padding: 10px 14px;
+            text-align: left;
+            font-weight: 600;
+        }
+        .styled-table td {
+            padding: 8px 14px;
+            border-bottom: 1px solid var(--border);
+        }
+        .styled-table tbody tr:hover {
+            background: #f5f5f5;
+        }
+
+        /* ========== 两列布局 ========== */
+        .two-col {
+            display: flex;
+            gap: 24px;
+            margin: 12px 0;
+        }
+        .two-col > div {
+            flex: 1;
+            min-width: 0;
+        }
+
+        /* ========== 底部导航 ========== */
+        .nav-bar {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            gap: 20px;
+            padding: 16px 24px 20px;
+            background: var(--bg-light);
+            border-top: 1px solid var(--border);
+        }
+        .nav-btn {
+            padding: 8px 28px;
+            border: 2px solid var(--primary);
+            background: var(--bg-white);
+            color: var(--primary);
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 14px;
+            font-weight: 600;
+            transition: all 0.2s;
+            user-select: none;
+        }
+        .nav-btn:hover {
+            background: var(--primary);
+            color: #ffffff;
+        }
+        .nav-btn:active {
+            transform: scale(0.96);
+        }
+        .page-indicator {
+            font-size: 14px;
+            color: var(--text-light);
+            font-weight: 500;
+            min-width: 80px;
+            text-align: center;
+        }
+        .page-dots {
+            display: flex;
+            gap: 6px;
+        }
+        .page-dot {
+            width: 10px;
+            height: 10px;
+            border-radius: 50%;
+            background: #ccc;
+            transition: all 0.3s;
+            cursor: pointer;
+        }
+        .page-dot.active {
+            background: var(--accent);
+            width: 28px;
+            border-radius: 5px;
+        }
+
+        /* ========== 响应式 ========== */
+        @media (max-width: 768px) {
+            body { padding: 8px; }
+            .slide { padding: 24px 20px 20px; }
+            .slides-container { min-height: 400px; }
+            .slide-title h1 { font-size: 28px; }
+            .slide h2 { font-size: 22px; }
+            .code-block { font-size: 12px; padding: 10px 14px; }
+            .two-col { flex-direction: column; gap: 12px; }
+            .nav-btn { padding: 6px 18px; font-size: 13px; }
+        }
+    </style>
+</head>
+<body>
+    <div class="deck" id="deck">
+        <!-- ========== 标题栏 ========== -->
+        <div class="titlebar">
+            <span class="course-name">CSP-J 备考课程</span>
+            <span class="lesson-num">第13课：一维数组</span>
+        </div>
+
+        <!-- ========== 幻灯片区域 ========== -->
+        <div class="slides-container">
+
+            <!-- 幻灯片1：标题页 -->
+            <div class="slide slide-title active" data-slide="1">
+                <h1>第13课：一维数组</h1>
+                <h2>从单个变量到批量数据</h2>
+                <p class="subtitle">CSP-J 考纲知识点 | 数组定义 · 下标从0开始 · 遍历 · 最值 · 反转</p>
+                <div class="accent-line"></div>
+            </div>
+
+            <!-- 幻灯片2：数组定义与初始化 -->
+            <div class="slide" data-slide="2">
+                <h2>📖 数组定义与初始化</h2>
+
+                <h3>定义语法</h3>
+                <div class="code-block"><span class="type">int</span> a[<span class="number">100</span>];      <span class="comment">// 100个整数的数组</span>
+<span class="type">double</span> b[<span class="number">50</span>];    <span class="comment">// 50个浮点数的数组</span>
+<span class="type">char</span> s[<span class="number">1000</span>];     <span class="comment">// 1000个字符的数组（字符串）</span></div>
+
+                <div class="two-col">
+                    <div>
+                        <h3>初始化方式一：花括号</h3>
+                        <div class="code-block"><span class="comment">// 全部初始化</span>
+<span class="type">int</span> a[<span class="number">5</span>] = {<span class="number">10</span>, <span class="number">20</span>, <span class="number">30</span>, <span class="number">40</span>, <span class="number">50</span>};
+
+<span class="comment">// 部分初始化，其余为0</span>
+<span class="type">int</span> b[<span class="number">5</span>] = {<span class="number">1</span>, <span class="number">2</span>};  <span class="comment">// {1,2,0,0,0}</span>
+
+<span class="comment">// 全部清零的快捷写法</span>
+<span class="type">int</span> c[<span class="number">100</span>] = {<span class="number">0</span>};
+
+<span class="comment">// 省略大小</span>
+<span class="type">int</span> d[] = {<span class="number">1</span>, <span class="number">3</span>, <span class="number">5</span>, <span class="number">7</span>};</div>
+                    </div>
+                    <div>
+                        <h3>初始化方式二：逐个赋值</h3>
+                        <div class="code-block"><span class="type">int</span> a[<span class="number">5</span>];
+<span class="keyword">for</span> (<span class="type">int</span> i = <span class="number">0</span>; i &lt; <span class="number">5</span>; i++) {
+    cin &gt;&gt; a[i];
+}</div>
+                        <h3 style="margin-top:14px;">内存存储：连续存放</h3>
+                        <div class="code-block" style="font-size:13px;"><span class="comment">// int a[5]; 内存布局（每int占4字节）</span>
+a[0] → a[1] → a[2] → a[3] → a[4]
+<span class="number">0x1000</span> <span class="number">0x1004</span> <span class="number">0x1008</span> <span class="number">0x100C</span> <span class="number">0x1010</span></div>
+                    </div>
+                </div>
+
+                <div class="tip-box info-box">
+                    <div class="tip-title">💡 关键特性</div>
+                    数组所有元素<strong>类型相同</strong>，在内存中<strong>连续存储</strong>，这使得遍历效率非常高（CPU 缓存友好）。
+                </div>
+            </div>
+
+            <!-- 幻灯片3：下标规则与遍历 -->
+            <div class="slide" data-slide="3">
+                <h2>🔍 下标从0开始与数组遍历</h2>
+
+                <div class="two-col">
+                    <div>
+                        <h3>下标规则</h3>
+                        <table class="styled-table" style="font-size:13px;">
+                            <thead><tr><th>概念</th><th>说明</th></tr></thead>
+                            <tbody>
+                                <tr><td>第1个元素</td><td><code>a[0]</code></td></tr>
+                                <tr><td>第2个元素</td><td><code>a[1]</code></td></tr>
+                                <tr><td>第i个元素</td><td><code>a[i-1]</code></td></tr>
+                                <tr><td>最后元素</td><td><code>a[n-1]</code></td></tr>
+                                <tr><td>有效范围</td><td><code>0 ~ n-1</code>，共 n 个</td></tr>
+                            </tbody>
+                        </table>
+                    </div>
+                    <div>
+                        <h3>经典遍历模板</h3>
+                        <div class="code-block"><span class="keyword">for</span> (<span class="type">int</span> i = <span class="number">0</span>; i &lt; n; i++) {
+    cout &lt;&lt; a[i] &lt;&lt; <span class="string">" "</span>;
+}</div>
+                        <p style="font-size:13px; color:#888;">i 从 0 开始，i &lt; n（不是 &lt;=），这样 i 最大取 n-1。</p>
+                    </div>
+                </div>
+
+                <h3 style="margin-top:14px;">常见应用一览</h3>
+                <table class="styled-table">
+                    <thead><tr><th>应用</th><th>代码片段</th></tr></thead>
+                    <tbody>
+                        <tr><td><strong>求和</strong></td><td><code>sum += a[i];</code></td></tr>
+                        <tr><td><strong>最大值</strong></td><td><code>if (a[i] &gt; maxVal) maxVal = a[i];</code></td></tr>
+                        <tr><td><strong>计数</strong></td><td><code>if (a[i] &gt;= 60) cnt++;</code></td></tr>
+                        <tr><td><strong>反转</strong></td><td><code>swap(a[i], a[n-1-i]);</code>（i 从 0 到 n/2）</td></tr>
+                        <tr><td><strong>查找</strong></td><td><code>if (a[i] == target) pos = i;</code></td></tr>
+                    </tbody>
+                </table>
+
+                <div class="warning-box tip-box">
+                    <div class="tip-title">⚠ 越界访问 — 最危险的陷阱</div>
+                    C++ <strong>不检查</strong>数组下标是否越界！<code>a[5] = 100;</code>（数组只有5个元素）不会报错，但可能<strong>修改其他变量的值</strong>，导致程序行为不可预料。这是 OJ 中 WA 或 RE 的常见原因。
+                </div>
+            </div>
+
+            <!-- 幻灯片4：代码模板 -->
+            <div class="slide" data-slide="4">
+                <h2>💻 核心代码模板</h2>
+
+                <div class="two-col">
+                    <div>
+                        <h3>模板一：找最大值及位置</h3>
+                        <div class="code-block"><span class="type">int</span> maxVal = a[<span class="number">0</span>], pos = <span class="number">0</span>;
+<span class="keyword">for</span> (<span class="type">int</span> i = <span class="number">1</span>; i &lt; n; i++) {
+    <span class="keyword">if</span> (a[i] &gt; maxVal) {
+        maxVal = a[i];
+        pos = i;
+    }
+}
+cout &lt;&lt; maxVal &lt;&lt; <span class="string">" "</span> &lt;&lt; pos+<span class="number">1</span>;</div>
+                    </div>
+                    <div>
+                        <h3>模板二：数组反转</h3>
+                        <div class="code-block"><span class="comment">// 方法一：对称交换</span>
+<span class="keyword">for</span> (<span class="type">int</span> i = <span class="number">0</span>; i &lt; n/<span class="number">2</span>; i++)
+    swap(a[i], a[n-<span class="number">1</span>-i]);
+
+<span class="comment">// 方法二：双指针</span>
+<span class="type">int</span> L = <span class="number">0</span>, R = n - <span class="number">1</span>;
+<span class="keyword">while</span> (L &lt; R) {
+    swap(a[L], a[R]);
+    L++; R--;
+}</div>
+                    </div>
+                </div>
+
+                <h3>模板三：计数统计（桶）</h3>
+                <div class="code-block"><span class="comment">// 统计 0~100 分数段的人数</span>
+<span class="type">int</span> cnt[<span class="number">101</span>] = {<span class="number">0</span>};
+<span class="keyword">for</span> (<span class="type">int</span> i = <span class="number">0</span>; i &lt; n; i++) {
+    cnt[a[i]]++;  <span class="comment">// 以值作为下标计数</span>
+}</div>
+
+                <div class="tip-box">
+                    <div class="tip-title">🎯 考试技巧</div>
+                    大数组（超过 10 万）一定要定义为<strong>全局数组</strong>（在 main 函数外面），否则会<strong>栈溢出</strong>导致程序崩溃。用 <code>const int N = 100005;</code> 定义常量是竞赛最佳实践。
+                </div>
+            </div>
+
+            <!-- 幻灯片5：真题精练 -->
+            <div class="slide" data-slide="5">
+                <h2>📝 真题精练</h2>
+
+                <h3>真题1：不与最大数相同的数字之和</h3>
+                <p style="font-size:14px; color:#666;">输入 N 个数，输出去掉所有最大值后剩余数字的和。</p>
+                <div class="code-block"><span class="comment">/* 样例输入:
+3
+1 2 3
+
+   样例输出:
+3                        ← 去掉最大数3，剩1和2 */</span>
+<span class="keyword">int</span> maxVal = -<span class="number">2000000</span>, sum = <span class="number">0</span>;
+<span class="keyword">for</span> (<span class="type">int</span> i = <span class="number">0</span>; i &lt; n; i++) {
+    cin &gt;&gt; a[i];
+    <span class="keyword">if</span> (a[i] &gt; maxVal) maxVal = a[i];
+}
+<span class="keyword">for</span> (<span class="type">int</span> i = <span class="number">0</span>; i &lt; n; i++)
+    <span class="keyword">if</span> (a[i] != maxVal) sum += a[i];</div>
+
+                <h3 style="margin-top:16px;">真题2：数组逆序重放</h3>
+                <p style="font-size:14px; color:#666;">将一个数组中的值按逆序重新存放并输出。</p>
+                <div class="code-block"><span class="comment">/* 样例输入: 5
+8 6 5 4 1
+   样例输出: 1 4 5 6 8  */</span>
+<span class="type">int</span> L = <span class="number">0</span>, R = n - <span class="number">1</span>;
+<span class="keyword">while</span> (L &lt; R) { swap(a[L], a[R]); L++; R--; }</div>
+
+                <div class="tip-box">
+                    <div class="tip-title">🎯 考试技巧</div>
+                    这两类题是 CSP-J 数组部分的"必考题"。核心思路：<strong>先遍历找最值，再遍历做处理</strong>；反转用<strong>双指针</strong>或<strong>对称交换</strong>。注意反转只需遍历到 n/2。
+                </div>
+            </div>
+
+            <!-- 幻灯片6：易错点与本课小结 -->
+            <div class="slide" data-slide="6">
+                <h2>⚠ 易错点总结 & 本课小结</h2>
+
+                <table class="styled-table">
+                    <thead>
+                        <tr><th>#</th><th>易错点</th><th>正确做法</th></tr>
+                    </thead>
+                    <tbody>
+                        <tr><td>1</td><td><strong>Off-by-one</strong>：遍历写成 <code>i &lt;= n</code></td><td>应写 <code>i &lt; n</code>，最后一个元素是 a[n-1]</td></tr>
+                        <tr><td>2</td><td><strong>数组大小不是常量</strong>：<code>int a[n]</code></td><td>使用 <code>const int N = 1005; int a[N];</code></td></tr>
+                        <tr><td>3</td><td><strong>越界不报错</strong>：访问 a[100] 但只有100个元素</td><td>始终确认下标在 0~n-1 范围内</td></tr>
+                        <tr><td>4</td><td><strong>局部大数组</strong>：main 里定义 int a[1000000]</td><td>定义为全局数组，避免栈溢出</td></tr>
+                        <tr><td>5</td><td><strong>忘记初始化</strong>：局部数组含随机值</td><td>定义时初始化为0，或全局定义</td></tr>
+                        <tr><td>6</td><td><strong>部分初始化误解</strong>：<code>int a[5]={1}</code></td><td>只有 a[0]=1，其余=0，不是全1</td></tr>
+                    </tbody>
+                </table>
+
+                <div class="tip-box" style="margin-top:16px;">
+                    <div class="tip-title">🎯 本课核心要点</div>
+                    <ol style="margin:4px 0 0 0;">
+                        <li>定义：<code>类型 数组名[常量大小]</code>，内存连续，通过下标访问。</li>
+                        <li>下标从 <strong>0</strong> 开始，n 个元素下标范围 <strong>0 ~ n-1</strong>。</li>
+                        <li>遍历模板：<code>for (int i = 0; i &lt; n; i++)</code> 是所有操作的基础。</li>
+                        <li>五大应用：求和平均、找最值、反转、计数统计、线性查找。</li>
+                        <li>大数组放全局、大小用常量、绝不越界。</li>
+                    </ol>
+                </div>
+            </div>
+        </div><!-- /.slides-container -->
+
+        <!-- ========== 底部导航 ========== -->
+        <div class="nav-bar">
+            <button class="nav-btn" id="btnPrev" onclick="goSlide(-1)">◀ 上一页</button>
+            <div class="page-indicator" id="pageIndicator">1 / 6</div>
+            <div class="page-dots" id="pageDots"></div>
+            <button class="nav-btn" id="btnNext" onclick="goSlide(1)">下一页 ▶</button>
+        </div>
+    </div>
+
+    <script>
+        (function() {
+            const slides = document.querySelectorAll('.slide');
+            const totalSlides = slides.length;
+            let currentIndex = 0;
+
+            // 构建圆点指示器
+            const dotsContainer = document.getElementById('pageDots');
+            for (let i = 0; i < totalSlides; i++) {
+                const dot = document.createElement('span');
+                dot.className = 'page-dot' + (i === 0 ? ' active' : '');
+                dot.setAttribute('data-index', i);
+                dot.addEventListener('click', () => goToSlide(i));
+                dotsContainer.appendChild(dot);
+            }
+            const dots = document.querySelectorAll('.page-dot');
+
+            function updateUI() {
+                slides.forEach((s, i) => s.classList.toggle('active', i === currentIndex));
+                dots.forEach((d, i) => d.classList.toggle('active', i === currentIndex));
+                document.getElementById('pageIndicator').textContent =
+                    (currentIndex + 1) + ' / ' + totalSlides;
+            }
+
+            window.goSlide = function(delta) {
+                currentIndex = (currentIndex + delta + totalSlides) % totalSlides;
+                updateUI();
+            };
+
+            window.goToSlide = function(index) {
+                currentIndex = index;
+                updateUI();
+            };
+
+            // 键盘导航
+            document.addEventListener('keydown', function(e) {
+                if (e.key === 'ArrowRight' || e.key === 'ArrowDown') {
+                    e.preventDefault();
+                    goSlide(1);
+                } else if (e.key === 'ArrowLeft' || e.key === 'ArrowUp') {
+                    e.preventDefault();
+                    goSlide(-1);
+                }
+            });
+
+            // 触摸滑动支持
+            let touchStartX = 0;
+            const deck = document.getElementById('deck');
+            deck.addEventListener('touchstart', function(e) {
+                touchStartX = e.touches[0].clientX;
+            });
+            deck.addEventListener('touchend', function(e) {
+                const diff = touchStartX - e.changedTouches[0].clientX;
+                if (Math.abs(diff) > 50) {
+                    goSlide(diff > 0 ? 1 : -1);
+                }
+            });
+        })();
+    </script>
+</body>
+</html>
