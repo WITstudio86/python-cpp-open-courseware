@@ -72,7 +72,7 @@ class B:
             return val
         if isinstance(val, str) and val.startswith("b"):
             return [2, val]
-        if isinstance(val, (list, tuple)) and len(val) > 0 and isinstance(val[0], str) and val[0].startswith("b"):
+        if isinstance(val, (list, tuple)) and len(val) > 0 and isinstance(val[0], str) and val[0].startswith("b") and val[0][1:].isdigit():
             return [3, "".join(val), list(val)]
         if isinstance(val, tuple):
             num_str = val[0]
@@ -240,8 +240,19 @@ class B:
 
     def broadcast(self, msg_name):
         bc_id = self.BC_IDS.get(msg_name, f"bc_{msg_name}")
+        # Create proper event_broadcast_menu shadow block
+        shadow_id = self._bid()
+        self.target["blocks"][shadow_id] = {
+            "opcode": "event_broadcast_menu",
+            "next": None,
+            "parent": None,
+            "inputs": {},
+            "fields": {"BROADCAST_OPTION": [msg_name, bc_id]},
+            "shadow": True,
+            "topLevel": False,
+        }
         return [("event_broadcast",
-            {"BROADCAST_INPUT": (bc_id, bc_id)},
+            {"BROADCAST_INPUT": [1, [shadow_id, shadow_id]]},
             {})]
 
     def wait(self, secs):
@@ -551,6 +562,11 @@ ASSETS["start_btn"] = '''<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 18
   <text x="90" y="32" text-anchor="middle" font-size="18" fill="#fff" font-family="sans-serif">🚀 开始救援任务</text>
 </svg>'''
 
+ASSETS["restart_btn"] = '''<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 180 50">
+  <rect x="0" y="0" width="180" height="50" rx="25" fill="#2ecc71" stroke="#fff" stroke-width="2"/>
+  <text x="90" y="32" text-anchor="middle" font-size="18" fill="#fff" font-family="sans-serif">🔄 再次出发</text>
+</svg>'''
+
 print(f"✅ Loaded {len(ASSETS)} SVG assets")
 
 # ═══════════════════════════════════════════
@@ -634,6 +650,18 @@ def build():
             *sb.broadcast("scene_1"),
         ])
 
+    # Timer increment during scene 3 (every 1 second)
+    sb.hat("event_whenbroadcastreceived",
+        {"BROADCAST_OPTION": ["scene_3", B.BC_IDS["scene_3"]]},
+        body=[*sb.set_var("timer", 0)])
+
+    sb.hat("event_whenbroadcastreceived",
+        {"BROADCAST_OPTION": ["scene_3", B.BC_IDS["scene_3"]]},
+        body=sb.forever([
+            *sb.wait(1),
+            *sb.change_var("timer", 1),
+        ]))
+
     targets.append(stage)
 
     # ── DRONE SPRITE ──
@@ -694,11 +722,45 @@ def build():
                 ("motion_sety", {"Y": ("-160", "-160")}, {})]),
         ]))
 
+    # Earthquake shake handler
+    db.hat("event_whenbroadcastreceived",
+        {"BROADCAST_OPTION": ["earthquake_shake", B.BC_IDS["earthquake_shake"]]},
+        body=db.repeat(15, [
+            ("motion_changexby", {"DX": ("5", "5")}, {}),
+            ("motion_changeyby", {"DY": ("3", "3")}, {}),
+            ("control_wait", {"DURATION": ("0.05", "0.05")}, {}),
+            ("motion_changexby", {"DX": ("-5", "-5")}, {}),
+            ("motion_changeyby", {"DY": ("-3", "-3")}, {}),
+            ("control_wait", {"DURATION": ("0.05", "0.05")}, {}),
+        ]))
+
     # Space key: delivery (only in scene 3, near any found survivor)
+    # Build distance check for proximity-gated delivery
+    dist_s1 = db._make_reporter("sensing_distanceto",
+        fields={"DISTANCETOMENU": ["Survivor1", None]})
+    dist_s2 = db._make_reporter("sensing_distanceto",
+        fields={"DISTANCETOMENU": ["Survivor2", None]})
+    dist_s3 = db._make_reporter("sensing_distanceto",
+        fields={"DISTANCETOMENU": ["Survivor3", None]})
+
+    lt_s1 = db.lt(dist_s1, ("80", "80"))
+    lt_s2 = db.lt(dist_s2, ("80", "80"))
+    lt_s3 = db.lt(dist_s3, ("80", "80"))
+
+    # OR chain: near Survivor1 OR Survivor2 OR Survivor3
+    or_12 = db._make_reporter("operator_or",
+        inputs={"OPERAND1": [2, lt_s1], "OPERAND2": [2, lt_s2]})
+    near_any = db._make_reporter("operator_or",
+        inputs={"OPERAND1": [2, or_12], "OPERAND2": [2, lt_s3]})
+
+    # Final condition: scene == 3 AND near any survivor
     scene_var2 = db.var_reporter("scene")
     eq_scene3 = db.eq(scene_var2, ("3", "3"))
+    can_deliver = db._make_reporter("operator_and",
+        inputs={"OPERAND1": [2, eq_scene3], "OPERAND2": [2, near_any]})
+
     db.hat("event_whenkeypressed", {"KEY_OPTION": ["space", "space"]},
-        body=db.if_(eq_scene3, [
+        body=db.if_(can_deliver, [
             *db.switch_costume("drone_drop"),
             *db.broadcast("supply_delivered"),
             *db.wait(0.5),
@@ -793,6 +855,9 @@ def build():
         body=[*spb.hide()])
 
     # When supply_delivered: show at drone position, fall down, then hide
+    # After increment, check if all 3 delivered → broadcast all_rescued
+    del_var = spb.var_reporter("delivered")
+    eq3_del = spb.eq(del_var, ("3", "3"))
     spb.hat("event_whenbroadcastreceived",
         {"BROADCAST_OPTION": ["supply_delivered", B.BC_IDS["supply_delivered"]]},
         body=[
@@ -801,14 +866,8 @@ def build():
             ("motion_glidesecstoxy", {"SECS": ("1", "1"), "X": ("x position", "x position"), "Y": ("-140", "-140")}, {}),
             *spb.hide(),
             *spb.change_var("delivered", 1),
+            *spb.if_(eq3_del, spb.broadcast("all_rescued")),
         ])
-
-    # Check if all 3 delivered → broadcast all_rescued
-    del_var = spb.var_reporter("delivered")
-    eq3_del = spb.eq(del_var, ("3", "3"))
-    spb.hat("event_whenbroadcastreceived",
-        {"BROADCAST_OPTION": ["supply_delivered", B.BC_IDS["supply_delivered"]]},
-        body=spb.if_(eq3_del, spb.broadcast("all_rescued")))
 
     targets.append(supply)
 
@@ -836,7 +895,7 @@ def build():
 
     # ── RESTART BUTTON (shown on scene_5) ──
     restart_btn = make_sprite("RestartButton")
-    restart_btn["costumes"] = [make_costume("start_btn", ASSETS["start_btn"])]
+    restart_btn["costumes"] = [make_costume("restart_btn", ASSETS["restart_btn"])]
     restart_btn["x"] = 0
     restart_btn["y"] = -60
     restart_btn["size"] = 90
@@ -865,7 +924,7 @@ def build():
     # scene_2 narration
     ub.hat("event_whenbroadcastreceived",
         {"BROADCAST_OPTION": ["scene_2", B.BC_IDS["scene_2"]]},
-        body=[*ub.show(), *ub.goto(0, -140), *ub.say("地震发生！山区道路中断，无人机救援队立即出发！", 3)])
+        body=[*ub.show(), *ub.goto(0, -140), *ub.say("地震发生！山区道路中断，地面救援队难以进入。无人机救援队，立即出发！", 3)])
 
     # scene_3 narration
     ub.hat("event_whenbroadcastreceived",
