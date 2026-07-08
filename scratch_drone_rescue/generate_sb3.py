@@ -54,6 +54,7 @@ class B:
     def __init__(self, target):
         self.target = target
         self.bid_counter = [0]  # for generating sequential block IDs
+        self._pending_shadows = []  # shadows created during current block, need parent set
 
     def _bid(self):
         self.bid_counter[0] += 1
@@ -77,32 +78,41 @@ class B:
         if isinstance(val, tuple):
             num_str = val[0]
             shadow_name = val[1] if len(val) > 1 else num_str
-            s1 = self._make_shadow(shadow_name)
-            return [1, [s1, s1]]
+            sid = self._make_shadow(key, shadow_name)
+            self._pending_shadows.append(sid)
+            return [1, [sid, sid]]
         # list of blocks → substack
         if isinstance(val, list):
             first = self.add_blocks(val)
             return [2, first]
         return [1, [str(val), str(val)]]
 
-    def _make_shadow(self, name):
-        """Create a shadow block for an input field."""
+    _SHADOW_TYPES = {
+        "BROADCAST_INPUT": ("event_broadcast_menu", "BROADCAST_OPTION"),
+        "TO": ("motion_gotom_menu", "TO"),
+    }
+
+    def _make_shadow(self, input_key, name):
+        """Create a shadow block with the correct opcode for the input type."""
         sid = self._bid()
-        # Determine the shadow opcode based on context
-        shadow_opcode = "text"  # default
-        # Use math_number for numeric values, text for strings
-        try:
-            float(name)
-            shadow_opcode = "math_number"
-        except ValueError:
-            shadow_opcode = "text"
+        if input_key in self._SHADOW_TYPES:
+            opcode, field_key = self._SHADOW_TYPES[input_key]
+            fields = {field_key: [name, None]}
+        else:
+            try:
+                float(name)
+                opcode = "math_number"
+                fields = {"NUM": [name, None]}
+            except ValueError:
+                opcode = "text"
+                fields = {"TEXT": [name, None]}
 
         self.target["blocks"][sid] = {
-            "opcode": shadow_opcode,
+            "opcode": opcode,
             "next": None,
             "parent": None,
             "inputs": {},
-            "fields": {"NUM" if shadow_opcode == "math_number" else "TEXT": [name, None]},
+            "fields": fields,
             "shadow": True,
             "topLevel": False,
         }
@@ -200,6 +210,12 @@ class B:
                     block["inputs"][k] = self._resolve_input(k, v)
 
             self.target["blocks"][bid] = block
+
+            # Set parent on any shadow blocks created during this block's input resolution
+            for shadow_id in self._pending_shadows:
+                if shadow_id in self.target["blocks"]:
+                    self.target["blocks"][shadow_id]["parent"] = bid
+            self._pending_shadows.clear()
 
             if prev_bid:
                 self.target["blocks"][prev_bid]["next"] = bid
@@ -313,22 +329,36 @@ class B:
             {},
             False)]
 
+    def _shadow_for(self, input_key, val):
+        """Create a shadow and track it for parent assignment. Returns shadow ID."""
+        sid = self._make_shadow(input_key, val)
+        self._pending_shadows.append(sid)
+        return sid
+
     def eq(self, a_val, b_val):
         """Equality reporter. a_val, b_val can be (str, str) tuples or block IDs."""
         rid = self._bid()
         inputs = {}
         if isinstance(a_val, tuple):
-            inputs["OPERAND1"] = [1, [self._make_shadow(a_val[0]), self._make_shadow(a_val[0])]]
+            s = self._shadow_for("OPERAND1", a_val[0])
+            inputs["OPERAND1"] = [1, [s, s]]
         else:
             inputs["OPERAND1"] = [2, a_val]
         if isinstance(b_val, tuple):
-            inputs["OPERAND2"] = [1, [self._make_shadow(b_val[0]), self._make_shadow(b_val[0])]]
+            s = self._shadow_for("OPERAND2", b_val[0])
+            inputs["OPERAND2"] = [1, [s, s]]
         else:
             inputs["OPERAND2"] = [2, b_val]
-        self.target["blocks"][rid] = {
+        block = {
             "opcode": "operator_equals", "next": None, "parent": None,
             "inputs": inputs, "fields": {}, "shadow": False, "topLevel": False,
         }
+        self.target["blocks"][rid] = block
+        # Set parent on shadows
+        for shadow_id in self._pending_shadows:
+            if shadow_id in self.target["blocks"]:
+                self.target["blocks"][shadow_id]["parent"] = rid
+        self._pending_shadows.clear()
         return rid
 
     def lt(self, a_val, b_val):
@@ -336,17 +366,25 @@ class B:
         rid = self._bid()
         inputs = {}
         if isinstance(a_val, tuple):
-            inputs["OPERAND1"] = [1, [self._make_shadow(a_val[0]), self._make_shadow(a_val[0])]]
+            s = self._shadow_for("OPERAND1", a_val[0])
+            inputs["OPERAND1"] = [1, [s, s]]
         else:
             inputs["OPERAND1"] = [2, a_val]
         if isinstance(b_val, tuple):
-            inputs["OPERAND2"] = [1, [self._make_shadow(b_val[0]), self._make_shadow(b_val[0])]]
+            s = self._shadow_for("OPERAND2", b_val[0])
+            inputs["OPERAND2"] = [1, [s, s]]
         else:
             inputs["OPERAND2"] = [2, b_val]
-        self.target["blocks"][rid] = {
+        block = {
             "opcode": "operator_lt", "next": None, "parent": None,
             "inputs": inputs, "fields": {}, "shadow": False, "topLevel": False,
         }
+        self.target["blocks"][rid] = block
+        # Set parent on shadows
+        for shadow_id in self._pending_shadows:
+            if shadow_id in self.target["blocks"]:
+                self.target["blocks"][shadow_id]["parent"] = rid
+        self._pending_shadows.clear()
         return rid
 
 
@@ -862,7 +900,7 @@ def build():
         {"BROADCAST_OPTION": ["supply_delivered", B.BC_IDS["supply_delivered"]]},
         body=[
             *spb.show(),
-            ("motion_goto", {"TO": ("_drone_", "_drone_")}, {}),
+            ("motion_goto", {"TO": ("Drone", "Drone")}, {}),
             ("motion_glidesecstoxy", {"SECS": ("1", "1"), "X": ("x position", "x position"), "Y": ("-140", "-140")}, {}),
             *spb.hide(),
             *spb.change_var("delivered", 1),
@@ -956,6 +994,25 @@ def build():
         body=[*ub.hide()])
 
     targets.append(ui)
+
+    # ── POST-PROCESSING: Fix shadow parent references ──
+    for target in targets:
+        block_ids = set(target['blocks'].keys())
+        for bid, block in target['blocks'].items():
+            for iname, ival in block.get('inputs', {}).items():
+                if isinstance(ival, list) and len(ival) >= 2:
+                    refs = ival[1]
+                    # Handle [[sid, sid]] format (obscured shadow)
+                    if isinstance(refs, list):
+                        for rid in refs:
+                            if rid in block_ids and target['blocks'].get(rid, {}).get('shadow'):
+                                if not target['blocks'][rid].get('parent'):
+                                    target['blocks'][rid]['parent'] = bid
+                    # Handle single shadow reference
+                    elif isinstance(refs, str) and refs in block_ids:
+                        if target['blocks'].get(refs, {}).get('shadow'):
+                            if not target['blocks'][refs].get('parent'):
+                                target['blocks'][refs]['parent'] = bid
 
     return build_project(targets)
 
