@@ -219,24 +219,24 @@ class B:
             bd.extend(body)
         return self.add_blocks(bd)
 
-    def var_reporter(self, var_name):
+    def var_reporter(self, var_name, *, var_id=None):
         """Create a variable reporter block."""
-        var_id = self.VAR_IDS.get(var_name, var_name)
+        vid = var_id if var_id else self.VAR_IDS.get(var_name, var_name)
         return self._make_reporter("data_variable",
-            fields={"VARIABLE": [var_name, var_id]})
+            fields={"VARIABLE": [var_name, vid]})
 
-    def set_var(self, var_name, value):
+    def set_var(self, var_name, value, *, var_id=None):
         """Set variable to value."""
-        var_id = self.VAR_IDS.get(var_name, var_name)
+        vid = var_id if var_id else self.VAR_IDS.get(var_name, var_name)
         return [("data_setvariableto",
             {"VALUE": (str(value), str(value))},
-            {"VARIABLE": [var_name, var_id]})]
+            {"VARIABLE": [var_name, vid]})]
 
-    def change_var(self, var_name, delta):
-        var_id = self.VAR_IDS.get(var_name, var_name)
+    def change_var(self, var_name, delta, *, var_id=None):
+        vid = var_id if var_id else self.VAR_IDS.get(var_name, var_name)
         return [("data_changevariableby",
             {"VALUE": (str(delta), str(delta))},
-            {"VARIABLE": [var_name, var_id]})]
+            {"VARIABLE": [var_name, vid]})]
 
     def broadcast(self, msg_name):
         bc_id = self.BC_IDS.get(msg_name, f"bc_{msg_name}")
@@ -734,7 +734,7 @@ def build():
             body=[
                 *sv.show(),
                 *sv.switch_costume("survivor_wave"),
-                *sv.set_var(found_var_name, 0),
+                *sv.set_var(found_var_name, 0, var_id=found_var_id),
             ])
 
         # On scene_1, scene_2, scene_5: hide
@@ -746,11 +746,11 @@ def build():
         # Forever: check distance to Drone for detection
         # Distance reporter for sensing_touchingobject alternative
         dist_reporter = sv._make_reporter("sensing_distanceto",
-            inputs={"DISTANCETOMENU": ("_drone_", "_drone_")})
+            fields={"DISTANCETOMENU": ["Drone", None]})
         lt_60 = sv.lt(dist_reporter, ("60", "60"))
 
         # Check if not already found
-        found_var_reporter = sv.var_reporter(found_var_name)
+        found_var_reporter = sv.var_reporter(found_var_name, var_id=found_var_id)
         eq0 = sv.eq(found_var_reporter, ("0", "0"))
 
         # Both conditions: distance < 60 AND not found yet
@@ -762,7 +762,7 @@ def build():
             body=sv.forever(
                 sv.if_(and_reporter, [
                     *sv.switch_costume("survivor_found"),
-                    *sv.set_var(found_var_name, 1),
+                    *sv.set_var(found_var_name, 1, var_id=found_var_id),
                     *sv.broadcast("survivor_found"),
                     *sv.change_var("found", 1),
                 ])
@@ -771,7 +771,7 @@ def build():
         # On restart: reset
         sv.hat("event_whenbroadcastreceived",
             {"BROADCAST_OPTION": ["restart", B.BC_IDS["restart"]]},
-            body=[*sv.set_var(found_var_name, 0)])
+            body=[*sv.set_var(found_var_name, 0, var_id=found_var_id)])
 
         targets.append(surv)
 
