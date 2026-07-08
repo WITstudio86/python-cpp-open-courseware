@@ -1,0 +1,391 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>第4课：持久化 —— 文件读写与完整发布</title>
+    <style>
+        :root { --bg-primary: #1a1a2e; --bg-card: rgba(255,255,255,0.05); --text-primary: #e0e0e0; --text-secondary: #a0a0b0; --accent: #e94560; --accent-glow: rgba(233,69,96,0.3); --code-bg: #0d1117; --border: rgba(255,255,255,0.1); --shadow: 0 8px 32px rgba(0,0,0,0.4); }
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "PingFang SC", "Microsoft YaHei", "Noto Sans SC", sans-serif; background: linear-gradient(135deg, #0f0c29 0%, #302b63 50%, #24243e 100%); min-height: 100vh; color: var(--text-primary); display: flex; flex-direction: column; align-items: center; justify-content: center; overflow-x: hidden; }
+        .slideshow-container { width: 100%; max-width: 960px; min-height: 600px; position: relative; padding: 20px; }
+        .slide { display: none; animation: fadeIn 0.5s ease-in-out; background: var(--bg-card); border: 1px solid var(--border); border-radius: 16px; padding: 38px 48px; min-height: 550px; box-shadow: var(--shadow); backdrop-filter: blur(10px); }
+        .slide.active { display: block; }
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
+        .slide-title { font-size: 2em; color: var(--accent); margin-bottom: 18px; padding-bottom: 10px; border-bottom: 2px solid var(--accent-glow); text-shadow: 0 0 15px var(--accent-glow); }
+        .title-slide { text-align: center; display: flex; flex-direction: column; justify-content: center; align-items: center; }
+        .title-slide h1 { font-size: 3em; color: var(--accent); text-shadow: 0 0 30px var(--accent-glow); margin-bottom: 15px; }
+        .title-slide .subtitle-big { font-size: 1.4em; color: var(--text-secondary); margin-bottom: 30px; }
+        .title-slide .lesson-info { color: var(--text-secondary); font-size: 1em; opacity: 0.7; }
+        .save-icon { font-size: 5em; margin-bottom: 20px; animation: pulse 2s infinite; }
+        @keyframes pulse { 0%,100% { transform: scale(1); opacity: 0.8; } 50% { transform: scale(1.1); opacity: 1; } }
+        .content-block { line-height: 1.9; font-size: 1.03em; color: var(--text-primary); margin-bottom: 12px; }
+        .content-block strong { color: var(--accent); }
+        .content-block ul { list-style: none; padding-left: 0; }
+        .content-block ul li { padding: 5px 0 5px 24px; position: relative; }
+        .content-block ul li::before { content: "▸"; color: var(--accent); position: absolute; left: 0; }
+        .content-block ol { padding-left: 20px; } .content-block ol li { padding: 4px 0; }
+        .info-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(210px, 1fr)); gap: 12px; margin: 14px 0; }
+        .info-card { background: rgba(233,69,96,0.08); border: 1px solid var(--accent-glow); border-radius: 10px; padding: 16px; text-align: center; transition: transform 0.3s; }
+        .info-card:hover { transform: translateY(-3px); box-shadow: 0 6px 20px var(--accent-glow); }
+        .info-card .card-number { font-size: 1.8em; font-weight: bold; color: var(--accent); margin-bottom: 6px; }
+        .info-card .card-title { font-size: 1.05em; font-weight: bold; margin-bottom: 6px; }
+        .info-card .card-desc { font-size: 0.85em; color: var(--text-secondary); line-height: 1.5; }
+        .code-block { background: var(--code-bg); border: 1px solid #30363d; border-radius: 8px; padding: 14px 20px; margin: 10px 0; overflow-x: auto; font-family: "JetBrains Mono","Fira Code","Cascadia Code","SF Mono",Consolas,monospace; font-size: 0.83em; line-height: 1.65; position: relative; white-space: pre; }
+        .code-block::before { content: "CPP"; position: absolute; top: 8px; right: 14px; font-size: 0.7em; color: var(--text-secondary); opacity: 0.5; }
+        .kw { color: #ff7b72; } .tp { color: #ffa657; } .fn { color: #d2a8ff; } .str { color: #a5d6ff; } .num { color: #79c0ff; } .cm { color: #8b949e; font-style: italic; } .pp { color: #79c0ff; } .bu { color: #7ee787; }
+        .file-vis { font-family: "JetBrains Mono","Fira Code",monospace; background: var(--code-bg); border: 1px solid #30363d; border-radius: 8px; padding: 14px 18px; margin: 10px 0; white-space: pre; line-height: 1.65; color: #a5d6ff; font-size: 0.8em; overflow-x: auto; }
+        .file-vis .hl { color: var(--accent); font-weight: bold; }
+        .compare-table { width: 100%; border-collapse: collapse; margin: 10px 0; font-size: 0.88em; }
+        .compare-table th { background: rgba(233,69,96,0.2); padding: 9px 12px; text-align: left; color: var(--accent); border: 1px solid var(--border); }
+        .compare-table td { padding: 7px 12px; border: 1px solid var(--border); color: var(--text-primary); }
+        .compare-table tr:nth-child(even) td { background: rgba(255,255,255,0.03); }
+        .warning-box { background: rgba(233,69,96,0.1); border-left: 4px solid var(--accent); border-radius: 0 8px 8px 0; padding: 10px 18px; margin: 10px 0; font-size: 0.9em; line-height: 1.7; }
+        .warning-box strong { color: var(--accent); }
+        .summary-grid { display: grid; grid-template-columns: repeat(2,1fr); gap: 10px; margin: 10px 0; }
+        .summary-item { background: rgba(233,69,96,0.08); border: 1px solid rgba(233,69,96,0.2); border-radius: 8px; padding: 10px 14px; }
+        .summary-item .item-label { color: var(--accent); font-weight: bold; font-size: 0.9em; margin-bottom: 3px; }
+        .summary-item .item-desc { color: var(--text-secondary); font-size: 0.8em; line-height: 1.5; }
+        .verse-box { background: rgba(233,69,96,0.08); border: 2px dashed var(--accent-glow); border-radius: 10px; padding: 14px 22px; margin: 14px 0; text-align: center; font-size: 1em; line-height: 2; color: var(--accent); }
+        .roadmap { display: flex; justify-content: center; gap: 8px; margin: 15px 0; flex-wrap: wrap; }
+        .roadmap-step { background: rgba(233,69,96,0.12); border: 1px solid var(--accent-glow); border-radius: 8px; padding: 10px 14px; text-align: center; font-size: 0.85em; min-width: 100px; }
+        .roadmap-step .step-num { color: var(--accent); font-weight: bold; font-size: 1.1em; }
+        .roadmap-arrow { color: var(--accent); font-size: 1.3em; display: flex; align-items: center; }
+        .nav-container { display: flex; justify-content: center; align-items: center; gap: 30px; margin-top: 20px; padding: 10px; }
+        .nav-btn { background: rgba(233,69,96,0.15); border: 1px solid var(--accent); color: var(--accent); padding: 10px 28px; border-radius: 8px; cursor: pointer; font-size: 1em; font-weight: bold; transition: all 0.3s; font-family: inherit; }
+        .nav-btn:hover { background: var(--accent); color: white; box-shadow: 0 4px 15px var(--accent-glow); }
+        .nav-btn:disabled { opacity: 0.3; cursor: not-allowed; pointer-events: none; }
+        .slide-counter { color: var(--text-secondary); font-size: 1em; min-width: 60px; text-align: center; }
+        .dot-nav { display: flex; gap: 8px; justify-content: center; }
+        .dot { width: 10px; height: 10px; border-radius: 50%; background: rgba(255,255,255,0.2); cursor: pointer; transition: all 0.3s; }
+        .dot.active { background: var(--accent); box-shadow: 0 0 10px var(--accent-glow); transform: scale(1.3); }
+        @media (max-width:768px) { .slideshow-container { padding: 10px; } .slide { padding: 22px 18px; min-height: auto; } .slide-title { font-size: 1.3em; } .title-slide h1 { font-size: 1.8em; } .info-grid { grid-template-columns: 1fr; } .summary-grid { grid-template-columns: 1fr; } .code-block { font-size: 0.68em; padding: 8px 10px; } .roadmap { flex-direction: column; align-items: center; } .roadmap-arrow { transform: rotate(90deg); } .nav-btn { padding: 8px 16px; font-size: 0.85em; } }
+    </style>
+</head>
+<body>
+<div class="slideshow-container">
+
+    <!-- Slide 1: Title -->
+    <div class="slide title-slide active">
+        <div class="save-icon">💾</div>
+        <h1>持久化</h1>
+        <p class="subtitle-big">文件读写与完整发布</p>
+        <p class="lesson-info">4节小课 · 第4课 | 从零构建 CLI 任务管理器</p>
+    </div>
+
+    <!-- Slide 2: 问题引入 -->
+    <div class="slide">
+        <div class="slide-title">致命问题：数据去哪了？</div>
+        <div class="content-block">
+            <p>前三节课，我们做出了一个功能齐全的任务管理器。但有一个<strong>致命问题</strong>：</p>
+        </div>
+        <div class="file-vis">
+<span class="hl">$ ./todo</span>
+  添加了 5 个任务... 标记完成了 3 个...
+  退出程序。
+
+<span class="hl">$ ./todo</span>  ← 重新打开
+  <span style="color:#ff7b72;">📭 暂无任务！</span>
+  ↑ 数据全丢了！😱
+        </div>
+        <div class="content-block" style="margin-top:12px;">
+            <p>因为数据只存在<strong>内存</strong>里，程序关闭后内存就释放了。</p>
+            <p style="color:var(--accent);">🎯 解决方案：<strong>持久化（Persistence）</strong>——把数据写入硬盘上的文件！</p>
+        </div>
+    </div>
+
+    <!-- Slide 3: 文件流 -->
+    <div class="slide">
+        <div class="slide-title">文件流 —— 与文件对话的桥梁</div>
+        <div class="content-block">
+            <p>C++ 通过<strong>文件流对象</strong>读写文件，需要包含 <code>&lt;fstream&gt;</code> 头文件。</p>
+        </div>
+        <table class="compare-table">
+            <thead><tr><th>类</th><th>用途</th><th>类比</th><th>关键方法</th></tr></thead>
+            <tbody>
+                <tr><td style="color:#7ee787;"><code>ofstream</code></td><td>写文件（Output）</td><td>把数据"倒"进文件</td><td><code>open(), &lt;&lt;, close()</code></td></tr>
+                <tr><td style="color:#79c0ff;"><code>ifstream</code></td><td>读文件（Input）</td><td>从文件"取"出数据</td><td><code>open(), getline(), close()</code></td></tr>
+                <tr><td style="color:#d2a8ff;"><code>fstream</code></td><td>读写文件</td><td>可读可写</td><td>上述两者之和</td></tr>
+            </tbody>
+        </table>
+        <div class="code-block"><span class="pp">#include</span> <span class="str">&lt;fstream&gt;</span>  <span class="cm">// 文件操作必备</span>
+
+<span class="cm">// 写文件</span>
+<span class="tp">ofstream</span> outFile(<span class="str">"tasks.txt"</span>);   <span class="cm">// 创建/打开文件用于写入</span>
+outFile &lt;&lt; <span class="str">"Hello, 文件！"</span> &lt;&lt; endl;  <span class="cm">// 像 cout 一样写入</span>
+outFile.<span class="fn">close</span>();                      <span class="cm">// 关闭文件（好习惯！）</span>
+
+<span class="cm">// 读文件</span>
+<span class="tp">ifstream</span> inFile(<span class="str">"tasks.txt"</span>);      <span class="cm">// 打开文件用于读取</span>
+<span class="tp">string</span> line;
+<span class="fn">getline</span>(inFile, line);               <span class="cm">// 像 cin 一样读取</span>
+inFile.<span class="fn">close</span>();</div>
+    </div>
+
+    <!-- Slide 4: 写入文件 -->
+    <div class="slide">
+        <div class="slide-title">保存数据 —— 把任务写入文件</div>
+        <div class="code-block"><span class="kw">void</span> <span class="fn">saveToFile</span>() {
+    <span class="tp">ofstream</span> file(<span class="str">"tasks.txt"</span>);      <span class="cm">// 创建/打开文件</span>
+
+    <span class="kw">if</span> (!file.<span class="fn">is_open</span>()) {            <span class="cm">// 检查是否成功打开</span>
+        cout &lt;&lt; <span class="str">"❌ 无法保存！"</span> &lt;&lt; endl;
+        <span class="kw">return</span>;
+    }
+
+    <span class="cm">// 逐行写入：id|title|done|priority</span>
+    <span class="kw">for</span> (<span class="kw">int</span> i = <span class="num">0</span>; i &lt; tasks.<span class="fn">size</span>(); i++) {
+        file &lt;&lt; tasks[i].id &lt;&lt; <span class="str">"|"</span>
+             &lt;&lt; tasks[i].title &lt;&lt; <span class="str">"|"</span>
+             &lt;&lt; tasks[i].done &lt;&lt; <span class="str">"|"</span>
+             &lt;&lt; tasks[i].priority &lt;&lt; endl;
+    }
+
+    file.<span class="fn">close</span>();
+    cout &lt;&lt; <span class="str">"✓ 已保存 "</span> &lt;&lt; tasks.<span class="fn">size</span>() &lt;&lt; <span class="str">" 条任务。"</span> &lt;&lt; endl;
+}</div>
+        <div class="file-vis">
+<span style="color:var(--accent);">tasks.txt 内容示例：</span>
+<span class="hl">1</span>|<span style="color:#7ee787;">完成数学作业</span>|<span class="hl">0</span>|<span style="color:#79c0ff;">1</span>
+<span class="hl">2</span>|<span style="color:#7ee787;">背英语单词</span>|<span class="hl">1</span>|<span style="color:#79c0ff;">2</span>
+<span class="hl">3</span>|<span style="color:#7ee787;">跑步30分钟</span>|<span class="hl">0</span>|<span style="color:#79c0ff;">3</span>
+  ↑id  ↑标题          ↑done ↑优先级
+        </div>
+        <div class="content-block">
+            <p><strong>为什么用 | 分隔？</strong>任务标题可能含空格，用 <code>|</code> 作为分隔符可以避免解析歧义。</p>
+        </div>
+    </div>
+
+    <!-- Slide 5: 读取与解析 -->
+    <div class="slide">
+        <div class="slide-title">读取数据 —— 解析文件还原任务</div>
+        <div class="code-block"><span class="kw">void</span> <span class="fn">loadFromFile</span>() {
+    <span class="tp">ifstream</span> file(<span class="str">"tasks.txt"</span>);
+    <span class="kw">if</span> (!file.<span class="fn">is_open</span>()) {            <span class="cm">// 首次使用，没文件正常</span>
+        cout &lt;&lt; <span class="str">"📝 首次使用，创建新列表。"</span> &lt;&lt; endl;
+        <span class="kw">return</span>;
+    }
+
+    tasks.<span class="fn">clear</span>();                    <span class="cm">// 清空现有数据</span>
+    <span class="tp">string</span> line;
+    <span class="kw">while</span> (<span class="fn">getline</span>(file, line)) {    <span class="cm">// 逐行读取</span>
+        <span class="kw">if</span> (line.<span class="fn">empty</span>()) <span class="kw">continue</span>;   <span class="cm">// 跳过空行</span>
+
+        <span class="cm">// 按 | 分割字符串</span>
+        <span class="tp">Task</span> t;
+        <span class="kw">int</span> p1 = line.<span class="fn">find</span>(<span class="str">'|'</span>);
+        <span class="kw">int</span> p2 = line.<span class="fn">find</span>(<span class="str">'|'</span>, p1 + <span class="num">1</span>);
+        <span class="kw">int</span> p3 = line.<span class="fn">find</span>(<span class="str">'|'</span>, p2 + <span class="num">1</span>);
+
+        t.id       = <span class="fn">stoi</span>(line.<span class="fn">substr</span>(<span class="num">0</span>, p1));
+        t.title    = line.<span class="fn">substr</span>(p1+<span class="num">1</span>, p2-p1-<span class="num">1</span>);
+        t.done     = (line.<span class="fn">substr</span>(p2+<span class="num">1</span>, p3-p2-<span class="num">1</span>) == <span class="str">"1"</span>);
+        t.priority = <span class="fn">stoi</span>(line.<span class="fn">substr</span>(p3 + <span class="num">1</span>));
+
+        tasks.<span class="fn">push_back</span>(t);
+    }
+    file.<span class="fn">close</span>();
+    <span class="kw">if</span> (!tasks.<span class="fn">empty</span>()) nextId = tasks.<span class="fn">back</span>().id + <span class="num">1</span>;
+}</div>
+    </div>
+
+    <!-- Slide 6: 解析可视化 -->
+    <div class="slide">
+        <div class="slide-title">字符串解析 —— 拆解"|"分隔的数据行</div>
+        <div class="file-vis">
+原始行："<span class="hl">1</span>|<span style="color:#7ee787;">完成数学作业</span>|<span class="hl">0</span>|<span style="color:#79c0ff;">1</span>"
+        │  │            │  │
+        │  │            │  └→ p3之后："<span style="color:#79c0ff;">1</span>" → stoi → <span class="hl">priority = 1</span>
+        │  │            └→ p2~p3："<span class="hl">0</span>" →=="1"? → <span class="hl">done = false</span>
+        │  └→ p1~p2："<span style="color:#7ee787;">完成数学作业</span>" → <span class="hl">title</span>
+        └→ 开头~p1："<span class="hl">1</span>" → stoi → <span class="hl">id = 1</span>
+        </div>
+        <table class="compare-table" style="margin-top:15px;">
+            <thead><tr><th>操作</th><th>代码</th><th>说明</th></tr></thead>
+            <tbody>
+                <tr><td>查找分隔符</td><td><code>line.find('|')</code></td><td>返回第一个 | 的位置</td></tr>
+                <tr><td>继续查找</td><td><code>line.find('|', pos+1)</code></td><td>从指定位置向后找</td></tr>
+                <tr><td>截取子串</td><td><code>line.substr(start, len)</code></td><td>截取一段字符串</td></tr>
+                <tr><td>转整数</td><td><code>stoi(str)</code></td><td>"123" → 123</td></tr>
+                <tr><td>转布尔</td><td><code>str == "1"</code></td><td>"1" → true, "0" → false</td></tr>
+            </tbody>
+        </table>
+    </div>
+
+    <!-- Slide 7: 自动保存 & 自动加载 -->
+    <div class="slide">
+        <div class="slide-title">自动保存 + 自动加载 = 完美体验</div>
+        <div class="info-grid">
+            <div class="info-card">
+                <div class="card-number">🔄</div>
+                <div class="card-title">启动时自动加载</div>
+                <div class="card-desc">main() 开头调用 loadFromFile()<br>恢复上次的任务数据</div>
+            </div>
+            <div class="info-card">
+                <div class="card-number">💾</div>
+                <div class="card-title">修改后自动保存</div>
+                <div class="card-desc">addTask / markDone / deleteTask<br>每次操作完自动保存</div>
+            </div>
+            <div class="info-card">
+                <div class="card-number">🚪</div>
+                <div class="card-title">退出时保存</div>
+                <div class="card-desc">程序退出前最后保存一次<br>确保数据万无一失</div>
+            </div>
+        </div>
+        <div class="code-block"><span class="kw">int</span> <span class="fn">main</span>() {
+    <span class="fn">loadFromFile</span>();  <span class="cm">// ★ 启动时加载</span>
+    <span class="kw">int</span> choice;
+    <span class="kw">do</span> {
+        <span class="fn">showMenu</span>(); cin &gt;&gt; choice;
+        <span class="kw">switch</span> (choice) {
+            <span class="kw">case</span> <span class="num">1</span>: <span class="fn">addTask</span>();    <span class="kw">break</span>;  <span class="cm">// 内部自动保存</span>
+            <span class="kw">case</span> <span class="num">3</span>: <span class="fn">markDone</span>();   <span class="kw">break</span>;  <span class="cm">// 内部自动保存</span>
+            <span class="kw">case</span> <span class="num">4</span>: <span class="fn">deleteTask</span>(); <span class="kw">break</span>;  <span class="cm">// 内部自动保存</span>
+            <span class="kw">case</span> <span class="num">0</span>: <span class="fn">saveToFile</span>();  <span class="kw">break</span>;   <span class="cm">// ★ 退出时保存</span>
+        }
+    } <span class="kw">while</span> (choice != <span class="num">0</span>);
+}</div>
+    </div>
+
+    <!-- Slide 8: ANSI 颜色 -->
+    <div class="slide">
+        <div class="slide-title">锦上添花 —— 终端彩色输出</div>
+        <div class="content-block">
+            <p>使用 <strong>ANSI 转义码</strong>让终端输出带颜色：</p>
+        </div>
+        <div class="code-block"><span class="cm">// 定义颜色常量</span>
+<span class="kw">const</span> <span class="tp">string</span> RED    = <span class="str">"\033[31m"</span>;
+<span class="kw">const</span> <span class="tp">string</span> GREEN  = <span class="str">"\033[32m"</span>;
+<span class="kw">const</span> <span class="tp">string</span> YELLOW = <span class="str">"\033[33m"</span>;
+<span class="kw">const</span> <span class="tp">string</span> CYAN   = <span class="str">"\033[36m"</span>;
+<span class="kw">const</span> <span class="tp">string</span> RESET  = <span class="str">"\033[0m"</span>;    <span class="cm">// ★ 用完颜色要重置！</span>
+
+<span class="cm">// 使用示例</span>
+cout &lt;&lt; RED   &lt;&lt; <span class="str">"❌ 错误！"</span>    &lt;&lt; RESET &lt;&lt; endl;
+cout &lt;&lt; GREEN &lt;&lt; <span class="str">"✓ 成功！"</span>    &lt;&lt; RESET &lt;&lt; endl;
+cout &lt;&lt; YELLOW &lt;&lt; <span class="str">"⚠ 警告！"</span> &lt;&lt; RESET &lt;&lt; endl;</div>
+        <div class="warning-box">
+            <strong>⚠️ 注意：</strong>ANSI 转义码在现代终端（macOS Terminal、Linux、Windows Terminal）都能正常工作，但旧版 Windows CMD 可能不支持。可以用 <code>#ifdef _WIN32</code> 做平台兼容处理。
+        </div>
+    </div>
+
+    <!-- Slide 9: 编译发布 -->
+    <div class="slide">
+        <div class="slide-title">编译与发布 —— 你的第一个可执行程序</div>
+        <div class="file-vis">
+<span class="hl">编译：</span>
+$ g++ -std=c++11 lesson_cli_04_文件持久化.cpp -o todo
+
+<span class="hl">运行：</span>
+$ ./todo
+
+<span class="hl">文件结构：</span>
+./todo          ← 可执行程序
+./tasks.txt     ← 数据文件（自动创建）
+        </div>
+        <div class="content-block" style="margin-top:15px;">
+            <p><strong>🎉 一个完整、实用的 CLI 工具诞生了！</strong></p>
+        </div>
+    </div>
+
+    <!-- Slide 10: 四课回顾 -->
+    <div class="slide">
+        <div class="slide-title">四节课回顾 —— 你构建了什么？</div>
+        <div class="roadmap">
+            <div class="roadmap-step"><div class="step-num">🧱 第1课</div>程序骨架<br>菜单 + 循环 + 输入</div>
+            <div class="roadmap-arrow">→</div>
+            <div class="roadmap-step"><div class="step-num">📦 第2课</div>数据模型<br>struct + vector</div>
+            <div class="roadmap-arrow">→</div>
+            <div class="roadmap-step"><div class="step-num">🔧 第3课</div>数据操作<br>查找 + 删改 + 统计</div>
+            <div class="roadmap-arrow">→</div>
+            <div class="roadmap-step"><div class="step-num">💾 第4课</div>持久化<br>文件读写 + 发布</div>
+        </div>
+        <table class="compare-table" style="margin-top:18px;">
+            <thead><tr><th>✅ 功能</th><th>课程</th><th>✅ 功能</th><th>课程</th></tr></thead>
+            <tbody>
+                <tr><td>菜单系统 + 输入处理</td><td>第1课</td><td>删除任务（含确认）</td><td>第3课</td></tr>
+                <tr><td>添加任务（标题+优先级）</td><td>第2课</td><td>筛选待完成任务</td><td>第3课</td></tr>
+                <tr><td>格式化表格输出</td><td>第2课</td><td>任务统计 + 进度条</td><td>第3课</td></tr>
+                <tr><td>标记完成/取消完成</td><td>第3课</td><td>文件保存/加载/彩色输出</td><td>第4课</td></tr>
+            </tbody>
+        </table>
+    </div>
+
+    <!-- Slide 11: 课后练习 -->
+    <div class="slide">
+        <div class="slide-title">课后练习 & 扩展方向</div>
+        <div class="content-block">
+            <p><strong>练习1：填空补全</strong> — 解析代码：</p>
+        </div>
+        <div class="code-block"><span class="tp">string</span> line = <span class="str">"5|买水果|1|1"</span>;
+<span class="kw">int</span> p1 = line.<span class="fn">find</span>(<span class="str">'|'</span>);
+<span class="kw">int</span> p2 = line.<span class="fn">find</span>(<span class="str">'|'</span>, <span style="color:var(--accent);border-bottom:2px solid var(--accent);">&nbsp;&nbsp;&nbsp;</span>);    <span class="cm">// 填空1</span>
+t.id = <span class="fn">stoi</span>(line.<span class="fn">substr</span>(<span class="num">0</span>, <span style="color:var(--accent);border-bottom:2px solid var(--accent);">&nbsp;&nbsp;&nbsp;</span>));   <span class="cm">// 填空2</span>
+t.title = line.<span class="fn">substr</span>(<span style="color:var(--accent);border-bottom:2px solid var(--accent);">&nbsp;&nbsp;&nbsp;</span>, <span style="color:var(--accent);border-bottom:2px solid var(--accent);">&nbsp;&nbsp;&nbsp;</span>); <span class="cm">// 填空3,4</span></div>
+        <div class="content-block" style="margin-top:8px;">
+            <p><strong>练习2：改进数据格式</strong> — 如果任务标题含 <code>|</code> 怎么办？</p>
+        </div>
+        <div class="content-block">
+            <p><strong>练习3：给通讯录加持久化</strong> — 让联系人数据保存到文件。</p>
+        </div>
+        <div class="content-block">
+            <p style="color:var(--accent);"><strong>🌟 扩展方向（继续探索）：</strong></p>
+            <ul>
+                <li>添加"编辑任务标题"功能</li>
+                <li>按优先级排序显示</li>
+                <li>添加"搜索"功能（按关键字查找）</li>
+                <li>支持多个任务列表（如 work.txt / personal.txt）</li>
+            </ul>
+        </div>
+    </div>
+
+    <!-- Slide 12: 本课小结 + 系列总结 -->
+    <div class="slide">
+        <div class="slide-title">本课小结 & 系列总结</div>
+        <div class="summary-grid">
+            <div class="summary-item"><div class="item-label">📝 ofstream</div><div class="item-desc">写文件，&lt;&lt; 运算符写入数据</div></div>
+            <div class="summary-item"><div class="item-label">📖 ifstream</div><div class="item-desc">读文件，getline() 逐行读取</div></div>
+            <div class="summary-item"><div class="item-label">📐 文件格式</div><div class="item-desc">用 | 分隔字段，便于解析</div></div>
+            <div class="summary-item"><div class="item-label">🔧 find/substr</div><div class="item-desc">字符串查找和截取</div></div>
+            <div class="summary-item"><div class="item-label">🔢 stoi()</div><div class="item-desc">字符串 → 整数转换</div></div>
+            <div class="summary-item"><div class="item-label">🔄 自动保存/加载</div><div class="item-desc">数据变化即保存，启动即加载</div></div>
+            <div class="summary-item"><div class="item-label">🎨 ANSI 颜色</div><div class="item-desc">\033[31m 等转义码实现彩色</div></div>
+            <div class="summary-item"><div class="item-label">🚀 项目发布</div><div class="item-desc">g++ 编译成可执行文件</div></div>
+        </div>
+        <div class="verse-box">
+            <p>📖 <strong>学习口诀</strong></p>
+            <p style="margin-top:6px;">
+                ofstream 写文件，ifstream 来读取。<br>
+                分隔符串数据，find+substr 拆出来。<br>
+                启动加载退出存，数据永远不丢失。<br>
+                四课完成小工具，CLI 编程你已入门！
+            </p>
+        </div>
+        <div class="content-block" style="text-align:center;font-size:0.9em;color:var(--accent);margin-top:8px;">
+            <p>🎉 <strong>恭喜完成全部 4 节课！</strong></p>
+            <p style="color:var(--text-secondary);">继续前进，用代码创造更多实用的工具吧！🚀</p>
+        </div>
+    </div>
+
+</div>
+
+<div class="nav-container">
+    <button class="nav-btn" id="prevBtn" onclick="changeSlide(-1)">⬅ 上一页</button>
+    <div style="text-align:center;"><div class="slide-counter" id="slideCounter">1/12</div><div class="dot-nav" id="dotNav"></div></div>
+    <button class="nav-btn" id="nextBtn" onclick="changeSlide(1)">下一页 ➡</button>
+</div>
+
+<script>
+    let currentSlide = 0; const slides = document.querySelectorAll('.slide'); const totalSlides = slides.length;
+    const dotNav = document.getElementById('dotNav'); const slideCounter = document.getElementById('slideCounter');
+    const prevBtn = document.getElementById('prevBtn'); const nextBtn = document.getElementById('nextBtn');
+    for (let i = 0; i < totalSlides; i++) { const dot = document.createElement('span'); dot.className = 'dot' + (i===0?' active':''); dot.onclick = () => goToSlide(i); dotNav.appendChild(dot); }
+    function showSlide(i) { slides.forEach((s,j)=>s.classList.toggle('active',j===i)); dotNav.querySelectorAll('.dot').forEach((d,j)=>d.classList.toggle('active',j===i)); slideCounter.textContent=(i+1)+'/'+totalSlides; prevBtn.disabled=(i===0); nextBtn.disabled=(i===totalSlides-1); }
+    function changeSlide(d) { const n=currentSlide+d; if(n>=0&&n<totalSlides){currentSlide=n;showSlide(n);} }
+    function goToSlide(i) { currentSlide=i; showSlide(i); }
+    document.addEventListener('keydown',(e)=>{if(e.key==='ArrowRight'||e.key==='ArrowDown')changeSlide(1);if(e.key==='ArrowLeft'||e.key==='ArrowUp')changeSlide(-1);if(e.key==='Home')goToSlide(0);if(e.key==='End')goToSlide(totalSlides-1);});
+    let touchStartX=0; document.addEventListener('touchstart',(e)=>{touchStartX=e.changedTouches[0].screenX;}); document.addEventListener('touchend',(e)=>{const diff=e.changedTouches[0].screenX-touchStartX;if(Math.abs(diff)>50)changeSlide(diff<0?1:-1);});
+    showSlide(0);
+</script>
+</body>
+</html>

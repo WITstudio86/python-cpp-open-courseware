@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>第25课：递归入门——函数调用自己</title>
+    <title>第25课：数组初识——数据排排队</title>
     <style>
         :root {
             --bg-primary: #1a1a2e;
@@ -107,7 +107,7 @@
             font-size: 1em;
             opacity: 0.7;
         }
-        .recursion-icon {
+        .array-icon {
             font-size: 5em;
             margin-bottom: 20px;
             animation: pulse 2s infinite;
@@ -140,6 +140,13 @@
             color: var(--accent);
             position: absolute;
             left: 0;
+        }
+        .content-block ol {
+            padding-left: 20px;
+        }
+        .content-block ol li {
+            padding: 6px 0;
+            color: var(--text-primary);
         }
 
         /* Info Cards */
@@ -212,8 +219,8 @@
         .pp { color: #79c0ff; }        /* preprocessor */
         .bu { color: #7ee787; }        /* builtin */
 
-        /* Tree / Stack Visualization */
-        .tree-vis {
+        /* Array Visualization */
+        .array-vis {
             font-family: "JetBrains Mono", "Fira Code", monospace;
             background: var(--code-bg);
             border: 1px solid #30363d;
@@ -225,35 +232,24 @@
             color: #7ee787;
             font-size: 0.85em;
             overflow-x: auto;
-        }
-        .tree-vis .highlight { color: var(--accent); font-weight: bold; }
-
-        /* Call Stack Animation */
-        .stack-demo {
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            gap: 4px;
-            margin: 20px auto;
-            font-family: "JetBrains Mono", monospace;
-            max-width: 400px;
-        }
-        .stack-frame {
-            background: rgba(233, 69, 96, 0.15);
-            border: 1px solid var(--accent-glow);
-            border-radius: 6px;
-            padding: 8px 16px;
-            color: var(--accent);
-            font-size: 0.85em;
-            width: 100%;
             text-align: center;
-            animation: stackPush 0.4s ease-out;
         }
-        @keyframes stackPush {
-            from { transform: translateY(-15px); opacity: 0; }
-            to { transform: translateY(0); opacity: 1; }
+        .array-vis .highlight { color: var(--accent); font-weight: bold; }
+
+        /* Roster Table Visualization */
+        .roster-demo {
+            font-family: "JetBrains Mono", "Fira Code", monospace;
+            background: var(--code-bg);
+            border: 1px solid #30363d;
+            border-radius: 8px;
+            padding: 15px 20px;
+            margin: 10px 0;
+            white-space: pre;
+            line-height: 1.7;
+            color: #a5d6ff;
+            font-size: 0.8em;
+            overflow-x: auto;
         }
-        .stack-arrow { color: var(--text-secondary); font-size: 1.2em; }
 
         /* Compare Table */
         .compare-table {
@@ -276,6 +272,79 @@
         }
         .compare-table tr:nth-child(even) td {
             background: rgba(255,255,255,0.03);
+        }
+
+        /* Index-Standard Number Table */
+        .index-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 15px 0;
+            font-size: 0.9em;
+            text-align: center;
+        }
+        .index-table th {
+            background: rgba(233, 69, 96, 0.2);
+            padding: 10px 12px;
+            color: var(--accent);
+            border: 1px solid var(--border);
+        }
+        .index-table td {
+            padding: 8px 12px;
+            border: 1px solid var(--border);
+            color: var(--text-primary);
+            font-family: "JetBrains Mono", monospace;
+        }
+
+        /* Warning Box */
+        .warning-box {
+            background: rgba(233, 69, 96, 0.1);
+            border-left: 4px solid var(--accent);
+            border-radius: 0 8px 8px 0;
+            padding: 15px 20px;
+            margin: 15px 0;
+            font-size: 0.95em;
+            line-height: 1.7;
+        }
+        .warning-box strong {
+            color: var(--accent);
+        }
+
+        /* Summary Grid */
+        .summary-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 12px;
+            margin: 15px 0;
+        }
+        .summary-item {
+            background: rgba(233, 69, 96, 0.08);
+            border: 1px solid rgba(233, 69, 96, 0.2);
+            border-radius: 10px;
+            padding: 14px 18px;
+        }
+        .summary-item .item-label {
+            color: var(--accent);
+            font-weight: bold;
+            font-size: 0.95em;
+            margin-bottom: 4px;
+        }
+        .summary-item .item-desc {
+            color: var(--text-secondary);
+            font-size: 0.85em;
+            line-height: 1.5;
+        }
+
+        /* Verse Box */
+        .verse-box {
+            background: rgba(233, 69, 96, 0.08);
+            border: 2px dashed var(--accent-glow);
+            border-radius: 12px;
+            padding: 20px 30px;
+            margin: 20px 0;
+            text-align: center;
+            font-size: 1.1em;
+            line-height: 2;
+            color: var(--accent);
         }
 
         /* Navigation */
@@ -342,8 +411,10 @@
             .title-slide h1 { font-size: 2em; }
             .info-grid { grid-template-columns: 1fr; }
             .code-block { font-size: 0.75em; padding: 12px 14px; }
-            .tree-vis { font-size: 0.7em; }
+            .array-vis { font-size: 0.7em; }
+            .roster-demo { font-size: 0.65em; }
             .nav-btn { padding: 8px 18px; font-size: 0.9em; }
+            .summary-grid { grid-template-columns: 1fr; }
         }
     </style>
 </head>
@@ -351,190 +422,361 @@
 
 <div class="slideshow-container">
 
-    <!-- Slide 1: Title -->
+    <!-- ============================================================ -->
+    <!-- Slide 1: 标题页 -->
+    <!-- ============================================================ -->
     <div class="slide title-slide active">
-        <div class="recursion-icon">🔄</div>
-        <h1>递归入门</h1>
-        <p class="subtitle-big">函数调用自己</p>
+        <div class="array-icon">📋</div>
+        <h1>数组初识</h1>
+        <p class="subtitle-big">数据排排队 —— 制作班级花名册</p>
         <p class="lesson-info">第25课 | C++ 算法提高</p>
     </div>
 
-    <!-- Slide 2: What is Recursion? -->
+    <!-- ============================================================ -->
+    <!-- Slide 2: 课程导入 -->
+    <!-- ============================================================ -->
     <div class="slide">
-        <div class="slide-title">什么是递归？</div>
+        <div class="slide-title">课程导入：为什么要用数组？</div>
         <div class="content-block">
-            <p><strong>递归</strong>（Recursion）是一种程序设计技巧，指一个函数在定义中<strong>直接或间接地调用自身</strong>。</p>
-        </div>
-        <div class="content-block">
-            <p><strong>生活中的递归例子：</strong></p>
-            <ul>
-                <li><strong>套娃</strong>——打开一个套娃，里面还有一个小一号的套娃，直到最小的那个。</li>
-                <li><strong>镜子对镜子</strong>——两面镜子相对放置，会看到无限嵌套的影像。</li>
-                <li><strong>讲故事</strong>——"从前有座山，山里有座庙，庙里有个老和尚在讲故事，讲的什么故事呢？从前有座山……"</li>
-                <li><strong>文件夹嵌套</strong>——文件夹里面可以有文件夹，一层一层嵌套下去。</li>
-            </ul>
+            <p>想象一下<strong>体育课</strong>上的场景：老师让全班同学排成一列纵队，每个人站在自己固定的位置上。老师说<strong>"第3位同学出列"</strong>，那位同学就马上站出来。为什么这么方便？因为大家排好了队，每个人都有固定的位置编号！</p>
         </div>
         <div class="content-block">
-            <p>在计算机科学中，递归是解决<strong>具有自相似结构问题</strong>的利器。一个问题如果可以分解为更小的同类子问题，就可以用递归来解决。</p>
+            <p>在C++编程中，如果我们要处理<strong>40位同学的考试成绩</strong>、<strong>30位同学的名字</strong>、<strong>50位同学的身高</strong>……为每一个数据都单独创建一个变量，那得写多少代码呀！</p>
         </div>
-    </div>
-
-    <!-- Slide 3: Three Elements of Recursion -->
-    <div class="slide">
-        <div class="slide-title">递归三要素</div>
-        <div class="info-grid">
-            <div class="info-card">
-                <div class="card-number">①</div>
-                <div class="card-title">终止条件</div>
-                <div class="card-desc">明确"什么时候停下来"<br>否则会陷入无限递归<br>→ 导致栈溢出（Stack Overflow）</div>
-            </div>
-            <div class="info-card">
-                <div class="card-number">②</div>
-                <div class="card-title">递归公式</div>
-                <div class="card-desc">明确"问题如何缩小"<br>将大问题转化为更小的同类问题<br>→ 每次递归都向终止条件靠近</div>
-            </div>
-            <div class="info-card">
-                <div class="card-number">③</div>
-                <div class="card-title">递归调用</div>
-                <div class="card-desc">明确"函数如何调用自己"<br>用更小的参数调用自身<br>→ 将子问题的结果组合为原问题的解</div>
-            </div>
+        <div class="content-block">
+            <p>于是，<strong>数组（Array）</strong>就诞生了——它就像给数据排排队，让一组<strong>相同类型</strong>的数据整齐地站成一排，每个数据都有自己固定的位置编号，访问起来又快又方便！</p>
         </div>
-        <div class="content-block" style="margin-top:20px;">
-            <p><strong>记忆口诀：</strong></p>
+        <div class="content-block" style="text-align:center;margin-top:20px;">
             <p style="color:var(--accent);font-size:1.1em;">
-                递归三要素，一个不能少 —— 结束有终点，递推有公式，自己调用自己！
+                🎯 本节课目标：用数组制作一个<strong>班级花名册</strong>程序！
             </p>
         </div>
     </div>
 
-    <!-- Slide 4: Factorial Recursion -->
+    <!-- ============================================================ -->
+    <!-- Slide 3: 什么是数组？ -->
+    <!-- ============================================================ -->
     <div class="slide">
-        <div class="slide-title">阶乘递归 —— 最经典的递归例子</div>
+        <div class="slide-title">什么是数组？</div>
         <div class="content-block">
-            <p><strong>定义：</strong>n! = n × (n-1) × (n-2) × ... × 1，特别地 0! = 1</p>
-            <p><strong>递归公式：</strong>n! = n × (n-1)! ，终止条件：n == 0 时返回 1</p>
+            <p>数组是一组<strong>相同类型</strong>数据的集合。这些数据在内存中<strong>连续存放</strong>，每一个数据称为数组的一个<strong>元素（Element）</strong>。每个元素都有一个<strong>下标（Index）</strong>，表示它在数组中的位置。</p>
         </div>
-        <div class="code-block"><span class="kw">int</span> <span class="fn">factorial</span>(<span class="kw">int</span> n) {
-    <span class="comment">cm">// 终止条件：0的阶乘为1</span>
-    <span class="kw">if</span> (n == <span class="num">0</span>) <span class="kw">return</span> <span class="num">1</span>;
-    <span class="comment">cm">// 递归公式：n! = n * (n-1)!</span>
-    <span class="kw">return</span> n * <span class="fn">factorial</span>(n - <span class="num">1</span>);
-}</div>
-        <div class="tree-vis">
-<span class="highlight">factorial(3)</span>
-    │
-    ├─→ 3 * <span class="highlight">factorial(2)</span>
-    │        │
-    │        ├─→ 2 * <span class="highlight">factorial(1)</span>
-    │        │        │
-    │        │        ├─→ 1 * <span class="highlight">factorial(0)</span>
-    │        │        │        │
-    │        │        │        └─→ 返回 1    ← 终止条件！
-    │        │        │
-    │        │        └─→ 返回 1 * 1 = 1
-    │        │
-    │        └─→ 返回 2 * 1 = 2
-    │
-    └─→ 返回 3 * 2 = 6
+        <div class="content-block">
+            <p>可以把数组想象成一列<strong>小火车</strong>🚂：火车头后面挂着一节节车厢，每节车厢装着一个数据，车厢的编号就是下标。</p>
+        </div>
+        <div class="array-vis">
+<span class="highlight">数组 scores：</span>
+┌──────┬──────┬──────┬──────┬──────┐
+│  98  │  85  │  92  │  78  │  95  │  ← 元素的值
+├──────┼──────┼──────┼──────┼──────┤
+│ [0]  │ [1]  │ [2]  │ [3]  │ [4]  │  ← <span class="highlight">下标（从0开始！）</span>
+└──────┴──────┴──────┴──────┴──────┘
+        </div>
+        <div class="warning-box">
+            <strong>⚠️ 关键记忆：</strong>在C++中，数组下标<strong>从 0 开始</strong>，而不是从 1 开始！这是初学者最容易出错的地方。
         </div>
     </div>
 
-    <!-- Slide 5: Fibonacci Recursion -->
+    <!-- ============================================================ -->
+    <!-- Slide 4: 数组的声明 -->
+    <!-- ============================================================ -->
     <div class="slide">
-        <div class="slide-title">斐波那契递归 —— 兔子数列</div>
+        <div class="slide-title">数组的声明</div>
         <div class="content-block">
-            <p><strong>斐波那契数列：</strong>1, 1, 2, 3, 5, 8, 13, 21, ...</p>
-            <p><strong>递推公式：</strong>F(n) = F(n-1) + F(n-2)，F(1)=1, F(2)=1</p>
+            <p>声明一个数组需要指定三个要素：<strong>数据类型</strong>、<strong>数组名</strong>、<strong>元素个数</strong>。</p>
         </div>
-        <div class="code-block"><span class="kw">int</span> <span class="fn">fib</span>(<span class="kw">int</span> n) {
-    <span class="comment">cm">// 终止条件：前两项都是1</span>
-    <span class="kw">if</span> (n == <span class="num">1</span> || n == <span class="num">2</span>) <span class="kw">return</span> <span class="num">1</span>;
-    <span class="comment">cm">// 递归：F(n) = F(n-1) + F(n-2)</span>
-    <span class="kw">return</span> <span class="fn">fib</span>(n - <span class="num">1</span>) + <span class="fn">fib</span>(n - <span class="num">2</span>);
-}</div>
-        <div class="tree-vis">
-              <span class="highlight">fib(5)</span>
-             /         \
-    <span class="highlight">fib(4)</span>           <span class="highlight">fib(3)</span>
-     /      \          /      \
-<span class="highlight">fib(3)</span>   fib(2)   fib(2)   fib(1)
- /    \     (1)      (1)      (1)
-<span class="highlight">fib(2)</span> fib(1)
-(1)     (1)
-
-→ fib(5) = fib(4)+fib(3) = 3+2 = 5
-        </div>
-        <div class="content-block" style="font-size:0.85em;color:var(--text-secondary);">
-            <p>⚠️ 注意：朴素递归求斐波那契有大量<strong>重复计算</strong>（如fib(2)算了3次），时间复杂度高达O(2ⁿ)。后续课程会学习用记忆化搜索来优化。</p>
+        <div class="code-block"><span class="cm">// 声明格式：</span>
+<span class="tp">数据类型</span> 数组名[元素个数];</div>
+        <div class="code-block"><span class="kw">int</span> scores[<span class="num">40</span>];        <span class="cm">// 声明一个能存40个整数的数组，存放成绩</span>
+<span class="tp">string</span> names[<span class="num">30</span>];      <span class="cm">// 声明一个能存30个字符串的数组，存放名字</span>
+<span class="kw">float</span> heights[<span class="num">50</span>];     <span class="cm">// 声明一个能存50个小数的数组，存放身高</span>
+<span class="kw">double</span> prices[<span class="num">100</span>];    <span class="cm">// 声明一个能存100个双精度小数的数组</span>
+<span class="kw">char</span> letters[<span class="num">26</span>];      <span class="cm">// 声明一个能存26个字符的数组，存放字母</span></div>
+        <div class="warning-box">
+            <strong>⚠️ 注意：</strong>元素个数必须是一个<strong>常量</strong>或<strong>常量表达式</strong>。一旦声明，静态数组的大小就固定了，不能改变。
         </div>
     </div>
 
-    <!-- Slide 6: Call Stack -->
+    <!-- ============================================================ -->
+    <!-- Slide 5: 数组的初始化 -->
+    <!-- ============================================================ -->
     <div class="slide">
-        <div class="slide-title">递归调用栈 —— 背后的魔法</div>
+        <div class="slide-title">数组的初始化（5种方式）</div>
         <div class="content-block">
-            <p>计算机使用<strong>调用栈（Call Stack）</strong>来管理函数调用。每次函数调用都会在栈上压入一个"栈帧"，存储函数的参数、局部变量和返回地址。</p>
+            <p>我们可以在声明数组的同时给它赋初值，使用花括号 <code>{ }</code>：</p>
         </div>
-        <div style="text-align:center;margin:20px 0;color:var(--text-secondary);">以 factorial(3) 为例的调用栈变化：</div>
-        <div class="stack-demo">
-            <div class="stack-frame">factorial(0) → 返回 1</div>
-            <div class="stack-arrow">↑ 返回 ↑</div>
-            <div class="stack-frame">factorial(1) → 等待 1×(结果) → 返回 1</div>
-            <div class="stack-arrow">↑ 返回 ↑</div>
-            <div class="stack-frame">factorial(2) → 等待 2×(结果) → 返回 2</div>
-            <div class="stack-arrow">↑ 返回 ↑</div>
-            <div class="stack-frame">factorial(3) → 等待 3×(结果) → 返回 6</div>
-            <div class="stack-arrow">↑ 调用 ↑</div>
-            <div class="stack-frame" style="background:rgba(233,69,96,0.25);">main()</div>
-        </div>
-        <div class="content-block" style="font-size:0.9em;color:var(--text-secondary);text-align:center;margin-top:10px;">
-            <p>调用时向下生长（压栈），返回时向上收缩（弹栈）</p>
+        <div class="code-block"><span class="cm">// ① 完全初始化：给所有元素赋值</span>
+<span class="kw">int</span> numbers[<span class="num">5</span>] = {<span class="num">10</span>, <span class="num">20</span>, <span class="num">30</span>, <span class="num">40</span>, <span class="num">50</span>};
+
+<span class="cm">// ② 部分初始化：只给前几个赋值，其余自动为 0</span>
+<span class="kw">int</span> nums[<span class="num">5</span>] = {<span class="num">1</span>, <span class="num">2</span>};    <span class="cm">// 相当于 {1, 2, 0, 0, 0}</span>
+
+<span class="cm">// ③ 省略大小：编译器自动计算元素个数</span>
+<span class="kw">int</span> grades[] = {<span class="num">90</span>, <span class="num">85</span>, <span class="num">92</span>, <span class="num">78</span>, <span class="num">95</span>};  <span class="cm">// 自动确定为5个元素</span>
+
+<span class="cm">// ④ 全部初始化为 0</span>
+<span class="kw">int</span> zeros[<span class="num">100</span>] = {<span class="num">0</span>};    <span class="cm">// 所有100个元素都是0</span>
+
+<span class="cm">// ⑤ 字符串数组初始化</span>
+<span class="tp">string</span> names[<span class="num">3</span>] = {<span class="str">"小明"</span>, <span class="str">"小红"</span>, <span class="str">"小刚"</span>};</div>
+        <div class="content-block">
+            <p><strong>特别技巧：</strong>使用 <code>sizeof(数组名) / sizeof(数组名[0])</code> 可以计算出数组的元素个数。</p>
         </div>
     </div>
 
-    <!-- Slide 7: Pros and Cons -->
+    <!-- ============================================================ -->
+    <!-- Slide 6: 下标访问规则 -->
+    <!-- ============================================================ -->
     <div class="slide">
-        <div class="slide-title">递归的优缺点总结</div>
-        <table class="compare-table">
+        <div class="slide-title">下标访问规则（非常重要！）</div>
+        <div class="content-block">
+            <p>在C++中，<strong>数组的下标从 0 开始</strong>。如果数组有 n 个元素，有效下标范围是 <strong>0 ~ n-1</strong>。</p>
+        </div>
+        <table class="index-table">
             <thead>
-                <tr><th style="width:50%;">✅ 优点</th><th style="width:50%;">❌ 缺点</th></tr>
+                <tr><th>第几个</th><th>下标</th><th>访问方式</th><th>示例值</th></tr>
             </thead>
             <tbody>
-                <tr>
-                    <td>代码简洁、优雅，思路清晰</td>
-                    <td>函数调用有开销，效率可能较低</td>
-                </tr>
-                <tr>
-                    <td>天然适合处理树、图等递归结构</td>
-                    <td>深度过大可能导致栈溢出</td>
-                </tr>
-                <tr>
-                    <td>与数学归纳法思维一致，易于证明</td>
-                    <td>可能产生大量重复计算</td>
-                </tr>
-                <tr>
-                    <td>是分治、回溯等高级算法的基础</td>
-                    <td>调试相对困难，需要追踪调用链</td>
-                </tr>
-                <tr>
-                    <td>"将复杂问题简单化"的思维模式</td>
-                    <td>某些问题递归转迭代需要额外技巧</td>
-                </tr>
+                <tr><td>第 1 个</td><td><strong style="color:var(--accent);">0</strong></td><td>arr[0]</td><td>10</td></tr>
+                <tr><td>第 2 个</td><td><strong style="color:var(--accent);">1</strong></td><td>arr[1]</td><td>20</td></tr>
+                <tr><td>第 3 个</td><td><strong style="color:var(--accent);">2</strong></td><td>arr[2]</td><td>30</td></tr>
+                <tr><td>第 4 个</td><td><strong style="color:var(--accent);">3</strong></td><td>arr[3]</td><td>40</td></tr>
+                <tr><td>第 5 个</td><td><strong style="color:var(--accent);">4</strong></td><td>arr[4]</td><td>50</td></tr>
             </tbody>
         </table>
-        <div class="content-block" style="margin-top:15px;text-align:center;">
-            <p style="color:var(--accent);">💡 核心经验：能递归解决的问题，一定是能分解为更小同类子问题的问题。</p>
-            <p style="color:var(--text-secondary);">下节课，我们将学习汉诺塔等更经典的递归问题！</p>
+        <div class="content-block">
+            <p style="text-align:center;color:var(--accent);">
+                📌 第 n 个元素 ↔ 下标 = n - 1
+            </p>
+        </div>
+        <div class="code-block"><span class="kw">int</span> arr[<span class="num">5</span>] = {<span class="num">10</span>, <span class="num">20</span>, <span class="num">30</span>, <span class="num">40</span>, <span class="num">50</span>};
+
+cout &lt;&lt; arr[<span class="num">0</span>];  <span class="cm">// 输出 10（第1个元素）</span>
+arr[<span class="num">2</span>] = <span class="num">100</span>;       <span class="cm">// 把第3个元素改成 100</span></div>
+        <div class="warning-box">
+            <strong>⚠️ 数组越界：</strong>访问 <code>arr[5]</code> 或 <code>arr[-1]</code> 会导致<strong>数组越界</strong>！这就像在5个人的队伍里喊"第6位同学"——没有这个人！C++<strong>不会阻止</strong>你这样做，但结果不可预料，可能导致程序崩溃或得到奇怪的值。
+        </div>
+    </div>
+
+    <!-- ============================================================ -->
+    <!-- Slide 7: 配合循环遍历数组 -->
+    <!-- ============================================================ -->
+    <div class="slide">
+        <div class="slide-title">配合循环遍历数组</div>
+        <div class="content-block">
+            <p>数组和 <strong>for 循环</strong>是天生的好搭档！循环变量 <code>i</code> 从 0 到 n-1，正好遍历数组的每个元素。</p>
+        </div>
+        <div class="code-block"><span class="cm">// ===== 输入5个成绩 =====</span>
+<span class="kw">int</span> scores[<span class="num">5</span>];
+<span class="kw">for</span> (<span class="kw">int</span> i = <span class="num">0</span>; i &lt; <span class="num">5</span>; i++) {
+    cout &lt;&lt; <span class="str">"请输入第"</span> &lt;&lt; i + <span class="num">1</span> &lt;&lt; <span class="str">"个成绩："</span>;
+    cin &gt;&gt; scores[i];
+}
+
+<span class="cm">// ===== 输出所有成绩 =====</span>
+<span class="kw">for</span> (<span class="kw">int</span> i = <span class="num">0</span>; i &lt; <span class="num">5</span>; i++) {
+    cout &lt;&lt; <span class="str">"第"</span> &lt;&lt; i + <span class="num">1</span> &lt;&lt; <span class="str">"个成绩："</span> &lt;&lt; scores[i] &lt;&lt; endl;
+}</div>
+        <div class="content-block">
+            <p><strong>💡 技巧：</strong>循环中显示"第几个"给用户看时，用 <code>i + 1</code> 把下标转成人类习惯的编号（从1开始）。</p>
+        </div>
+        <div class="info-grid">
+            <div class="info-card">
+                <div class="card-number">🔗</div>
+                <div class="card-title">为什么是绝配？</div>
+                <div class="card-desc">循环变量 i 天然对应数组下标<br>0 → 1 → 2 → ... → n-1<br>刚好逐个访问每个元素</div>
+            </div>
+            <div class="info-card">
+                <div class="card-number">⚡</div>
+                <div class="card-title">高效处理</div>
+                <div class="card-desc">无论数组有5个还是500个元素<br>几行代码就能全部处理完<br>这就是"批量处理"的力量</div>
+            </div>
+        </div>
+    </div>
+
+    <!-- ============================================================ -->
+    <!-- Slide 8: 班级花名册 —— 代码示例 -->
+    <!-- ============================================================ -->
+    <div class="slide">
+        <div class="slide-title">综合示例：制作班级花名册</div>
+        <div class="content-block">
+            <p>用三个并行数组存储同学的信息：<strong>姓名</strong>、<strong>年龄</strong>、<strong>爱好</strong></p>
+        </div>
+        <div class="code-block"><span class="cm">// 花名册数据 —— 三个数组，下标对应同一个人</span>
+<span class="tp">string</span> names[<span class="num">5</span>]   = {<span class="str">"小明"</span>, <span class="str">"小红"</span>, <span class="str">"小刚"</span>, <span class="str">"小丽"</span>, <span class="str">"小华"</span>};
+<span class="kw">int</span>    ages[<span class="num">5</span>]    = {<span class="num">11</span>,  <span class="num">10</span>,  <span class="num">12</span>,  <span class="num">11</span>,  <span class="num">10</span>};
+<span class="tp">string</span> hobbies[<span class="num">5</span>] = {<span class="str">"踢足球"</span>, <span class="str">"画画"</span>, <span class="str">"编程"</span>, <span class="str">"跳舞"</span>, <span class="str">"阅读"</span>};
+
+<span class="kw">for</span> (<span class="kw">int</span> i = <span class="num">0</span>; i &lt; <span class="num">5</span>; i++) {
+    cout &lt;&lt; <span class="str">"    "</span> &lt;&lt; i + <span class="num">1</span> &lt;&lt; <span class="str">". "</span> &lt;&lt; names[i]
+         &lt;&lt; <span class="str">"（"</span> &lt;&lt; ages[i] &lt;&lt; <span class="str">"岁）"</span> &lt;&lt; endl;
+}</div>
+        <p style="color:var(--text-secondary);font-size:0.9em;margin-top:10px;">程序输出效果：</p>
+        <div class="roster-demo">
+╔═══════════════════════════════════════════╗
+║         三（1）班 班级花名册              ║
+╠════╦═══════════╦══════╦══════════════════╣
+║ 编号║   姓名    ║ 年龄 ║     爱好         ║
+╠════╬═══════════╬══════╬══════════════════╣
+║  1  ║  小明    ║  11  ║  踢足球          ║
+║  2  ║  小红    ║  10  ║  画画            ║
+║  3  ║  小刚    ║  12  ║  编程            ║
+║  4  ║  小丽    ║  11  ║  跳舞            ║
+║  5  ║  小华    ║  10  ║  阅读            ║
+╚════╩═══════════╩══════╩══════════════════╝
+        </div>
+        <div class="content-block">
+            <p><strong>修改花名册：</strong>小刚转学了，新同学"小强"加入！</p>
+        </div>
+        <div class="code-block">names[<span class="num">2</span>] = <span class="str">"小强"</span>;     <span class="cm">// 修改第3位同学（下标=2）</span>
+ages[<span class="num">2</span>] = <span class="num">12</span>;
+hobbies[<span class="num">2</span>] = <span class="str">"打篮球"</span>;</div>
+    </div>
+
+    <!-- ============================================================ -->
+    <!-- Slide 9: 挑战任务 -->
+    <!-- ============================================================ -->
+    <div class="slide">
+        <div class="slide-title">挑战任务：完整的班级花名册程序</div>
+        <div class="content-block">
+            <p>编写一个<strong>交互式</strong>班级花名册管理程序，要求：</p>
+            <ol>
+                <li>首先询问用户班级有多少人</li>
+                <li>使用数组存储所有同学的名字（最多100人）</li>
+                <li>让用户逐个输入每位同学的名字</li>
+                <li>以美观的表格格式显示完整花名册</li>
+                <li>允许用户修改某位同学的名字（输入编号和新名字）</li>
+            </ol>
+        </div>
+        <div class="content-block">
+            <p><strong>💡 提示：</strong></p>
+            <ul>
+                <li>数组大小必须是常量，可以声明 <code>string roster[100]</code> 然后用其中一部分</li>
+                <li>修改名字时注意：<strong>下标 = 编号 - 1</strong></li>
+                <li>用 <code>cin.ignore()</code> 清空输入缓冲区后，再用 <code>getline()</code> 读取带空格的字符串</li>
+            </ul>
+        </div>
+        <div class="array-vis" style="text-align:left;color:var(--text-secondary);">
+<span style="color:var(--accent);">输出示例：</span>
+请输入班级人数（最多100人）：<span style="color:#7ee787;">3</span>
+
+请逐个输入同学的名字：
+    第1位同学：<span style="color:#7ee787;">张三</span>
+    第2位同学：<span style="color:#7ee787;">李四</span>
+    第3位同学：<span style="color:#7ee787;">王五</span>
+
+===== 班级花名册 =====
+1. 张三
+2. 李四
+3. 王五
+
+要修改第几位同学的名字？<span style="color:#7ee787;">2</span>
+请输入新的名字：<span style="color:#7ee787;">李思</span>
+✓ 修改成功！
+        </div>
+    </div>
+
+    <!-- ============================================================ -->
+    <!-- Slide 10: 课后练习 -->
+    <!-- ============================================================ -->
+    <div class="slide">
+        <div class="slide-title">课后练习</div>
+
+        <div class="content-block">
+            <p><strong>练习1：填空补全</strong></p>
+            <p>补全下面的代码，声明一个能存储 <strong>7</strong> 个整数的数组，赋值为 1~7，然后输出所有元素。</p>
+        </div>
+        <div class="code-block"><span class="pp">#include</span> <span class="str">&lt;iostream&gt;</span>
+<span class="kw">using namespace</span> std;
+<span class="kw">int</span> <span class="fn">main</span>() {
+    <span class="kw">int</span> arr[<span style="color:var(--accent);border-bottom:2px solid var(--accent);">&nbsp;&nbsp;&nbsp;</span>] = {<span style="color:var(--accent);border-bottom:2px solid var(--accent);">&nbsp;&nbsp;</span>, <span style="color:var(--accent);border-bottom:2px solid var(--accent);">&nbsp;&nbsp;</span>, <span style="color:var(--accent);border-bottom:2px solid var(--accent);">&nbsp;&nbsp;</span>, <span style="color:var(--accent);border-bottom:2px solid var(--accent);">&nbsp;&nbsp;</span>, <span style="color:var(--accent);border-bottom:2px solid var(--accent);">&nbsp;&nbsp;</span>, <span style="color:var(--accent);border-bottom:2px solid var(--accent);">&nbsp;&nbsp;</span>, <span style="color:var(--accent);border-bottom:2px solid var(--accent);">&nbsp;&nbsp;</span>};
+    <span class="kw">for</span> (<span class="kw">int</span> i = <span class="num">0</span>; i &lt; <span style="color:var(--accent);border-bottom:2px solid var(--accent);">&nbsp;&nbsp;</span>; i++) {
+        cout &lt;&lt; <span class="str">"arr["</span> &lt;&lt; i &lt;&lt; <span class="str">"] = "</span> &lt;&lt; <span style="color:var(--accent);border-bottom:2px solid var(--accent);">&nbsp;&nbsp;&nbsp;</span> &lt;&lt; endl;
+    }
+    <span class="kw">return</span> <span class="num">0</span>;
+}</div>
+
+        <div class="content-block" style="margin-top:15px;">
+            <p><strong>练习2：纠错小侦探 🕵️</strong></p>
+            <p>下面的代码有几处错误？请找出来并改正。</p>
+        </div>
+        <div class="code-block"><span class="kw">int</span> arr[<span class="num">3</span>] = {<span class="num">1</span>, <span class="num">2</span>, <span class="num">3</span>};
+cout &lt;&lt; arr[<span class="num">3</span>];    <span class="cm">// 想输出最后一个元素  ← 错误！</span>
+cout &lt;&lt; arr[<span class="num">1</span>, <span class="num">2</span>]; <span class="cm">// 想输出第2、3个元素  ← 错误！</span></div>
+        <div class="content-block" style="font-size:0.9em;color:var(--text-secondary);">
+            <p>提示：数组下标从几开始？下标范围是多少？逗号在C++中是什么意思？</p>
+        </div>
+
+        <div class="content-block" style="margin-top:10px;">
+            <p><strong>练习3：动手实践 —— 零食菜单 🍿</strong></p>
+            <p>创建一个字符串数组存储你最喜欢的 <strong>5种零食</strong>，然后用循环以编号列表形式输出。</p>
+        </div>
+    </div>
+
+    <!-- ============================================================ -->
+    <!-- Slide 11: 本课小结 -->
+    <!-- ============================================================ -->
+    <div class="slide">
+        <div class="slide-title">本课小结</div>
+
+        <div class="summary-grid">
+            <div class="summary-item">
+                <div class="item-label">📦 什么是数组</div>
+                <div class="item-desc">一组<strong>相同类型</strong>数据的集合，在内存中连续存放</div>
+            </div>
+            <div class="summary-item">
+                <div class="item-label">📝 声明格式</div>
+                <div class="item-desc"><code>类型 数组名[大小];</code></div>
+            </div>
+            <div class="summary-item">
+                <div class="item-label">🔢 下标规则</div>
+                <div class="item-desc"><strong>从 0 开始</strong>，第 n 个元素的下标是 n-1</div>
+            </div>
+            <div class="summary-item">
+                <div class="item-label">🎬 初始化</div>
+                <div class="item-desc">用花括号 <code>{值1, 值2, ...}</code> 在声明时赋值</div>
+            </div>
+            <div class="summary-item">
+                <div class="item-label">👆 访问元素</div>
+                <div class="item-desc">通过 <code>数组名[下标]</code> 读取或修改</div>
+            </div>
+            <div class="summary-item">
+                <div class="item-label">🔁 遍历数组</div>
+                <div class="item-desc">配合 <code>for</code> 循环和下标变量，高效处理所有元素</div>
+            </div>
+            <div class="summary-item">
+                <div class="item-label">⚠️ 数组越界</div>
+                <div class="item-desc">访问超出 0 ~ (大小-1) 范围的下标会导致不可预料的错误</div>
+            </div>
+            <div class="summary-item">
+                <div class="item-label">📏 获取大小</div>
+                <div class="item-desc"><code>sizeof(数组) / sizeof(数组[0])</code></div>
+            </div>
+        </div>
+
+        <div class="verse-box">
+            <p>📖 <strong>学习口诀</strong></p>
+            <p style="margin-top:8px;">
+                数据排队站整齐，类型相同在一起。<br>
+                下标从零开始记，第n元素下标减一。<br>
+                花括号里赋初值，for循环遍历最容易！
+            </p>
+        </div>
+
+        <div class="content-block" style="text-align:center;font-size:0.9em;color:var(--text-secondary);margin-top:10px;">
+            <p>数组是编程中非常重要的数据结构。下节课我们将学习如何用循环遍历数组，进行<strong>求和、求平均值</strong>等更复杂的计算。别忘了完成课后练习哦！ 🚀</p>
         </div>
     </div>
 
 </div>
 
+<!-- ============================================================ -->
 <!-- Navigation -->
+<!-- ============================================================ -->
 <div class="nav-container">
     <button class="nav-btn" id="prevBtn" onclick="changeSlide(-1)">⬅ 上一页</button>
     <div style="text-align:center;">
-        <div class="slide-counter" id="slideCounter">1/7</div>
+        <div class="slide-counter" id="slideCounter">1/11</div>
         <div class="dot-nav" id="dotNav"></div>
     </div>
     <button class="nav-btn" id="nextBtn" onclick="changeSlide(1)">下一页 ➡</button>

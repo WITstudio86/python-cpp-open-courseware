@@ -1,0 +1,410 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>第1课：搭建骨架 —— CLI 菜单与输入处理</title>
+    <style>
+        :root {
+            --bg-primary: #1a1a2e;
+            --bg-secondary: #16213e;
+            --bg-card: rgba(255,255,255,0.05);
+            --text-primary: #e0e0e0;
+            --text-secondary: #a0a0b0;
+            --accent: #e94560;
+            --accent-glow: rgba(233, 69, 96, 0.3);
+            --code-bg: #0d1117;
+            --border: rgba(255,255,255,0.1);
+            --shadow: 0 8px 32px rgba(0,0,0,0.4);
+        }
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "PingFang SC", "Microsoft YaHei", "Noto Sans SC", sans-serif;
+            background: linear-gradient(135deg, #0f0c29 0%, #302b63 50%, #24243e 100%);
+            min-height: 100vh; color: var(--text-primary);
+            display: flex; flex-direction: column; align-items: center; justify-content: center; overflow-x: hidden;
+        }
+        .slideshow-container { width: 100%; max-width: 960px; min-height: 600px; position: relative; padding: 20px; }
+        .slide { display: none; animation: fadeIn 0.5s ease-in-out; background: var(--bg-card); border: 1px solid var(--border); border-radius: 16px; padding: 40px 50px; min-height: 550px; box-shadow: var(--shadow); backdrop-filter: blur(10px); }
+        .slide.active { display: block; }
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
+        .slide-title { font-size: 2em; color: var(--accent); margin-bottom: 20px; padding-bottom: 12px; border-bottom: 2px solid var(--accent-glow); text-shadow: 0 0 15px var(--accent-glow); }
+        .slide-subtitle { font-size: 1.1em; color: var(--text-secondary); margin-bottom: 25px; line-height: 1.6; }
+        .title-slide { text-align: center; display: flex; flex-direction: column; justify-content: center; align-items: center; }
+        .title-slide h1 { font-size: 3em; color: var(--accent); text-shadow: 0 0 30px var(--accent-glow); margin-bottom: 15px; }
+        .title-slide .subtitle-big { font-size: 1.4em; color: var(--text-secondary); margin-bottom: 30px; }
+        .title-slide .lesson-info { color: var(--text-secondary); font-size: 1em; opacity: 0.7; }
+        .cli-icon { font-size: 5em; margin-bottom: 20px; animation: pulse 2s infinite; }
+        @keyframes pulse { 0%, 100% { transform: scale(1); opacity: 0.8; } 50% { transform: scale(1.1); opacity: 1; } }
+        .content-block { line-height: 1.9; font-size: 1.05em; color: var(--text-primary); margin-bottom: 15px; }
+        .content-block strong { color: var(--accent); }
+        .content-block ul { list-style: none; padding-left: 0; }
+        .content-block ul li { padding: 6px 0 6px 24px; position: relative; }
+        .content-block ul li::before { content: "▸"; color: var(--accent); position: absolute; left: 0; }
+        .content-block ol { padding-left: 20px; }
+        .content-block ol li { padding: 6px 0; }
+        .info-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 15px; margin: 20px 0; }
+        .info-card { background: rgba(233, 69, 96, 0.08); border: 1px solid var(--accent-glow); border-radius: 12px; padding: 20px; text-align: center; transition: transform 0.3s, box-shadow 0.3s; }
+        .info-card:hover { transform: translateY(-3px); box-shadow: 0 6px 20px var(--accent-glow); }
+        .info-card .card-number { font-size: 2em; font-weight: bold; color: var(--accent); margin-bottom: 8px; }
+        .info-card .card-title { font-size: 1.1em; font-weight: bold; margin-bottom: 8px; }
+        .info-card .card-desc { font-size: 0.9em; color: var(--text-secondary); line-height: 1.5; }
+        .code-block { background: var(--code-bg); border: 1px solid #30363d; border-radius: 8px; padding: 18px 22px; margin: 15px 0; overflow-x: auto; font-family: "JetBrains Mono", "Fira Code", "Cascadia Code", "SF Mono", Consolas, monospace; font-size: 0.88em; line-height: 1.7; position: relative; white-space: pre; }
+        .code-block::before { content: "CPP"; position: absolute; top: 8px; right: 14px; font-size: 0.7em; color: var(--text-secondary); opacity: 0.5; }
+        .kw { color: #ff7b72; } .tp { color: #ffa657; } .fn { color: #d2a8ff; } .str { color: #a5d6ff; } .num { color: #79c0ff; } .cm { color: #8b949e; font-style: italic; } .pp { color: #79c0ff; } .bu { color: #7ee787; }
+        .cli-vis { font-family: "JetBrains Mono", "Fira Code", monospace; background: var(--code-bg); border: 1px solid #30363d; border-radius: 8px; padding: 18px 22px; margin: 15px 0; white-space: pre; line-height: 1.6; color: #7ee787; font-size: 0.82em; overflow-x: auto; }
+        .cli-vis .hl { color: var(--accent); font-weight: bold; }
+        .compare-table { width: 100%; border-collapse: collapse; margin: 15px 0; font-size: 0.95em; }
+        .compare-table th { background: rgba(233, 69, 96, 0.2); padding: 12px 15px; text-align: left; color: var(--accent); border: 1px solid var(--border); }
+        .compare-table td { padding: 10px 15px; border: 1px solid var(--border); color: var(--text-primary); }
+        .compare-table tr:nth-child(even) td { background: rgba(255,255,255,0.03); }
+        .warning-box { background: rgba(233, 69, 96, 0.1); border-left: 4px solid var(--accent); border-radius: 0 8px 8px 0; padding: 15px 20px; margin: 15px 0; font-size: 0.95em; line-height: 1.7; }
+        .warning-box strong { color: var(--accent); }
+        .summary-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 12px; margin: 15px 0; }
+        .summary-item { background: rgba(233, 69, 96, 0.08); border: 1px solid rgba(233, 69, 96, 0.2); border-radius: 10px; padding: 14px 18px; }
+        .summary-item .item-label { color: var(--accent); font-weight: bold; font-size: 0.95em; margin-bottom: 4px; }
+        .summary-item .item-desc { color: var(--text-secondary); font-size: 0.85em; line-height: 1.5; }
+        .verse-box { background: rgba(233, 69, 96, 0.08); border: 2px dashed var(--accent-glow); border-radius: 12px; padding: 20px 30px; margin: 20px 0; text-align: center; font-size: 1.1em; line-height: 2; color: var(--accent); }
+        .flow-chart { display: flex; flex-direction: column; align-items: center; gap: 4px; margin: 20px auto; font-family: "JetBrains Mono", monospace; max-width: 450px; }
+        .flow-box { background: rgba(233, 69, 96, 0.15); border: 1px solid var(--accent-glow); border-radius: 8px; padding: 10px 20px; color: var(--text-primary); font-size: 0.9em; text-align: center; width: 100%; }
+        .flow-arrow { color: var(--accent); font-size: 1.3em; }
+        .flow-box.alt { background: rgba(100, 200, 255, 0.1); border-color: rgba(100, 200, 255, 0.3); }
+        .nav-container { display: flex; justify-content: center; align-items: center; gap: 30px; margin-top: 20px; padding: 10px; }
+        .nav-btn { background: rgba(233, 69, 96, 0.15); border: 1px solid var(--accent); color: var(--accent); padding: 10px 28px; border-radius: 8px; cursor: pointer; font-size: 1em; font-weight: bold; transition: all 0.3s; font-family: inherit; }
+        .nav-btn:hover { background: var(--accent); color: white; box-shadow: 0 4px 15px var(--accent-glow); }
+        .nav-btn:disabled { opacity: 0.3; cursor: not-allowed; pointer-events: none; }
+        .slide-counter { color: var(--text-secondary); font-size: 1em; min-width: 60px; text-align: center; }
+        .dot-nav { display: flex; gap: 8px; justify-content: center; }
+        .dot { width: 10px; height: 10px; border-radius: 50%; background: rgba(255,255,255,0.2); cursor: pointer; transition: all 0.3s; }
+        .dot.active { background: var(--accent); box-shadow: 0 0 10px var(--accent-glow); transform: scale(1.3); }
+        @media (max-width: 768px) {
+            .slideshow-container { padding: 10px; } .slide { padding: 25px 20px; min-height: auto; }
+            .slide-title { font-size: 1.4em; } .title-slide h1 { font-size: 2em; }
+            .info-grid { grid-template-columns: 1fr; } .summary-grid { grid-template-columns: 1fr; }
+            .code-block { font-size: 0.72em; padding: 12px 14px; } .nav-btn { padding: 8px 18px; font-size: 0.9em; }
+        }
+    </style>
+</head>
+<body>
+<div class="slideshow-container">
+
+    <!-- Slide 1: Title -->
+    <div class="slide title-slide active">
+        <div class="cli-icon">🖥️</div>
+        <h1>搭建骨架</h1>
+        <p class="subtitle-big">CLI 菜单与输入处理</p>
+        <p class="lesson-info">4节小课 · 第1课 | 从零构建 CLI 任务管理器</p>
+    </div>
+
+    <!-- Slide 2: 课程导入 -->
+    <div class="slide">
+        <div class="slide-title">课程导入：那些酷炫的命令行工具</div>
+        <div class="content-block">
+            <p>你有没有想过——那些在终端黑窗口里运行的酷炫程序是怎么做出来的？</p>
+        </div>
+        <div class="cli-vis"><span class="hl">$ git commit -m "fix bug"</span>
+<span class="hl">$ npm install</span>
+<span class="hl">$ g++ -std=c++11 hello.cpp -o hello</span>
+<span class="hl">$ python train.py --epochs 100</span></div>
+        <div class="content-block">
+            <p>它们没有漂亮的图形界面，却能完成非常复杂的任务！这就是<strong>CLI（命令行界面）</strong>程序的魅力。</p>
+        </div>
+        <div class="content-block">
+            <p><strong>4 节课的目标：</strong>从零构建一个完整的 <strong>CLI 任务管理器</strong> 📋——可以记录待办事项、标记完成、管理日常任务的实用小工具！</p>
+        </div>
+        <div class="content-block">
+            <p style="color:var(--accent);">🎯 第1课目标：搭建程序的<strong>基本骨架</strong>——菜单系统与用户输入处理。</p>
+        </div>
+    </div>
+
+    <!-- Slide 3: CLI 程序结构 -->
+    <div class="slide">
+        <div class="slide-title">CLI 程序的四大组件</div>
+        <div class="content-block">
+            <p>一个典型的 CLI 程序包含<strong>四个核心组件</strong>，它们像齿轮一样协同工作：</p>
+        </div>
+        <div class="flow-chart">
+            <div class="flow-box">🚀 程序启动</div>
+            <div class="flow-arrow">▼</div>
+            <div class="flow-box">📋 显示菜单（showMenu）</div>
+            <div class="flow-arrow">▼</div>
+            <div class="flow-box alt">👤 用户输入选择（cin >> choice）</div>
+            <div class="flow-arrow">▼</div>
+            <div class="flow-box">⚙️ 执行对应功能（switch）</div>
+            <div class="flow-arrow">▼ ↻ 循环</div>
+            <div class="flow-box">🔚 退出程序（choice == 0）</div>
+        </div>
+        <div class="content-block" style="margin-top:20px;">
+            <p><strong>四大组件：</strong></p>
+            <ul>
+                <li><strong>菜单显示</strong> — 告诉用户有哪些选项</li>
+                <li><strong>输入读取</strong> — 获取用户的选择</li>
+                <li><strong>功能分发</strong> — 根据选择执行不同操作</li>
+                <li><strong>主循环</strong> — 不断重复，直到用户选择退出</li>
+            </ul>
+        </div>
+    </div>
+
+    <!-- Slide 4: do-while 主循环 -->
+    <div class="slide">
+        <div class="slide-title">主循环：do-while 的天然优势</div>
+        <div class="content-block">
+            <p><strong>do-while</strong> 循环的特点：<strong>先执行一次循环体，再检查条件</strong>。这非常适合菜单程序——菜单至少要显示一次！</p>
+        </div>
+        <div class="code-block"><span class="kw">int</span> <span class="fn">main</span>() {
+    <span class="kw">int</span> choice;
+    <span class="kw">do</span> {
+        <span class="fn">showMenu</span>();           <span class="cm">// 1. 显示菜单</span>
+        cin &gt;&gt; choice;            <span class="cm">// 2. 获取用户选择</span>
+        <span class="kw">switch</span> (choice) {        <span class="cm">// 3. 分发功能</span>
+            <span class="kw">case</span> <span class="num">1</span>: <span class="fn">addTask</span>();    <span class="kw">break</span>;
+            <span class="kw">case</span> <span class="num">2</span>: <span class="fn">viewTasks</span>();  <span class="kw">break</span>;
+            <span class="kw">case</span> <span class="num">0</span>: cout &lt;&lt; <span class="str">"再见！"</span>; <span class="kw">break</span>;
+            <span class="kw">default</span>: cout &lt;&lt; <span class="str">"无效选择！"</span>;
+        }
+    } <span class="kw">while</span> (choice != <span class="num">0</span>);  <span class="cm">// 4. 选0才退出</span>
+    <span class="kw">return</span> <span class="num">0</span>;
+}</div>
+        <table class="compare-table">
+            <thead><tr><th>循环类型</th><th>执行顺序</th><th>最少执行次数</th><th>适用场景</th></tr></thead>
+            <tbody>
+                <tr><td><code>while (条件) { }</code></td><td>先判断，再执行</td><td style="color:var(--accent);">0 次</td><td>可能一次都不需要执行</td></tr>
+                <tr><td><code>do { } while (条件);</code></td><td>先执行，再判断</td><td style="color:var(--accent);">1 次</td><td>至少执行一次（菜单！）</td></tr>
+            </tbody>
+        </table>
+    </div>
+
+    <!-- Slide 5: switch 分支 -->
+    <div class="slide">
+        <div class="slide-title">switch 分支 —— 功能路由器</div>
+        <div class="content-block">
+            <p><code>switch</code> 语句像一个<strong>路由器</strong>，根据用户输入的数字把程序引导到对应的功能函数。</p>
+        </div>
+        <div class="code-block"><span class="kw">switch</span> (choice) {                <span class="cm">// choice 是用户输入的数字</span>
+    <span class="kw">case</span> <span class="num">1</span>:
+        <span class="fn">addTask</span>();                <span class="cm">// 选1 → 执行添加任务</span>
+        <span class="kw">break</span>;                      <span class="cm">// ★ 别忘了 break！</span>
+    <span class="kw">case</span> <span class="num">2</span>:
+        <span class="fn">viewTasks</span>();              <span class="cm">// 选2 → 执行查看任务</span>
+        <span class="kw">break</span>;
+    <span class="kw">case</span> <span class="num">0</span>:
+        cout &lt;&lt; <span class="str">"再见！"</span>;        <span class="cm">// 选0 → 退出</span>
+        <span class="kw">break</span>;
+    <span class="kw">default</span>:                        <span class="cm">// 其他数字 → 无效</span>
+        cout &lt;&lt; <span class="str">"❌ 无效选择！"</span>;
+}</div>
+        <div class="warning-box">
+            <strong>⚠️ 易错点：</strong>每个 <code>case</code> 末尾的 <code>break</code> 极易忘记！如果漏掉 break，程序会"穿透"到下一个 case，导致执行了不该执行的功能。
+        </div>
+        <div class="content-block">
+            <p><strong>switch vs if-else：</strong>当需要根据一个变量的<strong>多个具体值</strong>来判断时，switch 比写一长串 if-else 更清晰、更高效。</p>
+        </div>
+    </div>
+
+    <!-- Slide 6: 输入处理 -->
+    <div class="slide">
+        <div class="slide-title">用户输入处理 —— cin 与 getline 的配合</div>
+        <div class="content-block">
+            <p>CLI 程序中处理用户输入有三种常见方式：</p>
+        </div>
+        <div class="code-block"><span class="cm">// 方式1：读取整数（用于菜单选择）</span>
+<span class="kw">int</span> choice;
+cin &gt;&gt; choice;
+
+<span class="cm">// 方式2：读取一行文字（用于任务标题，可含空格）</span>
+<span class="tp">string</span> title;
+cin.<span class="fn">ignore</span>();           <span class="cm">// ★ 先清空缓冲区！</span>
+<span class="fn">getline</span>(cin, title);    <span class="cm">// 再读取整行</span>
+
+<span class="cm">// 方式3：读取单个字符（用于 y/n 确认）</span>
+<span class="kw">char</span> confirm;
+cin &gt;&gt; confirm;</div>
+    </div>
+
+    <!-- Slide 7: cin.ignore 陷阱 -->
+    <div class="slide">
+        <div class="slide-title">⚠️ 关键陷阱：cin >> 后面的"幽灵换行符"</div>
+        <div class="content-block">
+            <p>这是 CLI 编程中最常见的 Bug！当 <code>cin &gt;&gt;</code> 读取整数后，输入缓冲区中会<strong>残留一个换行符 `\n`</strong>。如果紧接着使用 <code>getline()</code>，它会把这个换行符当作"一行"读走，导致用户输入被<strong>跳过</strong>！</p>
+        </div>
+        <div class="cli-vis"><span class="hl">用户输入：1 [回车]</span>
+缓冲区内容：<span class="hl">'1'</span> <span class="hl">'\n'</span>
+              ↑            ↑
+         cin>>choice  cin.ignore()
+         读取了 '1'    丢弃了 '\n'  ← 不丢弃的话 getline 会读到空行！</div>
+        <div class="content-block" style="margin-top:15px;">
+            <p><strong>✅ 正确做法：</strong>在 <code>cin &gt;&gt;</code> 之后、<code>getline()</code> 之前，加一句 <code>cin.ignore();</code></p>
+        </div>
+        <div class="code-block"><span class="kw">int</span> choice;
+cin &gt;&gt; choice;
+cin.<span class="fn">ignore</span>();            <span class="cm">// ★ 清空残留的换行符</span>
+
+<span class="tp">string</span> title;
+<span class="fn">getline</span>(cin, title);    <span class="cm">// 现在可以正常读取了！</span></div>
+        <div class="warning-box">
+            <strong>💡 记忆口诀：</strong>整数读完留换行，ignore 清空不害怕！
+        </div>
+    </div>
+
+    <!-- Slide 8: 完整骨架代码 -->
+    <div class="slide">
+        <div class="slide-title">完整骨架代码</div>
+        <div class="code-block"><span class="pp">#include</span> <span class="str">&lt;iostream&gt;</span>
+<span class="pp">#include</span> <span class="str">&lt;string&gt;</span>
+<span class="kw">using namespace</span> std;
+
+<span class="kw">void</span> <span class="fn">showMenu</span>() {
+    cout &lt;&lt; <span class="str">"\n╔══════════════════════════╗"</span> &lt;&lt; endl;
+    cout &lt;&lt; <span class="str">"║    📋 任务管理器 v1.0    ║"</span> &lt;&lt; endl;
+    cout &lt;&lt; <span class="str">"╠══════════════════════════╣"</span> &lt;&lt; endl;
+    cout &lt;&lt; <span class="str">"║  1. ➕ 添加新任务        ║"</span> &lt;&lt; endl;
+    cout &lt;&lt; <span class="str">"║  2. 📋 查看所有任务      ║"</span> &lt;&lt; endl;
+    cout &lt;&lt; <span class="str">"║  3. ✅ 标记任务完成      ║"</span> &lt;&lt; endl;
+    cout &lt;&lt; <span class="str">"║  4. 🗑️  删除任务         ║"</span> &lt;&lt; endl;
+    cout &lt;&lt; <span class="str">"║  0. 🚪 退出程序          ║"</span> &lt;&lt; endl;
+    cout &lt;&lt; <span class="str">"╚══════════════════════════╝"</span> &lt;&lt; endl;
+    cout &lt;&lt; <span class="str">"请输入你的选择："</span>;
+}</div>
+        <div class="content-block">
+            <p>使用 <strong>Unicode 制表符</strong>（╔ ╗ ║ 等）让菜单看起来像真正的终端界面。这些字符在等宽字体下完美对齐！</p>
+        </div>
+    </div>
+
+    <!-- Slide 9: 增量开发与占位函数 -->
+    <div class="slide">
+        <div class="slide-title">增量开发 —— 先搭骨架，再充血肉</div>
+        <div class="content-block">
+            <p>软件开发中有一个重要原则：<strong>增量开发（Incremental Development）</strong>。先把整体骨架跑起来，再逐步添加功能。这样可以：</p>
+            <ul>
+                <li>及早发现问题（骨架运行正常 ≠ 逻辑正确）</li>
+                <li>每一步都有可以运行的版本</li>
+                <li>降低调试难度（出问题知道是刚加的代码导致的）</li>
+            </ul>
+        </div>
+        <div class="code-block"><span class="cm">// 占位函数 —— 先让程序能编译运行</span>
+<span class="kw">void</span> <span class="fn">addTask</span>() {
+    cout &lt;&lt; <span class="str">"  [功能开发中] 添加任务功能将在第2课实现！"</span> &lt;&lt; endl;
+}
+
+<span class="kw">void</span> <span class="fn">viewTasks</span>() {
+    cout &lt;&lt; <span class="str">"  [功能开发中] 查看任务功能将在第2课实现！"</span> &lt;&lt; endl;
+}</div>
+        <div class="content-block" style="margin-top:15px;">
+            <p style="color:var(--accent);text-align:center;">🧱 第1课 → 骨架 | 📦 第2课 → 数据存储 | 🔧 第3课 → 数据操作 | 💾 第4课 → 持久化</p>
+        </div>
+    </div>
+
+    <!-- Slide 10: 课后练习 -->
+    <div class="slide">
+        <div class="slide-title">课后练习</div>
+        <div class="content-block">
+            <p><strong>练习1：填空补全</strong> — 补全下面的简易计算器菜单程序：</p>
+        </div>
+        <div class="code-block"><span class="pp">#include</span> <span class="str">&lt;iostream&gt;</span>
+<span class="kw">using namespace</span> std;
+
+<span class="kw">void</span> <span class="fn">showMenu</span>() {
+    cout &lt;&lt; <span class="str">"=== 简易计算器 ==="</span> &lt;&lt; endl;
+    cout &lt;&lt; <span class="str">"1. 加法 2. 减法 0. 退出 请选择："</span>;
+}
+
+<span class="kw">int</span> <span class="fn">main</span>() {
+    <span class="kw">int</span> choice;
+    <span style="color:var(--accent);border-bottom:2px solid var(--accent);">&nbsp;&nbsp;&nbsp;</span> {                        <span class="cm">// 填空1：用什么循环？</span>
+        <span class="fn">showMenu</span>();
+        cin &gt;&gt; <span style="color:var(--accent);border-bottom:2px solid var(--accent);">&nbsp;&nbsp;&nbsp;</span>;              <span class="cm">// 填空2：输入存入哪个变量？</span>
+        <span class="kw">switch</span> (<span style="color:var(--accent);border-bottom:2px solid var(--accent);">&nbsp;&nbsp;&nbsp;</span>) {         <span class="cm">// 填空3：判断哪个变量？</span>
+            <span class="kw">case</span> <span class="num">1</span>: cout &lt;&lt; <span class="str">"你选择了加法"</span> &lt;&lt; endl; <span class="kw">break</span>;
+            <span class="kw">case</span> <span class="num">2</span>: cout &lt;&lt; <span class="str">"你选择了减法"</span> &lt;&lt; endl; <span class="kw">break</span>;
+            <span class="kw">case</span> <span class="num">0</span>: cout &lt;&lt; <span class="str">"再见！"</span> &lt;&lt; endl; <span class="kw">break</span>;
+            <span style="color:var(--accent);border-bottom:2px solid var(--accent);">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</span>: cout &lt;&lt; <span class="str">"无效选择！"</span> &lt;&lt; endl; <span class="cm">// 填空4</span>
+        }
+    } <span class="kw">while</span> (choice <span style="color:var(--accent);border-bottom:2px solid var(--accent);">&nbsp;&nbsp;</span> <span class="num">0</span>);  <span class="cm">// 填空5：不等于怎么写？</span>
+    <span class="kw">return</span> <span class="num">0</span>;
+}</div>
+        <div class="content-block" style="margin-top:10px;">
+            <p><strong>练习2：纠错小侦探 🕵️</strong> — 下面的代码有问题：</p>
+            <ul>
+                <li>① <code>choice</code> 变量初始化了吗？</li>
+                <li>② <code>getline</code> 能正常读取吗？怎么修复？</li>
+            </ul>
+        </div>
+        <div class="content-block">
+            <p><strong>练习3：动手实践</strong> — 修改计算器程序，添加"乘法"和"除法"选项。</p>
+        </div>
+    </div>
+
+    <!-- Slide 11: 本课小结 -->
+    <div class="slide">
+        <div class="slide-title">本课小结</div>
+        <div class="summary-grid">
+            <div class="summary-item"><div class="item-label">🖥️ CLI 程序骨架</div><div class="item-desc">主循环 + 菜单显示 + switch 分支</div></div>
+            <div class="summary-item"><div class="item-label">🔄 do-while</div><div class="item-desc">先执行后判断，菜单至少显示一次</div></div>
+            <div class="summary-item"><div class="item-label">🔀 switch 分支</div><div class="item-desc">根据整数选择跳转不同功能，勿忘 break</div></div>
+            <div class="summary-item"><div class="item-label">⚠️ cin.ignore()</div><div class="item-desc">清空输入缓冲区，防止 getline 跳过</div></div>
+            <div class="summary-item"><div class="item-label">📥 getline vs cin>></div><div class="item-desc">getline 读整行（含空格），cin>> 遇空白停止</div></div>
+            <div class="summary-item"><div class="item-label">🧱 增量开发</div><div class="item-desc">先搭骨架（占位函数），再逐步填充功能</div></div>
+        </div>
+        <div class="verse-box">
+            <p>📖 <strong>学习口诀</strong></p>
+            <p style="margin-top:8px;">
+                CLI 程序有骨架，循环菜单 switch 查。<br>
+                整数读完留换行，ignore 清空不害怕。<br>
+                先搭框架后填充，增量开发顶呱呱！
+            </p>
+        </div>
+        <div class="content-block" style="text-align:center;font-size:0.9em;color:var(--text-secondary);margin-top:10px;">
+            <p>下节课：存储数据 —— 结构体与向量，让程序真正"记住"任务！ 🚀</p>
+        </div>
+    </div>
+
+</div>
+
+<div class="nav-container">
+    <button class="nav-btn" id="prevBtn" onclick="changeSlide(-1)">⬅ 上一页</button>
+    <div style="text-align:center;">
+        <div class="slide-counter" id="slideCounter">1/11</div>
+        <div class="dot-nav" id="dotNav"></div>
+    </div>
+    <button class="nav-btn" id="nextBtn" onclick="changeSlide(1)">下一页 ➡</button>
+</div>
+
+<script>
+    let currentSlide = 0;
+    const slides = document.querySelectorAll('.slide');
+    const totalSlides = slides.length;
+    const dotNav = document.getElementById('dotNav');
+    const slideCounter = document.getElementById('slideCounter');
+    const prevBtn = document.getElementById('prevBtn');
+    const nextBtn = document.getElementById('nextBtn');
+    for (let i = 0; i < totalSlides; i++) {
+        const dot = document.createElement('span');
+        dot.className = 'dot' + (i === 0 ? ' active' : '');
+        dot.onclick = () => goToSlide(i);
+        dotNav.appendChild(dot);
+    }
+    function showSlide(index) {
+        slides.forEach((s, i) => { s.classList.toggle('active', i === index); });
+        dotNav.querySelectorAll('.dot').forEach((d, i) => { d.classList.toggle('active', i === index); });
+        slideCounter.textContent = (index + 1) + '/' + totalSlides;
+        prevBtn.disabled = (index === 0);
+        nextBtn.disabled = (index === totalSlides - 1);
+    }
+    function changeSlide(delta) { const n = currentSlide + delta; if (n >= 0 && n < totalSlides) { currentSlide = n; showSlide(n); } }
+    function goToSlide(i) { currentSlide = i; showSlide(i); }
+    document.addEventListener('keydown', (e) => {
+        if (e.key === 'ArrowRight' || e.key === 'ArrowDown') changeSlide(1);
+        if (e.key === 'ArrowLeft' || e.key === 'ArrowUp') changeSlide(-1);
+        if (e.key === 'Home') goToSlide(0);
+        if (e.key === 'End') goToSlide(totalSlides - 1);
+    });
+    let touchStartX = 0;
+    document.addEventListener('touchstart', (e) => { touchStartX = e.changedTouches[0].screenX; });
+    document.addEventListener('touchend', (e) => {
+        const diff = e.changedTouches[0].screenX - touchStartX;
+        if (Math.abs(diff) > 50) changeSlide(diff < 0 ? 1 : -1);
+    });
+    showSlide(0);
+</script>
+</body>
+</html>

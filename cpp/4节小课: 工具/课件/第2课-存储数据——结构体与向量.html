@@ -1,0 +1,375 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>第2课：存储数据 —— 结构体与向量</title>
+    <style>
+        :root {
+            --bg-primary: #1a1a2e; --bg-secondary: #16213e; --bg-card: rgba(255,255,255,0.05);
+            --text-primary: #e0e0e0; --text-secondary: #a0a0b0; --accent: #e94560;
+            --accent-glow: rgba(233, 69, 96, 0.3); --code-bg: #0d1117;
+            --border: rgba(255,255,255,0.1); --shadow: 0 8px 32px rgba(0,0,0,0.4);
+        }
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "PingFang SC", "Microsoft YaHei", "Noto Sans SC", sans-serif; background: linear-gradient(135deg, #0f0c29 0%, #302b63 50%, #24243e 100%); min-height: 100vh; color: var(--text-primary); display: flex; flex-direction: column; align-items: center; justify-content: center; overflow-x: hidden; }
+        .slideshow-container { width: 100%; max-width: 960px; min-height: 600px; position: relative; padding: 20px; }
+        .slide { display: none; animation: fadeIn 0.5s ease-in-out; background: var(--bg-card); border: 1px solid var(--border); border-radius: 16px; padding: 40px 50px; min-height: 550px; box-shadow: var(--shadow); backdrop-filter: blur(10px); }
+        .slide.active { display: block; }
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
+        .slide-title { font-size: 2em; color: var(--accent); margin-bottom: 20px; padding-bottom: 12px; border-bottom: 2px solid var(--accent-glow); text-shadow: 0 0 15px var(--accent-glow); }
+        .title-slide { text-align: center; display: flex; flex-direction: column; justify-content: center; align-items: center; }
+        .title-slide h1 { font-size: 3em; color: var(--accent); text-shadow: 0 0 30px var(--accent-glow); margin-bottom: 15px; }
+        .title-slide .subtitle-big { font-size: 1.4em; color: var(--text-secondary); margin-bottom: 30px; }
+        .title-slide .lesson-info { color: var(--text-secondary); font-size: 1em; opacity: 0.7; }
+        .storage-icon { font-size: 5em; margin-bottom: 20px; animation: pulse 2s infinite; }
+        @keyframes pulse { 0%, 100% { transform: scale(1); opacity: 0.8; } 50% { transform: scale(1.1); opacity: 1; } }
+        .content-block { line-height: 1.9; font-size: 1.05em; color: var(--text-primary); margin-bottom: 15px; }
+        .content-block strong { color: var(--accent); }
+        .content-block ul { list-style: none; padding-left: 0; }
+        .content-block ul li { padding: 6px 0 6px 24px; position: relative; }
+        .content-block ul li::before { content: "▸"; color: var(--accent); position: absolute; left: 0; }
+        .info-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 15px; margin: 20px 0; }
+        .info-card { background: rgba(233, 69, 96, 0.08); border: 1px solid var(--accent-glow); border-radius: 12px; padding: 20px; text-align: center; transition: transform 0.3s, box-shadow 0.3s; }
+        .info-card:hover { transform: translateY(-3px); box-shadow: 0 6px 20px var(--accent-glow); }
+        .info-card .card-number { font-size: 2em; font-weight: bold; color: var(--accent); margin-bottom: 8px; }
+        .info-card .card-title { font-size: 1.1em; font-weight: bold; margin-bottom: 8px; }
+        .info-card .card-desc { font-size: 0.9em; color: var(--text-secondary); line-height: 1.5; }
+        .code-block { background: var(--code-bg); border: 1px solid #30363d; border-radius: 8px; padding: 18px 22px; margin: 12px 0; overflow-x: auto; font-family: "JetBrains Mono", "Fira Code", "Cascadia Code", "SF Mono", Consolas, monospace; font-size: 0.86em; line-height: 1.7; position: relative; white-space: pre; }
+        .code-block::before { content: "CPP"; position: absolute; top: 8px; right: 14px; font-size: 0.7em; color: var(--text-secondary); opacity: 0.5; }
+        .kw { color: #ff7b72; } .tp { color: #ffa657; } .fn { color: #d2a8ff; } .str { color: #a5d6ff; } .num { color: #79c0ff; } .cm { color: #8b949e; font-style: italic; } .pp { color: #79c0ff; } .bu { color: #7ee787; }
+        .struct-vis { font-family: "JetBrains Mono", "Fira Code", monospace; background: var(--code-bg); border: 1px solid #30363d; border-radius: 8px; padding: 15px 20px; margin: 12px 0; white-space: pre; line-height: 1.7; color: #a5d6ff; font-size: 0.82em; overflow-x: auto; text-align: center; }
+        .struct-vis .hl { color: var(--accent); font-weight: bold; }
+        .compare-table { width: 100%; border-collapse: collapse; margin: 15px 0; font-size: 0.92em; }
+        .compare-table th { background: rgba(233, 69, 96, 0.2); padding: 10px 14px; text-align: left; color: var(--accent); border: 1px solid var(--border); }
+        .compare-table td { padding: 8px 14px; border: 1px solid var(--border); color: var(--text-primary); }
+        .compare-table tr:nth-child(even) td { background: rgba(255,255,255,0.03); }
+        .warning-box { background: rgba(233, 69, 96, 0.1); border-left: 4px solid var(--accent); border-radius: 0 8px 8px 0; padding: 12px 20px; margin: 12px 0; font-size: 0.93em; line-height: 1.7; }
+        .warning-box strong { color: var(--accent); }
+        .summary-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 12px; margin: 12px 0; }
+        .summary-item { background: rgba(233, 69, 96, 0.08); border: 1px solid rgba(233, 69, 96, 0.2); border-radius: 10px; padding: 12px 16px; }
+        .summary-item .item-label { color: var(--accent); font-weight: bold; font-size: 0.93em; margin-bottom: 4px; }
+        .summary-item .item-desc { color: var(--text-secondary); font-size: 0.83em; line-height: 1.5; }
+        .verse-box { background: rgba(233, 69, 96, 0.08); border: 2px dashed var(--accent-glow); border-radius: 12px; padding: 18px 28px; margin: 18px 0; text-align: center; font-size: 1.05em; line-height: 2; color: var(--accent); }
+        .nav-container { display: flex; justify-content: center; align-items: center; gap: 30px; margin-top: 20px; padding: 10px; }
+        .nav-btn { background: rgba(233, 69, 96, 0.15); border: 1px solid var(--accent); color: var(--accent); padding: 10px 28px; border-radius: 8px; cursor: pointer; font-size: 1em; font-weight: bold; transition: all 0.3s; font-family: inherit; }
+        .nav-btn:hover { background: var(--accent); color: white; box-shadow: 0 4px 15px var(--accent-glow); }
+        .nav-btn:disabled { opacity: 0.3; cursor: not-allowed; pointer-events: none; }
+        .slide-counter { color: var(--text-secondary); font-size: 1em; min-width: 60px; text-align: center; }
+        .dot-nav { display: flex; gap: 8px; justify-content: center; }
+        .dot { width: 10px; height: 10px; border-radius: 50%; background: rgba(255,255,255,0.2); cursor: pointer; transition: all 0.3s; }
+        .dot.active { background: var(--accent); box-shadow: 0 0 10px var(--accent-glow); transform: scale(1.3); }
+        @media (max-width: 768px) { .slideshow-container { padding: 10px; } .slide { padding: 25px 20px; min-height: auto; } .slide-title { font-size: 1.4em; } .title-slide h1 { font-size: 2em; } .info-grid { grid-template-columns: 1fr; } .summary-grid { grid-template-columns: 1fr; } .code-block { font-size: 0.7em; padding: 10px 12px; } .nav-btn { padding: 8px 18px; font-size: 0.9em; } }
+    </style>
+</head>
+<body>
+<div class="slideshow-container">
+
+    <!-- Slide 1: Title -->
+    <div class="slide title-slide active">
+        <div class="storage-icon">📦</div>
+        <h1>存储数据</h1>
+        <p class="subtitle-big">结构体与向量</p>
+        <p class="lesson-info">4节小课 · 第2课 | 从零构建 CLI 任务管理器</p>
+    </div>
+
+    <!-- Slide 2: 课程导入 -->
+    <div class="slide">
+        <div class="slide-title">上节课回顾 & 本节课目标</div>
+        <div class="content-block">
+            <p>上节课我们搭好了任务管理器的<strong>骨架</strong>——菜单系统已经能跑起来了！但是选择"添加任务"时，只是打印了一句"功能开发中"……</p>
+        </div>
+        <div class="content-block">
+            <p>今天要让程序真正<strong>记住任务</strong>！需要解决两个核心问题：</p>
+        </div>
+        <div class="info-grid">
+            <div class="info-card">
+                <div class="card-number">❓1</div>
+                <div class="card-title">数据长什么样？</div>
+                <div class="card-desc">每个任务包含：编号、标题、是否完成、优先级……需要一种复合数据类型</div>
+            </div>
+            <div class="info-card">
+                <div class="card-number">❓2</div>
+                <div class="card-title">怎么存多个？</div>
+                <div class="card-desc">任务数量不确定，可能随时增减……需要一种动态容器</div>
+            </div>
+        </div>
+        <div class="content-block" style="text-align:center;margin-top:15px;">
+            <p style="color:var(--accent);">答案：<strong>struct（结构体）</strong> + <strong>vector（向量）</strong> = 完美组合！🧠</p>
+        </div>
+    </div>
+
+    <!-- Slide 3: struct 定义 -->
+    <div class="slide">
+        <div class="slide-title">结构体 —— 自定义"档案袋"</div>
+        <div class="content-block">
+            <p>结构体（<code>struct</code>）允许我们把<strong>多个不同类型的数据组合在一起</strong>，形成一个新的复合数据类型。</p>
+        </div>
+        <div class="code-block"><span class="kw">struct</span> <span class="tp">Task</span> {
+    <span class="kw">int</span> id;           <span class="cm">// 任务编号</span>
+    <span class="tp">string</span> title;     <span class="cm">// 任务标题</span>
+    <span class="kw">bool</span> done;        <span class="cm">// 是否完成（true/false）</span>
+    <span class="kw">int</span> priority;     <span class="cm">// 优先级（1=高, 2=中, 3=低）</span>
+};  <span class="cm">// ★ 注意：末尾有分号！</span></div>
+        <div class="struct-vis">
+<span class="hl">Task t1;</span>   ← 声明一个 Task 类型的变量
+┌─────────────────────────────────────┐
+│  id       → 1                      │
+│  title    → "完成数学作业"          │
+│  done     → false                  │
+│  priority → 1                      │
+└─────────────────────────────────────┘
+<span style="color:var(--text-secondary);">就像一个"档案袋"，里面可以装各种信息！</span>
+        </div>
+    </div>
+
+    <!-- Slide 4: 使用结构体 -->
+    <div class="slide">
+        <div class="slide-title">使用结构体 —— 点运算符访问成员</div>
+        <div class="content-block">
+            <p>结构体的每个组成部分叫<strong>成员变量</strong>，使用 <code>.</code> 运算符来访问。</p>
+        </div>
+        <div class="code-block"><span class="cm">// 方式1：逐个赋值</span>
+<span class="tp">Task</span> t1;
+t1.id = <span class="num">1</span>;
+t1.title = <span class="str">"完成数学作业"</span>;
+t1.done = <span class="kw">false</span>;
+t1.priority = <span class="num">1</span>;
+
+<span class="cm">// 方式2：声明时初始化（C++11起支持）</span>
+<span class="tp">Task</span> t2 = {<span class="num">2</span>, <span class="str">"背英语单词"</span>, <span class="kw">false</span>, <span class="num">2</span>};
+
+<span class="cm">// 访问成员</span>
+cout &lt;&lt; t1.title &lt;&lt; endl;     <span class="cm">// 输出：完成数学作业</span>
+cout &lt;&lt; t1.id &lt;&lt; endl;        <span class="cm">// 输出：1</span></div>
+        <div class="content-block">
+            <p><strong>💡 类比：</strong>就像填写一张表格——<code>t1.id = 1</code> 就是在"编号"那一栏填上 1。</p>
+        </div>
+    </div>
+
+    <!-- Slide 5: vector 动态数组 -->
+    <div class="slide">
+        <div class="slide-title">vector —— 会"自动长大"的魔法袋</div>
+        <div class="content-block">
+            <p><code>vector</code> 是 C++ 标准库提供的<strong>动态数组</strong>容器。与普通数组不同，vector <strong>不需要在声明时确定大小</strong>，可以根据需要自动扩容。</p>
+        </div>
+        <div class="code-block"><span class="pp">#include</span> <span class="str">&lt;vector&gt;</span>    <span class="cm">// 使用 vector 必须包含这个头文件</span>
+
+<span class="cm">// 声明：vector&lt;元素类型&gt; 变量名;</span>
+<span class="tp">vector</span>&lt;<span class="tp">Task</span>&gt; tasks;      <span class="cm">// 存放 Task 的动态数组</span>
+<span class="tp">vector</span>&lt;<span class="kw">int</span>&gt; numbers;    <span class="cm">// 存放整数的动态数组</span>
+<span class="tp">vector</span>&lt;<span class="tp">string</span>&gt; names;  <span class="cm">// 存放字符串的动态数组</span></div>
+        <table class="compare-table">
+            <thead><tr><th>操作</th><th>代码</th><th>说明</th></tr></thead>
+            <tbody>
+                <tr><td style="color:var(--accent);">添加元素</td><td><code>v.push_back(x)</code></td><td>在末尾添加</td></tr>
+                <tr><td style="color:var(--accent);">元素个数</td><td><code>v.size()</code></td><td>返回 int</td></tr>
+                <tr><td style="color:var(--accent);">访问元素</td><td><code>v[i]</code></td><td>下标访问，从0开始</td></tr>
+                <tr><td style="color:var(--accent);">清空</td><td><code>v.clear()</code></td><td>删除所有元素</td></tr>
+                <tr><td style="color:var(--accent);">判空</td><td><code>v.empty()</code></td><td>返回 bool</td></tr>
+            </tbody>
+        </table>
+    </div>
+
+    <!-- Slide 6: vector vs 普通数组 -->
+    <div class="slide">
+        <div class="slide-title">vector vs 普通数组 —— 为什么选 vector？</div>
+        <table class="compare-table">
+            <thead><tr><th style="width:20%;">特性</th><th style="width:40%;">普通数组</th><th style="width:40%;">vector</th></tr></thead>
+            <tbody>
+                <tr><td>大小</td><td style="color:#ff7b72;">声明时确定，不可变</td><td style="color:#7ee787;">动态变化，自动扩容</td></tr>
+                <tr><td>初始化</td><td>int arr[5] = {1,2,3,4,5};</td><td>vector&lt;int&gt; v = {1,2,3,4,5};</td></tr>
+                <tr><td>获取大小</td><td style="color:#ff7b72;">sizeof(arr)/sizeof(arr[0])</td><td style="color:#7ee787;">v.size()</td></tr>
+                <tr><td>越界检查</td><td style="color:#ff7b72;">不检查，危险！</td><td>v.at(i) 方式会检查（可选）</td></tr>
+                <tr><td>添加元素</td><td style="color:#ff7b72;">不支持</td><td style="color:#7ee787;">v.push_back(x)</td></tr>
+                <tr><td>适用场景</td><td>数量固定且已知</td><td style="color:var(--accent);">数量不确定/动态变化</td></tr>
+            </tbody>
+        </table>
+        <div class="content-block" style="margin-top:15px;">
+            <p><strong>结论：</strong>任务管理器的任务数量是动态变化的——用户随时添加和删除——<strong>vector 是唯一正确的选择</strong>。</p>
+        </div>
+    </div>
+
+    <!-- Slide 7: struct + vector 联合使用 -->
+    <div class="slide">
+        <div class="slide-title">struct + vector —— 动态任务存储的实现</div>
+        <div class="code-block"><span class="kw">struct</span> <span class="tp">Task</span> {
+    <span class="kw">int</span> id;
+    <span class="tp">string</span> title;
+    <span class="kw">bool</span> done;
+    <span class="kw">int</span> priority;
+};
+
+<span class="tp">vector</span>&lt;<span class="tp">Task</span>&gt; tasks;     <span class="cm">// 全局任务列表</span>
+<span class="kw">int</span> nextId = <span class="num">1</span>;         <span class="cm">// 下一个任务的编号（自动增长）</span>
+
+<span class="kw">void</span> <span class="fn">addTask</span>() {
+    <span class="tp">Task</span> t;
+    t.id = nextId++;          <span class="cm">// 自动编号：先用当前值，再+1</span>
+    t.done = <span class="kw">false</span>;
+
+    cout &lt;&lt; <span class="str">"请输入任务标题："</span>;
+    cin.<span class="fn">ignore</span>();
+    <span class="fn">getline</span>(cin, t.title);
+
+    cout &lt;&lt; <span class="str">"优先级（1=高, 2=中, 3=低）："</span>;
+    cin &gt;&gt; t.priority;
+
+    tasks.<span class="fn">push_back</span>(t);      <span class="cm">// ★ 存入列表</span>
+    cout &lt;&lt; <span class="str">"✓ 任务添加成功！"</span> &lt;&lt; endl;
+}</div>
+        <div class="content-block">
+            <p><strong>关键细节：</strong><code>nextId++</code> 是后置自增——先使用当前值赋给 id，再将 nextId 加 1。这样每个任务都有唯一编号。</p>
+        </div>
+    </div>
+
+    <!-- Slide 8: 格式化输出 -->
+    <div class="slide">
+        <div class="slide-title">格式化输出 —— 把任务列表变成漂亮表格</div>
+        <div class="code-block"><span class="kw">void</span> <span class="fn">viewTasks</span>() {
+    <span class="kw">if</span> (tasks.<span class="fn">empty</span>()) {                    <span class="cm">// 先检查是否为空</span>
+        cout &lt;&lt; <span class="str">"📭 暂无任务！"</span> &lt;&lt; endl;
+        <span class="kw">return</span>;
+    }
+
+    <span class="cm">// ★ 表头</span>
+    cout &lt;&lt; <span class="str">"\n┌────┬──────────────────────┬──────────┬──────┐"</span> &lt;&lt; endl;
+    cout &lt;&lt; <span class="str">"│ 编号│       任务标题       │   状态   │ 优先级│"</span> &lt;&lt; endl;
+    cout &lt;&lt; <span class="str">"├────┼──────────────────────┼──────────┼──────┤"</span> &lt;&lt; endl;
+
+    <span class="cm">// ★ 表体：遍历每个任务</span>
+    <span class="kw">for</span> (<span class="kw">int</span> i = <span class="num">0</span>; i &lt; tasks.<span class="fn">size</span>(); i++) {
+        cout &lt;&lt; <span class="str">"│ "</span> &lt;&lt; <span class="fn">setw</span>(<span class="num">2</span>) &lt;&lt; tasks[i].id &lt;&lt; <span class="str">" │ "</span> &lt;&lt; tasks[i].title;
+        cout &lt;&lt; <span class="str">" │ "</span> &lt;&lt; (tasks[i].done ? <span class="str">"✅ 已完成"</span> : <span class="str">"⬜ 未完成"</span>);
+        cout &lt;&lt; <span class="str">" │   "</span> &lt;&lt; tasks[i].priority &lt;&lt; <span class="str">"  │"</span> &lt;&lt; endl;
+    }
+
+    cout &lt;&lt; <span class="str">"└────┴──────────────────────┴──────────┴──────┘"</span> &lt;&lt; endl;
+    cout &lt;&lt; <span class="str">"共 "</span> &lt;&lt; tasks.<span class="fn">size</span>() &lt;&lt; <span class="str">" 个任务。"</span> &lt;&lt; endl;
+}</div>
+    </div>
+
+    <!-- Slide 9: 完整代码运行效果 -->
+    <div class="slide">
+        <div class="slide-title">运行效果预览</div>
+        <div class="struct-vis" style="text-align:left;">
+<span style="color:var(--accent);">╔══════════════════════════╗</span>
+<span style="color:var(--accent);">║    📋 任务管理器 v2.0    ║</span>
+<span style="color:var(--accent);">╠══════════════════════════╣</span>
+<span style="color:var(--accent);">║  1. ➕ 添加新任务        ║</span>
+<span style="color:var(--accent);">║  2. 📋 查看所有任务      ║</span>
+<span style="color:var(--accent);">║  0. 🚪 退出程序          ║</span>
+<span style="color:var(--accent);">╚══════════════════════════╝</span>
+请输入你的选择：<span style="color:#7ee787;">1</span>
+
+请输入任务标题：<span style="color:#7ee787;">完成数学作业</span>
+优先级（1=高, 2=中, 3=低）：<span style="color:#7ee787;">1</span>
+<span style="color:#7ee787;">✓ 任务添加成功！</span>
+
+请输入你的选择：<span style="color:#7ee787;">2</span>
+
+┌────┬──────────────────────┬──────────┬──────┐
+│ 编号│       任务标题       │   状态   │ 优先级│
+├────┼──────────────────────┼──────────┼──────┤
+│  1 │ 完成数学作业         │ ⬜ 未完成 │   1  │
+└────┴──────────────────────┴──────────┴──────┘
+共 1 个任务。
+        </div>
+    </div>
+
+    <!-- Slide 10: 课后练习 -->
+    <div class="slide">
+        <div class="slide-title">课后练习</div>
+        <div class="content-block">
+            <p><strong>练习1：填空补全</strong> — 学生结构体：</p>
+        </div>
+        <div class="code-block"><span class="kw">struct</span> <span class="tp">Student</span> {
+    <span class="tp">string</span> name;
+    <span class="kw">int</span> <span style="color:var(--accent);border-bottom:2px solid var(--accent);">&nbsp;&nbsp;&nbsp;</span>;       <span class="cm">// 年龄</span>
+    <span class="kw">double</span> <span style="color:var(--accent);border-bottom:2px solid var(--accent);">&nbsp;&nbsp;&nbsp;</span>;    <span class="cm">// 成绩</span>
+};
+
+<span class="tp">vector</span>&lt;<span style="color:var(--accent);border-bottom:2px solid var(--accent);">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</span>&gt; students;   <span class="cm">// 填空：什么类型？</span>
+<span class="tp">Student</span> s = {<span class="str">"小明"</span>, <span class="num">12</span>, <span class="num">95.5</span>};
+students.<span style="color:var(--accent);border-bottom:2px solid var(--accent);">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</span>(s);        <span class="cm">// 填空：怎么添加？</span></div>
+        <div class="content-block" style="margin-top:10px;">
+            <p><strong>练习2：增加"截止日期"字段</strong></p>
+            <p>在 Task 结构体中增加一个 <code>string deadline</code> 成员，修改 addTask() 让用户输入截止日期，修改 viewTasks() 显示它。</p>
+        </div>
+        <div class="content-block">
+            <p><strong>练习3：动手实践 —— 通讯录</strong></p>
+            <p>定义 <code>Contact</code> 结构体（姓名、电话、邮箱），用 vector 存储，实现"添加联系人"和"查看所有联系人"。</p>
+        </div>
+    </div>
+
+    <!-- Slide 11: 本课小结 -->
+    <div class="slide">
+        <div class="slide-title">本课小结</div>
+        <div class="summary-grid">
+            <div class="summary-item"><div class="item-label">🏗️ struct</div><div class="item-desc">自定义复合数据类型，用 . 访问成员</div></div>
+            <div class="summary-item"><div class="item-label">📦 vector\<T\></div><div class="item-desc">动态数组，自动管理大小，用下标访问</div></div>
+            <div class="summary-item"><div class="item-label">➕ push_back()</div><div class="item-desc">向 vector 末尾添加元素</div></div>
+            <div class="summary-item"><div class="item-label">📏 size()</div><div class="item-desc">获取 vector 中元素个数</div></div>
+            <div class="summary-item"><div class="item-label">🈳 empty()</div><div class="item-desc">判断 vector 是否为空</div></div>
+            <div class="summary-item"><div class="item-label">🌐 全局数据</div><div class="item-desc">在函数外声明 vector，让所有函数共享</div></div>
+            <div class="summary-item"><div class="item-label">🔢 自动编号</div><div class="item-desc">用 nextId++ 给每个新任务唯一编号</div></div>
+            <div class="summary-item"><div class="item-label">📊 格式化输出</div><div class="item-desc">表格 + 循环 = 美观的数据展示</div></div>
+        </div>
+        <div class="verse-box">
+            <p>📖 <strong>学习口诀</strong></p>
+            <p style="margin-top:8px;">
+                结构体是档案袋，多个数据装一块。<br>
+                向量是个魔法袋，想装多少都能塞。<br>
+                push_back 后面加，下标访问快又快！
+            </p>
+        </div>
+        <div class="content-block" style="text-align:center;font-size:0.9em;color:var(--text-secondary);margin-top:8px;">
+            <p>下节课：操作数据 —— 查找、筛选与统计！让我们给任务管理器加上"大脑" 🧠</p>
+        </div>
+    </div>
+
+</div>
+
+<div class="nav-container">
+    <button class="nav-btn" id="prevBtn" onclick="changeSlide(-1)">⬅ 上一页</button>
+    <div style="text-align:center;">
+        <div class="slide-counter" id="slideCounter">1/11</div>
+        <div class="dot-nav" id="dotNav"></div>
+    </div>
+    <button class="nav-btn" id="nextBtn" onclick="changeSlide(1)">下一页 ➡</button>
+</div>
+
+<script>
+    let currentSlide = 0;
+    const slides = document.querySelectorAll('.slide');
+    const totalSlides = slides.length;
+    const dotNav = document.getElementById('dotNav');
+    const slideCounter = document.getElementById('slideCounter');
+    const prevBtn = document.getElementById('prevBtn');
+    const nextBtn = document.getElementById('nextBtn');
+    for (let i = 0; i < totalSlides; i++) {
+        const dot = document.createElement('span');
+        dot.className = 'dot' + (i === 0 ? ' active' : '');
+        dot.onclick = () => goToSlide(i);
+        dotNav.appendChild(dot);
+    }
+    function showSlide(index) {
+        slides.forEach((s, i) => { s.classList.toggle('active', i === index); });
+        dotNav.querySelectorAll('.dot').forEach((d, i) => { d.classList.toggle('active', i === index); });
+        slideCounter.textContent = (index + 1) + '/' + totalSlides;
+        prevBtn.disabled = (index === 0); nextBtn.disabled = (index === totalSlides - 1);
+    }
+    function changeSlide(delta) { const n = currentSlide + delta; if (n >= 0 && n < totalSlides) { currentSlide = n; showSlide(n); } }
+    function goToSlide(i) { currentSlide = i; showSlide(i); }
+    document.addEventListener('keydown', (e) => {
+        if (e.key === 'ArrowRight' || e.key === 'ArrowDown') changeSlide(1);
+        if (e.key === 'ArrowLeft' || e.key === 'ArrowUp') changeSlide(-1);
+        if (e.key === 'Home') goToSlide(0); if (e.key === 'End') goToSlide(totalSlides - 1);
+    });
+    let touchStartX = 0;
+    document.addEventListener('touchstart', (e) => { touchStartX = e.changedTouches[0].screenX; });
+    document.addEventListener('touchend', (e) => { const diff = e.changedTouches[0].screenX - touchStartX; if (Math.abs(diff) > 50) changeSlide(diff < 0 ? 1 : -1); });
+    showSlide(0);
+</script>
+</body>
+</html>

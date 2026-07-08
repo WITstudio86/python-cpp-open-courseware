@@ -1,0 +1,344 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>第3课：操作数据 —— 查找、筛选与统计</title>
+    <style>
+        :root { --bg-primary: #1a1a2e; --bg-card: rgba(255,255,255,0.05); --text-primary: #e0e0e0; --text-secondary: #a0a0b0; --accent: #e94560; --accent-glow: rgba(233,69,96,0.3); --code-bg: #0d1117; --border: rgba(255,255,255,0.1); --shadow: 0 8px 32px rgba(0,0,0,0.4); }
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "PingFang SC", "Microsoft YaHei", "Noto Sans SC", sans-serif; background: linear-gradient(135deg, #0f0c29 0%, #302b63 50%, #24243e 100%); min-height: 100vh; color: var(--text-primary); display: flex; flex-direction: column; align-items: center; justify-content: center; overflow-x: hidden; }
+        .slideshow-container { width: 100%; max-width: 960px; min-height: 600px; position: relative; padding: 20px; }
+        .slide { display: none; animation: fadeIn 0.5s ease-in-out; background: var(--bg-card); border: 1px solid var(--border); border-radius: 16px; padding: 40px 50px; min-height: 550px; box-shadow: var(--shadow); backdrop-filter: blur(10px); }
+        .slide.active { display: block; }
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
+        .slide-title { font-size: 2em; color: var(--accent); margin-bottom: 20px; padding-bottom: 12px; border-bottom: 2px solid var(--accent-glow); text-shadow: 0 0 15px var(--accent-glow); }
+        .title-slide { text-align: center; display: flex; flex-direction: column; justify-content: center; align-items: center; }
+        .title-slide h1 { font-size: 3em; color: var(--accent); text-shadow: 0 0 30px var(--accent-glow); margin-bottom: 15px; }
+        .title-slide .subtitle-big { font-size: 1.4em; color: var(--text-secondary); margin-bottom: 30px; }
+        .title-slide .lesson-info { color: var(--text-secondary); font-size: 1em; opacity: 0.7; }
+        .ops-icon { font-size: 5em; margin-bottom: 20px; animation: pulse 2s infinite; }
+        @keyframes pulse { 0%, 100% { transform: scale(1); opacity: 0.8; } 50% { transform: scale(1.1); opacity: 1; } }
+        .content-block { line-height: 1.9; font-size: 1.05em; color: var(--text-primary); margin-bottom: 15px; }
+        .content-block strong { color: var(--accent); }
+        .content-block ul { list-style: none; padding-left: 0; }
+        .content-block ul li { padding: 6px 0 6px 24px; position: relative; }
+        .content-block ul li::before { content: "▸"; color: var(--accent); position: absolute; left: 0; }
+        .content-block ol { padding-left: 20px; } .content-block ol li { padding: 5px 0; }
+        .info-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 15px; margin: 18px 0; }
+        .info-card { background: rgba(233,69,96,0.08); border: 1px solid var(--accent-glow); border-radius: 12px; padding: 20px; text-align: center; transition: transform 0.3s; }
+        .info-card:hover { transform: translateY(-3px); box-shadow: 0 6px 20px var(--accent-glow); }
+        .info-card .card-number { font-size: 2em; font-weight: bold; color: var(--accent); margin-bottom: 8px; }
+        .info-card .card-title { font-size: 1.1em; font-weight: bold; margin-bottom: 8px; }
+        .info-card .card-desc { font-size: 0.9em; color: var(--text-secondary); line-height: 1.5; }
+        .code-block { background: var(--code-bg); border: 1px solid #30363d; border-radius: 8px; padding: 16px 22px; margin: 12px 0; overflow-x: auto; font-family: "JetBrains Mono","Fira Code","Cascadia Code","SF Mono",Consolas,monospace; font-size: 0.85em; line-height: 1.7; position: relative; white-space: pre; }
+        .code-block::before { content: "CPP"; position: absolute; top: 8px; right: 14px; font-size: 0.7em; color: var(--text-secondary); opacity: 0.5; }
+        .kw { color: #ff7b72; } .tp { color: #ffa657; } .fn { color: #d2a8ff; } .str { color: #a5d6ff; } .num { color: #79c0ff; } .cm { color: #8b949e; font-style: italic; } .pp { color: #79c0ff; } .bu { color: #7ee787; }
+        .op-vis { font-family: "JetBrains Mono","Fira Code",monospace; background: var(--code-bg); border: 1px solid #30363d; border-radius: 8px; padding: 14px 18px; margin: 12px 0; white-space: pre; line-height: 1.6; color: #a5d6ff; font-size: 0.82em; overflow-x: auto; text-align: center; }
+        .op-vis .hl { color: var(--accent); font-weight: bold; }
+        .compare-table { width: 100%; border-collapse: collapse; margin: 12px 0; font-size: 0.9em; }
+        .compare-table th { background: rgba(233,69,96,0.2); padding: 10px 14px; text-align: left; color: var(--accent); border: 1px solid var(--border); }
+        .compare-table td { padding: 8px 14px; border: 1px solid var(--border); color: var(--text-primary); }
+        .compare-table tr:nth-child(even) td { background: rgba(255,255,255,0.03); }
+        .warning-box { background: rgba(233,69,96,0.1); border-left: 4px solid var(--accent); border-radius: 0 8px 8px 0; padding: 12px 20px; margin: 12px 0; font-size: 0.93em; line-height: 1.7; }
+        .warning-box strong { color: var(--accent); }
+        .summary-grid { display: grid; grid-template-columns: repeat(2,1fr); gap: 12px; margin: 12px 0; }
+        .summary-item { background: rgba(233,69,96,0.08); border: 1px solid rgba(233,69,96,0.2); border-radius: 10px; padding: 12px 16px; }
+        .summary-item .item-label { color: var(--accent); font-weight: bold; font-size: 0.93em; margin-bottom: 4px; }
+        .summary-item .item-desc { color: var(--text-secondary); font-size: 0.83em; line-height: 1.5; }
+        .verse-box { background: rgba(233,69,96,0.08); border: 2px dashed var(--accent-glow); border-radius: 12px; padding: 18px 28px; margin: 18px 0; text-align: center; font-size: 1.05em; line-height: 2; color: var(--accent); }
+        .progress-bar-box { margin: 15px 0; text-align: center; }
+        .progress-bar { display: inline-block; font-family: "JetBrains Mono",monospace; font-size: 1em; letter-spacing: 2px; }
+        .nav-container { display: flex; justify-content: center; align-items: center; gap: 30px; margin-top: 20px; padding: 10px; }
+        .nav-btn { background: rgba(233,69,96,0.15); border: 1px solid var(--accent); color: var(--accent); padding: 10px 28px; border-radius: 8px; cursor: pointer; font-size: 1em; font-weight: bold; transition: all 0.3s; font-family: inherit; }
+        .nav-btn:hover { background: var(--accent); color: white; box-shadow: 0 4px 15px var(--accent-glow); }
+        .nav-btn:disabled { opacity: 0.3; cursor: not-allowed; pointer-events: none; }
+        .slide-counter { color: var(--text-secondary); font-size: 1em; min-width: 60px; text-align: center; }
+        .dot-nav { display: flex; gap: 8px; justify-content: center; }
+        .dot { width: 10px; height: 10px; border-radius: 50%; background: rgba(255,255,255,0.2); cursor: pointer; transition: all 0.3s; }
+        .dot.active { background: var(--accent); box-shadow: 0 0 10px var(--accent-glow); transform: scale(1.3); }
+        @media (max-width:768px) { .slideshow-container { padding: 10px; } .slide { padding: 25px 20px; min-height: auto; } .slide-title { font-size: 1.4em; } .title-slide h1 { font-size: 2em; } .info-grid { grid-template-columns: 1fr; } .summary-grid { grid-template-columns: 1fr; } .code-block { font-size: 0.7em; padding: 10px 12px; } .nav-btn { padding: 8px 18px; font-size: 0.9em; } }
+    </style>
+</head>
+<body>
+<div class="slideshow-container">
+
+    <!-- Slide 1: Title -->
+    <div class="slide title-slide active">
+        <div class="ops-icon">🔧</div>
+        <h1>操作数据</h1>
+        <p class="subtitle-big">查找、筛选与统计</p>
+        <p class="lesson-info">4节小课 · 第3课 | 从零构建 CLI 任务管理器</p>
+    </div>
+
+    <!-- Slide 2: 课程导入 -->
+    <div class="slide">
+        <div class="slide-title">上节课回顾 & 本节课目标</div>
+        <div class="content-block">
+            <p>前两节课，任务管理器已经能<strong>添加和查看</strong>任务了。但光有这两个功能还不够——任务多了以后，我们还需要：</p>
+        </div>
+        <div class="info-grid">
+            <div class="info-card"><div class="card-number">✅</div><div class="card-title">标记完成</div><div class="card-desc">标记哪些做完了<br>（也能取消标记）</div></div>
+            <div class="info-card"><div class="card-number">🗑️</div><div class="card-title">删除任务</div><div class="card-desc">移除不需要的任务<br>（删除前确认）</div></div>
+            <div class="info-card"><div class="card-number">🔍</div><div class="card-title">筛选查看</div><div class="card-desc">只看未完成的任务<br>按条件过滤</div></div>
+            <div class="info-card"><div class="card-number">📊</div><div class="card-title">数据统计</div><div class="card-desc">完成率、优先级分布<br>一目了然</div></div>
+        </div>
+        <div class="content-block" style="text-align:center;margin-top:12px;">
+            <p style="color:var(--accent);">核心思路：<strong>用循环遍历 vector，找到目标，然后操作它！</strong></p>
+        </div>
+    </div>
+
+    <!-- Slide 3: 线性查找 -->
+    <div class="slide">
+        <div class="slide-title">线性查找 —— 在任务列表中寻找目标</div>
+        <div class="content-block">
+            <p>要标记或删除某个任务，首先需要根据编号找到它。最直接的方法：<strong>逐个遍历匹配</strong>——这叫<strong>线性查找（Linear Search）</strong>。</p>
+        </div>
+        <div class="code-block"><span class="kw">int</span> <span class="fn">findTaskById</span>(<span class="kw">int</span> id) {
+    <span class="kw">for</span> (<span class="kw">int</span> i = <span class="num">0</span>; i &lt; tasks.<span class="fn">size</span>(); i++) {
+        <span class="kw">if</span> (tasks[i].id == id) {
+            <span class="kw">return</span> i;  <span class="cm">// 找到了！返回下标</span>
+        }
+    }
+    <span class="kw">return</span> -<span class="num">1</span>;  <span class="cm">// 遍历完都没找到</span>
+}</div>
+        <div class="op-vis">
+<span class="hl">查找 id=3 的过程：</span>
+tasks[0].id=1 ≠ 3  → 继续
+tasks[1].id=2 ≠ 3  → 继续
+tasks[2].id=<span class="hl">3</span> == 3  → <span class="hl">找到！返回 idx=2</span>
+        </div>
+        <div class="content-block">
+            <p><strong>💡 为什么返回下标？</strong>调用者拿到下标后，既可以<strong>读取</strong>（tasks[idx]）、也可以<strong>修改</strong>（tasks[idx].done = true）、还可以<strong>删除</strong>（erase）。一举三得！</p>
+        </div>
+    </div>
+
+    <!-- Slide 4: 标记完成 -->
+    <div class="slide">
+        <div class="slide-title">标记任务 —— 切换完成状态</div>
+        <div class="code-block"><span class="kw">void</span> <span class="fn">markDone</span>() {
+    <span class="kw">if</span> (tasks.<span class="fn">empty</span>()) { cout &lt;&lt; <span class="str">"📭 暂无任务！"</span> &lt;&lt; endl; <span class="kw">return</span>; }
+
+    <span class="kw">int</span> id;
+    cout &lt;&lt; <span class="str">"请输入任务编号："</span>;
+    cin &gt;&gt; id;
+
+    <span class="kw">int</span> idx = <span class="fn">findTaskById</span>(id);
+    <span class="kw">if</span> (idx == -<span class="num">1</span>) {
+        cout &lt;&lt; <span class="str">"❌ 未找到！"</span> &lt;&lt; endl;
+        <span class="kw">return</span>;
+    }
+
+    tasks[idx].done = <span class="op">!</span>tasks[idx].done;  <span class="cm">// ★ 取反：true↔false</span>
+
+    cout &lt;&lt; <span class="str">"✓ 任务 #"</span> &lt;&lt; id;
+    <span class="kw">if</span> (tasks[idx].done)
+        cout &lt;&lt; <span class="str">" 已标记为 ✅ 已完成"</span> &lt;&lt; endl;
+    <span class="kw">else</span>
+        cout &lt;&lt; <span class="str">" 已标记为 ⬜ 未完成"</span> &lt;&lt; endl;
+}</div>
+        <div class="content-block">
+            <p><strong>亮点：</strong>使用 <code>!</code>（取反运算符），同一个函数既能"标记完成"也能"取消完成"——<strong>一键切换</strong>！</p>
+        </div>
+    </div>
+
+    <!-- Slide 5: 删除任务 - erase -->
+    <div class="slide">
+        <div class="slide-title">删除任务 —— vector 的 erase() 方法</div>
+        <div class="content-block">
+            <p>删除 vector 中的元素使用 <code>erase()</code> 方法，需要传入<strong>迭代器</strong>。</p>
+        </div>
+        <div class="code-block"><span class="cm">// 关键语法：</span>
+tasks.<span class="fn">erase</span>(tasks.<span class="fn">begin</span>() + idx);
+<span class="cm">//        ↑ 指向第一个元素的迭代器 + 偏移量</span></div>
+        <div class="op-vis">
+<span style="color:var(--text-secondary);">删除 tasks[2] 的过程：</span>
+
+删除前：[Task0] [Task1] [<span class="hl">Task2</span>] [Task3] [Task4]
+                           ↑ 要删除这个
+删除后：[Task0] [Task1] [Task3] [Task4]
+             后面的元素<span style="color:#7ee787;">自动前移</span>！
+        </div>
+        <div class="warning-box">
+            <strong>⚠️ 二次确认很重要！</strong>删除是不可逆操作，一定要在删除前询问用户确认（y/n），防止误删。这是良好用户体验的基本要求。
+        </div>
+    </div>
+
+    <!-- Slide 6: 删除完整代码 -->
+    <div class="slide">
+        <div class="slide-title">删除任务 —— 完整实现</div>
+        <div class="code-block"><span class="kw">void</span> <span class="fn">deleteTask</span>() {
+    <span class="kw">if</span> (tasks.<span class="fn">empty</span>()) { cout &lt;&lt; <span class="str">"📭 暂无任务！"</span> &lt;&lt; endl; <span class="kw">return</span>; }
+
+    <span class="kw">int</span> id;
+    cout &lt;&lt; <span class="str">"请输入要删除的任务编号："</span>;
+    cin &gt;&gt; id;
+
+    <span class="kw">int</span> idx = <span class="fn">findTaskById</span>(id);
+    <span class="kw">if</span> (idx == -<span class="num">1</span>) { cout &lt;&lt; <span class="str">"❌ 未找到！"</span> &lt;&lt; endl; <span class="kw">return</span>; }
+
+    <span class="cm">// ★ 二次确认，防止误删</span>
+    cout &lt;&lt; <span class="str">"\n⚠️ 确定删除「"</span> &lt;&lt; tasks[idx].title &lt;&lt; <span class="str">"」吗？(y/n)："</span>;
+    <span class="kw">char</span> confirm;
+    cin &gt;&gt; confirm;
+
+    <span class="kw">if</span> (confirm == <span class="str">'y'</span> || confirm == <span class="str">'Y'</span>) {
+        <span class="tp">string</span> deletedTitle = tasks[idx].title;
+        tasks.<span class="fn">erase</span>(tasks.<span class="fn">begin</span>() + idx);  <span class="cm">// 执行删除</span>
+        cout &lt;&lt; <span class="str">"✓ 任务「"</span> &lt;&lt; deletedTitle &lt;&lt; <span class="str">"」已删除！"</span> &lt;&lt; endl;
+    } <span class="kw">else</span> {
+        cout &lt;&lt; <span class="str">"  已取消删除。"</span> &lt;&lt; endl;
+    }
+}</div>
+    </div>
+
+    <!-- Slide 7: 筛选 -->
+    <div class="slide">
+        <div class="slide-title">筛选查询 —— 只看待完成的任务</div>
+        <div class="content-block">
+            <p>筛选的核心思路：<strong>遍历所有任务，用 if 条件过滤，只显示符合条件的。</strong></p>
+        </div>
+        <div class="code-block"><span class="kw">void</span> <span class="fn">viewPending</span>() {
+    <span class="kw">int</span> count = <span class="num">0</span>;
+    cout &lt;&lt; <span class="str">"\n📋 待完成的任务："</span> &lt;&lt; endl;
+
+    <span class="kw">for</span> (<span class="kw">int</span> i = <span class="num">0</span>; i &lt; tasks.<span class="fn">size</span>(); i++) {
+        <span class="kw">if</span> (<span class="op">!</span>tasks[i].done) {   <span class="cm">// ★ 只显示未完成的</span>
+            count++;
+            cout &lt;&lt; <span class="str">"  ["</span> &lt;&lt; tasks[i].id &lt;&lt; <span class="str">"] "</span> &lt;&lt; tasks[i].title;
+            <span class="kw">if</span> (tasks[i].priority == <span class="num">1</span>) cout &lt;&lt; <span class="str">" 🔴"</span>;
+            <span class="kw">else if</span> (tasks[i].priority == <span class="num">2</span>) cout &lt;&lt; <span class="str">" 🟡"</span>;
+            <span class="kw">else</span> cout &lt;&lt; <span class="str">" 🟢"</span>;
+            cout &lt;&lt; endl;
+        }
+    }
+
+    <span class="kw">if</span> (count == <span class="num">0</span>) cout &lt;&lt; <span class="str">"  🎉 所有任务都完成了！"</span> &lt;&lt; endl;
+    <span class="kw">else</span> cout &lt;&lt; <span class="str">"  共 "</span> &lt;&lt; count &lt;&lt; <span class="str">" 个待完成。"</span> &lt;&lt; endl;
+}</div>
+        <div class="content-block">
+            <p><strong>泛化能力：</strong>只需改 if 条件，就能实现各种筛选——按优先级、按关键字搜索、按日期范围……</p>
+        </div>
+    </div>
+
+    <!-- Slide 8: 统计 -->
+    <div class="slide">
+        <div class="slide-title">数据统计 —— 让数字说话</div>
+        <div class="code-block"><span class="kw">void</span> <span class="fn">showStats</span>() {
+    <span class="kw">int</span> total = tasks.<span class="fn">size</span>();
+    <span class="kw">int</span> done = <span class="num">0</span>;
+    <span class="kw">int</span> high = <span class="num">0</span>, mid = <span class="num">0</span>, low = <span class="num">0</span>;
+
+    <span class="kw">for</span> (<span class="kw">int</span> i = <span class="num">0</span>; i &lt; total; i++) {
+        <span class="kw">if</span> (tasks[i].done) done++;
+        <span class="kw">if</span> (tasks[i].priority == <span class="num">1</span>) high++;
+        <span class="kw">else if</span> (tasks[i].priority == <span class="num">2</span>) mid++;
+        <span class="kw">else</span> low++;
+    }
+
+    cout &lt;&lt; <span class="str">"\n📊 任务统计："</span> &lt;&lt; endl;
+    cout &lt;&lt; <span class="str">"  总任务："</span> &lt;&lt; total &lt;&lt; <span class="str">" | 已完成："</span> &lt;&lt; done;
+    cout &lt;&lt; <span class="str">" | 完成率："</span> &lt;&lt; (total ? done*<span class="num">100</span>/total : <span class="num">0</span>) &lt;&lt; <span class="str">"%"</span> &lt;&lt; endl;
+}</div>
+        <div class="op-vis">
+<span style="color:var(--accent);">进度条可视化：</span>
+[<span style="color:#7ee787;">████████████</span>░░░░░░░░] <span style="color:#7ee787;">60%</span>
+<span style="color:var(--text-secondary);">3/5 个任务已完成</span>
+        </div>
+        <div class="content-block">
+            <p><strong>技巧：</strong>用 <code>total ? done*100/total : 0</code> 防止除以 0 导致程序崩溃。</p>
+        </div>
+    </div>
+
+    <!-- Slide 9: 更新菜单 -->
+    <div class="slide">
+        <div class="slide-title">升级菜单 —— v3.0 新增选项</div>
+        <div class="op-vis" style="text-align:left;">
+<span style="color:var(--accent);">╔══════════════════════════════╗</span>
+<span style="color:var(--accent);">║     📋 任务管理器 v3.0       ║</span>
+<span style="color:var(--accent);">╠══════════════════════════════╣</span>
+<span style="color:var(--accent);">║  1. ➕ 添加新任务            ║</span>  ← 第2课实现
+<span style="color:var(--accent);">║  2. 📋 查看所有任务          ║</span>  ← 第2课实现
+<span style="color:var(--accent);">║  3. ✅ 标记任务完成/未完成   ║</span>  ← <span class="hl">第3课新增！</span>
+<span style="color:var(--accent);">║  4. 🗑️  删除任务             ║</span>  ← <span class="hl">第3课新增！</span>
+<span style="color:var(--accent);">║  5. 🔍 查看待完成任务        ║</span>  ← <span class="hl">第3课新增！</span>
+<span style="color:var(--accent);">║  6. 📊 任务统计              ║</span>  ← <span class="hl">第3课新增！</span>
+<span style="color:var(--accent);">║  0. 🚪 退出程序              ║</span>
+<span style="color:var(--accent);">╚══════════════════════════════╝</span>
+        </div>
+        <div class="content-block">
+            <p>在 <code>switch</code> 中添加对应的 <code>case 3~6</code>，main 函数几乎不需要改动其他部分——这就是<strong>模块化设计</strong>的好处！</p>
+        </div>
+    </div>
+
+    <!-- Slide 10: 课后练习 -->
+    <div class="slide">
+        <div class="slide-title">课后练习</div>
+        <div class="content-block">
+            <p><strong>练习1：填空补全</strong> — 按优先级筛选：</p>
+        </div>
+        <div class="code-block"><span class="kw">void</span> <span class="fn">viewByPriority</span>(<span class="kw">int</span> prio) {
+    <span class="kw">int</span> count = <span class="num">0</span>;
+    <span class="kw">for</span> (<span class="kw">int</span> i = <span class="num">0</span>; i &lt; tasks.<span class="fn">size</span>(); i++) {
+        <span class="kw">if</span> (tasks[i].<span style="color:var(--accent);border-bottom:2px solid var(--accent);">&nbsp;&nbsp;&nbsp;</span> == prio) {  <span class="cm">// 填空：比较哪个字段？</span>
+            cout &lt;&lt; tasks[i].title &lt;&lt; endl;
+            <span style="color:var(--accent);border-bottom:2px solid var(--accent);">&nbsp;&nbsp;&nbsp;</span>++;                   <span class="cm">// 填空：什么变量？</span>
+        }
+    }
+    cout &lt;&lt; <span class="str">"共找到 "</span> &lt;&lt; <span style="color:var(--accent);border-bottom:2px solid var(--accent);">&nbsp;&nbsp;&nbsp;</span> &lt;&lt; <span class="str">" 个。"</span> &lt;&lt; endl;  <span class="cm">// 填空：输出什么？</span>
+}</div>
+        <div class="content-block" style="margin-top:10px;">
+            <p><strong>练习2：纠错</strong> — <code>tasks.erase(tasks.begin() - 1)</code> 有什么问题？</p>
+        </div>
+        <div class="content-block">
+            <p><strong>练习3：给通讯录加功能</strong> — 在你第2课创建的通讯录中加入搜索、删除和统计功能。</p>
+        </div>
+    </div>
+
+    <!-- Slide 11: 本课小结 -->
+    <div class="slide">
+        <div class="slide-title">本课小结</div>
+        <div class="summary-grid">
+            <div class="summary-item"><div class="item-label">🔍 线性查找</div><div class="item-desc">逐个遍历找目标，返回下标（可读/可写/可删）</div></div>
+            <div class="summary-item"><div class="item-label">✅ 状态切换</div><div class="item-desc">! 运算符取反，一函数实现标记/取消</div></div>
+            <div class="summary-item"><div class="item-label">🗑️ erase()</div><div class="item-desc">v.erase(v.begin()+idx) 删除指定元素</div></div>
+            <div class="summary-item"><div class="item-label">🔐 二次确认</div><div class="item-desc">删除前询问 y/n，防止误操作</div></div>
+            <div class="summary-item"><div class="item-label">🔎 数据筛选</div><div class="item-desc">遍历 + if 条件，只处理符合条件的元素</div></div>
+            <div class="summary-item"><div class="item-label">📊 数据统计</div><div class="item-desc">遍历 + 计数器，汇总各类数据</div></div>
+        </div>
+        <div class="verse-box">
+            <p>📖 <strong>学习口诀</strong></p>
+            <p style="margin-top:8px;">
+                查找任务用循环，找到下标好操作。<br>
+                erase 删除传迭代，begin+idx 记心窝。<br>
+                筛选全靠 if 判断，统计计数好掌握。<br>
+                删除之前问一句，用户体验暖心窝！
+            </p>
+        </div>
+        <div class="content-block" style="text-align:center;font-size:0.9em;color:var(--text-secondary);margin-top:8px;">
+            <p>下节课：持久化 —— 文件读写与完整发布！让数据永久保存 💾</p>
+        </div>
+    </div>
+
+</div>
+
+<div class="nav-container">
+    <button class="nav-btn" id="prevBtn" onclick="changeSlide(-1)">⬅ 上一页</button>
+    <div style="text-align:center;"><div class="slide-counter" id="slideCounter">1/11</div><div class="dot-nav" id="dotNav"></div></div>
+    <button class="nav-btn" id="nextBtn" onclick="changeSlide(1)">下一页 ➡</button>
+</div>
+
+<script>
+    let currentSlide = 0; const slides = document.querySelectorAll('.slide'); const totalSlides = slides.length;
+    const dotNav = document.getElementById('dotNav'); const slideCounter = document.getElementById('slideCounter');
+    const prevBtn = document.getElementById('prevBtn'); const nextBtn = document.getElementById('nextBtn');
+    for (let i = 0; i < totalSlides; i++) { const dot = document.createElement('span'); dot.className = 'dot' + (i===0?' active':''); dot.onclick = () => goToSlide(i); dotNav.appendChild(dot); }
+    function showSlide(i) { slides.forEach((s,j)=>s.classList.toggle('active',j===i)); dotNav.querySelectorAll('.dot').forEach((d,j)=>d.classList.toggle('active',j===i)); slideCounter.textContent=(i+1)+'/'+totalSlides; prevBtn.disabled=(i===0); nextBtn.disabled=(i===totalSlides-1); }
+    function changeSlide(d) { const n=currentSlide+d; if(n>=0&&n<totalSlides){currentSlide=n;showSlide(n);} }
+    function goToSlide(i) { currentSlide=i; showSlide(i); }
+    document.addEventListener('keydown',(e)=>{if(e.key==='ArrowRight'||e.key==='ArrowDown')changeSlide(1);if(e.key==='ArrowLeft'||e.key==='ArrowUp')changeSlide(-1);if(e.key==='Home')goToSlide(0);if(e.key==='End')goToSlide(totalSlides-1);});
+    let touchStartX=0; document.addEventListener('touchstart',(e)=>{touchStartX=e.changedTouches[0].screenX;}); document.addEventListener('touchend',(e)=>{const diff=e.changedTouches[0].screenX-touchStartX;if(Math.abs(diff)>50)changeSlide(diff<0?1:-1);});
+    showSlide(0);
+</script>
+</body>
+</html>
