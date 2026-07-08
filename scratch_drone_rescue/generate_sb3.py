@@ -5,6 +5,9 @@ Output: output/drone_rescue.sb3
 """
 import json, uuid, zipfile, os
 
+# Global registry of SVG assets to embed in the .sb3 ZIP
+_SVG_ASSETS = {}
+
 # ═══════════════════════════════════════════
 # A. UTILITIES
 # ═══════════════════════════════════════════
@@ -40,7 +43,6 @@ class B:
         "scene_1":       "br_scene1",
         "scene_2":       "br_scene2",
         "scene_3":       "br_scene3",
-        "scene_4":       "br_scene4",
         "scene_5":       "br_scene5",
         "survivor_found":"br_found",
         "supply_delivered":"br_delivered",
@@ -343,11 +345,13 @@ class B:
 
 def make_costume(name, svg_data):
     asset_id = uid()
+    filename = f"{asset_id}.svg"
+    _SVG_ASSETS[filename] = svg_data
     return {
         "assetId": asset_id,
         "name": name,
         "bitmapResolution": 1,
-        "md5ext": f"{asset_id}.svg",
+        "md5ext": filename,
         "dataFormat": "svg",
         "rotationCenterX": 0,
         "rotationCenterY": 0,
@@ -395,6 +399,8 @@ def pack_sb3(project, path):
     os.makedirs(os.path.dirname(path) or ".", exist_ok=True)
     with zipfile.ZipFile(path, 'w', zipfile.ZIP_DEFLATED) as zf:
         zf.writestr('project.json', json.dumps(project, ensure_ascii=False, indent=2))
+        for filename, data in _SVG_ASSETS.items():
+            zf.writestr(filename, data)
     print(f"✅ Generated: {path} ({os.path.getsize(path)} bytes)")
 
 # ═══════════════════════════════════════════
@@ -538,6 +544,8 @@ ASSETS["supply_pack"] = '''<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 
   <text x="15" y="20" text-anchor="middle" font-size="12" fill="#fff" font-weight="bold">+</text>
 </svg>'''
 
+ASSETS["transparent"] = '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1 1"><rect width="1" height="1" fill="none"/></svg>'
+
 ASSETS["start_btn"] = '''<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 180 50">
   <rect x="0" y="0" width="180" height="50" rx="25" fill="#e76f51" stroke="#fff" stroke-width="2"/>
   <text x="90" y="32" text-anchor="middle" font-size="18" fill="#fff" font-family="sans-serif">🚀 开始救援任务</text>
@@ -670,9 +678,21 @@ def build():
                 ("motion_changeyby", {"DY": (str(dy), str(dy))}, {}),
             ]))
 
-    # Boundary clamping (forever during search — using a hat that watches)
-    # We'll handle boundaries with a simple forever-if
-    # Actually, let's skip complex boundary for now. The drone moves within stage.
+    # Boundary clamping (forever loop during scene 3)
+    x_reporter = db._make_reporter("motion_xposition")
+    y_reporter = db._make_reporter("motion_yposition")
+    db.hat("event_whenbroadcastreceived",
+        {"BROADCAST_OPTION": ["scene_3", B.BC_IDS["scene_3"]]},
+        body=db.forever([
+            *db.if_(db.lt(("220", "220"), x_reporter), [
+                ("motion_setx", {"X": ("220", "220")}, {})]),
+            *db.if_(db.lt(x_reporter, ("-220", "-220")), [
+                ("motion_setx", {"X": ("-220", "-220")}, {})]),
+            *db.if_(db.lt(("160", "160"), y_reporter), [
+                ("motion_sety", {"Y": ("160", "160")}, {})]),
+            *db.if_(db.lt(y_reporter, ("-160", "-160")), [
+                ("motion_sety", {"Y": ("-160", "-160")}, {})]),
+        ]))
 
     # Space key: delivery (only in scene 3, near any found survivor)
     scene_var2 = db.var_reporter("scene")
@@ -766,6 +786,9 @@ def build():
         {"BROADCAST_OPTION": ["scene_1", B.BC_IDS["scene_1"]]},
         body=[*spb.hide()])
     spb.hat("event_whenbroadcastreceived",
+        {"BROADCAST_OPTION": ["scene_2", B.BC_IDS["scene_2"]]},
+        body=[*spb.hide()])
+    spb.hat("event_whenbroadcastreceived",
         {"BROADCAST_OPTION": ["scene_5", B.BC_IDS["scene_5"]]},
         body=[*spb.hide()])
 
@@ -833,8 +856,8 @@ def build():
 
     # ── UI OVERLAY SPRITE (narrative text) ──
     ui = make_sprite("UI_Overlay")
-    # Simple empty costume
-    ui["costumes"] = [make_costume("empty", ASSETS["supply_pack"])]
+    # Transparent costume (1x1 invisible SVG)
+    ui["costumes"] = [make_costume("empty", ASSETS["transparent"])]
     ui["size"] = 5
     ui["layerOrder"] = 25
     ub = B(ui)
@@ -882,8 +905,10 @@ def build():
 # F. MAIN
 # ═══════════════════════════════════════════
 if __name__ == '__main__':
+    script_dir = os.path.dirname(os.path.abspath(__file__))
+    out_path = os.path.join(script_dir, 'output', 'drone_rescue.sb3')
     project = build()
-    pack_sb3(project, 'output/drone_rescue.sb3')
+    pack_sb3(project, out_path)
 
     # Print stats
     total_blocks = sum(len(t['blocks']) for t in project['targets'])
