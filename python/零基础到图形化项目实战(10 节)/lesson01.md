@@ -159,6 +159,41 @@ window.mainloop()             # 让窗口一直运行
 
 > 💡 **类比**：`mainloop()` 就像一个前台接待员，一直站在那里，等着你操作窗口。如果没有这行，窗口会"闪一下"就消失。
 
+### 1.8 Label 标签 — 在窗口里显示文字
+
+`Label` 是 tkinter 中最简单的**控件**（Widget），专门用来**显示文字**（用户不能修改）。
+
+```python
+# 创建标签
+label = tk.Label(窗口对象, text="要显示的文字", font=("字体名", 字号))
+
+# 把标签放到窗口里
+label.pack()
+```
+
+**参数详解**：
+
+| 参数 | 说明 | 示例 |
+|------|------|------|
+| 第一个参数 | 这个标签属于哪个窗口 | `window` |
+| `text` | 要显示的文字内容 | `text="欢迎使用备忘录！"` |
+| `font` | 字体设置，是一个元组 `("字体名", 字号)` | `font=("微软雅黑", 16)` |
+| `fg` | 文字颜色（foreground） | `fg="blue"` 或 `fg="#3333FF"` |
+| `bg` | 背景颜色（background） | `bg="yellow"` |
+
+```python
+# 示例：创建一个蓝色大标题标签
+title_label = tk.Label(
+    window,
+    text="📝 我的备忘录",
+    font=("微软雅黑", 20),
+    fg="blue"
+)
+title_label.pack()
+```
+
+> 💡 **注意**：创建控件后，**必须调用 `.pack()`** 才能把它放到窗口里显示出来。否则控件虽然被创建了，但不会显示在窗口上。
+
 ---
 
 ## 💻 写代码
@@ -196,6 +231,15 @@ window.title("我的备忘录")
 # 设置窗口大小（宽x高，中间是小写字母 x）
 window.geometry("400x500")
 
+# 第四步：在窗口里添加一个标签（Label）
+hello_label = tk.Label(
+    window,
+    text="欢迎来到我的备忘录！",
+    font=("微软雅黑", 14),
+    fg="#333333"
+)
+hello_label.pack(pady=20)
+
 # 让窗口保持运行（这一行要放在最后）
 window.mainloop()
 ```
@@ -232,6 +276,7 @@ window.mainloop()
 2. **改大小**：把窗口大小改成 `"600x400"`，看看长方形窗口的效果
 3. **加一行 print**：在代码最前面让电脑打印一句 `"我要做出一个超棒的备忘录！"`
 4. **试试变量**：创建两个新变量，分别存你的年龄和爱好，用 `print()` 打印出来
+5. **改 Label**：把标签的文字改成 `"你好，我是xxx！"`，试试改字体大小和颜色（`fg`）
 
 ---
 
@@ -239,7 +284,7 @@ window.mainloop()
 
 ```python
 # ============================================
-# 第 1 课：你好，Python！— 第一个窗口
+# 第 1 课：你好，Python！— 第一个窗口 + Label 标签
 # ============================================
 
 # --- 第一部分：print() 和变量 ---
@@ -271,6 +316,17 @@ window.title("我的备忘录")
 # 设置窗口大小（宽x高，单位是像素）
 window.geometry("400x500")
 
+# --- 第三部分：添加 Label 标签 ---
+
+# 添加一个欢迎标签
+hello_label = tk.Label(
+    window,
+    text="欢迎来到我的备忘录！",
+    font=("微软雅黑", 14),
+    fg="#333333"
+)
+hello_label.pack(pady=20)
+
 # 让窗口一直显示（事件循环，必须放最后）
 window.mainloop()
 ```
@@ -287,12 +343,14 @@ window.mainloop()
 | `tk.Tk()` | 创建窗口 | `window = tk.Tk()` |
 | `.title()` | 设标题 | `window.title("标题")` |
 | `.geometry()` | 设大小 | `window.geometry("宽x高")` |
+| `tk.Label()` | 文字标签 | `tk.Label(window, text="文字", font=("字体", 字号))` |
+| `.pack()` | 放置控件 | `label.pack(pady=间距)` |
 | `.mainloop()` | 窗口循环 | `window.mainloop()` |
 
 ---
 
 ## 📖 下节课预告
 
-第 2 课：**窗口里放东西 — Label 标签和 Button 按钮**
+第 2 课：**按钮与交互 — Button 按钮、pack 布局和 f-string**
 
-我们将在空窗口中添加文字标签和可点击的按钮，让窗口不再"空空如也"！
+我们将添加可点击的按钮，学会 pack() 布局和 f-string 格式化，让窗口"活"起来！

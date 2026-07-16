@@ -1,15 +1,16 @@
-# 第 2 课 · 窗口里放东西 — Label 标签和 Button 按钮
+# 第 2 课 · 按钮与交互 — Button 按钮、pack 布局和 f-string
 
 ---
 
 ## 🎯 本课目标
 
 - 理解"控件"（Widget）的概念
-- 在窗口中添加文字标签（Label）
 - 在窗口中添加可点击的按钮（Button）
 - 学会 `pack()` 布局方式
 - 学会用 `f-string` 格式化文字
+- 学会用 `def` 定义自己的函数
 - 给按钮绑定 `command`，实现"点按钮做事情"
+- 学会 `.config()` 动态修改控件属性
 
 ---
 
@@ -28,40 +29,7 @@
 
 > 💡 **控件的生命周期**：创建控件 → 设置属性 → 放到窗口里 → 显示
 
-### 2.2 Label 标签 — 显示文字
-
-`Label` 是最简单的控件，专门用来**显示文字**（用户不能修改）。
-
-```python
-# 创建标签
-label = tk.Label(窗口对象, text="要显示的文字", font=("字体名", 字号))
-
-# 把标签放到窗口里
-label.pack()
-```
-
-**参数详解**：
-
-| 参数 | 说明 | 示例 |
-|------|------|------|
-| 第一个参数 | 这个标签属于哪个窗口 | `window` |
-| `text` | 要显示的文字内容 | `text="欢迎使用备忘录！"` |
-| `font` | 字体设置，是一个元组 `("字体名", 字号)` | `font=("微软雅黑", 16)` |
-| `fg` | 文字颜色（foreground） | `fg="blue"` 或 `fg="#3333FF"` |
-| `bg` | 背景颜色（background） | `bg="yellow"` |
-
-```python
-# 示例：创建一个蓝色大标题标签
-title_label = tk.Label(
-    window,
-    text="📝 我的备忘录",
-    font=("微软雅黑", 20),
-    fg="blue"
-)
-title_label.pack()
-```
-
-### 2.3 Button 按钮 — 可点击
+### 2.2 Button 按钮 — 可点击
 
 `Button` 是一个**可以点击**的控件。点击后可以执行你指定的操作。
 
@@ -79,7 +47,7 @@ btn.pack()
 > - ✅ 正确：`command=say_hello`
 > - ❌ 错误：`command=say_hello()`（这样会在创建按钮时就执行函数，而不是点击时）
 
-### 2.4 pack() — 最简单的布局
+### 2.3 pack() — 最简单的布局
 
 `pack()` 是 tkinter 三种布局方式中最简单的一种。
 
@@ -102,7 +70,7 @@ button1.pack()  # 第三个，出现在 label2 下面
 | `padx` | 左右留空（像素） | `padx=20` |
 | `fill` | 是否填满 | `tk.X`（横向填满）、`tk.Y`（纵向填满）、`tk.BOTH` |
 
-### 2.5 f-string — 格式化文字
+### 2.4 f-string — 格式化文字
 
 `f-string` 是 Python 3.6 以后的新特性，可以**把变量嵌入到字符串中**，非常方便。
 
@@ -122,7 +90,7 @@ print(f"我叫{name}，今年{age}岁")
 - 变量用 `{ }` 包起来
 - 花括号里甚至可以写简单的计算：`f"明年我{age + 1}岁"`
 
-### 2.6 函数入门 — 用 `def` 定义操作
+### 2.5 函数入门 — 用 `def` 定义操作
 
 **函数**是一段有名字的代码，可以被重复调用。在第 1 课我们用过 `print()` 这个内置函数，现在我们自己定义函数。
 
@@ -164,33 +132,31 @@ window.title("我的备忘录")
 window.geometry("400x500")
 ```
 
-### 步骤 3：添加标题标签
+### 步骤 3：添加标签（复习第 1 课）
+
+Label 在第 1 课已经学过，这里快速复习一下：
 
 ```python
 # 大标题
 title_label = tk.Label(
     window,
     text="📝 我的备忘录",
-    font=("微软雅黑", 20, "bold"),  # bold 表示加粗
-    fg="#333333"                     # 深灰色文字
+    font=("微软雅黑", 20, "bold"),
+    fg="#333333"
 )
-title_label.pack(pady=15)  # 上下各留 15 像素的空隙
-```
+title_label.pack(pady=15)
 
-### 步骤 4：添加副标题标签
-
-```python
 # 副标题
 subtitle_label = tk.Label(
     window,
     text="用 Python 打造自己的专属工具！",
     font=("微软雅黑", 10),
-    fg="#888888"  # 浅灰色
+    fg="#888888"
 )
 subtitle_label.pack(pady=5)
 ```
 
-### 步骤 5：添加按钮和功能
+### 步骤 4：添加按钮和功能
 
 ```python
 # --- 定义函数：按钮点击后做什么 ---
@@ -242,7 +208,7 @@ quit_btn = tk.Button(
 quit_btn.pack(pady=30)
 ```
 
-### 步骤 6：运行主循环
+### 步骤 5：运行主循环
 
 ```python
 window.mainloop()
@@ -278,7 +244,7 @@ window.mainloop()
 
 ```python
 # ============================================
-# 第 2 课：Label 标签和 Button 按钮
+# 第 2 课：Button 按钮、pack 布局和 f-string
 # ============================================
 
 import tkinter as tk
@@ -356,7 +322,7 @@ quit_btn.pack(pady=30)
 # 6. 底部说明
 footer_label = tk.Label(
     window,
-    text="第 2 课 · Label 与 Button",
+    text="第 2 课 · Button 与交互",
     font=("微软雅黑", 8),
     fg="#CCCCCC"
 )
@@ -372,7 +338,6 @@ window.mainloop()
 
 | 学到的知识 | 是什么 | 怎么用 |
 |-----------|--------|--------|
-| `Label` | 文字标签控件 | `tk.Label(window, text="文字", font=("字体", 字号))` |
 | `Button` | 按钮控件 | `tk.Button(window, text="按钮", command=函数名)` |
 | `pack()` | 布局方式 | `控件.pack(pady=间距)` |
 | `f-string` | 格式化文字 | `f"我叫{name}"` |
@@ -386,4 +351,4 @@ window.mainloop()
 
 第 3 课：**输入文字吧 — Entry 输入框和 Listbox 列表**
 
-我们将加入输入框，让你可以**打字输入待办事项**，点击按钮后添加到下方的列表中——备忘录的核心功能来了！
+我们将加入输入框，让你可以**打字输入待办事项**，点击按钮后添加到下方的列表中——备忘录的核心交互来了！

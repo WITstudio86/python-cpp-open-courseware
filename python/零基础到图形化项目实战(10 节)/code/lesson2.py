@@ -1,5 +1,5 @@
 # ============================================
-# 第 2 课：Label 标签和 Button 按钮
+# 第 2 课：Button 按钮、pack 布局和 f-string
 # ============================================
 
 import tkinter as tk
@@ -77,7 +77,7 @@ quit_btn.pack(pady=30)
 # 6. 底部说明
 footer_label = tk.Label(
     window,
-    text="第 2 课 · Label 与 Button",
+    text="第 2 课 · Button 与交互",
     font=("微软雅黑", 8),
     fg="#CCCCCC"
 )
