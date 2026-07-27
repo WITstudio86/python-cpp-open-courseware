@@ -1,0 +1,416 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>lesson04_子集枚举.cpp</title>
+<style>
+  :root {
+    --bg: #f5f7fa;
+    --panel: #ffffff;
+    --text: #1a1a2e;
+    --muted: #5a6570;
+    --gold: #b8860b;
+    --code-bg: #ffffff;
+    --code-text: #1f2933;
+    --border: #d8dee6;
+    --top-bg: #ffffff;
+    --top-border: #e5e9ef;
+  }
+  * { box-sizing: border-box; }
+  html, body {
+    margin: 0; padding: 0;
+    background: var(--bg);
+    color: var(--text);
+    font-family: -apple-system, BlinkMacSystemFont, "PingFang SC", "Microsoft YaHei", sans-serif;
+    min-height: 100%;
+  }
+  .top {
+    position: sticky; top: 0; z-index: 10;
+    display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between;
+    gap: 10px;
+    padding: 12px 18px;
+    background: var(--top-bg);
+    border-bottom: 1px solid var(--top-border);
+    box-shadow: 0 1px 8px rgba(15, 23, 42, 0.06);
+  }
+  .brand { color: var(--gold); font-weight: 700; font-size: 14px; letter-spacing: 0.04em; }
+  .title { font-size: 15px; font-weight: 600; color: var(--text); max-width: 52vw; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .actions { display: flex; gap: 8px; flex-wrap: wrap; }
+  .btn {
+    appearance: none; border: 1px solid var(--border);
+    background: #fff; color: var(--text);
+    border-radius: 999px; padding: 8px 14px; font-size: 13px; font-weight: 600;
+    text-decoration: none; cursor: pointer;
+  }
+  .btn:hover { background: #f0f3f7; }
+  .btn.gold {
+    background: linear-gradient(135deg, #f0d78c, #d4a853);
+    color: #0a2540; border-color: #e0c06a;
+  }
+  .meta {
+    padding: 10px 18px; color: var(--muted); font-size: 12px;
+    border-bottom: 1px solid var(--border);
+    background: var(--panel);
+  }
+  .wrap { padding: 16px 18px 40px; }
+  pre {
+    margin: 0;
+    background: var(--code-bg);
+    color: var(--code-text);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 18px 20px;
+    overflow: auto;
+    font-family: "SF Mono", "JetBrains Mono", "Fira Code", Consolas, "Courier New", monospace;
+    font-size: 13.5px;
+    line-height: 1.55;
+    white-space: pre;
+    tab-size: 4;
+    box-shadow: 0 2px 12px rgba(15, 23, 42, 0.05);
+  }
+  .hint { margin-top: 12px; color: var(--muted); font-size: 12px; }
+  @media print {
+    html, body { background: #fff !important; color: #000 !important; }
+    .top { position: static; box-shadow: none; border-bottom: 1px solid #ccc; background: #fff !important; }
+    .actions { display: none !important; }
+    .meta { background: #fff !important; border-color: #ddd; color: #333; }
+    .wrap { padding: 0; }
+    pre {
+      background: #fff !important; color: #000 !important;
+      border: 1px solid #bbb; box-shadow: none; border-radius: 0;
+      white-space: pre-wrap; word-break: break-word; font-size: 11pt; line-height: 1.4;
+    }
+    .hint { display: none; }
+    a { color: #000; text-decoration: none; }
+  }
+</style>
+</head>
+<body>
+  <div class="top">
+    <div class="brand">C++ 算法提高 · 配套代码</div>
+    <div class="title">lesson04_子集枚举.cpp</div>
+    <div class="actions">
+      <a class="btn" href="../lesson04_子集枚举.cpp" download="lesson04_子集枚举.cpp">⬇️ 下载源文件</a>
+      <a class="btn gold" href="javascript:history.back()">← 返回课件</a>
+    </div>
+  </div>
+  <div class="meta">编码：UTF-8 · 文件：lesson04_子集枚举.cpp · 共 312 行 · 浅色主题便于打印</div>
+  <div class="wrap">
+    <pre id="code">/*
+ * ================================================================
+ * C++算法提高 第04课：子集枚举——组合问题
+ * ================================================================
+ *
+ * 算法知识点：
+ *   - 子集概念：从n个元素中选任意个，共2^n种可能
+ *   - 二进制枚举：用二进制位表示选取状态（1=选，0=不选）
+ *   - 位运算基础：左移(&lt;&lt;)、按位与(&amp;)、按位或(|)
+ *   - mask &amp; (1&lt;&lt;i)：检查第i位是否为1
+ *   - 适用范围：n ≤ 20（2^20 ≈ 100万）
+ *
+ * 经典例题：
+ *   例题1 - 集合选数：求所有子集的元素和
+ *   例题2 - 砝码称重：1g,2g,3g,5g,10g,20g各一个，能称出多少种重量
+ */
+
+#include &lt;iostream&gt;
+#include &lt;set&gt;
+#include &lt;vector&gt;
+#include &lt;iomanip&gt;
+using namespace std;
+
+// ================================================================
+// 位运算知识演示
+// 在开始枚举之前，先帮助学生理解位运算
+// ================================================================
+void demoBitOperations() {
+    cout &lt;&lt; "══════════════════════════════════════" &lt;&lt; endl;
+    cout &lt;&lt; "  位运算基础知识" &lt;&lt; endl;
+    cout &lt;&lt; "══════════════════════════════════════" &lt;&lt; endl;
+
+    int a = 5;   // 二进制: 0101
+    int b = 12;  // 二进制: 1100
+
+    cout &lt;&lt; "a = " &lt;&lt; a &lt;&lt; " (二进制: ";
+    for (int i = 3; i &gt;= 0; i--) cout &lt;&lt; ((a &gt;&gt; i) &amp; 1);
+    cout &lt;&lt; ")" &lt;&lt; endl;
+
+    cout &lt;&lt; "b = " &lt;&lt; b &lt;&lt; " (二进制: ";
+    for (int i = 3; i &gt;= 0; i--) cout &lt;&lt; ((b &gt;&gt; i) &amp; 1);
+    cout &lt;&lt; ")" &lt;&lt; endl;
+
+    cout &lt;&lt; endl;
+    cout &lt;&lt; "a &amp; b  (按位与)  = " &lt;&lt; (a &amp; b) &lt;&lt; "    ";
+    cout &lt;&lt; "(只有对应位都为1才为1)" &lt;&lt; endl;
+
+    cout &lt;&lt; "a | b  (按位或)  = " &lt;&lt; (a | b) &lt;&lt; "   ";
+    cout &lt;&lt; "(对应位有一个为1则为1)" &lt;&lt; endl;
+
+    cout &lt;&lt; "1 &lt;&lt; 3 (左移)    = " &lt;&lt; (1 &lt;&lt; 3) &lt;&lt; "    ";
+    cout &lt;&lt; "(= 2^3 = 8)" &lt;&lt; endl;
+
+    cout &lt;&lt; "a &gt;&gt; 1 (右移)    = " &lt;&lt; (a &gt;&gt; 1) &lt;&lt; "     ";
+    cout &lt;&lt; "(5/2 = 2)" &lt;&lt; endl;
+    cout &lt;&lt; endl;
+
+    // 演示 mask &amp; (1&lt;&lt;i) 检查第i位
+    cout &lt;&lt; "【重点演示】mask &amp; (1 &lt;&lt; i) 检查第i位：" &lt;&lt; endl;
+    int mask = 13;  // 二进制 1101
+    cout &lt;&lt; "mask = " &lt;&lt; mask &lt;&lt; " (二进制: 1101)" &lt;&lt; endl;
+    for (int i = 0; i &lt; 4; i++) {
+        cout &lt;&lt; "  第" &lt;&lt; i &lt;&lt; "位: mask &amp; (1&lt;&lt;" &lt;&lt; i &lt;&lt; ") = "
+             &lt;&lt; mask &lt;&lt; " &amp; " &lt;&lt; (1 &lt;&lt; i) &lt;&lt; " = "
+             &lt;&lt; (mask &amp; (1 &lt;&lt; i));
+        if (mask &amp; (1 &lt;&lt; i))
+            cout &lt;&lt; " ≠ 0 → 第" &lt;&lt; i &lt;&lt; "位是1（选中！）";
+        else
+            cout &lt;&lt; " = 0 → 第" &lt;&lt; i &lt;&lt; "位是0（未选）";
+        cout &lt;&lt; endl;
+    }
+    cout &lt;&lt; endl;
+}
+
+// ================================================================
+// 二进制枚举所有子集（核心演示）
+// 遍历 mask 从 0 到 2^n-1，逐一输出子集
+// ================================================================
+void enumerateAllSubsets(int arr[], int n) {
+    cout &lt;&lt; "══════════════════════════════════════" &lt;&lt; endl;
+    cout &lt;&lt; "  二进制枚举子集演示" &lt;&lt; endl;
+    cout &lt;&lt; "══════════════════════════════════════" &lt;&lt; endl;
+    cout &lt;&lt; "集合: {";
+    for (int i = 0; i &lt; n; i++) {
+        cout &lt;&lt; arr[i];
+        if (i &lt; n - 1) cout &lt;&lt; ", ";
+    }
+    cout &lt;&lt; "}  (" &lt;&lt; n &lt;&lt; "个元素，共2^" &lt;&lt; n &lt;&lt; " = " &lt;&lt; (1&lt;&lt;n) &lt;&lt; "个子集)" &lt;&lt; endl;
+    cout &lt;&lt; "--------------------------------------" &lt;&lt; endl;
+
+    int total = 1 &lt;&lt; n;  // 2^n
+
+    // 遍历所有可能的 mask（选取方案）
+    for (int mask = 0; mask &lt; total; mask++) {
+        // 输出 mask 的二进制表示
+        cout &lt;&lt; "mask=" &lt;&lt; setw(2) &lt;&lt; mask &lt;&lt; " (";
+        for (int i = n - 1; i &gt;= 0; i--) {
+            cout &lt;&lt; ((mask &gt;&gt; i) &amp; 1);
+        }
+        cout &lt;&lt; ") → { ";
+
+        int sum = 0;
+        bool first = true;
+
+        // 检查每一位
+        for (int i = 0; i &lt; n; i++) {
+            if (mask &amp; (1 &lt;&lt; i)) {  // 第i位为1，选中第i个元素
+                if (!first) cout &lt;&lt; ", ";
+                cout &lt;&lt; arr[i];
+                first = false;
+                sum += arr[i];
+            }
+        }
+
+        if (first) cout &lt;&lt; "(空集)";
+        cout &lt;&lt; " }  和 = " &lt;&lt; sum &lt;&lt; endl;
+    }
+    cout &lt;&lt; endl;
+}
+
+// ================================================================
+// 例题1：集合选数
+// 题目：给定N个正整数，求所有子集的元素和，去重排序输出
+//
+// 枚举思路：
+//   - 用二进制枚举所有 2^N 个子集
+//   - 对每个子集计算元素和
+//   - 用 set 自动去重和排序
+// ================================================================
+void solveSubsetSum() {
+    cout &lt;&lt; "══════════════════════════════════════" &lt;&lt; endl;
+    cout &lt;&lt; "  例题1：集合选数——所有子集和" &lt;&lt; endl;
+    cout &lt;&lt; "══════════════════════════════════════" &lt;&lt; endl;
+
+    int N;
+    cout &lt;&lt; "请输入元素个数 N（建议 ≤ 15）: ";
+    cin &gt;&gt; N;
+
+    int arr[20];
+    cout &lt;&lt; "请输入 " &lt;&lt; N &lt;&lt; " 个正整数: ";
+    for (int i = 0; i &lt; N; i++) {
+        cin &gt;&gt; arr[i];
+    }
+
+    set&lt;int&gt; sums;         // 用 set 自动去重和排序
+    int total = 1 &lt;&lt; N;    // 2^N 个子集
+
+    // 打印进度提示
+    cout &lt;&lt; "正在枚举 2^" &lt;&lt; N &lt;&lt; " = " &lt;&lt; total &lt;&lt; " 个子集..." &lt;&lt; endl;
+
+    for (int mask = 0; mask &lt; total; mask++) {
+        int sum = 0;
+        for (int i = 0; i &lt; N; i++) {
+            if (mask &amp; (1 &lt;&lt; i)) {  // 第i个元素被选中
+                sum += arr[i];
+            }
+        }
+        sums.insert(sum);
+    }
+
+    cout &lt;&lt; "--------------------------------------" &lt;&lt; endl;
+    cout &lt;&lt; "所有不同的子集和（共 " &lt;&lt; sums.size() &lt;&lt; " 种）：" &lt;&lt; endl;
+    int cnt = 0;
+    for (int s : sums) {
+        cout &lt;&lt; s &lt;&lt; " ";
+        cnt++;
+        if (cnt % 10 == 0) cout &lt;&lt; endl;  // 每10个换行
+    }
+    cout &lt;&lt; endl &lt;&lt; endl;
+}
+
+// ================================================================
+// 例题2：砝码称重
+// 题目：砝码1g,2g,3g,5g,10g,20g各一个，放同一边，能称出多少种重量
+//
+// 枚举思路：
+//   - 6种砝码，2^6 = 64 种选取方案
+//   - 每种方案对应一种重量（所选砝码重量之和）
+//   - 用 set 自动去重
+//
+// 注意：这题假设砝码只能放同一边。
+//       如果允许放两边（天平问题），需要更复杂的处理。
+// ================================================================
+void solveBalanceWeight() {
+    cout &lt;&lt; "══════════════════════════════════════" &lt;&lt; endl;
+    cout &lt;&lt; "  例题2：砝码称重" &lt;&lt; endl;
+    cout &lt;&lt; "══════════════════════════════════════" &lt;&lt; endl;
+    cout &lt;&lt; "砝码: 1g, 2g, 3g, 5g, 10g, 20g 各一个" &lt;&lt; endl;
+    cout &lt;&lt; "砝码放同一边，问能称出多少种重量？" &lt;&lt; endl;
+    cout &lt;&lt; "--------------------------------------" &lt;&lt; endl;
+
+    int weights[] = {1, 2, 3, 5, 10, 20};
+    int n = 6;                    // 6种砝码
+    int total = 1 &lt;&lt; n;            // 2^6 = 64
+
+    set&lt;int&gt; result;
+
+    for (int mask = 0; mask &lt; total; mask++) {
+        int sum = 0;
+        // 检查每种砝码是否被选中
+        for (int i = 0; i &lt; n; i++) {
+            if (mask &amp; (1 &lt;&lt; i)) {
+                sum += weights[i];
+            }
+        }
+        result.insert(sum);
+    }
+
+    cout &lt;&lt; "理论子集总数：64 种选取方案" &lt;&lt; endl;
+    cout &lt;&lt; "不同的称重量：共 " &lt;&lt; result.size() &lt;&lt; " 种" &lt;&lt; endl;
+    cout &lt;&lt; endl;
+    cout &lt;&lt; "所有可称重量（升序）：" &lt;&lt; endl;
+
+    int cnt = 0;
+    for (int w : result) {
+        cout &lt;&lt; setw(3) &lt;&lt; w &lt;&lt; "g";
+        cnt++;
+        if (cnt % 10 == 0) cout &lt;&lt; endl;
+        else cout &lt;&lt; " ";
+    }
+    cout &lt;&lt; endl;
+
+    // 验证：所有砝码之和 = 1+2+3+5+10+20 = 41
+    int maxWeight = 0;
+    for (int i = 0; i &lt; n; i++) maxWeight += weights[i];
+    cout &lt;&lt; endl;
+    cout &lt;&lt; "最重：将全部砝码放上 = " &lt;&lt; maxWeight &lt;&lt; "g" &lt;&lt; endl;
+    cout &lt;&lt; "（0g 表示不放任何砝码）" &lt;&lt; endl;
+    cout &lt;&lt; endl;
+}
+
+// ================================================================
+// 附加演示：子集枚举在"部分和问题"中的应用
+// 问题：给定一组数和目标值S，判断是否存在子集其和为S
+// 这是经典"subset sum"问题的暴力枚举解法
+// ================================================================
+void demoSubsetSumTarget() {
+    cout &lt;&lt; "══════════════════════════════════════" &lt;&lt; endl;
+    cout &lt;&lt; "  附加演示：部分和问题" &lt;&lt; endl;
+    cout &lt;&lt; "══════════════════════════════════════" &lt;&lt; endl;
+
+    int arr[] = {3, 5, 7, 9, 11};
+    int n = 5;
+    int target = 20;
+
+    cout &lt;&lt; "集合: {3, 5, 7, 9, 11}" &lt;&lt; endl;
+    cout &lt;&lt; "目标值: " &lt;&lt; target &lt;&lt; endl;
+    cout &lt;&lt; "寻找和等于 " &lt;&lt; target &lt;&lt; " 的子集..." &lt;&lt; endl;
+    cout &lt;&lt; "--------------------------------------" &lt;&lt; endl;
+
+    int total = 1 &lt;&lt; n;
+    bool found = false;
+
+    for (int mask = 0; mask &lt; total; mask++) {
+        int sum = 0;
+        // 计算当前子集的和
+        for (int i = 0; i &lt; n; i++) {
+            if (mask &amp; (1 &lt;&lt; i)) sum += arr[i];
+        }
+
+        if (sum == target) {
+            found = true;
+            cout &lt;&lt; "找到解：{ ";
+            for (int i = 0; i &lt; n; i++) {
+                if (mask &amp; (1 &lt;&lt; i)) cout &lt;&lt; arr[i] &lt;&lt; " ";
+            }
+            cout &lt;&lt; "} = " &lt;&lt; target &lt;&lt; endl;
+        }
+    }
+
+    if (!found) cout &lt;&lt; "无解" &lt;&lt; endl;
+    cout &lt;&lt; endl;
+}
+
+// ================================================================
+// 主函数
+// ================================================================
+int main() {
+    cout &lt;&lt; "╔══════════════════════════════════════════════╗" &lt;&lt; endl;
+    cout &lt;&lt; "║   C++ 算法提高 —— 第04课：子集枚举            ║" &lt;&lt; endl;
+    cout &lt;&lt; "║   组合问题 —— 二进制枚举 + 位运算             ║" &lt;&lt; endl;
+    cout &lt;&lt; "╚══════════════════════════════════════════════╝" &lt;&lt; endl;
+    cout &lt;&lt; endl;
+
+    // 位运算演示
+    demoBitOperations();
+
+    // 二进制枚举所有子集
+    int demoArr[] = {2, 3, 5, 7};
+    enumerateAllSubsets(demoArr, 4);
+
+    // 例题1：集合选数
+    solveSubsetSum();
+
+    // 例题2：砝码称重
+    solveBalanceWeight();
+
+    // 附加：部分和问题
+    demoSubsetSumTarget();
+
+    cout &lt;&lt; "══════════════════════════════════════" &lt;&lt; endl;
+    cout &lt;&lt; "  本课小结" &lt;&lt; endl;
+    cout &lt;&lt; "══════════════════════════════════════" &lt;&lt; endl;
+    cout &lt;&lt; "1. n个元素的子集总数 = 2^n" &lt;&lt; endl;
+    cout &lt;&lt; "2. 二进制枚举：mask从0到(1&lt;&lt;n)-1" &lt;&lt; endl;
+    cout &lt;&lt; "3. mask &amp; (1&lt;&lt;i) ≠ 0 → 第i个元素被选中" &lt;&lt; endl;
+    cout &lt;&lt; "4. 记住三个位运算：&lt;&lt;（左移）、&amp;（按位与）、|（按位或）" &lt;&lt; endl;
+    cout &lt;&lt; "5. 适用范围：n ≤ 20（2^20 ≈ 100万）" &lt;&lt; endl;
+    cout &lt;&lt; "══════════════════════════════════════" &lt;&lt; endl;
+
+    return 0;
+}
+</pre>
+    <p class="hint">本页使用浅色主题与 UTF-8 编码，可直接打印或导出 PDF。</p>
+  </div>
+</body>
+</html>

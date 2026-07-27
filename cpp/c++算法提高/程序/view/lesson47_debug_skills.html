@@ -1,0 +1,495 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>lesson47_debug_skills.cpp</title>
+<style>
+  :root {
+    --bg: #f5f7fa;
+    --panel: #ffffff;
+    --text: #1a1a2e;
+    --muted: #5a6570;
+    --gold: #b8860b;
+    --code-bg: #ffffff;
+    --code-text: #1f2933;
+    --border: #d8dee6;
+    --top-bg: #ffffff;
+    --top-border: #e5e9ef;
+  }
+  * { box-sizing: border-box; }
+  html, body {
+    margin: 0; padding: 0;
+    background: var(--bg);
+    color: var(--text);
+    font-family: -apple-system, BlinkMacSystemFont, "PingFang SC", "Microsoft YaHei", sans-serif;
+    min-height: 100%;
+  }
+  .top {
+    position: sticky; top: 0; z-index: 10;
+    display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between;
+    gap: 10px;
+    padding: 12px 18px;
+    background: var(--top-bg);
+    border-bottom: 1px solid var(--top-border);
+    box-shadow: 0 1px 8px rgba(15, 23, 42, 0.06);
+  }
+  .brand { color: var(--gold); font-weight: 700; font-size: 14px; letter-spacing: 0.04em; }
+  .title { font-size: 15px; font-weight: 600; color: var(--text); max-width: 52vw; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .actions { display: flex; gap: 8px; flex-wrap: wrap; }
+  .btn {
+    appearance: none; border: 1px solid var(--border);
+    background: #fff; color: var(--text);
+    border-radius: 999px; padding: 8px 14px; font-size: 13px; font-weight: 600;
+    text-decoration: none; cursor: pointer;
+  }
+  .btn:hover { background: #f0f3f7; }
+  .btn.gold {
+    background: linear-gradient(135deg, #f0d78c, #d4a853);
+    color: #0a2540; border-color: #e0c06a;
+  }
+  .meta {
+    padding: 10px 18px; color: var(--muted); font-size: 12px;
+    border-bottom: 1px solid var(--border);
+    background: var(--panel);
+  }
+  .wrap { padding: 16px 18px 40px; }
+  pre {
+    margin: 0;
+    background: var(--code-bg);
+    color: var(--code-text);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 18px 20px;
+    overflow: auto;
+    font-family: "SF Mono", "JetBrains Mono", "Fira Code", Consolas, "Courier New", monospace;
+    font-size: 13.5px;
+    line-height: 1.55;
+    white-space: pre;
+    tab-size: 4;
+    box-shadow: 0 2px 12px rgba(15, 23, 42, 0.05);
+  }
+  .hint { margin-top: 12px; color: var(--muted); font-size: 12px; }
+  @media print {
+    html, body { background: #fff !important; color: #000 !important; }
+    .top { position: static; box-shadow: none; border-bottom: 1px solid #ccc; background: #fff !important; }
+    .actions { display: none !important; }
+    .meta { background: #fff !important; border-color: #ddd; color: #333; }
+    .wrap { padding: 0; }
+    pre {
+      background: #fff !important; color: #000 !important;
+      border: 1px solid #bbb; box-shadow: none; border-radius: 0;
+      white-space: pre-wrap; word-break: break-word; font-size: 11pt; line-height: 1.4;
+    }
+    .hint { display: none; }
+    a { color: #000; text-decoration: none; }
+  }
+</style>
+</head>
+<body>
+  <div class="top">
+    <div class="brand">C++ 算法提高 · 配套代码</div>
+    <div class="title">lesson47_debug_skills.cpp</div>
+    <div class="actions">
+      <a class="btn" href="../lesson47_debug_skills.cpp" download="lesson47_debug_skills.cpp">⬇️ 下载源文件</a>
+      <a class="btn gold" href="javascript:history.back()">← 返回课件</a>
+    </div>
+  </div>
+  <div class="meta">编码：UTF-8 · 文件：lesson47_debug_skills.cpp · 共 391 行 · 浅色主题便于打印</div>
+  <div class="wrap">
+    <pre id="code">/*
+ * C++算法提高 第47课 竞赛技巧与调试方法
+ *
+ * 本程序包含以下内容：
+ *   第一部分：常见错误演示（5 种常见 Bug 及修复）
+ *   第二部分：对拍系统 — 最大子段和（暴力 O(N²) vs 优化 O(N)）
+ *   第三部分：时间复杂度估算指南
+ *
+ * 通过交互式菜单选择要运行的功能。
+ */
+
+#include &lt;iostream&gt;
+#include &lt;vector&gt;
+#include &lt;cstdlib&gt;
+#include &lt;ctime&gt;
+#include &lt;algorithm&gt;
+#include &lt;climits&gt;
+#include &lt;cassert&gt;
+#include &lt;cmath&gt;
+using namespace std;
+
+// ============================================================
+// 第一部分：常见错误演示
+// ============================================================
+
+// Bug 1：数组越界 — 修复演示
+void demo_array_bounds() {
+    cout &lt;&lt; "\n========== Bug 1：数组越界 ==========" &lt;&lt; endl;
+    int a[100];
+
+    // ❌ 错误写法（故意演示—这里不会实际执行越界，只展示逻辑）
+    // for (int i = 0; i &lt;= 100; i++) a[i] = i;  // i=100 时越界！
+
+    // ✅ 正确写法
+    for (int i = 0; i &lt; 100; i++) {
+        a[i] = i * i;
+    }
+    cout &lt;&lt; "✅ 正确：数组 a[99] = " &lt;&lt; a[99] &lt;&lt; " (下标范围 0~99，共 100 个元素)" &lt;&lt; endl;
+    cout &lt;&lt; "   错误：如果循环写成 i &lt;= 100，则 a[100] 越界" &lt;&lt; endl;
+}
+
+// Bug 2：未初始化变量 — 修复演示
+void demo_uninit() {
+    cout &lt;&lt; "\n========== Bug 2：未初始化变量 ==========" &lt;&lt; endl;
+
+    // ❌ 错误写法
+    // int sum;  // 局部变量未初始化，值是随机的！
+    // for (int i = 0; i &lt; 10; i++) sum += i;  // 结果不可预知
+
+    // ✅ 正确写法
+    int sum = 0;  // 必须显式赋初值
+    for (int i = 0; i &lt; 10; i++) {
+        sum += i;
+    }
+    cout &lt;&lt; "✅ 正确：sum = " &lt;&lt; sum &lt;&lt; " (初始化 sum = 0 后累加 0+1+...+9 = 45)" &lt;&lt; endl;
+    cout &lt;&lt; "   错误：如果 sum 不初始化，值可能是内存中的随机垃圾值" &lt;&lt; endl;
+}
+
+// Bug 3：整数溢出 — 修复演示
+void demo_overflow() {
+    cout &lt;&lt; "\n========== Bug 3：整数溢出 ==========" &lt;&lt; endl;
+
+    // ❌ 错误写法
+    int a = 100000, b = 100000;
+    int c_wrong = a * b;  // 10^10 超出 int（约 2.1×10^9）范围，溢出！
+    cout &lt;&lt; "   ❌ int 溢出：100000 * 100000 = " &lt;&lt; c_wrong &lt;&lt; " (错误！应为 10000000000)" &lt;&lt; endl;
+
+    // ✅ 正确写法
+    long long la = 100000, lb = 100000;
+    long long c_correct = la * lb;
+    cout &lt;&lt; "   ✅ long long：100000 * 100000 = " &lt;&lt; c_correct &lt;&lt; " (正确)" &lt;&lt; endl;
+
+    // 另一个常见陷阱：int 相乘再赋给 long long
+    int x = 100000, y = 100000;
+    long long z_pitfall = (long long)x * y;  // 需要先强制转换
+    // long long z_pitfall = x * y;  // ❌ 先做 int 乘法，结果已经溢出！
+    cout &lt;&lt; "   注意：int 相乘必须在乘法前就转为 long long" &lt;&lt; endl;
+    cout &lt;&lt; "   long long 范围：约 ±9.2×10^18，int 范围：约 ±2.1×10^9" &lt;&lt; endl;
+}
+
+// Bug 4：Off-by-One — 修复演示
+void demo_off_by_one() {
+    cout &lt;&lt; "\n========== Bug 4：Off-by-One（边界差一） ==========" &lt;&lt; endl;
+
+    // 在有序数组中二分查找
+    int arr[] = {1, 3, 5, 7, 9, 11, 13};
+    int n = 7;
+    int target = 9;
+
+    // ✅ 正确的二分查找
+    int left = 0, right = n - 1, found = -1;
+    while (left &lt;= right) {  // &lt;= 确保检查 single-element 情况
+        int mid = left + (right - left) / 2;  // 防止 left+right 溢出
+        if (arr[mid] == target) {
+            found = mid;
+            break;
+        } else if (arr[mid] &lt; target) {
+            left = mid + 1;
+        } else {
+            right = mid - 1;
+        }
+    }
+    cout &lt;&lt; "✅ 正确：二分查找 target=9 的下标为 " &lt;&lt; found &lt;&lt; " (使用 left &lt;= right)" &lt;&lt; endl;
+    cout &lt;&lt; "   错误一：left &lt; right 会漏掉 left==right 时唯一元素的情况" &lt;&lt; endl;
+    cout &lt;&lt; "   错误二：mid = (left+right)/2 在大数组时可能溢出" &lt;&lt; endl;
+}
+
+// Bug 5：死循环 — 修复演示
+void demo_infinite_loop() {
+    cout &lt;&lt; "\n========== Bug 5：死循环 ==========" &lt;&lt; endl;
+
+    // ❌ 错误写法
+    // int x = 1;
+    // while (x &gt; 0) {  // x 永远大于 0，死循环！
+    //     cout &lt;&lt; x &lt;&lt; " ";
+    //     x++;
+    // }
+
+    // ✅ 正确写法
+    int x = 1;
+    cout &lt;&lt; "✅ 正确：打印 1 到 10: ";
+    while (x &lt;= 10) {
+        cout &lt;&lt; x &lt;&lt; " ";
+        x++;
+    }
+    cout &lt;&lt; endl;
+    cout &lt;&lt; "   错误：while(x &gt; 0) 没有终止条件会导致死循环" &lt;&lt; endl;
+    cout &lt;&lt; "   另一个常见死循环：while(l&lt;r){...} 内没有更新 l 或 r" &lt;&lt; endl;
+}
+
+// ============================================================
+// 第二部分：对拍系统 — 最大子段和
+// ============================================================
+
+// 暴力解法 O(N²)：枚举所有子数组
+int max_subarray_brute(const vector&lt;int&gt;&amp; a) {
+    int n = a.size();
+    int max_sum = INT_MIN;  // 初始化为最小值，处理全负数情况
+    for (int i = 0; i &lt; n; i++) {
+        int sum = 0;
+        for (int j = i; j &lt; n; j++) {
+            sum += a[j];
+            if (sum &gt; max_sum) {
+                max_sum = sum;
+            }
+        }
+    }
+    return max_sum;
+}
+
+// 优化解法 O(N)：Kadane 算法（动态规划）
+int max_subarray_optimized(const vector&lt;int&gt;&amp; a) {
+    int max_ending_here = 0;
+    int max_so_far = INT_MIN;
+    for (int x : a) {
+        // 关键：当前元素要么加入前面的子数组，要么自己单独开始
+        max_ending_here = max(x, max_ending_here + x);
+        max_so_far = max(max_so_far, max_ending_here);
+    }
+    return max_so_far;
+}
+
+// 随机数据生成器
+vector&lt;int&gt; generate_test(int n, int value_range) {
+    vector&lt;int&gt; a(n);
+    for (int i = 0; i &lt; n; i++) {
+        // 生成 [-value_range, value_range] 范围内的随机整数
+        a[i] = (rand() % (2 * value_range + 1)) - value_range;
+    }
+    return a;
+}
+
+// 对拍函数：运行 rounds 轮测试，比较两个解法的输出
+void duipai(int rounds = 1000, int max_n = 100, int value_range = 100) {
+    cout &lt;&lt; "\n========== 对拍：最大子段和 ==========" &lt;&lt; endl;
+    cout &lt;&lt; "测试轮数：" &lt;&lt; rounds &lt;&lt; "，最大数组长度：" &lt;&lt; max_n &lt;&lt; endl;
+    cout &lt;&lt; "正在测试..." &lt;&lt; endl;
+
+    srand((unsigned int)time(0));
+    int passed = 0;
+
+    for (int t = 1; t &lt;= rounds; t++) {
+        int n = rand() % max_n + 1;  // 1 ~ max_n
+        vector&lt;int&gt; a = generate_test(n, value_range);
+
+        int ans_brute = max_subarray_brute(a);
+        int ans_optimized = max_subarray_optimized(a);
+
+        if (ans_brute == ans_optimized) {
+            passed++;
+        } else {
+            cout &lt;&lt; "\n❌ 测试 #" &lt;&lt; t &lt;&lt; " 失败！n = " &lt;&lt; n &lt;&lt; endl;
+            cout &lt;&lt; "   暴力 O(N²) 答案：" &lt;&lt; ans_brute &lt;&lt; endl;
+            cout &lt;&lt; "   优化 O(N)  答案：" &lt;&lt; ans_optimized &lt;&lt; endl;
+            cout &lt;&lt; "   出错的数组：";
+            for (int x : a) cout &lt;&lt; x &lt;&lt; " ";
+            cout &lt;&lt; endl;
+            return;  // 发现 Bug 立即停止
+        }
+
+        // 每 200 轮打印一次进度
+        if (t % 200 == 0) {
+            cout &lt;&lt; "   已通过 " &lt;&lt; passed &lt;&lt; "/" &lt;&lt; t &lt;&lt; " 组测试..." &lt;&lt; endl;
+        }
+    }
+
+    cout &lt;&lt; "\n🎉 全部 " &lt;&lt; rounds &lt;&lt; " 组测试通过！" &lt;&lt; endl;
+    cout &lt;&lt; "   优化解法的正确性得到充分验证。" &lt;&lt; endl;
+}
+
+// 手动演示：用具体数组展示两种算法
+void demo_max_subarray() {
+    cout &lt;&lt; "\n========== 最大子段和手动演示 ==========" &lt;&lt; endl;
+
+    vector&lt;int&gt; a = {-2, 1, -3, 4, -1, 2, 1, -5, 4};
+    cout &lt;&lt; "数组：";
+    for (int x : a) cout &lt;&lt; x &lt;&lt; " ";
+    cout &lt;&lt; endl;
+
+    int ans1 = max_subarray_brute(a);
+    int ans2 = max_subarray_optimized(a);
+
+    cout &lt;&lt; "暴力 O(N²) 结果：" &lt;&lt; ans1 &lt;&lt; " (子数组 [4, -1, 2, 1] 的和)" &lt;&lt; endl;
+    cout &lt;&lt; "优化 O(N)  结果：" &lt;&lt; ans2 &lt;&lt; " (Kadane 算法)" &lt;&lt; endl;
+    cout &lt;&lt; "最大子数组：[4, -1, 2, 1] → 和为 6" &lt;&lt; endl;
+}
+
+// ============================================================
+// 第三部分：时间复杂度估算指南
+// ============================================================
+
+void complexity_guide() {
+    cout &lt;&lt; "\n========== 时间复杂度估算指南 ==========" &lt;&lt; endl;
+    cout &lt;&lt; endl;
+    cout &lt;&lt; "  ┌────────────────┬──────────────────────┬──────────────────────────────┐" &lt;&lt; endl;
+    cout &lt;&lt; "  │ 数据范围 N     │ 可接受的时间复杂度   │ 典型算法                     │" &lt;&lt; endl;
+    cout &lt;&lt; "  ├────────────────┼──────────────────────┼──────────────────────────────┤" &lt;&lt; endl;
+    cout &lt;&lt; "  │ N ≤ 10         │ O(N!), O(2^N)        │ 全排列、回溯                 │" &lt;&lt; endl;
+    cout &lt;&lt; "  │ N ≤ 15         │ O(2^N)               │ 子集枚举                     │" &lt;&lt; endl;
+    cout &lt;&lt; "  │ N ≤ 20         │ O(N·2^N)             │ 状态压缩 DP                  │" &lt;&lt; endl;
+    cout &lt;&lt; "  │ N ≤ 100        │ O(N³)                │ Floyd-Warshall、区间 DP      │" &lt;&lt; endl;
+    cout &lt;&lt; "  │ N ≤ 500        │ O(N³)                │ 三重循环枚举                 │" &lt;&lt; endl;
+    cout &lt;&lt; "  │ N ≤ 2000       │ O(N²)                │ 简单 DP、二维前缀和          │" &lt;&lt; endl;
+    cout &lt;&lt; "  │ N ≤ 10⁵        │ O(N log N)            │ 排序、二分、堆优化 Dijkstra  │" &lt;&lt; endl;
+    cout &lt;&lt; "  │ N ≤ 10⁶        │ O(N log N) 或 O(N)   │ 排序、线性筛、贪心           │" &lt;&lt; endl;
+    cout &lt;&lt; "  │ N ≤ 10⁷        │ O(N)                 │ 线性扫描、前缀和             │" &lt;&lt; endl;
+    cout &lt;&lt; "  │ N ≤ 10⁸        │ O(log N) 或 O(1)     │ 公式 / 二分查找              │" &lt;&lt; endl;
+    cout &lt;&lt; "  └────────────────┴──────────────────────┴──────────────────────────────┘" &lt;&lt; endl;
+    cout &lt;&lt; endl;
+    cout &lt;&lt; "💡 经验法则：现代评测机 ~10⁸ 次基本操作/秒" &lt;&lt; endl;
+    cout &lt;&lt; "   示例：N=10⁵，O(N²)=10¹⁰ 次 → 约100秒 → 超时！" &lt;&lt; endl;
+    cout &lt;&lt; "         N=10⁵，O(N log N)≈1.7×10⁶ 次 → 瞬间完成" &lt;&lt; endl;
+    cout &lt;&lt; endl;
+    cout &lt;&lt; "🔢 常见函数增长速度对比（N=100000 时）：" &lt;&lt; endl;
+    cout &lt;&lt; "   log₂N ≈ 17" &lt;&lt; endl;
+    cout &lt;&lt; "   sqrt(N) ≈ 316" &lt;&lt; endl;
+    cout &lt;&lt; "   N = 100,000" &lt;&lt; endl;
+    cout &lt;&lt; "   N log N ≈ 1,700,000" &lt;&lt; endl;
+    cout &lt;&lt; "   N² = 10,000,000,000  ← 已经不可接受！" &lt;&lt; endl;
+}
+
+// ============================================================
+// 断言（assert）使用演示
+// ============================================================
+
+void demo_assert() {
+    cout &lt;&lt; "\n========== assert 断言演示 ==========" &lt;&lt; endl;
+
+    // assert 用于开发阶段检查不变量
+    int n = 5;
+    assert(n &gt; 0 &amp;&amp; n &lt;= 1000);  // 检查输入范围
+
+    int a[] = {1, 2, 3, 4, 5};
+    int sum = 0;
+    for (int i = 0; i &lt; n; i++) {
+        sum += a[i];
+    }
+    assert(sum == 15);  // 检查累加结果
+
+    cout &lt;&lt; "✅ assert 检查通过：n=5在合法范围内，sum=15 正确" &lt;&lt; endl;
+    cout &lt;&lt; "   如果 assert 失败，程序会立即终止并报告文件和行号" &lt;&lt; endl;
+    cout &lt;&lt; "   在 OJ 提交时记得注释掉 assert 或使用 NDEBUG" &lt;&lt; endl;
+}
+
+// ============================================================
+// 调试宏演示
+// ============================================================
+
+void demo_debug_macro() {
+    cout &lt;&lt; "\n========== 调试宏演示 ==========" &lt;&lt; endl;
+    cout &lt;&lt; "调试时在代码中添加：" &lt;&lt; endl;
+    cout &lt;&lt; "  #define debug(x) cerr &lt;&lt; #x &lt;&lt; \" = \" &lt;&lt; x &lt;&lt; endl;" &lt;&lt; endl;
+    cout &lt;&lt; "  debug(a[i]);  → 输出到标准错误流（不影响答案输出）" &lt;&lt; endl;
+    cout &lt;&lt; "提交时注释掉 #define 行即可关闭所有调试输出。" &lt;&lt; endl;
+}
+
+// ============================================================
+// 打印调试演示
+// ============================================================
+
+void demo_print_debug() {
+    cout &lt;&lt; "\n========== 打印调试演示 ==========" &lt;&lt; endl;
+
+    // 模拟调试场景：在数组中找最大值
+    int a[] = {3, 7, 2, 9, 1, 5};
+    int n = 6;
+    int max_val = INT_MIN;
+
+    cout &lt;&lt; "模拟查找最大值过程：" &lt;&lt; endl;
+    for (int i = 0; i &lt; n; i++) {
+        // 调试打印：观察每一次迭代的状态
+        cerr &lt;&lt; "[DEBUG] i=" &lt;&lt; i &lt;&lt; ", a[" &lt;&lt; i &lt;&lt; "]=" &lt;&lt; a[i]
+             &lt;&lt; ", current_max=" &lt;&lt; max_val &lt;&lt; endl;
+
+        if (a[i] &gt; max_val) {
+            max_val = a[i];
+        }
+    }
+    cout &lt;&lt; "最大值：" &lt;&lt; max_val &lt;&lt; " (调试信息已输出到 cerr)" &lt;&lt; endl;
+    cout &lt;&lt; "提示：cout 输出答案，cerr 输出调试信息，互不干扰" &lt;&lt; endl;
+}
+
+// ============================================================
+// 主菜单
+// ============================================================
+
+void show_menu() {
+    cout &lt;&lt; "\n╔══════════════════════════════════════════════╗" &lt;&lt; endl;
+    cout &lt;&lt; "║  第47课：竞赛技巧与调试方法 — 交互式演示     ║" &lt;&lt; endl;
+    cout &lt;&lt; "╠══════════════════════════════════════════════╣" &lt;&lt; endl;
+    cout &lt;&lt; "║  第一部分：常见错误分析                       ║" &lt;&lt; endl;
+    cout &lt;&lt; "║    1. 数组越界                                ║" &lt;&lt; endl;
+    cout &lt;&lt; "║    2. 未初始化变量                            ║" &lt;&lt; endl;
+    cout &lt;&lt; "║    3. 整数溢出                                ║" &lt;&lt; endl;
+    cout &lt;&lt; "║    4. Off-by-One（边界差一）                   ║" &lt;&lt; endl;
+    cout &lt;&lt; "║    5. 死循环                                  ║" &lt;&lt; endl;
+    cout &lt;&lt; "║    6. 一次性演示所有 Bug                       ║" &lt;&lt; endl;
+    cout &lt;&lt; "╠══════════════════════════════════════════════╣" &lt;&lt; endl;
+    cout &lt;&lt; "║  第二部分：对拍系统                            ║" &lt;&lt; endl;
+    cout &lt;&lt; "║    7. 手动演示最大子段和                       ║" &lt;&lt; endl;
+    cout &lt;&lt; "║    8. 运行对拍（自动验证）                     ║" &lt;&lt; endl;
+    cout &lt;&lt; "╠══════════════════════════════════════════════╣" &lt;&lt; endl;
+    cout &lt;&lt; "║  第三部分：工具演示                            ║" &lt;&lt; endl;
+    cout &lt;&lt; "║    9. 时间复杂度估算指南                       ║" &lt;&lt; endl;
+    cout &lt;&lt; "║   10. assert 断言演示                          ║" &lt;&lt; endl;
+    cout &lt;&lt; "║   11. 调试宏演示                               ║" &lt;&lt; endl;
+    cout &lt;&lt; "║   12. 打印调试演示                             ║" &lt;&lt; endl;
+    cout &lt;&lt; "╠══════════════════════════════════════════════╣" &lt;&lt; endl;
+    cout &lt;&lt; "║    0. 退出                                    ║" &lt;&lt; endl;
+    cout &lt;&lt; "╚══════════════════════════════════════════════╝" &lt;&lt; endl;
+    cout &lt;&lt; "请选择 [0-12]：";
+}
+
+int main() {
+    // 设置中文本地环境
+    setlocale(LC_ALL, "");
+
+    int choice;
+    do {
+        show_menu();
+        cin &gt;&gt; choice;
+
+        switch (choice) {
+            case 1:  demo_array_bounds();   break;
+            case 2:  demo_uninit();         break;
+            case 3:  demo_overflow();       break;
+            case 4:  demo_off_by_one();     break;
+            case 5:  demo_infinite_loop();  break;
+            case 6:
+                demo_array_bounds();
+                demo_uninit();
+                demo_overflow();
+                demo_off_by_one();
+                demo_infinite_loop();
+                break;
+            case 7:  demo_max_subarray();   break;
+            case 8:  duipai();              break;
+            case 9:  complexity_guide();    break;
+            case 10: demo_assert();         break;
+            case 11: demo_debug_macro();    break;
+            case 12: demo_print_debug();    break;
+            case 0:
+                cout &lt;&lt; "\n再见！祝竞赛顺利 🚀" &lt;&lt; endl;
+                break;
+            default:
+                cout &lt;&lt; "无效选项，请重新选择。" &lt;&lt; endl;
+        }
+    } while (choice != 0);
+
+    return 0;
+}
+</pre>
+    <p class="hint">本页使用浅色主题与 UTF-8 编码，可直接打印或导出 PDF。</p>
+  </div>
+</body>
+</html>

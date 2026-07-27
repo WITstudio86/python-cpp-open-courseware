@@ -1,0 +1,566 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>lesson34_tree_dp_advanced.cpp</title>
+<style>
+  :root {
+    --bg: #f5f7fa;
+    --panel: #ffffff;
+    --text: #1a1a2e;
+    --muted: #5a6570;
+    --gold: #b8860b;
+    --code-bg: #ffffff;
+    --code-text: #1f2933;
+    --border: #d8dee6;
+    --top-bg: #ffffff;
+    --top-border: #e5e9ef;
+  }
+  * { box-sizing: border-box; }
+  html, body {
+    margin: 0; padding: 0;
+    background: var(--bg);
+    color: var(--text);
+    font-family: -apple-system, BlinkMacSystemFont, "PingFang SC", "Microsoft YaHei", sans-serif;
+    min-height: 100%;
+  }
+  .top {
+    position: sticky; top: 0; z-index: 10;
+    display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between;
+    gap: 10px;
+    padding: 12px 18px;
+    background: var(--top-bg);
+    border-bottom: 1px solid var(--top-border);
+    box-shadow: 0 1px 8px rgba(15, 23, 42, 0.06);
+  }
+  .brand { color: var(--gold); font-weight: 700; font-size: 14px; letter-spacing: 0.04em; }
+  .title { font-size: 15px; font-weight: 600; color: var(--text); max-width: 52vw; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .actions { display: flex; gap: 8px; flex-wrap: wrap; }
+  .btn {
+    appearance: none; border: 1px solid var(--border);
+    background: #fff; color: var(--text);
+    border-radius: 999px; padding: 8px 14px; font-size: 13px; font-weight: 600;
+    text-decoration: none; cursor: pointer;
+  }
+  .btn:hover { background: #f0f3f7; }
+  .btn.gold {
+    background: linear-gradient(135deg, #f0d78c, #d4a853);
+    color: #0a2540; border-color: #e0c06a;
+  }
+  .meta {
+    padding: 10px 18px; color: var(--muted); font-size: 12px;
+    border-bottom: 1px solid var(--border);
+    background: var(--panel);
+  }
+  .wrap { padding: 16px 18px 40px; }
+  pre {
+    margin: 0;
+    background: var(--code-bg);
+    color: var(--code-text);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 18px 20px;
+    overflow: auto;
+    font-family: "SF Mono", "JetBrains Mono", "Fira Code", Consolas, "Courier New", monospace;
+    font-size: 13.5px;
+    line-height: 1.55;
+    white-space: pre;
+    tab-size: 4;
+    box-shadow: 0 2px 12px rgba(15, 23, 42, 0.05);
+  }
+  .hint { margin-top: 12px; color: var(--muted); font-size: 12px; }
+  @media print {
+    html, body { background: #fff !important; color: #000 !important; }
+    .top { position: static; box-shadow: none; border-bottom: 1px solid #ccc; background: #fff !important; }
+    .actions { display: none !important; }
+    .meta { background: #fff !important; border-color: #ddd; color: #333; }
+    .wrap { padding: 0; }
+    pre {
+      background: #fff !important; color: #000 !important;
+      border: 1px solid #bbb; box-shadow: none; border-radius: 0;
+      white-space: pre-wrap; word-break: break-word; font-size: 11pt; line-height: 1.4;
+    }
+    .hint { display: none; }
+    a { color: #000; text-decoration: none; }
+  }
+</style>
+</head>
+<body>
+  <div class="top">
+    <div class="brand">CSP-S 备考 · 配套代码</div>
+    <div class="title">lesson34_tree_dp_advanced.cpp</div>
+    <div class="actions">
+      <a class="btn" href="../lesson34_tree_dp_advanced.cpp" download="lesson34_tree_dp_advanced.cpp">⬇️ 下载源文件</a>
+      <a class="btn gold" href="javascript:history.back()">← 返回课件</a>
+    </div>
+  </div>
+  <div class="meta">编码：UTF-8 · 文件：lesson34_tree_dp_advanced.cpp · 共 462 行 · 浅色主题便于打印</div>
+  <div class="wrap">
+    <pre id="code">/**
+ * ============================================================
+ * 第34课：树形DP进阶 —— 完整AC代码
+ * ============================================================
+ * 包含三道经典例题：
+ *   题目1：树的直径（两种方法：两次DFS + 树形DP）
+ *   题目2：选课问题（树上背包）
+ *   题目3：换根DP（每个节点到其他节点的距离之和）
+ *
+ * CSP-S 考纲对应：树形DP进阶
+ * 难度：提高级 ~ 省选
+ * ============================================================
+ */
+
+#include &lt;bits/stdc++.h&gt;
+using namespace std;
+
+// ============================================================
+// 通用配置
+// ============================================================
+const int MAXN = 100005;               // 最大节点数
+const int INF = 0x3f3f3f3f;            // 无穷大
+
+// ============================================================
+// 题目1：树的直径 —— 两种方法
+// ============================================================
+// 洛谷 B4016 / AcWing 1072
+// 题目描述：
+//   给定一棵 n 个节点的树，边有长度 w_i（正整数）。
+//   求树的直径（最长简单路径的长度）。
+//
+// 数据范围：1 ≤ n ≤ 100000, 1 ≤ w_i ≤ 1000
+//
+// 方法对比：
+//   方法1（两次DFS）：只能处理非负权边，实现简单
+//   方法2（树形DP）：可处理负权边，一次DFS即可
+// ============================================================
+
+namespace Problem1_TreeDiameter {
+
+int n;
+vector&lt;pair&lt;int, int&gt;&gt; g[MAXN];        // 邻接表：(邻接点, 边权)
+
+// ============================================================
+// 方法1：两次DFS —— 仅适用于边权非负
+// ============================================================
+// 原理：
+//   第一次DFS：从任意节点1出发，找到距离最远的节点A
+//   第二次DFS：从A出发，找到距离最远的节点B
+//   dist(A, B) 即为直径长度
+//
+// 正确性：树上从任意点出发的最远点一定是某条直径的端点
+// ============================================================
+
+namespace Method1_TwoDFS {
+
+int dist[MAXN];                         // 从起点到各节点的距离
+int farthestNode;                       // 当前找到的最远节点
+
+void dfs(int u, int fa) {
+    // 更新最远节点
+    if (dist[u] &gt; dist[farthestNode]) {
+        farthestNode = u;
+    }
+
+    for (auto [v, w] : g[u]) {
+        if (v == fa) continue;
+        dist[v] = dist[u] + w;          // 累计距离
+        dfs(v, u);
+    }
+}
+
+int getDiameter() {
+    // ===== 第一次DFS：从节点1出发找最远点A =====
+    memset(dist, 0, sizeof(dist));
+    farthestNode = 1;
+    dfs(1, 0);
+    int A = farthestNode;
+
+    // ===== 第二次DFS：从A出发找最远点B =====
+    memset(dist, 0, sizeof(dist));
+    farthestNode = A;
+    dfs(A, 0);
+    int B = farthestNode;
+
+    // dist[B] 即为直径长度
+    return dist[B];
+}
+
+}  // namespace Method1_TwoDFS
+
+
+// ============================================================
+// 方法2：树形DP —— 可处理负权边
+// ============================================================
+// 原理：
+//   对每个节点u，维护从u向下走的最长路径 d1[u] 和次长路径 d2[u]
+//   （两条路径必须经过不同的子节点）。
+//   直径 = max{ d1[u] + d2[u] }（以u为"拐点"的路径）。
+//
+//   d1[u] 和 d2[u] 通过后序遍历（DFS）从叶子向上计算。
+//
+// 优点：一次DFS即可，可处理负权边
+// ============================================================
+
+namespace Method2_TreeDP {
+
+int diameter;                           // 全局直径长度
+
+/**
+ * dfs(u, fa): 后序遍历计算子树信息
+ * 返回值: 从u出发向下的最长路径长度
+ */
+int dfs(int u, int fa) {
+    int d1 = 0, d2 = 0;                 // 最长和次长向下路径
+    // 注意：如果边权可能为负数，应初始化为 -INF
+    // 因为本题边权为正，初始化为0即可
+
+    for (auto [v, w] : g[u]) {
+        if (v == fa) continue;
+
+        // 递归处理子树，得到从v向下的最长路径
+        int d = dfs(v, u) + w;
+
+        // 维护最长和次长
+        if (d &gt; d1) {
+            d2 = d1;                    // 原来的最长变成次长
+            d1 = d;
+        } else if (d &gt; d2) {
+            d2 = d;
+        }
+    }
+
+    // 以u为拐点的最长路径 = d1 + d2
+    diameter = max(diameter, d1 + d2);
+
+    return d1;                          // 返回从u向下的最长路径
+}
+
+int getDiameter() {
+    diameter = 0;
+    dfs(1, 0);
+    return diameter;
+}
+
+}  // namespace Method2_TreeDP
+
+void solve() {
+    cin &gt;&gt; n;
+    // 建树
+    for (int i = 1; i &lt; n; i++) {
+        int u, v, w;
+        cin &gt;&gt; u &gt;&gt; v &gt;&gt; w;
+        g[u].push_back({v, w});
+        g[v].push_back({u, w});
+    }
+
+    // 选择方法1或方法2（取消对应注释）
+    // cout &lt;&lt; Method1_TwoDFS::getDiameter() &lt;&lt; '\n';
+    cout &lt;&lt; Method2_TreeDP::getDiameter() &lt;&lt; '\n';
+}
+
+}  // namespace Problem1_TreeDiameter
+
+
+// ============================================================
+// 题目2：选课问题 —— 树上背包
+// ============================================================
+// 洛谷 P2014 [CTSC1997] 选课 / AcWing 286
+// 题目描述：
+//   学校实行学分制。有 n 门课，每门课有学分。部分课程有先修课。
+//   学生必须修完先修课才能选后续课。需要选出 m 门课，求最大总学分。
+//
+// 数据范围：1 ≤ n ≤ 300, 1 ≤ m ≤ n, 1 ≤ score_i ≤ 20
+//
+// 建模思路：
+//   1. 添加虚拟根节点 0（学分为0）
+//   2. 所有没有直接先修课的课程的父亲设为 0
+//   3. 问题转化为：在树上选择恰好 m+1 个节点（含虚拟根），
+//      父节点必选的情况下，最大学分总和
+//   4. 使用分组背包模型进行DP转移
+//
+// 状态设计：
+//   dp[u][j]：以 u 为根的子树中，选择恰好 j 门课（含 u）的最大总学分
+//
+// 状态转移（分组背包）：
+//   对于 u 的每个儿子 v：
+//     for j 从 size_now 递减到 1：
+//       for k 从 1 到 size[v] 且 k &lt; j：
+//         dp[u][j] = max(dp[u][j], dp[u][j - k] + dp[v][k])
+//
+// 复杂度：O(nm)（利用子树大小剪枝优化）
+// ============================================================
+
+namespace Problem2_CourseSelection {
+
+int n, m;                               // n门课，选m门
+int score[MAXN];                        // 每门课的学分
+vector&lt;int&gt; g[MAXN];                    // 树结构（有向边：父→子）
+int dp[MAXN][305];                      // dp[u][j]，dp第二维最大300+5
+int sz[MAXN];                           // 子树大小
+
+void dfs(int u) {
+    // ===== 初始化 =====
+    sz[u] = 1;
+    dp[u][1] = score[u];                // 只选u自己
+    dp[u][0] = 0;                       // 不选u
+
+    // ===== 遍历每个儿子（分组背包） =====
+    for (int v : g[u]) {
+        dfs(v);                         // 先递归处理子树
+
+        // 分组背包：逆序枚举容量（保证每棵子树只被使用一次）
+        // j 的上界：min(m, sz[u] + sz[v])
+        for (int j = min(m, sz[u] + sz[v]); j &gt;= 1; j--) {
+            // k 枚举儿子子树 v 中选择了多少门课
+            // k 的下界：max(1, j - sz[u])（保证剩余容量不超）
+            // k 的上界：min(j - 1, sz[v])（至少给u留一个位置）
+            for (int k = max(1, j - sz[u]); k &lt;= min(j - 1, sz[v]); k++) {
+                dp[u][j] = max(dp[u][j], dp[u][j - k] + dp[v][k]);
+            }
+        }
+
+        // 合并子树大小
+        sz[u] += sz[v];
+    }
+}
+
+void solve() {
+    // ===== 输入 =====
+    cin &gt;&gt; n &gt;&gt; m;
+
+    // 初始化dp数组为负无穷（表示不可达状态）
+    memset(dp, -0x3f, sizeof(dp));
+
+    // 虚拟根节点0：学分为0
+    score[0] = 0;
+
+    // 读入每门课的先修课和学分
+    for (int i = 1; i &lt;= n; i++) {
+        int pre;                        // 先修课编号
+        cin &gt;&gt; pre &gt;&gt; score[i];
+        g[pre].push_back(i);            // pre → i 的有向边
+    }
+
+    // 目标：选 m 门课 → 在包含虚拟根的树中选 m+1 个节点
+    m = m + 1;
+
+    dfs(0);                             // 从虚拟根开始DFS
+
+    // 答案：dp[0][m] = 选 m+1 个节点（含虚拟根）的最大总学分
+    cout &lt;&lt; dp[0][m] &lt;&lt; '\n';
+}
+
+/**
+ * 测试用例：
+ *   输入：
+ *     7 4
+ *     2 2
+ *     0 1
+ *     0 4
+ *     2 1
+ *     7 1
+ *     7 6
+ *     2 2
+ *   输出：13
+ *   解释：选修课程 2,3,5,6，学分分别为 1,4,1,6，总和12+虚拟根=13
+ */
+
+}  // namespace Problem2_CourseSelection
+
+
+// ============================================================
+// 题目3：换根DP（每个节点到其他节点的距离之和）
+// ============================================================
+// 洛谷 P3478 [POI2008] STA-Station
+// 题目描述：
+//   给定一棵 n 个节点的无根树，求一个节点，使得以该节点为根时，
+//   所有节点的深度之和最大。若有多解，输出编号最小的节点。
+//
+// 数据范围：1 ≤ n ≤ 10^6
+//
+// 换根DP思路：
+//   第一步（dfs1）：以1为根，计算每个节点的子树大小size[u]
+//      和以1为根时的深度之和 dp_down[1]
+//   第二步（dfs2）：从根1开始向下递推，利用父节点的答案推导子节点
+//
+//   换根公式推导：
+//   已知以 u 为根时所有节点的深度之和为 ans[u]。
+//   当根从 u 切换到其子节点 v 时：
+//     - 子树 v 中的所有点（size[v]个）深度减1
+//     - 其余点（n - size[v]个）深度加1
+//   因此：ans[v] = ans[u] - size[v] + (n - size[v])
+//              = ans[u] + n - 2 * size[v]
+//
+// 时间复杂度：O(n)
+// ============================================================
+
+namespace Problem3_RerootingDP {
+
+int n;
+vector&lt;int&gt; g[MAXN];                    // 邻接表（无向边）
+long long sz[MAXN];                     // size[u]：子树大小
+long long dp_down[MAXN];                // dp_down[u]：子树中节点到u的深度和
+long long ans[MAXN];                    // ans[u]：以u为根的全局深度和
+
+/**
+ * 第一次DFS：固定根为1，计算子树信息（后序遍历）
+ * 计算：
+ *   size[u]：子树大小
+ *   dp_down[u]：子树中所有节点到u的深度之和
+ */
+void dfs1(int u, int fa) {
+    sz[u] = 1;
+    dp_down[u] = 0;                     // u到自己的深度为0
+
+    for (int v : g[u]) {
+        if (v == fa) continue;
+        dfs1(v, u);                     // 先递归子节点
+
+        sz[u] += sz[v];
+        // 子树v中每个节点到u的距离 = 到v的距离 + 1
+        dp_down[u] += dp_down[v] + sz[v];
+    }
+}
+
+/**
+ * 第二次DFS：换根（先序遍历）
+ * 利用父节点u的全局答案 ans[u] 推导子节点v的全局答案 ans[v]
+ *
+ * 换根公式：
+ *   ans[v] = ans[u] - sz[v] + (n - sz[v])
+ *          = ans[u] + n - 2 * sz[v]
+ */
+void dfs2(int u, int fa) {
+    for (int v : g[u]) {
+        if (v == fa) continue;
+
+        // 换根推导：从以u为根切换到以v为根
+        ans[v] = ans[u] + n - 2 * sz[v];
+
+        dfs2(v, u);                     // 继续向下换根
+    }
+}
+
+void solve() {
+    cin &gt;&gt; n;
+
+    // 建树
+    for (int i = 1; i &lt; n; i++) {
+        int u, v;
+        cin &gt;&gt; u &gt;&gt; v;
+        g[u].push_back(v);
+        g[v].push_back(u);
+    }
+
+    // ===== 第一次扫描：以1为根计算子树信息 =====
+    dfs1(1, 0);
+
+    // 根节点1的答案即为 dp_down[1]
+    ans[1] = dp_down[1];
+
+    // ===== 第二次扫描：换根计算所有节点的答案 =====
+    dfs2(1, 0);
+
+    // ===== 找出最大深度和对应的最小节点编号 =====
+    long long maxSum = -1;
+    int bestNode = 0;
+    for (int i = 1; i &lt;= n; i++) {
+        if (ans[i] &gt; maxSum) {
+            maxSum = ans[i];
+            bestNode = i;
+        }
+        // 由于i从小到大遍历，当 ans[i] == maxSum 时不需要更新
+        // 这自然保证了"输出编号最小的节点"
+    }
+
+    cout &lt;&lt; bestNode &lt;&lt; '\n';
+}
+
+/**
+ * 测试用例：
+ *   输入：
+ *     8
+ *     1 4
+ *     5 6
+ *     4 5
+ *     6 7
+ *     6 8
+ *     2 4
+ *     3 4
+ *   输出：7
+ *
+ * 换根过程示意（以其中一个转移为例）：
+ *   已知 ans[1] = 18
+ *   切换到子节点4：
+ *     ans[4] = ans[1] + n - 2*sz[4]
+ *            = 18 + 8 - 2*7 = 18 + 8 - 14 = 12
+ *   （size[4] = 7，因为节点4的子树包含除1外的所有节点）
+ */
+
+}  // namespace Problem3_RerootingDP
+
+
+// ============================================================
+// 主函数：选择运行哪道题目
+// ============================================================
+int main() {
+    // ===== 快速IO优化 =====
+    ios::sync_with_stdio(false);
+    cin.tie(0);
+    cout.tie(0);
+
+    // ===== 选择题目运行（取消对应注释） =====
+    // Problem1_TreeDiameter::solve();          // 题目1：树的直径
+    Problem2_CourseSelection::solve();         // 题目2：选课问题
+    // Problem3_RerootingDP::solve();           // 题目3：换根DP
+
+    return 0;
+}
+
+/**
+ * ============================================================
+ * 知识点总结
+ * ============================================================
+ *
+ * 1. 树的直径（两种方法）：
+ *    - 两次DFS：O(n)，仅适用于非负权边，实现简单
+ *      核心：从任意点出发的最远点必为直径端点
+ *    - 树形DP：O(n)，可处理负权边，一次DFS
+ *      核心：维护每个节点的最长和次长向下路径
+ *
+ * 2. 树上背包（选课问题）：
+ *    - 状态：dp[u][j] = 在u子树中选j个节点的最大价值
+ *    - 转移：分组背包，枚举每个儿子子树贡献的节点数
+ *    - 优化：利用子树大小剪枝，j的上界取 min(m, size_now)
+ *    - 复杂度：O(nm)（优化后）
+ *    - 关键技巧：添加虚拟根节点统一处理森林
+ *
+ * 3. 换根DP（二次扫描法）：
+ *    - 第一步（dfs1）：固定一个根，计算子树信息（后序）
+ *    - 第二步（dfs2）：利用父节点答案O(1)推导子节点答案（先序）
+ *    - 核心公式（深度和换根）：
+ *      ans[v] = ans[u] + n - 2 * size[v]
+ *    - 适用场景：求"以每个节点为根时的某种全局信息"
+ *    - 关键：找到简洁的换根递推公式
+ *
+ * 4. 考试技巧：
+ *    - 识别题目隐含的树结构（表面是图，实际是树）
+ *    - 树的直径优先考虑两次DFS（多数情况边权非负）
+ *    - 树上背包注意 m &lt;= n 的规模（通常 n ≤ 300）
+ *    - 换根DP需要清晰地区分"子树信息"和"全局信息"
+ *    - 注意 long long 溢出（深度和可能达到 O(n^2) 级别）
+ *
+ * 5. 常见错误：
+ *    - 两次DFS求直径时未清空dist数组
+ *    - 树上背包未逆序枚举容量（导致同组物品被多次使用）
+ *    - 换根DP中子树大小计算错误（混淆有向和无向）
+ *    - 负权边场景下，树形DP求直径时 d1,d2 初始化为0而非 -INF
+ *
+ * ============================================================
+ */
+</pre>
+    <p class="hint">本页使用浅色主题与 UTF-8 编码，可直接打印或导出 PDF。</p>
+  </div>
+</body>
+</html>

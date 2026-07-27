@@ -1,0 +1,249 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>第2节-让画面动起来/main.py</title>
+<style>
+  :root {
+    --bg: #f5f7fa;
+    --panel: #ffffff;
+    --text: #1a1a2e;
+    --muted: #5a6570;
+    --gold: #b8860b;
+    --code-bg: #ffffff;
+    --code-text: #1f2933;
+    --border: #d8dee6;
+    --top-bg: #ffffff;
+    --top-border: #e5e9ef;
+  }
+  * { box-sizing: border-box; }
+  html, body {
+    margin: 0; padding: 0;
+    background: var(--bg);
+    color: var(--text);
+    font-family: -apple-system, BlinkMacSystemFont, "PingFang SC", "Microsoft YaHei", sans-serif;
+    min-height: 100%;
+  }
+  .top {
+    position: sticky; top: 0; z-index: 10;
+    display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between;
+    gap: 10px;
+    padding: 12px 18px;
+    background: var(--top-bg);
+    border-bottom: 1px solid var(--top-border);
+    box-shadow: 0 1px 8px rgba(15, 23, 42, 0.06);
+  }
+  .brand { color: var(--gold); font-weight: 700; font-size: 14px; letter-spacing: 0.04em; }
+  .title { font-size: 15px; font-weight: 600; color: var(--text); max-width: 52vw; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .actions { display: flex; gap: 8px; flex-wrap: wrap; }
+  .btn {
+    appearance: none; border: 1px solid var(--border);
+    background: #fff; color: var(--text);
+    border-radius: 999px; padding: 8px 14px; font-size: 13px; font-weight: 600;
+    text-decoration: none; cursor: pointer;
+  }
+  .btn:hover { background: #f0f3f7; }
+  .btn.gold {
+    background: linear-gradient(135deg, #f0d78c, #d4a853);
+    color: #0a2540; border-color: #e0c06a;
+  }
+  .meta {
+    padding: 10px 18px; color: var(--muted); font-size: 12px;
+    border-bottom: 1px solid var(--border);
+    background: var(--panel);
+  }
+  .wrap { padding: 16px 18px 40px; }
+  pre {
+    margin: 0;
+    background: var(--code-bg);
+    color: var(--code-text);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 18px 20px;
+    overflow: auto;
+    font-family: "SF Mono", "JetBrains Mono", "Fira Code", Consolas, "Courier New", monospace;
+    font-size: 13.5px;
+    line-height: 1.55;
+    white-space: pre;
+    tab-size: 4;
+    box-shadow: 0 2px 12px rgba(15, 23, 42, 0.05);
+  }
+  .hint { margin-top: 12px; color: var(--muted); font-size: 12px; }
+  @media print {
+    html, body { background: #fff !important; color: #000 !important; }
+    .top { position: static; box-shadow: none; border-bottom: 1px solid #ccc; background: #fff !important; }
+    .actions { display: none !important; }
+    .meta { background: #fff !important; border-color: #ddd; color: #333; }
+    .wrap { padding: 0; }
+    pre {
+      background: #fff !important; color: #000 !important;
+      border: 1px solid #bbb; box-shadow: none; border-radius: 0;
+      white-space: pre-wrap; word-break: break-word; font-size: 11pt; line-height: 1.4;
+    }
+    .hint { display: none; }
+    a { color: #000; text-decoration: none; }
+  }
+</style>
+</head>
+<body>
+  <div class="top">
+    <div class="brand">Pygame 零基础 · 配套代码</div>
+    <div class="title">第2节-让画面动起来/main.py</div>
+    <div class="actions">
+      <a class="btn" href="../第2节-让画面动起来/main.py" download="main.py">⬇️ 下载源文件</a>
+      <a class="btn gold" href="javascript:history.back()">← 返回课件</a>
+    </div>
+  </div>
+  <div class="meta">编码：UTF-8 · 文件：第2节-让画面动起来/main.py · 共 145 行 · 浅色主题便于打印</div>
+  <div class="wrap">
+    <pre id="code">"""
+第2节：让画面动起来 —— 移动的彩色矩形
+======================================
+本程序演示 Pygame 的动画原理：
+1. 游戏主循环（while True）
+2. 帧率控制（Clock / tick）
+3. 清屏重绘（fill）
+4. 绘制矩形（draw.rect）
+5. 自动移动 + 边缘反弹
+
+一个彩色矩形会在窗口中自动移动，
+碰到窗口边缘就会反弹，就像 DVD 屏保那样！
+"""
+
+import pygame
+import sys
+
+# ============================================
+# 1. 初始化 Pygame
+# ============================================
+pygame.init()
+
+# ============================================
+# 2. 设置窗口
+# ============================================
+WIDTH = 800
+HEIGHT = 600
+screen = pygame.display.set_mode((WIDTH, HEIGHT))
+pygame.display.set_caption("让画面动起来 —— 会反弹的彩色矩形")
+
+# ============================================
+# 3. 定义颜色
+# ============================================
+BLACK = (0, 0, 0)           # 黑色（背景色）
+WHITE = (255, 255, 255)     # 白色
+RED = (255, 0, 0)           # 红色
+GREEN = (0, 255, 0)         # 绿色
+BLUE = (0, 0, 255)          # 蓝色
+YELLOW = (255, 255, 0)      # 黄色
+ORANGE = (255, 165, 0)      # 橙色
+PURPLE = (160, 32, 240)     # 紫色
+CYAN = (0, 255, 255)        # 青色
+
+# ============================================
+# 4. 矩形的属性
+# ============================================
+rect_width = 120    # 矩形的宽度（像素）
+rect_height = 80    # 矩形的高度（像素）
+
+# 矩形的起始位置（左上角坐标）
+rect_x = 100        # X 坐标（水平位置）
+rect_y = 100        # Y 坐标（垂直位置）
+
+# 矩形的移动速度（每次移动多少像素）
+speed_x = 5         # 水平方向速度（正数=向右，负数=向左）
+speed_y = 4         # 垂直方向速度（正数=向下，负数=向上）
+
+# 矩形的颜色（初始为蓝色）
+rect_color = BLUE
+
+# ============================================
+# 5. 创建时钟对象（控制帧率）
+# ============================================
+# Clock 就像一个"节拍器"，它控制游戏每秒运行多少次
+clock = pygame.time.Clock()
+FPS = 60  # FPS = Frames Per Second（每秒帧数），60 表示每秒刷新 60 次
+
+# ============================================
+# 6. 颜色列表 —— 矩形每次反弹时换个颜色！
+# ============================================
+colors = [RED, GREEN, BLUE, YELLOW, ORANGE, PURPLE, CYAN, WHITE]
+color_index = 0  # 当前使用的颜色索引
+
+# ============================================
+# 7. 游戏主循环
+# ============================================
+print("游戏开始！观察矩形在窗口中的运动。")
+print("矩形碰到边缘会自动反弹并变色！")
+print("点击窗口右上角的 × 按钮可以关闭。")
+
+running = True
+
+while running:
+    # --- 7.1 处理事件 ---
+    for event in pygame.event.get():
+        if event.type == pygame.QUIT:
+            running = False
+
+    # --- 7.2 更新矩形的位置 ---
+    rect_x += speed_x  # 水平移动
+    rect_y += speed_y  # 垂直移动
+
+    # Bounce tracking flag
+    bounced = False
+
+    # --- 7.3 碰撞检测 —— 碰到左右边缘就反弹 ---
+    if rect_x &lt;= 0:  # 碰到左边缘
+        rect_x = 0
+        speed_x = -speed_x  # 反转水平方向
+        bounced = True
+
+    if rect_x &gt;= WIDTH - rect_width:  # 碰到右边缘
+        rect_x = WIDTH - rect_width
+        speed_x = -speed_x  # 反转水平方向
+        bounced = True
+
+    # --- 7.4 碰撞检测 —— 碰到上下边缘就反弹 ---
+    if rect_y &lt;= 0:  # 碰到上边缘
+        rect_y = 0
+        speed_y = -speed_y  # 反转垂直方向
+        bounced = True
+
+    if rect_y &gt;= HEIGHT - rect_height:  # 碰到下边缘
+        rect_y = HEIGHT - rect_height
+        speed_y = -speed_y  # 反转垂直方向
+        bounced = True
+
+    # --- 7.5 如果碰到了边缘，换一个颜色 ---
+    if bounced:
+        color_index = (color_index + 1) % len(colors)  # 循环切换到下一个颜色
+        rect_color = colors[color_index]
+
+    # --- 7.6 绘制画面 ---
+    # 第一步：用黑色清屏（擦掉上一帧的内容）
+    # 如果不清屏，矩形就会"拖尾"——试试注释掉下面这行看看效果！
+    screen.fill(BLACK)
+
+    # 第二步：在新的位置画出矩形
+    # draw.rect(画布, 颜色, (x坐标, y坐标, 宽度, 高度))
+    pygame.draw.rect(screen, rect_color, (rect_x, rect_y, rect_width, rect_height))
+
+    # 第三步：刷新显示
+    pygame.display.flip()
+
+    # --- 7.7 控制帧率 ---
+    # tick(FPS) 确保每秒最多运行 60 次循环
+    # 这意味着每次循环大约间隔 1/60 ≈ 16.7 毫秒
+    clock.tick(FPS)
+
+# ============================================
+# 8. 退出
+# ============================================
+pygame.quit()
+sys.exit()
+print("游戏已关闭。")
+</pre>
+    <p class="hint">本页使用浅色主题与 UTF-8 编码，可直接打印或导出 PDF。</p>
+  </div>
+</body>
+</html>

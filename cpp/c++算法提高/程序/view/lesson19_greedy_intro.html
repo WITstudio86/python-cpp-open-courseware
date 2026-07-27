@@ -1,0 +1,357 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>lesson19_greedy_intro.cpp</title>
+<style>
+  :root {
+    --bg: #f5f7fa;
+    --panel: #ffffff;
+    --text: #1a1a2e;
+    --muted: #5a6570;
+    --gold: #b8860b;
+    --code-bg: #ffffff;
+    --code-text: #1f2933;
+    --border: #d8dee6;
+    --top-bg: #ffffff;
+    --top-border: #e5e9ef;
+  }
+  * { box-sizing: border-box; }
+  html, body {
+    margin: 0; padding: 0;
+    background: var(--bg);
+    color: var(--text);
+    font-family: -apple-system, BlinkMacSystemFont, "PingFang SC", "Microsoft YaHei", sans-serif;
+    min-height: 100%;
+  }
+  .top {
+    position: sticky; top: 0; z-index: 10;
+    display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between;
+    gap: 10px;
+    padding: 12px 18px;
+    background: var(--top-bg);
+    border-bottom: 1px solid var(--top-border);
+    box-shadow: 0 1px 8px rgba(15, 23, 42, 0.06);
+  }
+  .brand { color: var(--gold); font-weight: 700; font-size: 14px; letter-spacing: 0.04em; }
+  .title { font-size: 15px; font-weight: 600; color: var(--text); max-width: 52vw; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .actions { display: flex; gap: 8px; flex-wrap: wrap; }
+  .btn {
+    appearance: none; border: 1px solid var(--border);
+    background: #fff; color: var(--text);
+    border-radius: 999px; padding: 8px 14px; font-size: 13px; font-weight: 600;
+    text-decoration: none; cursor: pointer;
+  }
+  .btn:hover { background: #f0f3f7; }
+  .btn.gold {
+    background: linear-gradient(135deg, #f0d78c, #d4a853);
+    color: #0a2540; border-color: #e0c06a;
+  }
+  .meta {
+    padding: 10px 18px; color: var(--muted); font-size: 12px;
+    border-bottom: 1px solid var(--border);
+    background: var(--panel);
+  }
+  .wrap { padding: 16px 18px 40px; }
+  pre {
+    margin: 0;
+    background: var(--code-bg);
+    color: var(--code-text);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 18px 20px;
+    overflow: auto;
+    font-family: "SF Mono", "JetBrains Mono", "Fira Code", Consolas, "Courier New", monospace;
+    font-size: 13.5px;
+    line-height: 1.55;
+    white-space: pre;
+    tab-size: 4;
+    box-shadow: 0 2px 12px rgba(15, 23, 42, 0.05);
+  }
+  .hint { margin-top: 12px; color: var(--muted); font-size: 12px; }
+  @media print {
+    html, body { background: #fff !important; color: #000 !important; }
+    .top { position: static; box-shadow: none; border-bottom: 1px solid #ccc; background: #fff !important; }
+    .actions { display: none !important; }
+    .meta { background: #fff !important; border-color: #ddd; color: #333; }
+    .wrap { padding: 0; }
+    pre {
+      background: #fff !important; color: #000 !important;
+      border: 1px solid #bbb; box-shadow: none; border-radius: 0;
+      white-space: pre-wrap; word-break: break-word; font-size: 11pt; line-height: 1.4;
+    }
+    .hint { display: none; }
+    a { color: #000; text-decoration: none; }
+  }
+</style>
+</head>
+<body>
+  <div class="top">
+    <div class="brand">C++ 算法提高 · 配套代码</div>
+    <div class="title">lesson19_greedy_intro.cpp</div>
+    <div class="actions">
+      <a class="btn" href="../lesson19_greedy_intro.cpp" download="lesson19_greedy_intro.cpp">⬇️ 下载源文件</a>
+      <a class="btn gold" href="javascript:history.back()">← 返回课件</a>
+    </div>
+  </div>
+  <div class="meta">编码：UTF-8 · 文件：lesson19_greedy_intro.cpp · 共 253 行 · 浅色主题便于打印</div>
+  <div class="wrap">
+    <pre id="code">/*
+ * ============================================================
+ * Lesson 19: 贪心算法入门 — 局部最优到全局最优
+ * C++ 算法提高课程
+ *
+ * 本文件包含两个经典贪心问题的完整实现：
+ *   1. 找零钱问题 —— 每次选择面额最大的纸币
+ *   2. 最大分数 —— 按分数降序排序，尽量将作业安排在截止日期前
+ *
+ * 编译: g++ -std=c++11 lesson19_greedy_intro.cpp -o lesson19_greedy_intro
+ * 运行: ./lesson19_greedy_intro
+ * ============================================================
+ */
+
+#include &lt;iostream&gt;
+#include &lt;algorithm&gt;
+#include &lt;cstring&gt;
+using namespace std;
+
+// ================================================================
+// 问题1: 找零钱问题
+// ================================================================
+// 贪心策略: 在人民币面额体系 (100, 50, 20, 10, 5, 1) 下，
+//           每次选择不超过剩余金额的最大面额纸币。
+//           这套面额满足贪心选择性质，因此能得到全局最优解。
+//
+// 时间复杂度: O(k)，k 为面额种类数 (此处 k = 6)
+// 空间复杂度: O(k)，用于存储各面额的张数
+// ================================================================
+
+void solveCoinChange() {
+    cout &lt;&lt; "========== 问题1: 找零钱问题 ==========" &lt;&lt; endl;
+
+    // 人民币面额，从大到小排列（贪心要求优先使用大面额）
+    int denominations[] = {100, 50, 20, 10, 5, 1};
+    int numTypes = 6;                       // 面额种类数
+    int counts[6] = {0};                    // 记录每种面额的使用张数
+    int N;                                  // 待找零金额
+
+    cout &lt;&lt; "请输入找零金额 N: ";
+    cin &gt;&gt; N;
+
+    int remain = N;                         // 剩余待找零金额
+    int totalCoins = 0;                     // 总纸币张数
+
+    // 贪心遍历：每种面额尽可能多用
+    for (int i = 0; i &lt; numTypes; i++) {
+        counts[i] = remain / denominations[i];  // 当前面额最多用几张
+        remain %= denominations[i];              // 更新剩余金额
+        totalCoins += counts[i];                 // 累加总张数
+    }
+
+    // 输出结果
+    cout &lt;&lt; "\n最少需要 " &lt;&lt; totalCoins &lt;&lt; " 张纸币:" &lt;&lt; endl;
+    for (int i = 0; i &lt; numTypes; i++) {
+        if (counts[i] &gt; 0) {
+            cout &lt;&lt; "  " &lt;&lt; denominations[i] &lt;&lt; "元: " &lt;&lt; counts[i] &lt;&lt; "张" &lt;&lt; endl;
+        }
+    }
+}
+
+// ================================================================
+// 问题2: 最大分数
+// ================================================================
+// 贪心策略: 将作业按分数从高到低排序，优先安排分数高的作业。
+//           对每项作业，从截止日期当天往前找第一个空闲的日子，
+//           若找到则安排该作业，否则放弃。
+//
+// 正确性: 这本质上是一个带权重的调度问题。按分数降序贪心是正确的，
+//         因为如果某项高分作业被放弃，那么所有已安排的作业分数
+//         都 &gt;= 它，替换不会产生更优解。
+//
+// 时间复杂度: O(N log N + N * maxDeadline)
+//             排序 O(N log N)，安排 O(N * maxDeadline)
+// 空间复杂度: O(maxDeadline)，用于记录每天是否已被占用
+// ================================================================
+
+// 作业结构体
+struct Job {
+    int deadline;   // 截止日期
+    int score;      // 完成可获得的分值
+};
+
+// 自定义排序：按分数从高到低
+// 分数越高越值得优先安排，这是贪心策略的核心
+bool compareByScore(Job a, Job b) {
+    return a.score &gt; b.score;
+}
+
+void solveMaxScore() {
+    cout &lt;&lt; "\n========== 问题2: 最大分数 ==========" &lt;&lt; endl;
+
+    int n;                                  // 作业数量
+    cout &lt;&lt; "请输入作业数量 N: ";
+    cin &gt;&gt; n;
+
+    Job jobs[1005];                         // 最多支持 1000 项作业
+    int maxDeadline = 0;                    // 记录最晚的截止日期
+
+    cout &lt;&lt; "请依次输入每项作业的截止日期和分数 (d s):" &lt;&lt; endl;
+    for (int i = 0; i &lt; n; i++) {
+        cin &gt;&gt; jobs[i].deadline &gt;&gt; jobs[i].score;
+        if (jobs[i].deadline &gt; maxDeadline) {
+            maxDeadline = jobs[i].deadline;
+        }
+    }
+
+    // 贪心步骤1: 按分数从高到低排序
+    sort(jobs, jobs + n, compareByScore);
+
+    // used[t] = true 表示第 t 天已经被某项作业占用
+    // 天数的范围是 [1, maxDeadline]
+    bool used[1005] = {false};
+    int totalScore = 0;                     // 获得的总分数
+
+    // 贪心步骤2: 按分数从高到低，依次尝试安排每项作业
+    for (int i = 0; i &lt; n; i++) {
+        // 从该作业的截止日期往前找空闲日子
+        // 越晚安排越好，为其他作业留出更早的时间槽位
+        for (int day = jobs[i].deadline; day &gt;= 1; day--) {
+            if (!used[day]) {               // 找到空闲日
+                used[day] = true;           // 占用这一天
+                totalScore += jobs[i].score; // 计入总分
+                break;                      // 该作业已安排，处理下一项
+            }
+        }
+        // 如果遍历完所有可能的日子都没找到，说明该作业无法完成，
+        // 自动放弃，不加入总分
+    }
+
+    cout &lt;&lt; "\n最大总分数: " &lt;&lt; totalScore &lt;&lt; endl;
+}
+
+// ================================================================
+// 测试用例: 使用预设数据快速验证两个问题的正确性
+// ================================================================
+
+void runTests() {
+    cout &lt;&lt; "\n========== 自动测试用例 ==========" &lt;&lt; endl;
+
+    // --- 测试1: 找零钱问题 ---
+    cout &lt;&lt; "\n[测试1] 找零钱: N = 286" &lt;&lt; endl;
+    {
+        int denominations[] = {100, 50, 20, 10, 5, 1};
+        int counts[6] = {0};
+        int N = 286, remain = N, total = 0;
+        for (int i = 0; i &lt; 6; i++) {
+            counts[i] = remain / denominations[i];
+            remain %= denominations[i];
+            total += counts[i];
+        }
+        cout &lt;&lt; "  最少纸币数: " &lt;&lt; total &lt;&lt; " (期望: 7)" &lt;&lt; endl;
+        // 100*2 + 50*1 + 20*1 + 10*1 + 5*1 + 1*1 = 7张 ✓
+    }
+
+    {
+        cout &lt;&lt; "\n[测试2] 找零钱: N = 63" &lt;&lt; endl;
+        int denominations[] = {100, 50, 20, 10, 5, 1};
+        int counts[6] = {0};
+        int N = 63, remain = N, total = 0;
+        for (int i = 0; i &lt; 6; i++) {
+            counts[i] = remain / denominations[i];
+            remain %= denominations[i];
+            total += counts[i];
+        }
+        cout &lt;&lt; "  最少纸币数: " &lt;&lt; total &lt;&lt; " (期望: 5)" &lt;&lt; endl;
+        // 50*1 + 10*1 + 1*3 = 5张 ✓
+    }
+
+    // --- 测试2: 最大分数 ---
+    cout &lt;&lt; "\n[测试3] 最大分数: 样例1" &lt;&lt; endl;
+    {
+        // 5项作业: (2,60), (1,30), (2,40), (1,80), (3,100)
+        Job jobs[5] = {{2,60}, {1,30}, {2,40}, {1,80}, {3,100}};
+        int n = 5;
+        sort(jobs, jobs + n, compareByScore);
+        bool used[1005] = {false};
+        int total = 0;
+        for (int i = 0; i &lt; n; i++) {
+            for (int day = jobs[i].deadline; day &gt;= 1; day--) {
+                if (!used[day]) {
+                    used[day] = true;
+                    total += jobs[i].score;
+                    break;
+                }
+            }
+        }
+        cout &lt;&lt; "  最大分数: " &lt;&lt; total &lt;&lt; " (期望: 240)" &lt;&lt; endl;
+    }
+
+    cout &lt;&lt; "\n[测试4] 最大分数: 样例2" &lt;&lt; endl;
+    {
+        // 4项作业: (1,50), (2,50), (2,100), (3,100)
+        Job jobs[4] = {{1,50}, {2,50}, {2,100}, {3,100}};
+        int n = 4;
+        sort(jobs, jobs + n, compareByScore);
+        bool used[1005] = {false};
+        int total = 0;
+        for (int i = 0; i &lt; n; i++) {
+            for (int day = jobs[i].deadline; day &gt;= 1; day--) {
+                if (!used[day]) {
+                    used[day] = true;
+                    total += jobs[i].score;
+                    break;
+                }
+            }
+        }
+        cout &lt;&lt; "  最大分数: " &lt;&lt; total &lt;&lt; " (期望: 250)" &lt;&lt; endl;
+    }
+
+    cout &lt;&lt; "\n========== 测试完成 ==========" &lt;&lt; endl;
+}
+
+// ================================================================
+// 主函数
+// ================================================================
+
+int main() {
+    cout &lt;&lt; "╔══════════════════════════════════════════╗" &lt;&lt; endl;
+    cout &lt;&lt; "║  第19课: 贪心算法入门                    ║" &lt;&lt; endl;
+    cout &lt;&lt; "║  局部最优到全局最优                      ║" &lt;&lt; endl;
+    cout &lt;&lt; "╚══════════════════════════════════════════╝" &lt;&lt; endl;
+    cout &lt;&lt; endl;
+
+    int choice;
+    cout &lt;&lt; "请选择操作:" &lt;&lt; endl;
+    cout &lt;&lt; "  1 - 找零钱问题 (交互输入)" &lt;&lt; endl;
+    cout &lt;&lt; "  2 - 最大分数问题 (交互输入)" &lt;&lt; endl;
+    cout &lt;&lt; "  3 - 运行自动测试用例" &lt;&lt; endl;
+    cout &lt;&lt; "  0 - 退出" &lt;&lt; endl;
+    cout &lt;&lt; "请输入选择: ";
+    cin &gt;&gt; choice;
+
+    switch (choice) {
+        case 1:
+            solveCoinChange();
+            break;
+        case 2:
+            solveMaxScore();
+            break;
+        case 3:
+            runTests();
+            break;
+        case 0:
+            cout &lt;&lt; "再见！" &lt;&lt; endl;
+            break;
+        default:
+            cout &lt;&lt; "无效选择！" &lt;&lt; endl;
+            break;
+    }
+
+    return 0;
+}
+</pre>
+    <p class="hint">本页使用浅色主题与 UTF-8 编码，可直接打印或导出 PDF。</p>
+  </div>
+</body>
+</html>

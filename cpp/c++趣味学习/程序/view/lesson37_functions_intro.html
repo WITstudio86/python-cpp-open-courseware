@@ -1,0 +1,745 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>lesson37_functions_intro.cpp</title>
+<style>
+  :root {
+    --bg: #f5f7fa;
+    --panel: #ffffff;
+    --text: #1a1a2e;
+    --muted: #5a6570;
+    --gold: #b8860b;
+    --code-bg: #ffffff;
+    --code-text: #1f2933;
+    --border: #d8dee6;
+    --top-bg: #ffffff;
+    --top-border: #e5e9ef;
+  }
+  * { box-sizing: border-box; }
+  html, body {
+    margin: 0; padding: 0;
+    background: var(--bg);
+    color: var(--text);
+    font-family: -apple-system, BlinkMacSystemFont, "PingFang SC", "Microsoft YaHei", sans-serif;
+    min-height: 100%;
+  }
+  .top {
+    position: sticky; top: 0; z-index: 10;
+    display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between;
+    gap: 10px;
+    padding: 12px 18px;
+    background: var(--top-bg);
+    border-bottom: 1px solid var(--top-border);
+    box-shadow: 0 1px 8px rgba(15, 23, 42, 0.06);
+  }
+  .brand { color: var(--gold); font-weight: 700; font-size: 14px; letter-spacing: 0.04em; }
+  .title { font-size: 15px; font-weight: 600; color: var(--text); max-width: 52vw; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .actions { display: flex; gap: 8px; flex-wrap: wrap; }
+  .btn {
+    appearance: none; border: 1px solid var(--border);
+    background: #fff; color: var(--text);
+    border-radius: 999px; padding: 8px 14px; font-size: 13px; font-weight: 600;
+    text-decoration: none; cursor: pointer;
+  }
+  .btn:hover { background: #f0f3f7; }
+  .btn.gold {
+    background: linear-gradient(135deg, #f0d78c, #d4a853);
+    color: #0a2540; border-color: #e0c06a;
+  }
+  .meta {
+    padding: 10px 18px; color: var(--muted); font-size: 12px;
+    border-bottom: 1px solid var(--border);
+    background: var(--panel);
+  }
+  .wrap { padding: 16px 18px 40px; }
+  pre {
+    margin: 0;
+    background: var(--code-bg);
+    color: var(--code-text);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 18px 20px;
+    overflow: auto;
+    font-family: "SF Mono", "JetBrains Mono", "Fira Code", Consolas, "Courier New", monospace;
+    font-size: 13.5px;
+    line-height: 1.55;
+    white-space: pre;
+    tab-size: 4;
+    box-shadow: 0 2px 12px rgba(15, 23, 42, 0.05);
+  }
+  .hint { margin-top: 12px; color: var(--muted); font-size: 12px; }
+  @media print {
+    html, body { background: #fff !important; color: #000 !important; }
+    .top { position: static; box-shadow: none; border-bottom: 1px solid #ccc; background: #fff !important; }
+    .actions { display: none !important; }
+    .meta { background: #fff !important; border-color: #ddd; color: #333; }
+    .wrap { padding: 0; }
+    pre {
+      background: #fff !important; color: #000 !important;
+      border: 1px solid #bbb; box-shadow: none; border-radius: 0;
+      white-space: pre-wrap; word-break: break-word; font-size: 11pt; line-height: 1.4;
+    }
+    .hint { display: none; }
+    a { color: #000; text-decoration: none; }
+  }
+</style>
+</head>
+<body>
+  <div class="top">
+    <div class="brand">C++ 趣味学习 · 配套代码</div>
+    <div class="title">lesson37_functions_intro.cpp</div>
+    <div class="actions">
+      <a class="btn" href="../lesson37_functions_intro.cpp" download="lesson37_functions_intro.cpp">⬇️ 下载源文件</a>
+      <a class="btn gold" href="javascript:history.back()">← 返回课件</a>
+    </div>
+  </div>
+  <div class="meta">编码：UTF-8 · 文件：lesson37_functions_intro.cpp · 共 641 行 · 浅色主题便于打印</div>
+  <div class="wrap">
+    <pre id="code">/*
+ * ============================================================
+ *  第37课：魔法配方——函数初识
+ *  Lesson 37: Magic Recipe — Introduction to Functions
+ * ============================================================
+ *
+ *  课程目标：
+ *    1. 理解函数的定义与调用
+ *    2. 掌握 void 函数和有返回值函数的区别
+ *    3. 学会使用多个函数协作完成复杂任务
+ *    4. 体会代码复用的价值
+ *
+ *  本文件包含 4 个独立的演示程序（运行时会逐一展示）：
+ *    程序一：简单的 void 函数 —— 打印魔法书欢迎信息
+ *    程序二：带返回值的函数 —— 魔法计算器（add, multiply 等）
+ *    程序三：多个函数协作 —— 完整的魔法配方书
+ *    程序四：课堂练习参考答案
+ *
+ *  编译方式（以 g++ 为例）：
+ *    g++ -std=c++11 lesson37_functions_intro.cpp -o lesson37
+ *    ./lesson37
+ *
+ * ============================================================
+ */
+
+#include &lt;iostream&gt;
+#include &lt;string&gt;
+#include &lt;cstdlib&gt;   // 用于 system("clear") 或 system("cls")
+using namespace std;
+
+// ============================================================
+//  辅助函数：清屏并打印分隔标题
+// ============================================================
+void clearScreen() {
+    // 在 macOS/Linux 上使用 "clear"，在 Windows 上使用 "cls"
+    #ifdef _WIN32
+        system("cls");
+    #else
+        system("clear");
+    #endif
+}
+
+void printSectionTitle(const string&amp; title) {
+    cout &lt;&lt; endl;
+    cout &lt;&lt; "╔══════════════════════════════════════════════════════╗" &lt;&lt; endl;
+    cout &lt;&lt; "║  " &lt;&lt; title &lt;&lt; endl;
+    cout &lt;&lt; "╚══════════════════════════════════════════════════════╝" &lt;&lt; endl;
+    cout &lt;&lt; endl;
+}
+
+void pauseAndContinue() {
+    cout &lt;&lt; endl;
+    cout &lt;&lt; "▶ 按 Enter 键继续..." &lt;&lt; endl;
+    cin.get();
+}
+
+// ============================================================
+//  程序一：简单的 void 函数
+//  演示不带返回值的函数 —— 就像魔法书上不需要"产出"的咒语
+// ============================================================
+
+// 函数：显示魔法书封面（void 类型 —— 只做动作，不返回值）
+void showMagicBookCover() {
+    cout &lt;&lt; "         ,___," &lt;&lt; endl;
+    cout &lt;&lt; "        (o,o)     ✨ 欢迎翻开魔法编程书 ✨" &lt;&lt; endl;
+    cout &lt;&lt; "        /)_) " &lt;&lt; endl;
+    cout &lt;&lt; "   ╔════════════════════════════════╗" &lt;&lt; endl;
+    cout &lt;&lt; "   ║   📖  魔  法  配  方  书  📖  ║" &lt;&lt; endl;
+    cout &lt;&lt; "   ║                              ║" &lt;&lt; endl;
+    cout &lt;&lt; "   ║   第 37 课：函数 —— 编程的    ║" &lt;&lt; endl;
+    cout &lt;&lt; "   ║           "魔法配方"          ║" &lt;&lt; endl;
+    cout &lt;&lt; "   ║                              ║" &lt;&lt; endl;
+    cout &lt;&lt; "   ║   著者：未来的大魔法师        ║" &lt;&lt; endl;
+    cout &lt;&lt; "   ╚════════════════════════════════╝" &lt;&lt; endl;
+}
+
+// 函数：打印魔法阵图案（void 类型）
+void drawMagicCircle() {
+    cout &lt;&lt; "        ╭―――――――――――――╮" &lt;&lt; endl;
+    cout &lt;&lt; "       ╱                 ╲" &lt;&lt; endl;
+    cout &lt;&lt; "      ╱   ✦  ✧  ✦  ✧   ╲" &lt;&lt; endl;
+    cout &lt;&lt; "     │    魔法阵 激活！    │" &lt;&lt; endl;
+    cout &lt;&lt; "      ╲   ✧  ✦  ✧  ✦   ╱" &lt;&lt; endl;
+    cout &lt;&lt; "       ╲                 ╱" &lt;&lt; endl;
+    cout &lt;&lt; "        ╰―――――――――――――╯" &lt;&lt; endl;
+}
+
+// 函数：显示魔法咒语（void 类型，带一个参数）
+void castSimpleSpell(const string&amp; spellName) {
+    cout &lt;&lt; "🔮 吟唱咒语：「" &lt;&lt; spellName &lt;&lt; "」" &lt;&lt; endl;
+    cout &lt;&lt; "   ✨✨✨ 咒语释放完毕！✨✨✨" &lt;&lt; endl;
+}
+
+void demo1_voidFunctions() {
+    printSectionTitle("程序一：探秘 void 函数 —— 无声的魔法");
+
+    cout &lt;&lt; "【知识点】void 类型的函数不返回任何值，只负责执行动作。" &lt;&lt; endl;
+    cout &lt;&lt; "          就像魔法书中的"展示咒"——念出来就好，不需要变出实物。\n" &lt;&lt; endl;
+
+    // 调用 void 函数 —— 直接写函数名和括号即可
+    showMagicBookCover();
+
+    cout &lt;&lt; "\n" &lt;&lt; string(50, '─') &lt;&lt; endl;
+
+    drawMagicCircle();
+
+    cout &lt;&lt; "\n" &lt;&lt; string(50, '─') &lt;&lt; endl;
+
+    // 带参数的 void 函数
+    castSimpleSpell("Lumos Maxima! 荧光闪烁!");
+    cout &lt;&lt; endl;
+    castSimpleSpell("Protego! 盔甲护身!");
+
+    cout &lt;&lt; "\n📝 小结：这 3 个函数都是 void 类型，它们被调用后执行了动作，" &lt;&lt; endl;
+    cout &lt;&lt; "        但没有返回任何数据给调用者。就像你让朋友帮忙喊一声"加油！"——" &lt;&lt; endl;
+    cout &lt;&lt; "        朋友做了这件事，但不需要"交还"什么东西给你。\n" &lt;&lt; endl;
+
+    pauseAndContinue();
+}
+
+// ============================================================
+//  程序二：带返回值的函数 —— 魔法计算器
+//  演示有返回值的函数，理解 return 的作用
+// ============================================================
+
+/**
+ *  函数：additionPotion —— 加法药水
+ *  @param a  第一个加数（材料一）
+ *  @param b  第二个加数（材料二）
+ *  @return   两数之和（炼制出的数字药水）
+ */
+int additionPotion(int a, int b) {
+    // return 语句做了两件事：
+    //   1. 计算 a + b 的值
+    //   2. 把这个值"交还"给调用者
+    return a + b;
+}
+
+/**
+ *  函数：multiplicationPotion —— 乘法药水
+ *  @param a  被乘数
+ *  @param b  乘数
+ *  @return   两数之积
+ */
+int multiplicationPotion(int a, int b) {
+    return a * b;
+}
+
+/**
+ *  函数：subtractionPotion —— 减法药水
+ *  @param a  被减数
+ *  @param b  减数
+ *  @return   两数之差
+ */
+int subtractionPotion(int a, int b) {
+    return a - b;
+}
+
+/**
+ *  函数：divisionPotion —— 除法药水
+ *  @param a      被除数
+ *  @param b      除数
+ *  @return       两数之商（double 类型，可以得到小数结果）
+ *
+ *  注意：返回类型是 double，不是 int！
+ *        因为除法可能产生小数（如 5 ÷ 2 = 2.5）
+ */
+double divisionPotion(int a, int b) {
+    // 安全检查：除数不能为零，否则会引发"魔法反噬"！
+    if (b == 0) {
+        cout &lt;&lt; "⚠️ 警告：除数不能为零！魔法反噬！返回 0。" &lt;&lt; endl;
+        return 0.0;
+    }
+    // static_cast&lt;double&gt; 将整数转为小数，确保除法得到小数结果
+    return static_cast&lt;double&gt;(a) / b;
+}
+
+/**
+ *  函数：powerPotion —— 乘方药水
+ *  @param base  底数
+ *  @param exp   指数（必须 &gt;= 0）
+ *  @return      base 的 exp 次方
+ */
+int powerPotion(int base, int exp) {
+    int result = 1;
+    for (int i = 0; i &lt; exp; i++) {
+        result *= base;
+    }
+    return result;
+}
+
+/**
+ *  函数：maxPower —— 找出两个药水中更强的那个
+ *  @param power1  药水1的效力
+ *  @param power2  药水2的效力
+ *  @return        较大的效力值
+ */
+int maxPower(int power1, int power2) {
+    return (power1 &gt; power2) ? power1 : power2;
+    // 三元运算符：条件 ? 值1 : 值2
+    // 等价于：
+    // if (power1 &gt; power2) return power1;
+    // else return power2;
+}
+
+void demo2_returnValueFunctions() {
+    printSectionTitle("程序二：魔法计算器 —— 有返回值的函数");
+
+    cout &lt;&lt; "【知识点】有返回值的函数像一个"自动贩卖机"：" &lt;&lt; endl;
+    cout &lt;&lt; "          你投进去材料（参数），它加工后还给你成品（返回值）。" &lt;&lt; endl;
+    cout &lt;&lt; "          return 语句就是那个"出货口"。\n" &lt;&lt; endl;
+
+    // 准备一些魔法数字
+    int ingredient1 = 15;
+    int ingredient2 = 4;
+
+    cout &lt;&lt; "🧪 当前魔法材料：" &lt;&lt; endl;
+    cout &lt;&lt; "   材料一 = " &lt;&lt; ingredient1 &lt;&lt; "，材料二 = " &lt;&lt; ingredient2 &lt;&lt; "\n" &lt;&lt; endl;
+
+    cout &lt;&lt; string(50, '─') &lt;&lt; endl;
+
+    // 调用有返回值的函数，用变量接收结果
+    int sum = additionPotion(ingredient1, ingredient2);
+    cout &lt;&lt; "➕ 加法药水：" &lt;&lt; ingredient1 &lt;&lt; " + " &lt;&lt; ingredient2
+         &lt;&lt; " = " &lt;&lt; sum &lt;&lt; endl;
+
+    int diff = subtractionPotion(ingredient1, ingredient2);
+    cout &lt;&lt; "➖ 减法药水：" &lt;&lt; ingredient1 &lt;&lt; " - " &lt;&lt; ingredient2
+         &lt;&lt; " = " &lt;&lt; diff &lt;&lt; endl;
+
+    int prod = multiplicationPotion(ingredient1, ingredient2);
+    cout &lt;&lt; "✖️  乘法药水：" &lt;&lt; ingredient1 &lt;&lt; " × " &lt;&lt; ingredient2
+         &lt;&lt; " = " &lt;&lt; prod &lt;&lt; endl;
+
+    double quot = divisionPotion(ingredient1, ingredient2);
+    cout &lt;&lt; "➗ 除法药水：" &lt;&lt; ingredient1 &lt;&lt; " ÷ " &lt;&lt; ingredient2
+         &lt;&lt; " = " &lt;&lt; quot &lt;&lt; endl;
+
+    int powResult = powerPotion(ingredient1, 3);
+    cout &lt;&lt; "📈 乘方药水：" &lt;&lt; ingredient1 &lt;&lt; "^3"
+         &lt;&lt; " = " &lt;&lt; powResult &lt;&lt; endl;
+
+    int stronger = maxPower(ingredient1, ingredient2);
+    cout &lt;&lt; "💪 更强药水：" &lt;&lt; ingredient1 &lt;&lt; " 和 " &lt;&lt; ingredient2
+         &lt;&lt; " 中更强的是 " &lt;&lt; stronger &lt;&lt; endl;
+
+    // 也可以直接在输出中调用函数，不需要中间变量
+    cout &lt;&lt; "\n🔮 直接调用（不用变量接收）：" &lt;&lt; endl;
+    cout &lt;&lt; "   " &lt;&lt; ingredient1 &lt;&lt; " × 10 = "
+         &lt;&lt; multiplicationPotion(ingredient1, 10) &lt;&lt; endl;
+
+    // 函数的返回值还可以作为另一个函数的参数！
+    cout &lt;&lt; "\n🔗 函数嵌套调用：" &lt;&lt; endl;
+    cout &lt;&lt; "   max(add(3, 5), multiply(2, 3)) = "
+         &lt;&lt; maxPower(additionPotion(3, 5), multiplicationPotion(2, 3)) &lt;&lt; endl;
+    cout &lt;&lt; "   （先算 3+5=8 和 2×3=6，然后 max(8,6)=8）" &lt;&lt; endl;
+
+    // 测试除零保护
+    cout &lt;&lt; "\n⚠️ 测试除零保护：" &lt;&lt; endl;
+    cout &lt;&lt; "   10 ÷ 0 = " &lt;&lt; divisionPotion(10, 0) &lt;&lt; endl;
+
+    pauseAndContinue();
+}
+
+// ============================================================
+//  程序三：多个函数协作 —— 完整的魔法配方书
+//  模拟一个完整的"炼制魔法药水"游戏
+// ============================================================
+
+/**
+ *  函数：brewPotion —— 炼制药水
+ *  根据配方编号和材料数量计算药水效力
+ *
+ *  @param recipeID   配方编号（1=治疗药水, 2=力量药水, 3=智慧药水）
+ *  @param herbs      草药数量
+ *  @param crystals   魔法水晶数量
+ *  @param moonDust   月光粉尘数量
+ *  @return           药水效力值
+ */
+int brewPotion(int recipeID, int herbs, int crystals, int moonDust) {
+    // 不同配方有不同的效力计算公式
+    int potency = 0;
+
+    switch (recipeID) {
+        case 1:  // 治疗药水配方
+            potency = herbs * 5 + crystals * 3 + moonDust * 2;
+            break;
+        case 2:  // 力量药水配方
+            potency = herbs * 2 + crystals * 7 + moonDust * 3;
+            break;
+        case 3:  // 智慧药水配方
+            potency = herbs * 3 + crystals * 3 + moonDust * 6;
+            break;
+        default:
+            cout &lt;&lt; "❌ 未知的配方编号！" &lt;&lt; endl;
+            potency = 0;
+    }
+    return potency;
+}
+
+/**
+ *  函数：getRecipeName —— 获取配方名称
+ *  @param recipeID  配方编号
+ *  @return          配方名称（string 类型）
+ */
+string getRecipeName(int recipeID) {
+    switch (recipeID) {
+        case 1:  return "💚 治疗药水";
+        case 2:  return "❤️ 力量药水";
+        case 3:  return "💙 智慧药水";
+        default: return "❓ 未知药水";
+    }
+}
+
+/**
+ *  函数：getPotionGrade —— 鉴定药水等级
+ *  @param potency  药水效力
+ *  @return         等级描述
+ */
+string getPotionGrade(int potency) {
+    if (potency &gt;= 80) {
+        return "🌟🌟🌟 传说级 (Legendary)";
+    } else if (potency &gt;= 60) {
+        return "🌟🌟  史诗级 (Epic)";
+    } else if (potency &gt;= 40) {
+        return "🌟   稀有级 (Rare)";
+    } else if (potency &gt;= 20) {
+        return "⭐   精良级 (Uncommon)";
+    } else {
+        return "💨   普通级 (Common)";
+    }
+}
+
+/**
+ *  函数：isPotionSuccessful —— 判断炼制是否成功
+ *  @param potency  药水效力
+ *  @return         true=成功, false=失败（效力太低）
+ */
+bool isPotionSuccessful(int potency) {
+    return potency &gt;= 20;  // 效力低于 20 视为失败
+}
+
+/**
+ *  函数：calcMaterialCost —— 计算材料总费用
+ *  @param herbs      草药数量
+ *  @param crystals   魔法水晶数量
+ *  @param moonDust   月光粉尘数量
+ *  @return           总金币数
+ */
+int calcMaterialCost(int herbs, int crystals, int moonDust) {
+    int herbPrice = 3;      // 每株草药 3 金币
+    int crystalPrice = 5;   // 每块水晶 5 金币
+    int dustPrice = 4;      // 每份粉尘 4 金币
+
+    return herbs * herbPrice + crystals * crystalPrice + moonDust * dustPrice;
+}
+
+/**
+ *  函数：displayPotionResult —— 展示炼制结果
+ *  这是一个综合性的函数，调用其他函数来组装完整的展示信息
+ *
+ *  @param recipeID   配方编号
+ *  @param herbs      草药数量
+ *  @param crystals   魔法水晶数量
+ *  @param moonDust   月光粉尘数量
+ */
+void displayPotionResult(int recipeID, int herbs, int crystals, int moonDust) {
+    string name = getRecipeName(recipeID);
+    int potency = brewPotion(recipeID, herbs, crystals, moonDust);
+    string grade = getPotionGrade(potency);
+    bool success = isPotionSuccessful(potency);
+    int cost = calcMaterialCost(herbs, crystals, moonDust);
+
+    cout &lt;&lt; "╭──────────────────────────────────────╮" &lt;&lt; endl;
+    cout &lt;&lt; "│  🧪 药水炼制报告                     │" &lt;&lt; endl;
+    cout &lt;&lt; "├──────────────────────────────────────┤" &lt;&lt; endl;
+    cout &lt;&lt; "│  配方名称：" &lt;&lt; name;
+    // 手动对齐中文（中文字符占两个英文字符宽度）
+    int padding = 24 - name.length() * 2;  // 粗略估算
+    // 简单处理：统一用固定宽度
+    cout &lt;&lt; endl;
+    cout &lt;&lt; "│  使用材料：草药×" &lt;&lt; herbs
+         &lt;&lt; "  水晶×" &lt;&lt; crystals
+         &lt;&lt; "  粉尘×" &lt;&lt; moonDust &lt;&lt; endl;
+    cout &lt;&lt; "│  材料费用：" &lt;&lt; cost &lt;&lt; " 金币" &lt;&lt; endl;
+    cout &lt;&lt; "│  药水效力：" &lt;&lt; potency &lt;&lt; endl;
+    cout &lt;&lt; "│  药水等级：" &lt;&lt; grade &lt;&lt; endl;
+    cout &lt;&lt; "│  炼制结果：" &lt;&lt; (success ? "✅ 成功！" : "❌ 失败...效力和材料不足") &lt;&lt; endl;
+    cout &lt;&lt; "╰──────────────────────────────────────╯" &lt;&lt; endl;
+}
+
+/**
+ *  函数：showSpellBookStats —— 打印魔法书统计信息（void 类型）
+ *  统计本次会话炼制的药水情况
+ *
+ *  @param totalPotions   炼制药水总数
+ *  @param totalCost      总花费金币
+ *  @param bestPotency    最高效力
+ */
+void showSpellBookStats(int totalPotions, int totalCost, int bestPotency) {
+    cout &lt;&lt; "\n📊 ╔══════════════════════════╗" &lt;&lt; endl;
+    cout &lt;&lt; "    ║  📖 魔法书统计报告     ║" &lt;&lt; endl;
+    cout &lt;&lt; "    ╠══════════════════════════╣" &lt;&lt; endl;
+    cout &lt;&lt; "    ║  炼制次数：" &lt;&lt; totalPotions;
+    for (int i = 0; i &lt; 12 - to_string(totalPotions).length(); i++) cout &lt;&lt; " ";
+    cout &lt;&lt; "║" &lt;&lt; endl;
+    cout &lt;&lt; "    ║  总花费：  " &lt;&lt; totalCost;
+    for (int i = 0; i &lt; 12 - to_string(totalCost).length(); i++) cout &lt;&lt; " ";
+    cout &lt;&lt; "金币║" &lt;&lt; endl;
+    cout &lt;&lt; "    ║  最高效力：" &lt;&lt; bestPotency;
+    for (int i = 0; i &lt; 12 - to_string(bestPotency).length(); i++) cout &lt;&lt; " ";
+    cout &lt;&lt; "║" &lt;&lt; endl;
+    cout &lt;&lt; "    ╚══════════════════════════╝" &lt;&lt; endl;
+}
+
+void demo3_magicRecipeBook() {
+    printSectionTitle("程序三：完整的魔法配方书 —— 多函数协作");
+
+    cout &lt;&lt; "【知识点】一个复杂的程序通常由多个函数组成，" &lt;&lt; endl;
+    cout &lt;&lt; "          每个函数各司其职，像魔法书里的不同章节。\n" &lt;&lt; endl;
+    cout &lt;&lt; "          本程序模拟了一位小魔法师打开魔法书炼制药水的过程。\n" &lt;&lt; endl;
+
+    // 显示魔法书封面
+    showMagicBookCover();
+    cout &lt;&lt; endl;
+
+    // 炼制药水的数据（模拟多次炼制）
+    // 格式：{配方编号, 草药, 水晶, 粉尘}
+    struct BrewAttempt {
+        int recipeID;
+        int herbs;
+        int crystals;
+        int moonDust;
+    };
+
+    BrewAttempt attempts[] = {
+        {1, 5, 3, 2},   // 治疗药水
+        {2, 4, 6, 1},   // 力量药水
+        {3, 7, 2, 5},   // 智慧药水
+        {1, 1, 1, 1},   // 治疗药水（材料不足，看看会不会失败）
+        {2, 8, 8, 8},   // 力量药水（豪华材料！）
+    };
+
+    int numAttempts = 5;
+    int totalCost = 0;
+    int bestPotency = 0;
+
+    cout &lt;&lt; "🔮 魔法师开始翻阅魔法书，准备炼制药水...\n" &lt;&lt; endl;
+
+    for (int i = 0; i &lt; numAttempts; i++) {
+        cout &lt;&lt; "━━━ 第 " &lt;&lt; (i + 1) &lt;&lt; " 次炼制 ━━━" &lt;&lt; endl;
+
+        // 调用核心函数：展示炼制结果
+        displayPotionResult(
+            attempts[i].recipeID,
+            attempts[i].herbs,
+            attempts[i].crystals,
+            attempts[i].moonDust
+        );
+
+        // 累计统计信息
+        int potency = brewPotion(
+            attempts[i].recipeID,
+            attempts[i].herbs,
+            attempts[i].crystals,
+            attempts[i].moonDust
+        );
+
+        totalCost += calcMaterialCost(
+            attempts[i].herbs,
+            attempts[i].crystals,
+            attempts[i].moonDust
+        );
+
+        if (potency &gt; bestPotency) {
+            bestPotency = potency;
+        }
+
+        cout &lt;&lt; endl;
+    }
+
+    // 展示统计报告
+    showSpellBookStats(numAttempts, totalCost, bestPotency);
+
+    cout &lt;&lt; "\n📝 小结：这个程序使用了 7 个自定义函数！" &lt;&lt; endl;
+    cout &lt;&lt; "        - brewPotion()      计算药水效力" &lt;&lt; endl;
+    cout &lt;&lt; "        - getRecipeName()   获取配方名称" &lt;&lt; endl;
+    cout &lt;&lt; "        - getPotionGrade()  鉴定药水等级" &lt;&lt; endl;
+    cout &lt;&lt; "        - isPotionSuccessful()  判断是否成功" &lt;&lt; endl;
+    cout &lt;&lt; "        - calcMaterialCost()  计算材料费用" &lt;&lt; endl;
+    cout &lt;&lt; "        - displayPotionResult()  综合展示结果" &lt;&lt; endl;
+    cout &lt;&lt; "        - showSpellBookStats()  打印统计报告" &lt;&lt; endl;
+    cout &lt;&lt; "\n        每个函数只做一件事，分工明确，这就是"模块化编程"的思想！" &lt;&lt; endl;
+
+    pauseAndContinue();
+}
+
+// ============================================================
+//  程序四：课堂练习参考答案
+// ============================================================
+
+/**
+ *  练习一答案：square 函数 —— 计算整数平方
+ */
+int square(int n) {
+    return n * n;
+}
+
+/**
+ *  练习二答案：修正后的 max 函数
+ *  原代码错误：参数 b 缺少类型、缺少 else 分支的 return、调用时参数不足
+ */
+int maxNumber(int a, int b) {
+    if (a &gt; b) {
+        return a;
+    } else {
+        return b;
+    }
+}
+
+/**
+ *  练习三答案：power 函数 —— 计算 base 的 exp 次方
+ */
+int power(int base, int exp) {
+    int result = 1;
+    for (int i = 0; i &lt; exp; i++) {
+        result *= base;
+    }
+    return result;
+}
+
+/**
+ *  挑战任务参考答案辅助函数 —— 判断是否为质数
+ */
+bool isPrime(int num) {
+    if (num &lt;= 1) return false;
+    for (int i = 2; i * i &lt;= num; i++) {
+        if (num % i == 0) return false;
+    }
+    return true;
+}
+
+/**
+ *  挑战任务参考答案辅助函数 —— 打印质数药水列表
+ */
+void listPrimePotions(int limit) {
+    cout &lt;&lt; "🔢 调试药水列表（1-" &lt;&lt; limit &lt;&lt; " 中的质数配方）：" &lt;&lt; endl;
+    int count = 0;
+    for (int i = 2; i &lt;= limit; i++) {
+        if (isPrime(i)) {
+            cout &lt;&lt; "  🧪 配方 #" &lt;&lt; i;
+            count++;
+            if (count % 5 == 0) cout &lt;&lt; endl;  // 每5个换行
+        }
+    }
+    if (count % 5 != 0) cout &lt;&lt; endl;
+    cout &lt;&lt; "  （共 " &lt;&lt; count &lt;&lt; " 个质数配方）" &lt;&lt; endl;
+}
+
+void demo4_exerciseAnswers() {
+    printSectionTitle("程序四：课堂练习参考答案");
+
+    // ===== 练习一答案演示 =====
+    cout &lt;&lt; "【练习一】square 函数 —— 计算平方" &lt;&lt; endl;
+    cout &lt;&lt; "  square(5) = " &lt;&lt; square(5) &lt;&lt; endl;
+    cout &lt;&lt; "  square(12) = " &lt;&lt; square(12) &lt;&lt; endl;
+    cout &lt;&lt; "  square(-3) = " &lt;&lt; square(-3) &lt;&lt; "  （负数平方也是正数）" &lt;&lt; endl;
+    cout &lt;&lt; endl;
+
+    // ===== 练习二答案演示 =====
+    cout &lt;&lt; "【练习二】修正后的 max 函数" &lt;&lt; endl;
+    cout &lt;&lt; "  maxNumber(10, 20) = " &lt;&lt; maxNumber(10, 20) &lt;&lt; endl;
+    cout &lt;&lt; "  maxNumber(99, 50) = " &lt;&lt; maxNumber(99, 50) &lt;&lt; endl;
+    cout &lt;&lt; "  maxNumber(-5, -3) = " &lt;&lt; maxNumber(-5, -3) &lt;&lt; endl;
+    cout &lt;&lt; "  （原代码有3处错误：参数b缺类型、缺else分支return、调用时参数不足）" &lt;&lt; endl;
+    cout &lt;&lt; endl;
+
+    // ===== 练习三答案演示 =====
+    cout &lt;&lt; "【练习三】power 函数 —— 计算乘方" &lt;&lt; endl;
+    cout &lt;&lt; "  power(2, 3)   = " &lt;&lt; power(2, 3) &lt;&lt; "   （2³ = 8）" &lt;&lt; endl;
+    cout &lt;&lt; "  power(5, 4)   = " &lt;&lt; power(5, 4) &lt;&lt; "  （5⁴ = 625）" &lt;&lt; endl;
+    cout &lt;&lt; "  power(10, 0)  = " &lt;&lt; power(10, 0) &lt;&lt; "   （任何数的0次方=1）" &lt;&lt; endl;
+    cout &lt;&lt; "  power(3, 5)   = " &lt;&lt; power(3, 5) &lt;&lt; "  （3⁵ = 243）" &lt;&lt; endl;
+    cout &lt;&lt; endl;
+
+    // ===== 挑战任务扩展演示 =====
+    cout &lt;&lt; "【挑战任务扩展】isPrime 和 listPrimePotions —— 质数判断" &lt;&lt; endl;
+    cout &lt;&lt; "  isPrime(7)  = " &lt;&lt; (isPrime(7) ? "true" : "false") &lt;&lt; endl;
+    cout &lt;&lt; "  isPrime(12) = " &lt;&lt; (isPrime(12) ? "true" : "false") &lt;&lt; endl;
+    cout &lt;&lt; "  isPrime(97) = " &lt;&lt; (isPrime(97) ? "true" : "false") &lt;&lt; endl;
+    cout &lt;&lt; endl;
+    listPrimePotions(50);
+
+    cout &lt;&lt; "\n─────────────────────────────────────────" &lt;&lt; endl;
+    cout &lt;&lt; "  以上是所有练习的参考答案。" &lt;&lt; endl;
+    cout &lt;&lt; "  建议先自己尝试编写，遇到困难再参考答案！" &lt;&lt; endl;
+    cout &lt;&lt; "─────────────────────────────────────────" &lt;&lt; endl;
+
+    pauseAndContinue();
+}
+
+// ============================================================
+//  主函数：程序的入口
+//  依次运行四个演示程序
+// ============================================================
+int main() {
+    // 设置为中文环境（如果终端支持）
+    // 在 macOS/Linux 终端中可能需要设置 locale
+    // setlocale(LC_ALL, "zh_CN.UTF-8");  // 如果中文显示异常可取消注释
+
+    // ===== 程序一 =====
+    demo1_voidFunctions();
+
+    // ===== 程序二 =====
+    demo2_returnValueFunctions();
+
+    // ===== 程序三 =====
+    demo3_magicRecipeBook();
+
+    // ===== 程序四 =====
+    demo4_exerciseAnswers();
+
+    // ===== 课程结束 =====
+    cout &lt;&lt; endl;
+    cout &lt;&lt; "╔══════════════════════════════════════════════════════╗" &lt;&lt; endl;
+    cout &lt;&lt; "║                                                      ║" &lt;&lt; endl;
+    cout &lt;&lt; "║   🧪  第 37 课「魔法配方——函数初识」学习完毕！ 🧪  ║" &lt;&lt; endl;
+    cout &lt;&lt; "║                                                      ║" &lt;&lt; endl;
+    cout &lt;&lt; "║   记住魔法口诀：                                      ║" &lt;&lt; endl;
+    cout &lt;&lt; "║   定义函数像写配方，返回类型要思量；                  ║" &lt;&lt; endl;
+    cout &lt;&lt; "║   函数名字见名知意，参数列表不能忘；                  ║" &lt;&lt; endl;
+    cout &lt;&lt; "║   花括号里写步骤，return 把结果交上；                 ║" &lt;&lt; endl;
+    cout &lt;&lt; "║   要使用时喊名字，传入实参就能用上！                  ║" &lt;&lt; endl;
+    cout &lt;&lt; "║                                                      ║" &lt;&lt; endl;
+    cout &lt;&lt; "║   下节课预告：第 38 课 —— 参数与返回值深入           ║" &lt;&lt; endl;
+    cout &lt;&lt; "║                                                      ║" &lt;&lt; endl;
+    cout &lt;&lt; "╚══════════════════════════════════════════════════════╝" &lt;&lt; endl;
+    cout &lt;&lt; endl;
+
+    return 0;
+}
+</pre>
+    <p class="hint">本页使用浅色主题与 UTF-8 编码，可直接打印或导出 PDF。</p>
+  </div>
+</body>
+</html>

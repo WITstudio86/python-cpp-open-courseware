@@ -1,0 +1,280 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>lesson25_dp_basics_lis.cpp</title>
+<style>
+  :root {
+    --bg: #f5f7fa;
+    --panel: #ffffff;
+    --text: #1a1a2e;
+    --muted: #5a6570;
+    --gold: #b8860b;
+    --code-bg: #ffffff;
+    --code-text: #1f2933;
+    --border: #d8dee6;
+    --top-bg: #ffffff;
+    --top-border: #e5e9ef;
+  }
+  * { box-sizing: border-box; }
+  html, body {
+    margin: 0; padding: 0;
+    background: var(--bg);
+    color: var(--text);
+    font-family: -apple-system, BlinkMacSystemFont, "PingFang SC", "Microsoft YaHei", sans-serif;
+    min-height: 100%;
+  }
+  .top {
+    position: sticky; top: 0; z-index: 10;
+    display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between;
+    gap: 10px;
+    padding: 12px 18px;
+    background: var(--top-bg);
+    border-bottom: 1px solid var(--top-border);
+    box-shadow: 0 1px 8px rgba(15, 23, 42, 0.06);
+  }
+  .brand { color: var(--gold); font-weight: 700; font-size: 14px; letter-spacing: 0.04em; }
+  .title { font-size: 15px; font-weight: 600; color: var(--text); max-width: 52vw; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .actions { display: flex; gap: 8px; flex-wrap: wrap; }
+  .btn {
+    appearance: none; border: 1px solid var(--border);
+    background: #fff; color: var(--text);
+    border-radius: 999px; padding: 8px 14px; font-size: 13px; font-weight: 600;
+    text-decoration: none; cursor: pointer;
+  }
+  .btn:hover { background: #f0f3f7; }
+  .btn.gold {
+    background: linear-gradient(135deg, #f0d78c, #d4a853);
+    color: #0a2540; border-color: #e0c06a;
+  }
+  .meta {
+    padding: 10px 18px; color: var(--muted); font-size: 12px;
+    border-bottom: 1px solid var(--border);
+    background: var(--panel);
+  }
+  .wrap { padding: 16px 18px 40px; }
+  pre {
+    margin: 0;
+    background: var(--code-bg);
+    color: var(--code-text);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 18px 20px;
+    overflow: auto;
+    font-family: "SF Mono", "JetBrains Mono", "Fira Code", Consolas, "Courier New", monospace;
+    font-size: 13.5px;
+    line-height: 1.55;
+    white-space: pre;
+    tab-size: 4;
+    box-shadow: 0 2px 12px rgba(15, 23, 42, 0.05);
+  }
+  .hint { margin-top: 12px; color: var(--muted); font-size: 12px; }
+  @media print {
+    html, body { background: #fff !important; color: #000 !important; }
+    .top { position: static; box-shadow: none; border-bottom: 1px solid #ccc; background: #fff !important; }
+    .actions { display: none !important; }
+    .meta { background: #fff !important; border-color: #ddd; color: #333; }
+    .wrap { padding: 0; }
+    pre {
+      background: #fff !important; color: #000 !important;
+      border: 1px solid #bbb; box-shadow: none; border-radius: 0;
+      white-space: pre-wrap; word-break: break-word; font-size: 11pt; line-height: 1.4;
+    }
+    .hint { display: none; }
+    a { color: #000; text-decoration: none; }
+  }
+</style>
+</head>
+<body>
+  <div class="top">
+    <div class="brand">CSP-S 备考 · 配套代码</div>
+    <div class="title">lesson25_dp_basics_lis.cpp</div>
+    <div class="actions">
+      <a class="btn" href="../lesson25_dp_basics_lis.cpp" download="lesson25_dp_basics_lis.cpp">⬇️ 下载源文件</a>
+      <a class="btn gold" href="javascript:history.back()">← 返回课件</a>
+    </div>
+  </div>
+  <div class="meta">编码：UTF-8 · 文件：lesson25_dp_basics_lis.cpp · 共 176 行 · 浅色主题便于打印</div>
+  <div class="wrap">
+    <pre id="code">/*
+ * 第25课：DP基础与LIS（最长上升子序列）
+ * 考纲知识点：动态规划基本概念、最优子结构、无后效性、LIS的O(n²)与O(n log n)解法
+ */
+
+#include &lt;bits/stdc++.h&gt;
+using namespace std;
+
+// ==================== 1. LIS - O(n²) DP ====================
+// dp[i] 表示以 a[i] 结尾的最长上升子序列长度
+// 状态转移：dp[i] = max(dp[j] + 1)  for all j &lt; i, a[j] &lt; a[i]
+int lis_n2(const vector&lt;int&gt;&amp; a) {
+    int n = a.size();
+    vector&lt;int&gt; dp(n, 1);
+    int ans = 1;
+    for (int i = 1; i &lt; n; ++i) {
+        for (int j = 0; j &lt; i; ++j) {
+            if (a[j] &lt; a[i]) {
+                dp[i] = max(dp[i], dp[j] + 1);
+            }
+        }
+        ans = max(ans, dp[i]);
+    }
+    return ans;
+}
+
+// ==================== 2. LIS - O(n log n) 贪心+二分 ====================
+// tails[i] 表示长度为 i+1 的上升子序列的最小末尾元素
+// 贪心性质：末尾元素越小，越容易接上新的元素
+int lis_nlogn(const vector&lt;int&gt;&amp; a) {
+    vector&lt;int&gt; tails;
+    for (int x : a) {
+        auto it = lower_bound(tails.begin(), tails.end(), x);
+        if (it == tails.end()) {
+            tails.push_back(x);
+        } else {
+            *it = x;
+        }
+    }
+    return tails.size();
+}
+
+// ==================== 3. LIS 路径还原 ====================
+vector&lt;int&gt; lis_path(const vector&lt;int&gt;&amp; a) {
+    int n = a.size();
+    vector&lt;int&gt; dp(n, 1), pre(n, -1);
+    int best_end = 0;
+    for (int i = 1; i &lt; n; ++i) {
+        for (int j = 0; j &lt; i; ++j) {
+            if (a[j] &lt; a[i] &amp;&amp; dp[j] + 1 &gt; dp[i]) {
+                dp[i] = dp[j] + 1;
+                pre[i] = j;
+            }
+        }
+        if (dp[i] &gt; dp[best_end]) best_end = i;
+    }
+    vector&lt;int&gt; path;
+    for (int i = best_end; i != -1; i = pre[i]) {
+        path.push_back(a[i]);
+    }
+    reverse(path.begin(), path.end());
+    return path;
+}
+
+// ==================== 4. 最长不下降子序列 (LNDS) ====================
+int lnds_nlogn(const vector&lt;int&gt;&amp; a) {
+    vector&lt;int&gt; tails;
+    for (int x : a) {
+        // 使用 upper_bound 允许相等元素
+        auto it = upper_bound(tails.begin(), tails.end(), x);
+        if (it == tails.end()) {
+            tails.push_back(x);
+        } else {
+            *it = x;
+        }
+    }
+    return tails.size();
+}
+
+// ==================== 5. 真题1：导弹拦截（NOIP1999 提高组） ====================
+// 问题：求最长不上升子序列长度（最多拦截数）和最少拦截系统数
+// 分析：最少拦截系统数 = 最长上升子序列长度（Dilworth定理）
+void missile_interception() {
+    vector&lt;int&gt; a;
+    int x;
+    while (cin &gt;&gt; x) a.push_back(x);
+    if (a.empty()) return;
+
+    int n = a.size();
+
+    // 第一问：最长不上升子序列长度
+    // 将问题转化为求 LIS 在逆序数组上
+    vector&lt;int&gt; tails1;
+    for (int i = 0; i &lt; n; ++i) {
+        int x = a[i];
+        // 求不上升：找第一个 &lt; x 的位置（严格递减条件）
+        auto it = upper_bound(tails1.begin(), tails1.end(), x, greater&lt;int&gt;());
+        if (it == tails1.end()) {
+            tails1.push_back(x);
+        } else {
+            *it = x;
+        }
+    }
+    cout &lt;&lt; tails1.size() &lt;&lt; endl;
+
+    // 第二问：最少系统数 = 最长上升子序列长度
+    vector&lt;int&gt; tails2;
+    for (int x : a) {
+        auto it = lower_bound(tails2.begin(), tails2.end(), x);
+        if (it == tails2.end()) {
+            tails2.push_back(x);
+        } else {
+            *it = x;
+        }
+    }
+    cout &lt;&lt; tails2.size() &lt;&lt; endl;
+}
+
+// ==================== 6. 真题2：合唱队形（NOIP2004 提高组） ====================
+// 问题：从N人中剔除最少的人，使得剩下的人呈先上升后下降的队形
+// 分析：对每个位置i，求以i结尾的LIS长度left[i]，以i开头的LDS长度right[i]
+//       答案 = N - max(left[i] + right[i] - 1)
+int chorus_formation(const vector&lt;int&gt;&amp; h) {
+    int n = h.size();
+    vector&lt;int&gt; left(n, 1), right(n, 1);
+
+    // 从左到右的 LIS
+    for (int i = 0; i &lt; n; ++i) {
+        for (int j = 0; j &lt; i; ++j) {
+            if (h[j] &lt; h[i]) {
+                left[i] = max(left[i], left[j] + 1);
+            }
+        }
+    }
+
+    // 从右到左的 LIS（等价于从左看的LDS）
+    for (int i = n - 1; i &gt;= 0; --i) {
+        for (int j = n - 1; j &gt; i; --j) {
+            if (h[j] &lt; h[i]) {
+                right[i] = max(right[i], right[j] + 1);
+            }
+        }
+    }
+
+    int max_len = 0;
+    for (int i = 0; i &lt; n; ++i) {
+        max_len = max(max_len, left[i] + right[i] - 1);
+    }
+    return n - max_len;  // 最少需要剔除的人数
+}
+
+int main() {
+    ios::sync_with_stdio(false);
+    cin.tie(nullptr);
+
+    // 测试 LIS
+    vector&lt;int&gt; a = {10, 9, 2, 5, 3, 7, 101, 18};
+    cout &lt;&lt; "LIS O(n^2): " &lt;&lt; lis_n2(a) &lt;&lt; endl;          // 4
+    cout &lt;&lt; "LIS O(n log n): " &lt;&lt; lis_nlogn(a) &lt;&lt; endl;   // 4
+
+    // 测试路径还原
+    auto path = lis_path(a);
+    cout &lt;&lt; "LIS path: ";
+    for (int x : path) cout &lt;&lt; x &lt;&lt; " ";
+    cout &lt;&lt; endl;
+
+    // 测试 LNDS
+    vector&lt;int&gt; b = {1, 3, 3, 3, 5};
+    cout &lt;&lt; "LNDS: " &lt;&lt; lnds_nlogn(b) &lt;&lt; endl;  // 5
+
+    // 测试合唱队形
+    vector&lt;int&gt; h = {186, 186, 150, 200, 160, 130, 197, 220};
+    cout &lt;&lt; "Chorus formation remove: " &lt;&lt; chorus_formation(h) &lt;&lt; endl;
+
+    return 0;
+}
+</pre>
+    <p class="hint">本页使用浅色主题与 UTF-8 编码，可直接打印或导出 PDF。</p>
+  </div>
+</body>
+</html>

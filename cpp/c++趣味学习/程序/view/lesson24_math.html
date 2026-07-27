@@ -1,0 +1,497 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>lesson24_math.cpp</title>
+<style>
+  :root {
+    --bg: #f5f7fa;
+    --panel: #ffffff;
+    --text: #1a1a2e;
+    --muted: #5a6570;
+    --gold: #b8860b;
+    --code-bg: #ffffff;
+    --code-text: #1f2933;
+    --border: #d8dee6;
+    --top-bg: #ffffff;
+    --top-border: #e5e9ef;
+  }
+  * { box-sizing: border-box; }
+  html, body {
+    margin: 0; padding: 0;
+    background: var(--bg);
+    color: var(--text);
+    font-family: -apple-system, BlinkMacSystemFont, "PingFang SC", "Microsoft YaHei", sans-serif;
+    min-height: 100%;
+  }
+  .top {
+    position: sticky; top: 0; z-index: 10;
+    display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between;
+    gap: 10px;
+    padding: 12px 18px;
+    background: var(--top-bg);
+    border-bottom: 1px solid var(--top-border);
+    box-shadow: 0 1px 8px rgba(15, 23, 42, 0.06);
+  }
+  .brand { color: var(--gold); font-weight: 700; font-size: 14px; letter-spacing: 0.04em; }
+  .title { font-size: 15px; font-weight: 600; color: var(--text); max-width: 52vw; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .actions { display: flex; gap: 8px; flex-wrap: wrap; }
+  .btn {
+    appearance: none; border: 1px solid var(--border);
+    background: #fff; color: var(--text);
+    border-radius: 999px; padding: 8px 14px; font-size: 13px; font-weight: 600;
+    text-decoration: none; cursor: pointer;
+  }
+  .btn:hover { background: #f0f3f7; }
+  .btn.gold {
+    background: linear-gradient(135deg, #f0d78c, #d4a853);
+    color: #0a2540; border-color: #e0c06a;
+  }
+  .meta {
+    padding: 10px 18px; color: var(--muted); font-size: 12px;
+    border-bottom: 1px solid var(--border);
+    background: var(--panel);
+  }
+  .wrap { padding: 16px 18px 40px; }
+  pre {
+    margin: 0;
+    background: var(--code-bg);
+    color: var(--code-text);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 18px 20px;
+    overflow: auto;
+    font-family: "SF Mono", "JetBrains Mono", "Fira Code", Consolas, "Courier New", monospace;
+    font-size: 13.5px;
+    line-height: 1.55;
+    white-space: pre;
+    tab-size: 4;
+    box-shadow: 0 2px 12px rgba(15, 23, 42, 0.05);
+  }
+  .hint { margin-top: 12px; color: var(--muted); font-size: 12px; }
+  @media print {
+    html, body { background: #fff !important; color: #000 !important; }
+    .top { position: static; box-shadow: none; border-bottom: 1px solid #ccc; background: #fff !important; }
+    .actions { display: none !important; }
+    .meta { background: #fff !important; border-color: #ddd; color: #333; }
+    .wrap { padding: 0; }
+    pre {
+      background: #fff !important; color: #000 !important;
+      border: 1px solid #bbb; box-shadow: none; border-radius: 0;
+      white-space: pre-wrap; word-break: break-word; font-size: 11pt; line-height: 1.4;
+    }
+    .hint { display: none; }
+    a { color: #000; text-decoration: none; }
+  }
+</style>
+</head>
+<body>
+  <div class="top">
+    <div class="brand">C++ 趣味学习 · 配套代码</div>
+    <div class="title">lesson24_math.cpp</div>
+    <div class="actions">
+      <a class="btn" href="../lesson24_math.cpp" download="lesson24_math.cpp">⬇️ 下载源文件</a>
+      <a class="btn gold" href="javascript:history.back()">← 返回课件</a>
+    </div>
+  </div>
+  <div class="meta">编码：UTF-8 · 文件：lesson24_math.cpp · 共 393 行 · 浅色主题便于打印</div>
+  <div class="wrap">
+    <pre id="code">/*
+ * C++趣味学习 - 第24课：数学小天才——循环应用
+ * 知识点：判断素数、找完数、水仙花数
+ * 项目：寻找数字中的宝藏
+ */
+
+#include &lt;iostream&gt;
+#include &lt;cmath&gt;
+#include &lt;iomanip&gt;
+using namespace std;
+
+// ============ 示例1：素数判断器 ============
+void example1_prime_checker() {
+    cout &lt;&lt; "════════════════════════════════" &lt;&lt; endl;
+    cout &lt;&lt; "  示例1：🔍 素数判断器" &lt;&lt; endl;
+    cout &lt;&lt; "════════════════════════════════" &lt;&lt; endl;
+
+    int n;
+    cout &lt;&lt; "请输入一个正整数：";
+    cin &gt;&gt; n;
+
+    if (n &lt;= 1) {
+        cout &lt;&lt; n &lt;&lt; " 不是素数（素数必须大于1）" &lt;&lt; endl;
+        cout &lt;&lt; endl;
+        return;
+    }
+
+    bool isPrime = true;
+    int factor = 0;
+
+    // 只需检查到sqrt(n)，用break优化
+    for (int i = 2; i &lt;= sqrt(n); i++) {
+        if (n % i == 0) {
+            isPrime = false;
+            factor = i;
+            break;  // 找到一个因子就够了
+        }
+    }
+
+    if (isPrime) {
+        cout &lt;&lt; "✅ " &lt;&lt; n &lt;&lt; " 是素数！" &lt;&lt; endl;
+        cout &lt;&lt; "   它只能被1和自身整除。" &lt;&lt; endl;
+    } else {
+        cout &lt;&lt; "❌ " &lt;&lt; n &lt;&lt; " 不是素数。" &lt;&lt; endl;
+        cout &lt;&lt; "   它有一个因子：" &lt;&lt; factor &lt;&lt; "（" &lt;&lt; factor &lt;&lt; " × " &lt;&lt; (n/factor) &lt;&lt; " = " &lt;&lt; n &lt;&lt; "）" &lt;&lt; endl;
+    }
+    cout &lt;&lt; endl;
+}
+
+// ============ 示例2：寻找完数 ============
+void example2_perfect_numbers() {
+    cout &lt;&lt; "════════════════════════════════" &lt;&lt; endl;
+    cout &lt;&lt; "  示例2：🏆 完数猎人" &lt;&lt; endl;
+    cout &lt;&lt; "════════════════════════════════" &lt;&lt; endl;
+
+    int limit;
+    cout &lt;&lt; "请输入搜索范围上限（建议不超过10000）：";
+    cin &gt;&gt; limit;
+
+    cout &lt;&lt; endl;
+    cout &lt;&lt; "正在搜索 1 ~ " &lt;&lt; limit &lt;&lt; " 范围内的完数..." &lt;&lt; endl;
+    cout &lt;&lt; "完数定义：一个数等于它的所有真因子之和" &lt;&lt; endl;
+    cout &lt;&lt; "-------------------------------------------" &lt;&lt; endl;
+
+    int count = 0;
+
+    for (int n = 2; n &lt;= limit; n++) {
+        int sum = 1;  // 1总是真因子
+
+        // 找所有真因子并求和（优化：只需检查到sqrt(n)）
+        for (int i = 2; i &lt;= sqrt(n); i++) {
+            if (n % i == 0) {
+                sum += i;
+                if (i != n / i) {  // 避免重复计算（如25的因子5）
+                    sum += n / i;
+                }
+            }
+        }
+
+        // 如果是完数，显示详细信息
+        if (sum == n &amp;&amp; n != 1) {
+            count++;
+            cout &lt;&lt; "💎 第" &lt;&lt; count &lt;&lt; "个完数：" &lt;&lt; n &lt;&lt; " = 1";
+
+            // 显示所有真因子
+            for (int i = 2; i &lt; n; i++) {
+                if (n % i == 0) {
+                    cout &lt;&lt; " + " &lt;&lt; i;
+                }
+            }
+            cout &lt;&lt; endl;
+        }
+    }
+
+    cout &lt;&lt; "-------------------------------------------" &lt;&lt; endl;
+    if (count == 0) {
+        cout &lt;&lt; "在 " &lt;&lt; limit &lt;&lt; " 以内没有找到完数。试试更大的范围？" &lt;&lt; endl;
+    } else {
+        cout &lt;&lt; "🌟 在 " &lt;&lt; limit &lt;&lt; " 以内共找到 " &lt;&lt; count &lt;&lt; " 个完数。" &lt;&lt; endl;
+    }
+    cout &lt;&lt; endl;
+}
+
+// ============ 示例3：寻找水仙花数 ============
+void example3_narcissistic_numbers() {
+    cout &lt;&lt; "════════════════════════════════" &lt;&lt; endl;
+    cout &lt;&lt; "  示例3：🌸 水仙花数寻踪" &lt;&lt; endl;
+    cout &lt;&lt; "════════════════════════════════" &lt;&lt; endl;
+
+    cout &lt;&lt; "水仙花数（三位数）：各位数字的立方和等于该数本身" &lt;&lt; endl;
+    cout &lt;&lt; "例如：153 = 1³ + 5³ + 3³ = 1 + 125 + 27 = 153" &lt;&lt; endl;
+    cout &lt;&lt; "-------------------------------------------" &lt;&lt; endl;
+
+    cout &lt;&lt; "搜索所有三位水仙花数（100-999）：" &lt;&lt; endl;
+
+    int count = 0;
+
+    for (int num = 100; num &lt;= 999; num++) {
+        int ge = num % 10;           // 个位数
+        int shi = num / 10 % 10;     // 十位数
+        int bai = num / 100;         // 百位数
+
+        int sum = ge * ge * ge + shi * shi * shi + bai * bai * bai;
+
+        if (sum == num) {
+            count++;
+            cout &lt;&lt; "🌸 第" &lt;&lt; count &lt;&lt; "朵水仙花：" &lt;&lt; num &lt;&lt; " = ";
+            cout &lt;&lt; bai &lt;&lt; "³ + " &lt;&lt; shi &lt;&lt; "³ + " &lt;&lt; ge &lt;&lt; "³ = ";
+            cout &lt;&lt; (bai*bai*bai) &lt;&lt; " + " &lt;&lt; (shi*shi*shi) &lt;&lt; " + " &lt;&lt; (ge*ge*ge);
+            cout &lt;&lt; " = " &lt;&lt; sum &lt;&lt; endl;
+        }
+    }
+
+    cout &lt;&lt; "-------------------------------------------" &lt;&lt; endl;
+    cout &lt;&lt; "🌟 三位水仙花数共有 " &lt;&lt; count &lt;&lt; " 个。" &lt;&lt; endl;
+    cout &lt;&lt; endl;
+}
+
+// ============ 练习答案 ============
+
+// 练习1：找出100-200之间的素数
+void practice1_primes_100_200() {
+    cout &lt;&lt; "════════════════════════════════" &lt;&lt; endl;
+    cout &lt;&lt; "  练习1答案：100-200之间的素数" &lt;&lt; endl;
+    cout &lt;&lt; "════════════════════════════════" &lt;&lt; endl;
+
+    int count = 0;
+    cout &lt;&lt; "100到200之间的素数：" &lt;&lt; endl;
+    cout &lt;&lt; "-------------------------------------------" &lt;&lt; endl;
+
+    for (int n = 100; n &lt;= 200; n++) {
+        bool isPrime = true;
+        for (int i = 2; i &lt;= sqrt(n); i++) {
+            if (n % i == 0) {
+                isPrime = false;
+                break;
+            }
+        }
+        if (isPrime) {
+            cout &lt;&lt; n &lt;&lt; " ";
+            count++;
+            if (count % 5 == 0) cout &lt;&lt; endl;
+        }
+    }
+
+    cout &lt;&lt; endl;
+    cout &lt;&lt; "-------------------------------------------" &lt;&lt; endl;
+    cout &lt;&lt; "🌟 100到200之间共有 " &lt;&lt; count &lt;&lt; " 个素数。" &lt;&lt; endl;
+    cout &lt;&lt; endl;
+}
+
+// 练习2：回文数判断
+void practice2_palindrome() {
+    cout &lt;&lt; "════════════════════════════════" &lt;&lt; endl;
+    cout &lt;&lt; "  练习2答案：回文数判断" &lt;&lt; endl;
+    cout &lt;&lt; "════════════════════════════════" &lt;&lt; endl;
+
+    int n, original, reversed = 0;
+
+    cout &lt;&lt; "请输入一个整数，判断是否为回文数：";
+    cin &gt;&gt; n;
+
+    original = n;
+
+    // 反转数字
+    while (n &gt; 0) {
+        reversed = reversed * 10 + n % 10;
+        n /= 10;
+    }
+
+    cout &lt;&lt; "原数：" &lt;&lt; original &lt;&lt; "，反转后：" &lt;&lt; reversed &lt;&lt; endl;
+
+    if (original == reversed) {
+        cout &lt;&lt; "✅ " &lt;&lt; original &lt;&lt; " 是回文数！（正读反读都一样）" &lt;&lt; endl;
+    } else {
+        cout &lt;&lt; "❌ " &lt;&lt; original &lt;&lt; " 不是回文数。" &lt;&lt; endl;
+    }
+    cout &lt;&lt; endl;
+}
+
+// 练习3：找所有三位水仙花数
+void practice3_all_narcissistic() {
+    cout &lt;&lt; "════════════════════════════════" &lt;&lt; endl;
+    cout &lt;&lt; "  练习3答案：所有三位水仙花数" &lt;&lt; endl;
+    cout &lt;&lt; "════════════════════════════════" &lt;&lt; endl;
+
+    cout &lt;&lt; "三位水仙花数列表（100-999）：" &lt;&lt; endl;
+    cout &lt;&lt; "-------------------------------------------" &lt;&lt; endl;
+
+    int count = 0;
+    for (int num = 100; num &lt;= 999; num++) {
+        int a = num / 100;           // 百位
+        int b = num / 10 % 10;       // 十位
+        int c = num % 10;            // 个位
+
+        if (a*a*a + b*b*b + c*c*c == num) {
+            count++;
+            cout &lt;&lt; num &lt;&lt; " = " &lt;&lt; a &lt;&lt; "³+" &lt;&lt; b &lt;&lt; "³+" &lt;&lt; c &lt;&lt; "³";
+            cout &lt;&lt; " (" &lt;&lt; a*a*a &lt;&lt; "+" &lt;&lt; b*b*b &lt;&lt; "+" &lt;&lt; c*c*c &lt;&lt; ")" &lt;&lt; endl;
+        }
+    }
+
+    cout &lt;&lt; "-------------------------------------------" &lt;&lt; endl;
+    cout &lt;&lt; "🌟 共找到 " &lt;&lt; count &lt;&lt; " 个三位水仙花数。" &lt;&lt; endl;
+    cout &lt;&lt; "   （它们是：153、370、371、407）" &lt;&lt; endl;
+    cout &lt;&lt; endl;
+}
+
+// ============ 挑战任务：数字宝藏综合搜索 ============
+void challenge_treasure_hunt() {
+    cout &lt;&lt; "════════════════════════════════" &lt;&lt; endl;
+    cout &lt;&lt; "  挑战任务：🏆 数字宝藏综合搜索" &lt;&lt; endl;
+    cout &lt;&lt; "════════════════════════════════" &lt;&lt; endl;
+
+    int choice;
+    do {
+        cout &lt;&lt; endl;
+        cout &lt;&lt; "╔═════════ 数字宝藏猎人 ═════════╗" &lt;&lt; endl;
+        cout &lt;&lt; "║  1. 🏆 搜索素数（统计个数）   ║" &lt;&lt; endl;
+        cout &lt;&lt; "║  2. 💎 搜索完数               ║" &lt;&lt; endl;
+        cout &lt;&lt; "║  3. 🌸 搜索水仙花数（三位）   ║" &lt;&lt; endl;
+        cout &lt;&lt; "║  4. 🌸 搜索四位水仙花数       ║" &lt;&lt; endl;
+        cout &lt;&lt; "║  5. 🔄 搜索回文数（统计个数） ║" &lt;&lt; endl;
+        cout &lt;&lt; "║  6. 退出宝藏猎人               ║" &lt;&lt; endl;
+        cout &lt;&lt; "╚════════════════════════════════╝" &lt;&lt; endl;
+        cout &lt;&lt; "请选择宝藏类型（1-6）：";
+        cin &gt;&gt; choice;
+
+        cout &lt;&lt; "─────────────────────────────────" &lt;&lt; endl;
+
+        if (choice == 1) {
+            // 搜索素数
+            int start, end;
+            cout &lt;&lt; "请输入搜索范围（起始 结束）：";
+            cin &gt;&gt; start &gt;&gt; end;
+
+            int count = 0;
+            for (int n = start; n &lt;= end; n++) {
+                if (n &lt;= 1) continue;
+                bool isPrime = true;
+                for (int i = 2; i &lt;= sqrt(n); i++) {
+                    if (n % i == 0) { isPrime = false; break; }
+                }
+                if (isPrime) count++;
+            }
+            cout &lt;&lt; "🌟 " &lt;&lt; start &lt;&lt; "到" &lt;&lt; end &lt;&lt; "之间共有 " &lt;&lt; count &lt;&lt; " 个素数。" &lt;&lt; endl;
+
+        } else if (choice == 2) {
+            // 搜索完数
+            int limit;
+            cout &lt;&lt; "请输入搜索上限：";
+            cin &gt;&gt; limit;
+
+            cout &lt;&lt; "搜索完数中..." &lt;&lt; endl;
+            for (int n = 2; n &lt;= limit; n++) {
+                int sum = 1;
+                for (int i = 2; i &lt;= sqrt(n); i++) {
+                    if (n % i == 0) {
+                        sum += i;
+                        if (i != n / i) sum += n / i;
+                    }
+                }
+                if (sum == n) {
+                    cout &lt;&lt; "💎 完数：" &lt;&lt; n &lt;&lt; " = 1";
+                    for (int i = 2; i &lt; n; i++) {
+                        if (n % i == 0) cout &lt;&lt; " + " &lt;&lt; i;
+                    }
+                    cout &lt;&lt; endl;
+                }
+            }
+
+        } else if (choice == 3) {
+            // 三位水仙花数
+            cout &lt;&lt; "三位水仙花数：" &lt;&lt; endl;
+            for (int num = 100; num &lt;= 999; num++) {
+                int a = num / 100;
+                int b = num / 10 % 10;
+                int c = num % 10;
+                if (a*a*a + b*b*b + c*c*c == num) {
+                    cout &lt;&lt; "🌸 " &lt;&lt; num &lt;&lt; " = " &lt;&lt; a &lt;&lt; "³+" &lt;&lt; b &lt;&lt; "³+" &lt;&lt; c &lt;&lt; "³" &lt;&lt; endl;
+                }
+            }
+
+        } else if (choice == 4) {
+            // 四位水仙花数（四次方）
+            cout &lt;&lt; "四位水仙花数（四次方）：" &lt;&lt; endl;
+            for (int num = 1000; num &lt;= 9999; num++) {
+                int a = num / 1000;          // 千位
+                int b = num / 100 % 10;      // 百位
+                int c = num / 10 % 10;       // 十位
+                int d = num % 10;            // 个位
+                if (a*a*a*a + b*b*b*b + c*c*c*c + d*d*d*d == num) {
+                    cout &lt;&lt; "🌸 " &lt;&lt; num &lt;&lt; " = " &lt;&lt; a &lt;&lt; "⁴+" &lt;&lt; b &lt;&lt; "⁴+" &lt;&lt; c &lt;&lt; "⁴+" &lt;&lt; d &lt;&lt; "⁴" &lt;&lt; endl;
+                }
+            }
+
+        } else if (choice == 5) {
+            // 回文数统计
+            int start, end;
+            cout &lt;&lt; "请输入搜索范围（起始 结束）：";
+            cin &gt;&gt; start &gt;&gt; end;
+
+            int count = 0;
+            for (int num = start; num &lt;= end; num++) {
+                int n = num, reversed = 0;
+                while (n &gt; 0) {
+                    reversed = reversed * 10 + n % 10;
+                    n /= 10;
+                }
+                if (num == reversed) {
+                    count++;
+                    if (count &lt;= 10) {  // 只显示前10个
+                        cout &lt;&lt; num &lt;&lt; " ";
+                    }
+                }
+            }
+            if (count &gt; 10) cout &lt;&lt; "...";
+            cout &lt;&lt; endl;
+            cout &lt;&lt; "🌟 " &lt;&lt; start &lt;&lt; "到" &lt;&lt; end &lt;&lt; "之间共有 " &lt;&lt; count &lt;&lt; " 个回文数。" &lt;&lt; endl;
+
+        } else if (choice == 6) {
+            cout &lt;&lt; "👋 宝藏猎人收工！再见！" &lt;&lt; endl;
+        } else {
+            cout &lt;&lt; "❌ 无效选项！" &lt;&lt; endl;
+        }
+        cout &lt;&lt; "─────────────────────────────────" &lt;&lt; endl;
+
+    } while (choice != 6);
+
+    cout &lt;&lt; endl;
+}
+
+// ============ 主函数 ============
+int main() {
+    cout &lt;&lt; "╔══════════════════════════════════════════╗" &lt;&lt; endl;
+    cout &lt;&lt; "║  第24课：数学小天才——循环应用         ║" &lt;&lt; endl;
+    cout &lt;&lt; "║  知识点：素数、完数、水仙花数           ║" &lt;&lt; endl;
+    cout &lt;&lt; "╚══════════════════════════════════════════╝" &lt;&lt; endl;
+    cout &lt;&lt; endl;
+
+    int choice;
+    while (true) {
+        cout &lt;&lt; "请选择要运行的示例：" &lt;&lt; endl;
+        cout &lt;&lt; "1. 素数判断器" &lt;&lt; endl;
+        cout &lt;&lt; "2. 完数猎人" &lt;&lt; endl;
+        cout &lt;&lt; "3. 水仙花数寻踪" &lt;&lt; endl;
+        cout &lt;&lt; "4. 练习1：100-200之间的素数" &lt;&lt; endl;
+        cout &lt;&lt; "5. 练习2：回文数判断" &lt;&lt; endl;
+        cout &lt;&lt; "6. 练习3：所有三位水仙花数" &lt;&lt; endl;
+        cout &lt;&lt; "7. 🏆 挑战：数字宝藏综合搜索" &lt;&lt; endl;
+        cout &lt;&lt; "0. 退出程序" &lt;&lt; endl;
+        cout &lt;&lt; "请输入选择（0-7）：";
+        cin &gt;&gt; choice;
+        cout &lt;&lt; endl;
+
+        if (choice == 0) break;
+
+        switch (choice) {
+            case 1: example1_prime_checker(); break;
+            case 2: example2_perfect_numbers(); break;
+            case 3: example3_narcissistic_numbers(); break;
+            case 4: practice1_primes_100_200(); break;
+            case 5: practice2_palindrome(); break;
+            case 6: practice3_all_narcissistic(); break;
+            case 7: challenge_treasure_hunt(); break;
+            default:
+                cout &lt;&lt; "无效选择，请重新输入！" &lt;&lt; endl;
+        }
+    }
+
+    cout &lt;&lt; "感谢学习！🎓 循环单元全部学完，你是编程小天才！👋" &lt;&lt; endl;
+    return 0;
+}
+</pre>
+    <p class="hint">本页使用浅色主题与 UTF-8 编码，可直接打印或导出 PDF。</p>
+  </div>
+</body>
+</html>

@@ -1,0 +1,449 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>lesson42_kmp.cpp</title>
+<style>
+  :root {
+    --bg: #f5f7fa;
+    --panel: #ffffff;
+    --text: #1a1a2e;
+    --muted: #5a6570;
+    --gold: #b8860b;
+    --code-bg: #ffffff;
+    --code-text: #1f2933;
+    --border: #d8dee6;
+    --top-bg: #ffffff;
+    --top-border: #e5e9ef;
+  }
+  * { box-sizing: border-box; }
+  html, body {
+    margin: 0; padding: 0;
+    background: var(--bg);
+    color: var(--text);
+    font-family: -apple-system, BlinkMacSystemFont, "PingFang SC", "Microsoft YaHei", sans-serif;
+    min-height: 100%;
+  }
+  .top {
+    position: sticky; top: 0; z-index: 10;
+    display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between;
+    gap: 10px;
+    padding: 12px 18px;
+    background: var(--top-bg);
+    border-bottom: 1px solid var(--top-border);
+    box-shadow: 0 1px 8px rgba(15, 23, 42, 0.06);
+  }
+  .brand { color: var(--gold); font-weight: 700; font-size: 14px; letter-spacing: 0.04em; }
+  .title { font-size: 15px; font-weight: 600; color: var(--text); max-width: 52vw; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .actions { display: flex; gap: 8px; flex-wrap: wrap; }
+  .btn {
+    appearance: none; border: 1px solid var(--border);
+    background: #fff; color: var(--text);
+    border-radius: 999px; padding: 8px 14px; font-size: 13px; font-weight: 600;
+    text-decoration: none; cursor: pointer;
+  }
+  .btn:hover { background: #f0f3f7; }
+  .btn.gold {
+    background: linear-gradient(135deg, #f0d78c, #d4a853);
+    color: #0a2540; border-color: #e0c06a;
+  }
+  .meta {
+    padding: 10px 18px; color: var(--muted); font-size: 12px;
+    border-bottom: 1px solid var(--border);
+    background: var(--panel);
+  }
+  .wrap { padding: 16px 18px 40px; }
+  pre {
+    margin: 0;
+    background: var(--code-bg);
+    color: var(--code-text);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 18px 20px;
+    overflow: auto;
+    font-family: "SF Mono", "JetBrains Mono", "Fira Code", Consolas, "Courier New", monospace;
+    font-size: 13.5px;
+    line-height: 1.55;
+    white-space: pre;
+    tab-size: 4;
+    box-shadow: 0 2px 12px rgba(15, 23, 42, 0.05);
+  }
+  .hint { margin-top: 12px; color: var(--muted); font-size: 12px; }
+  @media print {
+    html, body { background: #fff !important; color: #000 !important; }
+    .top { position: static; box-shadow: none; border-bottom: 1px solid #ccc; background: #fff !important; }
+    .actions { display: none !important; }
+    .meta { background: #fff !important; border-color: #ddd; color: #333; }
+    .wrap { padding: 0; }
+    pre {
+      background: #fff !important; color: #000 !important;
+      border: 1px solid #bbb; box-shadow: none; border-radius: 0;
+      white-space: pre-wrap; word-break: break-word; font-size: 11pt; line-height: 1.4;
+    }
+    .hint { display: none; }
+    a { color: #000; text-decoration: none; }
+  }
+</style>
+</head>
+<body>
+  <div class="top">
+    <div class="brand">CSP-S 备考 · 配套代码</div>
+    <div class="title">lesson42_kmp.cpp</div>
+    <div class="actions">
+      <a class="btn" href="../lesson42_kmp.cpp" download="lesson42_kmp.cpp">⬇️ 下载源文件</a>
+      <a class="btn gold" href="javascript:history.back()">← 返回课件</a>
+    </div>
+  </div>
+  <div class="meta">编码：UTF-8 · 文件：lesson42_kmp.cpp · 共 345 行 · 浅色主题便于打印</div>
+  <div class="wrap">
+    <pre id="code">/**
+ * 第42课：KMP算法（Knuth-Morris-Pratt）
+ * 对应CSP-S考纲知识点：
+ *   - KMP 字符串匹配算法（next 数组 / 前缀函数）
+ *   - next 数组的递推构建（双指针 i, j）
+ *   - 线性时间复杂度 O(n+m) 的 KMP 匹配过程
+ *   - 最小循环节定理：cycle = len - next[len-1]
+ *   - KMP 扩展：前缀出现次数、border 统计
+ *
+ * 包含以下实现：
+ *   1. get_next 函数（两种写法：下标从 0 开始 / 从 1 开始）
+ *   2. kmp_search 函数（查找所有出现位置）
+ *   3. kmp_count 函数（统计出现次数，允许重叠）
+ *   4. 最小循环节计算函数
+ *   5. 真题1：KMP 匹配统计出现次数
+ *   6. 真题2：最小循环节与补充成循环串
+ */
+
+#include &lt;bits/stdc++.h&gt;
+using namespace std;
+
+// ============================================================
+// 一、get_next 函数：构建 next 数组（下标从 0 开始）
+// next[i] = 前缀 P[0..i] 的最长公共前后缀长度（真前缀 &amp; 真后缀）
+// 通俗解释：next[i] = k 意味着 P[0..k-1] == P[i-k+1..i]
+// 时间复杂度：O(m)，其中 m = |P|
+// ============================================================
+vector&lt;int&gt; get_next(const string&amp; P) {
+    int m = P.size();
+    vector&lt;int&gt; next(m, 0);
+    int j = 0;  // j 表示「当前已匹配的前缀长度」，也是「待比较的前缀字符下标」
+
+    // i 从 1 开始，因为 next[0] 恒为 0（长度为 1 的前缀没有真前后缀）
+    for (int i = 1; i &lt; m; i++) {
+        // 失配时，j 回退到 next[j-1]（利用已计算的 next 信息）
+        while (j &gt; 0 &amp;&amp; P[i] != P[j]) {
+            j = next[j - 1];
+        }
+        // 匹配成功，j 前进
+        if (P[i] == P[j]) {
+            j++;
+        }
+        next[i] = j;
+    }
+    return next;
+}
+
+// ============================================================
+// 二、get_next 函数：下标从 1 开始的版本（部分教材使用）
+// next[1] = 0, next[i] 表示 P[1..i-1] 的最长公共前后缀长度
+// 注意：需要将 P 变为 1-indexed（P = " " + original_P）
+// ============================================================
+vector&lt;int&gt; get_next_1based(const string&amp; P) {
+    // 假设传入的 P 已经是 1-indexed：P[0] 为占位符，实际内容从 P[1] 开始
+    int m = P.size() - 1;  // 实际字符数
+    vector&lt;int&gt; next(m + 2, 0);
+    next[1] = 0;
+    int j = 0;
+    for (int i = 2; i &lt;= m; i++) {
+        while (j &gt; 0 &amp;&amp; P[i] != P[j + 1]) {
+            j = next[j];
+        }
+        if (P[i] == P[j + 1]) {
+            j++;
+        }
+        next[i] = j;
+    }
+    return next;
+}
+
+// ============================================================
+// 三、kmp_search：查找模式串 P 在文本串 T 中的所有出现位置
+// 返回起始下标列表（0-based）
+// 时间复杂度：O(n+m)
+// ============================================================
+vector&lt;int&gt; kmp_search(const string&amp; T, const string&amp; P) {
+    vector&lt;int&gt; positions;
+    int n = T.size(), m = P.size();
+    if (m == 0) return positions;
+
+    vector&lt;int&gt; next = get_next(P);
+    int j = 0;  // 已匹配的模式串长度
+
+    for (int i = 0; i &lt; n; i++) {
+        // 失配：j 通过 next 数组跳转
+        while (j &gt; 0 &amp;&amp; T[i] != P[j]) {
+            j = next[j - 1];
+        }
+        // 匹配：j 前进
+        if (T[i] == P[j]) {
+            j++;
+        }
+        // 完全匹配
+        if (j == m) {
+            positions.push_back(i - m + 1);  // 起始位置
+            j = next[j - 1];  // 允许重叠，继续寻找下一个匹配
+        }
+    }
+    return positions;
+}
+
+// ============================================================
+// 四、kmp_count：统计模式串 P 在文本串 T 中出现的次数
+// 允许重叠匹配，如需不重叠匹配只需将 j = next[j-1] 改为 j = 0
+// ============================================================
+int kmp_count(const string&amp; T, const string&amp; P) {
+    int n = T.size(), m = P.size();
+    if (m == 0) return 0;
+
+    vector&lt;int&gt; next = get_next(P);
+    int j = 0, cnt = 0;
+
+    for (int i = 0; i &lt; n; i++) {
+        while (j &gt; 0 &amp;&amp; T[i] != P[j]) j = next[j - 1];
+        if (T[i] == P[j]) j++;
+        if (j == m) {
+            cnt++;
+            j = next[j - 1];  // 允许重叠
+        }
+    }
+    return cnt;
+}
+
+// 不重叠版本
+int kmp_count_non_overlap(const string&amp; T, const string&amp; P) {
+    int n = T.size(), m = P.size();
+    if (m == 0) return 0;
+
+    vector&lt;int&gt; next = get_next(P);
+    int j = 0, cnt = 0;
+
+    for (int i = 0; i &lt; n; i++) {
+        while (j &gt; 0 &amp;&amp; T[i] != P[j]) j = next[j - 1];
+        if (T[i] == P[j]) j++;
+        if (j == m) {
+            cnt++;
+            j = 0;  // 不允许重叠，完全从头开始
+        }
+    }
+    return cnt;
+}
+
+// ============================================================
+// 五、最小循环节计算
+// 定理：对长度为 len 的字符串 s，
+//   设 cycle = len - next[len-1]
+//   若 len % cycle == 0，则最小循环节长度为 cycle
+//   否则不存在完整循环节，最小循环节长度为 len
+// ============================================================
+
+// 返回最小循环节长度
+int min_cycle_len(const string&amp; s) {
+    int n = s.size();
+    if (n == 0) return 0;
+    vector&lt;int&gt; next = get_next(s);
+    int cycle = n - next[n - 1];
+    if (n % cycle == 0) return cycle;
+    return n;  // 整个字符串作为循环节
+}
+
+// 获取循环节的重复次数（若存在循环节）
+// 返回 pair(cycle_len, repeat_count)，若不存在循环节 repeat_count = 1
+pair&lt;int, int&gt; get_cycle_info(const string&amp; s) {
+    int n = s.size();
+    vector&lt;int&gt; next = get_next(s);
+    int cycle = n - next[n - 1];
+    if (n % cycle == 0 &amp;&amp; cycle &lt; n) {
+        return {cycle, n / cycle};
+    }
+    return {n, 1};
+}
+
+// 补充最少字符使其成为循环串：返回需要添加的字符数，以及补充后的字符串
+// 补充规则：cycle = len - next[len-1]，需要补充 (cycle - len % cycle) % cycle 个字符
+int chars_needed_for_cycle(const string&amp; s) {
+    int n = s.size();
+    vector&lt;int&gt; next = get_next(s);
+    int cycle = n - next[n - 1];
+    if (n % cycle == 0) return 0;  // 已经是循环串
+    return cycle - n % cycle;
+}
+
+string complete_cycle(const string&amp; s) {
+    int n = s.size();
+    vector&lt;int&gt; next = get_next(s);
+    int cycle = n - next[n - 1];
+    int need = (cycle - n % cycle) % cycle;
+    // 补充的字符来自 s 的前面部分（按 cycle 循环）
+    string result = s;
+    for (int i = 0; i &lt; need; i++) {
+        result += s[i % cycle];  // 按循环节补充
+    }
+    return result;
+}
+
+// ============================================================
+// 六、扩展应用：求每个前缀在自身中的出现次数
+// 原理：cnt[i] 表示前缀 P[0..i] 作为 P 的 border 出现的次数
+//       从后向前遍历 i，将 cnt[next[i]-1] += cnt[i]
+// ============================================================
+vector&lt;int&gt; prefix_occurrence_count(const string&amp; s) {
+    int n = s.size();
+    vector&lt;int&gt; next = get_next(s);
+    vector&lt;int&gt; cnt(n, 1);  // 每个前缀至少自身出现一次
+
+    // 从后向前累加（因为 next[i] &lt; i+1，所以从大到小遍历安全）
+    for (int i = n - 1; i &gt;= 0; i--) {
+        if (next[i] &gt; 0) {
+            cnt[next[i] - 1] += cnt[i];
+        }
+    }
+    return cnt;
+}
+
+// ============================================================
+// 七、真题1：KMP 匹配统计出现次数
+// 题目：给定文本串 T 和模式串 P，统计 P 在 T 中出现的次数（允许重叠）
+// 数据范围：|T| ≤ 1e6, |P| ≤ 1e5
+// ============================================================
+void solve_problem1() {
+    string T, P;
+    cin &gt;&gt; T &gt;&gt; P;
+    cout &lt;&lt; kmp_count(T, P) &lt;&lt; '\n';
+}
+
+// ============================================================
+// 八、真题2：最小循环节
+// 题目：给定字符串 s，
+//   1. 若 s 由循环节重复构成，输出循环节和 k
+//   2. 否则输出需要添加的最少字符数及补充后的字符串
+// 数据范围：|s| ≤ 1e6
+// ============================================================
+void solve_problem2() {
+    string s;
+    cin &gt;&gt; s;
+    int n = s.size();
+    vector&lt;int&gt; next = get_next(s);
+    int cycle = n - next[n - 1];
+
+    if (n % cycle == 0 &amp;&amp; cycle &lt; n) {
+        // 存在完整循环节
+        cout &lt;&lt; "循环节: " &lt;&lt; s.substr(0, cycle) &lt;&lt; '\n';
+        cout &lt;&lt; "重复次数 k = " &lt;&lt; n / cycle &lt;&lt; '\n';
+    } else {
+        // 需要补充
+        int need = cycle - n % cycle;
+        cout &lt;&lt; "需要添加 " &lt;&lt; need &lt;&lt; " 个字符\n";
+        string added = s;
+        for (int i = 0; i &lt; need; i++) {
+            added += s[i % cycle];
+        }
+        cout &lt;&lt; "补充后: " &lt;&lt; added &lt;&lt; '\n';
+    }
+}
+
+// ============================================================
+// 九、测试用 main 函数
+// ============================================================
+int main() {
+    ios::sync_with_stdio(false);
+    cin.tie(nullptr);
+
+    // ---------- 测试1：next 数组构建 ----------
+    cout &lt;&lt; "========== 测试1：next 数组 ==========" &lt;&lt; endl;
+    {
+        string P = "ababc";
+        vector&lt;int&gt; next = get_next(P);
+        cout &lt;&lt; "P = \"ababc\"" &lt;&lt; endl;
+        for (int i = 0; i &lt; (int)next.size(); i++) {
+            cout &lt;&lt; "  next[" &lt;&lt; i &lt;&lt; "] = " &lt;&lt; next[i]
+                 &lt;&lt; "  (前缀 P[0.." &lt;&lt; i &lt;&lt; "]=\"" &lt;&lt; P.substr(0, i + 1)
+                 &lt;&lt; "\" 的最长公共前后缀)" &lt;&lt; endl;
+        }
+        cout &lt;&lt; "预期: next = [0, 0, 1, 2, 0]" &lt;&lt; endl;
+        cout &lt;&lt; endl;
+    }
+
+    // ---------- 测试2：KMP 搜索 ----------
+    cout &lt;&lt; "========== 测试2：KMP 搜索 ==========" &lt;&lt; endl;
+    {
+        string T = "ababcabcababc";
+        string P = "abc";
+        vector&lt;int&gt; pos = kmp_search(T, P);
+        cout &lt;&lt; "T = \"" &lt;&lt; T &lt;&lt; "\", P = \"" &lt;&lt; P &lt;&lt; "\"" &lt;&lt; endl;
+        cout &lt;&lt; "出现位置: ";
+        for (int p : pos) cout &lt;&lt; p &lt;&lt; " ";
+        cout &lt;&lt; "(预期: 2 5 10)" &lt;&lt; endl;
+
+        int cnt = kmp_count(T, P);
+        cout &lt;&lt; "出现次数: " &lt;&lt; cnt &lt;&lt; " (预期: 3)" &lt;&lt; endl;
+        cout &lt;&lt; endl;
+    }
+
+    // ---------- 测试3：允许重叠 vs 不重叠 ----------
+    cout &lt;&lt; "========== 测试3：重叠 vs 不重叠 ==========" &lt;&lt; endl;
+    {
+        string T = "aaaaa";
+        string P = "aa";
+        cout &lt;&lt; "T = \"aaaaa\", P = \"aa\"" &lt;&lt; endl;
+        cout &lt;&lt; "允许重叠次数: " &lt;&lt; kmp_count(T, P)
+             &lt;&lt; " (预期: 4, 位置: 0 1 2 3)" &lt;&lt; endl;
+        cout &lt;&lt; "不重叠次数:   " &lt;&lt; kmp_count_non_overlap(T, P)
+             &lt;&lt; " (预期: 2, 位置: 0 2)" &lt;&lt; endl;
+        cout &lt;&lt; endl;
+    }
+
+    // ---------- 测试4：最小循环节 ----------
+    cout &lt;&lt; "========== 测试4：最小循环节 ==========" &lt;&lt; endl;
+    {
+        vector&lt;string&gt; tests = {"abcabcabc", "ababab", "abcab", "aaaa"};
+        for (const string&amp; s : tests) {
+            auto [cyc, k] = get_cycle_info(s);
+            int need = chars_needed_for_cycle(s);
+            cout &lt;&lt; "s = \"" &lt;&lt; s &lt;&lt; "\": 循环节长度=" &lt;&lt; cyc;
+            if (k &gt; 1) cout &lt;&lt; ", 重复次数=" &lt;&lt; k;
+            if (need &gt; 0) cout &lt;&lt; ", 需要补充 " &lt;&lt; need &lt;&lt; " 个字符 -&gt; \""
+                               &lt;&lt; complete_cycle(s) &lt;&lt; "\"";
+            cout &lt;&lt; endl;
+        }
+        cout &lt;&lt; "预期:" &lt;&lt; endl;
+        cout &lt;&lt; "  abcabcabc: cycle=3, k=3" &lt;&lt; endl;
+        cout &lt;&lt; "  ababab:    cycle=2, k=3" &lt;&lt; endl;
+        cout &lt;&lt; "  abcab:     cycle=3, need=1, -&gt; abcabc" &lt;&lt; endl;
+        cout &lt;&lt; "  aaaa:      cycle=1, k=4" &lt;&lt; endl;
+        cout &lt;&lt; endl;
+    }
+
+    // ---------- 测试5：前缀出现次数 ----------
+    cout &lt;&lt; "========== 测试5：前缀出现次数 ==========" &lt;&lt; endl;
+    {
+        string s = "ababa";
+        vector&lt;int&gt; cnt = prefix_occurrence_count(s);
+        cout &lt;&lt; "s = \"ababa\"" &lt;&lt; endl;
+        for (int i = 0; i &lt; (int)cnt.size(); i++) {
+            cout &lt;&lt; "  前缀 \"" &lt;&lt; s.substr(0, i + 1) &lt;&lt; "\" 出现次数: " &lt;&lt; cnt[i] &lt;&lt; endl;
+        }
+        cout &lt;&lt; endl;
+    }
+
+    // ---------- 真题入口（取消注释以使用标准输入） ----------
+    // solve_problem1();
+    // solve_problem2();
+
+    return 0;
+}
+</pre>
+    <p class="hint">本页使用浅色主题与 UTF-8 编码，可直接打印或导出 PDF。</p>
+  </div>
+</body>
+</html>

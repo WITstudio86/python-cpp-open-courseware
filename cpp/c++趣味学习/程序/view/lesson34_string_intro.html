@@ -1,0 +1,536 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>lesson34_string_intro.cpp</title>
+<style>
+  :root {
+    --bg: #f5f7fa;
+    --panel: #ffffff;
+    --text: #1a1a2e;
+    --muted: #5a6570;
+    --gold: #b8860b;
+    --code-bg: #ffffff;
+    --code-text: #1f2933;
+    --border: #d8dee6;
+    --top-bg: #ffffff;
+    --top-border: #e5e9ef;
+  }
+  * { box-sizing: border-box; }
+  html, body {
+    margin: 0; padding: 0;
+    background: var(--bg);
+    color: var(--text);
+    font-family: -apple-system, BlinkMacSystemFont, "PingFang SC", "Microsoft YaHei", sans-serif;
+    min-height: 100%;
+  }
+  .top {
+    position: sticky; top: 0; z-index: 10;
+    display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between;
+    gap: 10px;
+    padding: 12px 18px;
+    background: var(--top-bg);
+    border-bottom: 1px solid var(--top-border);
+    box-shadow: 0 1px 8px rgba(15, 23, 42, 0.06);
+  }
+  .brand { color: var(--gold); font-weight: 700; font-size: 14px; letter-spacing: 0.04em; }
+  .title { font-size: 15px; font-weight: 600; color: var(--text); max-width: 52vw; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .actions { display: flex; gap: 8px; flex-wrap: wrap; }
+  .btn {
+    appearance: none; border: 1px solid var(--border);
+    background: #fff; color: var(--text);
+    border-radius: 999px; padding: 8px 14px; font-size: 13px; font-weight: 600;
+    text-decoration: none; cursor: pointer;
+  }
+  .btn:hover { background: #f0f3f7; }
+  .btn.gold {
+    background: linear-gradient(135deg, #f0d78c, #d4a853);
+    color: #0a2540; border-color: #e0c06a;
+  }
+  .meta {
+    padding: 10px 18px; color: var(--muted); font-size: 12px;
+    border-bottom: 1px solid var(--border);
+    background: var(--panel);
+  }
+  .wrap { padding: 16px 18px 40px; }
+  pre {
+    margin: 0;
+    background: var(--code-bg);
+    color: var(--code-text);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 18px 20px;
+    overflow: auto;
+    font-family: "SF Mono", "JetBrains Mono", "Fira Code", Consolas, "Courier New", monospace;
+    font-size: 13.5px;
+    line-height: 1.55;
+    white-space: pre;
+    tab-size: 4;
+    box-shadow: 0 2px 12px rgba(15, 23, 42, 0.05);
+  }
+  .hint { margin-top: 12px; color: var(--muted); font-size: 12px; }
+  @media print {
+    html, body { background: #fff !important; color: #000 !important; }
+    .top { position: static; box-shadow: none; border-bottom: 1px solid #ccc; background: #fff !important; }
+    .actions { display: none !important; }
+    .meta { background: #fff !important; border-color: #ddd; color: #333; }
+    .wrap { padding: 0; }
+    pre {
+      background: #fff !important; color: #000 !important;
+      border: 1px solid #bbb; box-shadow: none; border-radius: 0;
+      white-space: pre-wrap; word-break: break-word; font-size: 11pt; line-height: 1.4;
+    }
+    .hint { display: none; }
+    a { color: #000; text-decoration: none; }
+  }
+</style>
+</head>
+<body>
+  <div class="top">
+    <div class="brand">C++ 趣味学习 · 配套代码</div>
+    <div class="title">lesson34_string_intro.cpp</div>
+    <div class="actions">
+      <a class="btn" href="../lesson34_string_intro.cpp" download="lesson34_string_intro.cpp">⬇️ 下载源文件</a>
+      <a class="btn gold" href="javascript:history.back()">← 返回课件</a>
+    </div>
+  </div>
+  <div class="meta">编码：UTF-8 · 文件：lesson34_string_intro.cpp · 共 432 行 · 浅色主题便于打印</div>
+  <div class="wrap">
+    <pre id="code">/*
+ * =====================================================================
+ * 第34课：文字处理机——字符串入门
+ * lesson34_string_intro.cpp
+ * =====================================================================
+ *
+ * 本文件包含 4 个演示程序，展示 C++ string 类型的核心用法：
+ *
+ *   【程序1】字符串声明与基本输入输出
+ *     - string 类型的声明、赋值、length() 获取长度、通过索引访问字符
+ *
+ *   【程序2】cin vs getline 行为对比
+ *     - 对比 cin &gt;&gt; 和 getline() 读取带空格文本的不同表现
+ *     - 演示 cin.ignore() 在混合输入中的作用
+ *
+ *   【程序3】⭐ 名片生成器（本课主项目）
+ *     - 综合运用 getline 输入、字符串拼接、格式化输出
+ *     - 制作个性化的文字名片
+ *
+ *   【程序4】课后练习答案
+ *     - 练习一：填空补全代码的完整答案
+ *     - 挑战任务：智能问候机器人的实现
+ *
+ * 编译方式（任一均可）：
+ *   g++ lesson34_string_intro.cpp -o lesson34_string_intro
+ *   clang++ lesson34_string_intro.cpp -o lesson34_string_intro
+ *
+ * 运行：./lesson34_string_intro
+ *
+ * 适用对象：中国中小学 C++ 初学者
+ * 课时：第34课 | 第三阶段：数据类型进阶
+ * =====================================================================
+ */
+
+#include &lt;iostream&gt;
+#include &lt;string&gt;
+using namespace std;
+
+// -------------------------------------------------------
+// 工具函数：打印分隔线，让输出更清晰
+// -------------------------------------------------------
+void printDivider(const string&amp; title) {
+    cout &lt;&lt; endl;
+    cout &lt;&lt; "========================================" &lt;&lt; endl;
+    cout &lt;&lt; "  " &lt;&lt; title &lt;&lt; endl;
+    cout &lt;&lt; "========================================" &lt;&lt; endl;
+}
+
+// -------------------------------------------------------
+// 工具函数：暂停，等待用户按回车继续
+// -------------------------------------------------------
+void waitForEnter() {
+    cout &lt;&lt; endl;
+    cout &lt;&lt; "按回车键继续..." &lt;&lt; endl;
+    cin.get();
+}
+
+/*
+ * =====================================================================
+ * 程序1：字符串声明与基本输入输出
+ * =====================================================================
+ * 演示内容：
+ *   - 如何声明 string 变量
+ *   - 如何使用 cin &gt;&gt; 输入字符串
+ *   - 如何用 length() 获取字符个数
+ *   - 如何用索引 [i] 访问单个字符
+ *   - 如何重新赋值修改字符串内容
+ * =====================================================================
+ */
+void demo1_basicStringIO() {
+    printDivider("【程序1】字符串声明与基本输入输出");
+
+    // --- 1. 声明与初始化 ---
+    string name = "小明";
+    cout &lt;&lt; "初始名字：" &lt;&lt; name &lt;&lt; endl;
+    cout &lt;&lt; "（这是声明时直接赋的值）" &lt;&lt; endl;
+
+    // --- 2. 从键盘输入新名字（使用 cin &gt;&gt;） ---
+    cout &lt;&lt; endl;
+    cout &lt;&lt; "请输入一个新的名字（不要有空格哦）：";
+    cin &gt;&gt; name;
+    cout &lt;&lt; "你输入的新名字是：" &lt;&lt; name &lt;&lt; endl;
+
+    // --- 3. 获取字符串长度 ---
+    cout &lt;&lt; endl;
+    cout &lt;&lt; "【字符串长度】" &lt;&lt; endl;
+    cout &lt;&lt; "\"" &lt;&lt; name &lt;&lt; "\" 一共有 " &lt;&lt; name.length() &lt;&lt; " 个字符" &lt;&lt; endl;
+    // 注意：length() 返回的是字节数还是字符数取决于编码
+    // 在 UTF-8 环境下，一个中文字通常占 3 个字节，
+    // 这里用 length() 会得到字节数，用来说明 length() 的含义。
+
+    // --- 4. 访问单个字符 ---
+    cout &lt;&lt; endl;
+    cout &lt;&lt; "【访问单个字符（索引从0开始）】" &lt;&lt; endl;
+    if (name.length() &gt; 0) {
+        cout &lt;&lt; "第一个字符（索引0）：" &lt;&lt; name[0] &lt;&lt; endl;
+        cout &lt;&lt; "最后一个字符（索引" &lt;&lt; name.length() - 1 &lt;&lt; "）："
+             &lt;&lt; name[name.length() - 1] &lt;&lt; endl;
+    }
+
+    // --- 5. 判断是否为空 ---
+    cout &lt;&lt; endl;
+    cout &lt;&lt; "【判断字符串是否为空】" &lt;&lt; endl;
+    string emptyStr = "";
+    cout &lt;&lt; "空字符串 empty() 的返回值：" &lt;&lt; boolalpha &lt;&lt; emptyStr.empty() &lt;&lt; endl;
+    cout &lt;&lt; "\"" &lt;&lt; name &lt;&lt; "\" empty() 的返回值：" &lt;&lt; name.empty() &lt;&lt; endl;
+
+    // --- 6. 清空字符串 ---
+    cout &lt;&lt; endl;
+    cout &lt;&lt; "【清空字符串】" &lt;&lt; endl;
+    string test = "临时数据";
+    cout &lt;&lt; "清空前：" &lt;&lt; test &lt;&lt; "（长度：" &lt;&lt; test.length() &lt;&lt; "）" &lt;&lt; endl;
+    test.clear();
+    cout &lt;&lt; "清空后：" &lt;&lt; test &lt;&lt; "（长度：" &lt;&lt; test.length() &lt;&lt; "）" &lt;&lt; endl;
+
+    // 清除输入缓冲区（为后面的 getline 做准备）
+    cin.ignore(10000, '\n');
+    waitForEnter();
+}
+
+/*
+ * =====================================================================
+ * 程序2：cin &gt;&gt;  vs  getline()  行为对比
+ * =====================================================================
+ * 演示内容：
+ *   - cin &gt;&gt; 遇到空格就停止，只能读取一个"单词"
+ *   - getline() 可以读取包含空格的整行文本
+ *   - 混合使用 cin &gt;&gt; 和 getline() 时的"坑"及解决方案
+ * =====================================================================
+ */
+void demo2_cinVsGetline() {
+    printDivider("【程序2】cin &gt;&gt;  vs  getline() 行为对比");
+
+    // ===== 场景A：只用 cin &gt;&gt; =====
+    cout &lt;&lt; "【场景A：使用 cin &gt;&gt; 输入】" &lt;&lt; endl;
+    cout &lt;&lt; "请输入两个词语（用空格隔开，例如 \"Hello World\"）：" &lt;&lt; endl;
+
+    string word1, word2;
+    cin &gt;&gt; word1;
+    cin &gt;&gt; word2;
+
+    cout &lt;&lt; endl;
+    cout &lt;&lt; "cin &gt;&gt; word1 读到：" &lt;&lt; word1 &lt;&lt; endl;
+    cout &lt;&lt; "cin &gt;&gt; word2 读到：" &lt;&lt; word2 &lt;&lt; endl;
+    cout &lt;&lt; "&gt;&gt; 发现了吗？一次输入的两个词被分别存入了两个变量！" &lt;&lt; endl;
+
+    // 清除缓冲区
+    cin.ignore(10000, '\n');
+
+    cout &lt;&lt; endl;
+    cout &lt;&lt; "----------------------------------------" &lt;&lt; endl;
+
+    // ===== 场景B：只用 getline() =====
+    cout &lt;&lt; "【场景B：使用 getline() 输入】" &lt;&lt; endl;
+    cout &lt;&lt; "请输入一句完整的话（可以有空格）：" &lt;&lt; endl;
+
+    string fullLine;
+    getline(cin, fullLine);
+
+    cout &lt;&lt; endl;
+    cout &lt;&lt; "getline 读到：" &lt;&lt; fullLine &lt;&lt; endl;
+    cout &lt;&lt; "&gt;&gt; getline 把整行（包括空格）都完整读进来了！" &lt;&lt; endl;
+
+    cout &lt;&lt; endl;
+    cout &lt;&lt; "----------------------------------------" &lt;&lt; endl;
+
+    // ===== 场景C：混合使用的陷阱 =====
+    cout &lt;&lt; "【场景C：混合使用的陷阱】" &lt;&lt; endl;
+    cout &lt;&lt; "先输入一个单词：";
+    string tempWord;
+    cin &gt;&gt; tempWord;
+    cout &lt;&lt; "单词：" &lt;&lt; tempWord &lt;&lt; endl;
+
+    // 如果不加 cin.ignore()，下面的 getline 会立即读到残留的换行符
+    cout &lt;&lt; endl;
+    cout &lt;&lt; "⚠️  如果不调用 cin.ignore()，getline 会立即读到换行符而跳过输入！" &lt;&lt; endl;
+    cout &lt;&lt; "✅  现在调用 cin.ignore() 清除缓冲区..." &lt;&lt; endl;
+    cin.ignore(10000, '\n');
+
+    cout &lt;&lt; endl;
+    cout &lt;&lt; "现在请输入一句完整的话：";
+    string afterIgnore;
+    getline(cin, afterIgnore);
+    cout &lt;&lt; "getline 读到：" &lt;&lt; afterIgnore &lt;&lt; endl;
+    cout &lt;&lt; "&gt;&gt; 成功！getline 正常工作了。" &lt;&lt; endl;
+
+    // 总结对比
+    cout &lt;&lt; endl;
+    cout &lt;&lt; "========================================" &lt;&lt; endl;
+    cout &lt;&lt; "📋 cin &gt;&gt;  vs  getline() 总结：        " &lt;&lt; endl;
+    cout &lt;&lt; "========================================" &lt;&lt; endl;
+    cout &lt;&lt; "  cin &gt;&gt;    →  只读一个词，遇空格就停  " &lt;&lt; endl;
+    cout &lt;&lt; "  getline() →  读一整行，空格也保留    " &lt;&lt; endl;
+    cout &lt;&lt; "  混用时    →  记得用 cin.ignore()！    " &lt;&lt; endl;
+    cout &lt;&lt; "========================================" &lt;&lt; endl;
+
+    // 这里不需要再 ignore，因为场景C最后用的是 getline
+    waitForEnter();
+}
+
+/*
+ * =====================================================================
+ * 程序3：⭐ 个人名片生成器（本课主项目）
+ * =====================================================================
+ * 演示内容：
+ *   - 综合运用 getline() 收集用户多项信息
+ *   - 使用 + 和 += 进行字符串拼接
+ *   - 使用 for 循环做简单的对齐格式化
+ *   - 使用 length() 统计信息字符数
+ * =====================================================================
+ */
+void demo3_nameCardGenerator() {
+    printDivider("【程序3】⭐ 个人名片生成器");
+
+    string name, school, hobby, phone;
+
+    // --- 步骤1：收集用户信息 ---
+    cout &lt;&lt; "🎨 欢迎使用个人名片生成器！" &lt;&lt; endl;
+    cout &lt;&lt; "   请按照提示输入你的信息：" &lt;&lt; endl;
+    cout &lt;&lt; endl;
+
+    cout &lt;&lt; "  你的姓名：";
+    getline(cin, name);
+
+    cout &lt;&lt; "  你的学校：";
+    getline(cin, school);
+
+    cout &lt;&lt; "  你的爱好：";
+    getline(cin, hobby);
+
+    cout &lt;&lt; "  你的电话：";
+    getline(cin, phone);
+
+    // --- 步骤2：拼接生成名片 ---
+    // 名片宽度为 26 个半角字符（约等于框线的视觉宽度）
+    const int CARD_WIDTH = 26;
+
+    // 辅助函数（lambda）：在内容后面补空格，使总显示宽度接近 CARD_WIDTH
+    // 注意：中文字符显示宽度约为英文的2倍，这里用简化计算
+    auto padRight = [](const string&amp; content, int targetWidth) -&gt; string {
+        string result = "║  " + content;
+        // 计算当前"显示宽度"：认为每个字符占1个单位（近似）
+        int contentLen = (int)content.length();
+        int needed = targetWidth - contentLen - 3; // 3 = "║  " 的宽度近似
+        if (needed &lt; 1) needed = 1;
+        for (int i = 0; i &lt; needed; i++) {
+            result += " ";
+        }
+        result += "║\n";
+        return result;
+    };
+
+    // 构建名片
+    string card = "";
+    card += "╔══════════════════════════╗\n";
+    card += "║      🪪  个 人 名 片      ║\n";
+    card += "╠══════════════════════════╣\n";
+    card += padRight("姓名：" + name, CARD_WIDTH);
+    card += padRight("学校：" + school, CARD_WIDTH);
+    card += padRight("爱好：" + hobby, CARD_WIDTH);
+    card += padRight("电话：" + phone, CARD_WIDTH);
+    card += "╚══════════════════════════╝\n";
+
+    // --- 步骤3：输出名片 ---
+    cout &lt;&lt; endl;
+    cout &lt;&lt; "🎉 你的专属名片已生成：" &lt;&lt; endl;
+    cout &lt;&lt; endl;
+    cout &lt;&lt; card;
+
+    // --- 步骤4：输出统计信息 ---
+    cout &lt;&lt; "━━━━━━━━━━━━━━━━━━━━━━" &lt;&lt; endl;
+    cout &lt;&lt; "📊 名片信息统计：" &lt;&lt; endl;
+    cout &lt;&lt; "  姓名 \"" &lt;&lt; name &lt;&lt; "\" → " &lt;&lt; name.length() &lt;&lt; " 个字符" &lt;&lt; endl;
+    cout &lt;&lt; "  学校 \"" &lt;&lt; school &lt;&lt; "\" → " &lt;&lt; school.length() &lt;&lt; " 个字符" &lt;&lt; endl;
+    cout &lt;&lt; "  爱好 \"" &lt;&lt; hobby &lt;&lt; "\" → " &lt;&lt; hobby.length() &lt;&lt; " 个字符" &lt;&lt; endl;
+    cout &lt;&lt; "  电话 \"" &lt;&lt; phone &lt;&lt; "\" → " &lt;&lt; phone.length() &lt;&lt; " 个字符" &lt;&lt; endl;
+    cout &lt;&lt; "━━━━━━━━━━━━━━━━━━━━━━" &lt;&lt; endl;
+
+    waitForEnter();
+}
+
+/*
+ * =====================================================================
+ * 程序4：课后练习答案
+ * =====================================================================
+ * 包含：
+ *   练习一：填空补全代码 —— 完整的可运行版本
+ *   挑战任务：智能问候机器人 —— 完整实现
+ * =====================================================================
+ */
+
+// 练习一答案：填空补全代码
+void exercise1_fillInBlanks() {
+    printDivider("【练习一答案】填空补全代码");
+
+    cout &lt;&lt; "以下代码展示的是修正后的完整版本：" &lt;&lt; endl;
+    cout &lt;&lt; endl;
+    cout &lt;&lt; "--- 开始运行练习一程序 ---" &lt;&lt; endl;
+    cout &lt;&lt; endl;
+
+    string name, subject;
+    cout &lt;&lt; "你的名字：";
+    getline(cin, name);          // ① 补全：cin
+
+    cout &lt;&lt; "喜欢的科目：";
+    getline(cin, subject);       // ② 补全：subject
+
+    // ③ 补全：+ 运算符拼接，&lt;&lt; 输出
+    cout &lt;&lt; name + "最喜欢的科目是" + subject + "！" &lt;&lt; endl;
+
+    cout &lt;&lt; endl;
+    cout &lt;&lt; "--- 练习一程序结束 ---" &lt;&lt; endl;
+
+    cout &lt;&lt; endl;
+    cout &lt;&lt; "📝 答案说明：" &lt;&lt; endl;
+    cout &lt;&lt; "  ① 头文件是 &lt;string&gt;（已在文件顶部包含）" &lt;&lt; endl;
+    cout &lt;&lt; "  ② getline(cin, name) —— 第一个参数是 cin" &lt;&lt; endl;
+    cout &lt;&lt; "  ③ getline(cin, subject) —— 第二个参数是变量 subject" &lt;&lt; endl;
+    cout &lt;&lt; "  ④ 用 + 拼接字符串，用 &lt;&lt; 输出 —— name + \"最喜欢的科目是\" + subject + \"！\"" &lt;&lt; endl;
+
+    waitForEnter();
+}
+
+// 挑战任务答案：智能问候机器人
+void challenge_smartGreetingBot() {
+    printDivider("【挑战任务答案】智能问候机器人");
+
+    cout &lt;&lt; "🤖 你好！我是智能问候机器人！" &lt;&lt; endl;
+    cout &lt;&lt; endl;
+
+    string name, mood;
+
+    cout &lt;&lt; "请输入你的名字：";
+    getline(cin, name);
+
+    cout &lt;&lt; "请输入你现在的心情（如：开心 / 有点困 / 充满能量）：";
+    getline(cin, mood);
+
+    cout &lt;&lt; endl;
+    cout &lt;&lt; "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━" &lt;&lt; endl;
+
+    // 根据心情生成不同的问候语
+    if (mood == "开心") {
+        cout &lt;&lt; name + "，太棒了！保持好心情，今天一定万事如意！" &lt;&lt; endl;
+    } else if (mood == "有点困") {
+        cout &lt;&lt; name + "，来一杯热水提提神吧，代码世界需要清醒的你！" &lt;&lt; endl;
+    } else if (mood == "充满能量") {
+        cout &lt;&lt; name + "，充满能量就赶紧写代码吧，今天一定收获满满！" &lt;&lt; endl;
+    } else if (mood == "紧张") {
+        cout &lt;&lt; name + "，别紧张，深呼吸，你比自己想象的更厉害！" &lt;&lt; endl;
+    } else if (mood == "无聊") {
+        cout &lt;&lt; name + "，无聊的时候来写个程序吧，创造是最有趣的游戏！" &lt;&lt; endl;
+    } else {
+        cout &lt;&lt; name + "，感谢你的分享，每一天都是新的开始，加油！" &lt;&lt; endl;
+    }
+
+    cout &lt;&lt; endl;
+    cout &lt;&lt; "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━" &lt;&lt; endl;
+    cout &lt;&lt; endl;
+    cout &lt;&lt; "📝 挑战任务实现要点：" &lt;&lt; endl;
+    cout &lt;&lt; "  1. 使用 getline() 读取含空格的输入" &lt;&lt; endl;
+    cout &lt;&lt; "  2. 使用 if-else if-else 判断心情" &lt;&lt; endl;
+    cout &lt;&lt; "  3. 用 == 比较两个字符串是否相同" &lt;&lt; endl;
+    cout &lt;&lt; "  4. 用 + 拼接最终的问候语" &lt;&lt; endl;
+    cout &lt;&lt; endl;
+    cout &lt;&lt; "💡 扩展思路：你还可以添加更多心情选项，" &lt;&lt; endl;
+    cout &lt;&lt; "   让机器人变得更聪明哦！" &lt;&lt; endl;
+
+    waitForEnter();
+}
+
+/*
+ * =====================================================================
+ * main() —— 程序入口，提供菜单选择
+ * =====================================================================
+ */
+int main() {
+    cout &lt;&lt; endl;
+    cout &lt;&lt; "╔══════════════════════════════════════╗" &lt;&lt; endl;
+    cout &lt;&lt; "║  第34课：文字处理机——字符串入门  ║" &lt;&lt; endl;
+    cout &lt;&lt; "║  lesson34_string_intro.cpp           ║" &lt;&lt; endl;
+    cout &lt;&lt; "╚══════════════════════════════════════╝" &lt;&lt; endl;
+    cout &lt;&lt; endl;
+
+    int choice = 0;
+    bool exitProgram = false;
+
+    while (!exitProgram) {
+        cout &lt;&lt; "请选择要运行的程序：" &lt;&lt; endl;
+        cout &lt;&lt; "  1 → 字符串声明与基本输入输出" &lt;&lt; endl;
+        cout &lt;&lt; "  2 → cin &gt;&gt; vs getline() 行为对比" &lt;&lt; endl;
+        cout &lt;&lt; "  3 → ⭐ 个人名片生成器（主项目）" &lt;&lt; endl;
+        cout &lt;&lt; "  4 → 练习一：填空补全代码（答案）" &lt;&lt; endl;
+        cout &lt;&lt; "  5 → 挑战任务：智能问候机器人（答案）" &lt;&lt; endl;
+        cout &lt;&lt; "  0 → 退出程序" &lt;&lt; endl;
+        cout &lt;&lt; endl;
+        cout &lt;&lt; "请输入选项（0-5）：";
+        cin &gt;&gt; choice;
+
+        // 清除输入缓冲区
+        cin.ignore(10000, '\n');
+
+        cout &lt;&lt; endl;
+
+        switch (choice) {
+            case 1:
+                demo1_basicStringIO();
+                break;
+            case 2:
+                demo2_cinVsGetline();
+                break;
+            case 3:
+                demo3_nameCardGenerator();
+                break;
+            case 4:
+                exercise1_fillInBlanks();
+                break;
+            case 5:
+                challenge_smartGreetingBot();
+                break;
+            case 0:
+                cout &lt;&lt; "👋 再见！记得多多练习 string 的用法哦！" &lt;&lt; endl;
+                exitProgram = true;
+                break;
+            default:
+                cout &lt;&lt; "❌ 无效选项，请输入 0-5 之间的数字。" &lt;&lt; endl;
+                break;
+        }
+    }
+
+    return 0;
+}
+</pre>
+    <p class="hint">本页使用浅色主题与 UTF-8 编码，可直接打印或导出 PDF。</p>
+  </div>
+</body>
+</html>

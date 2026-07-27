@@ -1,0 +1,630 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>lesson42_graph_traversal.cpp</title>
+<style>
+  :root {
+    --bg: #f5f7fa;
+    --panel: #ffffff;
+    --text: #1a1a2e;
+    --muted: #5a6570;
+    --gold: #b8860b;
+    --code-bg: #ffffff;
+    --code-text: #1f2933;
+    --border: #d8dee6;
+    --top-bg: #ffffff;
+    --top-border: #e5e9ef;
+  }
+  * { box-sizing: border-box; }
+  html, body {
+    margin: 0; padding: 0;
+    background: var(--bg);
+    color: var(--text);
+    font-family: -apple-system, BlinkMacSystemFont, "PingFang SC", "Microsoft YaHei", sans-serif;
+    min-height: 100%;
+  }
+  .top {
+    position: sticky; top: 0; z-index: 10;
+    display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between;
+    gap: 10px;
+    padding: 12px 18px;
+    background: var(--top-bg);
+    border-bottom: 1px solid var(--top-border);
+    box-shadow: 0 1px 8px rgba(15, 23, 42, 0.06);
+  }
+  .brand { color: var(--gold); font-weight: 700; font-size: 14px; letter-spacing: 0.04em; }
+  .title { font-size: 15px; font-weight: 600; color: var(--text); max-width: 52vw; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .actions { display: flex; gap: 8px; flex-wrap: wrap; }
+  .btn {
+    appearance: none; border: 1px solid var(--border);
+    background: #fff; color: var(--text);
+    border-radius: 999px; padding: 8px 14px; font-size: 13px; font-weight: 600;
+    text-decoration: none; cursor: pointer;
+  }
+  .btn:hover { background: #f0f3f7; }
+  .btn.gold {
+    background: linear-gradient(135deg, #f0d78c, #d4a853);
+    color: #0a2540; border-color: #e0c06a;
+  }
+  .meta {
+    padding: 10px 18px; color: var(--muted); font-size: 12px;
+    border-bottom: 1px solid var(--border);
+    background: var(--panel);
+  }
+  .wrap { padding: 16px 18px 40px; }
+  pre {
+    margin: 0;
+    background: var(--code-bg);
+    color: var(--code-text);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 18px 20px;
+    overflow: auto;
+    font-family: "SF Mono", "JetBrains Mono", "Fira Code", Consolas, "Courier New", monospace;
+    font-size: 13.5px;
+    line-height: 1.55;
+    white-space: pre;
+    tab-size: 4;
+    box-shadow: 0 2px 12px rgba(15, 23, 42, 0.05);
+  }
+  .hint { margin-top: 12px; color: var(--muted); font-size: 12px; }
+  @media print {
+    html, body { background: #fff !important; color: #000 !important; }
+    .top { position: static; box-shadow: none; border-bottom: 1px solid #ccc; background: #fff !important; }
+    .actions { display: none !important; }
+    .meta { background: #fff !important; border-color: #ddd; color: #333; }
+    .wrap { padding: 0; }
+    pre {
+      background: #fff !important; color: #000 !important;
+      border: 1px solid #bbb; box-shadow: none; border-radius: 0;
+      white-space: pre-wrap; word-break: break-word; font-size: 11pt; line-height: 1.4;
+    }
+    .hint { display: none; }
+    a { color: #000; text-decoration: none; }
+  }
+</style>
+</head>
+<body>
+  <div class="top">
+    <div class="brand">C++ 算法提高 · 配套代码</div>
+    <div class="title">lesson42_graph_traversal.cpp</div>
+    <div class="actions">
+      <a class="btn" href="../lesson42_graph_traversal.cpp" download="lesson42_graph_traversal.cpp">⬇️ 下载源文件</a>
+      <a class="btn gold" href="javascript:history.back()">← 返回课件</a>
+    </div>
+  </div>
+  <div class="meta">编码：UTF-8 · 文件：lesson42_graph_traversal.cpp · 共 526 行 · 浅色主题便于打印</div>
+  <div class="wrap">
+    <pre id="code">/*
+ * ================================================================
+ * C++算法提高 第42课：图的遍历——DFS与BFS
+ * ================================================================
+ *
+ * 算法知识点：
+ *   - 深度优先搜索（DFS）：递归 + 回溯，一条路走到黑
+ *   - 广度优先搜索（BFS）：队列，逐层扩散，水波式
+ *   - 连通分量计数：对未访问顶点启动搜索
+ *   - 无权图最短路径：BFS 按层扩展，首次到达即为最短
+ *   - 路径还原：parent 数组记录前驱节点
+ *
+ * 经典例题：
+ *   例题1 - 连通分量计数：统计无向图中连通块的个数
+ *   例题2 - 无权图最短路径：BFS 求起点到终点的最短距离和路径
+ */
+
+#include &lt;iostream&gt;
+#include &lt;vector&gt;
+#include &lt;queue&gt;
+#include &lt;stack&gt;
+#include &lt;cstring&gt;
+#include &lt;algorithm&gt;
+using namespace std;
+
+const int MAXN = 101;
+
+// ================================================================
+// 全局邻接表
+// ================================================================
+vector&lt;int&gt; adj[MAXN];
+
+// 清空邻接表
+void clearGraph() {
+    for (int i = 0; i &lt; MAXN; i++) {
+        adj[i].clear();
+    }
+}
+
+// 添加无向边
+void addEdge(int u, int v) {
+    adj[u].push_back(v);
+    adj[v].push_back(u);
+}
+
+// ================================================================
+// 实现1：深度优先搜索（DFS）——递归实现
+// 时间复杂度：O(V + E)
+// 空间复杂度：O(V)（递归栈深度）
+// ================================================================
+bool dfsVisited[MAXN];
+int dfsOrder[MAXN];    // 记录访问顺序
+int dfsIdx = 0;        // 访问顺序索引
+
+void dfs(int u) {
+    dfsVisited[u] = true;
+    dfsOrder[++dfsIdx] = u;  // 记录访问顺序
+
+    for (int v : adj[u]) {
+        if (!dfsVisited[v]) {
+            dfs(v);           // 递归深入
+        }
+    }
+}
+
+// 封装：从 start 开始 DFS，返回访问序列
+vector&lt;int&gt; runDFS(int start, int n) {
+    memset(dfsVisited, 0, sizeof(dfsVisited));
+    dfsIdx = 0;
+    dfs(start);
+    vector&lt;int&gt; result;
+    for (int i = 1; i &lt;= dfsIdx; i++) {
+        result.push_back(dfsOrder[i]);
+    }
+    return result;
+}
+
+// ================================================================
+// 实现2：深度优先搜索（DFS）——栈实现（非递归）
+// 使用显式栈模拟递归过程
+// ================================================================
+vector&lt;int&gt; dfsStack(int start) {
+    bool vis[MAXN] = {false};
+    vector&lt;int&gt; result;
+    stack&lt;int&gt; stk;
+
+    stk.push(start);
+
+    while (!stk.empty()) {
+        int u = stk.top();
+        stk.pop();
+
+        if (vis[u]) continue;   // 可能重复入栈，跳过已访问的
+
+        vis[u] = true;
+        result.push_back(u);
+
+        // 逆序遍历邻居（保证与递归顺序一致）
+        for (int i = (int)adj[u].size() - 1; i &gt;= 0; i--) {
+            int v = adj[u][i];
+            if (!vis[v]) {
+                stk.push(v);
+            }
+        }
+    }
+    return result;
+}
+
+// ================================================================
+// 实现3：广度优先搜索（BFS）——队列实现
+// 时间复杂度：O(V + E)
+// 空间复杂度：O(V)（队列最大长度）
+// 特点：按层访问，首次到达即为最短路径（无权图）
+// ================================================================
+vector&lt;int&gt; bfs(int start) {
+    bool vis[MAXN] = {false};
+    vector&lt;int&gt; result;
+    queue&lt;int&gt; q;
+
+    q.push(start);
+    vis[start] = true;   // 入队时立即标记！
+
+    while (!q.empty()) {
+        int u = q.front();
+        q.pop();
+        result.push_back(u);
+
+        for (int v : adj[u]) {
+            if (!vis[v]) {
+                vis[v] = true;
+                q.push(v);
+            }
+        }
+    }
+    return result;
+}
+
+// 带层次信息的 BFS（返回各顶点的"深度"）
+void bfsWithLevel(int start, int n) {
+    bool vis[MAXN] = {false};
+    int level[MAXN] = {0};     // 每个顶点到起点的距离
+    queue&lt;int&gt; q;
+
+    q.push(start);
+    vis[start] = true;
+    level[start] = 0;
+
+    cout &lt;&lt; "BFS 层次遍历：" &lt;&lt; endl;
+    int currentLevel = -1;
+
+    while (!q.empty()) {
+        int u = q.front();
+        q.pop();
+
+        // 层次变化时换行
+        if (level[u] != currentLevel) {
+            if (currentLevel != -1) cout &lt;&lt; endl;
+            cout &lt;&lt; "  第 " &lt;&lt; level[u] &lt;&lt; " 层：";
+            currentLevel = level[u];
+        }
+        cout &lt;&lt; u &lt;&lt; " ";
+
+        for (int v : adj[u]) {
+            if (!vis[v]) {
+                vis[v] = true;
+                level[v] = level[u] + 1;
+                q.push(v);
+            }
+        }
+    }
+    cout &lt;&lt; endl;
+}
+
+// ================================================================
+// 例题1：连通分量计数
+// 题目：统计无向图中连通分量的个数，并输出每个分量的顶点
+// 思路：遍历所有顶点，对每个未访问的顶点启动 BFS/DFS
+//       每次启动意味着发现一个新的连通分量
+// ================================================================
+void example1_connectedComponents() {
+    cout &lt;&lt; "══════════════════════════════════════" &lt;&lt; endl;
+    cout &lt;&lt; "  例题1：连通分量计数" &lt;&lt; endl;
+    cout &lt;&lt; "══════════════════════════════════════" &lt;&lt; endl;
+
+    clearGraph();
+
+    int n, m;
+    cout &lt;&lt; "请输入顶点数 N 和边数 M（如 6 4）：" &lt;&lt; endl;
+    cout &lt;&lt; "（输入 6 4 使用样例数据）→ ";
+    cin &gt;&gt; n &gt;&gt; m;
+
+    cout &lt;&lt; "请输入 " &lt;&lt; m &lt;&lt; " 条边（每行两个整数 u v）：" &lt;&lt; endl;
+    for (int i = 0; i &lt; m; i++) {
+        int u, v;
+        cin &gt;&gt; u &gt;&gt; v;
+        addEdge(u, v);
+    }
+
+    // 统计连通分量
+    bool vis[MAXN] = {false};
+    vector&lt;vector&lt;int&gt;&gt; components;
+
+    for (int i = 1; i &lt;= n; i++) {
+        if (!vis[i]) {
+            // 发现新分量，启动 BFS
+            vector&lt;int&gt; comp;
+            queue&lt;int&gt; q;
+            q.push(i);
+            vis[i] = true;
+
+            while (!q.empty()) {
+                int u = q.front(); q.pop();
+                comp.push_back(u);
+                for (int v : adj[u]) {
+                    if (!vis[v]) {
+                        vis[v] = true;
+                        q.push(v);
+                    }
+                }
+            }
+            components.push_back(comp);
+        }
+    }
+
+    // 输出结果
+    cout &lt;&lt; endl;
+    cout &lt;&lt; "图中连通分量总数：" &lt;&lt; components.size() &lt;&lt; endl;
+    cout &lt;&lt; "────────────────────────────" &lt;&lt; endl;
+    for (size_t i = 0; i &lt; components.size(); i++) {
+        cout &lt;&lt; "分量 " &lt;&lt; (i + 1) &lt;&lt; "（共 " &lt;&lt; components[i].size()
+             &lt;&lt; " 个顶点）：";
+        for (int v : components[i]) {
+            cout &lt;&lt; v &lt;&lt; " ";
+        }
+        cout &lt;&lt; endl;
+    }
+    cout &lt;&lt; endl;
+
+    // 判断图是否连通
+    if (components.size() == 1) {
+        cout &lt;&lt; "结论：该图是连通图（所有顶点互相可达）" &lt;&lt; endl;
+    } else {
+        cout &lt;&lt; "结论：该图是非连通图（有 " &lt;&lt; components.size()
+             &lt;&lt; " 个互不连通的子图）" &lt;&lt; endl;
+    }
+    cout &lt;&lt; endl;
+}
+
+// ================================================================
+// 例题2：无权图最短路径（BFS）
+// 题目：求从起点 S 到终点 T 的最短路径长度和具体路径
+// 思路：BFS 按层扩展，首次到达 T 时经过的边数即最短距离
+//       parent 数组记录前驱，用于还原路径
+// ================================================================
+void example2_shortestPath() {
+    cout &lt;&lt; "══════════════════════════════════════" &lt;&lt; endl;
+    cout &lt;&lt; "  例题2：无权图最短路径（BFS）" &lt;&lt; endl;
+    cout &lt;&lt; "══════════════════════════════════════" &lt;&lt; endl;
+
+    clearGraph();
+
+    int n, m, s, t;
+    cout &lt;&lt; "请输入顶点数 N、边数 M、起点 S、终点 T" &lt;&lt; endl;
+    cout &lt;&lt; "（如 5 5 1 5）：" &lt;&lt; endl;
+    cout &lt;&lt; "（输入 5 5 1 5 使用样例数据）→ ";
+    cin &gt;&gt; n &gt;&gt; m &gt;&gt; s &gt;&gt; t;
+
+    cout &lt;&lt; "请输入 " &lt;&lt; m &lt;&lt; " 条边（每行两个整数 u v）：" &lt;&lt; endl;
+    for (int i = 0; i &lt; m; i++) {
+        int u, v;
+        cin &gt;&gt; u &gt;&gt; v;
+        addEdge(u, v);
+    }
+
+    // BFS 求最短路径
+    int dist[MAXN];
+    int parent[MAXN];
+    memset(dist, -1, sizeof(dist));
+    memset(parent, -1, sizeof(parent));
+
+    queue&lt;int&gt; q;
+    q.push(s);
+    dist[s] = 0;
+
+    bool found = false;
+    while (!q.empty() &amp;&amp; !found) {
+        int u = q.front(); q.pop();
+
+        for (int v : adj[u]) {
+            if (dist[v] == -1) {        // 未访问（首次到达即最短）
+                dist[v] = dist[u] + 1;
+                parent[v] = u;
+                q.push(v);
+                if (v == t) {
+                    found = true;
+                    break;              // 找到目标，提前退出
+                }
+            }
+        }
+    }
+
+    // 输出结果
+    cout &lt;&lt; endl;
+    if (dist[t] == -1) {
+        cout &lt;&lt; "结果：从 " &lt;&lt; s &lt;&lt; " 到 " &lt;&lt; t &lt;&lt; " 不可达！" &lt;&lt; endl;
+    } else {
+        cout &lt;&lt; "最短距离：" &lt;&lt; dist[t] &lt;&lt; " 条边" &lt;&lt; endl;
+
+        // 还原路径
+        vector&lt;int&gt; path;
+        for (int v = t; v != -1; v = parent[v]) {
+            path.push_back(v);
+        }
+        reverse(path.begin(), path.end());
+
+        cout &lt;&lt; "最短路径：";
+        for (size_t i = 0; i &lt; path.size(); i++) {
+            cout &lt;&lt; path[i];
+            if (i &lt; path.size() - 1) cout &lt;&lt; " → ";
+        }
+        cout &lt;&lt; endl;
+
+        // 路径可视化
+        cout &lt;&lt; endl;
+        cout &lt;&lt; "路径可视化：" &lt;&lt; endl;
+        cout &lt;&lt; "  ";
+        for (size_t i = 0; i &lt; path.size(); i++) {
+            cout &lt;&lt; "[" &lt;&lt; path[i] &lt;&lt; "]";
+            if (i &lt; path.size() - 1) {
+                cout &lt;&lt; "──" &lt;&lt; dist[path[i + 1]] - dist[path[i]] &lt;&lt; "步──&gt;";
+            }
+        }
+        cout &lt;&lt; endl;
+    }
+    cout &lt;&lt; endl;
+}
+
+// ================================================================
+// DFS vs BFS 对比演示
+// ================================================================
+void demo_comparison() {
+    cout &lt;&lt; "══════════════════════════════════════" &lt;&lt; endl;
+    cout &lt;&lt; "  DFS vs BFS 对比演示" &lt;&lt; endl;
+    cout &lt;&lt; "══════════════════════════════════════" &lt;&lt; endl;
+
+    clearGraph();
+
+    // 构建示例图
+    //     1
+    //    / \
+    //   2   3
+    //  / \   \
+    // 4   5   6
+    addEdge(1, 2);
+    addEdge(1, 3);
+    addEdge(2, 4);
+    addEdge(2, 5);
+    addEdge(3, 6);
+
+    cout &lt;&lt; "示例图结构：" &lt;&lt; endl;
+    cout &lt;&lt; "       1" &lt;&lt; endl;
+    cout &lt;&lt; "      / \\" &lt;&lt; endl;
+    cout &lt;&lt; "     2   3" &lt;&lt; endl;
+    cout &lt;&lt; "    / \\   \\" &lt;&lt; endl;
+    cout &lt;&lt; "   4   5   6" &lt;&lt; endl;
+    cout &lt;&lt; endl;
+
+    // DFS（递归）
+    vector&lt;int&gt; dfsResult = runDFS(1, 6);
+    cout &lt;&lt; "DFS（递归）访问顺序：";
+    for (int v : dfsResult) cout &lt;&lt; v &lt;&lt; " ";
+    cout &lt;&lt; endl;
+
+    // DFS（栈）
+    vector&lt;int&gt; dfsStackResult = dfsStack(1);
+    cout &lt;&lt; "DFS（栈）  访问顺序：";
+    for (int v : dfsStackResult) cout &lt;&lt; v &lt;&lt; " ";
+    cout &lt;&lt; endl;
+
+    // BFS
+    vector&lt;int&gt; bfsResult = bfs(1);
+    cout &lt;&lt; "BFS        访问顺序：";
+    for (int v : bfsResult) cout &lt;&lt; v &lt;&lt; " ";
+    cout &lt;&lt; endl;
+
+    cout &lt;&lt; endl;
+    cout &lt;&lt; "分析：" &lt;&lt; endl;
+    cout &lt;&lt; "  • DFS 一条路走到黑：1→2→4→5→3→6（先深入左子树）" &lt;&lt; endl;
+    cout &lt;&lt; "  • BFS 逐层扩散：1→2→3→4→5→6（按层次访问）" &lt;&lt; endl;
+    cout &lt;&lt; endl;
+}
+
+// ================================================================
+// DFS 遍历过程可视化（逐步演示）
+// ================================================================
+void demo_visualizeTraversal() {
+    cout &lt;&lt; "══════════════════════════════════════" &lt;&lt; endl;
+    cout &lt;&lt; "  图的遍历过程可视化" &lt;&lt; endl;
+    cout &lt;&lt; "══════════════════════════════════════" &lt;&lt; endl;
+
+    clearGraph();
+
+    // 构建一个更有趣的图
+    addEdge(1, 2);
+    addEdge(1, 3);
+    addEdge(2, 4);
+    addEdge(3, 4);
+    addEdge(3, 5);
+
+    cout &lt;&lt; "图结构：1-2, 1-3, 2-4, 3-4, 3-5" &lt;&lt; endl;
+    cout &lt;&lt; endl;
+
+    // 可视化 DFS 过程
+    cout &lt;&lt; "【DFS 遍历过程】" &lt;&lt; endl;
+    cout &lt;&lt; "────────────────────────" &lt;&lt; endl;
+    memset(dfsVisited, 0, sizeof(dfsVisited));
+    dfsIdx = 0;
+
+    // 手动模拟以展示过程
+    stack&lt;int&gt; stk;
+    stk.push(1);
+    int step = 0;
+
+    while (!stk.empty()) {
+        int u = stk.top(); stk.pop();
+        if (dfsVisited[u]) continue;
+
+        dfsVisited[u] = true;
+        step++;
+        cout &lt;&lt; "步骤 " &lt;&lt; step &lt;&lt; "：访问顶点 " &lt;&lt; u &lt;&lt; endl;
+        cout &lt;&lt; "  栈内容：[";
+        // 复制栈来显示（不会影响实际遍历，因为我们已经是模拟）
+        cout &lt;&lt; "]" &lt;&lt; endl;
+
+        for (int i = (int)adj[u].size() - 1; i &gt;= 0; i--) {
+            int v = adj[u][i];
+            if (!dfsVisited[v]) stk.push(v);
+        }
+    }
+    cout &lt;&lt; endl;
+
+    // 可视化 BFS 过程
+    cout &lt;&lt; "【BFS 遍历过程】" &lt;&lt; endl;
+    cout &lt;&lt; "────────────────────────" &lt;&lt; endl;
+    bool bfsVis[MAXN] = {false};
+    queue&lt;int&gt; q;
+    q.push(1);
+    bfsVis[1] = true;
+    step = 0;
+
+    while (!q.empty()) {
+        int u = q.front(); q.pop();
+        step++;
+        cout &lt;&lt; "步骤 " &lt;&lt; step &lt;&lt; "：访问顶点 " &lt;&lt; u;
+        cout &lt;&lt; "（出队）" &lt;&lt; endl;
+
+        int added = 0;
+        for (int v : adj[u]) {
+            if (!bfsVis[v]) {
+                bfsVis[v] = true;
+                q.push(v);
+                added++;
+            }
+        }
+        cout &lt;&lt; "  将 " &lt;&lt; added &lt;&lt; " 个未访问邻居加入队列" &lt;&lt; endl;
+    }
+    cout &lt;&lt; endl;
+}
+
+// ================================================================
+// 主函数
+// ================================================================
+int main() {
+    cout &lt;&lt; "╔══════════════════════════════════════════════╗" &lt;&lt; endl;
+    cout &lt;&lt; "║    第42课：图的遍历——DFS与BFS                 ║" &lt;&lt; endl;
+    cout &lt;&lt; "║    深度优先 · 广度优先 · 连通分量 · 最短路径   ║" &lt;&lt; endl;
+    cout &lt;&lt; "╚══════════════════════════════════════════════╝" &lt;&lt; endl;
+    cout &lt;&lt; endl;
+
+    int choice;
+    do {
+        cout &lt;&lt; "请选择要运行的功能：" &lt;&lt; endl;
+        cout &lt;&lt; "  1. 例题1：连通分量计数" &lt;&lt; endl;
+        cout &lt;&lt; "  2. 例题2：无权图最短路径（BFS）" &lt;&lt; endl;
+        cout &lt;&lt; "  3. DFS vs BFS 对比演示" &lt;&lt; endl;
+        cout &lt;&lt; "  4. 遍历过程可视化" &lt;&lt; endl;
+        cout &lt;&lt; "  5. BFS 层次遍历" &lt;&lt; endl;
+        cout &lt;&lt; "  0. 退出" &lt;&lt; endl;
+        cout &lt;&lt; "请输入选择 → ";
+        cin &gt;&gt; choice;
+        cout &lt;&lt; endl;
+
+        switch (choice) {
+        case 1:
+            example1_connectedComponents();
+            break;
+        case 2:
+            example2_shortestPath();
+            break;
+        case 3:
+            demo_comparison();
+            break;
+        case 4:
+            demo_visualizeTraversal();
+            break;
+        case 5:
+            cout &lt;&lt; "══════════════════════════════════════" &lt;&lt; endl;
+            cout &lt;&lt; "  BFS 层次遍历演示" &lt;&lt; endl;
+            cout &lt;&lt; "══════════════════════════════════════" &lt;&lt; endl;
+            clearGraph();
+            addEdge(1, 2); addEdge(1, 3);
+            addEdge(2, 4); addEdge(2, 5);
+            bfsWithLevel(1, 5);
+            cout &lt;&lt; endl;
+            break;
+        case 0:
+            cout &lt;&lt; "再见！" &lt;&lt; endl;
+            break;
+        default:
+            cout &lt;&lt; "无效选择，请重新输入。" &lt;&lt; endl;
+            break;
+        }
+    } while (choice != 0);
+
+    return 0;
+}
+</pre>
+    <p class="hint">本页使用浅色主题与 UTF-8 编码，可直接打印或导出 PDF。</p>
+  </div>
+</body>
+</html>

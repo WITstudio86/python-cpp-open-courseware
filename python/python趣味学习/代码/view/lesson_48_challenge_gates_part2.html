@@ -1,0 +1,565 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>lesson_48_challenge_gates_part2.py</title>
+<style>
+  :root {
+    --bg: #f5f7fa;
+    --panel: #ffffff;
+    --text: #1a1a2e;
+    --muted: #5a6570;
+    --gold: #b8860b;
+    --code-bg: #ffffff;
+    --code-text: #1f2933;
+    --border: #d8dee6;
+    --top-bg: #ffffff;
+    --top-border: #e5e9ef;
+  }
+  * { box-sizing: border-box; }
+  html, body {
+    margin: 0; padding: 0;
+    background: var(--bg);
+    color: var(--text);
+    font-family: -apple-system, BlinkMacSystemFont, "PingFang SC", "Microsoft YaHei", sans-serif;
+    min-height: 100%;
+  }
+  .top {
+    position: sticky; top: 0; z-index: 10;
+    display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between;
+    gap: 10px;
+    padding: 12px 18px;
+    background: var(--top-bg);
+    border-bottom: 1px solid var(--top-border);
+    box-shadow: 0 1px 8px rgba(15, 23, 42, 0.06);
+  }
+  .brand { color: var(--gold); font-weight: 700; font-size: 14px; letter-spacing: 0.04em; }
+  .title { font-size: 15px; font-weight: 600; color: var(--text); max-width: 52vw; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .actions { display: flex; gap: 8px; flex-wrap: wrap; }
+  .btn {
+    appearance: none; border: 1px solid var(--border);
+    background: #fff; color: var(--text);
+    border-radius: 999px; padding: 8px 14px; font-size: 13px; font-weight: 600;
+    text-decoration: none; cursor: pointer;
+  }
+  .btn:hover { background: #f0f3f7; }
+  .btn.gold {
+    background: linear-gradient(135deg, #f0d78c, #d4a853);
+    color: #0a2540; border-color: #e0c06a;
+  }
+  .meta {
+    padding: 10px 18px; color: var(--muted); font-size: 12px;
+    border-bottom: 1px solid var(--border);
+    background: var(--panel);
+  }
+  .wrap { padding: 16px 18px 40px; }
+  pre {
+    margin: 0;
+    background: var(--code-bg);
+    color: var(--code-text);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 18px 20px;
+    overflow: auto;
+    font-family: "SF Mono", "JetBrains Mono", "Fira Code", Consolas, "Courier New", monospace;
+    font-size: 13.5px;
+    line-height: 1.55;
+    white-space: pre;
+    tab-size: 4;
+    box-shadow: 0 2px 12px rgba(15, 23, 42, 0.05);
+  }
+  .hint { margin-top: 12px; color: var(--muted); font-size: 12px; }
+  @media print {
+    html, body { background: #fff !important; color: #000 !important; }
+    .top { position: static; box-shadow: none; border-bottom: 1px solid #ccc; background: #fff !important; }
+    .actions { display: none !important; }
+    .meta { background: #fff !important; border-color: #ddd; color: #333; }
+    .wrap { padding: 0; }
+    pre {
+      background: #fff !important; color: #000 !important;
+      border: 1px solid #bbb; box-shadow: none; border-radius: 0;
+      white-space: pre-wrap; word-break: break-word; font-size: 11pt; line-height: 1.4;
+    }
+    .hint { display: none; }
+    a { color: #000; text-decoration: none; }
+  }
+</style>
+</head>
+<body>
+  <div class="top">
+    <div class="brand">Python 趣味学习 · 配套代码</div>
+    <div class="title">lesson_48_challenge_gates_part2.py</div>
+    <div class="actions">
+      <a class="btn" href="../lesson_48_challenge_gates_part2.py" download="lesson_48_challenge_gates_part2.py">⬇️ 下载源文件</a>
+      <a class="btn gold" href="javascript:history.back()">← 返回课件</a>
+    </div>
+  </div>
+  <div class="meta">编码：UTF-8 · 文件：lesson_48_challenge_gates_part2.py · 共 461 行 · 浅色主题便于打印</div>
+  <div class="wrap">
+    <pre id="code"># -*- coding: utf-8 -*-
+"""
+课程编号：lesson_48
+课程标题：综合闯关挑战（下）—— 选择题关 + 学习总结
+学习目标：
+    1. 复习和检测 Python 核心知识点（变量、条件、循环、列表、字符串、函数等）
+    2. 学会设计选择题闯关系统
+    3. 学会汇总得分并给出个性化评语
+    4. 回顾学习旅程，总结收获，展望未来
+"""
+
+import random
+import time
+
+# ==================== 全局变量 ====================
+
+player_name = ""
+total_score = 0
+level_scores = {}  # {"第一关": 得分, "第二关": 得分, "第三关": 得分}
+
+# 选择题题库：列表中的每一项是一个字典
+# 字典结构：
+#   "question": 题目
+#   "options": ["A选项", "B选项", "C选项", "D选项"]
+#   "answer": 正确选项的索引（0=A, 1=B, 2=C, 3=D）
+#   "explanation": 解释
+
+question_bank = [
+    {
+        "question": "在 Python 中，下面哪个是合法的变量名？",
+        "options": ["A. 2name", "B. _name", "C. class", "D. my-name"],
+        "answer": 1,  # B
+        "explanation": "变量名不能以数字开头，不能是关键字（class），不能包含连字符（-），"
+                       "下划线开头是合法的。"
+    },
+    {
+        "question": "list = [1, 2, 3, 4, 5]，list[2] 的值是多少？",
+        "options": ["A. 1", "B. 2", "C. 3", "D. 4"],
+        "answer": 2,  # C
+        "explanation": "列表的索引从 0 开始，所以 list[2] 是第三个元素，值是 3。"
+    },
+    {
+        "question": '下面哪个符号在 Python 中表示"不等于"？',
+        "options": ["A. ==", "B. !=", "C. &lt;&gt;", "D. &lt;="],
+        "answer": 1,  # B
+        "explanation": '!= 是 Python 中判断"不等于"的运算符。== 是等于，&lt;= 是小于等于。'
+    },
+    {
+        "question": "for i in range(3): 这个循环会执行几次？",
+        "options": ["A. 2 次", "B. 3 次", "C. 4 次", "D. 无数次"],
+        "answer": 1,  # B
+        "explanation": "range(3) 产生 0, 1, 2 三个数字，所以循环执行 3 次。"
+    },
+    {
+        "question": 's = "Hello"，s[1:4] 的结果是什么？',
+        "options": ['A. "Hel"', 'B. "ell"', 'C. "ello"', 'D. "H"'],
+        "answer": 1,  # B
+        "explanation": "切片 [1:4] 表示从索引 1 开始（包含），到索引 4 结束（不包含），"
+                       '即 "ell"。'
+    },
+    {
+        "question": "下面哪个是正确的注释写法？",
+        "options": ['A. // 注释', 'B. &lt;!-- 注释 --&gt;', 'C. # 注释', 'D. /* 注释 */'],
+        "answer": 2,  # C
+        "explanation": "Python 中单行注释用 # 开头。// 是 C/Java 的注释，&lt;!-- --&gt; 是 HTML 的注释。"
+    },
+    {
+        "question": "要将用户输入转换成整数，使用哪个函数？",
+        "options": ["A. str()", "B. float()", "C. bool()", "D. int()"],
+        "answer": 3,  # D
+        "explanation": "int() 将输入转换成整数，str() 转字符串，float() 转小数，bool() 转布尔值。"
+    },
+    {
+        "question": 'print(3 * "ab") 的输出是什么？',
+        "options": ['A. "3ab"', 'B. "ababab"', 'C. 报错', 'D. "ab3"'],
+        "answer": 1,  # B
+        "explanation": "Python 中，字符串乘以整数表示重复，'ab' 重复 3 次得到 'ababab'。"
+    },
+    {
+        "question": "break 语句在循环中的作用是什么？",
+        "options": ["A. 暂停循环", "B. 跳过一次循环", "C. 立即结束整个循环", "D. 重新开始循环"],
+        "answer": 2,  # C
+        "explanation": "break 会立即终止整个循环。跳过本次循环用 continue。"
+    },
+    {
+        "question": "下面哪个可以正确创建一个包含 1 到 5 的列表？",
+        "options": ["A. list(1, 2, 3, 4, 5)",
+                     "B. [1, 2, 3, 4, 5]",
+                     "C. range(1, 5)",
+                     "D. {1, 2, 3, 4, 5}"],
+        "answer": 1,  # B
+        "explanation": "列表用方括号 [] 创建。花括号 {} 是集合或字典，range() 不是列表。"
+    },
+]
+
+
+# ==================== 工具函数 ====================
+
+def print_line(char="=", length=50):
+    print(char * length)
+
+
+def print_title(text):
+    print_line("=", 50)
+    print(text.center(50))
+    print_line("=", 50)
+
+
+# ==================== 第三关：选择题关 ====================
+
+def gate_3_quiz():
+    """
+    第三关：选择题关
+    从题库中随机抽取 5 道 Python 选择题
+    每题 10 分，至少答对 3 题过关
+    返回：本关得分
+    """
+    global total_score
+
+    print_title("📝 第三关：Python 知识选择题")
+    print()
+    print("规则：系统随机出 5 道选择题，每题 10 分。")
+    print("每题只有一个正确答案，请选择 A、B、C 或 D。")
+    print("至少答对 3 题才能过关！")
+    print()
+
+    input("准备好了吗？按 Enter 键开始...")
+    print()
+
+    # 从题库中随机选 5 题（如果题库不足 5 题，就全选）
+    selected = random.sample(question_bank, min(5, len(question_bank)))
+
+    correct_count = 0
+    score = 0
+    wrong_questions = []  # 记录答错的题目，用于最后展示解析
+
+    for i, q in enumerate(selected, 1):
+        # 显示题目
+        print(f"  【第 {i} 题】{q['question']}")
+        print()
+        for opt in q["options"]:
+            print(f"    {opt}")
+        print()
+
+        # 获取答案
+        user_answer = input("  请选择（A/B/C/D）：").strip().upper()
+
+        # 将 A/B/C/D 转换成索引 0/1/2/3
+        option_map = {"A": 0, "B": 1, "C": 2, "D": 3}
+        if user_answer in option_map:
+            user_index = option_map[user_answer]
+        else:
+            print("  ❌ 输入无效，请选 A/B/C/D，本题计 0 分\n")
+            wrong_questions.append(q)
+            continue
+
+        # 判断对错
+        if user_index == q["answer"]:
+            print("  ✅ 回答正确！+10 分\n")
+            correct_count += 1
+            score += 10
+        else:
+            correct_letter = ["A", "B", "C", "D"][q["answer"]]
+            print(f"  ❌ 回答错误！正确答案是 {correct_letter}\n")
+            wrong_questions.append(q)
+
+    # 显示错题解析
+    if wrong_questions:
+        print_line("-", 50)
+        print("📖 错题解析：")
+        for q in wrong_questions:
+            correct_letter = ["A", "B", "C", "D"][q["answer"]]
+            print(f"  题目：{q['question']}")
+            print(f"  正确答案：{correct_letter}")
+            print(f"  解析：{q['explanation']}")
+            print()
+
+    # 检查过关条件
+    print_line("-", 50)
+    print(f"你答对了 {correct_count} / {len(selected)} 题，本关得分：{score} 分")
+    total_score += score
+    level_scores["第三关"] = score
+
+    if correct_count &gt;= 3:
+        print("🎉 恭喜！你通过了第三关！")
+        return True
+    else:
+        print("😢 很遗憾，你没能通过第三关（需要至少答对 3 题）")
+        return False
+
+
+# ==================== 评语系统 ====================
+
+def get_final_evaluation():
+    """
+    根据三关总分给出最终评语
+    满分 150 分（每关 50 分）
+    """
+    max_possible = 150
+    ratio = total_score / max_possible
+
+    print()
+    print_title("🏆 最终评价")
+    print()
+
+    # 根据得分比例给出评语
+    if ratio &gt;= 0.9:
+        stars = "⭐⭐⭐⭐⭐"
+        title = "Python 大师"
+        comment = ("太厉害了！你几乎掌握了所有课程知识！\n"
+                   "你的编程基础非常扎实，未来一定能成为真正的程序员！")
+    elif ratio &gt;= 0.7:
+        stars = "⭐⭐⭐⭐"
+        title = "Python 高手"
+        comment = ("非常棒！你已经掌握了大部分 Python 核心知识。\n"
+                   "继续保持学习热情，你离大师只有一步之遥！")
+    elif ratio &gt;= 0.5:
+        stars = "⭐⭐⭐"
+        title = "Python 学徒"
+        comment = ("不错哦！你已经打下了良好的 Python 基础。\n"
+                   "建议回顾一下出错的知识点，再多加练习~")
+    elif ratio &gt;= 0.3:
+        stars = "⭐⭐"
+        title = "Python 新手"
+        comment = ("你已经迈出了编程的第一步！虽然还需要多加练习，\n"
+                   "但每个程序员都是从新手开始的，加油！")
+    else:
+        stars = "⭐"
+        title = "Python 探险者"
+        comment = ("万事开头难！你已经勇敢地尝试了 Python 编程。\n"
+                   "建议从头复习课程内容，多动手写代码，你一定会进步的！")
+
+    print(f"  {stars}")
+    print(f"  称号：{title}")
+    print(f"  总分：{total_score} / {max_possible}")
+    print()
+    print(f"  {comment}")
+
+
+# ==================== 学习之旅总结 ====================
+
+def show_learning_journey():
+    """
+    显示"我的 Python 学习之旅"总结页面
+    """
+    print_title("📚 我的 Python 学习之旅")
+    print()
+    print("  回顾我们一路学到的 Python 知识：")
+    print()
+    print("  ┌──────────────────────────────────────────────┐")
+    print("  │  第 1-5 课   ：基础入门                       │")
+    print("  │              · print() 输出                   │")
+    print("  │              · 变量与数据类型                  │")
+    print("  │              · input() 输入                   │")
+    print("  │              · 字符串操作                     │")
+    print("  │              · 数字运算                       │")
+    print("  ├──────────────────────────────────────────────┤")
+    print("  │  第 6-10 课  ：逻辑与控制                      │")
+    print("  │              · if/elif/else 条件判断          │")
+    print("  │              · 比较运算符                      │")
+    print("  │              · while 循环                     │")
+    print("  │              · for 循环                       │")
+    print("  │              · break / continue               │")
+    print("  ├──────────────────────────────────────────────┤")
+    print("  │  第 11-15 课 ：数据结构                        │")
+    print("  │              · 列表 (list)                    │")
+    print("  │              · 字典 (dict)                    │")
+    print("  │              · 元组 (tuple)                   │")
+    print("  │              · 集合 (set)                     │")
+    print("  │              · 嵌套数据结构                    │")
+    print("  ├──────────────────────────────────────────────┤")
+    print("  │  第 16-20 课 ：函数与模块                      │")
+    print("  │              · 定义函数 (def)                 │")
+    print("  │              · 参数与返回值                    │")
+    print("  │              · 变量作用域                      │")
+    print("  │              · 导入模块 (import)              │")
+    print("  │              · random / math / time 模块       │")
+    print("  ├──────────────────────────────────────────────┤")
+    print("  │  第 21-44 课 ：项目实战                        │")
+    print("  │              · 猜数字、文字冒险                │")
+    print("  │              · 待办清单、成绩管理              │")
+    print("  │              · Turtle 绘图                    │")
+    print("  │              · 密码生成器                      │")
+    print("  │              · 烟花动画                        │")
+    print("  ├──────────────────────────────────────────────┤")
+    print("  │  第 45-48 课 ：综合闯关                        │")
+    print("  │              · 数学计算                       │")
+    print("  │              · 密码破译                       │")
+    print("  │              · Python 知识问答                │")
+    print("  └──────────────────────────────────────────────┘")
+    print()
+    print("  你已经从一个编程新手，成长为能够独立完成项目的")
+    print("  Python 小专家了！🎉")
+    print()
+    print("  下一步你可以：")
+    print("    📖 学习更多 Python 库（pygame, requests 等）")
+    print("    🎮 尝试制作更复杂的游戏")
+    print("    🌐 学习用 Python 制作网页")
+    print("    🤖 了解人工智能和机器学习")
+    print()
+    print("  编程的世界无限广阔，继续保持好奇心！")
+    print()
+    print_line("=", 50)
+
+    # 留一个"彩蛋"：打印学习天数
+    print()
+    print("  💡 小提示：print() 是你在 Python 中学会的第一个函数。")
+    print('     试试在 Python 中输入：print("Hello, Python!")')
+    print("     这句话，是一切伟大程序的开始！")
+
+
+# ==================== 主程序 ====================
+
+def main():
+    global player_name, total_score, level_scores
+
+    print_title("🏰 Python 闯关大挑战（下半场）")
+    print()
+    print("欢迎回到闯关挑战！今天将迎来最后一关和总结~")
+    print()
+
+    # 获取玩家姓名
+    player_name = input("请输入你的名字：").strip()
+    if not player_name:
+        player_name = "小勇士"
+    print(f"\n你好，{player_name}！让我们继续闯关！\n")
+    time.sleep(1)
+
+    # 重置分数（如果是独立的赛后程，上一课的分数需要手动输入）
+    total_score = 0
+    level_scores = {}
+    previous_score = 0
+
+    print("如果你已经完成了上一课（第一关和第二关），")
+    try:
+        previous_score = int(input("请输入你上半场的总分（如果没玩过请直接按 Enter）：").strip() or "0")
+    except ValueError:
+        previous_score = 0
+
+    if previous_score &gt; 0:
+        total_score = previous_score
+        print(f"\n已记录上半场得分：{previous_score} 分\n")
+
+    # ---- 第三关 ----
+    passed_3 = gate_3_quiz()
+
+    # ---- 显示闯关状态 ----
+    print()
+    print_line("=", 50)
+    print(f"  玩家：{player_name}")
+    print(f"  下半场得分（第三关）：{level_scores.get('第三关', 0)} 分")
+    print(f"  累计总分：{total_score} 分")
+    print_line("=", 50)
+    print()
+
+    # ---- 最终评价 ----
+    get_final_evaluation()
+
+    # ---- 学习之旅 ----
+    input("\n按 Enter 键查看你的学习之旅总结...")
+    show_learning_journey()
+
+    # ---- 结束 ----
+    print()
+    print(f"感谢你，{player_name}！")
+    print("Python 学习之旅暂时告一段落，但你的编程之路才刚刚开始！")
+    print("加油，未来的程序员！💪")
+    print()
+
+
+if __name__ == "__main__":
+    main()
+
+
+# ==================== 练习题 ====================
+
+"""
+练习一：自定义题库
+---------------------------------------------------
+目前的题库只有 10 道固定题目。请扩展题库！
+要求：
+  - 至少添加 10 道新的选择题
+  - 题目可以涵盖变量、循环、条件、列表、字符串、函数、模块等知识点
+  - 每道题都要有详细的解析（explanation）
+提示：
+  - 用你学过的 Python 知识来出题
+  - 可以让同学或朋友来测试你的题库
+
+练习二：增加"隐藏关卡"
+---------------------------------------------------
+在第三关之后，增加一个隐藏关卡，只有三关全部通过的人才能进入！
+要求：
+  - 隐藏关卡可以是一道"编程实战题"
+  - 比如："请在 3 分钟内用代码画出一个正方形（用 print 或 turtle 都可以）"
+  - 或者："请写一个函数，判断一个数是否为质数"
+  - 隐藏关卡通关可以获得额外 30 分的奖励
+
+提示：
+  - 先检查 passed_1, passed_2, passed_3 是否全部为 True
+  - 如果全部通过，提示"你发现了一个隐藏关卡！"
+  - 让用户输入代码或用 eval()/exec() 来执行（注意安全性）
+
+练习三：美化输出界面
+---------------------------------------------------
+目前程序的输出是纯文本的，相对朴素。请尝试美化界面！
+
+要求：
+  - 使用 Unicode 字符画边框（如 ┌─┐│└─┘ 等）
+  - 使用 emoji 表情符号增强视觉效果
+  - 在关键步骤添加"等待动画"（如打印点号模拟加载中...）
+  - 不同分数段用不同颜色文字（在支持 ANSI 转义序列的终端中）
+
+提示：
+  - ANSI 颜色代码：print("\033[91m红色文字\033[0m")
+  - 等待动画可以用一个循环，print(".", end="", flush=True)
+"""
+
+
+# ==================== 综合小挑战 ====================
+
+"""
+综合挑战：打造你自己的"终极闯关游戏"
+---------------------------------------------------
+将 lesson_47 和 lesson_48 的代码整合起来，创建一个完整的
+"Python 终极闯关游戏"！
+
+要求：
+1. 三个关卡全部包含（数学计算 + 密码破译 + 知识问答）
+2. 每个关卡之间显示得分和进度条（如 [████░░░░] 50%）
+3. 添加"生命值"系统：
+   - 初始 3 条命
+   - 每关没通过扣 1 条命
+   - 生命为 0 则游戏结束
+4. 添加"道具系统"：
+   - "提示卡"：在数学关可以看到正确答案范围
+   - "跳过卡"：可以跳过一道不会的题
+   - 每种道具初始 1 个
+5. 所有关卡结束后，将玩家的成绩保存到一个文件中
+   （如 high_scores.txt），并显示历史最高分
+
+这将是你整个课程最完整的作品，融合了变量、条件、循环、
+列表、函数、文件操作等几乎所有知识！
+
+提示结构：
+  while lives &gt; 0 and current_gate &lt;= 3:
+      if current_gate == 1:
+          passed = gate_1_math()
+      elif current_gate == 2:
+          passed = gate_2_cipher()
+      elif current_gate == 3:
+          passed = gate_3_quiz()
+
+      if passed:
+          current_gate += 1
+      else:
+          lives -= 1
+          if lives &gt; 0:
+              重试当前关卡
+
+  保存分数到文件
+"""
+</pre>
+    <p class="hint">本页使用浅色主题与 UTF-8 编码，可直接打印或导出 PDF。</p>
+  </div>
+</body>
+</html>

@@ -1,0 +1,506 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>lesson_cli_04_文件持久化.cpp</title>
+<style>
+  :root {
+    --bg: #f5f7fa;
+    --panel: #ffffff;
+    --text: #1a1a2e;
+    --muted: #5a6570;
+    --gold: #b8860b;
+    --code-bg: #ffffff;
+    --code-text: #1f2933;
+    --border: #d8dee6;
+    --top-bg: #ffffff;
+    --top-border: #e5e9ef;
+  }
+  * { box-sizing: border-box; }
+  html, body {
+    margin: 0; padding: 0;
+    background: var(--bg);
+    color: var(--text);
+    font-family: -apple-system, BlinkMacSystemFont, "PingFang SC", "Microsoft YaHei", sans-serif;
+    min-height: 100%;
+  }
+  .top {
+    position: sticky; top: 0; z-index: 10;
+    display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between;
+    gap: 10px;
+    padding: 12px 18px;
+    background: var(--top-bg);
+    border-bottom: 1px solid var(--top-border);
+    box-shadow: 0 1px 8px rgba(15, 23, 42, 0.06);
+  }
+  .brand { color: var(--gold); font-weight: 700; font-size: 14px; letter-spacing: 0.04em; }
+  .title { font-size: 15px; font-weight: 600; color: var(--text); max-width: 52vw; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .actions { display: flex; gap: 8px; flex-wrap: wrap; }
+  .btn {
+    appearance: none; border: 1px solid var(--border);
+    background: #fff; color: var(--text);
+    border-radius: 999px; padding: 8px 14px; font-size: 13px; font-weight: 600;
+    text-decoration: none; cursor: pointer;
+  }
+  .btn:hover { background: #f0f3f7; }
+  .btn.gold {
+    background: linear-gradient(135deg, #f0d78c, #d4a853);
+    color: #0a2540; border-color: #e0c06a;
+  }
+  .meta {
+    padding: 10px 18px; color: var(--muted); font-size: 12px;
+    border-bottom: 1px solid var(--border);
+    background: var(--panel);
+  }
+  .wrap { padding: 16px 18px 40px; }
+  pre {
+    margin: 0;
+    background: var(--code-bg);
+    color: var(--code-text);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 18px 20px;
+    overflow: auto;
+    font-family: "SF Mono", "JetBrains Mono", "Fira Code", Consolas, "Courier New", monospace;
+    font-size: 13.5px;
+    line-height: 1.55;
+    white-space: pre;
+    tab-size: 4;
+    box-shadow: 0 2px 12px rgba(15, 23, 42, 0.05);
+  }
+  .hint { margin-top: 12px; color: var(--muted); font-size: 12px; }
+  @media print {
+    html, body { background: #fff !important; color: #000 !important; }
+    .top { position: static; box-shadow: none; border-bottom: 1px solid #ccc; background: #fff !important; }
+    .actions { display: none !important; }
+    .meta { background: #fff !important; border-color: #ddd; color: #333; }
+    .wrap { padding: 0; }
+    pre {
+      background: #fff !important; color: #000 !important;
+      border: 1px solid #bbb; box-shadow: none; border-radius: 0;
+      white-space: pre-wrap; word-break: break-word; font-size: 11pt; line-height: 1.4;
+    }
+    .hint { display: none; }
+    a { color: #000; text-decoration: none; }
+  }
+</style>
+</head>
+<body>
+  <div class="top">
+    <div class="brand">C++ 四节小课 · 工具 · 配套代码</div>
+    <div class="title">lesson_cli_04_文件持久化.cpp</div>
+    <div class="actions">
+      <a class="btn" href="../lesson_cli_04_文件持久化.cpp" download="lesson_cli_04_文件持久化.cpp">⬇️ 下载源文件</a>
+      <a class="btn gold" href="javascript:history.back()">← 返回课件</a>
+    </div>
+  </div>
+  <div class="meta">编码：UTF-8 · 文件：lesson_cli_04_文件持久化.cpp · 共 402 行 · 浅色主题便于打印</div>
+  <div class="wrap">
+    <pre id="code">/*
+ * 第4课：持久化 —— 文件读写与完整发布
+ * 项目：任务管理器 v4.0（完整发布版）✅
+ *
+ * 知识点：
+ *   1. ofstream 写文件
+ *   2. ifstream 读文件
+ *   3. 字符串解析（find + substr + stoi）
+ *   4. 自动保存 / 自动加载
+ *   5. ANSI 颜色转义码
+ *   6. 完整项目发布
+ *
+ * 编译方法：
+ *   g++ -std=c++11 lesson_cli_04_文件持久化.cpp -o todo
+ *   运行：./todo
+ *
+ * 数据文件：tasks.txt（自动创建，与程序同目录）
+ * 格式示例：1|完成数学作业|0|1
+ */
+
+#include &lt;iostream&gt;
+#include &lt;string&gt;
+#include &lt;vector&gt;
+#include &lt;fstream&gt;
+#include &lt;iomanip&gt;
+using namespace std;
+
+// ===== ANSI 颜色常量 =====
+#ifdef _WIN32
+    // Windows 旧版控制台可能不支持 ANSI，设为空
+    const string RED    = "";
+    const string GREEN  = "";
+    const string YELLOW = "";
+    const string CYAN   = "";
+    const string RESET  = "";
+#else
+    const string RED    = "\033[31m";
+    const string GREEN  = "\033[32m";
+    const string YELLOW = "\033[33m";
+    const string CYAN   = "\033[36m";
+    const string RESET  = "\033[0m";
+#endif
+
+// ===== 数据结构 =====
+struct Task {
+    int id;
+    string title;
+    bool done;
+    int priority;  // 1=高, 2=中, 3=低
+};
+
+// ===== 全局数据 =====
+vector&lt;Task&gt; tasks;
+int nextId = 1;
+
+// ===== 辅助函数：根据ID查找任务 =====
+int findTaskById(int id) {
+    for (int i = 0; i &lt; tasks.size(); i++) {
+        if (tasks[i].id == id) return i;
+    }
+    return -1;
+}
+
+// ===== 文件操作 =====
+
+// 保存数据到文件
+void saveToFile() {
+    ofstream file("tasks.txt");
+    if (!file.is_open()) {
+        cout &lt;&lt; RED &lt;&lt; "❌ 无法保存文件！请检查磁盘空间或权限。" &lt;&lt; RESET &lt;&lt; endl;
+        return;
+    }
+
+    // 格式：id|title|done(0/1)|priority
+    for (int i = 0; i &lt; tasks.size(); i++) {
+        file &lt;&lt; tasks[i].id &lt;&lt; "|"
+             &lt;&lt; tasks[i].title &lt;&lt; "|"
+             &lt;&lt; tasks[i].done &lt;&lt; "|"
+             &lt;&lt; tasks[i].priority &lt;&lt; endl;
+    }
+
+    file.close();
+}
+
+// 从文件加载数据
+void loadFromFile() {
+    ifstream file("tasks.txt");
+    if (!file.is_open()) {
+        cout &lt;&lt; YELLOW &lt;&lt; "📝 首次使用，未找到数据文件。" &lt;&lt; RESET &lt;&lt; endl;
+        cout &lt;&lt; "   程序将在当前目录创建 tasks.txt 保存你的任务数据。" &lt;&lt; endl;
+        return;
+    }
+
+    tasks.clear();
+    string line;
+    int lineNum = 0;
+
+    while (getline(file, line)) {
+        lineNum++;
+        if (line.empty()) continue;  // 跳过空行
+
+        // 解析格式：id|title|done|priority
+        int p1 = line.find('|');
+        int p2 = line.find('|', p1 + 1);
+        int p3 = line.find('|', p2 + 1);
+
+        // 验证格式完整性
+        if (p1 == string::npos || p2 == string::npos || p3 == string::npos) {
+            cout &lt;&lt; YELLOW &lt;&lt; "⚠ 第 " &lt;&lt; lineNum &lt;&lt; " 行格式错误，已跳过。" &lt;&lt; RESET &lt;&lt; endl;
+            continue;
+        }
+
+        Task t;
+        t.id       = stoi(line.substr(0, p1));
+        t.title    = line.substr(p1 + 1, p2 - p1 - 1);
+        t.done     = (line.substr(p2 + 1, p3 - p2 - 1) == "1");
+        t.priority = stoi(line.substr(p3 + 1));
+
+        tasks.push_back(t);
+    }
+
+    file.close();
+
+    // 更新 nextId
+    if (!tasks.empty()) {
+        nextId = tasks.back().id + 1;
+    }
+
+    cout &lt;&lt; GREEN &lt;&lt; "✓ 已从文件加载 " &lt;&lt; tasks.size() &lt;&lt; " 条任务。" &lt;&lt; RESET &lt;&lt; endl;
+}
+
+// ===== 菜单显示 =====
+void showMenu() {
+    cout &lt;&lt; "\n" &lt;&lt; CYAN;
+    cout &lt;&lt; "╔══════════════════════════════╗" &lt;&lt; endl;
+    cout &lt;&lt; "║     📋 任务管理器 v4.0       ║" &lt;&lt; endl;
+    cout &lt;&lt; "╠══════════════════════════════╣" &lt;&lt; endl;
+    cout &lt;&lt; "║  1. ➕ 添加新任务            ║" &lt;&lt; endl;
+    cout &lt;&lt; "║  2. 📋 查看所有任务          ║" &lt;&lt; endl;
+    cout &lt;&lt; "║  3. ✅ 标记任务完成/未完成   ║" &lt;&lt; endl;
+    cout &lt;&lt; "║  4. 🗑️  删除任务             ║" &lt;&lt; endl;
+    cout &lt;&lt; "║  5. 🔍 查看待完成任务        ║" &lt;&lt; endl;
+    cout &lt;&lt; "║  6. 📊 任务统计              ║" &lt;&lt; endl;
+    cout &lt;&lt; "║  0. 🚪 退出程序              ║" &lt;&lt; endl;
+    cout &lt;&lt; "╚══════════════════════════════╝" &lt;&lt; RESET &lt;&lt; endl;
+    cout &lt;&lt; "请输入你的选择：";
+}
+
+// ===== 功能1：添加任务（含自动保存） =====
+void addTask() {
+    Task t;
+    t.id = nextId++;
+    t.done = false;
+
+    cout &lt;&lt; "请输入任务标题：";
+    cin.ignore();
+    getline(cin, t.title);
+
+    // 检查标题中是否包含分隔符
+    if (t.title.find('|') != string::npos) {
+        cout &lt;&lt; YELLOW &lt;&lt; "⚠ 标题不能包含 '|' 字符，已自动替换为 '-'。" &lt;&lt; RESET &lt;&lt; endl;
+        for (int i = 0; i &lt; t.title.length(); i++) {
+            if (t.title[i] == '|') t.title[i] = '-';
+        }
+    }
+
+    cout &lt;&lt; "优先级（1=高🔴, 2=中🟡, 3=低🟢）：";
+    cin &gt;&gt; t.priority;
+    if (t.priority &lt; 1 || t.priority &gt; 3) t.priority = 2;
+
+    tasks.push_back(t);
+
+    // ★ 自动保存
+    saveToFile();
+
+    cout &lt;&lt; GREEN &lt;&lt; "✓ 任务添加成功！（编号：" &lt;&lt; t.id &lt;&lt; "，标题：" &lt;&lt; t.title &lt;&lt; "）" &lt;&lt; RESET &lt;&lt; endl;
+}
+
+// ===== 功能2：查看所有任务 =====
+void viewTasks() {
+    if (tasks.empty()) {
+        cout &lt;&lt; "\n📭 暂无任务！试试「1. 添加新任务」吧！" &lt;&lt; endl;
+        return;
+    }
+
+    cout &lt;&lt; "\n┌──────┬──────────────────────────┬────────────┬────────┐" &lt;&lt; endl;
+    cout &lt;&lt; "│ 编号 │        任务标题          │    状态    │ 优先级 │" &lt;&lt; endl;
+    cout &lt;&lt; "├──────┼──────────────────────────┼────────────┼────────┤" &lt;&lt; endl;
+
+    for (int i = 0; i &lt; tasks.size(); i++) {
+        Task&amp; t = tasks[i];
+        cout &lt;&lt; "│ " &lt;&lt; setw(3) &lt;&lt; t.id &lt;&lt; "  │  " &lt;&lt; t.title;
+
+        int displayLen = t.title.length() * 2;
+        for (int s = 0; s &lt; 28 - displayLen; s++) cout &lt;&lt; " ";
+
+        if (t.done)
+            cout &lt;&lt; "│  " &lt;&lt; GREEN &lt;&lt; "✅ 已完成" &lt;&lt; RESET &lt;&lt; "  │";
+        else
+            cout &lt;&lt; "│  ⬜ 未完成  │";
+
+        if (t.priority == 1) cout &lt;&lt; "   🔴高  │" &lt;&lt; endl;
+        else if (t.priority == 2) cout &lt;&lt; "   🟡中  │" &lt;&lt; endl;
+        else cout &lt;&lt; "   🟢低  │" &lt;&lt; endl;
+    }
+
+    cout &lt;&lt; "└──────┴──────────────────────────┴────────────┴────────┘" &lt;&lt; endl;
+
+    int doneCount = 0;
+    for (int i = 0; i &lt; tasks.size(); i++) {
+        if (tasks[i].done) doneCount++;
+    }
+    cout &lt;&lt; "📊 共 " &lt;&lt; tasks.size() &lt;&lt; " 个任务（"
+         &lt;&lt; GREEN &lt;&lt; doneCount &lt;&lt; RESET &lt;&lt; " 已完成, "
+         &lt;&lt; tasks.size() - doneCount &lt;&lt; " 未完成）" &lt;&lt; endl;
+}
+
+// ===== 功能3：标记任务完成/取消完成（含自动保存） =====
+void markDone() {
+    if (tasks.empty()) {
+        cout &lt;&lt; "📭 暂无任务！" &lt;&lt; endl;
+        return;
+    }
+
+    int id;
+    cout &lt;&lt; "请输入要切换状态的任务编号：";
+    cin &gt;&gt; id;
+
+    int idx = findTaskById(id);
+    if (idx == -1) {
+        cout &lt;&lt; RED &lt;&lt; "❌ 未找到编号为 " &lt;&lt; id &lt;&lt; " 的任务！" &lt;&lt; RESET &lt;&lt; endl;
+        return;
+    }
+
+    tasks[idx].done = !tasks[idx].done;
+
+    // ★ 自动保存
+    saveToFile();
+
+    cout &lt;&lt; GREEN &lt;&lt; "✓ 任务 #" &lt;&lt; id &lt;&lt; "「" &lt;&lt; tasks[idx].title &lt;&lt; "」";
+    if (tasks[idx].done)
+        cout &lt;&lt; " 已标记为 ✅ 已完成" &lt;&lt; RESET &lt;&lt; endl;
+    else
+        cout &lt;&lt; " 已标记为 ⬜ 未完成" &lt;&lt; RESET &lt;&lt; endl;
+}
+
+// ===== 功能4：删除任务（含自动保存） =====
+void deleteTask() {
+    if (tasks.empty()) {
+        cout &lt;&lt; "📭 暂无任务！" &lt;&lt; endl;
+        return;
+    }
+
+    int id;
+    cout &lt;&lt; "请输入要删除的任务编号：";
+    cin &gt;&gt; id;
+
+    int idx = findTaskById(id);
+    if (idx == -1) {
+        cout &lt;&lt; RED &lt;&lt; "❌ 未找到编号为 " &lt;&lt; id &lt;&lt; " 的任务！" &lt;&lt; RESET &lt;&lt; endl;
+        return;
+    }
+
+    // 二次确认
+    cout &lt;&lt; "\n⚠️  确定要删除以下任务吗？" &lt;&lt; endl;
+    cout &lt;&lt; "    编号：" &lt;&lt; tasks[idx].id &lt;&lt; endl;
+    cout &lt;&lt; "    标题：" &lt;&lt; tasks[idx].title &lt;&lt; endl;
+    cout &lt;&lt; "    状态：" &lt;&lt; (tasks[idx].done ? "已完成" : "未完成") &lt;&lt; endl;
+    cout &lt;&lt; "\n确认删除？(y/n)：";
+    char confirm;
+    cin &gt;&gt; confirm;
+
+    if (confirm == 'y' || confirm == 'Y') {
+        string deletedTitle = tasks[idx].title;
+        tasks.erase(tasks.begin() + idx);
+
+        // ★ 自动保存
+        saveToFile();
+
+        cout &lt;&lt; GREEN &lt;&lt; "✓ 任务「" &lt;&lt; deletedTitle &lt;&lt; "」已删除！" &lt;&lt; RESET &lt;&lt; endl;
+    } else {
+        cout &lt;&lt; "  已取消删除。" &lt;&lt; endl;
+    }
+}
+
+// ===== 功能5：查看待完成任务（筛选） =====
+void viewPending() {
+    if (tasks.empty()) {
+        cout &lt;&lt; "\n📭 暂无任务！" &lt;&lt; endl;
+        return;
+    }
+
+    int count = 0;
+    cout &lt;&lt; "\n📋 待完成的任务：" &lt;&lt; endl;
+    cout &lt;&lt; "─────────────────────────────────────" &lt;&lt; endl;
+
+    for (int i = 0; i &lt; tasks.size(); i++) {
+        if (!tasks[i].done) {
+            count++;
+            cout &lt;&lt; "  [" &lt;&lt; tasks[i].id &lt;&lt; "] " &lt;&lt; tasks[i].title;
+            if (tasks[i].priority == 1) cout &lt;&lt; " " &lt;&lt; RED &lt;&lt; "🔴" &lt;&lt; RESET;
+            else if (tasks[i].priority == 2) cout &lt;&lt; " " &lt;&lt; YELLOW &lt;&lt; "🟡" &lt;&lt; RESET;
+            else cout &lt;&lt; " 🟢";
+            cout &lt;&lt; endl;
+        }
+    }
+
+    if (count == 0) {
+        cout &lt;&lt; "  " &lt;&lt; GREEN &lt;&lt; "🎉 太棒了！所有任务都已完成！" &lt;&lt; RESET &lt;&lt; endl;
+    } else {
+        cout &lt;&lt; "─────────────────────────────────────" &lt;&lt; endl;
+        cout &lt;&lt; "  共 " &lt;&lt; count &lt;&lt; " 个待完成任务。" &lt;&lt; endl;
+    }
+}
+
+// ===== 功能6：任务统计 =====
+void showStats() {
+    if (tasks.empty()) {
+        cout &lt;&lt; "\n📭 暂无任务，无法统计！" &lt;&lt; endl;
+        return;
+    }
+
+    int total = tasks.size();
+    int done = 0;
+    int high = 0, mid = 0, low = 0;
+
+    for (int i = 0; i &lt; tasks.size(); i++) {
+        if (tasks[i].done) done++;
+        if (tasks[i].priority == 1) high++;
+        else if (tasks[i].priority == 2) mid++;
+        else low++;
+    }
+
+    int percent = (total &gt; 0) ? (done * 100 / total) : 0;
+
+    cout &lt;&lt; "\n╔═══════════════╦════════╗" &lt;&lt; endl;
+    cout &lt;&lt; "║  📊 任务统计  ║  数据  ║" &lt;&lt; endl;
+    cout &lt;&lt; "╠═══════════════╬════════╣" &lt;&lt; endl;
+    cout &lt;&lt; "║  总任务数     ║    " &lt;&lt; setw(2) &lt;&lt; total &lt;&lt; "  ║" &lt;&lt; endl;
+    cout &lt;&lt; "║  已完成       ║    " &lt;&lt; setw(2) &lt;&lt; done &lt;&lt; "  ║" &lt;&lt; endl;
+    cout &lt;&lt; "║  未完成       ║    " &lt;&lt; setw(2) &lt;&lt; total - done &lt;&lt; "  ║" &lt;&lt; endl;
+    cout &lt;&lt; "║  完成率       ║   " &lt;&lt; setw(2) &lt;&lt; percent &lt;&lt; "% ║" &lt;&lt; endl;
+    cout &lt;&lt; "╠═══════════════╬════════╣" &lt;&lt; endl;
+    cout &lt;&lt; "║  🔴 高优先级  ║    " &lt;&lt; setw(2) &lt;&lt; high &lt;&lt; "  ║" &lt;&lt; endl;
+    cout &lt;&lt; "║  🟡 中优先级  ║    " &lt;&lt; setw(2) &lt;&lt; mid &lt;&lt; "  ║" &lt;&lt; endl;
+    cout &lt;&lt; "║  🟢 低优先级  ║    " &lt;&lt; setw(2) &lt;&lt; low &lt;&lt; "  ║" &lt;&lt; endl;
+    cout &lt;&lt; "╚═══════════════╩════════╝" &lt;&lt; endl;
+
+    // 进度条
+    cout &lt;&lt; "\n完成进度：";
+    cout &lt;&lt; "[";
+    int barLen = 20;
+    int filled = (total &gt; 0) ? (done * barLen / total) : 0;
+    for (int i = 0; i &lt; barLen; i++) {
+        if (i &lt; filled) cout &lt;&lt; GREEN &lt;&lt; "█" &lt;&lt; RESET;
+        else cout &lt;&lt; "░";
+    }
+    cout &lt;&lt; "] " &lt;&lt; (percent &gt;= 50 ? GREEN : YELLOW) &lt;&lt; percent &lt;&lt; "%" &lt;&lt; RESET &lt;&lt; endl;
+}
+
+// ===== 主函数 =====
+int main() {
+    int choice;
+
+    cout &lt;&lt; CYAN;
+    cout &lt;&lt; "╔══════════════════════════════════════════════════╗" &lt;&lt; endl;
+    cout &lt;&lt; "║     第4课：持久化 —— 文件读写与完整发布         ║" &lt;&lt; endl;
+    cout &lt;&lt; "║     C++ 4节小课：从零构建 CLI 任务管理器         ║" &lt;&lt; endl;
+    cout &lt;&lt; "╚══════════════════════════════════════════════════╝" &lt;&lt; RESET &lt;&lt; endl;
+
+    // ★ 启动时自动加载数据
+    loadFromFile();
+
+    do {
+        showMenu();
+        cin &gt;&gt; choice;
+        cin.ignore();  // 清空缓冲区
+
+        cout &lt;&lt; endl;
+
+        switch (choice) {
+            case 1: addTask();     break;
+            case 2: viewTasks();   break;
+            case 3: markDone();    break;
+            case 4: deleteTask();  break;
+            case 5: viewPending(); break;
+            case 6: showStats();   break;
+            case 0:
+                // ★ 退出前保存
+                saveToFile();
+                cout &lt;&lt; GREEN &lt;&lt; "👋 数据已保存到 tasks.txt，再见！" &lt;&lt; RESET &lt;&lt; endl;
+                cout &lt;&lt; "\n🎉 恭喜你完成了全部 4 节课的学习！" &lt;&lt; endl;
+                cout &lt;&lt; "   你现在可以用 ./todo 命令随时管理你的任务了！" &lt;&lt; endl;
+                break;
+            default:
+                cout &lt;&lt; RED &lt;&lt; "❌ 无效选择！请输入 0~6 之间的数字。" &lt;&lt; RESET &lt;&lt; endl;
+                break;
+        }
+    } while (choice != 0);
+
+    return 0;
+}
+</pre>
+    <p class="hint">本页使用浅色主题与 UTF-8 编码，可直接打印或导出 PDF。</p>
+  </div>
+</body>
+</html>

@@ -1,0 +1,328 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>lesson13_union_find_basic.cpp</title>
+<style>
+  :root {
+    --bg: #f5f7fa;
+    --panel: #ffffff;
+    --text: #1a1a2e;
+    --muted: #5a6570;
+    --gold: #b8860b;
+    --code-bg: #ffffff;
+    --code-text: #1f2933;
+    --border: #d8dee6;
+    --top-bg: #ffffff;
+    --top-border: #e5e9ef;
+  }
+  * { box-sizing: border-box; }
+  html, body {
+    margin: 0; padding: 0;
+    background: var(--bg);
+    color: var(--text);
+    font-family: -apple-system, BlinkMacSystemFont, "PingFang SC", "Microsoft YaHei", sans-serif;
+    min-height: 100%;
+  }
+  .top {
+    position: sticky; top: 0; z-index: 10;
+    display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between;
+    gap: 10px;
+    padding: 12px 18px;
+    background: var(--top-bg);
+    border-bottom: 1px solid var(--top-border);
+    box-shadow: 0 1px 8px rgba(15, 23, 42, 0.06);
+  }
+  .brand { color: var(--gold); font-weight: 700; font-size: 14px; letter-spacing: 0.04em; }
+  .title { font-size: 15px; font-weight: 600; color: var(--text); max-width: 52vw; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .actions { display: flex; gap: 8px; flex-wrap: wrap; }
+  .btn {
+    appearance: none; border: 1px solid var(--border);
+    background: #fff; color: var(--text);
+    border-radius: 999px; padding: 8px 14px; font-size: 13px; font-weight: 600;
+    text-decoration: none; cursor: pointer;
+  }
+  .btn:hover { background: #f0f3f7; }
+  .btn.gold {
+    background: linear-gradient(135deg, #f0d78c, #d4a853);
+    color: #0a2540; border-color: #e0c06a;
+  }
+  .meta {
+    padding: 10px 18px; color: var(--muted); font-size: 12px;
+    border-bottom: 1px solid var(--border);
+    background: var(--panel);
+  }
+  .wrap { padding: 16px 18px 40px; }
+  pre {
+    margin: 0;
+    background: var(--code-bg);
+    color: var(--code-text);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 18px 20px;
+    overflow: auto;
+    font-family: "SF Mono", "JetBrains Mono", "Fira Code", Consolas, "Courier New", monospace;
+    font-size: 13.5px;
+    line-height: 1.55;
+    white-space: pre;
+    tab-size: 4;
+    box-shadow: 0 2px 12px rgba(15, 23, 42, 0.05);
+  }
+  .hint { margin-top: 12px; color: var(--muted); font-size: 12px; }
+  @media print {
+    html, body { background: #fff !important; color: #000 !important; }
+    .top { position: static; box-shadow: none; border-bottom: 1px solid #ccc; background: #fff !important; }
+    .actions { display: none !important; }
+    .meta { background: #fff !important; border-color: #ddd; color: #333; }
+    .wrap { padding: 0; }
+    pre {
+      background: #fff !important; color: #000 !important;
+      border: 1px solid #bbb; box-shadow: none; border-radius: 0;
+      white-space: pre-wrap; word-break: break-word; font-size: 11pt; line-height: 1.4;
+    }
+    .hint { display: none; }
+    a { color: #000; text-decoration: none; }
+  }
+</style>
+</head>
+<body>
+  <div class="top">
+    <div class="brand">CSP-S 备考 · 配套代码</div>
+    <div class="title">lesson13_union_find_basic.cpp</div>
+    <div class="actions">
+      <a class="btn" href="../lesson13_union_find_basic.cpp" download="lesson13_union_find_basic.cpp">⬇️ 下载源文件</a>
+      <a class="btn gold" href="javascript:history.back()">← 返回课件</a>
+    </div>
+  </div>
+  <div class="meta">编码：UTF-8 · 文件：lesson13_union_find_basic.cpp · 共 224 行 · 浅色主题便于打印</div>
+  <div class="wrap">
+    <pre id="code">/**
+ * 第13课：并查集基础（Union-Find / Disjoint Set Union）
+ * 对应CSP-S考纲知识点：
+ *   - 路径压缩（Path Compression）
+ *   - 按秩合并（Union by Rank / Size）
+ *   - 时间复杂度分析（反阿克曼函数 α(n)，近似 O(1)）
+ *   - 连通块计数与维护
+ *   - 离线逆序处理
+ *
+ * 包含以下实现：
+ *   1. 标准 DSU 模板（路径压缩 + 按大小合并）
+ *   2. 按秩（高度）合并版本
+ *   3. 连通块维护
+ *   4. Kruskal 最小生成树（应用并查集）
+ *   5. 离线删边转加边
+ */
+
+#include &lt;bits/stdc++.h&gt;
+using namespace std;
+
+// ============================================================
+// 一、标准并查集模板（路径压缩 + 按大小合并）
+// 功能：find 查根、unite 合并、same 判连通、size 查集合大小
+// 时间复杂度：单次操作 O(α(n)) ≈ O(1)
+// ============================================================
+struct DSU {
+    vector&lt;int&gt; fa, sz;
+    int comp;  // 连通块（集合）数量
+
+    DSU(int n) : fa(n + 1), sz(n + 1, 1), comp(n) {
+        for (int i = 1; i &lt;= n; i++) fa[i] = i;
+    }
+
+    // 查找（路径压缩 — 递归版）
+    int find(int x) {
+        return fa[x] == x ? x : fa[x] = find(fa[x]);
+    }
+
+    // 查找（路径压缩 — 迭代版，防栈溢出）
+    int find_iter(int x) {
+        int root = x;
+        while (fa[root] != root) root = fa[root];
+        while (x != root) {           // 路径压缩
+            int nxt = fa[x];
+            fa[x] = root;
+            x = nxt;
+        }
+        return root;
+    }
+
+    // 合并：小树挂到大树上
+    // 返回 true 表示成功合并，false 表示已连通
+    bool unite(int x, int y) {
+        x = find(x); y = find(y);
+        if (x == y) return false;
+        if (sz[x] &lt; sz[y]) swap(x, y);  // 确保 x 是较大的树
+        fa[y] = x;
+        sz[x] += sz[y];
+        comp--;
+        return true;
+    }
+
+    // 判断两个元素是否在同一集合
+    bool same(int x, int y) { return find(x) == find(y); }
+
+    // 查询 x 所属集合的大小
+    int size(int x) { return sz[find(x)]; }
+};
+
+// ============================================================
+// 二、按秩（高度）合并的 DSU
+// rank 是树高的上界估计值
+// ============================================================
+struct DSU_Rank {
+    vector&lt;int&gt; fa, rk;
+    int comp;
+
+    DSU_Rank(int n) : fa(n + 1), rk(n + 1, 0), comp(n) {
+        for (int i = 1; i &lt;= n; i++) fa[i] = i;
+    }
+
+    int find(int x) {
+        return fa[x] == x ? x : fa[x] = find(fa[x]);
+    }
+
+    bool unite(int x, int y) {
+        x = find(x); y = find(y);
+        if (x == y) return false;
+        if (rk[x] &lt; rk[y]) swap(x, y);
+        fa[y] = x;
+        if (rk[x] == rk[y]) rk[x]++;  // 等高时才增加秩
+        comp--;
+        return true;
+    }
+};
+
+// ============================================================
+// 三、Kruskal 最小生成树（并查集经典应用）
+// 给定 n 个点 m 条带权边的无向图，求最小生成树的边权和
+// ============================================================
+struct Edge {
+    int u, v, w;
+    bool operator&lt;(const Edge&amp; other) const {
+        return w &lt; other.w;
+    }
+};
+
+long long kruskal(int n, vector&lt;Edge&gt;&amp; edges) {
+    sort(edges.begin(), edges.end());  // 按边权升序
+    DSU dsu(n);
+    long long mst_weight = 0;
+    int cnt = 0;  // 已选边数
+
+    for (auto&amp; e : edges) {
+        if (dsu.unite(e.u, e.v)) {
+            mst_weight += e.w;
+            cnt++;
+            if (cnt == n - 1) break;  // 树已形成
+        }
+    }
+
+    // 若 cnt &lt; n - 1，则图不连通，不存在 MST
+    return (cnt == n - 1) ? mst_weight : -1;
+}
+
+// ============================================================
+// 四、离线删边转加边
+// 问题：给定一张图，依次删除 k 条边，每次删边后求连通块数
+// 解法：反向处理，初始加入所有未被删除的边，然后逆序加回被删的边
+// ============================================================
+vector&lt;int&gt; offline_delete_edges(int n, const vector&lt;pair&lt;int,int&gt;&gt;&amp; all_edges,
+                                  const vector&lt;pair&lt;int,int&gt;&gt;&amp; delete_edges) {
+    int k = delete_edges.size();
+
+    // 用 set 标记被删除的边（无向边需规范化）
+    set&lt;pair&lt;int,int&gt;&gt; deleted;
+    for (auto&amp; e : delete_edges) {
+        int u = e.first, v = e.second;
+        if (u &gt; v) swap(u, v);
+        deleted.insert({u, v});
+    }
+
+    // 建 DSU，先加入所有未被删除的边
+    DSU dsu(n);
+    for (auto&amp; e : all_edges) {
+        int u = e.first, v = e.second;
+        if (u &gt; v) swap(u, v);
+        if (deleted.find({u, v}) == deleted.end()) {
+            dsu.unite(u, v);
+        }
+    }
+
+    // 逆序加回被删除的边，记录每次加边前的连通块数
+    vector&lt;int&gt; ans(k);
+    for (int i = k - 1; i &gt;= 0; i--) {
+        ans[i] = dsu.comp;
+        int u = delete_edges[i].first, v = delete_edges[i].second;
+        dsu.unite(u, v);
+    }
+    return ans;
+}
+
+// ============================================================
+// 五、测试与示例程序
+// ============================================================
+
+// 示例1：基本连通性查询
+void solve_connectivity() {
+    int n, m;
+    cin &gt;&gt; n &gt;&gt; m;
+    DSU dsu(n);
+
+    while (m--) {
+        char op;
+        int x, y;
+        cin &gt;&gt; op &gt;&gt; x &gt;&gt; y;
+        if (op == 'M') {          // Merge
+            dsu.unite(x, y);
+        } else if (op == 'Q') {   // Query
+            cout &lt;&lt; (dsu.same(x, y) ? "Yes" : "No")
+                 &lt;&lt; " (components: " &lt;&lt; dsu.comp &lt;&lt; ")\n";
+        }
+    }
+}
+
+// 示例2：Kruskal 最小生成树
+void solve_mst() {
+    int n, m;
+    cin &gt;&gt; n &gt;&gt; m;
+    vector&lt;Edge&gt; edges(m);
+    for (int i = 0; i &lt; m; i++) {
+        cin &gt;&gt; edges[i].u &gt;&gt; edges[i].v &gt;&gt; edges[i].w;
+    }
+    long long ans = kruskal(n, edges);
+    if (ans == -1) cout &lt;&lt; "orz\n";  // 不连通
+    else cout &lt;&lt; ans &lt;&lt; '\n';
+}
+
+// 示例3：离线删边
+void solve_offline_delete() {
+    int n, m, k;
+    cin &gt;&gt; n &gt;&gt; m &gt;&gt; k;
+    vector&lt;pair&lt;int,int&gt;&gt; all_edges(m);
+    for (int i = 0; i &lt; m; i++) {
+        cin &gt;&gt; all_edges[i].first &gt;&gt; all_edges[i].second;
+    }
+    vector&lt;pair&lt;int,int&gt;&gt; del_edges(k);
+    for (int i = 0; i &lt; k; i++) {
+        cin &gt;&gt; del_edges[i].first &gt;&gt; del_edges[i].second;
+    }
+    vector&lt;int&gt; ans = offline_delete_edges(n, all_edges, del_edges);
+    for (int x : ans) cout &lt;&lt; x &lt;&lt; '\n';
+}
+
+int main() {
+    ios::sync_with_stdio(false);
+    cin.tie(nullptr);
+
+    // solve_connectivity();     // 连通性查询
+    // solve_mst();              // 最小生成树
+    // solve_offline_delete();   // 离线删边
+
+    return 0;
+}
+</pre>
+    <p class="hint">本页使用浅色主题与 UTF-8 编码，可直接打印或导出 PDF。</p>
+  </div>
+</body>
+</html>

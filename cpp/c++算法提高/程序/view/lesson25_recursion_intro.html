@@ -1,0 +1,412 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>lesson25_recursion_intro.cpp</title>
+<style>
+  :root {
+    --bg: #f5f7fa;
+    --panel: #ffffff;
+    --text: #1a1a2e;
+    --muted: #5a6570;
+    --gold: #b8860b;
+    --code-bg: #ffffff;
+    --code-text: #1f2933;
+    --border: #d8dee6;
+    --top-bg: #ffffff;
+    --top-border: #e5e9ef;
+  }
+  * { box-sizing: border-box; }
+  html, body {
+    margin: 0; padding: 0;
+    background: var(--bg);
+    color: var(--text);
+    font-family: -apple-system, BlinkMacSystemFont, "PingFang SC", "Microsoft YaHei", sans-serif;
+    min-height: 100%;
+  }
+  .top {
+    position: sticky; top: 0; z-index: 10;
+    display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between;
+    gap: 10px;
+    padding: 12px 18px;
+    background: var(--top-bg);
+    border-bottom: 1px solid var(--top-border);
+    box-shadow: 0 1px 8px rgba(15, 23, 42, 0.06);
+  }
+  .brand { color: var(--gold); font-weight: 700; font-size: 14px; letter-spacing: 0.04em; }
+  .title { font-size: 15px; font-weight: 600; color: var(--text); max-width: 52vw; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .actions { display: flex; gap: 8px; flex-wrap: wrap; }
+  .btn {
+    appearance: none; border: 1px solid var(--border);
+    background: #fff; color: var(--text);
+    border-radius: 999px; padding: 8px 14px; font-size: 13px; font-weight: 600;
+    text-decoration: none; cursor: pointer;
+  }
+  .btn:hover { background: #f0f3f7; }
+  .btn.gold {
+    background: linear-gradient(135deg, #f0d78c, #d4a853);
+    color: #0a2540; border-color: #e0c06a;
+  }
+  .meta {
+    padding: 10px 18px; color: var(--muted); font-size: 12px;
+    border-bottom: 1px solid var(--border);
+    background: var(--panel);
+  }
+  .wrap { padding: 16px 18px 40px; }
+  pre {
+    margin: 0;
+    background: var(--code-bg);
+    color: var(--code-text);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 18px 20px;
+    overflow: auto;
+    font-family: "SF Mono", "JetBrains Mono", "Fira Code", Consolas, "Courier New", monospace;
+    font-size: 13.5px;
+    line-height: 1.55;
+    white-space: pre;
+    tab-size: 4;
+    box-shadow: 0 2px 12px rgba(15, 23, 42, 0.05);
+  }
+  .hint { margin-top: 12px; color: var(--muted); font-size: 12px; }
+  @media print {
+    html, body { background: #fff !important; color: #000 !important; }
+    .top { position: static; box-shadow: none; border-bottom: 1px solid #ccc; background: #fff !important; }
+    .actions { display: none !important; }
+    .meta { background: #fff !important; border-color: #ddd; color: #333; }
+    .wrap { padding: 0; }
+    pre {
+      background: #fff !important; color: #000 !important;
+      border: 1px solid #bbb; box-shadow: none; border-radius: 0;
+      white-space: pre-wrap; word-break: break-word; font-size: 11pt; line-height: 1.4;
+    }
+    .hint { display: none; }
+    a { color: #000; text-decoration: none; }
+  }
+</style>
+</head>
+<body>
+  <div class="top">
+    <div class="brand">C++ 算法提高 · 配套代码</div>
+    <div class="title">lesson25_recursion_intro.cpp</div>
+    <div class="actions">
+      <a class="btn" href="../lesson25_recursion_intro.cpp" download="lesson25_recursion_intro.cpp">⬇️ 下载源文件</a>
+      <a class="btn gold" href="javascript:history.back()">← 返回课件</a>
+    </div>
+  </div>
+  <div class="meta">编码：UTF-8 · 文件：lesson25_recursion_intro.cpp · 共 308 行 · 浅色主题便于打印</div>
+  <div class="wrap">
+    <pre id="code">/*
+ * ============================================================
+ * 课程：递归算法入门 (Recursion Introduction)
+ *
+ * 本课内容：
+ * 1. 递归的基本概念
+ *    递归是一种编程技巧，函数在其定义中直接或间接地调用自身。
+ *    递归使得我们可以用简洁的代码解决具有自相似结构的问题。
+ *
+ * 2. 阶乘 (Factorial) 的递归实现
+ *    n! = n * (n-1) * (n-2) * ... * 1
+ *    递归定义：n! = n * (n-1)!，其中 0! = 1（基准情形）
+ *
+ * 3. 斐波那契数列 (Fibonacci) 的递归实现
+ *    F(0) = 0, F(1) = 1
+ *    F(n) = F(n-1) + F(n-2)  (n &gt;= 2)
+ *
+ * 4. 递归调用栈 (Call Stack) 的可视化演示
+ *    每次递归调用都会在调用栈上压入一个新的栈帧 (Stack Frame)，
+ *    栈帧中保存了函数的局部变量、参数和返回地址。
+ *    当递归深度过大时，可能会导致栈溢出 (Stack Overflow)。
+ *
+ * 递归的两个核心要素：
+ * - 基准情形 (Base Case)：
+ *   递归的终止条件。遇到基准情形时不再进行递归调用，直接返回结果。
+ *   没有基准情形会导致无限递归，最终栈溢出。
+ * - 递归步骤 (Recursive Step)：
+ *   将原问题分解为一个或多个规模更小的同类子问题，
+ *   通过递归调用解决子问题，再组合子问题的结果得到原问题的解。
+ *
+ * 递归 vs 迭代：
+ * - 递归代码通常更简洁、更接近数学定义，易于理解
+ * - 迭代通常效率更高，不占用额外的栈空间
+ * - 许多递归问题可以用"记忆化搜索"或"动态规划"优化
+ * ============================================================
+ */
+
+#include &lt;iostream&gt;
+#include &lt;string&gt;
+
+using namespace std;
+
+/**
+ * 阶乘的递归实现
+ *
+ * 数学定义：
+ *   0! = 1
+ *   n! = n * (n-1)!  (n &gt; 0)
+ *
+ * 执行过程（以 factorial(5) 为例）：
+ *   factorial(5) = 5 * factorial(4)
+ *                 = 5 * 4 * factorial(3)
+ *                 = 5 * 4 * 3 * factorial(2)
+ *                 = 5 * 4 * 3 * 2 * factorial(1)
+ *                 = 5 * 4 * 3 * 2 * 1 * factorial(0)
+ *                 = 5 * 4 * 3 * 2 * 1 * 1    ← 基准情形，开始返回
+ *                 = 120
+ *
+ * @param n 非负整数，计算 n 的阶乘
+ * @return n 的阶乘值，如果 n &lt; 0 则返回 -1 表示错误
+ */
+long long factorial(int n) {
+    // 基准情形 (Base Case)：
+    // 当 n 等于 0 时，0! = 1，递归终止，不再进行新的递归调用
+    // 这是递归的"出口"，没有它递归将无限进行，最终导致栈溢出
+    if (n == 0) {
+        return 1;
+    }
+
+    // 处理非法输入：负数没有阶乘定义
+    if (n &lt; 0) {
+        return -1;  // 返回 -1 表示输入错误
+    }
+
+    // 递归步骤 (Recursive Step)：
+    // n! = n * (n-1)!
+    // 将计算 n! 的问题分解为：
+    //   1. 计算 (n-1)! —— 这是一个规模更小的同类子问题，递归调用自身
+    //   2. 将结果乘以 n —— 组合子问题的解得到原问题的解
+    // 每次递归调用 n 都减少 1，最终会到达 n=0 的基准情形
+    return n * factorial(n - 1);
+}
+
+/**
+ * 斐波那契数列的递归实现
+ *
+ * 数学定义：
+ *   F(0) = 0
+ *   F(1) = 1
+ *   F(n) = F(n-1) + F(n-2)  (n &gt;= 2)
+ *
+ * 斐波那契数列的前几项：0, 1, 1, 2, 3, 5, 8, 13, 21, 34, 55, ...
+ *
+ * 执行过程（以 fibonacci(5) 为例）：
+ *                          fibonacci(5)
+ *                        /               \
+ *               fibonacci(4)         fibonacci(3)
+ *              /           \         /           \
+ *      fibonacci(3)  fibonacci(2) fibonacci(2) fibonacci(1)
+ *        /      \        /    \       /    \
+ *   fib(2)  fib(1)  fib(1) fib(0) fib(1) fib(0)
+ *    /   \
+ * fib(1) fib(0)
+ *
+ * 注意：这种简单的递归实现存在大量的重复计算（如上图所示），
+ * 时间复杂度为 O(2^n)，非常低效。实际应用中应使用
+ * 记忆化搜索或动态规划来优化。
+ *
+ * @param n 非负整数，计算第 n 个斐波那契数（从 0 开始）
+ * @return 第 n 个斐波那契数
+ */
+long long fibonacci(int n) {
+    // 基准情形 1：F(0) = 0
+    // 第 0 个斐波那契数是 0，递归在此终止
+    if (n == 0) {
+        return 0;
+    }
+
+    // 基准情形 2：F(1) = 1
+    // 第 1 个斐波那契数是 1，递归在此终止
+    if (n == 1) {
+        return 1;
+    }
+
+    // 处理非法输入
+    if (n &lt; 0) {
+        return -1;
+    }
+
+    // 递归步骤：
+    // F(n) = F(n-1) + F(n-2)
+    // 将问题分解为两个规模更小的子问题：
+    //   1. 计算 F(n-1) —— 规模为 n-1 的子问题
+    //   2. 计算 F(n-2) —— 规模为 n-2 的子问题
+    // 两个递归调用都会各自继续分解，直到遇到基准情形 F(0) 或 F(1)
+    return fibonacci(n - 1) + fibonacci(n - 2);
+}
+
+/**
+ * 递归调用栈演示函数
+ *
+ * 本函数通过打印缩进来直观展示递归的"进入"和"返回"过程。
+ * 每次递归调用深度增加一层，缩进也随之增加，
+ * 从而可以看到调用栈的"生长"和"收缩"。
+ *
+ * 递归调用栈的工作方式：
+ * 1. 当函数调用自身时，一个新的栈帧被压入调用栈顶端
+ * 2. 栈帧包含：参数值、局部变量、返回地址
+ * 3. 当基准情形达成、函数返回时，栈帧从调用栈顶端弹出
+ * 4. 程序回到上一层调用的位置继续执行
+ *
+ * 例如 recursion_demo(3, 0) 的输出：
+ *   → 进入 recursion_demo(3)，当前深度: 0
+ *      → 进入 recursion_demo(2)，当前深度: 1
+ *         → 进入 recursion_demo(1)，当前深度: 2
+ *            → 进入 recursion_demo(0)，当前深度: 3
+ *            ← 基准情形！开始返回。深度: 3
+ *            ← 返回 recursion_demo(1)，深度: 3
+ *         ← 返回 recursion_demo(2)，深度: 2
+ *      ← 返回 recursion_demo(3)，深度: 1
+ *   ← 完成 recursion_demo(3)，深度: 0
+ *
+ * @param n      剩余要递归的次数，每次递归减 1，为 0 时达到基准情形
+ * @param depth  当前递归深度，用于控制缩进量
+ */
+void recursion_demo(int n, int depth) {
+    // 生成缩进字符串：每层深度使用 4 个空格 + "│" 符号
+    // 这样可以清晰地看到递归的层级结构
+    string indent = "";
+    for (int i = 0; i &lt; depth; i++) {
+        indent += "│   ";
+    }
+
+    // 打印进入信息：显示进入当前函数调用，
+    // 括号内是当前的 n 值和深度值
+    cout &lt;&lt; indent &lt;&lt; "→ 进入 recursion_demo(n=" &lt;&lt; n &lt;&lt; ")，"
+         &lt;&lt; "当前深度: " &lt;&lt; depth &lt;&lt; endl;
+
+    // 基准情形：当 n == 0 时递归终止
+    // 这是递归的最深层，不再进行新的递归调用，直接开始返回
+    if (n == 0) {
+        cout &lt;&lt; indent &lt;&lt; "← 基准情形！n=0，开始返回。"
+             &lt;&lt; "深度: " &lt;&lt; depth &lt;&lt; endl;
+        return;  // 基准情形达成，弹出当前栈帧，返回上一层
+    }
+
+    // 递归步骤：调用自身，n 减 1，深度加 1
+    // 这一行代码执行时，会发生以下事情：
+    //   1. 一个新的栈帧被压入调用栈
+    //   2. 参数 n-1 和 depth+1 被传入新栈帧
+    //   3. 程序跳转到 recursion_demo 函数的开头执行
+    //   4. 直到新栈帧返回，程序才继续执行下面的代码
+    recursion_demo(n - 1, depth + 1);
+
+    // 当上面的递归调用返回后，程序执行到这里
+    // 这表示已经完成了 n-1 的子调用，当前函数也即将返回
+    // 打印返回信息，配合缩进可以看到调用栈正在"收缩"
+    cout &lt;&lt; indent &lt;&lt; "← 返回 recursion_demo(n=" &lt;&lt; n &lt;&lt; ")，"
+         &lt;&lt; "深度: " &lt;&lt; depth &lt;&lt; "，即将弹出栈帧" &lt;&lt; endl;
+}
+
+/**
+ * 辅助函数：打印分隔线，使输出更易阅读
+ */
+void print_separator(const string &amp;title) {
+    cout &lt;&lt; endl;
+    cout &lt;&lt; "========== " &lt;&lt; title &lt;&lt; " ==========" &lt;&lt; endl;
+}
+
+/**
+ * 主函数：
+ * 依次演示阶乘递归、斐波那契递归和调用栈可视化
+ */
+int main() {
+    // ==================== 第一部分：阶乘递归演示 ====================
+    print_separator("第一部分：阶乘 (Factorial) 递归");
+
+    cout &lt;&lt; "阶乘的递归定义：" &lt;&lt; endl;
+    cout &lt;&lt; "  0! = 1  （基准情形）" &lt;&lt; endl;
+    cout &lt;&lt; "  n! = n * (n-1)!  （递归步骤，n &gt; 0）" &lt;&lt; endl;
+    cout &lt;&lt; endl;
+
+    // 测试几个不同的阶乘值
+    // 可以选择使用固定值测试，也可以从用户输入获取 n
+    int fact_n = 5;  // 默认测试 factorial(5)，预期结果: 120
+
+    cout &lt;&lt; "请输入要计算阶乘的数（输入负数退出）：";
+    // 取消下面一行的注释以支持用户交互输入：
+    // cin &gt;&gt; fact_n;
+
+    if (fact_n &gt;= 0) {
+        long long fact_result = factorial(fact_n);
+        cout &lt;&lt; fact_n &lt;&lt; "! = " &lt;&lt; fact_result &lt;&lt; endl;
+
+        // 用循环验证一下结果，加深理解
+        cout &lt;&lt; "验证（循环计算）：";
+        long long verify = 1;
+        for (int i = 1; i &lt;= fact_n; i++) {
+            verify *= i;
+            if (i &lt; fact_n) {
+                cout &lt;&lt; i &lt;&lt; "*";
+            } else {
+                cout &lt;&lt; i;
+            }
+        }
+        cout &lt;&lt; " = " &lt;&lt; verify &lt;&lt; endl;
+    } else {
+        cout &lt;&lt; "输入为负数，跳过阶乘测试。" &lt;&lt; endl;
+    }
+
+    // ==================== 第二部分：斐波那契递归演示 ====================
+    print_separator("第二部分：斐波那契 (Fibonacci) 递归");
+
+    cout &lt;&lt; "斐波那契数列的递归定义：" &lt;&lt; endl;
+    cout &lt;&lt; "  F(0) = 0  （基准情形 1）" &lt;&lt; endl;
+    cout &lt;&lt; "  F(1) = 1  （基准情形 2）" &lt;&lt; endl;
+    cout &lt;&lt; "  F(n) = F(n-1) + F(n-2)  （递归步骤，n &gt;= 2）" &lt;&lt; endl;
+    cout &lt;&lt; endl;
+
+    // 测试斐波那契数列的前几项
+    int fib_n = 10;  // 默认测试第 10 个斐波那契数，预期结果: 55
+
+    cout &lt;&lt; "请输入要计算的斐波那契数序号（n &gt;= 0）：";
+    // 取消下面一行的注释以支持用户交互输入：
+    // cin &gt;&gt; fib_n;
+
+    if (fib_n &gt;= 0) {
+        // 打印斐波那契数列的前 n+1 项
+        cout &lt;&lt; "斐波那契数列前 " &lt;&lt; fib_n + 1 &lt;&lt; " 项：" &lt;&lt; endl;
+        for (int i = 0; i &lt;= fib_n; i++) {
+            cout &lt;&lt; "F(" &lt;&lt; i &lt;&lt; ") = " &lt;&lt; fibonacci(i) &lt;&lt; endl;
+        }
+
+        cout &lt;&lt; endl;
+        cout &lt;&lt; "注意：简单递归实现斐波那契数列的时间复杂度为 O(2^n)，" &lt;&lt; endl;
+        cout &lt;&lt; "当 n 较大时（如 n &gt; 40）会非常慢，因为存在大量重复计算。" &lt;&lt; endl;
+        cout &lt;&lt; "实际应用中推荐使用记忆化搜索或动态规划来优化。" &lt;&lt; endl;
+    } else {
+        cout &lt;&lt; "输入为负数，跳过斐波那契测试。" &lt;&lt; endl;
+    }
+
+    // ==================== 第三部分：递归调用栈可视化演示 ====================
+    print_separator("第三部分：递归调用栈 (Call Stack) 可视化演示");
+
+    cout &lt;&lt; "下面演示 recursion_demo(3, 0) 的递归调用过程：" &lt;&lt; endl;
+    cout &lt;&lt; "缩进表示递归深度，箭头方向表示进入(→)或返回(←)" &lt;&lt; endl;
+    cout &lt;&lt; endl;
+
+    // 从一个较小的数值开始，使输出结构清晰可读
+    // recursion_demo(3, 0) 表示从深度 0 开始递归 3 层
+    recursion_demo(3, 0);
+
+    cout &lt;&lt; endl;
+    cout &lt;&lt; "调用栈总结：" &lt;&lt; endl;
+    cout &lt;&lt; "  1. 每次递归调用都会在调用栈上压入一个新的栈帧" &lt;&lt; endl;
+    cout &lt;&lt; "  2. 栈帧中保存了函数的参数和局部变量" &lt;&lt; endl;
+    cout &lt;&lt; "  3. 递归深度 = 调用栈中栈帧的数量" &lt;&lt; endl;
+    cout &lt;&lt; "  4. 递归深度过大会导致栈溢出 (Stack Overflow)" &lt;&lt; endl;
+    cout &lt;&lt; "  5. 函数返回时栈帧被弹出，回到上一层调用" &lt;&lt; endl;
+
+    cout &lt;&lt; endl;
+    cout &lt;&lt; "课程结束。回顾本课三个核心概念：" &lt;&lt; endl;
+    cout &lt;&lt; "  - 基准情形：递归终止的条件" &lt;&lt; endl;
+    cout &lt;&lt; "  - 递归步骤：将大问题分解为小问题" &lt;&lt; endl;
+    cout &lt;&lt; "  - 调用栈：理解递归执行过程的模型" &lt;&lt; endl;
+
+    return 0;
+}
+</pre>
+    <p class="hint">本页使用浅色主题与 UTF-8 编码，可直接打印或导出 PDF。</p>
+  </div>
+</body>
+</html>

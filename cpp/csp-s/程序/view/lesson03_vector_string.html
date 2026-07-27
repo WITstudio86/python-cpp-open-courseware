@@ -1,0 +1,547 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>lesson03_vector_string.cpp</title>
+<style>
+  :root {
+    --bg: #f5f7fa;
+    --panel: #ffffff;
+    --text: #1a1a2e;
+    --muted: #5a6570;
+    --gold: #b8860b;
+    --code-bg: #ffffff;
+    --code-text: #1f2933;
+    --border: #d8dee6;
+    --top-bg: #ffffff;
+    --top-border: #e5e9ef;
+  }
+  * { box-sizing: border-box; }
+  html, body {
+    margin: 0; padding: 0;
+    background: var(--bg);
+    color: var(--text);
+    font-family: -apple-system, BlinkMacSystemFont, "PingFang SC", "Microsoft YaHei", sans-serif;
+    min-height: 100%;
+  }
+  .top {
+    position: sticky; top: 0; z-index: 10;
+    display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between;
+    gap: 10px;
+    padding: 12px 18px;
+    background: var(--top-bg);
+    border-bottom: 1px solid var(--top-border);
+    box-shadow: 0 1px 8px rgba(15, 23, 42, 0.06);
+  }
+  .brand { color: var(--gold); font-weight: 700; font-size: 14px; letter-spacing: 0.04em; }
+  .title { font-size: 15px; font-weight: 600; color: var(--text); max-width: 52vw; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .actions { display: flex; gap: 8px; flex-wrap: wrap; }
+  .btn {
+    appearance: none; border: 1px solid var(--border);
+    background: #fff; color: var(--text);
+    border-radius: 999px; padding: 8px 14px; font-size: 13px; font-weight: 600;
+    text-decoration: none; cursor: pointer;
+  }
+  .btn:hover { background: #f0f3f7; }
+  .btn.gold {
+    background: linear-gradient(135deg, #f0d78c, #d4a853);
+    color: #0a2540; border-color: #e0c06a;
+  }
+  .meta {
+    padding: 10px 18px; color: var(--muted); font-size: 12px;
+    border-bottom: 1px solid var(--border);
+    background: var(--panel);
+  }
+  .wrap { padding: 16px 18px 40px; }
+  pre {
+    margin: 0;
+    background: var(--code-bg);
+    color: var(--code-text);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 18px 20px;
+    overflow: auto;
+    font-family: "SF Mono", "JetBrains Mono", "Fira Code", Consolas, "Courier New", monospace;
+    font-size: 13.5px;
+    line-height: 1.55;
+    white-space: pre;
+    tab-size: 4;
+    box-shadow: 0 2px 12px rgba(15, 23, 42, 0.05);
+  }
+  .hint { margin-top: 12px; color: var(--muted); font-size: 12px; }
+  @media print {
+    html, body { background: #fff !important; color: #000 !important; }
+    .top { position: static; box-shadow: none; border-bottom: 1px solid #ccc; background: #fff !important; }
+    .actions { display: none !important; }
+    .meta { background: #fff !important; border-color: #ddd; color: #333; }
+    .wrap { padding: 0; }
+    pre {
+      background: #fff !important; color: #000 !important;
+      border: 1px solid #bbb; box-shadow: none; border-radius: 0;
+      white-space: pre-wrap; word-break: break-word; font-size: 11pt; line-height: 1.4;
+    }
+    .hint { display: none; }
+    a { color: #000; text-decoration: none; }
+  }
+</style>
+</head>
+<body>
+  <div class="top">
+    <div class="brand">CSP-S 备考 · 配套代码</div>
+    <div class="title">lesson03_vector_string.cpp</div>
+    <div class="actions">
+      <a class="btn" href="../lesson03_vector_string.cpp" download="lesson03_vector_string.cpp">⬇️ 下载源文件</a>
+      <a class="btn gold" href="javascript:history.back()">← 返回课件</a>
+    </div>
+  </div>
+  <div class="meta">编码：UTF-8 · 文件：lesson03_vector_string.cpp · 共 443 行 · 浅色主题便于打印</div>
+  <div class="wrap">
+    <pre id="code">/**
+ * ============================================================
+ * 课程编号：第03课
+ * 课程标题：vector 与 string 高级用法
+ * 对应考纲：vector内存管理、string高阶操作、stringstream、迭代器失效
+ *
+ * 本程序演示：
+ *   1. vector 内存管理（reserve/resize/capacity/shrink_to_fit）
+ *   2. vector 扩容过程的可视化
+ *   3. string 高阶用法（find/rfind/substr/split）
+ *   4. stringstream 类型转换与字符串分割
+ *   5. 迭代器失效演示与修复方法
+ *   6. emplace_back vs push_back 性能对比
+ * ============================================================
+ */
+
+#include &lt;bits/stdc++.h&gt;
+using namespace std;
+using namespace chrono;
+
+// ==================== 1. vector 内存管理演示 ====================
+
+void demo_vector_memory() {
+    cout &lt;&lt; "\n========== 1. vector 内存管理演示 ==========\n\n";
+
+    vector&lt;int&gt; v;
+
+    // 观察默认状态
+    cout &lt;&lt; "【初始状态】\n";
+    cout &lt;&lt; "  size     = " &lt;&lt; v.size() &lt;&lt; "\n";
+    cout &lt;&lt; "  capacity = " &lt;&lt; v.capacity() &lt;&lt; "\n\n";
+
+    // reserve 预分配：只改变 capacity，不改变 size
+    cout &lt;&lt; "【reserve(10) 之后】\n";
+    v.reserve(10);
+    cout &lt;&lt; "  size     = " &lt;&lt; v.size() &lt;&lt; "\n";
+    cout &lt;&lt; "  capacity = " &lt;&lt; v.capacity() &lt;&lt; "\n\n";
+
+    // resize 改变 size：新元素用默认值填充
+    cout &lt;&lt; "【resize(5) 之后】\n";
+    v.resize(5);
+    cout &lt;&lt; "  size     = " &lt;&lt; v.size() &lt;&lt; "\n";
+    cout &lt;&lt; "  capacity = " &lt;&lt; v.capacity() &lt;&lt; "\n";
+    cout &lt;&lt; "  元素内容：";
+    for (int x : v) cout &lt;&lt; x &lt;&lt; ' ';
+    cout &lt;&lt; "\n\n";
+
+    // resize 增大且指定填充值
+    cout &lt;&lt; "【resize(8, 42) 之后】\n";
+    v.resize(8, 42);
+    cout &lt;&lt; "  size     = " &lt;&lt; v.size() &lt;&lt; "\n";
+    cout &lt;&lt; "  capacity = " &lt;&lt; v.capacity() &lt;&lt; "\n";
+    cout &lt;&lt; "  元素内容：";
+    for (int x : v) cout &lt;&lt; x &lt;&lt; ' ';
+    cout &lt;&lt; "\n\n";
+
+    // clear 只清空元素，不释放内存
+    cout &lt;&lt; "【clear() 之后】\n";
+    v.clear();
+    cout &lt;&lt; "  size     = " &lt;&lt; v.size() &lt;&lt; "\n";
+    cout &lt;&lt; "  capacity = " &lt;&lt; v.capacity() &lt;&lt; "  ← capacity 不变！\n\n";
+
+    // shrink_to_fit 请求缩减容量
+    cout &lt;&lt; "【shrink_to_fit() 之后】\n";
+    v.shrink_to_fit();
+    cout &lt;&lt; "  size     = " &lt;&lt; v.size() &lt;&lt; "\n";
+    cout &lt;&lt; "  capacity = " &lt;&lt; v.capacity() &lt;&lt; "\n\n";
+
+    // 100% 保证释放内存的方法：swap 技巧
+    cout &lt;&lt; "【swap 技巧释放内存】\n";
+    vector&lt;int&gt; v2;
+    v2.reserve(100);
+    cout &lt;&lt; "  释放前 capacity = " &lt;&lt; v2.capacity() &lt;&lt; "\n";
+    vector&lt;int&gt;().swap(v2);   // 与临时空 vector 交换
+    cout &lt;&lt; "  释放后 capacity = " &lt;&lt; v2.capacity() &lt;&lt; "\n\n";
+}
+
+// ==================== 2. vector 扩容过程可视化 ====================
+
+void demo_vector_growth() {
+    cout &lt;&lt; "========== 2. vector 扩容过程可视化 ==========\n\n";
+
+    // 不 reserve，观察扩容
+    cout &lt;&lt; "【无 reserve 的扩容过程】\n";
+    {
+        vector&lt;int&gt; v;
+        cout &lt;&lt; "  初始 capacity = " &lt;&lt; v.capacity() &lt;&lt; "\n";
+        int last_cap = v.capacity();
+        for (int i = 0; i &lt; 10; i++) {
+            v.push_back(i);
+            if ((int)v.capacity() != last_cap) {
+                cout &lt;&lt; "  插入第 " &lt;&lt; i &lt;&lt; " 个元素后扩容："
+                     &lt;&lt; last_cap &lt;&lt; " → " &lt;&lt; v.capacity() &lt;&lt; "\n";
+                last_cap = v.capacity();
+            }
+        }
+        cout &lt;&lt; "  最终 size=" &lt;&lt; v.size() &lt;&lt; ", capacity=" &lt;&lt; v.capacity() &lt;&lt; "\n";
+        // 扩容因子 ≈ 2（GCC libstdc++）
+    }
+
+    cout &lt;&lt; "\n【有 reserve 的无扩容过程】\n";
+    {
+        vector&lt;int&gt; v;
+        v.reserve(10);  // 一次性预分配
+        cout &lt;&lt; "  reserve(10) 后 capacity = " &lt;&lt; v.capacity() &lt;&lt; "\n";
+        int last_cap = v.capacity();
+        for (int i = 0; i &lt; 10; i++) {
+            v.push_back(i);
+            if ((int)v.capacity() != last_cap) {
+                cout &lt;&lt; "  扩容发生! " &lt;&lt; last_cap &lt;&lt; " → " &lt;&lt; v.capacity() &lt;&lt; "\n";
+                last_cap = v.capacity();
+            }
+        }
+        if (last_cap == (int)v.capacity())
+            cout &lt;&lt; "  全程无扩容！capacity 保持 " &lt;&lt; v.capacity() &lt;&lt; "\n";
+    }
+    cout &lt;&lt; "\n";
+}
+
+// ==================== 3. string 高阶用法 ====================
+
+void demo_string_advanced() {
+    cout &lt;&lt; "========== 3. string 高阶用法 ==========\n\n";
+
+    string s = "hello world, hello cpp, world of cpp";
+
+    // find：从左向右查找子串
+    cout &lt;&lt; "【find 系列】\n";
+    size_t pos = s.find("hello");
+    cout &lt;&lt; "  s.find(\"hello\")     = " &lt;&lt; pos &lt;&lt; "\n";
+
+    pos = s.find("hello", 5);        // 从索引 5 开始
+    cout &lt;&lt; "  s.find(\"hello\", 5)  = " &lt;&lt; pos &lt;&lt; "\n";
+
+    pos = s.find("python");          // 不存在
+    cout &lt;&lt; "  s.find(\"python\")    = " &lt;&lt; pos &lt;&lt; " (npos=" &lt;&lt; string::npos &lt;&lt; ")\n";
+    if (pos == string::npos)
+        cout &lt;&lt; "    → 未找到，返回 string::npos\n\n";
+
+    // rfind：从右向左查找
+    cout &lt;&lt; "【rfind 系列】\n";
+    pos = s.rfind("hello");
+    cout &lt;&lt; "  s.rfind(\"hello\")    = " &lt;&lt; pos &lt;&lt; "\n";
+    pos = s.rfind("world");
+    cout &lt;&lt; "  s.rfind(\"world\")    = " &lt;&lt; pos &lt;&lt; "\n\n";
+
+    // find_first_of / find_last_of
+    cout &lt;&lt; "【find_first_of / find_last_of】\n";
+    pos = s.find_first_of("aeiou");   // 第一个元音字母
+    cout &lt;&lt; "  第一个元音的位置 = " &lt;&lt; pos &lt;&lt; " ('" &lt;&lt; s[pos] &lt;&lt; "')\n";
+    pos = s.find_last_of("aeiou");
+    cout &lt;&lt; "  最后一个元音的位置 = " &lt;&lt; pos &lt;&lt; " ('" &lt;&lt; s[pos] &lt;&lt; "')\n\n";
+
+    // find_first_not_of
+    cout &lt;&lt; "【find_first_not_of】\n";
+    pos = s.find_first_not_of("helo ");  // 第一个不在集合中的字符
+    cout &lt;&lt; "  跳过'helo '后第一个字符位置 = " &lt;&lt; pos &lt;&lt; " ('" &lt;&lt; s[pos] &lt;&lt; "')\n\n";
+
+    // substr
+    cout &lt;&lt; "【substr 用法】\n";
+    cout &lt;&lt; "  s.substr(6)      = \"" &lt;&lt; s.substr(6) &lt;&lt; "\"\n";
+    cout &lt;&lt; "  s.substr(6, 5)   = \"" &lt;&lt; s.substr(6, 5) &lt;&lt; "\"\n";
+    cout &lt;&lt; "  s.substr(0, 5)   = \"" &lt;&lt; s.substr(0, 5) &lt;&lt; "\"\n\n";
+
+    // compare
+    cout &lt;&lt; "【compare 比较】\n";
+    string a = "apple", b = "banana";
+    cout &lt;&lt; "  \"apple\".compare(\"banana\") = " &lt;&lt; a.compare(b) &lt;&lt; " (&lt;0 表示 a&lt;b)\n";
+    cout &lt;&lt; "  a.compare(0, 3, b, 0, 3) = " &lt;&lt; a.compare(0, 3, b, 0, 3)
+         &lt;&lt; " (\"app\" vs \"ban\")  ← 只比较子串！\n\n";
+}
+
+// ==================== 4. stringstream 类型转换 ====================
+
+// 任意类型 → 字符串
+template&lt;typename T&gt;
+string tos(const T&amp; val) {
+    ostringstream oss;
+    oss &lt;&lt; val;
+    return oss.str();
+}
+
+// 字符串 → 任意类型
+template&lt;typename T&gt;
+T sto(const string&amp; s) {
+    T val;
+    istringstream(s) &gt;&gt; val;
+    return val;
+}
+
+void demo_stringstream() {
+    cout &lt;&lt; "========== 4. stringstream 类型转换与分割 ==========\n\n";
+
+    // 4.1 类型转换
+    cout &lt;&lt; "【类型转换】\n";
+    string s1 = tos(42);
+    cout &lt;&lt; "  int → string : " &lt;&lt; s1 &lt;&lt; "\n";
+    string s2 = tos(3.14159);
+    cout &lt;&lt; "  double → string : " &lt;&lt; s2 &lt;&lt; "\n";
+    string s3 = tos(string("hello"));
+    cout &lt;&lt; "  string → string : " &lt;&lt; s3 &lt;&lt; "\n";
+
+    int n = sto&lt;int&gt;("12345");
+    cout &lt;&lt; "  string → int : " &lt;&lt; n &lt;&lt; "\n";
+    double d = sto&lt;double&gt;("3.14159");
+    cout &lt;&lt; "  string → double : " &lt;&lt; d &lt;&lt; "\n\n";
+
+    // 4.2 格式化输入
+    cout &lt;&lt; "【格式化输入解析】\n";
+    string input = "Alice 18 95.5";
+    istringstream iss(input);
+    string name; int age; double score;
+    iss &gt;&gt; name &gt;&gt; age &gt;&gt; score;
+    cout &lt;&lt; "  解析 \"" &lt;&lt; input &lt;&lt; "\" → 姓名=" &lt;&lt; name
+         &lt;&lt; ", 年龄=" &lt;&lt; age &lt;&lt; ", 分数=" &lt;&lt; score &lt;&lt; "\n\n";
+
+    // 4.3 字符串分割
+    cout &lt;&lt; "【字符串分割】\n";
+    string csv = "one,two,three,four,five";
+    stringstream ss(csv);
+    string item;
+    int idx = 0;
+    cout &lt;&lt; "  原始字符串：\"" &lt;&lt; csv &lt;&lt; "\"\n  分割结果：\n";
+    while (getline(ss, item, ',')) {
+        cout &lt;&lt; "    [" &lt;&lt; idx++ &lt;&lt; "] " &lt;&lt; item &lt;&lt; "\n";
+    }
+    cout &lt;&lt; "\n";
+
+    // 4.4 格式化输出
+    cout &lt;&lt; "【格式化输出】\n";
+    ostringstream oss;
+    oss &lt;&lt; fixed &lt;&lt; setprecision(3) &lt;&lt; 3.1415926535;
+    cout &lt;&lt; "  π ≈ " &lt;&lt; oss.str() &lt;&lt; "\n\n";
+}
+
+// ==================== 5. 迭代器失效演示与修复 ====================
+
+void demo_iterator_invalidation() {
+    cout &lt;&lt; "========== 5. 迭代器失效演示与修复 ==========\n\n";
+
+    // 5.1 erase 导致迭代器失效 — 错误写法
+    cout &lt;&lt; "【场景1：erase 导致迭代器失效】\n";
+    {
+        vector&lt;int&gt; v = {1, 2, 3, 4, 5, 6, 7, 8, 9, 10};
+        cout &lt;&lt; "  原始数组：";
+        for (int x : v) cout &lt;&lt; x &lt;&lt; ' ';
+        cout &lt;&lt; "\n";
+
+        // ✅ 正确写法：使用 erase 返回值
+        cout &lt;&lt; "  ✅ 正确：删除所有偶数\n  ";
+        for (auto it = v.begin(); it != v.end(); ) {
+            if (*it % 2 == 0)
+                it = v.erase(it);   // erase 返回下一个有效迭代器
+            else
+                ++it;
+        }
+        cout &lt;&lt; "  剩余元素：";
+        for (int x : v) cout &lt;&lt; x &lt;&lt; ' ';
+        cout &lt;&lt; "\n\n";
+    }
+
+    // 5.2 erase-remove 惯用法
+    cout &lt;&lt; "【场景2：erase-remove 惯用法】\n";
+    {
+        vector&lt;int&gt; v = {5, 2, 8, 1, 9, 3, 7, 4, 6};
+        cout &lt;&lt; "  原始数组：";
+        for (int x : v) cout &lt;&lt; x &lt;&lt; ' ';
+        cout &lt;&lt; "\n";
+
+        // 删除所有 &gt; 5 的元素
+        v.erase(remove_if(v.begin(), v.end(),
+                [](int x) { return x &gt; 5; }),
+                v.end());
+        cout &lt;&lt; "  删除 &gt;5 后：";
+        for (int x : v) cout &lt;&lt; x &lt;&lt; ' ';
+        cout &lt;&lt; "\n\n";
+    }
+
+    // 5.3 insert 导致迭代器失效
+    cout &lt;&lt; "【场景3：insert 返回值修复】\n";
+    {
+        vector&lt;int&gt; v = {1, 2, 3};
+        cout &lt;&lt; "  原始数组：";
+        for (int x : v) cout &lt;&lt; x &lt;&lt; ' ';
+        cout &lt;&lt; "\n";
+
+        // 在 2 前面插入 0
+        auto it = find(v.begin(), v.end(), 2);
+        if (it != v.end()) {
+            it = v.insert(it, 0);  // insert 返回指向新插入元素的迭代器
+            // it 现在指向 0
+            cout &lt;&lt; "  在2前插入0：";
+            for (int x : v) cout &lt;&lt; x &lt;&lt; ' ';
+            cout &lt;&lt; "  (insert 返回迭代器指向: " &lt;&lt; *it &lt;&lt; ")\n";
+        }
+        cout &lt;&lt; "\n";
+    }
+
+    // 5.4 push_back 触发扩容导致迭代器失效
+    cout &lt;&lt; "【场景4：push_back 扩容导致迭代器失效】\n";
+    {
+        vector&lt;int&gt; v;
+        v.reserve(3);  // 确保后面 push_back 会扩容
+        v = {1, 2, 3};
+
+        auto it = v.begin();  // 保存迭代器
+        cout &lt;&lt; "  初态：*it = " &lt;&lt; *it &lt;&lt; ", capacity = " &lt;&lt; v.capacity() &lt;&lt; "\n";
+
+        v.reserve(100);  // 触发重新分配！
+        // it 已失效！不能解引用！
+        auto new_it = v.begin();  // 重新获取
+        cout &lt;&lt; "  reserve(100) 后必须重新获取迭代器\n";
+        cout &lt;&lt; "  新迭代器 *new_it = " &lt;&lt; *new_it &lt;&lt; "\n\n";
+    }
+}
+
+// ==================== 6. emplace_back vs push_back 性能对比 ====================
+
+struct HeavyObject {
+    int id;
+    string name;
+    vector&lt;int&gt; data;
+
+    HeavyObject(int i, string n) : id(i), name(move(n)) {
+        data.resize(100, i);  // 模拟"重量级"对象
+    }
+
+    // 拷贝构造（统计拷贝次数）
+    HeavyObject(const HeavyObject&amp; other)
+        : id(other.id), name(other.name), data(other.data) {
+        // 耗时操作
+    }
+
+    HeavyObject(HeavyObject&amp;&amp;) = default;
+    HeavyObject&amp; operator=(const HeavyObject&amp;) = default;
+    HeavyObject&amp; operator=(HeavyObject&amp;&amp;) = default;
+};
+
+void demo_emplace_vs_push() {
+    cout &lt;&lt; "========== 6. emplace_back vs push_back ==========\n\n";
+
+    cout &lt;&lt; "【概念说明】\n";
+    cout &lt;&lt; "  push_back:   先构造对象 → 再拷贝/移动到 vector\n";
+    cout &lt;&lt; "  emplace_back: 直接在 vector 内部原地构造，零临时对象\n\n";
+
+    const int N = 100000;
+
+    // 测试 push_back
+    {
+        vector&lt;pair&lt;int, string&gt;&gt; v;
+        v.reserve(N);
+        auto start = high_resolution_clock::now();
+        for (int i = 0; i &lt; N; i++) {
+            v.push_back(make_pair(i, "hello world"));
+        }
+        auto end = high_resolution_clock::now();
+        auto duration = duration_cast&lt;microseconds&gt;(end - start).count();
+        cout &lt;&lt; "  push_back(make_pair(...)) : " &lt;&lt; duration &lt;&lt; " μs\n";
+    }
+
+    // 测试 emplace_back
+    {
+        vector&lt;pair&lt;int, string&gt;&gt; v;
+        v.reserve(N);
+        auto start = high_resolution_clock::now();
+        for (int i = 0; i &lt; N; i++) {
+            v.emplace_back(i, "hello world");
+        }
+        auto end = high_resolution_clock::now();
+        auto duration = duration_cast&lt;microseconds&gt;(end - start).count();
+        cout &lt;&lt; "  emplace_back(i, ...)      : " &lt;&lt; duration &lt;&lt; " μs\n";
+    }
+    cout &lt;&lt; "  → emplace_back 避免了 pair 的临时对象构造，性能更优\n";
+
+    // 不 reserve 的情况
+    cout &lt;&lt; "\n【无 reserve 时的差异更大】\n";
+    {
+        vector&lt;pair&lt;int, string&gt;&gt; v;
+        auto start = high_resolution_clock::now();
+        for (int i = 0; i &lt; 10000; i++) {
+            v.push_back(make_pair(i, "test"));
+        }
+        auto end = high_resolution_clock::now();
+        auto duration = duration_cast&lt;microseconds&gt;(end - start).count();
+        cout &lt;&lt; "  push_back(无reserve) : " &lt;&lt; duration &lt;&lt; " μs\n";
+    }
+    {
+        vector&lt;pair&lt;int, string&gt;&gt; v;
+        auto start = high_resolution_clock::now();
+        for (int i = 0; i &lt; 10000; i++) {
+            v.emplace_back(i, "test");
+        }
+        auto end = high_resolution_clock::now();
+        auto duration = duration_cast&lt;microseconds&gt;(end - start).count();
+        cout &lt;&lt; "  emplace_back(无reserve) : " &lt;&lt; duration &lt;&lt; " μs\n";
+    }
+    cout &lt;&lt; "  → 无 reserve 时扩容也会占主导，但 emplace 仍优于 push\n\n";
+}
+
+// ==================== 7. 综合示例：split 函数实现 ====================
+
+vector&lt;string&gt; split(const string&amp; s, char delim = ' ') {
+    vector&lt;string&gt; tokens;
+    stringstream ss(s);
+    string token;
+    while (getline(ss, token, delim))
+        if (!token.empty())
+            tokens.push_back(move(token));
+    return tokens;
+}
+
+void demo_split_comprehensive() {
+    cout &lt;&lt; "========== 7. 综合示例：split 函数 ==========\n\n";
+
+    string s = "  apple  banana   cherry  ";
+    cout &lt;&lt; "  原始：\"" &lt;&lt; s &lt;&lt; "\"\n";
+
+    auto tokens = split(s, ' ');
+    cout &lt;&lt; "  分割结果(" &lt;&lt; tokens.size() &lt;&lt; "个): ";
+    for (const auto&amp; t : tokens) cout &lt;&lt; "\"" &lt;&lt; t &lt;&lt; "\" ";
+    cout &lt;&lt; "\n";
+}
+
+// ==================== main ====================
+
+int main() {
+    ios::sync_with_stdio(false);
+    cin.tie(nullptr);
+
+    cout &lt;&lt; "╔══════════════════════════════════════════════════╗\n";
+    cout &lt;&lt; "║  第03课：vector 与 string 高级用法 — 演示程序  ║\n";
+    cout &lt;&lt; "╚══════════════════════════════════════════════════╝\n";
+
+    demo_vector_memory();
+    demo_vector_growth();
+    demo_string_advanced();
+    demo_stringstream();
+    demo_iterator_invalidation();
+    demo_emplace_vs_push();
+    demo_split_comprehensive();
+
+    return 0;
+}
+</pre>
+    <p class="hint">本页使用浅色主题与 UTF-8 编码，可直接打印或导出 PDF。</p>
+  </div>
+</body>
+</html>

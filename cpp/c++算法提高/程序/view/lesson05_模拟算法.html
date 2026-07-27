@@ -1,0 +1,370 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>lesson05_模拟算法.cpp</title>
+<style>
+  :root {
+    --bg: #f5f7fa;
+    --panel: #ffffff;
+    --text: #1a1a2e;
+    --muted: #5a6570;
+    --gold: #b8860b;
+    --code-bg: #ffffff;
+    --code-text: #1f2933;
+    --border: #d8dee6;
+    --top-bg: #ffffff;
+    --top-border: #e5e9ef;
+  }
+  * { box-sizing: border-box; }
+  html, body {
+    margin: 0; padding: 0;
+    background: var(--bg);
+    color: var(--text);
+    font-family: -apple-system, BlinkMacSystemFont, "PingFang SC", "Microsoft YaHei", sans-serif;
+    min-height: 100%;
+  }
+  .top {
+    position: sticky; top: 0; z-index: 10;
+    display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between;
+    gap: 10px;
+    padding: 12px 18px;
+    background: var(--top-bg);
+    border-bottom: 1px solid var(--top-border);
+    box-shadow: 0 1px 8px rgba(15, 23, 42, 0.06);
+  }
+  .brand { color: var(--gold); font-weight: 700; font-size: 14px; letter-spacing: 0.04em; }
+  .title { font-size: 15px; font-weight: 600; color: var(--text); max-width: 52vw; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .actions { display: flex; gap: 8px; flex-wrap: wrap; }
+  .btn {
+    appearance: none; border: 1px solid var(--border);
+    background: #fff; color: var(--text);
+    border-radius: 999px; padding: 8px 14px; font-size: 13px; font-weight: 600;
+    text-decoration: none; cursor: pointer;
+  }
+  .btn:hover { background: #f0f3f7; }
+  .btn.gold {
+    background: linear-gradient(135deg, #f0d78c, #d4a853);
+    color: #0a2540; border-color: #e0c06a;
+  }
+  .meta {
+    padding: 10px 18px; color: var(--muted); font-size: 12px;
+    border-bottom: 1px solid var(--border);
+    background: var(--panel);
+  }
+  .wrap { padding: 16px 18px 40px; }
+  pre {
+    margin: 0;
+    background: var(--code-bg);
+    color: var(--code-text);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 18px 20px;
+    overflow: auto;
+    font-family: "SF Mono", "JetBrains Mono", "Fira Code", Consolas, "Courier New", monospace;
+    font-size: 13.5px;
+    line-height: 1.55;
+    white-space: pre;
+    tab-size: 4;
+    box-shadow: 0 2px 12px rgba(15, 23, 42, 0.05);
+  }
+  .hint { margin-top: 12px; color: var(--muted); font-size: 12px; }
+  @media print {
+    html, body { background: #fff !important; color: #000 !important; }
+    .top { position: static; box-shadow: none; border-bottom: 1px solid #ccc; background: #fff !important; }
+    .actions { display: none !important; }
+    .meta { background: #fff !important; border-color: #ddd; color: #333; }
+    .wrap { padding: 0; }
+    pre {
+      background: #fff !important; color: #000 !important;
+      border: 1px solid #bbb; box-shadow: none; border-radius: 0;
+      white-space: pre-wrap; word-break: break-word; font-size: 11pt; line-height: 1.4;
+    }
+    .hint { display: none; }
+    a { color: #000; text-decoration: none; }
+  }
+</style>
+</head>
+<body>
+  <div class="top">
+    <div class="brand">C++ 算法提高 · 配套代码</div>
+    <div class="title">lesson05_模拟算法.cpp</div>
+    <div class="actions">
+      <a class="btn" href="../lesson05_模拟算法.cpp" download="lesson05_模拟算法.cpp">⬇️ 下载源文件</a>
+      <a class="btn gold" href="javascript:history.back()">← 返回课件</a>
+    </div>
+  </div>
+  <div class="meta">编码：UTF-8 · 文件：lesson05_模拟算法.cpp · 共 266 行 · 浅色主题便于打印</div>
+  <div class="wrap">
+    <pre id="code">/*
+ * ================================================================
+ * C++算法提高 第05课：模拟算法——照章办事
+ * ================================================================
+ *
+ * 算法知识点：
+ *   - 模拟算法的本质：按规则逐步执行，照章办事
+ *   - while 循环：适合"到某条件为止"的模拟
+ *   - 状态变量管理：跟踪位置、数量、天数等状态
+ *   - 边界条件处理：精心处理第一天、最后一步等边界
+ *   - 逆向模拟：从结果反推初始状态（如猴子吃桃）
+ *
+ * 经典例题：
+ *   例题1 - 蜗牛爬井：白天爬a米，晚上滑b米，几天出井？
+ *   例题2 - 猴子吃桃：每天吃一半多一个，第N天剩1个，原来多少？
+ *
+ * 常见陷阱：
+ *   - 白天就出井时不需要再下滑
+ *   - 用 long long 防止数据溢出
+ *   - 循环变量的初始化和更新顺序
+ */
+
+#include &lt;iostream&gt;
+#include &lt;iomanip&gt;
+using namespace std;
+
+// ================================================================
+// 例题1：蜗牛爬井
+// 题目：井深H米，白天爬A米，晚上滑B米（A&gt;B），几天出井？
+//
+// 模拟思路：
+//   - 状态变量：当前位置 pos（从井底往上算到井口的距离）
+//   - 循环：while (pos &gt; 0)，每天迭代
+//   - 白天先爬，如果白天就出井了直接 break
+//   - 晚上再下滑（只有没出井才下滑）
+//
+// 数学分析（验证用）：
+//   实际上，最后一天爬A米出井，前面每天净爬(A-B)米
+//   天数 = ceil((H-A) / (A-B)) + 1（但模拟法更直观）
+// ================================================================
+void solveSnailClimb() {
+    cout &lt;&lt; "══════════════════════════════════════" &lt;&lt; endl;
+    cout &lt;&lt; "  例题1：蜗牛爬井" &lt;&lt; endl;
+    cout &lt;&lt; "══════════════════════════════════════" &lt;&lt; endl;
+
+    long long H, A, B;
+    cout &lt;&lt; "请输入井深 H（米）: ";
+    cin &gt;&gt; H;
+    cout &lt;&lt; "请输入白天爬升距离 A（米）: ";
+    cin &gt;&gt; A;
+    cout &lt;&lt; "请输入夜间下滑距离 B（米，B &lt; A）: ";
+    cin &gt;&gt; B;
+
+    // 参数校验
+    if (A &lt;= B) {
+        cout &lt;&lt; "错误：白天爬升必须大于夜间下滑（A &gt; B）！" &lt;&lt; endl;
+        return;
+    }
+
+    long long pos = H;   // 当前位置 = 距离井口的深度（米）
+    int day = 0;          // 天数计数器
+    bool debug = false;
+
+    cout &lt;&lt; "\n是否显示逐日模拟过程？(1=是, 0=否): ";
+    cin &gt;&gt; debug;
+
+    if (debug) {
+        cout &lt;&lt; "\n--- 逐日模拟过程 ---" &lt;&lt; endl;
+        cout &lt;&lt; "初始位置：井底，距离井口 " &lt;&lt; H &lt;&lt; " 米" &lt;&lt; endl;
+    }
+
+    // 模拟每一天
+    while (pos &gt; 0) {
+        day++;
+
+        // 白天爬升
+        pos -= A;
+        if (debug) cout &lt;&lt; "第 " &lt;&lt; setw(3) &lt;&lt; day &lt;&lt; " 天：白天爬 " &lt;&lt; A
+                        &lt;&lt; " 米 → 距离井口 " &lt;&lt; max(0LL, pos) &lt;&lt; " 米";
+
+        // 如果已经出井，结束
+        if (pos &lt;= 0) {
+            if (debug) cout &lt;&lt; " 【出井！】" &lt;&lt; endl;
+            break;
+        }
+
+        // 晚上下滑（只有没出井才下滑）
+        pos += B;
+        if (debug) cout &lt;&lt; "，晚上滑 " &lt;&lt; B &lt;&lt; " 米 → 距离井口 " &lt;&lt; pos
+                        &lt;&lt; " 米" &lt;&lt; endl;
+    }
+
+    cout &lt;&lt; "\n--------------------------------------" &lt;&lt; endl;
+    cout &lt;&lt; "结果：蜗牛在第 " &lt;&lt; day &lt;&lt; " 天成功爬出井口！" &lt;&lt; endl;
+
+    // 数学验证
+    // 最后一天爬A米，前面天数需要净爬 (H-A) 米，每天净爬 (A-B) 米
+    // 前面需要的天数 = ceil((H-A) / (A-B))
+    long long netPerDay = A - B;
+    long long preDays = (H - A + netPerDay - 1) / netPerDay;
+    if (preDays &lt; 0) preDays = 0;
+    long long mathDays = preDays + 1;
+    if (A &gt;= H) mathDays = 1;
+
+    cout &lt;&lt; "数学验证：" &lt;&lt; endl;
+    cout &lt;&lt; "  每天净爬升 = " &lt;&lt; netPerDay &lt;&lt; " 米" &lt;&lt; endl;
+    cout &lt;&lt; "  前面需要 " &lt;&lt; preDays &lt;&lt; " 天，最后1天冲刺" &lt;&lt; endl;
+    cout &lt;&lt; "  公式计算天数 = " &lt;&lt; mathDays
+         &lt;&lt; "（与模拟结果" &lt;&lt; (mathDays == day ? "一致 ✓" : "不一致 ✗") &lt;&lt; "）"
+         &lt;&lt; endl;
+    cout &lt;&lt; endl;
+}
+
+// ================================================================
+// 例题2：猴子吃桃
+// 题目：猴子每天吃一半多一个，第N天剩1个，第一天原有多少？
+//
+// 模拟思路（逆向）：
+//   - 从第N天开始倒推
+//   - 递推公式：前一天的桃子 = (当天桃子 + 1) × 2
+//   - 因为：当天桃子 = 前一天桃子/2 - 1
+//          → 前一天桃子 = (当天桃子 + 1) × 2
+// ================================================================
+void solveMonkeyPeach() {
+    cout &lt;&lt; "══════════════════════════════════════" &lt;&lt; endl;
+    cout &lt;&lt; "  例题2：猴子吃桃" &lt;&lt; endl;
+    cout &lt;&lt; "══════════════════════════════════════" &lt;&lt; endl;
+    cout &lt;&lt; "猴子每天吃前一天剩下的一半多一个" &lt;&lt; endl;
+    cout &lt;&lt; "问：第N天早上剩1个，第一天摘了多少？" &lt;&lt; endl;
+    cout &lt;&lt; "--------------------------------------" &lt;&lt; endl;
+
+    int N;
+    cout &lt;&lt; "请输入天数 N（第N天早上剩1个）: ";
+    cin &gt;&gt; N;
+
+    if (N &lt; 2) {
+        cout &lt;&lt; "N &lt; 2 无意义，请重新运行。" &lt;&lt; endl;
+        return;
+    }
+
+    long long peach = 1;  // 第N天早上剩1个（使用 long long 防止溢出）
+
+    // 打印初始状态
+    cout &lt;&lt; "\n逆向递推过程：" &lt;&lt; endl;
+    cout &lt;&lt; "第 " &lt;&lt; setw(2) &lt;&lt; N &lt;&lt; " 天早上: 剩 " &lt;&lt; peach &lt;&lt; " 个" &lt;&lt; endl;
+
+    // 逆推：从第N天推到第1天
+    for (int day = N; day &gt; 1; day--) {
+        // 逆向递推公式：
+        // 设前一天有 x 个，则当天剩 x - (x/2 + 1) = x/2 - 1
+        // 所以 x = (当天剩 + 1) × 2
+        peach = (peach + 1) * 2;
+
+        cout &lt;&lt; "第 " &lt;&lt; setw(2) &lt;&lt; (day - 1) &lt;&lt; " 天早上: 剩 " &lt;&lt; peach &lt;&lt; " 个";
+        if (day - 1 == 1) cout &lt;&lt; " ← 这就是第一天的总数！";
+        cout &lt;&lt; endl;
+    }
+
+    cout &lt;&lt; "--------------------------------------" &lt;&lt; endl;
+    cout &lt;&lt; "结果：第一天猴子共摘了 " &lt;&lt; peach &lt;&lt; " 个桃子！" &lt;&lt; endl;
+    cout &lt;&lt; endl;
+
+    // 正向验证
+    cout &lt;&lt; "正向验证（从第1天到第N天）：" &lt;&lt; endl;
+    long long verify = peach;
+    for (int day = 1; day &lt; N; day++) {
+        long long eat = verify / 2 + 1;              // 吃掉的
+        verify = verify - eat;                        // 剩下的
+        cout &lt;&lt; "  第 " &lt;&lt; day &lt;&lt; " 天：有" &lt;&lt; setw(8) &lt;&lt; (verify + eat)
+             &lt;&lt; "个 → 吃" &lt;&lt; setw(8) &lt;&lt; eat
+             &lt;&lt; "个 → 剩" &lt;&lt; setw(8) &lt;&lt; verify &lt;&lt; "个" &lt;&lt; endl;
+    }
+    cout &lt;&lt; "  第 " &lt;&lt; N &lt;&lt; " 天早上：剩 " &lt;&lt; verify &lt;&lt; " 个";
+    if (verify == 1)
+        cout &lt;&lt; "（正确！✓）" &lt;&lt; endl;
+    else
+        cout &lt;&lt; "（不对！应该是1个）" &lt;&lt; endl;
+    cout &lt;&lt; endl;
+}
+
+// ================================================================
+// 附加演示：while vs for 的区别
+// ================================================================
+void demoWhileVsFor() {
+    cout &lt;&lt; "══════════════════════════════════════" &lt;&lt; endl;
+    cout &lt;&lt; "  附加演示：while 循环 vs for 循环" &lt;&lt; endl;
+    cout &lt;&lt; "══════════════════════════════════════" &lt;&lt; endl;
+
+    // 示例：数到第一个能被17整除的数
+    cout &lt;&lt; "【while 循环】找到第一个能被17整除的100以上的数：" &lt;&lt; endl;
+    int n = 100;
+    while (n % 17 != 0) {
+        n++;
+    }
+    cout &lt;&lt; n &lt;&lt; "（" &lt;&lt; n &lt;&lt; " = 17 × " &lt;&lt; n / 17 &lt;&lt; "）" &lt;&lt; endl;
+
+    // while 适合"不知道要循环多少次"的场景
+    cout &lt;&lt; "\n【对比总结】" &lt;&lt; endl;
+    cout &lt;&lt; "  while：条件循环 → \"直到...为止\"" &lt;&lt; endl;
+    cout &lt;&lt; "  for：  计数循环 → \"做N次\"" &lt;&lt; endl;
+    cout &lt;&lt; endl;
+}
+
+// ================================================================
+// 附加演示：模拟一个简单的人口增长过程
+// 人口每年增长10%，问多少年翻倍？
+// ================================================================
+void demoPopulation() {
+    cout &lt;&lt; "══════════════════════════════════════" &lt;&lt; endl;
+    cout &lt;&lt; "  附加演示：人口增长模拟" &lt;&lt; endl;
+    cout &lt;&lt; "══════════════════════════════════════" &lt;&lt; endl;
+    cout &lt;&lt; "每年增长10%，问多少年翻倍？" &lt;&lt; endl;
+
+    double population = 1000.0;
+    double target = 2000.0;
+    int years = 0;
+
+    cout &lt;&lt; "年份  |  人口" &lt;&lt; endl;
+    cout &lt;&lt; "------+----------" &lt;&lt; endl;
+    cout &lt;&lt; "0     |  " &lt;&lt; fixed &lt;&lt; setprecision(0) &lt;&lt; population &lt;&lt; endl;
+
+    while (population &lt; target) {
+        years++;
+        population *= 1.10;  // 增长10%
+        cout &lt;&lt; setw(4) &lt;&lt; years &lt;&lt; "   |  " &lt;&lt; setw(8)
+             &lt;&lt; setprecision(0) &lt;&lt; population &lt;&lt; endl;
+    }
+
+    cout &lt;&lt; "--------------------------------------" &lt;&lt; endl;
+    cout &lt;&lt; "结果：需要 " &lt;&lt; years &lt;&lt; " 年翻倍" &lt;&lt; endl;
+    cout &lt;&lt; "（数学精确解：log(2)/log(1.10) ≈ 7.27 年，即第8年翻倍）" &lt;&lt; endl;
+    cout &lt;&lt; endl;
+}
+
+// ================================================================
+// 主函数
+// ================================================================
+int main() {
+    cout &lt;&lt; "╔══════════════════════════════════════════════╗" &lt;&lt; endl;
+    cout &lt;&lt; "║   C++ 算法提高 —— 第05课：模拟算法            ║" &lt;&lt; endl;
+    cout &lt;&lt; "║   照章办事 —— 按规则逐步执行                  ║" &lt;&lt; endl;
+    cout &lt;&lt; "╚══════════════════════════════════════════════╝" &lt;&lt; endl;
+    cout &lt;&lt; endl;
+
+    // 例题1：蜗牛爬井
+    solveSnailClimb();
+
+    // 例题2：猴子吃桃
+    solveMonkeyPeach();
+
+    // 附加演示
+    demoWhileVsFor();
+    demoPopulation();
+
+    cout &lt;&lt; "══════════════════════════════════════" &lt;&lt; endl;
+    cout &lt;&lt; "  本课小结" &lt;&lt; endl;
+    cout &lt;&lt; "══════════════════════════════════════" &lt;&lt; endl;
+    cout &lt;&lt; "1. 模拟算法 = 照章办事，题目怎么说就怎么写" &lt;&lt; endl;
+    cout &lt;&lt; "2. while 循环：适合\"直到某条件\"的模拟" &lt;&lt; endl;
+    cout &lt;&lt; "3. 状态变量：清晰定义并追踪关键状态" &lt;&lt; endl;
+    cout &lt;&lt; "4. 边界条件：注意最后一步、第一天等特殊情况" &lt;&lt; endl;
+    cout &lt;&lt; "5. 逆向模拟：从结果递推到初始（猴子吃桃）" &lt;&lt; endl;
+    cout &lt;&lt; "══════════════════════════════════════" &lt;&lt; endl;
+
+    return 0;
+}
+</pre>
+    <p class="hint">本页使用浅色主题与 UTF-8 编码，可直接打印或导出 PDF。</p>
+  </div>
+</body>
+</html>

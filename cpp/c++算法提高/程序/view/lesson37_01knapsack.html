@@ -1,0 +1,298 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>lesson37_01knapsack.cpp</title>
+<style>
+  :root {
+    --bg: #f5f7fa;
+    --panel: #ffffff;
+    --text: #1a1a2e;
+    --muted: #5a6570;
+    --gold: #b8860b;
+    --code-bg: #ffffff;
+    --code-text: #1f2933;
+    --border: #d8dee6;
+    --top-bg: #ffffff;
+    --top-border: #e5e9ef;
+  }
+  * { box-sizing: border-box; }
+  html, body {
+    margin: 0; padding: 0;
+    background: var(--bg);
+    color: var(--text);
+    font-family: -apple-system, BlinkMacSystemFont, "PingFang SC", "Microsoft YaHei", sans-serif;
+    min-height: 100%;
+  }
+  .top {
+    position: sticky; top: 0; z-index: 10;
+    display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between;
+    gap: 10px;
+    padding: 12px 18px;
+    background: var(--top-bg);
+    border-bottom: 1px solid var(--top-border);
+    box-shadow: 0 1px 8px rgba(15, 23, 42, 0.06);
+  }
+  .brand { color: var(--gold); font-weight: 700; font-size: 14px; letter-spacing: 0.04em; }
+  .title { font-size: 15px; font-weight: 600; color: var(--text); max-width: 52vw; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .actions { display: flex; gap: 8px; flex-wrap: wrap; }
+  .btn {
+    appearance: none; border: 1px solid var(--border);
+    background: #fff; color: var(--text);
+    border-radius: 999px; padding: 8px 14px; font-size: 13px; font-weight: 600;
+    text-decoration: none; cursor: pointer;
+  }
+  .btn:hover { background: #f0f3f7; }
+  .btn.gold {
+    background: linear-gradient(135deg, #f0d78c, #d4a853);
+    color: #0a2540; border-color: #e0c06a;
+  }
+  .meta {
+    padding: 10px 18px; color: var(--muted); font-size: 12px;
+    border-bottom: 1px solid var(--border);
+    background: var(--panel);
+  }
+  .wrap { padding: 16px 18px 40px; }
+  pre {
+    margin: 0;
+    background: var(--code-bg);
+    color: var(--code-text);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 18px 20px;
+    overflow: auto;
+    font-family: "SF Mono", "JetBrains Mono", "Fira Code", Consolas, "Courier New", monospace;
+    font-size: 13.5px;
+    line-height: 1.55;
+    white-space: pre;
+    tab-size: 4;
+    box-shadow: 0 2px 12px rgba(15, 23, 42, 0.05);
+  }
+  .hint { margin-top: 12px; color: var(--muted); font-size: 12px; }
+  @media print {
+    html, body { background: #fff !important; color: #000 !important; }
+    .top { position: static; box-shadow: none; border-bottom: 1px solid #ccc; background: #fff !important; }
+    .actions { display: none !important; }
+    .meta { background: #fff !important; border-color: #ddd; color: #333; }
+    .wrap { padding: 0; }
+    pre {
+      background: #fff !important; color: #000 !important;
+      border: 1px solid #bbb; box-shadow: none; border-radius: 0;
+      white-space: pre-wrap; word-break: break-word; font-size: 11pt; line-height: 1.4;
+    }
+    .hint { display: none; }
+    a { color: #000; text-decoration: none; }
+  }
+</style>
+</head>
+<body>
+  <div class="top">
+    <div class="brand">C++ 算法提高 · 配套代码</div>
+    <div class="title">lesson37_01knapsack.cpp</div>
+    <div class="actions">
+      <a class="btn" href="../lesson37_01knapsack.cpp" download="lesson37_01knapsack.cpp">⬇️ 下载源文件</a>
+      <a class="btn gold" href="javascript:history.back()">← 返回课件</a>
+    </div>
+  </div>
+  <div class="meta">编码：UTF-8 · 文件：lesson37_01knapsack.cpp · 共 194 行 · 浅色主题便于打印</div>
+  <div class="wrap">
+    <pre id="code">/*
+ * Lesson 37: 背包问题（一）——01背包
+ * 包含：二维DP、一维优化DP、采药问题、装箱问题
+ */
+
+#include &lt;iostream&gt;
+#include &lt;algorithm&gt;
+#include &lt;cstring&gt;
+using namespace std;
+
+const int MAXN = 105;    // 最大物品数
+const int MAXC = 20005;  // 最大容量
+
+int w[MAXN], v[MAXN];    // 物品重量和价值
+int dp2[MAXN][MAXC];     // 二维DP数组
+int dp1[MAXC];           // 一维DP数组
+
+// ============================================================
+// 1. 二维DP解法
+// dp[i][j]: 考虑前 i 个物品，背包容量为 j 时的最大价值
+// ============================================================
+int knapsack2D(int n, int C) {
+    // 初始化第 0 行：没有物品时，任何容量下价值都为 0
+    for (int j = 0; j &lt;= C; j++) {
+        dp2[0][j] = 0;
+    }
+
+    // 逐个考虑每个物品
+    for (int i = 1; i &lt;= n; i++) {
+        for (int j = 0; j &lt;= C; j++) {
+            // 不选第 i 个物品：直接继承上一行的结果
+            dp2[i][j] = dp2[i - 1][j];
+
+            // 选第 i 个物品：前提是当前容量足够装下该物品
+            if (j &gt;= w[i]) {
+                dp2[i][j] = max(dp2[i][j], dp2[i - 1][j - w[i]] + v[i]);
+            }
+        }
+    }
+
+    return dp2[n][C];
+}
+
+// ============================================================
+// 2. 一维DP解法（空间优化）
+// dp[j]: 容量为 j 时的最大价值
+// 关键：j 必须反向遍历（从 C 递减到 w[i]），确保每个物品只被用一次
+// 如果正序遍历，dp[j - w[i]] 可能已经被当前物品更新过，
+// 相当于当前物品被使用了多次，会退化成为"完全背包"
+// ============================================================
+int knapsack1D(int n, int C) {
+    // 初始化一维 DP 数组为 0
+    memset(dp1, 0, sizeof(dp1));
+
+    for (int i = 1; i &lt;= n; i++) {
+        // 反向遍历：从大到小更新，保证 dp[j - w[i]] 是上一轮的旧值
+        for (int j = C; j &gt;= w[i]; j--) {
+            dp1[j] = max(dp1[j], dp1[j - w[i]] + v[i]);
+        }
+    }
+
+    return dp1[C];
+}
+
+// ============================================================
+// 3. 例题1：采药问题
+// 山洞里有 n 株草药，每株需要 t 时间采摘，价值为 v
+// 总共有 T 时间，问能采到的最大总价值
+// 思路：标准01背包，时间=重量，价值=价值
+// ============================================================
+int herbPicking() {
+    int T, n;
+    cout &lt;&lt; "【采药问题】" &lt;&lt; endl;
+    cout &lt;&lt; "输入总时间 T 和草药数量 n：" &lt;&lt; endl;
+    cin &gt;&gt; T &gt;&gt; n;
+
+    memset(dp1, 0, sizeof(dp1));
+
+    for (int i = 1; i &lt;= n; i++) {
+        int t, val;
+        cin &gt;&gt; t &gt;&gt; val;  // t=采摘时间(重量), val=价值
+
+        // 标准 01 背包，反向遍历
+        for (int j = T; j &gt;= t; j--) {
+            dp1[j] = max(dp1[j], dp1[j - t] + val);
+        }
+    }
+
+    cout &lt;&lt; "最大总价值：" &lt;&lt; dp1[T] &lt;&lt; endl;
+    return dp1[T];
+}
+
+// ============================================================
+// 4. 例题2：装箱问题
+// 箱子容量 V，n 个物品各有体积 v[i]
+// 求箱子剩余空间最小（即装入物品总体积最大）
+// 思路：物品体积 = 重量 = 价值，求最大能装入的体积
+// 答案 = V - dp[V]
+// ============================================================
+int binPacking() {
+    int V, n;
+    cout &lt;&lt; "【装箱问题】" &lt;&lt; endl;
+    cout &lt;&lt; "输入箱子容量 V 和物品数 n：" &lt;&lt; endl;
+    cin &gt;&gt; V &gt;&gt; n;
+
+    memset(dp1, 0, sizeof(dp1));
+
+    for (int i = 1; i &lt;= n; i++) {
+        int vol;
+        cin &gt;&gt; vol;  // 物品体积，同时也是重量和价值
+
+        // 体积 = 重量 = 价值，01 背包
+        for (int j = V; j &gt;= vol; j--) {
+            dp1[j] = max(dp1[j], dp1[j - vol] + vol);
+        }
+    }
+
+    int minRemain = V - dp1[V];
+    cout &lt;&lt; "最小剩余空间：" &lt;&lt; minRemain &lt;&lt; endl;
+    return minRemain;
+}
+
+// ============================================================
+// 测试主函数
+// ============================================================
+int main() {
+    cout &lt;&lt; "========== 第37课：背包问题（一）——01背包 ==========" &lt;&lt; endl;
+    cout &lt;&lt; endl;
+
+    // --- 测试1：二维DP ---
+    cout &lt;&lt; "--- 测试1：二维DP ---" &lt;&lt; endl;
+    {
+        // 样例：3个物品 (w=2,v=3) (w=3,v=4) (w=4,v=5)，容量=8
+        int n = 3, C = 8;
+        w[1] = 2; v[1] = 3;
+        w[2] = 3; v[2] = 4;
+        w[3] = 4; v[3] = 5;
+        int result = knapsack2D(n, C);
+        cout &lt;&lt; "物品: (2,3) (3,4) (4,5), 容量: 8" &lt;&lt; endl;
+        cout &lt;&lt; "二维DP最大价值: " &lt;&lt; result &lt;&lt; " (期望: 9)" &lt;&lt; endl;
+    }
+    cout &lt;&lt; endl;
+
+    // --- 测试2：一维DP ---
+    cout &lt;&lt; "--- 测试2：一维DP（空间优化） ---" &lt;&lt; endl;
+    {
+        int n = 3, C = 8;
+        w[1] = 2; v[1] = 3;
+        w[2] = 3; v[2] = 4;
+        w[3] = 4; v[3] = 5;
+        int result = knapsack1D(n, C);
+        cout &lt;&lt; "物品: (2,3) (3,4) (4,5), 容量: 8" &lt;&lt; endl;
+        cout &lt;&lt; "一维DP最大价值: " &lt;&lt; result &lt;&lt; " (期望: 9)" &lt;&lt; endl;
+    }
+    cout &lt;&lt; endl;
+
+    // --- 测试3：采药问题 ---
+    cout &lt;&lt; "--- 测试3：采药问题 ---" &lt;&lt; endl;
+    {
+        int T = 70, n = 3;
+        int herbs[3][2] = { {71, 100}, {69, 1}, {1, 2} };
+        memset(dp1, 0, sizeof(dp1));
+        for (int i = 0; i &lt; n; i++) {
+            int t = herbs[i][0], val = herbs[i][1];
+            for (int j = T; j &gt;= t; j--) {
+                dp1[j] = max(dp1[j], dp1[j - t] + val);
+            }
+        }
+        cout &lt;&lt; "输入: T=70, n=3, 草药=(71,100) (69,1) (1,2)" &lt;&lt; endl;
+        cout &lt;&lt; "最大总价值: " &lt;&lt; dp1[T] &lt;&lt; " (期望: 3)" &lt;&lt; endl;
+    }
+    cout &lt;&lt; endl;
+
+    // --- 测试4：装箱问题 ---
+    cout &lt;&lt; "--- 测试4：装箱问题 ---" &lt;&lt; endl;
+    {
+        int V = 24, n = 6;
+        int volumes[6] = { 8, 3, 12, 7, 9, 7 };
+        memset(dp1, 0, sizeof(dp1));
+        for (int i = 0; i &lt; n; i++) {
+            int vol = volumes[i];
+            for (int j = V; j &gt;= vol; j--) {
+                dp1[j] = max(dp1[j], dp1[j - vol] + vol);
+            }
+        }
+        cout &lt;&lt; "输入: V=24, n=6, 物品体积=8 3 12 7 9 7" &lt;&lt; endl;
+        cout &lt;&lt; "最大装入体积: " &lt;&lt; dp1[V] &lt;&lt; endl;
+        cout &lt;&lt; "最小剩余空间: " &lt;&lt; V - dp1[V] &lt;&lt; " (期望: 0)" &lt;&lt; endl;
+    }
+    cout &lt;&lt; endl;
+
+    cout &lt;&lt; "========== 测试完毕 ==========" &lt;&lt; endl;
+    return 0;
+}
+</pre>
+    <p class="hint">本页使用浅色主题与 UTF-8 编码，可直接打印或导出 PDF。</p>
+  </div>
+</body>
+</html>

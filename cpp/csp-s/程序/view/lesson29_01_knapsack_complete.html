@@ -1,0 +1,559 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>lesson29_01_knapsack_complete.cpp</title>
+<style>
+  :root {
+    --bg: #f5f7fa;
+    --panel: #ffffff;
+    --text: #1a1a2e;
+    --muted: #5a6570;
+    --gold: #b8860b;
+    --code-bg: #ffffff;
+    --code-text: #1f2933;
+    --border: #d8dee6;
+    --top-bg: #ffffff;
+    --top-border: #e5e9ef;
+  }
+  * { box-sizing: border-box; }
+  html, body {
+    margin: 0; padding: 0;
+    background: var(--bg);
+    color: var(--text);
+    font-family: -apple-system, BlinkMacSystemFont, "PingFang SC", "Microsoft YaHei", sans-serif;
+    min-height: 100%;
+  }
+  .top {
+    position: sticky; top: 0; z-index: 10;
+    display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between;
+    gap: 10px;
+    padding: 12px 18px;
+    background: var(--top-bg);
+    border-bottom: 1px solid var(--top-border);
+    box-shadow: 0 1px 8px rgba(15, 23, 42, 0.06);
+  }
+  .brand { color: var(--gold); font-weight: 700; font-size: 14px; letter-spacing: 0.04em; }
+  .title { font-size: 15px; font-weight: 600; color: var(--text); max-width: 52vw; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .actions { display: flex; gap: 8px; flex-wrap: wrap; }
+  .btn {
+    appearance: none; border: 1px solid var(--border);
+    background: #fff; color: var(--text);
+    border-radius: 999px; padding: 8px 14px; font-size: 13px; font-weight: 600;
+    text-decoration: none; cursor: pointer;
+  }
+  .btn:hover { background: #f0f3f7; }
+  .btn.gold {
+    background: linear-gradient(135deg, #f0d78c, #d4a853);
+    color: #0a2540; border-color: #e0c06a;
+  }
+  .meta {
+    padding: 10px 18px; color: var(--muted); font-size: 12px;
+    border-bottom: 1px solid var(--border);
+    background: var(--panel);
+  }
+  .wrap { padding: 16px 18px 40px; }
+  pre {
+    margin: 0;
+    background: var(--code-bg);
+    color: var(--code-text);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 18px 20px;
+    overflow: auto;
+    font-family: "SF Mono", "JetBrains Mono", "Fira Code", Consolas, "Courier New", monospace;
+    font-size: 13.5px;
+    line-height: 1.55;
+    white-space: pre;
+    tab-size: 4;
+    box-shadow: 0 2px 12px rgba(15, 23, 42, 0.05);
+  }
+  .hint { margin-top: 12px; color: var(--muted); font-size: 12px; }
+  @media print {
+    html, body { background: #fff !important; color: #000 !important; }
+    .top { position: static; box-shadow: none; border-bottom: 1px solid #ccc; background: #fff !important; }
+    .actions { display: none !important; }
+    .meta { background: #fff !important; border-color: #ddd; color: #333; }
+    .wrap { padding: 0; }
+    pre {
+      background: #fff !important; color: #000 !important;
+      border: 1px solid #bbb; box-shadow: none; border-radius: 0;
+      white-space: pre-wrap; word-break: break-word; font-size: 11pt; line-height: 1.4;
+    }
+    .hint { display: none; }
+    a { color: #000; text-decoration: none; }
+  }
+</style>
+</head>
+<body>
+  <div class="top">
+    <div class="brand">CSP-S 备考 · 配套代码</div>
+    <div class="title">lesson29_01_knapsack_complete.cpp</div>
+    <div class="actions">
+      <a class="btn" href="../lesson29_01_knapsack_complete.cpp" download="lesson29_01_knapsack_complete.cpp">⬇️ 下载源文件</a>
+      <a class="btn gold" href="javascript:history.back()">← 返回课件</a>
+    </div>
+  </div>
+  <div class="meta">编码：UTF-8 · 文件：lesson29_01_knapsack_complete.cpp · 共 455 行 · 浅色主题便于打印</div>
+  <div class="wrap">
+    <pre id="code">/**
+ * ============================================================
+ * 第29课：01背包与完全背包 —— 完整C++实现
+ * ============================================================
+ *
+ * 本文件包含以下内容：
+ *   1. 01背包 - 二维DP标准实现
+ *   2. 01背包 - 一维滚动数组优化（逆序遍历）
+ *   3. 完全背包 - 一维数组实现（正序遍历）
+ *   4. 01背包 - 恰好装满版本
+ *   5. 完全背包 - 恰好装满版本
+ *   6. 01背包 - 求方案数
+ *   7. 完全背包 - 求方案数
+ *   8. 01背包 - 求字典序最小方案（回溯法）
+ *   9. 真题1：采药 (NOIP2005 普及组)
+ *  10. 真题2：装箱问题 (最小剩余容量)
+ *
+ * 编译运行：
+ *   g++ -std=c++17 -O2 lesson29_01_knapsack_complete.cpp -o lesson29
+ *   ./lesson29
+ */
+
+#include &lt;iostream&gt;
+#include &lt;vector&gt;
+#include &lt;algorithm&gt;
+#include &lt;climits&gt;
+#include &lt;string&gt;
+using namespace std;
+
+const int MOD = 1e9 + 7;      // 方案数取模
+const int INF = 1e9;          // 无穷大，用于恰好装满的初始化
+
+// ============================================================
+// 辅助函数：打印分隔线
+// ============================================================
+void printSeparator(const string&amp; title) {
+    cout &lt;&lt; "\n========================================" &lt;&lt; endl;
+    cout &lt;&lt; "  " &lt;&lt; title &lt;&lt; endl;
+    cout &lt;&lt; "========================================\n" &lt;&lt; endl;
+}
+
+// ============================================================
+// 1. 01背包 —— 二维DP标准实现
+// ============================================================
+// 时间复杂度：O(N * V)
+// 空间复杂度：O(N * V)
+// 优点：可以方便地回溯具体选择方案
+int knapsack01_2D(const vector&lt;int&gt;&amp; w, const vector&lt;int&gt;&amp; v, int V) {
+    int N = w.size() - 1;  // 物品编号从1开始，w[0]是占位
+    // dp[i][j]: 考虑前i件物品，总重量不超过j时的最大价值
+    vector&lt;vector&lt;int&gt;&gt; dp(N + 1, vector&lt;int&gt;(V + 1, 0));
+
+    for (int i = 1; i &lt;= N; i++) {
+        for (int j = 0; j &lt;= V; j++) {
+            // 不选第i件物品
+            dp[i][j] = dp[i - 1][j];
+            // 如果容量够，考虑选第i件物品
+            if (j &gt;= w[i]) {
+                dp[i][j] = max(dp[i][j], dp[i - 1][j - w[i]] + v[i]);
+            }
+        }
+    }
+
+    cout &lt;&lt; "  [01背包 二维DP] 最大价值 = " &lt;&lt; dp[N][V] &lt;&lt; endl;
+    return dp[N][V];
+}
+
+// ============================================================
+// 2. 01背包 —— 一维滚动数组优化（逆序遍历）
+// ============================================================
+// 时间复杂度：O(N * V)
+// 空间复杂度：O(V)
+//
+// 【关键】为什么必须逆序遍历？
+//   dp[j] = max(dp[j], dp[j - w[i]] + v[i])
+//   等式右边的 dp[j - w[i]] 必须是【上一轮】(i-1)的旧值。
+//   如果正序遍历，当计算 dp[j] 时，dp[j - w[i]] 可能已经被本轮更新过，
+//   导致第i件物品被多次使用，退化为完全背包。
+//   逆序遍历确保 j-w[i] &lt; j，较小的索引在本轮中尚未被覆盖，
+//   仍然保存着上一轮的旧值，从而保证每件物品最多用一次。
+int knapsack01_1D(const vector&lt;int&gt;&amp; w, const vector&lt;int&gt;&amp; v, int V) {
+    int N = w.size() - 1;
+    vector&lt;int&gt; dp(V + 1, 0);
+
+    // 逐物品迭代
+    for (int i = 1; i &lt;= N; i++) {
+        // 逆序遍历容量：从V到w[i]
+        // 只有当 j &gt;= w[i] 时才有可能装入，所以以 w[i] 为下界
+        for (int j = V; j &gt;= w[i]; j--) {
+            // dp[j]:     不选物品i（保持上一轮的旧值）
+            // dp[j-w[i]] + v[i]: 选物品i
+            //   注意：这里的 dp[j-w[i]] 由于逆序，仍是上一轮的旧值
+            dp[j] = max(dp[j], dp[j - w[i]] + v[i]);
+        }
+    }
+
+    cout &lt;&lt; "  [01背包 一维逆序] 最大价值 = " &lt;&lt; dp[V] &lt;&lt; endl;
+    return dp[V];
+}
+
+// ============================================================
+// 3. 完全背包 —— 一维数组实现（正序遍历）
+// ============================================================
+// 时间复杂度：O(N * V)
+// 空间复杂度：O(V)
+//
+// 【关键】为什么必须正序遍历？
+//   完全背包中每件物品可以使用任意多次。
+//   正序遍历时，计算 dp[j] 时 dp[j - w[i]] 可能已经被本轮更新过，
+//   即已经包含了物品i。此时再在此基础上加一件物品i，
+//   相当于物品i被多次使用，这正是完全背包所需要的效果。
+//   逆序反而会让物品i最多只用一次（变成01背包）。
+int knapsackComplete(const vector&lt;int&gt;&amp; w, const vector&lt;int&gt;&amp; v, int V) {
+    int N = w.size() - 1;
+    vector&lt;int&gt; dp(V + 1, 0);
+
+    for (int i = 1; i &lt;= N; i++) {
+        // 正序遍历容量：从 w[i] 到 V
+        // 正序使得 dp[j - w[i]] 可能已是本轮更新后的值
+        for (int j = w[i]; j &lt;= V; j++) {
+            dp[j] = max(dp[j], dp[j - w[i]] + v[i]);
+        }
+    }
+
+    cout &lt;&lt; "  [完全背包 一维正序] 最大价值 = " &lt;&lt; dp[V] &lt;&lt; endl;
+    return dp[V];
+}
+
+// ============================================================
+// 4. 01背包 —— 恰好装满版本
+// ============================================================
+// 初始化技巧：
+//   dp[0] = 0         精确匹配容量0，价值为0（合法状态）
+//   dp[1..V] = -INF   其他容量暂无法恰好装满（非法状态）
+//
+// 原理：状态转移 dp[j] = max(dp[j], dp[j-w[i]] + v[i])
+//   如果 dp[j-w[i]] 是 -INF（无法恰好装满 j-w[i]），
+//   那么 dp[j-w[i]] + v[i] 仍然是极小的负数，
+//   不会用于更新 dp[j]。只有从 dp[0] = 0 出发，
+//   通过转移能够到达的状态才会被更新为有效值。
+int knapsack01_exact(const vector&lt;int&gt;&amp; w, const vector&lt;int&gt;&amp; v, int V) {
+    int N = w.size() - 1;
+    vector&lt;int&gt; dp(V + 1, -INF);
+    dp[0] = 0;  // 关键：容量0可以恰好装满（一件都不装）
+
+    for (int i = 1; i &lt;= N; i++) {
+        // 01背包用逆序
+        for (int j = V; j &gt;= w[i]; j--) {
+            // 只有当 dp[j-w[i]] 不是 -INF 时，更新才有效
+            // 但实际上: max(-INF, -INF+v[i]) = 很小的数，不影响
+            dp[j] = max(dp[j], dp[j - w[i]] + v[i]);
+        }
+    }
+
+    if (dp[V] &lt; 0) {
+        cout &lt;&lt; "  [01背包 恰好装满] 无法恰好装满容量 " &lt;&lt; V &lt;&lt; endl;
+        return -1;
+    }
+    cout &lt;&lt; "  [01背包 恰好装满] 最大价值 = " &lt;&lt; dp[V] &lt;&lt; endl;
+    return dp[V];
+}
+
+// ============================================================
+// 5. 完全背包 —— 恰好装满版本
+// ============================================================
+int knapsackComplete_exact(const vector&lt;int&gt;&amp; w, const vector&lt;int&gt;&amp; v, int V) {
+    int N = w.size() - 1;
+    vector&lt;int&gt; dp(V + 1, -INF);
+    dp[0] = 0;
+
+    for (int i = 1; i &lt;= N; i++) {
+        // 完全背包用正序
+        for (int j = w[i]; j &lt;= V; j++) {
+            dp[j] = max(dp[j], dp[j - w[i]] + v[i]);
+        }
+    }
+
+    if (dp[V] &lt; 0) {
+        cout &lt;&lt; "  [完全背包 恰好装满] 无法恰好装满容量 " &lt;&lt; V &lt;&lt; endl;
+        return -1;
+    }
+    cout &lt;&lt; "  [完全背包 恰好装满] 最大价值 = " &lt;&lt; dp[V] &lt;&lt; endl;
+    return dp[V];
+}
+
+// ============================================================
+// 6. 01背包 —— 求方案数
+// ============================================================
+// dp[j]: 恰好装满容量j的方案数
+// 初始化：dp[0] = 1（空背包是一种方案）
+int knapsack01_count(const vector&lt;int&gt;&amp; w, int V) {
+    int N = w.size() - 1;
+    vector&lt;int&gt; dp(V + 1, 0);
+    dp[0] = 1;  // 一件都不选是一种方案
+
+    for (int i = 1; i &lt;= N; i++) {
+        // 01背包逆序
+        for (int j = V; j &gt;= w[i]; j--) {
+            dp[j] = (dp[j] + dp[j - w[i]]) % MOD;
+        }
+    }
+
+    cout &lt;&lt; "  [01背包 方案数] 恰好装满容量 " &lt;&lt; V &lt;&lt; " 的方案数 = " &lt;&lt; dp[V] &lt;&lt; endl;
+    return dp[V];
+}
+
+// ============================================================
+// 7. 完全背包 —— 求方案数
+// ============================================================
+int knapsackComplete_count(const vector&lt;int&gt;&amp; w, int V) {
+    int N = w.size() - 1;
+    vector&lt;int&gt; dp(V + 1, 0);
+    dp[0] = 1;
+
+    for (int i = 1; i &lt;= N; i++) {
+        // 完全背包正序
+        for (int j = w[i]; j &lt;= V; j++) {
+            dp[j] = (dp[j] + dp[j - w[i]]) % MOD;
+        }
+    }
+
+    cout &lt;&lt; "  [完全背包 方案数] 恰好装满容量 " &lt;&lt; V &lt;&lt; " 的方案数 = " &lt;&lt; dp[V] &lt;&lt; endl;
+    return dp[V];
+}
+
+// ============================================================
+// 8. 01背包 —— 求字典序最小方案（回溯法）
+// ============================================================
+// 使用二维DP + 记录表 g[i][j]，从 (N, V) 回溯
+// 回溯策略：从后往前判断，只要可以选就选，最终 reverse 即为字典序最小
+void knapsack01_minLexOrder(const vector&lt;int&gt;&amp; w, const vector&lt;int&gt;&amp; v, int V) {
+    int N = w.size() - 1;
+    vector&lt;vector&lt;int&gt;&gt; dp(N + 1, vector&lt;int&gt;(V + 1, 0));
+    // g[i][j] = true 表示在状态(i, j)处选择了物品i
+    vector&lt;vector&lt;bool&gt;&gt; g(N + 1, vector&lt;bool&gt;(V + 1, false));
+
+    // 二维DP + 记录选择
+    for (int i = 1; i &lt;= N; i++) {
+        for (int j = 0; j &lt;= V; j++) {
+            dp[i][j] = dp[i - 1][j];  // 默认不选
+            if (j &gt;= w[i]) {
+                int val = dp[i - 1][j - w[i]] + v[i];
+                // 注意：使用 &gt; 而不是 &gt;= 来保证字典序最小
+                // &gt; 保证仅在严格更优时才选，避免不必要的选择
+                if (val &gt; dp[i][j]) {
+                    dp[i][j] = val;
+                    g[i][j] = true;
+                }
+            }
+        }
+    }
+
+    // 回溯：从 (N, V) 开始
+    int j = V;
+    vector&lt;int&gt; selected;
+
+    // 从后往前遍历物品，能选则选
+    for (int i = N; i &gt;= 1; i--) {
+        if (j &gt;= w[i] &amp;&amp; dp[i][j] == dp[i - 1][j - w[i]] + v[i]) {
+            selected.push_back(i);
+            j -= w[i];
+        }
+    }
+
+    // 因为是倒着收集的，reverse 后即为编号从小到大
+    reverse(selected.begin(), selected.end());
+
+    cout &lt;&lt; "  [01背包 字典序最小方案] 最大价值 = " &lt;&lt; dp[N][V] &lt;&lt; endl;
+    cout &lt;&lt; "    选择的物品编号: ";
+    if (selected.empty()) {
+        cout &lt;&lt; "(无)";
+    } else {
+        for (size_t k = 0; k &lt; selected.size(); k++) {
+            if (k &gt; 0) cout &lt;&lt; " -&gt; ";
+            cout &lt;&lt; selected[k];
+        }
+    }
+    cout &lt;&lt; endl;
+}
+
+// ============================================================
+// 9. 真题1：采药 (NOIP2005 普及组)
+// ============================================================
+// 题目：有T的时间，M株草药，每株需要 time[i] 时间，有 value[i] 价值
+//       每株只能采一次，求最大总价值
+void solve_herbPicking() {
+    printSeparator("真题1：采药 (NOIP2005 普及组)");
+
+    // 样例输入：T=70, M=3
+    // 草药1: 71 100
+    // 草药2: 69 1
+    // 草药3: 1 2
+    // 预期输出：3
+
+    int T = 70, M = 3;
+    vector&lt;int&gt; w = {0, 71, 69, 1};   // 重量 = 采药时间
+    vector&lt;int&gt; v = {0, 100, 1, 2};    // 价值 = 草药价值
+
+    vector&lt;int&gt; dp(T + 1, 0);
+
+    // 01背包一维逆序
+    for (int i = 1; i &lt;= M; i++) {
+        for (int j = T; j &gt;= w[i]; j--) {
+            dp[j] = max(dp[j], dp[j - w[i]] + v[i]);
+        }
+    }
+
+    cout &lt;&lt; "  样例输入：T=70, M=3" &lt;&lt; endl;
+    cout &lt;&lt; "  草药: (71,100), (69,1), (1,2)" &lt;&lt; endl;
+    cout &lt;&lt; "  最大总价值 = " &lt;&lt; dp[T] &lt;&lt; " (预期: 3)" &lt;&lt; endl;
+    cout &lt;&lt; "  解释: 选草药3(1,2)，剩余时间=69，草1和草2都装不下" &lt;&lt; endl;
+}
+
+// ============================================================
+// 10. 真题2：装箱问题（最小剩余容量）
+// ============================================================
+// 题目：箱子容量V，n个物品各有体积，求装入后箱子的最小剩余空间
+// 思路：体积既是重量也是价值，做01背包，答案 = V - dp[V]
+void solve_binPacking() {
+    printSeparator("真题2：装箱问题 (最小剩余容量)");
+
+    // 样例输入：V=24, n=6
+    // 物品体积：8, 3, 12, 7, 9, 7
+    // 最优：8 + 7 + 9 = 24，剩余0
+
+    int V = 24, n = 6;
+    vector&lt;int&gt; w = {0, 8, 3, 12, 7, 9, 7};  // 体积 = 重量 = 价值
+
+    vector&lt;int&gt; dp(V + 1, 0);
+
+    // 01背包：体积既是重量也是价值
+    for (int i = 1; i &lt;= n; i++) {
+        for (int j = V; j &gt;= w[i]; j--) {
+            // v[i] = w[i]，即体积就是价值
+            dp[j] = max(dp[j], dp[j - w[i]] + w[i]);
+        }
+    }
+
+    int minRemain = V - dp[V];
+
+    cout &lt;&lt; "  样例输入：V=24, n=6" &lt;&lt; endl;
+    cout &lt;&lt; "  物品体积：8, 3, 12, 7, 9, 7" &lt;&lt; endl;
+    cout &lt;&lt; "  最大装载体积 = " &lt;&lt; dp[V] &lt;&lt; endl;
+    cout &lt;&lt; "  最小剩余空间 = " &lt;&lt; minRemain &lt;&lt; " (预期: 0)" &lt;&lt; endl;
+    cout &lt;&lt; "  解释: 选 8+7+9=24，恰好装满" &lt;&lt; endl;
+}
+
+// ============================================================
+// main() —— 测试所有实现
+// ============================================================
+int main() {
+    ios::sync_with_stdio(false);
+    cin.tie(nullptr);
+
+    cout &lt;&lt; "╔══════════════════════════════════════╗" &lt;&lt; endl;
+    cout &lt;&lt; "║  第29课：01背包与完全背包 测试程序  ║" &lt;&lt; endl;
+    cout &lt;&lt; "╚══════════════════════════════════════╝" &lt;&lt; endl;
+
+    // ----- 测试数据 -----
+    // 4件物品，背包容量10
+    // 物品编号:  1    2    3    4
+    // 重量 w:    4    5    6    3
+    // 价值 v:    5    6    7    4
+
+    const int N = 4, V = 10;
+    vector&lt;int&gt; w = {0, 4, 5, 6, 3};  // w[0] 占位
+    vector&lt;int&gt; v = {0, 5, 6, 7, 4};  // v[0] 占位
+
+    cout &lt;&lt; "\n测试数据：" &lt;&lt; endl;
+    cout &lt;&lt; "  物品数量 N = " &lt;&lt; N &lt;&lt; ", 背包容量 V = " &lt;&lt; V &lt;&lt; endl;
+    cout &lt;&lt; "  物品列表:" &lt;&lt; endl;
+    for (int i = 1; i &lt;= N; i++) {
+        cout &lt;&lt; "    物品" &lt;&lt; i &lt;&lt; ": w=" &lt;&lt; w[i] &lt;&lt; ", v=" &lt;&lt; v[i] &lt;&lt; endl;
+    }
+    cout &lt;&lt; "\n预期最优：选物品1(w=4,v=5) + 物品3(w=6,v=7) = 总重10, 总价值12" &lt;&lt; endl;
+
+    // ──── 1. 01背包 二维DP ────
+    printSeparator("测试1: 01背包 二维DP");
+    knapsack01_2D(w, v, V);
+
+    // ──── 2. 01背包 一维逆序 ────
+    printSeparator("测试2: 01背包 一维滚动数组（逆序）");
+    knapsack01_1D(w, v, V);
+
+    // ──── 3. 完全背包 一维正序 ────
+    printSeparator("测试3: 完全背包 一维正序");
+    knapsackComplete(w, v, V);
+
+    // ──── 4. 01背包 恰好装满 ────
+    printSeparator("测试4: 01背包 恰好装满");
+
+    // 用一组恰好能装满的数据测试
+    // 物品：w = {2, 3, 5}, v = {3, 4, 6}, V = 5
+    // 方案1: 选物品1(2)+物品2(3) = 重量5, 价值7
+    // 方案2: 选物品3(5) = 重量5, 价值6
+    // 最优：价值7
+    vector&lt;int&gt; w_exact = {0, 2, 3, 5};
+    vector&lt;int&gt; v_exact = {0, 3, 4, 6};
+    cout &lt;&lt; "  子测试a: 恰好可装满的数据 (w={2,3,5}, v={3,4,6}, V=5)" &lt;&lt; endl;
+    knapsack01_exact(w_exact, v_exact, 5);
+
+    // 一组无法恰好装满的数据
+    cout &lt;&lt; "  子测试b: 无法恰好装满的数据 (w={4,5,6}, v={5,6,7}, V=7)" &lt;&lt; endl;
+    knapsack01_exact(w, v, 7);
+
+    // ──── 5. 完全背包 恰好装满 ────
+    printSeparator("测试5: 完全背包 恰好装满");
+    // 物品：w={3,5}, v={4,6}, V=8
+    // 选3+5=8 价值=10
+    // 选3+3(不行，剩余2装不下)=无法恰好装满
+    // 选5+? 不行
+    // 试试: 3+5=8 → 价值10 ✓
+    vector&lt;int&gt; w_ce = {0, 3, 5};
+    vector&lt;int&gt; v_ce = {0, 4, 6};
+    cout &lt;&lt; "  数据: w={3,5}, v={4,6}, V=8" &lt;&lt; endl;
+    knapsackComplete_exact(w_ce, v_ce, 8);
+
+    // ──── 6. 01背包 求方案数 ────
+    printSeparator("测试6: 01背包 求方案数");
+    // 物品体积：{2, 3, 5, 7}, V=10
+    // 方案1: 3+7=10
+    // 方案2: 2+3+5=10
+    // 预期：2种方案
+    vector&lt;int&gt; w_count = {0, 2, 3, 5, 7};
+    cout &lt;&lt; "  数据: w={2,3,5,7}, V=10" &lt;&lt; endl;
+    cout &lt;&lt; "  预期: 2种方案 (3+7, 2+3+5)" &lt;&lt; endl;
+    knapsack01_count(w_count, 10);
+
+    // ──── 7. 完全背包 求方案数 ────
+    printSeparator("测试7: 完全背包 求方案数");
+    // 物品体积：{1, 2}, V=4
+    // 方案: 1111, 112, 22, 13(没有3), 4(没有4)
+    // 1+1+1+1, 1+1+2, 2+2
+    // 预期：3种方案
+    vector&lt;int&gt; w_c_count = {0, 1, 2};
+    cout &lt;&lt; "  数据: w={1,2}, V=4" &lt;&lt; endl;
+    cout &lt;&lt; "  预期: 3种方案 (1+1+1+1, 1+1+2, 2+2)" &lt;&lt; endl;
+    knapsackComplete_count(w_c_count, 4);
+
+    // ──── 8. 01背包 求字典序最小方案 ────
+    printSeparator("测试8: 01背包 求字典序最小方案");
+    // 用原始数据测试，V=10
+    // 预期最优：物品1(4,5) + 物品3(6,7) = 价值12
+    knapsack01_minLexOrder(w, v, V);
+
+    // ──── 9. 真题精练 ────
+    solve_herbPicking();
+    solve_binPacking();
+
+    cout &lt;&lt; "\n╔══════════════════════════════════════╗" &lt;&lt; endl;
+    cout &lt;&lt; "║        所有测试完成！              ║" &lt;&lt; endl;
+    cout &lt;&lt; "╚══════════════════════════════════════╝" &lt;&lt; endl;
+
+    return 0;
+}
+</pre>
+    <p class="hint">本页使用浅色主题与 UTF-8 编码，可直接打印或导出 PDF。</p>
+  </div>
+</body>
+</html>

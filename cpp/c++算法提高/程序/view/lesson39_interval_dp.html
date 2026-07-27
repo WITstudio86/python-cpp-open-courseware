@@ -1,0 +1,259 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>lesson39_interval_dp.cpp</title>
+<style>
+  :root {
+    --bg: #f5f7fa;
+    --panel: #ffffff;
+    --text: #1a1a2e;
+    --muted: #5a6570;
+    --gold: #b8860b;
+    --code-bg: #ffffff;
+    --code-text: #1f2933;
+    --border: #d8dee6;
+    --top-bg: #ffffff;
+    --top-border: #e5e9ef;
+  }
+  * { box-sizing: border-box; }
+  html, body {
+    margin: 0; padding: 0;
+    background: var(--bg);
+    color: var(--text);
+    font-family: -apple-system, BlinkMacSystemFont, "PingFang SC", "Microsoft YaHei", sans-serif;
+    min-height: 100%;
+  }
+  .top {
+    position: sticky; top: 0; z-index: 10;
+    display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between;
+    gap: 10px;
+    padding: 12px 18px;
+    background: var(--top-bg);
+    border-bottom: 1px solid var(--top-border);
+    box-shadow: 0 1px 8px rgba(15, 23, 42, 0.06);
+  }
+  .brand { color: var(--gold); font-weight: 700; font-size: 14px; letter-spacing: 0.04em; }
+  .title { font-size: 15px; font-weight: 600; color: var(--text); max-width: 52vw; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .actions { display: flex; gap: 8px; flex-wrap: wrap; }
+  .btn {
+    appearance: none; border: 1px solid var(--border);
+    background: #fff; color: var(--text);
+    border-radius: 999px; padding: 8px 14px; font-size: 13px; font-weight: 600;
+    text-decoration: none; cursor: pointer;
+  }
+  .btn:hover { background: #f0f3f7; }
+  .btn.gold {
+    background: linear-gradient(135deg, #f0d78c, #d4a853);
+    color: #0a2540; border-color: #e0c06a;
+  }
+  .meta {
+    padding: 10px 18px; color: var(--muted); font-size: 12px;
+    border-bottom: 1px solid var(--border);
+    background: var(--panel);
+  }
+  .wrap { padding: 16px 18px 40px; }
+  pre {
+    margin: 0;
+    background: var(--code-bg);
+    color: var(--code-text);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 18px 20px;
+    overflow: auto;
+    font-family: "SF Mono", "JetBrains Mono", "Fira Code", Consolas, "Courier New", monospace;
+    font-size: 13.5px;
+    line-height: 1.55;
+    white-space: pre;
+    tab-size: 4;
+    box-shadow: 0 2px 12px rgba(15, 23, 42, 0.05);
+  }
+  .hint { margin-top: 12px; color: var(--muted); font-size: 12px; }
+  @media print {
+    html, body { background: #fff !important; color: #000 !important; }
+    .top { position: static; box-shadow: none; border-bottom: 1px solid #ccc; background: #fff !important; }
+    .actions { display: none !important; }
+    .meta { background: #fff !important; border-color: #ddd; color: #333; }
+    .wrap { padding: 0; }
+    pre {
+      background: #fff !important; color: #000 !important;
+      border: 1px solid #bbb; box-shadow: none; border-radius: 0;
+      white-space: pre-wrap; word-break: break-word; font-size: 11pt; line-height: 1.4;
+    }
+    .hint { display: none; }
+    a { color: #000; text-decoration: none; }
+  }
+</style>
+</head>
+<body>
+  <div class="top">
+    <div class="brand">C++ 算法提高 · 配套代码</div>
+    <div class="title">lesson39_interval_dp.cpp</div>
+    <div class="actions">
+      <a class="btn" href="../lesson39_interval_dp.cpp" download="lesson39_interval_dp.cpp">⬇️ 下载源文件</a>
+      <a class="btn gold" href="javascript:history.back()">← 返回课件</a>
+    </div>
+  </div>
+  <div class="meta">编码：UTF-8 · 文件：lesson39_interval_dp.cpp · 共 155 行 · 浅色主题便于打印</div>
+  <div class="wrap">
+    <pre id="code">/*
+ * 第39课：区间DP入门
+ *
+ * 本程序演示区间DP的两个经典问题：
+ * 1. 石子合并（直线版）  — O(n³)
+ * 2. 矩阵链乘            — O(n³)
+ *
+ * 核心思想：dp[i][j] 表示区间 [i, j] 的最优值，
+ * 通过枚举分割点 k，将大区间分解为两个小区间来求解。
+ * 枚举顺序：区间长度 → 左端点 → 分割点
+ */
+
+#include &lt;iostream&gt;
+#include &lt;vector&gt;
+#include &lt;climits&gt;
+#include &lt;algorithm&gt;
+using namespace std;
+
+/**
+ * 石子合并（直线版）
+ *
+ * 有 n 堆石子排成一行，每次合并相邻两堆，
+ * 合并代价为两堆石子数之和，求最小总代价。
+ *
+ * dp[i][j] = 将第 i 堆到第 j 堆石子合并成一堆的最小代价
+ * 转移方程：
+ *   dp[i][j] = min(dp[i][k] + dp[k+1][j]) + sum(i, j)
+ *   其中 i ≤ k &lt; j
+ *
+ * @param a  石子数量数组，a[1..n] 有效
+ * @return   最小总合并代价
+ */
+int stoneMerge(const vector&lt;int&gt;&amp; a) {
+    int n = a.size() - 1;  // a[0] 不使用，实际石子从 a[1] 开始
+    if (n &lt;= 1) return 0;
+
+    // 前缀和：sum[i] = a[1] + a[2] + ... + a[i]
+    vector&lt;int&gt; sum(n + 1, 0);
+    for (int i = 1; i &lt;= n; i++) {
+        sum[i] = sum[i - 1] + a[i];
+    }
+
+    // dp[i][j]：合并区间 [i, j] 的最小代价
+    // 初始化为 0，dp[i][i] = 0（单堆无需合并）
+    vector&lt;vector&lt;int&gt;&gt; dp(n + 1, vector&lt;int&gt;(n + 1, 0));
+
+    // 按区间长度从小到大枚举——这是区间DP的关键！
+    for (int len = 2; len &lt;= n; len++) {            // 区间长度
+        for (int i = 1; i + len - 1 &lt;= n; i++) {    // 左端点
+            int j = i + len - 1;                     // 右端点
+            dp[i][j] = INT_MAX;
+            // 枚举分割点：将 [i, j] 分成 [i, k] 和 [k+1, j]
+            for (int k = i; k &lt; j; k++) {
+                // 合并两个子区间的代价 = 子区间代价之和 + 本次合并代价
+                // 本次合并代价 = 区间 [i, j] 的石子总数 = sum[j] - sum[i-1]
+                int cost = dp[i][k] + dp[k + 1][j] + sum[j] - sum[i - 1];
+                dp[i][j] = min(dp[i][j], cost);
+            }
+        }
+    }
+
+    return dp[1][n];  // 合并全部 n 堆的最小代价
+}
+
+/**
+ * 矩阵链乘
+ *
+ * 给定 n 个矩阵的维度序列 r[0], r[1], ..., r[n]，
+ * 第 i 个矩阵为 r[i-1] 行 × r[i] 列。
+ * 求通过加括号改变计算顺序后的最少标量乘法次数。
+ *
+ * dp[i][j] = 计算矩阵 i 到矩阵 j 相乘的最少乘法次数
+ * 转移方程：
+ *   dp[i][j] = min(dp[i][k] + dp[k+1][j] + r[i-1] * r[k] * r[j])
+ *   其中 i ≤ k &lt; j
+ *
+ * @param r  维度数组，r[0..n]，共 n+1 个元素
+ * @return   最少标量乘法次数
+ */
+int matrixChain(const vector&lt;int&gt;&amp; r) {
+    int n = r.size() - 1;  // 矩阵个数
+    if (n &lt;= 1) return 0;
+
+    // dp[i][j]：矩阵 i 到矩阵 j 的最少乘法次数
+    vector&lt;vector&lt;int&gt;&gt; dp(n + 1, vector&lt;int&gt;(n + 1, 0));
+
+    for (int len = 2; len &lt;= n; len++) {            // 区间长度
+        for (int i = 1; i + len - 1 &lt;= n; i++) {    // 左端点
+            int j = i + len - 1;                     // 右端点
+            dp[i][j] = INT_MAX;
+            // 枚举分割点 k：最后一个执行的乘法
+            // 左边：[i, k] 相乘得到一个 r[i-1]×r[k] 的矩阵
+            // 右边：[k+1, j] 相乘得到一个 r[k]×r[j] 的矩阵
+            // 两者相乘的代价：r[i-1] * r[k] * r[j]
+            for (int k = i; k &lt; j; k++) {
+                int cost = dp[i][k] + dp[k + 1][j] + r[i - 1] * r[k] * r[j];
+                dp[i][j] = min(dp[i][j], cost);
+            }
+        }
+    }
+
+    return dp[1][n];
+}
+
+/**
+ * 测试主函数
+ * 使用样例数据分别测试石子合并和矩阵链乘
+ */
+int main() {
+    // ========== 测试1：石子合并 ==========
+    cout &lt;&lt; "========== 第39课：区间DP入门 ==========" &lt;&lt; endl;
+    cout &lt;&lt; endl;
+    cout &lt;&lt; "【测试1】石子合并（直线版）" &lt;&lt; endl;
+    cout &lt;&lt; "样例：4 堆石子，数量分别为 1, 3, 5, 2" &lt;&lt; endl;
+
+    // a[0] 占位，实际数据从 a[1] 开始
+    vector&lt;int&gt; stones = {0, 1, 3, 5, 2};
+    int result1 = stoneMerge(stones);
+    cout &lt;&lt; "最小合并代价 = " &lt;&lt; result1 &lt;&lt; endl;
+    cout &lt;&lt; "预期答案 = 22" &lt;&lt; endl;
+    cout &lt;&lt; "结果：" &lt;&lt; (result1 == 22 ? "✓ 通过" : "✗ 未通过") &lt;&lt; endl;
+    cout &lt;&lt; endl;
+
+    // ========== 测试2：矩阵链乘 ==========
+    cout &lt;&lt; "【测试2】矩阵链乘" &lt;&lt; endl;
+    cout &lt;&lt; "样例：3 个矩阵，维度序列为 10, 100, 5, 50" &lt;&lt; endl;
+    cout &lt;&lt; "  矩阵1: 10 × 100" &lt;&lt; endl;
+    cout &lt;&lt; "  矩阵2: 100 × 5" &lt;&lt; endl;
+    cout &lt;&lt; "  矩阵3: 5 × 50" &lt;&lt; endl;
+
+    vector&lt;int&gt; dims = {10, 100, 5, 50};
+    int result2 = matrixChain(dims);
+    cout &lt;&lt; "最少乘法次数 = " &lt;&lt; result2 &lt;&lt; endl;
+    cout &lt;&lt; "预期答案 = 7500 （即 (A1×A2)×A3）" &lt;&lt; endl;
+    cout &lt;&lt; "结果：" &lt;&lt; (result2 == 7500 ? "✓ 通过" : "✗ 未通过") &lt;&lt; endl;
+    cout &lt;&lt; endl;
+
+    // ========== 附加测试 ==========
+    cout &lt;&lt; "【附加测试】石子合并（n=6）" &lt;&lt; endl;
+    cout &lt;&lt; "石子：3, 4, 6, 5, 4, 2" &lt;&lt; endl;
+    vector&lt;int&gt; stones2 = {0, 3, 4, 6, 5, 4, 2};
+    int result3 = stoneMerge(stones2);
+    cout &lt;&lt; "最小合并代价 = " &lt;&lt; result3 &lt;&lt; endl;
+    cout &lt;&lt; endl;
+
+    cout &lt;&lt; "【附加测试】矩阵链乘（n=4）" &lt;&lt; endl;
+    cout &lt;&lt; "维度：5, 4, 6, 2, 7" &lt;&lt; endl;
+    vector&lt;int&gt; dims2 = {5, 4, 6, 2, 7};
+    int result4 = matrixChain(dims2);
+    cout &lt;&lt; "最少乘法次数 = " &lt;&lt; result4 &lt;&lt; endl;
+    cout &lt;&lt; endl;
+
+    cout &lt;&lt; "========== 所有测试完成 ==========" &lt;&lt; endl;
+    return 0;
+}
+</pre>
+    <p class="hint">本页使用浅色主题与 UTF-8 编码，可直接打印或导出 PDF。</p>
+  </div>
+</body>
+</html>

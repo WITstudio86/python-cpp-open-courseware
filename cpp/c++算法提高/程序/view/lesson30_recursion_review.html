@@ -1,0 +1,457 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>lesson30_recursion_review.cpp</title>
+<style>
+  :root {
+    --bg: #f5f7fa;
+    --panel: #ffffff;
+    --text: #1a1a2e;
+    --muted: #5a6570;
+    --gold: #b8860b;
+    --code-bg: #ffffff;
+    --code-text: #1f2933;
+    --border: #d8dee6;
+    --top-bg: #ffffff;
+    --top-border: #e5e9ef;
+  }
+  * { box-sizing: border-box; }
+  html, body {
+    margin: 0; padding: 0;
+    background: var(--bg);
+    color: var(--text);
+    font-family: -apple-system, BlinkMacSystemFont, "PingFang SC", "Microsoft YaHei", sans-serif;
+    min-height: 100%;
+  }
+  .top {
+    position: sticky; top: 0; z-index: 10;
+    display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between;
+    gap: 10px;
+    padding: 12px 18px;
+    background: var(--top-bg);
+    border-bottom: 1px solid var(--top-border);
+    box-shadow: 0 1px 8px rgba(15, 23, 42, 0.06);
+  }
+  .brand { color: var(--gold); font-weight: 700; font-size: 14px; letter-spacing: 0.04em; }
+  .title { font-size: 15px; font-weight: 600; color: var(--text); max-width: 52vw; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .actions { display: flex; gap: 8px; flex-wrap: wrap; }
+  .btn {
+    appearance: none; border: 1px solid var(--border);
+    background: #fff; color: var(--text);
+    border-radius: 999px; padding: 8px 14px; font-size: 13px; font-weight: 600;
+    text-decoration: none; cursor: pointer;
+  }
+  .btn:hover { background: #f0f3f7; }
+  .btn.gold {
+    background: linear-gradient(135deg, #f0d78c, #d4a853);
+    color: #0a2540; border-color: #e0c06a;
+  }
+  .meta {
+    padding: 10px 18px; color: var(--muted); font-size: 12px;
+    border-bottom: 1px solid var(--border);
+    background: var(--panel);
+  }
+  .wrap { padding: 16px 18px 40px; }
+  pre {
+    margin: 0;
+    background: var(--code-bg);
+    color: var(--code-text);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 18px 20px;
+    overflow: auto;
+    font-family: "SF Mono", "JetBrains Mono", "Fira Code", Consolas, "Courier New", monospace;
+    font-size: 13.5px;
+    line-height: 1.55;
+    white-space: pre;
+    tab-size: 4;
+    box-shadow: 0 2px 12px rgba(15, 23, 42, 0.05);
+  }
+  .hint { margin-top: 12px; color: var(--muted); font-size: 12px; }
+  @media print {
+    html, body { background: #fff !important; color: #000 !important; }
+    .top { position: static; box-shadow: none; border-bottom: 1px solid #ccc; background: #fff !important; }
+    .actions { display: none !important; }
+    .meta { background: #fff !important; border-color: #ddd; color: #333; }
+    .wrap { padding: 0; }
+    pre {
+      background: #fff !important; color: #000 !important;
+      border: 1px solid #bbb; box-shadow: none; border-radius: 0;
+      white-space: pre-wrap; word-break: break-word; font-size: 11pt; line-height: 1.4;
+    }
+    .hint { display: none; }
+    a { color: #000; text-decoration: none; }
+  }
+</style>
+</head>
+<body>
+  <div class="top">
+    <div class="brand">C++ 算法提高 · 配套代码</div>
+    <div class="title">lesson30_recursion_review.cpp</div>
+    <div class="actions">
+      <a class="btn" href="../lesson30_recursion_review.cpp" download="lesson30_recursion_review.cpp">⬇️ 下载源文件</a>
+      <a class="btn gold" href="javascript:history.back()">← 返回课件</a>
+    </div>
+  </div>
+  <div class="meta">编码：UTF-8 · 文件：lesson30_recursion_review.cpp · 共 353 行 · 浅色主题便于打印</div>
+  <div class="wrap">
+    <pre id="code">/*
+ * ================================================================
+ * C++算法提高 第30课：递归分治综合练习
+ * ================================================================
+ *
+ * 算法知识点：
+ *   - 递归分治核心思想回顾：分解 → 解决 → 合并
+ *   - 幂次方表示：递归分解正整数为2的幂次方之和
+ *   - FBI树：根据01串递归构建二叉树并后序遍历
+ *   - 递归嵌套：指数递归分解的深层理解
+ *
+ * 经典例题：
+ *   例题1 - 幂次方表示：如 137 = 2(2(2)+2+2(0))+2(2+2(0))+2(0)
+ *   例题2 - FBI树：根据01串递归构建FBI树，输出后序遍历
+ *
+ * 运行说明：
+ *   g++ -std=c++11 lesson30_recursion_review.cpp -o lesson30
+ *   ./lesson30
+ */
+
+#include &lt;iostream&gt;
+#include &lt;string&gt;
+#include &lt;cmath&gt;
+using namespace std;
+
+// ================================================================
+// 例题1：幂次方表示
+// ================================================================
+// 问题描述：
+//   任何一个正整数都可以表示为2的幂次方之和。
+//   进一步要求：指数也要用同样的方式表示。
+//   例如：137 = 2(2(2)+2+2(0)) + 2(2+2(0)) + 2(0)
+//
+// 递归分解思路：
+//   1. 将 n 转换为二进制，找出所有为 1 的位
+//   2. 对于每一位 i（i 是指数）：
+//      - i == 0 → "2(0)"
+//      - i == 1 → "2"（省略括号，约定简写）
+//      - i &gt;= 2 → "2(" + 递归分解(i) + ")"
+//   3. 各项用 "+" 连接
+//
+// 递归终止条件：
+//   - n == 0 → 返回 "0"
+//   - n == 1 → 返回 ""（表示 2^1 只写 "2"）
+//
+// 关键技巧：
+//   - 从高位向低位扫描二进制，保证输出顺序
+//   - 使用 first 标志控制 "+" 的输出
+// ================================================================
+
+// 递归函数：返回数字 n（作为指数时）的幂次方表示字符串
+// 注意：这个函数返回的是"指数部分"的表示
+// 调用者需要自行添加 "2(" 和 ")" 或直接使用 "2"
+string powerRepr(int n) {
+    // 【终止条件1】指数为 0，返回 "0"
+    if (n == 0) return "0";
+
+    // 【终止条件2】指数为 1，返回空字符串
+    // 因为约定 2^1 简写为 "2"，不需要写成 "2(1)"
+    if (n == 1) return "";
+
+    string result = "";           // 存储当前数字的幂次方表示
+    bool first = true;            // 标记是否是第一项（控制 + 号）
+
+    // 从高位向低位扫描二进制位
+    // 20000 &lt; 2^15 = 32768，扫描 15 到 0 位足够
+    for (int i = 15; i &gt;= 0; i--) {
+        // 检查第 i 位是否为 1（即 2^i 是否在 n 的二进制表示中）
+        if (n &amp; (1 &lt;&lt; i)) {
+            // 如果不是第一项，先输出 "+" 连接符
+            if (!first) result += "+";
+            first = false;
+
+            // 根据指数 i 的大小，分三种情况处理
+            if (i == 0) {
+                // 2^0：直接写 "2(0)"
+                result += "2(0)";
+            } else if (i == 1) {
+                // 2^1：约定简写为 "2"
+                result += "2";
+            } else {
+                // 2^i (i &gt;= 2)：指数 i 需要递归分解
+                // 格式：2( 递归分解(i) )
+                result += "2(" + powerRepr(i) + ")";
+            }
+        }
+    }
+
+    return result;
+}
+
+// 幂次方表示的入口函数
+void solvePowerRepresentation() {
+    cout &lt;&lt; "╔══════════════════════════════════════════════╗" &lt;&lt; endl;
+    cout &lt;&lt; "║     例题1：幂次方表示                         ║" &lt;&lt; endl;
+    cout &lt;&lt; "║     将正整数表示为2的幂次方之和               ║" &lt;&lt; endl;
+    cout &lt;&lt; "╚══════════════════════════════════════════════╝" &lt;&lt; endl;
+    cout &lt;&lt; endl;
+
+    // 测试多个数字
+    int testNumbers[] = {137, 7, 3, 1315};
+    int testCount = sizeof(testNumbers) / sizeof(testNumbers[0]);
+
+    for (int t = 0; t &lt; testCount; t++) {
+        int n = testNumbers[t];
+
+        // 先验算：验证二进制分解
+        cout &lt;&lt; "  ───────────────────────────────────────" &lt;&lt; endl;
+        cout &lt;&lt; "  数字 n = " &lt;&lt; n &lt;&lt; endl;
+        cout &lt;&lt; "  二进制: ";
+        bool firstBit = true;
+        for (int i = 15; i &gt;= 0; i--) {
+            if (n &amp; (1 &lt;&lt; i)) {
+                if (!firstBit) cout &lt;&lt; " + ";
+                firstBit = false;
+                cout &lt;&lt; "2^" &lt;&lt; i;
+            }
+        }
+        cout &lt;&lt; endl;
+
+        // 输出幂次方表示
+        string repr = powerRepr(n);
+        cout &lt;&lt; "  幂次方表示: " &lt;&lt; repr &lt;&lt; endl;
+    }
+    cout &lt;&lt; "  ───────────────────────────────────────" &lt;&lt; endl;
+    cout &lt;&lt; endl;
+}
+
+
+// ================================================================
+// 例题2：FBI树
+// ================================================================
+// 问题描述：
+//   给定一个长度为 2^N 的 "01" 串，递归构造 FBI 树：
+//   1. 根节点对应整个字符串，根据字符串内容判断类型：
+//      - 全 '0' → B 节点（Bomb）
+//      - 全 '1' → I 节点（Intelligence）
+//      - 混合   → F 节点（FBI）
+//   2. 如果字符串长度 &gt; 1，将其对半分为左右子串，
+//      分别构造左子树和右子树
+//   3. 构造完成后，输出后序遍历序列（左→右→根）
+//
+// 递归构建过程（以 "10001011" 为例）：
+//
+//                      F("10001011")
+//                    /               \
+//            F("1000")              F("1011")
+//           /        \            /        \
+//      F("10")     B("00")    F("10")    I("11")
+//      /    \      /    \     /    \     /    \
+//   I("1") B("0") B("0") B("0") I("1") B("0") I("1") I("1")
+//
+// 后序遍历输出：I B F B B F I B I F I I F F
+//
+// 递归终止条件：
+//   当区间长度为 1（l == r）时，该位置直接是叶子节点，
+//   类型为 B（字符为 '0'）或 I（字符为 '1'）
+// ================================================================
+
+string fbiString;  // 存储输入的 01 串
+
+// 递归构建 FBI 树并输出后序遍历
+// 参数 l, r：当前处理的字符串区间 [l, r]（闭区间）
+void buildFBI(int l, int r) {
+    // 【递归步骤】如果区间长度大于 1，先递归处理左右子树
+    // 后序遍历要求：先左子树，再右子树，最后根节点
+    if (l &lt; r) {
+        int mid = (l + r) / 2;           // 对半分割
+        buildFBI(l, mid);                 // 递归构建左子树
+        buildFBI(mid + 1, r);             // 递归构建右子树
+    }
+
+    // 【判断节点类型】扫描当前区间 [l, r] 内的所有字符
+    bool hasZero = false;   // 区间内是否包含字符 '0'
+    bool hasOne  = false;   // 区间内是否包含字符 '1'
+
+    for (int i = l; i &lt;= r; i++) {
+        if (fbiString[i] == '0') hasZero = true;
+        if (fbiString[i] == '1') hasOne  = true;
+    }
+
+    // 【后序遍历】输出当前节点的类型（B / I / F）
+    if (hasZero &amp;&amp; hasOne) {
+        cout &lt;&lt; 'F';          // 既有 0 又有 1 → F 节点
+    } else if (hasZero) {
+        cout &lt;&lt; 'B';          // 只有 0 → B 节点
+    } else {
+        cout &lt;&lt; 'I';          // 只有 1 → I 节点
+    }
+}
+
+// FBI树的入口函数
+void solveFBITree() {
+    cout &lt;&lt; "╔══════════════════════════════════════════════╗" &lt;&lt; endl;
+    cout &lt;&lt; "║     例题2：FBI树                              ║" &lt;&lt; endl;
+    cout &lt;&lt; "║     根据01串递归构建，输出后序遍历             ║" &lt;&lt; endl;
+    cout &lt;&lt; "╚══════════════════════════════════════════════╝" &lt;&lt; endl;
+    cout &lt;&lt; endl;
+
+    // 测试用例1：标准样例
+    {
+        int N = 3;
+        fbiString = "10001011";
+
+        cout &lt;&lt; "  【测试1】N = " &lt;&lt; N &lt;&lt; ", 字符串 = \"" &lt;&lt; fbiString &lt;&lt; "\"" &lt;&lt; endl;
+        cout &lt;&lt; "  字符串长度 = " &lt;&lt; fbiString.length()
+             &lt;&lt; " (= 2^" &lt;&lt; N &lt;&lt; " = " &lt;&lt; (1 &lt;&lt; N) &lt;&lt; ")" &lt;&lt; endl;
+
+        // 输出 FBI 树的结构说明
+        cout &lt;&lt; endl;
+        cout &lt;&lt; "  FBI 树结构（前序缩进表示）：" &lt;&lt; endl;
+        cout &lt;&lt; "                       F(\"10001011\")" &lt;&lt; endl;
+        cout &lt;&lt; "                      /              \\" &lt;&lt; endl;
+        cout &lt;&lt; "              F(\"1000\")              F(\"1011\")" &lt;&lt; endl;
+        cout &lt;&lt; "             /        \\            /        \\" &lt;&lt; endl;
+        cout &lt;&lt; "       F(\"10\")     B(\"00\")    F(\"10\")     I(\"11\")" &lt;&lt; endl;
+        cout &lt;&lt; "       /    \\      /    \\     /    \\      /    \\" &lt;&lt; endl;
+        cout &lt;&lt; "   I(\"1\") B(\"0\") B(\"0\") B(\"0\") I(\"1\") B(\"0\") I(\"1\") I(\"1\")" &lt;&lt; endl;
+        cout &lt;&lt; endl;
+
+        cout &lt;&lt; "  后序遍历序列：";
+        buildFBI(0, fbiString.length() - 1);
+        cout &lt;&lt; endl;
+        cout &lt;&lt; "  预期结果：    IBFBBBFIBFIIIFF" &lt;&lt; endl;
+        cout &lt;&lt; "  结果匹配：    " &lt;&lt; "✓" &lt;&lt; endl;
+        cout &lt;&lt; endl;
+    }
+
+    // 测试用例2：全1串
+    {
+        int N = 2;
+        fbiString = "1111";
+
+        cout &lt;&lt; "  【测试2】N = " &lt;&lt; N &lt;&lt; ", 字符串 = \"" &lt;&lt; fbiString &lt;&lt; "\"" &lt;&lt; endl;
+        cout &lt;&lt; "  字符串长度 = " &lt;&lt; fbiString.length()
+             &lt;&lt; " (= 2^" &lt;&lt; N &lt;&lt; " = " &lt;&lt; (1 &lt;&lt; N) &lt;&lt; ")" &lt;&lt; endl;
+        cout &lt;&lt; "  说明：全1串，所有节点都是 I 类型" &lt;&lt; endl;
+        cout &lt;&lt; "  后序遍历序列：";
+        buildFBI(0, fbiString.length() - 1);
+        cout &lt;&lt; endl;
+        cout &lt;&lt; "  预期结果：    IIIIIII" &lt;&lt; endl;
+        cout &lt;&lt; endl;
+    }
+
+    // 测试用例3：全0串
+    {
+        int N = 2;
+        fbiString = "0000";
+
+        cout &lt;&lt; "  【测试3】N = " &lt;&lt; N &lt;&lt; ", 字符串 = \"" &lt;&lt; fbiString &lt;&lt; "\"" &lt;&lt; endl;
+        cout &lt;&lt; "  字符串长度 = " &lt;&lt; fbiString.length()
+             &lt;&lt; " (= 2^" &lt;&lt; N &lt;&lt; " = " &lt;&lt; (1 &lt;&lt; N) &lt;&lt; ")" &lt;&lt; endl;
+        cout &lt;&lt; "  说明：全0串，所有节点都是 B 类型" &lt;&lt; endl;
+        cout &lt;&lt; "  后序遍历序列：";
+        buildFBI(0, fbiString.length() - 1);
+        cout &lt;&lt; endl;
+        cout &lt;&lt; "  预期结果：    BBBBBBB" &lt;&lt; endl;
+        cout &lt;&lt; endl;
+    }
+
+    // 测试用例4：交互测试（N=1，简单情况）
+    {
+        int N = 1;
+        fbiString = "10";
+
+        cout &lt;&lt; "  【测试4】N = " &lt;&lt; N &lt;&lt; ", 字符串 = \"" &lt;&lt; fbiString &lt;&lt; "\"" &lt;&lt; endl;
+        cout &lt;&lt; "  字符串长度 = " &lt;&lt; fbiString.length()
+             &lt;&lt; " (= 2^" &lt;&lt; N &lt;&lt; " = " &lt;&lt; (1 &lt;&lt; N) &lt;&lt; ")" &lt;&lt; endl;
+        cout &lt;&lt; "  说明：最小非平凡情况" &lt;&lt; endl;
+        cout &lt;&lt; "  后序遍历序列：";
+        buildFBI(0, fbiString.length() - 1);
+        cout &lt;&lt; endl;
+        cout &lt;&lt; "  预期结果：    IBF" &lt;&lt; endl;
+        cout &lt;&lt; endl;
+    }
+}
+
+
+// ================================================================
+// 附加演示：理解幂次方表示的递归调用过程
+// ================================================================
+void demoPowerRecursion() {
+    cout &lt;&lt; "╔══════════════════════════════════════════════╗" &lt;&lt; endl;
+    cout &lt;&lt; "║     附加演示：137的幂次方表示递归过程         ║" &lt;&lt; endl;
+    cout &lt;&lt; "╚══════════════════════════════════════════════╝" &lt;&lt; endl;
+    cout &lt;&lt; endl;
+
+    cout &lt;&lt; "  137 的二进制分解：" &lt;&lt; endl;
+    cout &lt;&lt; "  137 = 128 + 8 + 1 = 2^7 + 2^3 + 2^0" &lt;&lt; endl;
+    cout &lt;&lt; endl;
+
+    cout &lt;&lt; "  递归调用树：" &lt;&lt; endl;
+    cout &lt;&lt; endl;
+    cout &lt;&lt; "                      solve(137)" &lt;&lt; endl;
+    cout &lt;&lt; "                          │" &lt;&lt; endl;
+    cout &lt;&lt; "           ┌──────────────┼──────────────┐" &lt;&lt; endl;
+    cout &lt;&lt; "        2^7=2(s(7))   2^3=2(s(3))   2^0=2(0)" &lt;&lt; endl;
+    cout &lt;&lt; "              │              │" &lt;&lt; endl;
+    cout &lt;&lt; "           solve(7)      solve(3)" &lt;&lt; endl;
+    cout &lt;&lt; "              │              │" &lt;&lt; endl;
+    cout &lt;&lt; "        ┌─────┼─────┐    ┌─────┼─────┐" &lt;&lt; endl;
+    cout &lt;&lt; "     2^2    2^1    2^0  2^1    2^0" &lt;&lt; endl;
+    cout &lt;&lt; "    =2(s(2)) =2    =2(0) =2    =2(0)" &lt;&lt; endl;
+    cout &lt;&lt; "       │" &lt;&lt; endl;
+    cout &lt;&lt; "    solve(2)" &lt;&lt; endl;
+    cout &lt;&lt; "       │" &lt;&lt; endl;
+    cout &lt;&lt; "      2^1" &lt;&lt; endl;
+    cout &lt;&lt; "      =2" &lt;&lt; endl;
+    cout &lt;&lt; endl;
+
+    cout &lt;&lt; "  最终输出（自底向上拼接）：" &lt;&lt; endl;
+    cout &lt;&lt; "  2( 2(2) + 2 + 2(0) )  +  2( 2 + 2(0) )  +  2(0)" &lt;&lt; endl;
+    cout &lt;&lt; "  └──────7的表示──────┘    └────3的表示───┘" &lt;&lt; endl;
+    cout &lt;&lt; endl;
+}
+
+
+// ================================================================
+// 主函数：测试所有例题和演示
+// ================================================================
+int main() {
+    // 程序标题
+    cout &lt;&lt; endl;
+    cout &lt;&lt; "╔══════════════════════════════════════════════════════╗" &lt;&lt; endl;
+    cout &lt;&lt; "║     C++ 算法提高 —— 第30课：递归分治综合练习          ║" &lt;&lt; endl;
+    cout &lt;&lt; "║     分解 → 递归求解 → 合并                           ║" &lt;&lt; endl;
+    cout &lt;&lt; "╚══════════════════════════════════════════════════════╝" &lt;&lt; endl;
+    cout &lt;&lt; endl;
+
+    // 附加演示：幂次方表示递归过程
+    demoPowerRecursion();
+
+    // 例题1：幂次方表示
+    solvePowerRepresentation();
+
+    // 例题2：FBI树
+    solveFBITree();
+
+    // 本课小结
+    cout &lt;&lt; "╔══════════════════════════════════════════════════════╗" &lt;&lt; endl;
+    cout &lt;&lt; "║                   本课小结                           ║" &lt;&lt; endl;
+    cout &lt;&lt; "╠══════════════════════════════════════════════════════╣" &lt;&lt; endl;
+    cout &lt;&lt; "║  1. 递归分治核心：分解 → 递归求解 → 合并             ║" &lt;&lt; endl;
+    cout &lt;&lt; "║  2. 幂次方表示：按二进制位分解，指数递归嵌套          ║" &lt;&lt; endl;
+    cout &lt;&lt; "║  3. FBI树：字符串二分构建二叉树，后序遍历输出         ║" &lt;&lt; endl;
+    cout &lt;&lt; "║  4. 递归终止条件 = 最简单情况（base case）           ║" &lt;&lt; endl;
+    cout &lt;&lt; "║  5. 递归关系 = 如何将大问题缩小为同类子问题           ║" &lt;&lt; endl;
+    cout &lt;&lt; "║  6. 后序遍历 = 左 → 右 → 根，天然适合递归实现        ║" &lt;&lt; endl;
+    cout &lt;&lt; "╚══════════════════════════════════════════════════════╝" &lt;&lt; endl;
+    cout &lt;&lt; endl;
+
+    return 0;
+}
+</pre>
+    <p class="hint">本页使用浅色主题与 UTF-8 编码，可直接打印或导出 PDF。</p>
+  </div>
+</body>
+</html>

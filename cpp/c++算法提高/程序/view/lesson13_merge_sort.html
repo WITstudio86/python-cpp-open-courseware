@@ -1,0 +1,615 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>lesson13_merge_sort.cpp</title>
+<style>
+  :root {
+    --bg: #f5f7fa;
+    --panel: #ffffff;
+    --text: #1a1a2e;
+    --muted: #5a6570;
+    --gold: #b8860b;
+    --code-bg: #ffffff;
+    --code-text: #1f2933;
+    --border: #d8dee6;
+    --top-bg: #ffffff;
+    --top-border: #e5e9ef;
+  }
+  * { box-sizing: border-box; }
+  html, body {
+    margin: 0; padding: 0;
+    background: var(--bg);
+    color: var(--text);
+    font-family: -apple-system, BlinkMacSystemFont, "PingFang SC", "Microsoft YaHei", sans-serif;
+    min-height: 100%;
+  }
+  .top {
+    position: sticky; top: 0; z-index: 10;
+    display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between;
+    gap: 10px;
+    padding: 12px 18px;
+    background: var(--top-bg);
+    border-bottom: 1px solid var(--top-border);
+    box-shadow: 0 1px 8px rgba(15, 23, 42, 0.06);
+  }
+  .brand { color: var(--gold); font-weight: 700; font-size: 14px; letter-spacing: 0.04em; }
+  .title { font-size: 15px; font-weight: 600; color: var(--text); max-width: 52vw; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .actions { display: flex; gap: 8px; flex-wrap: wrap; }
+  .btn {
+    appearance: none; border: 1px solid var(--border);
+    background: #fff; color: var(--text);
+    border-radius: 999px; padding: 8px 14px; font-size: 13px; font-weight: 600;
+    text-decoration: none; cursor: pointer;
+  }
+  .btn:hover { background: #f0f3f7; }
+  .btn.gold {
+    background: linear-gradient(135deg, #f0d78c, #d4a853);
+    color: #0a2540; border-color: #e0c06a;
+  }
+  .meta {
+    padding: 10px 18px; color: var(--muted); font-size: 12px;
+    border-bottom: 1px solid var(--border);
+    background: var(--panel);
+  }
+  .wrap { padding: 16px 18px 40px; }
+  pre {
+    margin: 0;
+    background: var(--code-bg);
+    color: var(--code-text);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 18px 20px;
+    overflow: auto;
+    font-family: "SF Mono", "JetBrains Mono", "Fira Code", Consolas, "Courier New", monospace;
+    font-size: 13.5px;
+    line-height: 1.55;
+    white-space: pre;
+    tab-size: 4;
+    box-shadow: 0 2px 12px rgba(15, 23, 42, 0.05);
+  }
+  .hint { margin-top: 12px; color: var(--muted); font-size: 12px; }
+  @media print {
+    html, body { background: #fff !important; color: #000 !important; }
+    .top { position: static; box-shadow: none; border-bottom: 1px solid #ccc; background: #fff !important; }
+    .actions { display: none !important; }
+    .meta { background: #fff !important; border-color: #ddd; color: #333; }
+    .wrap { padding: 0; }
+    pre {
+      background: #fff !important; color: #000 !important;
+      border: 1px solid #bbb; box-shadow: none; border-radius: 0;
+      white-space: pre-wrap; word-break: break-word; font-size: 11pt; line-height: 1.4;
+    }
+    .hint { display: none; }
+    a { color: #000; text-decoration: none; }
+  }
+</style>
+</head>
+<body>
+  <div class="top">
+    <div class="brand">C++ 算法提高 · 配套代码</div>
+    <div class="title">lesson13_merge_sort.cpp</div>
+    <div class="actions">
+      <a class="btn" href="../lesson13_merge_sort.cpp" download="lesson13_merge_sort.cpp">⬇️ 下载源文件</a>
+      <a class="btn gold" href="javascript:history.back()">← 返回课件</a>
+    </div>
+  </div>
+  <div class="meta">编码：UTF-8 · 文件：lesson13_merge_sort.cpp · 共 511 行 · 浅色主题便于打印</div>
+  <div class="wrap">
+    <pre id="code">/*
+ * ================================================================
+ * C++算法提高 第13课：归并排序——合并有序序列
+ * ================================================================
+ *
+ * 算法知识点：
+ *   - 归并排序的分治策略：分（Divide）→ 治（Conquer）→ 合（Combine）
+ *   - 合并两个有序数组（merge）的双指针法
+ *   - 递归分解：不断二分直到子数组长度为1（天然有序）
+ *   - 利用归并排序在合并过程中统计逆序对
+ *
+ * 经典例题：
+ *   例题1 - 求逆序对：在归并过程中统计 i&lt;j 且 a[i]&gt;a[j] 的数量
+ *   例题2 - 归并排序验证：使用归并排序对 n 个整数排序
+ *
+ * 复杂度：
+ *   时间复杂度：O(n log n)，始终稳定
+ *   空间复杂度：O(n)，需要额外的临时数组
+ */
+
+#include &lt;iostream&gt;
+#include &lt;vector&gt;
+#include &lt;iomanip&gt;
+using namespace std;
+
+typedef long long ll;  // 用于逆序对计数，结果可能超出 int 范围
+
+// ================================================================
+// 函数：合并两个有序子数组
+// ================================================================
+// 参数说明：
+//   arr   - 原始数组（引用传递，结果写回 arr）
+//   left  - 左子数组的起始下标
+//   mid   - 左子数组的结束下标
+//   right - 右子数组的结束下标
+//
+// 前置条件：arr 的 [left, mid] 和 [mid+1, right] 两个区间
+//           已经分别是有序的（从小到大排列）
+//
+// 算法思路（双指针法）：
+//   1. 创建临时数组 temp，大小为 (right - left + 1)
+//   2. i 指向左子数组开头，j 指向右子数组开头，k 指向 temp 开头
+//   3. 比较 arr[i] 和 arr[j]：
+//      - 如果 arr[i] &lt;= arr[j]，取 arr[i] 放入 temp，i++、k++
+//      - 否则取 arr[j] 放入 temp，j++、k++
+//   4. 重复步骤 3，直到某个子数组的元素全部取完
+//   5. 把剩余元素全部复制到 temp 末尾
+//   6. 将 temp 的内容拷贝回 arr 的 [left, right] 区间
+// ================================================================
+void merge(vector&lt;int&gt;&amp; arr, int left, int mid, int right) {
+    // 临时数组：存放合并后的有序结果
+    vector&lt;int&gt; temp(right - left + 1);
+
+    // i —— 遍历左子数组 [left, mid] 的指针
+    // j —— 遍历右子数组 [mid+1, right] 的指针
+    // k —— 填充临时数组 temp 的指针
+    int i = left;
+    int j = mid + 1;
+    int k = 0;
+
+    // ---- 阶段1：两个子数组都还有元素时，谁小取谁 ----
+    while (i &lt;= mid &amp;&amp; j &lt;= right) {
+        if (arr[i] &lt;= arr[j]) {
+            // 左子数组的当前元素更小（或相等），取左边
+            // 使用 &lt;= 保证了归并排序的稳定性：
+            // 相等时优先取左边的，保持原有相对顺序不变
+            temp[k] = arr[i];
+            i++;  // 左指针后移
+        } else {
+            // 右子数组的当前元素更小，取右边
+            temp[k] = arr[j];
+            j++;  // 右指针后移
+        }
+        k++;  // temp 指针始终后移
+    }
+
+    // ---- 阶段2：左子数组还有剩余元素，全部搬过去 ----
+    // （此时右子数组已经空了，左子数组剩余的元素天然有序且都比已放入的大）
+    while (i &lt;= mid) {
+        temp[k] = arr[i];
+        i++;
+        k++;
+    }
+
+    // ---- 阶段3：右子数组还有剩余元素，全部搬过去 ----
+    // （和阶段2对称，这两个 while 循环只有一个会真正执行）
+    while (j &lt;= right) {
+        temp[k] = arr[j];
+        j++;
+        k++;
+    }
+
+    // ---- 阶段4：将合并结果拷贝回原数组 ----
+    // temp[0] 对应 arr[left]，temp[t] 对应 arr[left + t]
+    for (int t = 0; t &lt; (int)temp.size(); t++) {
+        arr[left + t] = temp[t];
+    }
+}
+
+// ================================================================
+// 函数：归并排序（递归实现）
+// ================================================================
+// 参数说明：
+//   arr   - 待排序的数组（引用传递，排序结果直接反映在原数组上）
+//   left  - 当前需要排序的区间左端点
+//   right - 当前需要排序的区间右端点
+//
+// 递归过程详解：
+//   1. 终止条件：left &gt;= right，即区间长度 ≤ 1
+//      单个元素天然有序，不需要排序，直接返回
+//   2. 分解：计算中间位置 mid，将区间分成两半
+//   3. 递归排序左半：mergeSort(arr, left, mid)
+//   4. 递归排序右半：mergeSort(arr, mid + 1, right)
+//   5. 合并：merge(arr, left, mid, right)
+//      此时左右两半都已有序，合并成一个有序的整体
+//
+// 递推过程可以想象成一棵树：
+//   - 递归调用一路向下"分"，直到区间长度为1
+//   - 然后从叶子节点开始向上"合"，逐层返回
+//
+// 例如排序 [8, 4, 5, 7, 1, 3, 6, 2]：
+//   分：[8,4,5,7,1,3,6,2]
+//        → [8,4,5,7] + [1,3,6,2]
+//        → [8,4] + [5,7] + [1,3] + [6,2]
+//        → [8] + [4] + [5] + [7] + [1] + [3] + [6] + [2]
+//   合：[4,8] + [5,7] → [4,5,7,8]
+//        [1,3] + [2,6] → [1,2,3,6]
+//        [4,5,7,8] + [1,2,3,6] → [1,2,3,4,5,6,7,8]
+// ================================================================
+void mergeSort(vector&lt;int&gt;&amp; arr, int left, int right) {
+    // 递归的"终止条件"（也叫"基线条件"）
+    // 当区间里只有 0 或 1 个元素时，已经是有序的，不需要再分
+    if (left &gt;= right) {
+        return;
+    }
+
+    // 计算中间位置
+    // 使用 left + (right - left) / 2 而不是 (left + right) / 2
+    // 是为了防止 left + right 可能 int 溢出（当数组很大时）
+    int mid = left + (right - left) / 2;
+
+    // 【分治第一步：分】
+    // 递归排序左半部分 [left, mid]
+    // 这个调用会一直深入下去，直到 left &gt;= mid
+    mergeSort(arr, left, mid);
+
+    // 递归排序右半部分 [mid+1, right]
+    // 同样会一直深入，直到 mid+1 &gt;= right
+    mergeSort(arr, mid + 1, right);
+
+    // 【分治第三步：合】
+    // 当左右两半都已经排好序后，将它们合并
+    // 注意：这里 mergeSort 采用的是"后序遍历"的顺序
+    // 先递归处理左右子树，再处理当前层（合并）
+    merge(arr, left, mid, right);
+}
+
+// ================================================================
+// 例题1：求逆序对
+// ================================================================
+// 题目：对于一个序列 a，如果 i &lt; j 且 a[i] &gt; a[j]，则称
+//       (a[i], a[j]) 为一个逆序对。给定序列，求逆序对总数。
+//
+// 解题核心思路：
+//   在归并排序的"合并"过程中，当 arr[i] &gt; arr[j] 时：
+//   - 由于左子数组已经有序，arr[i] 后面的元素都比 arr[i] 更大
+//   - 因此左子数组中从 i 到 mid 的所有元素，都和 arr[j] 构成逆序对
+//   - 一次就统计出 (mid - i + 1) 个逆序对！
+//
+// 例如：左 [3,5,8]  右 [2,6,9]
+//   比较 3 和 2：3 &gt; 2 → 逆序对 +3  (3,2) (5,2) (8,2)
+//   比较 3 和 6：3 &lt; 6 → 正常合并
+//   比较 5 和 6：5 &lt; 6 → 正常合并
+//   比较 8 和 6：8 &gt; 6 → 逆序对 +1  (8,6)
+//   比较 8 和 9：8 &lt; 9 → 正常合并
+//   最终逆序对总数 = 3 + 1 = 4
+//
+// 时间复杂度：O(n log n)，空间复杂度：O(n)
+// 注意：逆序对数量最多可达 n(n-1)/2 ≈ 5×10^9（n=10^5时），
+//       超出 int 范围（约 2.1×10^9），必须使用 long long
+// ================================================================
+
+// 合并函数，同时统计逆序对
+ll mergeAndCount(vector&lt;int&gt;&amp; arr, int left, int mid, int right) {
+    vector&lt;int&gt; temp(right - left + 1);
+    int i = left;
+    int j = mid + 1;
+    int k = 0;
+    ll count = 0;  // 记录本次合并过程中发现的逆序对数量
+
+    // 双指针合并，同时计数
+    while (i &lt;= mid &amp;&amp; j &lt;= right) {
+        if (arr[i] &lt;= arr[j]) {
+            // 左边 &lt;= 右边，不构成逆序对，正常合并
+            temp[k] = arr[i];
+            i++;
+        } else {
+            // 左边 &gt; 右边，构成逆序对！
+            // 关键：因为左子数组有序，所以 arr[i], arr[i+1], ..., arr[mid]
+            //       全部大于 arr[j]，一共 (mid - i + 1) 个元素
+            temp[k] = arr[j];
+            // ★ 核心语句：累加跨区逆序对的数量 ★
+            count += (ll)(mid - i + 1);
+            j++;
+        }
+        k++;
+    }
+
+    // 剩余元素直接复制（此时不会产生新的逆序对）
+    while (i &lt;= mid) {
+        temp[k] = arr[i];
+        i++;
+        k++;
+    }
+    while (j &lt;= right) {
+        temp[k] = arr[j];
+        j++;
+        k++;
+    }
+
+    // 拷贝回原数组
+    for (int t = 0; t &lt; (int)temp.size(); t++) {
+        arr[left + t] = temp[t];
+    }
+
+    return count;
+}
+
+// 递归排序并统计逆序对
+// 返回值：区间 [left, right] 内的逆序对总数
+ll mergeSortAndCount(vector&lt;int&gt;&amp; arr, int left, int right) {
+    // 终止条件：区间只有 0 或 1 个元素，没有逆序对
+    if (left &gt;= right) {
+        return 0;
+    }
+
+    int mid = left + (right - left) / 2;
+
+    // 分治统计逆序对：
+    //   1. 左半部分内部的逆序对
+    //   2. 右半部分内部的逆序对
+    //   3. 横跨左右两部分的逆序对（在合并阶段统计）
+
+    ll leftCount = mergeSortAndCount(arr, left, mid);      // 左边内部的逆序对
+    ll rightCount = mergeSortAndCount(arr, mid + 1, right); // 右边内部的逆序对
+    ll crossCount = mergeAndCount(arr, left, mid, right);   // 跨左右的逆序对
+
+    // 三者之和就是逆序对总数
+    return leftCount + rightCount + crossCount;
+}
+
+// 例题1的包装函数
+void solveInversePair() {
+    cout &lt;&lt; "══════════════════════════════════════" &lt;&lt; endl;
+    cout &lt;&lt; "  例题1：求逆序对" &lt;&lt; endl;
+    cout &lt;&lt; "══════════════════════════════════════" &lt;&lt; endl;
+    cout &lt;&lt; "题目：对于一个序列 a，如果 i&lt;j 且 a[i]&gt;a[j]，" &lt;&lt; endl;
+    cout &lt;&lt; "      则称 (a[i], a[j]) 为一个逆序对。" &lt;&lt; endl;
+    cout &lt;&lt; "      给定序列，求其中逆序对的数量。" &lt;&lt; endl;
+    cout &lt;&lt; "--------------------------------------" &lt;&lt; endl;
+
+    // 测试用例1：样例
+    cout &lt;&lt; "【测试1】序列: 3 1 4 2 5" &lt;&lt; endl;
+    vector&lt;int&gt; test1 = {3, 1, 4, 2, 5};
+    ll ans1 = mergeSortAndCount(test1, 0, (int)test1.size() - 1);
+    cout &lt;&lt; "逆序对数量: " &lt;&lt; ans1 &lt;&lt; " (预期: 3)" &lt;&lt; endl;
+    cout &lt;&lt; "逆序对详解: (3,1) (3,2) (4,2)" &lt;&lt; endl;
+
+    // 测试用例2：完全逆序（最大逆序对数量）
+    cout &lt;&lt; "\n【测试2】完全逆序序列: 5 4 3 2 1" &lt;&lt; endl;
+    vector&lt;int&gt; test2 = {5, 4, 3, 2, 1};
+    ll ans2 = mergeSortAndCount(test2, 0, (int)test2.size() - 1);
+    cout &lt;&lt; "逆序对数量: " &lt;&lt; ans2 &lt;&lt; " (预期: 10, 即 C(5,2))" &lt;&lt; endl;
+
+    // 测试用例3：完全有序（没有逆序对）
+    cout &lt;&lt; "\n【测试3】完全有序序列: 1 2 3 4 5" &lt;&lt; endl;
+    vector&lt;int&gt; test3 = {1, 2, 3, 4, 5};
+    ll ans3 = mergeSortAndCount(test3, 0, (int)test3.size() - 1);
+    cout &lt;&lt; "逆序对数量: " &lt;&lt; ans3 &lt;&lt; " (预期: 0)" &lt;&lt; endl;
+
+    // 测试用例4：含重复元素
+    cout &lt;&lt; "\n【测试4】含重复元素: 2 3 2 3 2" &lt;&lt; endl;
+    vector&lt;int&gt; test4 = {2, 3, 2, 3, 2};
+    // 逆序对: (2[0],2[2]), (2[0],2[4]), (3[1],2[2]),
+    //        (3[1],2[4]), (2[2],2[4]?不,相等不算), (3[3],2[4])
+    // 实际：3的索引1 vs 2的索引2,4; 3的索引3 vs 2的索引4; 2的索引0 vs 无
+    // 准确：位置1,2:3&gt;2; 位置1,4:3&gt;2; 位置3,4:3&gt;2;
+    //       位置0,2:2&gt;=2不构成; 位置0,4:2&gt;=2不构成; 位置2,4:2&gt;=2不构成
+    // 共3个逆序对
+    ll ans4 = mergeSortAndCount(test4, 0, (int)test4.size() - 1);
+    cout &lt;&lt; "逆序对数量: " &lt;&lt; ans4 &lt;&lt; " (预期: 3)" &lt;&lt; endl;
+    cout &lt;&lt; "逆序对: (3₁,2₂) (3₁,2₄) (3₃,2₄)" &lt;&lt; endl;
+
+    cout &lt;&lt; "--------------------------------------" &lt;&lt; endl;
+    cout &lt;&lt; "算法分析:" &lt;&lt; endl;
+    cout &lt;&lt; "  核心思想: 在归并排序的合并过程中统计逆序对" &lt;&lt; endl;
+    cout &lt;&lt; "  当 arr[i] &gt; arr[j] 时，累加 (mid - i + 1)" &lt;&lt; endl;
+    cout &lt;&lt; "  时间复杂度: O(n log n)，空间复杂度: O(n)" &lt;&lt; endl;
+    cout &lt;&lt; "  注意: 答案可能超过 int 范围，必须使用 long long" &lt;&lt; endl;
+    cout &lt;&lt; endl;
+}
+
+// ================================================================
+// 例题2：归并排序验证
+// ================================================================
+// 题目：使用归并排序对 n 个整数从小到大排序，输出排序结果。
+// 这是对归并排序算法的直接应用，验证排序的正确性。
+// ================================================================
+void solveMergeSort() {
+    cout &lt;&lt; "══════════════════════════════════════" &lt;&lt; endl;
+    cout &lt;&lt; "  例题2：归并排序验证" &lt;&lt; endl;
+    cout &lt;&lt; "══════════════════════════════════════" &lt;&lt; endl;
+    cout &lt;&lt; "题目：使用归并排序对 n 个整数从小到大排序" &lt;&lt; endl;
+    cout &lt;&lt; "--------------------------------------" &lt;&lt; endl;
+
+    // 测试用例1：样例数据
+    cout &lt;&lt; "【测试1】原始序列: 8 4 5 7 1" &lt;&lt; endl;
+    vector&lt;int&gt; test1 = {8, 4, 5, 7, 1};
+    mergeSort(test1, 0, (int)test1.size() - 1);
+    cout &lt;&lt; "排序结果: ";
+    for (int x : test1) cout &lt;&lt; x &lt;&lt; " ";
+    cout &lt;&lt; " (预期: 1 4 5 7 8)" &lt;&lt; endl;
+
+    // 测试用例2：随机数据
+    cout &lt;&lt; "\n【测试2】随机序列: 42 23 74 11 65 58 94 36 99 87" &lt;&lt; endl;
+    vector&lt;int&gt; test2 = {42, 23, 74, 11, 65, 58, 94, 36, 99, 87};
+    mergeSort(test2, 0, (int)test2.size() - 1);
+    cout &lt;&lt; "排序结果: ";
+    for (int x : test2) cout &lt;&lt; x &lt;&lt; " ";
+    cout &lt;&lt; " (预期: 11 23 36 42 58 65 74 87 94 99)" &lt;&lt; endl;
+
+    // 测试用例3：已有序的序列（测试稳定性）
+    cout &lt;&lt; "\n【测试3】已有序序列: 1 2 3 4 5 6 7 8" &lt;&lt; endl;
+    vector&lt;int&gt; test3 = {1, 2, 3, 4, 5, 6, 7, 8};
+    mergeSort(test3, 0, (int)test3.size() - 1);
+    cout &lt;&lt; "排序结果: ";
+    for (int x : test3) cout &lt;&lt; x &lt;&lt; " ";
+    cout &lt;&lt; " (预期: 1 2 3 4 5 6 7 8)" &lt;&lt; endl;
+
+    // 测试用例4：逆序序列（最坏情况）
+    cout &lt;&lt; "\n【测试4】完全逆序序列: 9 8 7 6 5 4 3 2 1" &lt;&lt; endl;
+    vector&lt;int&gt; test4 = {9, 8, 7, 6, 5, 4, 3, 2, 1};
+    mergeSort(test4, 0, (int)test4.size() - 1);
+    cout &lt;&lt; "排序结果: ";
+    for (int x : test4) cout &lt;&lt; x &lt;&lt; " ";
+    cout &lt;&lt; " (预期: 1 2 3 4 5 6 7 8 9)" &lt;&lt; endl;
+
+    // 测试用例5：含重复元素
+    cout &lt;&lt; "\n【测试5】含重复元素: 4 2 4 1 2 3 1" &lt;&lt; endl;
+    vector&lt;int&gt; test5 = {4, 2, 4, 1, 2, 3, 1};
+    mergeSort(test5, 0, (int)test5.size() - 1);
+    cout &lt;&lt; "排序结果: ";
+    for (int x : test5) cout &lt;&lt; x &lt;&lt; " ";
+    cout &lt;&lt; " (预期: 1 1 2 2 3 4 4)" &lt;&lt; endl;
+
+    // 测试用例6：单个元素（边界情况）
+    cout &lt;&lt; "\n【测试6】单个元素: 100" &lt;&lt; endl;
+    vector&lt;int&gt; test6 = {100};
+    mergeSort(test6, 0, (int)test6.size() - 1);
+    cout &lt;&lt; "排序结果: ";
+    for (int x : test6) cout &lt;&lt; x &lt;&lt; " ";
+    cout &lt;&lt; " (预期: 100)" &lt;&lt; endl;
+
+    cout &lt;&lt; "--------------------------------------" &lt;&lt; endl;
+    cout &lt;&lt; "归并排序特点总结:" &lt;&lt; endl;
+    cout &lt;&lt; "  1. 时间复杂度: O(n log n)，始终稳定" &lt;&lt; endl;
+    cout &lt;&lt; "  2. 空间复杂度: O(n)，需要额外数组" &lt;&lt; endl;
+    cout &lt;&lt; "  3. 稳定性: 稳定排序（相等元素相对顺序不变）" &lt;&lt; endl;
+    cout &lt;&lt; "  4. 分治策略: 先递归分解，再合并有序子数组" &lt;&lt; endl;
+    cout &lt;&lt; "  5. 适用场景: 数据量大、要求稳定、链表排序" &lt;&lt; endl;
+    cout &lt;&lt; endl;
+}
+
+// ================================================================
+// 附加演示：归并排序过程可视化
+// ================================================================
+// 逐步展示归并排序的分治过程，帮助学生直观理解算法原理
+// ================================================================
+void demoMergeSortProcess() {
+    cout &lt;&lt; "══════════════════════════════════════" &lt;&lt; endl;
+    cout &lt;&lt; "  演示：归并排序分治过程可视化" &lt;&lt; endl;
+    cout &lt;&lt; "══════════════════════════════════════" &lt;&lt; endl;
+    cout &lt;&lt; "排序数组: [38, 27, 43, 3, 9, 82, 10]" &lt;&lt; endl;
+    cout &lt;&lt; "--------------------------------------" &lt;&lt; endl;
+
+    vector&lt;int&gt; demo = {38, 27, 43, 3, 9, 82, 10};
+
+    auto printRange = [&amp;](int L, int R, const string&amp; label) {
+        cout &lt;&lt; "  " &lt;&lt; label &lt;&lt; " [" &lt;&lt; L &lt;&lt; ".." &lt;&lt; R &lt;&lt; "]: [";
+        for (int i = L; i &lt;= R; i++) {
+            cout &lt;&lt; demo[i];
+            if (i &lt; R) cout &lt;&lt; ", ";
+        }
+        cout &lt;&lt; "]" &lt;&lt; endl;
+    };
+
+    // 原始数组
+    printRange(0, 6, "原始数组");
+
+    // 模拟分解过程
+    cout &lt;&lt; "\n  === 递归分解（分） ===" &lt;&lt; endl;
+    cout &lt;&lt; "  [0..6] 拆分为 [0..3] 和 [4..6]" &lt;&lt; endl;
+    cout &lt;&lt; "    [0..3] 拆分为 [0..1] 和 [2..3]" &lt;&lt; endl;
+    cout &lt;&lt; "      [0..1] 拆分为 [0..0] 和 [1..1]  ← 单个元素，已有序" &lt;&lt; endl;
+    cout &lt;&lt; "      [2..3] 拆分为 [2..2] 和 [3..3]  ← 单个元素，已有序" &lt;&lt; endl;
+    cout &lt;&lt; "    [4..6] 拆分为 [4..5] 和 [6..6]" &lt;&lt; endl;
+    cout &lt;&lt; "      [4..5] 拆分为 [4..4] 和 [5..5]  ← 单个元素，已有序" &lt;&lt; endl;
+    cout &lt;&lt; "      [6..6] 已经是单个元素，已有序" &lt;&lt; endl;
+
+    // 模拟合并过程
+    cout &lt;&lt; "\n  === 合并有序子数组（合） ===" &lt;&lt; endl;
+    cout &lt;&lt; "  第1层合并:" &lt;&lt; endl;
+
+    // 手动展示合并 [0] 和 [1]
+    cout &lt;&lt; "    合并 [38] 和 [27] → [27, 38] （27&lt;38, 交换）" &lt;&lt; endl;
+    // 手动展示合并 [2] 和 [3]
+    cout &lt;&lt; "    合并 [43] 和 [3]  → [3, 43]  （3&lt;43, 交换）" &lt;&lt; endl;
+    // 手动展示合并 [4] 和 [5]
+    cout &lt;&lt; "    合并 [9] 和 [82]  → [9, 82]  （9&lt;82, 保持）" &lt;&lt; endl;
+    // [6] 单个元素，不用合并
+
+    cout &lt;&lt; "\n  第2层合并:" &lt;&lt; endl;
+    cout &lt;&lt; "    合并 [27,38] 和 [3,43]:" &lt;&lt; endl;
+    cout &lt;&lt; "      比较 27 vs 3  → 取3" &lt;&lt; endl;
+    cout &lt;&lt; "      比较 27 vs 43 → 取27" &lt;&lt; endl;
+    cout &lt;&lt; "      比较 38 vs 43 → 取38" &lt;&lt; endl;
+    cout &lt;&lt; "      剩下 [43]     → 取43" &lt;&lt; endl;
+    cout &lt;&lt; "      结果: [3, 27, 38, 43]" &lt;&lt; endl;
+    cout &lt;&lt; "    合并 [9,82] 和 [10]:" &lt;&lt; endl;
+    cout &lt;&lt; "      比较 9 vs 10  → 取9" &lt;&lt; endl;
+    cout &lt;&lt; "      比较 82 vs 10 → 取10" &lt;&lt; endl;
+    cout &lt;&lt; "      剩下 [82]     → 取82" &lt;&lt; endl;
+    cout &lt;&lt; "      结果: [9, 10, 82]" &lt;&lt; endl;
+
+    cout &lt;&lt; "\n  第3层合并（最终）:" &lt;&lt; endl;
+    cout &lt;&lt; "    合并 [3,27,38,43] 和 [9,10,82]:" &lt;&lt; endl;
+    cout &lt;&lt; "      比较 3 vs 9   → 取3" &lt;&lt; endl;
+    cout &lt;&lt; "      比较 27 vs 9  → 取9" &lt;&lt; endl;
+    cout &lt;&lt; "      比较 27 vs 10 → 取10" &lt;&lt; endl;
+    cout &lt;&lt; "      比较 27 vs 82 → 取27" &lt;&lt; endl;
+    cout &lt;&lt; "      比较 38 vs 82 → 取38" &lt;&lt; endl;
+    cout &lt;&lt; "      比较 43 vs 82 → 取43" &lt;&lt; endl;
+    cout &lt;&lt; "      剩下 [82]     → 取82" &lt;&lt; endl;
+    cout &lt;&lt; "      最终结果: [3, 9, 10, 27, 38, 43, 82]" &lt;&lt; endl;
+
+    cout &lt;&lt; "--------------------------------------" &lt;&lt; endl;
+    cout &lt;&lt; "总结：归并排序 = 递归分解（拆到单个元素）" &lt;&lt; endl;
+    cout &lt;&lt; "                + 两两合并（保持有序）" &lt;&lt; endl;
+    cout &lt;&lt; "      每次合并需要 O(n) 时间，共 log n 层" &lt;&lt; endl;
+    cout &lt;&lt; "      总时间复杂度 = O(n log n)" &lt;&lt; endl;
+    cout &lt;&lt; endl;
+}
+
+// ================================================================
+// 主函数：测试所有例题和演示
+// ================================================================
+int main() {
+    // 设置输出（如果控制台中文乱码，可在编译选项中添加 -fexec-charset=UTF-8）
+
+    cout &lt;&lt; "╔══════════════════════════════════════════════════╗" &lt;&lt; endl;
+    cout &lt;&lt; "║   C++ 算法提高 —— 第13课：归并排序               ║" &lt;&lt; endl;
+    cout &lt;&lt; "║   合并有序序列 —— 分治策略的经典应用              ║" &lt;&lt; endl;
+    cout &lt;&lt; "╚══════════════════════════════════════════════════╝" &lt;&lt; endl;
+    cout &lt;&lt; endl;
+
+    // 演示归并排序的分治过程
+    demoMergeSortProcess();
+
+    // 例题1：求逆序对
+    solveInversePair();
+
+    // 例题2：归并排序验证
+    solveMergeSort();
+
+    // 本课小结
+    cout &lt;&lt; "══════════════════════════════════════" &lt;&lt; endl;
+    cout &lt;&lt; "  本课小结 —— 归并排序核心要点" &lt;&lt; endl;
+    cout &lt;&lt; "══════════════════════════════════════" &lt;&lt; endl;
+    cout &lt;&lt; "1. 思想：分治策略 —— 分、治、合" &lt;&lt; endl;
+    cout &lt;&lt; "   分：把大问题拆成小问题（数组不断对半拆分）" &lt;&lt; endl;
+    cout &lt;&lt; "   治：递归地解决小问题（单个元素天然有序）" &lt;&lt; endl;
+    cout &lt;&lt; "   合：把有序的小答案合并成大答案（双指针合并）" &lt;&lt; endl;
+    cout &lt;&lt; endl;
+    cout &lt;&lt; "2. 合并操作（核心）：" &lt;&lt; endl;
+    cout &lt;&lt; "   使用两个指针分别遍历两个有序子数组" &lt;&lt; endl;
+    cout &lt;&lt; "   谁小取谁 → 保证了合并后的数组仍然有序" &lt;&lt; endl;
+    cout &lt;&lt; endl;
+    cout &lt;&lt; "3. 时间复杂度：" &lt;&lt; endl;
+    cout &lt;&lt; "   O(n log n) —— 始终稳定，不依赖输入数据" &lt;&lt; endl;
+    cout &lt;&lt; "   递归树有 log n 层，每层处理 n 个元素" &lt;&lt; endl;
+    cout &lt;&lt; endl;
+    cout &lt;&lt; "4. 空间复杂度：" &lt;&lt; endl;
+    cout &lt;&lt; "   O(n) —— 需要一个大小为 n 的临时数组" &lt;&lt; endl;
+    cout &lt;&lt; "   这是归并排序的主要代价" &lt;&lt; endl;
+    cout &lt;&lt; endl;
+    cout &lt;&lt; "5. 稳定性：" &lt;&lt; endl;
+    cout &lt;&lt; "   归并排序是稳定排序（相等时优先取左边）" &lt;&lt; endl;
+    cout &lt;&lt; "   适合对稳定性有要求的场景" &lt;&lt; endl;
+    cout &lt;&lt; endl;
+    cout &lt;&lt; "6. 经典应用 —— 求逆序对：" &lt;&lt; endl;
+    cout &lt;&lt; "   在合并过程中，当 arr[i] &gt; arr[j] 时" &lt;&lt; endl;
+    cout &lt;&lt; "   累加 (mid - i + 1) 即可统计逆序对" &lt;&lt; endl;
+    cout &lt;&lt; "   时间复杂度同样是 O(n log n)" &lt;&lt; endl;
+    cout &lt;&lt; endl;
+    cout &lt;&lt; "7. 与快速排序的对比：" &lt;&lt; endl;
+    cout &lt;&lt; "   归并排序：先递归后合并（后序），稳定，需要额外空间" &lt;&lt; endl;
+    cout &lt;&lt; "   快速排序：先划分后递归（前序），不稳定，空间开销小" &lt;&lt; endl;
+    cout &lt;&lt; "══════════════════════════════════════" &lt;&lt; endl;
+
+    return 0;
+}
+</pre>
+    <p class="hint">本页使用浅色主题与 UTF-8 编码，可直接打印或导出 PDF。</p>
+  </div>
+</body>
+</html>

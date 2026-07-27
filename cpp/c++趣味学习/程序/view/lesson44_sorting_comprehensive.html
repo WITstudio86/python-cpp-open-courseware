@@ -1,0 +1,641 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>lesson44_sorting_comprehensive.cpp</title>
+<style>
+  :root {
+    --bg: #f5f7fa;
+    --panel: #ffffff;
+    --text: #1a1a2e;
+    --muted: #5a6570;
+    --gold: #b8860b;
+    --code-bg: #ffffff;
+    --code-text: #1f2933;
+    --border: #d8dee6;
+    --top-bg: #ffffff;
+    --top-border: #e5e9ef;
+  }
+  * { box-sizing: border-box; }
+  html, body {
+    margin: 0; padding: 0;
+    background: var(--bg);
+    color: var(--text);
+    font-family: -apple-system, BlinkMacSystemFont, "PingFang SC", "Microsoft YaHei", sans-serif;
+    min-height: 100%;
+  }
+  .top {
+    position: sticky; top: 0; z-index: 10;
+    display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between;
+    gap: 10px;
+    padding: 12px 18px;
+    background: var(--top-bg);
+    border-bottom: 1px solid var(--top-border);
+    box-shadow: 0 1px 8px rgba(15, 23, 42, 0.06);
+  }
+  .brand { color: var(--gold); font-weight: 700; font-size: 14px; letter-spacing: 0.04em; }
+  .title { font-size: 15px; font-weight: 600; color: var(--text); max-width: 52vw; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .actions { display: flex; gap: 8px; flex-wrap: wrap; }
+  .btn {
+    appearance: none; border: 1px solid var(--border);
+    background: #fff; color: var(--text);
+    border-radius: 999px; padding: 8px 14px; font-size: 13px; font-weight: 600;
+    text-decoration: none; cursor: pointer;
+  }
+  .btn:hover { background: #f0f3f7; }
+  .btn.gold {
+    background: linear-gradient(135deg, #f0d78c, #d4a853);
+    color: #0a2540; border-color: #e0c06a;
+  }
+  .meta {
+    padding: 10px 18px; color: var(--muted); font-size: 12px;
+    border-bottom: 1px solid var(--border);
+    background: var(--panel);
+  }
+  .wrap { padding: 16px 18px 40px; }
+  pre {
+    margin: 0;
+    background: var(--code-bg);
+    color: var(--code-text);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 18px 20px;
+    overflow: auto;
+    font-family: "SF Mono", "JetBrains Mono", "Fira Code", Consolas, "Courier New", monospace;
+    font-size: 13.5px;
+    line-height: 1.55;
+    white-space: pre;
+    tab-size: 4;
+    box-shadow: 0 2px 12px rgba(15, 23, 42, 0.05);
+  }
+  .hint { margin-top: 12px; color: var(--muted); font-size: 12px; }
+  @media print {
+    html, body { background: #fff !important; color: #000 !important; }
+    .top { position: static; box-shadow: none; border-bottom: 1px solid #ccc; background: #fff !important; }
+    .actions { display: none !important; }
+    .meta { background: #fff !important; border-color: #ddd; color: #333; }
+    .wrap { padding: 0; }
+    pre {
+      background: #fff !important; color: #000 !important;
+      border: 1px solid #bbb; box-shadow: none; border-radius: 0;
+      white-space: pre-wrap; word-break: break-word; font-size: 11pt; line-height: 1.4;
+    }
+    .hint { display: none; }
+    a { color: #000; text-decoration: none; }
+  }
+</style>
+</head>
+<body>
+  <div class="top">
+    <div class="brand">C++ 趣味学习 · 配套代码</div>
+    <div class="title">lesson44_sorting_comprehensive.cpp</div>
+    <div class="actions">
+      <a class="btn" href="../lesson44_sorting_comprehensive.cpp" download="lesson44_sorting_comprehensive.cpp">⬇️ 下载源文件</a>
+      <a class="btn gold" href="javascript:history.back()">← 返回课件</a>
+    </div>
+  </div>
+  <div class="meta">编码：UTF-8 · 文件：lesson44_sorting_comprehensive.cpp · 共 537 行 · 浅色主题便于打印</div>
+  <div class="wrap">
+    <pre id="code">/*
+ * 第44课：终极排序大赛——排序综合
+ * 主题：冒泡排序 vs 选择排序对比、结构体排序、多条件排序
+ * 项目：成绩排名大比拼
+ * 适用：中小学C++趣味学习
+ * 日期：2026年
+ */
+
+#include &lt;iostream&gt;
+#include &lt;string&gt;
+#include &lt;iomanip&gt;
+using namespace std;
+
+// ==========================================
+// 结构体定义
+// ==========================================
+
+// 学生结构体：用于成绩排名
+struct Student {
+    string name;      // 姓名
+    int age;          // 年龄
+    double score;     // 成绩
+};
+
+// 运动员结构体：用于运动会排行榜
+struct Athlete {
+    string name;      // 姓名
+    int classId;      // 班级编号
+    int gold;         // 金牌数
+    int silver;       // 银牌数
+    int bronze;       // 铜牌数
+    int total;        // 奖牌总数
+};
+
+// ==========================================
+// 辅助函数：打印分隔线
+// ==========================================
+void printLine(string title) {
+    cout &lt;&lt; "\n========================================" &lt;&lt; endl;
+    cout &lt;&lt; "  " &lt;&lt; title &lt;&lt; endl;
+    cout &lt;&lt; "========================================" &lt;&lt; endl;
+}
+
+// ==========================================
+// 辅助函数：打印整数数组
+// ==========================================
+void printArray(int arr[], int n) {
+    for (int i = 0; i &lt; n; i++) {
+        cout &lt;&lt; arr[i] &lt;&lt; " ";
+    }
+    cout &lt;&lt; endl;
+}
+
+// ==========================================
+// 示例1：冒泡排序 vs 选择排序对比（带计数器）
+// ==========================================
+void example1_sortComparison() {
+    printLine("示例1：冒泡排序 vs 选择排序对比");
+
+    // 准备两个完全相同的数组，分别用两种排序
+    int bubbleArr[] = {9, 5, 7, 3, 1, 8, 6, 4, 2, 0};
+    int selectArr[] = {9, 5, 7, 3, 1, 8, 6, 4, 2, 0};
+    int n = 10;
+
+    // ---- 冒泡排序（升序） ----
+    int bubbleCompares = 0;  // 比较次数计数器
+    int bubbleSwaps = 0;     // 交换次数计数器
+
+    cout &lt;&lt; "\n冒泡排序过程（原数组：9 5 7 3 1 8 6 4 2 0）" &lt;&lt; endl;
+
+    for (int i = 0; i &lt; n - 1; i++) {
+        bool swapped = false;  // 优化标记：本轮是否发生过交换
+        for (int j = 0; j &lt; n - 1 - i; j++) {
+            bubbleCompares++;   // 每次比较，计数器+1
+            if (bubbleArr[j] &gt; bubbleArr[j+1]) {
+                // 交换相邻元素
+                int temp = bubbleArr[j];
+                bubbleArr[j] = bubbleArr[j+1];
+                bubbleArr[j+1] = temp;
+                bubbleSwaps++;  // 每次交换，计数器+1
+                swapped = true;
+            }
+        }
+        // 如果本轮没有发生任何交换，说明已经有序，提前结束
+        if (!swapped) {
+            cout &lt;&lt; "  第" &lt;&lt; i + 1 &lt;&lt; "轮后已有序，提前结束！" &lt;&lt; endl;
+            break;
+        }
+    }
+
+    cout &lt;&lt; "冒泡排序结果：";
+    printArray(bubbleArr, n);
+    cout &lt;&lt; "冒泡排序 - 比较次数：" &lt;&lt; bubbleCompares &lt;&lt; " 次" &lt;&lt; endl;
+    cout &lt;&lt; "冒泡排序 - 交换次数：" &lt;&lt; bubbleSwaps &lt;&lt; " 次" &lt;&lt; endl;
+
+    // ---- 选择排序（升序） ----
+    int selectCompares = 0;  // 比较次数计数器
+    int selectSwaps = 0;     // 交换次数计数器
+
+    cout &lt;&lt; "\n选择排序过程" &lt;&lt; endl;
+
+    for (int i = 0; i &lt; n - 1; i++) {
+        int minIndex = i;  // 假设当前位置是最小值
+        for (int j = i + 1; j &lt; n; j++) {
+            selectCompares++;  // 每次比较，计数器+1
+            if (selectArr[j] &lt; selectArr[minIndex]) {
+                minIndex = j;  // 找到更小的，更新最小值位置
+            }
+        }
+        // 如果最小值不在当前位置，则交换
+        if (minIndex != i) {
+            int temp = selectArr[i];
+            selectArr[i] = selectArr[minIndex];
+            selectArr[minIndex] = temp;
+            selectSwaps++;  // 每轮最多交换一次
+        }
+    }
+
+    cout &lt;&lt; "选择排序结果：";
+    printArray(selectArr, n);
+    cout &lt;&lt; "选择排序 - 比较次数：" &lt;&lt; selectCompares &lt;&lt; " 次" &lt;&lt; endl;
+    cout &lt;&lt; "选择排序 - 交换次数：" &lt;&lt; selectSwaps &lt;&lt; " 次" &lt;&lt; endl;
+
+    // ---- 对比总结 ----
+    cout &lt;&lt; "\n========== 对比总结 ==========" &lt;&lt; endl;
+    cout &lt;&lt; "排列指标        | 冒泡排序 | 选择排序" &lt;&lt; endl;
+    cout &lt;&lt; "----------------|---------|---------" &lt;&lt; endl;
+    cout &lt;&lt; "比较次数        | " &lt;&lt; bubbleCompares &lt;&lt; " 次    | " &lt;&lt; selectCompares &lt;&lt; " 次" &lt;&lt; endl;
+    cout &lt;&lt; "交换次数        | " &lt;&lt; bubbleSwaps &lt;&lt; " 次     | " &lt;&lt; selectSwaps &lt;&lt; " 次" &lt;&lt; endl;
+    cout &lt;&lt; "是否稳定        | 稳定    | 不稳定" &lt;&lt; endl;
+    cout &lt;&lt; "提前结束        | 支持    | 不支持" &lt;&lt; endl;
+
+    cout &lt;&lt; "\n 分析：" &lt;&lt; endl;
+    cout &lt;&lt; "  比较次数相同，但选择排序的交换次数少得多！" &lt;&lt; endl;
+    cout &lt;&lt; "  冒泡排序每发现一次逆序就交换，选择排序每轮只交换一次。" &lt;&lt; endl;
+}
+
+// ==========================================
+// 示例2：学生结构体数组按成绩排序（冒泡排序）
+// ==========================================
+void example2_studentRanking() {
+    printLine("示例2：学生成绩排名（结构体数组 + 冒泡排序）");
+
+    const int N = 6;
+
+    // 创建学生数组并初始化
+    Student students[N] = {
+        {"小明", 12, 88.5},
+        {"小红", 11, 95.0},
+        {"小刚", 13, 76.0},
+        {"小丽", 12, 95.0},   // 和小红成绩相同，测试稳定性
+        {"小华", 14, 82.5},
+        {"小强", 11, 69.0}
+    };
+
+    // 输出排序前的名单
+    cout &lt;&lt; "\n------------ 排序前的学生名单 ------------" &lt;&lt; endl;
+    cout &lt;&lt; "序号  姓名    年龄    成绩" &lt;&lt; endl;
+    cout &lt;&lt; "----------------------------------------" &lt;&lt; endl;
+    for (int i = 0; i &lt; N; i++) {
+        cout &lt;&lt; " " &lt;&lt; i + 1 &lt;&lt; "    "
+             &lt;&lt; students[i].name &lt;&lt; "    "
+             &lt;&lt; students[i].age &lt;&lt; "岁    "
+             &lt;&lt; students[i].score &lt;&lt; "分" &lt;&lt; endl;
+    }
+
+    // ==========================================
+    // 核心：结构体排序
+    // 比较的是结构体的 score 成员
+    // 但交换的是整个 Student 结构体变量
+    // ==========================================
+    // 使用冒泡排序，按成绩从高到低排列（降序）
+    // 降序的条件：前面的成绩 &lt; 后面的成绩 → 交换（把低的往后移）
+    for (int i = 0; i &lt; N - 1; i++) {
+        for (int j = 0; j &lt; N - 1 - i; j++) {
+            // 关键：比较的是 .score 成员
+            if (students[j].score &lt; students[j+1].score) {
+                // 关键：交换的是整个结构体！
+                Student temp = students[j];
+                students[j] = students[j+1];
+                students[j+1] = temp;
+            }
+        }
+    }
+
+    // 输出排序后的排行榜
+    cout &lt;&lt; "\n========== 🏅 成绩排行榜（降序） ==========" &lt;&lt; endl;
+    cout &lt;&lt; "排名  姓名    年龄    成绩    荣誉" &lt;&lt; endl;
+    cout &lt;&lt; "----------------------------------------" &lt;&lt; endl;
+    for (int i = 0; i &lt; N; i++) {
+        // 判断荣誉等级
+        string honor;
+        if (students[i].score &gt;= 90) {
+            honor = "🏆 优秀";
+        } else if (students[i].score &gt;= 80) {
+            honor = "⭐ 良好";
+        } else if (students[i].score &gt;= 60) {
+            honor = " 及格";
+        } else {
+            honor = " 加油";
+        }
+
+        cout &lt;&lt; "第" &lt;&lt; i + 1 &lt;&lt; "名 "
+             &lt;&lt; students[i].name &lt;&lt; "    "
+             &lt;&lt; students[i].age &lt;&lt; "岁    "
+             &lt;&lt; students[i].score &lt;&lt; "分   "
+             &lt;&lt; honor &lt;&lt; endl;
+    }
+
+    // 观察排序稳定性
+    cout &lt;&lt; "\n 稳定性观察：" &lt;&lt; endl;
+    cout &lt;&lt; "  小红(11岁,95分) 在原始数组中排在小丽(12岁,95分)前面" &lt;&lt; endl;
+    cout &lt;&lt; "  冒泡排序后，小红仍然在小丽前面 → 冒泡排序是稳定的！" &lt;&lt; endl;
+
+    // 计算平均分
+    double totalScore = 0;
+    for (int i = 0; i &lt; N; i++) {
+        totalScore += students[i].score;
+    }
+    double average = totalScore / N;
+
+    cout &lt;&lt; "\n------------ 成绩统计 ------------" &lt;&lt; endl;
+    cout &lt;&lt; fixed &lt;&lt; setprecision(1);
+    cout &lt;&lt; "总人数：" &lt;&lt; N &lt;&lt; " 人" &lt;&lt; endl;
+    cout &lt;&lt; "总分：" &lt;&lt; totalScore &lt;&lt; " 分" &lt;&lt; endl;
+    cout &lt;&lt; "平均分：" &lt;&lt; average &lt;&lt; " 分" &lt;&lt; endl;
+    cout &lt;&lt; "最高分：" &lt;&lt; students[0].name &lt;&lt; " " &lt;&lt; students[0].score &lt;&lt; " 分" &lt;&lt; endl;
+    cout &lt;&lt; "最低分：" &lt;&lt; students[N-1].name &lt;&lt; " " &lt;&lt; students[N-1].score &lt;&lt; " 分" &lt;&lt; endl;
+}
+
+// ==========================================
+// 示例3：多条件结构体排序
+// 规则：先按成绩降序，成绩相同按年龄升序
+// ==========================================
+void example3_multiConditionSorting() {
+    printLine("示例3：多条件排序（成绩降序 + 年龄升序）");
+
+    const int N = 8;
+
+    // 创建学生数组（包含成绩相同、年龄不同的情况）
+    Student students[N] = {
+        {"张伟",  13, 92.0},
+        {"李娜",  12, 88.5},
+        {"王芳",  14, 92.0},   // 和张伟成绩相同，年龄不同
+        {"赵雷",  11, 88.5},   // 和李娜成绩相同，年龄不同
+        {"陈静",  12, 76.0},
+        {"杨洋",  13, 95.0},
+        {"刘涛",  11, 95.0},   // 和杨洋成绩相同，年龄不同
+        {"周杰",  14, 82.5}
+    };
+
+    cout &lt;&lt; "\n------------ 排序前的学生名单 ------------" &lt;&lt; endl;
+    for (int i = 0; i &lt; N; i++) {
+        cout &lt;&lt; i + 1 &lt;&lt; ". " &lt;&lt; students[i].name
+             &lt;&lt; " 年龄" &lt;&lt; students[i].age &lt;&lt; "岁"
+             &lt;&lt; " 成绩" &lt;&lt; students[i].score &lt;&lt; "分" &lt;&lt; endl;
+    }
+
+    // ==========================================
+    // 多条件冒泡排序
+    // 第一条件（主条件）：成绩从高到低（降序）
+    // 第二条件（次条件）：成绩相同时，年龄从小到大（升序）
+    // ==========================================
+    for (int i = 0; i &lt; N - 1; i++) {
+        for (int j = 0; j &lt; N - 1 - i; j++) {
+            // 先判断主条件：成绩
+            if (students[j].score &lt; students[j+1].score) {
+                // 成绩低 → 往后移（实现成绩降序）
+                Student temp = students[j];
+                students[j] = students[j+1];
+                students[j+1] = temp;
+            }
+            else if (students[j].score == students[j+1].score) {
+                // 成绩相同 → 再判断次条件：年龄
+                if (students[j].age &gt; students[j+1].age) {
+                    // 年龄大 → 往后移（实现年龄升序）
+                    // 注意：这里用的是 &gt;，因为要升序
+                    Student temp = students[j];
+                    students[j] = students[j+1];
+                    students[j+1] = temp;
+                }
+            }
+            // 成绩高且年龄小的情况不需要交换
+        }
+    }
+
+    // 输出多条件排序结果
+    cout &lt;&lt; "\n===== 多条件排序结果 =====" &lt;&lt; endl;
+    cout &lt;&lt; "规则：①成绩从高到低  ②成绩相同时，年龄从小到大" &lt;&lt; endl;
+    cout &lt;&lt; "\n排名  姓名    年龄    成绩" &lt;&lt; endl;
+    cout &lt;&lt; "--------------------------------" &lt;&lt; endl;
+    for (int i = 0; i &lt; N; i++) {
+        cout &lt;&lt; "第" &lt;&lt; i + 1 &lt;&lt; "名 "
+             &lt;&lt; students[i].name &lt;&lt; "    "
+             &lt;&lt; students[i].age &lt;&lt; "岁    "
+             &lt;&lt; students[i].score &lt;&lt; "分" &lt;&lt; endl;
+    }
+
+    // 验证排序结果
+    cout &lt;&lt; "\n 验证多条件排序：" &lt;&lt; endl;
+
+    // 验证成绩降序
+    bool scoreOrderOK = true;
+    for (int i = 0; i &lt; N - 1; i++) {
+        if (students[i].score &lt; students[i+1].score) {
+            scoreOrderOK = false;
+            break;
+        }
+    }
+    cout &lt;&lt; "  成绩降序排列：" &lt;&lt; (scoreOrderOK ? "✅ 正确" : "❌ 有误") &lt;&lt; endl;
+
+    // 验证成绩相同时年龄升序
+    bool ageOrderOK = true;
+    for (int i = 0; i &lt; N - 1; i++) {
+        if (students[i].score == students[i+1].score) {
+            if (students[i].age &gt; students[i+1].age) {
+                ageOrderOK = false;
+                break;
+            }
+        }
+    }
+    cout &lt;&lt; "  同分年龄升序：" &lt;&lt; (ageOrderOK ? "✅ 正确" : "❌ 有误") &lt;&lt; endl;
+
+    // 详细分析同分情况
+    cout &lt;&lt; "\n 同分情况分析：" &lt;&lt; endl;
+    cout &lt;&lt; "  杨洋(13岁,95分) vs 刘涛(11岁,95分) → 成绩相同，年龄小的刘涛排前面 ✅" &lt;&lt; endl;
+    cout &lt;&lt; "  张伟(13岁,92分) vs 王芳(14岁,92分) → 成绩相同，年龄小的张伟排前面 ✅" &lt;&lt; endl;
+    cout &lt;&lt; "  李娜(12岁,88.5分) vs 赵雷(11岁,88.5分) → 成绩相同，年龄小的赵雷排前面 ✅" &lt;&lt; endl;
+}
+
+// ==========================================
+// 示例4：运动会奖牌排行榜（挑战任务参考）
+// 多条件排序：金牌→银牌→铜牌，均为降序
+// ==========================================
+void example4_olympicRanking() {
+    printLine("示例4：运动会奖牌排行榜（挑战任务）");
+
+    const int N = 6;
+
+    // 创建运动员数组
+    Athlete athletes[N] = {
+        {"刘翔",  2, 5, 3, 2, 0},  // total 待计算
+        {"苏炳添", 1, 5, 2, 4, 0},
+        {"姚明",  3, 3, 5, 1, 0},
+        {"林丹",  2, 3, 3, 3, 0},
+        {"李娜",  1, 4, 4, 2, 0},
+        {"孙杨",  3, 4, 3, 2, 0}
+    };
+
+    // 计算每个运动员的奖牌总数
+    for (int i = 0; i &lt; N; i++) {
+        athletes[i].total = athletes[i].gold + athletes[i].silver + athletes[i].bronze;
+    }
+
+    // ==========================================
+    // 多条件排序（使用冒泡排序，保证稳定性）
+    // 第一条件：金牌数降序
+    // 第二条件：银牌数降序
+    // 第三条件：铜牌数降序
+    // ==========================================
+    for (int i = 0; i &lt; N - 1; i++) {
+        for (int j = 0; j &lt; N - 1 - i; j++) {
+            bool shouldSwap = false;
+
+            // 第一条件：金牌数
+            if (athletes[j].gold &lt; athletes[j+1].gold) {
+                shouldSwap = true;
+            }
+            else if (athletes[j].gold == athletes[j+1].gold) {
+                // 第二条件：银牌数（金牌相同时）
+                if (athletes[j].silver &lt; athletes[j+1].silver) {
+                    shouldSwap = true;
+                }
+                else if (athletes[j].silver == athletes[j+1].silver) {
+                    // 第三条件：铜牌数（金银都相同时）
+                    if (athletes[j].bronze &lt; athletes[j+1].bronze) {
+                        shouldSwap = true;
+                    }
+                }
+            }
+
+            if (shouldSwap) {
+                Athlete temp = athletes[j];
+                athletes[j] = athletes[j+1];
+                athletes[j+1] = temp;
+            }
+        }
+    }
+
+    // 输出排行榜
+    cout &lt;&lt; "\n🏅 ========== 运动会奖牌排行榜 ========== 🏅" &lt;&lt; endl;
+    cout &lt;&lt; "排名  姓名      班级   🥇金牌  🥈银牌  🥉铜牌  📊总数" &lt;&lt; endl;
+    cout &lt;&lt; "--------------------------------------------------" &lt;&lt; endl;
+    for (int i = 0; i &lt; N; i++) {
+        // 第一名特殊标注
+        string medalEmoji;
+        if (i == 0) medalEmoji = "🥇";
+        else if (i == 1) medalEmoji = "🥈";
+        else if (i == 2) medalEmoji = "🥉";
+        else medalEmoji = "  ";
+
+        cout &lt;&lt; medalEmoji &lt;&lt; "第" &lt;&lt; i + 1 &lt;&lt; "名 "
+             &lt;&lt; athletes[i].name &lt;&lt; "      "
+             &lt;&lt; athletes[i].classId &lt;&lt; "班    "
+             &lt;&lt; athletes[i].gold &lt;&lt; "      "
+             &lt;&lt; athletes[i].silver &lt;&lt; "      "
+             &lt;&lt; athletes[i].bronze &lt;&lt; "      "
+             &lt;&lt; athletes[i].total &lt;&lt; endl;
+    }
+
+    // 班级统计
+    int classTotal[4] = {0};  // 假设有1-3班
+    for (int i = 0; i &lt; N; i++) {
+        classTotal[athletes[i].classId] += athletes[i].total;
+    }
+
+    cout &lt;&lt; "\n------------ 班级奖牌统计 ------------" &lt;&lt; endl;
+    for (int c = 1; c &lt;= 3; c++) {
+        cout &lt;&lt; c &lt;&lt; "班总奖牌数：" &lt;&lt; classTotal[c] &lt;&lt; " 枚" &lt;&lt; endl;
+    }
+
+    // 找出奖牌最多的班级
+    int bestClass = 1;
+    for (int c = 2; c &lt;= 3; c++) {
+        if (classTotal[c] &gt; classTotal[bestClass]) {
+            bestClass = c;
+        }
+    }
+    cout &lt;&lt; "🏆 奖牌总数最多的班级是：" &lt;&lt; bestClass &lt;&lt; "班！" &lt;&lt; endl;
+}
+
+// ==========================================
+// 示例5：排序方法选择指南（互动演示）
+// ==========================================
+void example5_sortingGuide() {
+    printLine("示例5：排序方法选择指南");
+
+    cout &lt;&lt; "\n根据不同场景选择不同的排序方法：\n" &lt;&lt; endl;
+
+    cout &lt;&lt; "┌─────────────────────────────────────────────────────┐" &lt;&lt; endl;
+    cout &lt;&lt; "│  场景                   │  推荐方法    │  原因      │" &lt;&lt; endl;
+    cout &lt;&lt; "├─────────────────────────────────────────────────────┤" &lt;&lt; endl;
+    cout &lt;&lt; "│  数据量很小（&lt; 20个）   │  任选一种    │  差别不大  │" &lt;&lt; endl;
+    cout &lt;&lt; "│  需要稳定性（保持顺序） │  冒泡排序    │  稳定算法  │" &lt;&lt; endl;
+    cout &lt;&lt; "│  交换代价很大           │  选择排序    │  交换少    │" &lt;&lt; endl;
+    cout &lt;&lt; "│  数据基本有序           │  冒泡排序    │  提前结束  │" &lt;&lt; endl;
+    cout &lt;&lt; "│  多条件排序             │  冒泡排序    │  更可控    │" &lt;&lt; endl;
+    cout &lt;&lt; "│  代码要简单             │  选择排序    │  逻辑直观  │" &lt;&lt; endl;
+    cout &lt;&lt; "└─────────────────────────────────────────────────────┘" &lt;&lt; endl;
+
+    cout &lt;&lt; "\n 示例演示：稳定性对比" &lt;&lt; endl;
+    cout &lt;&lt; "------------------------------" &lt;&lt; endl;
+
+    // 准备两个相同的数据（学生同分情况）
+    Student arr1[3] = {
+        {"小红", 11, 90.0},
+        {"小明", 12, 85.0},
+        {"小丽", 12, 90.0}   // 和小红同分，但在小丽后面
+    };
+
+    Student arr2[3] = {
+        {"小红", 11, 90.0},
+        {"小明", 12, 85.0},
+        {"小丽", 12, 90.0}
+    };
+
+    // 冒泡排序（稳定）
+    for (int i = 0; i &lt; 2; i++) {
+        for (int j = 0; j &lt; 2 - i; j++) {
+            if (arr1[j].score &lt; arr1[j+1].score) {
+                Student temp = arr1[j];
+                arr1[j] = arr1[j+1];
+                arr1[j+1] = temp;
+            }
+        }
+    }
+
+    // 选择排序（不稳定）
+    for (int i = 0; i &lt; 2; i++) {
+        int maxIdx = i;
+        for (int j = i + 1; j &lt; 3; j++) {
+            if (arr2[j].score &gt; arr2[maxIdx].score) {
+                maxIdx = j;
+            }
+        }
+        if (maxIdx != i) {
+            Student temp = arr2[i];
+            arr2[i] = arr2[maxIdx];
+            arr2[maxIdx] = temp;
+        }
+    }
+
+    cout &lt;&lt; "原始顺序：小红(90) → 小明(85) → 小丽(90)" &lt;&lt; endl;
+    cout &lt;&lt; "\n冒泡排序（稳定）结果：" &lt;&lt; endl;
+    for (int i = 0; i &lt; 3; i++) {
+        cout &lt;&lt; "  " &lt;&lt; arr1[i].name &lt;&lt; "(" &lt;&lt; arr1[i].score &lt;&lt; "分) ";
+    }
+    cout &lt;&lt; "\n  → 小红(90) 仍然在小丽(90) 前面 ✅ 保持顺序" &lt;&lt; endl;
+
+    cout &lt;&lt; "\n选择排序（不稳定）结果：" &lt;&lt; endl;
+    for (int i = 0; i &lt; 3; i++) {
+        cout &lt;&lt; "  " &lt;&lt; arr2[i].name &lt;&lt; "(" &lt;&lt; arr2[i].score &lt;&lt; "分) ";
+    }
+    cout &lt;&lt; "\n  → 小红和小丽的顺序可能发生变化 ⚠️" &lt;&lt; endl;
+}
+
+// ==========================================
+// 主函数
+// ==========================================
+int main() {
+    cout &lt;&lt; "╔══════════════════════════════════════════════════╗" &lt;&lt; endl;
+    cout &lt;&lt; "║    第44课：终极排序大赛——排序综合              ║" &lt;&lt; endl;
+    cout &lt;&lt; "║    冒泡排序 vs 选择排序 | 结构体排序 | 多条件排序 ║" &lt;&lt; endl;
+    cout &lt;&lt; "╚══════════════════════════════════════════════════╝" &lt;&lt; endl;
+
+    // 运行所有示例
+    example1_sortComparison();
+    example2_studentRanking();
+    example3_multiConditionSorting();
+    example4_olympicRanking();
+    example5_sortingGuide();
+
+    // 最终总结
+    cout &lt;&lt; "\n\n========================================" &lt;&lt; endl;
+    cout &lt;&lt; "  🎉 第44课学习完毕！ 🎉" &lt;&lt; endl;
+    cout &lt;&lt; "========================================" &lt;&lt; endl;
+    cout &lt;&lt; "本节课你学到了：" &lt;&lt; endl;
+    cout &lt;&lt; "  1. 冒泡排序 vs 选择排序：比较次数相同，" &lt;&lt; endl;
+    cout &lt;&lt; "     但选择排序交换少、冒泡排序稳定" &lt;&lt; endl;
+    cout &lt;&lt; "  2. 结构体排序：比较的是成员，交换的是整个结构体" &lt;&lt; endl;
+    cout &lt;&lt; "  3. 多条件排序：用 if...else if 实现分层判断" &lt;&lt; endl;
+    cout &lt;&lt; "  4. 实际应用：成绩排名、运动会排行榜等" &lt;&lt; endl;
+    cout &lt;&lt; "\n  你已经掌握了排序的综合应用！继续加油！" &lt;&lt; endl;
+    cout &lt;&lt; "========================================" &lt;&lt; endl;
+
+    return 0;
+}
+</pre>
+    <p class="hint">本页使用浅色主题与 UTF-8 编码，可直接打印或导出 PDF。</p>
+  </div>
+</body>
+</html>

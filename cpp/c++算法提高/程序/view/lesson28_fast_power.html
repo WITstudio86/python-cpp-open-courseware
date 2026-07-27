@@ -1,0 +1,556 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>lesson28_fast_power.cpp</title>
+<style>
+  :root {
+    --bg: #f5f7fa;
+    --panel: #ffffff;
+    --text: #1a1a2e;
+    --muted: #5a6570;
+    --gold: #b8860b;
+    --code-bg: #ffffff;
+    --code-text: #1f2933;
+    --border: #d8dee6;
+    --top-bg: #ffffff;
+    --top-border: #e5e9ef;
+  }
+  * { box-sizing: border-box; }
+  html, body {
+    margin: 0; padding: 0;
+    background: var(--bg);
+    color: var(--text);
+    font-family: -apple-system, BlinkMacSystemFont, "PingFang SC", "Microsoft YaHei", sans-serif;
+    min-height: 100%;
+  }
+  .top {
+    position: sticky; top: 0; z-index: 10;
+    display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between;
+    gap: 10px;
+    padding: 12px 18px;
+    background: var(--top-bg);
+    border-bottom: 1px solid var(--top-border);
+    box-shadow: 0 1px 8px rgba(15, 23, 42, 0.06);
+  }
+  .brand { color: var(--gold); font-weight: 700; font-size: 14px; letter-spacing: 0.04em; }
+  .title { font-size: 15px; font-weight: 600; color: var(--text); max-width: 52vw; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .actions { display: flex; gap: 8px; flex-wrap: wrap; }
+  .btn {
+    appearance: none; border: 1px solid var(--border);
+    background: #fff; color: var(--text);
+    border-radius: 999px; padding: 8px 14px; font-size: 13px; font-weight: 600;
+    text-decoration: none; cursor: pointer;
+  }
+  .btn:hover { background: #f0f3f7; }
+  .btn.gold {
+    background: linear-gradient(135deg, #f0d78c, #d4a853);
+    color: #0a2540; border-color: #e0c06a;
+  }
+  .meta {
+    padding: 10px 18px; color: var(--muted); font-size: 12px;
+    border-bottom: 1px solid var(--border);
+    background: var(--panel);
+  }
+  .wrap { padding: 16px 18px 40px; }
+  pre {
+    margin: 0;
+    background: var(--code-bg);
+    color: var(--code-text);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 18px 20px;
+    overflow: auto;
+    font-family: "SF Mono", "JetBrains Mono", "Fira Code", Consolas, "Courier New", monospace;
+    font-size: 13.5px;
+    line-height: 1.55;
+    white-space: pre;
+    tab-size: 4;
+    box-shadow: 0 2px 12px rgba(15, 23, 42, 0.05);
+  }
+  .hint { margin-top: 12px; color: var(--muted); font-size: 12px; }
+  @media print {
+    html, body { background: #fff !important; color: #000 !important; }
+    .top { position: static; box-shadow: none; border-bottom: 1px solid #ccc; background: #fff !important; }
+    .actions { display: none !important; }
+    .meta { background: #fff !important; border-color: #ddd; color: #333; }
+    .wrap { padding: 0; }
+    pre {
+      background: #fff !important; color: #000 !important;
+      border: 1px solid #bbb; box-shadow: none; border-radius: 0;
+      white-space: pre-wrap; word-break: break-word; font-size: 11pt; line-height: 1.4;
+    }
+    .hint { display: none; }
+    a { color: #000; text-decoration: none; }
+  }
+</style>
+</head>
+<body>
+  <div class="top">
+    <div class="brand">C++ 算法提高 · 配套代码</div>
+    <div class="title">lesson28_fast_power.cpp</div>
+    <div class="actions">
+      <a class="btn" href="../lesson28_fast_power.cpp" download="lesson28_fast_power.cpp">⬇️ 下载源文件</a>
+      <a class="btn gold" href="javascript:history.back()">← 返回课件</a>
+    </div>
+  </div>
+  <div class="meta">编码：UTF-8 · 文件：lesson28_fast_power.cpp · 共 452 行 · 浅色主题便于打印</div>
+  <div class="wrap">
+    <pre id="code">/*
+ * ============================================================================
+ * 第28课：快速幂 —— 高效的指数运算
+ * ============================================================================
+ *
+ * 【课程目标】
+ *   学习快速幂算法，掌握如何高效地计算 a^b mod m，以及如何将快速幂思想
+ *   推广到矩阵运算中，解决斐波那契数列等经典问题。
+ *
+ * 【知识点】
+ *   1. 朴素幂运算的问题：计算 a^b 需要 O(b) 次乘法，b 很大时效率极低
+ *   2. 快速幂核心思想：利用指数的二进制拆分，将 b 次乘法降为 O(log b) 次
+ *   3. 递归快速幂：基于分治思想 "折半——乘方——合并"
+ *   4. 迭代快速幂：基于二进制位 "逐位判断——累积——翻倍"
+ *   5. 矩阵快速幂：将快速幂思想用于矩阵乘法，加速线性递推
+ *   6. 应用：大数取模运算、斐波那契数列第 n 项、图论路径计数等
+ *
+ * 【算法复杂度】
+ *   - 快速幂：   时间复杂度 O(log b)，空间复杂度 O(log b) 递归 / O(1) 迭代
+ *   - 矩阵快速幂：时间复杂度 O(k³ log n)，其中 k 为矩阵阶数
+ *
+ * 【适用场景】
+ *   当指数 b 非常大（如 b = 10^9 甚至 10^18）时，朴素算法完全不可行，
+ *   而快速幂只需几十次乘法即可完成计算。
+ *
+ * 【学情提示】
+ *   本课面向中小学生，要求已掌握循环、函数、数组基础，了解取模运算。
+ *   建议先理解「折半」思想（分治），再引入二进制视角（迭代）。
+ *   矩阵快速幂作为拓展内容，适合学有余力的同学。
+ *
+ * ============================================================================
+ */
+
+#include &lt;iostream&gt;
+#include &lt;vector&gt;
+using namespace std;
+
+// 取模常量，用于防止结果溢出
+const long long MOD = 1000000007LL;
+
+// ============================================================================
+// 第一部分：递归快速幂
+// ============================================================================
+
+/*
+ * fastPowerRecursive —— 递归实现快速幂
+ *
+ * 参数：
+ *   a   : 底数（base）
+ *   b   : 指数（exponent），要求 b &gt;= 0
+ *   mod : 模数，防止溢出
+ *
+ * 返回值： (a^b) % mod
+ *
+ * 【算法思路（分治）】
+ *   把 a^b 拆成两半：
+ *     - 如果 b 是偶数：a^b = a^(b/2) * a^(b/2)
+ *     - 如果 b 是奇数：a^b = a^(b/2) * a^(b/2) * a
+ *   先递归算出 half = a^(b/2)，然后：
+ *     - b 为偶数时：result = half * half
+ *     - b 为奇数时：result = half * half * a
+ *   每一步都取模，防止数字过大溢出。
+ *
+ * 【递归终止条件】
+ *   b == 0 时，任何数的 0 次幂都等于 1（包括 0^0，这里约定返回 1）。
+ *
+ * 【举例】
+ *   计算 2^10：
+ *     fastPowerRecursive(2, 10)
+ *       → half = fastPowerRecursive(2, 5) = 32
+ *       → half 是奇数时多乘一个 a，此处 2^5 = 2^2 * 2^2 * 2 = 16 * 2 = 32 ✓
+ *       → 2^10 = 32 * 32 = 1024 ✓
+ *   总共只递归了约 log₂(10) ≈ 4 层！
+ */
+long long fastPowerRecursive(long long a, long long b, long long mod) {
+    // 递归终止条件：任何数的 0 次幂等于 1
+    if (b == 0) {
+        return 1;
+    }
+
+    // 分治：先计算 a^(b/2)
+    long long half = fastPowerRecursive(a, b / 2, mod);
+
+    // 合并：a^b = half^2（当 b 为偶数时）
+    long long result = (half * half) % mod;
+
+    // 如果 b 是奇数，还需要再乘一个 a
+    if (b % 2 == 1) {
+        result = (result * (a % mod)) % mod;
+    }
+
+    return result;
+}
+
+// ============================================================================
+// 第二部分：迭代快速幂
+// ============================================================================
+
+/*
+ * fastPowerIterative —— 迭代（循环）实现快速幂
+ *
+ * 参数：
+ *   a   : 底数
+ *   b   : 指数，要求 b &gt;= 0
+ *   mod : 模数
+ *
+ * 返回值： (a^b) % mod
+ *
+ * 【算法思路（二进制拆分）】
+ *   把指数 b 写成二进制形式。例如 b = 13，二进制是 1101：
+ *     a^13 = a^(8+4+0+1) = a^8 * a^4 * a^0 * a^1
+ *   其中 a^0 不参与乘积。
+ *
+ *   我们维护两个变量：
+ *     - base : 代表 a^(2^i)，每轮平方一次（对应二进制位左移）
+ *     - result: 累积结果，当 b 的当前最低位是 1 时才乘入
+ *
+ *   每次循环把 b 右移一位（除以 2），检查最低位。
+ *
+ * 【举例（迭代过程）】
+ *   计算 3^13 mod 100：
+ *     初始：base = 3, b = 13(二进制1101), result = 1
+ *     第1轮：b 最低位是 1 → result = (1 * 3) % 100 = 3
+ *            base = (3 * 3) % 100 = 9, b &gt;&gt;= 1 → b = 6
+ *     第2轮：b 最低位是 0 → 不更新 result
+ *            base = (9 * 9) % 100 = 81, b &gt;&gt;= 1 → b = 3
+ *     第3轮：b 最低位是 1 → result = (3 * 81) % 100 = 43
+ *            base = (81 * 81) % 100 = 61, b &gt;&gt;= 1 → b = 1
+ *     第4轮：b 最低位是 1 → result = (43 * 61) % 100 = 23
+ *            base = (61 * 61) % 100 = 21, b &gt;&gt;= 1 → b = 0
+ *     循环结束，返回 23。验证：3^13 = 1594323，1594323 % 100 = 23 ✓
+ *
+ * 【迭代 vs 递归】
+ *   迭代版本更省内存（没有递归调用栈），推荐在竞赛中使用。
+ */
+long long fastPowerIterative(long long a, long long b, long long mod) {
+    // 先把底数取模，避免 a 本身过大
+    a = a % mod;
+    long long result = 1;
+
+    // 当指数 b 还没变成 0 时，继续循环
+    while (b &gt; 0) {
+        // 判断 b 的二进制最低位是否为 1（即 b 是否为奇数）
+        if (b &amp; 1) {  // 等价于 if (b % 2 == 1)
+            result = (result * a) % mod;
+        }
+
+        // 底数平方，对应二进制位左移
+        a = (a * a) % mod;
+
+        // 指数右移一位（相当于 b = b / 2）
+        b &gt;&gt;= 1;
+    }
+
+    return result;
+}
+
+// ============================================================================
+// 第三部分：矩阵快速幂（用于求解斐波那契数列）
+// ============================================================================
+
+/*
+ * 矩阵结构体 —— 定义一个 2×2 的矩阵
+ *
+ * 斐波那契数列与矩阵的关系：
+ *   [ F(n+1) ]   =   [ 1  1 ]^n   ×   [ F(1) ]
+ *   [ F(n)   ]       [ 1  0 ]         [ F(0) ]
+ *
+ *   即：
+ *   [ F(n+1) ]   =   [ 1  1 ]^n   ×   [ 1 ]
+ *   [ F(n)   ]       [ 1  0 ]         [ 0 ]
+ *
+ *   其中 F(0) = 0, F(1) = 1
+ *   所以 F(n) = matrixPower( [[1,1],[1,0]], n ) 的 [0][1]（或 [1][0]）位置的值。
+ *
+ *   更简洁的递推：把 n 次幂作用在向量 [F(1), F(0)] = [1, 0] 上，
+ *   得到 [F(n+1), F(n)]，取第二个分量即可。
+ */
+struct Matrix {
+    long long m[2][2];  // 2×2 矩阵的四个元素
+
+    // 构造函数：初始化为零矩阵
+    Matrix() {
+        m[0][0] = m[0][1] = m[1][0] = m[1][1] = 0;
+    }
+};
+
+/*
+ * matrixMultiply —— 两个 2×2 矩阵相乘
+ *
+ * 参数：
+ *   A, B : 两个 2×2 矩阵
+ *   mod  : 模数
+ *
+ * 返回值： C = A × B（取模后）
+ *
+ * 【矩阵乘法公式（2×2）】
+ *   C[0][0] = A[0][0]*B[0][0] + A[0][1]*B[1][0]
+ *   C[0][1] = A[0][0]*B[0][1] + A[0][1]*B[1][1]
+ *   C[1][0] = A[1][0]*B[0][0] + A[1][1]*B[1][0]
+ *   C[1][1] = A[1][0]*B[0][1] + A[1][1]*B[1][1]
+ *
+ *   每一步乘法后立即取模，防止溢出。
+ */
+Matrix matrixMultiply(const Matrix &amp;A, const Matrix &amp;B, long long mod) {
+    Matrix C;
+    C.m[0][0] = (A.m[0][0] * B.m[0][0] + A.m[0][1] * B.m[1][0]) % mod;
+    C.m[0][1] = (A.m[0][0] * B.m[0][1] + A.m[0][1] * B.m[1][1]) % mod;
+    C.m[1][0] = (A.m[1][0] * B.m[0][0] + A.m[1][1] * B.m[1][0]) % mod;
+    C.m[1][1] = (A.m[1][0] * B.m[0][1] + A.m[1][1] * B.m[1][1]) % mod;
+    return C;
+}
+
+/*
+ * matrixPower —— 矩阵快速幂
+ *
+ * 参数：
+ *   base : 底矩阵（2×2）
+ *   exp  : 指数（幂次）
+ *   mod  : 模数
+ *
+ * 返回值： base^exp（取模后）
+ *
+ * 【算法思路】
+ *   与整数快速幂完全相同！只是把「乘法」替换为「矩阵乘法」，
+ *   把「单位元 1」替换为「单位矩阵 I（对角线为 1，其余为 0）」。
+ *
+ *   迭代过程：
+ *     result = I（单位矩阵）
+ *     while (exp &gt; 0):
+ *         if (exp 最低位是 1): result = result × base
+ *         base = base × base
+ *         exp &gt;&gt;= 1
+ */
+Matrix matrixPower(Matrix base, long long exp, long long mod) {
+    // 初始化结果为单位矩阵 I（相当于整数快速幂中的 result = 1）
+    Matrix result;
+    result.m[0][0] = 1;  // 单位矩阵：左上角为 1
+    result.m[1][1] = 1;  // 单位矩阵：右下角为 1
+    // 其余位置已经是 0，不需要额外设置
+
+    while (exp &gt; 0) {
+        // 如果当前指数的最低位是 1，将当前底矩阵乘入结果
+        if (exp &amp; 1) {
+            result = matrixMultiply(result, base, mod);
+        }
+        // 底矩阵自乘（平方），对应指数右移一位
+        base = matrixMultiply(base, base, mod);
+        exp &gt;&gt;= 1;
+    }
+
+    return result;
+}
+
+/*
+ * fibonacciMatrix —— 使用矩阵快速幂求斐波那契数列第 n 项
+ *
+ * 参数：
+ *   n : 要求第几项（n &gt;= 0），即 F(0)=0, F(1)=1, F(2)=1, F(3)=2, ...
+ *
+ * 返回值： 斐波那契数列的第 n 项 F(n)
+ *
+ * 【推导过程】
+ *   斐波那契递推公式：F(n) = F(n-1) + F(n-2)
+ *   写成矩阵形式：
+ *     [ F(n+1) ]   [ 1  1 ]   [ F(n)   ]
+ *     [ F(n)   ] = [ 1  0 ] × [ F(n-1) ]
+ *
+ *   不断展开：
+ *     [ F(n+1) ]   [ 1  1 ]^n   [ F(1) ]   [ 1  1 ]^n   [ 1 ]
+ *     [ F(n)   ] = [ 1  0 ]   × [ F(0) ] = [ 1  0 ]   × [ 0 ]
+ *
+ *   所以 F(n) = 转移矩阵的 n 次幂 的 [1][0] 位置（或 [0][1]）的值。
+ *   但注意：当 n=0 时，转移矩阵^0 = I，I[1][0] = 0 = F(0) ✓
+ *           当 n=1 时，转移矩阵^1 = [[1,1],[1,0]]，[1][0] = 1 = F(1) ✓
+ *
+ *   因此直接用转移矩阵的 n 次幂结果取 [1][0] 即可得到 F(n)。
+ */
+long long fibonacciMatrix(long long n) {
+    // 处理 n=0 的特殊情况
+    if (n == 0) {
+        return 0;
+    }
+    // 处理 n=1 的特殊情况
+    if (n == 1) {
+        return 1;
+    }
+
+    // 构造斐波那契转移矩阵 T = [[1, 1], [1, 0]]
+    Matrix T;
+    T.m[0][0] = 1;
+    T.m[0][1] = 1;
+    T.m[1][0] = 1;
+    T.m[1][1] = 0;
+
+    // 计算 T 的 n 次幂（注意这里是 n 次幂，不是 n-1）
+    // 因为我们将 T^n 作用在 [F(1), F(0)]^T = [1, 0]^T 上
+    Matrix Tn = matrixPower(T, n, MOD);
+
+    // 结果 = Tn × [F(1), F(0)]^T 的第二个分量
+    //      = Tn[1][0] * F(1) + Tn[1][1] * F(0)
+    //      = Tn[1][0] * 1 + Tn[1][1] * 0
+    //      = Tn[1][0]
+    return Tn.m[1][0];
+}
+
+// ============================================================================
+// 第四部分：主函数 —— 测试与演示
+// ============================================================================
+
+int main() {
+    cout &lt;&lt; "================================================" &lt;&lt; endl;
+    cout &lt;&lt; "  第28课：快速幂 —— 高效的指数运算" &lt;&lt; endl;
+    cout &lt;&lt; "================================================" &lt;&lt; endl;
+    cout &lt;&lt; endl;
+
+    // ---------- 测试1：递归快速幂 ----------
+    cout &lt;&lt; "【测试1】递归快速幂：计算 2^10 mod " &lt;&lt; MOD &lt;&lt; endl;
+    {
+        long long a = 2, b = 10;
+        long long ans_rec = fastPowerRecursive(a, b, MOD);
+        cout &lt;&lt; "  递归结果：2^10 mod " &lt;&lt; MOD &lt;&lt; " = " &lt;&lt; ans_rec &lt;&lt; endl;
+        cout &lt;&lt; "  验证：2^10 = " &lt;&lt; (1LL &lt;&lt; 10) &lt;&lt; "（实际值）" &lt;&lt; endl;
+        cout &lt;&lt; endl;
+    }
+
+    // ---------- 测试2：迭代快速幂 ----------
+    cout &lt;&lt; "【测试2】迭代快速幂：计算 3^13 mod " &lt;&lt; MOD &lt;&lt; endl;
+    {
+        long long a = 3, b = 13;
+        long long ans_iter = fastPowerIterative(a, b, MOD);
+        cout &lt;&lt; "  迭代结果：3^13 mod " &lt;&lt; MOD &lt;&lt; " = " &lt;&lt; ans_iter &lt;&lt; endl;
+        // 3^13 = 1594323, 1594323 % MOD = 1594323
+        cout &lt;&lt; "  验证：3^13 = 1594323（不取模时）" &lt;&lt; endl;
+        cout &lt;&lt; endl;
+    }
+
+    // ---------- 测试3：大指数场景（递归 vs 迭代对比） ----------
+    cout &lt;&lt; "【测试3】大指数对比：计算 7^123456789 mod " &lt;&lt; MOD &lt;&lt; endl;
+    {
+        long long a = 7;
+        long long b = 123456789LL;
+        long long ans_rec = fastPowerRecursive(a, b, MOD);
+        long long ans_iter = fastPowerIterative(a, b, MOD);
+        cout &lt;&lt; "  递归结果：" &lt;&lt; ans_rec &lt;&lt; endl;
+        cout &lt;&lt; "  迭代结果：" &lt;&lt; ans_iter &lt;&lt; endl;
+        cout &lt;&lt; "  两种方法结果一致：" &lt;&lt; (ans_rec == ans_iter ? "是 ✓" : "否 ✗") &lt;&lt; endl;
+        cout &lt;&lt; "  （指数高达 123456789，但仅需约 log₂(b) ≈ 27 次乘法！）" &lt;&lt; endl;
+        cout &lt;&lt; endl;
+    }
+
+    // ---------- 测试4：递归与迭代多种底数指数对比 ----------
+    cout &lt;&lt; "【测试4】多种输入对比（递归 vs 迭代）" &lt;&lt; endl;
+    {
+        // 测试数组：{底数, 指数}
+        long long tests[][2] = {
+            {5, 0},       // 任何数的 0 次幂 = 1
+            {2, 5},       // 2^5 = 32
+            {10, 3},      // 10^3 = 1000
+            {7, 7},       // 7^7 = 823543
+            {100, 5},     // 100^5 = 10^10
+            {123456, 10}, // 较大底数
+        };
+        int testCount = sizeof(tests) / sizeof(tests[0]);
+
+        for (int i = 0; i &lt; testCount; i++) {
+            long long a = tests[i][0];
+            long long b = tests[i][1];
+            long long r1 = fastPowerRecursive(a, b, MOD);
+            long long r2 = fastPowerIterative(a, b, MOD);
+            cout &lt;&lt; "  " &lt;&lt; a &lt;&lt; "^" &lt;&lt; b &lt;&lt; " mod " &lt;&lt; MOD &lt;&lt; " → 递归: " &lt;&lt; r1
+                 &lt;&lt; " | 迭代: " &lt;&lt; r2
+                 &lt;&lt; " | " &lt;&lt; (r1 == r2 ? "一致 ✓" : "不一致 ✗") &lt;&lt; endl;
+        }
+        cout &lt;&lt; endl;
+    }
+
+    // ---------- 测试5：矩阵快速幂求斐波那契数列 ----------
+    cout &lt;&lt; "【测试5】矩阵快速幂 —— 斐波那契数列" &lt;&lt; endl;
+    cout &lt;&lt; "  斐波那契定义：F(0)=0, F(1)=1, F(n)=F(n-1)+F(n-2)" &lt;&lt; endl;
+    cout &lt;&lt; endl;
+
+    // 计算并输出前20项，验证矩阵快速幂的正确性
+    cout &lt;&lt; "  --- 前20项（递归法验证） ---" &lt;&lt; endl;
+    {
+        // 先用简单的递推法计算出前20项作为"标准答案"
+        long long fib[21];
+        fib[0] = 0;
+        fib[1] = 1;
+        for (int i = 2; i &lt;= 20; i++) {
+            fib[i] = fib[i - 1] + fib[i - 2];
+        }
+
+        bool allCorrect = true;
+        for (int i = 0; i &lt;= 20; i++) {
+            long long matrixResult = fibonacciMatrix(i);
+            if (matrixResult != fib[i]) {
+                cout &lt;&lt; "    第 " &lt;&lt; i &lt;&lt; " 项不一致！递推：" &lt;&lt; fib[i]
+                     &lt;&lt; "，矩阵：" &lt;&lt; matrixResult &lt;&lt; endl;
+                allCorrect = false;
+            }
+        }
+
+        if (allCorrect) {
+            cout &lt;&lt; "    前20项全部验证通过 ✓" &lt;&lt; endl;
+        }
+
+        // 打印前20项的具体值
+        cout &lt;&lt; "    ";
+        for (int i = 0; i &lt;= 20; i++) {
+            cout &lt;&lt; fib[i];
+            if (i &lt; 20) cout &lt;&lt; ", ";
+        }
+        cout &lt;&lt; endl;
+        cout &lt;&lt; endl;
+    }
+
+    // 计算第10、第20、第50项
+    cout &lt;&lt; "  --- 指定项查询 ---" &lt;&lt; endl;
+    {
+        long long queries[] = {10, 20, 50};
+        for (int i = 0; i &lt; 3; i++) {
+            long long n = queries[i];
+            long long result = fibonacciMatrix(n);
+            cout &lt;&lt; "  斐波那契第 " &lt;&lt; n &lt;&lt; " 项 F(" &lt;&lt; n &lt;&lt; ") = " &lt;&lt; result &lt;&lt; endl;
+        }
+        cout &lt;&lt; endl;
+    }
+
+    // 额外：验证一个更大的 n
+    cout &lt;&lt; "  --- 大 n 测试 ---" &lt;&lt; endl;
+    {
+        long long n = 100;
+        long long result = fibonacciMatrix(n);
+        cout &lt;&lt; "  斐波那契第 " &lt;&lt; n &lt;&lt; " 项 F(" &lt;&lt; n &lt;&lt; ") = " &lt;&lt; result &lt;&lt; endl;
+        cout &lt;&lt; "  （用矩阵快速幂依然瞬间算出，时间复杂度仅 O(log n)！）" &lt;&lt; endl;
+        cout &lt;&lt; endl;
+    }
+
+    // ---------- 总结 ----------
+    cout &lt;&lt; "================================================" &lt;&lt; endl;
+    cout &lt;&lt; "  课程总结" &lt;&lt; endl;
+    cout &lt;&lt; "================================================" &lt;&lt; endl;
+    cout &lt;&lt; "  1. 快速幂将 O(b) 的朴素算法优化到 O(log b)。" &lt;&lt; endl;
+    cout &lt;&lt; "  2. 递归版直观易懂，适合理解「折半」思想。" &lt;&lt; endl;
+    cout &lt;&lt; "  3. 迭代版空间 O(1)，适合竞赛和高性能场景。" &lt;&lt; endl;
+    cout &lt;&lt; "  4. 矩阵快速幂是快速幂的自然推广，解决线性递推。" &lt;&lt; endl;
+    cout &lt;&lt; "  5. 斐波那契数列可用 2×2 矩阵在 O(log n) 内求解。" &lt;&lt; endl;
+    cout &lt;&lt; "================================================" &lt;&lt; endl;
+
+    return 0;
+}
+</pre>
+    <p class="hint">本页使用浅色主题与 UTF-8 编码，可直接打印或导出 PDF。</p>
+  </div>
+</body>
+</html>

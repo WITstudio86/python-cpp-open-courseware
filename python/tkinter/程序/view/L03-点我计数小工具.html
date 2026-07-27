@@ -1,0 +1,224 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>L03-点我计数小工具.py</title>
+<style>
+  :root {
+    --bg: #f5f7fa;
+    --panel: #ffffff;
+    --text: #1a1a2e;
+    --muted: #5a6570;
+    --gold: #b8860b;
+    --code-bg: #ffffff;
+    --code-text: #1f2933;
+    --border: #d8dee6;
+    --top-bg: #ffffff;
+    --top-border: #e5e9ef;
+  }
+  * { box-sizing: border-box; }
+  html, body {
+    margin: 0; padding: 0;
+    background: var(--bg);
+    color: var(--text);
+    font-family: -apple-system, BlinkMacSystemFont, "PingFang SC", "Microsoft YaHei", sans-serif;
+    min-height: 100%;
+  }
+  .top {
+    position: sticky; top: 0; z-index: 10;
+    display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between;
+    gap: 10px;
+    padding: 12px 18px;
+    background: var(--top-bg);
+    border-bottom: 1px solid var(--top-border);
+    box-shadow: 0 1px 8px rgba(15, 23, 42, 0.06);
+  }
+  .brand { color: var(--gold); font-weight: 700; font-size: 14px; letter-spacing: 0.04em; }
+  .title { font-size: 15px; font-weight: 600; color: var(--text); max-width: 52vw; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .actions { display: flex; gap: 8px; flex-wrap: wrap; }
+  .btn {
+    appearance: none; border: 1px solid var(--border);
+    background: #fff; color: var(--text);
+    border-radius: 999px; padding: 8px 14px; font-size: 13px; font-weight: 600;
+    text-decoration: none; cursor: pointer;
+  }
+  .btn:hover { background: #f0f3f7; }
+  .btn.gold {
+    background: linear-gradient(135deg, #f0d78c, #d4a853);
+    color: #0a2540; border-color: #e0c06a;
+  }
+  .meta {
+    padding: 10px 18px; color: var(--muted); font-size: 12px;
+    border-bottom: 1px solid var(--border);
+    background: var(--panel);
+  }
+  .wrap { padding: 16px 18px 40px; }
+  pre {
+    margin: 0;
+    background: var(--code-bg);
+    color: var(--code-text);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 18px 20px;
+    overflow: auto;
+    font-family: "SF Mono", "JetBrains Mono", "Fira Code", Consolas, "Courier New", monospace;
+    font-size: 13.5px;
+    line-height: 1.55;
+    white-space: pre;
+    tab-size: 4;
+    box-shadow: 0 2px 12px rgba(15, 23, 42, 0.05);
+  }
+  .hint { margin-top: 12px; color: var(--muted); font-size: 12px; }
+  @media print {
+    html, body { background: #fff !important; color: #000 !important; }
+    .top { position: static; box-shadow: none; border-bottom: 1px solid #ccc; background: #fff !important; }
+    .actions { display: none !important; }
+    .meta { background: #fff !important; border-color: #ddd; color: #333; }
+    .wrap { padding: 0; }
+    pre {
+      background: #fff !important; color: #000 !important;
+      border: 1px solid #bbb; box-shadow: none; border-radius: 0;
+      white-space: pre-wrap; word-break: break-word; font-size: 11pt; line-height: 1.4;
+    }
+    .hint { display: none; }
+    a { color: #000; text-decoration: none; }
+  }
+</style>
+</head>
+<body>
+  <div class="top">
+    <div class="brand">Python Tkinter · 配套代码</div>
+    <div class="title">L03-点我计数小工具.py</div>
+    <div class="actions">
+      <a class="btn" href="../L03-点我计数小工具.py" download="L03-点我计数小工具.py">⬇️ 下载源文件</a>
+      <a class="btn gold" href="javascript:history.back()">← 返回课件</a>
+    </div>
+  </div>
+  <div class="meta">编码：UTF-8 · 文件：L03-点我计数小工具.py · 共 120 行 · 浅色主题便于打印</div>
+  <div class="wrap">
+    <pre id="code">import tkinter as tk
+
+# ========================================
+# 第 3 节：Button 按钮 —— 点我计数小工具
+# ========================================
+
+# 1. 创建窗口
+root = tk.Tk()
+root.title("点我计数小工具")
+root.geometry("450x400")
+root.configure(bg="#e8f0fe")  # 浅蓝色背景
+
+# --- 计数变量 ---
+count = 0  # 用普通变量记录点击次数（定义在函数外，是"全局变量"）
+
+# --- 标题 Label ---
+title = tk.Label(
+    root,
+    text="🖱️ 点我计数小工具",
+    font=("微软雅黑", 20, "bold"),
+    fg="#1a237e",    # 深蓝色文字
+    bg="#e8f0fe"
+)
+title.pack(pady=20)
+
+# --- 计数显示 Label ---
+count_label = tk.Label(
+    root,
+    text="点击次数：0",
+    font=("微软雅黑", 16),
+    fg="#283593",
+    bg="#e8f0fe"
+)
+count_label.pack(pady=10)
+
+# --- 点击按钮 ---
+def add_count():
+    """点击一次，计数 +1，更新显示"""
+    global count                      # 声明要修改全局变量 count
+    count += 1                        # 次数 +1
+    count_label.config(text=f"点击次数：{count}")  # f-string 更新文字
+    # 根据次数改变颜色 —— 给用户视觉反馈
+    if count &gt;= 20:
+        count_label.config(fg="#c62828")  # 红色：超过 20 次了！
+    elif count &gt;= 10:
+        count_label.config(fg="#e65100")  # 橙色：超过 10 次了
+
+click_btn = tk.Button(
+    root,
+    text="👆 点我！",
+    command=add_count,               # ← 注意：函数名不加括号！
+    font=("微软雅黑", 18, "bold"),
+    bg="#42a5f5",                    # 蓝色背景
+    fg="white",                      # 白色文字
+    activebackground="#1e88e5",      # 鼠标悬停时的背景色
+    activeforeground="white",        # 鼠标悬停时的文字色
+    padx=30,                         # 左右内边距
+    pady=10,                         # 上下内边距
+    relief="raised",                 # 凸起边框
+    bd=3                             # 边框宽度
+)
+click_btn.pack(pady=15)
+
+# --- 重置按钮 ---
+def reset_count():
+    """重置计数为 0"""
+    global count                     # 声明修改全局变量
+    count = 0                        # 归零
+    count_label.config(text="点击次数：0", fg="#283593")  # 恢复默认颜色
+
+reset_btn = tk.Button(
+    root,
+    text="🔄 归零",
+    command=reset_count,
+    font=("微软雅黑", 12),
+    bg="#78909c",                    # 灰色背景
+    fg="white",
+    padx=20,
+    pady=5
+)
+reset_btn.pack(pady=5)
+
+# --- 切换按钮（演示文字切换） ---
+is_on = False  # 状态标记：False=关闭, True=开启
+
+def toggle():
+    """切换按钮文字和颜色 —— Toggle 模式"""
+    global is_on
+    is_on = not is_on                # 翻转状态（not：True 变 False，False 变 True）
+    if is_on:
+        # 开启状态：红色
+        toggle_btn.config(text="🔴 已开启", bg="#ef5350")
+    else:
+        # 关闭状态：绿色
+        toggle_btn.config(text="🟢 已关闭", bg="#66bb6a")
+
+toggle_btn = tk.Button(
+    root,
+    text="🟢 已关闭",
+    command=toggle,
+    font=("微软雅黑", 12),
+    bg="#66bb6a",                    # 绿色（初始为关闭状态）
+    fg="white",
+    padx=20,
+    pady=5
+)
+toggle_btn.pack(pady=10)
+
+# --- 提示 Label ---
+tip = tk.Label(
+    root,
+    text="试试连续点击，看看颜色会不会变？",
+    font=("微软雅黑", 10),
+    fg="#78909c",                    # 灰色提示文字
+    bg="#e8f0fe"
+)
+tip.pack(pady=15)
+
+# 2. 启动主循环 —— 让窗口一直显示
+root.mainloop()
+</pre>
+    <p class="hint">本页使用浅色主题与 UTF-8 编码，可直接打印或导出 PDF。</p>
+  </div>
+</body>
+</html>

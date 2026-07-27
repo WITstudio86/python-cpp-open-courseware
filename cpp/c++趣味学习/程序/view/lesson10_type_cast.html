@@ -1,0 +1,306 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>lesson10_type_cast.cpp</title>
+<style>
+  :root {
+    --bg: #f5f7fa;
+    --panel: #ffffff;
+    --text: #1a1a2e;
+    --muted: #5a6570;
+    --gold: #b8860b;
+    --code-bg: #ffffff;
+    --code-text: #1f2933;
+    --border: #d8dee6;
+    --top-bg: #ffffff;
+    --top-border: #e5e9ef;
+  }
+  * { box-sizing: border-box; }
+  html, body {
+    margin: 0; padding: 0;
+    background: var(--bg);
+    color: var(--text);
+    font-family: -apple-system, BlinkMacSystemFont, "PingFang SC", "Microsoft YaHei", sans-serif;
+    min-height: 100%;
+  }
+  .top {
+    position: sticky; top: 0; z-index: 10;
+    display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between;
+    gap: 10px;
+    padding: 12px 18px;
+    background: var(--top-bg);
+    border-bottom: 1px solid var(--top-border);
+    box-shadow: 0 1px 8px rgba(15, 23, 42, 0.06);
+  }
+  .brand { color: var(--gold); font-weight: 700; font-size: 14px; letter-spacing: 0.04em; }
+  .title { font-size: 15px; font-weight: 600; color: var(--text); max-width: 52vw; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .actions { display: flex; gap: 8px; flex-wrap: wrap; }
+  .btn {
+    appearance: none; border: 1px solid var(--border);
+    background: #fff; color: var(--text);
+    border-radius: 999px; padding: 8px 14px; font-size: 13px; font-weight: 600;
+    text-decoration: none; cursor: pointer;
+  }
+  .btn:hover { background: #f0f3f7; }
+  .btn.gold {
+    background: linear-gradient(135deg, #f0d78c, #d4a853);
+    color: #0a2540; border-color: #e0c06a;
+  }
+  .meta {
+    padding: 10px 18px; color: var(--muted); font-size: 12px;
+    border-bottom: 1px solid var(--border);
+    background: var(--panel);
+  }
+  .wrap { padding: 16px 18px 40px; }
+  pre {
+    margin: 0;
+    background: var(--code-bg);
+    color: var(--code-text);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 18px 20px;
+    overflow: auto;
+    font-family: "SF Mono", "JetBrains Mono", "Fira Code", Consolas, "Courier New", monospace;
+    font-size: 13.5px;
+    line-height: 1.55;
+    white-space: pre;
+    tab-size: 4;
+    box-shadow: 0 2px 12px rgba(15, 23, 42, 0.05);
+  }
+  .hint { margin-top: 12px; color: var(--muted); font-size: 12px; }
+  @media print {
+    html, body { background: #fff !important; color: #000 !important; }
+    .top { position: static; box-shadow: none; border-bottom: 1px solid #ccc; background: #fff !important; }
+    .actions { display: none !important; }
+    .meta { background: #fff !important; border-color: #ddd; color: #333; }
+    .wrap { padding: 0; }
+    pre {
+      background: #fff !important; color: #000 !important;
+      border: 1px solid #bbb; box-shadow: none; border-radius: 0;
+      white-space: pre-wrap; word-break: break-word; font-size: 11pt; line-height: 1.4;
+    }
+    .hint { display: none; }
+    a { color: #000; text-decoration: none; }
+  }
+</style>
+</head>
+<body>
+  <div class="top">
+    <div class="brand">C++ 趣味学习 · 配套代码</div>
+    <div class="title">lesson10_type_cast.cpp</div>
+    <div class="actions">
+      <a class="btn" href="../lesson10_type_cast.cpp" download="lesson10_type_cast.cpp">⬇️ 下载源文件</a>
+      <a class="btn gold" href="javascript:history.back()">← 返回课件</a>
+    </div>
+  </div>
+  <div class="meta">编码：UTF-8 · 文件：lesson10_type_cast.cpp · 共 202 行 · 浅色主题便于打印</div>
+  <div class="wrap">
+    <pre id="code">/*
+ * ==========================================
+ *  第10课：数字变形记——类型转换
+ *  知识点：隐式类型转换、强制转换、数据溢出
+ *  C++趣味学习系列
+ * ==========================================
+ */
+
+#include &lt;iostream&gt;
+#include &lt;cstdio&gt;          // 提供 printf 函数，用于格式化输出
+#include &lt;iomanip&gt;         // 提供 fixed 和 setprecision
+using namespace std;
+
+int main() {
+    // =====================================
+    // 示例1：隐式类型转换
+    //   int 和 double 一起运算时，
+    //   int 会自动"换装"成 double
+    // =====================================
+    cout &lt;&lt; "========== 示例1：隐式类型转换 ==========" &lt;&lt; endl;
+
+    int a = 5;             // a 穿着 int 的衣服
+    double b = 3.2;        // b 穿着 double 的衣服
+
+    // a 自动转换成 double（5 → 5.0），然后和 b 相加
+    double sum = a + b;    // 5.0 + 3.2 = 8.2
+    cout &lt;&lt; a &lt;&lt; " + " &lt;&lt; b &lt;&lt; " = " &lt;&lt; sum &lt;&lt; endl;
+    cout &lt;&lt; "sum 是 double 类型，占用 " &lt;&lt; sizeof(sum) &lt;&lt; " 字节" &lt;&lt; endl;
+
+    // int 赋值给 double：安全！小数衣服更大
+    double d = a;          // int 5 自动变成 double 5.0
+    cout &lt;&lt; "int " &lt;&lt; a &lt;&lt; " 赋值给 double → " &lt;&lt; d &lt;&lt; endl;
+
+    // double 赋值给 int：危险！小数部分会被丢掉
+    int i = b;             // double 3.2 → int 3（丢失了 .2）
+    cout &lt;&lt; "double " &lt;&lt; b &lt;&lt; " 赋值给 int → " &lt;&lt; i &lt;&lt; "（小数部分丢失了！）" &lt;&lt; endl;
+    cout &lt;&lt; endl;
+
+    // =====================================
+    // 示例2：强制类型转换——手动换装
+    //   两种写法：(类型名)变量 和 static_cast&lt;类型名&gt;(变量)
+    //   注意：不是四舍五入，是直接砍掉小数！
+    // =====================================
+    cout &lt;&lt; "========== 示例2：强制类型转换 ==========" &lt;&lt; endl;
+
+    double pi = 3.1415926;
+
+    // 方法1：C语言风格 —— (类型名)变量
+    int pi_int1 = (int)pi;
+    cout &lt;&lt; "C风格:   (int)" &lt;&lt; pi &lt;&lt; " = " &lt;&lt; pi_int1 &lt;&lt; endl;
+
+    // 方法2：C++风格（推荐） —— static_cast&lt;类型名&gt;(变量)
+    int pi_int2 = static_cast&lt;int&gt;(pi);
+    cout &lt;&lt; "C++风格: static_cast&lt;int&gt;(" &lt;&lt; pi &lt;&lt; ") = " &lt;&lt; pi_int2 &lt;&lt; endl;
+
+    // 演示：强制转换不是四舍五入！
+    double num1 = 5.9;
+    double num2 = 3.1;
+    cout &lt;&lt; "(int)" &lt;&lt; num1 &lt;&lt; " = " &lt;&lt; (int)num1 &lt;&lt; "（不是四舍五入！）" &lt;&lt; endl;
+    cout &lt;&lt; "(int)" &lt;&lt; num2 &lt;&lt; " = " &lt;&lt; (int)num2 &lt;&lt; "（不是四舍五入！）" &lt;&lt; endl;
+
+    // 整数除法的陷阱对比
+    cout &lt;&lt; "\n=== 整数除法 vs 浮点除法 ===" &lt;&lt; endl;
+    cout &lt;&lt; "5 / 2         = " &lt;&lt; 5 / 2 &lt;&lt; "   ← 整数除法，结果也是整数！" &lt;&lt; endl;
+    cout &lt;&lt; "5.0 / 2       = " &lt;&lt; 5.0 / 2 &lt;&lt; "   ← 有小数参与，结果正确！" &lt;&lt; endl;
+    cout &lt;&lt; "5 / 2.0       = " &lt;&lt; 5 / 2.0 &lt;&lt; "   ← 有小数参与，结果正确！" &lt;&lt; endl;
+    cout &lt;&lt; "(double)5 / 2 = " &lt;&lt; (double)5 / 2 &lt;&lt; "   ← 强制转换后，结果正确！" &lt;&lt; endl;
+    cout &lt;&lt; "5.0 / 2.0     = " &lt;&lt; 5.0 / 2.0 &lt;&lt; "   ← 两边都是小数，结果正确！" &lt;&lt; endl;
+    cout &lt;&lt; endl;
+
+    // =====================================
+    // 示例3：数据溢出演示
+    //   char 类型范围：-128 ~ 127
+    //   就像一个小水杯，只能装这么多水
+    // =====================================
+    cout &lt;&lt; "========== 示例3：数据溢出演示 ==========" &lt;&lt; endl;
+
+    // char 溢出示意
+    char c = 127;  // char 能装的最大值
+    cout &lt;&lt; "char 类型范围：-128 ~ 127" &lt;&lt; endl;
+    cout &lt;&lt; "char c = " &lt;&lt; (int)c &lt;&lt; "（当前值：127，杯子快满了）" &lt;&lt; endl;
+
+    c = c + 1;     // 再加 1，水杯溢出！
+    cout &lt;&lt; "c = c + 1 → c = " &lt;&lt; (int)c &lt;&lt; "（溢出！变成了 -128）" &lt;&lt; endl;
+    cout &lt;&lt; "  解释：127 + 1 = 128，但 char 装不下 128，于是绕回了 -128" &lt;&lt; endl;
+
+    // 再演示一次：从 -128 继续加
+    c = c + 1;
+    cout &lt;&lt; "c = c + 1 → c = " &lt;&lt; (int)c &lt;&lt; "（从 -128 到了 -127）" &lt;&lt; endl;
+
+    // int 类型的溢出（范围大得多，但也不是无限的）
+    cout &lt;&lt; "\n--- int 类型溢出演示 ---" &lt;&lt; endl;
+    int max_int = 2147483647;  // int 能装的最大值（约 21 亿）
+    cout &lt;&lt; "int 最大值：     " &lt;&lt; max_int &lt;&lt; endl;
+    cout &lt;&lt; "int 最大值 + 1： " &lt;&lt; max_int + 1 &lt;&lt; "（溢出！变成了负数）" &lt;&lt; endl;
+    cout &lt;&lt; "int 最大值 + 2： " &lt;&lt; max_int + 2 &lt;&lt; "（继续绕圈...）" &lt;&lt; endl;
+
+    // 不同类型的"杯子"大小对比
+    cout &lt;&lt; "\n--- 各类型的「杯子」（范围）对比 ---" &lt;&lt; endl;
+    cout &lt;&lt; "char 范围：     -128 ~ 127（最小的杯子）" &lt;&lt; endl;
+    cout &lt;&lt; "short 范围：    -32768 ~ 32767" &lt;&lt; endl;
+    cout &lt;&lt; "int 范围：      约 -21 亿 ~ 21 亿" &lt;&lt; endl;
+    cout &lt;&lt; "long long 范围：约 -9百京 ~ 9百京（超大的杯子）" &lt;&lt; endl;
+    cout &lt;&lt; "double 范围：   可以装下极大和极小的数" &lt;&lt; endl;
+    cout &lt;&lt; endl;
+
+    // =====================================
+    // 练习1 答案：(int)5.7 的预测与验证
+    // =====================================
+    cout &lt;&lt; "========== 练习1答案：(int)5.7 的结果 ==========" &lt;&lt; endl;
+    cout &lt;&lt; "(int)5.7 = " &lt;&lt; (int)5.7 &lt;&lt; endl;
+    cout &lt;&lt; "解释：强制转换是直接砍掉小数部分，不是四舍五入！";
+    cout &lt;&lt; "所以 5.7 变成 5，而不是 6。" &lt;&lt; endl;
+    cout &lt;&lt; endl;
+
+    // =====================================
+    // 练习2 答案：华氏度转摄氏度
+    //   公式：C = (F - 32) × 5 ÷ 9
+    //   注意：一定要避免整数除法！
+    // =====================================
+    cout &lt;&lt; "========== 练习2答案：华氏度 → 摄氏度 ==========" &lt;&lt; endl;
+
+    double fahrenheit = 98.6;  // 人体正常体温（华氏度）
+
+    // 方法1：使用 5.0 / 9 —— 其中一个用小数即可
+    double celsius1 = (fahrenheit - 32) * 5.0 / 9;
+    cout &lt;&lt; "方法1（5.0/9）：     " &lt;&lt; fahrenheit &lt;&lt; " °F = "
+         &lt;&lt; celsius1 &lt;&lt; " °C" &lt;&lt; endl;
+
+    // 方法2：使用 5 / 9.0
+    double celsius2 = (fahrenheit - 32) * 5 / 9.0;
+    cout &lt;&lt; "方法2（5/9.0）：     " &lt;&lt; fahrenheit &lt;&lt; " °F = "
+         &lt;&lt; celsius2 &lt;&lt; " °C" &lt;&lt; endl;
+
+    // 方法3：使用 (double) 强制转换
+    double celsius3 = (fahrenheit - 32) * (double)5 / 9;
+    cout &lt;&lt; "方法3（强制转换）：  " &lt;&lt; fahrenheit &lt;&lt; " °F = "
+         &lt;&lt; celsius3 &lt;&lt; " °C" &lt;&lt; endl;
+
+    // 错误示范：如果写成 (F-32)*5/9，结果会是 0！
+    int wrong = (int)(fahrenheit - 32) * 5 / 9;
+    cout &lt;&lt; "\n【错误示范】用整数除法：" &lt;&lt; (int)(fahrenheit - 32)
+         &lt;&lt; " * 5 / 9 = " &lt;&lt; wrong &lt;&lt; "（完全错误！）" &lt;&lt; endl;
+    cout &lt;&lt; "  原因：(F-32)*5/9 中全是 int，5/9 = 0，任何数乘 0 都等于 0！" &lt;&lt; endl;
+    cout &lt;&lt; endl;
+
+    // =====================================
+    // 练习3 答案：127+1 在 char 中的结果
+    // =====================================
+    cout &lt;&lt; "========== 练习3答案：127+1 存入 char ==========" &lt;&lt; endl;
+
+    char ch = 127;
+    cout &lt;&lt; "char ch = " &lt;&lt; (int)ch &lt;&lt; "（初始值）" &lt;&lt; endl;
+
+    ch = ch + 1;
+    cout &lt;&lt; "ch = 127 + 1 → ch = " &lt;&lt; (int)ch &lt;&lt; endl;
+    cout &lt;&lt; "原因：char 的范围是 -128~127，127 是最大正数。" &lt;&lt; endl;
+    cout &lt;&lt; "      127 的二进制是 01111111，" &lt;&lt; endl;
+    cout &lt;&lt; "      加 1 变成 10000000（在补码中表示 -128），" &lt;&lt; endl;
+    cout &lt;&lt; "      就像钟表一样，走到头就绕回来了！" &lt;&lt; endl;
+    cout &lt;&lt; endl;
+
+    // =====================================
+    // 挑战任务答案：万能温度转换器
+    //   输入摄氏度，输出华氏度和开尔文
+    //   保留 2 位小数
+    // =====================================
+    cout &lt;&lt; "========== 挑战任务答案：万能温度转换器 ==========" &lt;&lt; endl;
+
+    double celsius_input;  // 存放用户输入的摄氏度
+
+    cout &lt;&lt; "请输入摄氏温度：";
+    cin &gt;&gt; celsius_input;
+
+    // 计算华氏度和开尔文
+    // 公式：F = C × 9 ÷ 5 + 32
+    //       K = C + 273.15
+    double f = celsius_input * 9.0 / 5.0 + 32;   // 华氏度
+    double k = celsius_input + 273.15;            // 开尔文
+
+    // 使用 printf 输出，%.2f 表示保留两位小数
+    cout &lt;&lt; "\n===== 温度转换结果 =====" &lt;&lt; endl;
+    printf("摄氏度 (C)：  %.2f °C\n", celsius_input);
+    printf("华氏度 (F)：  %.2f °F\n", f);
+    printf("开尔文 (K)：  %.2f K\n", k);
+
+    // 也可以使用 cout 配合 fixed 和 setprecision
+    cout &lt;&lt; "\n（使用 cout + fixed + setprecision 的方式）" &lt;&lt; endl;
+    cout &lt;&lt; fixed &lt;&lt; setprecision(2);    // 设置保留两位小数
+    cout &lt;&lt; "摄氏度 (C)：  " &lt;&lt; celsius_input &lt;&lt; " °C" &lt;&lt; endl;
+    cout &lt;&lt; "华氏度 (F)：  " &lt;&lt; f &lt;&lt; " °F" &lt;&lt; endl;
+    cout &lt;&lt; "开尔文 (K)：  " &lt;&lt; k &lt;&lt; " K" &lt;&lt; endl;
+
+    // =====================================
+    // 程序结束
+    // =====================================
+    cout &lt;&lt; "\n========== 程序结束 ==========" &lt;&lt; endl;
+    cout &lt;&lt; "恭喜！你已经掌握了C++中的类型转换！" &lt;&lt; endl;
+    cout &lt;&lt; "记住：数字换装要小心，小数除法记得用小数哦！" &lt;&lt; endl;
+
+    return 0;  // 程序正常结束
+}
+</pre>
+    <p class="hint">本页使用浅色主题与 UTF-8 编码，可直接打印或导出 PDF。</p>
+  </div>
+</body>
+</html>

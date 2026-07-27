@@ -1,0 +1,721 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>lesson26_数组遍历.cpp</title>
+<style>
+  :root {
+    --bg: #f5f7fa;
+    --panel: #ffffff;
+    --text: #1a1a2e;
+    --muted: #5a6570;
+    --gold: #b8860b;
+    --code-bg: #ffffff;
+    --code-text: #1f2933;
+    --border: #d8dee6;
+    --top-bg: #ffffff;
+    --top-border: #e5e9ef;
+  }
+  * { box-sizing: border-box; }
+  html, body {
+    margin: 0; padding: 0;
+    background: var(--bg);
+    color: var(--text);
+    font-family: -apple-system, BlinkMacSystemFont, "PingFang SC", "Microsoft YaHei", sans-serif;
+    min-height: 100%;
+  }
+  .top {
+    position: sticky; top: 0; z-index: 10;
+    display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between;
+    gap: 10px;
+    padding: 12px 18px;
+    background: var(--top-bg);
+    border-bottom: 1px solid var(--top-border);
+    box-shadow: 0 1px 8px rgba(15, 23, 42, 0.06);
+  }
+  .brand { color: var(--gold); font-weight: 700; font-size: 14px; letter-spacing: 0.04em; }
+  .title { font-size: 15px; font-weight: 600; color: var(--text); max-width: 52vw; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .actions { display: flex; gap: 8px; flex-wrap: wrap; }
+  .btn {
+    appearance: none; border: 1px solid var(--border);
+    background: #fff; color: var(--text);
+    border-radius: 999px; padding: 8px 14px; font-size: 13px; font-weight: 600;
+    text-decoration: none; cursor: pointer;
+  }
+  .btn:hover { background: #f0f3f7; }
+  .btn.gold {
+    background: linear-gradient(135deg, #f0d78c, #d4a853);
+    color: #0a2540; border-color: #e0c06a;
+  }
+  .meta {
+    padding: 10px 18px; color: var(--muted); font-size: 12px;
+    border-bottom: 1px solid var(--border);
+    background: var(--panel);
+  }
+  .wrap { padding: 16px 18px 40px; }
+  pre {
+    margin: 0;
+    background: var(--code-bg);
+    color: var(--code-text);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 18px 20px;
+    overflow: auto;
+    font-family: "SF Mono", "JetBrains Mono", "Fira Code", Consolas, "Courier New", monospace;
+    font-size: 13.5px;
+    line-height: 1.55;
+    white-space: pre;
+    tab-size: 4;
+    box-shadow: 0 2px 12px rgba(15, 23, 42, 0.05);
+  }
+  .hint { margin-top: 12px; color: var(--muted); font-size: 12px; }
+  @media print {
+    html, body { background: #fff !important; color: #000 !important; }
+    .top { position: static; box-shadow: none; border-bottom: 1px solid #ccc; background: #fff !important; }
+    .actions { display: none !important; }
+    .meta { background: #fff !important; border-color: #ddd; color: #333; }
+    .wrap { padding: 0; }
+    pre {
+      background: #fff !important; color: #000 !important;
+      border: 1px solid #bbb; box-shadow: none; border-radius: 0;
+      white-space: pre-wrap; word-break: break-word; font-size: 11pt; line-height: 1.4;
+    }
+    .hint { display: none; }
+    a { color: #000; text-decoration: none; }
+  }
+</style>
+</head>
+<body>
+  <div class="top">
+    <div class="brand">C++ 趣味学习 · 配套代码</div>
+    <div class="title">lesson26_数组遍历.cpp</div>
+    <div class="actions">
+      <a class="btn" href="../lesson26_数组遍历.cpp" download="lesson26_数组遍历.cpp">⬇️ 下载源文件</a>
+      <a class="btn gold" href="javascript:history.back()">← 返回课件</a>
+    </div>
+  </div>
+  <div class="meta">编码：UTF-8 · 文件：lesson26_数组遍历.cpp · 共 617 行 · 浅色主题便于打印</div>
+  <div class="wrap">
+    <pre id="code">/*
+ * 第26课：平均分大作战——数组遍历
+ * 课程项目：成绩统计分析器
+ *
+ * 知识点：
+ *   1. 使用 for 循环遍历数组
+ *   2. 数组元素的求和与平均值计算
+ *   3. 在遍历中进行条件统计
+ *   4. 找最大值、最小值
+ *   5. 数据可视化（简易柱状图）
+ *
+ * 编译方法：
+ *   g++ -std=c++11 lesson26_数组遍历.cpp -o lesson26_数组遍历
+ *   运行：./lesson26_数组遍历
+ */
+
+#include &lt;iostream&gt;
+#include &lt;iomanip&gt;
+#include &lt;string&gt;
+using namespace std;
+
+// ---------- 示例1：数组的基本遍历 ----------
+void ejemplo1_traversalBasico() {
+    cout &lt;&lt; "╔══════════════════════════════════════╗" &lt;&lt; endl;
+    cout &lt;&lt; "║   示例1：数组的基本遍历             ║" &lt;&lt; endl;
+    cout &lt;&lt; "╚══════════════════════════════════════╝" &lt;&lt; endl;
+    cout &lt;&lt; endl;
+
+    // 声明并初始化一个数组
+    int numbers[8] = {15, 28, 3, 47, 9, 62, 31, 54};
+
+    cout &lt;&lt; "数组内容：{15, 28, 3, 47, 9, 62, 31, 54}" &lt;&lt; endl;
+    cout &lt;&lt; "数组大小：" &lt;&lt; sizeof(numbers) / sizeof(numbers[0]) &lt;&lt; " 个元素" &lt;&lt; endl;
+    cout &lt;&lt; endl;
+
+    // 1.1 正向遍历：从头到尾
+    cout &lt;&lt; "1.1 正向遍历（从头到尾）：" &lt;&lt; endl;
+    cout &lt;&lt; "    下标:  ";
+    for (int i = 0; i &lt; 8; i++) {
+        cout &lt;&lt; "[" &lt;&lt; i &lt;&lt; "]  ";
+    }
+    cout &lt;&lt; endl;
+    cout &lt;&lt; "    元素: ";
+    for (int i = 0; i &lt; 8; i++) {
+        cout &lt;&lt; " " &lt;&lt; numbers[i];
+        if (numbers[i] &lt; 10) cout &lt;&lt; "  ";   // 对齐
+        else cout &lt;&lt; " ";
+    }
+    cout &lt;&lt; endl &lt;&lt; endl;
+
+    // 1.2 反向遍历：从尾到头
+    cout &lt;&lt; "1.2 反向遍历（从尾到头）：" &lt;&lt; endl;
+    cout &lt;&lt; "    下标:  ";
+    for (int i = 7; i &gt;= 0; i--) {
+        cout &lt;&lt; "[" &lt;&lt; i &lt;&lt; "]  ";
+    }
+    cout &lt;&lt; endl;
+    cout &lt;&lt; "    元素: ";
+    for (int i = 7; i &gt;= 0; i--) {
+        cout &lt;&lt; " " &lt;&lt; numbers[i];
+        if (numbers[i] &lt; 10) cout &lt;&lt; "  ";
+        else cout &lt;&lt; " ";
+    }
+    cout &lt;&lt; endl &lt;&lt; endl;
+
+    // 1.3 隔一个访问（访问偶数下标元素）
+    cout &lt;&lt; "1.3 隔一个访问（偶数下标元素）：" &lt;&lt; endl;
+    cout &lt;&lt; "    ";
+    for (int i = 0; i &lt; 8; i += 2) {
+        cout &lt;&lt; "numbers[" &lt;&lt; i &lt;&lt; "]=" &lt;&lt; numbers[i] &lt;&lt; "  ";
+    }
+    cout &lt;&lt; endl &lt;&lt; endl;
+
+    // 1.4 遍历时显示"第几个"
+    cout &lt;&lt; "1.4 带编号的遍历：" &lt;&lt; endl;
+    for (int i = 0; i &lt; 8; i++) {
+        cout &lt;&lt; "    第" &lt;&lt; i + 1 &lt;&lt; "个元素：numbers[" &lt;&lt; i &lt;&lt; "] = " &lt;&lt; numbers[i] &lt;&lt; endl;
+    }
+    cout &lt;&lt; endl;
+}
+
+// ---------- 示例2：求和与平均值计算 ----------
+void ejemplo2_sumaYPromedio() {
+    cout &lt;&lt; "╔══════════════════════════════════════╗" &lt;&lt; endl;
+    cout &lt;&lt; "║   示例2：求和与平均值计算           ║" &lt;&lt; endl;
+    cout &lt;&lt; "╚══════════════════════════════════════╝" &lt;&lt; endl;
+    cout &lt;&lt; endl;
+
+    // 模拟一组考试成绩
+    int scores[6] = {85, 92, 78, 95, 88, 72};
+
+    cout &lt;&lt; "成绩数组：";
+    for (int i = 0; i &lt; 6; i++) {
+        cout &lt;&lt; scores[i] &lt;&lt; " ";
+    }
+    cout &lt;&lt; endl &lt;&lt; endl;
+
+    // 2.1 计算总和
+    cout &lt;&lt; "2.1 计算总和：" &lt;&lt; endl;
+    int sum = 0;
+    cout &lt;&lt; "    累加过程演示：" &lt;&lt; endl;
+    for (int i = 0; i &lt; 6; i++) {
+        cout &lt;&lt; "    第" &lt;&lt; i + 1 &lt;&lt; "步：sum = " &lt;&lt; sum &lt;&lt; " + " &lt;&lt; scores[i] &lt;&lt; " = ";
+        sum += scores[i];  // 等价于 sum = sum + scores[i]
+        cout &lt;&lt; sum &lt;&lt; endl;
+    }
+    cout &lt;&lt; "    最终总和 sum = " &lt;&lt; sum &lt;&lt; endl;
+    cout &lt;&lt; endl;
+
+    // 2.2 计算平均值
+    cout &lt;&lt; "2.2 计算平均值：" &lt;&lt; endl;
+    // 方法1：直接除法（整数除法，会丢失小数）
+    int avgInt = sum / 6;
+    cout &lt;&lt; "    整数除法 sum / 6 = " &lt;&lt; avgInt &lt;&lt; "  （错误！丢失了小数部分）" &lt;&lt; endl;
+    // 方法2：强制类型转换
+    double avgDouble1 = (double)sum / 6;
+    cout &lt;&lt; "    (double)sum / 6 = " &lt;&lt; avgDouble1 &lt;&lt; "  （正确）" &lt;&lt; endl;
+    // 方法3：乘以1.0
+    double avgDouble2 = sum * 1.0 / 6;
+    cout &lt;&lt; "    sum * 1.0 / 6 = " &lt;&lt; avgDouble2 &lt;&lt; "  （正确）" &lt;&lt; endl;
+    // 方法4：除数写小数
+    double avgDouble3 = sum / 6.0;
+    cout &lt;&lt; "    sum / 6.0 = " &lt;&lt; avgDouble3 &lt;&lt; "  （正确）" &lt;&lt; endl;
+    cout &lt;&lt; endl;
+
+    // 2.3 格式化输出
+    cout &lt;&lt; fixed &lt;&lt; setprecision(2);  // 保留2位小数
+    cout &lt;&lt; "2.3 成绩统计：" &lt;&lt; endl;
+    cout &lt;&lt; "    ┌──────────┬────────┐" &lt;&lt; endl;
+    cout &lt;&lt; "    │   项目   │  数值  │" &lt;&lt; endl;
+    cout &lt;&lt; "    ├──────────┼────────┤" &lt;&lt; endl;
+    cout &lt;&lt; "    │  总  分  │ " &lt;&lt; setw(4) &lt;&lt; sum &lt;&lt; "  │" &lt;&lt; endl;
+    cout &lt;&lt; "    │  平均分  │ " &lt;&lt; setw(6) &lt;&lt; avgDouble1 &lt;&lt; " │" &lt;&lt; endl;
+    cout &lt;&lt; "    └──────────┴────────┘" &lt;&lt; endl;
+    cout &lt;&lt; endl;
+
+    // 恢复默认格式
+    cout &lt;&lt; defaultfloat;
+}
+
+// ---------- 示例3：完整的成绩统计分析器 ----------
+void ejemplo3_analizadorCompleto() {
+    cout &lt;&lt; "╔══════════════════════════════════════╗" &lt;&lt; endl;
+    cout &lt;&lt; "║   示例3：完整的成绩统计分析器       ║" &lt;&lt; endl;
+    cout &lt;&lt; "╚══════════════════════════════════════╝" &lt;&lt; endl;
+    cout &lt;&lt; endl;
+
+    const int MAX = 100;
+    int scores[MAX];
+    int n;
+
+    // ===== 输入阶段 =====
+    cout &lt;&lt; "请输入班级人数（最多" &lt;&lt; MAX &lt;&lt; "人）：";
+    cin &gt;&gt; n;
+
+    if (n &lt;= 0 || n &gt; MAX) {
+        cout &lt;&lt; "人数超出范围，程序退出。" &lt;&lt; endl;
+        return;
+    }
+
+    cout &lt;&lt; "\n请逐个输入成绩（0~100）：" &lt;&lt; endl;
+    for (int i = 0; i &lt; n; i++) {
+        cout &lt;&lt; "  第" &lt;&lt; i + 1 &lt;&lt; "位同学的成绩：";
+        cin &gt;&gt; scores[i];
+
+        // 输入验证：确保成绩在0~100之间
+        while (scores[i] &lt; 0 || scores[i] &gt; 100) {
+            cout &lt;&lt; "  成绩无效！请输入0~100之间的分数：";
+            cin &gt;&gt; scores[i];
+        }
+    }
+
+    // ===== 显示所有成绩 =====
+    cout &lt;&lt; "\n===== 全班成绩一览 =====" &lt;&lt; endl;
+    cout &lt;&lt; "┌──────┬───────┐" &lt;&lt; endl;
+    cout &lt;&lt; "│ 编号 │ 成绩  │" &lt;&lt; endl;
+    cout &lt;&lt; "├──────┼───────┤" &lt;&lt; endl;
+    for (int i = 0; i &lt; n; i++) {
+        cout &lt;&lt; "│  " &lt;&lt; setw(2) &lt;&lt; i + 1 &lt;&lt; "   │  " &lt;&lt; setw(3) &lt;&lt; scores[i] &lt;&lt; "  │" &lt;&lt; endl;
+    }
+    cout &lt;&lt; "└──────┴───────┘" &lt;&lt; endl;
+
+    // ===== 统计分析 =====
+    // 1. 计算总和
+    int sum = 0;
+    for (int i = 0; i &lt; n; i++) {
+        sum += scores[i];
+    }
+    double average = (double)sum / n;
+
+    // 2. 找最高分和最低分（同时记录位置）
+    int maxScore = scores[0];
+    int minScore = scores[0];
+    int maxIndex = 0;  // 最高分所在位置（下标）
+    int minIndex = 0;  // 最低分所在位置（下标）
+
+    for (int i = 1; i &lt; n; i++) {
+        if (scores[i] &gt; maxScore) {
+            maxScore = scores[i];
+            maxIndex = i;
+        }
+        if (scores[i] &lt; minScore) {
+            minScore = scores[i];
+            minIndex = i;
+        }
+    }
+
+    // 3. 分数段统计
+    int excellent = 0;   // 优秀 &gt;= 90
+    int good = 0;        // 良好 80~89
+    int medium = 0;      // 中等 70~79
+    int pass = 0;        // 及格 60~69
+    int fail = 0;        // 不及格 &lt; 60
+
+    int aboveAvg = 0;    // 高于平均分的人数
+    int belowAvg = 0;    // 低于平均分的人数
+    int equalAvg = 0;    // 等于平均分的人数
+
+    for (int i = 0; i &lt; n; i++) {
+        // 分数段统计
+        if (scores[i] &gt;= 90) {
+            excellent++;
+        } else if (scores[i] &gt;= 80) {
+            good++;
+        } else if (scores[i] &gt;= 70) {
+            medium++;
+        } else if (scores[i] &gt;= 60) {
+            pass++;
+        } else {
+            fail++;
+        }
+
+        // 与平均分比较
+        if (scores[i] &gt; average) {
+            aboveAvg++;
+        } else if (scores[i] &lt; average) {
+            belowAvg++;
+        } else {
+            equalAvg++;
+        }
+    }
+
+    // ===== 输出分析报告 =====
+    cout &lt;&lt; fixed &lt;&lt; setprecision(1);
+    cout &lt;&lt; "\n╔════════════════════════════════════════╗" &lt;&lt; endl;
+    cout &lt;&lt; "║          成  绩  分  析  报  告       ║" &lt;&lt; endl;
+    cout &lt;&lt; "╠════════════════════════════════════════╣" &lt;&lt; endl;
+    cout &lt;&lt; "║                                        ║" &lt;&lt; endl;
+    cout &lt;&lt; "║  【基本数据】                          ║" &lt;&lt; endl;
+    cout &lt;&lt; "║   班级人数：     " &lt;&lt; setw(3) &lt;&lt; n &lt;&lt; " 人                   ║" &lt;&lt; endl;
+    cout &lt;&lt; "║   总分：         " &lt;&lt; setw(3) &lt;&lt; sum &lt;&lt; " 分                   ║" &lt;&lt; endl;
+    cout &lt;&lt; "║   平均分：       " &lt;&lt; setw(5) &lt;&lt; average &lt;&lt; " 分                  ║" &lt;&lt; endl;
+    cout &lt;&lt; "║   最高分：       " &lt;&lt; setw(3) &lt;&lt; maxScore &lt;&lt; " 分（第" &lt;&lt; maxIndex + 1 &lt;&lt; "位同学）    ║" &lt;&lt; endl;
+    cout &lt;&lt; "║   最低分：       " &lt;&lt; setw(3) &lt;&lt; minScore &lt;&lt; " 分（第" &lt;&lt; minIndex + 1 &lt;&lt; "位同学）    ║" &lt;&lt; endl;
+    cout &lt;&lt; "║                                        ║" &lt;&lt; endl;
+    cout &lt;&lt; "║  【分数段分布】                        ║" &lt;&lt; endl;
+    cout &lt;&lt; "║   优秀（90~100）：" &lt;&lt; setw(3) &lt;&lt; excellent &lt;&lt; " 人  "
+         &lt;&lt; "占比 " &lt;&lt; setw(5) &lt;&lt; (double)excellent / n * 100 &lt;&lt; "%     ║" &lt;&lt; endl;
+    cout &lt;&lt; "║   良好（80~89）： " &lt;&lt; setw(3) &lt;&lt; good &lt;&lt; " 人  "
+         &lt;&lt; "占比 " &lt;&lt; setw(5) &lt;&lt; (double)good / n * 100 &lt;&lt; "%     ║" &lt;&lt; endl;
+    cout &lt;&lt; "║   中等（70~79）： " &lt;&lt; setw(3) &lt;&lt; medium &lt;&lt; " 人  "
+         &lt;&lt; "占比 " &lt;&lt; setw(5) &lt;&lt; (double)medium / n * 100 &lt;&lt; "%     ║" &lt;&lt; endl;
+    cout &lt;&lt; "║   及格（60~69）： " &lt;&lt; setw(3) &lt;&lt; pass &lt;&lt; " 人  "
+         &lt;&lt; "占比 " &lt;&lt; setw(5) &lt;&lt; (double)pass / n * 100 &lt;&lt; "%     ║" &lt;&lt; endl;
+    cout &lt;&lt; "║   不及格（&lt;60）： " &lt;&lt; setw(3) &lt;&lt; fail &lt;&lt; " 人  "
+         &lt;&lt; "占比 " &lt;&lt; setw(5) &lt;&lt; (double)fail / n * 100 &lt;&lt; "%     ║" &lt;&lt; endl;
+    cout &lt;&lt; "║                                        ║" &lt;&lt; endl;
+    cout &lt;&lt; "║  【平均分对比】                        ║" &lt;&lt; endl;
+    cout &lt;&lt; "║   高于平均分：   " &lt;&lt; setw(3) &lt;&lt; aboveAvg &lt;&lt; " 人                   ║" &lt;&lt; endl;
+    cout &lt;&lt; "║   低于平均分：   " &lt;&lt; setw(3) &lt;&lt; belowAvg &lt;&lt; " 人                   ║" &lt;&lt; endl;
+    if (equalAvg &gt; 0) {
+        cout &lt;&lt; "║   等于平均分：   " &lt;&lt; setw(3) &lt;&lt; equalAvg &lt;&lt; " 人                   ║" &lt;&lt; endl;
+    }
+    cout &lt;&lt; "║   及格率：       " &lt;&lt; setw(5)
+         &lt;&lt; (double)(excellent + good + medium + pass) / n * 100 &lt;&lt; "%                ║" &lt;&lt; endl;
+    cout &lt;&lt; "║                                        ║" &lt;&lt; endl;
+    cout &lt;&lt; "╚════════════════════════════════════════╝" &lt;&lt; endl;
+
+    // ===== 成绩柱状图 =====
+    cout &lt;&lt; "\n===== 成绩分布柱状图 =====" &lt;&lt; endl;
+    cout &lt;&lt; endl;
+
+    // 找到最大值用于确定柱状图比例
+    int maxCount = excellent;
+    if (good &gt; maxCount) maxCount = good;
+    if (medium &gt; maxCount) maxCount = medium;
+    if (pass &gt; maxCount) maxCount = pass;
+    if (fail &gt; maxCount) maxCount = fail;
+    if (maxCount == 0) maxCount = 1;  // 避免除以0
+
+    const int BAR_MAX = 30;  // 柱状图最大宽度
+
+    string labels[5] = {"优秀(≥90)", "良好(80)", "中等(70)", "及格(60)", "不及格  "};
+    int counts[5] = {excellent, good, medium, pass, fail};
+
+    cout &lt;&lt; "    0%        25%        50%        75%       100%" &lt;&lt; endl;
+    cout &lt;&lt; "    ├──────────┼──────────┼──────────┼──────────┤" &lt;&lt; endl;
+
+    for (int i = 0; i &lt; 5; i++) {
+        int barLen = (int)((double)counts[i] / maxCount * BAR_MAX);
+        if (counts[i] &gt; 0 &amp;&amp; barLen == 0) barLen = 1;  // 至少有1格
+
+        cout &lt;&lt; labels[i] &lt;&lt; " │";
+        for (int j = 0; j &lt; barLen; j++) {
+            cout &lt;&lt; "█";
+        }
+        for (int j = barLen; j &lt; BAR_MAX; j++) {
+            cout &lt;&lt; " ";
+        }
+        cout &lt;&lt; "│ " &lt;&lt; setw(2) &lt;&lt; counts[i] &lt;&lt; "人" &lt;&lt; endl;
+    }
+    cout &lt;&lt; "    └──────────┴──────────┴──────────┴──────────┘" &lt;&lt; endl;
+
+    // 恢复浮点数默认格式
+    cout &lt;&lt; defaultfloat;
+    cout &lt;&lt; endl;
+}
+
+// ---------- 练习答案 ----------
+void ejercicio1_respuesta() {
+    cout &lt;&lt; "╔══════════════════════════════════════╗" &lt;&lt; endl;
+    cout &lt;&lt; "║   练习1答案：计算总和与平均值       ║" &lt;&lt; endl;
+    cout &lt;&lt; "╚══════════════════════════════════════╝" &lt;&lt; endl;
+    cout &lt;&lt; endl;
+
+    int numbers[6] = {23, 45, 12, 67, 34, 89};
+    int sum = 0;                          // 答案：初始化为0
+    for (int i = 0; i &lt; 6; i++) {         // 答案：i &lt; 6
+        sum += numbers[i];                // 答案：numbers[i]
+    }
+    double avg = sum / 6.0;               // 答案：sum / 6.0
+
+    cout &lt;&lt; "补全后的代码运行结果：" &lt;&lt; endl;
+    cout &lt;&lt; "    总和：" &lt;&lt; sum &lt;&lt; endl;
+    cout &lt;&lt; "    平均值：" &lt;&lt; avg &lt;&lt; endl;
+    cout &lt;&lt; endl;
+
+    cout &lt;&lt; "填空答案：" &lt;&lt; endl;
+    cout &lt;&lt; "    第1空：0（累加器初始化为0）" &lt;&lt; endl;
+    cout &lt;&lt; "    第2空：6（数组有6个元素）" &lt;&lt; endl;
+    cout &lt;&lt; "    第3空：numbers[i]（当前元素）" &lt;&lt; endl;
+    cout &lt;&lt; "    第4空：sum（总和）" &lt;&lt; endl;
+    cout &lt;&lt; endl;
+}
+
+void ejercicio2_respuesta() {
+    cout &lt;&lt; "╔══════════════════════════════════════╗" &lt;&lt; endl;
+    cout &lt;&lt; "║   练习2答案：找最大最小值           ║" &lt;&lt; endl;
+    cout &lt;&lt; "╚══════════════════════════════════════╝" &lt;&lt; endl;
+    cout &lt;&lt; endl;
+
+    int arr[8] = {34, 12, 89, 7, 56, 91, 23, 45};
+
+    cout &lt;&lt; "数组内容：";
+    for (int i = 0; i &lt; 8; i++) {
+        cout &lt;&lt; arr[i] &lt;&lt; " ";
+    }
+    cout &lt;&lt; endl &lt;&lt; endl;
+
+    // 找最大值和最小值及其位置
+    int maxVal = arr[0];
+    int minVal = arr[0];
+    int maxPos = 0;
+    int minPos = 0;
+
+    for (int i = 1; i &lt; 8; i++) {
+        if (arr[i] &gt; maxVal) {
+            maxVal = arr[i];
+            maxPos = i;
+        }
+        if (arr[i] &lt; minVal) {
+            minVal = arr[i];
+            minPos = i;
+        }
+    }
+
+    cout &lt;&lt; "分析结果：" &lt;&lt; endl;
+    cout &lt;&lt; "    最大值：" &lt;&lt; maxVal &lt;&lt; "，位于下标 " &lt;&lt; maxPos
+         &lt;&lt; "（第" &lt;&lt; maxPos + 1 &lt;&lt; "个元素）" &lt;&lt; endl;
+    cout &lt;&lt; "    最小值：" &lt;&lt; minVal &lt;&lt; "，位于下标 " &lt;&lt; minPos
+         &lt;&lt; "（第" &lt;&lt; minPos + 1 &lt;&lt; "个元素）" &lt;&lt; endl;
+    cout &lt;&lt; endl;
+
+    cout &lt;&lt; "参考代码：" &lt;&lt; endl;
+    cout &lt;&lt; "┌──────────────────────────────────────────┐" &lt;&lt; endl;
+    cout &lt;&lt; "│ int maxVal = arr[0], minVal = arr[0];    │" &lt;&lt; endl;
+    cout &lt;&lt; "│ int maxPos = 0, minPos = 0;              │" &lt;&lt; endl;
+    cout &lt;&lt; "│ for (int i = 1; i &lt; 8; i++) {            │" &lt;&lt; endl;
+    cout &lt;&lt; "│     if (arr[i] &gt; maxVal) {               │" &lt;&lt; endl;
+    cout &lt;&lt; "│         maxVal = arr[i]; maxPos = i;     │" &lt;&lt; endl;
+    cout &lt;&lt; "│     }                                    │" &lt;&lt; endl;
+    cout &lt;&lt; "│     if (arr[i] &lt; minVal) {               │" &lt;&lt; endl;
+    cout &lt;&lt; "│         minVal = arr[i]; minPos = i;     │" &lt;&lt; endl;
+    cout &lt;&lt; "│     }                                    │" &lt;&lt; endl;
+    cout &lt;&lt; "│ }                                        │" &lt;&lt; endl;
+    cout &lt;&lt; "└──────────────────────────────────────────┘" &lt;&lt; endl;
+    cout &lt;&lt; endl;
+}
+
+void ejercicio3_respuesta() {
+    cout &lt;&lt; "╔══════════════════════════════════════╗" &lt;&lt; endl;
+    cout &lt;&lt; "║   练习3答案：统计奇偶数             ║" &lt;&lt; endl;
+    cout &lt;&lt; "╚══════════════════════════════════════╝" &lt;&lt; endl;
+    cout &lt;&lt; endl;
+
+    int numbers[10] = {7, 14, 23, 8, 19, 30, 45, 12, 6, 33};
+
+    cout &lt;&lt; "数组内容：";
+    for (int i = 0; i &lt; 10; i++) {
+        cout &lt;&lt; numbers[i] &lt;&lt; " ";
+    }
+    cout &lt;&lt; endl &lt;&lt; endl;
+
+    int oddCount = 0;   // 奇数个数
+    int evenCount = 0;  // 偶数个数
+
+    cout &lt;&lt; "逐一判断：" &lt;&lt; endl;
+    for (int i = 0; i &lt; 10; i++) {
+        if (numbers[i] % 2 == 0) {
+            cout &lt;&lt; "    " &lt;&lt; numbers[i] &lt;&lt; " → 偶数" &lt;&lt; endl;
+            evenCount++;
+        } else {
+            cout &lt;&lt; "    " &lt;&lt; numbers[i] &lt;&lt; " → 奇数" &lt;&lt; endl;
+            oddCount++;
+        }
+    }
+
+    cout &lt;&lt; "\n统计结果：" &lt;&lt; endl;
+    cout &lt;&lt; "    奇数个数：" &lt;&lt; oddCount &lt;&lt; endl;
+    cout &lt;&lt; "    偶数个数：" &lt;&lt; evenCount &lt;&lt; endl;
+    cout &lt;&lt; endl;
+
+    cout &lt;&lt; "关键知识点：判断奇偶性用 % 运算符" &lt;&lt; endl;
+    cout &lt;&lt; "    num % 2 == 0  →  偶数" &lt;&lt; endl;
+    cout &lt;&lt; "    num % 2 == 1  →  奇数" &lt;&lt; endl;
+    cout &lt;&lt; endl;
+}
+
+// ---------- 挑战任务：增强版成绩统计分析器 ----------
+void desafio_analizadorAvanzado() {
+    cout &lt;&lt; "╔══════════════════════════════════════╗" &lt;&lt; endl;
+    cout &lt;&lt; "║   挑战任务：增强版成绩统计分析器     ║" &lt;&lt; endl;
+    cout &lt;&lt; "╚══════════════════════════════════════╝" &lt;&lt; endl;
+    cout &lt;&lt; endl;
+
+    const int MAX = 100;
+    int scores[MAX];
+    string grades[MAX];  // 等级数组
+    int n;
+
+    // 输入成绩
+    cout &lt;&lt; "请输入班级人数（最多" &lt;&lt; MAX &lt;&lt; "人）：";
+    cin &gt;&gt; n;
+    if (n &lt;= 0 || n &gt; MAX) {
+        cout &lt;&lt; "人数超出范围！" &lt;&lt; endl;
+        return;
+    }
+
+    cout &lt;&lt; "\n请逐个输入成绩（0~100）：" &lt;&lt; endl;
+    for (int i = 0; i &lt; n; i++) {
+        cout &lt;&lt; "  第" &lt;&lt; i + 1 &lt;&lt; "位同学：";
+        cin &gt;&gt; scores[i];
+        while (scores[i] &lt; 0 || scores[i] &gt; 100) {
+            cout &lt;&lt; "  成绩无效，请重新输入（0~100）：";
+            cin &gt;&gt; scores[i];
+        }
+
+        // 评定等级
+        if (scores[i] &gt;= 90) grades[i] = "A等（优秀）";
+        else if (scores[i] &gt;= 80) grades[i] = "B等（良好）";
+        else if (scores[i] &gt;= 70) grades[i] = "C等（中等）";
+        else if (scores[i] &gt;= 60) grades[i] = "D等（及格）";
+        else grades[i] = "E等（不及格）";
+    }
+
+    // 计算基本统计量
+    int sum = 0;
+    for (int i = 0; i &lt; n; i++) sum += scores[i];
+    double average = (double)sum / n;
+
+    // 找最高分和最低分
+    int maxScore = scores[0], minScore = scores[0];
+    for (int i = 1; i &lt; n; i++) {
+        if (scores[i] &gt; maxScore) maxScore = scores[i];
+        if (scores[i] &lt; minScore) minScore = scores[i];
+    }
+
+    // 冒泡排序（从高到低）
+    // 先复制一份数组用于排序
+    int sortedScores[MAX];
+    int sortedIndex[MAX];  // 记录原始编号
+    for (int i = 0; i &lt; n; i++) {
+        sortedScores[i] = scores[i];
+        sortedIndex[i] = i;  // 原始编号 = 下标 + 1
+    }
+
+    for (int i = 0; i &lt; n - 1; i++) {
+        for (int j = 0; j &lt; n - 1 - i; j++) {
+            if (sortedScores[j] &lt; sortedScores[j + 1]) {
+                // 交换成绩
+                int tempScore = sortedScores[j];
+                sortedScores[j] = sortedScores[j + 1];
+                sortedScores[j + 1] = tempScore;
+                // 同时交换编号
+                int tempIndex = sortedIndex[j];
+                sortedIndex[j] = sortedIndex[j + 1];
+                sortedIndex[j + 1] = tempIndex;
+            }
+        }
+    }
+
+    // 计算中位数
+    double median;
+    if (n % 2 == 1) {
+        // 奇数个：取中间那个
+        median = sortedScores[n / 2];
+    } else {
+        // 偶数个：取中间两个的平均值
+        median = (sortedScores[n / 2 - 1] + sortedScores[n / 2]) / 2.0;
+    }
+
+    // ===== 输出报告 =====
+    cout &lt;&lt; fixed &lt;&lt; setprecision(1);
+    cout &lt;&lt; "\n╔══════════════════════════════════════════════╗" &lt;&lt; endl;
+    cout &lt;&lt; "║           成  绩  分  析  报  告            ║" &lt;&lt; endl;
+    cout &lt;&lt; "╠══════════════════════════════════════════════╣" &lt;&lt; endl;
+    cout &lt;&lt; "║  班级人数：" &lt;&lt; setw(3) &lt;&lt; n &lt;&lt; "人    总分：" &lt;&lt; setw(4) &lt;&lt; sum
+         &lt;&lt; "    平均分：" &lt;&lt; setw(5) &lt;&lt; average &lt;&lt; "  ║" &lt;&lt; endl;
+    cout &lt;&lt; "║  最高分：" &lt;&lt; setw(3) &lt;&lt; maxScore &lt;&lt; "分    最低分：" &lt;&lt; setw(3) &lt;&lt; minScore
+         &lt;&lt; "分    中位数：" &lt;&lt; setw(5) &lt;&lt; median &lt;&lt; "  ║" &lt;&lt; endl;
+    cout &lt;&lt; "╠══════════════════════════════════════════════╣" &lt;&lt; endl;
+
+    // 成绩排行榜
+    cout &lt;&lt; "║  成绩排行榜（从高到低）：                   ║" &lt;&lt; endl;
+    cout &lt;&lt; "║  ┌──────┬──────┬───────┬──────────┐         ║" &lt;&lt; endl;
+    cout &lt;&lt; "║  │ 排名 │ 编号 │ 成绩  │   等级   │         ║" &lt;&lt; endl;
+    cout &lt;&lt; "║  ├──────┼──────┼───────┼──────────┤         ║" &lt;&lt; endl;
+    for (int i = 0; i &lt; n; i++) {
+        int origIndex = sortedIndex[i] + 1;  // 原始编号
+        int origScore = scores[origIndex - 1];
+        cout &lt;&lt; "║  │  " &lt;&lt; setw(2) &lt;&lt; i + 1 &lt;&lt; "  │  " &lt;&lt; setw(2) &lt;&lt; origIndex
+             &lt;&lt; "  │  " &lt;&lt; setw(3) &lt;&lt; origScore &lt;&lt; "  │ " &lt;&lt; grades[origIndex - 1];
+        // 补空格对齐
+        int gradeDisplayLen = grades[origIndex - 1].length();
+        for (int s = 0; s &lt; 10 - gradeDisplayLen; s++) cout &lt;&lt; " ";
+        cout &lt;&lt; "│         ║" &lt;&lt; endl;
+    }
+    cout &lt;&lt; "║  └──────┴──────┴───────┴──────────┘         ║" &lt;&lt; endl;
+
+    // 统计及格率
+    int passCount = 0;
+    for (int i = 0; i &lt; n; i++) {
+        if (scores[i] &gt;= 60) passCount++;
+    }
+    cout &lt;&lt; "║  及格率：" &lt;&lt; (double)passCount / n * 100 &lt;&lt; "%                              ║" &lt;&lt; endl;
+    cout &lt;&lt; "╚══════════════════════════════════════════════╝" &lt;&lt; endl;
+
+    cout &lt;&lt; defaultfloat;
+    cout &lt;&lt; endl;
+}
+
+// ---------- 主函数 ----------
+int main() {
+    cout &lt;&lt; "╔══════════════════════════════════════════════════╗" &lt;&lt; endl;
+    cout &lt;&lt; "║     第26课：平均分大作战——数组遍历              ║" &lt;&lt; endl;
+    cout &lt;&lt; "║     C++ 趣味学习——成绩统计分析器                ║" &lt;&lt; endl;
+    cout &lt;&lt; "╚══════════════════════════════════════════════════╝" &lt;&lt; endl;
+    cout &lt;&lt; endl;
+
+    int opcion;
+
+    do {
+        cout &lt;&lt; "请选择要运行的功能：" &lt;&lt; endl;
+        cout &lt;&lt; "    1. 示例1：数组的基本遍历" &lt;&lt; endl;
+        cout &lt;&lt; "    2. 示例2：求和与平均值计算" &lt;&lt; endl;
+        cout &lt;&lt; "    3. 示例3：完整的成绩统计分析器" &lt;&lt; endl;
+        cout &lt;&lt; "    4. 练习1答案：计算总和与平均值" &lt;&lt; endl;
+        cout &lt;&lt; "    5. 练习2答案：找最大最小值" &lt;&lt; endl;
+        cout &lt;&lt; "    6. 练习3答案：统计奇偶数" &lt;&lt; endl;
+        cout &lt;&lt; "    7. 挑战任务：增强版成绩统计分析器" &lt;&lt; endl;
+        cout &lt;&lt; "    0. 退出程序" &lt;&lt; endl;
+        cout &lt;&lt; "请输入数字选择：";
+        cin &gt;&gt; opcion;
+        cout &lt;&lt; endl;
+
+        switch (opcion) {
+            case 1:
+                ejemplo1_traversalBasico();
+                break;
+            case 2:
+                ejemplo2_sumaYPromedio();
+                break;
+            case 3:
+                ejemplo3_analizadorCompleto();
+                break;
+            case 4:
+                ejercicio1_respuesta();
+                break;
+            case 5:
+                ejercicio2_respuesta();
+                break;
+            case 6:
+                ejercicio3_respuesta();
+                break;
+            case 7:
+                desafio_analizadorAvanzado();
+                break;
+            case 0:
+                cout &lt;&lt; "再见！继续加油，你离编程高手越来越近了！" &lt;&lt; endl;
+                break;
+            default:
+                cout &lt;&lt; "无效选择，请重新输入！" &lt;&lt; endl;
+        }
+    } while (opcion != 0);
+
+    return 0;
+}
+</pre>
+    <p class="hint">本页使用浅色主题与 UTF-8 编码，可直接打印或导出 PDF。</p>
+  </div>
+</body>
+</html>

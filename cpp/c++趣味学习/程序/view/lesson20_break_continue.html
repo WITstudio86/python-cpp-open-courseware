@@ -1,0 +1,401 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>lesson20_break_continue.cpp</title>
+<style>
+  :root {
+    --bg: #f5f7fa;
+    --panel: #ffffff;
+    --text: #1a1a2e;
+    --muted: #5a6570;
+    --gold: #b8860b;
+    --code-bg: #ffffff;
+    --code-text: #1f2933;
+    --border: #d8dee6;
+    --top-bg: #ffffff;
+    --top-border: #e5e9ef;
+  }
+  * { box-sizing: border-box; }
+  html, body {
+    margin: 0; padding: 0;
+    background: var(--bg);
+    color: var(--text);
+    font-family: -apple-system, BlinkMacSystemFont, "PingFang SC", "Microsoft YaHei", sans-serif;
+    min-height: 100%;
+  }
+  .top {
+    position: sticky; top: 0; z-index: 10;
+    display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between;
+    gap: 10px;
+    padding: 12px 18px;
+    background: var(--top-bg);
+    border-bottom: 1px solid var(--top-border);
+    box-shadow: 0 1px 8px rgba(15, 23, 42, 0.06);
+  }
+  .brand { color: var(--gold); font-weight: 700; font-size: 14px; letter-spacing: 0.04em; }
+  .title { font-size: 15px; font-weight: 600; color: var(--text); max-width: 52vw; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .actions { display: flex; gap: 8px; flex-wrap: wrap; }
+  .btn {
+    appearance: none; border: 1px solid var(--border);
+    background: #fff; color: var(--text);
+    border-radius: 999px; padding: 8px 14px; font-size: 13px; font-weight: 600;
+    text-decoration: none; cursor: pointer;
+  }
+  .btn:hover { background: #f0f3f7; }
+  .btn.gold {
+    background: linear-gradient(135deg, #f0d78c, #d4a853);
+    color: #0a2540; border-color: #e0c06a;
+  }
+  .meta {
+    padding: 10px 18px; color: var(--muted); font-size: 12px;
+    border-bottom: 1px solid var(--border);
+    background: var(--panel);
+  }
+  .wrap { padding: 16px 18px 40px; }
+  pre {
+    margin: 0;
+    background: var(--code-bg);
+    color: var(--code-text);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 18px 20px;
+    overflow: auto;
+    font-family: "SF Mono", "JetBrains Mono", "Fira Code", Consolas, "Courier New", monospace;
+    font-size: 13.5px;
+    line-height: 1.55;
+    white-space: pre;
+    tab-size: 4;
+    box-shadow: 0 2px 12px rgba(15, 23, 42, 0.05);
+  }
+  .hint { margin-top: 12px; color: var(--muted); font-size: 12px; }
+  @media print {
+    html, body { background: #fff !important; color: #000 !important; }
+    .top { position: static; box-shadow: none; border-bottom: 1px solid #ccc; background: #fff !important; }
+    .actions { display: none !important; }
+    .meta { background: #fff !important; border-color: #ddd; color: #333; }
+    .wrap { padding: 0; }
+    pre {
+      background: #fff !important; color: #000 !important;
+      border: 1px solid #bbb; box-shadow: none; border-radius: 0;
+      white-space: pre-wrap; word-break: break-word; font-size: 11pt; line-height: 1.4;
+    }
+    .hint { display: none; }
+    a { color: #000; text-decoration: none; }
+  }
+</style>
+</head>
+<body>
+  <div class="top">
+    <div class="brand">C++ 趣味学习 · 配套代码</div>
+    <div class="title">lesson20_break_continue.cpp</div>
+    <div class="actions">
+      <a class="btn" href="../lesson20_break_continue.cpp" download="lesson20_break_continue.cpp">⬇️ 下载源文件</a>
+      <a class="btn gold" href="javascript:history.back()">← 返回课件</a>
+    </div>
+  </div>
+  <div class="meta">编码：UTF-8 · 文件：lesson20_break_continue.cpp · 共 297 行 · 浅色主题便于打印</div>
+  <div class="wrap">
+    <pre id="code">/*
+ * C++趣味学习 - 第20课：循环控制台——break与continue
+ * 知识点：跳出循环、跳过本次
+ * 项目：数字躲避游戏
+ */
+
+#include &lt;iostream&gt;
+#include &lt;cstdlib&gt;
+#include &lt;ctime&gt;
+#include &lt;cmath&gt;
+using namespace std;
+
+// ============ 示例1：数字躲避游戏 ============
+void example1_number_dodge() {
+    cout &lt;&lt; "════════════════════════════════" &lt;&lt; endl;
+    cout &lt;&lt; "  示例1：🕹️ 数字躲避游戏" &lt;&lt; endl;
+    cout &lt;&lt; "════════════════════════════════" &lt;&lt; endl;
+
+    cout &lt;&lt; "规则：从1数到30，遇到以下数字要跳过：" &lt;&lt; endl;
+    cout &lt;&lt; "  - 3的倍数" &lt;&lt; endl;
+    cout &lt;&lt; "  - 个位数是3的数字" &lt;&lt; endl;
+    cout &lt;&lt; "  - 十位数是3的数字" &lt;&lt; endl;
+    cout &lt;&lt; "-------------------------------------------" &lt;&lt; endl;
+
+    for (int i = 1; i &lt;= 30; i++) {
+        // 判断是否需要跳过
+        if (i % 3 == 0 || i % 10 == 3 || i / 10 == 3) {
+            cout &lt;&lt; "第" &lt;&lt; i &lt;&lt; "个 → 💨 跳过！（这是一个'危险数字'）" &lt;&lt; endl;
+            continue;  // 跳过这个数字，进入下一次循环
+        }
+        cout &lt;&lt; "第" &lt;&lt; i &lt;&lt; "个 → 🔢 " &lt;&lt; i &lt;&lt; " ✓" &lt;&lt; endl;
+    }
+
+    cout &lt;&lt; "-------------------------------------------" &lt;&lt; endl;
+    cout &lt;&lt; "🎮 游戏结束！你成功避开了所有危险数字！" &lt;&lt; endl;
+    cout &lt;&lt; endl;
+}
+
+// ============ 示例2：查找质数——break的应用 ============
+void example2_find_primes() {
+    cout &lt;&lt; "════════════════════════════════" &lt;&lt; endl;
+    cout &lt;&lt; "  示例2：🔍 质数查找器（用break优化）" &lt;&lt; endl;
+    cout &lt;&lt; "════════════════════════════════" &lt;&lt; endl;
+
+    int limit;
+    cout &lt;&lt; "请输入搜索上限：";
+    cin &gt;&gt; limit;
+
+    cout &lt;&lt; endl &lt;&lt; "正在查找 2 ~ " &lt;&lt; limit &lt;&lt; " 之间的所有质数..." &lt;&lt; endl;
+    cout &lt;&lt; "-------------------------------------------" &lt;&lt; endl;
+
+    int count = 0;
+
+    for (int num = 2; num &lt;= limit; num++) {
+        bool isPrime = true;
+
+        // 只需检查到sqrt(num)，用break提前终止
+        for (int i = 2; i &lt;= sqrt(num); i++) {
+            if (num % i == 0) {
+                isPrime = false;
+                break;  // 找到一个因子就够了，不用继续检查
+            }
+        }
+
+        if (isPrime) {
+            cout &lt;&lt; num &lt;&lt; "\t";
+            count++;
+            if (count % 10 == 0) cout &lt;&lt; endl;  // 每10个换行
+        }
+    }
+
+    cout &lt;&lt; endl &lt;&lt; "-------------------------------------------" &lt;&lt; endl;
+    cout &lt;&lt; "🌟 " &lt;&lt; limit &lt;&lt; "以内共有 " &lt;&lt; count &lt;&lt; " 个质数。" &lt;&lt; endl;
+    cout &lt;&lt; endl;
+}
+
+// ============ 示例3：break与continue对比实验 ============
+void example3_break_vs_continue() {
+    cout &lt;&lt; "════════════════════════════════" &lt;&lt; endl;
+    cout &lt;&lt; "  示例3：🧪 break vs continue 对比实验" &lt;&lt; endl;
+    cout &lt;&lt; "════════════════════════════════" &lt;&lt; endl;
+
+    cout &lt;&lt; "实验：循环1到10，遇到5时的不同表现" &lt;&lt; endl;
+    cout &lt;&lt; "-------------------------------------------" &lt;&lt; endl;
+
+    // 实验1：正常循环（对照组）
+    cout &lt;&lt; "🔵 正常循环：            ";
+    for (int i = 1; i &lt;= 10; i++) {
+        cout &lt;&lt; i &lt;&lt; " ";
+    }
+    cout &lt;&lt; endl;
+
+    // 实验2：使用break
+    cout &lt;&lt; "🔴 使用break（遇到5）：  ";
+    for (int i = 1; i &lt;= 10; i++) {
+        if (i == 5) break;    // 到5就彻底停止
+        cout &lt;&lt; i &lt;&lt; " ";
+    }
+    cout &lt;&lt; "← 5及以后全部消失！" &lt;&lt; endl;
+
+    // 实验3：使用continue
+    cout &lt;&lt; "🟡 使用continue（遇到5）：";
+    for (int i = 1; i &lt;= 10; i++) {
+        if (i == 5) continue; // 只跳过5
+        cout &lt;&lt; i &lt;&lt; " ";
+    }
+    cout &lt;&lt; "← 只有5被跳过！" &lt;&lt; endl;
+
+    cout &lt;&lt; "-------------------------------------------" &lt;&lt; endl;
+    cout &lt;&lt; "📌 结论：" &lt;&lt; endl;
+    cout &lt;&lt; "  break    → 一刀两断，循环结束" &lt;&lt; endl;
+    cout &lt;&lt; "  continue → 只跳一段，循环继续" &lt;&lt; endl;
+    cout &lt;&lt; endl;
+}
+
+// ============ 练习答案 ============
+
+// 练习1：跳过3的倍数
+void practice1_skip_multiples_of_3() {
+    cout &lt;&lt; "════════════════════════════════" &lt;&lt; endl;
+    cout &lt;&lt; "  练习1答案：跳过3的倍数" &lt;&lt; endl;
+    cout &lt;&lt; "════════════════════════════════" &lt;&lt; endl;
+
+    cout &lt;&lt; "打印1-30，跳过所有3的倍数：" &lt;&lt; endl;
+    int count = 0;
+    for (int i = 1; i &lt;= 30; i++) {
+        if (i % 3 == 0) {
+            continue;  // 跳过3的倍数
+        }
+        cout &lt;&lt; i &lt;&lt; " ";
+        count++;
+        if (count % 10 == 0) cout &lt;&lt; endl;
+    }
+    cout &lt;&lt; endl &lt;&lt; endl;
+}
+
+// 练习2：找到第一个7和5的公倍数
+void practice2_first_common_multiple() {
+    cout &lt;&lt; "════════════════════════════════" &lt;&lt; endl;
+    cout &lt;&lt; "  练习2答案：找第一个公倍数" &lt;&lt; endl;
+    cout &lt;&lt; "════════════════════════════════" &lt;&lt; endl;
+
+    cout &lt;&lt; "在1-100中找第一个能同时被7和5整除的数：" &lt;&lt; endl;
+
+    for (int i = 1; i &lt;= 100; i++) {
+        if (i % 7 == 0 &amp;&amp; i % 5 == 0) {
+            cout &lt;&lt; "找到了！它是 " &lt;&lt; i &lt;&lt; endl;
+            cout &lt;&lt; "验证：35 ÷ 7 = " &lt;&lt; (35 / 7) &lt;&lt; "，35 ÷ 5 = " &lt;&lt; (35 / 5) &lt;&lt; endl;
+            break;  // 找到就停止
+        }
+    }
+    cout &lt;&lt; endl;
+}
+
+// 练习3：数字过滤器
+void practice3_number_filter() {
+    cout &lt;&lt; "════════════════════════════════" &lt;&lt; endl;
+    cout &lt;&lt; "  练习3答案：数字过滤器" &lt;&lt; endl;
+    cout &lt;&lt; "════════════════════════════════" &lt;&lt; endl;
+
+    int num;
+    cout &lt;&lt; "请连续输入10个整数（输入0则提前结束），程序只显示偶数。" &lt;&lt; endl;
+    cout &lt;&lt; "-------------------------------------------" &lt;&lt; endl;
+
+    for (int i = 1; i &lt;= 10; i++) {
+        cout &lt;&lt; "第" &lt;&lt; i &lt;&lt; "个数：";
+        cin &gt;&gt; num;
+
+        if (num == 0) {
+            cout &lt;&lt; "⚠️ 检测到0，结束输入！" &lt;&lt; endl;
+            break;  // 终止循环
+        }
+
+        if (num % 2 != 0) {
+            cout &lt;&lt; "   → " &lt;&lt; num &lt;&lt; " 是奇数，跳过。" &lt;&lt; endl;
+            continue;  // 跳过奇数，不显示在结果中
+        }
+
+        cout &lt;&lt; "   → ✅ " &lt;&lt; num &lt;&lt; " 是偶数，已记录！" &lt;&lt; endl;
+    }
+    cout &lt;&lt; endl;
+}
+
+// ============ 挑战任务：猜数字豪华版 ============
+void challenge_guess_number_deluxe() {
+    cout &lt;&lt; "════════════════════════════════" &lt;&lt; endl;
+    cout &lt;&lt; "  挑战任务：🎯 猜数字豪华版" &lt;&lt; endl;
+    cout &lt;&lt; "════════════════════════════════" &lt;&lt; endl;
+
+    srand(time(0));
+    int secret = rand() % 100 + 1;
+    int guess;
+    int tries = 0;
+    const int MAX_TRIES = 7;
+
+    cout &lt;&lt; "┌─────────────────────────────┐" &lt;&lt; endl;
+    cout &lt;&lt; "│    🎯 猜数字豪华版          │" &lt;&lt; endl;
+    cout &lt;&lt; "│    1-100之间，共7次机会     │" &lt;&lt; endl;
+    cout &lt;&lt; "└─────────────────────────────┘" &lt;&lt; endl;
+    cout &lt;&lt; endl;
+
+    while (tries &lt; MAX_TRIES) {
+        cout &lt;&lt; "第" &lt;&lt; (tries + 1) &lt;&lt; "/" &lt;&lt; MAX_TRIES &lt;&lt; "次 - 请输入你猜的数字：";
+        cin &gt;&gt; guess;
+
+        // 无效输入：不消耗次数
+        if (guess &lt; 1 || guess &gt; 100) {
+            cout &lt;&lt; "⚠️ 请输入1-100之间的数字！这次不算。" &lt;&lt; endl;
+            continue;  // 跳过本次，不增加tries
+        }
+
+        tries++;  // 有效输入才计数
+
+        if (guess == secret) {
+            cout &lt;&lt; "🎉 恭喜你猜对了！数字就是 " &lt;&lt; secret &lt;&lt; "！" &lt;&lt; endl;
+            cout &lt;&lt; "你用了 " &lt;&lt; tries &lt;&lt; " 次机会。" &lt;&lt; endl;
+
+            if (tries == 1) {
+                cout &lt;&lt; "🏆 一发入魂！你是神算子！" &lt;&lt; endl;
+            } else if (tries &lt;= 3) {
+                cout &lt;&lt; "🌟 非常厉害！" &lt;&lt; endl;
+            }
+            break;  // 猜对了，结束游戏
+        }
+
+        // 提示"大了"或"小了"
+        if (guess &gt; secret) {
+            cout &lt;&lt; "📉 太大了！";
+        } else {
+            cout &lt;&lt; "📈 太小了！";
+        }
+
+        // 显示剩余机会
+        int remaining = MAX_TRIES - tries;
+        if (remaining &gt; 0) {
+            cout &lt;&lt; "还剩 " &lt;&lt; remaining &lt;&lt; " 次机会。" &lt;&lt; endl;
+
+            // 最后2次给额外提示
+            if (remaining == 2) {
+                cout &lt;&lt; "   💡 提示：这个数的范围在左右20以内哦。" &lt;&lt; endl;
+            }
+            if (remaining == 1) {
+                int diff = abs(secret - guess);
+                cout &lt;&lt; "   💡 提示：你离答案还差" &lt;&lt; diff &lt;&lt; "左右。" &lt;&lt; endl;
+            }
+        }
+
+        // 次数用完
+        if (tries &gt;= MAX_TRIES) {
+            cout &lt;&lt; endl;
+            cout &lt;&lt; "😢 机会用完了！正确答案是 " &lt;&lt; secret &lt;&lt; "。" &lt;&lt; endl;
+        }
+    }
+    cout &lt;&lt; endl;
+}
+
+// ============ 主函数 ============
+int main() {
+    cout &lt;&lt; "╔══════════════════════════════════════════╗" &lt;&lt; endl;
+    cout &lt;&lt; "║  第20课：循环控制台——break与continue   ║" &lt;&lt; endl;
+    cout &lt;&lt; "║  知识点：跳出循环、跳过本次             ║" &lt;&lt; endl;
+    cout &lt;&lt; "╚══════════════════════════════════════════╝" &lt;&lt; endl;
+    cout &lt;&lt; endl;
+
+    int choice;
+    while (true) {
+        cout &lt;&lt; "请选择要运行的示例：" &lt;&lt; endl;
+        cout &lt;&lt; "1. 数字躲避游戏" &lt;&lt; endl;
+        cout &lt;&lt; "2. 质数查找器" &lt;&lt; endl;
+        cout &lt;&lt; "3. break vs continue 对比实验" &lt;&lt; endl;
+        cout &lt;&lt; "4. 练习1：跳过3的倍数" &lt;&lt; endl;
+        cout &lt;&lt; "5. 练习2：找第一个公倍数" &lt;&lt; endl;
+        cout &lt;&lt; "6. 练习3：数字过滤器" &lt;&lt; endl;
+        cout &lt;&lt; "7. 🏆 挑战：猜数字豪华版" &lt;&lt; endl;
+        cout &lt;&lt; "0. 退出程序" &lt;&lt; endl;
+        cout &lt;&lt; "请输入选择（0-7）：";
+        cin &gt;&gt; choice;
+        cout &lt;&lt; endl;
+
+        if (choice == 0) break;
+
+        switch (choice) {
+            case 1: example1_number_dodge(); break;
+            case 2: example2_find_primes(); break;
+            case 3: example3_break_vs_continue(); break;
+            case 4: practice1_skip_multiples_of_3(); break;
+            case 5: practice2_first_common_multiple(); break;
+            case 6: practice3_number_filter(); break;
+            case 7: challenge_guess_number_deluxe(); break;
+            default:
+                cout &lt;&lt; "无效选择，请重新输入！" &lt;&lt; endl;
+        }
+    }
+
+    cout &lt;&lt; "感谢学习！我们下一课再见！👋" &lt;&lt; endl;
+    return 0;
+}
+</pre>
+    <p class="hint">本页使用浅色主题与 UTF-8 编码，可直接打印或导出 PDF。</p>
+  </div>
+</body>
+</html>

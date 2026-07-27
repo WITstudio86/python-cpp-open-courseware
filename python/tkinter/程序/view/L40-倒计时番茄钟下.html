@@ -1,0 +1,416 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>L40-倒计时番茄钟下.py</title>
+<style>
+  :root {
+    --bg: #f5f7fa;
+    --panel: #ffffff;
+    --text: #1a1a2e;
+    --muted: #5a6570;
+    --gold: #b8860b;
+    --code-bg: #ffffff;
+    --code-text: #1f2933;
+    --border: #d8dee6;
+    --top-bg: #ffffff;
+    --top-border: #e5e9ef;
+  }
+  * { box-sizing: border-box; }
+  html, body {
+    margin: 0; padding: 0;
+    background: var(--bg);
+    color: var(--text);
+    font-family: -apple-system, BlinkMacSystemFont, "PingFang SC", "Microsoft YaHei", sans-serif;
+    min-height: 100%;
+  }
+  .top {
+    position: sticky; top: 0; z-index: 10;
+    display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between;
+    gap: 10px;
+    padding: 12px 18px;
+    background: var(--top-bg);
+    border-bottom: 1px solid var(--top-border);
+    box-shadow: 0 1px 8px rgba(15, 23, 42, 0.06);
+  }
+  .brand { color: var(--gold); font-weight: 700; font-size: 14px; letter-spacing: 0.04em; }
+  .title { font-size: 15px; font-weight: 600; color: var(--text); max-width: 52vw; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .actions { display: flex; gap: 8px; flex-wrap: wrap; }
+  .btn {
+    appearance: none; border: 1px solid var(--border);
+    background: #fff; color: var(--text);
+    border-radius: 999px; padding: 8px 14px; font-size: 13px; font-weight: 600;
+    text-decoration: none; cursor: pointer;
+  }
+  .btn:hover { background: #f0f3f7; }
+  .btn.gold {
+    background: linear-gradient(135deg, #f0d78c, #d4a853);
+    color: #0a2540; border-color: #e0c06a;
+  }
+  .meta {
+    padding: 10px 18px; color: var(--muted); font-size: 12px;
+    border-bottom: 1px solid var(--border);
+    background: var(--panel);
+  }
+  .wrap { padding: 16px 18px 40px; }
+  pre {
+    margin: 0;
+    background: var(--code-bg);
+    color: var(--code-text);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 18px 20px;
+    overflow: auto;
+    font-family: "SF Mono", "JetBrains Mono", "Fira Code", Consolas, "Courier New", monospace;
+    font-size: 13.5px;
+    line-height: 1.55;
+    white-space: pre;
+    tab-size: 4;
+    box-shadow: 0 2px 12px rgba(15, 23, 42, 0.05);
+  }
+  .hint { margin-top: 12px; color: var(--muted); font-size: 12px; }
+  @media print {
+    html, body { background: #fff !important; color: #000 !important; }
+    .top { position: static; box-shadow: none; border-bottom: 1px solid #ccc; background: #fff !important; }
+    .actions { display: none !important; }
+    .meta { background: #fff !important; border-color: #ddd; color: #333; }
+    .wrap { padding: 0; }
+    pre {
+      background: #fff !important; color: #000 !important;
+      border: 1px solid #bbb; box-shadow: none; border-radius: 0;
+      white-space: pre-wrap; word-break: break-word; font-size: 11pt; line-height: 1.4;
+    }
+    .hint { display: none; }
+    a { color: #000; text-decoration: none; }
+  }
+</style>
+</head>
+<body>
+  <div class="top">
+    <div class="brand">Python Tkinter · 配套代码</div>
+    <div class="title">L40-倒计时番茄钟下.py</div>
+    <div class="actions">
+      <a class="btn" href="../L40-倒计时番茄钟下.py" download="L40-倒计时番茄钟下.py">⬇️ 下载源文件</a>
+      <a class="btn gold" href="javascript:history.back()">← 返回课件</a>
+    </div>
+  </div>
+  <div class="meta">编码：UTF-8 · 文件：L40-倒计时番茄钟下.py · 共 312 行 · 浅色主题便于打印</div>
+  <div class="wrap">
+    <pre id="code">import tkinter as tk
+from tkinter import messagebox
+import sys
+
+# ========================================
+# 第 40 节：项目 11 —— 倒计时番茄钟（下）
+# 知识点：Entry输入任务名、完成提示音、今日番茄数统计、按钮状态切换
+# 衔接：第 39 节搭建了基础倒计时框架，本节加装三大强化模块
+# ========================================
+
+# 1. 创建主窗口
+root = tk.Tk()
+root.title("🍅 番茄钟")
+root.geometry("480x520")
+root.configure(bg="#fff8e1")  # 暖黄色背景，温暖专注
+
+# ---------- 全局状态变量 ----------
+WORK_MIN = 25                     # 工作时长：25 分钟（测试可改为 1）
+total_seconds = WORK_MIN * 60     # 总秒数 = 25 × 60 = 1500
+remaining = total_seconds         # 剩余秒数，初始等于总秒数
+is_running = False                # 是否正在倒计时
+is_paused = False                 # 是否暂停中
+after_id = None                   # 保存 after() 返回的 ID，用于取消定时
+today_count = 0                   # 今日已完成的番茄数
+
+
+# 2. 标题区域
+title_label = tk.Label(
+    root,
+    text="🍅 番茄工作法",
+    font=("微软雅黑", 22, "bold"),
+    bg="#fff8e1",
+    fg="#e65100"                  # 深橙色
+)
+title_label.pack(pady=(20, 5))
+
+
+# 3. 任务输入区 —— Entry 控件
+#    让用户输入当前要做的任务名称
+input_frame = tk.Frame(root, bg="#fff8e1")
+input_frame.pack(pady=10)
+
+tk.Label(
+    input_frame,
+    text="任务名称：",
+    bg="#fff8e1",
+    font=("微软雅黑", 13)
+).pack(side=tk.LEFT)
+
+task_entry = tk.Entry(
+    input_frame,
+    width=22,
+    font=("微软雅黑", 14),
+    justify="center"              # 文字居中
+)
+# 设置默认提示文字
+task_entry.insert(0, "例如：背古诗")
+task_entry.pack(side=tk.LEFT, padx=5)
+
+
+# 4. 当前任务显示 Label
+task_label = tk.Label(
+    root,
+    text="📌 等待开始...",
+    font=("微软雅黑", 14),
+    bg="#fff8e1",
+    fg="#555555"
+)
+task_label.pack(pady=5)
+
+
+# 5. 倒计时时间显示 Label（核心显示区域）
+time_label = tk.Label(
+    root,
+    text="25:00",                 # 初始显示 25 分钟
+    font=("Consolas", 64, "bold"), # 等宽大字体，数字不晃动
+    bg="#1b1b1b",                 # 深色背景模仿电子表
+    fg="#ff6f00",                 # 橙色数字
+    width=8
+)
+time_label.pack(pady=15)
+
+
+# 6. 今日番茄数显示
+count_label = tk.Label(
+    root,
+    text="🍅 今日番茄：0 个",
+    font=("微软雅黑", 13, "bold"),
+    bg="#fff8e1",
+    fg="#bf360c"                  # 深红棕色
+)
+count_label.pack(pady=5)
+
+
+# ==================== 核心函数 ====================
+
+def format_time(seconds):
+    """把秒数格式化为 MM:SS 字符串
+    例如：1500 → "25:00"，90 → "01:30"
+    """
+    m = seconds // 60              # 整除得到分钟数
+    s = seconds % 60               # 取余得到秒数
+    return f"{m:02d}:{s:02d}"     # :02d 表示至少两位，不足前面补 0
+
+
+def countdown():
+    """倒计时核心函数：每秒减 1 秒，直到 0
+    使用 after() 定时循环，不会阻塞窗口
+    """
+    global remaining, is_running, after_id
+
+    # 如果被暂停了，不再继续（退出递归）
+    if not is_running:
+        return
+
+    if remaining &gt; 0:
+        remaining -= 1             # 减 1 秒
+        time_label.config(text=format_time(remaining))
+        # 1 秒（1000 毫秒）后再次调用自己
+        after_id = root.after(1000, countdown)
+    else:
+        # 时间到！
+        time_up()
+
+
+def time_up():
+    """番茄钟时间到的处理：响铃 + 统计 + 弹窗 + 恢复状态"""
+    global is_running, is_paused, remaining, today_count
+
+    # 重置运行状态
+    is_running = False
+    is_paused = False
+    remaining = total_seconds
+    time_label.config(text=format_time(remaining))
+
+    # 番茄数 +1
+    today_count += 1
+    count_label.config(text=f"🍅 今日番茄：{today_count} 个")
+
+    # 播放提示音
+    play_sound()
+
+    # 弹出完成提示窗口
+    task_name = task_entry.get().strip() or "专注中..."
+    messagebox.showinfo(
+        "⏰ 时间到！",
+        f"「{task_name}」完成！\n\n"
+        f"今日已完成 {today_count} 个番茄 🍅\n"
+        "休息 5 分钟，准备下一个吧！"
+    )
+
+    # 恢复按钮状态
+    start_btn.config(state="normal")
+    pause_btn.config(state="disabled")
+    task_label.config(text="📌 等待开始...")
+
+
+def play_sound():
+    """播放完成提示音（跨平台兼容）
+    Windows：使用 winsound.Beep() 蜂鸣
+    Mac/Linux：使用 root.bell() 系统响铃
+    """
+    if sys.platform == "win32":
+        # Windows 系统
+        try:
+            import winsound
+            # 连续蜂鸣 3 次：频率 1000Hz，持续 300 毫秒
+            for _ in range(3):
+                winsound.Beep(1000, 300)
+        except:
+            # 如果 winsound 不可用，回退到 bell()
+            root.bell()
+    else:
+        # Mac / Linux 系统
+        # 连续响铃 3 次
+        for _ in range(3):
+            root.bell()
+            root.update()          # 刷新事件，让 bell 生效
+
+
+def start():
+    """开始倒计时（全新开始 / 从暂停恢复）"""
+    global is_running, is_paused, remaining
+
+    # 获取并显示任务名称
+    task_name = task_entry.get().strip()
+    # 如果用户没输入或还是默认提示文字，给个默认名称
+    if task_name == "" or task_name == "例如：背古诗":
+        task_name = "专注中..."
+    task_label.config(text=f"📌 {task_name}")
+
+    if is_paused:
+        # 从暂停恢复，不重置时间
+        is_paused = False
+    else:
+        # 全新开始，重置时间到 25:00
+        remaining = total_seconds
+        time_label.config(text=format_time(remaining))
+
+    is_running = True
+
+    # 更新按钮状态
+    start_btn.config(state="disabled")       # 运行中，开始按钮禁用
+    pause_btn.config(text="⏸️ 暂停", state="normal")  # 启用暂停按钮
+
+    countdown()  # 启动倒计时循环
+
+
+def pause():
+    """暂停 / 继续切换"""
+    global is_running, is_paused
+
+    if is_paused:
+        # 当前已暂停 → 继续运行
+        is_paused = False
+        is_running = True
+        pause_btn.config(text="⏸️ 暂停")
+        countdown()  # 重新开始倒计时循环
+    else:
+        # 当前运行中 → 暂停
+        is_paused = True
+        is_running = False   # 停止倒计时循环
+        pause_btn.config(text="▶️ 继续")
+
+
+def reset():
+    """重置番茄钟：恢复时间、清除状态、恢复按钮"""
+    global is_running, is_paused, remaining, after_id
+
+    is_running = False
+    is_paused = False
+    remaining = total_seconds
+
+    # 取消计划中的 after() 调用（重要！否则会继续倒计时）
+    if after_id is not None:
+        root.after_cancel(after_id)
+        after_id = None
+
+    # 恢复界面
+    time_label.config(text=format_time(remaining))
+    task_label.config(text="📌 等待开始...")
+
+    # 恢复按钮状态
+    start_btn.config(state="normal")         # 开始按钮恢复可用
+    pause_btn.config(text="⏸️ 暂停", state="disabled")  # 暂停按钮禁用
+
+
+# ==================== 按钮区域 ====================
+
+btn_frame = tk.Frame(root, bg="#fff8e1")
+btn_frame.pack(pady=15)
+
+# 开始按钮
+start_btn = tk.Button(
+    btn_frame,
+    text="▶️ 开始专注",
+    command=start,
+    font=("微软雅黑", 13, "bold"),
+    bg="#ff9800",                  # 橙色背景
+    fg="white",                    # 白色文字
+    activebackground="#f57c00",   # 点击时的深橙色
+    relief="flat",                 # 扁平样式
+    padx=20, pady=8,
+    cursor="hand2"                 # 鼠标悬停时显示手型光标
+)
+start_btn.pack(side=tk.LEFT, padx=8)
+
+# 暂停按钮（初始禁用，开始后才启用）
+pause_btn = tk.Button(
+    btn_frame,
+    text="⏸️ 暂停",
+    command=pause,
+    font=("微软雅黑", 13, "bold"),
+    bg="#ffcc02",                  # 金黄色
+    fg="#333333",
+    activebackground="#ffc107",
+    relief="flat",
+    padx=20, pady=8,
+    cursor="hand2",
+    state="disabled"               # 初始禁用
+)
+pause_btn.pack(side=tk.LEFT, padx=8)
+
+# 重置按钮
+reset_btn = tk.Button(
+    btn_frame,
+    text="🔄 重置",
+    command=reset,
+    font=("微软雅黑", 13, "bold"),
+    bg="#bdbdbd",                  # 灰色
+    fg="#333333",
+    activebackground="#9e9e9e",
+    relief="flat",
+    padx=20, pady=8,
+    cursor="hand2"
+)
+reset_btn.pack(side=tk.LEFT, padx=8)
+
+
+# 7. 底部提示文字
+tip = tk.Label(
+    root,
+    text="💡 输入任务名 → 点「开始专注」→ 25 分钟后响铃提醒",
+    font=("微软雅黑", 10),
+    bg="#fff8e1",
+    fg="#888888"
+)
+tip.pack(pady=15)
+
+
+# 8. 启动窗口主循环
+root.mainloop()
+</pre>
+    <p class="hint">本页使用浅色主题与 UTF-8 编码，可直接打印或导出 PDF。</p>
+  </div>
+</body>
+</html>

@@ -1,0 +1,598 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>第39节-方块下落/main.py</title>
+<style>
+  :root {
+    --bg: #f5f7fa;
+    --panel: #ffffff;
+    --text: #1a1a2e;
+    --muted: #5a6570;
+    --gold: #b8860b;
+    --code-bg: #ffffff;
+    --code-text: #1f2933;
+    --border: #d8dee6;
+    --top-bg: #ffffff;
+    --top-border: #e5e9ef;
+  }
+  * { box-sizing: border-box; }
+  html, body {
+    margin: 0; padding: 0;
+    background: var(--bg);
+    color: var(--text);
+    font-family: -apple-system, BlinkMacSystemFont, "PingFang SC", "Microsoft YaHei", sans-serif;
+    min-height: 100%;
+  }
+  .top {
+    position: sticky; top: 0; z-index: 10;
+    display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between;
+    gap: 10px;
+    padding: 12px 18px;
+    background: var(--top-bg);
+    border-bottom: 1px solid var(--top-border);
+    box-shadow: 0 1px 8px rgba(15, 23, 42, 0.06);
+  }
+  .brand { color: var(--gold); font-weight: 700; font-size: 14px; letter-spacing: 0.04em; }
+  .title { font-size: 15px; font-weight: 600; color: var(--text); max-width: 52vw; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .actions { display: flex; gap: 8px; flex-wrap: wrap; }
+  .btn {
+    appearance: none; border: 1px solid var(--border);
+    background: #fff; color: var(--text);
+    border-radius: 999px; padding: 8px 14px; font-size: 13px; font-weight: 600;
+    text-decoration: none; cursor: pointer;
+  }
+  .btn:hover { background: #f0f3f7; }
+  .btn.gold {
+    background: linear-gradient(135deg, #f0d78c, #d4a853);
+    color: #0a2540; border-color: #e0c06a;
+  }
+  .meta {
+    padding: 10px 18px; color: var(--muted); font-size: 12px;
+    border-bottom: 1px solid var(--border);
+    background: var(--panel);
+  }
+  .wrap { padding: 16px 18px 40px; }
+  pre {
+    margin: 0;
+    background: var(--code-bg);
+    color: var(--code-text);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 18px 20px;
+    overflow: auto;
+    font-family: "SF Mono", "JetBrains Mono", "Fira Code", Consolas, "Courier New", monospace;
+    font-size: 13.5px;
+    line-height: 1.55;
+    white-space: pre;
+    tab-size: 4;
+    box-shadow: 0 2px 12px rgba(15, 23, 42, 0.05);
+  }
+  .hint { margin-top: 12px; color: var(--muted); font-size: 12px; }
+  @media print {
+    html, body { background: #fff !important; color: #000 !important; }
+    .top { position: static; box-shadow: none; border-bottom: 1px solid #ccc; background: #fff !important; }
+    .actions { display: none !important; }
+    .meta { background: #fff !important; border-color: #ddd; color: #333; }
+    .wrap { padding: 0; }
+    pre {
+      background: #fff !important; color: #000 !important;
+      border: 1px solid #bbb; box-shadow: none; border-radius: 0;
+      white-space: pre-wrap; word-break: break-word; font-size: 11pt; line-height: 1.4;
+    }
+    .hint { display: none; }
+    a { color: #000; text-decoration: none; }
+  }
+</style>
+</head>
+<body>
+  <div class="top">
+    <div class="brand">Pygame 零基础 · 配套代码</div>
+    <div class="title">第39节-方块下落/main.py</div>
+    <div class="actions">
+      <a class="btn" href="../第39节-方块下落/main.py" download="main.py">⬇️ 下载源文件</a>
+      <a class="btn gold" href="javascript:history.back()">← 返回课件</a>
+    </div>
+  </div>
+  <div class="meta">编码：UTF-8 · 文件：第39节-方块下落/main.py · 共 494 行 · 浅色主题便于打印</div>
+  <div class="wrap">
+    <pre id="code">"""
+第39节：方块下落 —— 俄罗斯方块核心下落系统
+
+功能说明：
+- 7种标准方块（I/O/T/S/Z/J/L）随机生成
+- 方向键控制：← → 左右移动、↑ 旋转、↓ 加速下落
+- 自动下落（800ms间隔，用pygame.time.get_ticks()控制）
+- 碰撞检测：边界检测 + 重叠检测
+- 方块锁定：不能下落时写入棋盘grid，生成新方块
+- 棋盘：10列×20行的二维列表
+- 暂不实现消行和Game Over（第40节完成）
+
+作者：Pygame教学课件
+适用：中小学生（10-15岁）Python游戏开发课程
+"""
+
+import pygame
+import random
+import sys
+
+# ============================================================
+# 常量配置
+# ============================================================
+SCREEN_WIDTH = 600   # 窗口宽度
+SCREEN_HEIGHT = 700  # 窗口高度
+COLS = 10            # 棋盘列数（宽度）
+ROWS = 20            # 棋盘行数（高度）
+CELL_SIZE = 30       # 每个格子的像素大小
+
+# 棋盘在窗口中的偏移位置（左上角坐标）
+GRID_OFFSET_X = 40   # 棋盘左边距
+GRID_OFFSET_Y = 50   # 棋盘上边距
+
+# 自动下落间隔（毫秒），数值越小下落越快
+FALL_INTERVAL = 800  # 初始800ms，适合新手
+
+# ============================================================
+# 颜色定义
+# ============================================================
+BLACK = (0, 0, 0)
+WHITE = (255, 255, 255)
+GRAY = (100, 100, 100)
+DARK_GRAY = (35, 35, 45)
+LIGHT_GRAY = (60, 60, 70)
+GHOST_WHITE = (200, 200, 210)
+
+# 7种方块的颜色（经典俄罗斯方块配色方案）
+# 每种颜色都是明亮的，便于区分
+COLORS = {
+    'I': (0, 255, 255),     # 青色（Cyan）—— 长条
+    'O': (255, 255, 0),     # 黄色（Yellow）—— 方块
+    'T': (160, 32, 240),    # 紫色（Purple）—— T字
+    'S': (0, 255, 0),       # 绿色（Green）—— S弯
+    'Z': (255, 50, 50),     # 红色（Red）—— Z弯
+    'J': (0, 100, 255),     # 蓝色（Blue）—— J块
+    'L': (255, 165, 0),     # 橙色（Orange）—— L块
+}
+
+# ============================================================
+# 7种标准方块定义
+# 每种方块用二维列表表示：1=有方块，0=空
+# 外层列表代表行（Y方向），内层列表代表列（X方向）
+# ============================================================
+SHAPES = {
+    # I型：4个格子排成一行（像一根棍子）
+    'I': [[1, 1, 1, 1]],
+
+    # O型：2×2的正方形（旋转后还是自己）
+    'O': [[1, 1],
+          [1, 1]],
+
+    # T型：上面1个，下面3个（像字母T）
+    'T': [[0, 1, 0],
+          [1, 1, 1]],
+
+    # S型：蜿蜒的S形曲线
+    'S': [[0, 1, 1],
+          [1, 1, 0]],
+
+    # Z型：S型的镜像（Z形曲线）
+    'Z': [[1, 1, 0],
+          [0, 1, 1]],
+
+    # J型：左边有一个小尾巴
+    'J': [[1, 0, 0],
+          [1, 1, 1]],
+
+    # L型：右边有一个小尾巴（J的镜像）
+    'L': [[0, 0, 1],
+          [1, 1, 1]],
+}
+
+# ============================================================
+# 全局状态变量
+# ============================================================
+
+# 棋盘：10列×20行的二维列表
+# grid[y][x] = 0 表示该位置为空
+# grid[y][x] = (R, G, B) 表示该位置有方块，存储颜色值
+grid = [[0 for _ in range(COLS)] for _ in range(ROWS)]
+
+# 当前方块的属性
+current_shape = None       # 当前方块的二维列表形状
+current_color = None       # 当前方块的颜色（RGB元组）
+current_x = 0              # 当前方块在棋盘上的列坐标（左上角参考点）
+current_y = 0              # 当前方块在棋盘上的行坐标（左上角参考点）
+current_shape_name = None  # 当前方块的名字（'I', 'O', 'T'等）
+
+
+# ============================================================
+# 旋转函数：顺时针旋转90度
+# 算法：先转置（行列互换），再水平翻转每一行
+# ============================================================
+def rotate_shape(shape):
+    """
+    顺时针旋转方块90度
+
+    参数:
+        shape: 二维列表，表示方块的形状
+
+    返回:
+        旋转后的新二维列表
+
+    算法原理（两步走）：
+    第1步「转置」—— 把"第m行第n列"变成"第n行第m列"
+        例如 [[0,1,0],     转置后  [[0,1],
+             [1,1,1]]              [1,1],
+                                   [0,1]]
+    第2步「水平翻转」—— 把每一行的顺序颠倒
+        例如 [[0,1],      翻转后   [[1,0],
+             [1,1],               [1,1],
+             [0,1]]               [1,0]]
+    """
+    # 第1步：转置（用zip实现行列互换）
+    # zip(*shape) 将shape的每一行"解开"，按列重新组合
+    transposed = list(zip(*shape))
+
+    # 第2步：水平翻转每一行
+    # row[::-1] 是Python切片语法，表示"从末尾到开头，步长为-1"
+    rotated = [list(row)[::-1] for row in transposed]
+
+    return rotated
+
+
+# ============================================================
+# 碰撞检测：检查方块能否放在棋盘的指定位置
+# ============================================================
+def is_valid_position(shape, grid_x, grid_y):
+    """
+    检查方块shape在棋盘坐标(grid_x, grid_y)处是否合法
+
+    参数:
+        shape: 方块的二维列表形状
+        grid_x: 方块左上角在棋盘上的列坐标
+        grid_y: 方块左上角在棋盘上的行坐标
+
+    返回:
+        True  = 位置合法，可以放置
+        False = 位置不合法，不能放置
+
+    检测两个条件：
+        条件一：边界检测 —— 方块不能超出棋盘边界
+        条件二：重叠检测 —— 方块不能和已有方块重叠
+    """
+    for y, row in enumerate(shape):      # 遍历方块的每一行
+        for x, cell in enumerate(row):   # 遍历每一行的每个格子
+            if cell == 1:                # 只检查有方块的位置（忽略空格）
+                # 计算这个格子在棋盘上的实际坐标
+                board_x = grid_x + x
+                board_y = grid_y + y
+
+                # 【条件一：边界检测】
+                # 检查是否超出左右边界
+                if board_x &lt; 0 or board_x &gt;= COLS:
+                    return False  # 超出左右边界，不合法！
+                # 检查是否超出下边界（掉到底部以下）
+                if board_y &gt;= ROWS:
+                    return False  # 超出下边界，不合法！
+                # 检查是否在上边界以上（方块刚生成时可能在这里）
+                if board_y &lt; 0:
+                    continue  # 在棋盘上方是允许的，跳过重叠检测
+
+                # 【条件二：重叠检测】
+                # 检查是否和已经锁定的方块重叠
+                if grid[board_y][board_x] != 0:
+                    return False  # 这个位置已经有方块了，不合法！
+
+    return True  # 所有检查都通过了，位置合法！
+
+
+# ============================================================
+# 锁定函数：将当前方块写入棋盘grid
+# ============================================================
+def lock_piece():
+    """
+    将当前方块"锁定"到棋盘上
+
+    当方块无法继续下落时调用此函数。
+    把方块的每个小方块的颜色写入grid数组对应的位置。
+    方块就变成了棋盘上"永久"的一部分。
+    """
+    global grid
+
+    for y, row in enumerate(current_shape):
+        for x, cell in enumerate(row):
+            if cell == 1:
+                board_x = current_x + x
+                board_y = current_y + y
+                # 只锁定在棋盘范围内的格子
+                # （理论上不应该有出界的，但安全检查总是好的）
+                if 0 &lt;= board_y &lt; ROWS and 0 &lt;= board_x &lt; COLS:
+                    grid[board_y][board_x] = current_color
+
+
+# ============================================================
+# 生成新方块：随机选择一种方块，放在棋盘顶部中间
+# ============================================================
+def new_piece():
+    """
+    生成一个新的随机方块
+
+    从7种方块中随机选一种，放在棋盘顶部居中位置。
+    如果新方块一出生就碰撞，这里暂时不处理（第40节实现Game Over）。
+    """
+    global current_shape, current_color, current_x, current_y, current_shape_name
+
+    # 随机选择一种方块
+    current_shape_name = random.choice(list(SHAPES.keys()))
+    # 获取方块的形状数据
+    current_shape = SHAPES[current_shape_name]
+    # 获取方块的颜色
+    current_color = COLORS[current_shape_name]
+
+    # 计算方块在棋盘顶部的居中位置
+    # COLS // 2 是棋盘的水平中心
+    # len(current_shape[0]) 是方块的宽度（列数）
+    # 从中心向左偏移半个方块宽度，让方块居中
+    current_x = COLS // 2 - len(current_shape[0]) // 2
+    current_y = 0  # 从最顶部开始
+
+
+# ============================================================
+# 键盘输入处理
+# ============================================================
+def handle_key(key):
+    """
+    处理玩家的按键输入
+
+    参数:
+        key: pygame按键常量（如pygame.K_LEFT）
+
+    四个操作：
+        ← 左移一格
+        → 右移一格
+        ↑ 顺时针旋转90度
+        ↓ 加速下落一格
+
+    每条操作前都做碰撞检测，只有合法位置才执行移动。
+    """
+    global current_shape, current_x, current_y
+
+    if key == pygame.K_LEFT:
+        # 左移：检查目标位置是否合法
+        if is_valid_position(current_shape, current_x - 1, current_y):
+            current_x -= 1  # 向左移动一格
+
+    elif key == pygame.K_RIGHT:
+        # 右移：检查目标位置是否合法
+        if is_valid_position(current_shape, current_x + 1, current_y):
+            current_x += 1  # 向右移动一格
+
+    elif key == pygame.K_DOWN:
+        # 加速下落：向下移动一格
+        if is_valid_position(current_shape, current_x, current_y + 1):
+            current_y += 1  # 向下移动一格
+
+    elif key == pygame.K_UP:
+        # 旋转：先计算旋转后的形状，再检查是否合法
+        rotated = rotate_shape(current_shape)
+        if is_valid_position(rotated, current_x, current_y):
+            current_shape = rotated  # 应用旋转
+
+
+# ============================================================
+# 绘制函数
+# ============================================================
+def draw_all(screen, font, small_font):
+    """
+    绘制整个游戏画面
+
+    绘制顺序（从底层到上层）：
+    1. 黑色背景
+    2. 棋盘背景（深灰色）
+    3. 已锁定的方块
+    4. 当前下落的方块
+    5. 网格线
+    6. 棋盘外边框
+    7. 右侧信息面板
+    """
+    # --- 清屏 ---
+    screen.fill(BLACK)
+
+    # --- 绘制棋盘背景（深灰色矩形区域） ---
+    pygame.draw.rect(screen, DARK_GRAY,
+                     (GRID_OFFSET_X, GRID_OFFSET_Y,
+                      COLS * CELL_SIZE, ROWS * CELL_SIZE))
+
+    # --- 绘制已锁定的方块（grid中非0的位置） ---
+    for y in range(ROWS):
+        for x in range(COLS):
+            if grid[y][x] != 0:
+                # 绘制实心方块
+                pygame.draw.rect(screen, grid[y][x],
+                                 (GRID_OFFSET_X + x * CELL_SIZE + 1,
+                                  GRID_OFFSET_Y + y * CELL_SIZE + 1,
+                                  CELL_SIZE - 2, CELL_SIZE - 2))
+                # 绘制方块的高光效果（顶部和左侧的亮线）
+                lighter = tuple(min(255, c + 60) for c in grid[y][x])
+                pygame.draw.line(screen, lighter,
+                                 (GRID_OFFSET_X + x * CELL_SIZE + 1,
+                                  GRID_OFFSET_Y + y * CELL_SIZE + 1),
+                                 (GRID_OFFSET_X + x * CELL_SIZE + CELL_SIZE - 2,
+                                  GRID_OFFSET_Y + y * CELL_SIZE + 1), 1)
+                pygame.draw.line(screen, lighter,
+                                 (GRID_OFFSET_X + x * CELL_SIZE + 1,
+                                  GRID_OFFSET_Y + y * CELL_SIZE + 1),
+                                 (GRID_OFFSET_X + x * CELL_SIZE + 1,
+                                  GRID_OFFSET_Y + y * CELL_SIZE + CELL_SIZE - 2), 1)
+
+    # --- 绘制当前下落的方块 ---
+    if current_shape:
+        for y, row in enumerate(current_shape):
+            for x, cell in enumerate(row):
+                if cell == 1:
+                    board_x = current_x + x
+                    board_y = current_y + y
+                    # 只绘制棋盘范围内的部分（上方的不画）
+                    if board_y &gt;= 0:
+                        px = GRID_OFFSET_X + board_x * CELL_SIZE
+                        py = GRID_OFFSET_Y + board_y * CELL_SIZE
+                        # 绘制实心方块
+                        pygame.draw.rect(screen, current_color,
+                                         (px + 1, py + 1,
+                                          CELL_SIZE - 2, CELL_SIZE - 2))
+                        # 绘制高光效果
+                        lighter = tuple(min(255, c + 60) for c in current_color)
+                        pygame.draw.line(screen, lighter,
+                                         (px + 1, py + 1),
+                                         (px + CELL_SIZE - 2, py + 1), 1)
+                        pygame.draw.line(screen, lighter,
+                                         (px + 1, py + 1),
+                                         (px + 1, py + CELL_SIZE - 2), 1)
+
+    # --- 绘制网格线 ---
+    for x in range(COLS + 1):
+        pygame.draw.line(screen, LIGHT_GRAY,
+                         (GRID_OFFSET_X + x * CELL_SIZE, GRID_OFFSET_Y),
+                         (GRID_OFFSET_X + x * CELL_SIZE,
+                          GRID_OFFSET_Y + ROWS * CELL_SIZE))
+    for y in range(ROWS + 1):
+        pygame.draw.line(screen, LIGHT_GRAY,
+                         (GRID_OFFSET_X, GRID_OFFSET_Y + y * CELL_SIZE),
+                         (GRID_OFFSET_X + COLS * CELL_SIZE,
+                          GRID_OFFSET_Y + y * CELL_SIZE))
+
+    # --- 绘制棋盘外边框（白色加粗） ---
+    pygame.draw.rect(screen, WHITE,
+                     (GRID_OFFSET_X, GRID_OFFSET_Y,
+                      COLS * CELL_SIZE, ROWS * CELL_SIZE), 3)
+
+    # --- 绘制右侧信息面板 ---
+    info_x = GRID_OFFSET_X + COLS * CELL_SIZE + 40  # 信息面板的X起点
+
+    # 标题
+    title_text = font.render("方块下落", True, WHITE)
+    screen.blit(title_text, (info_x, GRID_OFFSET_Y + 10))
+
+    # 第39节标识
+    subtitle_text = small_font.render("第39节", True, GRAY)
+    screen.blit(subtitle_text, (info_x, GRID_OFFSET_Y + 55))
+
+    # 当前方块名称
+    if current_shape_name:
+        piece_label = small_font.render("当前方块:", True, GRAY)
+        screen.blit(piece_label, (info_x, GRID_OFFSET_Y + 100))
+
+        piece_name = font.render(f"{current_shape_name} 型", True, current_color)
+        screen.blit(piece_name, (info_x, GRID_OFFSET_Y + 130))
+
+    # 操作提示
+    hint_y = GRID_OFFSET_Y + 200
+    hints = [
+        ("操作说明", WHITE),
+        ("← →  左右移动", GHOST_WHITE),
+        ("  ↑    旋转", GHOST_WHITE),
+        ("  ↓    加速下落", GHOST_WHITE),
+    ]
+    for i, (text, color) in enumerate(hints):
+        hint_text = small_font.render(text, True, color)
+        screen.blit(hint_text, (info_x, hint_y + i * 35))
+
+    # 速度提示
+    speed_label = small_font.render(f"下落速度: {FALL_INTERVAL}ms", True, GRAY)
+    screen.blit(speed_label, (info_x, hint_y + 170))
+
+    # 下节预告
+    next_label = small_font.render("下节预告: 消行与得分", True, GRAY)
+    screen.blit(next_label, (info_x, SCREEN_HEIGHT - 80))
+
+
+# ============================================================
+# 主游戏循环
+# ============================================================
+def main():
+    """
+    游戏主函数
+
+    游戏循环的三个阶段（每帧执行）：
+    1. 事件处理 —— 响应键盘和退出事件
+    2. 逻辑更新 —— 自动下落 / 锁定 / 生成新方块
+    3. 画面绘制 —— 把当前状态画到屏幕上
+    """
+    # --- 初始化Pygame ---
+    pygame.init()
+    screen = pygame.display.set_mode((SCREEN_WIDTH, SCREEN_HEIGHT))
+    pygame.display.set_caption("方块下落 — 第39节")
+    clock = pygame.time.Clock()
+
+    # --- 初始化字体 ---
+    # 使用pygame默认字体（跨平台兼容）
+    font = pygame.font.Font(None, 36)        # 大号字体，用于标题和方块名
+    small_font = pygame.font.Font(None, 24)  # 小号字体，用于提示文字
+
+    # --- 生成第一个方块 ---
+    new_piece()
+
+    # --- 自动下落计时器 ---
+    last_fall_time = pygame.time.get_ticks()  # 上次下落的时间点
+
+    # --- 游戏主循环 ---
+    running = True
+    while running:
+        # ========================================
+        # 阶段一：事件处理
+        # ========================================
+        for event in pygame.event.get():
+            if event.type == pygame.QUIT:
+                running = False  # 点击关闭按钮，退出游戏
+
+            elif event.type == pygame.KEYDOWN:
+                # 处理键盘输入
+                handle_key(event.key)
+
+        # ========================================
+        # 阶段二：自动下落逻辑
+        # ========================================
+        current_time = pygame.time.get_ticks()
+
+        # 检查是否到了下落时间
+        if current_time - last_fall_time &gt; FALL_INTERVAL:
+            # 尝试向下移动一格
+            if is_valid_position(current_shape, current_x, current_y + 1):
+                # 还能往下落——就下落一格
+                current_y += 1
+            else:
+                # 不能下落了——执行锁定！
+                lock_piece()
+                # 生成一个新方块继续游戏
+                new_piece()
+
+            # 重置下落计时器
+            last_fall_time = current_time
+
+        # ========================================
+        # 阶段三：绘制画面
+        # ========================================
+        draw_all(screen, font, small_font)
+
+        # 更新显示
+        pygame.display.flip()
+
+        # 限制帧率为60帧/秒（保证游戏流畅但不消耗过多CPU）
+        clock.tick(60)
+
+    # --- 退出游戏 ---
+    pygame.quit()
+    sys.exit()
+
+
+# ============================================================
+# 程序入口
+# ============================================================
+if __name__ == "__main__":
+    main()
+</pre>
+    <p class="hint">本页使用浅色主题与 UTF-8 编码，可直接打印或导出 PDF。</p>
+  </div>
+</body>
+</html>

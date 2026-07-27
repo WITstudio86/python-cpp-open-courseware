@@ -1,0 +1,570 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>lesson17_lower_upper_bound.cpp</title>
+<style>
+  :root {
+    --bg: #f5f7fa;
+    --panel: #ffffff;
+    --text: #1a1a2e;
+    --muted: #5a6570;
+    --gold: #b8860b;
+    --code-bg: #ffffff;
+    --code-text: #1f2933;
+    --border: #d8dee6;
+    --top-bg: #ffffff;
+    --top-border: #e5e9ef;
+  }
+  * { box-sizing: border-box; }
+  html, body {
+    margin: 0; padding: 0;
+    background: var(--bg);
+    color: var(--text);
+    font-family: -apple-system, BlinkMacSystemFont, "PingFang SC", "Microsoft YaHei", sans-serif;
+    min-height: 100%;
+  }
+  .top {
+    position: sticky; top: 0; z-index: 10;
+    display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between;
+    gap: 10px;
+    padding: 12px 18px;
+    background: var(--top-bg);
+    border-bottom: 1px solid var(--top-border);
+    box-shadow: 0 1px 8px rgba(15, 23, 42, 0.06);
+  }
+  .brand { color: var(--gold); font-weight: 700; font-size: 14px; letter-spacing: 0.04em; }
+  .title { font-size: 15px; font-weight: 600; color: var(--text); max-width: 52vw; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .actions { display: flex; gap: 8px; flex-wrap: wrap; }
+  .btn {
+    appearance: none; border: 1px solid var(--border);
+    background: #fff; color: var(--text);
+    border-radius: 999px; padding: 8px 14px; font-size: 13px; font-weight: 600;
+    text-decoration: none; cursor: pointer;
+  }
+  .btn:hover { background: #f0f3f7; }
+  .btn.gold {
+    background: linear-gradient(135deg, #f0d78c, #d4a853);
+    color: #0a2540; border-color: #e0c06a;
+  }
+  .meta {
+    padding: 10px 18px; color: var(--muted); font-size: 12px;
+    border-bottom: 1px solid var(--border);
+    background: var(--panel);
+  }
+  .wrap { padding: 16px 18px 40px; }
+  pre {
+    margin: 0;
+    background: var(--code-bg);
+    color: var(--code-text);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 18px 20px;
+    overflow: auto;
+    font-family: "SF Mono", "JetBrains Mono", "Fira Code", Consolas, "Courier New", monospace;
+    font-size: 13.5px;
+    line-height: 1.55;
+    white-space: pre;
+    tab-size: 4;
+    box-shadow: 0 2px 12px rgba(15, 23, 42, 0.05);
+  }
+  .hint { margin-top: 12px; color: var(--muted); font-size: 12px; }
+  @media print {
+    html, body { background: #fff !important; color: #000 !important; }
+    .top { position: static; box-shadow: none; border-bottom: 1px solid #ccc; background: #fff !important; }
+    .actions { display: none !important; }
+    .meta { background: #fff !important; border-color: #ddd; color: #333; }
+    .wrap { padding: 0; }
+    pre {
+      background: #fff !important; color: #000 !important;
+      border: 1px solid #bbb; box-shadow: none; border-radius: 0;
+      white-space: pre-wrap; word-break: break-word; font-size: 11pt; line-height: 1.4;
+    }
+    .hint { display: none; }
+    a { color: #000; text-decoration: none; }
+  }
+</style>
+</head>
+<body>
+  <div class="top">
+    <div class="brand">C++ 算法提高 · 配套代码</div>
+    <div class="title">lesson17_lower_upper_bound.cpp</div>
+    <div class="actions">
+      <a class="btn" href="../lesson17_lower_upper_bound.cpp" download="lesson17_lower_upper_bound.cpp">⬇️ 下载源文件</a>
+      <a class="btn gold" href="javascript:history.back()">← 返回课件</a>
+    </div>
+  </div>
+  <div class="meta">编码：UTF-8 · 文件：lesson17_lower_upper_bound.cpp · 共 466 行 · 浅色主题便于打印</div>
+  <div class="wrap">
+    <pre id="code">/**
+ * ============================================================
+ * C++ 算法提高 — 第17课：二分查找的边界处理
+ * ============================================================
+ *
+ * 本课核心内容：
+ *   1. 手写 lower_bound：查找有序数组中第一个 &gt;= x 的位置
+ *   2. 手写 upper_bound：查找有序数组中第一个 &gt; x 的位置
+ *   3. 利用 lower_bound + upper_bound 解决"数的范围"问题
+ *
+ * lower_bound 与 upper_bound 是二分查找中最重要的两个变体，
+ * 它们的区别仅在于判断条件的不同：
+ *   - lower_bound: a[mid] &gt;= x  → 找"第一个不小于 x"的位置
+ *   - upper_bound: a[mid] &gt;  x  → 找"第一个大于 x"的位置
+ *
+ * 适用年级：初中 / 高中
+ * 前置知识：数组、循环、基本的二分查找
+ * ============================================================
+ */
+
+#include &lt;iostream&gt;
+using namespace std;
+
+// ================================================================
+// 第一部分：核心算法实现
+// ================================================================
+
+/**
+ * my_lower_bound —— 在升序数组 a[0..n-1] 中查找第一个 &gt;= x 的位置
+ *
+ * @param a   升序排列的整数数组（允许重复元素）
+ * @param n   数组的长度
+ * @param x   要查找的目标值
+ * @return    第一个满足 a[i] &gt;= x 的下标 i
+ *            如果所有元素都小于 x，则返回 n（表示不存在）
+ *
+ * 算法思路（手动模拟）：
+ *   以数组 [1, 3, 3, 5, 7, 9, 9, 9, 11]，查询 x = 9 为例：
+ *
+ *   初始：left = 0, right = 8, ans = 9
+ *   第1轮：mid = 4, a[4]=7 &lt; 9  → left = 5
+ *   第2轮：mid = 6, a[6]=9 &gt;= 9 → ans = 6, right = 5
+ *   第3轮：mid = 5, a[5]=9 &gt;= 9 → ans = 5, right = 4
+ *   循环结束（left=5, right=4），返回 ans = 5 ✓
+ *
+ * 时间复杂度：O(log n)
+ * 空间复杂度：O(1)
+ */
+int my_lower_bound(int a[], int n, int x) {
+    int left = 0;                // 搜索区间的左端点
+    int right = n - 1;           // 搜索区间的右端点（闭区间）
+    int ans = n;                 // 候选答案，默认为 n（表示"不存在"）
+
+    // 当 left &lt;= right 时，区间内还有元素需要检查
+    // 注意：必须用 &lt;= 而不是 &lt;，否则 left == right 时唯一元素会被跳过！
+    while (left &lt;= right) {
+        // 计算中点，使用 left + (right - left) / 2 防止溢出
+        // 等价于 (left + right) / 2，但更安全
+        int mid = left + (right - left) / 2;
+
+        if (a[mid] &gt;= x) {
+            // a[mid] 已经满足条件，记录为候选答案
+            ans = mid;
+            // 但左边可能还有更小的索引也满足条件，
+            // 所以继续向左搜索（缩小右边界）
+            right = mid - 1;
+        } else {
+            // a[mid] &lt; x，mid 以及 mid 左边的元素都不满足条件
+            // 答案一定在右边，缩小左边界
+            left = mid + 1;
+        }
+    }
+    return ans;
+}
+
+/**
+ * my_upper_bound —— 在升序数组 a[0..n-1] 中查找第一个 &gt; x 的位置
+ *
+ * @param a   升序排列的整数数组
+ * @param n   数组的长度
+ * @param x   要查找的目标值
+ * @return    第一个满足 a[i] &gt; x 的下标 i
+ *            如果所有元素都 ≤ x，则返回 n
+ *
+ * 与 lower_bound 的区别只有一处：
+ *   判断条件从 a[mid] &gt;= x 变为 a[mid] &gt; x
+ *
+ * 算法模拟（同样数组 [1, 3, 3, 5, 7, 9, 9, 9, 11]，查询 x = 9）：
+ *
+ *   初始：left = 0, right = 8, ans = 9
+ *   第1轮：mid = 4, a[4]=7 &gt; 9? 否 → left = 5
+ *   第2轮：mid = 6, a[6]=9 &gt; 9? 否 → left = 7
+ *   第3轮：mid = 7, a[7]=9 &gt; 9? 否 → left = 8
+ *   第4轮：mid = 8, a[8]=11 &gt; 9! → ans = 8, right = 7
+ *   循环结束（left=8, right=7），返回 ans = 8 ✓
+ *
+ * 注意：ans = 8 是元素 11 的位置，
+ *   upper_bound(9) - 1 = 7 才是最后一个 9 的位置
+ */
+int my_upper_bound(int a[], int n, int x) {
+    int left = 0;
+    int right = n - 1;
+    int ans = n;
+
+    while (left &lt;= right) {
+        int mid = left + (right - left) / 2;
+
+        if (a[mid] &gt; x) {
+            // 【关键区别】：这里用的是 &gt; 而不是 &gt;=
+            // 只有严格大于 x 的元素才被记录
+            ans = mid;
+            right = mid - 1;       // 继续向左找更靠前的位置
+        } else {
+            // a[mid] &lt;= x，不满足"严格大于"的条件
+            left = mid + 1;
+        }
+    }
+    return ans;
+}
+
+// ================================================================
+// 第二部分：问题1 —— 查找第一个 &gt;= x 的位置
+// ================================================================
+
+/**
+ * 问题描述：
+ *   给定一个升序数组，有 q 次查询，每次查询输出第一个 &gt;= x 的元素下标。
+ *   如果不存在，输出 -1。
+ *
+ * 本函数将 my_lower_bound 的返回值做了适配：
+ *   若返回 n（表示不存在），统一输出 -1
+ */
+
+/**
+ * lower_bound_pos —— 查找第一个 &gt;= x 的位置（适配版）
+ *
+ * @return 第一个 &gt;= x 的下标，若不存在返回 -1
+ */
+int lower_bound_pos(int a[], int n, int x) {
+    int pos = my_lower_bound(a, n, x);
+    // my_lower_bound 返回 n 表示不存在，这里转为 -1
+    if (pos == n) return -1;
+    return pos;
+}
+
+/**
+ * solve_problem1 —— 解决"查找第一个 &gt;= x 的位置"问题
+ *
+ * 输入格式：
+ *   第一行：n q
+ *   第二行：n 个升序整数
+ *   接下来 q 行：每行一个查询 x
+ *
+ * 输出格式：
+ *   每行输出一个整数，第一个 &gt;= x 的下标，不存在输出 -1
+ */
+void solve_problem1() {
+    // ---- 测试数据（硬编码，方便直接运行验证） ----
+    // 数组：[1, 3, 5, 7, 7, 9]，长度 n = 6
+    // 查询：3, 7, 10, 0
+    int a[] = {1, 3, 5, 7, 7, 9};
+    int n = 6;
+    int queries[] = {3, 7, 10, 0};
+    int q = 4;
+
+    cout &lt;&lt; "================================================" &lt;&lt; endl;
+    cout &lt;&lt; "  例题1：查找第一个 &gt;= x 的位置" &lt;&lt; endl;
+    cout &lt;&lt; "================================================" &lt;&lt; endl;
+    cout &lt;&lt; "数组：[1, 3, 5, 7, 7, 9]" &lt;&lt; endl;
+    cout &lt;&lt; "查询结果：" &lt;&lt; endl;
+
+    for (int i = 0; i &lt; q; i++) {
+        int x = queries[i];
+        int pos = lower_bound_pos(a, n, x);
+        cout &lt;&lt; "  x = " &lt;&lt; x &lt;&lt; "  →  ";
+        if (pos == -1) {
+            cout &lt;&lt; "-1（不存在 ≥ " &lt;&lt; x &lt;&lt; " 的元素）" &lt;&lt; endl;
+        } else {
+            cout &lt;&lt; "下标 " &lt;&lt; pos &lt;&lt; "（a[" &lt;&lt; pos &lt;&lt; "] = " &lt;&lt; a[pos] &lt;&lt; "）" &lt;&lt; endl;
+        }
+    }
+    cout &lt;&lt; endl;
+
+    // 预期输出：
+    // x = 3  → 下标 1（a[1] = 3）
+    // x = 7  → 下标 3（a[3] = 7）
+    // x = 10 → -1（不存在 ≥ 10 的元素）
+    // x = 0  → 下标 0（a[0] = 1）
+}
+
+// ================================================================
+// 第三部分：问题2 —— 数的范围
+// ================================================================
+
+/**
+ * 问题描述（"数的范围"）：
+ *   给定一个升序数组，有 q 次查询。
+ *   对于每次查询 x，输出 x 在数组中的起始位置和终止位置。
+ *   如果 x 不存在，输出 "-1 -1"。
+ *
+ * 核心思路：
+ *   - 起始位置 = my_lower_bound(x)   （第一个 &gt;= x 的位置）
+ *   - 终止位置 = my_upper_bound(x) - 1（最后一个 &lt;= x 的位置）
+ *   - 如果 lower_bound 返回的位置不等于 x，说明 x 不存在
+ *
+ * 为什么 upper_bound(x) - 1 就是最后一个 x 的位置？
+ *   upper_bound(x) 返回的是第一个 &gt; x 的位置。
+ *   因此 upper_bound(x) - 1 就是"最后一个 ≤ x"的位置。
+ *   如果 x 存在，这个位置上的值一定等于 x。
+ *   如果 x 不存在，upper_bound(x) - 1 上的值 &lt; x，
+ *   而 lower_bound(x) 的位置上的值 &gt; x，两者矛盾，
+ *   所以通过检查 a[lower_bound(x)] == x 即可判断存在性。
+ */
+
+/**
+ * find_range —— 查找 x 在数组中的范围
+ *
+ * @param a      升序数组
+ * @param n      数组长度
+ * @param x      目标值
+ * @param first  输出参数：起始位置（若不存在则为 -1）
+ * @param last   输出参数：终止位置（若不存在则为 -1）
+ */
+void find_range(int a[], int n, int x, int &amp;first, int &amp;last) {
+    // 步骤1：利用 lower_bound 找起始位置
+    first = my_lower_bound(a, n, x);
+
+    // 步骤2：检查 x 是否真的存在
+    // 条件：first 没有越界，且 a[first] 真的等于 x
+    if (first &gt;= n || a[first] != x) {
+        // x 不存在
+        first = -1;
+        last = -1;
+        return;
+    }
+
+    // 步骤3：利用 upper_bound 找终止位置
+    // upper_bound(x) - 1 就是最后一个 x 的位置
+    last = my_upper_bound(a, n, x) - 1;
+}
+
+/**
+ * solve_problem2 —— 解决"数的范围"问题
+ *
+ * 输入格式：
+ *   第一行：n q
+ *   第二行：n 个升序整数
+ *   接下来 q 行：每行一个查询 x
+ *
+ * 输出格式：
+ *   每行两个整数，x 的起始和终止位置，不存在则输出 "-1 -1"
+ */
+void solve_problem2() {
+    // ---- 测试数据（硬编码） ----
+    // 数组：[1, 2, 2, 3, 3, 3, 5, 7]，长度 n = 8
+    // 查询：3, 4, 2, 7
+    int a[] = {1, 2, 2, 3, 3, 3, 5, 7};
+    int n = 8;
+    int queries[] = {3, 4, 2, 7};
+    int q = 4;
+
+    cout &lt;&lt; "================================================" &lt;&lt; endl;
+    cout &lt;&lt; "  例题2：数的范围" &lt;&lt; endl;
+    cout &lt;&lt; "================================================" &lt;&lt; endl;
+    cout &lt;&lt; "数组：[1, 2, 2, 3, 3, 3, 5, 7]" &lt;&lt; endl;
+    cout &lt;&lt; endl;
+
+    // 为了帮助理解，先打印 lower_bound 和 upper_bound 的中间结果
+    cout &lt;&lt; "【逐步演示】" &lt;&lt; endl;
+    for (int i = 0; i &lt; q; i++) {
+        int x = queries[i];
+        int lb = my_lower_bound(a, n, x);
+        int ub = my_upper_bound(a, n, x);
+        cout &lt;&lt; "  x = " &lt;&lt; x &lt;&lt; "：" &lt;&lt; endl;
+        cout &lt;&lt; "    lower_bound(" &lt;&lt; x &lt;&lt; ") = " &lt;&lt; lb;
+        if (lb &lt; n) cout &lt;&lt; "（a[" &lt;&lt; lb &lt;&lt; "] = " &lt;&lt; a[lb] &lt;&lt; "）";
+        else cout &lt;&lt; "（超出数组范围）";
+        cout &lt;&lt; endl;
+        cout &lt;&lt; "    upper_bound(" &lt;&lt; x &lt;&lt; ") = " &lt;&lt; ub;
+        if (ub &lt; n) cout &lt;&lt; "（a[" &lt;&lt; ub &lt;&lt; "] = " &lt;&lt; a[ub] &lt;&lt; "）";
+        else cout &lt;&lt; "（超出数组范围）";
+        cout &lt;&lt; endl;
+        cout &lt;&lt; "    → 起始位置 = lower_bound = " &lt;&lt; lb;
+        cout &lt;&lt; "，终止位置 = upper_bound - 1 = " &lt;&lt; ub - 1;
+        if (lb &lt; n &amp;&amp; a[lb] == x) {
+            cout &lt;&lt; " ✓";
+        } else {
+            cout &lt;&lt; " ✗（" &lt;&lt; x &lt;&lt; " 不存在）";
+        }
+        cout &lt;&lt; endl;
+    }
+    cout &lt;&lt; endl;
+
+    cout &lt;&lt; "【最终结果】" &lt;&lt; endl;
+    for (int i = 0; i &lt; q; i++) {
+        int x = queries[i];
+        int first, last;
+        find_range(a, n, x, first, last);
+
+        cout &lt;&lt; "  x = " &lt;&lt; x &lt;&lt; "  →  ";
+        if (first == -1) {
+            cout &lt;&lt; "-1 -1" &lt;&lt; endl;
+        } else {
+            cout &lt;&lt; first &lt;&lt; " " &lt;&lt; last;
+            // 额外显示子数组以便理解
+            cout &lt;&lt; "（数组中的位置：";
+            for (int j = first; j &lt;= last; j++) {
+                cout &lt;&lt; a[j];
+                if (j &lt; last) cout &lt;&lt; ", ";
+            }
+            cout &lt;&lt; "）" &lt;&lt; endl;
+        }
+    }
+
+    // 预期输出：
+    // x = 3 → 3 5  (元素 3 出现在索引 3, 4, 5)
+    // x = 4 → -1 -1 (4 不存在)
+    // x = 2 → 1 2  (元素 2 出现在索引 1, 2)
+    // x = 7 → 7 7  (元素 7 只出现在索引 7)
+}
+
+
+// ================================================================
+// 第四部分：额外测试 —— 边界情况
+// ================================================================
+
+/**
+ * test_edge_cases —— 测试各种边界情况
+ *
+ * 包括：
+ *   1. 所有元素都小于 x（lower_bound 应返回 n）
+ *   2. 所有元素都大于 x（lower_bound 应返回 0）
+ *   3. x 等于第一个元素
+ *   4. x 等于最后一个元素
+ *   5. 只有一个元素的数组
+ *   6. 全部相同元素的数组
+ *   7. lower_bound 和 upper_bound 在重复元素上的区别
+ */
+void test_edge_cases() {
+    cout &lt;&lt; "================================================" &lt;&lt; endl;
+    cout &lt;&lt; "  边界情况测试" &lt;&lt; endl;
+    cout &lt;&lt; "================================================" &lt;&lt; endl;
+
+    // 测试1：所有元素都小于 x
+    {
+        int a[] = {1, 2, 3, 4, 5};
+        int n = 5;
+        int x = 10;
+        int lb = my_lower_bound(a, n, x);
+        int ub = my_upper_bound(a, n, x);
+        cout &lt;&lt; "  测试1 - 所有元素 &lt; x（x=10）：" &lt;&lt; endl;
+        cout &lt;&lt; "    lower_bound = " &lt;&lt; lb &lt;&lt; "（期望 5 = n，表示不存在）" &lt;&lt; endl;
+        cout &lt;&lt; "    upper_bound = " &lt;&lt; ub &lt;&lt; "（期望 5 = n）" &lt;&lt; endl;
+    }
+
+    // 测试2：所有元素都大于 x
+    {
+        int a[] = {10, 20, 30, 40, 50};
+        int n = 5;
+        int x = 1;
+        int lb = my_lower_bound(a, n, x);
+        int ub = my_upper_bound(a, n, x);
+        cout &lt;&lt; "  测试2 - 所有元素 &gt; x（x=1）：" &lt;&lt; endl;
+        cout &lt;&lt; "    lower_bound = " &lt;&lt; lb &lt;&lt; "（期望 0，a[0] 就是第一个 ≥1 的）" &lt;&lt; endl;
+        cout &lt;&lt; "    upper_bound = " &lt;&lt; ub &lt;&lt; "（期望 0，a[0] &gt; 1）" &lt;&lt; endl;
+    }
+
+    // 测试3：x 等于第一个元素
+    {
+        int a[] = {3, 5, 7, 9};
+        int n = 4;
+        int x = 3;
+        int lb = my_lower_bound(a, n, x);
+        int ub = my_upper_bound(a, n, x);
+        cout &lt;&lt; "  测试3 - x 等于第一个元素（x=3）：" &lt;&lt; endl;
+        cout &lt;&lt; "    lower_bound = " &lt;&lt; lb &lt;&lt; "（期望 0）" &lt;&lt; endl;
+        cout &lt;&lt; "    upper_bound = " &lt;&lt; ub &lt;&lt; "（期望 1，a[1]=5 &gt; 3）" &lt;&lt; endl;
+    }
+
+    // 测试4：x 等于最后一个元素
+    {
+        int a[] = {3, 5, 7, 9};
+        int n = 4;
+        int x = 9;
+        int lb = my_lower_bound(a, n, x);
+        int ub = my_upper_bound(a, n, x);
+        cout &lt;&lt; "  测试4 - x 等于最后一个元素（x=9）：" &lt;&lt; endl;
+        cout &lt;&lt; "    lower_bound = " &lt;&lt; lb &lt;&lt; "（期望 3）" &lt;&lt; endl;
+        cout &lt;&lt; "    upper_bound = " &lt;&lt; ub &lt;&lt; "（期望 4 = n，没有 &gt; 9 的元素）" &lt;&lt; endl;
+    }
+
+    // 测试5：只有一个元素的数组
+    {
+        int a[] = {42};
+        int n = 1;
+        cout &lt;&lt; "  测试5 - 单元素数组（[42]）：" &lt;&lt; endl;
+        cout &lt;&lt; "    lower_bound(41) = " &lt;&lt; my_lower_bound(a, n, 41) &lt;&lt; "（期望 0）" &lt;&lt; endl;
+        cout &lt;&lt; "    lower_bound(42) = " &lt;&lt; my_lower_bound(a, n, 42) &lt;&lt; "（期望 0）" &lt;&lt; endl;
+        cout &lt;&lt; "    lower_bound(43) = " &lt;&lt; my_lower_bound(a, n, 43) &lt;&lt; "（期望 1 = n）" &lt;&lt; endl;
+        cout &lt;&lt; "    upper_bound(41) = " &lt;&lt; my_upper_bound(a, n, 41) &lt;&lt; "（期望 0）" &lt;&lt; endl;
+        cout &lt;&lt; "    upper_bound(42) = " &lt;&lt; my_upper_bound(a, n, 42) &lt;&lt; "（期望 1 = n）" &lt;&lt; endl;
+    }
+
+    // 测试6：全部相同元素
+    {
+        int a[] = {7, 7, 7, 7, 7};
+        int n = 5;
+        int lb = my_lower_bound(a, n, 7);
+        int ub = my_upper_bound(a, n, 7);
+        cout &lt;&lt; "  测试6 - 全部相同元素（[7,7,7,7,7]）：" &lt;&lt; endl;
+        cout &lt;&lt; "    lower_bound(7) = " &lt;&lt; lb &lt;&lt; "（期望 0，第一个 7 的位置）" &lt;&lt; endl;
+        cout &lt;&lt; "    upper_bound(7) = " &lt;&lt; ub &lt;&lt; "（期望 5 = n，没有 &gt; 7 的元素）" &lt;&lt; endl;
+        cout &lt;&lt; "    → 7 的出现次数 = upper_bound - lower_bound = "
+             &lt;&lt; ub - lb &lt;&lt; "（期望 5）" &lt;&lt; endl;
+    }
+
+    // 测试7：重复元素场景 —— 展示 lower_bound 和 upper_bound 的关键区别
+    {
+        int a[] = {1, 3, 3, 3, 5, 7, 9, 9};
+        int n = 8;
+        int x = 3;
+        int lb = my_lower_bound(a, n, x);
+        int ub = my_upper_bound(a, n, x);
+        cout &lt;&lt; "  测试7 - 重复元素（[1,3,3,3,5,7,9,9]，x=3）：" &lt;&lt; endl;
+        cout &lt;&lt; "    lower_bound(3) = " &lt;&lt; lb &lt;&lt; " → a[" &lt;&lt; lb &lt;&lt; "] = " &lt;&lt; a[lb]
+             &lt;&lt; "（第一个 ≥3 的元素）" &lt;&lt; endl;
+        cout &lt;&lt; "    upper_bound(3) = " &lt;&lt; ub &lt;&lt; " → a[" &lt;&lt; ub &lt;&lt; "] = " &lt;&lt; a[ub]
+             &lt;&lt; "（第一个 &gt;3 的元素）" &lt;&lt; endl;
+        cout &lt;&lt; "    → 3 的出现次数 = " &lt;&lt; ub - lb &lt;&lt; "（期望 3）" &lt;&lt; endl;
+        cout &lt;&lt; "    → 3 的范围 = [" &lt;&lt; lb &lt;&lt; ", " &lt;&lt; ub - 1 &lt;&lt; "]" &lt;&lt; endl;
+    }
+
+    cout &lt;&lt; endl;
+}
+
+
+// ================================================================
+// 第五部分：main 函数 —— 运行所有测试
+// ================================================================
+
+int main() {
+    // 加速输入输出（本程序使用硬编码测试，但保留好习惯）
+    ios::sync_with_stdio(false);
+    cin.tie(0);
+
+    cout &lt;&lt; "╔══════════════════════════════════════════════════╗" &lt;&lt; endl;
+    cout &lt;&lt; "║  C++ 算法提高 — 第17课：二分查找的边界处理        ║" &lt;&lt; endl;
+    cout &lt;&lt; "║  lower_bound() 与 upper_bound() 完整实现与测试    ║" &lt;&lt; endl;
+    cout &lt;&lt; "╚══════════════════════════════════════════════════╝" &lt;&lt; endl;
+    cout &lt;&lt; endl;
+
+    // 运行问题1
+    solve_problem1();
+
+    // 运行问题2
+    solve_problem2();
+
+    // 运行边界情况测试
+    test_edge_cases();
+
+    cout &lt;&lt; "================================================" &lt;&lt; endl;
+    cout &lt;&lt; "  所有测试完成！" &lt;&lt; endl;
+    cout &lt;&lt; "================================================" &lt;&lt; endl;
+
+    return 0;
+}
+</pre>
+    <p class="hint">本页使用浅色主题与 UTF-8 编码，可直接打印或导出 PDF。</p>
+  </div>
+</body>
+</html>

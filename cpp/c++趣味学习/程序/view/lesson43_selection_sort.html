@@ -1,0 +1,401 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>lesson43_selection_sort.cpp</title>
+<style>
+  :root {
+    --bg: #f5f7fa;
+    --panel: #ffffff;
+    --text: #1a1a2e;
+    --muted: #5a6570;
+    --gold: #b8860b;
+    --code-bg: #ffffff;
+    --code-text: #1f2933;
+    --border: #d8dee6;
+    --top-bg: #ffffff;
+    --top-border: #e5e9ef;
+  }
+  * { box-sizing: border-box; }
+  html, body {
+    margin: 0; padding: 0;
+    background: var(--bg);
+    color: var(--text);
+    font-family: -apple-system, BlinkMacSystemFont, "PingFang SC", "Microsoft YaHei", sans-serif;
+    min-height: 100%;
+  }
+  .top {
+    position: sticky; top: 0; z-index: 10;
+    display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between;
+    gap: 10px;
+    padding: 12px 18px;
+    background: var(--top-bg);
+    border-bottom: 1px solid var(--top-border);
+    box-shadow: 0 1px 8px rgba(15, 23, 42, 0.06);
+  }
+  .brand { color: var(--gold); font-weight: 700; font-size: 14px; letter-spacing: 0.04em; }
+  .title { font-size: 15px; font-weight: 600; color: var(--text); max-width: 52vw; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .actions { display: flex; gap: 8px; flex-wrap: wrap; }
+  .btn {
+    appearance: none; border: 1px solid var(--border);
+    background: #fff; color: var(--text);
+    border-radius: 999px; padding: 8px 14px; font-size: 13px; font-weight: 600;
+    text-decoration: none; cursor: pointer;
+  }
+  .btn:hover { background: #f0f3f7; }
+  .btn.gold {
+    background: linear-gradient(135deg, #f0d78c, #d4a853);
+    color: #0a2540; border-color: #e0c06a;
+  }
+  .meta {
+    padding: 10px 18px; color: var(--muted); font-size: 12px;
+    border-bottom: 1px solid var(--border);
+    background: var(--panel);
+  }
+  .wrap { padding: 16px 18px 40px; }
+  pre {
+    margin: 0;
+    background: var(--code-bg);
+    color: var(--code-text);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 18px 20px;
+    overflow: auto;
+    font-family: "SF Mono", "JetBrains Mono", "Fira Code", Consolas, "Courier New", monospace;
+    font-size: 13.5px;
+    line-height: 1.55;
+    white-space: pre;
+    tab-size: 4;
+    box-shadow: 0 2px 12px rgba(15, 23, 42, 0.05);
+  }
+  .hint { margin-top: 12px; color: var(--muted); font-size: 12px; }
+  @media print {
+    html, body { background: #fff !important; color: #000 !important; }
+    .top { position: static; box-shadow: none; border-bottom: 1px solid #ccc; background: #fff !important; }
+    .actions { display: none !important; }
+    .meta { background: #fff !important; border-color: #ddd; color: #333; }
+    .wrap { padding: 0; }
+    pre {
+      background: #fff !important; color: #000 !important;
+      border: 1px solid #bbb; box-shadow: none; border-radius: 0;
+      white-space: pre-wrap; word-break: break-word; font-size: 11pt; line-height: 1.4;
+    }
+    .hint { display: none; }
+    a { color: #000; text-decoration: none; }
+  }
+</style>
+</head>
+<body>
+  <div class="top">
+    <div class="brand">C++ 趣味学习 · 配套代码</div>
+    <div class="title">lesson43_selection_sort.cpp</div>
+    <div class="actions">
+      <a class="btn" href="../lesson43_selection_sort.cpp" download="lesson43_selection_sort.cpp">⬇️ 下载源文件</a>
+      <a class="btn gold" href="javascript:history.back()">← 返回课件</a>
+    </div>
+  </div>
+  <div class="meta">编码：UTF-8 · 文件：lesson43_selection_sort.cpp · 共 297 行 · 浅色主题便于打印</div>
+  <div class="wrap">
+    <pre id="code">/*
+ * 第43课：快刀斩乱麻——选择排序
+ * 主题：选择排序（基础选择排序、从大到小选择排序、挑战任务）
+ * 算法核心：每轮找最值下标，然后一次性交换
+ * 适用：中小学C++趣味学习
+ * 日期：2026年
+ */
+
+#include &lt;iostream&gt;
+#include &lt;cstdlib&gt;  // 用于 rand() 和 srand()
+#include &lt;ctime&gt;    // 用于 time()
+using namespace std;
+
+int main() {
+    // ==========================================
+    // 示例1：基础选择排序（从小到大排列）
+    // ==========================================
+    cout &lt;&lt; "========================================" &lt;&lt; endl;
+    cout &lt;&lt; "  示例1：基础选择排序（从小到大）" &lt;&lt; endl;
+    cout &lt;&lt; "========================================" &lt;&lt; endl;
+
+    int arr1[] = {64, 25, 12, 22, 11};
+    int n1 = 5;  // 数组长度
+
+    // 打印排序前的数组
+    cout &lt;&lt; "排序前的数组：";
+    for (int i = 0; i &lt; n1; i++) {
+        cout &lt;&lt; arr1[i] &lt;&lt; " ";
+    }
+    cout &lt;&lt; endl &lt;&lt; endl;
+
+    // ===== 选择排序核心代码 =====
+    // 外层循环：控制已排序区的边界
+    // 注意：只需要 n-1 轮，因为最后一轮只剩一个元素，它自然就在正确的位置上
+    for (int i = 0; i &lt; n1 - 1; i++) {
+        // 第 i 轮：在 arr[i] 到 arr[n-1] 之间（未排序区）找最小值的下标
+        int minIndex = i;  // 先假设未排序区的第一个就是最小的
+
+        // 内层循环：遍历未排序区，找出真正的最小值
+        for (int j = i + 1; j &lt; n1; j++) {
+            if (arr1[j] &lt; arr1[minIndex]) {  // 如果发现更小的元素
+                minIndex = j;                // 更新最小值的下标
+            }
+        }
+
+        // 如果找到的最小值不在第 i 个位置，就将它交换到未排序区的第一位
+        if (minIndex != i) {
+            int temp = arr1[i];
+            arr1[i] = arr1[minIndex];
+            arr1[minIndex] = temp;
+        }
+
+        // 打印每一轮排序后的结果（帮助学生理解算法过程）
+        cout &lt;&lt; "第 " &lt;&lt; i + 1 &lt;&lt; " 轮后：";
+        for (int k = 0; k &lt; n1; k++) {
+            cout &lt;&lt; arr1[k] &lt;&lt; " ";
+        }
+        cout &lt;&lt; endl;
+    }
+
+    // 打印最终排序结果
+    cout &lt;&lt; "\n排序后的数组：";
+    for (int i = 0; i &lt; n1; i++) {
+        cout &lt;&lt; arr1[i] &lt;&lt; " ";
+    }
+    cout &lt;&lt; endl &lt;&lt; endl;
+
+    // ==========================================
+    // 示例2：选择排序从大到小排列
+    // ==========================================
+    cout &lt;&lt; "========================================" &lt;&lt; endl;
+    cout &lt;&lt; "  示例2：选择排序（从大到小）" &lt;&lt; endl;
+    cout &lt;&lt; "========================================" &lt;&lt; endl;
+
+    int arr2[] = {64, 25, 12, 22, 11};
+    int n2 = 5;
+
+    cout &lt;&lt; "排序前的数组：";
+    for (int i = 0; i &lt; n2; i++) {
+        cout &lt;&lt; arr2[i] &lt;&lt; " ";
+    }
+    cout &lt;&lt; endl &lt;&lt; endl;
+
+    // ===== 从大到小选择排序核心代码 =====
+    // 思路：和从小到大一样，只是把"找最小"改为"找最大"
+    for (int i = 0; i &lt; n2 - 1; i++) {
+        int maxIndex = i;  // 假设第 i 个是最大的
+
+        for (int j = i + 1; j &lt; n2; j++) {
+            if (arr2[j] &gt; arr2[maxIndex]) {  // ★ 关键修改：&lt; 改为 &gt;
+                maxIndex = j;
+            }
+        }
+
+        if (maxIndex != i) {
+            int temp = arr2[i];
+            arr2[i] = arr2[maxIndex];
+            arr2[maxIndex] = temp;
+        }
+
+        cout &lt;&lt; "第 " &lt;&lt; i + 1 &lt;&lt; " 轮后：";
+        for (int k = 0; k &lt; n2; k++) {
+            cout &lt;&lt; arr2[k] &lt;&lt; " ";
+        }
+        cout &lt;&lt; endl;
+    }
+
+    cout &lt;&lt; "\n从大到小排序结果：";
+    for (int i = 0; i &lt; n2; i++) {
+        cout &lt;&lt; arr2[i] &lt;&lt; " ";
+    }
+    cout &lt;&lt; endl &lt;&lt; endl;
+
+    // ==========================================
+    // 示例3：成绩排序应用（从高到低排名）
+    // ==========================================
+    cout &lt;&lt; "========================================" &lt;&lt; endl;
+    cout &lt;&lt; "  示例3：考试成绩排名" &lt;&lt; endl;
+    cout &lt;&lt; "========================================" &lt;&lt; endl;
+
+    int scores[] = {85, 92, 78, 95, 88};
+    int nScores = 5;
+
+    cout &lt;&lt; "原始成绩：";
+    for (int i = 0; i &lt; nScores; i++) {
+        cout &lt;&lt; scores[i] &lt;&lt; " ";
+    }
+    cout &lt;&lt; endl;
+
+    // 选择排序：从高到低（降序）
+    for (int i = 0; i &lt; nScores - 1; i++) {
+        int maxIndex = i;
+        for (int j = i + 1; j &lt; nScores; j++) {
+            if (scores[j] &gt; scores[maxIndex]) {
+                maxIndex = j;
+            }
+        }
+        if (maxIndex != i) {
+            int temp = scores[i];
+            scores[i] = scores[maxIndex];
+            scores[maxIndex] = temp;
+        }
+    }
+
+    cout &lt;&lt; "成绩排名（从高到低）：" &lt;&lt; endl;
+    for (int i = 0; i &lt; nScores; i++) {
+        cout &lt;&lt; "第 " &lt;&lt; i + 1 &lt;&lt; " 名：" &lt;&lt; scores[i] &lt;&lt; " 分" &lt;&lt; endl;
+    }
+    cout &lt;&lt; endl;
+
+    // ==========================================
+    // 挑战任务：排序算法大比拼
+    // ==========================================
+    cout &lt;&lt; "========================================" &lt;&lt; endl;
+    cout &lt;&lt; "  挑战任务：冒泡排序 VS 选择排序" &lt;&lt; endl;
+    cout &lt;&lt; "========================================" &lt;&lt; endl;
+
+    // 用随机种子生成随机数
+    srand(time(0));
+
+    const int SIZE = 10;
+    int original[SIZE];     // 原始数组
+    int arrBubble[SIZE];    // 用于冒泡排序
+    int arrSelect[SIZE];    // 用于选择排序
+
+    // 生成随机数组
+    cout &lt;&lt; "随机生成的数组：";
+    for (int i = 0; i &lt; SIZE; i++) {
+        original[i] = rand() % 100 + 1;  // 生成 1~100 的随机数
+        arrBubble[i] = original[i];      // 复制一份给冒泡排序
+        arrSelect[i] = original[i];      // 复制一份给选择排序
+        cout &lt;&lt; original[i] &lt;&lt; " ";
+    }
+    cout &lt;&lt; endl &lt;&lt; endl;
+
+    // ----- 冒泡排序（带统计）-----
+    int bubbleCompares = 0;  // 比较次数
+    int bubbleSwaps = 0;     // 交换次数
+
+    for (int i = 0; i &lt; SIZE - 1; i++) {
+        for (int j = 0; j &lt; SIZE - 1 - i; j++) {
+            bubbleCompares++;  // 统计比较次数
+            if (arrBubble[j] &gt; arrBubble[j + 1]) {
+                bubbleSwaps++;  // 统计交换次数
+                int temp = arrBubble[j];
+                arrBubble[j] = arrBubble[j + 1];
+                arrBubble[j + 1] = temp;
+            }
+        }
+    }
+
+    cout &lt;&lt; "冒泡排序结果：";
+    for (int i = 0; i &lt; SIZE; i++) {
+        cout &lt;&lt; arrBubble[i] &lt;&lt; " ";
+    }
+    cout &lt;&lt; endl;
+    cout &lt;&lt; "  比较次数：" &lt;&lt; bubbleCompares &lt;&lt; "  交换次数：" &lt;&lt; bubbleSwaps &lt;&lt; endl &lt;&lt; endl;
+
+    // ----- 选择排序（带统计）-----
+    int selectCompares = 0;  // 比较次数
+    int selectSwaps = 0;     // 交换次数
+
+    for (int i = 0; i &lt; SIZE - 1; i++) {
+        int minIndex = i;
+        for (int j = i + 1; j &lt; SIZE; j++) {
+            selectCompares++;  // 统计比较次数
+            if (arrSelect[j] &lt; arrSelect[minIndex]) {
+                minIndex = j;
+            }
+        }
+        if (minIndex != i) {
+            selectSwaps++;  // 统计交换次数
+            int temp = arrSelect[i];
+            arrSelect[i] = arrSelect[minIndex];
+            arrSelect[minIndex] = temp;
+        }
+    }
+
+    cout &lt;&lt; "选择排序结果：";
+    for (int i = 0; i &lt; SIZE; i++) {
+        cout &lt;&lt; arrSelect[i] &lt;&lt; " ";
+    }
+    cout &lt;&lt; endl;
+    cout &lt;&lt; "  比较次数：" &lt;&lt; selectCompares &lt;&lt; "  交换次数：" &lt;&lt; selectSwaps &lt;&lt; endl &lt;&lt; endl;
+
+    // ----- 结果分析 -----
+    cout &lt;&lt; "========== 分析 ==========" &lt;&lt; endl;
+    cout &lt;&lt; "冒泡排序交换了 " &lt;&lt; bubbleSwaps &lt;&lt; " 次，" &lt;&lt; endl;
+    cout &lt;&lt; "选择排序只交换了 " &lt;&lt; selectSwaps &lt;&lt; " 次！" &lt;&lt; endl;
+    cout &lt;&lt; endl;
+    if (selectSwaps &lt;= bubbleSwaps) {
+        cout &lt;&lt; "结论：在这个例子中，选择排序的交换次数更少。" &lt;&lt; endl;
+        cout &lt;&lt; "这是因为选择排序每轮最多只交换 1 次，" &lt;&lt; endl;
+        cout &lt;&lt; "而冒泡排序可能每轮交换多次。" &lt;&lt; endl;
+        cout &lt;&lt; "当数据量大时，选择排序的写操作明显少于冒泡排序。" &lt;&lt; endl;
+    }
+
+    // ==========================================
+    // 练习参考答案
+    // ==========================================
+    cout &lt;&lt; "\n========================================" &lt;&lt; endl;
+    cout &lt;&lt; "  课后练习参考答案" &lt;&lt; endl;
+    cout &lt;&lt; "========================================" &lt;&lt; endl;
+
+    // ---------- 练习1：手动模拟 ----------
+    cout &lt;&lt; "\n--- 练习1：手动模拟选择排序 ---" &lt;&lt; endl;
+    cout &lt;&lt; "给定数组：[29, 10, 14, 37, 13]" &lt;&lt; endl;
+    cout &lt;&lt; "第1轮：最小10（下标1），与29交换 → 10, 29, 14, 37, 13" &lt;&lt; endl;
+    cout &lt;&lt; "第2轮：最小13（下标4），与29交换 → 10, 13, 14, 37, 29" &lt;&lt; endl;
+    cout &lt;&lt; "第3轮：最小14（下标2），已在正确位置 → 10, 13, 14, 37, 29" &lt;&lt; endl;
+    cout &lt;&lt; "第4轮：最小29（下标4），与37交换 → 10, 13, 14, 29, 37" &lt;&lt; endl;
+    cout &lt;&lt; "排序完成！" &lt;&lt; endl;
+
+    // ---------- 练习2：成绩排序 ----------
+    cout &lt;&lt; "\n--- 练习2：成绩排序（用选择排序）---" &lt;&lt; endl;
+    {
+        int testScores[] = {85, 92, 78, 95, 88};
+        int n = 5;
+
+        cout &lt;&lt; "原始成绩：";
+        for (int i = 0; i &lt; n; i++) {
+            cout &lt;&lt; testScores[i] &lt;&lt; " ";
+        }
+        cout &lt;&lt; endl;
+
+        // 选择排序从高到低
+        for (int i = 0; i &lt; n - 1; i++) {
+            int maxIdx = i;
+            for (int j = i + 1; j &lt; n; j++) {
+                if (testScores[j] &gt; testScores[maxIdx]) {
+                    maxIdx = j;
+                }
+            }
+            if (maxIdx != i) {
+                int t = testScores[i];
+                testScores[i] = testScores[maxIdx];
+                testScores[maxIdx] = t;
+            }
+        }
+
+        cout &lt;&lt; "排名结果：";
+        for (int i = 0; i &lt; n; i++) {
+            cout &lt;&lt; testScores[i] &lt;&lt; " ";
+        }
+        cout &lt;&lt; endl;
+    }
+
+    // ---------- 练习3：代码输出 ----------
+    cout &lt;&lt; "\n--- 练习3：代码输出结果 ---" &lt;&lt; endl;
+    cout &lt;&lt; "给定数组：[3, 1, 4, 1, 5]" &lt;&lt; endl;
+    cout &lt;&lt; "选择排序（从小到大）后：1, 1, 3, 4, 5" &lt;&lt; endl;
+    cout &lt;&lt; "说明：选择排序能正确处理重复元素。" &lt;&lt; endl;
+
+    cout &lt;&lt; "\n========== 第43课学习完毕！ ==========" &lt;&lt; endl;
+
+    return 0;
+}
+</pre>
+    <p class="hint">本页使用浅色主题与 UTF-8 编码，可直接打印或导出 PDF。</p>
+  </div>
+</body>
+</html>

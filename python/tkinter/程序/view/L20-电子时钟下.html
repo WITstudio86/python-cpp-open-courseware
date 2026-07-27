@@ -1,0 +1,257 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>L20-电子时钟下.py</title>
+<style>
+  :root {
+    --bg: #f5f7fa;
+    --panel: #ffffff;
+    --text: #1a1a2e;
+    --muted: #5a6570;
+    --gold: #b8860b;
+    --code-bg: #ffffff;
+    --code-text: #1f2933;
+    --border: #d8dee6;
+    --top-bg: #ffffff;
+    --top-border: #e5e9ef;
+  }
+  * { box-sizing: border-box; }
+  html, body {
+    margin: 0; padding: 0;
+    background: var(--bg);
+    color: var(--text);
+    font-family: -apple-system, BlinkMacSystemFont, "PingFang SC", "Microsoft YaHei", sans-serif;
+    min-height: 100%;
+  }
+  .top {
+    position: sticky; top: 0; z-index: 10;
+    display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between;
+    gap: 10px;
+    padding: 12px 18px;
+    background: var(--top-bg);
+    border-bottom: 1px solid var(--top-border);
+    box-shadow: 0 1px 8px rgba(15, 23, 42, 0.06);
+  }
+  .brand { color: var(--gold); font-weight: 700; font-size: 14px; letter-spacing: 0.04em; }
+  .title { font-size: 15px; font-weight: 600; color: var(--text); max-width: 52vw; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .actions { display: flex; gap: 8px; flex-wrap: wrap; }
+  .btn {
+    appearance: none; border: 1px solid var(--border);
+    background: #fff; color: var(--text);
+    border-radius: 999px; padding: 8px 14px; font-size: 13px; font-weight: 600;
+    text-decoration: none; cursor: pointer;
+  }
+  .btn:hover { background: #f0f3f7; }
+  .btn.gold {
+    background: linear-gradient(135deg, #f0d78c, #d4a853);
+    color: #0a2540; border-color: #e0c06a;
+  }
+  .meta {
+    padding: 10px 18px; color: var(--muted); font-size: 12px;
+    border-bottom: 1px solid var(--border);
+    background: var(--panel);
+  }
+  .wrap { padding: 16px 18px 40px; }
+  pre {
+    margin: 0;
+    background: var(--code-bg);
+    color: var(--code-text);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 18px 20px;
+    overflow: auto;
+    font-family: "SF Mono", "JetBrains Mono", "Fira Code", Consolas, "Courier New", monospace;
+    font-size: 13.5px;
+    line-height: 1.55;
+    white-space: pre;
+    tab-size: 4;
+    box-shadow: 0 2px 12px rgba(15, 23, 42, 0.05);
+  }
+  .hint { margin-top: 12px; color: var(--muted); font-size: 12px; }
+  @media print {
+    html, body { background: #fff !important; color: #000 !important; }
+    .top { position: static; box-shadow: none; border-bottom: 1px solid #ccc; background: #fff !important; }
+    .actions { display: none !important; }
+    .meta { background: #fff !important; border-color: #ddd; color: #333; }
+    .wrap { padding: 0; }
+    pre {
+      background: #fff !important; color: #000 !important;
+      border: 1px solid #bbb; box-shadow: none; border-radius: 0;
+      white-space: pre-wrap; word-break: break-word; font-size: 11pt; line-height: 1.4;
+    }
+    .hint { display: none; }
+    a { color: #000; text-decoration: none; }
+  }
+</style>
+</head>
+<body>
+  <div class="top">
+    <div class="brand">Python Tkinter · 配套代码</div>
+    <div class="title">L20-电子时钟下.py</div>
+    <div class="actions">
+      <a class="btn" href="../L20-电子时钟下.py" download="L20-电子时钟下.py">⬇️ 下载源文件</a>
+      <a class="btn gold" href="javascript:history.back()">← 返回课件</a>
+    </div>
+  </div>
+  <div class="meta">编码：UTF-8 · 文件：L20-电子时钟下.py · 共 153 行 · 浅色主题便于打印</div>
+  <div class="wrap">
+    <pre id="code">import tkinter as tk
+import time
+
+# ========================================
+# 第 20 节：项目1 · 电子时钟（下）
+# 知识点：大字体美化 / 颜色切换 / 12-24小时制 / 日期显示
+# ========================================
+
+# ---------- 窗口设置 ----------
+root = tk.Tk()
+root.title("电子时钟 - 第20节")
+root.geometry("500x350")
+root.configure(bg="#1a1a2e")  # 深色背景，营造科技感
+
+# ---------- 颜色列表（4 种炫彩颜色）----------
+# 点击"切换颜色"按钮会在这 4 个颜色之间循环
+colors = ["#00FF00",   # 亮绿色（赛博朋克风）
+          "#FF6B6B",   # 珊瑚红
+          "#4ECDC4",   # 青绿色
+          "#FFE66D"]   # 金黄色
+color_index = 0  # 当前颜色在 colors 列表中的位置
+
+# ---------- 时制模式变量 ----------
+# IntVar 是 tkinter 的整数变量，.get() 读取值，.set() 修改值
+# 1 表示 24 小时制，0 表示 12 小时制
+is_24h = tk.IntVar(value=1)
+
+# =============================================
+# 控件区域
+# =============================================
+
+# ---------- 时间 Label（大字体，核心显示）----------
+# font 参数：(字体名, 字号, 样式)
+# "Consolas" 是等宽字体——每个数字宽度一样，跳秒时不会晃动
+time_label = tk.Label(
+    root,
+    text="00:00:00",
+    font=("Consolas", 72, "bold"),  # 72 号大字体，加粗
+    fg=colors[color_index],         # 前景色（文字颜色），初始为亮绿
+    bg="#1a1a2e"                    # 背景色，和窗口一致
+)
+time_label.pack(pady=(40, 10))  # pack 布局：上边距 40，下边距 10
+
+# ---------- 日期 Label（小字体，显示在时间下方）----------
+date_label = tk.Label(
+    root,
+    text="",
+    font=("Microsoft YaHei", 16),   # 微软雅黑，16 号
+    fg="#8a8aaa",                   # 灰白色，比时间暗一些，有层次感
+    bg="#1a1a2e"
+)
+date_label.pack(pady=(0, 15))
+
+# =============================================
+# 核心函数
+# =============================================
+
+def update_time():
+    """
+    每秒更新时间和日期
+    这是整个时钟的"心跳"函数——通过 after() 每秒调用自己一次
+    """
+    # 根据当前模式选择小时格式符
+    # %H = 24 小时制（00~23），%I = 12 小时制（01~12）
+    hour_format = "%H" if is_24h.get() else "%I"
+    time_str = time.strftime(f"{hour_format}:%M:%S")
+    time_label.config(text=time_str)
+
+    # 更新日期显示
+    # %Y = 四位数年份，%m = 两位数月份，%d = 两位数日期
+    # %A = 英文星期全名（Monday, Tuesday...）
+    date_str = time.strftime("%Y年%m月%d日 %A")
+    date_label.config(text=date_str)
+
+    # 1000 毫秒 = 1 秒后再次调用 update_time()
+    # 这样就实现了"每秒刷新一次"的效果
+    root.after(1000, update_time)
+
+
+def change_color():
+    """
+    切换到颜色列表中的下一个颜色
+    使用取余运算（%）实现无限循环：
+    当 color_index 走到最后时，(3+1) % 4 = 0，回到第一个颜色
+    """
+    global color_index  # 声明要修改全局变量
+    color_index = (color_index + 1) % len(colors)
+    # config() 方法可以在程序运行中修改控件的属性
+    time_label.config(fg=colors[color_index])
+
+
+def toggle_mode():
+    """
+    切换 12 小时制和 24 小时制
+    用 1 - is_24h.get() 巧妙实现 0 ↔ 1 翻转：
+    当前是 1 → 1-1=0（切到 12 小时制）
+    当前是 0 → 1-0=1（切到 24 小时制）
+    """
+    is_24h.set(1 - is_24h.get())
+
+    # 根据新状态更新按钮上的文字
+    if is_24h.get():
+        toggle_btn.config(text="当前：24 小时制")
+    else:
+        toggle_btn.config(text="当前：12 小时制")
+
+
+# =============================================
+# 按钮区域
+# =============================================
+
+# ---------- 切换颜色按钮 ----------
+cycle_btn = tk.Button(
+    root,
+    text="🎨 切换颜色",
+    command=change_color,           # 点击时调用 change_color()
+    font=("Microsoft YaHei", 12),
+    bg="#16213e",                   # 深蓝灰色背景（比窗口更深）
+    fg="#e0e0e0",                   # 浅灰白色文字
+    activebackground="#0f3460",     # 鼠标按下时的背景色
+    relief="flat",                  # 扁平风格（无边框凸起）
+    padx=20,                        # 左右内边距
+    pady=8,                         # 上下内边距
+    cursor="hand2"                  # 鼠标悬停时变成手指形状
+)
+cycle_btn.pack(pady=(5, 5))
+
+# ---------- 切换 12/24 小时制按钮 ----------
+toggle_btn = tk.Button(
+    root,
+    text="当前：24 小时制",        # 初始文字（和 is_24h=1 一致）
+    command=toggle_mode,            # 点击时调用 toggle_mode()
+    font=("Microsoft YaHei", 12),
+    bg="#16213e",
+    fg="#e0e0e0",
+    activebackground="#0f3460",
+    relief="flat",
+    padx=20,
+    pady=8,
+    cursor="hand2"
+)
+toggle_btn.pack(pady=(5, 10))
+
+# =============================================
+# 启动程序
+# =============================================
+
+# 先手动调用一次 update_time()，让窗口一出场就有时间显示
+# 否则要等 1 秒后 after() 第一次触发才有数字
+update_time()
+
+# 启动 tkinter 主循环——让窗口一直显示，持续监听用户操作
+root.mainloop()
+</pre>
+    <p class="hint">本页使用浅色主题与 UTF-8 编码，可直接打印或导出 PDF。</p>
+  </div>
+</body>
+</html>

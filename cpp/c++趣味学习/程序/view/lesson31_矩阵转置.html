@@ -1,0 +1,507 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>lesson31_矩阵转置.cpp</title>
+<style>
+  :root {
+    --bg: #f5f7fa;
+    --panel: #ffffff;
+    --text: #1a1a2e;
+    --muted: #5a6570;
+    --gold: #b8860b;
+    --code-bg: #ffffff;
+    --code-text: #1f2933;
+    --border: #d8dee6;
+    --top-bg: #ffffff;
+    --top-border: #e5e9ef;
+  }
+  * { box-sizing: border-box; }
+  html, body {
+    margin: 0; padding: 0;
+    background: var(--bg);
+    color: var(--text);
+    font-family: -apple-system, BlinkMacSystemFont, "PingFang SC", "Microsoft YaHei", sans-serif;
+    min-height: 100%;
+  }
+  .top {
+    position: sticky; top: 0; z-index: 10;
+    display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between;
+    gap: 10px;
+    padding: 12px 18px;
+    background: var(--top-bg);
+    border-bottom: 1px solid var(--top-border);
+    box-shadow: 0 1px 8px rgba(15, 23, 42, 0.06);
+  }
+  .brand { color: var(--gold); font-weight: 700; font-size: 14px; letter-spacing: 0.04em; }
+  .title { font-size: 15px; font-weight: 600; color: var(--text); max-width: 52vw; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .actions { display: flex; gap: 8px; flex-wrap: wrap; }
+  .btn {
+    appearance: none; border: 1px solid var(--border);
+    background: #fff; color: var(--text);
+    border-radius: 999px; padding: 8px 14px; font-size: 13px; font-weight: 600;
+    text-decoration: none; cursor: pointer;
+  }
+  .btn:hover { background: #f0f3f7; }
+  .btn.gold {
+    background: linear-gradient(135deg, #f0d78c, #d4a853);
+    color: #0a2540; border-color: #e0c06a;
+  }
+  .meta {
+    padding: 10px 18px; color: var(--muted); font-size: 12px;
+    border-bottom: 1px solid var(--border);
+    background: var(--panel);
+  }
+  .wrap { padding: 16px 18px 40px; }
+  pre {
+    margin: 0;
+    background: var(--code-bg);
+    color: var(--code-text);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 18px 20px;
+    overflow: auto;
+    font-family: "SF Mono", "JetBrains Mono", "Fira Code", Consolas, "Courier New", monospace;
+    font-size: 13.5px;
+    line-height: 1.55;
+    white-space: pre;
+    tab-size: 4;
+    box-shadow: 0 2px 12px rgba(15, 23, 42, 0.05);
+  }
+  .hint { margin-top: 12px; color: var(--muted); font-size: 12px; }
+  @media print {
+    html, body { background: #fff !important; color: #000 !important; }
+    .top { position: static; box-shadow: none; border-bottom: 1px solid #ccc; background: #fff !important; }
+    .actions { display: none !important; }
+    .meta { background: #fff !important; border-color: #ddd; color: #333; }
+    .wrap { padding: 0; }
+    pre {
+      background: #fff !important; color: #000 !important;
+      border: 1px solid #bbb; box-shadow: none; border-radius: 0;
+      white-space: pre-wrap; word-break: break-word; font-size: 11pt; line-height: 1.4;
+    }
+    .hint { display: none; }
+    a { color: #000; text-decoration: none; }
+  }
+</style>
+</head>
+<body>
+  <div class="top">
+    <div class="brand">C++ 趣味学习 · 配套代码</div>
+    <div class="title">lesson31_矩阵转置.cpp</div>
+    <div class="actions">
+      <a class="btn" href="../lesson31_矩阵转置.cpp" download="lesson31_矩阵转置.cpp">⬇️ 下载源文件</a>
+      <a class="btn gold" href="javascript:history.back()">← 返回课件</a>
+    </div>
+  </div>
+  <div class="meta">编码：UTF-8 · 文件：lesson31_矩阵转置.cpp · 共 403 行 · 浅色主题便于打印</div>
+  <div class="wrap">
+    <pre id="code">/*
+ * 第31课：位置大变换——矩阵转置
+ * 项目：神奇的矩阵翻转
+ * 第三单元：数据的组织
+ *
+ * 本课学习：
+ *   1. 方阵的原地转置
+ *   2. 长方形矩阵转置（MxN -&gt; NxM）
+ *   3. 对角线元素识别
+ *   4. 对称矩阵判断
+ *
+ * 日期：2026年6月
+ */
+
+#include &lt;iostream&gt;
+#include &lt;iomanip&gt;
+using namespace std;
+
+// ============================================================
+// 示例1：方阵的原地转置 (In-Place Transpose)
+// ============================================================
+void example1_squareTranspose() {
+    cout &lt;&lt; "========================================" &lt;&lt; endl;
+    cout &lt;&lt; "  示例1：方阵的原地转置" &lt;&lt; endl;
+    cout &lt;&lt; "========================================" &lt;&lt; endl;
+
+    const int N = 3;
+    int a[N][N] = {
+        {1, 2, 3},
+        {4, 5, 6},
+        {7, 8, 9}
+    };
+
+    cout &lt;&lt; "\n原始矩阵：" &lt;&lt; endl;
+    for (int i = 0; i &lt; N; i++) {
+        for (int j = 0; j &lt; N; j++) {
+            cout &lt;&lt; setw(4) &lt;&lt; a[i][j];
+        }
+        cout &lt;&lt; endl;
+    }
+
+    // 原地转置：只交换对角线上方的元素
+    // 关键：内层循环从 j = i+1 开始，避免重复交换
+    for (int i = 0; i &lt; N; i++) {
+        for (int j = i + 1; j &lt; N; j++) {
+            // 交换 a[i][j] 和 a[j][i]
+            int temp = a[i][j];
+            a[i][j] = a[j][i];
+            a[j][i] = temp;
+        }
+    }
+
+    cout &lt;&lt; "\n转置后矩阵：" &lt;&lt; endl;
+    for (int i = 0; i &lt; N; i++) {
+        for (int j = 0; j &lt; N; j++) {
+            cout &lt;&lt; setw(4) &lt;&lt; a[i][j];
+        }
+        cout &lt;&lt; endl;
+    }
+
+    cout &lt;&lt; "\n观察：第1列变成了 {1, 4, 7}，原来第1行的 {1, 2, 3} 变成了第1列。" &lt;&lt; endl;
+    cout &lt;&lt; "主对角线上的元素 {1, 5, 9} 位置没有改变！" &lt;&lt; endl;
+}
+
+// ============================================================
+// 示例2：长方形矩阵转置 (MxN -&gt; NxM)
+// ============================================================
+void example2_rectangularTranspose() {
+    cout &lt;&lt; "\n========================================" &lt;&lt; endl;
+    cout &lt;&lt; "  示例2：长方形矩阵转置 (3x4 -&gt; 4x3)" &lt;&lt; endl;
+    cout &lt;&lt; "========================================" &lt;&lt; endl;
+
+    const int M = 3;  // 原矩阵行数
+    const int N = 4;  // 原矩阵列数
+    int a[M][N] = {
+        {1,  2,  3,  4},
+        {5,  6,  7,  8},
+        {9, 10, 11, 12}
+    };
+    int b[N][M];  // 转置后：N行 M列
+
+    cout &lt;&lt; "\n原始矩阵 (" &lt;&lt; M &lt;&lt; " 行 × " &lt;&lt; N &lt;&lt; " 列)：" &lt;&lt; endl;
+    for (int i = 0; i &lt; M; i++) {
+        for (int j = 0; j &lt; N; j++) {
+            cout &lt;&lt; setw(4) &lt;&lt; a[i][j];
+        }
+        cout &lt;&lt; endl;
+    }
+
+    // 转置到新矩阵：b[j][i] = a[i][j]
+    for (int i = 0; i &lt; M; i++) {
+        for (int j = 0; j &lt; N; j++) {
+            b[j][i] = a[i][j];
+        }
+    }
+
+    cout &lt;&lt; "\n转置后矩阵 (" &lt;&lt; N &lt;&lt; " 行 × " &lt;&lt; M &lt;&lt; " 列)：" &lt;&lt; endl;
+    for (int i = 0; i &lt; N; i++) {
+        for (int j = 0; j &lt; M; j++) {
+            cout &lt;&lt; setw(4) &lt;&lt; b[i][j];
+        }
+        cout &lt;&lt; endl;
+    }
+
+    cout &lt;&lt; "\n注意：长方形矩阵不能原地转置，因为行数和列数不同！" &lt;&lt; endl;
+    cout &lt;&lt; "必须创建一个新矩阵来存储转置结果。" &lt;&lt; endl;
+}
+
+// ============================================================
+// 示例3：完整程序——矩阵转置 + 对角线高亮 + 对称判断
+// ============================================================
+void example3_completeProgram() {
+    cout &lt;&lt; "\n========================================" &lt;&lt; endl;
+    cout &lt;&lt; "  示例3：矩阵转置 + 对角线识别 + 对称判断" &lt;&lt; endl;
+    cout &lt;&lt; "========================================" &lt;&lt; endl;
+
+    const int SIZE = 4;
+    int original[SIZE][SIZE] = {
+        {2, 5, 8, 3},
+        {5, 7, 4, 9},
+        {8, 4, 5, 0},
+        {3, 9, 0, 4}
+    };
+    int transposed[SIZE][SIZE];  // 存储转置结果
+
+    // ---- 显示原始矩阵（标记主对角线） ----
+    cout &lt;&lt; "\n原始矩阵（[]表示主对角线元素 i==j）：" &lt;&lt; endl;
+    for (int i = 0; i &lt; SIZE; i++) {
+        for (int j = 0; j &lt; SIZE; j++) {
+            if (i == j) {
+                cout &lt;&lt; "[" &lt;&lt; setw(2) &lt;&lt; original[i][j] &lt;&lt; "]";
+            } else {
+                cout &lt;&lt; " " &lt;&lt; setw(2) &lt;&lt; original[i][j] &lt;&lt; " ";
+            }
+        }
+        cout &lt;&lt; endl;
+    }
+
+    // ---- 转置 ----
+    for (int i = 0; i &lt; SIZE; i++) {
+        for (int j = 0; j &lt; SIZE; j++) {
+            transposed[i][j] = original[j][i];
+            // 等价于：transposed[j][i] = original[i][j];
+            // 两种写法都可以，只要下标互换即可
+        }
+    }
+
+    // ---- 显示转置矩阵（标记主对角线） ----
+    cout &lt;&lt; "\n转置后矩阵（[]表示主对角线元素）：" &lt;&lt; endl;
+    for (int i = 0; i &lt; SIZE; i++) {
+        for (int j = 0; j &lt; SIZE; j++) {
+            if (i == j) {
+                cout &lt;&lt; "[" &lt;&lt; setw(2) &lt;&lt; transposed[i][j] &lt;&lt; "]";
+            } else {
+                cout &lt;&lt; " " &lt;&lt; setw(2) &lt;&lt; transposed[i][j] &lt;&lt; " ";
+            }
+        }
+        cout &lt;&lt; endl;
+    }
+
+    // ---- 显示副对角线元素 ----
+    cout &lt;&lt; "\n副对角线元素（i + j == " &lt;&lt; SIZE - 1 &lt;&lt; "）：" &lt;&lt; endl;
+    cout &lt;&lt; "原始矩阵的副对角线: ";
+    for (int i = 0; i &lt; SIZE; i++) {
+        cout &lt;&lt; original[i][SIZE - 1 - i] &lt;&lt; " ";
+    }
+    cout &lt;&lt; endl;
+
+    // ---- 判断是否为对称矩阵 ----
+    bool isSymmetric = true;
+    for (int i = 0; i &lt; SIZE &amp;&amp; isSymmetric; i++) {
+        for (int j = 0; j &lt; SIZE &amp;&amp; isSymmetric; j++) {
+            if (original[i][j] != original[j][i]) {
+                isSymmetric = false;
+            }
+        }
+    }
+
+    cout &lt;&lt; "\n对称矩阵判断：" &lt;&lt; endl;
+    if (isSymmetric) {
+        cout &lt;&lt; "✓ 该矩阵是 对称矩阵！(A^T == A)" &lt;&lt; endl;
+        cout &lt;&lt; "  因为对任意 i,j 都有 a[i][j] == a[j][i]。" &lt;&lt; endl;
+        cout &lt;&lt; "  转置后矩阵和原始矩阵完全一样！" &lt;&lt; endl;
+    } else {
+        cout &lt;&lt; "✗ 该矩阵不是 对称矩阵。" &lt;&lt; endl;
+        cout &lt;&lt; "  转置后矩阵与原始矩阵不同。" &lt;&lt; endl;
+    }
+}
+
+// ============================================================
+// 课后练习答案
+// ============================================================
+void exerciseAnswers() {
+    cout &lt;&lt; "\n========================================" &lt;&lt; endl;
+    cout &lt;&lt; "  课后练习答案" &lt;&lt; endl;
+    cout &lt;&lt; "========================================" &lt;&lt; endl;
+
+    // ---- 练习1：用户输入矩阵并转置 ----
+    cout &lt;&lt; "\n【练习1】用户输入3x3矩阵并转置：" &lt;&lt; endl;
+    const int N1 = 3;
+    int mat[N1][N1];
+    int trans[N1][N1];
+
+    cout &lt;&lt; "请输入 3x3 矩阵的9个元素（每输入一个按回车）：" &lt;&lt; endl;
+    for (int i = 0; i &lt; N1; i++) {
+        for (int j = 0; j &lt; N1; j++) {
+            cout &lt;&lt; "a[" &lt;&lt; i &lt;&lt; "][" &lt;&lt; j &lt;&lt; "] = ";
+            cin &gt;&gt; mat[i][j];
+        }
+    }
+
+    cout &lt;&lt; "\n原始矩阵：" &lt;&lt; endl;
+    for (int i = 0; i &lt; N1; i++) {
+        for (int j = 0; j &lt; N1; j++) {
+            cout &lt;&lt; setw(4) &lt;&lt; mat[i][j];
+        }
+        cout &lt;&lt; endl;
+    }
+
+    // 转置
+    for (int i = 0; i &lt; N1; i++) {
+        for (int j = 0; j &lt; N1; j++) {
+            trans[j][i] = mat[i][j];
+        }
+    }
+
+    cout &lt;&lt; "\n转置后矩阵：" &lt;&lt; endl;
+    for (int i = 0; i &lt; N1; i++) {
+        for (int j = 0; j &lt; N1; j++) {
+            cout &lt;&lt; setw(4) &lt;&lt; trans[i][j];
+        }
+        cout &lt;&lt; endl;
+    }
+
+    // ---- 练习2：判断对称矩阵 ----
+    cout &lt;&lt; "\n【练习2】判断对称矩阵：" &lt;&lt; endl;
+    const int N2 = 3;
+    int symMat[N2][N2] = {
+        {1, 2, 3},
+        {2, 4, 5},
+        {3, 5, 6}
+    };
+
+    cout &lt;&lt; "待判断的矩阵：" &lt;&lt; endl;
+    for (int i = 0; i &lt; N2; i++) {
+        for (int j = 0; j &lt; N2; j++) {
+            cout &lt;&lt; setw(4) &lt;&lt; symMat[i][j];
+        }
+        cout &lt;&lt; endl;
+    }
+
+    bool sym = true;
+    for (int i = 0; i &lt; N2 &amp;&amp; sym; i++) {
+        for (int j = 0; j &lt; N2 &amp;&amp; sym; j++) {
+            if (symMat[i][j] != symMat[j][i]) {
+                sym = false;
+            }
+        }
+    }
+
+    if (sym) {
+        cout &lt;&lt; "结果：这是一个对称矩阵！" &lt;&lt; endl;
+    } else {
+        cout &lt;&lt; "结果：这不是对称矩阵。" &lt;&lt; endl;
+    }
+
+    // ---- 练习3：长方形矩阵转置 (2x4 -&gt; 4x2) ----
+    cout &lt;&lt; "\n【练习3】长方形矩阵转置 (2x4 -&gt; 4x2)：" &lt;&lt; endl;
+    const int M3 = 2, N3 = 4;
+    int rect[M3][N3] = {
+        {10, 20, 30, 40},
+        {50, 60, 70, 80}
+    };
+    int rectT[N3][M3];
+
+    cout &lt;&lt; "原始矩阵 (2行×4列)：" &lt;&lt; endl;
+    for (int i = 0; i &lt; M3; i++) {
+        for (int j = 0; j &lt; N3; j++) {
+            cout &lt;&lt; setw(4) &lt;&lt; rect[i][j];
+        }
+        cout &lt;&lt; endl;
+    }
+
+    for (int i = 0; i &lt; M3; i++) {
+        for (int j = 0; j &lt; N3; j++) {
+            rectT[j][i] = rect[i][j];
+        }
+    }
+
+    cout &lt;&lt; "\n转置后矩阵 (4行×2列)：" &lt;&lt; endl;
+    for (int i = 0; i &lt; N3; i++) {
+        for (int j = 0; j &lt; M3; j++) {
+            cout &lt;&lt; setw(4) &lt;&lt; rectT[i][j];
+        }
+        cout &lt;&lt; endl;
+    }
+
+    // ---- 挑战任务演示：矩阵翻转大师 ----
+    cout &lt;&lt; "\n========================================" &lt;&lt; endl;
+    cout &lt;&lt; "  挑战任务：矩阵翻转大师" &lt;&lt; endl;
+    cout &lt;&lt; "========================================" &lt;&lt; endl;
+
+    const int SIZE_C = 4;
+    int challenge[SIZE_C][SIZE_C];
+    int challengeT[SIZE_C][SIZE_C];
+
+    cout &lt;&lt; "\n请输入 4x4 方阵的16个元素：" &lt;&lt; endl;
+    for (int i = 0; i &lt; SIZE_C; i++) {
+        for (int j = 0; j &lt; SIZE_C; j++) {
+            cout &lt;&lt; "a[" &lt;&lt; i &lt;&lt; "][" &lt;&lt; j &lt;&lt; "] = ";
+            cin &gt;&gt; challenge[i][j];
+        }
+    }
+
+    // 转置
+    for (int i = 0; i &lt; SIZE_C; i++) {
+        for (int j = 0; j &lt; SIZE_C; j++) {
+            challengeT[i][j] = challenge[j][i];
+        }
+    }
+
+    // 显示原始矩阵（标记主对角线）
+    cout &lt;&lt; "\n原始矩阵（[]标记主对角线）：" &lt;&lt; endl;
+    for (int i = 0; i &lt; SIZE_C; i++) {
+        for (int j = 0; j &lt; SIZE_C; j++) {
+            if (i == j) {
+                cout &lt;&lt; "[" &lt;&lt; setw(3) &lt;&lt; challenge[i][j] &lt;&lt; "]";
+            } else {
+                cout &lt;&lt; " " &lt;&lt; setw(3) &lt;&lt; challenge[i][j] &lt;&lt; " ";
+            }
+        }
+        cout &lt;&lt; endl;
+    }
+
+    // 显示转置矩阵（标记主对角线）
+    cout &lt;&lt; "\n转置矩阵（[]标记主对角线）：" &lt;&lt; endl;
+    for (int i = 0; i &lt; SIZE_C; i++) {
+        for (int j = 0; j &lt; SIZE_C; j++) {
+            if (i == j) {
+                cout &lt;&lt; "[" &lt;&lt; setw(3) &lt;&lt; challengeT[i][j] &lt;&lt; "]";
+            } else {
+                cout &lt;&lt; " " &lt;&lt; setw(3) &lt;&lt; challengeT[i][j] &lt;&lt; " ";
+            }
+        }
+        cout &lt;&lt; endl;
+    }
+
+    // 副对角线
+    cout &lt;&lt; "\n副对角线元素（i + j == " &lt;&lt; SIZE_C - 1 &lt;&lt; "）：" &lt;&lt; endl;
+    cout &lt;&lt; "原始: ";
+    for (int i = 0; i &lt; SIZE_C; i++) {
+        cout &lt;&lt; challenge[i][SIZE_C - 1 - i] &lt;&lt; " ";
+    }
+    cout &lt;&lt; endl;
+    cout &lt;&lt; "转置: ";
+    for (int i = 0; i &lt; SIZE_C; i++) {
+        cout &lt;&lt; challengeT[i][SIZE_C - 1 - i] &lt;&lt; " ";
+    }
+    cout &lt;&lt; endl;
+
+    // 对称判断
+    bool challengeSym = true;
+    for (int i = 0; i &lt; SIZE_C &amp;&amp; challengeSym; i++) {
+        for (int j = 0; j &lt; SIZE_C &amp;&amp; challengeSym; j++) {
+            if (challenge[i][j] != challenge[j][i]) {
+                challengeSym = false;
+            }
+        }
+    }
+
+    cout &lt;&lt; "\n对称矩阵判断：";
+    if (challengeSym) {
+        cout &lt;&lt; "是！(A^T == A)" &lt;&lt; endl;
+    } else {
+        cout &lt;&lt; "否。(A^T != A)" &lt;&lt; endl;
+    }
+}
+
+// ============================================================
+// 主函数
+// ============================================================
+int main() {
+    cout &lt;&lt; "╔════════════════════════════════════════╗" &lt;&lt; endl;
+    cout &lt;&lt; "║  第31课：位置大变换——矩阵转置        ║" &lt;&lt; endl;
+    cout &lt;&lt; "║  项目：神奇的矩阵翻转                 ║" &lt;&lt; endl;
+    cout &lt;&lt; "╚════════════════════════════════════════╝" &lt;&lt; endl;
+
+    example1_squareTranspose();
+    example2_rectangularTranspose();
+    example3_completeProgram();
+    exerciseAnswers();
+
+    cout &lt;&lt; "\n================================" &lt;&lt; endl;
+    cout &lt;&lt; "  本课学习完成！" &lt;&lt; endl;
+    cout &lt;&lt; "  核心要点：" &lt;&lt; endl;
+    cout &lt;&lt; "  1. 转置：a[i][j] &lt;-&gt; a[j][i]" &lt;&lt; endl;
+    cout &lt;&lt; "  2. 方阵可原地转置，长方形需新数组" &lt;&lt; endl;
+    cout &lt;&lt; "  3. 主对角线(i==j)元素不移动" &lt;&lt; endl;
+    cout &lt;&lt; "  4. 对称矩阵满足 A^T == A" &lt;&lt; endl;
+    cout &lt;&lt; "================================" &lt;&lt; endl;
+
+    return 0;
+}
+</pre>
+    <p class="hint">本页使用浅色主题与 UTF-8 编码，可直接打印或导出 PDF。</p>
+  </div>
+</body>
+</html>

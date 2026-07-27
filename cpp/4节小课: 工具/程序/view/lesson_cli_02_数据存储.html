@@ -1,0 +1,277 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>lesson_cli_02_数据存储.cpp</title>
+<style>
+  :root {
+    --bg: #f5f7fa;
+    --panel: #ffffff;
+    --text: #1a1a2e;
+    --muted: #5a6570;
+    --gold: #b8860b;
+    --code-bg: #ffffff;
+    --code-text: #1f2933;
+    --border: #d8dee6;
+    --top-bg: #ffffff;
+    --top-border: #e5e9ef;
+  }
+  * { box-sizing: border-box; }
+  html, body {
+    margin: 0; padding: 0;
+    background: var(--bg);
+    color: var(--text);
+    font-family: -apple-system, BlinkMacSystemFont, "PingFang SC", "Microsoft YaHei", sans-serif;
+    min-height: 100%;
+  }
+  .top {
+    position: sticky; top: 0; z-index: 10;
+    display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between;
+    gap: 10px;
+    padding: 12px 18px;
+    background: var(--top-bg);
+    border-bottom: 1px solid var(--top-border);
+    box-shadow: 0 1px 8px rgba(15, 23, 42, 0.06);
+  }
+  .brand { color: var(--gold); font-weight: 700; font-size: 14px; letter-spacing: 0.04em; }
+  .title { font-size: 15px; font-weight: 600; color: var(--text); max-width: 52vw; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .actions { display: flex; gap: 8px; flex-wrap: wrap; }
+  .btn {
+    appearance: none; border: 1px solid var(--border);
+    background: #fff; color: var(--text);
+    border-radius: 999px; padding: 8px 14px; font-size: 13px; font-weight: 600;
+    text-decoration: none; cursor: pointer;
+  }
+  .btn:hover { background: #f0f3f7; }
+  .btn.gold {
+    background: linear-gradient(135deg, #f0d78c, #d4a853);
+    color: #0a2540; border-color: #e0c06a;
+  }
+  .meta {
+    padding: 10px 18px; color: var(--muted); font-size: 12px;
+    border-bottom: 1px solid var(--border);
+    background: var(--panel);
+  }
+  .wrap { padding: 16px 18px 40px; }
+  pre {
+    margin: 0;
+    background: var(--code-bg);
+    color: var(--code-text);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 18px 20px;
+    overflow: auto;
+    font-family: "SF Mono", "JetBrains Mono", "Fira Code", Consolas, "Courier New", monospace;
+    font-size: 13.5px;
+    line-height: 1.55;
+    white-space: pre;
+    tab-size: 4;
+    box-shadow: 0 2px 12px rgba(15, 23, 42, 0.05);
+  }
+  .hint { margin-top: 12px; color: var(--muted); font-size: 12px; }
+  @media print {
+    html, body { background: #fff !important; color: #000 !important; }
+    .top { position: static; box-shadow: none; border-bottom: 1px solid #ccc; background: #fff !important; }
+    .actions { display: none !important; }
+    .meta { background: #fff !important; border-color: #ddd; color: #333; }
+    .wrap { padding: 0; }
+    pre {
+      background: #fff !important; color: #000 !important;
+      border: 1px solid #bbb; box-shadow: none; border-radius: 0;
+      white-space: pre-wrap; word-break: break-word; font-size: 11pt; line-height: 1.4;
+    }
+    .hint { display: none; }
+    a { color: #000; text-decoration: none; }
+  }
+</style>
+</head>
+<body>
+  <div class="top">
+    <div class="brand">C++ 四节小课 · 工具 · 配套代码</div>
+    <div class="title">lesson_cli_02_数据存储.cpp</div>
+    <div class="actions">
+      <a class="btn" href="../lesson_cli_02_数据存储.cpp" download="lesson_cli_02_数据存储.cpp">⬇️ 下载源文件</a>
+      <a class="btn gold" href="javascript:history.back()">← 返回课件</a>
+    </div>
+  </div>
+  <div class="meta">编码：UTF-8 · 文件：lesson_cli_02_数据存储.cpp · 共 173 行 · 浅色主题便于打印</div>
+  <div class="wrap">
+    <pre id="code">/*
+ * 第2课：存储数据 —— 结构体与向量
+ * 项目：任务管理器 v2.0（数据存储版）
+ *
+ * 知识点：
+ *   1. struct 结构体定义
+ *   2. vector&lt;T&gt; 动态数组容器
+ *   3. push_back / size / empty
+ *   4. 全局数据共享
+ *   5. 格式化表格输出
+ *
+ * 编译方法：
+ *   g++ -std=c++11 lesson_cli_02_数据存储.cpp -o lesson_cli_02_数据存储
+ *   运行：./lesson_cli_02_数据存储
+ */
+
+#include &lt;iostream&gt;
+#include &lt;string&gt;
+#include &lt;vector&gt;
+#include &lt;iomanip&gt;
+using namespace std;
+
+// ---------- 数据结构 ----------
+struct Task {
+    int id;           // 任务编号（自动分配）
+    string title;     // 任务标题
+    bool done;        // 是否完成
+    int priority;     // 优先级（1=高, 2=中, 3=低）
+};
+
+// ---------- 全局数据 ----------
+vector&lt;Task&gt; tasks;   // 存储所有任务的动态数组
+int nextId = 1;       // 下一个可用的任务编号
+
+// ---------- 菜单显示 ----------
+void showMenu() {
+    cout &lt;&lt; "\n╔══════════════════════════╗" &lt;&lt; endl;
+    cout &lt;&lt; "║    📋 任务管理器 v2.0    ║" &lt;&lt; endl;
+    cout &lt;&lt; "╠══════════════════════════╣" &lt;&lt; endl;
+    cout &lt;&lt; "║  1. ➕ 添加新任务        ║" &lt;&lt; endl;
+    cout &lt;&lt; "║  2. 📋 查看所有任务      ║" &lt;&lt; endl;
+    cout &lt;&lt; "║  3. ✅ 标记任务完成      ║" &lt;&lt; endl;
+    cout &lt;&lt; "║  4. 🗑️  删除任务         ║" &lt;&lt; endl;
+    cout &lt;&lt; "║  0. 🚪 退出程序          ║" &lt;&lt; endl;
+    cout &lt;&lt; "╚══════════════════════════╝" &lt;&lt; endl;
+    cout &lt;&lt; "请输入你的选择：";
+}
+
+// ---------- 功能1：添加任务 ----------
+void addTask() {
+    Task t;
+    t.id = nextId++;      // 自动分配编号，然后编号+1
+    t.done = false;       // 新任务默认未完成
+
+    cout &lt;&lt; "请输入任务标题：";
+    cin.ignore();
+    getline(cin, t.title);
+
+    cout &lt;&lt; "优先级（1=高🔴, 2=中🟡, 3=低🟢）：";
+    cin &gt;&gt; t.priority;
+
+    // 校验优先级输入
+    if (t.priority &lt; 1 || t.priority &gt; 3) {
+        t.priority = 2;  // 默认中等优先级
+        cout &lt;&lt; "  输入无效，已设为默认优先级（中）。" &lt;&lt; endl;
+    }
+
+    tasks.push_back(t);  // 将任务添加到列表
+    cout &lt;&lt; "✓ 任务添加成功！" &lt;&lt; endl;
+    cout &lt;&lt; "  编号：" &lt;&lt; t.id &lt;&lt; " | 标题：" &lt;&lt; t.title
+         &lt;&lt; " | 优先级：";
+    if (t.priority == 1) cout &lt;&lt; "高🔴";
+    else if (t.priority == 2) cout &lt;&lt; "中🟡";
+    else cout &lt;&lt; "低🟢";
+    cout &lt;&lt; endl;
+}
+
+// ---------- 功能2：查看所有任务 ----------
+void viewTasks() {
+    if (tasks.empty()) {
+        cout &lt;&lt; "\n📭 暂无任务！" &lt;&lt; endl;
+        cout &lt;&lt; "  试试选择「1. 添加新任务」来创建第一个任务吧！" &lt;&lt; endl;
+        return;
+    }
+
+    // 表头
+    cout &lt;&lt; "\n┌──────┬──────────────────────────┬────────────┬────────┐" &lt;&lt; endl;
+    cout &lt;&lt; "│ 编号 │        任务标题          │    状态    │ 优先级 │" &lt;&lt; endl;
+    cout &lt;&lt; "├──────┼──────────────────────────┼────────────┼────────┤" &lt;&lt; endl;
+
+    // 表体：遍历每个任务
+    for (int i = 0; i &lt; tasks.size(); i++) {
+        Task&amp; t = tasks[i];
+
+        cout &lt;&lt; "│ " &lt;&lt; setw(3) &lt;&lt; t.id &lt;&lt; "  │  " &lt;&lt; t.title;
+
+        // 手动对齐：中文在等宽字体中约占 2 个英文字符宽度
+        int displayLen = t.title.length() * 2;
+        for (int s = 0; s &lt; 28 - displayLen; s++) cout &lt;&lt; " ";
+
+        cout &lt;&lt; "│  " &lt;&lt; (t.done ? "✅ 已完成" : "⬜ 未完成") &lt;&lt; "  │";
+
+        // 优先级显示
+        if (t.priority == 1) cout &lt;&lt; "   🔴 高  │" &lt;&lt; endl;
+        else if (t.priority == 2) cout &lt;&lt; "   🟡 中  │" &lt;&lt; endl;
+        else cout &lt;&lt; "   🟢 低  │" &lt;&lt; endl;
+    }
+
+    cout &lt;&lt; "└──────┴──────────────────────────┴────────────┴────────┘" &lt;&lt; endl;
+
+    // 统计信息
+    int doneCount = 0;
+    for (int i = 0; i &lt; tasks.size(); i++) {
+        if (tasks[i].done) doneCount++;
+    }
+    cout &lt;&lt; "📊 共 " &lt;&lt; tasks.size() &lt;&lt; " 个任务（"
+         &lt;&lt; doneCount &lt;&lt; " 已完成, "
+         &lt;&lt; tasks.size() - doneCount &lt;&lt; " 未完成）" &lt;&lt; endl;
+}
+
+// ---------- 占位功能（第3课实现） ----------
+void markDone() {
+    if (tasks.empty()) {
+        cout &lt;&lt; "📭 暂无任务！" &lt;&lt; endl;
+        return;
+    }
+    cout &lt;&lt; "  ⏳ [功能开发中] 标记完成功能将在第3课实现！" &lt;&lt; endl;
+    cout &lt;&lt; "     当前已有 " &lt;&lt; tasks.size() &lt;&lt; " 个任务等待管理。" &lt;&lt; endl;
+}
+
+void deleteTask() {
+    if (tasks.empty()) {
+        cout &lt;&lt; "📭 暂无任务！" &lt;&lt; endl;
+        return;
+    }
+    cout &lt;&lt; "  ⏳ [功能开发中] 删除任务功能将在第3课实现！" &lt;&lt; endl;
+    cout &lt;&lt; "     当前已有 " &lt;&lt; tasks.size() &lt;&lt; " 个任务。" &lt;&lt; endl;
+}
+
+// ---------- 主函数 ----------
+int main() {
+    int choice;
+
+    cout &lt;&lt; "╔══════════════════════════════════════════════════╗" &lt;&lt; endl;
+    cout &lt;&lt; "║     第2课：存储数据 —— 结构体与向量             ║" &lt;&lt; endl;
+    cout &lt;&lt; "║     C++ 4节小课：从零构建 CLI 任务管理器         ║" &lt;&lt; endl;
+    cout &lt;&lt; "╚══════════════════════════════════════════════════╝" &lt;&lt; endl;
+
+    do {
+        showMenu();
+        cin &gt;&gt; choice;
+        cin.ignore();  // 清空缓冲区
+
+        cout &lt;&lt; endl;
+
+        switch (choice) {
+            case 1: addTask();    break;
+            case 2: viewTasks();  break;
+            case 3: markDone();   break;
+            case 4: deleteTask(); break;
+            case 0:
+                cout &lt;&lt; "👋 感谢使用任务管理器，再见！" &lt;&lt; endl;
+                cout &lt;&lt; "   当前共有 " &lt;&lt; tasks.size() &lt;&lt; " 个任务。" &lt;&lt; endl;
+                cout &lt;&lt; "   下节课我们将实现标记完成和删除功能！" &lt;&lt; endl;
+                break;
+            default:
+                cout &lt;&lt; "❌ 无效选择！请输入 0~4 之间的数字。" &lt;&lt; endl;
+                break;
+        }
+    } while (choice != 0);
+
+    return 0;
+}
+</pre>
+    <p class="hint">本页使用浅色主题与 UTF-8 编码，可直接打印或导出 PDF。</p>
+  </div>
+</body>
+</html>

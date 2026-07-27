@@ -1,0 +1,545 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>lesson38_complete_knapsack.cpp</title>
+<style>
+  :root {
+    --bg: #f5f7fa;
+    --panel: #ffffff;
+    --text: #1a1a2e;
+    --muted: #5a6570;
+    --gold: #b8860b;
+    --code-bg: #ffffff;
+    --code-text: #1f2933;
+    --border: #d8dee6;
+    --top-bg: #ffffff;
+    --top-border: #e5e9ef;
+  }
+  * { box-sizing: border-box; }
+  html, body {
+    margin: 0; padding: 0;
+    background: var(--bg);
+    color: var(--text);
+    font-family: -apple-system, BlinkMacSystemFont, "PingFang SC", "Microsoft YaHei", sans-serif;
+    min-height: 100%;
+  }
+  .top {
+    position: sticky; top: 0; z-index: 10;
+    display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between;
+    gap: 10px;
+    padding: 12px 18px;
+    background: var(--top-bg);
+    border-bottom: 1px solid var(--top-border);
+    box-shadow: 0 1px 8px rgba(15, 23, 42, 0.06);
+  }
+  .brand { color: var(--gold); font-weight: 700; font-size: 14px; letter-spacing: 0.04em; }
+  .title { font-size: 15px; font-weight: 600; color: var(--text); max-width: 52vw; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .actions { display: flex; gap: 8px; flex-wrap: wrap; }
+  .btn {
+    appearance: none; border: 1px solid var(--border);
+    background: #fff; color: var(--text);
+    border-radius: 999px; padding: 8px 14px; font-size: 13px; font-weight: 600;
+    text-decoration: none; cursor: pointer;
+  }
+  .btn:hover { background: #f0f3f7; }
+  .btn.gold {
+    background: linear-gradient(135deg, #f0d78c, #d4a853);
+    color: #0a2540; border-color: #e0c06a;
+  }
+  .meta {
+    padding: 10px 18px; color: var(--muted); font-size: 12px;
+    border-bottom: 1px solid var(--border);
+    background: var(--panel);
+  }
+  .wrap { padding: 16px 18px 40px; }
+  pre {
+    margin: 0;
+    background: var(--code-bg);
+    color: var(--code-text);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 18px 20px;
+    overflow: auto;
+    font-family: "SF Mono", "JetBrains Mono", "Fira Code", Consolas, "Courier New", monospace;
+    font-size: 13.5px;
+    line-height: 1.55;
+    white-space: pre;
+    tab-size: 4;
+    box-shadow: 0 2px 12px rgba(15, 23, 42, 0.05);
+  }
+  .hint { margin-top: 12px; color: var(--muted); font-size: 12px; }
+  @media print {
+    html, body { background: #fff !important; color: #000 !important; }
+    .top { position: static; box-shadow: none; border-bottom: 1px solid #ccc; background: #fff !important; }
+    .actions { display: none !important; }
+    .meta { background: #fff !important; border-color: #ddd; color: #333; }
+    .wrap { padding: 0; }
+    pre {
+      background: #fff !important; color: #000 !important;
+      border: 1px solid #bbb; box-shadow: none; border-radius: 0;
+      white-space: pre-wrap; word-break: break-word; font-size: 11pt; line-height: 1.4;
+    }
+    .hint { display: none; }
+    a { color: #000; text-decoration: none; }
+  }
+</style>
+</head>
+<body>
+  <div class="top">
+    <div class="brand">C++ 算法提高 · 配套代码</div>
+    <div class="title">lesson38_complete_knapsack.cpp</div>
+    <div class="actions">
+      <a class="btn" href="../lesson38_complete_knapsack.cpp" download="lesson38_complete_knapsack.cpp">⬇️ 下载源文件</a>
+      <a class="btn gold" href="javascript:history.back()">← 返回课件</a>
+    </div>
+  </div>
+  <div class="meta">编码：UTF-8 · 文件：lesson38_complete_knapsack.cpp · 共 441 行 · 浅色主题便于打印</div>
+  <div class="wrap">
+    <pre id="code">/**
+ * 第38课：背包问题（二）——完全背包
+ *
+ * 本文件包含：
+ * 1. completeKnapsack()  —— 一维DP正向遍历，求最大价值
+ * 2. coinChange()        —— 计数型完全背包（硬币找零方案数）
+ * 3. comparison01Complete() —— 01背包与完全背包的遍历方向对比演示
+ * 4. 例题1：完全背包
+ * 5. 例题2：货币系统（货币系统）
+ */
+
+#include &lt;iostream&gt;
+#include &lt;vector&gt;
+#include &lt;algorithm&gt;
+#include &lt;iomanip&gt;
+
+using namespace std;
+
+/**
+ * 完全背包：一维DP + 正向遍历
+ *
+ * dp[j] = 容量为j时能获得的最大总价值
+ *
+ * 【关键】正向遍历（j从w[i]到C）：
+ *   正向遍历时，dp[j - w[i]] 可能已经在当前轮（当前物品i）被更新过，
+ *   也就是说 dp[j - w[i]] 中可能已经包含了物品i。
+ *   在此基础上再加一个物品i，就实现了「物品i可以被多次选取」的效果。
+ *
+ *   举例：w=3, v=5, C=6
+ *     j=3: dp[3] = max(dp[3], dp[0]+5) = 5   → 拿了1个物品
+ *     j=6: dp[6] = max(dp[6], dp[3]+5) = 10  → 又拿了1个（dp[3]已经包含了物品）
+ *     结果：相当于拿了2个物品！
+ *
+ * 参数：
+ *   w - 物品重量数组
+ *   v - 物品价值数组
+ *   C - 背包容量
+ * 返回值：最大总价值
+ */
+int completeKnapsack(const vector&lt;int&gt;&amp; w, const vector&lt;int&gt;&amp; v, int C) {
+    // dp[j]：容量为j时的最大价值，初始全为0
+    vector&lt;int&gt; dp(C + 1, 0);
+
+    // 遍历每种物品
+    for (size_t i = 0; i &lt; w.size(); i++) {
+        // 【重点】正向遍历！从 w[i] 到 C
+        // 这样 dp[j - w[i]] 可能已经在当前轮被更新过（包含了物品i）
+        // 从而允许同一个物品被多次选取
+        for (int j = w[i]; j &lt;= C; j++) {
+            dp[j] = max(dp[j], dp[j - w[i]] + v[i]);
+        }
+    }
+
+    return dp[C];
+}
+
+/**
+ * 硬币找零方案数 — 计数型完全背包
+ *
+ * 给定n种面值的硬币（每种无限个），求凑出金额amount有多少种不同的组合方式。
+ *
+ * dp[j] = 凑出金额j的方案数
+ * dp[0] = 1（凑出0元有一种方案：什么都不选）
+ * 转移方程：dp[j] += dp[j - coin[i]]  （正向遍历）
+ *
+ * 【注意】外层循环是硬币种类，内层循环是金额。
+ *   这样保证了组合的无序性，即 {1,2,5} 和 {5,2,1} 被视为同一种方案。
+ *   如果反过来（外层金额、内层硬币），则会计算排列数。
+ *
+ * 参数：
+ *   coins  - 硬币面值数组
+ *   amount - 目标金额
+ * 返回值：方案总数
+ */
+int coinChange(const vector&lt;int&gt;&amp; coins, int amount) {
+    // dp[j]：凑出金额j的方案数
+    vector&lt;int&gt; dp(amount + 1, 0);
+    dp[0] = 1;  // 凑出0元有一种方案：什么都不选
+
+    // 遍历每种硬币
+    for (size_t i = 0; i &lt; coins.size(); i++) {
+        // 正向遍历金额，允许多次使用同一种硬币
+        for (int j = coins[i]; j &lt;= amount; j++) {
+            dp[j] += dp[j - coins[i]];
+            // 含义：凑出j元的方案数 += 凑出(j-当前硬币面值)元的方案数
+            // 即「使用当前硬币后」新增的方案
+        }
+    }
+
+    return dp[amount];
+}
+
+/**
+ * 对比演示：01背包 vs 完全背包的遍历方向
+ *
+ * 直观展示为什么「正向遍历 = 可重复选取，逆向遍历 = 最多选一次」
+ */
+void comparison01Complete() {
+    cout &lt;&lt; "========================================" &lt;&lt; endl;
+    cout &lt;&lt; "  01背包 vs 完全背包：遍历方向对比" &lt;&lt; endl;
+    cout &lt;&lt; "========================================" &lt;&lt; endl;
+    cout &lt;&lt; endl;
+
+    cout &lt;&lt; "┌─────────────────────────────────────────────────────┐" &lt;&lt; endl;
+    cout &lt;&lt; "│  问题设定：1种物品，重量w=2，价值v=3，容量C=4   │" &lt;&lt; endl;
+    cout &lt;&lt; "│  期望：                                           │" &lt;&lt; endl;
+    cout &lt;&lt; "│    01背包 → 最多选1个，最优价值=3               │" &lt;&lt; endl;
+    cout &lt;&lt; "│    完全背包 → 可以选2个，最优价值=6             │" &lt;&lt; endl;
+    cout &lt;&lt; "└─────────────────────────────────────────────────────┘" &lt;&lt; endl;
+    cout &lt;&lt; endl;
+
+    // ========== 01背包：逆向遍历 ==========
+    {
+        vector&lt;int&gt; dp(5, 0);
+        int w = 2, v = 3, C = 4;
+
+        cout &lt;&lt; "【01背包 — 逆向遍历 for(j=C down to w)】" &lt;&lt; endl;
+        cout &lt;&lt; "初始dp: [0, 0, 0, 0, 0]" &lt;&lt; endl;
+        cout &lt;&lt; endl;
+
+        for (int j = C; j &gt;= w; j--) {
+            int oldVal = dp[j];
+            dp[j] = max(dp[j], dp[j - w] + v);
+            cout &lt;&lt; "  j=" &lt;&lt; j &lt;&lt; ": dp[" &lt;&lt; j &lt;&lt; "] = max(" &lt;&lt; oldVal
+                 &lt;&lt; ", dp[" &lt;&lt; j - w &lt;&lt; "]+" &lt;&lt; v &lt;&lt; ") = " &lt;&lt; dp[j];
+            cout &lt;&lt; "   ← dp[" &lt;&lt; j - w &lt;&lt; "]=" &lt;&lt; dp[j - w] &lt;&lt; " 还是旧值(未包含当前物品)" &lt;&lt; endl;
+        }
+        cout &lt;&lt; endl;
+        cout &lt;&lt; "结果dp: [" &lt;&lt; dp[0] &lt;&lt; ", " &lt;&lt; dp[1] &lt;&lt; ", " &lt;&lt; dp[2]
+             &lt;&lt; ", " &lt;&lt; dp[3] &lt;&lt; ", " &lt;&lt; dp[4] &lt;&lt; "]" &lt;&lt; endl;
+        cout &lt;&lt; "最优价值(01背包) = " &lt;&lt; dp[C] &lt;&lt; " ✓ 只选了1个物品" &lt;&lt; endl;
+        cout &lt;&lt; endl;
+    }
+
+    // ========== 完全背包：正向遍历 ==========
+    {
+        vector&lt;int&gt; dp(5, 0);
+        int w = 2, v = 3, C = 4;
+
+        cout &lt;&lt; "【完全背包 — 正向遍历 for(j=w to C)】" &lt;&lt; endl;
+        cout &lt;&lt; "初始dp: [0, 0, 0, 0, 0]" &lt;&lt; endl;
+        cout &lt;&lt; endl;
+
+        for (int j = w; j &lt;= C; j++) {
+            int oldVal = dp[j];
+            dp[j] = max(dp[j], dp[j - w] + v);
+            cout &lt;&lt; "  j=" &lt;&lt; j &lt;&lt; ": dp[" &lt;&lt; j &lt;&lt; "] = max(" &lt;&lt; oldVal
+                 &lt;&lt; ", dp[" &lt;&lt; j - w &lt;&lt; "]+" &lt;&lt; v &lt;&lt; ") = " &lt;&lt; dp[j];
+            if (j &gt;= 2 * w) {
+                cout &lt;&lt; "   ★ dp[" &lt;&lt; j - w &lt;&lt; "]=" &lt;&lt; (j &gt;= 2 * w ? 3 : 0)
+                     &lt;&lt; " 已经被更新过！实现了重复选取！" &lt;&lt; endl;
+            } else {
+                cout &lt;&lt; endl;
+            }
+        }
+        cout &lt;&lt; endl;
+        cout &lt;&lt; "结果dp: [" &lt;&lt; dp[0] &lt;&lt; ", " &lt;&lt; dp[1] &lt;&lt; ", " &lt;&lt; dp[2]
+             &lt;&lt; ", " &lt;&lt; dp[3] &lt;&lt; ", " &lt;&lt; dp[4] &lt;&lt; "]" &lt;&lt; endl;
+        cout &lt;&lt; "最优价值(完全背包) = " &lt;&lt; dp[C] &lt;&lt; " ✓ 选了2个物品！" &lt;&lt; endl;
+        cout &lt;&lt; endl;
+    }
+
+    // ========== 表格总结 ==========
+    cout &lt;&lt; "┌──────────────┬──────────────────┬──────────────────┐" &lt;&lt; endl;
+    cout &lt;&lt; "│   对比维度   │     01背包       │     完全背包     │" &lt;&lt; endl;
+    cout &lt;&lt; "├──────────────┼──────────────────┼──────────────────┤" &lt;&lt; endl;
+    cout &lt;&lt; "│  遍历方向    │   逆向(j=C→w)    │   正向(j=w→C)    │" &lt;&lt; endl;
+    cout &lt;&lt; "├──────────────┼──────────────────┼──────────────────┤" &lt;&lt; endl;
+    cout &lt;&lt; "│  物品选取    │   最多选1次      │   可选无限次      │" &lt;&lt; endl;
+    cout &lt;&lt; "├──────────────┼──────────────────┼──────────────────┤" &lt;&lt; endl;
+    cout &lt;&lt; "│  转移方程    │  dp[j]=max(dp[j],│  dp[j]=max(dp[j], │" &lt;&lt; endl;
+    cout &lt;&lt; "│              │  dp[j-w]+v)      │  dp[j-w]+v)       │" &lt;&lt; endl;
+    cout &lt;&lt; "├──────────────┼──────────────────┼──────────────────┤" &lt;&lt; endl;
+    cout &lt;&lt; "│  本质原因    │  dp[j-w]来自上一  │  dp[j-w]可能来自  │" &lt;&lt; endl;
+    cout &lt;&lt; "│              │  轮（未包含物品i） │  当前轮（已含物品i）│" &lt;&lt; endl;
+    cout &lt;&lt; "└──────────────┴──────────────────┴──────────────────┘" &lt;&lt; endl;
+    cout &lt;&lt; endl;
+
+    // ========== 口诀 ==========
+    cout &lt;&lt; "  记忆口诀：正向重复，逆向唯一！" &lt;&lt; endl;
+    cout &lt;&lt; "  → 正向遍历 = 物品可重复使用（完全背包）" &lt;&lt; endl;
+    cout &lt;&lt; "  → 逆向遍历 = 每个物品最多用一次（01背包）" &lt;&lt; endl;
+    cout &lt;&lt; endl;
+}
+
+/**
+ * 例题1：完全背包
+ *
+ * 题目描述：
+ *   有n种物品，每种物品有无限个。第i种物品重量为w[i]，价值为v[i]。
+ *   背包容量为C，求能获得的最大总价值。
+ *
+ * 输入格式：
+ *   第一行：n C
+ *   接下来n行：w v
+ *
+ * 样例输入：
+ *   3 10
+ *   2 3
+ *   3 4
+ *   4 5
+ *
+ * 样例输出：15
+ */
+void problem1_completeKnapsack() {
+    cout &lt;&lt; "========================================" &lt;&lt; endl;
+    cout &lt;&lt; "  例题1：完全背包" &lt;&lt; endl;
+    cout &lt;&lt; "========================================" &lt;&lt; endl;
+    cout &lt;&lt; endl;
+
+    // 样例数据
+    int n = 3, C = 10;
+    vector&lt;int&gt; w = {2, 3, 4};
+    vector&lt;int&gt; v = {3, 4, 5};
+
+    cout &lt;&lt; "输入：" &lt;&lt; endl;
+    cout &lt;&lt; "  n = " &lt;&lt; n &lt;&lt; ", C = " &lt;&lt; C &lt;&lt; endl;
+    for (int i = 0; i &lt; n; i++) {
+        cout &lt;&lt; "  物品" &lt;&lt; (i + 1) &lt;&lt; "：重量=" &lt;&lt; w[i] &lt;&lt; ", 价值=" &lt;&lt; v[i] &lt;&lt; endl;
+    }
+    cout &lt;&lt; endl;
+
+    // 执行完全背包算法
+    vector&lt;int&gt; dp(C + 1, 0);
+
+    cout &lt;&lt; "DP过程：" &lt;&lt; endl;
+    for (int i = 0; i &lt; n; i++) {
+        cout &lt;&lt; "  处理物品" &lt;&lt; (i + 1) &lt;&lt; " (w=" &lt;&lt; w[i] &lt;&lt; ", v=" &lt;&lt; v[i] &lt;&lt; "):" &lt;&lt; endl;
+        for (int j = w[i]; j &lt;= C; j++) {
+            int oldVal = dp[j];
+            dp[j] = max(dp[j], dp[j - w[i]] + v[i]);
+            if (dp[j] != oldVal) {
+                cout &lt;&lt; "    dp[" &lt;&lt; j &lt;&lt; "] = " &lt;&lt; dp[j]
+                     &lt;&lt; "  (选了物品" &lt;&lt; (i + 1) &lt;&lt; ")" &lt;&lt; endl;
+            }
+        }
+    }
+    cout &lt;&lt; endl;
+
+    cout &lt;&lt; "最终dp数组：" &lt;&lt; endl;
+    cout &lt;&lt; "  ";
+    for (int j = 0; j &lt;= C; j++) {
+        cout &lt;&lt; setw(3) &lt;&lt; j;
+    }
+    cout &lt;&lt; endl;
+    cout &lt;&lt; "  ";
+    for (int j = 0; j &lt;= C; j++) {
+        cout &lt;&lt; setw(3) &lt;&lt; dp[j];
+    }
+    cout &lt;&lt; endl;
+    cout &lt;&lt; endl;
+
+    cout &lt;&lt; "最大总价值 = " &lt;&lt; dp[C] &lt;&lt; endl;
+    cout &lt;&lt; "（选5个物品1：重量=5×2=10, 价值=5×3=15）" &lt;&lt; endl;
+    cout &lt;&lt; endl;
+}
+
+/**
+ * 例题2：货币系统（硬币找零方案数）
+ *
+ * 题目描述：
+ *   有n种面值的硬币，每种有无限个。要凑出总价值m，
+ *   问有多少种不同的组合方式（硬币顺序不影响，视为同一种方案）。
+ *
+ * 输入格式：
+ *   第一行：n m
+ *   第二行：n个整数（硬币面值）
+ *
+ * 样例输入：
+ *   3 10
+ *   1 2 5
+ *
+ * 样例输出：10
+ */
+void problem2_coinSystem() {
+    cout &lt;&lt; "========================================" &lt;&lt; endl;
+    cout &lt;&lt; "  例题2：货币系统（硬币找零方案数）" &lt;&lt; endl;
+    cout &lt;&lt; "========================================" &lt;&lt; endl;
+    cout &lt;&lt; endl;
+
+    // 样例数据
+    int n = 3, amount = 10;
+    vector&lt;int&gt; coins = {1, 2, 5};
+
+    cout &lt;&lt; "输入：" &lt;&lt; endl;
+    cout &lt;&lt; "  n = " &lt;&lt; n &lt;&lt; ", amount = " &lt;&lt; amount &lt;&lt; endl;
+    cout &lt;&lt; "  硬币面值：";
+    for (int i = 0; i &lt; n; i++) {
+        cout &lt;&lt; coins[i] &lt;&lt; " ";
+    }
+    cout &lt;&lt; endl;
+    cout &lt;&lt; endl;
+
+    // 执行硬币找零算法
+    vector&lt;int&gt; dp(amount + 1, 0);
+    dp[0] = 1;  // 凑出0元有一种方案
+
+    cout &lt;&lt; "DP过程：" &lt;&lt; endl;
+    cout &lt;&lt; "  初始dp[0] = 1" &lt;&lt; endl;
+
+    for (int i = 0; i &lt; n; i++) {
+        cout &lt;&lt; "  考虑硬币面值 " &lt;&lt; coins[i] &lt;&lt; "：" &lt;&lt; endl;
+        for (int j = coins[i]; j &lt;= amount; j++) {
+            int oldVal = dp[j];
+            dp[j] += dp[j - coins[i]];
+            if (dp[j] != oldVal) {
+                cout &lt;&lt; "    dp[" &lt;&lt; j &lt;&lt; "] += dp[" &lt;&lt; (j - coins[i]) &lt;&lt; "] → dp[" &lt;&lt; j &lt;&lt; "] = " &lt;&lt; dp[j] &lt;&lt; endl;
+            }
+        }
+    }
+    cout &lt;&lt; endl;
+
+    // 打印完整dp表
+    cout &lt;&lt; "完整dp表（凑出金额j的方案数）：" &lt;&lt; endl;
+    cout &lt;&lt; "  金额: ";
+    for (int j = 0; j &lt;= amount; j++) {
+        cout &lt;&lt; setw(4) &lt;&lt; j;
+    }
+    cout &lt;&lt; endl;
+    cout &lt;&lt; "  方案: ";
+    for (int j = 0; j &lt;= amount; j++) {
+        cout &lt;&lt; setw(4) &lt;&lt; dp[j];
+    }
+    cout &lt;&lt; endl;
+    cout &lt;&lt; endl;
+
+    // 验证：列出所有方案（仅用于小额演示）
+    cout &lt;&lt; "凑出" &lt;&lt; amount &lt;&lt; "元的方案总数 = " &lt;&lt; dp[amount] &lt;&lt; endl;
+    cout &lt;&lt; endl;
+
+    // 列出验证方案
+    cout &lt;&lt; "验证（手工枚举所有方案）：" &lt;&lt; endl;
+    cout &lt;&lt; "  10 = 5+5" &lt;&lt; endl;
+    cout &lt;&lt; "  10 = 5+2+2+1" &lt;&lt; endl;
+    cout &lt;&lt; "  10 = 5+2+1+1+1" &lt;&lt; endl;
+    cout &lt;&lt; "  10 = 5+1+1+1+1+1" &lt;&lt; endl;
+    cout &lt;&lt; "  10 = 2+2+2+2+2" &lt;&lt; endl;
+    cout &lt;&lt; "  10 = 2+2+2+2+1+1" &lt;&lt; endl;
+    cout &lt;&lt; "  10 = 2+2+2+1+1+1+1" &lt;&lt; endl;
+    cout &lt;&lt; "  10 = 2+2+1+1+1+1+1+1" &lt;&lt; endl;
+    cout &lt;&lt; "  10 = 2+1+1+1+1+1+1+1+1" &lt;&lt; endl;
+    cout &lt;&lt; "  10 = 1+1+1+1+1+1+1+1+1+1" &lt;&lt; endl;
+    cout &lt;&lt; "  共 " &lt;&lt; dp[amount] &lt;&lt; " 种方案 ✓" &lt;&lt; endl;
+    cout &lt;&lt; endl;
+}
+
+/**
+ * 主函数：运行所有示例和测试
+ */
+int main() {
+    cout &lt;&lt; "╔══════════════════════════════════════════════╗" &lt;&lt; endl;
+    cout &lt;&lt; "║  第38课：背包问题（二）——完全背包          ║" &lt;&lt; endl;
+    cout &lt;&lt; "║  Lesson 38: Complete Knapsack Problem       ║" &lt;&lt; endl;
+    cout &lt;&lt; "╚══════════════════════════════════════════════╝" &lt;&lt; endl;
+    cout &lt;&lt; endl;
+
+    // ========== 1. 基本完全背包测试 ==========
+    cout &lt;&lt; "&gt;&gt;&gt; 测试1：基本完全背包" &lt;&lt; endl;
+    cout &lt;&lt; "----------------------------------------" &lt;&lt; endl;
+    {
+        vector&lt;int&gt; w = {2, 3, 4};
+        vector&lt;int&gt; v = {3, 4, 5};
+        int C = 10;
+        int result = completeKnapsack(w, v, C);
+        cout &lt;&lt; "物品：(2,3), (3,4), (4,5), 容量=" &lt;&lt; C &lt;&lt; endl;
+        cout &lt;&lt; "最大价值 = " &lt;&lt; result;
+        if (result == 15) {
+            cout &lt;&lt; " ✓ 正确" &lt;&lt; endl;
+        } else {
+            cout &lt;&lt; " ✗ 期望15" &lt;&lt; endl;
+        }
+    }
+    cout &lt;&lt; endl;
+
+    // ========== 2. 硬币找零测试 ==========
+    cout &lt;&lt; "&gt;&gt;&gt; 测试2：硬币找零（计数型完全背包）" &lt;&lt; endl;
+    cout &lt;&lt; "----------------------------------------" &lt;&lt; endl;
+    {
+        vector&lt;int&gt; coins = {1, 2, 5};
+        int amount = 10;
+        int result = coinChange(coins, amount);
+        cout &lt;&lt; "硬币面值：1, 2, 5, 目标金额=" &lt;&lt; amount &lt;&lt; endl;
+        cout &lt;&lt; "方案数 = " &lt;&lt; result;
+        if (result == 10) {
+            cout &lt;&lt; " ✓ 正确" &lt;&lt; endl;
+        } else {
+            cout &lt;&lt; " ✗ 期望10" &lt;&lt; endl;
+        }
+    }
+    {
+        // 额外测试：小额
+        vector&lt;int&gt; coins = {1, 2, 5};
+        int amount = 5;
+        int result = coinChange(coins, amount);
+        cout &lt;&lt; "硬币面值：1, 2, 5, 目标金额=" &lt;&lt; amount &lt;&lt; endl;
+        cout &lt;&lt; "方案数 = " &lt;&lt; result;
+        if (result == 4) {
+            cout &lt;&lt; " ✓ 正确 (5=5, 5=2+2+1, 5=2+1+1+1, 5=1+1+1+1+1)" &lt;&lt; endl;
+        } else {
+            cout &lt;&lt; " ✗ 期望4" &lt;&lt; endl;
+        }
+    }
+    {
+        // 额外测试：只有一种硬币
+        vector&lt;int&gt; coins = {3};
+        int amount = 9;
+        int result = coinChange(coins, amount);
+        cout &lt;&lt; "硬币面值：3, 目标金额=" &lt;&lt; amount &lt;&lt; endl;
+        cout &lt;&lt; "方案数 = " &lt;&lt; result;
+        if (result == 1) {
+            cout &lt;&lt; " ✓ 正确 (只有3+3+3一种)" &lt;&lt; endl;
+        } else {
+            cout &lt;&lt; " ✗ 期望1" &lt;&lt; endl;
+        }
+    }
+    cout &lt;&lt; endl;
+
+    // ========== 3. 遍历方向对比演示 ==========
+    cout &lt;&lt; endl;
+    comparison01Complete();
+
+    // ========== 4. 例题1演示 ==========
+    cout &lt;&lt; endl;
+    problem1_completeKnapsack();
+
+    // ========== 5. 例题2演示 ==========
+    cout &lt;&lt; endl;
+    problem2_coinSystem();
+
+    cout &lt;&lt; "========================================" &lt;&lt; endl;
+    cout &lt;&lt; "  本课总结" &lt;&lt; endl;
+    cout &lt;&lt; "========================================" &lt;&lt; endl;
+    cout &lt;&lt; "  1. 完全背包使用正向遍历（j从w到C），实现物品可重复选取" &lt;&lt; endl;
+    cout &lt;&lt; "  2. 01背包使用逆向遍历（j从C到w），保证物品最多选一次" &lt;&lt; endl;
+    cout &lt;&lt; "  3. 计数型完全背包：dp[j] += dp[j-coin[i]]，dp[0]=1" &lt;&lt; endl;
+    cout &lt;&lt; "  4. 记忆口诀：正向重复，逆向唯一！" &lt;&lt; endl;
+    cout &lt;&lt; "========================================" &lt;&lt; endl;
+    cout &lt;&lt; endl;
+
+    return 0;
+}
+</pre>
+    <p class="hint">本页使用浅色主题与 UTF-8 编码，可直接打印或导出 PDF。</p>
+  </div>
+</body>
+</html>

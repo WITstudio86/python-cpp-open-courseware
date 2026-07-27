@@ -1,0 +1,333 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>lesson08_高精度加法与减法.cpp</title>
+<style>
+  :root {
+    --bg: #f5f7fa;
+    --panel: #ffffff;
+    --text: #1a1a2e;
+    --muted: #5a6570;
+    --gold: #b8860b;
+    --code-bg: #ffffff;
+    --code-text: #1f2933;
+    --border: #d8dee6;
+    --top-bg: #ffffff;
+    --top-border: #e5e9ef;
+  }
+  * { box-sizing: border-box; }
+  html, body {
+    margin: 0; padding: 0;
+    background: var(--bg);
+    color: var(--text);
+    font-family: -apple-system, BlinkMacSystemFont, "PingFang SC", "Microsoft YaHei", sans-serif;
+    min-height: 100%;
+  }
+  .top {
+    position: sticky; top: 0; z-index: 10;
+    display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between;
+    gap: 10px;
+    padding: 12px 18px;
+    background: var(--top-bg);
+    border-bottom: 1px solid var(--top-border);
+    box-shadow: 0 1px 8px rgba(15, 23, 42, 0.06);
+  }
+  .brand { color: var(--gold); font-weight: 700; font-size: 14px; letter-spacing: 0.04em; }
+  .title { font-size: 15px; font-weight: 600; color: var(--text); max-width: 52vw; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .actions { display: flex; gap: 8px; flex-wrap: wrap; }
+  .btn {
+    appearance: none; border: 1px solid var(--border);
+    background: #fff; color: var(--text);
+    border-radius: 999px; padding: 8px 14px; font-size: 13px; font-weight: 600;
+    text-decoration: none; cursor: pointer;
+  }
+  .btn:hover { background: #f0f3f7; }
+  .btn.gold {
+    background: linear-gradient(135deg, #f0d78c, #d4a853);
+    color: #0a2540; border-color: #e0c06a;
+  }
+  .meta {
+    padding: 10px 18px; color: var(--muted); font-size: 12px;
+    border-bottom: 1px solid var(--border);
+    background: var(--panel);
+  }
+  .wrap { padding: 16px 18px 40px; }
+  pre {
+    margin: 0;
+    background: var(--code-bg);
+    color: var(--code-text);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 18px 20px;
+    overflow: auto;
+    font-family: "SF Mono", "JetBrains Mono", "Fira Code", Consolas, "Courier New", monospace;
+    font-size: 13.5px;
+    line-height: 1.55;
+    white-space: pre;
+    tab-size: 4;
+    box-shadow: 0 2px 12px rgba(15, 23, 42, 0.05);
+  }
+  .hint { margin-top: 12px; color: var(--muted); font-size: 12px; }
+  @media print {
+    html, body { background: #fff !important; color: #000 !important; }
+    .top { position: static; box-shadow: none; border-bottom: 1px solid #ccc; background: #fff !important; }
+    .actions { display: none !important; }
+    .meta { background: #fff !important; border-color: #ddd; color: #333; }
+    .wrap { padding: 0; }
+    pre {
+      background: #fff !important; color: #000 !important;
+      border: 1px solid #bbb; box-shadow: none; border-radius: 0;
+      white-space: pre-wrap; word-break: break-word; font-size: 11pt; line-height: 1.4;
+    }
+    .hint { display: none; }
+    a { color: #000; text-decoration: none; }
+  }
+</style>
+</head>
+<body>
+  <div class="top">
+    <div class="brand">C++ 算法提高 · 配套代码</div>
+    <div class="title">lesson08_高精度加法与减法.cpp</div>
+    <div class="actions">
+      <a class="btn" href="../lesson08_高精度加法与减法.cpp" download="lesson08_高精度加法与减法.cpp">⬇️ 下载源文件</a>
+      <a class="btn gold" href="javascript:history.back()">← 返回课件</a>
+    </div>
+  </div>
+  <div class="meta">编码：UTF-8 · 文件：lesson08_高精度加法与减法.cpp · 共 229 行 · 浅色主题便于打印</div>
+  <div class="wrap">
+    <pre id="code">/**
+ * 第08课：高精度加法与减法
+ *
+ * 算法知识点：
+ * 1. 大数存储 — 字符串读入，倒序存入 vector&lt;int&gt;（索引0=个位）
+ * 2. 高精度加法 — 逐位相加，t % 10 得当前位，t / 10 得进位
+ * 3. 高精度减法 — 逐位相减，(t+10)%10 统一处理正负；不够减借位
+ * 4. 大数比较 — 先比位数，位数相同从高位向低位逐位比较
+ * 5. 前导零处理 — 减法结果 pop_back 去除末尾的 0
+ * 6. 负数处理 — A&lt;B 时交换计算并在结果前加 "-"
+ *
+ * 适用场景：int（~10位）和 long long（~19位）无法容纳的超大整数运算
+ * 作者：C++算法提高课程
+ */
+
+#include &lt;iostream&gt;
+#include &lt;vector&gt;
+#include &lt;string&gt;
+#include &lt;algorithm&gt;
+#include &lt;cstdlib&gt;
+using namespace std;
+
+// ============================================================
+// 辅助函数：将字符串转换为倒序存储的 vector&lt;int&gt;
+// 例如："123" → [3, 2, 1]（索引 0 是个位）
+// ============================================================
+vector&lt;int&gt; toVector(const string &amp;s) {
+    vector&lt;int&gt; res;
+    for (int i = s.size() - 1; i &gt;= 0; --i)
+        res.push_back(s[i] - '0');
+    return res;
+}
+
+// ============================================================
+// 辅助函数：将倒序 vector&lt;int&gt; 转为可读字符串，自动去前导零
+// 例如：[3, 2, 1] → "123"; [0, 0, 1] → "1"
+// ============================================================
+string toString(const vector&lt;int&gt; &amp;v) {
+    if (v.empty()) return "0";
+    string res;
+    for (int i = v.size() - 1; i &gt;= 0; --i)
+        res += char(v[i] + '0');
+    int pos = 0;
+    while (pos + 1 &lt; (int)res.size() &amp;&amp; res[pos] == '0') ++pos;
+    return res.substr(pos);
+}
+
+// ============================================================
+// 辅助函数：大数比较 — A &gt;= B 返回 true（倒序存储）
+// ============================================================
+bool cmp(const vector&lt;int&gt; &amp;A, const vector&lt;int&gt; &amp;B) {
+    if (A.size() != B.size())
+        return A.size() &gt; B.size();
+    for (int i = A.size() - 1; i &gt;= 0; --i)
+        if (A[i] != B[i])
+            return A[i] &gt; B[i];
+    return true;  // 完全相等
+}
+
+// ============================================================
+// 核心算法1：高精度加法
+// t 变量一箭三雕：进位载体 + 累加器 + 当前位来源
+// ============================================================
+vector&lt;int&gt; add(const vector&lt;int&gt; &amp;A, const vector&lt;int&gt; &amp;B) {
+    vector&lt;int&gt; C;
+    int t = 0;
+    for (size_t i = 0; i &lt; max(A.size(), B.size()); ++i) {
+        if (i &lt; A.size()) t += A[i];
+        if (i &lt; B.size()) t += B[i];
+        C.push_back(t % 10);   // 当前位 = 累加和的个位
+        t /= 10;               // 进位 = 累加和的十位
+    }
+    if (t) C.push_back(t);     // 最高位仍有进位
+    return C;
+}
+
+// ============================================================
+// 核心算法2：高精度减法（A &gt;= B）
+// (t+10)%10 统一处理正负：t≥0得t，t&lt;0得t+10
+// ============================================================
+vector&lt;int&gt; sub(const vector&lt;int&gt; &amp;A, const vector&lt;int&gt; &amp;B) {
+    vector&lt;int&gt; C;
+    int t = 0;  // 借位标记
+    for (int i = 0; i &lt; (int)A.size(); ++i) {
+        t = A[i] - t;                      // 减去借位
+        if (i &lt; (int)B.size()) t -= B[i];  // 减去减数
+        C.push_back((t + 10) % 10);        // 统一处理正负
+        t = (t &lt; 0) ? 1 : 0;               // 更新借位
+    }
+    // 去除前导零（高位多余的零）
+    while (C.size() &gt; 1 &amp;&amp; C.back() == 0)
+        C.pop_back();
+    return C;
+}
+
+// ============================================================
+// 问题求解1：A+B Problem（高精度）
+// ============================================================
+void solveAdd() {
+    string a, b;
+    cout &lt;&lt; "请输入两个非负大整数 A 和 B（用空格或换行分隔）：" &lt;&lt; endl;
+    cin &gt;&gt; a &gt;&gt; b;
+    vector&lt;int&gt; A = toVector(a);
+    vector&lt;int&gt; B = toVector(b);
+    vector&lt;int&gt; C = add(A, B);
+    cout &lt;&lt; "A + B = " &lt;&lt; toString(C) &lt;&lt; endl;
+}
+
+// ============================================================
+// 问题求解2：大数减法（自动处理负数）
+// ============================================================
+void solveSub() {
+    string a, b;
+    cout &lt;&lt; "请输入被减数 A 和减数 B（用空格或换行分隔）：" &lt;&lt; endl;
+    cin &gt;&gt; a &gt;&gt; b;
+    vector&lt;int&gt; A = toVector(a);
+    vector&lt;int&gt; B = toVector(b);
+
+    if (cmp(A, B)) {
+        vector&lt;int&gt; C = sub(A, B);
+        cout &lt;&lt; "A - B = " &lt;&lt; toString(C) &lt;&lt; endl;
+    } else {
+        vector&lt;int&gt; C = sub(B, A);
+        cout &lt;&lt; "A - B = -" &lt;&lt; toString(C) &lt;&lt; endl;
+    }
+}
+
+// ============================================================
+// 自动测试：运行预设测试用例
+// ============================================================
+void runTests() {
+    cout &lt;&lt; "========== 高精度加法 自动测试 ==========" &lt;&lt; endl;
+
+    struct { string a, b, expected; } addTests[] = {
+        {"123",       "456",       "579"},
+        {"999",       "1",         "1000"},
+        {"0",         "0",         "0"},
+        {"999999",    "1",         "1000000"},
+        {"12345678901234567890", "98765432109876543210", "111111111011111111100"},
+        {"11111111111111111111", "22222222222222222222", "33333333333333333333"},
+    };
+
+    int passCount = 0;
+    for (auto &amp;tc : addTests) {
+        vector&lt;int&gt; A = toVector(tc.a);
+        vector&lt;int&gt; B = toVector(tc.b);
+        vector&lt;int&gt; C = add(A, B);
+        string result = toString(C);
+        bool pass = (result == tc.expected);
+        if (pass) ++passCount;
+        cout &lt;&lt; "  " &lt;&lt; tc.a &lt;&lt; " + " &lt;&lt; tc.b &lt;&lt; " = " &lt;&lt; result
+             &lt;&lt; "  [" &lt;&lt; (pass ? "PASS" : "FAIL") &lt;&lt; "]" &lt;&lt; endl;
+        if (!pass) cout &lt;&lt; "    期望: " &lt;&lt; tc.expected &lt;&lt; endl;
+    }
+    cout &lt;&lt; "  加法通过: " &lt;&lt; passCount &lt;&lt; "/6" &lt;&lt; endl &lt;&lt; endl;
+
+    cout &lt;&lt; "========== 高精度减法 自动测试 ==========" &lt;&lt; endl;
+
+    struct { string a, b, expected; } subTests[] = {
+        {"1000",      "1",         "999"},
+        {"1",         "1000",      "-999"},
+        {"12345",     "12345",     "0"},
+        {"10000",     "1234",      "8766"},
+        {"98765432109876543210", "12345678901234567890", "86419753208641975320"},
+        {"100000000000000000000", "1", "99999999999999999999"},
+    };
+
+    passCount = 0;
+    for (auto &amp;tc : subTests) {
+        vector&lt;int&gt; A = toVector(tc.a);
+        vector&lt;int&gt; B = toVector(tc.b);
+
+        string result;
+        if (cmp(A, B)) {
+            vector&lt;int&gt; C = sub(A, B);
+            result = toString(C);
+        } else {
+            vector&lt;int&gt; C = sub(B, A);
+            result = "-" + toString(C);
+        }
+
+        bool pass = (result == tc.expected);
+        if (pass) ++passCount;
+        cout &lt;&lt; "  " &lt;&lt; tc.a &lt;&lt; " - " &lt;&lt; tc.b &lt;&lt; " = " &lt;&lt; result
+             &lt;&lt; "  [" &lt;&lt; (pass ? "PASS" : "FAIL") &lt;&lt; "]" &lt;&lt; endl;
+        if (!pass) cout &lt;&lt; "    期望: " &lt;&lt; tc.expected &lt;&lt; endl;
+    }
+    cout &lt;&lt; "  减法通过: " &lt;&lt; passCount &lt;&lt; "/6" &lt;&lt; endl &lt;&lt; endl;
+}
+
+// ============================================================
+// 交互式主菜单
+// ============================================================
+int main() {
+    cout &lt;&lt; "========================================" &lt;&lt; endl;
+    cout &lt;&lt; "  第08课：高精度加法与减法" &lt;&lt; endl;
+    cout &lt;&lt; "  大数存储 · 逐位运算 · 进位借位" &lt;&lt; endl;
+    cout &lt;&lt; "========================================" &lt;&lt; endl;
+
+    while (true) {
+        cout &lt;&lt; endl;
+        cout &lt;&lt; "请选择操作：" &lt;&lt; endl;
+        cout &lt;&lt; "  1. 高精度加法（A + B）" &lt;&lt; endl;
+        cout &lt;&lt; "  2. 高精度减法（A - B）" &lt;&lt; endl;
+        cout &lt;&lt; "  3. 自动运行测试用例" &lt;&lt; endl;
+        cout &lt;&lt; "  0. 退出" &lt;&lt; endl;
+        cout &lt;&lt; "请输入选项 (0-3): ";
+
+        int choice;
+        cin &gt;&gt; choice;
+
+        if (cin.fail()) {
+            cin.clear();
+            cin.ignore(10000, '\n');
+            cout &lt;&lt; "无效输入，请输入数字 0-3。" &lt;&lt; endl;
+            continue;
+        }
+        cin.ignore(10000, '\n');
+
+        switch (choice) {
+            case 1: cout &lt;&lt; endl; solveAdd(); break;
+            case 2: cout &lt;&lt; endl; solveSub(); break;
+            case 3: cout &lt;&lt; endl; runTests(); break;
+            case 0: cout &lt;&lt; "再见！" &lt;&lt; endl; return 0;
+            default: cout &lt;&lt; "无效选项，请重新输入。" &lt;&lt; endl; break;
+        }
+    }
+    return 0;
+}
+</pre>
+    <p class="hint">本页使用浅色主题与 UTF-8 编码，可直接打印或导出 PDF。</p>
+  </div>
+</body>
+</html>

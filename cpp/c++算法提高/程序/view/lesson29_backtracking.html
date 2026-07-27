@@ -1,0 +1,401 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>lesson29_backtracking.cpp</title>
+<style>
+  :root {
+    --bg: #f5f7fa;
+    --panel: #ffffff;
+    --text: #1a1a2e;
+    --muted: #5a6570;
+    --gold: #b8860b;
+    --code-bg: #ffffff;
+    --code-text: #1f2933;
+    --border: #d8dee6;
+    --top-bg: #ffffff;
+    --top-border: #e5e9ef;
+  }
+  * { box-sizing: border-box; }
+  html, body {
+    margin: 0; padding: 0;
+    background: var(--bg);
+    color: var(--text);
+    font-family: -apple-system, BlinkMacSystemFont, "PingFang SC", "Microsoft YaHei", sans-serif;
+    min-height: 100%;
+  }
+  .top {
+    position: sticky; top: 0; z-index: 10;
+    display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between;
+    gap: 10px;
+    padding: 12px 18px;
+    background: var(--top-bg);
+    border-bottom: 1px solid var(--top-border);
+    box-shadow: 0 1px 8px rgba(15, 23, 42, 0.06);
+  }
+  .brand { color: var(--gold); font-weight: 700; font-size: 14px; letter-spacing: 0.04em; }
+  .title { font-size: 15px; font-weight: 600; color: var(--text); max-width: 52vw; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .actions { display: flex; gap: 8px; flex-wrap: wrap; }
+  .btn {
+    appearance: none; border: 1px solid var(--border);
+    background: #fff; color: var(--text);
+    border-radius: 999px; padding: 8px 14px; font-size: 13px; font-weight: 600;
+    text-decoration: none; cursor: pointer;
+  }
+  .btn:hover { background: #f0f3f7; }
+  .btn.gold {
+    background: linear-gradient(135deg, #f0d78c, #d4a853);
+    color: #0a2540; border-color: #e0c06a;
+  }
+  .meta {
+    padding: 10px 18px; color: var(--muted); font-size: 12px;
+    border-bottom: 1px solid var(--border);
+    background: var(--panel);
+  }
+  .wrap { padding: 16px 18px 40px; }
+  pre {
+    margin: 0;
+    background: var(--code-bg);
+    color: var(--code-text);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 18px 20px;
+    overflow: auto;
+    font-family: "SF Mono", "JetBrains Mono", "Fira Code", Consolas, "Courier New", monospace;
+    font-size: 13.5px;
+    line-height: 1.55;
+    white-space: pre;
+    tab-size: 4;
+    box-shadow: 0 2px 12px rgba(15, 23, 42, 0.05);
+  }
+  .hint { margin-top: 12px; color: var(--muted); font-size: 12px; }
+  @media print {
+    html, body { background: #fff !important; color: #000 !important; }
+    .top { position: static; box-shadow: none; border-bottom: 1px solid #ccc; background: #fff !important; }
+    .actions { display: none !important; }
+    .meta { background: #fff !important; border-color: #ddd; color: #333; }
+    .wrap { padding: 0; }
+    pre {
+      background: #fff !important; color: #000 !important;
+      border: 1px solid #bbb; box-shadow: none; border-radius: 0;
+      white-space: pre-wrap; word-break: break-word; font-size: 11pt; line-height: 1.4;
+    }
+    .hint { display: none; }
+    a { color: #000; text-decoration: none; }
+  }
+</style>
+</head>
+<body>
+  <div class="top">
+    <div class="brand">C++ 算法提高 · 配套代码</div>
+    <div class="title">lesson29_backtracking.cpp</div>
+    <div class="actions">
+      <a class="btn" href="../lesson29_backtracking.cpp" download="lesson29_backtracking.cpp">⬇️ 下载源文件</a>
+      <a class="btn gold" href="javascript:history.back()">← 返回课件</a>
+    </div>
+  </div>
+  <div class="meta">编码：UTF-8 · 文件：lesson29_backtracking.cpp · 共 297 行 · 浅色主题便于打印</div>
+  <div class="wrap">
+    <pre id="code">/*
+ * ================================================================
+ * C++算法提高 第29课：递归与回溯
+ * ================================================================
+ *
+ * 算法知识点：
+ *   - 回溯法的核心思想：试探 → 递归 → 撤销（回溯）
+ *   - 回溯法通用框架：选择、试探、递归、撤销四步走
+ *   - 剪枝优化：在搜索过程中提前排除不可能的分支
+ *   - 解空间树：直观理解回溯搜索过程
+ *
+ * 经典例题：
+ *   例题1 - 八皇后问题：8×8棋盘放8个皇后，互不攻击
+ *   例题2 - 组合输出：从1~n中选r个数的所有组合（回溯法）
+ *
+ * 运行说明：
+ *   g++ -std=c++11 lesson29_backtracking.cpp -o lesson29
+ *   ./lesson29
+ */
+
+#include &lt;iostream&gt;
+#include &lt;cmath&gt;
+#include &lt;cstring&gt;
+using namespace std;
+
+// ================================================================
+// 例题1：八皇后问题
+// ================================================================
+// 问题描述：
+//   在 8×8 的国际象棋棋盘上放置 8 个皇后，使得任意两个皇后
+//   都不能在同一行、同一列或同一对角线上。
+//
+// 数据结构说明：
+//   pos[i] = 第 i 行皇后所在的列编号（0 ~ 7）
+//   这样设计天然保证了"每行只有一个皇后"
+//
+// 冲突检查逻辑：
+//   - 同列冲突：pos[i] == col（两个皇后在同一列）
+//   - 对角线冲突：abs(row - i) == abs(col - pos[i])
+//     解释：在棋盘上，如果两个位置的行差等于列差，
+//     说明它们在一条45度或135度的对角线上
+//
+// 回溯搜索流程：
+//   从第0行开始，逐行放置皇后
+//   对于每一行，尝试所有8列位置
+//   → 如果某一列合法，就放置皇后并递归到下一行
+//   → 如果8列都不合法，回溯到上一行重新选择
+// ================================================================
+
+const int N = 8;                    // 棋盘大小（8×8）
+int pos[N];                         // pos[行] = 列，记录皇后位置
+int queenSolutionCount = 0;         // 八皇后解的数量计数器
+bool queenFirstPrinted = false;     // 是否已经输出了第一个解
+
+// 检查在第 row 行第 col 列放置皇后是否安全
+// 需要和前面已经放置的 row 个皇后逐一比较
+bool isSafe(int row, int col) {
+    for (int i = 0; i &lt; row; i++) {
+        // 检查1：是否在同一列？
+        if (pos[i] == col) {
+            return false;           // 同列冲突，不安全
+        }
+        // 检查2：是否在同一个对角线上？
+        // 如果 |row - i| == |col - pos[i]|，说明在对角线上
+        if (abs(row - i) == abs(col - pos[i])) {
+            return false;           // 对角线冲突，不安全
+        }
+    }
+    return true;                    // 通过所有检查，安全
+}
+
+// 回溯搜索函数：尝试在第 row 行放置皇后
+// 参数 row：当前正在处理的行号（0 ~ N-1）
+// 当 row == N 时，说明前 N 行都已经成功放置，找到一个解
+void solveEightQueens(int row) {
+    // 【终止条件】所有行都放好了皇后，找到一个解
+    if (row == N) {
+        queenSolutionCount++;
+
+        // 如果是第一个解，打印棋盘布局
+        if (!queenFirstPrinted) {
+            queenFirstPrinted = true;
+            cout &lt;&lt; "┌─────────────────────────────────────┐" &lt;&lt; endl;
+            cout &lt;&lt; "│       八皇后问题 —— 第一个解        │" &lt;&lt; endl;
+            cout &lt;&lt; "├─────────────────────────────────────┤" &lt;&lt; endl;
+            cout &lt;&lt; "│  棋盘布局 (Q=皇后, .=空格)          │" &lt;&lt; endl;
+            cout &lt;&lt; "│                                     │" &lt;&lt; endl;
+            for (int i = 0; i &lt; N; i++) {
+                cout &lt;&lt; "│  ";
+                for (int j = 0; j &lt; N; j++) {
+                    if (pos[i] == j) {
+                        cout &lt;&lt; " Q ";   // 该位置有皇后
+                    } else {
+                        cout &lt;&lt; " · ";   // 该位置为空
+                    }
+                }
+                // 输出该行皇后的列号
+                cout &lt;&lt; "  ← 第" &lt;&lt; i + 1 &lt;&lt; "行皇后在第" &lt;&lt; pos[i] + 1 &lt;&lt; "列";
+                cout &lt;&lt; endl;
+            }
+            cout &lt;&lt; "└─────────────────────────────────────┘" &lt;&lt; endl;
+            cout &lt;&lt; endl;
+        }
+        return;
+    }
+
+    // 【回溯搜索】在第 row 行尝试所有可能的列位置
+    for (int col = 0; col &lt; N; col++) {
+        // 【剪枝】只有在安全的位置才继续搜索
+        if (isSafe(row, col)) {
+            pos[row] = col;                 // ② 试探：放置皇后
+            solveEightQueens(row + 1);      // ③ 递归：处理下一行
+            // ④ 撤销：pos[row] 会在下一轮循环中被覆盖，无需显式清除
+        }
+    }
+}
+
+// 八皇后问题的入口函数
+void solveEightQueensProblem() {
+    cout &lt;&lt; "╔══════════════════════════════════════════════╗" &lt;&lt; endl;
+    cout &lt;&lt; "║     例题1：八皇后问题（回溯法）               ║" &lt;&lt; endl;
+    cout &lt;&lt; "║     8×8 棋盘，放8个皇后，互不攻击             ║" &lt;&lt; endl;
+    cout &lt;&lt; "╚══════════════════════════════════════════════╝" &lt;&lt; endl;
+    cout &lt;&lt; endl;
+
+    // 初始化
+    queenSolutionCount = 0;
+    queenFirstPrinted = false;
+
+    // 从第 0 行开始搜索
+    solveEightQueens(0);
+
+    // 输出统计结果
+    cout &lt;&lt; "══════════════════════════════════════" &lt;&lt; endl;
+    cout &lt;&lt; "  八皇后问题总共有 " &lt;&lt; queenSolutionCount &lt;&lt; " 种不同的解法。" &lt;&lt; endl;
+    cout &lt;&lt; "══════════════════════════════════════" &lt;&lt; endl;
+    cout &lt;&lt; endl;
+}
+
+
+// ================================================================
+// 例题2：组合输出（回溯法）
+// ================================================================
+// 问题描述：
+//   从 1 到 n 的整数中选出 r 个数，输出所有可能的组合。
+//   组合不考虑顺序（{1,2,3} 和 {3,2,1} 是同一组合），
+//   按字典序从小到大输出。
+//
+// 回溯思路：
+//   使用 dfs(start, depth) 回溯框架：
+//   - start：从哪个数开始选（保证递增，避免重复）
+//   - depth：已经选了几个数（当 depth == r 时输出）
+//
+// 剪枝策略：
+//   如果剩余可选的数字数量 &lt; 还需要的数量，提前返回
+//   即：n - start + 1 &lt; r - depth 时剪枝
+//
+// 为什么 start 参数能避免重复？
+//   例如从1~5选3个，选择1后，下一个只能从2开始选，
+//   这样就保证了组合中的数字是递增的，不会出现 {3,1,2} 这样的重复。
+// ================================================================
+
+int n_comb, r_comb;                 // n: 总数, r: 要选的数量
+int comb[25];                       // 存储当前组合的数组
+int combCount = 0;                  // 组合数量计数器
+
+// 回溯搜索函数：生成组合
+// 参数 start：下一个候选数字从 start 开始（保证递增）
+// 参数 depth：当前已经选择了几个数字
+void dfsCombine(int start, int depth) {
+    // 【终止条件】已经选够了 r 个数，输出当前组合
+    if (depth == r_comb) {
+        combCount++;
+        cout &lt;&lt; "  ";
+        for (int i = 0; i &lt; r_comb; i++) {
+            cout &lt;&lt; comb[i];
+            if (i &lt; r_comb - 1) cout &lt;&lt; " ";
+        }
+        cout &lt;&lt; endl;
+        return;
+    }
+
+    // 【回溯搜索】从 start 开始尝试每一个候选数字
+    for (int i = start; i &lt;= n_comb; i++) {
+        // 【剪枝优化】如果剩余可选的数字不够凑齐 r 个
+        // 剩余可选个数 = n_comb - i + 1
+        // 还需要选个数 = r_comb - depth
+        if (n_comb - i + 1 &lt; r_comb - depth) {
+            break;  // 剪枝：剩下的数不够了，直接退出循环
+        }
+
+        comb[depth] = i;                    // ② 试探：选择数字 i
+        dfsCombine(i + 1, depth + 1);       // ③ 递归：从 i+1 开始选下一个数
+        // ④ 撤销：comb[depth] 会在下一轮循环被覆盖，无需显式清除
+    }
+}
+
+// 组合输出的入口函数
+void solveCombination() {
+    // 测试参数：从 1~5 中选 3 个
+    n_comb = 5;
+    r_comb = 3;
+
+    cout &lt;&lt; "╔══════════════════════════════════════════════╗" &lt;&lt; endl;
+    cout &lt;&lt; "║     例题2：组合输出（回溯法）                 ║" &lt;&lt; endl;
+    cout &lt;&lt; "║     从 1~" &lt;&lt; n_comb &lt;&lt; " 中选 " &lt;&lt; r_comb &lt;&lt; " 个数的所有组合              ║" &lt;&lt; endl;
+    cout &lt;&lt; "╚══════════════════════════════════════════════╝" &lt;&lt; endl;
+    cout &lt;&lt; endl;
+
+    // 理论上组合数：C(5,3) = 5!/(3!*2!) = 10
+    int theoryCount = 1;
+    for (int i = 1; i &lt;= r_comb; i++) {
+        theoryCount = theoryCount * (n_comb - r_comb + i) / i;
+    }
+    cout &lt;&lt; "  理论组合数：C(" &lt;&lt; n_comb &lt;&lt; "," &lt;&lt; r_comb &lt;&lt; ") = " &lt;&lt; theoryCount &lt;&lt; endl;
+    cout &lt;&lt; "  ───────────────────────────────────────" &lt;&lt; endl;
+
+    combCount = 0;
+    dfsCombine(1, 0);                       // 从数字 1 开始选
+
+    cout &lt;&lt; "  ───────────────────────────────────────" &lt;&lt; endl;
+    cout &lt;&lt; "  实际输出 " &lt;&lt; combCount &lt;&lt; " 种组合（与理论值一致：";
+    cout &lt;&lt; (combCount == theoryCount ? "✓" : "✗ 不一致！") &lt;&lt; "）" &lt;&lt; endl;
+    cout &lt;&lt; endl;
+}
+
+
+// ================================================================
+// 附加演示：理解回溯法的可视化工具
+// ================================================================
+// 打印 4 皇后问题的解空间树（简化版），帮助学生理解回溯的搜索过程
+// 4皇后只有2个解，搜索树较小，适合教学演示
+// ================================================================
+void demoBacktrackingTree() {
+    cout &lt;&lt; "╔══════════════════════════════════════════════╗" &lt;&lt; endl;
+    cout &lt;&lt; "║     附加演示：4皇后问题解空间树              ║" &lt;&lt; endl;
+    cout &lt;&lt; "║     (帮助理解回溯法的搜索过程)               ║" &lt;&lt; endl;
+    cout &lt;&lt; "╚══════════════════════════════════════════════╝" &lt;&lt; endl;
+    cout &lt;&lt; endl;
+    cout &lt;&lt; "  回溯法搜索 4 皇后问题的过程（DFS + 剪枝）：" &lt;&lt; endl;
+    cout &lt;&lt; endl;
+    cout &lt;&lt; "                          [开始]" &lt;&lt; endl;
+    cout &lt;&lt; "                            │" &lt;&lt; endl;
+    cout &lt;&lt; "          ┌────────┬────────┼────────┬────────┐" &lt;&lt; endl;
+    cout &lt;&lt; "        行1=0   行1=1   行1=2    行1=3" &lt;&lt; endl;
+    cout &lt;&lt; "        Q···    ·Q··    ··Q·     ···Q" &lt;&lt; endl;
+    cout &lt;&lt; "          │       │       │        │" &lt;&lt; endl;
+    cout &lt;&lt; "       ┌──┴──┐    │    ┌──┴──┐  ┌──┴──┐" &lt;&lt; endl;
+    cout &lt;&lt; "     行2=2 行2=3 行2=3  行2=0  行2=0 行2=1" &lt;&lt; endl;
+    cout &lt;&lt; "     Q···  Q···  ·Q··   ··Q·   ···Q  ···Q" &lt;&lt; endl;
+    cout &lt;&lt; "     ··Q·  ···Q  ···Q   Q···   Q···  ·Q··" &lt;&lt; endl;
+    cout &lt;&lt; "      │     │     │      │      │      │" &lt;&lt; endl;
+    cout &lt;&lt; "    行3=1  ✗冲突  ✗冲突  ✗冲突  ✗冲突  ✗冲突" &lt;&lt; endl;
+    cout &lt;&lt; "    失败   剪枝   剪枝   剪枝   剪枝   剪枝" &lt;&lt; endl;
+    cout &lt;&lt; endl;
+    cout &lt;&lt; "  ★ 4皇后问题有 2 个解（对称的）" &lt;&lt; endl;
+    cout &lt;&lt; "  ★ 大量分支被剪枝，避免了无效搜索" &lt;&lt; endl;
+    cout &lt;&lt; endl;
+}
+
+
+// ================================================================
+// 主函数：测试所有例题和演示
+// ================================================================
+int main() {
+    // 程序标题
+    cout &lt;&lt; endl;
+    cout &lt;&lt; "╔══════════════════════════════════════════════════════╗" &lt;&lt; endl;
+    cout &lt;&lt; "║     C++ 算法提高 —— 第29课：递归与回溯                ║" &lt;&lt; endl;
+    cout &lt;&lt; "║     试探 → 递归 → 撤销 → 剪枝                        ║" &lt;&lt; endl;
+    cout &lt;&lt; "╚══════════════════════════════════════════════════════╝" &lt;&lt; endl;
+    cout &lt;&lt; endl;
+
+    // 附加演示：4皇后解空间树
+    demoBacktrackingTree();
+
+    // 例题1：八皇后问题
+    solveEightQueensProblem();
+
+    // 例题2：组合输出
+    solveCombination();
+
+    // 本课小结
+    cout &lt;&lt; "╔══════════════════════════════════════════════════════╗" &lt;&lt; endl;
+    cout &lt;&lt; "║                   本课小结                           ║" &lt;&lt; endl;
+    cout &lt;&lt; "╠══════════════════════════════════════════════════════╣" &lt;&lt; endl;
+    cout &lt;&lt; "║  1. 回溯法 = 深度优先搜索 + 状态记录 + 撤销恢复      ║" &lt;&lt; endl;
+    cout &lt;&lt; "║  2. 四步框架：选择 → 试探 → 递归 → 撤销             ║" &lt;&lt; endl;
+    cout &lt;&lt; "║  3. 剪枝是效率关键：提前排除不可能的分支             ║" &lt;&lt; endl;
+    cout &lt;&lt; "║  4. 解空间树帮助理解搜索过程                         ║" &lt;&lt; endl;
+    cout &lt;&lt; "║  5. 八皇后：92种解法，只探索约2057个节点             ║" &lt;&lt; endl;
+    cout &lt;&lt; "║  6. 组合输出：递增选取避免重复，剩余不足则剪枝       ║" &lt;&lt; endl;
+    cout &lt;&lt; "╚══════════════════════════════════════════════════════╝" &lt;&lt; endl;
+    cout &lt;&lt; endl;
+
+    return 0;
+}
+</pre>
+    <p class="hint">本页使用浅色主题与 UTF-8 编码，可直接打印或导出 PDF。</p>
+  </div>
+</body>
+</html>

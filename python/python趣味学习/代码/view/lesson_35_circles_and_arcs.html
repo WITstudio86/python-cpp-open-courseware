@@ -1,0 +1,455 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>lesson_35_circles_and_arcs.py</title>
+<style>
+  :root {
+    --bg: #f5f7fa;
+    --panel: #ffffff;
+    --text: #1a1a2e;
+    --muted: #5a6570;
+    --gold: #b8860b;
+    --code-bg: #ffffff;
+    --code-text: #1f2933;
+    --border: #d8dee6;
+    --top-bg: #ffffff;
+    --top-border: #e5e9ef;
+  }
+  * { box-sizing: border-box; }
+  html, body {
+    margin: 0; padding: 0;
+    background: var(--bg);
+    color: var(--text);
+    font-family: -apple-system, BlinkMacSystemFont, "PingFang SC", "Microsoft YaHei", sans-serif;
+    min-height: 100%;
+  }
+  .top {
+    position: sticky; top: 0; z-index: 10;
+    display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between;
+    gap: 10px;
+    padding: 12px 18px;
+    background: var(--top-bg);
+    border-bottom: 1px solid var(--top-border);
+    box-shadow: 0 1px 8px rgba(15, 23, 42, 0.06);
+  }
+  .brand { color: var(--gold); font-weight: 700; font-size: 14px; letter-spacing: 0.04em; }
+  .title { font-size: 15px; font-weight: 600; color: var(--text); max-width: 52vw; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .actions { display: flex; gap: 8px; flex-wrap: wrap; }
+  .btn {
+    appearance: none; border: 1px solid var(--border);
+    background: #fff; color: var(--text);
+    border-radius: 999px; padding: 8px 14px; font-size: 13px; font-weight: 600;
+    text-decoration: none; cursor: pointer;
+  }
+  .btn:hover { background: #f0f3f7; }
+  .btn.gold {
+    background: linear-gradient(135deg, #f0d78c, #d4a853);
+    color: #0a2540; border-color: #e0c06a;
+  }
+  .meta {
+    padding: 10px 18px; color: var(--muted); font-size: 12px;
+    border-bottom: 1px solid var(--border);
+    background: var(--panel);
+  }
+  .wrap { padding: 16px 18px 40px; }
+  pre {
+    margin: 0;
+    background: var(--code-bg);
+    color: var(--code-text);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 18px 20px;
+    overflow: auto;
+    font-family: "SF Mono", "JetBrains Mono", "Fira Code", Consolas, "Courier New", monospace;
+    font-size: 13.5px;
+    line-height: 1.55;
+    white-space: pre;
+    tab-size: 4;
+    box-shadow: 0 2px 12px rgba(15, 23, 42, 0.05);
+  }
+  .hint { margin-top: 12px; color: var(--muted); font-size: 12px; }
+  @media print {
+    html, body { background: #fff !important; color: #000 !important; }
+    .top { position: static; box-shadow: none; border-bottom: 1px solid #ccc; background: #fff !important; }
+    .actions { display: none !important; }
+    .meta { background: #fff !important; border-color: #ddd; color: #333; }
+    .wrap { padding: 0; }
+    pre {
+      background: #fff !important; color: #000 !important;
+      border: 1px solid #bbb; box-shadow: none; border-radius: 0;
+      white-space: pre-wrap; word-break: break-word; font-size: 11pt; line-height: 1.4;
+    }
+    .hint { display: none; }
+    a { color: #000; text-decoration: none; }
+  }
+</style>
+</head>
+<body>
+  <div class="top">
+    <div class="brand">Python 趣味学习 · 配套代码</div>
+    <div class="title">lesson_35_circles_and_arcs.py</div>
+    <div class="actions">
+      <a class="btn" href="../lesson_35_circles_and_arcs.py" download="lesson_35_circles_and_arcs.py">⬇️ 下载源文件</a>
+      <a class="btn gold" href="javascript:history.back()">← 返回课件</a>
+    </div>
+  </div>
+  <div class="meta">编码：UTF-8 · 文件：lesson_35_circles_and_arcs.py · 共 351 行 · 浅色主题便于打印</div>
+  <div class="wrap">
+    <pre id="code"># ============================================================
+# 课程 35：画圆和弧线
+# 学习目标：
+#   1. 学会用 circle(radius) 画圆
+#   2. 学会用 circle(radius, angle) 画弧线（圆的一部分）
+#   3. 学会 penup() 和 pendown() 配合使用，移动到不同位置画图
+#   4. 能用圆和弧线组合出有趣的图案（笑脸、雪人）
+# ============================================================
+
+import turtle
+
+screen = turtle.Screen()
+screen.title("第35课：画圆和弧线")
+screen.bgcolor("lightyellow")  # 淡黄色背景，像一张画纸
+
+t = turtle.Turtle()
+t.shape("turtle")
+t.pensize(3)
+t.speed(6)
+
+# =====================================================
+# 第一部分：circle() 的基本用法
+# =====================================================
+
+# --- 1.1 画一个完整的圆 ---
+# circle(半径)：画一个半径为 radius 的圆
+# 海龟当前位置是圆的"底部切点"，圆会画在海龟的左边
+
+t.color("blue")
+t.penup()
+t.goto(-200, 150)  # 移动到左上角
+t.pendown()
+
+t.circle(50)  # 画半径为 50 的圆
+
+# 在圆的旁边写个标签（可选，帮助理解）
+t.penup()
+t.goto(-200, 100)
+t.pendown()
+t.write("半径50的圆", font=("Arial", 10, "normal"))
+t.penup()
+
+
+# --- 1.2 画不同大小的圆 ---
+t.color("red")
+t.goto(-80, 130)
+t.pendown()
+t.circle(30)  # 小圆，半径 30
+
+t.color("green")
+t.goto(30, 110)
+t.pendown()
+t.circle(70)  # 大圆，半径 70
+
+# 发现了吗？circle(半径) 中的数字越大，圆越大！
+
+
+# =====================================================
+# 第二部分：circle(radius, angle) 画弧线
+# =====================================================
+
+# circle(半径, 角度)：画圆的一部分（弧线）
+# 角度 = 180 → 半圆；角度 = 90 → 四分之一圆
+
+t.color("purple")
+t.penup()
+t.goto(-200, -20)
+t.pendown()
+
+t.circle(60, 180)  # 画半圆（180 度）
+
+t.penup()
+t.goto(-200, -30)
+t.write("半圆 (180°)", font=("Arial", 9, "normal"))
+
+
+t.color("orange")
+t.penup()
+t.goto(-50, 0)
+t.pendown()
+
+t.circle(60, 90)  # 画四分之一圆（90 度）
+
+t.penup()
+t.goto(-50, -50)
+t.write("1/4圆 (90°)", font=("Arial", 9, "normal"))
+
+
+t.color("brown")
+t.penup()
+t.goto(80, 30)
+t.pendown()
+
+t.circle(60, 270)  # 画四分之三圆（270 度）
+
+t.penup()
+t.goto(80, -30)
+t.write("3/4圆 (270°)", font=("Arial", 9, "normal"))
+
+
+# =====================================================
+# 第三部分：画一个笑脸
+# =====================================================
+
+def draw_smiley(turtle_obj, x, y):
+    """在位置 (x, y) 画一个笑脸"""
+    t = turtle_obj
+
+    # --- 画脸（大圆） ---
+    t.penup()
+    t.goto(x, y)
+    t.pendown()
+    t.color("black")
+    t.pensize(3)
+    t.circle(80)  # 脸，半径 80
+
+    # --- 画左眼 ---
+    t.penup()
+    t.goto(x - 30, y + 100)  # 移动到左眼位置
+    t.pendown()
+    t.color("blue")
+    t.begin_fill()      # 开始填充
+    t.circle(10)         # 小圆当眼睛
+    t.end_fill()         # 结束填充（眼睛变成蓝色实心圆）
+
+    # --- 画右眼 ---
+    t.penup()
+    t.goto(x + 30, y + 100)  # 移动到右眼位置
+    t.pendown()
+    t.circle(10)
+    t.end_fill()
+
+    # --- 画嘴巴（半圆弧线） ---
+    t.penup()
+    t.goto(x - 30, y + 70)  # 移动到嘴巴起点
+    t.pendown()
+    t.color("red")
+    t.pensize(4)
+    t.setheading(-60)      # 调整海龟朝向，让弧线向下弯
+    t.circle(35, 120)      # 画 120 度的弧线当微笑的嘴巴
+
+
+# 清除之前画的演示图形
+t.clear()
+
+# 画一个笑脸！
+draw_smiley(t, -100, -80)
+
+# 再在旁边画一个小一点的笑脸
+# 我们没有用类，直接手动调整位置和大小
+t.penup()
+t.goto(120, -100)
+t.pendown()
+t.color("black")
+t.pensize(3)
+t.circle(50)  # 小脸
+
+t.penup()
+t.goto(100, -40)
+t.pendown()
+t.color("blue")
+t.begin_fill()
+t.circle(7)   # 小眼睛
+t.end_fill()
+
+t.penup()
+t.goto(140, -40)
+t.pendown()
+t.begin_fill()
+t.circle(7)
+t.end_fill()
+
+t.penup()
+t.goto(100, -60)
+t.pendown()
+t.color("red")
+t.pensize(3)
+t.setheading(-60)
+t.circle(25, 120)
+
+
+# =====================================================
+# 第四部分：画雪人
+# =====================================================
+
+# 清除画布，重新开始画雪人
+t.clear()
+t.penup()
+t.goto(0, -200)
+t.pendown()
+t.setheading(0)  # 重置朝向
+
+# 雪人的特点：两个圆叠在一起，下面大上面小
+# 还有眼睛、鼻子、帽子
+
+# --- 雪人身体（下面的大圆） ---
+t.color("black")
+t.pensize(3)
+t.penup()
+t.goto(0, -180)
+t.pendown()
+t.circle(100)  # 大圆当身体
+
+# --- 雪人头（上面的小圆） ---
+t.penup()
+t.goto(0, 20)
+t.pendown()
+t.circle(60)  # 小圆当头
+
+# --- 雪人的眼睛 ---
+t.color("black")
+for eye_x in [-20, 20]:
+    t.penup()
+    t.goto(eye_x, 90)
+    t.pendown()
+    t.begin_fill()
+    t.circle(5)
+    t.end_fill()
+
+# --- 雪人的鼻子（用一条短线代替胡萝卜鼻子） ---
+t.color("orange")
+t.pensize(4)
+t.penup()
+t.goto(0, 80)
+t.pendown()
+t.setheading(0)
+t.forward(20)
+
+# --- 雪人的帽子 ---
+t.color("red")
+t.pensize(2)
+t.penup()
+t.goto(-30, 130)
+t.pendown()
+t.setheading(0)
+t.begin_fill()
+t.forward(60)
+t.left(90)
+t.forward(15)
+t.left(90)
+t.forward(60)
+t.left(90)
+t.forward(15)
+t.end_fill()
+
+# 帽子的顶
+t.penup()
+t.goto(-15, 145)
+t.pendown()
+t.begin_fill()
+t.left(90)
+t.forward(30)
+t.left(90)
+t.forward(25)
+t.left(90)
+t.forward(30)
+t.end_fill()
+
+t.hideturtle()
+turtle.done()
+
+
+# ============================================================
+# 练习题 1：画雪人
+#
+# 自己从头画一个雪人！可以设计得更可爱：
+# - 可以给雪人加上围巾
+# - 可以加两个纽扣（用实心小圆）
+# - 可以加一双手（用线条表示）
+#
+# 提示：多使用 penup() 把笔移动到合适的位置，再 pendown() 开始画
+#
+# import turtle
+# t = turtle.Turtle()
+# t.speed(5)
+#
+# # 【你的代码】画一个可爱的雪人
+#
+# turtle.done()
+# ============================================================
+
+
+# ============================================================
+# 练习题 2：画笑脸
+#
+# 画一个开心的笑脸，包含：
+# - 一个大圆当脸
+# - 两只眼睛
+# - 弯弯的嘴巴（用弧线 circle(半径, 角度) 来画）
+#
+# 试试改变嘴巴的弧线角度，看看表情会有什么变化？
+# （120 度是大笑，60 度是微笑，200 度是难过...试试看！）
+#
+# import turtle
+# t = turtle.Turtle()
+# t.speed(5)
+#
+# # 【你的代码】画一个笑脸，试试不同的嘴巴角度
+#
+# turtle.done()
+# ============================================================
+
+
+# ============================================================
+# 练习题 3：画奥运五环
+#
+# 奥运五环是 5 个不同颜色的圆环叠在一起。
+# 要求：
+# - 用 5 种颜色：蓝、黑、红、黄、绿
+# - 用 penup()/pendown() 移动到每个环的位置
+# - 每个环的半径一样（比如 50）
+# - 位置要安排好：上面 3 个环，下面 2 个环
+#
+# 位置参考（x 是水平位置，y 是垂直位置）：
+#   上面三环：(x=-110, y=0), (x=0, y=0), (x=110, y=0)
+#   下面两环：(x=-55, y=-55), (x=55, y=-55)
+#
+# import turtle
+# t = turtle.Turtle()
+# t.pensize(5)
+# t.speed(5)
+#
+# colors = ["blue", "black", "red", "yellow", "green"]
+# positions = [(-110, 0), (0, 0), (110, 0), (-55, -55), (55, -55)]
+#
+# # 【你的代码】用循环画 5 个环
+#
+# turtle.done()
+# ============================================================
+
+
+# ============================================================
+# 综合小挑战：画"海底世界"
+#
+# 挑战内容：
+# 综合运用圆、弧线、直线，画一幅"海底世界"。
+#
+# 要求：
+#   1. 画一条鱼（身体用椭圆/两个弧线、尾巴用三角形、眼睛用实心小圆）
+#   2. 画一些泡泡（用不同大小的圆，分散在不同位置）
+#   3. 画海底的沙地（用一条波浪线，可用多个半圆弧线连接）
+#   4. 给画面加上颜色，让海底世界生动起来
+#
+# 提示：
+#   - 画鱼的身体可以用两个 circle(半径, 180) 弧线拼在一起
+#   - 泡泡用小 circle(5) 或 circle(10)
+#   - 波浪线可以用多个 circle(30, 180) 左右交替画
+#   - 别忘了用 begin_fill() 和 end_fill() 给鱼填色！
+#
+# 发挥你的想象力，画出你心中的海底世界吧！
+# ============================================================
+</pre>
+    <p class="hint">本页使用浅色主题与 UTF-8 编码，可直接打印或导出 PDF。</p>
+  </div>
+</body>
+</html>

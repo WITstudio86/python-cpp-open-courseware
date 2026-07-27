@@ -1,0 +1,453 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>第35节-屏幕在抖/main.py</title>
+<style>
+  :root {
+    --bg: #f5f7fa;
+    --panel: #ffffff;
+    --text: #1a1a2e;
+    --muted: #5a6570;
+    --gold: #b8860b;
+    --code-bg: #ffffff;
+    --code-text: #1f2933;
+    --border: #d8dee6;
+    --top-bg: #ffffff;
+    --top-border: #e5e9ef;
+  }
+  * { box-sizing: border-box; }
+  html, body {
+    margin: 0; padding: 0;
+    background: var(--bg);
+    color: var(--text);
+    font-family: -apple-system, BlinkMacSystemFont, "PingFang SC", "Microsoft YaHei", sans-serif;
+    min-height: 100%;
+  }
+  .top {
+    position: sticky; top: 0; z-index: 10;
+    display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between;
+    gap: 10px;
+    padding: 12px 18px;
+    background: var(--top-bg);
+    border-bottom: 1px solid var(--top-border);
+    box-shadow: 0 1px 8px rgba(15, 23, 42, 0.06);
+  }
+  .brand { color: var(--gold); font-weight: 700; font-size: 14px; letter-spacing: 0.04em; }
+  .title { font-size: 15px; font-weight: 600; color: var(--text); max-width: 52vw; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .actions { display: flex; gap: 8px; flex-wrap: wrap; }
+  .btn {
+    appearance: none; border: 1px solid var(--border);
+    background: #fff; color: var(--text);
+    border-radius: 999px; padding: 8px 14px; font-size: 13px; font-weight: 600;
+    text-decoration: none; cursor: pointer;
+  }
+  .btn:hover { background: #f0f3f7; }
+  .btn.gold {
+    background: linear-gradient(135deg, #f0d78c, #d4a853);
+    color: #0a2540; border-color: #e0c06a;
+  }
+  .meta {
+    padding: 10px 18px; color: var(--muted); font-size: 12px;
+    border-bottom: 1px solid var(--border);
+    background: var(--panel);
+  }
+  .wrap { padding: 16px 18px 40px; }
+  pre {
+    margin: 0;
+    background: var(--code-bg);
+    color: var(--code-text);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 18px 20px;
+    overflow: auto;
+    font-family: "SF Mono", "JetBrains Mono", "Fira Code", Consolas, "Courier New", monospace;
+    font-size: 13.5px;
+    line-height: 1.55;
+    white-space: pre;
+    tab-size: 4;
+    box-shadow: 0 2px 12px rgba(15, 23, 42, 0.05);
+  }
+  .hint { margin-top: 12px; color: var(--muted); font-size: 12px; }
+  @media print {
+    html, body { background: #fff !important; color: #000 !important; }
+    .top { position: static; box-shadow: none; border-bottom: 1px solid #ccc; background: #fff !important; }
+    .actions { display: none !important; }
+    .meta { background: #fff !important; border-color: #ddd; color: #333; }
+    .wrap { padding: 0; }
+    pre {
+      background: #fff !important; color: #000 !important;
+      border: 1px solid #bbb; box-shadow: none; border-radius: 0;
+      white-space: pre-wrap; word-break: break-word; font-size: 11pt; line-height: 1.4;
+    }
+    .hint { display: none; }
+    a { color: #000; text-decoration: none; }
+  }
+</style>
+</head>
+<body>
+  <div class="top">
+    <div class="brand">Pygame 零基础 · 配套代码</div>
+    <div class="title">第35节-屏幕在抖/main.py</div>
+    <div class="actions">
+      <a class="btn" href="../第35节-屏幕在抖/main.py" download="main.py">⬇️ 下载源文件</a>
+      <a class="btn gold" href="javascript:history.back()">← 返回课件</a>
+    </div>
+  </div>
+  <div class="meta">编码：UTF-8 · 文件：第35节-屏幕在抖/main.py · 共 349 行 · 浅色主题便于打印</div>
+  <div class="wrap">
+    <pre id="code">"""
+第35节：屏幕在抖 —— 爆炸震动与粒子系统演示器
+==============================================
+点击画面中的砖块，触发爆炸粒子 + 屏幕震动效果！
+
+操作说明：
+  - 鼠标点击砖块 → 爆炸 + 屏幕震动
+  - 点击空白区域也会产生小爆炸
+  - 关闭窗口退出
+
+知识点：
+  1. 屏幕震动：sin衰减公式  shake = sin(time*freq) * strength * e^(-time*decay)
+  2. 粒子类：位置、速度、生命值、颜色渐变
+  3. 粒子池：列表管理，生命归零自动移除
+"""
+
+import pygame
+import random
+import math
+
+# ==================== 初始化 ====================
+pygame.init()
+WIDTH, HEIGHT = 800, 600
+screen = pygame.display.set_mode((WIDTH, HEIGHT))
+pygame.display.set_caption("第35节：屏幕在抖 - 爆炸震动与粒子系统")
+clock = pygame.time.Clock()
+FPS = 60
+
+# ==================== 颜色定义 ====================
+COLOR_BG = (20, 20, 40)           # 深蓝背景
+COLOR_BRICK = (200, 80, 50)       # 砖块红
+COLOR_BRICK_BORDER = (140, 50, 25)  # 砖块边框
+COLOR_BRICK_HIT = (255, 200, 80)  # 被击中高亮
+COLOR_TEXT = (255, 255, 255)
+COLOR_HINT = (150, 150, 180)
+COLOR_PARTICLE_COUNT = (255, 220, 100)
+
+
+# ==================== 砖块类 ====================
+class Brick:
+    """可点击的砖块，被点击后短暂高亮并触发爆炸"""
+
+    def __init__(self, x, y, w, h):
+        self.rect = pygame.Rect(x, y, w, h)  # 砖块矩形区域
+        self.color = COLOR_BRICK             # 当前颜色
+        self.hit_timer = 0                   # 被击中高亮计时器（帧数）
+
+    def draw(self, surface):
+        """绘制砖块"""
+        color = self.color if self.hit_timer &lt;= 0 else COLOR_BRICK_HIT
+        # 绘制砖块主体（带圆角效果用多个矩形模拟）
+        pygame.draw.rect(surface, color, self.rect, border_radius=4)
+        pygame.draw.rect(surface, COLOR_BRICK_BORDER, self.rect, width=2, border_radius=4)
+
+        # 砖块纹理线（模拟砖块纹理）
+        inner = self.rect.inflate(-10, -10)
+        mid_y = self.rect.centery
+        pygame.draw.line(surface, COLOR_BRICK_BORDER,
+                         (self.rect.left + 4, mid_y),
+                         (self.rect.right - 4, mid_y), 1)
+
+    def update(self):
+        """更新砖块状态（高亮计时）"""
+        if self.hit_timer &gt; 0:
+            self.hit_timer -= 1
+
+    def hit(self):
+        """被击中，触发高亮"""
+        self.hit_timer = 8  # 高亮持续8帧
+
+
+# ==================== 粒子类 ====================
+class Particle:
+    """
+    粒子类 —— 爆炸效果的基本单位
+    -------------------------------
+    每个粒子都是一个独立的"小生命"：
+    - 出生：在爆炸中心产生，获得随机速度和方向
+    - 运动：飞向四周，受重力和摩擦力影响
+    - 衰老：颜色变暗、大小缩小
+    - 死亡：生命值归零，从粒子池中移除
+    """
+
+    def __init__(self, x, y):
+        self.x = float(x)               # X坐标
+        self.y = float(y)               # Y坐标
+
+        # 用随机角度 + 随机速度 生成速度向量
+        # 这样可以保证粒子均匀地向四周飞散
+        angle = random.uniform(0, 2 * math.pi)   # 随机角度 (0~360度)
+        speed = random.uniform(2.0, 8.0)          # 随机速度大小
+        self.vx = math.cos(angle) * speed         # X方向速度分量
+        self.vy = math.sin(angle) * speed         # Y方向速度分量
+
+        self.life = 1.0                # 生命值 (1.0 = 刚出生, 0.0 = 死亡)
+        self.max_radius = random.randint(3, 8)  # 最大半径（每个粒子不同更自然）
+        self.decay_rate = random.uniform(0.8, 1.5)  # 生命衰减速度（随机变化）
+
+        # 颜色渐变：从亮黄（高温）渐变到暗红（冷却）
+        self.color_start = (255, 255, 100)  # 起始颜色：亮黄
+        self.color_end = (180, 30, 0)       # 结束颜色：暗红
+
+    def update(self, dt):
+        """
+        更新粒子状态（每帧调用）
+        dt: 帧间隔时间（秒），用于帧率无关的运动
+        """
+        frame_mult = dt * FPS  # 将dt换算为"标准帧"单位
+
+        # 1. 更新位置（速度 × 时间 = 位移）
+        self.x += self.vx * frame_mult
+        self.y += self.vy * frame_mult
+
+        # 2. 施加重力（让粒子向下加速，更真实）
+        self.vy += 3.0 * frame_mult
+
+        # 3. 摩擦力减速（空气阻力，让粒子慢慢停下来）
+        self.vx *= 0.99 ** frame_mult
+        self.vy *= 0.99 ** frame_mult
+
+        # 4. 生命值衰减
+        self.life -= self.decay_rate * dt
+
+    def get_color(self):
+        """
+        根据剩余生命值计算当前颜色（颜色渐变）
+        生命值越低 → 越接近end_color（暗红）
+        """
+        if self.life &lt;= 0:
+            return self.color_end
+        t = 1.0 - self.life  # t: 0(刚出生) → 1(即将死亡)
+        return (
+            int(self.color_start[0] + (self.color_end[0] - self.color_start[0]) * t),
+            int(self.color_start[1] + (self.color_end[1] - self.color_start[1]) * t),
+            int(self.color_start[2] + (self.color_end[2] - self.color_start[2]) * t),
+        )
+
+    def get_radius(self):
+        """根据剩余生命值计算当前半径（越老越小）"""
+        return max(1, int(self.max_radius * self.life))
+
+    def is_dead(self):
+        """判断粒子是否已死亡"""
+        return self.life &lt;= 0
+
+    def draw(self, surface, offset_x=0, offset_y=0):
+        """绘制粒子（支持屏幕震动偏移）"""
+        color = self.get_color()
+        radius = self.get_radius()
+        draw_x = int(self.x + offset_x)
+        draw_y = int(self.y + offset_y)
+        # 限制在屏幕内绘制（避免绘制到屏幕外）
+        if -20 &lt; draw_x &lt; WIDTH + 20 and -20 &lt; draw_y &lt; HEIGHT + 20:
+            pygame.draw.circle(surface, color, (draw_x, draw_y), radius)
+
+
+# ==================== 屏幕震动管理器 ====================
+class ScreenShake:
+    """
+    屏幕震动效果管理器
+    -------------------
+    使用 sin 衰减公式：
+    shake = sin(time * freq) * strength * exp(-time * decay_speed)
+
+    物理直觉：就像一根弹簧，拨动后来回振荡，幅度越来越小直到停止
+    """
+
+    def __init__(self):
+        self.active = False           # 是否正在震动
+        self.start_time = 0.0         # 震动开始时间（秒，使用pygame ticks）
+        self.duration = 0.5           # 震动持续秒数
+        self.frequency = 40.0         # sin振动频率（越大震动越快）
+        self.strength = 14.0          # 初始振幅（像素偏移量）
+        self.decay_speed = 8.0        # 衰减速度（越大震动消失越快）
+
+    def trigger(self):
+        """触发屏幕震动"""
+        self.active = True
+        self.start_time = pygame.time.get_ticks() / 1000.0
+
+    def get_offset(self):
+        """获取当前帧的震动偏移量 (offset_x, offset_y)"""
+        if not self.active:
+            return 0.0, 0.0
+
+        now = pygame.time.get_ticks() / 1000.0
+        elapsed = now - self.start_time
+
+        # 震动持续时间结束
+        if elapsed &gt;= self.duration:
+            self.active = False
+            return 0.0, 0.0
+
+        # 核心公式：sin衰减震动
+        decay = math.exp(-elapsed * self.decay_speed)      # 指数衰减系数
+        current_strength = self.strength * decay            # 当前振幅
+
+        # X和Y方向使用不同频率，让震动更自然（不会只在对角线上跳）
+        offset_x = math.sin(elapsed * self.frequency) * current_strength
+        offset_y = math.cos(elapsed * self.frequency * 0.85) * current_strength
+
+        return offset_x, offset_y
+
+
+# ==================== 辅助函数 ====================
+def create_bricks(rows=4, cols=5):
+    """创建一排砖块"""
+    bricks = []
+    brick_w, brick_h = 100, 60
+    gap_x, gap_y = 30, 20
+    start_x = (WIDTH - (cols * brick_w + (cols - 1) * gap_x)) // 2
+    start_y = (HEIGHT - (rows * brick_h + (rows - 1) * gap_y)) // 2
+
+    for row in range(rows):
+        for col in range(cols):
+            x = start_x + col * (brick_w + gap_x)
+            y = start_y + row * (brick_h + gap_y)
+            bricks.append(Brick(x, y, brick_w, brick_h))
+    return bricks
+
+
+def spawn_explosion(particles, x, y, count=60):
+    """在指定位置生成爆炸粒子"""
+    for _ in range(count):
+        particles.append(Particle(x, y))
+
+
+def draw_particle_count(surface, count):
+    """在屏幕上显示当前粒子数量"""
+    font = pygame.font.Font(None, 28)
+    text = font.render(f"粒子数: {count}", True, COLOR_PARTICLE_COUNT)
+    surface.blit(text, (10, 10))
+
+
+def draw_instructions(surface):
+    """绘制操作提示"""
+    font = pygame.font.Font(None, 24)
+    hints = [
+        "点击砖块 触发爆炸 + 屏幕震动",
+        "点击空白 产生小爆炸",
+        "按 R 键 重置所有砖块",
+    ]
+    y = HEIGHT - 20
+    for hint in reversed(hints):
+        text = font.render(hint, True, COLOR_HINT)
+        y -= 25
+        surface.blit(text, (10, y))
+
+
+# ==================== 主程序 ====================
+def main():
+    # 创建砖块
+    bricks = create_bricks(rows=3, cols=5)
+
+    # 粒子池（列表存储所有活跃粒子）
+    particles = []
+
+    # 屏幕震动管理器
+    shake = ScreenShake()
+
+    running = True
+    while running:
+        # --- 计算帧间隔时间 ---
+        dt = clock.tick(FPS) / 1000.0  # 秒
+        dt = min(dt, 0.05)              # 防止卡顿后帧跳过大的保护
+
+        # --- 事件处理 ---
+        for event in pygame.event.get():
+            if event.type == pygame.QUIT:
+                running = False
+
+            elif event.type == pygame.MOUSEBUTTONDOWN:
+                if event.button == 1:  # 左键点击
+                    mx, my = event.pos
+                    hit_brick = False
+
+                    # 检查是否点击了砖块
+                    for brick in bricks:
+                        if brick.rect.collidepoint(mx, my):
+                            # 在砖块中心产生爆炸
+                            spawn_explosion(particles, brick.rect.centerx, brick.rect.centery, count=60)
+                            shake.trigger()  # 触发屏幕震动
+                            brick.hit()      # 砖块高亮
+                            hit_brick = True
+                            break
+
+                    # 点击空白区域也产生小爆炸（方便测试）
+                    if not hit_brick:
+                        spawn_explosion(particles, mx, my, count=25)
+                        shake.trigger()
+
+            elif event.type == pygame.KEYDOWN:
+                if event.key == pygame.K_r:
+                    # 重置：清空粒子，重建砖块
+                    particles.clear()
+                    bricks = create_bricks(rows=3, cols=5)
+
+        # --- 更新 ---
+        # 更新砖块（高亮计时器）
+        for brick in bricks:
+            brick.update()
+
+        # 更新粒子（同时移除死亡粒子）
+        # 注意：遍历 particles[:] 创建副本，避免边遍历边删除的问题
+        for p in particles[:]:
+            p.update(dt)
+            if p.is_dead():
+                particles.remove(p)
+
+        # --- 获取屏幕震动偏移 ---
+        shake_x, shake_y = shake.get_offset()
+
+        # --- 渲染 ---
+        screen.fill(COLOR_BG)
+
+        # 绘制砖块（应用震动偏移）
+        for brick in bricks:
+            # 临时移动矩形来模拟震动偏移
+            original_rect = brick.rect.copy()
+            brick.rect = brick.rect.move(int(shake_x), int(shake_y))
+            brick.draw(screen)
+            brick.rect = original_rect  # 恢复原始位置
+
+        # 绘制粒子（应用震动偏移）
+        for p in particles:
+            p.draw(screen, shake_x, shake_y)
+
+        # 在砖块位置绘制爆炸提示圈（提示哪里可以点）
+        for brick in bricks:
+            cx, cy = brick.rect.centerx, brick.rect.centery
+            # 微弱脉冲圈提示
+            pulse = math.sin(pygame.time.get_ticks() / 800) * 0.3 + 0.7
+            alpha_surface = pygame.Surface((10, 10), pygame.SRCALPHA)
+            pygame.draw.circle(alpha_surface, (255, 255, 255, int(40 * pulse)), (5, 5), 5)
+            screen.blit(alpha_surface, (cx - 5 + int(shake_x), cy - 5 + int(shake_y)))
+
+        # 绘制UI信息
+        draw_particle_count(screen, len(particles))
+        draw_instructions(screen)
+
+        # --- 更新屏幕 ---
+        pygame.display.flip()
+
+    pygame.quit()
+
+
+# ==================== 程序入口 ====================
+if __name__ == "__main__":
+    main()
+</pre>
+    <p class="hint">本页使用浅色主题与 UTF-8 编码，可直接打印或导出 PDF。</p>
+  </div>
+</body>
+</html>

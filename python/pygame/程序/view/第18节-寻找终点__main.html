@@ -1,0 +1,485 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>第18节-寻找终点/main.py</title>
+<style>
+  :root {
+    --bg: #f5f7fa;
+    --panel: #ffffff;
+    --text: #1a1a2e;
+    --muted: #5a6570;
+    --gold: #b8860b;
+    --code-bg: #ffffff;
+    --code-text: #1f2933;
+    --border: #d8dee6;
+    --top-bg: #ffffff;
+    --top-border: #e5e9ef;
+  }
+  * { box-sizing: border-box; }
+  html, body {
+    margin: 0; padding: 0;
+    background: var(--bg);
+    color: var(--text);
+    font-family: -apple-system, BlinkMacSystemFont, "PingFang SC", "Microsoft YaHei", sans-serif;
+    min-height: 100%;
+  }
+  .top {
+    position: sticky; top: 0; z-index: 10;
+    display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between;
+    gap: 10px;
+    padding: 12px 18px;
+    background: var(--top-bg);
+    border-bottom: 1px solid var(--top-border);
+    box-shadow: 0 1px 8px rgba(15, 23, 42, 0.06);
+  }
+  .brand { color: var(--gold); font-weight: 700; font-size: 14px; letter-spacing: 0.04em; }
+  .title { font-size: 15px; font-weight: 600; color: var(--text); max-width: 52vw; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .actions { display: flex; gap: 8px; flex-wrap: wrap; }
+  .btn {
+    appearance: none; border: 1px solid var(--border);
+    background: #fff; color: var(--text);
+    border-radius: 999px; padding: 8px 14px; font-size: 13px; font-weight: 600;
+    text-decoration: none; cursor: pointer;
+  }
+  .btn:hover { background: #f0f3f7; }
+  .btn.gold {
+    background: linear-gradient(135deg, #f0d78c, #d4a853);
+    color: #0a2540; border-color: #e0c06a;
+  }
+  .meta {
+    padding: 10px 18px; color: var(--muted); font-size: 12px;
+    border-bottom: 1px solid var(--border);
+    background: var(--panel);
+  }
+  .wrap { padding: 16px 18px 40px; }
+  pre {
+    margin: 0;
+    background: var(--code-bg);
+    color: var(--code-text);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 18px 20px;
+    overflow: auto;
+    font-family: "SF Mono", "JetBrains Mono", "Fira Code", Consolas, "Courier New", monospace;
+    font-size: 13.5px;
+    line-height: 1.55;
+    white-space: pre;
+    tab-size: 4;
+    box-shadow: 0 2px 12px rgba(15, 23, 42, 0.05);
+  }
+  .hint { margin-top: 12px; color: var(--muted); font-size: 12px; }
+  @media print {
+    html, body { background: #fff !important; color: #000 !important; }
+    .top { position: static; box-shadow: none; border-bottom: 1px solid #ccc; background: #fff !important; }
+    .actions { display: none !important; }
+    .meta { background: #fff !important; border-color: #ddd; color: #333; }
+    .wrap { padding: 0; }
+    pre {
+      background: #fff !important; color: #000 !important;
+      border: 1px solid #bbb; box-shadow: none; border-radius: 0;
+      white-space: pre-wrap; word-break: break-word; font-size: 11pt; line-height: 1.4;
+    }
+    .hint { display: none; }
+    a { color: #000; text-decoration: none; }
+  }
+</style>
+</head>
+<body>
+  <div class="top">
+    <div class="brand">Pygame 零基础 · 配套代码</div>
+    <div class="title">第18节-寻找终点/main.py</div>
+    <div class="actions">
+      <a class="btn" href="../第18节-寻找终点/main.py" download="main.py">⬇️ 下载源文件</a>
+      <a class="btn gold" href="javascript:history.back()">← 返回课件</a>
+    </div>
+  </div>
+  <div class="meta">编码：UTF-8 · 文件：第18节-寻找终点/main.py · 共 381 行 · 浅色主题便于打印</div>
+  <div class="wrap">
+    <pre id="code">"""
+第18节：寻找终点 —— 迷宫探索（第二课时）
+==============================================
+本程序在上一节课的基础上，添加了：
+1. 终点标记（2 = 终点）
+2. 金币收集（3 = 金币，碰到后变成地板并加分）
+3. 步数统计
+4. 胜利画面（显示收集的金币数和步数）
+
+所有图形均使用 pygame.draw 绘制，不依赖外部图片文件。
+
+地图数字含义：
+    0 = 路（白色地板）
+    1 = 墙（深灰色墙壁）
+    2 = 终点（绿色旗帜标志）
+    3 = 金币（金色圆点）
+    4 = 起点（蓝色方块标记）
+"""
+
+import pygame
+import sys
+
+# ============================================
+# 1. 初始化 Pygame
+# ============================================
+pygame.init()
+
+# ============================================
+# 2. 窗口设置
+# ============================================
+TILE_SIZE = 40          # 每个格子的大小（像素）
+COLS = 16               # 地图列数
+ROWS = 12               # 地图行数
+WIDTH = COLS * TILE_SIZE   # 窗口宽度：640
+HEIGHT = ROWS * TILE_SIZE  # 窗口高度：480
+
+screen = pygame.display.set_mode((WIDTH, HEIGHT))
+pygame.display.set_caption("第18节：寻找终点 —— 迷宫探索")
+
+# 字体对象（用于显示文字）
+font_small = pygame.font.SysFont("simhei", 20)    # 小号字体（状态栏）
+font_big = pygame.font.SysFont("simhei", 36)      # 大号字体（胜利画面）
+font_title = pygame.font.SysFont("simhei", 48)    # 特大号字体（标题）
+
+clock = pygame.time.Clock()
+FPS = 30  # 帧率（迷宫游戏不需要高帧率）
+
+# ============================================
+# 3. 颜色定义（RGB）
+# ============================================
+COLOR_BLACK = (0, 0, 0)
+COLOR_WHITE = (255, 255, 255)
+COLOR_GRAY = (128, 128, 128)
+COLOR_DARK_GRAY = (64, 64, 64)
+COLOR_BLUE = (50, 100, 255)
+COLOR_GREEN = (50, 200, 50)
+COLOR_GOLD = (255, 215, 0)
+COLOR_RED = (255, 80, 80)
+COLOR_BG = (30, 30, 50)          # 深蓝黑色背景
+COLOR_WALL = (80, 80, 100)       # 墙壁颜色
+COLOR_FLOOR = (240, 240, 240)    # 地板颜色
+COLOR_PLAYER = (50, 150, 255)    # 玩家颜色
+COLOR_END_FLAG = (50, 220, 50)   # 终点颜色
+COLOR_INFO_BG = (20, 20, 40)     # 信息栏背景
+
+# ============================================
+# 4. 迷宫地图（二维列表）
+# ============================================
+# 0=路  1=墙  2=终点  3=金币  4=起点
+MAZE = [
+    [1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1],  # 第0行
+    [1, 4, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 3, 0, 0, 1],  # 第1行（起点在(1,1)）
+    [1, 1, 1, 1, 1, 1, 1, 0, 0, 0, 1, 0, 1, 1, 1, 1],  # 第2行
+    [1, 0, 0, 3, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 1],  # 第3行
+    [1, 0, 1, 1, 1, 1, 1, 0, 1, 1, 1, 1, 1, 1, 0, 1],  # 第4行
+    [1, 0, 0, 0, 0, 3, 1, 0, 0, 0, 3, 0, 0, 0, 0, 1],  # 第5行
+    [1, 1, 1, 0, 1, 1, 1, 1, 1, 0, 1, 1, 1, 1, 1, 1],  # 第6行
+    [1, 0, 0, 0, 0, 0, 0, 3, 0, 0, 0, 0, 0, 0, 0, 1],  # 第7行
+    [1, 0, 1, 1, 1, 1, 1, 0, 1, 1, 1, 1, 1, 1, 1, 1],  # 第8行
+    [1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 3, 0, 0, 0, 0, 1],  # 第9行
+    [1, 1, 1, 1, 1, 1, 1, 0, 1, 0, 1, 1, 1, 1, 0, 1],  # 第10行
+    [1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 2, 1],  # 第11行（终点在(14,11)）
+]
+
+# ============================================
+# 5. 保存一份原始地图的副本（用于查找起点位置）
+# ============================================
+# 地图会被修改（金币收集后变成路），所以保存副本
+ORIGINAL_MAZE = [row[:] for row in MAZE]  # 深拷贝每一行
+
+
+def find_start(maze):
+    """在地图中找到起点(4)的位置，返回 (col, row)"""
+    for row in range(ROWS):
+        for col in range(COLS):
+            if maze[row][col] == 4:
+                return col, row
+    return 0, 0  # 找不到时返回默认值
+
+
+# ============================================
+# 6. 游戏状态变量
+# ============================================
+player_x, player_y = find_start(ORIGINAL_MAZE)  # 玩家初始位置（像素坐标 = col*tile, row*tile）
+steps = 0           # 步数计数器
+coins_collected = 0 # 已收集的金币数量
+total_coins = 0     # 地图中的金币总数
+won = False         # 是否到达终点
+
+# 统计金币总数
+for row in range(ROWS):
+    for col in range(COLS):
+        if ORIGINAL_MAZE[row][col] == 3:
+            total_coins += 1
+
+
+# ============================================
+# 7. 绘制函数
+# ============================================
+
+def draw_maze():
+    """绘制整个迷宫地图"""
+    for row in range(ROWS):
+        for col in range(COLS):
+            cell = MAZE[row][col]
+            x = col * TILE_SIZE  # 像素 x 坐标
+            y = row * TILE_SIZE  # 像素 y 坐标
+
+            if cell == 1:
+                # 墙壁：深灰色方块，带3D浮雕效果
+                pygame.draw.rect(screen, COLOR_WALL, (x, y, TILE_SIZE, TILE_SIZE))
+                # 左上角亮边（模拟凸起效果）
+                pygame.draw.line(screen, (140, 140, 160), (x, y), (x + TILE_SIZE - 1, y), 2)
+                pygame.draw.line(screen, (140, 140, 160), (x, y), (x, y + TILE_SIZE - 1), 2)
+                # 右下角暗边
+                pygame.draw.line(screen, (40, 40, 60),
+                                 (x, y + TILE_SIZE - 1),
+                                 (x + TILE_SIZE - 1, y + TILE_SIZE - 1), 2)
+                pygame.draw.line(screen, (40, 40, 60),
+                                 (x + TILE_SIZE - 1, y),
+                                 (x + TILE_SIZE - 1, y + TILE_SIZE - 1), 2)
+
+            elif cell == 0 or cell == 4:
+                # 路/起点：浅色地板
+                pygame.draw.rect(screen, COLOR_FLOOR, (x, y, TILE_SIZE, TILE_SIZE))
+                # 格子边框（虚线效果）
+                pygame.draw.rect(screen, (200, 200, 210), (x, y, TILE_SIZE, TILE_SIZE), 1)
+
+                # 如果是起点位置，绘制特殊标记
+                if ORIGINAL_MAZE[row][col] == 4:
+                    # 起点：蓝色方形标记
+                    pygame.draw.rect(screen, COLOR_BLUE,
+                                     (x + TILE_SIZE // 4, y + TILE_SIZE // 4,
+                                      TILE_SIZE // 2, TILE_SIZE // 2))
+                    pygame.draw.rect(screen, COLOR_WHITE,
+                                     (x + TILE_SIZE // 4, y + TILE_SIZE // 4,
+                                      TILE_SIZE // 2, TILE_SIZE // 2), 2)
+
+            elif cell == 2:
+                # 终点：先画地板，再画绿色旗帜标志
+                pygame.draw.rect(screen, COLOR_FLOOR, (x, y, TILE_SIZE, TILE_SIZE))
+                # 绿色菱形（代表终点旗帜）
+                center_x = x + TILE_SIZE // 2
+                center_y = y + TILE_SIZE // 2
+                size = TILE_SIZE // 3
+                points = [
+                    (center_x, center_y - size),        # 上
+                    (center_x + size, center_y),        # 右
+                    (center_x, center_y + size),        # 下
+                    (center_x - size, center_y),        # 左
+                ]
+                pygame.draw.polygon(screen, COLOR_END_FLAG, points)
+                pygame.draw.polygon(screen, COLOR_WHITE, points, 2)
+                # 写一个"终"字
+                end_text = font_small.render("终", True, COLOR_WHITE)
+                text_rect = end_text.get_rect(center=(center_x, center_y))
+                screen.blit(end_text, text_rect)
+
+            elif cell == 3:
+                # 金币：先画地板，再画金色圆圈
+                pygame.draw.rect(screen, COLOR_FLOOR, (x, y, TILE_SIZE, TILE_SIZE))
+                center = (x + TILE_SIZE // 2, y + TILE_SIZE // 2)
+                radius = TILE_SIZE // 3
+                # 金色外圈
+                pygame.draw.circle(screen, COLOR_GOLD, center, radius)
+                # 亮色内圈（模拟金币光泽）
+                pygame.draw.circle(screen, (255, 240, 100), center, radius - 4)
+                # 边框
+                pygame.draw.circle(screen, (200, 160, 0), center, radius, 2)
+
+
+def draw_player():
+    """绘制玩家角色"""
+    px = player_x * TILE_SIZE
+    py = player_y * TILE_SIZE
+
+    # 玩家主体：蓝色圆角矩形
+    body_rect = pygame.Rect(px + TILE_SIZE // 6, py + TILE_SIZE // 6,
+                            TILE_SIZE * 2 // 3, TILE_SIZE * 2 // 3)
+    pygame.draw.rect(screen, COLOR_PLAYER, body_rect, border_radius=8)
+    pygame.draw.rect(screen, COLOR_WHITE, body_rect, 3, border_radius=8)
+
+    # 眼睛（两个白点）
+    eye_size = 4
+    # 左眼
+    left_eye_x = px + TILE_SIZE // 3
+    eye_y = py + TILE_SIZE // 3
+    pygame.draw.circle(screen, COLOR_WHITE, (left_eye_x, eye_y), eye_size)
+    pygame.draw.circle(screen, COLOR_BLACK, (left_eye_x + 1, eye_y), 2)  # 瞳孔
+    # 右眼
+    right_eye_x = px + TILE_SIZE * 2 // 3
+    pygame.draw.circle(screen, COLOR_WHITE, (right_eye_x, eye_y), eye_size)
+    pygame.draw.circle(screen, COLOR_BLACK, (right_eye_x + 1, eye_y), 2)  # 瞳孔
+
+    # 嘴巴（笑脸弧线）
+    mouth_rect = pygame.Rect(px + TILE_SIZE // 3, py + TILE_SIZE // 2,
+                             TILE_SIZE // 3, TILE_SIZE // 6)
+    pygame.draw.arc(screen, COLOR_BLACK, mouth_rect, 0, 3.14, 2)
+
+
+def draw_status_bar():
+    """绘制底部状态栏（步数 + 金币数）"""
+    bar_height = 36
+    bar_y = HEIGHT - bar_height
+
+    # 半透明背景
+    status_surface = pygame.Surface((WIDTH, bar_height))
+    status_surface.set_alpha(200)
+    status_surface.fill(COLOR_INFO_BG)
+    screen.blit(status_surface, (0, bar_y))
+
+    # 步数信息
+    steps_text = font_small.render(f"步数: {steps}", True, COLOR_WHITE)
+    screen.blit(steps_text, (20, bar_y + 8))
+
+    # 金币信息
+    coins_text = font_small.render(f"金币: {coins_collected}/{total_coins}", True, COLOR_GOLD)
+    screen.blit(coins_text, (WIDTH // 2 - 60, bar_y + 8))
+
+    # 操作提示
+    hint_text = font_small.render("方向键移动  ESC退出", True, COLOR_GRAY)
+    screen.blit(hint_text, (WIDTH - 240, bar_y + 8))
+
+
+def draw_win_screen():
+    """绘制胜利画面"""
+    # 半透明遮罩
+    overlay = pygame.Surface((WIDTH, HEIGHT))
+    overlay.set_alpha(200)
+    overlay.fill((0, 0, 0))
+    screen.blit(overlay, (0, 0))
+
+    # 胜利标题
+    title_text = font_title.render("恭喜通关！", True, COLOR_GOLD)
+    title_rect = title_text.get_rect(center=(WIDTH // 2, HEIGHT // 2 - 80))
+    screen.blit(title_text, title_rect)
+
+    # 统计信息
+    info1 = font_big.render(f"总步数：{steps} 步", True, COLOR_WHITE)
+    info1_rect = info1.get_rect(center=(WIDTH // 2, HEIGHT // 2 - 10))
+    screen.blit(info1, info1_rect)
+
+    info2 = font_big.render(f"收集金币：{coins_collected}/{total_coins} 枚", True, COLOR_GOLD)
+    info2_rect = info2.get_rect(center=(WIDTH // 2, HEIGHT // 2 + 40))
+    screen.blit(info2, info2_rect)
+
+    # 评价
+    if coins_collected == total_coins:
+        rating = "完美收集！你太厉害了！"
+    elif coins_collected &gt;= total_coins // 2:
+        rating = "不错哦！继续加油！"
+    else:
+        rating = "下次试着收集更多金币吧！"
+
+    rating_text = font_big.render(rating, True, COLOR_GREEN)
+    rating_rect = rating_text.get_rect(center=(WIDTH // 2, HEIGHT // 2 + 100))
+    screen.blit(rating_text, rating_rect)
+
+    # 退出提示
+    hint_text = font_small.render("按 ESC 或点击关闭按钮退出", True, COLOR_GRAY)
+    hint_rect = hint_text.get_rect(center=(WIDTH // 2, HEIGHT // 2 + 150))
+    screen.blit(hint_text, hint_rect)
+
+
+# ============================================
+# 8. 移动逻辑
+# ============================================
+
+def can_move(new_col, new_row):
+    """判断玩家是否能移动到 (new_col, new_row) 位置"""
+    # 边界检查
+    if new_col &lt; 0 or new_col &gt;= COLS or new_row &lt; 0 or new_row &gt;= ROWS:
+        return False
+    # 墙壁检查
+    if MAZE[new_row][new_col] == 1:
+        return False
+    return True
+
+
+def move_player(dx, dy):
+    """
+    尝试移动玩家
+    dx, dy：移动方向（-1, 0, 1）
+    """
+    global player_x, player_y, steps, coins_collected
+
+    new_x = player_x + dx
+    new_y = player_y + dy
+
+    if not can_move(new_x, new_y):
+        return  # 不能移动（撞墙或出界）
+
+    # 执行移动
+    player_x = new_x
+    player_y = new_y
+    steps += 1  # 步数 +1
+
+    # 检查是否碰到金币
+    if MAZE[player_y][player_x] == 3:
+        coins_collected += 1
+        MAZE[player_y][player_x] = 0  # 金币消失，变成地板
+        print(f"获得金币！已收集 {coins_collected}/{total_coins} 枚")
+
+
+# ============================================
+# 9. 游戏主循环
+# ============================================
+print("=" * 50)
+print("第18节：寻找终点 —— 迷宫探索")
+print(f"地图大小：{COLS}×{ROWS}  格子大小：{TILE_SIZE}px")
+print(f"金币总数：{total_coins} 枚")
+print("方向键移动，到达终点即胜利！")
+print("=" * 50)
+
+running = True
+
+while running:
+    # --- 9.1 事件处理 ---
+    for event in pygame.event.get():
+        if event.type == pygame.QUIT:
+            running = False
+
+        if event.type == pygame.KEYDOWN:
+            if event.key == pygame.K_ESCAPE:
+                running = False
+
+            # 胜利后不再响应移动按键
+            if not won:
+                if event.key == pygame.K_LEFT or event.key == pygame.K_a:
+                    move_player(-1, 0)
+                elif event.key == pygame.K_RIGHT or event.key == pygame.K_d:
+                    move_player(1, 0)
+                elif event.key == pygame.K_UP or event.key == pygame.K_w:
+                    move_player(0, -1)
+                elif event.key == pygame.K_DOWN or event.key == pygame.K_s:
+                    move_player(0, 1)
+
+    # --- 9.2 胜利判定 ---
+    if not won and MAZE[player_y][player_x] == 2:
+        won = True
+        print(f"到达终点！步数：{steps}  金币：{coins_collected}/{total_coins}")
+
+    # --- 9.3 绘制画面 ---
+    screen.fill(COLOR_BG)
+
+    draw_maze()        # 1. 先画地图
+    draw_player()      # 2. 再画玩家（在地图上方）
+    draw_status_bar()  # 3. 画状态栏
+
+    if won:
+        draw_win_screen()  # 4. 胜利画面（覆盖在最上方）
+
+    # --- 9.4 刷新屏幕 ---
+    pygame.display.flip()
+    clock.tick(FPS)
+
+# ============================================
+# 10. 退出
+# ============================================
+pygame.quit()
+sys.exit()
+</pre>
+    <p class="hint">本页使用浅色主题与 UTF-8 编码，可直接打印或导出 PDF。</p>
+  </div>
+</body>
+</html>

@@ -1,0 +1,475 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>lesson41_struct_basics.cpp</title>
+<style>
+  :root {
+    --bg: #f5f7fa;
+    --panel: #ffffff;
+    --text: #1a1a2e;
+    --muted: #5a6570;
+    --gold: #b8860b;
+    --code-bg: #ffffff;
+    --code-text: #1f2933;
+    --border: #d8dee6;
+    --top-bg: #ffffff;
+    --top-border: #e5e9ef;
+  }
+  * { box-sizing: border-box; }
+  html, body {
+    margin: 0; padding: 0;
+    background: var(--bg);
+    color: var(--text);
+    font-family: -apple-system, BlinkMacSystemFont, "PingFang SC", "Microsoft YaHei", sans-serif;
+    min-height: 100%;
+  }
+  .top {
+    position: sticky; top: 0; z-index: 10;
+    display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between;
+    gap: 10px;
+    padding: 12px 18px;
+    background: var(--top-bg);
+    border-bottom: 1px solid var(--top-border);
+    box-shadow: 0 1px 8px rgba(15, 23, 42, 0.06);
+  }
+  .brand { color: var(--gold); font-weight: 700; font-size: 14px; letter-spacing: 0.04em; }
+  .title { font-size: 15px; font-weight: 600; color: var(--text); max-width: 52vw; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .actions { display: flex; gap: 8px; flex-wrap: wrap; }
+  .btn {
+    appearance: none; border: 1px solid var(--border);
+    background: #fff; color: var(--text);
+    border-radius: 999px; padding: 8px 14px; font-size: 13px; font-weight: 600;
+    text-decoration: none; cursor: pointer;
+  }
+  .btn:hover { background: #f0f3f7; }
+  .btn.gold {
+    background: linear-gradient(135deg, #f0d78c, #d4a853);
+    color: #0a2540; border-color: #e0c06a;
+  }
+  .meta {
+    padding: 10px 18px; color: var(--muted); font-size: 12px;
+    border-bottom: 1px solid var(--border);
+    background: var(--panel);
+  }
+  .wrap { padding: 16px 18px 40px; }
+  pre {
+    margin: 0;
+    background: var(--code-bg);
+    color: var(--code-text);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 18px 20px;
+    overflow: auto;
+    font-family: "SF Mono", "JetBrains Mono", "Fira Code", Consolas, "Courier New", monospace;
+    font-size: 13.5px;
+    line-height: 1.55;
+    white-space: pre;
+    tab-size: 4;
+    box-shadow: 0 2px 12px rgba(15, 23, 42, 0.05);
+  }
+  .hint { margin-top: 12px; color: var(--muted); font-size: 12px; }
+  @media print {
+    html, body { background: #fff !important; color: #000 !important; }
+    .top { position: static; box-shadow: none; border-bottom: 1px solid #ccc; background: #fff !important; }
+    .actions { display: none !important; }
+    .meta { background: #fff !important; border-color: #ddd; color: #333; }
+    .wrap { padding: 0; }
+    pre {
+      background: #fff !important; color: #000 !important;
+      border: 1px solid #bbb; box-shadow: none; border-radius: 0;
+      white-space: pre-wrap; word-break: break-word; font-size: 11pt; line-height: 1.4;
+    }
+    .hint { display: none; }
+    a { color: #000; text-decoration: none; }
+  }
+</style>
+</head>
+<body>
+  <div class="top">
+    <div class="brand">C++ 趣味学习 · 配套代码</div>
+    <div class="title">lesson41_struct_basics.cpp</div>
+    <div class="actions">
+      <a class="btn" href="../lesson41_struct_basics.cpp" download="lesson41_struct_basics.cpp">⬇️ 下载源文件</a>
+      <a class="btn gold" href="javascript:history.back()">← 返回课件</a>
+    </div>
+  </div>
+  <div class="meta">编码：UTF-8 · 文件：lesson41_struct_basics.cpp · 共 371 行 · 浅色主题便于打印</div>
+  <div class="wrap">
+    <pre id="code">/*
+ * ============================================================
+ * 第41课：超级名片——结构体入门
+ * C++趣味学习课程
+ * ============================================================
+ *
+ * 本课学习内容：
+ *   1. 结构体(struct)的概念 —— 把不同类型的数据打包在一起
+ *   2. struct 的定义语法：struct 名称 { 成员列表 };
+ *   3. 创建结构体变量
+ *   4. 用点运算符 . 访问和修改结构体成员
+ *   5. 结构体的初始化和整体赋值
+ *
+ * 本文件包含以下程序：
+ *   程序1：学生信息卡 —— 结构体基本用法演示
+ *   程序2：图书信息管理 —— 结构体综合应用演示
+ *   程序3：练习题参考答案 —— 宠物、商品、成绩比拼
+ *
+ * 编译方式（以 g++ 为例）：
+ *   g++ -std=c++11 lesson41_struct_basics.cpp -o lesson41
+ *   ./lesson41
+ * ============================================================
+ */
+
+#include &lt;iostream&gt;
+#include &lt;string&gt;
+#include &lt;iomanip&gt;
+using namespace std;
+
+// ============================================================
+// 第一部分：结构体定义
+// 把结构体定义在全局，这样所有程序都可以使用
+// ============================================================
+
+// 学生结构体 —— 用于管理学生信息
+struct Student {
+    string name;      // 姓名
+    int age;          // 年龄（岁）
+    double score;     // 成绩（分）
+};
+
+// 图书结构体 —— 用于管理图书信息
+struct Book {
+    string title;     // 书名
+    string author;    // 作者
+    double price;     // 价格（元）
+};
+
+// 宠物结构体 —— 用于练习1
+struct Pet {
+    string name;      // 宠物名字
+    string type;      // 种类（狗、猫等）
+    int age;          // 年龄（岁）
+};
+
+// 商品结构体 —— 用于练习2
+struct Product {
+    string name;      // 商品名称
+    double price;     // 单价（元）
+    int quantity;     // 库存数量
+};
+
+// 坐标点结构体 —— 用于练习3（演示结构体值复制）
+struct Point {
+    int x;            // x坐标
+    int y;            // y坐标
+};
+
+// ============================================================
+// 第二部分：辅助函数
+// ============================================================
+
+// 打印分隔线，让输出更美观
+void printSeparator(string title = "") {
+    cout &lt;&lt; "\n";
+    if (title != "") {
+        cout &lt;&lt; title &lt;&lt; endl;
+    }
+    cout &lt;&lt; "============================================================" &lt;&lt; endl;
+}
+
+// 打印学生信息
+void printStudent(const Student&amp; s) {
+    cout &lt;&lt; "姓名：" &lt;&lt; s.name &lt;&lt; "  |  ";
+    cout &lt;&lt; "年龄：" &lt;&lt; s.age &lt;&lt; " 岁  |  ";
+    cout &lt;&lt; "成绩：" &lt;&lt; s.score &lt;&lt; " 分" &lt;&lt; endl;
+}
+
+// 打印图书信息
+void printBook(const Book&amp; b) {
+    cout &lt;&lt; "《" &lt;&lt; b.title &lt;&lt; "》  |  ";
+    cout &lt;&lt; "作者：" &lt;&lt; b.author &lt;&lt; "  |  ";
+    cout &lt;&lt; "价格：" &lt;&lt; fixed &lt;&lt; setprecision(2) &lt;&lt; b.price &lt;&lt; " 元" &lt;&lt; endl;
+}
+
+// ============================================================
+// 程序1：学生信息卡演示
+// 演示结构体的基本操作：创建、初始化、访问、修改、复制
+// ============================================================
+void program1_studentCard() {
+    printSeparator("【程序1】学生信息卡 —— 结构体基本用法");
+
+    // ---- 1. 创建结构体变量并初始化 ----
+    // 使用花括号 {} 按结构体成员的定义顺序初始化
+    Student s1 = {"小明", 12, 95.5};
+
+    // ---- 2. 访问结构体成员（读取） ----
+    // 使用点运算符 . 来读取每个成员的值
+    cout &lt;&lt; "&gt;&gt;&gt; 学生信息卡 &lt;&lt;&lt;" &lt;&lt; endl;
+    cout &lt;&lt; "姓名：" &lt;&lt; s1.name &lt;&lt; endl;
+    cout &lt;&lt; "年龄：" &lt;&lt; s1.age &lt;&lt; " 岁" &lt;&lt; endl;
+    cout &lt;&lt; "成绩：" &lt;&lt; s1.score &lt;&lt; " 分" &lt;&lt; endl;
+
+    // ---- 3. 修改结构体成员 ----
+    // 直接通过 . 赋值即可修改
+    cout &lt;&lt; "\n&gt;&gt;&gt; 小明成绩进步了！ &lt;&lt;&lt;" &lt;&lt; endl;
+    s1.score = 98.0;  // 成绩从 95.5 改为 98.0
+    cout &lt;&lt; "更新后的成绩：" &lt;&lt; s1.score &lt;&lt; " 分" &lt;&lt; endl;
+
+    // ---- 4. 通过输入给结构体赋值 ----
+    Student s2;
+    cout &lt;&lt; "\n&gt;&gt;&gt; 请输入第二个学生的信息 &lt;&lt;&lt;" &lt;&lt; endl;
+    cout &lt;&lt; "姓名：";
+    cin &gt;&gt; s2.name;
+    cout &lt;&lt; "年龄：";
+    cin &gt;&gt; s2.age;
+    cout &lt;&lt; "成绩：";
+    cin &gt;&gt; s2.score;
+
+    cout &lt;&lt; "\n你输入的学生：" &lt;&lt; endl;
+    printStudent(s2);
+
+    // ---- 5. 结构体整体赋值（复制） ----
+    cout &lt;&lt; "\n&gt;&gt;&gt; 结构体赋值演示 &lt;&lt;&lt;" &lt;&lt; endl;
+    Student s3;
+    s3 = s1;  // 把 s1 的所有成员值一次性复制给 s3
+    cout &lt;&lt; "将 s1 赋值给 s3 后，s3 的信息：" &lt;&lt; endl;
+    printStudent(s3);
+
+    cout &lt;&lt; "\n修改 s3 的名字为\"大明\"：" &lt;&lt; endl;
+    s3.name = "大明";
+    cout &lt;&lt; "s1 的名字：" &lt;&lt; s1.name &lt;&lt; endl;  // 仍然是小明，不受影响
+    cout &lt;&lt; "s3 的名字：" &lt;&lt; s3.name &lt;&lt; endl;  // 变成了大明
+    cout &lt;&lt; "结论：结构体赋值是【值复制】，修改副本不影响原件！" &lt;&lt; endl;
+}
+
+// ============================================================
+// 程序2：图书信息管理演示
+// 演示结构体的综合应用：创建多个变量、计算、格式化输出
+// ============================================================
+void program2_bookManager() {
+    printSeparator("【程序2】图书信息管理 —— 结构体综合应用");
+
+    // ---- 1. 创建多本图书 ----
+    Book book1 = {"小王子", "圣埃克苏佩里", 29.90};
+    Book book2 = {"西游记", "吴承恩", 45.00};
+    Book book3 = {"哈利·波特与魔法石", "J.K.罗琳", 39.50};
+
+    // ---- 2. 输出所有图书信息 ----
+    cout &lt;&lt; "========== 我的小小图书馆 ==========" &lt;&lt; endl;
+    cout &lt;&lt; "编号 | 书名                    | 作者           | 价格" &lt;&lt; endl;
+    cout &lt;&lt; "-----+-------------------------+----------------+--------" &lt;&lt; endl;
+    cout &lt;&lt; "  1  | " &lt;&lt; book1.title &lt;&lt; "                | "
+         &lt;&lt; book1.author &lt;&lt; "    | " &lt;&lt; fixed &lt;&lt; setprecision(2)
+         &lt;&lt; book1.price &lt;&lt; " 元" &lt;&lt; endl;
+    cout &lt;&lt; "  2  | " &lt;&lt; book2.title &lt;&lt; "                  | "
+         &lt;&lt; book2.author &lt;&lt; "        | " &lt;&lt; book2.price &lt;&lt; " 元" &lt;&lt; endl;
+    cout &lt;&lt; "  3  | " &lt;&lt; book3.title &lt;&lt; "      | "
+         &lt;&lt; book3.author &lt;&lt; "      | " &lt;&lt; book3.price &lt;&lt; " 元" &lt;&lt; endl;
+
+    // ---- 3. 计算总价 ----
+    double total = book1.price + book2.price + book3.price;
+    cout &lt;&lt; "-----+-------------------------+----------------+--------" &lt;&lt; endl;
+    cout &lt;&lt; "总价：" &lt;&lt; total &lt;&lt; " 元" &lt;&lt; endl;
+
+    // ---- 4. 修改图书信息（模拟打折） ----
+    cout &lt;&lt; "\n&gt;&gt;&gt; 打折促销啦！《小王子》打8折 &lt;&lt;&lt;" &lt;&lt; endl;
+    book1.price = book1.price * 0.8;
+    cout &lt;&lt; "《小王子》打折后价格：" &lt;&lt; book1.price &lt;&lt; " 元" &lt;&lt; endl;
+
+    // ---- 5. 比较找最贵的书 ----
+    cout &lt;&lt; "\n&gt;&gt;&gt; 找出最贵的书 &lt;&lt;&lt;" &lt;&lt; endl;
+    Book mostExpensive = book1;  // 先假设第一本最贵
+    if (book2.price &gt; mostExpensive.price) {
+        mostExpensive = book2;
+    }
+    if (book3.price &gt; mostExpensive.price) {
+        mostExpensive = book3;
+    }
+    cout &lt;&lt; "最贵的书是：《" &lt;&lt; mostExpensive.title &lt;&lt; "》" &lt;&lt; endl;
+    cout &lt;&lt; "价格为：" &lt;&lt; mostExpensive.price &lt;&lt; " 元" &lt;&lt; endl;
+
+    // ---- 6. 统计信息 ----
+    cout &lt;&lt; "\n&gt;&gt;&gt; 图书统计 &lt;&lt;&lt;" &lt;&lt; endl;
+    cout &lt;&lt; "共有 3 本书" &lt;&lt; endl;
+    cout &lt;&lt; "总价：" &lt;&lt; total &lt;&lt; " 元" &lt;&lt; endl;
+    cout &lt;&lt; "平均价格：" &lt;&lt; (total / 3) &lt;&lt; " 元" &lt;&lt; endl;
+}
+
+// ============================================================
+// 程序3：练习题参考答案
+// 包含练习1、练习2、练习3 的完整解答代码
+// ============================================================
+void program3_exercises() {
+    printSeparator("【程序3】练习题参考答案");
+
+    // ========== 练习1：定义你的宠物 ==========
+    cout &lt;&lt; "---------- 练习1：宠物信息卡 ----------" &lt;&lt; endl;
+    Pet myPet = {"旺财", "狗", 3};
+    cout &lt;&lt; "我的宠物：" &lt;&lt; endl;
+    cout &lt;&lt; "  名字：" &lt;&lt; myPet.name &lt;&lt; endl;
+    cout &lt;&lt; "  种类：" &lt;&lt; myPet.type &lt;&lt; endl;
+    cout &lt;&lt; "  年龄：" &lt;&lt; myPet.age &lt;&lt; " 岁" &lt;&lt; endl;
+
+    // ========== 练习2：商品信息管理 ==========
+    cout &lt;&lt; "\n---------- 练习2：商品信息管理 ----------" &lt;&lt; endl;
+    Product p1 = {"铅笔", 2.5, 100};
+    Product p2 = {"橡皮", 1.5, 80};
+
+    double total1 = p1.price * p1.quantity;
+    double total2 = p2.price * p2.quantity;
+    double grandTotal = total1 + total2;
+
+    cout &lt;&lt; "商品1 - " &lt;&lt; p1.name &lt;&lt; "：" &lt;&lt; endl;
+    cout &lt;&lt; "  单价：" &lt;&lt; p1.price &lt;&lt; " 元，库存：" &lt;&lt; p1.quantity &lt;&lt; " 支" &lt;&lt; endl;
+    cout &lt;&lt; "  总价值：" &lt;&lt; total1 &lt;&lt; " 元" &lt;&lt; endl;
+
+    cout &lt;&lt; "商品2 - " &lt;&lt; p2.name &lt;&lt; "：" &lt;&lt; endl;
+    cout &lt;&lt; "  单价：" &lt;&lt; p2.price &lt;&lt; " 元，库存：" &lt;&lt; p2.quantity &lt;&lt; " 块" &lt;&lt; endl;
+    cout &lt;&lt; "  总价值：" &lt;&lt; total2 &lt;&lt; " 元" &lt;&lt; endl;
+
+    cout &lt;&lt; "所有商品总价值：" &lt;&lt; grandTotal &lt;&lt; " 元" &lt;&lt; endl;
+
+    // ========== 练习3：结构体值复制 ==========
+    cout &lt;&lt; "\n---------- 练习3：结构体的值复制 ----------" &lt;&lt; endl;
+    Point pnt1 = {3, 5};
+    Point pnt2 = pnt1;   // 值复制
+    pnt2.x = 10;         // 修改 p2
+    pnt2.y = 20;
+
+    cout &lt;&lt; "p1: (" &lt;&lt; pnt1.x &lt;&lt; ", " &lt;&lt; pnt1.y &lt;&lt; ")" &lt;&lt; endl;
+    cout &lt;&lt; "p2: (" &lt;&lt; pnt2.x &lt;&lt; ", " &lt;&lt; pnt2.y &lt;&lt; ")" &lt;&lt; endl;
+    cout &lt;&lt; "结论：修改 p2 不影响 p1，因为它们是独立的两份数据！" &lt;&lt; endl;
+}
+
+// ============================================================
+// 程序4：挑战任务 —— 成绩排行榜
+// 创建3个学生，找出最高分，计算平均分，输出排行榜
+// ============================================================
+void program4_challenge() {
+    printSeparator("【挑战任务】成绩排行榜");
+
+    // ---- 1. 创建并存入3个学生信息 ----
+    Student students[3] = {
+        {"小明", 12, 88.5},
+        {"小红", 11, 96.0},
+        {"小刚", 12, 91.0}
+    };
+
+    cout &lt;&lt; "&gt;&gt;&gt; 所有学生信息 &lt;&lt;&lt;" &lt;&lt; endl;
+    for (int i = 0; i &lt; 3; i++) {
+        cout &lt;&lt; "学生" &lt;&lt; (i + 1) &lt;&lt; "：";
+        printStudent(students[i]);
+    }
+
+    // ---- 2. 找出成绩最高的学生 ----
+    int bestIndex = 0;  // 假设第0个学生成绩最高
+    for (int i = 1; i &lt; 3; i++) {
+        if (students[i].score &gt; students[bestIndex].score) {
+            bestIndex = i;
+        }
+    }
+
+    cout &lt;&lt; "\n&gt;&gt;&gt; 成绩最高的学生 &lt;&lt;&lt;" &lt;&lt; endl;
+    cout &lt;&lt; "🏆 " &lt;&lt; students[bestIndex].name &lt;&lt; " —— "
+         &lt;&lt; students[bestIndex].score &lt;&lt; " 分！" &lt;&lt; endl;
+
+    // ---- 3. 计算平均成绩 ----
+    double totalScore = 0.0;
+    for (int i = 0; i &lt; 3; i++) {
+        totalScore += students[i].score;
+    }
+    double averageScore = totalScore / 3;
+    cout &lt;&lt; "\n&gt;&gt;&gt; 班级平均分 &lt;&lt;&lt;" &lt;&lt; endl;
+    cout &lt;&lt; "平均成绩：" &lt;&lt; averageScore &lt;&lt; " 分" &lt;&lt; endl;
+
+    // ---- 4. 按成绩从高到低排序并输出排行榜 ----
+    // 使用简单的选择排序（冒泡排序的铺垫！）
+    for (int i = 0; i &lt; 2; i++) {
+        for (int j = 0; j &lt; 2 - i; j++) {
+            if (students[j].score &lt; students[j + 1].score) {
+                // 交换整个结构体！
+                Student temp = students[j];
+                students[j] = students[j + 1];
+                students[j + 1] = temp;
+            }
+        }
+    }
+
+    cout &lt;&lt; "\n&gt;&gt;&gt; 成绩排行榜（从高到低） &lt;&lt;&lt;" &lt;&lt; endl;
+    cout &lt;&lt; "排名 | 姓名 | 年龄 | 成绩" &lt;&lt; endl;
+    cout &lt;&lt; "-----+------+------+------" &lt;&lt; endl;
+    for (int i = 0; i &lt; 3; i++) {
+        cout &lt;&lt; "  " &lt;&lt; (i + 1) &lt;&lt; "   | "
+             &lt;&lt; students[i].name &lt;&lt; " |  "
+             &lt;&lt; students[i].age &lt;&lt; "  | "
+             &lt;&lt; students[i].score &lt;&lt; endl;
+    }
+
+    // ---- 5. 综合评价 ----
+    cout &lt;&lt; "\n&gt;&gt;&gt; 综合评价 &lt;&lt;&lt;" &lt;&lt; endl;
+    for (int i = 0; i &lt; 3; i++) {
+        cout &lt;&lt; students[i].name &lt;&lt; "：";
+        if (students[i].score &gt;= 90) {
+            cout &lt;&lt; "优秀！继续保持！" &lt;&lt; endl;
+        } else if (students[i].score &gt;= 80) {
+            cout &lt;&lt; "良好！继续加油！" &lt;&lt; endl;
+        } else if (students[i].score &gt;= 60) {
+            cout &lt;&lt; "及格了，但还需要努力哦！" &lt;&lt; endl;
+        } else {
+            cout &lt;&lt; "不要气馁，好好复习！" &lt;&lt; endl;
+        }
+    }
+}
+
+// ============================================================
+// main 函数：程序入口
+// 依次运行所有演示程序
+// ============================================================
+int main() {
+    // 设置输出中文（根据不同操作系统可能需要调整）
+    // Windows: system("chcp 65001");
+    // 本程序在支持 UTF-8 的终端中直接运行即可
+
+    cout &lt;&lt; "╔══════════════════════════════════════════════════════════╗" &lt;&lt; endl;
+    cout &lt;&lt; "║     第41课：超级名片 —— 结构体入门                     ║" &lt;&lt; endl;
+    cout &lt;&lt; "║     C++ 趣味学习课程                                    ║" &lt;&lt; endl;
+    cout &lt;&lt; "╚══════════════════════════════════════════════════════════╝" &lt;&lt; endl;
+    cout &lt;&lt; "\n本程序将依次演示：" &lt;&lt; endl;
+    cout &lt;&lt; "  1. 学生信息卡 —— 结构体基本操作" &lt;&lt; endl;
+    cout &lt;&lt; "  2. 图书信息管理 —— 结构体综合应用" &lt;&lt; endl;
+    cout &lt;&lt; "  3. 练习题参考答案" &lt;&lt; endl;
+    cout &lt;&lt; "  4. 挑战任务 —— 成绩排行榜" &lt;&lt; endl;
+    cout &lt;&lt; endl;
+
+    // ---- 依次运行各个程序 ----
+    program1_studentCard();
+
+    cout &lt;&lt; "\n按 Enter 键继续观看下一个程序...";
+    cin.get();  // 等待用户按回车
+    cin.get();  // 消耗掉之前输入留下的换行符（如果有的话）
+
+    program2_bookManager();
+
+    cout &lt;&lt; "\n按 Enter 键继续观看下一个程序...";
+    cin.get();
+
+    program3_exercises();
+
+    cout &lt;&lt; "\n按 Enter 键继续观看下一个程序...";
+    cin.get();
+
+    program4_challenge();
+
+    cout &lt;&lt; "\n╔══════════════════════════════════════════════════════════╗" &lt;&lt; endl;
+    cout &lt;&lt; "║     本课所有程序演示完毕！                              ║" &lt;&lt; endl;
+    cout &lt;&lt; "║     下一课预告：第42课 —— 排排坐吃果果：冒泡排序       ║" &lt;&lt; endl;
+    cout &lt;&lt; "╚══════════════════════════════════════════════════════════╝" &lt;&lt; endl;
+
+    return 0;
+}
+</pre>
+    <p class="hint">本页使用浅色主题与 UTF-8 编码，可直接打印或导出 PDF。</p>
+  </div>
+</body>
+</html>

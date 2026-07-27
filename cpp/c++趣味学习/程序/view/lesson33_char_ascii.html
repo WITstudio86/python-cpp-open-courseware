@@ -1,0 +1,666 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>lesson33_char_ascii.cpp</title>
+<style>
+  :root {
+    --bg: #f5f7fa;
+    --panel: #ffffff;
+    --text: #1a1a2e;
+    --muted: #5a6570;
+    --gold: #b8860b;
+    --code-bg: #ffffff;
+    --code-text: #1f2933;
+    --border: #d8dee6;
+    --top-bg: #ffffff;
+    --top-border: #e5e9ef;
+  }
+  * { box-sizing: border-box; }
+  html, body {
+    margin: 0; padding: 0;
+    background: var(--bg);
+    color: var(--text);
+    font-family: -apple-system, BlinkMacSystemFont, "PingFang SC", "Microsoft YaHei", sans-serif;
+    min-height: 100%;
+  }
+  .top {
+    position: sticky; top: 0; z-index: 10;
+    display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between;
+    gap: 10px;
+    padding: 12px 18px;
+    background: var(--top-bg);
+    border-bottom: 1px solid var(--top-border);
+    box-shadow: 0 1px 8px rgba(15, 23, 42, 0.06);
+  }
+  .brand { color: var(--gold); font-weight: 700; font-size: 14px; letter-spacing: 0.04em; }
+  .title { font-size: 15px; font-weight: 600; color: var(--text); max-width: 52vw; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .actions { display: flex; gap: 8px; flex-wrap: wrap; }
+  .btn {
+    appearance: none; border: 1px solid var(--border);
+    background: #fff; color: var(--text);
+    border-radius: 999px; padding: 8px 14px; font-size: 13px; font-weight: 600;
+    text-decoration: none; cursor: pointer;
+  }
+  .btn:hover { background: #f0f3f7; }
+  .btn.gold {
+    background: linear-gradient(135deg, #f0d78c, #d4a853);
+    color: #0a2540; border-color: #e0c06a;
+  }
+  .meta {
+    padding: 10px 18px; color: var(--muted); font-size: 12px;
+    border-bottom: 1px solid var(--border);
+    background: var(--panel);
+  }
+  .wrap { padding: 16px 18px 40px; }
+  pre {
+    margin: 0;
+    background: var(--code-bg);
+    color: var(--code-text);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 18px 20px;
+    overflow: auto;
+    font-family: "SF Mono", "JetBrains Mono", "Fira Code", Consolas, "Courier New", monospace;
+    font-size: 13.5px;
+    line-height: 1.55;
+    white-space: pre;
+    tab-size: 4;
+    box-shadow: 0 2px 12px rgba(15, 23, 42, 0.05);
+  }
+  .hint { margin-top: 12px; color: var(--muted); font-size: 12px; }
+  @media print {
+    html, body { background: #fff !important; color: #000 !important; }
+    .top { position: static; box-shadow: none; border-bottom: 1px solid #ccc; background: #fff !important; }
+    .actions { display: none !important; }
+    .meta { background: #fff !important; border-color: #ddd; color: #333; }
+    .wrap { padding: 0; }
+    pre {
+      background: #fff !important; color: #000 !important;
+      border: 1px solid #bbb; box-shadow: none; border-radius: 0;
+      white-space: pre-wrap; word-break: break-word; font-size: 11pt; line-height: 1.4;
+    }
+    .hint { display: none; }
+    a { color: #000; text-decoration: none; }
+  }
+</style>
+</head>
+<body>
+  <div class="top">
+    <div class="brand">C++ 趣味学习 · 配套代码</div>
+    <div class="title">lesson33_char_ascii.cpp</div>
+    <div class="actions">
+      <a class="btn" href="../lesson33_char_ascii.cpp" download="lesson33_char_ascii.cpp">⬇️ 下载源文件</a>
+      <a class="btn gold" href="javascript:history.back()">← 返回课件</a>
+    </div>
+  </div>
+  <div class="meta">编码：UTF-8 · 文件：lesson33_char_ascii.cpp · 共 562 行 · 浅色主题便于打印</div>
+  <div class="wrap">
+    <pre id="code">/*
+ * ==========================================
+ *  第33课：字母大家族——字符类型
+ *  知识点：char类型、ASCII码、字符运算、大小写转换、凯撒密码
+ *  C++趣味学习系列
+ *
+ *  本程序包含以下演示模块：
+ *    程序1 - char 类型的基本用法：声明、输入输出、ASCII查询
+ *    程序2 - ASCII 编码表打印：用循环打印大写字母和小写字母的ASCII码对照表
+ *    程序3 - 字符算术运算与大小写转换：演示字符加减和大小写互相转换
+ *    程序4 - 简单凯撒密码：加密和解密单个字母
+ *    练习答案 - 三个课后练习的参考实现（注释函数形式）
+ *
+ *  编译方法：
+ *    g++ -std=c++11 lesson33_char_ascii.cpp -o lesson33_char_ascii
+ *  运行方法：
+ *    ./lesson33_char_ascii
+ * ==========================================
+ */
+
+#include &lt;iostream&gt;
+#include &lt;cctype&gt;    // 提供 isupper、islower、isdigit、toupper、tolower 等函数
+#include &lt;iomanip&gt;   // 提供 setw 设置输出宽度
+using namespace std;
+
+// ============================================
+// 练习答案函数：练习1 - ASCII侦探
+// 输入一个字符，输出它的ASCII码
+// ============================================
+void exercise1_asciiDetective() {
+    cout &lt;&lt; "\n========== 练习1：ASCII侦探 ==========" &lt;&lt; endl;
+    cout &lt;&lt; "输入一个字符，我会告诉你它的ASCII码！" &lt;&lt; endl;
+
+    char ch;
+    cout &lt;&lt; "请输入字符：";
+    cin &gt;&gt; ch;
+
+    // 将字符转换为整数，得到ASCII码
+    int asciiValue = (int)ch;   // 或者写 int asciiValue = ch;
+
+    cout &lt;&lt; "字符 '" &lt;&lt; ch &lt;&lt; "' 的ASCII码是：" &lt;&lt; asciiValue &lt;&lt; endl;
+    cout &lt;&lt; endl;
+
+    // 展示几个常见字符的ASCII码
+    cout &lt;&lt; "--- 常见字符速查 ---" &lt;&lt; endl;
+    cout &lt;&lt; "'M' 的ASCII码 = " &lt;&lt; (int)'M' &lt;&lt; endl;
+    cout &lt;&lt; "'9' 的ASCII码 = " &lt;&lt; (int)'9' &lt;&lt; endl;
+    cout &lt;&lt; "ASCII码 100 对应字符 = " &lt;&lt; (char)100 &lt;&lt; endl;
+    cout &lt;&lt; "ASCII码 70 对应字符 = " &lt;&lt; (char)70 &lt;&lt; endl;
+}
+
+// ============================================
+// 练习答案函数：练习2 - 大小写魔术师
+// 输入大写字母，转小写，并后移5位
+// ============================================
+void exercise2_caseMagic() {
+    cout &lt;&lt; "\n========== 练习2：大小写魔术师 ==========" &lt;&lt; endl;
+    cout &lt;&lt; "输入一个大写字母，我帮你转小写并后移5位！" &lt;&lt; endl;
+
+    char upper;
+    cout &lt;&lt; "请输入大写字母（A-Z）：";
+    cin &gt;&gt; upper;
+
+    // 检查是否为大写字母
+    if (upper &gt;= 'A' &amp;&amp; upper &lt;= 'Z') {
+        // 方法1：用ASCII差值转换
+        char lower = upper + 32;
+        cout &lt;&lt; "原字母 " &lt;&lt; upper &lt;&lt; " 的小写形式是：" &lt;&lt; lower &lt;&lt; endl;
+
+        // 后移5位（以小写字母为基础）
+        char shifted = lower + 5;
+
+        // 超出'z'就回绕到'a'继续
+        if (shifted &gt; 'z') {
+            shifted = shifted - 26;
+        }
+
+        cout &lt;&lt; lower &lt;&lt; " 后移5位变成：" &lt;&lt; shifted &lt;&lt; endl;
+
+        // 也展示一下用 toupper/tolower 函数的方式
+        cout &lt;&lt; "\n💡 用 cctype 库函数也能实现：" &lt;&lt; endl;
+        cout &lt;&lt; "  tolower('" &lt;&lt; upper &lt;&lt; "') = "
+             &lt;&lt; (char)tolower(upper) &lt;&lt; endl;
+    } else {
+        cout &lt;&lt; "❌ 请输入大写字母（A-Z）！你输入的不是大写字母哦。" &lt;&lt; endl;
+    }
+}
+
+// ============================================
+// 练习答案函数：练习3 - 字符分类器
+// 输入一个字符，判断类型
+// ============================================
+void exercise3_charClassifier() {
+    cout &lt;&lt; "\n========== 练习3：字符分类器 ==========" &lt;&lt; endl;
+    cout &lt;&lt; "输入一个字符，我帮你分类！" &lt;&lt; endl;
+
+    char ch;
+    cout &lt;&lt; "请输入任意一个字符：";
+    cin &gt;&gt; ch;
+
+    cout &lt;&lt; "\n--- 分析结果 ---" &lt;&lt; endl;
+    cout &lt;&lt; "字符：'" &lt;&lt; ch &lt;&lt; "'" &lt;&lt; endl;
+    cout &lt;&lt; "ASCII码：" &lt;&lt; (int)ch &lt;&lt; endl;
+    cout &lt;&lt; "分类：";
+
+    // 用ASCII范围判断字符类型
+    if (ch &gt;= 'A' &amp;&amp; ch &lt;= 'Z') {
+        cout &lt;&lt; "大写字母" &lt;&lt; endl;
+    } else if (ch &gt;= 'a' &amp;&amp; ch &lt;= 'z') {
+        cout &lt;&lt; "小写字母" &lt;&lt; endl;
+    } else if (ch &gt;= '0' &amp;&amp; ch &lt;= '9') {
+        cout &lt;&lt; "数字字符" &lt;&lt; endl;
+    } else if (ch == ' ') {
+        cout &lt;&lt; "空格" &lt;&lt; endl;
+    } else {
+        cout &lt;&lt; "其他字符（可能是标点符号或特殊符号）" &lt;&lt; endl;
+    }
+
+    // 展示用 cctype 库函数的判断方式
+    cout &lt;&lt; "\n💡 用 cctype 库函数判断结果：" &lt;&lt; endl;
+    cout &lt;&lt; "  isupper('" &lt;&lt; ch &lt;&lt; "') = "
+         &lt;&lt; (isupper(ch) ? "true（是大写）" : "false（不是大写）") &lt;&lt; endl;
+    cout &lt;&lt; "  islower('" &lt;&lt; ch &lt;&lt; "') = "
+         &lt;&lt; (islower(ch) ? "true（是小写）" : "false（不是小写）") &lt;&lt; endl;
+    cout &lt;&lt; "  isdigit('" &lt;&lt; ch &lt;&lt; "') = "
+         &lt;&lt; (isdigit(ch) ? "true（是数字）" : "false（不是数字）") &lt;&lt; endl;
+    cout &lt;&lt; "  isalpha('" &lt;&lt; ch &lt;&lt; "') = "
+         &lt;&lt; (isalpha(ch) ? "true（是字母）" : "false（不是字母）") &lt;&lt; endl;
+}
+
+// ============================================
+// 挑战任务：完整凯撒密码加密/解密系统
+// 输入任意英文句子，指定偏移量进行加密和解密
+// ============================================
+void challenge_caesarCipher() {
+    cout &lt;&lt; "\n========== 🔐 挑战任务：完整的凯撒密码系统 ==========" &lt;&lt; endl;
+
+    // 先吃掉之前输入的换行符（因为可能前面用了cin &gt;&gt; 读取）
+    cin.ignore();
+
+    // 1. 输入明文
+    string plaintext;
+    cout &lt;&lt; "请输入一句英文（仅小写字母和空格）：" &lt;&lt; endl;
+    cout &lt;&lt; "&gt; ";
+    getline(cin, plaintext);
+
+    // 2. 输入偏移量
+    int shift;
+    cout &lt;&lt; "请输入偏移量（1~25）：";
+    cin &gt;&gt; shift;
+
+    // 验证偏移量
+    if (shift &lt; 1 || shift &gt; 25) {
+        cout &lt;&lt; "❌ 偏移量必须在1~25之间！" &lt;&lt; endl;
+        return;
+    }
+
+    // 3. 加密过程
+    string ciphertext = "";  // 存储密文
+    for (int i = 0; i &lt; plaintext.length(); i++) {
+        char c = plaintext[i];
+        if (c == ' ') {
+            // 空格保持不变
+            ciphertext += ' ';
+        } else if (c &gt;= 'a' &amp;&amp; c &lt;= 'z') {
+            // 加密公式：(c - 'a' + shift) % 26 + 'a'
+            // 解释：
+            //   c - 'a'   → 把字母变成 0~25 的数字
+            //   + shift   → 加上偏移量
+            //   % 26      → 取余，保证不超出字母表范围（回绕到开头）
+            //   + 'a'     → 变回小写字母
+            char encrypted = (c - 'a' + shift) % 26 + 'a';
+            ciphertext += encrypted;
+        } else {
+            // 其他字符（如大写、标点）保持原样
+            ciphertext += c;
+        }
+    }
+
+    // 4. 输出加密结果
+    cout &lt;&lt; "\n--- 加密结果 ---" &lt;&lt; endl;
+    cout &lt;&lt; "原文：" &lt;&lt; plaintext &lt;&lt; endl;
+    cout &lt;&lt; "偏移量：" &lt;&lt; shift &lt;&lt; " 位" &lt;&lt; endl;
+    cout &lt;&lt; "密文：" &lt;&lt; ciphertext &lt;&lt; endl;
+
+    // 5. 解密验证
+    string decrypted = "";
+    for (int i = 0; i &lt; ciphertext.length(); i++) {
+        char c = ciphertext[i];
+        if (c == ' ') {
+            decrypted += ' ';
+        } else if (c &gt;= 'a' &amp;&amp; c &lt;= 'z') {
+            // 解密就是反向偏移：
+            // 26 - shift 相当于前移 shift 位并处理回绕
+            char original = (c - 'a' + (26 - shift)) % 26 + 'a';
+            decrypted += original;
+        } else {
+            decrypted += c;
+        }
+    }
+
+    cout &lt;&lt; "\n--- 解密验证 ---" &lt;&lt; endl;
+    cout &lt;&lt; "密文：" &lt;&lt; ciphertext &lt;&lt; endl;
+    cout &lt;&lt; "解密后：" &lt;&lt; decrypted &lt;&lt; endl;
+
+    if (decrypted == plaintext) {
+        cout &lt;&lt; "✅ 解密成功！密文已正确还原为原文！" &lt;&lt; endl;
+    } else {
+        cout &lt;&lt; "❌ 解密出现偏差，请检查程序。" &lt;&lt; endl;
+    }
+
+    // 算法小课堂
+    cout &lt;&lt; "\n💡 算法揭秘：" &lt;&lt; endl;
+    cout &lt;&lt; "  加密公式：(字母 - 'a' + 偏移量) % 26 + 'a'" &lt;&lt; endl;
+    cout &lt;&lt; "  为什么要 % 26？因为英文字母有26个，取余确保" &lt;&lt; endl;
+    cout &lt;&lt; "  不管偏移多少位都能正确回绕。比如 'z' + 3 = 'c'，" &lt;&lt; endl;
+    cout &lt;&lt; "  因为 (25 + 3) % 26 = 2，对应字母 'c'。" &lt;&lt; endl;
+}
+
+// ============================================
+// 主函数
+// ============================================
+int main() {
+    // 程序标题
+    cout &lt;&lt; "╔════════════════════════════════════╗" &lt;&lt; endl;
+    cout &lt;&lt; "║   第33课：字母大家族——字符类型    ║" &lt;&lt; endl;
+    cout &lt;&lt; "║   char、ASCII码、字符运算         ║" &lt;&lt; endl;
+    cout &lt;&lt; "╚════════════════════════════════════╝" &lt;&lt; endl;
+    cout &lt;&lt; endl;
+
+    // ==========================================
+    // 程序1：char 类型的基本用法
+    // 演示：声明char变量、输入输出、ASCII码查询
+    // ==========================================
+    {
+        cout &lt;&lt; "╔════════════════════════════════════╗" &lt;&lt; endl;
+        cout &lt;&lt; "║  程序1：char 类型基本用法         ║" &lt;&lt; endl;
+        cout &lt;&lt; "╚════════════════════════════════════╝" &lt;&lt; endl;
+        cout &lt;&lt; endl;
+
+        // 1.1 声明并初始化char变量
+        cout &lt;&lt; "--- 声明 char 变量 ---" &lt;&lt; endl;
+        char grade = 'A';        // 成绩等级
+        char symbol = '#';       // 特殊符号
+        char digitChar = '7';    // 数字字符（不是数字7！）
+        char space = ' ';        // 空格字符
+
+        cout &lt;&lt; "成绩等级字符：'" &lt;&lt; grade &lt;&lt; "'" &lt;&lt; endl;
+        cout &lt;&lt; "特殊符号：'" &lt;&lt; symbol &lt;&lt; "'" &lt;&lt; endl;
+        cout &lt;&lt; "数字字符：'" &lt;&lt; digitChar &lt;&lt; "'（注意：这不是数字7！）" &lt;&lt; endl;
+        cout &lt;&lt; "空格字符：'" &lt;&lt; space &lt;&lt; "'（你看不到它，但它在！）" &lt;&lt; endl;
+
+        // 1.2 展示字符和其ASCII码的对应关系
+        cout &lt;&lt; "\n--- 字符 vs ASCII码 ---" &lt;&lt; endl;
+        cout &lt;&lt; "字符 '" &lt;&lt; grade &lt;&lt; "' 的ASCII码是：" &lt;&lt; (int)grade
+             &lt;&lt; "（用 (int)grade 转换得到）" &lt;&lt; endl;
+        cout &lt;&lt; "字符 '" &lt;&lt; digitChar &lt;&lt; "' 的ASCII码是：" &lt;&lt; (int)digitChar &lt;&lt; endl;
+
+        // 1.3 从ASCII码反查字符
+        cout &lt;&lt; "\n--- ASCII码 → 字符 ---" &lt;&lt; endl;
+        cout &lt;&lt; "ASCII码 65 对应的字符是：'" &lt;&lt; (char)65 &lt;&lt; "'" &lt;&lt; endl;
+        cout &lt;&lt; "ASCII码 97 对应的字符是：'" &lt;&lt; (char)97 &lt;&lt; "'" &lt;&lt; endl;
+        cout &lt;&lt; "ASCII码 48 对应的字符是：'" &lt;&lt; (char)48 &lt;&lt; "'" &lt;&lt; endl;
+
+        // 1.4 验证字符'7'不等于数字7
+        cout &lt;&lt; "\n--- ⚠️ 重要：字符'7' ≠ 数字7 ---" &lt;&lt; endl;
+        cout &lt;&lt; "  C++代码：     cout &lt;&lt; '7' + 1" &lt;&lt; endl;
+        cout &lt;&lt; "  输出结果：    " &lt;&lt; digitChar + 1 &lt;&lt; "（因为 '7' 的ASCII码55 + 1 = 56）" &lt;&lt; endl;
+        cout &lt;&lt; "  而：          cout &lt;&lt; 7 + 1" &lt;&lt; endl;
+        cout &lt;&lt; "  输出结果：    " &lt;&lt; 7 + 1 &lt;&lt; endl;
+        cout &lt;&lt; "  两者完全不同！单引号里的'7'是一个字符，不是数字。" &lt;&lt; endl;
+
+        // 1.5 交互式ASCII查询
+        cout &lt;&lt; "\n--- 🔍 交互式ASCII码查询 ---" &lt;&lt; endl;
+        cout &lt;&lt; "请输入一个字符，我告诉你它的ASCII码：";
+        char query;
+        cin &gt;&gt; query;
+        cout &lt;&lt; "字符 '" &lt;&lt; query &lt;&lt; "' 的ASCII码 = " &lt;&lt; (int)query &lt;&lt; endl;
+        cout &lt;&lt; endl;
+    }
+
+    // ==========================================
+    // 程序2：ASCII编码表打印
+    // 演示：用for循环打印大写字母、小写字母的ASCII码对照表
+    // ==========================================
+    {
+        cout &lt;&lt; "╔════════════════════════════════════╗" &lt;&lt; endl;
+        cout &lt;&lt; "║  程序2：ASCII编码表打印           ║" &lt;&lt; endl;
+        cout &lt;&lt; "╚════════════════════════════════════╝" &lt;&lt; endl;
+        cout &lt;&lt; endl;
+
+        // 2.1 打印大写字母表（A~Z）及ASCII码
+        cout &lt;&lt; "--- 大写字母 ASCII 码对照表 ---" &lt;&lt; endl;
+        cout &lt;&lt; "┌──────┬──────┬──────┐" &lt;&lt; endl;
+        cout &lt;&lt; "│ 序号 │ 字母 │ ASCII│" &lt;&lt; endl;
+        cout &lt;&lt; "├──────┼──────┼──────┤" &lt;&lt; endl;
+        int index = 1;
+        for (char c = 'A'; c &lt;= 'Z'; c++) {
+            cout &lt;&lt; "│  " &lt;&lt; setw(3) &lt;&lt; index
+                 &lt;&lt; " │  '" &lt;&lt; c &lt;&lt; "'  │  " &lt;&lt; setw(3) &lt;&lt; (int)c &lt;&lt; " │" &lt;&lt; endl;
+            index++;
+        }
+        cout &lt;&lt; "└──────┴──────┴──────┘" &lt;&lt; endl;
+
+        // 2.2 打印小写字母表（a~z）及ASCII码
+        cout &lt;&lt; "\n--- 小写字母 ASCII 码对照表 ---" &lt;&lt; endl;
+        cout &lt;&lt; "┌──────┬──────┬──────┐" &lt;&lt; endl;
+        cout &lt;&lt; "│ 序号 │ 字母 │ ASCII│" &lt;&lt; endl;
+        cout &lt;&lt; "├──────┼──────┼──────┤" &lt;&lt; endl;
+        index = 1;
+        for (char c = 'a'; c &lt;= 'z'; c++) {
+            cout &lt;&lt; "│  " &lt;&lt; setw(3) &lt;&lt; index
+                 &lt;&lt; " │  '" &lt;&lt; c &lt;&lt; "'  │  " &lt;&lt; setw(3) &lt;&lt; (int)c &lt;&lt; " │" &lt;&lt; endl;
+            index++;
+        }
+        cout &lt;&lt; "└──────┴──────┴──────┘" &lt;&lt; endl;
+
+        // 2.3 打印数字字符（0~9）的ASCII码
+        cout &lt;&lt; "\n--- 数字字符 ASCII 码对照表 ---" &lt;&lt; endl;
+        cout &lt;&lt; "┌──────┬──────┬──────┐" &lt;&lt; endl;
+        cout &lt;&lt; "│ 序号 │ 字符 │ ASCII│" &lt;&lt; endl;
+        cout &lt;&lt; "├──────┼──────┼──────┤" &lt;&lt; endl;
+        for (char c = '0'; c &lt;= '9'; c++) {
+            cout &lt;&lt; "│  " &lt;&lt; setw(3) &lt;&lt; (c - '0' + 1)
+                 &lt;&lt; " │  '" &lt;&lt; c &lt;&lt; "'  │  " &lt;&lt; setw(3) &lt;&lt; (int)c &lt;&lt; " │" &lt;&lt; endl;
+        }
+        cout &lt;&lt; "└──────┴──────┴──────┘" &lt;&lt; endl;
+
+        // 2.4 重要规律总结
+        cout &lt;&lt; "\n📐 重要规律总结：" &lt;&lt; endl;
+        cout &lt;&lt; "  ① 大写字母 'A'~'Z' → ASCII码 65~90" &lt;&lt; endl;
+        cout &lt;&lt; "  ② 小写字母 'a'~'z' → ASCII码 97~122" &lt;&lt; endl;
+        cout &lt;&lt; "  ③ 数字字符 '0'~'9' → ASCII码 48~57" &lt;&lt; endl;
+        cout &lt;&lt; "  ④ 大写字母 + 32 = 对应小写字母" &lt;&lt; endl;
+        cout &lt;&lt; "  ⑤ 小写字母 - 32 = 对应大写字母" &lt;&lt; endl;
+        cout &lt;&lt; "  ⑥ ASCII码顺序：数字字符 &lt; 大写字母 &lt; 小写字母" &lt;&lt; endl;
+        cout &lt;&lt; "     验证：" &lt;&lt; (int)'9' &lt;&lt; " &lt; " &lt;&lt; (int)'A'
+             &lt;&lt; " &lt; " &lt;&lt; (int)'a' &lt;&lt; " ✓" &lt;&lt; endl;
+        cout &lt;&lt; endl;
+    }
+
+    // ==========================================
+    // 程序3：字符算术运算与大小写转换
+    // 演示：字符加减法、大小写互相转换的两种方法
+    // ==========================================
+    {
+        cout &lt;&lt; "╔════════════════════════════════════╗" &lt;&lt; endl;
+        cout &lt;&lt; "║  程序3：字符运算与大小写转换      ║" &lt;&lt; endl;
+        cout &lt;&lt; "╚════════════════════════════════════╝" &lt;&lt; endl;
+        cout &lt;&lt; endl;
+
+        // 3.1 字符算术运算
+        cout &lt;&lt; "--- 字符做加法 ---" &lt;&lt; endl;
+        char base = 'A';
+        cout &lt;&lt; "从 '" &lt;&lt; base &lt;&lt; "' 开始：" &lt;&lt; endl;
+        for (int i = 0; i &lt;= 25; i += 5) {
+            cout &lt;&lt; "  加" &lt;&lt; i &lt;&lt; "位 → '" &lt;&lt; (char)(base + i) &lt;&lt; "'"
+                 &lt;&lt; " (ASCII码：" &lt;&lt; (int)(base + i) &lt;&lt; ")" &lt;&lt; endl;
+        }
+
+        // 3.2 大小写转换（方法1：直接加减32）
+        cout &lt;&lt; "\n--- 大小写转换（方法1：加减32） ---" &lt;&lt; endl;
+        char original1 = 'H';
+        cout &lt;&lt; "原字母：" &lt;&lt; original1 &lt;&lt; " (ASCII码：" &lt;&lt; (int)original1 &lt;&lt; ")" &lt;&lt; endl;
+
+        char upperToLower = original1 + 32;  // 大写→小写
+        cout &lt;&lt; "转小写（+32）：" &lt;&lt; upperToLower
+             &lt;&lt; " (ASCII码：" &lt;&lt; (int)upperToLower &lt;&lt; ")" &lt;&lt; endl;
+
+        char lowerToUpper = upperToLower - 32;  // 小写→大写
+        cout &lt;&lt; "再转大写（-32）：" &lt;&lt; lowerToUpper
+             &lt;&lt; " (ASCII码：" &lt;&lt; (int)lowerToUpper &lt;&lt; ")" &lt;&lt; endl;
+
+        // 3.3 大小写转换（方法2：用cctype库函数）
+        cout &lt;&lt; "\n--- 大小写转换（方法2：cctype库函数） ---" &lt;&lt; endl;
+        char original2 = 'z';
+        cout &lt;&lt; "原字母：" &lt;&lt; original2 &lt;&lt; endl;
+        cout &lt;&lt; "toupper()：" &lt;&lt; (char)toupper(original2)
+             &lt;&lt; " → '" &lt;&lt; (char)toupper(original2) &lt;&lt; "'" &lt;&lt; endl;
+
+        original2 = 'G';
+        cout &lt;&lt; "原字母：" &lt;&lt; original2 &lt;&lt; endl;
+        cout &lt;&lt; "tolower()：" &lt;&lt; (char)tolower(original2)
+             &lt;&lt; " → '" &lt;&lt; (char)tolower(original2) &lt;&lt; "'" &lt;&lt; endl;
+
+        // 3.4 字符比较演示
+        cout &lt;&lt; "\n--- 字符比较 ---" &lt;&lt; endl;
+        cout &lt;&lt; "请输入两个字符，我帮你比较它们的 ASCII 码大小：" &lt;&lt; endl;
+
+        char char1, char2;
+        cout &lt;&lt; "第1个字符：";
+        cin &gt;&gt; char1;
+        cout &lt;&lt; "第2个字符：";
+        cin &gt;&gt; char2;
+
+        cout &lt;&lt; "\n'" &lt;&lt; char1 &lt;&lt; "' 的 ASCII码 = " &lt;&lt; (int)char1 &lt;&lt; endl;
+        cout &lt;&lt; "'" &lt;&lt; char2 &lt;&lt; "' 的 ASCII码 = " &lt;&lt; (int)char2 &lt;&lt; endl;
+
+        if (char1 &gt; char2) {
+            cout &lt;&lt; "结果：'" &lt;&lt; char1 &lt;&lt; "' &gt; '" &lt;&lt; char2 &lt;&lt; "'（"
+                 &lt;&lt; (int)char1 &lt;&lt; " &gt; " &lt;&lt; (int)char2 &lt;&lt; "）" &lt;&lt; endl;
+        } else if (char1 &lt; char2) {
+            cout &lt;&lt; "结果：'" &lt;&lt; char1 &lt;&lt; "' &lt; '" &lt;&lt; char2 &lt;&lt; "'（"
+                 &lt;&lt; (int)char1 &lt;&lt; " &lt; " &lt;&lt; (int)char2 &lt;&lt; "）" &lt;&lt; endl;
+        } else {
+            cout &lt;&lt; "结果：'" &lt;&lt; char1 &lt;&lt; "' == '" &lt;&lt; char2 &lt;&lt; "'（两个字符相同）" &lt;&lt; endl;
+        }
+
+        // 3.5 判断字符类型
+        cout &lt;&lt; "\n--- 字符类型判断 ---" &lt;&lt; endl;
+        cout &lt;&lt; "请输入一个字符，我判断它的类型：" &lt;&lt; endl;
+        char typeChar;
+        cout &lt;&lt; "输入字符：";
+        cin &gt;&gt; typeChar;
+
+        cout &lt;&lt; "\n字符 '" &lt;&lt; typeChar &lt;&lt; "' 的判断结果：" &lt;&lt; endl;
+        cout &lt;&lt; "  isalpha（是字母）：" &lt;&lt; (isalpha(typeChar) ? "✓" : "✗") &lt;&lt; endl;
+        cout &lt;&lt; "  isupper（是大写）：" &lt;&lt; (isupper(typeChar) ? "✓" : "✗") &lt;&lt; endl;
+        cout &lt;&lt; "  islower（是小写）：" &lt;&lt; (islower(typeChar) ? "✓" : "✗") &lt;&lt; endl;
+        cout &lt;&lt; "  isdigit（是数字）：" &lt;&lt; (isdigit(typeChar) ? "✓" : "✗") &lt;&lt; endl;
+        cout &lt;&lt; "  isspace（是空白）：" &lt;&lt; (isspace(typeChar) ? "✓" : "✗") &lt;&lt; endl;
+        cout &lt;&lt; endl;
+    }
+
+    // ==========================================
+    // 程序4：简单凯撒密码加密器
+    // 演示：输入一个字母，后移3位加密，前移3位解密
+    // ==========================================
+    {
+        cout &lt;&lt; "╔════════════════════════════════════╗" &lt;&lt; endl;
+        cout &lt;&lt; "║  程序4：🔐 凯撒密码加密解密器     ║" &lt;&lt; endl;
+        cout &lt;&lt; "╚════════════════════════════════════╝" &lt;&lt; endl;
+        cout &lt;&lt; endl;
+        cout &lt;&lt; "规则：把每个小写字母后移3位进行加密" &lt;&lt; endl;
+        cout &lt;&lt; "      例如：a→d, b→e, ..., x→a, y→b, z→c" &lt;&lt; endl;
+        cout &lt;&lt; "      解密时反方向前移3位即可" &lt;&lt; endl;
+        cout &lt;&lt; endl;
+
+        // 输入需要加密的字母
+        char letter;
+        cout &lt;&lt; "请输入一个小写字母（a-z）进行加密：";
+        cin &gt;&gt; letter;
+
+        // 判断是否为小写字母
+        if (letter &gt;= 'a' &amp;&amp; letter &lt;= 'z') {
+            // 加密：后移3位
+            char encrypted = letter + 3;
+
+            // 处理超出'z'的情况（回绕到'a'）
+            if (encrypted &gt; 'z') {
+                encrypted = encrypted - 26;  // 26个字母，绕回来
+            }
+
+            // 解密：前移3位
+            char decrypted = encrypted - 3;
+            if (decrypted &lt; 'a') {
+                decrypted = decrypted + 26;  // 回绕到'z'
+            }
+
+            // 输出结果
+            cout &lt;&lt; "\n--- 🔐 加密解密过程 ---" &lt;&lt; endl;
+            cout &lt;&lt; "原文   '" &lt;&lt; letter &lt;&lt; "'\tASCII码：" &lt;&lt; (int)letter &lt;&lt; endl;
+
+            // 展示计算步骤
+            cout &lt;&lt; "加密计算：'" &lt;&lt; letter &lt;&lt; "' + 3" &lt;&lt; endl;
+            if (letter + 3 &gt; 'z') {
+                cout &lt;&lt; "  → " &lt;&lt; (int)(letter) &lt;&lt; " + 3 = " &lt;&lt; (int)(letter) + 3
+                     &lt;&lt; "，超出'z'(" &lt;&lt; (int)'z' &lt;&lt; ")，回绕-" &lt;&lt; 26
+                     &lt;&lt; " = " &lt;&lt; (int)encrypted
+                     &lt;&lt; " → '" &lt;&lt; encrypted &lt;&lt; "'" &lt;&lt; endl;
+            } else {
+                cout &lt;&lt; "  → " &lt;&lt; (int)(letter) &lt;&lt; " + 3 = " &lt;&lt; (int)(letter) + 3
+                     &lt;&lt; " → '" &lt;&lt; encrypted &lt;&lt; "'" &lt;&lt; endl;
+            }
+            cout &lt;&lt; "密文   '" &lt;&lt; encrypted &lt;&lt; "'\tASCII码：" &lt;&lt; (int)encrypted &lt;&lt; endl;
+
+            cout &lt;&lt; "\n解密计算：'" &lt;&lt; encrypted &lt;&lt; "' - 3" &lt;&lt; endl;
+            cout &lt;&lt; "  → " &lt;&lt; (int)(encrypted) &lt;&lt; " - 3 = " &lt;&lt; (int)decrypted
+                 &lt;&lt; " → '" &lt;&lt; decrypted &lt;&lt; "'" &lt;&lt; endl;
+            cout &lt;&lt; "解密后 '" &lt;&lt; decrypted &lt;&lt; "'\tASCII码：" &lt;&lt; (int)decrypted &lt;&lt; endl;
+
+            // 验证
+            if (decrypted == letter) {
+                cout &lt;&lt; "\n✅ 解密成功！结果与原文一致！" &lt;&lt; endl;
+            }
+
+            // 展示所有字母的加密对照表
+            cout &lt;&lt; "\n--- 完整加密对照表（偏移3位） ---" &lt;&lt; endl;
+            cout &lt;&lt; "原文：a b c d e f g h i j k l m n o p q r s t u v w x y z" &lt;&lt; endl;
+            cout &lt;&lt; "密文：";
+            for (char c = 'a'; c &lt;= 'z'; c++) {
+                char enc = c + 3;
+                if (enc &gt; 'z') enc -= 26;
+                cout &lt;&lt; enc &lt;&lt; " ";
+            }
+            cout &lt;&lt; endl;
+
+        } else {
+            cout &lt;&lt; "❌ 请输入小写字母（a-z）！" &lt;&lt; endl;
+        }
+        cout &lt;&lt; endl;
+    }
+
+    // ==========================================
+    // 课后练习参考答案演示
+    // 执行前提示用户
+    // ==========================================
+    cout &lt;&lt; "╔════════════════════════════════════╗" &lt;&lt; endl;
+    cout &lt;&lt; "║  课后练习参考答案演示              ║" &lt;&lt; endl;
+    cout &lt;&lt; "╚════════════════════════════════════╝" &lt;&lt; endl;
+
+    // 练习1：ASCII侦探
+    exercise1_asciiDetective();
+
+    // 练习2：大小写魔术师
+    exercise2_caseMagic();
+
+    // 练习3：字符分类器
+    exercise3_charClassifier();
+
+    // ==========================================
+    // 挑战任务：完整凯撒密码加密/解密系统
+    // ==========================================
+    cout &lt;&lt; "\n╔════════════════════════════════════╗" &lt;&lt; endl;
+    cout &lt;&lt; "║  🏆 挑战任务：凯撒密码系统        ║" &lt;&lt; endl;
+    cout &lt;&lt; "╚════════════════════════════════════╝" &lt;&lt; endl;
+
+    char runChallenge;
+    cout &lt;&lt; "\n是否运行挑战任务——完整凯撒密码系统？(y/n)：";
+    cin &gt;&gt; runChallenge;
+    if (runChallenge == 'y' || runChallenge == 'Y') {
+        challenge_caesarCipher();
+    } else {
+        cout &lt;&lt; "跳过挑战任务。你可以以后自己运行试试！" &lt;&lt; endl;
+    }
+
+    // ==========================================
+    // 课程总结
+    // ==========================================
+    cout &lt;&lt; "\n╔══════════════════════════════════════════════╗" &lt;&lt; endl;
+    cout &lt;&lt; "║  📝 本课核心知识点总结                      ║" &lt;&lt; endl;
+    cout &lt;&lt; "╠══════════════════════════════════════════════╣" &lt;&lt; endl;
+    cout &lt;&lt; "║  1. char类型  → 存储单个字符，用单引号      ║" &lt;&lt; endl;
+    cout &lt;&lt; "║  2. ASCII编码 → 字符背后的数字身份证        ║" &lt;&lt; endl;
+    cout &lt;&lt; "║      大写 A-Z: 65~90                         ║" &lt;&lt; endl;
+    cout &lt;&lt; "║      小写 a-z: 97~122                        ║" &lt;&lt; endl;
+    cout &lt;&lt; "║      数字 0-9: 48~57                         ║" &lt;&lt; endl;
+    cout &lt;&lt; "║  3. 大小写转换 → 大写+32=小写，小写-32=大写 ║" &lt;&lt; endl;
+    cout &lt;&lt; "║  4. 字符运算   → 字符可以加减整数           ║" &lt;&lt; endl;
+    cout &lt;&lt; "║  5. 字符比较   → 按ASCII码比大小            ║" &lt;&lt; endl;
+    cout &lt;&lt; "║  6. 凯撒密码   → 利用ASCII偏移实现加密      ║" &lt;&lt; endl;
+    cout &lt;&lt; "╠══════════════════════════════════════════════╣" &lt;&lt; endl;
+    cout &lt;&lt; "║  🔑 口诀：                                   ║" &lt;&lt; endl;
+    cout &lt;&lt; "║  字母背后藏数字，ASCII编码记心间；          ║" &lt;&lt; endl;
+    cout &lt;&lt; "║  大写小写差三二，字符也能做加减；            ║" &lt;&lt; endl;
+    cout &lt;&lt; "║  加密解密都靠它，密码达人就是你！            ║" &lt;&lt; endl;
+    cout &lt;&lt; "╚══════════════════════════════════════════════╝" &lt;&lt; endl;
+
+    cout &lt;&lt; "\n程序结束。感谢学习第33课：字母大家族——字符类型！" &lt;&lt; endl;
+
+    return 0;
+}
+</pre>
+    <p class="hint">本页使用浅色主题与 UTF-8 编码，可直接打印或导出 PDF。</p>
+  </div>
+</body>
+</html>

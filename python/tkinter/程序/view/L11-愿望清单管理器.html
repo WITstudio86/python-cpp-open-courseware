@@ -1,0 +1,219 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>L11-愿望清单管理器.py</title>
+<style>
+  :root {
+    --bg: #f5f7fa;
+    --panel: #ffffff;
+    --text: #1a1a2e;
+    --muted: #5a6570;
+    --gold: #b8860b;
+    --code-bg: #ffffff;
+    --code-text: #1f2933;
+    --border: #d8dee6;
+    --top-bg: #ffffff;
+    --top-border: #e5e9ef;
+  }
+  * { box-sizing: border-box; }
+  html, body {
+    margin: 0; padding: 0;
+    background: var(--bg);
+    color: var(--text);
+    font-family: -apple-system, BlinkMacSystemFont, "PingFang SC", "Microsoft YaHei", sans-serif;
+    min-height: 100%;
+  }
+  .top {
+    position: sticky; top: 0; z-index: 10;
+    display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between;
+    gap: 10px;
+    padding: 12px 18px;
+    background: var(--top-bg);
+    border-bottom: 1px solid var(--top-border);
+    box-shadow: 0 1px 8px rgba(15, 23, 42, 0.06);
+  }
+  .brand { color: var(--gold); font-weight: 700; font-size: 14px; letter-spacing: 0.04em; }
+  .title { font-size: 15px; font-weight: 600; color: var(--text); max-width: 52vw; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .actions { display: flex; gap: 8px; flex-wrap: wrap; }
+  .btn {
+    appearance: none; border: 1px solid var(--border);
+    background: #fff; color: var(--text);
+    border-radius: 999px; padding: 8px 14px; font-size: 13px; font-weight: 600;
+    text-decoration: none; cursor: pointer;
+  }
+  .btn:hover { background: #f0f3f7; }
+  .btn.gold {
+    background: linear-gradient(135deg, #f0d78c, #d4a853);
+    color: #0a2540; border-color: #e0c06a;
+  }
+  .meta {
+    padding: 10px 18px; color: var(--muted); font-size: 12px;
+    border-bottom: 1px solid var(--border);
+    background: var(--panel);
+  }
+  .wrap { padding: 16px 18px 40px; }
+  pre {
+    margin: 0;
+    background: var(--code-bg);
+    color: var(--code-text);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 18px 20px;
+    overflow: auto;
+    font-family: "SF Mono", "JetBrains Mono", "Fira Code", Consolas, "Courier New", monospace;
+    font-size: 13.5px;
+    line-height: 1.55;
+    white-space: pre;
+    tab-size: 4;
+    box-shadow: 0 2px 12px rgba(15, 23, 42, 0.05);
+  }
+  .hint { margin-top: 12px; color: var(--muted); font-size: 12px; }
+  @media print {
+    html, body { background: #fff !important; color: #000 !important; }
+    .top { position: static; box-shadow: none; border-bottom: 1px solid #ccc; background: #fff !important; }
+    .actions { display: none !important; }
+    .meta { background: #fff !important; border-color: #ddd; color: #333; }
+    .wrap { padding: 0; }
+    pre {
+      background: #fff !important; color: #000 !important;
+      border: 1px solid #bbb; box-shadow: none; border-radius: 0;
+      white-space: pre-wrap; word-break: break-word; font-size: 11pt; line-height: 1.4;
+    }
+    .hint { display: none; }
+    a { color: #000; text-decoration: none; }
+  }
+</style>
+</head>
+<body>
+  <div class="top">
+    <div class="brand">Python Tkinter · 配套代码</div>
+    <div class="title">L11-愿望清单管理器.py</div>
+    <div class="actions">
+      <a class="btn" href="../L11-愿望清单管理器.py" download="L11-愿望清单管理器.py">⬇️ 下载源文件</a>
+      <a class="btn gold" href="javascript:history.back()">← 返回课件</a>
+    </div>
+  </div>
+  <div class="meta">编码：UTF-8 · 文件：L11-愿望清单管理器.py · 共 115 行 · 浅色主题便于打印</div>
+  <div class="wrap">
+    <pre id="code">import tkinter as tk
+
+# ========================================
+# 第 11 节：愿望清单管理器
+# 知识点：Listbox + Scrollbar + Entry + Button
+# ========================================
+
+# 1. 创建主窗口
+root = tk.Tk()
+root.title("愿望清单管理器")           # 设置窗口标题
+root.geometry("450x400")               # 设置窗口大小：宽450，高400
+root.configure(bg="#fff8e1")           # 设置背景色：暖黄色
+
+# 2. 顶部标题
+title_label = tk.Label(
+    root,
+    text="🌟 我的愿望清单",
+    font=("Microsoft YaHei", 18, "bold"),
+    bg="#fff8e1",                      # 背景色与窗口一致
+    fg="#e65100"                       # 文字颜色：深橙色
+)
+title_label.pack(pady=(15, 5))
+
+# 3. 输入区域：一个 Frame 容器，包含输入框和添加按钮
+input_frame = tk.Frame(root, bg="#fff8e1")
+input_frame.pack(pady=10)
+
+# 3a. 创建输入框
+entry = tk.Entry(
+    input_frame,
+    width=30,                          # 输入框宽度（字符数）
+    font=("Microsoft YaHei", 12)
+)
+entry.pack(side=tk.LEFT, padx=(0, 8))  # 放在 Frame 左边
+entry.focus_set()                       # 让输入框自动获得焦点，可以直接打字
+
+
+# 3b. 定义"添加"功能的函数
+def add_wish():
+    """获取输入框内容，添加到 Listbox 中"""
+    text = entry.get().strip()          # .get() 获取输入文字，.strip() 去掉首尾空格
+    if text:                             # 如果内容不为空
+        listbox.insert(tk.END, text)     # tk.END 表示添加到列表末尾
+        entry.delete(0, tk.END)          # 清空输入框（从第0个字符删到末尾）
+
+
+# 3c. 创建"添加"按钮
+add_btn = tk.Button(
+    input_frame,
+    text="➕ 添加",
+    command=add_wish,                   # 点击时调用 add_wish 函数
+    font=("Microsoft YaHei", 11, "bold"),
+    bg="#ff9800",                       # 按钮背景色：橙色
+    fg="white",                         # 按钮文字色：白色
+    activebackground="#f57c00",         # 鼠标按下时的颜色
+    relief="flat",                      # 扁平样式
+    padx=15, pady=4,                    # 内边距
+    cursor="hand2"                      # 鼠标悬停时显示手指
+)
+add_btn.pack(side=tk.LEFT)              # 放在输入框右边
+
+# 3d. 绑定回车键：在窗口任意位置按回车都能触发添加
+root.bind("&lt;Return&gt;", lambda event: add_wish())
+
+# 4. 列表区域：一个 Frame 包含 Listbox 和 Scrollbar
+list_frame = tk.Frame(root, bg="#fff8e1")
+list_frame.pack(pady=10, fill=tk.BOTH, expand=True, padx=30)
+
+# 4a. 创建滚动条（先放右边）
+scrollbar = tk.Scrollbar(list_frame)
+scrollbar.pack(side=tk.RIGHT, fill=tk.Y)  # 靠右放置，纵向填满
+
+# 4b. 创建 Listbox，并与滚动条关联
+listbox = tk.Listbox(
+    list_frame,
+    width=35,                           # 列表宽度（字符数）
+    height=10,                          # 列表高度（行数）
+    font=("Microsoft YaHei", 12),
+    bg="#ffffff",                       # 列表背景色：白色
+    fg="#333333",                       # 列表文字色
+    selectbackground="#ffcc80",         # 选中项的背景色：浅橙色
+    selectforeground="#333333",         # 选中项的文字色
+    yscrollcommand=scrollbar.set        # 关键！让 Listbox 通知滚动条
+)
+listbox.pack(side=tk.LEFT, fill=tk.BOTH, expand=True)
+
+# 4c. 滚动条也要关联 Listbox（双向绑定）
+scrollbar.config(command=listbox.yview)
+
+
+# 5. 定义"删除"功能的函数
+def delete_wish():
+    """删除 Listbox 中当前选中的项目"""
+    selected = listbox.curselection()   # 获取选中项的索引（返回元组）
+    if selected:                         # 如果有选中的项（元组不为空）
+        listbox.delete(selected[0])      # 删除第一个选中的项（索引从元组中取）
+
+
+# 5a. 创建"删除选中"按钮
+delete_btn = tk.Button(
+    root,
+    text="🗑️ 删除选中",
+    command=delete_wish,                # 点击时调用 delete_wish 函数
+    font=("Microsoft YaHei", 11, "bold"),
+    bg="#f44336",                       # 按钮背景色：红色
+    fg="white",                         # 按钮文字色：白色
+    activebackground="#d32f2f",         # 鼠标按下时的颜色
+    relief="flat",
+    padx=15, pady=6,
+    cursor="hand2"
+)
+delete_btn.pack(pady=(0, 15))
+
+# 6. 启动主循环（必须放在代码最后！）
+root.mainloop()
+</pre>
+    <p class="hint">本页使用浅色主题与 UTF-8 编码，可直接打印或导出 PDF。</p>
+  </div>
+</body>
+</html>

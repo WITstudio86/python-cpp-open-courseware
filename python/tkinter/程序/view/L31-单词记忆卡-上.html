@@ -1,0 +1,291 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>L31-单词记忆卡-上.py</title>
+<style>
+  :root {
+    --bg: #f5f7fa;
+    --panel: #ffffff;
+    --text: #1a1a2e;
+    --muted: #5a6570;
+    --gold: #b8860b;
+    --code-bg: #ffffff;
+    --code-text: #1f2933;
+    --border: #d8dee6;
+    --top-bg: #ffffff;
+    --top-border: #e5e9ef;
+  }
+  * { box-sizing: border-box; }
+  html, body {
+    margin: 0; padding: 0;
+    background: var(--bg);
+    color: var(--text);
+    font-family: -apple-system, BlinkMacSystemFont, "PingFang SC", "Microsoft YaHei", sans-serif;
+    min-height: 100%;
+  }
+  .top {
+    position: sticky; top: 0; z-index: 10;
+    display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between;
+    gap: 10px;
+    padding: 12px 18px;
+    background: var(--top-bg);
+    border-bottom: 1px solid var(--top-border);
+    box-shadow: 0 1px 8px rgba(15, 23, 42, 0.06);
+  }
+  .brand { color: var(--gold); font-weight: 700; font-size: 14px; letter-spacing: 0.04em; }
+  .title { font-size: 15px; font-weight: 600; color: var(--text); max-width: 52vw; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .actions { display: flex; gap: 8px; flex-wrap: wrap; }
+  .btn {
+    appearance: none; border: 1px solid var(--border);
+    background: #fff; color: var(--text);
+    border-radius: 999px; padding: 8px 14px; font-size: 13px; font-weight: 600;
+    text-decoration: none; cursor: pointer;
+  }
+  .btn:hover { background: #f0f3f7; }
+  .btn.gold {
+    background: linear-gradient(135deg, #f0d78c, #d4a853);
+    color: #0a2540; border-color: #e0c06a;
+  }
+  .meta {
+    padding: 10px 18px; color: var(--muted); font-size: 12px;
+    border-bottom: 1px solid var(--border);
+    background: var(--panel);
+  }
+  .wrap { padding: 16px 18px 40px; }
+  pre {
+    margin: 0;
+    background: var(--code-bg);
+    color: var(--code-text);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 18px 20px;
+    overflow: auto;
+    font-family: "SF Mono", "JetBrains Mono", "Fira Code", Consolas, "Courier New", monospace;
+    font-size: 13.5px;
+    line-height: 1.55;
+    white-space: pre;
+    tab-size: 4;
+    box-shadow: 0 2px 12px rgba(15, 23, 42, 0.05);
+  }
+  .hint { margin-top: 12px; color: var(--muted); font-size: 12px; }
+  @media print {
+    html, body { background: #fff !important; color: #000 !important; }
+    .top { position: static; box-shadow: none; border-bottom: 1px solid #ccc; background: #fff !important; }
+    .actions { display: none !important; }
+    .meta { background: #fff !important; border-color: #ddd; color: #333; }
+    .wrap { padding: 0; }
+    pre {
+      background: #fff !important; color: #000 !important;
+      border: 1px solid #bbb; box-shadow: none; border-radius: 0;
+      white-space: pre-wrap; word-break: break-word; font-size: 11pt; line-height: 1.4;
+    }
+    .hint { display: none; }
+    a { color: #000; text-decoration: none; }
+  }
+</style>
+</head>
+<body>
+  <div class="top">
+    <div class="brand">Python Tkinter · 配套代码</div>
+    <div class="title">L31-单词记忆卡-上.py</div>
+    <div class="actions">
+      <a class="btn" href="../L31-单词记忆卡-上.py" download="L31-单词记忆卡-上.py">⬇️ 下载源文件</a>
+      <a class="btn gold" href="javascript:history.back()">← 返回课件</a>
+    </div>
+  </div>
+  <div class="meta">编码：UTF-8 · 文件：L31-单词记忆卡-上.py · 共 187 行 · 浅色主题便于打印</div>
+  <div class="wrap">
+    <pre id="code">import tkinter as tk
+import random
+
+# ========================================
+# 第 31 节：项目 7 — 单词记忆卡 v1
+# 功能：随机显示单词，点击翻面看释义
+# ========================================
+
+# 1. 创建主窗口
+root = tk.Tk()
+root.title("单词记忆卡 🃏")
+root.geometry("470x450")
+root.configure(bg="#fff8e7")  # 米白色背景，像纸张
+
+# ========================================
+# 2. 单词库（字典）
+# ========================================
+
+word_dict = {
+    "apple":      "苹果 🍎",
+    "book":       "书 📖",
+    "cat":        "猫 🐱",
+    "dog":        "狗 🐕",
+    "elephant":   "大象 🐘",
+    "flower":     "花 🌸",
+    "garden":     "花园 🌻",
+    "house":      "房子 🏠",
+    "ice cream":  "冰淇淋 🍦",
+    "jungle":     "丛林 🌴",
+    "king":       "国王 👑",
+    "lion":       "狮子 🦁",
+    "moon":       "月亮 🌙",
+    "night":      "夜晚 🌃",
+    "ocean":      "海洋 🌊",
+    "piano":      "钢琴 🎹",
+    "queen":      "女王 👸",
+    "rainbow":    "彩虹 🌈",
+    "star":       "星星 ⭐",
+    "tree":       "树 🌳",
+}
+
+# ========================================
+# 3. 当前状态变量
+# ========================================
+
+current_word = ""      # 当前显示的英文单词
+current_meaning = ""   # 对应的中文释义
+is_front = True        # True = 正面（英文）, False = 背面（中文）
+
+# ========================================
+# 4. 功能函数
+# ========================================
+
+def next_card():
+    """随机抽取一张新卡片（自动翻回正面）"""
+    global current_word, current_meaning, is_front
+
+    # 从所有单词中随机选一个
+    current_word = random.choice(list(word_dict.keys()))
+    current_meaning = word_dict[current_word]
+
+    # 重置为正面（显示英文）
+    is_front = True
+
+    # 更新界面
+    word_label.config(text=current_word, fg="#3a2a1a")  # 深棕色文字
+    flip_btn.config(text="🔍 翻面看释义")
+    status_label.config(
+        text=f"📚 词库共 {len(word_dict)} 个单词"
+    )
+
+
+def flip():
+    """翻面：切换显示英文/中文"""
+    global is_front
+
+    if is_front:
+        # 当前是正面（英文）→ 翻到背面，显示中文释义
+        word_label.config(text=current_meaning, fg="#8b4513")  # 棕色
+        flip_btn.config(text="↩ 翻回正面")
+        is_front = False
+    else:
+        # 当前是背面（中文）→ 翻回正面，显示英文
+        word_label.config(text=current_word, fg="#3a2a1a")
+        flip_btn.config(text="🔍 翻面看释义")
+        is_front = True
+
+
+# ========================================
+# 5. 界面布局
+# ========================================
+
+# --- 顶部标题 ---
+title_label = tk.Label(
+    root,
+    text="📖 单词记忆卡",
+    font=("微软雅黑", 24, "bold"),
+    bg="#fff8e7",
+    fg="#5a3e2b"
+)
+title_label.pack(pady=(25, 15))
+
+# --- 卡片区域（模拟一张实体卡片）---
+card_frame = tk.Frame(
+    root,
+    bg="#fffef5",         # 卡片颜色（略白于背景）
+    relief="solid",
+    bd=2,                 # 边框宽度
+    width=340,
+    height=190
+)
+card_frame.pack(pady=10)
+card_frame.pack_propagate(False)  # 阻止 Frame 被内容撑开
+
+# 卡片上的单词/释义显示
+word_label = tk.Label(
+    card_frame,
+    text="点击下方按钮开始 🎯",
+    font=("微软雅黑", 30, "bold"),
+    bg="#fffef5",
+    fg="#3a2a1a"
+)
+# expand=True 让 Label 在 Frame 中居中
+word_label.pack(expand=True)
+
+# --- 状态提示 ---
+status_label = tk.Label(
+    root,
+    text=f"📚 词库共 {len(word_dict)} 个单词",
+    font=("微软雅黑", 11),
+    bg="#fff8e7",
+    fg="#bbaa99"
+)
+status_label.pack(pady=(5, 0))
+
+# --- 按钮区域 ---
+btn_frame = tk.Frame(root, bg="#fff8e7")
+btn_frame.pack(pady=25)
+
+# 翻面按钮（黄色）
+flip_btn = tk.Button(
+    btn_frame,
+    text="🔍 翻面看释义",
+    command=flip,
+    font=("微软雅黑", 14),
+    bg="#f0c060",       # 暖黄色
+    fg="#3a2a1a",
+    padx=22,
+    pady=8,
+    relief="flat",
+    cursor="hand2"
+)
+flip_btn.pack(side=tk.LEFT, padx=10)
+
+# 下一张按钮（绿色）
+next_btn = tk.Button(
+    btn_frame,
+    text="➡ 下一张",
+    command=next_card,
+    font=("微软雅黑", 14),
+    bg="#7d9d6e",       # 绿色
+    fg="white",
+    padx=22,
+    pady=8,
+    relief="flat",
+    cursor="hand2"
+)
+next_btn.pack(side=tk.LEFT, padx=10)
+
+# --- 底部提示 ---
+hint_label = tk.Label(
+    root,
+    text="💡 试试看：先猜释义，再点「翻面」验证！",
+    font=("微软雅黑", 10),
+    bg="#fff8e7",
+    fg="#ccbbaa"
+)
+hint_label.pack(side=tk.BOTTOM, pady=15)
+
+# ========================================
+# 6. 启动程序
+# ========================================
+
+# 自动抽第一张卡片
+next_card()
+
+root.mainloop()
+</pre>
+    <p class="hint">本页使用浅色主题与 UTF-8 编码，可直接打印或导出 PDF。</p>
+  </div>
+</body>
+</html>

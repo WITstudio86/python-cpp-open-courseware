@@ -1,0 +1,508 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>lesson32_interval_dp_advanced.cpp</title>
+<style>
+  :root {
+    --bg: #f5f7fa;
+    --panel: #ffffff;
+    --text: #1a1a2e;
+    --muted: #5a6570;
+    --gold: #b8860b;
+    --code-bg: #ffffff;
+    --code-text: #1f2933;
+    --border: #d8dee6;
+    --top-bg: #ffffff;
+    --top-border: #e5e9ef;
+  }
+  * { box-sizing: border-box; }
+  html, body {
+    margin: 0; padding: 0;
+    background: var(--bg);
+    color: var(--text);
+    font-family: -apple-system, BlinkMacSystemFont, "PingFang SC", "Microsoft YaHei", sans-serif;
+    min-height: 100%;
+  }
+  .top {
+    position: sticky; top: 0; z-index: 10;
+    display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between;
+    gap: 10px;
+    padding: 12px 18px;
+    background: var(--top-bg);
+    border-bottom: 1px solid var(--top-border);
+    box-shadow: 0 1px 8px rgba(15, 23, 42, 0.06);
+  }
+  .brand { color: var(--gold); font-weight: 700; font-size: 14px; letter-spacing: 0.04em; }
+  .title { font-size: 15px; font-weight: 600; color: var(--text); max-width: 52vw; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .actions { display: flex; gap: 8px; flex-wrap: wrap; }
+  .btn {
+    appearance: none; border: 1px solid var(--border);
+    background: #fff; color: var(--text);
+    border-radius: 999px; padding: 8px 14px; font-size: 13px; font-weight: 600;
+    text-decoration: none; cursor: pointer;
+  }
+  .btn:hover { background: #f0f3f7; }
+  .btn.gold {
+    background: linear-gradient(135deg, #f0d78c, #d4a853);
+    color: #0a2540; border-color: #e0c06a;
+  }
+  .meta {
+    padding: 10px 18px; color: var(--muted); font-size: 12px;
+    border-bottom: 1px solid var(--border);
+    background: var(--panel);
+  }
+  .wrap { padding: 16px 18px 40px; }
+  pre {
+    margin: 0;
+    background: var(--code-bg);
+    color: var(--code-text);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 18px 20px;
+    overflow: auto;
+    font-family: "SF Mono", "JetBrains Mono", "Fira Code", Consolas, "Courier New", monospace;
+    font-size: 13.5px;
+    line-height: 1.55;
+    white-space: pre;
+    tab-size: 4;
+    box-shadow: 0 2px 12px rgba(15, 23, 42, 0.05);
+  }
+  .hint { margin-top: 12px; color: var(--muted); font-size: 12px; }
+  @media print {
+    html, body { background: #fff !important; color: #000 !important; }
+    .top { position: static; box-shadow: none; border-bottom: 1px solid #ccc; background: #fff !important; }
+    .actions { display: none !important; }
+    .meta { background: #fff !important; border-color: #ddd; color: #333; }
+    .wrap { padding: 0; }
+    pre {
+      background: #fff !important; color: #000 !important;
+      border: 1px solid #bbb; box-shadow: none; border-radius: 0;
+      white-space: pre-wrap; word-break: break-word; font-size: 11pt; line-height: 1.4;
+    }
+    .hint { display: none; }
+    a { color: #000; text-decoration: none; }
+  }
+</style>
+</head>
+<body>
+  <div class="top">
+    <div class="brand">CSP-S 备考 · 配套代码</div>
+    <div class="title">lesson32_interval_dp_advanced.cpp</div>
+    <div class="actions">
+      <a class="btn" href="../lesson32_interval_dp_advanced.cpp" download="lesson32_interval_dp_advanced.cpp">⬇️ 下载源文件</a>
+      <a class="btn gold" href="javascript:history.back()">← 返回课件</a>
+    </div>
+  </div>
+  <div class="meta">编码：UTF-8 · 文件：lesson32_interval_dp_advanced.cpp · 共 404 行 · 浅色主题便于打印</div>
+  <div class="wrap">
+    <pre id="code">/*
+ * 第32课：区间DP进阶
+ * 考纲知识点：环形区间DP（破环成链×2）、能量项链、合并型与消去型区间DP、四边形不等式优化
+ *
+ * 本文件包含：
+ *   1. 环形石子合并（破环成链 ×2）- 最小值和最大值
+ *   2. 能量项链（NOIP2006 提高组）
+ *   3. 消去型区间DP示例
+ *   4. 四边形不等式优化版本（石子合并）
+ *   5. 真题1：环形石子合并【洛谷 P1880】
+ *   6. 真题2：能量项链【洛谷 P1063】
+ */
+
+#include &lt;iostream&gt;
+#include &lt;vector&gt;
+#include &lt;algorithm&gt;
+#include &lt;cstdlib&gt;
+#include &lt;ctime&gt;
+using namespace std;
+
+const int INF = 0x3f3f3f3f;
+
+// ==================== 1. 环形石子合并（破环成链 ×2） ====================
+// 技巧：将原序列复制一份接到尾部，得到长度为2n的序列
+// 在2n的序列上做区间DP，最终答案遍历所有长度为n的区间
+
+// 环形石子合并 - 最小代价
+int circular_merge_stones_min(const vector&lt;int&gt;&amp; a) {
+    int n = a.size();
+    // 破环成链 ×2
+    vector&lt;int&gt; b(2 * n);
+    for (int i = 0; i &lt; n; ++i) {
+        b[i] = a[i];
+        b[i + n] = a[i];
+    }
+
+    // 前缀和（长度为2n）
+    vector&lt;int&gt; pre(2 * n + 1, 0);
+    for (int i = 1; i &lt;= 2 * n; ++i) pre[i] = pre[i-1] + b[i-1];
+    auto sum = [&amp;](int l, int r) { return pre[r+1] - pre[l]; };
+
+    // DP数组
+    vector&lt;vector&lt;int&gt;&gt; dp(2 * n, vector&lt;int&gt;(2 * n, INF));
+    for (int i = 0; i &lt; 2 * n; ++i) dp[i][i] = 0;
+
+    // 区间DP（只枚举长度最多到n即可，因为我们只关心长度为n的区间）
+    for (int len = 2; len &lt;= n; ++len) {
+        for (int l = 0; l + len - 1 &lt; 2 * n; ++l) {
+            int r = l + len - 1;
+            for (int k = l; k &lt; r; ++k) {
+                dp[l][r] = min(dp[l][r],
+                    dp[l][k] + dp[k+1][r] + sum(l, r));
+            }
+        }
+    }
+
+    // 遍历所有长度为n的区间，取最小值
+    int ans = INF;
+    for (int i = 0; i &lt; n; ++i) {
+        ans = min(ans, dp[i][i + n - 1]);
+    }
+    return ans;
+}
+
+// 环形石子合并 - 最大代价
+int circular_merge_stones_max(const vector&lt;int&gt;&amp; a) {
+    int n = a.size();
+    vector&lt;int&gt; b(2 * n);
+    for (int i = 0; i &lt; n; ++i) b[i] = b[i + n] = a[i];
+
+    vector&lt;int&gt; pre(2 * n + 1, 0);
+    for (int i = 1; i &lt;= 2 * n; ++i) pre[i] = pre[i-1] + b[i-1];
+    auto sum = [&amp;](int l, int r) { return pre[r+1] - pre[l]; };
+
+    vector&lt;vector&lt;int&gt;&gt; dp(2 * n, vector&lt;int&gt;(2 * n, 0));
+    for (int i = 0; i &lt; 2 * n; ++i) dp[i][i] = 0;
+
+    for (int len = 2; len &lt;= n; ++len) {
+        for (int l = 0; l + len - 1 &lt; 2 * n; ++l) {
+            int r = l + len - 1;
+            for (int k = l; k &lt; r; ++k) {
+                dp[l][r] = max(dp[l][r],
+                    dp[l][k] + dp[k+1][r] + sum(l, r));
+            }
+        }
+    }
+
+    int ans = 0;
+    for (int i = 0; i &lt; n; ++i) {
+        ans = max(ans, dp[i][i + n - 1]);
+    }
+    return ans;
+}
+
+// 环形石子合并 - 同时返回最小值和最大值
+pair&lt;int, int&gt; circular_merge_stones(const vector&lt;int&gt;&amp; a) {
+    return {circular_merge_stones_min(a), circular_merge_stones_max(a)};
+}
+
+// ==================== 2. 能量项链（NOIP2006 提高组） ====================
+// 问题：环形排列的珠子，每颗珠子有头标记和尾标记
+// 前一颗珠子的尾标记 = 后一颗珠子的头标记
+// 合并释放能量 = head[l] * head[k] * head[r]
+// 注意：这里的转移是 dp[l][r] = max(dp[l][k] + dp[k][r] + ...)，不是 dp[k+1]
+int energy_necklace(const vector&lt;int&gt;&amp; head, int n) {
+    // 破环成链 ×2（珠子的头标记）
+    // head[1..n] 表示n颗珠子的头标记，head[n+1] = head[1]
+    vector&lt;int&gt; h(2 * n + 2);
+    for (int i = 1; i &lt;= n; ++i) {
+        h[i] = head[i];
+        h[i + n] = head[i];
+    }
+    h[2 * n + 1] = h[1];  // 多余一位保证索引不越界
+
+    vector&lt;vector&lt;int&gt;&gt; dp(2 * n + 1, vector&lt;int&gt;(2 * n + 1, 0));
+
+    // len表示合并的珠子个数（2颗合并成1颗，3颗合并成1颗...）
+    for (int len = 2; len &lt;= n; ++len) {
+        for (int l = 1; l + len - 1 &lt;= 2 * n; ++l) {
+            int r = l + len - 1;
+            for (int k = l; k &lt; r; ++k) {
+                // 合并dp[l][k]和dp[k+1][r]
+                // 左边合并结果的头标记=h[l], 尾标记=h[k+1]
+                // 右边合并结果的头标记=h[k+1], 尾标记=h[r+1]
+                // 能量 = h[l] * h[k+1] * h[r+1]
+                dp[l][r] = max(dp[l][r],
+                    dp[l][k] + dp[k+1][r] + h[l] * h[k+1] * h[r+1]);
+            }
+        }
+    }
+
+    // 遍历所有长度为n的区间，取最大值
+    int ans = 0;
+    for (int i = 1; i &lt;= n; ++i) {
+        ans = max(ans, dp[i][i + n - 1]);
+    }
+    return ans;
+}
+
+// ==================== 3. 消去型区间DP示例 ====================
+// 简化版：给定一个数组，每次可以消除一个子数组（子数组和为0），求最少消除次数
+// 这展示了消去型DP的典型模式
+
+// 判断区间[l,r]的和是否为0
+bool can_eliminate(const vector&lt;int&gt;&amp; a, const vector&lt;int&gt;&amp; pre, int l, int r) {
+    return (pre[r+1] - pre[l]) == 0;
+}
+
+// 消去型区间DP：最少消除次数
+int min_eliminations(const vector&lt;int&gt;&amp; a) {
+    int n = a.size();
+    vector&lt;int&gt; pre(n + 1, 0);
+    for (int i = 1; i &lt;= n; ++i) pre[i] = pre[i-1] + a[i-1];
+
+    vector&lt;vector&lt;int&gt;&gt; dp(n, vector&lt;int&gt;(n, INF));
+
+    // 初始化：单个元素至少需要1次消除
+    for (int i = 0; i &lt; n; ++i) dp[i][i] = 1;
+
+    for (int len = 2; len &lt;= n; ++len) {
+        for (int l = 0; l + len - 1 &lt; n; ++l) {
+            int r = l + len - 1;
+
+            // 情况1：整个区间可以一次消除
+            if (can_eliminate(a, pre, l, r)) {
+                dp[l][r] = 1;
+                continue;
+            }
+
+            // 情况2：分割成两个子区间分别消除
+            for (int k = l; k &lt; r; ++k) {
+                dp[l][r] = min(dp[l][r], dp[l][k] + dp[k+1][r]);
+            }
+        }
+    }
+    return dp[0][n-1];
+}
+
+// ==================== 4. 四边形不等式优化（石子合并 - 最小代价） ====================
+// 通过记录最优决策点 s[l][r]，将 O(n³) 优化到 O(n²)
+// s[l][r-1] &lt;= s[l][r] &lt;= s[l+1][r]
+int merge_stones_optimized(const vector&lt;int&gt;&amp; a) {
+    int n = a.size();
+    vector&lt;int&gt; pre(n + 1, 0);
+    for (int i = 1; i &lt;= n; ++i) pre[i] = pre[i-1] + a[i-1];
+    auto sum = [&amp;](int l, int r) { return pre[r+1] - pre[l]; };
+
+    vector&lt;vector&lt;int&gt;&gt; dp(n, vector&lt;int&gt;(n, INF));
+    vector&lt;vector&lt;int&gt;&gt; s(n, vector&lt;int&gt;(n, 0));  // 最优决策点
+
+    for (int i = 0; i &lt; n; ++i) {
+        dp[i][i] = 0;
+        s[i][i] = i;  // 单个元素的决策点是自己
+    }
+
+    for (int len = 2; len &lt;= n; ++len) {
+        for (int l = 0; l + len - 1 &lt; n; ++l) {
+            int r = l + len - 1;
+            // 利用四边形不等式缩小k的枚举范围
+            int left_k = s[l][r-1];       // 下界
+            int right_k = s[l+1][r];      // 上界
+            // 注意：当 r-1 &lt; l 时（即len=2），left_k = s[l][l] = l
+            // 当 l+1 &gt; r 时，right_k 取 r-1
+
+            if (l + 1 &gt; r) right_k = r - 1;
+            if (r - 1 &lt; l) left_k = l;
+
+            for (int k = left_k; k &lt;= right_k &amp;&amp; k &lt; r; ++k) {
+                int val = dp[l][k] + dp[k+1][r] + sum(l, r);
+                if (val &lt; dp[l][r]) {
+                    dp[l][r] = val;
+                    s[l][r] = k;  // 记录最优决策点
+                }
+            }
+        }
+    }
+    return dp[0][n-1];
+}
+
+// ==================== 5. 真题1：环形石子合并【洛谷 P1880】 ====================
+void solve_p1880() {
+    cout &lt;&lt; "\n========== 真题1：环形石子合并【洛谷 P1880】 ==========" &lt;&lt; endl;
+    int n;
+    cout &lt;&lt; "请输入石子堆数 n: ";
+    cin &gt;&gt; n;
+    vector&lt;int&gt; a(n);
+    cout &lt;&lt; "请输入每堆石子的数量: ";
+    for (int i = 0; i &lt; n; ++i) cin &gt;&gt; a[i];
+
+    auto [min_ans, max_ans] = circular_merge_stones(a);
+    cout &lt;&lt; "最小得分: " &lt;&lt; min_ans &lt;&lt; endl;
+    cout &lt;&lt; "最大得分: " &lt;&lt; max_ans &lt;&lt; endl;
+}
+
+// ==================== 6. 真题2：能量项链【洛谷 P1063】 ====================
+void solve_p1063() {
+    cout &lt;&lt; "\n========== 真题2：能量项链【洛谷 P1063】 ==========" &lt;&lt; endl;
+    int n;
+    cout &lt;&lt; "请输入珠子数量 n: ";
+    cin &gt;&gt; n;
+    // 注意：输入的是每颗珠子的头标记
+    // head[1..n] 存放，head[n+1] = head[1]
+    vector&lt;int&gt; head(n + 1);
+    cout &lt;&lt; "请输入 " &lt;&lt; n &lt;&lt; " 个正整数（每颗珠子的头标记）: ";
+    for (int i = 1; i &lt;= n; ++i) cin &gt;&gt; head[i];
+
+    cout &lt;&lt; "最大总能量: " &lt;&lt; energy_necklace(head, n) &lt;&lt; endl;
+}
+
+// ==================== 7. 打印DP表（调试用） ====================
+void print_dp_table(const vector&lt;vector&lt;int&gt;&gt;&amp; dp, int n, const string&amp; title) {
+    cout &lt;&lt; "=== " &lt;&lt; title &lt;&lt; " ===" &lt;&lt; endl;
+    for (int i = 0; i &lt; n; ++i) {
+        for (int j = 0; j &lt; n; ++j) {
+            if (dp[i][j] &gt;= INF / 2) cout &lt;&lt; "∞\t";
+            else cout &lt;&lt; dp[i][j] &lt;&lt; "\t";
+        }
+        cout &lt;&lt; endl;
+    }
+    cout &lt;&lt; endl;
+}
+
+// ==================== 8. 测试函数 ====================
+void run_all_tests() {
+    cout &lt;&lt; "==================== 第32课：区间DP进阶 - 全部测试 ====================" &lt;&lt; endl;
+
+    // 测试1：环形石子合并 - 最小值
+    {
+        vector&lt;int&gt; a = {4, 5, 9, 4};
+        auto [min_ans, max_ans] = circular_merge_stones(a);
+        cout &lt;&lt; "【测试1】环形石子合并 - 输入: [4,5,9,4]" &lt;&lt; endl;
+        cout &lt;&lt; "  最小得分 期望: 43, 实际: " &lt;&lt; min_ans &lt;&lt; " -&gt; "
+             &lt;&lt; (min_ans == 43 ? "✓ PASS" : "✗ FAIL") &lt;&lt; endl;
+        cout &lt;&lt; "  最大得分 期望: 54, 实际: " &lt;&lt; max_ans &lt;&lt; " -&gt; "
+             &lt;&lt; (max_ans == 54 ? "✓ PASS" : "✗ FAIL") &lt;&lt; endl;
+    }
+
+    // 测试2：环形石子合并 - 简单情况
+    {
+        vector&lt;int&gt; a = {1, 2, 3};
+        auto [min_ans, max_ans] = circular_merge_stones(a);
+        cout &lt;&lt; "【测试2】环形石子合并 - 输入: [1,2,3]" &lt;&lt; endl;
+        cout &lt;&lt; "  最小得分: " &lt;&lt; min_ans &lt;&lt; ", 最大得分: " &lt;&lt; max_ans &lt;&lt; endl;
+        // 环形情况：有三种"断开"方式
+        // [1,2,3]: min=9, max=11
+        // [2,3,1]: min=9, max=11
+        // [3,1,2]: min=9, max=11
+    }
+
+    // 测试3：能量项链 - 标准样例
+    {
+        // 注意：head[1..n]存储，head[1]对应第一颗珠子的头标记
+        // 样例：4颗珠子，头标记为 2,3,5,10
+        // 第一颗珠子(头=2,尾=3)，第二颗(头=3,尾=5)，第三颗(头=5,尾=10)，第四颗(头=10,尾=2)
+        vector&lt;int&gt; head = {0, 2, 3, 5, 10};  // 下标从1开始
+        int ans = energy_necklace(head, 4);
+        cout &lt;&lt; "【测试3】能量项链 - 头标记: [2,3,5,10]" &lt;&lt; endl;
+        cout &lt;&lt; "  期望输出: 710, 实际输出: " &lt;&lt; ans &lt;&lt; " -&gt; "
+             &lt;&lt; (ans == 710 ? "✓ PASS" : "✗ FAIL") &lt;&lt; endl;
+    }
+
+    // 测试4：四边形不等式优化 vs 朴素版本
+    {
+        vector&lt;int&gt; a = {4, 5, 9, 4, 7, 3, 6, 8};
+        int naive = circular_merge_stones_min(a);
+        // 直线版本用四边形不等式优化
+        int optimized = merge_stones_optimized(a);
+        int naive_linear = [&amp;]() {
+            int n = a.size();
+            vector&lt;int&gt; pre(n+1,0);
+            for(int i=1;i&lt;=n;++i) pre[i]=pre[i-1]+a[i-1];
+            auto sum = [&amp;](int l,int r){return pre[r+1]-pre[l];};
+            vector&lt;vector&lt;int&gt;&gt; dp(n, vector&lt;int&gt;(n, INF));
+            for(int i=0;i&lt;n;++i) dp[i][i]=0;
+            for(int len=2;len&lt;=n;++len)
+                for(int l=0;l+len-1&lt;n;++l){
+                    int r=l+len-1;
+                    for(int k=l;k&lt;r;++k)
+                        dp[l][r]=min(dp[l][r],dp[l][k]+dp[k+1][r]+sum(l,r));
+                }
+            return dp[0][n-1];
+        }();
+
+        cout &lt;&lt; "【测试4】四边形不等式优化验证" &lt;&lt; endl;
+        cout &lt;&lt; "  朴素直线版: " &lt;&lt; naive_linear &lt;&lt; endl;
+        cout &lt;&lt; "  优化直线版: " &lt;&lt; optimized &lt;&lt; " -&gt; "
+             &lt;&lt; (naive_linear == optimized ? "✓ PASS" : "✗ FAIL") &lt;&lt; endl;
+    }
+
+    // 测试5：消去型区间DP
+    {
+        vector&lt;int&gt; a = {1, -1, 2, -2, 3, -3};
+        int ans = min_eliminations(a);
+        cout &lt;&lt; "【测试5】消去型区间DP - 输入: [1,-1,2,-2,3,-3]" &lt;&lt; endl;
+        cout &lt;&lt; "  最少消除次数: " &lt;&lt; ans &lt;&lt; " (每个和为0的子数组可一次消除)" &lt;&lt; endl;
+    }
+
+    // 测试6：消去型区间DP - 全正数
+    {
+        vector&lt;int&gt; a = {1, 2, 3};
+        int ans = min_eliminations(a);
+        cout &lt;&lt; "【测试6】消去型区间DP - 输入: [1,2,3]" &lt;&lt; endl;
+        // 没有和为0的子数组，只能一个一个消 -&gt; 3次
+        cout &lt;&lt; "  期望输出: 3, 实际输出: " &lt;&lt; ans &lt;&lt; " -&gt; "
+             &lt;&lt; (ans == 3 ? "✓ PASS" : "✗ FAIL") &lt;&lt; endl;
+    }
+
+    // 测试7：四边形不等式 - 大数组性能测试
+    {
+        int n = 200;
+        vector&lt;int&gt; a(n);
+        srand(time(0));
+        for (int i = 0; i &lt; n; ++i) a[i] = rand() % 100 + 1;
+
+        auto start = clock();
+        int opt = merge_stones_optimized(a);
+        auto end = clock();
+        double time_opt = (double)(end - start) / CLOCKS_PER_SEC;
+
+        cout &lt;&lt; "【测试7】四边形不等式 - n=200 性能测试" &lt;&lt; endl;
+        cout &lt;&lt; "  优化版结果: " &lt;&lt; opt &lt;&lt; ", 耗时: " &lt;&lt; time_opt &lt;&lt; "s" &lt;&lt; endl;
+
+        auto start2 = clock();
+        // 朴素O(n³)
+        auto naive_linear = [&amp;]() {
+            int n = a.size();
+            vector&lt;int&gt; pre(n+1,0);
+            for(int i=1;i&lt;=n;++i) pre[i]=pre[i-1]+a[i-1];
+            auto sum = [&amp;](int l,int r){return pre[r+1]-pre[l];};
+            vector&lt;vector&lt;int&gt;&gt; dp(n, vector&lt;int&gt;(n, INF));
+            for(int i=0;i&lt;n;++i) dp[i][i]=0;
+            for(int len=2;len&lt;=n;++len)
+                for(int l=0;l+len-1&lt;n;++l){
+                    int r=l+len-1;
+                    for(int k=l;k&lt;r;++k)
+                        dp[l][r]=min(dp[l][r],dp[l][k]+dp[k+1][r]+sum(l,r));
+                }
+            return dp[0][n-1];
+        }();
+        auto end2 = clock();
+        double time_naive = (double)(end2 - start2) / CLOCKS_PER_SEC;
+
+        cout &lt;&lt; "  朴素版结果: " &lt;&lt; naive_linear &lt;&lt; ", 耗时: " &lt;&lt; time_naive &lt;&lt; "s" &lt;&lt; endl;
+        cout &lt;&lt; "  结果一致: " &lt;&lt; (opt == naive_linear ? "✓" : "✗") &lt;&lt; endl;
+        cout &lt;&lt; "  加速比: " &lt;&lt; (time_naive / max(time_opt, 0.000001)) &lt;&lt; "x" &lt;&lt; endl;
+    }
+
+    cout &lt;&lt; "\n==================== 全部测试完成 ====================" &lt;&lt; endl;
+}
+
+// ==================== 主函数 ====================
+int main() {
+    ios::sync_with_stdio(false);
+    cin.tie(nullptr);
+
+    // 运行所有测试
+    run_all_tests();
+
+    // 如需交互式输入，取消以下注释：
+    // solve_p1880();
+    // solve_p1063();
+
+    return 0;
+}
+</pre>
+    <p class="hint">本页使用浅色主题与 UTF-8 编码，可直接打印或导出 PDF。</p>
+  </div>
+</body>
+</html>

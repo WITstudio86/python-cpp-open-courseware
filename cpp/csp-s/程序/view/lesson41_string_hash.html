@@ -1,0 +1,434 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>lesson41_string_hash.cpp</title>
+<style>
+  :root {
+    --bg: #f5f7fa;
+    --panel: #ffffff;
+    --text: #1a1a2e;
+    --muted: #5a6570;
+    --gold: #b8860b;
+    --code-bg: #ffffff;
+    --code-text: #1f2933;
+    --border: #d8dee6;
+    --top-bg: #ffffff;
+    --top-border: #e5e9ef;
+  }
+  * { box-sizing: border-box; }
+  html, body {
+    margin: 0; padding: 0;
+    background: var(--bg);
+    color: var(--text);
+    font-family: -apple-system, BlinkMacSystemFont, "PingFang SC", "Microsoft YaHei", sans-serif;
+    min-height: 100%;
+  }
+  .top {
+    position: sticky; top: 0; z-index: 10;
+    display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between;
+    gap: 10px;
+    padding: 12px 18px;
+    background: var(--top-bg);
+    border-bottom: 1px solid var(--top-border);
+    box-shadow: 0 1px 8px rgba(15, 23, 42, 0.06);
+  }
+  .brand { color: var(--gold); font-weight: 700; font-size: 14px; letter-spacing: 0.04em; }
+  .title { font-size: 15px; font-weight: 600; color: var(--text); max-width: 52vw; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .actions { display: flex; gap: 8px; flex-wrap: wrap; }
+  .btn {
+    appearance: none; border: 1px solid var(--border);
+    background: #fff; color: var(--text);
+    border-radius: 999px; padding: 8px 14px; font-size: 13px; font-weight: 600;
+    text-decoration: none; cursor: pointer;
+  }
+  .btn:hover { background: #f0f3f7; }
+  .btn.gold {
+    background: linear-gradient(135deg, #f0d78c, #d4a853);
+    color: #0a2540; border-color: #e0c06a;
+  }
+  .meta {
+    padding: 10px 18px; color: var(--muted); font-size: 12px;
+    border-bottom: 1px solid var(--border);
+    background: var(--panel);
+  }
+  .wrap { padding: 16px 18px 40px; }
+  pre {
+    margin: 0;
+    background: var(--code-bg);
+    color: var(--code-text);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 18px 20px;
+    overflow: auto;
+    font-family: "SF Mono", "JetBrains Mono", "Fira Code", Consolas, "Courier New", monospace;
+    font-size: 13.5px;
+    line-height: 1.55;
+    white-space: pre;
+    tab-size: 4;
+    box-shadow: 0 2px 12px rgba(15, 23, 42, 0.05);
+  }
+  .hint { margin-top: 12px; color: var(--muted); font-size: 12px; }
+  @media print {
+    html, body { background: #fff !important; color: #000 !important; }
+    .top { position: static; box-shadow: none; border-bottom: 1px solid #ccc; background: #fff !important; }
+    .actions { display: none !important; }
+    .meta { background: #fff !important; border-color: #ddd; color: #333; }
+    .wrap { padding: 0; }
+    pre {
+      background: #fff !important; color: #000 !important;
+      border: 1px solid #bbb; box-shadow: none; border-radius: 0;
+      white-space: pre-wrap; word-break: break-word; font-size: 11pt; line-height: 1.4;
+    }
+    .hint { display: none; }
+    a { color: #000; text-decoration: none; }
+  }
+</style>
+</head>
+<body>
+  <div class="top">
+    <div class="brand">CSP-S 备考 · 配套代码</div>
+    <div class="title">lesson41_string_hash.cpp</div>
+    <div class="actions">
+      <a class="btn" href="../lesson41_string_hash.cpp" download="lesson41_string_hash.cpp">⬇️ 下载源文件</a>
+      <a class="btn gold" href="javascript:history.back()">← 返回课件</a>
+    </div>
+  </div>
+  <div class="meta">编码：UTF-8 · 文件：lesson41_string_hash.cpp · 共 330 行 · 浅色主题便于打印</div>
+  <div class="wrap">
+    <pre id="code">/**
+ * 第41课：字符串哈希（String Hashing）
+ * 对应CSP-S考纲知识点：
+ *   - BKDR 哈希函数设计（base 取 131 / 13331）
+ *   - 自然溢出（unsigned long long）与双哈希（大质数取模）
+ *   - 子串哈希 O(1) 查询（前缀哈希 + 幂次预处理）
+ *   - 二分 + 哈希求最长公共前缀（LCP）
+ *   - 哈希去重与模式匹配（unordered_map / set）
+ *
+ * 包含以下实现：
+ *   1. 自然溢出单哈希结构体（StringHash）
+ *   2. 双哈希结构体（DoubleHash）
+ *   3. 最长公共前缀（LCP）函数
+ *   4. 真题1：字符串去重（N 个字符串中不同串的个数）
+ *   5. 真题2：最长回文子串（二分 + 正反哈希）
+ */
+
+#include &lt;bits/stdc++.h&gt;
+using namespace std;
+
+// ============================================================
+// 一、自然溢出单哈希（unsigned long long，自动模 2^64）
+// 优点：代码简洁、速度快
+// 缺点：2^64 不是质数，存在卡哈希风险
+// ============================================================
+typedef unsigned long long ull;
+
+struct StringHash {
+    int n;                  // 字符串长度
+    vector&lt;ull&gt; h;          // 前缀哈希数组，h[i] = hash(s[0..i-1])
+    vector&lt;ull&gt; p;          // base 的幂次数组，p[i] = base^i
+    static const ull BASE = 131;
+
+    // 构造函数：预处理前缀哈希和幂次
+    StringHash(const string&amp; s) {
+        n = s.size();
+        h.resize(n + 1, 0);
+        p.resize(n + 1, 1);
+        for (int i = 0; i &lt; n; i++) {
+            h[i + 1] = h[i] * BASE + s[i];   // 自然溢出
+            p[i + 1] = p[i] * BASE;
+        }
+    }
+
+    // 获取子串 [l, r] 的哈希值（0-based，闭区间）
+    // 公式：hash(l, r) = h[r+1] - h[l] * base^{r-l+1}
+    ull get(int l, int r) {
+        return h[r + 1] - h[l] * p[r - l + 1];
+    }
+
+    // 获取整个字符串的哈希值
+    ull get_all() {
+        return h[n];
+    }
+};
+
+// ============================================================
+// 二、双哈希（两个大质数分别取模，防冲突）
+// 模数：1e9+7 和 1e9+9，均为常用质数
+// 双哈希冲突概率 ≈ 1/(M1 × M2) ≈ 10^{-18}，几乎不可能冲突
+// ============================================================
+const int MOD1 = 1000000007;   // 1e9 + 7
+const int MOD2 = 1000000009;   // 1e9 + 9
+const int BASE_D = 131;
+
+struct DoubleHash {
+    int n;
+    vector&lt;long long&gt; h1, h2;    // 两个模数下的前缀哈希
+    vector&lt;long long&gt; p1, p2;    // 两个模数下的幂次
+
+    DoubleHash(const string&amp; s) {
+        n = s.size();
+        h1.resize(n + 1, 0); h2.resize(n + 1, 0);
+        p1.resize(n + 1, 1); p2.resize(n + 1, 1);
+        for (int i = 0; i &lt; n; i++) {
+            h1[i + 1] = (h1[i] * BASE_D + s[i]) % MOD1;
+            h2[i + 1] = (h2[i] * BASE_D + s[i]) % MOD2;
+            p1[i + 1] = (p1[i] * BASE_D) % MOD1;
+            p2[i + 1] = (p2[i] * BASE_D) % MOD2;
+        }
+    }
+
+    // 获取子串 [l, r] 的哈希值，返回 (hash1, hash2)
+    pair&lt;long long, long long&gt; get(int l, int r) {
+        long long v1 = (h1[r + 1] - h1[l] * p1[r - l + 1] % MOD1 + MOD1) % MOD1;
+        long long v2 = (h2[r + 1] - h2[l] * p2[r - l + 1] % MOD2 + MOD2) % MOD2;
+        return {v1, v2};
+    }
+
+    // 获取整个字符串的双哈希值
+    pair&lt;long long, long long&gt; get_all() {
+        return {h1[n], h2[n]};
+    }
+};
+
+// ============================================================
+// 三、最长公共前缀（LCP）
+// 利用二分 + 哈希在 O(log n) 时间内求两个位置开始的最长公共前缀长度
+// ============================================================
+
+// 使用 StringHash 的 LCP
+int lcp(const StringHash&amp; sh, int a, int b) {
+    int n = sh.n;
+    int lo = 0, hi = min(n - a, n - b);  // hi 为可能的最大公共前缀长度
+    while (lo &lt; hi) {
+        int mid = (lo + hi + 1) / 2;      // 取上取整，避免死循环
+        if (sh.get(a, a + mid - 1) == sh.get(b, b + mid - 1))
+            lo = mid;
+        else
+            hi = mid - 1;
+    }
+    return lo;
+}
+
+// 比较两个子串的字典序：返回 true 表示 s[l1..r1] &lt; s[l2..r2]
+bool less_than(const StringHash&amp; sh, int l1, int r1, int l2, int r2) {
+    int len = lcp(sh, l1, l2);
+    int len1 = min(r1 - l1 + 1, r2 - l2 + 1);
+    if (len == len1) {
+        // 一个串是另一个的前缀
+        return (r1 - l1 + 1) &lt; (r2 - l2 + 1);
+    }
+    // 在第一个不同字符处比较
+    return sh.get(l1 + len, l1 + len) &lt; sh.get(l2 + len, l2 + len);
+}
+
+// ============================================================
+// 四、真题1：字符串去重
+// 题目：给定 N 个字符串，问有多少个不同的字符串
+// 数据范围：N ≤ 10000，总长度 ≤ 1e6
+// 算法：对每个字符串计算双哈希值，存入 set 统计不同个数
+// 时间复杂度：O(total_length + N log N)
+// ============================================================
+void solve_distinct_strings() {
+    int N;
+    cin &gt;&gt; N;
+    set&lt;pair&lt;long long, long long&gt;&gt; seen;
+    for (int i = 0; i &lt; N; i++) {
+        string s;
+        cin &gt;&gt; s;
+        DoubleHash dh(s);
+        seen.insert(dh.get_all());
+    }
+    cout &lt;&lt; seen.size() &lt;&lt; '\n';
+}
+
+// ============================================================
+// 五、真题2：最长回文子串
+// 题目：给定字符串 s，求其最长回文子串的长度
+// 数据范围：|s| ≤ 1e5
+// 算法：预处理正串哈希和反串哈希，枚举回文中心，二分半径
+//       奇数回文：中心为 s[i]，二分半径 r，判断 s[i-r..i+r]
+//       偶数回文：中心在 s[i] 和 s[i+1] 之间，二分半径 r，判断 s[i-r+1..i+r]
+// 时间复杂度：O(n log n)
+// ============================================================
+void solve_longest_palindrome() {
+    string s;
+    cin &gt;&gt; s;
+    int n = s.size();
+
+    // 预处理正串哈希
+    StringHash forward_hash(s);
+
+    // 预处理反串哈希（将 s 反转后建哈希）
+    string rev_s = s;
+    reverse(rev_s.begin(), rev_s.end());
+    StringHash reverse_hash(rev_s);
+
+    int ans = 1;  // 至少为 1（单个字符）
+
+    // 枚举奇数长度回文的中心
+    for (int i = 0; i &lt; n; i++) {
+        int lo = 0, hi = min(i, n - 1 - i);  // hi = 最大可能的半径
+        while (lo &lt; hi) {
+            int mid = (lo + hi + 1) / 2;
+            // 正串区间 [i-mid, i+mid]
+            // 对应反串区间 [n-1-(i+mid), n-1-(i-mid)]
+            ull fwd = forward_hash.get(i - mid, i + mid);
+            ull rev = reverse_hash.get(n - 1 - (i + mid), n - 1 - (i - mid));
+            if (fwd == rev)
+                lo = mid;
+            else
+                hi = mid - 1;
+        }
+        ans = max(ans, 2 * lo + 1);
+    }
+
+    // 枚举偶数长度回文的中心（在 i 和 i+1 之间）
+    for (int i = 0; i &lt; n - 1; i++) {
+        if (s[i] != s[i + 1]) continue;  // 中心两个字符不同则不可能有偶数回文
+        int lo = 0, hi = min(i + 1, n - 1 - i);
+        while (lo &lt; hi) {
+            int mid = (lo + hi + 1) / 2;
+            // 正串区间 [i-mid+1, i+mid]
+            ull fwd = forward_hash.get(i - mid + 1, i + mid);
+            // 对应反串区间
+            ull rev = reverse_hash.get(n - 1 - (i + mid), n - 1 - (i - mid + 1));
+            if (fwd == rev)
+                lo = mid;
+            else
+                hi = mid - 1;
+        }
+        if (lo &gt; 0) ans = max(ans, 2 * lo);
+    }
+
+    cout &lt;&lt; ans &lt;&lt; '\n';
+}
+
+// ============================================================
+// 六、辅助函数：计算单个字符串的哈希值
+// ============================================================
+ull single_hash(const string&amp; s) {
+    ull h = 0;
+    for (char c : s) {
+        h = h * 131 + c;   // 自然溢出
+    }
+    return h;
+}
+
+pair&lt;long long, long long&gt; dual_hash(const string&amp; s) {
+    long long h1 = 0, h2 = 0;
+    for (char c : s) {
+        h1 = (h1 * 131 + c) % MOD1;
+        h2 = (h2 * 131 + c) % MOD2;
+    }
+    return {h1, h2};
+}
+
+// ============================================================
+// 七、测试用 main 函数
+// ============================================================
+int main() {
+    ios::sync_with_stdio(false);
+    cin.tie(nullptr);
+
+    // ---------- 测试1：子串哈希 O(1) 查询 ----------
+    cout &lt;&lt; "========== 测试1：子串哈希查询 ==========" &lt;&lt; endl;
+    {
+        string s = "abcabcabc";
+        StringHash sh(s);
+        // s[0..2] = "abc", s[3..5] = "abc", s[6..8] = "abc" 应该相等
+        cout &lt;&lt; "hash(\"abc\") = " &lt;&lt; sh.get(0, 2) &lt;&lt; endl;
+        cout &lt;&lt; "hash(s[3..5]) = " &lt;&lt; sh.get(3, 5) &lt;&lt; endl;
+        cout &lt;&lt; "hash(s[6..8]) = " &lt;&lt; sh.get(6, 8) &lt;&lt; endl;
+        cout &lt;&lt; "前两个子串相等: " &lt;&lt; (sh.get(0, 2) == sh.get(3, 5) ? "YES" : "NO") &lt;&lt; endl;
+        cout &lt;&lt; endl;
+    }
+
+    // ---------- 测试2：LCP ----------
+    cout &lt;&lt; "========== 测试2：最长公共前缀 ==========" &lt;&lt; endl;
+    {
+        string s = "ababcababc";
+        StringHash sh(s);
+        // s[0..] = "ababcababc", s[5..] = "ababc"
+        int len = lcp(sh, 0, 5);
+        cout &lt;&lt; "s[0..] 和 s[5..] 的 LCP 长度: " &lt;&lt; len &lt;&lt; endl;
+        cout &lt;&lt; "（预期 5，因为 s[0..4] == s[5..9] == \"ababc\"）" &lt;&lt; endl;
+        cout &lt;&lt; endl;
+    }
+
+    // ---------- 测试3：双哈希 ----------
+    cout &lt;&lt; "========== 测试3：双哈希 ==========" &lt;&lt; endl;
+    {
+        string a = "helloworld";
+        string b = "helloworld";
+        string c = "helloworlD";
+        DoubleHash dh_a(a), dh_b(b), dh_c(c);
+        cout &lt;&lt; "a == b (双哈希): " &lt;&lt; (dh_a.get_all() == dh_b.get_all() ? "YES" : "NO") &lt;&lt; endl;
+        cout &lt;&lt; "a == c (双哈希): " &lt;&lt; (dh_a.get_all() == dh_c.get_all() ? "YES" : "NO") &lt;&lt; endl;
+        cout &lt;&lt; endl;
+    }
+
+    // ---------- 测试4：字符串去重 ----------
+    cout &lt;&lt; "========== 测试4：字符串去重 ==========" &lt;&lt; endl;
+    {
+        // 模拟输入：5 个字符串，其中 2 个重复
+        vector&lt;string&gt; test = {"apple", "banana", "apple", "cherry", "banana"};
+        set&lt;pair&lt;long long, long long&gt;&gt; seen;
+        for (const string&amp; s : test) {
+            seen.insert(dual_hash(s));
+        }
+        cout &lt;&lt; "不同字符串个数: " &lt;&lt; seen.size() &lt;&lt; "（预期 3）" &lt;&lt; endl;
+        cout &lt;&lt; endl;
+    }
+
+    // ---------- 测试5：最长回文子串 ----------
+    cout &lt;&lt; "========== 测试5：最长回文子串 ==========" &lt;&lt; endl;
+    {
+        // 手动测试（不依赖 cin）
+        string s = "ababa";
+        int n = s.size();
+        StringHash fwd(s);
+        string rev = s; reverse(rev.begin(), rev.end());
+        StringHash rev_hash(rev);
+        int ans = 1;
+        // 奇数
+        for (int i = 0; i &lt; n; i++) {
+            int lo = 0, hi = min(i, n - 1 - i);
+            while (lo &lt; hi) {
+                int mid = (lo + hi + 1) / 2;
+                ull a = fwd.get(i - mid, i + mid);
+                ull b = rev_hash.get(n - 1 - (i + mid), n - 1 - (i - mid));
+                if (a == b) lo = mid;
+                else hi = mid - 1;
+            }
+            ans = max(ans, 2 * lo + 1);
+        }
+        // 偶数
+        for (int i = 0; i &lt; n - 1; i++) {
+            if (s[i] != s[i + 1]) continue;
+            int lo = 0, hi = min(i + 1, n - 1 - i);
+            while (lo &lt; hi) {
+                int mid = (lo + hi + 1) / 2;
+                ull a = fwd.get(i - mid + 1, i + mid);
+                ull b = rev_hash.get(n - 1 - (i + mid), n - 1 - (i - mid + 1));
+                if (a == b) lo = mid;
+                else hi = mid - 1;
+            }
+            if (lo &gt; 0) ans = max(ans, 2 * lo);
+        }
+        cout &lt;&lt; "字符串 \"ababa\" 的最长回文子串长度: " &lt;&lt; ans &lt;&lt; "（预期 5）" &lt;&lt; endl;
+        cout &lt;&lt; endl;
+    }
+
+    // ---------- 真题测试（取消注释以使用标准输入） ----------
+    // solve_distinct_strings();
+    // solve_longest_palindrome();
+
+    return 0;
+}
+</pre>
+    <p class="hint">本页使用浅色主题与 UTF-8 编码，可直接打印或导出 PDF。</p>
+  </div>
+</body>
+</html>

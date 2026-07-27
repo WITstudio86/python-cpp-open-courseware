@@ -1,0 +1,559 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>第36节-特效大赏/main.py</title>
+<style>
+  :root {
+    --bg: #f5f7fa;
+    --panel: #ffffff;
+    --text: #1a1a2e;
+    --muted: #5a6570;
+    --gold: #b8860b;
+    --code-bg: #ffffff;
+    --code-text: #1f2933;
+    --border: #d8dee6;
+    --top-bg: #ffffff;
+    --top-border: #e5e9ef;
+  }
+  * { box-sizing: border-box; }
+  html, body {
+    margin: 0; padding: 0;
+    background: var(--bg);
+    color: var(--text);
+    font-family: -apple-system, BlinkMacSystemFont, "PingFang SC", "Microsoft YaHei", sans-serif;
+    min-height: 100%;
+  }
+  .top {
+    position: sticky; top: 0; z-index: 10;
+    display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between;
+    gap: 10px;
+    padding: 12px 18px;
+    background: var(--top-bg);
+    border-bottom: 1px solid var(--top-border);
+    box-shadow: 0 1px 8px rgba(15, 23, 42, 0.06);
+  }
+  .brand { color: var(--gold); font-weight: 700; font-size: 14px; letter-spacing: 0.04em; }
+  .title { font-size: 15px; font-weight: 600; color: var(--text); max-width: 52vw; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .actions { display: flex; gap: 8px; flex-wrap: wrap; }
+  .btn {
+    appearance: none; border: 1px solid var(--border);
+    background: #fff; color: var(--text);
+    border-radius: 999px; padding: 8px 14px; font-size: 13px; font-weight: 600;
+    text-decoration: none; cursor: pointer;
+  }
+  .btn:hover { background: #f0f3f7; }
+  .btn.gold {
+    background: linear-gradient(135deg, #f0d78c, #d4a853);
+    color: #0a2540; border-color: #e0c06a;
+  }
+  .meta {
+    padding: 10px 18px; color: var(--muted); font-size: 12px;
+    border-bottom: 1px solid var(--border);
+    background: var(--panel);
+  }
+  .wrap { padding: 16px 18px 40px; }
+  pre {
+    margin: 0;
+    background: var(--code-bg);
+    color: var(--code-text);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 18px 20px;
+    overflow: auto;
+    font-family: "SF Mono", "JetBrains Mono", "Fira Code", Consolas, "Courier New", monospace;
+    font-size: 13.5px;
+    line-height: 1.55;
+    white-space: pre;
+    tab-size: 4;
+    box-shadow: 0 2px 12px rgba(15, 23, 42, 0.05);
+  }
+  .hint { margin-top: 12px; color: var(--muted); font-size: 12px; }
+  @media print {
+    html, body { background: #fff !important; color: #000 !important; }
+    .top { position: static; box-shadow: none; border-bottom: 1px solid #ccc; background: #fff !important; }
+    .actions { display: none !important; }
+    .meta { background: #fff !important; border-color: #ddd; color: #333; }
+    .wrap { padding: 0; }
+    pre {
+      background: #fff !important; color: #000 !important;
+      border: 1px solid #bbb; box-shadow: none; border-radius: 0;
+      white-space: pre-wrap; word-break: break-word; font-size: 11pt; line-height: 1.4;
+    }
+    .hint { display: none; }
+    a { color: #000; text-decoration: none; }
+  }
+</style>
+</head>
+<body>
+  <div class="top">
+    <div class="brand">Pygame 零基础 · 配套代码</div>
+    <div class="title">第36节-特效大赏/main.py</div>
+    <div class="actions">
+      <a class="btn" href="../第36节-特效大赏/main.py" download="main.py">⬇️ 下载源文件</a>
+      <a class="btn gold" href="javascript:history.back()">← 返回课件</a>
+    </div>
+  </div>
+  <div class="meta">编码：UTF-8 · 文件：第36节-特效大赏/main.py · 共 455 行 · 浅色主题便于打印</div>
+  <div class="wrap">
+    <pre id="code">"""
+第36节：特效大赏 —— 拖尾残影 · Alpha渐变 · 弹出文字 · 淡入淡出
+==================================================================
+四种游戏特效一站式展示程序！
+
+操作说明：
+  - 移动鼠标 → 拖尾球体跟随鼠标，展示拖尾残影效果
+  - 观察画面中央 → Alpha透明度呼吸方块（循环渐变）
+  - 点击鼠标左键 → 在点击位置弹出文字动画（"+100"向上飘+渐隐）
+  - 按空格键 → 触发全屏淡入淡出转场
+  - 按 1/2/3/4 键 → 切换背景主题色
+
+知识点：
+  1. 拖尾残影：存储前N帧位置，逐帧绘制半透明残影
+  2. Alpha透明度：Surface.set_alpha(0~255)，sin循环
+  3. 弹出文字：向上飘起 + alpha渐减
+  4. 淡入淡出：全屏遮罩 alpha 0→255→0 的状态机
+"""
+
+import pygame
+import math
+import random
+
+# ==================== 初始化 ====================
+pygame.init()
+WIDTH, HEIGHT = 800, 600
+screen = pygame.display.set_mode((WIDTH, HEIGHT))
+pygame.display.set_caption("第36节：特效大赏 - 拖尾·Alpha·弹出文字·淡入淡出")
+clock = pygame.time.Clock()
+FPS = 60
+
+# ==================== 预创建字体 ====================
+FONT_SMALL = pygame.font.Font(None, 24)
+FONT_MEDIUM = pygame.font.Font(None, 32)
+FONT_LARGE = pygame.font.Font(None, 48)
+FONT_HUGE = pygame.font.Font(None, 64)
+
+# ==================== 背景主题色（按数字键切换） ====================
+BG_THEMES = [
+    (20, 20, 40),    # 0: 深蓝（默认）
+    (30, 10, 30),    # 1: 深紫
+    (10, 30, 20),    # 2: 深绿
+    (35, 15, 10),    # 3: 深红棕
+    (15, 25, 35),    # 4: 深青
+]
+current_theme = 0  # 当前主题索引
+
+
+# ==================== 辅助函数 ====================
+def make_circle_surface(radius, color, outline=False):
+    """
+    创建一个圆形Surface（带SRCALPHA支持透明度）
+    这是实现拖尾和透明度效果的关键——必须用SRCALPHA！
+    """
+    size = radius * 2
+    surf = pygame.Surface((size, size), pygame.SRCALPHA)
+    if outline:
+        pygame.draw.circle(surf, color, (radius, radius), radius, width=2)
+    else:
+        pygame.draw.circle(surf, color, (radius, radius), radius)
+    return surf
+
+
+def get_score_text():
+    """生成随机的得分文字内容"""
+    texts = ["+100", "+200", "+50", "暴击!", "+500", "完美!", "连击x2", "+300"]
+    return random.choice(texts)
+
+
+# ==================== 拖尾效果管理器 ====================
+class TrailEffect:
+    """
+    拖尾残影效果
+    -------------
+    原理：存储物体最近N帧的位置，绘制时从旧到新依次画出不同透明度的残影。
+    类比：用手指在满是灰尘的玻璃上画线——当前位置最清楚，旧痕迹逐渐变淡。
+    """
+
+    def __init__(self, max_trail=20):
+        self.positions = []           # 历史位置列表：[(x1,y1), (x2,y2), ...]
+        self.max_trail = max_trail    # 最多保留多少帧历史
+
+    def update(self, x, y):
+        """每帧调用，记录当前位置"""
+        # 最新位置插入到列表最前面
+        self.positions.insert(0, (x, y))
+        # 超出最大长度的旧位置删除
+        if len(self.positions) &gt; self.max_trail:
+            self.positions.pop()
+
+    def draw(self, surface, radius, color):
+        """
+        绘制拖尾残影
+        从旧到新绘制，越旧越透明
+        """
+        if len(self.positions) &lt; 2:
+            return
+
+        # reversed(): 从最旧的位置开始画（底层）
+        for i, (tx, ty) in enumerate(reversed(self.positions)):
+            # i=0 是最旧的，alpha最小（最透明）
+            # i=len-1 是最新的，alpha最大（最不透明）
+            if len(self.positions) &lt;= 1:
+                alpha = 255
+            else:
+                alpha = int(55 + 200 * i / (len(self.positions) - 1))
+
+            # 圆圈大小也随残影递减（越旧越小）
+            trail_radius = int(radius * (0.4 + 0.6 * i / max(1, len(self.positions) - 1)))
+
+            ghost = make_circle_surface(trail_radius, color)
+            ghost.set_alpha(alpha)  # ★ 设置透明度——核心操作！
+            surface.blit(ghost, (int(tx - trail_radius), int(ty - trail_radius)))
+
+    def clear(self):
+        """清空历史位置（场景切换时调用）"""
+        self.positions.clear()
+
+
+# ==================== 弹出文字类 ====================
+class FloatingText:
+    """
+    弹出文字动画
+    -------------
+    经典游戏效果：得分/伤害数字从目标位置浮起，逐渐变淡消失。
+    三要素：向上移动 + 透明度渐减 + 生命值控制
+    """
+
+    def __init__(self, x, y, text, color=(255, 220, 50)):
+        self.x = float(x)            # X坐标
+        self.y = float(y)            # Y坐标
+        self.text = text             # 显示的文字内容
+        self.color = color           # 文字颜色
+        self.life = 1.0              # 生命值 (1.0→0.0)
+        self.vy = -2.5               # 向上飘的速度（负=向上）
+        self.fade_speed = 0.6        # 每秒生命衰减量
+
+    def update(self, dt):
+        """更新位置和生命值"""
+        self.y += self.vy * dt * FPS  # 向上移动
+        self.life -= self.fade_speed * dt
+
+    @property
+    def alpha(self):
+        """根据生命值计算当前透明度"""
+        return max(0, int(255 * self.life))
+
+    def is_dead(self):
+        return self.life &lt;= 0
+
+    def draw(self, surface):
+        """绘制弹出文字"""
+        if self.alpha &lt;= 0:
+            return
+
+        # 渲染文字
+        text_surf = FONT_LARGE.render(self.text, True, self.color)
+        # 设置整个Surface的透明度
+        text_surf.set_alpha(self.alpha)
+        # 居中绘制
+        surface.blit(text_surf,
+                     (int(self.x - text_surf.get_width() // 2),
+                      int(self.y - text_surf.get_height() // 2)))
+
+
+# ==================== 淡入淡出转场类 ====================
+class FadeTransition:
+    """
+    全屏淡入淡出转场
+    -----------------
+    状态机：
+    IDLE → FADE_IN(画面渐黑) → WAIT(停顿) → FADE_OUT(画面恢复) → IDLE
+    """
+
+    # 状态常量
+    IDLE = "idle"
+    FADE_IN = "fade_in"
+    WAIT = "wait"
+    FADE_OUT = "fade_out"
+
+    def __init__(self, width, height):
+        self.width = width
+        self.height = height
+        self.state = self.IDLE         # 当前状态
+        self.alpha = 0.0               # 遮罩透明度 (0~255)
+        self.speed = 600.0             # alpha变化速度（每秒变化量）
+        self.wait_duration = 0.3       # 停顿时间（秒）
+        self.wait_timer = 0.0          # 停顿计时器
+
+        # 预创建黑色遮罩Surface（只创建一次，性能更好）
+        self.overlay = pygame.Surface((width, height))
+        self.overlay.fill((0, 0, 0))
+
+    def start(self):
+        """触发淡入淡出（仅在IDLE状态时有效）"""
+        if self.state == self.IDLE:
+            self.state = self.FADE_IN
+            self.alpha = 0.0
+
+    def update(self, dt):
+        """更新转场状态机"""
+        if self.state == self.FADE_IN:
+            self.alpha += self.speed * dt
+            if self.alpha &gt;= 255:
+                self.alpha = 255
+                self.state = self.WAIT
+                self.wait_timer = self.wait_duration
+
+        elif self.state == self.WAIT:
+            self.wait_timer -= dt
+            if self.wait_timer &lt;= 0:
+                self.state = self.FADE_OUT
+
+        elif self.state == self.FADE_OUT:
+            self.alpha -= self.speed * dt
+            if self.alpha &lt;= 0:
+                self.alpha = 0
+                self.state = self.IDLE
+
+    def draw(self, surface):
+        """绘制转场遮罩"""
+        if self.state != self.IDLE:
+            self.overlay.set_alpha(int(self.alpha))
+            surface.blit(self.overlay, (0, 0))
+
+    def is_active(self):
+        """转场是否正在进行中"""
+        return self.state != self.IDLE
+
+
+# ==================== 绘制UI信息面板 ====================
+def draw_ui(surface, trail_count, float_count, theme_idx, transition_state):
+    """绘制屏幕上的信息面板"""
+    bg_color = BG_THEMES[theme_idx]
+
+    # 左上角：拖尾信息
+    info1 = FONT_SMALL.render(f"拖尾残影数: {trail_count}", True, (180, 220, 255))
+    surface.blit(info1, (12, 12))
+
+    # 右上角：粒子/文字信息
+    info2 = FONT_SMALL.render(f"弹出文字数: {float_count}", True, (255, 220, 180))
+    surface.blit(info2, (WIDTH - info2.get_width() - 12, 12))
+
+    # 左下角：操作提示
+    hints = [
+        "移动鼠标 → 拖尾效果",
+        "点击鼠标 → 弹出文字",
+        "空格键 → 淡入淡出",
+        "1-4键 → 切换主题",
+    ]
+    y = HEIGHT - 18
+    for hint in reversed(hints):
+        txt = FONT_SMALL.render(hint, True, (140, 140, 180))
+        y -= 22
+        surface.blit(txt, (12, y))
+
+    # 底部中间：转场状态
+    if transition_state != "idle":
+        state_text = FONT_MEDIUM.render(f"转场状态: {transition_state}", True, (255, 200, 80))
+        surface.blit(state_text,
+                     (WIDTH // 2 - state_text.get_width() // 2, HEIGHT - 55))
+
+
+def draw_decorations(surface, theme_idx):
+    """绘制背景装饰元素（网格线和角落标记）"""
+    # 细微的网格线（增加科技感）
+    for x in range(0, WIDTH, 80):
+        pygame.draw.line(surface, (40, 42, 60), (x, 0), (x, HEIGHT), 1)
+    for y in range(0, HEIGHT, 80):
+        pygame.draw.line(surface, (40, 42, 60), (0, y), (WIDTH, y), 1)
+
+    # 四角装饰
+    corner_size = 30
+    corner_color = (60, 65, 90)
+    corners = [
+        [(0, 0), (corner_size, 0), (0, corner_size)],
+        [(WIDTH, 0), (WIDTH - corner_size, 0), (WIDTH, corner_size)],
+        [(0, HEIGHT), (corner_size, HEIGHT), (0, HEIGHT - corner_size)],
+        [(WIDTH, HEIGHT), (WIDTH - corner_size, HEIGHT), (WIDTH, HEIGHT - corner_size)],
+    ]
+    for pts in corners:
+        pygame.draw.lines(surface, corner_color, False, pts, 2)
+
+
+# ==================== 主程序 ====================
+def main():
+    # -------- 拖尾效果 --------
+    trail = TrailEffect(max_trail=25)
+    ball_radius = 18
+    ball_color = (100, 200, 255)       # 淡蓝色球体
+    ball_pos = [WIDTH // 2, HEIGHT // 2]
+
+    # -------- Alpha透明度呼吸方块 --------
+    alpha_time = 0.0
+    breath_color = (255, 140, 50)      # 橙色方块
+
+    # -------- 弹出文字列表 --------
+    floating_texts = []
+
+    # -------- 淡入淡出转场 --------
+    transition = FadeTransition(WIDTH, HEIGHT)
+
+    # -------- 背景主题 --------
+    global current_theme
+
+    # -------- 粒子装饰（飘浮的背景粒子，纯装饰） --------
+    bg_particles = []
+    for _ in range(15):
+        bg_particles.append({
+            "x": random.randint(0, WIDTH),
+            "y": random.randint(0, HEIGHT),
+            "vx": random.uniform(-0.3, 0.3),
+            "vy": random.uniform(-0.3, 0.3),
+            "radius": random.randint(1, 3),
+        })
+
+    running = True
+    while running:
+        # --- 计算帧间隔 ---
+        dt = clock.tick(FPS) / 1000.0
+        dt = min(dt, 0.05)  # 防止卡顿跳帧
+
+        # --- 事件处理 ---
+        for event in pygame.event.get():
+            if event.type == pygame.QUIT:
+                running = False
+
+            elif event.type == pygame.MOUSEBUTTONDOWN:
+                if event.button == 1:  # 左键点击 → 弹出文字
+                    mx, my = event.pos
+                    text = get_score_text()
+                    # 根据文字内容选择不同颜色
+                    if "暴击" in text or "完美" in text:
+                        color = (255, 80, 80)  # 红色（特殊效果）
+                    elif "连击" in text:
+                        color = (100, 220, 255)  # 蓝色
+                    else:
+                        color = (255, 220, 50)  # 金黄色（普通得分）
+                    floating_texts.append(FloatingText(mx, my, text, color))
+
+            elif event.type == pygame.KEYDOWN:
+                if event.key == pygame.K_SPACE:
+                    # 空格键 → 触发淡入淡出转场
+                    transition.start()
+
+                elif event.key in (pygame.K_1, pygame.K_2, pygame.K_3, pygame.K_4):
+                    # 数字键 → 切换背景主题
+                    idx = event.key - pygame.K_1
+                    if idx &lt; len(BG_THEMES):
+                        current_theme = idx
+                        trail.clear()  # 切换主题时清空拖尾
+
+        # --- 更新 ---
+
+        # 1. 球体位置（让球体有一段自动运动 + 跟随鼠标混合）
+        mouse_x, mouse_y = pygame.mouse.get_pos()
+        # 球体平滑跟随鼠标（lerp线性插值，产生更流畅的拖尾）
+        ball_pos[0] += (mouse_x - ball_pos[0]) * 0.08 * dt * FPS
+        ball_pos[1] += (mouse_y - ball_pos[1]) * 0.08 * dt * FPS
+
+        # 更新拖尾历史位置
+        trail.update(ball_pos[0], ball_pos[1])
+
+        # 2. Alpha透明度呼吸循环
+        alpha_time += dt
+        # sin产生 -1→1 的波动，映射到 30→255（不完全透明，避免完全消失）
+        breath_alpha = int(141 + 114 * math.sin(alpha_time * 1.8))
+
+        # 3. 更新弹出文字
+        for ft in floating_texts[:]:
+            ft.update(dt)
+            if ft.is_dead():
+                floating_texts.remove(ft)
+
+        # 4. 更新淡入淡出转场
+        transition.update(dt)
+
+        # 5. 更新背景装饰粒子
+        for p in bg_particles:
+            p["x"] += p["vx"]
+            p["y"] += p["vy"]
+            # 超出屏幕边界就重新放置
+            if p["x"] &lt; 0: p["x"] = WIDTH
+            if p["x"] &gt; WIDTH: p["x"] = 0
+            if p["y"] &lt; 0: p["y"] = HEIGHT
+            if p["y"] &gt; HEIGHT: p["y"] = 0
+
+        # --- 渲染 ---
+        bg_color = BG_THEMES[current_theme]
+        screen.fill(bg_color)
+
+        # 绘制背景装饰
+        draw_decorations(screen, current_theme)
+
+        # 绘制背景飘浮粒子
+        for p in bg_particles:
+            pygame.draw.circle(screen, (80, 85, 110),
+                               (int(p["x"]), int(p["y"])), p["radius"])
+
+        # ---- 绘制 Alpha透明度呼吸方块（画面中央偏上） ----
+        square_size = 100
+        square_x = WIDTH // 2 - square_size // 2
+        square_y = HEIGHT // 2 - 60
+
+        # 创建带透明度的方块
+        breath_surf = pygame.Surface((square_size, square_size), pygame.SRCALPHA)
+        # 绘制方块背景
+        pygame.draw.rect(breath_surf, breath_color, (0, 0, square_size, square_size), border_radius=12)
+        # 绘制边框
+        pygame.draw.rect(breath_surf, (255, 220, 180),
+                         (0, 0, square_size, square_size), width=3, border_radius=12)
+        breath_surf.set_alpha(breath_alpha)
+        screen.blit(breath_surf, (square_x, square_y))
+
+        # 在方块旁边显示当前alpha值
+        alpha_label = FONT_SMALL.render(f"Alpha: {breath_alpha}", True, (200, 200, 200))
+        screen.blit(alpha_label, (square_x, square_y + square_size + 8))
+
+        # 画一个不动的参考框（始终不透明，用于对比）
+        ref_rect = pygame.Rect(square_x - 120, square_y, square_size, square_size)
+        pygame.draw.rect(screen, (80, 80, 120), ref_rect, border_radius=12)
+        pygame.draw.rect(screen, (180, 180, 200), ref_rect, width=2, border_radius=12)
+        ref_label = FONT_SMALL.render("参考(Alpha=255)", True, (150, 150, 170))
+        screen.blit(ref_label, (square_x - 120, square_y + square_size + 8))
+
+        # ---- 绘制拖尾残影（最底层，先画） ----
+        trail.draw(screen, ball_radius, ball_color)
+
+        # ---- 绘制当前球体（最顶层，最后画） ----
+        ball_surf = make_circle_surface(ball_radius, ball_color)
+        # 白色高光（让球体看起来有立体感）
+        highlight_surf = make_circle_surface(ball_radius - 5, (255, 255, 255, 60))
+        ball_surf.blit(highlight_surf, (5, 5))
+        screen.blit(ball_surf,
+                    (int(ball_pos[0] - ball_radius), int(ball_pos[1] - ball_radius)))
+
+        # ---- 绘制弹出文字 ----
+        for ft in floating_texts:
+            ft.draw(screen)
+
+        # ---- 绘制UI ----
+        draw_ui(screen, len(trail.positions), len(floating_texts),
+                current_theme, transition.state)
+
+        # ---- 绘制转场遮罩（最顶层） ----
+        transition.draw(screen)
+
+        # 更新屏幕
+        pygame.display.flip()
+
+    pygame.quit()
+
+
+if __name__ == "__main__":
+    main()
+</pre>
+    <p class="hint">本页使用浅色主题与 UTF-8 编码，可直接打印或导出 PDF。</p>
+  </div>
+</body>
+</html>

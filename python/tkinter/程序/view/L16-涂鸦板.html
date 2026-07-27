@@ -1,0 +1,251 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>L16-涂鸦板.py</title>
+<style>
+  :root {
+    --bg: #f5f7fa;
+    --panel: #ffffff;
+    --text: #1a1a2e;
+    --muted: #5a6570;
+    --gold: #b8860b;
+    --code-bg: #ffffff;
+    --code-text: #1f2933;
+    --border: #d8dee6;
+    --top-bg: #ffffff;
+    --top-border: #e5e9ef;
+  }
+  * { box-sizing: border-box; }
+  html, body {
+    margin: 0; padding: 0;
+    background: var(--bg);
+    color: var(--text);
+    font-family: -apple-system, BlinkMacSystemFont, "PingFang SC", "Microsoft YaHei", sans-serif;
+    min-height: 100%;
+  }
+  .top {
+    position: sticky; top: 0; z-index: 10;
+    display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between;
+    gap: 10px;
+    padding: 12px 18px;
+    background: var(--top-bg);
+    border-bottom: 1px solid var(--top-border);
+    box-shadow: 0 1px 8px rgba(15, 23, 42, 0.06);
+  }
+  .brand { color: var(--gold); font-weight: 700; font-size: 14px; letter-spacing: 0.04em; }
+  .title { font-size: 15px; font-weight: 600; color: var(--text); max-width: 52vw; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .actions { display: flex; gap: 8px; flex-wrap: wrap; }
+  .btn {
+    appearance: none; border: 1px solid var(--border);
+    background: #fff; color: var(--text);
+    border-radius: 999px; padding: 8px 14px; font-size: 13px; font-weight: 600;
+    text-decoration: none; cursor: pointer;
+  }
+  .btn:hover { background: #f0f3f7; }
+  .btn.gold {
+    background: linear-gradient(135deg, #f0d78c, #d4a853);
+    color: #0a2540; border-color: #e0c06a;
+  }
+  .meta {
+    padding: 10px 18px; color: var(--muted); font-size: 12px;
+    border-bottom: 1px solid var(--border);
+    background: var(--panel);
+  }
+  .wrap { padding: 16px 18px 40px; }
+  pre {
+    margin: 0;
+    background: var(--code-bg);
+    color: var(--code-text);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 18px 20px;
+    overflow: auto;
+    font-family: "SF Mono", "JetBrains Mono", "Fira Code", Consolas, "Courier New", monospace;
+    font-size: 13.5px;
+    line-height: 1.55;
+    white-space: pre;
+    tab-size: 4;
+    box-shadow: 0 2px 12px rgba(15, 23, 42, 0.05);
+  }
+  .hint { margin-top: 12px; color: var(--muted); font-size: 12px; }
+  @media print {
+    html, body { background: #fff !important; color: #000 !important; }
+    .top { position: static; box-shadow: none; border-bottom: 1px solid #ccc; background: #fff !important; }
+    .actions { display: none !important; }
+    .meta { background: #fff !important; border-color: #ddd; color: #333; }
+    .wrap { padding: 0; }
+    pre {
+      background: #fff !important; color: #000 !important;
+      border: 1px solid #bbb; box-shadow: none; border-radius: 0;
+      white-space: pre-wrap; word-break: break-word; font-size: 11pt; line-height: 1.4;
+    }
+    .hint { display: none; }
+    a { color: #000; text-decoration: none; }
+  }
+</style>
+</head>
+<body>
+  <div class="top">
+    <div class="brand">Python Tkinter · 配套代码</div>
+    <div class="title">L16-涂鸦板.py</div>
+    <div class="actions">
+      <a class="btn" href="../L16-涂鸦板.py" download="L16-涂鸦板.py">⬇️ 下载源文件</a>
+      <a class="btn gold" href="javascript:history.back()">← 返回课件</a>
+    </div>
+  </div>
+  <div class="meta">编码：UTF-8 · 文件：L16-涂鸦板.py · 共 147 行 · 浅色主题便于打印</div>
+  <div class="wrap">
+    <pre id="code">import tkinter as tk
+
+# ========================================
+# 第 16 节：涂鸦板 —— 用鼠标画出你的作品
+# ========================================
+
+root = tk.Tk()
+root.title("涂鸦板")
+root.geometry("550x550")
+root.configure(bg="#f0f0f0")
+
+# ---------- 画笔设置 ----------
+brush_color = "black"   # 当前画笔颜色，默认黑色
+brush_size = 4          # 当前画笔大小（直径，单位：像素）
+
+# ---------- 创建画布 ----------
+# Canvas 是 tkinter 的绘图区域，可以在上面画圆、线、矩形等
+# width/height 设置画布大小，bg 设置背景色为白色
+canvas = tk.Canvas(root, width=500, height=400, bg="white",
+                   highlightthickness=1, highlightbackground="#cccccc")
+canvas.pack(pady=(10, 5))
+
+# ---------- 鼠标事件处理 ----------
+def draw(event):
+    """
+    鼠标拖拽时的绘图函数
+    当用户按住鼠标左键并在画布上移动时，tkinter 会自动调用此函数
+    event 参数包含鼠标的坐标信息：
+      - event.x：鼠标在画布上的水平坐标（从左到右增大）
+      - event.y：鼠标在画布上的垂直坐标（从上到下增大）
+    """
+    r = brush_size / 2  # 圆的半径 = 画笔大小的一半
+    # create_oval(x1, y1, x2, y2) 画一个椭圆
+    # (x1, y1) 是椭圆外接矩形的左上角，(x2, y2) 是右下角
+    # 宽高相等时椭圆就是正圆，用来模拟画笔的笔触
+    canvas.create_oval(
+        event.x - r, event.y - r,  # 左上角：以鼠标位置为中心向左上偏移 r
+        event.x + r, event.y + r,  # 右下角：以鼠标位置为中心向右下偏移 r
+        fill=brush_color,           # 圆的填充颜色
+        outline=brush_color         # 圆的边框颜色（与填充色一致，看不出边框）
+    )
+
+# 将 &lt;B1-Motion&gt; 事件绑定到 draw 函数
+# 含义：当用户"按住鼠标左键（B1）并在画布上拖动（Motion）"时，调用 draw
+# tkinter 会自动把鼠标坐标通过 event 参数传给 draw 函数
+canvas.bind("&lt;B1-Motion&gt;", draw)
+
+# ---------- 控制按钮区域 ----------
+control_frame = tk.Frame(root, bg="#f0f0f0")
+control_frame.pack(pady=5)
+
+# 清除画布按钮
+def clear_canvas():
+    """清除画布上绘制的所有内容"""
+    canvas.delete("all")  # delete("all") 删除画布上的所有图形对象
+
+clear_btn = tk.Button(control_frame, text="🧹 清除画布",
+                      command=clear_canvas,
+                      font=("Microsoft YaHei", 11),
+                      bg="#ff6b6b", fg="white",
+                      activebackground="#ee5a5a",
+                      relief="flat", padx=15, pady=5,
+                      cursor="hand2")
+clear_btn.grid(row=0, column=0, padx=10)
+
+# ---------- 颜色选择区域 ----------
+color_frame = tk.Frame(root, bg="#f0f0f0")
+color_frame.pack(pady=5)
+
+# 画笔颜色标签
+tk.Label(color_frame, text="🎨 画笔颜色：", font=("Microsoft YaHei", 11),
+         bg="#f0f0f0", fg="#333333").grid(row=0, column=0, padx=(0, 5))
+
+# 颜色列表：每个元素是 (按钮上显示的文字, 实际颜色值)
+colors = [
+    ("⚫ 黑", "black"), ("🔴 红", "red"), ("🔵 蓝", "blue"),
+    ("🟢 绿", "green"), ("🟠 橙", "orange"), ("🟣 紫", "purple")
+]
+
+def change_color(color):
+    """切换画笔颜色"""
+    global brush_color
+    brush_color = color
+
+# 为每种颜色创建一个按钮
+for i, (text, color) in enumerate(colors):
+    # lambda c=color: change_color(c)
+    # ⚠️ 重要：必须用 c=color 来捕获当前循环的 color 值
+    # 如果写成 lambda: change_color(color)，所有按钮都会使用循环最后的颜色值
+    btn = tk.Button(color_frame, text=text,
+                    command=lambda c=color: change_color(c),
+                    font=("Microsoft YaHei", 10),
+                    bg="#ffffff", fg="#333333",
+                    relief="flat", padx=8, pady=3,
+                    cursor="hand2")
+    btn.grid(row=0, column=i+1, padx=3)
+
+# ---------- 画笔大小调整区域 ----------
+size_frame = tk.Frame(root, bg="#f0f0f0")
+size_frame.pack(pady=5)
+
+# 画笔大小标签
+tk.Label(size_frame, text="✏️ 画笔大小：", font=("Microsoft YaHei", 11),
+         bg="#f0f0f0", fg="#333333").grid(row=0, column=0, padx=(0, 5))
+
+# 显示当前画笔大小的标签
+size_label = tk.Label(size_frame, text=str(brush_size),
+                      font=("Microsoft YaHei", 12, "bold"),
+                      bg="#ffffff", fg="#333333",
+                      width=3, relief="groove")
+size_label.grid(row=0, column=1, padx=5)
+
+def increase_size():
+    """增大画笔尺寸"""
+    global brush_size
+    if brush_size &lt; 20:  # 限制最大尺寸为 20
+        brush_size += 2
+        size_label.config(text=str(brush_size))  # 更新标签上的数字
+
+def decrease_size():
+    """减小画笔尺寸"""
+    global brush_size
+    if brush_size &gt; 2:  # 限制最小尺寸为 2
+        brush_size -= 2
+        size_label.config(text=str(brush_size))
+
+# 变小按钮
+small_btn = tk.Button(size_frame, text="➖ 变小",
+                      command=decrease_size,
+                      font=("Microsoft YaHei", 10),
+                      bg="#ffffff", fg="#333333",
+                      relief="flat", padx=10, pady=3,
+                      cursor="hand2")
+small_btn.grid(row=0, column=2, padx=5)
+
+# 变大按钮
+big_btn = tk.Button(size_frame, text="➕ 变大",
+                    command=increase_size,
+                    font=("Microsoft YaHei", 10),
+                    bg="#ffffff", fg="#333333",
+                    relief="flat", padx=10, pady=3,
+                    cursor="hand2")
+big_btn.grid(row=0, column=3, padx=5)
+
+# ---------- 启动主循环 ----------
+# mainloop() 让窗口持续显示，监听用户的鼠标操作
+root.mainloop()
+</pre>
+    <p class="hint">本页使用浅色主题与 UTF-8 编码，可直接打印或导出 PDF。</p>
+  </div>
+</body>
+</html>

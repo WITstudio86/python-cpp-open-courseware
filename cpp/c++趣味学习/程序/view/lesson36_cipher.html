@@ -1,0 +1,674 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>lesson36_cipher.cpp</title>
+<style>
+  :root {
+    --bg: #f5f7fa;
+    --panel: #ffffff;
+    --text: #1a1a2e;
+    --muted: #5a6570;
+    --gold: #b8860b;
+    --code-bg: #ffffff;
+    --code-text: #1f2933;
+    --border: #d8dee6;
+    --top-bg: #ffffff;
+    --top-border: #e5e9ef;
+  }
+  * { box-sizing: border-box; }
+  html, body {
+    margin: 0; padding: 0;
+    background: var(--bg);
+    color: var(--text);
+    font-family: -apple-system, BlinkMacSystemFont, "PingFang SC", "Microsoft YaHei", sans-serif;
+    min-height: 100%;
+  }
+  .top {
+    position: sticky; top: 0; z-index: 10;
+    display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between;
+    gap: 10px;
+    padding: 12px 18px;
+    background: var(--top-bg);
+    border-bottom: 1px solid var(--top-border);
+    box-shadow: 0 1px 8px rgba(15, 23, 42, 0.06);
+  }
+  .brand { color: var(--gold); font-weight: 700; font-size: 14px; letter-spacing: 0.04em; }
+  .title { font-size: 15px; font-weight: 600; color: var(--text); max-width: 52vw; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .actions { display: flex; gap: 8px; flex-wrap: wrap; }
+  .btn {
+    appearance: none; border: 1px solid var(--border);
+    background: #fff; color: var(--text);
+    border-radius: 999px; padding: 8px 14px; font-size: 13px; font-weight: 600;
+    text-decoration: none; cursor: pointer;
+  }
+  .btn:hover { background: #f0f3f7; }
+  .btn.gold {
+    background: linear-gradient(135deg, #f0d78c, #d4a853);
+    color: #0a2540; border-color: #e0c06a;
+  }
+  .meta {
+    padding: 10px 18px; color: var(--muted); font-size: 12px;
+    border-bottom: 1px solid var(--border);
+    background: var(--panel);
+  }
+  .wrap { padding: 16px 18px 40px; }
+  pre {
+    margin: 0;
+    background: var(--code-bg);
+    color: var(--code-text);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 18px 20px;
+    overflow: auto;
+    font-family: "SF Mono", "JetBrains Mono", "Fira Code", Consolas, "Courier New", monospace;
+    font-size: 13.5px;
+    line-height: 1.55;
+    white-space: pre;
+    tab-size: 4;
+    box-shadow: 0 2px 12px rgba(15, 23, 42, 0.05);
+  }
+  .hint { margin-top: 12px; color: var(--muted); font-size: 12px; }
+  @media print {
+    html, body { background: #fff !important; color: #000 !important; }
+    .top { position: static; box-shadow: none; border-bottom: 1px solid #ccc; background: #fff !important; }
+    .actions { display: none !important; }
+    .meta { background: #fff !important; border-color: #ddd; color: #333; }
+    .wrap { padding: 0; }
+    pre {
+      background: #fff !important; color: #000 !important;
+      border: 1px solid #bbb; box-shadow: none; border-radius: 0;
+      white-space: pre-wrap; word-break: break-word; font-size: 11pt; line-height: 1.4;
+    }
+    .hint { display: none; }
+    a { color: #000; text-decoration: none; }
+  }
+</style>
+</head>
+<body>
+  <div class="top">
+    <div class="brand">C++ 趣味学习 · 配套代码</div>
+    <div class="title">lesson36_cipher.cpp</div>
+    <div class="actions">
+      <a class="btn" href="../lesson36_cipher.cpp" download="lesson36_cipher.cpp">⬇️ 下载源文件</a>
+      <a class="btn gold" href="javascript:history.back()">← 返回课件</a>
+    </div>
+  </div>
+  <div class="meta">编码：UTF-8 · 文件：lesson36_cipher.cpp · 共 570 行 · 浅色主题便于打印</div>
+  <div class="wrap">
+    <pre id="code">/*
+ * =====================================================================
+ * 第36课：密文特工队——字符串趣味应用
+ * 大小写转换、凯撒加密 | 编写秘密暗号
+ * =====================================================================
+ *
+ * 本文件包含以下程序演示：
+ *   1. 使用 &lt;cctype&gt; 的 toupper/tolower 进行大小写转换
+ *   2. 使用 ASCII 码手动进行大小写转换（不依赖库函数）
+ *   3. 凯撒加密与解密（单字符 + 字符串）
+ *   4. 交互式加密解密程序（可配置偏移量）
+ *   5. 暴力破解凯撒密文
+ *   6. 练习答案：大小写翻转 + 解密练习
+ *
+ * 编译方式：
+ *   g++ -std=c++11 -o lesson36_cipher lesson36_cipher.cpp
+ * 运行方式：
+ *   ./lesson36_cipher
+ *
+ * 在程序运行时会显示菜单，选择对应的功能即可。
+ * =====================================================================
+ */
+
+#include &lt;iostream&gt;
+#include &lt;string&gt;
+#include &lt;cctype&gt;   // 提供 toupper() 和 tolower()
+using namespace std;
+
+// =====================================================================
+// 通用工具函数
+// =====================================================================
+
+/*
+ * 功能：使用 cctype 库函数将字符转换为大写
+ * 参数：ch - 待转换的字符
+ * 返回：转换后的大写字符（如果是小写字母），否则返回原字符
+ */
+char toUpperLib(char ch) {
+    return (char)toupper(ch);
+}
+
+/*
+ * 功能：使用 cctype 库函数将字符转换为小写
+ * 参数：ch - 待转换的字符
+ * 返回：转换后的小写字符（如果是大写字母），否则返回原字符
+ */
+char toLowerLib(char ch) {
+    return (char)tolower(ch);
+}
+
+/*
+ * 功能：使用 ASCII 码手动将小写字母转换为大写（不依赖 cctype）
+ * 原理：小写字母 ASCII 码比对应大写字母大 32
+ * 参数：ch - 待转换的字符
+ * 返回：转换后的大写字符（如果是小写字母），否则返回原字符
+ */
+char toUpperAscii(char ch) {
+    if (ch &gt;= 'a' &amp;&amp; ch &lt;= 'z') {
+        // 方法1：直接减 32
+        // return ch - 32;
+
+        // 方法2：更专业、可读性更好的写法
+        return ch - ('a' - 'A');   // 'a' - 'A' == 32
+    }
+    return ch;
+}
+
+/*
+ * 功能：使用 ASCII 码手动将大写字母转换为小写（不依赖 cctype）
+ * 原理：小写字母 ASCII 码比对应大写字母大 32
+ * 参数：ch - 待转换的字符
+ * 返回：转换后的小写字符（如果是大写字母），否则返回原字符
+ */
+char toLowerAscii(char ch) {
+    if (ch &gt;= 'A' &amp;&amp; ch &lt;= 'Z') {
+        // 方法1：直接加 32
+        // return ch + 32;
+
+        // 方法2：更专业、可读性更好的写法
+        return ch + ('a' - 'A');   // 'a' - 'A' == 32
+    }
+    return ch;
+}
+
+/*
+ * 功能：凯撒加密 - 对单个字符进行加密
+ * 原理：将字母按字母表顺序向后移动 shift 位
+ *       非字母字符保持不变
+ *       使用模运算 % 26 实现循环（如 Z 后移 1 位变成 A）
+ * 参数：ch    - 待加密的字符
+ *       shift - 偏移量（正数向后移，负数向前移）
+ * 返回：加密后的字符
+ */
+char caesarEncryptChar(char ch, int shift) {
+    // 处理大写字母 A~Z (ASCII: 65~90)
+    if (ch &gt;= 'A' &amp;&amp; ch &lt;= 'Z') {
+        // 步骤拆解：
+        // 1. ch - 'A'：将字母映射到 0~25 的数字
+        // 2. + shift：加上偏移量
+        // 3. % 26：取模，确保在 0~25 范围内循环
+        // 4. + 'A'：映射回 ASCII 字符
+        return (ch - 'A' + shift) % 26 + 'A';
+    }
+    // 处理小写字母 a~z (ASCII: 97~122)
+    else if (ch &gt;= 'a' &amp;&amp; ch &lt;= 'z') {
+        return (ch - 'a' + shift) % 26 + 'a';
+    }
+    // 非字母字符（空格、数字、标点等）保持不变
+    return ch;
+}
+
+/*
+ * 功能：凯撒解密 - 对单个字符进行解密
+ * 原理：将字母按字母表顺序向前移动 shift 位（即加密的逆操作）
+ *       注意 C++ 中负数 % 正数可能得到负数，所以要先 +26
+ * 参数：ch    - 待解密的字符
+ *       shift - 偏移量（与加密时相同的值）
+ * 返回：解密后的字符
+ */
+char caesarDecryptChar(char ch, int shift) {
+    // 处理大写字母
+    if (ch &gt;= 'A' &amp;&amp; ch &lt;= 'Z') {
+        // 解密公式：(ch - 'A' - shift + 26) % 26 + 'A'
+        // 为什么 +26？因为 C++ 中 -1 % 26 的结果可能是 -1（取决于编译器），
+        // 加上 26 后变成 25 % 26 = 25，即正确的循环结果。
+        return (ch - 'A' - shift + 26) % 26 + 'A';
+    }
+    // 处理小写字母
+    else if (ch &gt;= 'a' &amp;&amp; ch &lt;= 'z') {
+        return (ch - 'a' - shift + 26) % 26 + 'a';
+    }
+    // 非字母字符保持不变
+    return ch;
+}
+
+/*
+ * 功能：对整个字符串进行凯撒加密
+ * 参数：text  - 明文字符串
+ *       shift - 偏移量
+ * 返回：加密后的密文字符串
+ */
+string caesarEncrypt(string text, int shift) {
+    string result = "";
+    for (int i = 0; i &lt; text.length(); i++) {
+        result += caesarEncryptChar(text[i], shift);
+    }
+    return result;
+}
+
+/*
+ * 功能：对整个字符串进行凯撒解密
+ * 参数：text  - 密文字符串
+ *       shift - 偏移量（与加密时相同）
+ * 返回：解密后的明文字符串
+ */
+string caesarDecrypt(string text, int shift) {
+    string result = "";
+    for (int i = 0; i &lt; text.length(); i++) {
+        result += caesarDecryptChar(text[i], shift);
+    }
+    return result;
+}
+
+// =====================================================================
+// 程序 1：使用 cctype 库函数进行大小写转换
+// =====================================================================
+void demo1_cctypeCaseConversion() {
+    cout &lt;&lt; "\n==============================================" &lt;&lt; endl;
+    cout &lt;&lt; "  程序 1：使用 &lt;cctype&gt; 库进行大小写转换" &lt;&lt; endl;
+    cout &lt;&lt; "==============================================" &lt;&lt; endl;
+
+    // 测试字符数组
+    char testChars[] = {'a', 'Z', 'm', 'Q', '3', '!', ' ', 'b'};
+    int count = 8;
+
+    cout &lt;&lt; "原始字符： ";
+    for (int i = 0; i &lt; count; i++) {
+        cout &lt;&lt; testChars[i] &lt;&lt; "  ";
+    }
+    cout &lt;&lt; endl;
+
+    cout &lt;&lt; "转大写后： ";
+    for (int i = 0; i &lt; count; i++) {
+        cout &lt;&lt; toUpperLib(testChars[i]) &lt;&lt; "  ";
+    }
+    cout &lt;&lt; endl;
+
+    cout &lt;&lt; "转小写后： ";
+    for (int i = 0; i &lt; count; i++) {
+        cout &lt;&lt; toLowerLib(testChars[i]) &lt;&lt; "  ";
+    }
+    cout &lt;&lt; endl;
+
+    // 展示字符串整体转换
+    string message = "Hello, C++ World! 你好，编程世界！";
+    cout &lt;&lt; "\n原始字符串：" &lt;&lt; message &lt;&lt; endl;
+
+    string upperStr = "";
+    for (int i = 0; i &lt; message.length(); i++) {
+        upperStr += toupper(message[i]);
+    }
+    cout &lt;&lt; "全部大写：  " &lt;&lt; upperStr &lt;&lt; endl;
+
+    string lowerStr = "";
+    for (int i = 0; i &lt; message.length(); i++) {
+        lowerStr += tolower(message[i]);
+    }
+    cout &lt;&lt; "全部小写：  " &lt;&lt; lowerStr &lt;&lt; endl;
+
+    // 注意：中文字符不是 ASCII 字母，toupper/tolower 对它们没有影响
+    cout &lt;&lt; "\n💡 注意：中文字符和标点符号不受 toupper/tolower 影响。" &lt;&lt; endl;
+}
+
+// =====================================================================
+// 程序 2：使用 ASCII 码手动进行大小写转换
+// =====================================================================
+void demo2_manualAsciiConversion() {
+    cout &lt;&lt; "\n==============================================" &lt;&lt; endl;
+    cout &lt;&lt; "  程序 2：使用 ASCII 码手动进行大小写转换" &lt;&lt; endl;
+    cout &lt;&lt; "==============================================" &lt;&lt; endl;
+
+    // 展示 ASCII 码表关键信息
+    cout &lt;&lt; "ASCII 码表关键数据：" &lt;&lt; endl;
+    cout &lt;&lt; "  'A' 的 ASCII 码 = " &lt;&lt; (int)'A' &lt;&lt; endl;
+    cout &lt;&lt; "  'Z' 的 ASCII 码 = " &lt;&lt; (int)'Z' &lt;&lt; endl;
+    cout &lt;&lt; "  'a' 的 ASCII 码 = " &lt;&lt; (int)'a' &lt;&lt; endl;
+    cout &lt;&lt; "  'z' 的 ASCII 码 = " &lt;&lt; (int)'z' &lt;&lt; endl;
+    cout &lt;&lt; "  大小写差值 'a' - 'A' = " &lt;&lt; ('a' - 'A') &lt;&lt; endl;
+    cout &lt;&lt; endl;
+
+    // 展示完整的 A~Z 和 a~z 对应关系
+    cout &lt;&lt; "字母对应关系表：" &lt;&lt; endl;
+    cout &lt;&lt; "  大写 | ASCII |  小写 | ASCII | 差值" &lt;&lt; endl;
+    cout &lt;&lt; "  -----|-------|-------|-------|-----" &lt;&lt; endl;
+    for (char c = 'A'; c &lt;= 'Z'; c++) {
+        char lower = c + ('a' - 'A');
+        cout &lt;&lt; "    " &lt;&lt; c &lt;&lt; "  |  "
+             &lt;&lt; (int)c &lt;&lt; "   |   " &lt;&lt; lower &lt;&lt; "  |  "
+             &lt;&lt; (int)lower &lt;&lt; "   |  " &lt;&lt; (int)(lower - c) &lt;&lt; endl;
+    }
+
+    // 测试字符串转换
+    string testStr = "AbCdEfGhIjKlMnOpQrStUvWxYz";
+    cout &lt;&lt; "\n测试字符串（交替大小写）：" &lt;&lt; testStr &lt;&lt; endl;
+
+    cout &lt;&lt; "手动转大写（ASCII法）：";
+    for (int i = 0; i &lt; testStr.length(); i++) {
+        cout &lt;&lt; toUpperAscii(testStr[i]);
+    }
+    cout &lt;&lt; endl;
+
+    cout &lt;&lt; "手动转小写（ASCII法）：";
+    for (int i = 0; i &lt; testStr.length(); i++) {
+        cout &lt;&lt; toLowerAscii(testStr[i]);
+    }
+    cout &lt;&lt; endl;
+
+    // 验证手动方法的结果与库函数一致
+    cout &lt;&lt; "\n✅ 手动方法与 &lt;cctype&gt; 库函数结果一致吗？" &lt;&lt; endl;
+    bool allMatch = true;
+    for (int i = 0; i &lt; testStr.length(); i++) {
+        if (toUpperAscii(testStr[i]) != toupper(testStr[i]) ||
+            toLowerAscii(testStr[i]) != tolower(testStr[i])) {
+            allMatch = false;
+            break;
+        }
+    }
+    cout &lt;&lt; (allMatch ? "  是的，完全一致！" : "  不，存在差异。") &lt;&lt; endl;
+}
+
+// =====================================================================
+// 程序 3：凯撒加密与解密演示
+// =====================================================================
+void demo3_caesarCipher() {
+    cout &lt;&lt; "\n==============================================" &lt;&lt; endl;
+    cout &lt;&lt; "  程序 3：凯撒加密与解密演示" &lt;&lt; endl;
+    cout &lt;&lt; "==============================================" &lt;&lt; endl;
+
+    cout &lt;&lt; "\n--- 凯撒加密原理图解 ---" &lt;&lt; endl;
+    cout &lt;&lt; "明文：A B C D E F G ... X Y Z" &lt;&lt; endl;
+    cout &lt;&lt; "      ↓ ↓ ↓ ↓ ↓ ↓ ↓     ↓ ↓ ↓  (偏移量 = 3)" &lt;&lt; endl;
+    cout &lt;&lt; "密文：D E F G H I J ... A B C" &lt;&lt; endl;
+    cout &lt;&lt; endl;
+
+    int shift = 3;
+    cout &lt;&lt; "使用偏移量 shift = " &lt;&lt; shift &lt;&lt; " 进行演示：" &lt;&lt; endl &lt;&lt; endl;
+
+    // 演示单个字母的加密解密过程
+    cout &lt;&lt; "【单个字母演示】" &lt;&lt; endl;
+    char demoLetters[] = {'A', 'Z', 'a', 'z', 'H', 'e', 'l', 'o', ' ', '!'};
+    int letterCount = 10;
+
+    for (int i = 0; i &lt; letterCount; i++) {
+        char ch = demoLetters[i];
+        char encrypted = caesarEncryptChar(ch, shift);
+        char decrypted = caesarDecryptChar(encrypted, shift);
+
+        cout &lt;&lt; "  '" &lt;&lt; ch &lt;&lt; "' (ASCII:" &lt;&lt; (int)ch &lt;&lt; ")";
+        // 用更宽的间距对齐
+        if ((int)ch &lt; 100) cout &lt;&lt; " ";
+        cout &lt;&lt; " → 加密 → '" &lt;&lt; encrypted
+             &lt;&lt; "' (ASCII:" &lt;&lt; (int)encrypted &lt;&lt; ")";
+        if ((int)encrypted &lt; 100) cout &lt;&lt; " ";
+        cout &lt;&lt; " → 解密 → '" &lt;&lt; decrypted
+             &lt;&lt; "' (ASCII:" &lt;&lt; (int)decrypted &lt;&lt; ")";
+        cout &lt;&lt; (ch == decrypted ? " ✅" : " ❌") &lt;&lt; endl;
+    }
+
+    // 演示整句加密
+    cout &lt;&lt; "\n【整句加密演示】" &lt;&lt; endl;
+    string plainText1 = "HELLO WORLD";
+    string cipherText1 = caesarEncrypt(plainText1, shift);
+    string backText1 = caesarDecrypt(cipherText1, shift);
+
+    cout &lt;&lt; "  原文：" &lt;&lt; plainText1 &lt;&lt; endl;
+    cout &lt;&lt; "  密文：" &lt;&lt; cipherText1 &lt;&lt; endl;
+    cout &lt;&lt; "  解密：" &lt;&lt; backText1 &lt;&lt; endl;
+    cout &lt;&lt; "  验证：" &lt;&lt; (plainText1 == backText1 ? "✅ 成功" : "❌ 失败") &lt;&lt; endl;
+
+    // 演示混合大小写的句子
+    cout &lt;&lt; "\n【混合大小写演示】" &lt;&lt; endl;
+    string plainText2 = "I love C++ Programming!";
+    string cipherText2 = caesarEncrypt(plainText2, shift);
+    string backText2 = caesarDecrypt(cipherText2, shift);
+
+    cout &lt;&lt; "  原文：" &lt;&lt; plainText2 &lt;&lt; endl;
+    cout &lt;&lt; "  密文：" &lt;&lt; cipherText2 &lt;&lt; endl;
+    cout &lt;&lt; "  解密：" &lt;&lt; backText2 &lt;&lt; endl;
+    cout &lt;&lt; "  验证：" &lt;&lt; (plainText2 == backText2 ? "✅ 成功" : "❌ 失败") &lt;&lt; endl;
+
+    // 演示不同偏移量的效果
+    cout &lt;&lt; "\n【不同偏移量效果对比】" &lt;&lt; endl;
+    string testWord = "Secret";
+    cout &lt;&lt; "  原文 = \"" &lt;&lt; testWord &lt;&lt; "\"" &lt;&lt; endl;
+    for (int s = 1; s &lt;= 5; s++) {
+        cout &lt;&lt; "  shift=" &lt;&lt; s &lt;&lt; " → \"" &lt;&lt; caesarEncrypt(testWord, s) &lt;&lt; "\"" &lt;&lt; endl;
+    }
+
+    // ROT13 特例展示
+    cout &lt;&lt; "\n【ROT13 特例（shift=13）】" &lt;&lt; endl;
+    string rot13test = "Hello";
+    string rot13once = caesarEncrypt(rot13test, 13);
+    string rot13twice = caesarEncrypt(rot13once, 13);
+    cout &lt;&lt; "  原文　　　：" &lt;&lt; rot13test &lt;&lt; endl;
+    cout &lt;&lt; "  ROT13一次　：" &lt;&lt; rot13once &lt;&lt; endl;
+    cout &lt;&lt; "  ROT13两次　：" &lt;&lt; rot13twice &lt;&lt; endl;
+    cout &lt;&lt; "  💡 ROT13 加密两次等于原文！（因为 13 + 13 = 26 = 一圈）" &lt;&lt; endl;
+}
+
+// =====================================================================
+// 程序 4：交互式加密解密程序
+// =====================================================================
+void demo4_interactiveCipher() {
+    cout &lt;&lt; "\n==============================================" &lt;&lt; endl;
+    cout &lt;&lt; "  程序 4：交互式加密解密程序" &lt;&lt; endl;
+    cout &lt;&lt; "==============================================" &lt;&lt; endl;
+
+    int shift;
+    string message;
+
+    cout &lt;&lt; "\n🔐 欢迎使用凯撒加密系统！" &lt;&lt; endl;
+    cout &lt;&lt; "----------------------------------------------" &lt;&lt; endl;
+
+    // 获取偏移量
+    cout &lt;&lt; "请输入偏移量（建议 1~25）：";
+    cin &gt;&gt; shift;
+
+    // 确保偏移量在有效范围内（归一化到 1~25）
+    shift = shift % 26;
+    if (shift == 0) {
+        cout &lt;&lt; "⚠️  偏移量是 26 的倍数，密文和原文一样哦！" &lt;&lt; endl;
+        shift = 26; // 保持为 26，这样加密后等于原文，方便展示原理
+    }
+    if (shift &lt; 0) {
+        shift = shift + 26;  // 负数偏移量转为等价的正常移量
+    }
+
+    // 清除输入缓冲区（cin &gt;&gt; 后留下的换行符）
+    cin.ignore();
+
+    // 获取要加密的消息
+    cout &lt;&lt; "请输入要加密的消息：";
+    getline(cin, message);
+
+    cout &lt;&lt; "\n----------------------------------------------" &lt;&lt; endl;
+    cout &lt;&lt; "  加密参数" &lt;&lt; endl;
+    cout &lt;&lt; "----------------------------------------------" &lt;&lt; endl;
+    cout &lt;&lt; "  偏移量：" &lt;&lt; shift &lt;&lt; endl;
+    cout &lt;&lt; "  原文：\"" &lt;&lt; message &lt;&lt; "\"" &lt;&lt; endl;
+
+    // 加密
+    string encrypted = caesarEncrypt(message, shift);
+    cout &lt;&lt; "  密文：\"" &lt;&lt; encrypted &lt;&lt; "\"" &lt;&lt; endl;
+
+    // 解密
+    string decrypted = caesarDecrypt(encrypted, shift);
+    cout &lt;&lt; "  解密：\"" &lt;&lt; decrypted &lt;&lt; "\"" &lt;&lt; endl;
+
+    // 验证
+    cout &lt;&lt; "----------------------------------------------" &lt;&lt; endl;
+    if (message == decrypted) {
+        cout &lt;&lt; "  ✅ 加密解密成功！密文安全送达，特工任务完成！" &lt;&lt; endl;
+    } else {
+        cout &lt;&lt; "  ❌ 解密结果与原文不一致，请检查程序逻辑。" &lt;&lt; endl;
+    }
+    cout &lt;&lt; "==============================================" &lt;&lt; endl;
+}
+
+// =====================================================================
+// 程序 5：暴力破解凯撒密文
+// =====================================================================
+void demo5_bruteForce() {
+    cout &lt;&lt; "\n==============================================" &lt;&lt; endl;
+    cout &lt;&lt; "  程序 5：暴力破解凯撒密文" &lt;&lt; endl;
+    cout &lt;&lt; "==============================================" &lt;&lt; endl;
+
+    string cipherText;
+    cout &lt;&lt; "\n请输入要破解的凯撒密文：";
+    cin.ignore();
+    getline(cin, cipherText);
+
+    cout &lt;&lt; "\n📋 尝试所有可能的偏移量（1~25）：" &lt;&lt; endl;
+    cout &lt;&lt; "----------------------------------------------" &lt;&lt; endl;
+
+    for (int s = 1; s &lt;= 25; s++) {
+        string attempt = caesarDecrypt(cipherText, s);
+        // 如果偏移量小于 10，加个空格保持对齐
+        cout &lt;&lt; "  偏移量 ";
+        if (s &lt; 10) cout &lt;&lt; " ";
+        cout &lt;&lt; s &lt;&lt; " → \"" &lt;&lt; attempt &lt;&lt; "\"" &lt;&lt; endl;
+    }
+
+    cout &lt;&lt; "----------------------------------------------" &lt;&lt; endl;
+    cout &lt;&lt; "💡 请从上面的 25 行中找到有意义的那一行，" &lt;&lt; endl;
+    cout &lt;&lt; "   它对应的偏移量就是加密时使用的密钥！" &lt;&lt; endl;
+}
+
+// =====================================================================
+// 程序 6：练习答案 - 大小写翻转
+// =====================================================================
+void exercise1_flipCase() {
+    cout &lt;&lt; "\n==============================================" &lt;&lt; endl;
+    cout &lt;&lt; "  练习 1 答案：大小写翻转" &lt;&lt; endl;
+    cout &lt;&lt; "==============================================" &lt;&lt; endl;
+
+    string s;
+    cout &lt;&lt; "请输入字符串：";
+    cin.ignore();
+    getline(cin, s);
+
+    // 方法1：使用 cctype 库函数
+    string result1 = s;
+    for (int i = 0; i &lt; result1.length(); i++) {
+        if (result1[i] &gt;= 'a' &amp;&amp; result1[i] &lt;= 'z') {
+            result1[i] = toupper(result1[i]);
+        } else if (result1[i] &gt;= 'A' &amp;&amp; result1[i] &lt;= 'Z') {
+            result1[i] = tolower(result1[i]);
+        }
+    }
+
+    // 方法2：使用 ASCII 码手动转换
+    string result2 = s;
+    for (int i = 0; i &lt; result2.length(); i++) {
+        if (result2[i] &gt;= 'a' &amp;&amp; result2[i] &lt;= 'z') {
+            result2[i] = result2[i] - ('a' - 'A');  // -32
+        } else if (result2[i] &gt;= 'A' &amp;&amp; result2[i] &lt;= 'Z') {
+            result2[i] = result2[i] + ('a' - 'A');  // +32
+        }
+    }
+
+    cout &lt;&lt; "原始字符串：" &lt;&lt; s &lt;&lt; endl;
+    cout &lt;&lt; "方法1(cctype)：" &lt;&lt; result1 &lt;&lt; endl;
+    cout &lt;&lt; "方法2(ASCII)： " &lt;&lt; result2 &lt;&lt; endl;
+
+    if (result1 == result2) {
+        cout &lt;&lt; "✅ 两种方法结果一致！" &lt;&lt; endl;
+    }
+}
+
+// =====================================================================
+// 程序 7：练习答案 - 解密截获的密文
+// =====================================================================
+void exercise2_decryptMessage() {
+    cout &lt;&lt; "\n==============================================" &lt;&lt; endl;
+    cout &lt;&lt; "  练习 2 答案：解密截获的密文" &lt;&lt; endl;
+    cout &lt;&lt; "==============================================" &lt;&lt; endl;
+
+    // 截获的密文
+    string cipher = "Xlmw mw e Jsvqirx irgvcTxiv!";
+    int shift = 4;  // 已知加密时使用的偏移量
+
+    cout &lt;&lt; "截获的密文：" &lt;&lt; cipher &lt;&lt; endl;
+    cout &lt;&lt; "已知偏移量：" &lt;&lt; shift &lt;&lt; endl;
+
+    // 解密
+    string plain = "";
+    for (int i = 0; i &lt; cipher.length(); i++) {
+        char ch = cipher[i];
+        if (ch &gt;= 'A' &amp;&amp; ch &lt;= 'Z') {
+            ch = (ch - 'A' - shift + 26) % 26 + 'A';
+        } else if (ch &gt;= 'a' &amp;&amp; ch &lt;= 'z') {
+            ch = (ch - 'a' - shift + 26) % 26 + 'a';
+        }
+        plain += ch;
+    }
+
+    cout &lt;&lt; "解密后的明文：" &lt;&lt; plain &lt;&lt; endl;
+    cout &lt;&lt; "\n💡 密文 \"Xlmw mw e Jsvqirx irgvcTxiv!\" 解密后是：" &lt;&lt; endl;
+    cout &lt;&lt; "   \"This is a Program encryption!\"（这是一个程序加密！）" &lt;&lt; endl;
+}
+
+// =====================================================================
+// 主菜单
+// =====================================================================
+int main() {
+    int choice;
+    bool running = true;
+
+    while (running) {
+        cout &lt;&lt; "\n" &lt;&lt; endl;
+        cout &lt;&lt; "╔════════════════════════════════════════════╗" &lt;&lt; endl;
+        cout &lt;&lt; "║   🔐 第36课：密文特工队 - 程序演示菜单   ║" &lt;&lt; endl;
+        cout &lt;&lt; "╠════════════════════════════════════════════╣" &lt;&lt; endl;
+        cout &lt;&lt; "║  1. 大小写转换（&lt;cctype&gt; 库函数）         ║" &lt;&lt; endl;
+        cout &lt;&lt; "║  2. 大小写转换（ASCII 码手动方式）         ║" &lt;&lt; endl;
+        cout &lt;&lt; "║  3. 凯撒加密与解密完整演示                 ║" &lt;&lt; endl;
+        cout &lt;&lt; "║  4. 交互式加密解密（可配置偏移量）         ║" &lt;&lt; endl;
+        cout &lt;&lt; "║  5. 暴力破解凯撒密文                       ║" &lt;&lt; endl;
+        cout &lt;&lt; "║  6. 练习1答案 - 大小写翻转                 ║" &lt;&lt; endl;
+        cout &lt;&lt; "║  7. 练习2答案 - 解密截获密文               ║" &lt;&lt; endl;
+        cout &lt;&lt; "║  0. 退出程序                               ║" &lt;&lt; endl;
+        cout &lt;&lt; "╚════════════════════════════════════════════╝" &lt;&lt; endl;
+        cout &lt;&lt; "请输入你的选择（0~7）：";
+        cin &gt;&gt; choice;
+
+        switch (choice) {
+            case 1:
+                demo1_cctypeCaseConversion();
+                break;
+            case 2:
+                demo2_manualAsciiConversion();
+                break;
+            case 3:
+                demo3_caesarCipher();
+                break;
+            case 4:
+                demo4_interactiveCipher();
+                break;
+            case 5:
+                demo5_bruteForce();
+                break;
+            case 6:
+                exercise1_flipCase();
+                break;
+            case 7:
+                exercise2_decryptMessage();
+                break;
+            case 0:
+                cout &lt;&lt; "\n👋 密文特工队任务结束，再见！" &lt;&lt; endl;
+                cout &lt;&lt; "   记住：真正的安全需要更强大的加密算法哦~" &lt;&lt; endl;
+                running = false;
+                break;
+            default:
+                cout &lt;&lt; "\n⚠️  无效选择，请输入 0~7 之间的数字。" &lt;&lt; endl;
+                break;
+        }
+    }
+
+    return 0;
+}
+</pre>
+    <p class="hint">本页使用浅色主题与 UTF-8 编码，可直接打印或导出 PDF。</p>
+  </div>
+</body>
+</html>

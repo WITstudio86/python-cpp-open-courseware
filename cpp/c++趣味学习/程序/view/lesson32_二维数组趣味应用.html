@@ -1,0 +1,609 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>lesson32_二维数组趣味应用.cpp</title>
+<style>
+  :root {
+    --bg: #f5f7fa;
+    --panel: #ffffff;
+    --text: #1a1a2e;
+    --muted: #5a6570;
+    --gold: #b8860b;
+    --code-bg: #ffffff;
+    --code-text: #1f2933;
+    --border: #d8dee6;
+    --top-bg: #ffffff;
+    --top-border: #e5e9ef;
+  }
+  * { box-sizing: border-box; }
+  html, body {
+    margin: 0; padding: 0;
+    background: var(--bg);
+    color: var(--text);
+    font-family: -apple-system, BlinkMacSystemFont, "PingFang SC", "Microsoft YaHei", sans-serif;
+    min-height: 100%;
+  }
+  .top {
+    position: sticky; top: 0; z-index: 10;
+    display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between;
+    gap: 10px;
+    padding: 12px 18px;
+    background: var(--top-bg);
+    border-bottom: 1px solid var(--top-border);
+    box-shadow: 0 1px 8px rgba(15, 23, 42, 0.06);
+  }
+  .brand { color: var(--gold); font-weight: 700; font-size: 14px; letter-spacing: 0.04em; }
+  .title { font-size: 15px; font-weight: 600; color: var(--text); max-width: 52vw; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .actions { display: flex; gap: 8px; flex-wrap: wrap; }
+  .btn {
+    appearance: none; border: 1px solid var(--border);
+    background: #fff; color: var(--text);
+    border-radius: 999px; padding: 8px 14px; font-size: 13px; font-weight: 600;
+    text-decoration: none; cursor: pointer;
+  }
+  .btn:hover { background: #f0f3f7; }
+  .btn.gold {
+    background: linear-gradient(135deg, #f0d78c, #d4a853);
+    color: #0a2540; border-color: #e0c06a;
+  }
+  .meta {
+    padding: 10px 18px; color: var(--muted); font-size: 12px;
+    border-bottom: 1px solid var(--border);
+    background: var(--panel);
+  }
+  .wrap { padding: 16px 18px 40px; }
+  pre {
+    margin: 0;
+    background: var(--code-bg);
+    color: var(--code-text);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 18px 20px;
+    overflow: auto;
+    font-family: "SF Mono", "JetBrains Mono", "Fira Code", Consolas, "Courier New", monospace;
+    font-size: 13.5px;
+    line-height: 1.55;
+    white-space: pre;
+    tab-size: 4;
+    box-shadow: 0 2px 12px rgba(15, 23, 42, 0.05);
+  }
+  .hint { margin-top: 12px; color: var(--muted); font-size: 12px; }
+  @media print {
+    html, body { background: #fff !important; color: #000 !important; }
+    .top { position: static; box-shadow: none; border-bottom: 1px solid #ccc; background: #fff !important; }
+    .actions { display: none !important; }
+    .meta { background: #fff !important; border-color: #ddd; color: #333; }
+    .wrap { padding: 0; }
+    pre {
+      background: #fff !important; color: #000 !important;
+      border: 1px solid #bbb; box-shadow: none; border-radius: 0;
+      white-space: pre-wrap; word-break: break-word; font-size: 11pt; line-height: 1.4;
+    }
+    .hint { display: none; }
+    a { color: #000; text-decoration: none; }
+  }
+</style>
+</head>
+<body>
+  <div class="top">
+    <div class="brand">C++ 趣味学习 · 配套代码</div>
+    <div class="title">lesson32_二维数组趣味应用.cpp</div>
+    <div class="actions">
+      <a class="btn" href="../lesson32_二维数组趣味应用.cpp" download="lesson32_二维数组趣味应用.cpp">⬇️ 下载源文件</a>
+      <a class="btn gold" href="javascript:history.back()">← 返回课件</a>
+    </div>
+  </div>
+  <div class="meta">编码：UTF-8 · 文件：lesson32_二维数组趣味应用.cpp · 共 505 行 · 浅色主题便于打印</div>
+  <div class="wrap">
+    <pre id="code">/*
+ * 第32课：像素小画家——二维数组趣味应用
+ * 项目：字符画创作大师
+ * 第三单元：数据的组织
+ *
+ * 本课学习：
+ *   1. 用字符数组填充图案（矩形、三角形）
+ *   2. 创作ASCII艺术形状（菱形、空心正方形）
+ *   3. 用数字模拟地形图
+ *   4. 交互式字符画创作程序
+ *
+ * 日期：2026年6月
+ */
+
+#include &lt;iostream&gt;
+#include &lt;iomanip&gt;
+using namespace std;
+
+// ============================================================
+// 辅助函数：打印分隔线
+// ============================================================
+void printSeparator(const char* title) {
+    cout &lt;&lt; "\n========================================" &lt;&lt; endl;
+    cout &lt;&lt; "  " &lt;&lt; title &lt;&lt; endl;
+    cout &lt;&lt; "========================================" &lt;&lt; endl;
+}
+
+// ============================================================
+// 示例1：填充字符图案——矩形与直角三角形
+// ============================================================
+void example1_fillPatterns() {
+    printSeparator("示例1：字符图案填充——矩形与直角三角形");
+
+    char fillChar = '*';
+    int width = 8, height = 4;
+
+    // ---- 实心矩形 ----
+    cout &lt;&lt; "\n实心矩形 (" &lt;&lt; width &lt;&lt; "×" &lt;&lt; height &lt;&lt; ")：" &lt;&lt; endl;
+    for (int i = 0; i &lt; height; i++) {
+        for (int j = 0; j &lt; width; j++) {
+            cout &lt;&lt; fillChar &lt;&lt; " ";
+        }
+        cout &lt;&lt; endl;
+    }
+
+    // ---- 左下角直角三角形 ----
+    cout &lt;&lt; "\n直角三角形——左下角（高度=5）：" &lt;&lt; endl;
+    int n = 5;
+    for (int i = 0; i &lt; n; i++) {
+        for (int j = 0; j &lt;= i; j++) {
+            cout &lt;&lt; fillChar &lt;&lt; " ";
+        }
+        cout &lt;&lt; endl;
+    }
+
+    // ---- 右下角直角三角形 ----
+    cout &lt;&lt; "\n直角三角形——右下角（高度=5）：" &lt;&lt; endl;
+    for (int i = 0; i &lt; n; i++) {
+        // 前面填充空格
+        for (int j = 0; j &lt; n - i - 1; j++) {
+            cout &lt;&lt; "  ";
+        }
+        // 画星星
+        for (int j = 0; j &lt;= i; j++) {
+            cout &lt;&lt; fillChar &lt;&lt; " ";
+        }
+        cout &lt;&lt; endl;
+    }
+
+    // ---- 左上角直角三角形 ----
+    cout &lt;&lt; "\n直角三角形——左上角（高度=5）：" &lt;&lt; endl;
+    for (int i = 0; i &lt; n; i++) {
+        for (int j = 0; j &lt; n - i; j++) {
+            cout &lt;&lt; fillChar &lt;&lt; " ";
+        }
+        cout &lt;&lt; endl;
+    }
+
+    // ---- 等腰三角形（居中） ----
+    cout &lt;&lt; "\n等腰三角形——居中（高度=5）：" &lt;&lt; endl;
+    for (int i = 0; i &lt; n; i++) {
+        // 打印前导空格
+        for (int j = 0; j &lt; n - i - 1; j++) {
+            cout &lt;&lt; "  ";
+        }
+        // 打印星星：第i行打印 2*i+1 个
+        for (int j = 0; j &lt; 2 * i + 1; j++) {
+            cout &lt;&lt; fillChar &lt;&lt; " ";
+        }
+        cout &lt;&lt; endl;
+    }
+
+    cout &lt;&lt; "\n规律总结：每种三角形只是改变了 空格数量 和 星星数量 的计算公式。" &lt;&lt; endl;
+}
+
+// ============================================================
+// 示例2：ASCII艺术形状——菱形与空心正方形
+// ============================================================
+void example2_asciiArt() {
+    printSeparator("示例2：ASCII艺术——菱形与空心正方形");
+
+    int n = 4;  // 菱形半高（不包括中间行）
+    char ch = '#';
+
+    // ---- 菱形 ----
+    cout &lt;&lt; "\n菱形图案（半高=" &lt;&lt; n &lt;&lt; "）：" &lt;&lt; endl;
+
+    // 上半部分（含中间行）
+    for (int i = 0; i &lt;= n; i++) {
+        // 前导空格
+        for (int j = 0; j &lt; n - i; j++) {
+            cout &lt;&lt; "  ";
+        }
+        // 画字符：第i行画 2*i+1 个
+        for (int j = 0; j &lt; 2 * i + 1; j++) {
+            cout &lt;&lt; ch &lt;&lt; " ";
+        }
+        cout &lt;&lt; endl;
+    }
+
+    // 下半部分
+    for (int i = n - 1; i &gt;= 0; i--) {
+        // 前导空格
+        for (int j = 0; j &lt; n - i; j++) {
+            cout &lt;&lt; "  ";
+        }
+        // 画字符：第i行画 2*i+1 个
+        for (int j = 0; j &lt; 2 * i + 1; j++) {
+            cout &lt;&lt; ch &lt;&lt; " ";
+        }
+        cout &lt;&lt; endl;
+    }
+
+    // ---- 空心正方形 ----
+    int size = 6;
+    cout &lt;&lt; "\n空心正方形（边长=" &lt;&lt; size &lt;&lt; "）：" &lt;&lt; endl;
+    for (int i = 0; i &lt; size; i++) {
+        for (int j = 0; j &lt; size; j++) {
+            // 只在边界位置画字符
+            if (i == 0 || i == size - 1 || j == 0 || j == size - 1) {
+                cout &lt;&lt; ch &lt;&lt; " ";
+            } else {
+                cout &lt;&lt; "  ";
+            }
+        }
+        cout &lt;&lt; endl;
+    }
+
+    // ---- 空心菱形 ----
+    cout &lt;&lt; "\n空心菱形（半高=" &lt;&lt; n &lt;&lt; "）：" &lt;&lt; endl;
+    // 上半部分
+    for (int i = 0; i &lt;= n; i++) {
+        for (int j = 0; j &lt; n - i; j++) {
+            cout &lt;&lt; "  ";
+        }
+        // 2*i+1 个位置中，只画第一个和最后一个
+        for (int j = 0; j &lt; 2 * i + 1; j++) {
+            if (j == 0 || j == 2 * i) {
+                cout &lt;&lt; ch &lt;&lt; " ";
+            } else {
+                cout &lt;&lt; "  ";
+            }
+        }
+        cout &lt;&lt; endl;
+    }
+    // 下半部分
+    for (int i = n - 1; i &gt;= 0; i--) {
+        for (int j = 0; j &lt; n - i; j++) {
+            cout &lt;&lt; "  ";
+        }
+        for (int j = 0; j &lt; 2 * i + 1; j++) {
+            if (j == 0 || j == 2 * i) {
+                cout &lt;&lt; ch &lt;&lt; " ";
+            } else {
+                cout &lt;&lt; "  ";
+            }
+        }
+        cout &lt;&lt; endl;
+    }
+
+    // ---- 数字三角形 ----
+    cout &lt;&lt; "\n数字三角形（高度=5）：" &lt;&lt; endl;
+    for (int i = 1; i &lt;= 5; i++) {
+        for (int j = 0; j &lt; 5 - i; j++) {
+            cout &lt;&lt; "  ";
+        }
+        for (int j = 1; j &lt;= i; j++) {
+            cout &lt;&lt; j &lt;&lt; " ";
+        }
+        for (int j = i - 1; j &gt;= 1; j--) {
+            cout &lt;&lt; j &lt;&lt; " ";
+        }
+        cout &lt;&lt; endl;
+    }
+}
+
+// ============================================================
+// 示例3：简单地图模拟——数字代表地形
+// ============================================================
+void example3_terrainMap() {
+    printSeparator("示例3：简单地形图模拟");
+
+    // 地形编码：0=海洋(~), 1=平原(.), 2=高山(^), 3=森林(T), 4=沙漠(s)
+    const int ROWS = 6, COLS = 6;
+    int map[ROWS][COLS] = {
+        {0, 0, 0, 1, 1, 0},
+        {0, 0, 1, 2, 2, 1},
+        {0, 1, 2, 3, 2, 1},
+        {0, 1, 2, 2, 1, 0},
+        {1, 1, 1, 4, 4, 0},
+        {0, 1, 1, 1, 1, 0}
+    };
+
+    cout &lt;&lt; "\n图例说明：" &lt;&lt; endl;
+    cout &lt;&lt; "  ~  = 海洋（0）" &lt;&lt; endl;
+    cout &lt;&lt; "  .  = 平原（1）" &lt;&lt; endl;
+    cout &lt;&lt; "  ^  = 高山（2）" &lt;&lt; endl;
+    cout &lt;&lt; "  T  = 森林（3）" &lt;&lt; endl;
+    cout &lt;&lt; "  s  = 沙漠（4）" &lt;&lt; endl;
+
+    cout &lt;&lt; "\n地形图 (" &lt;&lt; ROWS &lt;&lt; "×" &lt;&lt; COLS &lt;&lt; ")：" &lt;&lt; endl;
+    cout &lt;&lt; "  +";
+    for (int j = 0; j &lt; COLS; j++) cout &lt;&lt; "--";
+    cout &lt;&lt; "+" &lt;&lt; endl;
+
+    for (int i = 0; i &lt; ROWS; i++) {
+        cout &lt;&lt; "  |";
+        for (int j = 0; j &lt; COLS; j++) {
+            switch (map[i][j]) {
+                case 0: cout &lt;&lt; "~ "; break;   // 海洋
+                case 1: cout &lt;&lt; ". "; break;   // 平原
+                case 2: cout &lt;&lt; "^ "; break;   // 高山
+                case 3: cout &lt;&lt; "T "; break;   // 森林
+                case 4: cout &lt;&lt; "s "; break;   // 沙漠
+                default: cout &lt;&lt; "? "; break;
+            }
+        }
+        cout &lt;&lt; "|" &lt;&lt; endl;
+    }
+
+    cout &lt;&lt; "  +";
+    for (int j = 0; j &lt; COLS; j++) cout &lt;&lt; "--";
+    cout &lt;&lt; "+" &lt;&lt; endl;
+
+    // ---- 地形统计 ----
+    cout &lt;&lt; "\n地形统计：" &lt;&lt; endl;
+    int count[5] = {0};  // 统计5种地形数量
+    for (int i = 0; i &lt; ROWS; i++) {
+        for (int j = 0; j &lt; COLS; j++) {
+            if (map[i][j] &gt;= 0 &amp;&amp; map[i][j] &lt; 5) {
+                count[map[i][j]]++;
+            }
+        }
+    }
+    const char* names[] = {"海洋", "平原", "高山", "森林", "沙漠"};
+    const char* symbols[] = {"~", ".", "^", "T", "s"};
+    for (int k = 0; k &lt; 5; k++) {
+        cout &lt;&lt; "  " &lt;&lt; symbols[k] &lt;&lt; " " &lt;&lt; names[k] &lt;&lt; "：" &lt;&lt; count[k] &lt;&lt; " 格" &lt;&lt; endl;
+    }
+
+    // ---- 显示数字地图（原始数据） ----
+    cout &lt;&lt; "\n原始数字地图（对照）：" &lt;&lt; endl;
+    for (int i = 0; i &lt; ROWS; i++) {
+        for (int j = 0; j &lt; COLS; j++) {
+            cout &lt;&lt; setw(2) &lt;&lt; map[i][j] &lt;&lt; " ";
+        }
+        cout &lt;&lt; endl;
+    }
+}
+
+// ============================================================
+// 课后练习答案
+// ============================================================
+void exerciseAnswers() {
+    printSeparator("课后练习答案");
+
+    // ---- 练习1：靠右的直角三角形 ----
+    cout &lt;&lt; "\n【练习1】靠右直角三角形（高度=5）：" &lt;&lt; endl;
+    int n = 5;
+    char ch = '*';
+    for (int i = 0; i &lt; n; i++) {
+        // 打印前导空格：第i行需要 (n-i-1)*2 个空格
+        for (int j = 0; j &lt; n - i - 1; j++) {
+            cout &lt;&lt; "  ";
+        }
+        // 打印星星
+        for (int j = 0; j &lt;= i; j++) {
+            cout &lt;&lt; ch &lt;&lt; " ";
+        }
+        cout &lt;&lt; endl;
+    }
+
+    // ---- 练习2：空心正方形 ----
+    cout &lt;&lt; "\n【练习2】空心正方形（边长=5）：" &lt;&lt; endl;
+    int side = 5;
+    for (int i = 0; i &lt; side; i++) {
+        for (int j = 0; j &lt; side; j++) {
+            if (i == 0 || i == side - 1 || j == 0 || j == side - 1) {
+                cout &lt;&lt; ch &lt;&lt; " ";
+            } else {
+                cout &lt;&lt; "  ";
+            }
+        }
+        cout &lt;&lt; endl;
+    }
+
+    // ---- 练习3：扩展地形图（含沙漠） ----
+    cout &lt;&lt; "\n【练习3】扩展地形图（含5种地形）：" &lt;&lt; endl;
+    const int R = 6, C = 6;
+    int mapEx[R][C] = {
+        {0, 0, 0, 4, 4, 0},
+        {0, 1, 1, 2, 4, 0},
+        {0, 1, 2, 3, 2, 1},
+        {1, 2, 2, 3, 1, 0},
+        {4, 4, 1, 2, 1, 0},
+        {4, 4, 4, 1, 1, 0}
+    };
+
+    cout &lt;&lt; "\n图例: ~=海洋 .=平原 ^=高山 T=森林 s=沙漠" &lt;&lt; endl &lt;&lt; endl;
+    for (int i = 0; i &lt; R; i++) {
+        cout &lt;&lt; "  ";
+        for (int j = 0; j &lt; C; j++) {
+            switch (mapEx[i][j]) {
+                case 0: cout &lt;&lt; "~ "; break;
+                case 1: cout &lt;&lt; ". "; break;
+                case 2: cout &lt;&lt; "^ "; break;
+                case 3: cout &lt;&lt; "T "; break;
+                case 4: cout &lt;&lt; "s "; break;
+                default: cout &lt;&lt; "? "; break;
+            }
+        }
+        cout &lt;&lt; endl;
+    }
+}
+
+// ============================================================
+// 挑战任务：字符画创作大师（交互式程序）
+// ============================================================
+void challenge_artCreator() {
+    printSeparator("挑战任务：字符画创作大师");
+
+    char choice;
+    bool running = true;
+
+    while (running) {
+        cout &lt;&lt; "\n╔════════════════════════════════╗" &lt;&lt; endl;
+        cout &lt;&lt; "║     字符画创作大师 菜单       ║" &lt;&lt; endl;
+        cout &lt;&lt; "╠════════════════════════════════╣" &lt;&lt; endl;
+        cout &lt;&lt; "║  (A) 画实心矩形               ║" &lt;&lt; endl;
+        cout &lt;&lt; "║  (B) 画等腰三角形             ║" &lt;&lt; endl;
+        cout &lt;&lt; "║  (C) 画菱形                   ║" &lt;&lt; endl;
+        cout &lt;&lt; "║  (D) 画实心正方形             ║" &lt;&lt; endl;
+        cout &lt;&lt; "║  (E) 显示地形图               ║" &lt;&lt; endl;
+        cout &lt;&lt; "║  (Q) 退出程序                 ║" &lt;&lt; endl;
+        cout &lt;&lt; "╚════════════════════════════════╝" &lt;&lt; endl;
+        cout &lt;&lt; "请选择 (A/B/C/D/E/Q)：";
+        cin &gt;&gt; choice;
+
+        // 将小写转为大写
+        if (choice &gt;= 'a' &amp;&amp; choice &lt;= 'z') {
+            choice = choice - 'a' + 'A';
+        }
+
+        int w, h;
+        char fill;
+
+        switch (choice) {
+            case 'A':
+                // 画实心矩形
+                cout &lt;&lt; "输入矩形的宽度：";
+                cin &gt;&gt; w;
+                cout &lt;&lt; "输入矩形的高度：";
+                cin &gt;&gt; h;
+                cout &lt;&lt; "输入填充字符：";
+                cin &gt;&gt; fill;
+                cout &lt;&lt; "\n实心矩形 (" &lt;&lt; w &lt;&lt; "×" &lt;&lt; h &lt;&lt; ")：" &lt;&lt; endl;
+                for (int i = 0; i &lt; h; i++) {
+                    for (int j = 0; j &lt; w; j++) {
+                        cout &lt;&lt; fill &lt;&lt; " ";
+                    }
+                    cout &lt;&lt; endl;
+                }
+                break;
+
+            case 'B':
+                // 画等腰三角形
+                cout &lt;&lt; "输入三角形的高度：";
+                cin &gt;&gt; h;
+                cout &lt;&lt; "输入填充字符：";
+                cin &gt;&gt; fill;
+                cout &lt;&lt; "\n等腰三角形（高度=" &lt;&lt; h &lt;&lt; "）：" &lt;&lt; endl;
+                for (int i = 0; i &lt; h; i++) {
+                    for (int j = 0; j &lt; h - i - 1; j++) {
+                        cout &lt;&lt; "  ";
+                    }
+                    for (int j = 0; j &lt; 2 * i + 1; j++) {
+                        cout &lt;&lt; fill &lt;&lt; " ";
+                    }
+                    cout &lt;&lt; endl;
+                }
+                break;
+
+            case 'C':
+                // 画菱形
+                cout &lt;&lt; "输入菱形的半高（不含中间行）：";
+                cin &gt;&gt; h;
+                cout &lt;&lt; "输入填充字符：";
+                cin &gt;&gt; fill;
+                cout &lt;&lt; "\n菱形（半高=" &lt;&lt; h &lt;&lt; "）：" &lt;&lt; endl;
+                // 上半部分
+                for (int i = 0; i &lt;= h; i++) {
+                    for (int j = 0; j &lt; h - i; j++) cout &lt;&lt; "  ";
+                    for (int j = 0; j &lt; 2 * i + 1; j++) cout &lt;&lt; fill &lt;&lt; " ";
+                    cout &lt;&lt; endl;
+                }
+                // 下半部分
+                for (int i = h - 1; i &gt;= 0; i--) {
+                    for (int j = 0; j &lt; h - i; j++) cout &lt;&lt; "  ";
+                    for (int j = 0; j &lt; 2 * i + 1; j++) cout &lt;&lt; fill &lt;&lt; " ";
+                    cout &lt;&lt; endl;
+                }
+                break;
+
+            case 'D':
+                // 画实心正方形
+                cout &lt;&lt; "输入正方形的边长：";
+                cin &gt;&gt; w;
+                cout &lt;&lt; "输入填充字符：";
+                cin &gt;&gt; fill;
+                cout &lt;&lt; "\n实心正方形（边长=" &lt;&lt; w &lt;&lt; "）：" &lt;&lt; endl;
+                for (int i = 0; i &lt; w; i++) {
+                    for (int j = 0; j &lt; w; j++) {
+                        cout &lt;&lt; fill &lt;&lt; " ";
+                    }
+                    cout &lt;&lt; endl;
+                }
+                break;
+
+            case 'E': {
+                // 显示地形图
+                const int R2 = 6, C2 = 6;
+                int map[R2][C2] = {
+                    {0, 0, 0, 1, 1, 0},
+                    {0, 0, 1, 2, 2, 1},
+                    {0, 1, 2, 3, 2, 1},
+                    {0, 1, 2, 2, 1, 0},
+                    {1, 1, 1, 4, 4, 0},
+                    {0, 1, 1, 1, 1, 0}
+                };
+                cout &lt;&lt; "\n图例: ~=海洋 .=平原 ^=高山 T=森林 s=沙漠\n" &lt;&lt; endl;
+                for (int i = 0; i &lt; R2; i++) {
+                    cout &lt;&lt; "  ";
+                    for (int j = 0; j &lt; C2; j++) {
+                        switch (map[i][j]) {
+                            case 0: cout &lt;&lt; "~ "; break;
+                            case 1: cout &lt;&lt; ". "; break;
+                            case 2: cout &lt;&lt; "^ "; break;
+                            case 3: cout &lt;&lt; "T "; break;
+                            case 4: cout &lt;&lt; "s "; break;
+                        }
+                    }
+                    cout &lt;&lt; endl;
+                }
+                break;
+            }
+
+            case 'Q':
+                running = false;
+                cout &lt;&lt; "\n感谢使用字符画创作大师，再见！" &lt;&lt; endl;
+                break;
+
+            default:
+                cout &lt;&lt; "\n无效的选择，请重新输入 A/B/C/D/E/Q。" &lt;&lt; endl;
+                break;
+        }
+    }
+}
+
+// ============================================================
+// 主函数
+// ============================================================
+int main() {
+    cout &lt;&lt; "╔════════════════════════════════════════╗" &lt;&lt; endl;
+    cout &lt;&lt; "║  第32课：像素小画家——二维数组趣味应用 ║" &lt;&lt; endl;
+    cout &lt;&lt; "║  项目：字符画创作大师                  ║" &lt;&lt; endl;
+    cout &lt;&lt; "╚════════════════════════════════════════╝" &lt;&lt; endl;
+
+    example1_fillPatterns();
+    example2_asciiArt();
+    example3_terrainMap();
+    exerciseAnswers();
+    challenge_artCreator();
+
+    cout &lt;&lt; "\n================================" &lt;&lt; endl;
+    cout &lt;&lt; "  本课学习完成！" &lt;&lt; endl;
+    cout &lt;&lt; "  核心要点：" &lt;&lt; endl;
+    cout &lt;&lt; "  1. 二维字符数组 = 字符画的\"画布\"" &lt;&lt; endl;
+    cout &lt;&lt; "  2. 图案 = 嵌套循环 + 位置判断条件" &lt;&lt; endl;
+    cout &lt;&lt; "  3. 空心形状只需在边界画字符" &lt;&lt; endl;
+    cout &lt;&lt; "  4. 地形图：数字 -&gt; 符号映射" &lt;&lt; endl;
+    cout &lt;&lt; "  5. 发挥创意，用代码画画！" &lt;&lt; endl;
+    cout &lt;&lt; "================================" &lt;&lt; endl;
+
+    return 0;
+}
+</pre>
+    <p class="hint">本页使用浅色主题与 UTF-8 编码，可直接打印或导出 PDF。</p>
+  </div>
+</body>
+</html>

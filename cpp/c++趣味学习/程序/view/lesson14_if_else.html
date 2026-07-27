@@ -1,0 +1,557 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>lesson14_if_else.cpp</title>
+<style>
+  :root {
+    --bg: #f5f7fa;
+    --panel: #ffffff;
+    --text: #1a1a2e;
+    --muted: #5a6570;
+    --gold: #b8860b;
+    --code-bg: #ffffff;
+    --code-text: #1f2933;
+    --border: #d8dee6;
+    --top-bg: #ffffff;
+    --top-border: #e5e9ef;
+  }
+  * { box-sizing: border-box; }
+  html, body {
+    margin: 0; padding: 0;
+    background: var(--bg);
+    color: var(--text);
+    font-family: -apple-system, BlinkMacSystemFont, "PingFang SC", "Microsoft YaHei", sans-serif;
+    min-height: 100%;
+  }
+  .top {
+    position: sticky; top: 0; z-index: 10;
+    display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between;
+    gap: 10px;
+    padding: 12px 18px;
+    background: var(--top-bg);
+    border-bottom: 1px solid var(--top-border);
+    box-shadow: 0 1px 8px rgba(15, 23, 42, 0.06);
+  }
+  .brand { color: var(--gold); font-weight: 700; font-size: 14px; letter-spacing: 0.04em; }
+  .title { font-size: 15px; font-weight: 600; color: var(--text); max-width: 52vw; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .actions { display: flex; gap: 8px; flex-wrap: wrap; }
+  .btn {
+    appearance: none; border: 1px solid var(--border);
+    background: #fff; color: var(--text);
+    border-radius: 999px; padding: 8px 14px; font-size: 13px; font-weight: 600;
+    text-decoration: none; cursor: pointer;
+  }
+  .btn:hover { background: #f0f3f7; }
+  .btn.gold {
+    background: linear-gradient(135deg, #f0d78c, #d4a853);
+    color: #0a2540; border-color: #e0c06a;
+  }
+  .meta {
+    padding: 10px 18px; color: var(--muted); font-size: 12px;
+    border-bottom: 1px solid var(--border);
+    background: var(--panel);
+  }
+  .wrap { padding: 16px 18px 40px; }
+  pre {
+    margin: 0;
+    background: var(--code-bg);
+    color: var(--code-text);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 18px 20px;
+    overflow: auto;
+    font-family: "SF Mono", "JetBrains Mono", "Fira Code", Consolas, "Courier New", monospace;
+    font-size: 13.5px;
+    line-height: 1.55;
+    white-space: pre;
+    tab-size: 4;
+    box-shadow: 0 2px 12px rgba(15, 23, 42, 0.05);
+  }
+  .hint { margin-top: 12px; color: var(--muted); font-size: 12px; }
+  @media print {
+    html, body { background: #fff !important; color: #000 !important; }
+    .top { position: static; box-shadow: none; border-bottom: 1px solid #ccc; background: #fff !important; }
+    .actions { display: none !important; }
+    .meta { background: #fff !important; border-color: #ddd; color: #333; }
+    .wrap { padding: 0; }
+    pre {
+      background: #fff !important; color: #000 !important;
+      border: 1px solid #bbb; box-shadow: none; border-radius: 0;
+      white-space: pre-wrap; word-break: break-word; font-size: 11pt; line-height: 1.4;
+    }
+    .hint { display: none; }
+    a { color: #000; text-decoration: none; }
+  }
+</style>
+</head>
+<body>
+  <div class="top">
+    <div class="brand">C++ 趣味学习 · 配套代码</div>
+    <div class="title">lesson14_if_else.cpp</div>
+    <div class="actions">
+      <a class="btn" href="../lesson14_if_else.cpp" download="lesson14_if_else.cpp">⬇️ 下载源文件</a>
+      <a class="btn gold" href="javascript:history.back()">← 返回课件</a>
+    </div>
+  </div>
+  <div class="meta">编码：UTF-8 · 文件：lesson14_if_else.cpp · 共 453 行 · 浅色主题便于打印</div>
+  <div class="wrap">
+    <pre id="code">/*
+ * =============================================
+ * C++趣味学习 —— 第14课：二选一的智慧——if-else
+ * 知识点：双分支if-else、else配对规则
+ * 趣味项目：🎯 猜数字小游戏
+ * =============================================
+ *
+ * 本文件包含：
+ *   示例1：基本if-else——判断奇偶数
+ *   示例2：if-else判断成绩是否及格
+ *   示例3：嵌套if-else——判断正数、负数还是零
+ *   示例4：else配对规则演示
+ *   练习1：奇偶判断器
+ *   练习2：else配对谜题
+ *   练习3：登录验证程序
+ *   挑战任务：猜数字小游戏（完整版）
+ *
+ * 编译运行方式：
+ *   g++ lesson14_if_else.cpp -o lesson14_if_else
+ *   ./lesson14_if_else
+ * =============================================
+ */
+
+#include &lt;iostream&gt;
+#include &lt;string&gt;
+#include &lt;cstdlib&gt;   // 用于rand()和srand()
+#include &lt;ctime&gt;     // 用于time()
+using namespace std;
+
+// ==================== 示例1：基本if-else——判断奇偶数 ====================
+void example1_oddEven() {
+    cout &lt;&lt; "\n======== 示例1：判断奇偶数 ========" &lt;&lt; endl;
+
+    int number;
+    cout &lt;&lt; "请输入一个整数：";
+    cin &gt;&gt; number;
+
+    // 使用 %（取余）运算符：number % 2 表示 number 除以 2 的余数
+    // 如果余数为0，说明能被2整除，就是偶数
+    if (number % 2 == 0) {
+        // 条件成立：是偶数
+        cout &lt;&lt; number &lt;&lt; " 是偶数！" &lt;&lt; endl;
+        cout &lt;&lt; "偶数可以被2整除，没有余数哦~" &lt;&lt; endl;
+        cout &lt;&lt; "判断方法：" &lt;&lt; number &lt;&lt; " ÷ 2 = " &lt;&lt; (number / 2) &lt;&lt; " 余 " &lt;&lt; (number % 2) &lt;&lt; endl;
+    } else {
+        // 条件不成立：是奇数
+        cout &lt;&lt; number &lt;&lt; " 是奇数！" &lt;&lt; endl;
+        cout &lt;&lt; "奇数除以2会余1哦~" &lt;&lt; endl;
+        cout &lt;&lt; "判断方法：" &lt;&lt; number &lt;&lt; " ÷ 2 = " &lt;&lt; (number / 2) &lt;&lt; " 余 " &lt;&lt; (number % 2) &lt;&lt; endl;
+    }
+
+    // 这行无论奇偶都会执行
+    cout &lt;&lt; "判断完毕！" &lt;&lt; endl;
+}
+
+// ==================== 示例2：if-else判断成绩是否及格 ====================
+void example2_passOrFail() {
+    cout &lt;&lt; "\n======== 示例2：成绩是否及格 ========" &lt;&lt; endl;
+
+    int score;
+    cout &lt;&lt; "请输入你的考试分数（0~100）：";
+    cin &gt;&gt; score;
+
+    // 60分是及格线
+    if (score &gt;= 60) {
+        // 及格了！
+        cout &lt;&lt; "🎉 恭喜你，及格了！" &lt;&lt; endl;
+        cout &lt;&lt; "你的分数是：" &lt;&lt; score &lt;&lt; " 分" &lt;&lt; endl;
+
+        // 还可以根据分数给出不同评价
+        if (score &gt;= 90) {
+            cout &lt;&lt; "你的成绩非常优秀！继续保持！" &lt;&lt; endl;
+        }
+        if (score &gt;= 70 &amp;&amp; score &lt; 90) {
+            cout &lt;&lt; "成绩不错，继续努力可以更好！" &lt;&lt; endl;
+        }
+        if (score &gt;= 60 &amp;&amp; score &lt; 70) {
+            cout &lt;&lt; "刚刚及格，还有很大的进步空间！" &lt;&lt; endl;
+        }
+    } else {
+        // 没及格
+        cout &lt;&lt; "💪 这次没有及格，不要灰心！" &lt;&lt; endl;
+        cout &lt;&lt; "你的分数是：" &lt;&lt; score &lt;&lt; " 分" &lt;&lt; endl;
+        cout &lt;&lt; "距离及格还差 " &lt;&lt; (60 - score) &lt;&lt; " 分" &lt;&lt; endl;
+        cout &lt;&lt; "认真复习，下次一定能过！加油！" &lt;&lt; endl;
+    }
+}
+
+// ==================== 示例3：嵌套if-else——判断正数、负数还是零 ====================
+void example3_positiveNegativeZero() {
+    cout &lt;&lt; "\n======== 示例3：正数、负数还是零 ========" &lt;&lt; endl;
+
+    int number;
+    cout &lt;&lt; "请输入一个整数：";
+    cin &gt;&gt; number;
+
+    // 使用嵌套的if-else实现三种情况的判断
+    if (number &gt; 0) {
+        // 第一种情况：大于0 → 正数
+        cout &lt;&lt; number &lt;&lt; " 是正数！(+)" &lt;&lt; endl;
+        cout &lt;&lt; "正数都大于零，在数轴的右边。" &lt;&lt; endl;
+    } else {
+        // 走到这里说明 number &lt;= 0
+        // 在else里面再判断：是0还是负数？
+        if (number == 0) {
+            // 第二种情况：等于0
+            cout &lt;&lt; "你输入的是零！" &lt;&lt; endl;
+            cout &lt;&lt; "零是一个特殊的数：它既不是正数，也不是负数。" &lt;&lt; endl;
+            cout &lt;&lt; "零是正数和负数的分界线。" &lt;&lt; endl;
+        } else {
+            // 第三种情况：小于0 → 负数
+            cout &lt;&lt; number &lt;&lt; " 是负数！(-)" &lt;&lt; endl;
+            cout &lt;&lt; "负数都小于零，在数轴的左边。" &lt;&lt; endl;
+        }
+    }
+
+    // 画出简易数轴帮助理解
+    cout &lt;&lt; "\n--- 数轴示意 ---" &lt;&lt; endl;
+    cout &lt;&lt; " 负数区域       零       正数区域" &lt;&lt; endl;
+    cout &lt;&lt; " &lt;---------[ 0 ]---------&gt;" &lt;&lt; endl;
+    cout &lt;&lt; "你的数字 " &lt;&lt; number &lt;&lt; " 在数轴的这边 ↑" &lt;&lt; endl;
+}
+
+// ==================== 示例4：else配对规则演示 ====================
+void example4_elsePairing() {
+    cout &lt;&lt; "\n======== 示例4：else配对规则 ========" &lt;&lt; endl;
+    cout &lt;&lt; "这个示例演示else配对的重要规则！" &lt;&lt; endl;
+    cout &lt;&lt; endl;
+
+    int score;
+    cout &lt;&lt; "请输入分数：";
+    cin &gt;&gt; score;
+
+    cout &lt;&lt; "\n--- 版本1：没有花括号（陷阱！） ---" &lt;&lt; endl;
+    cout &lt;&lt; "代码：" &lt;&lt; endl;
+    cout &lt;&lt; "  if (score &gt;= 90)" &lt;&lt; endl;
+    cout &lt;&lt; "      if (score == 100)" &lt;&lt; endl;
+    cout &lt;&lt; "          cout &lt;&lt; \"满分！\";" &lt;&lt; endl;
+    cout &lt;&lt; "  else" &lt;&lt; endl;
+    cout &lt;&lt; "      cout &lt;&lt; \"优秀！\";" &lt;&lt; endl;
+    cout &lt;&lt; "运行结果：";
+
+    // 陷阱版本：else和里面的if配对
+    if (score &gt;= 90)
+        if (score == 100)
+            cout &lt;&lt; "满分！" &lt;&lt; endl;
+        else
+            cout &lt;&lt; "优秀！" &lt;&lt; endl;
+    // score &lt; 90 时，什么都不输出！
+
+    cout &lt;&lt; "\n解释：else和里面if(score==100)配对" &lt;&lt; endl;
+    cout &lt;&lt; "  - score=100 → 输出\"满分！\"" &lt;&lt; endl;
+    cout &lt;&lt; "  - score=95  → 输出\"优秀！\"" &lt;&lt; endl;
+    cout &lt;&lt; "  - score=80  → 什么都不输出（注意！）" &lt;&lt; endl;
+
+    cout &lt;&lt; "\n--- 版本2：有花括号（正确！） ---" &lt;&lt; endl;
+    cout &lt;&lt; "代码：" &lt;&lt; endl;
+    cout &lt;&lt; "  if (score &gt;= 90) {" &lt;&lt; endl;
+    cout &lt;&lt; "      if (score == 100)" &lt;&lt; endl;
+    cout &lt;&lt; "          cout &lt;&lt; \"满分！\";" &lt;&lt; endl;
+    cout &lt;&lt; "  } else {" &lt;&lt; endl;
+    cout &lt;&lt; "      cout &lt;&lt; \"继续加油！\";" &lt;&lt; endl;
+    cout &lt;&lt; "  }" &lt;&lt; endl;
+    cout &lt;&lt; "运行结果：";
+
+    // 正确版本：花括号明确了配对关系
+    if (score &gt;= 90) {
+        if (score == 100)
+            cout &lt;&lt; "满分！" &lt;&lt; endl;
+    } else {
+        cout &lt;&lt; "继续加油！" &lt;&lt; endl;
+    }
+
+    cout &lt;&lt; "\n解释：花括号让else和外面if(score &gt;= 90)配对" &lt;&lt; endl;
+    cout &lt;&lt; "  - score &gt;= 90 → 进入if检查是否满分" &lt;&lt; endl;
+    cout &lt;&lt; "  - score &lt; 90  → 执行else，输出\"继续加油！\"" &lt;&lt; endl;
+    cout &lt;&lt; endl;
+    cout &lt;&lt; "结论：永远使用花括号！它能帮你避免配对错误！" &lt;&lt; endl;
+}
+
+// ==================== 练习1：奇偶判断器 ====================
+void exercise1_oddEvenChecker() {
+    cout &lt;&lt; "\n======== 练习1：奇偶判断器 ========" &lt;&lt; endl;
+
+    int num;
+    cout &lt;&lt; "请输入一个整数：";
+    cin &gt;&gt; num;
+
+    // 核心逻辑：用 % 判断是否能被2整除
+    if (num % 2 == 0) {
+        cout &lt;&lt; num &lt;&lt; " 是偶数 ✓" &lt;&lt; endl;
+    } else {
+        cout &lt;&lt; num &lt;&lt; " 是奇数 ✓" &lt;&lt; endl;
+    }
+}
+
+// ==================== 练习2：else配对谜题 ====================
+void exercise2_pairingPuzzle() {
+    cout &lt;&lt; "\n======== 练习2：else配对谜题 ========" &lt;&lt; endl;
+
+    cout &lt;&lt; "题目代码：" &lt;&lt; endl;
+    cout &lt;&lt; "  if (score &gt;= 90)" &lt;&lt; endl;
+    cout &lt;&lt; "      if (score == 100)" &lt;&lt; endl;
+    cout &lt;&lt; "          cout &lt;&lt; \"满分！\";" &lt;&lt; endl;
+    cout &lt;&lt; "  else" &lt;&lt; endl;
+    cout &lt;&lt; "      cout &lt;&lt; \"优秀！\";" &lt;&lt; endl;
+    cout &lt;&lt; endl;
+
+    cout &lt;&lt; "问：else和哪个if配对？" &lt;&lt; endl;
+    cout &lt;&lt; "答：else和里面最近的 if(score == 100) 配对！" &lt;&lt; endl;
+    cout &lt;&lt; endl;
+
+    cout &lt;&lt; "让我们用不同分数来测试：" &lt;&lt; endl;
+    cout &lt;&lt; endl;
+
+    // 测试1：score = 100
+    int score1 = 100;
+    cout &lt;&lt; "测试1：score = " &lt;&lt; score1 &lt;&lt; " → 输出：";
+    if (score1 &gt;= 90)
+        if (score1 == 100)
+            cout &lt;&lt; "满分！";
+        else
+            cout &lt;&lt; "优秀！";
+    cout &lt;&lt; endl;
+    cout &lt;&lt; "  （满分，正确！）" &lt;&lt; endl;
+
+    // 测试2：score = 95
+    int score2 = 95;
+    cout &lt;&lt; "测试2：score = " &lt;&lt; score2 &lt;&lt; " → 输出：";
+    if (score2 &gt;= 90)
+        if (score2 == 100)
+            cout &lt;&lt; "满分！";
+        else
+            cout &lt;&lt; "优秀！";
+    cout &lt;&lt; endl;
+    cout &lt;&lt; "  （95分输出\"优秀！\"，else和==100的if配对了）" &lt;&lt; endl;
+
+    // 测试3：score = 80
+    int score3 = 80;
+    cout &lt;&lt; "测试3：score = " &lt;&lt; score3 &lt;&lt; " → 输出：";
+    if (score3 &gt;= 90)
+        if (score3 == 100)
+            cout &lt;&lt; "满分！";
+        else
+            cout &lt;&lt; "优秀！";
+    cout &lt;&lt; endl;
+    cout &lt;&lt; "  （80分什么都没输出！因为80 &lt; 90，最外层if都没进去）" &lt;&lt; endl;
+
+    cout &lt;&lt; "\n结论：else配对规则 = else和最近的、未配对的if配对" &lt;&lt; endl;
+    cout &lt;&lt; "解决方法：用花括号明确配对关系！" &lt;&lt; endl;
+}
+
+// ==================== 练习3：登录验证程序 ====================
+void exercise3_loginCheck() {
+    cout &lt;&lt; "\n======== 练习3：登录验证 ========" &lt;&lt; endl;
+
+    // 预设正确的用户名和密码
+    string correctUser = "admin";
+    string correctPass = "123456";
+
+    string username, password;
+
+    cout &lt;&lt; "╔════════════════════════╗" &lt;&lt; endl;
+    cout &lt;&lt; "║     用户登录系统      ║" &lt;&lt; endl;
+    cout &lt;&lt; "╚════════════════════════╝" &lt;&lt; endl;
+    cout &lt;&lt; endl;
+    cout &lt;&lt; "用户名：";
+    cin &gt;&gt; username;
+    cout &lt;&lt; "密码：";
+    cin &gt;&gt; password;
+
+    cout &lt;&lt; "\n—— 验证结果 ——" &lt;&lt; endl;
+
+    // 同时检查用户名和密码是否都正确
+    // &amp;&amp; 是"与"运算符，两边都成立才为true
+    if (username == correctUser &amp;&amp; password == correctPass) {
+        cout &lt;&lt; "✅ 登录成功！" &lt;&lt; endl;
+        cout &lt;&lt; "   欢迎回来，" &lt;&lt; username &lt;&lt; "！" &lt;&lt; endl;
+        cout &lt;&lt; "   您已成功登录系统。" &lt;&lt; endl;
+    } else {
+        cout &lt;&lt; "❌ 登录失败！" &lt;&lt; endl;
+
+        // 进一步判断是哪里错了
+        if (username != correctUser) {
+            cout &lt;&lt; "   → 用户名错误！（正确的用户名是：admin）" &lt;&lt; endl;
+        }
+        if (password != correctPass) {
+            cout &lt;&lt; "   → 密码错误！（正确的密码是：123456）" &lt;&lt; endl;
+        }
+        cout &lt;&lt; "   请检查后重新尝试。" &lt;&lt; endl;
+    }
+}
+
+// ==================== 挑战任务：🎯 猜数字小游戏（完整版） ====================
+void challenge_guessNumber() {
+    cout &lt;&lt; "\n======== 🎯 挑战：猜数字小游戏 ========" &lt;&lt; endl;
+
+    // 使用随机数让游戏更有趣
+    // srand(time(0)) 用当前时间作为随机种子，每次运行生成不同的数字
+    srand(time(0));
+    int secret = rand() % 100 + 1;  // 生成1~100之间的随机数
+
+    int guess;        // 用户猜的数字
+    int attempts = 0; // 猜测次数
+
+    cout &lt;&lt; "╔══════════════════════════════════════╗" &lt;&lt; endl;
+    cout &lt;&lt; "║        🎯 猜数字小游戏             ║" &lt;&lt; endl;
+    cout &lt;&lt; "║                                    ║" &lt;&lt; endl;
+    cout &lt;&lt; "║  规则：我心里想了一个1~100之间的数 ║" &lt;&lt; endl;
+    cout &lt;&lt; "║  你来猜，我会告诉你猜大了还是猜小了║" &lt;&lt; endl;
+    cout &lt;&lt; "║  看看你几次能猜对！               ║" &lt;&lt; endl;
+    cout &lt;&lt; "╚══════════════════════════════════════╝" &lt;&lt; endl;
+    cout &lt;&lt; endl;
+
+    // 最多给7次机会（二分查找理论上7次一定能猜中1~100的数字）
+    while (attempts &lt; 7) {
+        cout &lt;&lt; "第 " &lt;&lt; (attempts + 1) &lt;&lt; " 次猜测，请输入1~100之间的数字：";
+        cin &gt;&gt; guess;
+
+        attempts = attempts + 1;  // 猜测次数+1
+
+        // 先检查输入是否在有效范围内
+        if (guess &lt; 1 || guess &gt; 100) {
+            cout &lt;&lt; "⚠️  请输入1~100之间的有效数字！这次不算，重新来。" &lt;&lt; endl;
+            attempts = attempts - 1;  // 无效输入不计次数
+            continue;  // 跳过本次循环，重新猜
+        }
+
+        // 核心判断逻辑
+        if (guess == secret) {
+            // 猜对了！
+            cout &lt;&lt; endl;
+            cout &lt;&lt; "╔══════════════════════════════════════╗" &lt;&lt; endl;
+            cout &lt;&lt; "║  🎉🎉🎉 恭喜你猜对了！            ║" &lt;&lt; endl;
+            cout &lt;&lt; "║  秘密数字就是 " &lt;&lt; secret;
+            // 根据secret的位数调整对齐
+            if (secret &lt; 10) {
+                cout &lt;&lt; "                    ║" &lt;&lt; endl;
+            } else if (secret &lt; 100) {
+                cout &lt;&lt; "                   ║" &lt;&lt; endl;
+            } else {
+                cout &lt;&lt; "                  ║" &lt;&lt; endl;
+            }
+            cout &lt;&lt; "║  你一共猜了 " &lt;&lt; attempts &lt;&lt; " 次";
+            if (attempts &lt; 10) {
+                cout &lt;&lt; "                  ║" &lt;&lt; endl;
+            } else {
+                cout &lt;&lt; "                 ║" &lt;&lt; endl;
+            }
+
+            // 根据猜测次数给出评价
+            if (attempts == 1) {
+                cout &lt;&lt; "║  🏆 一次就中！你是天才！          ║" &lt;&lt; endl;
+            } else if (attempts &lt;= 3) {
+                cout &lt;&lt; "║  ⭐ 非常厉害！运气和智慧并存！    ║" &lt;&lt; endl;
+            } else if (attempts &lt;= 5) {
+                cout &lt;&lt; "║  👍 不错！表现良好！              ║" &lt;&lt; endl;
+            } else {
+                cout &lt;&lt; "║  💪 终于猜对了，继续加油！        ║" &lt;&lt; endl;
+            }
+            cout &lt;&lt; "╚══════════════════════════════════════╝" &lt;&lt; endl;
+
+            return;  // 猜对了，游戏结束
+        } else {
+            // 没猜对，给出提示
+            if (guess &gt; secret) {
+                cout &lt;&lt; "📈 猜大了！往下猜。" &lt;&lt; endl;
+            } else {
+                cout &lt;&lt; "📉 猜小了！往上猜。" &lt;&lt; endl;
+            }
+
+            // 显示剩余机会
+            int remaining = 7 - attempts;
+            if (remaining &gt; 0) {
+                cout &lt;&lt; "   还剩 " &lt;&lt; remaining &lt;&lt; " 次机会。" &lt;&lt; endl;
+
+                // 最后3次给额外提示
+                if (remaining &lt;= 3 &amp;&amp; remaining &gt; 0) {
+                    // 缩小范围提示
+                    if (secret % 2 == 0) {
+                        cout &lt;&lt; "   💡 提示：秘密数字是偶数。" &lt;&lt; endl;
+                    } else {
+                        cout &lt;&lt; "   💡 提示：秘密数字是奇数。" &lt;&lt; endl;
+                    }
+                }
+            }
+            cout &lt;&lt; endl;
+        }
+    }
+
+    // 7次都没猜对
+    cout &lt;&lt; "╔══════════════════════════════════════╗" &lt;&lt; endl;
+    cout &lt;&lt; "║  😅 很遗憾，7次机会用完了！       ║" &lt;&lt; endl;
+    cout &lt;&lt; "║  秘密数字是 " &lt;&lt; secret;
+    if (secret &lt; 10) {
+        cout &lt;&lt; "                       ║" &lt;&lt; endl;
+    } else if (secret &lt; 100) {
+        cout &lt;&lt; "                      ║" &lt;&lt; endl;
+    } else {
+        cout &lt;&lt; "                     ║" &lt;&lt; endl;
+    }
+    cout &lt;&lt; "║  下次一定能猜中！加油！           ║" &lt;&lt; endl;
+    cout &lt;&lt; "╚══════════════════════════════════════╝" &lt;&lt; endl;
+}
+
+// ==================== 主函数：菜单选择 ====================
+int main() {
+    int choice;
+
+    cout &lt;&lt; "╔══════════════════════════════════════╗" &lt;&lt; endl;
+    cout &lt;&lt; "║ 第14课：二选一的智慧——if-else     ║" &lt;&lt; endl;
+    cout &lt;&lt; "║ 🎯 趣味项目：猜数字小游戏         ║" &lt;&lt; endl;
+    cout &lt;&lt; "╠══════════════════════════════════════╣" &lt;&lt; endl;
+    cout &lt;&lt; "║  请选择要运行的示例：               ║" &lt;&lt; endl;
+    cout &lt;&lt; "║  1. 示例1：判断奇偶数              ║" &lt;&lt; endl;
+    cout &lt;&lt; "║  2. 示例2：成绩是否及格            ║" &lt;&lt; endl;
+    cout &lt;&lt; "║  3. 示例3：正数/负数/零            ║" &lt;&lt; endl;
+    cout &lt;&lt; "║  4. 示例4：else配对规则演示        ║" &lt;&lt; endl;
+    cout &lt;&lt; "║  5. 练习1：奇偶判断器              ║" &lt;&lt; endl;
+    cout &lt;&lt; "║  6. 练习2：else配对谜题            ║" &lt;&lt; endl;
+    cout &lt;&lt; "║  7. 练习3：登录验证程序            ║" &lt;&lt; endl;
+    cout &lt;&lt; "║  8. 🏆 挑战：猜数字小游戏          ║" &lt;&lt; endl;
+    cout &lt;&lt; "║  0. 退出                           ║" &lt;&lt; endl;
+    cout &lt;&lt; "╚══════════════════════════════════════╝" &lt;&lt; endl;
+    cout &lt;&lt; "请输入你的选择：";
+    cin &gt;&gt; choice;
+
+    // 使用if-else结构进行菜单选择
+    if (choice == 1) {
+        example1_oddEven();
+    } else if (choice == 2) {
+        example2_passOrFail();
+    } else if (choice == 3) {
+        example3_positiveNegativeZero();
+    } else if (choice == 4) {
+        example4_elsePairing();
+    } else if (choice == 5) {
+        exercise1_oddEvenChecker();
+    } else if (choice == 6) {
+        exercise2_pairingPuzzle();
+    } else if (choice == 7) {
+        exercise3_loginCheck();
+    } else if (choice == 8) {
+        challenge_guessNumber();
+    } else if (choice == 0) {
+        cout &lt;&lt; "再见！记得多练习if-else语句哦~" &lt;&lt; endl;
+    } else {
+        cout &lt;&lt; "无效的选择，请输入0~8之间的数字。" &lt;&lt; endl;
+    }
+
+    cout &lt;&lt; endl;
+    return 0;
+}
+</pre>
+    <p class="hint">本页使用浅色主题与 UTF-8 编码，可直接打印或导出 PDF。</p>
+  </div>
+</body>
+</html>

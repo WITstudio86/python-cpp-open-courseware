@@ -1,0 +1,557 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>lesson06_algorithm_advanced.cpp</title>
+<style>
+  :root {
+    --bg: #f5f7fa;
+    --panel: #ffffff;
+    --text: #1a1a2e;
+    --muted: #5a6570;
+    --gold: #b8860b;
+    --code-bg: #ffffff;
+    --code-text: #1f2933;
+    --border: #d8dee6;
+    --top-bg: #ffffff;
+    --top-border: #e5e9ef;
+  }
+  * { box-sizing: border-box; }
+  html, body {
+    margin: 0; padding: 0;
+    background: var(--bg);
+    color: var(--text);
+    font-family: -apple-system, BlinkMacSystemFont, "PingFang SC", "Microsoft YaHei", sans-serif;
+    min-height: 100%;
+  }
+  .top {
+    position: sticky; top: 0; z-index: 10;
+    display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between;
+    gap: 10px;
+    padding: 12px 18px;
+    background: var(--top-bg);
+    border-bottom: 1px solid var(--top-border);
+    box-shadow: 0 1px 8px rgba(15, 23, 42, 0.06);
+  }
+  .brand { color: var(--gold); font-weight: 700; font-size: 14px; letter-spacing: 0.04em; }
+  .title { font-size: 15px; font-weight: 600; color: var(--text); max-width: 52vw; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .actions { display: flex; gap: 8px; flex-wrap: wrap; }
+  .btn {
+    appearance: none; border: 1px solid var(--border);
+    background: #fff; color: var(--text);
+    border-radius: 999px; padding: 8px 14px; font-size: 13px; font-weight: 600;
+    text-decoration: none; cursor: pointer;
+  }
+  .btn:hover { background: #f0f3f7; }
+  .btn.gold {
+    background: linear-gradient(135deg, #f0d78c, #d4a853);
+    color: #0a2540; border-color: #e0c06a;
+  }
+  .meta {
+    padding: 10px 18px; color: var(--muted); font-size: 12px;
+    border-bottom: 1px solid var(--border);
+    background: var(--panel);
+  }
+  .wrap { padding: 16px 18px 40px; }
+  pre {
+    margin: 0;
+    background: var(--code-bg);
+    color: var(--code-text);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 18px 20px;
+    overflow: auto;
+    font-family: "SF Mono", "JetBrains Mono", "Fira Code", Consolas, "Courier New", monospace;
+    font-size: 13.5px;
+    line-height: 1.55;
+    white-space: pre;
+    tab-size: 4;
+    box-shadow: 0 2px 12px rgba(15, 23, 42, 0.05);
+  }
+  .hint { margin-top: 12px; color: var(--muted); font-size: 12px; }
+  @media print {
+    html, body { background: #fff !important; color: #000 !important; }
+    .top { position: static; box-shadow: none; border-bottom: 1px solid #ccc; background: #fff !important; }
+    .actions { display: none !important; }
+    .meta { background: #fff !important; border-color: #ddd; color: #333; }
+    .wrap { padding: 0; }
+    pre {
+      background: #fff !important; color: #000 !important;
+      border: 1px solid #bbb; box-shadow: none; border-radius: 0;
+      white-space: pre-wrap; word-break: break-word; font-size: 11pt; line-height: 1.4;
+    }
+    .hint { display: none; }
+    a { color: #000; text-decoration: none; }
+  }
+</style>
+</head>
+<body>
+  <div class="top">
+    <div class="brand">CSP-S 备考 · 配套代码</div>
+    <div class="title">lesson06_algorithm_advanced.cpp</div>
+    <div class="actions">
+      <a class="btn" href="../lesson06_algorithm_advanced.cpp" download="lesson06_algorithm_advanced.cpp">⬇️ 下载源文件</a>
+      <a class="btn gold" href="javascript:history.back()">← 返回课件</a>
+    </div>
+  </div>
+  <div class="meta">编码：UTF-8 · 文件：lesson06_algorithm_advanced.cpp · 共 453 行 · 浅色主题便于打印</div>
+  <div class="wrap">
+    <pre id="code">/*
+ * ============================================================
+ * CSP-S 第06课：algorithm 库高级函数
+ * ============================================================
+ *
+ * 对应考纲知识点：
+ *   - sort 与自定义比较函数（Introsort 原理、三种比较方式）
+ *   - nth_element 的 O(n) 快速选择算法
+ *   - next_permutation / prev_permutation 字典序排列生成
+ *   - lower_bound / upper_bound / binary_search 二分查找
+ *   - 离散化的两种实现方法（排序+去重+二分 / map 映射）
+ *   - unique 的去重原理与 erase-remove idiom
+ *   - stable_sort 的语义与应用场景
+ *
+ * 日期：2026-06-27
+ * ============================================================
+ */
+
+#include &lt;iostream&gt;
+#include &lt;vector&gt;
+#include &lt;algorithm&gt;
+#include &lt;string&gt;
+#include &lt;cmath&gt;
+#include &lt;set&gt;
+#include &lt;map&gt;
+using namespace std;
+
+// ==================== 模块1：sort 自定义排序多示例 ====================
+
+// -------------------- 示例1：函数指针方式 --------------------
+bool cmp_desc_func(int a, int b) {
+    // 降序：a &gt; b 时 a 应排在 b 前面
+    return a &gt; b;
+}
+
+// -------------------- 示例2：仿函数 (struct) 方式 --------------------
+struct CmpDesc {
+    // 仿函数：重载 operator()，使得对象可以像函数一样调用
+    // 相比函数指针，编译器更容易内联优化
+    bool operator()(int a, int b) const {
+        return a &gt; b;
+    }
+};
+
+// 用于多关键字排序的仿函数
+struct CmpMulti {
+    // 先按绝对值降序，再按原始值升序
+    bool operator()(int a, int b) const {
+        if (abs(a) != abs(b)) return abs(a) &gt; abs(b);
+        return a &lt; b;
+    }
+};
+
+// -------------------- 示例3：lambda 表达式方式 --------------------
+//（在主函数中直接演示，方便捕获外部变量）
+
+// -------------------- 示例4：多关键字排序 --------------------
+// 定义一个学生结构体，用于演示多关键字排序
+struct Student {
+    string name;
+    int score;   // 分数——主关键字，降序
+    int id;      // 编号——次关键字，升序
+
+    // 重载 &lt;&lt; 方便输出
+    friend ostream&amp; operator&lt;&lt;(ostream&amp; os, const Student&amp; s) {
+        os &lt;&lt; "{" &lt;&lt; s.name &lt;&lt; ", score=" &lt;&lt; s.score &lt;&lt; ", id=" &lt;&lt; s.id &lt;&lt; "}";
+        return os;
+    }
+};
+
+void demo_sort_module() {
+    cout &lt;&lt; "\n========== 模块1：sort 自定义排序多示例 ==========\n\n";
+
+    vector&lt;int&gt; v;
+
+    // --- 示例1：函数指针 ---
+    v = {3, 1, 4, 1, 5, 9, 2, 6};
+    sort(v.begin(), v.end(), cmp_desc_func);
+    cout &lt;&lt; "[函数指针降序] ";
+    for (int x : v) cout &lt;&lt; x &lt;&lt; " ";
+    cout &lt;&lt; "\n";
+
+    // --- 示例2：仿函数 ---
+    v = {3, 1, 4, 1, 5, 9, 2, 6};
+    sort(v.begin(), v.end(), CmpDesc());
+    cout &lt;&lt; "[仿函数降序]   ";
+    for (int x : v) cout &lt;&lt; x &lt;&lt; " ";
+    cout &lt;&lt; "\n";
+
+    // --- 示例3：lambda 表达式 ---
+    v = {3, 1, 4, 1, 5, 9, 2, 6};
+    sort(v.begin(), v.end(), [](int a, int b) {
+        return a &gt; b;  // 降序 lambda
+    });
+    cout &lt;&lt; "[lambda降序]   ";
+    for (int x : v) cout &lt;&lt; x &lt;&lt; " ";
+    cout &lt;&lt; "\n";
+
+    // lambda 带捕获：按与 5 的距离排序
+    int center = 5;
+    sort(v.begin(), v.end(), [center](int a, int b) {
+        return abs(a - center) &lt; abs(b - center);
+    });
+    cout &lt;&lt; "[按离" &lt;&lt; center &lt;&lt; "的距离排序] ";
+    for (int x : v) cout &lt;&lt; x &lt;&lt; " ";
+    cout &lt;&lt; "\n";
+
+    // --- 示例4：多关键字排序 ---
+    vector&lt;Student&gt; stu = {
+        {"Alice", 95, 3},
+        {"Bob",   85, 1},
+        {"Carol", 95, 2},
+        {"Dave",  85, 4},
+        {"Eve",   90, 5}
+    };
+
+    // 先按 score 降序，score 相同时按 id 升序
+    sort(stu.begin(), stu.end(), [](const Student&amp; a, const Student&amp; b) {
+        if (a.score != b.score) return a.score &gt; b.score;  // 分数高的在前
+        return a.id &lt; b.id;                                 // 分数相同，编号小的在前
+    });
+
+    cout &lt;&lt; "\n[多关键字排序：score降序, id升序]\n";
+    for (const auto&amp; s : stu) {
+        cout &lt;&lt; "  " &lt;&lt; s &lt;&lt; "\n";
+    }
+
+    // --- 示例5：stable_sort 使用场景 ---
+    // 场景：先按 name 排序，再按 score 排序，
+    //      希望 score 相同的学生保持 name 的字典序
+    vector&lt;Student&gt; stu2 = {
+        {"Bob",   90, 1},
+        {"Alice", 85, 2},
+        {"Bob",   85, 3},
+        {"Alice", 90, 4},
+        {"Carol", 90, 5}
+    };
+
+    // 第一步：按 name 升序排序（用 sort 即可）
+    sort(stu2.begin(), stu2.end(), [](const Student&amp; a, const Student&amp; b) {
+        return a.name &lt; b.name;
+    });
+
+    // 第二步：按 score 降序排序，使用 stable_sort 保持同分数的 name 顺序
+    stable_sort(stu2.begin(), stu2.end(), [](const Student&amp; a, const Student&amp; b) {
+        return a.score &gt; b.score;
+    });
+
+    cout &lt;&lt; "\n[stable_sort：先按name排，再stable_sort按score降序]\n";
+    cout &lt;&lt; "  （分数相同时，保留名字的字典序）\n";
+    for (const auto&amp; s : stu2) {
+        cout &lt;&lt; "  " &lt;&lt; s &lt;&lt; "\n";
+    }
+}
+
+// ==================== 模块2：nth_element 示例 ====================
+
+void demo_nth_element() {
+    cout &lt;&lt; "\n========== 模块2：nth_element 示例 ==========\n\n";
+
+    // 原始数组
+    vector&lt;int&gt; v = {7, 2, 5, 1, 8, 3, 9, 4, 6};
+    int n = v.size();
+
+    // --- 求第 k 小的元素（1-based） ---
+    vector&lt;int&gt; temp = v;  // 保留副本
+    int k = 4;  // 求第 4 小的元素
+
+    cout &lt;&lt; "原始数组: ";
+    for (int x : v) cout &lt;&lt; x &lt;&lt; " ";
+    cout &lt;&lt; "\n";
+
+    // nth_element 将第 k-1 个位置上的元素放到正确位置
+    nth_element(temp.begin(), temp.begin() + k - 1, temp.end());
+    cout &lt;&lt; "第 " &lt;&lt; k &lt;&lt; " 小的元素: " &lt;&lt; temp[k - 1] &lt;&lt; "\n";
+
+    // 验证：左侧元素 &lt;= 第 k 小，右侧元素 &gt;= 第 k 小
+    cout &lt;&lt; "左侧区间（前 " &lt;&lt; k - 1 &lt;&lt; " 个，无序）: ";
+    for (int i = 0; i &lt; k - 1; ++i) cout &lt;&lt; temp[i] &lt;&lt; " ";
+    cout &lt;&lt; "\n";
+    cout &lt;&lt; "右侧区间（后 " &lt;&lt; n - k &lt;&lt; " 个，无序）: ";
+    for (int i = k; i &lt; n; ++i) cout &lt;&lt; temp[i] &lt;&lt; " ";
+    cout &lt;&lt; "\n";
+
+    // --- 求中位数 ---
+    temp = v;
+    nth_element(temp.begin(), temp.begin() + n / 2, temp.end());
+    int median = temp[n / 2];
+    cout &lt;&lt; "中位数（n=" &lt;&lt; n &lt;&lt; "）: " &lt;&lt; median &lt;&lt; "（位置 n/2=" &lt;&lt; n/2 &lt;&lt; "）\n";
+
+    // --- 求前 k 小的元素（不保证有序，可根据需要排序） ---
+    temp = v;
+    k = 3;
+    nth_element(temp.begin(), temp.begin() + k, temp.end());
+    // 前 k 个元素现在是整个数组中最小的 k 个，但内部无序
+    cout &lt;&lt; "前 " &lt;&lt; k &lt;&lt; " 小的元素（无序）: ";
+    for (int i = 0; i &lt; k; ++i) cout &lt;&lt; temp[i] &lt;&lt; " ";
+    cout &lt;&lt; "\n";
+
+    // 如果需要对前 k 个排序
+    sort(temp.begin(), temp.begin() + k);
+    cout &lt;&lt; "前 " &lt;&lt; k &lt;&lt; " 小的元素（有序）: ";
+    for (int i = 0; i &lt; k; ++i) cout &lt;&lt; temp[i] &lt;&lt; " ";
+    cout &lt;&lt; "\n";
+
+    // --- 性能对比提示 ---
+    cout &lt;&lt; "\n[性能提示]\n";
+    cout &lt;&lt; "  sort 求第k小:     O(n log n) ≈ " &lt;&lt; n &lt;&lt; " * " &lt;&lt; int(log2(n)) &lt;&lt; " ≈ " &lt;&lt; n * int(log2(n)) &lt;&lt; " 次比较\n";
+    cout &lt;&lt; "  nth_element 求第k小: O(n) ≈ " &lt;&lt; n &lt;&lt; " 次比较\n";
+    cout &lt;&lt; "  n 越大，nth_element 优势越明显\n";
+}
+
+// ==================== 模块3：next_permutation 全排列生成 ====================
+
+void demo_permutation() {
+    cout &lt;&lt; "\n========== 模块3：next_permutation 全排列生成 ==========\n\n";
+
+    // --- next_permutation 生成全排列 ---
+    vector&lt;int&gt; v = {1, 2, 3};  // ★ 必须初始为升序，才能生成所有排列
+    cout &lt;&lt; "全排列生成（n=3）:\n";
+    int cnt = 0;
+    do {
+        cout &lt;&lt; "  " &lt;&lt; ++cnt &lt;&lt; ": ";
+        for (int x : v) cout &lt;&lt; x &lt;&lt; " ";
+        cout &lt;&lt; "\n";
+    } while (next_permutation(v.begin(), v.end()));
+
+    // --- 判断是否还有下一个排列 ---
+    cout &lt;&lt; "\n判断是否还有下一个排列:\n";
+    vector&lt;int&gt; p = {3, 2, 1};  // 最大排列
+    cout &lt;&lt; "  当前排列: ";
+    for (int x : p) cout &lt;&lt; x &lt;&lt; " ";
+    cout &lt;&lt; "\n";
+    bool has_next = next_permutation(p.begin(), p.end());
+    cout &lt;&lt; "  有下一个排列? " &lt;&lt; (has_next ? "是" : "否（已回绕到最小排列）") &lt;&lt; "\n";
+    cout &lt;&lt; "  next_permutation 后: ";
+    for (int x : p) cout &lt;&lt; x &lt;&lt; " ";
+    cout &lt;&lt; "\n";
+
+    // --- prev_permutation 生成上一个排列 ---
+    cout &lt;&lt; "\nprev_permutation 示例（降序起始）:\n";
+    vector&lt;int&gt; q = {3, 2, 1};
+    cnt = 0;
+    do {
+        cout &lt;&lt; "  " &lt;&lt; ++cnt &lt;&lt; ": ";
+        for (int x : q) cout &lt;&lt; x &lt;&lt; " ";
+        cout &lt;&lt; "\n";
+    } while (prev_permutation(q.begin(), q.end()));
+
+    // --- 部分排列演示 ---
+    cout &lt;&lt; "\n部分排列（选择 4 个元素，演示更长序列）:\n";
+    vector&lt;int&gt; w = {1, 2, 3, 4};
+    cout &lt;&lt; "  {1, 2, 3, 4} 的下一个排列: ";
+    next_permutation(w.begin(), w.end());
+    for (int x : w) cout &lt;&lt; x &lt;&lt; " ";  // 应输出 1 2 4 3
+    cout &lt;&lt; "\n";
+}
+
+// ==================== 模块4：lower_bound / upper_bound 正确用法 ====================
+
+void demo_binary_search() {
+    cout &lt;&lt; "\n========== 模块4：lower_bound / upper_bound 正确用法 ==========\n\n";
+
+    // --- 在有序数组中使用 ---
+    vector&lt;int&gt; v = {1, 2, 2, 2, 3, 5, 7};  // 升序
+    int x = 2;
+
+    cout &lt;&lt; "有序数组: ";
+    for (int val : v) cout &lt;&lt; val &lt;&lt; " ";
+    cout &lt;&lt; "\n查找值 x = " &lt;&lt; x &lt;&lt; "\n\n";
+
+    // lower_bound：第一个 &gt;= x 的位置
+    auto lb = lower_bound(v.begin(), v.end(), x);
+    cout &lt;&lt; "lower_bound(x): 第一个 &gt;= " &lt;&lt; x &lt;&lt; " 的位置 = 下标 " &lt;&lt; (lb - v.begin());
+    cout &lt;&lt; "（值 = " &lt;&lt; *lb &lt;&lt; "）\n";
+
+    // upper_bound：第一个 &gt; x 的位置
+    auto ub = upper_bound(v.begin(), v.end(), x);
+    cout &lt;&lt; "upper_bound(x): 第一个 &gt;  " &lt;&lt; x &lt;&lt; " 的位置 = 下标 " &lt;&lt; (ub - v.begin());
+    cout &lt;&lt; "（值 = " &lt;&lt; *ub &lt;&lt; "）\n";
+
+    // 等于 x 的元素个数 = ub - lb
+    int cnt_eq = ub - lb;
+    cout &lt;&lt; "等于 " &lt;&lt; x &lt;&lt; " 的元素个数: " &lt;&lt; cnt_eq &lt;&lt; "\n";
+
+    // 小于 x 的元素个数 = lb - begin
+    int cnt_lt = lb - v.begin();
+    cout &lt;&lt; "小于 " &lt;&lt; x &lt;&lt; " 的元素个数: " &lt;&lt; cnt_lt &lt;&lt; "\n";
+
+    // 大于 x 的元素个数 = end - ub
+    int cnt_gt = v.end() - ub;
+    cout &lt;&lt; "大于 " &lt;&lt; x &lt;&lt; " 的元素个数: " &lt;&lt; cnt_gt &lt;&lt; "\n";
+
+    // --- binary_search：判断是否存在 ---
+    cout &lt;&lt; "\nbinary_search(" &lt;&lt; x &lt;&lt; "): "
+         &lt;&lt; (binary_search(v.begin(), v.end(), x) ? "存在" : "不存在") &lt;&lt; "\n";
+    cout &lt;&lt; "binary_search(10): "
+         &lt;&lt; (binary_search(v.begin(), v.end(), 10) ? "存在" : "不存在") &lt;&lt; "\n";
+
+    // --- 降序序列中的二分查找（需传入 greater&lt;int&gt;()） ---
+    vector&lt;int&gt; v_desc = {9, 7, 5, 3, 1};
+    cout &lt;&lt; "\n降序数组: ";
+    for (int val : v_desc) cout &lt;&lt; val &lt;&lt; " ";
+    cout &lt;&lt; "\n";
+
+    auto lb_desc = lower_bound(v_desc.begin(), v_desc.end(), 5, greater&lt;int&gt;());
+    // 在降序中，lower_bound 返回第一个 &lt;= 5 的位置
+    cout &lt;&lt; "降序 lower_bound(5): 下标 " &lt;&lt; (lb_desc - v_desc.begin());
+    cout &lt;&lt; "（值 = " &lt;&lt; *lb_desc &lt;&lt; "）\n";
+
+    // --- 对 set 使用成员函数 lower_bound ---
+    cout &lt;&lt; "\n[重要：set 须用成员函数 lower_bound]\n";
+    set&lt;int&gt; s = {1, 3, 5, 7, 9, 11};
+
+    // ★ 正确：使用 set::lower_bound —— O(log n)
+    auto it_set = s.lower_bound(5);
+    cout &lt;&lt; "  s.lower_bound(5)    (O(log n)): " &lt;&lt; *it_set &lt;&lt; "\n";
+
+    // ★ 错误演示（概念说明，不实际执行以避免性能问题）：
+    cout &lt;&lt; "  std::lower_bound(s.begin(), s.end(), 5): ";
+    cout &lt;&lt; "注意！对 set 使用 std::lower_bound 会退化为 O(n) 遍历！\n";
+    cout &lt;&lt; "  因为 set 的迭代器不是随机访问迭代器。\n";
+
+    // --- 检查 end() 的重要性 ---
+    cout &lt;&lt; "\n[安全示范：检查返回值]\n";
+    auto it_safe = lower_bound(v.begin(), v.end(), 100);
+    if (it_safe != v.end()) {
+        cout &lt;&lt; "  找到元素: " &lt;&lt; *it_safe &lt;&lt; "\n";
+    } else {
+        cout &lt;&lt; "  未找到 &gt;= 100 的元素（it == end()）\n";
+    }
+}
+
+// ==================== 模块5：离散化完整模板 ====================
+
+void demo_discretization() {
+    cout &lt;&lt; "\n========== 模块5：离散化完整模板 ==========\n\n";
+
+    // 原始数据：包含大坐标和重复值
+    vector&lt;int&gt; raw = {1000000000, -500, 3, 1000000000, 7, -500, 2024};
+
+    cout &lt;&lt; "原始数据: ";
+    for (int x : raw) cout &lt;&lt; x &lt;&lt; " ";
+    cout &lt;&lt; "\n\n";
+
+    // =========== 方法1：排序 + 去重 + 二分查找 ===========
+    cout &lt;&lt; "--- 方法1：排序 + 去重 + 二分查找 ---\n";
+
+    vector&lt;int&gt; sorted = raw;  // 复制一份用于排序去重
+    sort(sorted.begin(), sorted.end());
+    cout &lt;&lt; "  排序后: ";
+    for (int x : sorted) cout &lt;&lt; x &lt;&lt; " ";
+    cout &lt;&lt; "\n";
+
+    // unique 将不重复的元素移到前面，返回新结尾迭代器
+    auto new_end = unique(sorted.begin(), sorted.end());
+    sorted.erase(new_end, sorted.end());  // 必须配合 erase 才能真正删除
+    cout &lt;&lt; "  去重后: ";
+    for (int x : sorted) cout &lt;&lt; x &lt;&lt; " ";
+    cout &lt;&lt; "\n";
+
+    // 构造离散化查询函数（1-based 索引，常用于树状数组等）
+    auto get_id_1based = [&amp;sorted](int x) {
+        // lower_bound 返回第一个 &gt;= x 的位置
+        return lower_bound(sorted.begin(), sorted.end(), x) - sorted.begin() + 1;
+    };
+
+    // 0-based 版本（备用，如需要可与 1-based 版本互换）
+    // auto get_id_0based = [&amp;sorted](int x) {
+    //     return lower_bound(sorted.begin(), sorted.end(), x) - sorted.begin();
+    // };
+
+    cout &lt;&lt; "\n  离散化映射结果（1-based）:\n";
+    for (int x : raw) {
+        cout &lt;&lt; "    " &lt;&lt; x &lt;&lt; " -&gt; id = " &lt;&lt; get_id_1based(x) &lt;&lt; "\n";
+    }
+
+    // --- 还原：通过 ID 找回原始值 ---
+    cout &lt;&lt; "\n  还原映射:\n";
+    for (int id = 1; id &lt;= (int)sorted.size(); ++id) {
+        cout &lt;&lt; "    id " &lt;&lt; id &lt;&lt; " -&gt; 原始值 " &lt;&lt; sorted[id - 1] &lt;&lt; "\n";
+    }
+
+    // =========== 方法2：map 映射 ===========
+    cout &lt;&lt; "\n--- 方法2：map 映射 ---\n";
+
+    map&lt;int, int&gt; id_map;
+    int cur_id = 0;  // 0-based
+    for (int x : raw) {
+        if (id_map.find(x) == id_map.end()) {
+            id_map[x] = ++cur_id;  // 首次出现才分配新 ID（1-based）
+        }
+    }
+
+    cout &lt;&lt; "  map 映射结果（1-based）:\n";
+    for (int x : raw) {
+        cout &lt;&lt; "    " &lt;&lt; x &lt;&lt; " -&gt; id = " &lt;&lt; id_map[x] &lt;&lt; "\n";
+    }
+
+    // =========== 方法对比 ===========
+    cout &lt;&lt; "\n--- 方法对比 ---\n";
+    cout &lt;&lt; "  方法1（排序+去重+二分）:\n";
+    cout &lt;&lt; "    - 预处理 O(n log n)，单次查询 O(log n)（常数小）\n";
+    cout &lt;&lt; "    - 映射值紧凑连续，可直接用作数组下标\n";
+    cout &lt;&lt; "    - 适合离线处理（所有数据已知的情况）\n";
+    cout &lt;&lt; "  方法2（map 映射）:\n";
+    cout &lt;&lt; "    - 单次插入/查询 O(log n)（常数较大，红黑树）\n";
+    cout &lt;&lt; "    - 映射值也连续，但 map 本身有额外内存开销\n";
+    cout &lt;&lt; "    - 适合在线处理（数据逐步给出的情况）\n";
+
+    // =========== unique 原理深入演示 ===========
+    cout &lt;&lt; "\n--- unique 原理深入演示 ---\n";
+    vector&lt;int&gt; u = {1, 2, 2, 3, 3, 3, 4, 5, 5};
+    cout &lt;&lt; "  原始数组:            ";
+    for (int x : u) cout &lt;&lt; x &lt;&lt; " ";
+    cout &lt;&lt; "\n";
+
+    auto it = unique(u.begin(), u.end());
+    cout &lt;&lt; "  unique 后（未 erase）: ";
+    for (int x : u) cout &lt;&lt; x &lt;&lt; " ";  // 末尾是未定义的值
+    cout &lt;&lt; "\n";
+    cout &lt;&lt; "  unique 返回的迭代器指向下标 " &lt;&lt; (it - u.begin()) &lt;&lt; "\n";
+
+    u.erase(it, u.end());
+    cout &lt;&lt; "  erase 后:            ";
+    for (int x : u) cout &lt;&lt; x &lt;&lt; " ";
+    cout &lt;&lt; "\n";
+}
+
+// ==================== 模块6：综合测试 main 函数 ====================
+
+int main() {
+    // 加速 I/O
+    ios::sync_with_stdio(false);
+    cin.tie(nullptr);
+
+    cout &lt;&lt; "============================================================\n";
+    cout &lt;&lt; "  CSP-S 第06课：algorithm 库高级函数 —— 综合演示程序\n";
+    cout &lt;&lt; "============================================================\n";
+
+    // 按顺序演示所有模块
+    demo_sort_module();
+    demo_nth_element();
+    demo_permutation();
+    demo_binary_search();
+    demo_discretization();
+
+    cout &lt;&lt; "\n============================================================\n";
+    cout &lt;&lt; "  所有模块演示完毕！\n";
+    cout &lt;&lt; "============================================================\n";
+
+    return 0;
+}
+</pre>
+    <p class="hint">本页使用浅色主题与 UTF-8 编码，可直接打印或导出 PDF。</p>
+  </div>
+</body>
+</html>

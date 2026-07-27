@@ -1,0 +1,317 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>lesson45_guess_number.cpp</title>
+<style>
+  :root {
+    --bg: #f5f7fa;
+    --panel: #ffffff;
+    --text: #1a1a2e;
+    --muted: #5a6570;
+    --gold: #b8860b;
+    --code-bg: #ffffff;
+    --code-text: #1f2933;
+    --border: #d8dee6;
+    --top-bg: #ffffff;
+    --top-border: #e5e9ef;
+  }
+  * { box-sizing: border-box; }
+  html, body {
+    margin: 0; padding: 0;
+    background: var(--bg);
+    color: var(--text);
+    font-family: -apple-system, BlinkMacSystemFont, "PingFang SC", "Microsoft YaHei", sans-serif;
+    min-height: 100%;
+  }
+  .top {
+    position: sticky; top: 0; z-index: 10;
+    display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between;
+    gap: 10px;
+    padding: 12px 18px;
+    background: var(--top-bg);
+    border-bottom: 1px solid var(--top-border);
+    box-shadow: 0 1px 8px rgba(15, 23, 42, 0.06);
+  }
+  .brand { color: var(--gold); font-weight: 700; font-size: 14px; letter-spacing: 0.04em; }
+  .title { font-size: 15px; font-weight: 600; color: var(--text); max-width: 52vw; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .actions { display: flex; gap: 8px; flex-wrap: wrap; }
+  .btn {
+    appearance: none; border: 1px solid var(--border);
+    background: #fff; color: var(--text);
+    border-radius: 999px; padding: 8px 14px; font-size: 13px; font-weight: 600;
+    text-decoration: none; cursor: pointer;
+  }
+  .btn:hover { background: #f0f3f7; }
+  .btn.gold {
+    background: linear-gradient(135deg, #f0d78c, #d4a853);
+    color: #0a2540; border-color: #e0c06a;
+  }
+  .meta {
+    padding: 10px 18px; color: var(--muted); font-size: 12px;
+    border-bottom: 1px solid var(--border);
+    background: var(--panel);
+  }
+  .wrap { padding: 16px 18px 40px; }
+  pre {
+    margin: 0;
+    background: var(--code-bg);
+    color: var(--code-text);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 18px 20px;
+    overflow: auto;
+    font-family: "SF Mono", "JetBrains Mono", "Fira Code", Consolas, "Courier New", monospace;
+    font-size: 13.5px;
+    line-height: 1.55;
+    white-space: pre;
+    tab-size: 4;
+    box-shadow: 0 2px 12px rgba(15, 23, 42, 0.05);
+  }
+  .hint { margin-top: 12px; color: var(--muted); font-size: 12px; }
+  @media print {
+    html, body { background: #fff !important; color: #000 !important; }
+    .top { position: static; box-shadow: none; border-bottom: 1px solid #ccc; background: #fff !important; }
+    .actions { display: none !important; }
+    .meta { background: #fff !important; border-color: #ddd; color: #333; }
+    .wrap { padding: 0; }
+    pre {
+      background: #fff !important; color: #000 !important;
+      border: 1px solid #bbb; box-shadow: none; border-radius: 0;
+      white-space: pre-wrap; word-break: break-word; font-size: 11pt; line-height: 1.4;
+    }
+    .hint { display: none; }
+    a { color: #000; text-decoration: none; }
+  }
+</style>
+</head>
+<body>
+  <div class="top">
+    <div class="brand">C++ 趣味学习 · 配套代码</div>
+    <div class="title">lesson45_guess_number.cpp</div>
+    <div class="actions">
+      <a class="btn" href="../lesson45_guess_number.cpp" download="lesson45_guess_number.cpp">⬇️ 下载源文件</a>
+      <a class="btn gold" href="javascript:history.back()">← 返回课件</a>
+    </div>
+  </div>
+  <div class="meta">编码：UTF-8 · 文件：lesson45_guess_number.cpp · 共 213 行 · 浅色主题便于打印</div>
+  <div class="wrap">
+    <pre id="code">/*
+ * 第45课：终极密码——猜数字游戏
+ * 主题：随机数生成、二分查找、猜数字游戏
+ * 项目：电脑出题玩家猜 / 电脑用二分法猜玩家数字
+ * 适用：中小学C++趣味学习
+ * 日期：2026年
+ */
+
+#include &lt;iostream&gt;
+#include &lt;cstdlib&gt;   // 包含 rand() 和 srand() 函数
+#include &lt;ctime&gt;     // 包含 time() 函数，用于生成随机种子
+using namespace std;
+
+int main() {
+    // ==========================================
+    // 程序1：基础猜数字游戏（电脑出题，玩家猜）
+    // ==========================================
+    cout &lt;&lt; "========================================" &lt;&lt; endl;
+    cout &lt;&lt; "  程序1：基础猜数字游戏" &lt;&lt; endl;
+    cout &lt;&lt; "  电脑出一个 1~100 的随机数，你来猜！" &lt;&lt; endl;
+    cout &lt;&lt; "========================================" &lt;&lt; endl;
+
+    // 设置随机数种子
+    // time(0) 获取当前时间（1970年1月1日至今的秒数）
+    // 因为时间一直在变，所以每次运行随机数都不同
+    srand(time(0));
+
+    // 生成 1~100 的随机数
+    // rand() % 100 生成 0~99，加 1 变成 1~100
+    int secret1 = rand() % 100 + 1;
+    int guess1;       // 存放玩家输入的数字
+    int count1 = 0;   // 记录猜测次数
+
+    cout &lt;&lt; "\n我已经想好了一个 1~100 之间的数字！" &lt;&lt; endl;
+
+    // do-while 循环：至少猜一次，直到猜对为止
+    do {
+        cout &lt;&lt; "请输入你猜的数字：";
+        cin &gt;&gt; guess1;
+        count1++;  // 每猜一次，计数器加1
+
+        if (guess1 &gt; secret1) {
+            cout &lt;&lt; "太大了！往小猜一猜~" &lt;&lt; endl;
+        } else if (guess1 &lt; secret1) {
+            cout &lt;&lt; "太小了！往大猜一猜~" &lt;&lt; endl;
+        } else {
+            cout &lt;&lt; "\n🎉 恭喜你猜对了！" &lt;&lt; endl;
+            cout &lt;&lt; "正确答案就是：" &lt;&lt; secret1 &lt;&lt; endl;
+            cout &lt;&lt; "你一共猜了 " &lt;&lt; count1 &lt;&lt; " 次！" &lt;&lt; endl;
+        }
+    } while (guess1 != secret1);  // 没猜对就继续循环
+
+    cout &lt;&lt; "\n" &lt;&lt; endl;
+
+
+    // ==========================================
+    // 程序2：升级版猜数字游戏（带提示 + 次数限制）
+    // ==========================================
+    cout &lt;&lt; "========================================" &lt;&lt; endl;
+    cout &lt;&lt; "  程序2：升级版猜数字游戏" &lt;&lt; endl;
+    cout &lt;&lt; "  增加难度：最多只有10次机会！" &lt;&lt; endl;
+    cout &lt;&lt; "========================================" &lt;&lt; endl;
+
+    // 重新生成一个随机数
+    int secret2 = rand() % 100 + 1;
+    int guess2;
+    int count2 = 0;
+    const int MAX_CHANCES = 10;  // 常量：最大猜测次数
+
+    cout &lt;&lt; "\n规则：猜 1~100 的数字，最多 " &lt;&lt; MAX_CHANCES &lt;&lt; " 次机会！" &lt;&lt; endl;
+    cout &lt;&lt; "提示：试试从中间开始猜，效率更高哦！" &lt;&lt; endl;
+
+    while (count2 &lt; MAX_CHANCES) {  // 只要还有机会就继续
+        cout &lt;&lt; "\n第 " &lt;&lt; count2 + 1 &lt;&lt; " 次猜测（剩余 "
+             &lt;&lt; MAX_CHANCES - count2 &lt;&lt; " 次机会）：请输入数字：";
+        cin &gt;&gt; guess2;
+        count2++;
+
+        if (guess2 == secret2) {
+            // 猜对了！
+            cout &lt;&lt; "\n🎉 恭喜！你用了 " &lt;&lt; count2 &lt;&lt; " 次就猜对了！" &lt;&lt; endl;
+            cout &lt;&lt; "正确答案是：" &lt;&lt; secret2 &lt;&lt; endl;
+
+            // 根据次数给出评价
+            if (count2 == 1) {
+                cout &lt;&lt; "⭐ 运气爆棚！一次命中！" &lt;&lt; endl;
+            } else if (count2 &lt;= 3) {
+                cout &lt;&lt; "⭐ 非常厉害！你是猜数小天才！" &lt;&lt; endl;
+            } else if (count2 &lt;= 5) {
+                cout &lt;&lt; "⭐ 不错！逻辑思维很棒！" &lt;&lt; endl;
+            } else if (count2 &lt;= 7) {
+                cout &lt;&lt; "⭐ 还可以，继续加油！" &lt;&lt; endl;
+            } else {
+                cout &lt;&lt; "💡 建议用二分法：每次猜中间值，效率会翻倍！" &lt;&lt; endl;
+            }
+            break;  // 猜对就结束
+        } else if (guess2 &gt; secret2) {
+            // 猜大了：给出提示，差距大时额外提醒
+            cout &lt;&lt; "📉 太大了！";
+            if (guess2 - secret2 &gt; 20) {
+                cout &lt;&lt; " （差得有点远哦，大胆往下减！）";
+            }
+            cout &lt;&lt; endl;
+        } else {
+            // 猜小了：给出提示，差距大时额外提醒
+            cout &lt;&lt; "📈 太小了！";
+            if (secret2 - guess2 &gt; 20) {
+                cout &lt;&lt; " （差得有点远哦，大胆往上加！）";
+            }
+            cout &lt;&lt; endl;
+        }
+    }
+
+    // 如果循环结束还没猜对，说明次数用完了
+    if (count2 &gt;= MAX_CHANCES &amp;&amp; guess2 != secret2) {
+        cout &lt;&lt; "\n😢 很遗憾，" &lt;&lt; MAX_CHANCES &lt;&lt; " 次机会用完了！" &lt;&lt; endl;
+        cout &lt;&lt; "正确答案是：" &lt;&lt; secret2 &lt;&lt; endl;
+        cout &lt;&lt; "下次从中间开始猜会更高效哦！" &lt;&lt; endl;
+    }
+
+    cout &lt;&lt; "\n\n";
+
+
+    // ==========================================
+    // 程序3：反向猜数字（电脑用二分法猜玩家的数字）
+    // ==========================================
+    cout &lt;&lt; "========================================" &lt;&lt; endl;
+    cout &lt;&lt; "  程序3：反向猜数字" &lt;&lt; endl;
+    cout &lt;&lt; "  现在轮到电脑来猜你的数字了！" &lt;&lt; endl;
+    cout &lt;&lt; "  电脑使用二分查找策略（每次猜中间值）" &lt;&lt; endl;
+    cout &lt;&lt; "========================================" &lt;&lt; endl;
+
+    cout &lt;&lt; "\n请你心里想一个 1~100 的数字（或者写在纸上）。" &lt;&lt; endl;
+    cout &lt;&lt; "电脑每次猜一个数，请你输入反馈：" &lt;&lt; endl;
+    cout &lt;&lt; "  输入 'd' 表示猜大了" &lt;&lt; endl;
+    cout &lt;&lt; "  输入 'x' 表示猜小了" &lt;&lt; endl;
+    cout &lt;&lt; "  输入 'y' 表示猜对了" &lt;&lt; endl;
+    cout &lt;&lt; "\n准备好了吗？按回车键开始..." &lt;&lt; endl;
+    cin.get();  // 吸收之前残留的换行符
+    cin.get();  // 等待用户按回车
+
+    // 二分查找的核心变量
+    int low = 1;       // 当前范围的下界
+    int high = 100;    // 当前范围的上界
+    int mid;           // 电脑的猜测（中间值）
+    int count3 = 0;    // 电脑的猜测次数
+    char feedback;     // 玩家的反馈（d/x/y）
+
+    cout &lt;&lt; "\n========== 电脑开始猜了！ ==========" &lt;&lt; endl;
+
+    // 二分查找最多需要 7 次（2^7 = 128 &gt; 100），但用 while 循环更灵活
+    while (low &lt;= high) {
+        // 核心：计算中间值
+        // (low + high) / 2 就是范围的中间位置
+        mid = (low + high) / 2;
+        count3++;
+
+        // 显示当前范围和猜测
+        cout &lt;&lt; "\n第 " &lt;&lt; count3 &lt;&lt; " 次猜测：" &lt;&lt; endl;
+        cout &lt;&lt; "  当前范围：[" &lt;&lt; low &lt;&lt; ", " &lt;&lt; high &lt;&lt; "]" &lt;&lt; endl;
+        cout &lt;&lt; "  电脑猜的数字是：" &lt;&lt; mid &lt;&lt; endl;
+
+        // 获取玩家反馈
+        cout &lt;&lt; "  请输入反馈（d=大了 / x=小了 / y=对了）：";
+        cin &gt;&gt; feedback;
+
+        if (feedback == 'y' || feedback == 'Y') {
+            // 猜对了！
+            cout &lt;&lt; "\n🎉 电脑猜对了！答案就是 " &lt;&lt; mid &lt;&lt; "！" &lt;&lt; endl;
+            cout &lt;&lt; "电脑一共猜了 " &lt;&lt; count3 &lt;&lt; " 次。" &lt;&lt; endl;
+
+            // 理论分析
+            cout &lt;&lt; "\n📊 二分查找效率分析：" &lt;&lt; endl;
+            cout &lt;&lt; "  1~100 范围内，二分查找最多需要 7 次。" &lt;&lt; endl;
+            cout &lt;&lt; "  电脑只用了 " &lt;&lt; count3 &lt;&lt; " 次，非常高效！" &lt;&lt; endl;
+            break;
+        } else if (feedback == 'd' || feedback == 'D') {
+            // 猜大了：目标在 low 到 mid-1 之间
+            cout &lt;&lt; "  → 电脑猜大了，范围缩小到 [" &lt;&lt; low &lt;&lt; ", " &lt;&lt; mid - 1 &lt;&lt; "]" &lt;&lt; endl;
+            high = mid - 1;  // 上界缩小到 mid-1
+        } else if (feedback == 'x' || feedback == 'X') {
+            // 猜小了：目标在 mid+1 到 high 之间
+            cout &lt;&lt; "  → 电脑猜小了，范围缩小到 [" &lt;&lt; mid + 1 &lt;&lt; ", " &lt;&lt; high &lt;&lt; "]" &lt;&lt; endl;
+            low = mid + 1;   // 下界增大到 mid+1
+        } else {
+            // 输入了无效的字符
+            cout &lt;&lt; "  ⚠️ 无效输入！请输入 d、x 或 y。" &lt;&lt; endl;
+            count3--;  // 这次不算
+        }
+
+        // 如果范围交叉了，说明玩家给错了反馈
+        if (low &gt; high &amp;&amp; (feedback != 'y' &amp;&amp; feedback != 'Y')) {
+            cout &lt;&lt; "\n🤔 嗯？范围变成 [" &lt;&lt; low &lt;&lt; ", " &lt;&lt; high
+                 &lt;&lt; "] 了，你是不是给错反馈了？" &lt;&lt; endl;
+            cout &lt;&lt; "游戏结束，请重新开始。" &lt;&lt; endl;
+            break;
+        }
+    }
+
+    // 二分查找科普
+    cout &lt;&lt; "\n========================================" &lt;&lt; endl;
+    cout &lt;&lt; "  💡 二分查找小知识：" &lt;&lt; endl;
+    cout &lt;&lt; "  100 个数字 ➜ 最多猜 7 次" &lt;&lt; endl;
+    cout &lt;&lt; "  1000 个数字 ➜ 最多猜 10 次" &lt;&lt; endl;
+    cout &lt;&lt; "  10000 个数字 ➜ 最多猜 14 次" &lt;&lt; endl;
+    cout &lt;&lt; "  100万个数字 ➜ 最多猜 20 次！" &lt;&lt; endl;
+    cout &lt;&lt; "  每次排除一半，效率超级高！" &lt;&lt; endl;
+    cout &lt;&lt; "========================================" &lt;&lt; endl;
+
+    cout &lt;&lt; "\n========== 第45课学习完毕！ ==========" &lt;&lt; endl;
+
+    return 0;
+}
+</pre>
+    <p class="hint">本页使用浅色主题与 UTF-8 编码，可直接打印或导出 PDF。</p>
+  </div>
+</body>
+</html>

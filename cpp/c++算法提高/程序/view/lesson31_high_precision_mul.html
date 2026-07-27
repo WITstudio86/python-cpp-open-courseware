@@ -1,0 +1,362 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>lesson31_high_precision_mul.cpp</title>
+<style>
+  :root {
+    --bg: #f5f7fa;
+    --panel: #ffffff;
+    --text: #1a1a2e;
+    --muted: #5a6570;
+    --gold: #b8860b;
+    --code-bg: #ffffff;
+    --code-text: #1f2933;
+    --border: #d8dee6;
+    --top-bg: #ffffff;
+    --top-border: #e5e9ef;
+  }
+  * { box-sizing: border-box; }
+  html, body {
+    margin: 0; padding: 0;
+    background: var(--bg);
+    color: var(--text);
+    font-family: -apple-system, BlinkMacSystemFont, "PingFang SC", "Microsoft YaHei", sans-serif;
+    min-height: 100%;
+  }
+  .top {
+    position: sticky; top: 0; z-index: 10;
+    display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between;
+    gap: 10px;
+    padding: 12px 18px;
+    background: var(--top-bg);
+    border-bottom: 1px solid var(--top-border);
+    box-shadow: 0 1px 8px rgba(15, 23, 42, 0.06);
+  }
+  .brand { color: var(--gold); font-weight: 700; font-size: 14px; letter-spacing: 0.04em; }
+  .title { font-size: 15px; font-weight: 600; color: var(--text); max-width: 52vw; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .actions { display: flex; gap: 8px; flex-wrap: wrap; }
+  .btn {
+    appearance: none; border: 1px solid var(--border);
+    background: #fff; color: var(--text);
+    border-radius: 999px; padding: 8px 14px; font-size: 13px; font-weight: 600;
+    text-decoration: none; cursor: pointer;
+  }
+  .btn:hover { background: #f0f3f7; }
+  .btn.gold {
+    background: linear-gradient(135deg, #f0d78c, #d4a853);
+    color: #0a2540; border-color: #e0c06a;
+  }
+  .meta {
+    padding: 10px 18px; color: var(--muted); font-size: 12px;
+    border-bottom: 1px solid var(--border);
+    background: var(--panel);
+  }
+  .wrap { padding: 16px 18px 40px; }
+  pre {
+    margin: 0;
+    background: var(--code-bg);
+    color: var(--code-text);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 18px 20px;
+    overflow: auto;
+    font-family: "SF Mono", "JetBrains Mono", "Fira Code", Consolas, "Courier New", monospace;
+    font-size: 13.5px;
+    line-height: 1.55;
+    white-space: pre;
+    tab-size: 4;
+    box-shadow: 0 2px 12px rgba(15, 23, 42, 0.05);
+  }
+  .hint { margin-top: 12px; color: var(--muted); font-size: 12px; }
+  @media print {
+    html, body { background: #fff !important; color: #000 !important; }
+    .top { position: static; box-shadow: none; border-bottom: 1px solid #ccc; background: #fff !important; }
+    .actions { display: none !important; }
+    .meta { background: #fff !important; border-color: #ddd; color: #333; }
+    .wrap { padding: 0; }
+    pre {
+      background: #fff !important; color: #000 !important;
+      border: 1px solid #bbb; box-shadow: none; border-radius: 0;
+      white-space: pre-wrap; word-break: break-word; font-size: 11pt; line-height: 1.4;
+    }
+    .hint { display: none; }
+    a { color: #000; text-decoration: none; }
+  }
+</style>
+</head>
+<body>
+  <div class="top">
+    <div class="brand">C++ 算法提高 · 配套代码</div>
+    <div class="title">lesson31_high_precision_mul.cpp</div>
+    <div class="actions">
+      <a class="btn" href="../lesson31_high_precision_mul.cpp" download="lesson31_high_precision_mul.cpp">⬇️ 下载源文件</a>
+      <a class="btn gold" href="javascript:history.back()">← 返回课件</a>
+    </div>
+  </div>
+  <div class="meta">编码：UTF-8 · 文件：lesson31_high_precision_mul.cpp · 共 258 行 · 浅色主题便于打印</div>
+  <div class="wrap">
+    <pre id="code">/**
+ * ============================================================
+ * 第31课：高精度乘法 — 完整 C++ 实现
+ * ============================================================
+ *
+ * 本文件包含以下功能：
+ *   1. high_precision_multiply() —— 高精度 × 高精度
+ *      原理：模拟竖式乘法，逐位相乘累加后统一进位
+ *      输入：两个数字字符串
+ *      输出：乘积的字符串表示
+ *
+ *   2. high_precision_add() —— 高精度 + 高精度
+ *      用于阶乘之和的累加操作
+ *      输入：两个数字字符串
+ *      输出：和的字符串表示
+ *
+ *   3. factorial_sum() —— 计算 1! + 2! + ... + n!
+ *      使用高精度乘法和加法，支持 n ≤ 50
+ *
+ *   4. main() —— 提供两个例题的测试
+ *      例题1：阶乘之和（输入 n，输出 S = 1! + 2! + ... + n!）
+ *      例题2：大数乘法（输入两个大整数，输出乘积）
+ *
+ * 编译方式：
+ *   g++ -std=c++11 -o lesson31 lesson31_high_precision_mul.cpp
+ * 运行方式：
+ *   ./lesson31
+ *
+ * 作者：C++算法提高课程
+ * 日期：2026年
+ * ============================================================
+ */
+
+#include &lt;iostream&gt;
+#include &lt;string&gt;
+#include &lt;vector&gt;
+#include &lt;algorithm&gt;
+using namespace std;
+
+/**
+ * 高精度乘法：计算两个大正整数的乘积
+ *
+ * 算法步骤：
+ *   1. 将两个字符串倒序存入数组 a[] 和 b[]（个位在索引 0）
+ *   2. 双层循环：c[i+j] += a[i] * b[j]
+ *   3. 统一处理进位：c[i+1] += c[i] / 10; c[i] %= 10
+ *   4. 去除前导零，拼接结果字符串
+ *
+ * @param num1  第一个大整数（字符串形式）
+ * @param num2  第二个大整数（字符串形式）
+ * @return      乘积的字符串表示
+ */
+string high_precision_multiply(const string &amp;num1, const string &amp;num2) {
+    // 特殊情况：任何一个数为 0，结果就是 0
+    if (num1 == "0" || num2 == "0") return "0";
+
+    int len1 = num1.size();
+    int len2 = num2.size();
+
+    // 倒序存储：索引 0 存个位，索引 1 存十位，以此类推
+    // 例如 "123" → a[0]=3, a[1]=2, a[2]=1
+    vector&lt;int&gt; a(len1), b(len2);
+    for (int i = 0; i &lt; len1; i++) {
+        a[i] = num1[len1 - 1 - i] - '0';  // 字符转数字
+    }
+    for (int i = 0; i &lt; len2; i++) {
+        b[i] = num2[len2 - 1 - i] - '0';
+    }
+
+    // 结果数组：两个数相乘，结果最多有 len1 + len2 位
+    // 例如：999 × 999 = 998001，3位×3位 = 6位
+    vector&lt;int&gt; c(len1 + len2, 0);
+
+    // ============================================================
+    // 第一步：逐位相乘并累加到对应位置
+    // 核心公式：c[i+j] += a[i] * b[j]
+    //
+    // 原理（以 123 × 456 为例）：
+    //   竖式中，123 的个位 3 乘以 456 的十位 5，得到 150
+    //   这个 150 中的 5 实际上在百位（个位×十位 → 百位）
+    //   即 c[0+1] += a[0]*b[1] → c[1] += 3*5 = 15
+    // ============================================================
+    for (int i = 0; i &lt; len1; i++) {
+        for (int j = 0; j &lt; len2; j++) {
+            c[i + j] += a[i] * b[j];
+        }
+    }
+
+    // ============================================================
+    // 第二步：统一处理进位
+    // 从低位到高位依次处理：如果当前位 ≥ 10，则进位到高一位
+    // 注意：循环到 len1+len2-1，因为最高位也可能产生进位
+    // ============================================================
+    for (int i = 0; i &lt; len1 + len2; i++) {
+        if (c[i] &gt;= 10) {
+            c[i + 1] += c[i] / 10;  // 进位部分加到高一位
+            c[i] %= 10;              // 保留个位
+        }
+    }
+
+    // ============================================================
+    // 第三步：去除前导零
+    // 结果数组的最后一个非零位置就是最高有效位
+    // 从末尾向前找，跳过所有值为 0 的高位
+    // ============================================================
+    int pos = len1 + len2 - 1;
+    while (pos &gt; 0 &amp;&amp; c[pos] == 0) {
+        pos--;
+    }
+
+    // ============================================================
+    // 第四步：将结果数组转换为字符串（从高位到低位）
+    // ============================================================
+    string result;
+    for (int i = pos; i &gt;= 0; i--) {
+        result += char(c[i] + '0');  // 数字转字符
+    }
+    return result;
+}
+
+/**
+ * 高精度加法：计算两个大正整数的和
+ *
+ * 算法步骤：
+ *   1. 将两个字符串倒序存入数组（个位在索引 0）
+ *   2. 从低位到高位逐位相加，同时处理进位
+ *   3. 去除前导零，拼接结果字符串
+ *
+ * @param num1  第一个大整数（字符串形式）
+ * @param num2  第二个大整数（字符串形式）
+ * @return      和的字符串表示
+ */
+string high_precision_add(const string &amp;num1, const string &amp;num2) {
+    int len1 = num1.size();
+    int len2 = num2.size();
+    int maxLen = max(len1, len2);
+
+    // 倒序存储：统一到 maxLen 长度，不足的高位补 0
+    vector&lt;int&gt; a(maxLen, 0), b(maxLen, 0);
+    for (int i = 0; i &lt; len1; i++) {
+        a[i] = num1[len1 - 1 - i] - '0';
+    }
+    for (int i = 0; i &lt; len2; i++) {
+        b[i] = num2[len2 - 1 - i] - '0';
+    }
+
+    // 结果数组，可能比 maxLen 多 1 位（处理最高位进位）
+    vector&lt;int&gt; c(maxLen + 1, 0);
+
+    // 逐位相加，同时处理进位
+    for (int i = 0; i &lt; maxLen; i++) {
+        c[i] += a[i] + b[i];
+        if (c[i] &gt;= 10) {
+            c[i + 1] += c[i] / 10;
+            c[i] %= 10;
+        }
+    }
+
+    // 去除前导零
+    int pos = maxLen;
+    while (pos &gt; 0 &amp;&amp; c[pos] == 0) {
+        pos--;
+    }
+
+    // 拼接结果（从高位到低位）
+    string result;
+    for (int i = pos; i &gt;= 0; i--) {
+        result += char(c[i] + '0');
+    }
+    return result;
+}
+
+/**
+ * 阶乘之和：计算 S = 1! + 2! + 3! + ... + n!
+ *
+ * 算法思路：
+ *   利用递推关系 fact(i) = fact(i-1) × i
+ *   每次用高精度乘法计算当前阶乘，再用高精度加法累加到总和
+ *   这样避免了每次重新计算阶乘，效率更高
+ *
+ * @param n  阶乘的最大项（n ≤ 50）
+ * @return   阶乘之和的字符串表示
+ */
+string factorial_sum(int n) {
+    if (n &lt;= 0) return "0";
+
+    string factorial = "1";   // 当前阶乘值，初始为 1! = 1
+    string sum = "0";          // 累加和，初始为 0
+
+    for (int i = 1; i &lt;= n; i++) {
+        // 计算 i! = (i-1)! × i
+        // 将整数 i 转换为字符串参与高精度乘法
+        string i_str = to_string(i);
+        factorial = high_precision_multiply(factorial, i_str);
+
+        // 累加到总和
+        sum = high_precision_add(sum, factorial);
+    }
+
+    return sum;
+}
+
+/**
+ * 主函数：测试两个例题
+ *
+ * 例题1：阶乘之和
+ *   输入 n，输出 1! + 2! + ... + n! 的高精度值
+ *
+ * 例题2：大数乘法
+ *   输入两个大整数，输出乘积
+ */
+int main() {
+    cout &lt;&lt; "========================================" &lt;&lt; endl;
+    cout &lt;&lt; "  第31课：高精度乘法 — 例题测试" &lt;&lt; endl;
+    cout &lt;&lt; "========================================" &lt;&lt; endl;
+    cout &lt;&lt; endl;
+
+    // ============================================================
+    // 例题1：阶乘之和
+    // 输入 n，计算 S = 1! + 2! + ... + n!
+    // ============================================================
+    cout &lt;&lt; "【例题1】阶乘之和" &lt;&lt; endl;
+    cout &lt;&lt; "请输入 n (n ≤ 50)：";
+    int n;
+    cin &gt;&gt; n;
+
+    if (n &lt; 1 || n &gt; 50) {
+        cout &lt;&lt; "输入错误：n 应在 1 到 50 之间！" &lt;&lt; endl;
+    } else {
+        string result = factorial_sum(n);
+        cout &lt;&lt; "1! + 2! + ... + " &lt;&lt; n &lt;&lt; "! = " &lt;&lt; result &lt;&lt; endl;
+    }
+
+    cout &lt;&lt; endl;
+
+    // ============================================================
+    // 例题2：大数乘法
+    // 输入两个不超过 200 位的正整数，输出它们的乘积
+    // ============================================================
+    cout &lt;&lt; "【例题2】大数乘法" &lt;&lt; endl;
+    cout &lt;&lt; "请输入第一个大整数 A：";
+    string a, b;
+    cin &gt;&gt; a;
+    cout &lt;&lt; "请输入第二个大整数 B：";
+    cin &gt;&gt; b;
+
+    if (a.size() &gt; 200 || b.size() &gt; 200) {
+        cout &lt;&lt; "输入错误：每个数的位数不能超过 200 位！" &lt;&lt; endl;
+    } else {
+        string product = high_precision_multiply(a, b);
+        cout &lt;&lt; a &lt;&lt; " × " &lt;&lt; b &lt;&lt; " = " &lt;&lt; product &lt;&lt; endl;
+    }
+
+    cout &lt;&lt; endl;
+    cout &lt;&lt; "测试完成！" &lt;&lt; endl;
+
+    return 0;
+}
+</pre>
+    <p class="hint">本页使用浅色主题与 UTF-8 编码，可直接打印或导出 PDF。</p>
+  </div>
+</body>
+</html>

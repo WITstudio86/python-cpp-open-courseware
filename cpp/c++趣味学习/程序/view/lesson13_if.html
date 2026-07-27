@@ -1,0 +1,498 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>lesson13_if.cpp</title>
+<style>
+  :root {
+    --bg: #f5f7fa;
+    --panel: #ffffff;
+    --text: #1a1a2e;
+    --muted: #5a6570;
+    --gold: #b8860b;
+    --code-bg: #ffffff;
+    --code-text: #1f2933;
+    --border: #d8dee6;
+    --top-bg: #ffffff;
+    --top-border: #e5e9ef;
+  }
+  * { box-sizing: border-box; }
+  html, body {
+    margin: 0; padding: 0;
+    background: var(--bg);
+    color: var(--text);
+    font-family: -apple-system, BlinkMacSystemFont, "PingFang SC", "Microsoft YaHei", sans-serif;
+    min-height: 100%;
+  }
+  .top {
+    position: sticky; top: 0; z-index: 10;
+    display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between;
+    gap: 10px;
+    padding: 12px 18px;
+    background: var(--top-bg);
+    border-bottom: 1px solid var(--top-border);
+    box-shadow: 0 1px 8px rgba(15, 23, 42, 0.06);
+  }
+  .brand { color: var(--gold); font-weight: 700; font-size: 14px; letter-spacing: 0.04em; }
+  .title { font-size: 15px; font-weight: 600; color: var(--text); max-width: 52vw; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .actions { display: flex; gap: 8px; flex-wrap: wrap; }
+  .btn {
+    appearance: none; border: 1px solid var(--border);
+    background: #fff; color: var(--text);
+    border-radius: 999px; padding: 8px 14px; font-size: 13px; font-weight: 600;
+    text-decoration: none; cursor: pointer;
+  }
+  .btn:hover { background: #f0f3f7; }
+  .btn.gold {
+    background: linear-gradient(135deg, #f0d78c, #d4a853);
+    color: #0a2540; border-color: #e0c06a;
+  }
+  .meta {
+    padding: 10px 18px; color: var(--muted); font-size: 12px;
+    border-bottom: 1px solid var(--border);
+    background: var(--panel);
+  }
+  .wrap { padding: 16px 18px 40px; }
+  pre {
+    margin: 0;
+    background: var(--code-bg);
+    color: var(--code-text);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 18px 20px;
+    overflow: auto;
+    font-family: "SF Mono", "JetBrains Mono", "Fira Code", Consolas, "Courier New", monospace;
+    font-size: 13.5px;
+    line-height: 1.55;
+    white-space: pre;
+    tab-size: 4;
+    box-shadow: 0 2px 12px rgba(15, 23, 42, 0.05);
+  }
+  .hint { margin-top: 12px; color: var(--muted); font-size: 12px; }
+  @media print {
+    html, body { background: #fff !important; color: #000 !important; }
+    .top { position: static; box-shadow: none; border-bottom: 1px solid #ccc; background: #fff !important; }
+    .actions { display: none !important; }
+    .meta { background: #fff !important; border-color: #ddd; color: #333; }
+    .wrap { padding: 0; }
+    pre {
+      background: #fff !important; color: #000 !important;
+      border: 1px solid #bbb; box-shadow: none; border-radius: 0;
+      white-space: pre-wrap; word-break: break-word; font-size: 11pt; line-height: 1.4;
+    }
+    .hint { display: none; }
+    a { color: #000; text-decoration: none; }
+  }
+</style>
+</head>
+<body>
+  <div class="top">
+    <div class="brand">C++ 趣味学习 · 配套代码</div>
+    <div class="title">lesson13_if.cpp</div>
+    <div class="actions">
+      <a class="btn" href="../lesson13_if.cpp" download="lesson13_if.cpp">⬇️ 下载源文件</a>
+      <a class="btn gold" href="javascript:history.back()">← 返回课件</a>
+    </div>
+  </div>
+  <div class="meta">编码：UTF-8 · 文件：lesson13_if.cpp · 共 394 行 · 浅色主题便于打印</div>
+  <div class="wrap">
+    <pre id="code">/*
+ * =============================================
+ * C++趣味学习 —— 第13课：人生的十字路口——if语句
+ * 知识点：单分支if、代码块{}
+ * 趣味项目：🚦 制作交通信号灯
+ * =============================================
+ *
+ * 本文件包含：
+ *   示例1：检查数字是否为正数
+ *   示例2：交通信号灯（完整版）
+ *   示例3：if的陷阱——忘记{}的后果
+ *   练习1：正数判断器
+ *   练习2：代码阅读（理解{}作用）
+ *   练习3：交通信号灯程序
+ *   挑战任务：简易银行取款程序
+ *
+ * 编译运行方式：
+ *   g++ lesson13_if.cpp -o lesson13_if
+ *   ./lesson13_if
+ * =============================================
+ */
+
+#include &lt;iostream&gt;
+#include &lt;iomanip&gt;
+using namespace std;
+
+// ==================== 示例1：最简单的if——检查数字是否为正数 ====================
+void example1_checkPositive() {
+    cout &lt;&lt; "\n========== 示例1：检查数字是否为正数 ==========" &lt;&lt; endl;
+
+    int number;
+    cout &lt;&lt; "请输入一个整数：";
+    cin &gt;&gt; number;
+
+    // 单分支if：只有当number &gt; 0成立时，花括号里的代码才会执行
+    if (number &gt; 0) {
+        cout &lt;&lt; number &lt;&lt; " 是一个正数！" &lt;&lt; endl;
+        cout &lt;&lt; "正数都大于零哦~" &lt;&lt; endl;
+        // 花括号里的这两行是一个整体
+    }
+
+    // 这行代码不在if的控制范围内，无论条件成立与否都会执行
+    cout &lt;&lt; "程序结束，谢谢使用！" &lt;&lt; endl;
+}
+
+// ==================== 示例2：if配合代码块——交通信号灯 ====================
+void example2_trafficLight() {
+    cout &lt;&lt; "\n========== 示例2：交通信号灯 ==========" &lt;&lt; endl;
+
+    char light;
+    cout &lt;&lt; "请输入信号灯颜色（R=红，G=绿，Y=黄）：";
+    cin &gt;&gt; light;
+
+    // 用三个独立的if分别判断三种颜色的灯
+    // 注意：这里每个if都有{}，代码块里的内容是一个整体
+
+    if (light == 'R' || light == 'r') {
+        cout &lt;&lt; "=== 交通信号灯 ===" &lt;&lt; endl;
+        cout &lt;&lt; "当前信号：红灯 🔴" &lt;&lt; endl;
+        cout &lt;&lt; "请停下！耐心等待~" &lt;&lt; endl;
+        cout &lt;&lt; "==================" &lt;&lt; endl;
+    }
+
+    if (light == 'G' || light == 'g') {
+        cout &lt;&lt; "=== 交通信号灯 ===" &lt;&lt; endl;
+        cout &lt;&lt; "当前信号：绿灯 🟢" &lt;&lt; endl;
+        cout &lt;&lt; "可以安全通行！" &lt;&lt; endl;
+        cout &lt;&lt; "==================" &lt;&lt; endl;
+    }
+
+    if (light == 'Y' || light == 'y') {
+        cout &lt;&lt; "=== 交通信号灯 ===" &lt;&lt; endl;
+        cout &lt;&lt; "当前信号：黄灯 🟡" &lt;&lt; endl;
+        cout &lt;&lt; "请减速，准备停下！" &lt;&lt; endl;
+        cout &lt;&lt; "==================" &lt;&lt; endl;
+    }
+
+    // 思考：如果用户输入的不是R/G/Y，会怎样？
+    // 答案：三个if的条件都不成立，什么灯的状态都不会输出
+}
+
+// ==================== 示例3：if的陷阱——忘记加{}的后果 ====================
+void example3_trapWithoutBraces() {
+    cout &lt;&lt; "\n========== 示例3：if的陷阱——忘记{}的后果 ==========" &lt;&lt; endl;
+
+    int x = -5;  // 把x改成5试试看，输出会有什么不同？
+
+    cout &lt;&lt; "x 的值是：" &lt;&lt; x &lt;&lt; endl;
+    cout &lt;&lt; "--- 没有{}的版本 ---" &lt;&lt; endl;
+
+    // 陷阱版本：没有花括号
+    // if只能控制紧跟它的第一条语句（即下一行）
+    if (x &gt; 0)
+        cout &lt;&lt; "A：x是正数（受if控制）" &lt;&lt; endl;
+        cout &lt;&lt; "B：这行不受if控制，总是执行！" &lt;&lt; endl;
+        // 上面这一行缩进看起来像是在if里面，但实际上不是！
+
+    cout &lt;&lt; "--- 有{}的正确版本 ---" &lt;&lt; endl;
+
+    // 正确版本：使用花括号明确代码块范围
+    if (x &gt; 0) {
+        cout &lt;&lt; "C：x是正数（受if控制）" &lt;&lt; endl;
+        cout &lt;&lt; "D：这行也受if控制（因为在花括号内）" &lt;&lt; endl;
+    }
+
+    cout &lt;&lt; "--- 总结 ---" &lt;&lt; endl;
+    cout &lt;&lt; "当x=-5时：只有B会输出（A、C、D都被跳过）" &lt;&lt; endl;
+    cout &lt;&lt; "当x=5时：A、B、C、D全部输出" &lt;&lt; endl;
+    cout &lt;&lt; "结论：无论什么时候，都建议写{}来避免歧义！" &lt;&lt; endl;
+}
+
+// ==================== 示例4：嵌套if——游乐园身高检查 ====================
+void example4_amusementPark() {
+    cout &lt;&lt; "\n========== 示例4：游乐园身高检查（嵌套if） ==========" &lt;&lt; endl;
+
+    int height;
+    cout &lt;&lt; "🏰 欢迎来到欢乐谷游乐园！" &lt;&lt; endl;
+    cout &lt;&lt; "请输入你的身高（厘米）：";
+    cin &gt;&gt; height;
+
+    // 外层if：判断能否进入游乐园
+    if (height &gt;= 120) {
+        cout &lt;&lt; "✅ 你可以进入游乐园！" &lt;&lt; endl;
+
+        // 内层if-else if-else：根据身高推荐项目
+        if (height &gt;= 160) {
+            cout &lt;&lt; "🎢 你可以玩所有项目：过山车、跳楼机、大摆锤……尽情享受吧！" &lt;&lt; endl;
+        } else if (height &gt;= 140) {
+            cout &lt;&lt; "🎡 你可以玩大部分项目，但过山车还需要再长高一点哦！" &lt;&lt; endl;
+            cout &lt;&lt; "   推荐：海盗船、碰碰车、旋转飞椅" &lt;&lt; endl;
+        } else {
+            cout &lt;&lt; "🎠 欢迎来到儿童专区！旋转木马、小火车在向你招手~" &lt;&lt; endl;
+        }
+    } else {
+        cout &lt;&lt; "😢 抱歉，身高不够120厘米，还不能进入游乐园。" &lt;&lt; endl;
+        cout &lt;&lt; "   等你长高了再来玩哦！" &lt;&lt; endl;
+    }
+
+    cout &lt;&lt; "\n💡 这个程序使用了嵌套if结构——判断里面还有判断！" &lt;&lt; endl;
+    cout &lt;&lt; "   外层if控制是否能入园，内层if控制能玩哪些项目。" &lt;&lt; endl;
+}
+
+// ==================== 示例5：数字大小比较器 ====================
+void example5_numberComparer() {
+    cout &lt;&lt; "\n========== 示例5：数字大小比较器 ==========" &lt;&lt; endl;
+
+    int a, b;
+    cout &lt;&lt; "请输入第一个整数：";
+    cin &gt;&gt; a;
+    cout &lt;&lt; "请输入第二个整数：";
+    cin &gt;&gt; b;
+
+    cout &lt;&lt; "\n—— 比较结果 ——" &lt;&lt; endl;
+
+    // 分别用三种比较运算符
+    if (a &gt; b) {
+        cout &lt;&lt; a &lt;&lt; " 大于 " &lt;&lt; b &lt;&lt; " —— 第一个数更大！" &lt;&lt; endl;
+    }
+    if (a &lt; b) {
+        cout &lt;&lt; a &lt;&lt; " 小于 " &lt;&lt; b &lt;&lt; " —— 第二个数更大！" &lt;&lt; endl;
+    }
+    if (a == b) {
+        cout &lt;&lt; a &lt;&lt; " 等于 " &lt;&lt; b &lt;&lt; " —— 两个数一样大！" &lt;&lt; endl;
+    }
+
+    // 额外判断：是否为特殊数字
+    if (a == 0 || b == 0) {
+        cout &lt;&lt; "💡 提示：你输入了数字 0！任意数加0还是它自己哦~" &lt;&lt; endl;
+    }
+    if (a % b == 0 &amp;&amp; b != 0) {
+        cout &lt;&lt; "💡 发现：" &lt;&lt; a &lt;&lt; " 可以被 " &lt;&lt; b &lt;&lt; " 整除！" &lt;&lt; endl;
+    }
+
+    cout &lt;&lt; "\n谢谢使用，再见！" &lt;&lt; endl;
+}
+
+// ==================== 练习1：正数判断器 ====================
+void exercise1_positiveChecker() {
+    cout &lt;&lt; "\n========== 练习1：正数判断器 ==========" &lt;&lt; endl;
+
+    int num;
+    cout &lt;&lt; "请输入一个整数：";
+    cin &gt;&gt; num;
+
+    // 如果数字大于0，就输出提示
+    if (num &gt; 0) {
+        cout &lt;&lt; num &lt;&lt; " 是正数 ✓" &lt;&lt; endl;
+    }
+
+    // 扩展思考：如果数字不大于0，会发生什么？
+    // 答案：什么都不输出。程序直接结束。
+    // 后续我们会学到if-else来处理"不大于0"的情况
+}
+
+// ==================== 练习2：代码阅读——理解{}的作用 ====================
+void exercise2_codeReading() {
+    cout &lt;&lt; "\n========== 练习2：代码阅读——理解{}的作用 ==========" &lt;&lt; endl;
+
+    cout &lt;&lt; "题目：下面代码会输出什么？" &lt;&lt; endl;
+    cout &lt;&lt; "  int x = -5;" &lt;&lt; endl;
+    cout &lt;&lt; "  if (x &gt; 0)" &lt;&lt; endl;
+    cout &lt;&lt; "      cout &lt;&lt; \"A\";" &lt;&lt; endl;
+    cout &lt;&lt; "      cout &lt;&lt; \"B\";" &lt;&lt; endl;
+    cout &lt;&lt; endl;
+
+    // 实际运行这段代码来验证
+    int x = -5;
+    cout &lt;&lt; "运行结果：";
+    if (x &gt; 0)
+        cout &lt;&lt; "A";
+        cout &lt;&lt; "B";     // 这行不在if控制范围内
+    cout &lt;&lt; endl;
+
+    cout &lt;&lt; "答案：只输出 \"B\"" &lt;&lt; endl;
+    cout &lt;&lt; "原因：if(x &gt; 0)不成立，所以A被跳过；但是B没有在{}里，" &lt;&lt; endl;
+    cout &lt;&lt; "      它不受if控制，所以B总是会执行。" &lt;&lt; endl;
+    cout &lt;&lt; "教训：永远给if加上花括号！即使只有一条语句也建议加上！" &lt;&lt; endl;
+}
+
+// ==================== 练习3：交通信号灯程序 ====================
+void exercise3_trafficLightSimple() {
+    cout &lt;&lt; "\n========== 练习3：交通信号灯程序 ==========" &lt;&lt; endl;
+
+    char light;
+    cout &lt;&lt; "请输入信号灯颜色（R/G/Y）：";
+    cin &gt;&gt; light;
+
+    cout &lt;&lt; "—— 信号灯判断结果 ——" &lt;&lt; endl;
+
+    if (light == 'R' || light == 'r') {
+        cout &lt;&lt; "🔴 停下！红灯亮起，请不要通行。" &lt;&lt; endl;
+    }
+    if (light == 'G' || light == 'g') {
+        cout &lt;&lt; "🟢 通行！绿灯亮起，可以安全通过。" &lt;&lt; endl;
+    }
+    if (light == 'Y' || light == 'y') {
+        cout &lt;&lt; "🟡 注意！黄灯亮起，请减速准备停下。" &lt;&lt; endl;
+    }
+}
+
+// ==================== 挑战任务：简易银行取款程序 ====================
+void challenge_bankWithdrawal() {
+    cout &lt;&lt; "\n========== 挑战任务：简易银行取款程序 ==========" &lt;&lt; endl;
+
+    double balance = 1000.00;  // 初始余额
+    double amount;              // 取款金额
+
+    // 显示欢迎界面和当前余额
+    cout &lt;&lt; "╔══════════════════════════════════╗" &lt;&lt; endl;
+    cout &lt;&lt; "║      🏦 简易银行取款系统        ║" &lt;&lt; endl;
+    cout &lt;&lt; "╠══════════════════════════════════╣" &lt;&lt; endl;
+    cout &lt;&lt; fixed &lt;&lt; setprecision(2);  // 设置输出保留2位小数
+    cout &lt;&lt; "║  当前余额：  " &lt;&lt; balance &lt;&lt; " 元         ║" &lt;&lt; endl;
+    cout &lt;&lt; "╚══════════════════════════════════╝" &lt;&lt; endl;
+    cout &lt;&lt; endl;
+    cout &lt;&lt; "请输入取款金额：";
+    cin &gt;&gt; amount;
+
+    cout &lt;&lt; "\n—— 交易结果 ——" &lt;&lt; endl;
+
+    // 判断1：取款金额是否合法（大于0）
+    if (amount &lt;= 0) {
+        cout &lt;&lt; "❌ 错误：请输入有效的取款金额（大于0）！" &lt;&lt; endl;
+    }
+
+    // 判断2：余额是否足够
+    if (amount &gt; 0 &amp;&amp; amount &lt;= balance) {
+        balance = balance - amount;  // 扣除金额
+        cout &lt;&lt; "✅ 取款成功！" &lt;&lt; endl;
+        cout &lt;&lt; "   取款金额：" &lt;&lt; amount &lt;&lt; " 元" &lt;&lt; endl;
+        cout &lt;&lt; "   剩余余额：" &lt;&lt; balance &lt;&lt; " 元" &lt;&lt; endl;
+        cout &lt;&lt; "   请收好您的现金，欢迎下次光临！" &lt;&lt; endl;
+    }
+
+    // 判断3：余额不足
+    if (amount &gt; balance &amp;&amp; amount &gt; 0) {
+        cout &lt;&lt; "❌ 余额不足！取款失败。" &lt;&lt; endl;
+        cout &lt;&lt; "   您想取 " &lt;&lt; amount &lt;&lt; " 元" &lt;&lt; endl;
+        cout &lt;&lt; "   当前余额仅 " &lt;&lt; balance &lt;&lt; " 元" &lt;&lt; endl;
+        cout &lt;&lt; "   差额：" &lt;&lt; (amount - balance) &lt;&lt; " 元" &lt;&lt; endl;
+    }
+
+    cout &lt;&lt; "\n感谢使用本系统，再见！" &lt;&lt; endl;
+}
+
+// ==================== 练习4：偶数判断器 ====================
+void exercise4_evenChecker() {
+    cout &lt;&lt; "\n========== 练习4：偶数判断器 ==========" &lt;&lt; endl;
+
+    int num;
+    cout &lt;&lt; "请输入一个整数：";
+    cin &gt;&gt; num;
+
+    // 判断是否为偶数：除以2余数为0
+    if (num % 2 == 0) {
+        cout &lt;&lt; num &lt;&lt; " 是一个偶数 ✓" &lt;&lt; endl;
+        cout &lt;&lt; "偶数除以2的余数总是0哦！" &lt;&lt; endl;
+    }
+
+    if (num % 2 != 0) {
+        cout &lt;&lt; num &lt;&lt; " 是一个奇数" &lt;&lt; endl;
+        cout &lt;&lt; "奇数除以2的余数总是1！" &lt;&lt; endl;
+    }
+}
+
+// ==================== 练习5：密码验证器 ====================
+void exercise5_passwordChecker() {
+    cout &lt;&lt; "\n========== 练习5：密码验证器 ==========" &lt;&lt; endl;
+
+    const int PASSWORD = 1234;  // 预设密码（实际应用中应该更复杂）
+    int input;
+
+    cout &lt;&lt; "===== 密码验证系统 =====" &lt;&lt; endl;
+    cout &lt;&lt; "请输入四位数字密码：";
+    cin &gt;&gt; input;
+
+    if (input == PASSWORD) {
+        cout &lt;&lt; "✅ 密码正确，欢迎进入！" &lt;&lt; endl;
+        cout &lt;&lt; "你已成功登录系统。" &lt;&lt; endl;
+    }
+
+    if (input != PASSWORD) {
+        cout &lt;&lt; "❌ 密码错误，拒绝访问！" &lt;&lt; endl;
+        cout &lt;&lt; "请检查密码后重试。" &lt;&lt; endl;
+        cout &lt;&lt; "\n💡 提示：密码是一个有特殊意义的四位数哦~" &lt;&lt; endl;
+    }
+}
+
+// ==================== 主函数：菜单选择 ====================
+int main() {
+    int choice;
+
+    cout &lt;&lt; "╔══════════════════════════════════════╗" &lt;&lt; endl;
+    cout &lt;&lt; "║  第13课：人生的十字路口——if语句    ║" &lt;&lt; endl;
+    cout &lt;&lt; "║  🚦 趣味项目：交通信号灯           ║" &lt;&lt; endl;
+    cout &lt;&lt; "╠══════════════════════════════════════╣" &lt;&lt; endl;
+    cout &lt;&lt; "║  请选择要运行的示例：               ║" &lt;&lt; endl;
+    cout &lt;&lt; "║  1. 示例1：检查数字是否为正数      ║" &lt;&lt; endl;
+    cout &lt;&lt; "║  2. 示例2：交通信号灯              ║" &lt;&lt; endl;
+    cout &lt;&lt; "║  3. 示例3：if的陷阱                ║" &lt;&lt; endl;
+    cout &lt;&lt; "║  4. 示例4：游乐园身高检查（嵌套if）║" &lt;&lt; endl;
+    cout &lt;&lt; "║  5. 示例5：数字大小比较器          ║" &lt;&lt; endl;
+    cout &lt;&lt; "║  6. 练习1：正数判断器              ║" &lt;&lt; endl;
+    cout &lt;&lt; "║  7. 练习2：代码阅读                ║" &lt;&lt; endl;
+    cout &lt;&lt; "║  8. 练习3：交通信号灯程序          ║" &lt;&lt; endl;
+    cout &lt;&lt; "║  9. 练习4：偶数判断器              ║" &lt;&lt; endl;
+    cout &lt;&lt; "║ 10. 练习5：密码验证器              ║" &lt;&lt; endl;
+    cout &lt;&lt; "║ 11. 🏆 挑战：简易银行取款程序      ║" &lt;&lt; endl;
+    cout &lt;&lt; "║  0. 退出                           ║" &lt;&lt; endl;
+    cout &lt;&lt; "╚══════════════════════════════════════╝" &lt;&lt; endl;
+    cout &lt;&lt; "请输入你的选择：";
+    cin &gt;&gt; choice;
+
+    // 根据用户选择执行不同的函数
+    if (choice == 1) {
+        example1_checkPositive();
+    }
+    if (choice == 2) {
+        example2_trafficLight();
+    }
+    if (choice == 3) {
+        example3_trapWithoutBraces();
+    }
+    if (choice == 4) {
+        example4_amusementPark();
+    }
+    if (choice == 5) {
+        example5_numberComparer();
+    }
+    if (choice == 6) {
+        exercise1_positiveChecker();
+    }
+    if (choice == 7) {
+        exercise2_codeReading();
+    }
+    if (choice == 8) {
+        exercise3_trafficLightSimple();
+    }
+    if (choice == 9) {
+        exercise4_evenChecker();
+    }
+    if (choice == 10) {
+        exercise5_passwordChecker();
+    }
+    if (choice == 11) {
+        challenge_bankWithdrawal();
+    }
+    if (choice == 0) {
+        cout &lt;&lt; "再见！记得多练习if语句哦~" &lt;&lt; endl;
+    }
+
+    cout &lt;&lt; endl;
+    return 0;
+}
+</pre>
+    <p class="hint">本页使用浅色主题与 UTF-8 编码，可直接打印或导出 PDF。</p>
+  </div>
+</body>
+</html>

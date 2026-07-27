@@ -1,0 +1,445 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>lesson30_multi_group_knapsack.cpp</title>
+<style>
+  :root {
+    --bg: #f5f7fa;
+    --panel: #ffffff;
+    --text: #1a1a2e;
+    --muted: #5a6570;
+    --gold: #b8860b;
+    --code-bg: #ffffff;
+    --code-text: #1f2933;
+    --border: #d8dee6;
+    --top-bg: #ffffff;
+    --top-border: #e5e9ef;
+  }
+  * { box-sizing: border-box; }
+  html, body {
+    margin: 0; padding: 0;
+    background: var(--bg);
+    color: var(--text);
+    font-family: -apple-system, BlinkMacSystemFont, "PingFang SC", "Microsoft YaHei", sans-serif;
+    min-height: 100%;
+  }
+  .top {
+    position: sticky; top: 0; z-index: 10;
+    display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between;
+    gap: 10px;
+    padding: 12px 18px;
+    background: var(--top-bg);
+    border-bottom: 1px solid var(--top-border);
+    box-shadow: 0 1px 8px rgba(15, 23, 42, 0.06);
+  }
+  .brand { color: var(--gold); font-weight: 700; font-size: 14px; letter-spacing: 0.04em; }
+  .title { font-size: 15px; font-weight: 600; color: var(--text); max-width: 52vw; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .actions { display: flex; gap: 8px; flex-wrap: wrap; }
+  .btn {
+    appearance: none; border: 1px solid var(--border);
+    background: #fff; color: var(--text);
+    border-radius: 999px; padding: 8px 14px; font-size: 13px; font-weight: 600;
+    text-decoration: none; cursor: pointer;
+  }
+  .btn:hover { background: #f0f3f7; }
+  .btn.gold {
+    background: linear-gradient(135deg, #f0d78c, #d4a853);
+    color: #0a2540; border-color: #e0c06a;
+  }
+  .meta {
+    padding: 10px 18px; color: var(--muted); font-size: 12px;
+    border-bottom: 1px solid var(--border);
+    background: var(--panel);
+  }
+  .wrap { padding: 16px 18px 40px; }
+  pre {
+    margin: 0;
+    background: var(--code-bg);
+    color: var(--code-text);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 18px 20px;
+    overflow: auto;
+    font-family: "SF Mono", "JetBrains Mono", "Fira Code", Consolas, "Courier New", monospace;
+    font-size: 13.5px;
+    line-height: 1.55;
+    white-space: pre;
+    tab-size: 4;
+    box-shadow: 0 2px 12px rgba(15, 23, 42, 0.05);
+  }
+  .hint { margin-top: 12px; color: var(--muted); font-size: 12px; }
+  @media print {
+    html, body { background: #fff !important; color: #000 !important; }
+    .top { position: static; box-shadow: none; border-bottom: 1px solid #ccc; background: #fff !important; }
+    .actions { display: none !important; }
+    .meta { background: #fff !important; border-color: #ddd; color: #333; }
+    .wrap { padding: 0; }
+    pre {
+      background: #fff !important; color: #000 !important;
+      border: 1px solid #bbb; box-shadow: none; border-radius: 0;
+      white-space: pre-wrap; word-break: break-word; font-size: 11pt; line-height: 1.4;
+    }
+    .hint { display: none; }
+    a { color: #000; text-decoration: none; }
+  }
+</style>
+</head>
+<body>
+  <div class="top">
+    <div class="brand">CSP-S 备考 · 配套代码</div>
+    <div class="title">lesson30_multi_group_knapsack.cpp</div>
+    <div class="actions">
+      <a class="btn" href="../lesson30_multi_group_knapsack.cpp" download="lesson30_multi_group_knapsack.cpp">⬇️ 下载源文件</a>
+      <a class="btn gold" href="javascript:history.back()">← 返回课件</a>
+    </div>
+  </div>
+  <div class="meta">编码：UTF-8 · 文件：lesson30_multi_group_knapsack.cpp · 共 341 行 · 浅色主题便于打印</div>
+  <div class="wrap">
+    <pre id="code">/**
+ * lesson30_multi_group_knapsack.cpp
+ * 第30课：多重背包与分组背包
+ *
+ * 包含以下实现：
+ * 1. 多重背包 - 朴素实现 O(V * Σc[i])
+ * 2. 多重背包 - 二进制拆分优化 O(V * Σ log c[i])
+ * 3. 多重背包 - 单调队列优化 O(V * n)
+ * 4. 分组背包 - 标准实现
+ * 5. 真题1：宝物筛选（多重背包模板题）
+ * 6. 真题2：选拔队员（分组背包题）
+ *
+ * 编译：g++ -std=c++17 -O2 lesson30_multi_group_knapsack.cpp -o lesson30
+ * 运行：./lesson30
+ */
+
+#include &lt;bits/stdc++.h&gt;
+using namespace std;
+
+// ============================================================
+// 1. 多重背包 - 朴素实现 O(V * Σc[i])
+// 逐件物品枚举 k 从 0 到 c[i]，逐个更新 dp
+// 仅用于对比, 实际比赛不建议使用
+// ============================================================
+int knapsack_multi_naive(int n, int V, const vector&lt;int&gt;&amp; w,
+                          const vector&lt;int&gt;&amp; v, const vector&lt;int&gt;&amp; c) {
+    vector&lt;int&gt; dp(V + 1, 0);
+    for (int i = 0; i &lt; n; i++) {
+        // 容量逆序 —— 因为本质上是 01 背包（每个 k 件是一个选择）
+        for (int j = V; j &gt;= w[i]; j--) {
+            for (int k = 1; k &lt;= c[i] &amp;&amp; k * w[i] &lt;= j; k++) {
+                dp[j] = max(dp[j], dp[j - k * w[i]] + k * v[i]);
+            }
+        }
+    }
+    return dp[V];
+}
+
+// ============================================================
+// 2. 多重背包 - 二进制拆分优化 O(V * Σ log c[i])
+// 核心：将 c[i] 件拆分为 1, 2, 4, ..., 2^k, r 件打包物品
+// 这些打包物品可以组合出 0~c[i] 之间的任意数量
+// 拆分后转化为 01 背包问题求解
+// ============================================================
+int knapsack_multi_binary(int n, int V, const vector&lt;int&gt;&amp; w,
+                           const vector&lt;int&gt;&amp; v, const vector&lt;int&gt;&amp; c) {
+    vector&lt;int&gt; dp(V + 1, 0);
+
+    for (int i = 0; i &lt; n; i++) {
+        int weight = w[i], value = v[i], cnt = c[i];
+
+        // 可行性剪枝：如果总重量 ≥ V，转化为完全背包
+        if ((long long)cnt * weight &gt;= V) {
+            for (int j = weight; j &lt;= V; j++) {
+                dp[j] = max(dp[j], dp[j - weight] + value);
+            }
+            continue;
+        }
+
+        // 二进制拆分：将 cnt 拆成 1, 2, 4, 8, ..., 2^k, r
+        // k 从 1 开始，每次翻倍，直到超过剩余数量
+        for (int k = 1; k &lt;= cnt; k &lt;&lt;= 1) {
+            // 打包物品：(k * weight, k * value)
+            int pack_w = weight * k;
+            int pack_v = value * k;
+            // 01 背包 —— 容量逆序
+            for (int j = V; j &gt;= pack_w; j--) {
+                dp[j] = max(dp[j], dp[j - pack_w] + pack_v);
+            }
+            cnt -= k; // 减去已拆分的数量
+        }
+        // 处理余数 r
+        if (cnt &gt; 0) {
+            int pack_w = weight * cnt;
+            int pack_v = value * cnt;
+            for (int j = V; j &gt;= pack_w; j--) {
+                dp[j] = max(dp[j], dp[j - pack_w] + pack_v);
+            }
+        }
+    }
+    return dp[V];
+}
+
+// ============================================================
+// 3. 多重背包 - 单调队列优化 O(V * n)
+//
+// 核心思想：
+// 1. 按 j mod w[i] 分组，每组内状态转移只依赖同组前面的状态
+// 2. 每组维护一个单调递减队列，在滑动窗口内求最大值
+//
+// 状态转移：dp[j] = max{ dp[j - k*w] + k*v }  (0 &lt;= k &lt;= c, k*w &lt;= j)
+// 设 j = r + x*w，其中 r = j % w, x = j / w
+// 则 dp[r + x*w] = max_{x-c &lt;= t &lt;= x} { g[r + t*w] - t*v } + x*v
+//
+// g[] 是上一轮 dp 的拷贝，保证物品只被使用一次
+// 候选值 candidate[t] = g[r + t*w] - t*v
+// 单调队列维护 candidate 的递减序列，队首是窗口内最大值
+// ============================================================
+int knapsack_multi_monoqueue(int n, int V, const vector&lt;int&gt;&amp; w,
+                              const vector&lt;int&gt;&amp; v, const vector&lt;int&gt;&amp; c) {
+    vector&lt;int&gt; dp(V + 1, 0);
+    vector&lt;int&gt; g(V + 1, 0); // 保存上一轮 dp 状态
+
+    for (int i = 0; i &lt; n; i++) {
+        int weight = w[i], value = v[i], cnt = c[i];
+
+        // 保存上一轮状态
+        g = dp;
+
+        // 按余数 r 分组 (0 &lt;= r &lt; weight)
+        for (int r = 0; r &lt; weight; r++) {
+            deque&lt;int&gt; q; // 单调递减队列，存储下标 x (即 j/w)
+            // 遍历同余序列: r, r+w, r+2w, ..., r+x*w &lt;= V
+            for (int x = 0; r + x * weight &lt;= V; x++) {
+                int j = r + x * weight; // 当前容量
+
+                // 计算候选值: candidate[t] = g[r + t*w] - t * value
+                // 对于当前 x，candidate[x] = g[j] - x * value
+                int cur_candidate = g[j] - x * value;
+
+                // 维护队列单调递减：弹出队尾所有 ≤ cur_candidate 的元素
+                // 因为它们永远不会成为窗口内的最大值
+                while (!q.empty()) {
+                    int t_back = q.back();
+                    int back_candidate = g[r + t_back * weight] - t_back * value;
+                    if (back_candidate &lt;= cur_candidate) {
+                        q.pop_back();
+                    } else {
+                        break;
+                    }
+                }
+                q.push_back(x);
+
+                // 弹出窗口外的元素：窗口范围 [x - cnt, x]
+                while (!q.empty() &amp;&amp; q.front() &lt; x - cnt) {
+                    q.pop_front();
+                }
+
+                // 队首是窗口内最大 candidate 对应的下标
+                int best_t = q.front();
+                // dp[j] = max_candidate + x * value
+                //        = (g[r + best_t*w] - best_t*value) + x*value
+                dp[j] = g[r + best_t * weight] + (x - best_t) * value;
+            }
+        }
+    }
+    return dp[V];
+}
+
+// ============================================================
+// 4. 分组背包 - 标准实现
+// 问题：有 n 组物品，每组最多选一件，求最大价值
+//
+// 循环顺序说明：
+//   外层：枚举组 i
+//   中层：逆序枚举容量 j = V .. 0
+//   内层：枚举组内物品 k
+//
+// 为什么中层必须逆序？
+//   如果正序，当前组物品 k 更新 dp[j] 后，
+//   更大的 j' 处可能再次使用同组物品（因为 dp[j' - w[k']] 已含物品 k），
+//   导致同组选多件，违反约束。
+//   逆序保证每个 dp[j] 只用上一组的状态来更新。
+// ============================================================
+int knapsack_group(int n, int V,
+                    const vector&lt;vector&lt;pair&lt;int, int&gt;&gt;&gt;&amp; groups) {
+    // groups[i] = vector of (weight, value) for group i
+    vector&lt;int&gt; dp(V + 1, 0);
+
+    for (int i = 0; i &lt; n; i++) {                     // 外层：枚举组
+        for (int j = V; j &gt;= 0; j--) {                // 中层：容量逆序
+            for (auto&amp; item : groups[i]) {            // 内层：枚举组内物品
+                int w = item.first, v = item.second;
+                if (j &gt;= w) {
+                    dp[j] = max(dp[j], dp[j - w] + v);
+                }
+            }
+        }
+    }
+    return dp[V];
+}
+
+// ============================================================
+// 5. 真题1：宝物筛选（多重背包模板题 —— 二进制拆分版本）
+// 题目来源：Luogu P1776
+// N 种宝物，容量 V，每种有重量 w、价值 v、数量 c
+// 数据范围：N &lt;= 100, V &lt;= 40000, c &lt;= 100
+// ============================================================
+void solve_treasure_filter() {
+    cout &lt;&lt; "========== 真题1：宝物筛选（多重背包） ==========" &lt;&lt; endl;
+    int n, V;
+    cin &gt;&gt; n &gt;&gt; V;
+    vector&lt;int&gt; w(n), v(n), c(n);
+    for (int i = 0; i &lt; n; i++) {
+        cin &gt;&gt; v[i] &gt;&gt; w[i] &gt;&gt; c[i]; // 注意输入顺序：价值 重量 数量
+    }
+    int ans = knapsack_multi_binary(n, V, w, v, c);
+    cout &lt;&lt; ans &lt;&lt; endl;
+}
+
+// ============================================================
+// 6. 真题2：选拔队员（分组背包题）
+// N 个班级，预算 V，每班若干候选人（费用 w, 能力 v），每班最多选1人
+// ============================================================
+void solve_team_selection() {
+    cout &lt;&lt; "========== 真题2：选拔队员（分组背包） ==========" &lt;&lt; endl;
+    int n, V;
+    cin &gt;&gt; n &gt;&gt; V;
+    vector&lt;vector&lt;pair&lt;int, int&gt;&gt;&gt; groups(n);
+    for (int i = 0; i &lt; n; i++) {
+        int m;
+        cin &gt;&gt; m;
+        groups[i].resize(m);
+        for (int j = 0; j &lt; m; j++) {
+            int w, v;
+            cin &gt;&gt; w &gt;&gt; v;
+            groups[i][j] = {w, v};
+        }
+    }
+    int ans = knapsack_group(n, V, groups);
+    cout &lt;&lt; ans &lt;&lt; endl;
+}
+
+// ============================================================
+// 7. 自测函数：用随机数据验证三种多重背包实现的一致性
+// ============================================================
+void self_test() {
+    cout &lt;&lt; "========== 自测：验证三种多重背包实现 ==========" &lt;&lt; endl;
+
+    // 小数据随机测试
+    srand(time(0));
+    int test_count = 100;
+    bool all_pass = true;
+
+    for (int t = 0; t &lt; test_count; t++) {
+        int n = rand() % 5 + 1;       // 1~5 种物品
+        int V = rand() % 50 + 1;      // 容量 1~50
+        vector&lt;int&gt; w(n), v(n), c(n);
+        for (int i = 0; i &lt; n; i++) {
+            w[i] = rand() % 10 + 1;   // 重量 1~10
+            v[i] = rand() % 20 + 1;   // 价值 1~20
+            c[i] = rand() % 5 + 1;    // 数量 1~5
+        }
+
+        int ans1 = knapsack_multi_naive(n, V, w, v, c);
+        int ans2 = knapsack_multi_binary(n, V, w, v, c);
+        int ans3 = knapsack_multi_monoqueue(n, V, w, v, c);
+
+        if (ans1 != ans2 || ans2 != ans3) {
+            cout &lt;&lt; "测试 " &lt;&lt; t + 1 &lt;&lt; " 失败!" &lt;&lt; endl;
+            cout &lt;&lt; "  n=" &lt;&lt; n &lt;&lt; " V=" &lt;&lt; V &lt;&lt; endl;
+            cout &lt;&lt; "  朴素=" &lt;&lt; ans1 &lt;&lt; " 二进制=" &lt;&lt; ans2
+                 &lt;&lt; " 单调队列=" &lt;&lt; ans3 &lt;&lt; endl;
+            all_pass = false;
+            break;
+        }
+    }
+
+    if (all_pass) {
+        cout &lt;&lt; "全部 " &lt;&lt; test_count &lt;&lt; " 组随机测试通过！" &lt;&lt; endl;
+    }
+}
+
+// ============================================================
+// 8. 演示：小规模手动测试，打印 dp 过程
+// ============================================================
+void demo() {
+    cout &lt;&lt; "\n========== 演示：多重背包各实现详细输出 ==========" &lt;&lt; endl;
+
+    int n = 3, V = 15;
+    vector&lt;int&gt; w = {3, 4, 5};
+    vector&lt;int&gt; v = {2, 3, 4};
+    vector&lt;int&gt; c = {4, 3, 2};
+
+    cout &lt;&lt; "物品数量 n = " &lt;&lt; n &lt;&lt; ", 容量 V = " &lt;&lt; V &lt;&lt; endl;
+    for (int i = 0; i &lt; n; i++) {
+        cout &lt;&lt; "  物品" &lt;&lt; i + 1 &lt;&lt; ": 重量=" &lt;&lt; w[i]
+             &lt;&lt; ", 价值=" &lt;&lt; v[i] &lt;&lt; ", 数量=" &lt;&lt; c[i] &lt;&lt; endl;
+    }
+
+    cout &lt;&lt; "\n朴素实现结果:    " &lt;&lt; knapsack_multi_naive(n, V, w, v, c) &lt;&lt; endl;
+    cout &lt;&lt; "二进制拆分结果:  " &lt;&lt; knapsack_multi_binary(n, V, w, v, c) &lt;&lt; endl;
+    cout &lt;&lt; "单调队列结果:    " &lt;&lt; knapsack_multi_monoqueue(n, V, w, v, c) &lt;&lt; endl;
+
+    cout &lt;&lt; "\n分组背包演示：" &lt;&lt; endl;
+    // 2组物品：每组2件
+    // 组0: (w=2,v=3), (w=3,v=5)
+    // 组1: (w=4,v=6), (w=5,v=9)
+    vector&lt;vector&lt;pair&lt;int, int&gt;&gt;&gt; groups = {
+        {{2, 3}, {3, 5}},
+        {{4, 6}, {5, 9}}
+    };
+    int group_ans = knapsack_group(2, 10, groups);
+    cout &lt;&lt; "  2组物品, 容量10, 最大价值 = " &lt;&lt; group_ans &lt;&lt; endl;
+    // 预期：组0选(3,5) + 组1选(5,9) = 14，或组0选(2,3)+组1选(5,9)=12
+}
+
+// ============================================================
+// main 函数：提供交互式菜单
+// ============================================================
+int main() {
+    ios::sync_with_stdio(false);
+    cin.tie(nullptr);
+
+    cout &lt;&lt; "==================================================" &lt;&lt; endl;
+    cout &lt;&lt; "  第30课：多重背包与分组背包 —— 代码演示" &lt;&lt; endl;
+    cout &lt;&lt; "==================================================" &lt;&lt; endl;
+    cout &lt;&lt; "请选择功能：" &lt;&lt; endl;
+    cout &lt;&lt; "  1 - 自测（随机数据验证三种多重背包实现）" &lt;&lt; endl;
+    cout &lt;&lt; "  2 - 演示（小规模手动测试）" &lt;&lt; endl;
+    cout &lt;&lt; "  3 - 真题1：宝物筛选（输入测试数据）" &lt;&lt; endl;
+    cout &lt;&lt; "  4 - 真题2：选拔队员（输入测试数据）" &lt;&lt; endl;
+    cout &lt;&lt; "请输入选项 (1-4): ";
+
+    int choice;
+    cin &gt;&gt; choice;
+
+    switch (choice) {
+        case 1:
+            self_test();
+            break;
+        case 2:
+            demo();
+            break;
+        case 3:
+            cout &lt;&lt; "请输入数据（格式：N V，然后每行 v w c）：" &lt;&lt; endl;
+            solve_treasure_filter();
+            break;
+        case 4:
+            cout &lt;&lt; "请输入数据（格式：N V，然后每组 m 及 m行 w v）：" &lt;&lt; endl;
+            solve_team_selection();
+            break;
+        default:
+            cout &lt;&lt; "无效选项，执行默认自测和演示。" &lt;&lt; endl;
+            self_test();
+            demo();
+            break;
+    }
+
+    return 0;
+}
+</pre>
+    <p class="hint">本页使用浅色主题与 UTF-8 编码，可直接打印或导出 PDF。</p>
+  </div>
+</body>
+</html>

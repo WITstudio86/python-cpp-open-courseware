@@ -1,0 +1,536 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>lesson30_二维数组遍历.cpp</title>
+<style>
+  :root {
+    --bg: #f5f7fa;
+    --panel: #ffffff;
+    --text: #1a1a2e;
+    --muted: #5a6570;
+    --gold: #b8860b;
+    --code-bg: #ffffff;
+    --code-text: #1f2933;
+    --border: #d8dee6;
+    --top-bg: #ffffff;
+    --top-border: #e5e9ef;
+  }
+  * { box-sizing: border-box; }
+  html, body {
+    margin: 0; padding: 0;
+    background: var(--bg);
+    color: var(--text);
+    font-family: -apple-system, BlinkMacSystemFont, "PingFang SC", "Microsoft YaHei", sans-serif;
+    min-height: 100%;
+  }
+  .top {
+    position: sticky; top: 0; z-index: 10;
+    display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between;
+    gap: 10px;
+    padding: 12px 18px;
+    background: var(--top-bg);
+    border-bottom: 1px solid var(--top-border);
+    box-shadow: 0 1px 8px rgba(15, 23, 42, 0.06);
+  }
+  .brand { color: var(--gold); font-weight: 700; font-size: 14px; letter-spacing: 0.04em; }
+  .title { font-size: 15px; font-weight: 600; color: var(--text); max-width: 52vw; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .actions { display: flex; gap: 8px; flex-wrap: wrap; }
+  .btn {
+    appearance: none; border: 1px solid var(--border);
+    background: #fff; color: var(--text);
+    border-radius: 999px; padding: 8px 14px; font-size: 13px; font-weight: 600;
+    text-decoration: none; cursor: pointer;
+  }
+  .btn:hover { background: #f0f3f7; }
+  .btn.gold {
+    background: linear-gradient(135deg, #f0d78c, #d4a853);
+    color: #0a2540; border-color: #e0c06a;
+  }
+  .meta {
+    padding: 10px 18px; color: var(--muted); font-size: 12px;
+    border-bottom: 1px solid var(--border);
+    background: var(--panel);
+  }
+  .wrap { padding: 16px 18px 40px; }
+  pre {
+    margin: 0;
+    background: var(--code-bg);
+    color: var(--code-text);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 18px 20px;
+    overflow: auto;
+    font-family: "SF Mono", "JetBrains Mono", "Fira Code", Consolas, "Courier New", monospace;
+    font-size: 13.5px;
+    line-height: 1.55;
+    white-space: pre;
+    tab-size: 4;
+    box-shadow: 0 2px 12px rgba(15, 23, 42, 0.05);
+  }
+  .hint { margin-top: 12px; color: var(--muted); font-size: 12px; }
+  @media print {
+    html, body { background: #fff !important; color: #000 !important; }
+    .top { position: static; box-shadow: none; border-bottom: 1px solid #ccc; background: #fff !important; }
+    .actions { display: none !important; }
+    .meta { background: #fff !important; border-color: #ddd; color: #333; }
+    .wrap { padding: 0; }
+    pre {
+      background: #fff !important; color: #000 !important;
+      border: 1px solid #bbb; box-shadow: none; border-radius: 0;
+      white-space: pre-wrap; word-break: break-word; font-size: 11pt; line-height: 1.4;
+    }
+    .hint { display: none; }
+    a { color: #000; text-decoration: none; }
+  }
+</style>
+</head>
+<body>
+  <div class="top">
+    <div class="brand">C++ 趣味学习 · 配套代码</div>
+    <div class="title">lesson30_二维数组遍历.cpp</div>
+    <div class="actions">
+      <a class="btn" href="../lesson30_二维数组遍历.cpp" download="lesson30_二维数组遍历.cpp">⬇️ 下载源文件</a>
+      <a class="btn gold" href="javascript:history.back()">← 返回课件</a>
+    </div>
+  </div>
+  <div class="meta">编码：UTF-8 · 文件：lesson30_二维数组遍历.cpp · 共 432 行 · 浅色主题便于打印</div>
+  <div class="wrap">
+    <pre id="code">/*
+ * ==========================================
+ *  第30课：矩阵总动员——二维数组遍历
+ *  知识点：嵌套循环遍历二维数组、行和、列和
+ *  项目：矩阵行列表
+ *  C++趣味学习系列
+ * ==========================================
+ */
+
+#include &lt;iostream&gt;
+#include &lt;iomanip&gt;
+#include &lt;string&gt;
+using namespace std;
+
+int main() {
+    // =====================================
+    // 示例1：基本嵌套循环遍历二维数组
+    // =====================================
+    cout &lt;&lt; "========== 示例1：嵌套循环遍历二维数组 ==========" &lt;&lt; endl;
+
+    int grid[3][4] = {
+        {1,  2,  3,  4},
+        {5,  6,  7,  8},
+        {9, 10, 11, 12}
+    };
+
+    cout &lt;&lt; "使用嵌套循环遍历 3×4 的二维数组：" &lt;&lt; endl;
+    cout &lt;&lt; "执行顺序：外层 i=0 → 内层 j=0,1,2,3 → 外层 i=1 → 内层 j=0,1,2,3 → ..." &lt;&lt; endl;
+    cout &lt;&lt; endl;
+
+    // 逐行遍历
+    for (int i = 0; i &lt; 3; i++) {
+        for (int j = 0; j &lt; 4; j++) {
+            cout &lt;&lt; "grid[" &lt;&lt; i &lt;&lt; "][" &lt;&lt; j &lt;&lt; "] = " &lt;&lt; setw(2) &lt;&lt; grid[i][j] &lt;&lt; "  ";
+        }
+        cout &lt;&lt; endl;   // 每行结束后换行
+    }
+    cout &lt;&lt; endl;
+
+    // 逐列遍历演示
+    cout &lt;&lt; "--- 逐列遍历（了解即可） ---" &lt;&lt; endl;
+    for (int j = 0; j &lt; 4; j++) {
+        for (int i = 0; i &lt; 3; i++) {
+            cout &lt;&lt; grid[i][j] &lt;&lt; " ";
+        }
+        cout &lt;&lt; "(第" &lt;&lt; j + 1 &lt;&lt; "列元素)" &lt;&lt; endl;
+    }
+    cout &lt;&lt; endl;
+
+    // =====================================
+    // 示例2：计算行和与列和
+    // =====================================
+    cout &lt;&lt; "========== 示例2：计算行和与列和 ==========" &lt;&lt; endl;
+
+    int matrix[3][4] = {
+        {12, 25,  8, 19},
+        {33,  7, 41, 15},
+        {22, 18,  5, 30}
+    };
+
+    const int ROWS = 3;
+    const int COLS = 4;
+
+    // 显示矩阵
+    cout &lt;&lt; "原始矩阵：" &lt;&lt; endl;
+    for (int i = 0; i &lt; ROWS; i++) {
+        cout &lt;&lt; "  ";
+        for (int j = 0; j &lt; COLS; j++) {
+            cout &lt;&lt; setw(4) &lt;&lt; matrix[i][j];
+        }
+        cout &lt;&lt; endl;
+    }
+    cout &lt;&lt; endl;
+
+    // 计算每行的和
+    cout &lt;&lt; "--- 行和 ---" &lt;&lt; endl;
+    int rowSums[ROWS];
+    for (int i = 0; i &lt; ROWS; i++) {
+        rowSums[i] = 0;
+        for (int j = 0; j &lt; COLS; j++) {
+            rowSums[i] += matrix[i][j];
+        }
+        cout &lt;&lt; "第" &lt;&lt; i + 1 &lt;&lt; "行: ";
+        for (int j = 0; j &lt; COLS; j++) {
+            cout &lt;&lt; matrix[i][j];
+            if (j &lt; COLS - 1) cout &lt;&lt; " + ";
+        }
+        cout &lt;&lt; " = " &lt;&lt; rowSums[i] &lt;&lt; endl;
+    }
+    cout &lt;&lt; endl;
+
+    // 计算每列的和
+    cout &lt;&lt; "--- 列和 ---" &lt;&lt; endl;
+    int colSums[COLS];
+    for (int j = 0; j &lt; COLS; j++) {
+        colSums[j] = 0;
+        for (int i = 0; i &lt; ROWS; i++) {
+            colSums[j] += matrix[i][j];
+        }
+        cout &lt;&lt; "第" &lt;&lt; j + 1 &lt;&lt; "列: ";
+        for (int i = 0; i &lt; ROWS; i++) {
+            cout &lt;&lt; matrix[i][j];
+            if (i &lt; ROWS - 1) cout &lt;&lt; " + ";
+        }
+        cout &lt;&lt; " = " &lt;&lt; colSums[j] &lt;&lt; endl;
+    }
+    cout &lt;&lt; endl;
+
+    // 计算总和
+    int grandTotal = 0;
+    int elementCount = 0;
+    for (int i = 0; i &lt; ROWS; i++) {
+        for (int j = 0; j &lt; COLS; j++) {
+            grandTotal += matrix[i][j];
+            elementCount++;
+        }
+    }
+    cout &lt;&lt; "--- 总和与平均值 ---" &lt;&lt; endl;
+    cout &lt;&lt; "总和 = " &lt;&lt; grandTotal &lt;&lt; endl;
+    cout &lt;&lt; "元素个数 = " &lt;&lt; elementCount &lt;&lt; " (行数×列数 = " &lt;&lt; ROWS &lt;&lt; "×" &lt;&lt; COLS &lt;&lt; " = " &lt;&lt; ROWS * COLS &lt;&lt; ")" &lt;&lt; endl;
+    cout &lt;&lt; "平均值 = " &lt;&lt; fixed &lt;&lt; setprecision(2) &lt;&lt; grandTotal * 1.0 / elementCount &lt;&lt; endl;
+    cout &lt;&lt; endl;
+
+    // =====================================
+    // 示例3：完整矩阵行列表（带格式化输出）
+    // =====================================
+    cout &lt;&lt; "========== 示例3：矩阵行列表（完整版） ==========" &lt;&lt; endl;
+
+    // 一个5×5的矩阵
+    int data[5][5] = {
+        { 8, 15,  3, 22,  7},
+        {14,  6, 19, 11, 25},
+        { 2, 18,  9, 31, 12},
+        {20, 27,  5, 16, 10},
+        {13,  4, 24, 17, 21}
+    };
+
+    const int SIZE = 5;
+
+    // 计算每行的和
+    int dataRowSums[SIZE];
+    for (int i = 0; i &lt; SIZE; i++) {
+        dataRowSums[i] = 0;
+        for (int j = 0; j &lt; SIZE; j++) {
+            dataRowSums[i] += data[i][j];
+        }
+    }
+
+    // 计算每列的和
+    int dataColSums[SIZE];
+    for (int j = 0; j &lt; SIZE; j++) {
+        dataColSums[j] = 0;
+        for (int i = 0; i &lt; SIZE; i++) {
+            dataColSums[j] += data[i][j];
+        }
+    }
+
+    // 计算总和
+    int dataTotal = 0;
+    for (int i = 0; i &lt; SIZE; i++) {
+        dataTotal += dataRowSums[i];
+    }
+
+    // 格式化输出矩阵行列表
+    cout &lt;&lt; "╔══════════════════════════════════════════════════════╗" &lt;&lt; endl;
+    cout &lt;&lt; "║                   矩阵行列表                        ║" &lt;&lt; endl;
+    cout &lt;&lt; "╠═════════╦═════════╦═════════╦═════════╦═════════╦═════════╣" &lt;&lt; endl;
+    cout &lt;&lt; "║         ║  列 1   ║  列 2   ║  列 3   ║  列 4   ║  列 5   ║  行 和  ║" &lt;&lt; endl;
+    cout &lt;&lt; "╠═════════╬═════════╬═════════╬═════════╬═════════╬═════════╬═════════╣" &lt;&lt; endl;
+    for (int i = 0; i &lt; SIZE; i++) {
+        cout &lt;&lt; "║ 行 " &lt;&lt; i + 1 &lt;&lt; "   ║";
+        for (int j = 0; j &lt; SIZE; j++) {
+            cout &lt;&lt; "  " &lt;&lt; setw(4) &lt;&lt; data[i][j] &lt;&lt; " ║";
+        }
+        cout &lt;&lt; "  " &lt;&lt; setw(4) &lt;&lt; dataRowSums[i] &lt;&lt; " ║" &lt;&lt; endl;
+        if (i &lt; SIZE - 1) {
+            cout &lt;&lt; "╠═════════╬═════════╬═════════╬═════════╬═════════╬═════════╬═════════╣" &lt;&lt; endl;
+        }
+    }
+    cout &lt;&lt; "╠═════════╬═════════╬═════════╬═════════╬═════════╬═════════╬═════════╣" &lt;&lt; endl;
+    cout &lt;&lt; "║  列 和  ║";
+    for (int j = 0; j &lt; SIZE; j++) {
+        cout &lt;&lt; "  " &lt;&lt; setw(4) &lt;&lt; dataColSums[j] &lt;&lt; " ║";
+    }
+    cout &lt;&lt; "  " &lt;&lt; setw(4) &lt;&lt; dataTotal &lt;&lt; " ║" &lt;&lt; endl;
+    cout &lt;&lt; "╚═════════╩═════════╩═════════╩═════════╩═════════╩═════════╩═════════╝" &lt;&lt; endl;
+    cout &lt;&lt; endl;
+
+    // 找出和最大的行
+    int maxRowSum = dataRowSums[0];
+    int maxRowIdx = 0;
+    for (int i = 1; i &lt; SIZE; i++) {
+        if (dataRowSums[i] &gt; maxRowSum) {
+            maxRowSum = dataRowSums[i];
+            maxRowIdx = i;
+        }
+    }
+    cout &lt;&lt; "行和最大：第" &lt;&lt; maxRowIdx + 1 &lt;&lt; "行（和 = " &lt;&lt; maxRowSum &lt;&lt; "）" &lt;&lt; endl;
+
+    // 找出和最小的列
+    int minColSum = dataColSums[0];
+    int minColIdx = 0;
+    for (int j = 1; j &lt; SIZE; j++) {
+        if (dataColSums[j] &lt; minColSum) {
+            minColSum = dataColSums[j];
+            minColIdx = j;
+        }
+    }
+    cout &lt;&lt; "列和最小：第" &lt;&lt; minColIdx + 1 &lt;&lt; "列（和 = " &lt;&lt; minColSum &lt;&lt; "）" &lt;&lt; endl;
+    cout &lt;&lt; endl;
+
+    // 成绩统计表示例
+    cout &lt;&lt; "--- 附加：成绩统计表 ---" &lt;&lt; endl;
+    string students[5] = {"小明", "小红", "小刚", "小丽", "小华"};
+    int scores[5][3] = {
+        {95, 87, 91},
+        {78, 92, 85},
+        {88, 76, 90},
+        {92, 89, 94},
+        {80, 85, 78}
+    };
+    string subjects[3] = {"语文", "数学", "英语"};
+
+    cout &lt;&lt; setw(6) &lt;&lt; "姓名";
+    for (int k = 0; k &lt; 3; k++) {
+        cout &lt;&lt; setw(8) &lt;&lt; subjects[k];
+    }
+    cout &lt;&lt; setw(8) &lt;&lt; "总分" &lt;&lt; setw(8) &lt;&lt; "平均分" &lt;&lt; endl;
+    cout &lt;&lt; string(46, '-') &lt;&lt; endl;
+
+    for (int i = 0; i &lt; 5; i++) {
+        cout &lt;&lt; setw(6) &lt;&lt; students[i];
+        int stuTotal = 0;
+        for (int j = 0; j &lt; 3; j++) {
+            cout &lt;&lt; setw(8) &lt;&lt; scores[i][j];
+            stuTotal += scores[i][j];
+        }
+        cout &lt;&lt; setw(8) &lt;&lt; stuTotal;
+        cout &lt;&lt; setw(8) &lt;&lt; fixed &lt;&lt; setprecision(1) &lt;&lt; stuTotal / 3.0 &lt;&lt; endl;
+    }
+
+    cout &lt;&lt; string(46, '-') &lt;&lt; endl;
+    // 各科平均
+    cout &lt;&lt; setw(6) &lt;&lt; "全班";
+    for (int j = 0; j &lt; 3; j++) {
+        double subAvg = 0;
+        for (int i = 0; i &lt; 5; i++) {
+            subAvg += scores[i][j];
+        }
+        subAvg /= 5.0;
+        cout &lt;&lt; setw(8) &lt;&lt; fixed &lt;&lt; setprecision(1) &lt;&lt; subAvg;
+    }
+    cout &lt;&lt; endl;
+    cout &lt;&lt; endl;
+
+    // =====================================
+    // 练习1 参考答案：对角线元素之和
+    // =====================================
+    cout &lt;&lt; "========== 练习1答案：对角线元素之和 ==========" &lt;&lt; endl;
+    int mat[3][3] = {{2, 5, 8}, {3, 7, 1}, {6, 4, 9}};
+    int diagSum = 0;
+    for (int i = 0; i &lt; 3; i++) {
+        diagSum += mat[i][i];   // 对角线元素：行下标 == 列下标
+    }
+    cout &lt;&lt; "矩阵：" &lt;&lt; endl;
+    for (int i = 0; i &lt; 3; i++) {
+        cout &lt;&lt; "  ";
+        for (int j = 0; j &lt; 3; j++) {
+            cout &lt;&lt; setw(3) &lt;&lt; mat[i][j];
+        }
+        cout &lt;&lt; endl;
+    }
+    cout &lt;&lt; "主对角线元素：mat[0][0]=" &lt;&lt; mat[0][0]
+         &lt;&lt; ", mat[1][1]=" &lt;&lt; mat[1][1]
+         &lt;&lt; ", mat[2][2]=" &lt;&lt; mat[2][2] &lt;&lt; endl;
+    cout &lt;&lt; "对角线元素之和 = " &lt;&lt; diagSum &lt;&lt; " （" &lt;&lt; mat[0][0]
+         &lt;&lt; " + " &lt;&lt; mat[1][1] &lt;&lt; " + " &lt;&lt; mat[2][2] &lt;&lt; " = " &lt;&lt; diagSum &lt;&lt; "）" &lt;&lt; endl;
+    cout &lt;&lt; endl;
+
+    // 附加：副对角线（从右上到左下）
+    int antiDiagSum = 0;
+    for (int i = 0; i &lt; 3; i++) {
+        antiDiagSum += mat[i][2 - i];   // 副对角线：行下标 + 列下标 = N - 1
+    }
+    cout &lt;&lt; "副对角线元素：mat[0][2]=" &lt;&lt; mat[0][2]
+         &lt;&lt; ", mat[1][1]=" &lt;&lt; mat[1][1]
+         &lt;&lt; ", mat[2][0]=" &lt;&lt; mat[2][0] &lt;&lt; endl;
+    cout &lt;&lt; "副对角线元素之和 = " &lt;&lt; antiDiagSum &lt;&lt; endl;
+    cout &lt;&lt; endl;
+
+    // =====================================
+    // 练习2 参考答案（纠错）
+    // =====================================
+    cout &lt;&lt; "========== 练习2答案：纠错小侦探 ==========" &lt;&lt; endl;
+    cout &lt;&lt; "原代码错误分析：" &lt;&lt; endl;
+    cout &lt;&lt; "  错误1: for (int i = 0; i &lt;= 2; i++) → 应改为 i &lt; 2" &lt;&lt; endl;
+    cout &lt;&lt; "        data[2][3]只有2行(0~1)，i&lt;=2会导致越界！" &lt;&lt; endl;
+    cout &lt;&lt; "  错误2: int sum; → 应改为 int sum = 0;" &lt;&lt; endl;
+    cout &lt;&lt; "        未初始化的局部变量值是不确定的！" &lt;&lt; endl;
+    cout &lt;&lt; "  错误3: sum += data[j][i]; → 应改为 sum += data[i][j];" &lt;&lt; endl;
+    cout &lt;&lt; "        数组名后面第一个下标是行，第二个是列！data[j][i]顺序反了！" &lt;&lt; endl;
+    cout &lt;&lt; endl;
+
+    // 正确版本
+    cout &lt;&lt; "--- 正确代码演示 ---" &lt;&lt; endl;
+    int data2[2][3] = {{1, 2, 3}, {4, 5, 6}};
+    for (int i = 0; i &lt; 2; i++) {
+        int sum = 0;                       // ✅ 初始化
+        for (int j = 0; j &lt; 3; j++) {
+            sum += data2[i][j];           // ✅ 正确的下标顺序：data[行][列]
+        }
+        cout &lt;&lt; "第" &lt;&lt; i + 1 &lt;&lt; "行和：" &lt;&lt; sum &lt;&lt; endl;
+    }
+    cout &lt;&lt; endl;
+
+    // =====================================
+    // 练习3 参考答案：我的成绩单
+    // =====================================
+    cout &lt;&lt; "========== 练习3答案：我的成绩单 ==========" &lt;&lt; endl;
+
+    // 4门课，每门课3次测验成绩
+    string courses[4] = {"编程", "数学", "物理", "英语"};
+    int myScores[4][3] = {
+        {92, 88, 95},    // 编程：3次测验
+        {85, 90, 87},    // 数学
+        {78, 82, 80},    // 物理
+        {91, 89, 94}     // 英语
+    };
+
+    cout &lt;&lt; "╔══════════════════════════════════════════╗" &lt;&lt; endl;
+    cout &lt;&lt; "║           我的成绩单                     ║" &lt;&lt; endl;
+    cout &lt;&lt; "╠════════╦════════╦════════╦════════╦════════╣" &lt;&lt; endl;
+    cout &lt;&lt; "║  科目  ║ 测验1  ║ 测验2  ║ 测验3  ║ 平均分 ║" &lt;&lt; endl;
+    cout &lt;&lt; "╠════════╬════════╬════════╬════════╬════════╣" &lt;&lt; endl;
+
+    double bestAvg = 0;
+    int bestIdx = 0;
+
+    for (int i = 0; i &lt; 4; i++) {
+        cout &lt;&lt; "║ " &lt;&lt; setw(6) &lt;&lt; courses[i] &lt;&lt; " ║";
+        int courseTotal = 0;
+        for (int j = 0; j &lt; 3; j++) {
+            cout &lt;&lt; "  " &lt;&lt; setw(4) &lt;&lt; myScores[i][j] &lt;&lt; " ║";
+            courseTotal += myScores[i][j];
+        }
+        double avg = courseTotal / 3.0;
+        cout &lt;&lt; "  " &lt;&lt; setw(4) &lt;&lt; fixed &lt;&lt; setprecision(1) &lt;&lt; avg &lt;&lt; " ║" &lt;&lt; endl;
+
+        if (avg &gt; bestAvg) {
+            bestAvg = avg;
+            bestIdx = i;
+        }
+
+        if (i &lt; 3) {
+            cout &lt;&lt; "╠════════╬════════╬════════╬════════╬════════╣" &lt;&lt; endl;
+        }
+    }
+    cout &lt;&lt; "╚════════╩════════╩════════╩════════╩════════╝" &lt;&lt; endl;
+    cout &lt;&lt; endl;
+
+    cout &lt;&lt; "最高平均分的科目：" &lt;&lt; courses[bestIdx]
+         &lt;&lt; "（平均分 = " &lt;&lt; fixed &lt;&lt; setprecision(1) &lt;&lt; bestAvg &lt;&lt; "）" &lt;&lt; endl;
+    cout &lt;&lt; endl;
+
+    // =====================================
+    // 挑战任务参考答案：矩阵行列表完整版
+    // =====================================
+    cout &lt;&lt; "========== 挑战任务答案：矩阵行列表 ==========" &lt;&lt; endl;
+
+    int challengeMat[5][5] = {
+        { 3,  7,  2,  9,  1},
+        { 5,  4,  8,  3,  6},
+        { 1,  9,  5,  2,  7},
+        { 8,  3,  6,  4,  5},
+        { 2,  5,  7,  8,  9}
+    };
+
+    const int N = 5;
+    int chRowSums[N] = {0};
+    int chColSums[N] = {0};
+    int chTotal = 0;
+
+    // 输出表头
+    cout &lt;&lt; "       列1  列2  列3  列4  列5  行和" &lt;&lt; endl;
+    cout &lt;&lt; "     +-------------------------------+------+" &lt;&lt; endl;
+
+    for (int i = 0; i &lt; N; i++) {
+        cout &lt;&lt; "行" &lt;&lt; i + 1 &lt;&lt; "   |";
+        for (int j = 0; j &lt; N; j++) {
+            cout &lt;&lt; setw(4) &lt;&lt; challengeMat[i][j] &lt;&lt; " ";
+            chRowSums[i] += challengeMat[i][j];
+            chColSums[j] += challengeMat[i][j];
+        }
+        chTotal += chRowSums[i];
+        cout &lt;&lt; " | " &lt;&lt; setw(3) &lt;&lt; chRowSums[i] &lt;&lt; endl;
+    }
+
+    cout &lt;&lt; "     +-------------------------------+------+" &lt;&lt; endl;
+    cout &lt;&lt; "列和  |";
+    for (int j = 0; j &lt; N; j++) {
+        cout &lt;&lt; setw(4) &lt;&lt; chColSums[j] &lt;&lt; " ";
+    }
+    cout &lt;&lt; " | " &lt;&lt; setw(3) &lt;&lt; chTotal &lt;&lt; endl;
+    cout &lt;&lt; "     +-------------------------------+------+" &lt;&lt; endl;
+    cout &lt;&lt; endl;
+
+    // 找最大行和与最小列和
+    int chMaxRowSum = chRowSums[0], chMaxRowIdx = 0;
+    int chMinColSum = chColSums[0], chMinColIdx = 0;
+    for (int k = 1; k &lt; N; k++) {
+        if (chRowSums[k] &gt; chMaxRowSum) {
+            chMaxRowSum = chRowSums[k];
+            chMaxRowIdx = k;
+        }
+        if (chColSums[k] &lt; chMinColSum) {
+            chMinColSum = chColSums[k];
+            chMinColIdx = k;
+        }
+    }
+    cout &lt;&lt; "行和最大：第" &lt;&lt; chMaxRowIdx + 1 &lt;&lt; "行（" &lt;&lt; chMaxRowSum &lt;&lt; "）" &lt;&lt; endl;
+    cout &lt;&lt; "列和最小：第" &lt;&lt; chMinColIdx + 1 &lt;&lt; "列（" &lt;&lt; chMinColSum &lt;&lt; "）" &lt;&lt; endl;
+    cout &lt;&lt; endl;
+
+    // =====================================
+    // 程序结束
+    // =====================================
+    cout &lt;&lt; "========== 程序结束 ==========" &lt;&lt; endl;
+    cout &lt;&lt; "恭喜！你已经掌握了二维数组的遍历与统计！" &lt;&lt; endl;
+    cout &lt;&lt; "记住口诀：外行内列来遍历，行和列和都能算！" &lt;&lt; endl;
+
+    return 0;
+}
+</pre>
+    <p class="hint">本页使用浅色主题与 UTF-8 编码，可直接打印或导出 PDF。</p>
+  </div>
+</body>
+</html>

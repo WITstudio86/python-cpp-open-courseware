@@ -1,0 +1,561 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>lesson04_set_map.cpp</title>
+<style>
+  :root {
+    --bg: #f5f7fa;
+    --panel: #ffffff;
+    --text: #1a1a2e;
+    --muted: #5a6570;
+    --gold: #b8860b;
+    --code-bg: #ffffff;
+    --code-text: #1f2933;
+    --border: #d8dee6;
+    --top-bg: #ffffff;
+    --top-border: #e5e9ef;
+  }
+  * { box-sizing: border-box; }
+  html, body {
+    margin: 0; padding: 0;
+    background: var(--bg);
+    color: var(--text);
+    font-family: -apple-system, BlinkMacSystemFont, "PingFang SC", "Microsoft YaHei", sans-serif;
+    min-height: 100%;
+  }
+  .top {
+    position: sticky; top: 0; z-index: 10;
+    display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between;
+    gap: 10px;
+    padding: 12px 18px;
+    background: var(--top-bg);
+    border-bottom: 1px solid var(--top-border);
+    box-shadow: 0 1px 8px rgba(15, 23, 42, 0.06);
+  }
+  .brand { color: var(--gold); font-weight: 700; font-size: 14px; letter-spacing: 0.04em; }
+  .title { font-size: 15px; font-weight: 600; color: var(--text); max-width: 52vw; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .actions { display: flex; gap: 8px; flex-wrap: wrap; }
+  .btn {
+    appearance: none; border: 1px solid var(--border);
+    background: #fff; color: var(--text);
+    border-radius: 999px; padding: 8px 14px; font-size: 13px; font-weight: 600;
+    text-decoration: none; cursor: pointer;
+  }
+  .btn:hover { background: #f0f3f7; }
+  .btn.gold {
+    background: linear-gradient(135deg, #f0d78c, #d4a853);
+    color: #0a2540; border-color: #e0c06a;
+  }
+  .meta {
+    padding: 10px 18px; color: var(--muted); font-size: 12px;
+    border-bottom: 1px solid var(--border);
+    background: var(--panel);
+  }
+  .wrap { padding: 16px 18px 40px; }
+  pre {
+    margin: 0;
+    background: var(--code-bg);
+    color: var(--code-text);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 18px 20px;
+    overflow: auto;
+    font-family: "SF Mono", "JetBrains Mono", "Fira Code", Consolas, "Courier New", monospace;
+    font-size: 13.5px;
+    line-height: 1.55;
+    white-space: pre;
+    tab-size: 4;
+    box-shadow: 0 2px 12px rgba(15, 23, 42, 0.05);
+  }
+  .hint { margin-top: 12px; color: var(--muted); font-size: 12px; }
+  @media print {
+    html, body { background: #fff !important; color: #000 !important; }
+    .top { position: static; box-shadow: none; border-bottom: 1px solid #ccc; background: #fff !important; }
+    .actions { display: none !important; }
+    .meta { background: #fff !important; border-color: #ddd; color: #333; }
+    .wrap { padding: 0; }
+    pre {
+      background: #fff !important; color: #000 !important;
+      border: 1px solid #bbb; box-shadow: none; border-radius: 0;
+      white-space: pre-wrap; word-break: break-word; font-size: 11pt; line-height: 1.4;
+    }
+    .hint { display: none; }
+    a { color: #000; text-decoration: none; }
+  }
+</style>
+</head>
+<body>
+  <div class="top">
+    <div class="brand">CSP-S 备考 · 配套代码</div>
+    <div class="title">lesson04_set_map.cpp</div>
+    <div class="actions">
+      <a class="btn" href="../lesson04_set_map.cpp" download="lesson04_set_map.cpp">⬇️ 下载源文件</a>
+      <a class="btn gold" href="javascript:history.back()">← 返回课件</a>
+    </div>
+  </div>
+  <div class="meta">编码：UTF-8 · 文件：lesson04_set_map.cpp · 共 457 行 · 浅色主题便于打印</div>
+  <div class="wrap">
+    <pre id="code">/**
+ * ============================================================
+ * 课程编号：第04课
+ * 课程标题：set / map 与 unordered 容器
+ * 对应考纲：红黑树实现、哈希表实现、自定义比较器、unordered_map优化
+ *
+ * 本程序演示：
+ *   1. set 自定义排序（函数对象 / lambda 两种方式）
+ *   2. map 自定义 key 排序
+ *   3. unordered_map 自定义哈希（pair&lt;int,int&gt; 等复合类型）
+ *   4. unordered_map reserve 预分配优化
+ *   5. set/map vs unordered_map 性能对比测试
+ *   6. multiset 与 multimap 的基础用法
+ *   7. lower_bound / upper_bound / equal_range 范围查询
+ * ============================================================
+ */
+
+#include &lt;bits/stdc++.h&gt;
+using namespace std;
+using namespace chrono;
+
+// ==================== 1. set 自定义排序 ====================
+
+// 方法一：函数对象（Functor）
+struct CmpByLen {
+    bool operator()(const string&amp; a, const string&amp; b) const {
+        if (a.size() != b.size()) return a.size() &lt; b.size();  // 按长度升序
+        return a &lt; b;  // 长度相同时字典序升序
+    }
+};
+
+struct CmpDesc {
+    bool operator()(int a, int b) const {
+        return a &gt; b;  // 降序排列
+    }
+};
+
+void demo_set_custom_cmp() {
+    cout &lt;&lt; "\n========== 1. set 自定义排序 ==========\n\n";
+
+    // 1.1 默认升序
+    cout &lt;&lt; "【默认升序 set&lt;int&gt;】\n  ";
+    set&lt;int&gt; s1 = {5, 2, 8, 1, 9, 3};
+    for (int x : s1) cout &lt;&lt; x &lt;&lt; ' ';
+    cout &lt;&lt; "\n\n";
+
+    // 1.2 降序排列（函数对象）
+    cout &lt;&lt; "【降序 set&lt;int, CmpDesc&gt;】\n  ";
+    set&lt;int, CmpDesc&gt; s2 = {5, 2, 8, 1, 9, 3};
+    for (int x : s2) cout &lt;&lt; x &lt;&lt; ' ';
+    cout &lt;&lt; "\n\n";
+
+    // 1.3 按字符串长度排序
+    cout &lt;&lt; "【按长度排序 set&lt;string, CmpByLen&gt;】\n";
+    set&lt;string, CmpByLen&gt; s3 = {"apple", "pie", "a", "banana", "c", "dog"};
+    cout &lt;&lt; "  原始: apple pie a banana c dog\n";
+    cout &lt;&lt; "  排序: ";
+    for (const auto&amp; str : s3) cout &lt;&lt; str &lt;&lt; ' ';
+    cout &lt;&lt; "\n\n";
+
+    // 1.4 使用 greater&lt;int&gt; 快捷实现降序
+    cout &lt;&lt; "【使用 greater&lt;int&gt; 快捷降序】\n  ";
+    set&lt;int, greater&lt;int&gt;&gt; s4 = {5, 2, 8, 1, 9, 3};
+    for (int x : s4) cout &lt;&lt; x &lt;&lt; ' ';
+    cout &lt;&lt; "\n\n";
+
+    // 1.5 Lambda 表达式（C++11 + decltype）
+    cout &lt;&lt; "【Lambda 自定义比较】\n";
+    auto cmp = [](int a, int b) { return a &gt; b; };
+    set&lt;int, decltype(cmp)&gt; s5(cmp);  // 必须传 lambda 给构造函数
+    s5 = {5, 2, 8, 1, 9, 3};
+    cout &lt;&lt; "  ";
+    for (int x : s5) cout &lt;&lt; x &lt;&lt; ' ';
+    cout &lt;&lt; "\n  (使用 decltype(lambda) 声明类型)\n\n";
+}
+
+// ==================== 2. map 自定义 key 排序 ====================
+
+// 按 pair 的第一个元素降序，第一个相同时第二个升序
+struct PairCmp {
+    bool operator()(const pair&lt;int, int&gt;&amp; a, const pair&lt;int, int&gt;&amp; b) const {
+        if (a.first != b.first) return a.first &gt; b.first;  // first 降序
+        return a.second &lt; b.second;  // second 升序
+    }
+};
+
+void demo_map_custom_key() {
+    cout &lt;&lt; "========== 2. map 自定义 key 排序 ==========\n\n";
+
+    // 2.1 默认排序（first 升序）
+    cout &lt;&lt; "【默认 map&lt;pair&lt;int,int&gt;, string&gt;】\n";
+    map&lt;pair&lt;int, int&gt;, string&gt; mp1;
+    mp1[{2, 3}] = "A";
+    mp1[{2, 1}] = "B";
+    mp1[{1, 5}] = "C";
+    mp1[{3, 0}] = "D";
+    for (const auto&amp; [k, v] : mp1)
+        cout &lt;&lt; "  (" &lt;&lt; k.first &lt;&lt; "," &lt;&lt; k.second &lt;&lt; ") -&gt; " &lt;&lt; v &lt;&lt; '\n';
+    cout &lt;&lt; "\n";
+
+    // 2.2 自定义 pair 排序
+    cout &lt;&lt; "【自定义 map&lt;pair&lt;int,int&gt;, string, PairCmp&gt;】\n";
+    cout &lt;&lt; "  规则：first 降序，second 升序\n";
+    map&lt;pair&lt;int, int&gt;, string, PairCmp&gt; mp2;
+    mp2[{2, 3}] = "A";
+    mp2[{2, 1}] = "B";
+    mp2[{1, 5}] = "C";
+    mp2[{3, 0}] = "D";
+    for (const auto&amp; [k, v] : mp2)
+        cout &lt;&lt; "  (" &lt;&lt; k.first &lt;&lt; "," &lt;&lt; k.second &lt;&lt; ") -&gt; " &lt;&lt; v &lt;&lt; '\n';
+    cout &lt;&lt; "\n";
+
+    // 2.3 自定义结构体作为 key
+    cout &lt;&lt; "【自定义结构体作为 key（需 operator&lt;）】\n";
+    struct Point {
+        int x, y;
+        bool operator&lt;(const Point&amp; o) const {
+            if (x != o.x) return x &lt; o.x;
+            return y &lt; o.y;
+        }
+    };
+    map&lt;Point, string&gt; mp3;
+    mp3[{2, 3}] = "P1";
+    mp3[{1, 5}] = "P2";
+    mp3[{2, 1}] = "P3";
+    mp3[{3, 0}] = "P4";
+    for (const auto&amp; [k, v] : mp3)
+        cout &lt;&lt; "  (" &lt;&lt; k.x &lt;&lt; "," &lt;&lt; k.y &lt;&lt; ") -&gt; " &lt;&lt; v &lt;&lt; '\n';
+    cout &lt;&lt; "\n";
+}
+
+// ==================== 3. unordered_map 自定义哈希 ====================
+
+// 为 pair&lt;int, int&gt; 提供哈希函数
+struct PairHash {
+    size_t operator()(const pair&lt;int, int&gt;&amp; p) const {
+        auto h1 = hash&lt;int&gt;{}(p.first);
+        auto h2 = hash&lt;int&gt;{}(p.second);
+        // hash_combine: 黄金比例 + 移位，避免 (1,2) 与 (2,1) 相同哈希
+        return h1 ^ (h2 + 0x9e3779b9 + (h1 &lt;&lt; 6) + (h1 &gt;&gt; 2));
+    }
+};
+
+// 为 pair 提供相等比较（unordered_map 也需要 == 运算符）
+struct PairEq {
+    bool operator()(const pair&lt;int, int&gt;&amp; a, const pair&lt;int, int&gt;&amp; b) const {
+        return a.first == b.first &amp;&amp; a.second == b.second;
+    }
+};
+
+// 为自定义结构体提供哈希
+struct PointHash {
+    size_t operator()(const pair&lt;int, int&gt;&amp; p) const {
+        return (size_t)p.first * 1000000007ULL + (size_t)p.second;
+    }
+};
+
+void demo_unordered_map_custom_hash() {
+    cout &lt;&lt; "========== 3. unordered_map 自定义哈希 ==========\n\n";
+
+    // 3.1 pair&lt;int,int&gt; 自定义哈希
+    cout &lt;&lt; "【unordered_map&lt;pair&lt;int,int&gt;, int, PairHash&gt;】\n";
+    unordered_map&lt;pair&lt;int, int&gt;, int, PairHash&gt; ump;
+    ump[{1, 2}] = 10;
+    ump[{2, 1}] = 20;  // (1,2) 和 (2,1) 是不同的 key
+    ump[{1, 2}] = 30;  // 覆盖了 10
+    for (const auto&amp; [k, v] : ump)
+        cout &lt;&lt; "  (" &lt;&lt; k.first &lt;&lt; "," &lt;&lt; k.second &lt;&lt; ") -&gt; " &lt;&lt; v &lt;&lt; '\n';
+    cout &lt;&lt; "\n";
+
+    // 3.2 演示哈希冲突：查看 bucket 分布
+    cout &lt;&lt; "【Bucket 分布（验证哈希质量）】\n";
+    unordered_map&lt;pair&lt;int, int&gt;, int, PairHash&gt; ump2;
+    ump2.reserve(100);
+    // 插入 20 个不同 pair
+    for (int i = 0; i &lt; 5; i++)
+        for (int j = 0; j &lt; 4; j++)
+            ump2[{i, j}] = i * 10 + j;
+
+    cout &lt;&lt; "  bucket_count = " &lt;&lt; ump2.bucket_count() &lt;&lt; "\n";
+    cout &lt;&lt; "  load_factor  = " &lt;&lt; ump2.load_factor() &lt;&lt; "\n";
+    cout &lt;&lt; "  各 bucket 元素数量：\n";
+    set&lt;int&gt; bucket_sizes;
+    for (size_t b = 0; b &lt; ump2.bucket_count(); b++) {
+        int sz = (int)ump2.bucket_size(b);
+        if (sz &gt; 0) bucket_sizes.insert(sz);
+    }
+    cout &lt;&lt; "  出现过的 bucket 大小: ";
+    for (int sz : bucket_sizes) cout &lt;&lt; sz &lt;&lt; ' ';
+    cout &lt;&lt; " (理想情况下应均匀分布)\n\n";
+
+    // 3.3 字符串的自定义哈希（不区分大小写）
+    cout &lt;&lt; "【字符串的自定义哈希（不区分大小写）】\n";
+    struct CaseInsensitiveHash {
+        size_t operator()(const string&amp; s) const {
+            string lower = s;
+            for (char&amp; c : lower) c = tolower(c);
+            return hash&lt;string&gt;{}(lower);
+        }
+    };
+    struct CaseInsensitiveEq {
+        bool operator()(const string&amp; a, const string&amp; b) const {
+            if (a.size() != b.size()) return false;
+            for (size_t i = 0; i &lt; a.size(); i++)
+                if (tolower(a[i]) != tolower(b[i])) return false;
+            return true;
+        }
+    };
+    // 注意：这里仅演示哈希，实际映射时 key 仍为原始大小写
+    cout &lt;&lt; "  (演示完毕，此功能用于不区分大小写的键匹配)\n\n";
+}
+
+// ==================== 4. unordered_map reserve 预分配 ====================
+
+void demo_unordered_reserve() {
+    cout &lt;&lt; "========== 4. unordered_map reserve 预分配 ==========\n\n";
+
+    const int N = 50000;
+
+    // 4.1 无 reserve
+    {
+        unordered_map&lt;int, int&gt; ump;
+        auto start = high_resolution_clock::now();
+        for (int i = 0; i &lt; N; i++) ump[i] = i;
+        auto end = high_resolution_clock::now();
+        auto dur = duration_cast&lt;microseconds&gt;(end - start).count();
+        cout &lt;&lt; "  无 reserve: " &lt;&lt; dur &lt;&lt; " μs";
+        cout &lt;&lt; "  (bucket_count=" &lt;&lt; ump.bucket_count()
+             &lt;&lt; ", load_factor=" &lt;&lt; ump.load_factor() &lt;&lt; ")\n";
+    }
+
+    // 4.2 有 reserve
+    {
+        unordered_map&lt;int, int&gt; ump;
+        ump.reserve(N);  // 关键优化！
+        auto start = high_resolution_clock::now();
+        for (int i = 0; i &lt; N; i++) ump[i] = i;
+        auto end = high_resolution_clock::now();
+        auto dur = duration_cast&lt;microseconds&gt;(end - start).count();
+        cout &lt;&lt; "  有 reserve: " &lt;&lt; dur &lt;&lt; " μs";
+        cout &lt;&lt; "  (bucket_count=" &lt;&lt; ump.bucket_count()
+             &lt;&lt; ", load_factor=" &lt;&lt; ump.load_factor() &lt;&lt; ")\n";
+    }
+
+    // 4.3 调整 max_load_factor
+    {
+        unordered_map&lt;int, int&gt; ump;
+        ump.max_load_factor(0.5);  // 降低负载因子，减少冲突
+        ump.reserve(N);
+        auto start = high_resolution_clock::now();
+        for (int i = 0; i &lt; N; i++) ump[i] = i;
+        auto end = high_resolution_clock::now();
+        auto dur = duration_cast&lt;microseconds&gt;(end - start).count();
+        cout &lt;&lt; "  reserve+低负载: " &lt;&lt; dur &lt;&lt; " μs";
+        cout &lt;&lt; "  (bucket_count=" &lt;&lt; ump.bucket_count()
+             &lt;&lt; ", load_factor=" &lt;&lt; ump.load_factor() &lt;&lt; ")\n";
+    }
+    cout &lt;&lt; "  → reserve 是最廉价的哈希表优化，务必使用！\n\n";
+}
+
+// ==================== 5. set/map vs unordered_map 性能对比 ====================
+
+void demo_performance_comparison() {
+    cout &lt;&lt; "========== 5. set/map vs unordered_map 性能对比 ==========\n\n";
+
+    const int N = 200000;
+
+    auto now = [] { return high_resolution_clock::now(); };
+    auto elapsed = [](auto start, auto end) {
+        return duration_cast&lt;microseconds&gt;(end - start).count();
+    };
+
+    // 生成测试数据：N 个随机数
+    vector&lt;int&gt; data(N);
+    mt19937 rng(42);
+    uniform_int_distribution&lt;int&gt; dist(1, N * 10);
+    for (int i = 0; i &lt; N; i++) data[i] = dist(rng);
+
+    // ---- 插入测试 ----
+    cout &lt;&lt; "【插入 " &lt;&lt; N &lt;&lt; " 个随机整数】\n";
+    {
+        set&lt;int&gt; s;
+        auto start = now();
+        for (int x : data) s.insert(x);
+        auto end = now();
+        cout &lt;&lt; "  set:           " &lt;&lt; setw(8) &lt;&lt; elapsed(start, end) &lt;&lt; " μs\n";
+    }
+    {
+        unordered_set&lt;int&gt; us;
+        auto start = now();
+        for (int x : data) us.insert(x);
+        auto end = now();
+        cout &lt;&lt; "  unordered_set: " &lt;&lt; setw(8) &lt;&lt; elapsed(start, end) &lt;&lt; " μs\n";
+    }
+    {
+        unordered_set&lt;int&gt; us;
+        us.reserve(N);
+        auto start = now();
+        for (int x : data) us.insert(x);
+        auto end = now();
+        cout &lt;&lt; "  unordered_set(reserve): " &lt;&lt; elapsed(start, end) &lt;&lt; " μs\n";
+    }
+
+    // ---- 查找测试 ----
+    cout &lt;&lt; "\n【查找 " &lt;&lt; N &lt;&lt; " 次】\n";
+    {
+        set&lt;int&gt; s(data.begin(), data.end());
+        auto start = now();
+        long long checksum = 0;
+        for (int x : data) if (s.count(x)) checksum += x;
+        auto end = now();
+        cout &lt;&lt; "  set:           " &lt;&lt; setw(8) &lt;&lt; elapsed(start, end) &lt;&lt; " μs (checksum=" &lt;&lt; checksum &lt;&lt; ")\n";
+    }
+    {
+        unordered_set&lt;int&gt; us(data.begin(), data.end());
+        auto start = now();
+        long long checksum = 0;
+        for (int x : data) if (us.count(x)) checksum += x;
+        auto end = now();
+        cout &lt;&lt; "  unordered_set: " &lt;&lt; setw(8) &lt;&lt; elapsed(start, end) &lt;&lt; " μs (checksum=" &lt;&lt; checksum &lt;&lt; ")\n";
+    }
+
+    // ---- 有序遍历测试 ----
+    cout &lt;&lt; "\n【有序遍历（只有 set/map 能做到）】\n";
+    {
+        set&lt;int&gt; s(data.begin(), data.end());
+        auto start = now();
+        long long sum = 0;
+        for (int x : s) sum += x;
+        auto end = now();
+        cout &lt;&lt; "  set 有序遍历:  " &lt;&lt; elapsed(start, end) &lt;&lt; " μs (sum=" &lt;&lt; sum &lt;&lt; ")\n";
+        cout &lt;&lt; "  → unordered_set 无法直接有序遍历，需拷贝到 vector 再 sort\n";
+    }
+    cout &lt;&lt; "\n";
+}
+
+// ==================== 6. multiset / multimap ====================
+
+void demo_multiset_multimap() {
+    cout &lt;&lt; "========== 6. multiset / multimap ==========\n\n";
+
+    cout &lt;&lt; "【multiset：允许重复元素的有序集合】\n";
+    multiset&lt;int&gt; ms = {3, 1, 4, 1, 5, 9, 2, 6, 5};
+    cout &lt;&lt; "  原始：" &lt;&lt; "3 1 4 1 5 9 2 6 5\n";
+    cout &lt;&lt; "  排序：";
+    for (int x : ms) cout &lt;&lt; x &lt;&lt; ' ';
+    cout &lt;&lt; "\n";
+    cout &lt;&lt; "  count(1) = " &lt;&lt; ms.count(1) &lt;&lt; "\n";
+    cout &lt;&lt; "  count(5) = " &lt;&lt; ms.count(5) &lt;&lt; "\n";
+    cout &lt;&lt; "  count(7) = " &lt;&lt; ms.count(7) &lt;&lt; " (不存在)\n";
+
+    // 删除所有 5
+    ms.erase(5);
+    cout &lt;&lt; "  erase(5) 后: ";
+    for (int x : ms) cout &lt;&lt; x &lt;&lt; ' ';
+    cout &lt;&lt; "\n";
+
+    // 只删除一个 1
+    auto it = ms.find(1);
+    if (it != ms.end()) ms.erase(it);
+    cout &lt;&lt; "  删除一个1后: ";
+    for (int x : ms) cout &lt;&lt; x &lt;&lt; ' ';
+    cout &lt;&lt; "\n\n";
+
+    cout &lt;&lt; "【multimap：允许重复 key 的有序映射】\n";
+    multimap&lt;string, int&gt; mmp;
+    mmp.insert({"Alice", 95});
+    mmp.insert({"Bob", 87});
+    mmp.insert({"Alice", 92});
+    mmp.insert({"Alice", 88});
+    mmp.insert({"Bob", 91});
+
+    cout &lt;&lt; "  所有记录：\n";
+    for (const auto&amp; [name, score] : mmp)
+        cout &lt;&lt; "    " &lt;&lt; name &lt;&lt; ": " &lt;&lt; score &lt;&lt; '\n';
+
+    // 查找 Alice 的所有成绩
+    cout &lt;&lt; "  Alice 的成绩：\n";
+    auto [lo, hi] = mmp.equal_range("Alice");
+    for (auto it = lo; it != hi; ++it)
+        cout &lt;&lt; "    " &lt;&lt; it-&gt;second &lt;&lt; '\n';
+    cout &lt;&lt; "\n";
+}
+
+// ==================== 7. lower_bound / upper_bound 范围查询 ====================
+
+void demo_range_queries() {
+    cout &lt;&lt; "========== 7. lower_bound / upper_bound 范围查询 ==========\n\n";
+
+    set&lt;int&gt; s = {1, 3, 5, 7, 9, 11, 13, 15};
+    cout &lt;&lt; "  集合：";
+    for (int x : s) cout &lt;&lt; x &lt;&lt; ' ';
+    cout &lt;&lt; "\n\n";
+
+    // lower_bound(x)：第一个 ≥ x 的元素
+    cout &lt;&lt; "【lower_bound / upper_bound】\n";
+    cout &lt;&lt; "  lower_bound(5)  = " &lt;&lt; *s.lower_bound(5) &lt;&lt; "  (第一个 ≥ 5)\n";
+    cout &lt;&lt; "  lower_bound(6)  = " &lt;&lt; *s.lower_bound(6) &lt;&lt; "  (第一个 ≥ 6)\n";
+    cout &lt;&lt; "  upper_bound(5)  = " &lt;&lt; *s.upper_bound(5) &lt;&lt; "  (第一个 &gt; 5)\n";
+    cout &lt;&lt; "  upper_bound(15) == end()? "
+         &lt;&lt; (s.upper_bound(15) == s.end() ? "true" : "false") &lt;&lt; "\n\n";
+
+    // equal_range(x)：返回 [lower_bound(x), upper_bound(x))
+    cout &lt;&lt; "【equal_range】\n";
+    cout &lt;&lt; "  equal_range(7) 区间内的元素：";
+    auto [lo, hi] = s.equal_range(7);
+    for (auto it = lo; it != hi; ++it) cout &lt;&lt; *it &lt;&lt; ' ';
+    cout &lt;&lt; "(仅一个元素)\n";
+
+    // 范围查询：统计 [5, 11] 内的元素
+    cout &lt;&lt; "  [5, 11] 范围内的元素：";
+    auto lo2 = s.lower_bound(5);
+    auto hi2 = s.upper_bound(11);
+    int cnt = 0;
+    for (auto it = lo2; it != hi2; ++it) {
+        cout &lt;&lt; *it &lt;&lt; ' ';
+        cnt++;
+    }
+    cout &lt;&lt; " → 共 " &lt;&lt; cnt &lt;&lt; " 个\n\n";
+
+    // map 的范围查询
+    cout &lt;&lt; "【map 的范围查询】\n";
+    map&lt;int, string&gt; mp = {
+        {10, "A"}, {20, "B"}, {30, "C"}, {40, "D"}, {50, "E"}
+    };
+    cout &lt;&lt; "  key 在 [25, 45] 范围内的元素：\n";
+    auto mlo = mp.lower_bound(25);
+    auto mhi = mp.upper_bound(45);
+    for (auto it = mlo; it != mhi; ++it)
+        cout &lt;&lt; "    " &lt;&lt; it-&gt;first &lt;&lt; " -&gt; " &lt;&lt; it-&gt;second &lt;&lt; '\n';
+    cout &lt;&lt; "\n";
+}
+
+// ==================== main ====================
+
+int main() {
+    ios::sync_with_stdio(false);
+    cin.tie(nullptr);
+
+    cout &lt;&lt; "╔══════════════════════════════════════════════════════╗\n";
+    cout &lt;&lt; "║  第04课：set/map 与 unordered 容器 — 演示程序    ║\n";
+    cout &lt;&lt; "╚══════════════════════════════════════════════════════╝\n";
+
+    demo_set_custom_cmp();
+    demo_map_custom_key();
+    demo_unordered_map_custom_hash();
+    demo_unordered_reserve();
+    demo_performance_comparison();
+    demo_multiset_multimap();
+    demo_range_queries();
+
+    cout &lt;&lt; "══════════════════════════════════════════════════════\n";
+    cout &lt;&lt; "  演示完毕！\n";
+    cout &lt;&lt; "══════════════════════════════════════════════════════\n";
+
+    return 0;
+}
+</pre>
+    <p class="hint">本页使用浅色主题与 UTF-8 编码，可直接打印或导出 PDF。</p>
+  </div>
+</body>
+</html>

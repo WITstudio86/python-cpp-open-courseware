@@ -1,0 +1,477 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>lesson46_rps_game.cpp</title>
+<style>
+  :root {
+    --bg: #f5f7fa;
+    --panel: #ffffff;
+    --text: #1a1a2e;
+    --muted: #5a6570;
+    --gold: #b8860b;
+    --code-bg: #ffffff;
+    --code-text: #1f2933;
+    --border: #d8dee6;
+    --top-bg: #ffffff;
+    --top-border: #e5e9ef;
+  }
+  * { box-sizing: border-box; }
+  html, body {
+    margin: 0; padding: 0;
+    background: var(--bg);
+    color: var(--text);
+    font-family: -apple-system, BlinkMacSystemFont, "PingFang SC", "Microsoft YaHei", sans-serif;
+    min-height: 100%;
+  }
+  .top {
+    position: sticky; top: 0; z-index: 10;
+    display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between;
+    gap: 10px;
+    padding: 12px 18px;
+    background: var(--top-bg);
+    border-bottom: 1px solid var(--top-border);
+    box-shadow: 0 1px 8px rgba(15, 23, 42, 0.06);
+  }
+  .brand { color: var(--gold); font-weight: 700; font-size: 14px; letter-spacing: 0.04em; }
+  .title { font-size: 15px; font-weight: 600; color: var(--text); max-width: 52vw; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .actions { display: flex; gap: 8px; flex-wrap: wrap; }
+  .btn {
+    appearance: none; border: 1px solid var(--border);
+    background: #fff; color: var(--text);
+    border-radius: 999px; padding: 8px 14px; font-size: 13px; font-weight: 600;
+    text-decoration: none; cursor: pointer;
+  }
+  .btn:hover { background: #f0f3f7; }
+  .btn.gold {
+    background: linear-gradient(135deg, #f0d78c, #d4a853);
+    color: #0a2540; border-color: #e0c06a;
+  }
+  .meta {
+    padding: 10px 18px; color: var(--muted); font-size: 12px;
+    border-bottom: 1px solid var(--border);
+    background: var(--panel);
+  }
+  .wrap { padding: 16px 18px 40px; }
+  pre {
+    margin: 0;
+    background: var(--code-bg);
+    color: var(--code-text);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 18px 20px;
+    overflow: auto;
+    font-family: "SF Mono", "JetBrains Mono", "Fira Code", Consolas, "Courier New", monospace;
+    font-size: 13.5px;
+    line-height: 1.55;
+    white-space: pre;
+    tab-size: 4;
+    box-shadow: 0 2px 12px rgba(15, 23, 42, 0.05);
+  }
+  .hint { margin-top: 12px; color: var(--muted); font-size: 12px; }
+  @media print {
+    html, body { background: #fff !important; color: #000 !important; }
+    .top { position: static; box-shadow: none; border-bottom: 1px solid #ccc; background: #fff !important; }
+    .actions { display: none !important; }
+    .meta { background: #fff !important; border-color: #ddd; color: #333; }
+    .wrap { padding: 0; }
+    pre {
+      background: #fff !important; color: #000 !important;
+      border: 1px solid #bbb; box-shadow: none; border-radius: 0;
+      white-space: pre-wrap; word-break: break-word; font-size: 11pt; line-height: 1.4;
+    }
+    .hint { display: none; }
+    a { color: #000; text-decoration: none; }
+  }
+</style>
+</head>
+<body>
+  <div class="top">
+    <div class="brand">C++ 趣味学习 · 配套代码</div>
+    <div class="title">lesson46_rps_game.cpp</div>
+    <div class="actions">
+      <a class="btn" href="../lesson46_rps_game.cpp" download="lesson46_rps_game.cpp">⬇️ 下载源文件</a>
+      <a class="btn gold" href="javascript:history.back()">← 返回课件</a>
+    </div>
+  </div>
+  <div class="meta">编码：UTF-8 · 文件：lesson46_rps_game.cpp · 共 373 行 · 浅色主题便于打印</div>
+  <div class="wrap">
+    <pre id="code">/*
+ * ============================================================
+ * 第46课：石头剪刀布 —— 人机对战
+ * C++ 趣味学习课件 - 配套程序文件
+ * ============================================================
+ * 本文件包含三个程序：
+ *   1. 单局石头剪刀布（一局定胜负）
+ *   2. 三局两胜制完整游戏（多轮、计分、最终判定）
+ *   3. 增强版：带手势图形显示的石头剪刀布
+ *
+ * 知识点：
+ *   - 随机数生成：srand(time(0)) + rand() % 3
+ *   - 多条件判断：if-else 实现胜负逻辑
+ *   - 循环与计分：while 循环实现多轮比赛
+ *   - 数组应用：用 string 数组存储手势名称
+ *
+ * 编译方式：
+ *   g++ -o rps_game lesson46_rps_game.cpp
+ *   ./rps_game
+ * ============================================================
+ */
+
+#include &lt;iostream&gt;
+#include &lt;cstdlib&gt;
+#include &lt;ctime&gt;
+using namespace std;
+
+// ==========================================
+// 程序1：单局石头剪刀布（一局定胜负）
+// ==========================================
+void singleRound() {
+    cout &lt;&lt; endl;
+    cout &lt;&lt; "╔══════════════════════════════╗" &lt;&lt; endl;
+    cout &lt;&lt; "║  程序1：单局石头剪刀布       ║" &lt;&lt; endl;
+    cout &lt;&lt; "╚══════════════════════════════╝" &lt;&lt; endl;
+    cout &lt;&lt; endl;
+
+    // 设置随机种子，让电脑每次出拳不同
+    srand(time(0));
+
+    int player, computer;
+    string gestures[] = {"石头", "剪刀", "布"};
+
+    // 显示菜单，引导玩家输入
+    cout &lt;&lt; "请出拳：" &lt;&lt; endl;
+    cout &lt;&lt; "  0 —— 石头 ✊" &lt;&lt; endl;
+    cout &lt;&lt; "  1 —— 剪刀 ✌" &lt;&lt; endl;
+    cout &lt;&lt; "  2 —— 布   ✋" &lt;&lt; endl;
+    cout &lt;&lt; "你的选择：";
+    cin &gt;&gt; player;
+
+    // 检查输入是否合法（必须在 0-2 之间）
+    if (player &lt; 0 || player &gt; 2) {
+        cout &lt;&lt; "输入无效！请输入 0、1 或 2。" &lt;&lt; endl;
+        return;
+    }
+
+    // 电脑随机出拳：rand() % 3 生成 0、1、2 中的一个
+    computer = rand() % 3;
+
+    // 显示双方出拳结果
+    cout &lt;&lt; endl;
+    cout &lt;&lt; "你出了：" &lt;&lt; gestures[player] &lt;&lt; endl;
+    cout &lt;&lt; "电脑出了：" &lt;&lt; gestures[computer] &lt;&lt; endl;
+
+    // ---------- 胜负判断 ----------
+    // 胜负判断的数学规律：
+    //   玩家赢的情况：(player + 1) % 3 == computer
+    //   即：石头(0)赢剪刀(1)、剪刀(1)赢布(2)、布(2)赢石头(0)
+    if (player == computer) {
+        cout &lt;&lt; "结果：平局！再来一次吧 🤝" &lt;&lt; endl;
+    } else if ((player + 1) % 3 == computer) {
+        cout &lt;&lt; "结果：你赢了！好厉害 🎉" &lt;&lt; endl;
+    } else {
+        cout &lt;&lt; "结果：电脑赢了！别灰心，继续加油 💪" &lt;&lt; endl;
+    }
+}
+
+// ==========================================
+// 程序2：三局两胜制完整游戏
+// ==========================================
+void bestOfThree() {
+    cout &lt;&lt; endl;
+    cout &lt;&lt; "╔══════════════════════════════╗" &lt;&lt; endl;
+    cout &lt;&lt; "║  程序2：三局两胜制完整游戏   ║" &lt;&lt; endl;
+    cout &lt;&lt; "╚══════════════════════════════╝" &lt;&lt; endl;
+    cout &lt;&lt; endl;
+
+    srand(time(0));
+
+    // score 变量用于记录双方得分
+    int playerScore = 0;
+    int computerScore = 0;
+    int round = 1;                     // 当前是第几局
+    string gestures[] = {"石头", "剪刀", "布"};
+
+    cout &lt;&lt; "规则说明：" &lt;&lt; endl;
+    cout &lt;&lt; "  1. 共进行最多 3 局比赛" &lt;&lt; endl;
+    cout &lt;&lt; "  2. 先赢 2 局者获得最终胜利" &lt;&lt; endl;
+    cout &lt;&lt; "  3. 平局不计分，但计局数" &lt;&lt; endl;
+    cout &lt;&lt; endl;
+
+    // while 循环控制比赛流程：
+    //   继续比赛的条件 —— 双方都没有赢到 2 局 &amp;&amp;
+    //   还没打完 3 局
+    while (playerScore &lt; 2 &amp;&amp; computerScore &lt; 2 &amp;&amp; round &lt;= 3) {
+        // 显示当前局数和比分
+        cout &lt;&lt; "──────── 第 " &lt;&lt; round &lt;&lt; " 局 ────────" &lt;&lt; endl;
+        cout &lt;&lt; "当前比分：你 " &lt;&lt; playerScore
+             &lt;&lt; " - " &lt;&lt; computerScore &lt;&lt; " 电脑" &lt;&lt; endl;
+        cout &lt;&lt; endl;
+
+        int player, computer;
+
+        // 引导玩家出拳
+        cout &lt;&lt; "请出拳（0=石头, 1=剪刀, 2=布）：";
+        cin &gt;&gt; player;
+
+        // 输入验证：如果输入非法，提示后重新输入
+        if (player &lt; 0 || player &gt; 2) {
+            cout &lt;&lt; "❌ 输入无效！请输入 0、1 或 2。" &lt;&lt; endl;
+            cout &lt;&lt; endl;
+            continue;   // 跳过本轮循环，回到 while 开头
+        }
+
+        // 电脑随机出拳
+        computer = rand() % 3;
+
+        // 展示双方出拳
+        cout &lt;&lt; "  你出了：" &lt;&lt; gestures[player] &lt;&lt; endl;
+        cout &lt;&lt; "  电脑出了：" &lt;&lt; gestures[computer] &lt;&lt; endl;
+
+        // 判断本局胜负，并更新比分
+        if (player == computer) {
+            cout &lt;&lt; "  本局结果：平局！不分胜负" &lt;&lt; endl;
+        } else if ((player + 1) % 3 == computer) {
+            cout &lt;&lt; "  本局结果：你赢！🏆 得分 +1" &lt;&lt; endl;
+            playerScore++;   // 玩家得分加 1
+        } else {
+            cout &lt;&lt; "  本局结果：电脑赢！💻 得分 +1" &lt;&lt; endl;
+            computerScore++; // 电脑得分加 1
+        }
+
+        round++;
+        cout &lt;&lt; endl;
+
+        // 提前结束判断：如果已经有人赢到 2 局，提前退出
+        if (playerScore &gt;= 2 || computerScore &gt;= 2) {
+            cout &lt;&lt; "&gt;&gt;&gt; 比赛提前结束！已经有人赢得 2 局 &lt;&lt;&lt;" &lt;&lt; endl;
+            cout &lt;&lt; endl;
+            break;
+        }
+    }
+
+    // ---------- 最终结果判定 ----------
+    cout &lt;&lt; "══════════════════════════════" &lt;&lt; endl;
+    cout &lt;&lt; "        最终结算               " &lt;&lt; endl;
+    cout &lt;&lt; "══════════════════════════════" &lt;&lt; endl;
+    cout &lt;&lt; "最终比分：你 " &lt;&lt; playerScore
+         &lt;&lt; " - " &lt;&lt; computerScore &lt;&lt; " 电脑" &lt;&lt; endl;
+    cout &lt;&lt; "比赛局数：" &lt;&lt; (round - 1) &lt;&lt; " 局" &lt;&lt; endl;
+    cout &lt;&lt; endl;
+
+    if (playerScore &gt; computerScore) {
+        cout &lt;&lt; "🎉🎉🎉 恭喜你，获得了最终胜利！🎉🎉🎉" &lt;&lt; endl;
+        cout &lt;&lt; "你以 " &lt;&lt; playerScore &lt;&lt; ":" &lt;&lt; computerScore
+             &lt;&lt; " 战胜了电脑！" &lt;&lt; endl;
+    } else if (computerScore &gt; playerScore) {
+        cout &lt;&lt; "😢 很遗憾，电脑获得了最终胜利！" &lt;&lt; endl;
+        cout &lt;&lt; "不要气馁，下次一定能赢！" &lt;&lt; endl;
+    } else {
+        cout &lt;&lt; "🤝 平局收场！势均力敌呢~" &lt;&lt; endl;
+    }
+}
+
+// ==========================================
+// 程序3：增强版 —— 带手势图形显示的石头剪刀布
+// ==========================================
+void enhancedVersion() {
+    cout &lt;&lt; endl;
+    cout &lt;&lt; "╔══════════════════════════════╗" &lt;&lt; endl;
+    cout &lt;&lt; "║  程序3：增强版石头剪刀布     ║" &lt;&lt; endl;
+    cout &lt;&lt; "╚══════════════════════════════╝" &lt;&lt; endl;
+    cout &lt;&lt; endl;
+
+    srand(time(0));
+
+    // 使用二维字符数组存储手势的 ASCII 艺术图形
+    // 让游戏界面更加生动有趣
+    string gestureArt[3][5] = {
+        {   // 石头 ✊（拳头形状）
+            "    _______   ",
+            "---'   ____)  ",
+            "      (_____) ",
+            "      (_____) ",
+            "      (____)  "
+        },
+        {   // 剪刀 ✌（剪刀形状）
+            "    _______   ",
+            "---'   ____)__",
+            "          ____)",
+            "       _______)",
+            "      (____)  "
+        },
+        {   // 布 ✋（手掌形状）
+            "    _______   ",
+            "---'   ____)__",
+            "          ____)",
+            "       _______)",
+            "      _______)"
+        }
+    };
+
+    string gestureName[] = {"石头 ✊", "剪刀 ✌", "布 ✋"};
+
+    int playerScore = 0, computerScore = 0;
+    int totalGames = 0;     // 总局数
+    int playerWins = 0;     // 玩家胜局数
+    int computerWins = 0;   // 电脑胜局数
+    int draws = 0;          // 平局数
+    char playAgain;         // 是否继续游戏
+
+    cout &lt;&lt; "欢迎来到增强版石头剪刀布！" &lt;&lt; endl;
+    cout &lt;&lt; "特色功能：" &lt;&lt; endl;
+    cout &lt;&lt; "  • 手势图形显示" &lt;&lt; endl;
+    cout &lt;&lt; "  • 无限对战（直到你选择退出）" &lt;&lt; endl;
+    cout &lt;&lt; "  • 实时胜率统计" &lt;&lt; endl;
+    cout &lt;&lt; endl;
+
+    do {
+        int player, computer;
+        totalGames++;
+
+        cout &lt;&lt; "──────── 第 " &lt;&lt; totalGames &lt;&lt; " 局 ────────" &lt;&lt; endl;
+
+        // 显示漂亮的菜单
+        cout &lt;&lt; "请出拳：" &lt;&lt; endl;
+        cout &lt;&lt; "  [0] 石头 ✊" &lt;&lt; endl;
+        cout &lt;&lt; "  [1] 剪刀 ✌" &lt;&lt; endl;
+        cout &lt;&lt; "  [2] 布   ✋" &lt;&lt; endl;
+        cout &lt;&lt; endl;
+        cout &lt;&lt; "你的选择：";
+        cin &gt;&gt; player;
+
+        // 输入验证
+        if (player &lt; 0 || player &gt; 2) {
+            cout &lt;&lt; "输入无效！请重新输入。" &lt;&lt; endl;
+            totalGames--;  // 无效游戏不计入统计
+            continue;
+        }
+
+        // 电脑出拳
+        computer = rand() % 3;
+
+        // ---------- 显示双方手势图形 ----------
+        cout &lt;&lt; endl;
+        cout &lt;&lt; "你的手势：" &lt;&lt; gestureName[player] &lt;&lt; endl;
+        // 逐行打印手势图形
+        for (int i = 0; i &lt; 5; i++) {
+            cout &lt;&lt; "  " &lt;&lt; gestureArt[player][i] &lt;&lt; endl;
+        }
+        cout &lt;&lt; endl;
+
+        cout &lt;&lt; "电脑的手势：" &lt;&lt; gestureName[computer] &lt;&lt; endl;
+        for (int i = 0; i &lt; 5; i++) {
+            cout &lt;&lt; "  " &lt;&lt; gestureArt[computer][i] &lt;&lt; endl;
+        }
+        cout &lt;&lt; endl;
+
+        // ---------- 判断胜负并统计 ----------
+        if (player == computer) {
+            cout &lt;&lt; "👉 平局！🤝" &lt;&lt; endl;
+            draws++;
+        } else if ((player + 1) % 3 == computer) {
+            cout &lt;&lt; "👉 你赢了！🎉" &lt;&lt; endl;
+            playerWins++;
+        } else {
+            cout &lt;&lt; "👉 电脑赢了！💻" &lt;&lt; endl;
+            computerWins++;
+        }
+
+        // 显示实时统计
+        cout &lt;&lt; endl;
+        cout &lt;&lt; "══════ 实时统计 ══════" &lt;&lt; endl;
+        cout &lt;&lt; "总局数：" &lt;&lt; totalGames &lt;&lt; endl;
+        cout &lt;&lt; "你赢了：" &lt;&lt; playerWins &lt;&lt; " 局" &lt;&lt; endl;
+        cout &lt;&lt; "电脑赢了：" &lt;&lt; computerWins &lt;&lt; " 局" &lt;&lt; endl;
+        cout &lt;&lt; "平局：" &lt;&lt; draws &lt;&lt; " 局" &lt;&lt; endl;
+
+        // 计算并显示胜率（避免除以零）
+        if (totalGames &gt; 0) {
+            double winRate = (double)playerWins / totalGames * 100;
+            cout &lt;&lt; "你的胜率：" &lt;&lt; winRate &lt;&lt; "%" &lt;&lt; endl;
+        }
+        cout &lt;&lt; "════════════════════" &lt;&lt; endl;
+        cout &lt;&lt; endl;
+
+        // 询问是否继续
+        cout &lt;&lt; "是否继续游戏？(y/n)：";
+        cin &gt;&gt; playAgain;
+        cout &lt;&lt; endl;
+
+    } while (playAgain == 'y' || playAgain == 'Y');
+
+    // 最终总结
+    cout &lt;&lt; "══════════════════════════════" &lt;&lt; endl;
+    cout &lt;&lt; "      游戏结束，感谢游玩！    " &lt;&lt; endl;
+    cout &lt;&lt; "══════════════════════════════" &lt;&lt; endl;
+    cout &lt;&lt; "共进行了 " &lt;&lt; totalGames &lt;&lt; " 局比赛" &lt;&lt; endl;
+
+    if (totalGames &gt; 0) {
+        double finalWinRate = (double)playerWins / totalGames * 100;
+        cout &lt;&lt; "最终胜率：" &lt;&lt; finalWinRate &lt;&lt; "%" &lt;&lt; endl;
+
+        // 根据胜率给出评价
+        if (finalWinRate &gt;= 80) {
+            cout &lt;&lt; "🏆 评价：你是石头剪刀布大师！" &lt;&lt; endl;
+        } else if (finalWinRate &gt;= 60) {
+            cout &lt;&lt; "👍 评价：还不错，继续加油！" &lt;&lt; endl;
+        } else if (finalWinRate &gt;= 40) {
+            cout &lt;&lt; "📚 评价：势均力敌，多练练会更好！" &lt;&lt; endl;
+        } else {
+            cout &lt;&lt; "💪 评价：没关系，运气成分也很大！" &lt;&lt; endl;
+        }
+    }
+
+    cout &lt;&lt; "期待下次再战！再见~" &lt;&lt; endl;
+}
+
+// ==========================================
+// 主函数：选择要运行的演示程序
+// ==========================================
+int main() {
+    int choice;
+
+    cout &lt;&lt; "╔══════════════════════════════════╗" &lt;&lt; endl;
+    cout &lt;&lt; "║  第46课：石头剪刀布 —— 人机对战 ║" &lt;&lt; endl;
+    cout &lt;&lt; "║       C++ 趣味学习程序演示       ║" &lt;&lt; endl;
+    cout &lt;&lt; "╚══════════════════════════════════╝" &lt;&lt; endl;
+    cout &lt;&lt; endl;
+    cout &lt;&lt; "请选择要运行的程序：" &lt;&lt; endl;
+    cout &lt;&lt; "  1 —— 单局石头剪刀布" &lt;&lt; endl;
+    cout &lt;&lt; "  2 —— 三局两胜制完整游戏" &lt;&lt; endl;
+    cout &lt;&lt; "  3 —— 增强版（手势图形 + 胜率统计）" &lt;&lt; endl;
+    cout &lt;&lt; "  0 —— 退出" &lt;&lt; endl;
+    cout &lt;&lt; endl;
+    cout &lt;&lt; "请输入选择：";
+    cin &gt;&gt; choice;
+
+    // 根据用户选择调用对应的函数
+    switch (choice) {
+        case 1:
+            singleRound();
+            break;
+        case 2:
+            bestOfThree();
+            break;
+        case 3:
+            enhancedVersion();
+            break;
+        case 0:
+            cout &lt;&lt; "再见！" &lt;&lt; endl;
+            break;
+        default:
+            cout &lt;&lt; "无效的选择！" &lt;&lt; endl;
+            break;
+    }
+
+    cout &lt;&lt; endl;
+    cout &lt;&lt; "程序运行完毕，谢谢使用！" &lt;&lt; endl;
+
+    return 0;
+}
+</pre>
+    <p class="hint">本页使用浅色主题与 UTF-8 编码，可直接打印或导出 PDF。</p>
+  </div>
+</body>
+</html>

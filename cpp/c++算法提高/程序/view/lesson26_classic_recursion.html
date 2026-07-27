@@ -1,0 +1,384 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>lesson26_classic_recursion.cpp</title>
+<style>
+  :root {
+    --bg: #f5f7fa;
+    --panel: #ffffff;
+    --text: #1a1a2e;
+    --muted: #5a6570;
+    --gold: #b8860b;
+    --code-bg: #ffffff;
+    --code-text: #1f2933;
+    --border: #d8dee6;
+    --top-bg: #ffffff;
+    --top-border: #e5e9ef;
+  }
+  * { box-sizing: border-box; }
+  html, body {
+    margin: 0; padding: 0;
+    background: var(--bg);
+    color: var(--text);
+    font-family: -apple-system, BlinkMacSystemFont, "PingFang SC", "Microsoft YaHei", sans-serif;
+    min-height: 100%;
+  }
+  .top {
+    position: sticky; top: 0; z-index: 10;
+    display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between;
+    gap: 10px;
+    padding: 12px 18px;
+    background: var(--top-bg);
+    border-bottom: 1px solid var(--top-border);
+    box-shadow: 0 1px 8px rgba(15, 23, 42, 0.06);
+  }
+  .brand { color: var(--gold); font-weight: 700; font-size: 14px; letter-spacing: 0.04em; }
+  .title { font-size: 15px; font-weight: 600; color: var(--text); max-width: 52vw; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .actions { display: flex; gap: 8px; flex-wrap: wrap; }
+  .btn {
+    appearance: none; border: 1px solid var(--border);
+    background: #fff; color: var(--text);
+    border-radius: 999px; padding: 8px 14px; font-size: 13px; font-weight: 600;
+    text-decoration: none; cursor: pointer;
+  }
+  .btn:hover { background: #f0f3f7; }
+  .btn.gold {
+    background: linear-gradient(135deg, #f0d78c, #d4a853);
+    color: #0a2540; border-color: #e0c06a;
+  }
+  .meta {
+    padding: 10px 18px; color: var(--muted); font-size: 12px;
+    border-bottom: 1px solid var(--border);
+    background: var(--panel);
+  }
+  .wrap { padding: 16px 18px 40px; }
+  pre {
+    margin: 0;
+    background: var(--code-bg);
+    color: var(--code-text);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 18px 20px;
+    overflow: auto;
+    font-family: "SF Mono", "JetBrains Mono", "Fira Code", Consolas, "Courier New", monospace;
+    font-size: 13.5px;
+    line-height: 1.55;
+    white-space: pre;
+    tab-size: 4;
+    box-shadow: 0 2px 12px rgba(15, 23, 42, 0.05);
+  }
+  .hint { margin-top: 12px; color: var(--muted); font-size: 12px; }
+  @media print {
+    html, body { background: #fff !important; color: #000 !important; }
+    .top { position: static; box-shadow: none; border-bottom: 1px solid #ccc; background: #fff !important; }
+    .actions { display: none !important; }
+    .meta { background: #fff !important; border-color: #ddd; color: #333; }
+    .wrap { padding: 0; }
+    pre {
+      background: #fff !important; color: #000 !important;
+      border: 1px solid #bbb; box-shadow: none; border-radius: 0;
+      white-space: pre-wrap; word-break: break-word; font-size: 11pt; line-height: 1.4;
+    }
+    .hint { display: none; }
+    a { color: #000; text-decoration: none; }
+  }
+</style>
+</head>
+<body>
+  <div class="top">
+    <div class="brand">C++ 算法提高 · 配套代码</div>
+    <div class="title">lesson26_classic_recursion.cpp</div>
+    <div class="actions">
+      <a class="btn" href="../lesson26_classic_recursion.cpp" download="lesson26_classic_recursion.cpp">⬇️ 下载源文件</a>
+      <a class="btn gold" href="javascript:history.back()">← 返回课件</a>
+    </div>
+  </div>
+  <div class="meta">编码：UTF-8 · 文件：lesson26_classic_recursion.cpp · 共 280 行 · 浅色主题便于打印</div>
+  <div class="wrap">
+    <pre id="code">/*
+ * ============================================================================
+ * 第26课：经典递归算法 —— 汉诺塔 与 最大公约数（辗转相除法）
+ * ============================================================================
+ *
+ * 【课程目标】
+ *   1. 理解递归的核心思想：将大问题分解为相同结构的小问题
+ *   2. 掌握汉诺塔问题的递归解法，理解"把 n 个盘子的问题转化为 n-1 个盘子"的递推关系
+ *   3. 掌握辗转相除法（欧几里得算法）求最大公约数的递归实现
+ *   4. 体会递归函数中"基准条件（base case）"与"递归条件（recursive case）"的设计
+ *
+ * 【汉诺塔问题】
+ *   - 有三根柱子 A（起始）、C（目标）、B（辅助）
+ *   - 规则：一次只能移动一个盘子，大盘子不能放在小盘子上面
+ *   - 目标：将 n 个盘子从 A 柱移动到 C 柱
+ *   - 递推思路：
+ *       步骤1: 将上方 n-1 个盘子从 A 移到 B（借助 C）
+ *       步骤2: 将最底下第 n 个盘子从 A 移到 C
+ *       步骤3: 将 n-1 个盘子从 B 移到 C（借助 A）
+ *   - 移动次数公式：T(n) = 2^n - 1
+ *
+ * 【辗转相除法（欧几里得算法）】
+ *   - 原理：gcd(a, b) = gcd(b, a % b)，当 b == 0 时 gcd(a, 0) = a
+ *   - 这是基于"两个数的最大公约数等于较小数与两数相除余数的最大公约数"
+ *   - 递归过程自然简洁，是递归思想在数论中的经典应用
+ *
+ * ============================================================================
+ */
+
+#include &lt;iostream&gt;
+#include &lt;cmath&gt;
+
+using namespace std;
+
+// ============================================================================
+// 汉诺塔递归函数
+// 功能：将 n 个盘子从柱子 from 移动到柱子 to，借助柱子 aux
+// 参数：
+//   n    - 当前需要移动的盘子数量
+//   from - 起始柱子
+//   to   - 目标柱子
+//   aux  - 辅助柱子
+// 递归思想：
+//   基准条件：n == 1 时，直接将盘子从 from 移动到 to
+//   递归条件：n &gt; 1 时，分解为三个步骤：
+//     (1) 将 n-1 个盘子从 from 移动到 aux（借助 to）
+//     (2) 将第 n 个盘子从 from 移动到 to
+//     (3) 将 n-1 个盘子从 aux 移动到 to（借助 from）
+// ============================================================================
+void hanoi(int n, char from, char to, char aux) {
+    // 基准条件：只有一个盘子，直接移动
+    if (n == 1) {
+        cout &lt;&lt; "  移动盘子 1 号： " &lt;&lt; from &lt;&lt; " --&gt; " &lt;&lt; to &lt;&lt; endl;
+        return;
+    }
+
+    // 递归步骤1：将上方 n-1 个盘子从 from 移动到 aux（以 to 为辅助柱）
+    // 因为要把最大的盘子露出来，必须先把上面的小盘子移走
+    hanoi(n - 1, from, aux, to);
+
+    // 步骤2：将最底下的第 n 号盘子从 from 直接移动到目标柱 to
+    // 此时目标柱 to 是空的（或只有更大的盘子），可以直接放置
+    cout &lt;&lt; "  移动盘子 " &lt;&lt; n &lt;&lt; " 号： " &lt;&lt; from &lt;&lt; " --&gt; " &lt;&lt; to &lt;&lt; endl;
+
+    // 递归步骤3：将之前移到 aux 的 n-1 个盘子从 aux 移动到 to（以 from 为辅助柱）
+    // 此时 from 柱可以作为辅助柱使用
+    hanoi(n - 1, aux, to, from);
+}
+
+// ============================================================================
+// 汉诺塔移动次数计算函数
+// 功能：计算移动 n 个盘子所需的总步数
+// 公式：T(n) = 2^n - 1
+// 说明：
+//   - 递推关系：T(n) = 2 * T(n-1) + 1，展开后得 T(n) = 2^n - 1
+//   - 例如：n=3 时需要 2^3 - 1 = 7 步
+//   -       n=4 时需要 2^4 - 1 = 15 步
+//   -       n=64 时需要 2^64 - 1 步（经典传说中的世界末日问题）
+// ============================================================================
+int hanoi_moves(int n) {
+    // 使用位运算计算 2^n - 1，比 pow 更高效且避免浮点误差
+    // (1 &lt;&lt; n) 等价于 2^n
+    return (1 &lt;&lt; n) - 1;
+}
+
+// ============================================================================
+// 最大公约数递归函数（辗转相除法 / 欧几里得算法）
+// 功能：计算两个非负整数 a 和 b 的最大公约数（Greatest Common Divisor）
+// 参数：
+//   a - 第一个整数（假设 a &gt;= b，如果不是，第一次递归会自动交换）
+//   b - 第二个整数
+// 递归思想：
+//   基准条件：b == 0 时，gcd(a, 0) = a
+//   递归条件：gcd(a, b) = gcd(b, a % b)
+// 原理说明：
+//   设 a = b * q + r（其中 0 &lt;= r &lt; b），则
+//   任何同时整除 a 和 b 的数也必然整除 r = a - b * q
+//   因此 gcd(a, b) = gcd(b, r) = gcd(b, a % b)
+//   反复应用此性质，直到余数为 0，此时除数即为最大公约数
+// ============================================================================
+int gcd(int a, int b) {
+    // 基准条件：余数为 0，此时的除数 a 就是最大公约数
+    // 例如 gcd(6, 0) = 6，因为 6 能整除 6 和 0
+    if (b == 0) {
+        return a;
+    }
+
+    // 递归条件：将问题转化为求较小数 b 与余数 a % b 的最大公约数
+    // 每次递归，参数规模都在缩小（余数一定小于除数），保证算法终止
+    return gcd(b, a % b);
+}
+
+// ============================================================================
+// 带过程输出的 GCD 计算函数
+// 功能：计算 GCD 的同时，打印每一步的计算过程，便于理解算法
+// 参数：
+//   a, b  - 两个整数
+//   step  - 当前递归深度（用于缩进显示）
+// 返回值：a 和 b 的最大公约数
+// ============================================================================
+int gcd_with_steps(int a, int b, int step) {
+    // 打印缩进，让递归层次一目了然
+    for (int i = 0; i &lt; step; i++) {
+        cout &lt;&lt; "  ";
+    }
+    cout &lt;&lt; "第 " &lt;&lt; step &lt;&lt; " 层递归：gcd(" &lt;&lt; a &lt;&lt; ", " &lt;&lt; b &lt;&lt; ")" &lt;&lt; endl;
+
+    // 基准条件
+    if (b == 0) {
+        for (int i = 0; i &lt; step; i++) {
+            cout &lt;&lt; "  ";
+        }
+        cout &lt;&lt; "  -&gt; 基准条件触发！b == 0，返回 a = " &lt;&lt; a &lt;&lt; endl;
+        return a;
+    }
+
+    // 打印计算过程：a 除以 b 的商和余数
+    int quotient = a / b;
+    int remainder = a % b;
+    for (int i = 0; i &lt; step; i++) {
+        cout &lt;&lt; "  ";
+    }
+    cout &lt;&lt; "  -&gt; " &lt;&lt; a &lt;&lt; " ÷ " &lt;&lt; b &lt;&lt; " = " &lt;&lt; quotient
+         &lt;&lt; " 余 " &lt;&lt; remainder
+         &lt;&lt; "，递归调用 gcd(" &lt;&lt; b &lt;&lt; ", " &lt;&lt; remainder &lt;&lt; ")" &lt;&lt; endl;
+
+    // 递归求解
+    int result = gcd_with_steps(b, remainder, step + 1);
+
+    // 返回时打印
+    for (int i = 0; i &lt; step; i++) {
+        cout &lt;&lt; "  ";
+    }
+    cout &lt;&lt; "第 " &lt;&lt; step &lt;&lt; " 层返回：gcd(" &lt;&lt; a &lt;&lt; ", " &lt;&lt; b &lt;&lt; ") = " &lt;&lt; result &lt;&lt; endl;
+
+    return result;
+}
+
+// ============================================================================
+// 主函数：演示汉诺塔与最大公约数的递归求解
+// ============================================================================
+int main() {
+    cout &lt;&lt; "============================================================" &lt;&lt; endl;
+    cout &lt;&lt; "  第26课：经典递归算法 —— 汉诺塔 与 辗转相除法求 GCD" &lt;&lt; endl;
+    cout &lt;&lt; "============================================================" &lt;&lt; endl;
+
+    // ========================================================================
+    // 第一部分：汉诺塔问题演示
+    // ========================================================================
+    cout &lt;&lt; endl;
+    cout &lt;&lt; "┌──────────────────────────────────────────────────────────┐" &lt;&lt; endl;
+    cout &lt;&lt; "│  第一部分：汉诺塔问题（Hanoi Tower）                       │" &lt;&lt; endl;
+    cout &lt;&lt; "└──────────────────────────────────────────────────────────┘" &lt;&lt; endl;
+    cout &lt;&lt; endl;
+
+    int n = 3;
+    cout &lt;&lt; "【测试】n = " &lt;&lt; n &lt;&lt; " 个盘子的汉诺塔移动步骤：" &lt;&lt; endl;
+    cout &lt;&lt; "------------------------------------------------------------" &lt;&lt; endl;
+    cout &lt;&lt; "说明：A = 起始柱  |  C = 目标柱  |  B = 辅助柱" &lt;&lt; endl;
+    cout &lt;&lt; "目标：将 " &lt;&lt; n &lt;&lt; " 个盘子从 A 柱移动到 C 柱" &lt;&lt; endl;
+    cout &lt;&lt; "------------------------------------------------------------" &lt;&lt; endl;
+
+    // 调用汉诺塔递归函数，打印每一步移动
+    hanoi(n, 'A', 'C', 'B');
+
+    // 计算并显示总移动次数
+    int moves = hanoi_moves(n);
+    cout &lt;&lt; "------------------------------------------------------------" &lt;&lt; endl;
+    cout &lt;&lt; "总移动次数：T(" &lt;&lt; n &lt;&lt; ") = 2^" &lt;&lt; n &lt;&lt; " - 1 = " &lt;&lt; moves &lt;&lt; " 步" &lt;&lt; endl;
+    cout &lt;&lt; "理论验证：2^" &lt;&lt; n &lt;&lt; " - 1 = " &lt;&lt; (1 &lt;&lt; n) - 1 &lt;&lt; " ✓" &lt;&lt; endl;
+
+    // ========================================================================
+    // 第二部分：扩展示例 —— n=4 时只显示理论次数
+    // ========================================================================
+    cout &lt;&lt; endl;
+    cout &lt;&lt; "【扩展】n = 4 时的理论分析：" &lt;&lt; endl;
+    cout &lt;&lt; "  T(4) = 2^4 - 1 = " &lt;&lt; hanoi_moves(4) &lt;&lt; " 步" &lt;&lt; endl;
+    cout &lt;&lt; "  递推关系：T(4) = 2 * T(3) + 1 = 2 * " &lt;&lt; moves &lt;&lt; " + 1 = "
+         &lt;&lt; 2 * moves + 1 &lt;&lt; " 步" &lt;&lt; endl;
+    cout &lt;&lt; "  可见随着 n 增大，移动次数呈指数增长！" &lt;&lt; endl;
+
+    // ========================================================================
+    // 第三部分：最大公约数（辗转相除法）演示
+    // ========================================================================
+    cout &lt;&lt; endl;
+    cout &lt;&lt; "┌──────────────────────────────────────────────────────────┐" &lt;&lt; endl;
+    cout &lt;&lt; "│  第二部分：最大公约数（辗转相除法 / 欧几里得算法）         │" &lt;&lt; endl;
+    cout &lt;&lt; "└──────────────────────────────────────────────────────────┘" &lt;&lt; endl;
+    cout &lt;&lt; endl;
+
+    int a = 48, b = 18;
+    cout &lt;&lt; "【测试】计算 gcd(" &lt;&lt; a &lt;&lt; ", " &lt;&lt; b &lt;&lt; ") 的详细过程：" &lt;&lt; endl;
+    cout &lt;&lt; "------------------------------------------------------------" &lt;&lt; endl;
+    cout &lt;&lt; "辗转相除法原理：gcd(a, b) = gcd(b, a % b)" &lt;&lt; endl;
+    cout &lt;&lt; "不断用较小数除较大数取余，直到余数为 0" &lt;&lt; endl;
+    cout &lt;&lt; "------------------------------------------------------------" &lt;&lt; endl;
+    cout &lt;&lt; endl;
+    cout &lt;&lt; "递归调用过程（缩进表示递归深度）：" &lt;&lt; endl;
+    cout &lt;&lt; endl;
+
+    // 调用带步骤输出的 GCD 函数
+    int result = gcd_with_steps(a, b, 0);
+
+    cout &lt;&lt; endl;
+    cout &lt;&lt; "------------------------------------------------------------" &lt;&lt; endl;
+    cout &lt;&lt; "结果：gcd(" &lt;&lt; a &lt;&lt; ", " &lt;&lt; b &lt;&lt; ") = " &lt;&lt; result &lt;&lt; endl;
+
+    // 验证结果
+    cout &lt;&lt; "验证：" &lt;&lt; a &lt;&lt; " ÷ " &lt;&lt; result &lt;&lt; " = " &lt;&lt; a / result
+         &lt;&lt; "（整除），" &lt;&lt; b &lt;&lt; " ÷ " &lt;&lt; result &lt;&lt; " = " &lt;&lt; b / result
+         &lt;&lt; "（整除）✓" &lt;&lt; endl;
+
+    // ========================================================================
+    // 第四部分：更多 GCD 测试样例
+    // ========================================================================
+    cout &lt;&lt; endl;
+    cout &lt;&lt; "【更多测试样例】" &lt;&lt; endl;
+    cout &lt;&lt; "------------------------------------------------------------" &lt;&lt; endl;
+
+    // 测试样例数组
+    int test_pairs[][2] = {
+        {56, 42},
+        {100, 25},
+        {17, 13},    // 互质的情况
+        {64, 48},
+        {270, 192}
+    };
+    int num_tests = sizeof(test_pairs) / sizeof(test_pairs[0]);
+
+    for (int i = 0; i &lt; num_tests; i++) {
+        int x = test_pairs[i][0];
+        int y = test_pairs[i][1];
+        int g = gcd(x, y);
+        cout &lt;&lt; "  gcd(" &lt;&lt; x &lt;&lt; ", " &lt;&lt; y &lt;&lt; ") = " &lt;&lt; g;
+        // 对互质情况加注释
+        if (g == 1) {
+            cout &lt;&lt; "  （" &lt;&lt; x &lt;&lt; " 和 " &lt;&lt; y &lt;&lt; " 互质）";
+        }
+        cout &lt;&lt; endl;
+    }
+
+    // ========================================================================
+    // 总结
+    // ========================================================================
+    cout &lt;&lt; endl;
+    cout &lt;&lt; "============================================================" &lt;&lt; endl;
+    cout &lt;&lt; "  课程总结" &lt;&lt; endl;
+    cout &lt;&lt; "============================================================" &lt;&lt; endl;
+    cout &lt;&lt; "  1. 汉诺塔递归核心：把 n 个盘子的问题分解为移动 n-1 个盘子" &lt;&lt; endl;
+    cout &lt;&lt; "     的子问题，体现了「分而治之」的思想。" &lt;&lt; endl;
+    cout &lt;&lt; "  2. 汉诺塔时间复杂度为 O(2^n)，是指数级增长，n=64 时" &lt;&lt; endl;
+    cout &lt;&lt; "     即使每秒移动一次也需要约 5849 亿年！" &lt;&lt; endl;
+    cout &lt;&lt; "  3. 辗转相除法递归核心：gcd(a,b) = gcd(b, a%b)，" &lt;&lt; endl;
+    cout &lt;&lt; "     每次递归问题规模急剧缩小，时间复杂度为 O(log n)。" &lt;&lt; endl;
+    cout &lt;&lt; "  4. 编写递归函数的关键：明确基准条件、确保每次递归" &lt;&lt; endl;
+    cout &lt;&lt; "     都向基准条件靠近、相信递归会正确完成子任务。" &lt;&lt; endl;
+    cout &lt;&lt; "============================================================" &lt;&lt; endl;
+
+    return 0;
+}
+</pre>
+    <p class="hint">本页使用浅色主题与 UTF-8 编码，可直接打印或导出 PDF。</p>
+  </div>
+</body>
+</html>

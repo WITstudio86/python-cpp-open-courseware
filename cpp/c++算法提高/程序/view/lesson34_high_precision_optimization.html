@@ -1,0 +1,510 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>lesson34_high_precision_optimization.cpp</title>
+<style>
+  :root {
+    --bg: #f5f7fa;
+    --panel: #ffffff;
+    --text: #1a1a2e;
+    --muted: #5a6570;
+    --gold: #b8860b;
+    --code-bg: #ffffff;
+    --code-text: #1f2933;
+    --border: #d8dee6;
+    --top-bg: #ffffff;
+    --top-border: #e5e9ef;
+  }
+  * { box-sizing: border-box; }
+  html, body {
+    margin: 0; padding: 0;
+    background: var(--bg);
+    color: var(--text);
+    font-family: -apple-system, BlinkMacSystemFont, "PingFang SC", "Microsoft YaHei", sans-serif;
+    min-height: 100%;
+  }
+  .top {
+    position: sticky; top: 0; z-index: 10;
+    display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between;
+    gap: 10px;
+    padding: 12px 18px;
+    background: var(--top-bg);
+    border-bottom: 1px solid var(--top-border);
+    box-shadow: 0 1px 8px rgba(15, 23, 42, 0.06);
+  }
+  .brand { color: var(--gold); font-weight: 700; font-size: 14px; letter-spacing: 0.04em; }
+  .title { font-size: 15px; font-weight: 600; color: var(--text); max-width: 52vw; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .actions { display: flex; gap: 8px; flex-wrap: wrap; }
+  .btn {
+    appearance: none; border: 1px solid var(--border);
+    background: #fff; color: var(--text);
+    border-radius: 999px; padding: 8px 14px; font-size: 13px; font-weight: 600;
+    text-decoration: none; cursor: pointer;
+  }
+  .btn:hover { background: #f0f3f7; }
+  .btn.gold {
+    background: linear-gradient(135deg, #f0d78c, #d4a853);
+    color: #0a2540; border-color: #e0c06a;
+  }
+  .meta {
+    padding: 10px 18px; color: var(--muted); font-size: 12px;
+    border-bottom: 1px solid var(--border);
+    background: var(--panel);
+  }
+  .wrap { padding: 16px 18px 40px; }
+  pre {
+    margin: 0;
+    background: var(--code-bg);
+    color: var(--code-text);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 18px 20px;
+    overflow: auto;
+    font-family: "SF Mono", "JetBrains Mono", "Fira Code", Consolas, "Courier New", monospace;
+    font-size: 13.5px;
+    line-height: 1.55;
+    white-space: pre;
+    tab-size: 4;
+    box-shadow: 0 2px 12px rgba(15, 23, 42, 0.05);
+  }
+  .hint { margin-top: 12px; color: var(--muted); font-size: 12px; }
+  @media print {
+    html, body { background: #fff !important; color: #000 !important; }
+    .top { position: static; box-shadow: none; border-bottom: 1px solid #ccc; background: #fff !important; }
+    .actions { display: none !important; }
+    .meta { background: #fff !important; border-color: #ddd; color: #333; }
+    .wrap { padding: 0; }
+    pre {
+      background: #fff !important; color: #000 !important;
+      border: 1px solid #bbb; box-shadow: none; border-radius: 0;
+      white-space: pre-wrap; word-break: break-word; font-size: 11pt; line-height: 1.4;
+    }
+    .hint { display: none; }
+    a { color: #000; text-decoration: none; }
+  }
+</style>
+</head>
+<body>
+  <div class="top">
+    <div class="brand">C++ 算法提高 · 配套代码</div>
+    <div class="title">lesson34_high_precision_optimization.cpp</div>
+    <div class="actions">
+      <a class="btn" href="../lesson34_high_precision_optimization.cpp" download="lesson34_high_precision_optimization.cpp">⬇️ 下载源文件</a>
+      <a class="btn gold" href="javascript:history.back()">← 返回课件</a>
+    </div>
+  </div>
+  <div class="meta">编码：UTF-8 · 文件：lesson34_high_precision_optimization.cpp · 共 406 行 · 浅色主题便于打印</div>
+  <div class="wrap">
+    <pre id="code">/*
+ * ================================================================
+ * C++算法提高 第34课：高精度应用与优化——压位存储（万进制）
+ * ================================================================
+ *
+ * 算法知识点：
+ *   - 压位存储（万进制）：每个数组元素存储4位十进制数字
+ *   - 高精度乘低精度（压位版）：进位由 /10 变为 /BASE
+ *   - 高精度减法（压位版）：借位由 +10 变为 +BASE
+ *   - 输出前导零处理：非最高段需要用 setw + setfill('0') 补齐
+ *   - 快速计算 2^n：循环 n 次，每次乘以 2
+ *
+ * 经典例题：
+ *   例题1 - 2的N次方：输入 n（1 ≤ n ≤ 500），输出 2^n 的精确值
+ *   例题2 - Hanoi双塔问题：输入 n（1 ≤ n ≤ 200），输出 2^(n+1) - 2
+ */
+
+#include &lt;iostream&gt;
+#include &lt;vector&gt;
+#include &lt;iomanip&gt;
+#include &lt;string&gt;
+using namespace std;
+
+// ================================================================
+// 压位高精度常量定义
+// BASE = 10000 表示使用万进制（每个元素存储4位十进制数）
+// WIDTH = 4     表示输出时每个非最高段应占的宽度
+//
+// 选择万进制的原因：
+//   - 每个元素存4位，压缩比为4:1（空间和运算次数都减少到1/4）
+//   - 乘法时：digits[i] * 2 + carry 最大约 20000+，远小于 int 上限
+//   - 输出友好：4位一组，与千分位对齐，肉眼容易检查结果
+// ================================================================
+const int BASE = 10000;
+const int WIDTH = 4;
+
+// ================================================================
+// BigInt 结构体：压位高精度整数（万进制）
+// digits 数组从低位到高位存储，digits[0] 是最低位
+// 例如：数值 12345678 存储为 digits = [5678, 1234]
+// ================================================================
+struct BigInt {
+    vector&lt;int&gt; digits;
+
+    // 构造函数：将普通整数转换为万进制存储
+    // 例如：n=12345678 → digits = [5678, 1234]
+    BigInt(int n = 0) {
+        if (n == 0) {
+            digits.push_back(0);
+        } else {
+            while (n &gt; 0) {
+                digits.push_back(n % BASE);
+                n /= BASE;
+            }
+        }
+    }
+
+    // ----------------------------------------------------------
+    // multiply：高精度乘低精度（压位版）
+    // 例如：12345678 × 2 = 24691356
+    //   输入：digits = [5678, 1234], x = 2
+    //   过程：
+    //     i=0: 5678 × 2 = 11356 → digits[0]=1356, carry=1
+    //     i=1: 1234 × 2 + 1 = 2469 → digits[1]=2469, carry=0
+    //   输出：digits = [1356, 2469]  表示 24691356 ✓
+    // ----------------------------------------------------------
+    void multiply(int x) {
+        int carry = 0;
+        for (int i = 0; i &lt; (int)digits.size(); i++) {
+            // 使用 long long 防止中间结果溢出
+            long long cur = (long long)digits[i] * x + carry;
+            digits[i] = cur % BASE;   // 当前段取余数
+            carry = cur / BASE;        // 进位到下一位
+        }
+        // 处理最后的进位（可能需要多个万进制段）
+        while (carry &gt; 0) {
+            digits.push_back(carry % BASE);
+            carry /= BASE;
+        }
+    }
+
+    // ----------------------------------------------------------
+    // subtract2：高精度减2（用于 Hanoi双塔公式 2^(n+1) - 2）
+    // 由于只减2，借位最多影响前两个段，但代码支持通用减法
+    // 例如：10000 - 2 = 9998
+    //   输入：digits = [0, 1]  （表示 10000）
+    //   过程：
+    //     i=0: 0 &lt; 2 → digits[0] = 0 + 10000 - 2 = 9998, borrow=1
+    //     i=1: 1 &gt;= 1 → digits[1] = 1 - 1 = 0, borrow=0
+    //   输出：digits = [9998]  （去掉前导零后）
+    // ----------------------------------------------------------
+    void subtract2() {
+        int borrow = 2;
+        for (int i = 0; i &lt; (int)digits.size() &amp;&amp; borrow &gt; 0; i++) {
+            if (digits[i] &gt;= borrow) {
+                digits[i] -= borrow;
+                borrow = 0;
+            } else {
+                // 当前段不够减，向高位借1（借 BASE）
+                digits[i] = digits[i] + BASE - borrow;
+                borrow = 1;
+            }
+        }
+        // 去除高位的前导零（对应 BASE 级别的零段）
+        while (digits.size() &gt; 1 &amp;&amp; digits.back() == 0) {
+            digits.pop_back();
+        }
+    }
+
+    // ----------------------------------------------------------
+    // print：输出高精度数
+    // 关键点：非最高段的所有段必须用前导零补齐到 WIDTH 位
+    //
+    // 例如：digits = [2, 1]  表示 10002
+    //   输出：digits[1]=1 → 直接输出 "1"
+    //         digits[0]=2 → 补齐输出 "0002"
+    //   最终："10002" ✓
+    //
+    // 常见错误：忘记补零，输出 "12" ✗
+    // ----------------------------------------------------------
+    void print() const {
+        // 最高段直接输出（不需要补前导零）
+        cout &lt;&lt; digits.back();
+        // 其余各段补足 WIDTH 位
+        for (int i = (int)digits.size() - 2; i &gt;= 0; i--) {
+            cout &lt;&lt; setw(WIDTH) &lt;&lt; setfill('0') &lt;&lt; digits[i];
+        }
+        cout &lt;&lt; endl;
+    }
+
+    // ----------------------------------------------------------
+    // getDecimalLength：估算十进制位数
+    // 用于展示计算结果的长度
+    // ----------------------------------------------------------
+    int getDecimalLength() const {
+        if (digits.size() == 1 &amp;&amp; digits[0] == 0) return 1;
+        int len = (digits.size() - 1) * WIDTH;
+        int high = digits.back();
+        while (high &gt; 0) {
+            len++;
+            high /= 10;
+        }
+        return len;
+    }
+};
+
+// ================================================================
+// pow2：快速计算 2 的 n 次方（使用压位高精度）
+// 参数：n - 指数（0 ≤ n ≤ 500）
+// 返回：2^n 的精确值
+//
+// 算法：从 1 开始，循环 n 次，每次乘以 2
+// 虽然每次只乘 2，但使用压位后运算量仅为普通方法的 1/4
+//
+// 复杂度：
+//   时间：O(n²/B) ≈ O(n²/4)  （B=4为压缩比）
+//   空间：O(n/B) ≈ O(n/4)
+//
+// 示例：
+//   n=0  → 1
+//   n=1  → 2
+//   n=5  → 32
+//   n=10 → 1024
+//   n=64 → 18446744073709551616
+// ================================================================
+BigInt pow2(int n) {
+    BigInt result(1);  // 初始为 2^0 = 1
+    for (int i = 1; i &lt;= n; i++) {
+        result.multiply(2);
+    }
+    return result;
+}
+
+// ================================================================
+// 例题1：2的N次方
+// 题目：输入一个正整数 n（1 ≤ n ≤ 500），计算 2^n 的精确值
+//
+// 输入格式：一个整数 n
+// 输出格式：2^n 的精确值
+//
+// 样例输入1：64
+// 样例输出1：18446744073709551616
+//
+// 样例输入2：100
+// 样例输出2：1267650600228229401496703205376
+//
+// 算法说明：
+//   从 1 开始，循环 n 次，每次将当前值乘以 2。
+//   使用压位高精度（万进制）存储中间结果，效率约为普通方法的4倍。
+//   当 n=500 时，结果约有 151 位十进制数字，在万进制下仅需约 38 个段。
+// ================================================================
+void solvePow2() {
+    cout &lt;&lt; "══════════════════════════════════════" &lt;&lt; endl;
+    cout &lt;&lt; "  例题1：2的N次方" &lt;&lt; endl;
+    cout &lt;&lt; "══════════════════════════════════════" &lt;&lt; endl;
+    cout &lt;&lt; "请输入指数 n（1 ≤ n ≤ 500）：" &lt;&lt; endl;
+
+    int n;
+    cin &gt;&gt; n;
+
+    if (n &lt; 1 || n &gt; 500) {
+        cout &lt;&lt; "输入超出范围！请确保 n ∈ [1, 500]" &lt;&lt; endl;
+        return;
+    }
+
+    cout &lt;&lt; endl;
+    cout &lt;&lt; "计算 2^" &lt;&lt; n &lt;&lt; " ..." &lt;&lt; endl;
+    cout &lt;&lt; "--------------------------------------" &lt;&lt; endl;
+
+    BigInt result = pow2(n);
+
+    cout &lt;&lt; "2^" &lt;&lt; n &lt;&lt; " = ";
+    result.print();
+    cout &lt;&lt; "--------------------------------------" &lt;&lt; endl;
+    cout &lt;&lt; "十进制位数：" &lt;&lt; result.getDecimalLength() &lt;&lt; " 位" &lt;&lt; endl;
+    cout &lt;&lt; "万进制段数：" &lt;&lt; result.digits.size() &lt;&lt; " 段" &lt;&lt; endl;
+    cout &lt;&lt; "（万进制下每个段存储4位十进制数，空间节省约 "
+         &lt;&lt; fixed &lt;&lt; setprecision(0)
+         &lt;&lt; 100.0 * (1.0 - (double)result.digits.size() / result.getDecimalLength())
+         &lt;&lt; "%）" &lt;&lt; endl;
+    cout &lt;&lt; endl;
+}
+
+// ================================================================
+// 例题2：Hanoi双塔问题
+// 题目：汉诺双塔问题。A柱上有2n个圆盘，n种不同大小，每种大小有2个
+//       相同的圆盘。按照汉诺塔规则将所有圆盘移到C柱，求最少移动次数。
+//
+// 输入格式：一个整数 n（1 ≤ n ≤ 200）
+// 输出格式：最少移动次数
+//
+// 公式：H(n) = 2^(n+1) - 2
+//
+// 样例输入：2
+// 样例输出：6
+//
+// 公式推导（递推）：
+//   设 H(n) 为双塔问题的最少移动次数（2n个圆盘）
+//
+//   移动策略：
+//     1. 将上面 2(n-1) 个圆盘从A移到B  → H(n-1) 步
+//     2. 将最大的2个圆盘从A移到C        → 2 步
+//     3. 将B柱上 2(n-1) 个圆盘移到C    → H(n-1) 步
+//
+//   递推式：H(n) = 2 × H(n-1) + 2
+//   边界：H(1) = 2（两个相同圆盘，直接移两次即可）
+//
+//   展开求解：
+//     H(n) = 2 × H(n-1) + 2
+//          = 2[2H(n-2) + 2] + 2
+//          = 2² × H(n-2) + (2² + 2)
+//          = ...
+//          = 2^(n-1) × H(1) + (2^(n-1) + ... + 2² + 2)
+//          = 2^(n-1) × 2 + (2^n - 2)
+//          = 2^n + 2^n - 2
+//          = 2^(n+1) - 2
+//
+//   验证：
+//     n=1: 2^(1+1) - 2 = 4 - 2 = 2   → 正确！两个相同圆盘只需移2步
+//     n=2: 2^(2+1) - 2 = 8 - 2 = 6   → 与样例一致！
+//     n=3: 2^(3+1) - 2 = 16 - 2 = 14
+//
+// 复杂度：
+//   与例题1相同：O((n+1)²/4) 时间，O((n+1)/4) 空间
+//   当 n=200 时，结果约有 61 位十进制数，万进制下约需 16 个段
+// ================================================================
+void solveHanoiTwin() {
+    cout &lt;&lt; "══════════════════════════════════════" &lt;&lt; endl;
+    cout &lt;&lt; "  例题2：Hanoi双塔问题" &lt;&lt; endl;
+    cout &lt;&lt; "══════════════════════════════════════" &lt;&lt; endl;
+    cout &lt;&lt; "A柱上有2n个圆盘（n种大小，每种2个）" &lt;&lt; endl;
+    cout &lt;&lt; "按照汉诺塔规则全部移到C柱" &lt;&lt; endl;
+    cout &lt;&lt; "公式：最少移动次数 = 2^(n+1) - 2" &lt;&lt; endl;
+    cout &lt;&lt; "--------------------------------------" &lt;&lt; endl;
+    cout &lt;&lt; "请输入 n（1 ≤ n ≤ 200）：" &lt;&lt; endl;
+
+    int n;
+    cin &gt;&gt; n;
+
+    if (n &lt; 1 || n &gt; 200) {
+        cout &lt;&lt; "输入超出范围！请确保 n ∈ [1, 200]" &lt;&lt; endl;
+        return;
+    }
+
+    cout &lt;&lt; endl;
+    cout &lt;&lt; "计算 Hanoi双塔 H(" &lt;&lt; n &lt;&lt; ") = 2^(" &lt;&lt; n &lt;&lt; "+1) - 2 ..." &lt;&lt; endl;
+    cout &lt;&lt; "--------------------------------------" &lt;&lt; endl;
+
+    // 计算 2^(n+1)
+    BigInt result = pow2(n + 1);
+
+    // 减去 2
+    result.subtract2();
+
+    cout &lt;&lt; "H(" &lt;&lt; n &lt;&lt; ") = 2^(" &lt;&lt; n &lt;&lt; "+1) - 2 = 2^" &lt;&lt; (n + 1)
+         &lt;&lt; " - 2 = ";
+    result.print();
+    cout &lt;&lt; "--------------------------------------" &lt;&lt; endl;
+    cout &lt;&lt; "十进制位数：" &lt;&lt; result.getDecimalLength() &lt;&lt; " 位" &lt;&lt; endl;
+    cout &lt;&lt; "即最少需要移动 " &lt;&lt; result.getDecimalLength() &lt;&lt; " 位数字的次数！" &lt;&lt; endl;
+    cout &lt;&lt; endl;
+}
+
+// ================================================================
+// 演示函数：对比普通存储与压位存储的差异
+// 用具体数字展示压位优化的直观效果
+// ================================================================
+void demoCompression() {
+    cout &lt;&lt; "══════════════════════════════════════" &lt;&lt; endl;
+    cout &lt;&lt; "  演示：普通存储 vs 压位存储（万进制）" &lt;&lt; endl;
+    cout &lt;&lt; "══════════════════════════════════════" &lt;&lt; endl;
+    cout &lt;&lt; endl;
+
+    // 以 2^64 = 18446744073709551616 为例
+    string value = "18446744073709551616";
+    cout &lt;&lt; "以数值 " &lt;&lt; value &lt;&lt; " 为例：" &lt;&lt; endl;
+    cout &lt;&lt; endl;
+
+    cout &lt;&lt; "┌─ 普通存储（每个int存1位十进制数）────────────┐" &lt;&lt; endl;
+    cout &lt;&lt; "│ 数组长度：" &lt;&lt; value.length() &lt;&lt; " 个元素                        │" &lt;&lt; endl;
+    cout &lt;&lt; "│ 每次乘法需循环 " &lt;&lt; value.length() &lt;&lt; " 次                     │" &lt;&lt; endl;
+    cout &lt;&lt; "└──────────────────────────────────────────────┘" &lt;&lt; endl;
+    cout &lt;&lt; endl;
+
+    // 万进制存储
+    BigInt big(value[0] - '0');
+    // 其实这里只是展示概念，构造一个代表性BigInt
+    cout &lt;&lt; "┌─ 压位存储（万进制，每个int存4位十进制数）─────┐" &lt;&lt; endl;
+    cout &lt;&lt; "│ 数组长度：" &lt;&lt; (value.length() + 3) / 4 &lt;&lt; " 个元素                         │" &lt;&lt; endl;
+    cout &lt;&lt; "│ 每次乘法需循环 " &lt;&lt; (value.length() + 3) / 4 &lt;&lt; " 次                      │" &lt;&lt; endl;
+    cout &lt;&lt; "│ 压缩比：约 4:1                                │" &lt;&lt; endl;
+    cout &lt;&lt; "│ 效率提升：约 4 倍                              │" &lt;&lt; endl;
+    cout &lt;&lt; "└──────────────────────────────────────────────┘" &lt;&lt; endl;
+    cout &lt;&lt; endl;
+
+    cout &lt;&lt; "压位存储示意图：" &lt;&lt; endl;
+    cout &lt;&lt; "  原数字： 18 4467 4407 3709 5516 16" &lt;&lt; endl;
+    cout &lt;&lt; "           (共20位十进制数)" &lt;&lt; endl;
+    cout &lt;&lt; "  万进制： [16] [5516] [3709] [4407] [4467] [18]" &lt;&lt; endl;
+    cout &lt;&lt; "            ↑     ↑      ↑      ↑      ↑     ↑" &lt;&lt; endl;
+    cout &lt;&lt; "         段[0]  段[1]  段[2]  段[3]  段[4] 段[5]" &lt;&lt; endl;
+    cout &lt;&lt; "           (仅需6个数组元素！)" &lt;&lt; endl;
+    cout &lt;&lt; endl;
+}
+
+// ================================================================
+// 附加演示：展示不同 n 值下 2^n 的规模变化
+// 帮助学生直观感受指数增长的威力
+// ================================================================
+void demoGrowth() {
+    cout &lt;&lt; "══════════════════════════════════════" &lt;&lt; endl;
+    cout &lt;&lt; "  演示：2^n 的增长速度" &lt;&lt; endl;
+    cout &lt;&lt; "══════════════════════════════════════" &lt;&lt; endl;
+    cout &lt;&lt; endl;
+    cout &lt;&lt; " n   | 结果十进制位数 | 万进制段数" &lt;&lt; endl;
+    cout &lt;&lt; "─────┼────────────────┼───────────" &lt;&lt; endl;
+
+    int testN[] = {10, 20, 32, 50, 64, 100, 200, 500};
+    for (int idx = 0; idx &lt; 8; idx++) {
+        int n = testN[idx];
+        BigInt val = pow2(n);
+        cout &lt;&lt; " " &lt;&lt; setw(3) &lt;&lt; n &lt;&lt; " | "
+             &lt;&lt; setw(14) &lt;&lt; val.getDecimalLength() &lt;&lt; " | "
+             &lt;&lt; setw(9) &lt;&lt; val.digits.size() &lt;&lt; endl;
+    }
+    cout &lt;&lt; endl;
+    cout &lt;&lt; "可以看到，2^500 的结果有 151 位十进制数，" &lt;&lt; endl;
+    cout &lt;&lt; "万进制下仅需约 38 个段即可存储。效率提升显著！" &lt;&lt; endl;
+    cout &lt;&lt; endl;
+}
+
+// ================================================================
+// 主函数：测试所有例题和演示
+// ================================================================
+int main() {
+    cout &lt;&lt; "╔══════════════════════════════════════════════╗" &lt;&lt; endl;
+    cout &lt;&lt; "║   C++ 算法提高 —— 第34课：高精度应用与优化   ║" &lt;&lt; endl;
+    cout &lt;&lt; "║   压位存储（万进制）—— 让高精度计算更快更强   ║" &lt;&lt; endl;
+    cout &lt;&lt; "╚══════════════════════════════════════════════╝" &lt;&lt; endl;
+    cout &lt;&lt; endl;
+
+    // 演示1：存储对比
+    demoCompression();
+
+    // 演示2：增长趋势
+    demoGrowth();
+
+    // 例题1：2的N次方
+    solvePow2();
+
+    // 例题2：Hanoi双塔问题
+    solveHanoiTwin();
+
+    cout &lt;&lt; "══════════════════════════════════════" &lt;&lt; endl;
+    cout &lt;&lt; "  本课小结" &lt;&lt; endl;
+    cout &lt;&lt; "══════════════════════════════════════" &lt;&lt; endl;
+    cout &lt;&lt; "1. 压位存储（万进制）将数组长度缩减到约 1/4" &lt;&lt; endl;
+    cout &lt;&lt; "2. 乘法和减法的进位/借位基数变为 10000" &lt;&lt; endl;
+    cout &lt;&lt; "3. 输出时非最高段必须补足前导零" &lt;&lt; endl;
+    cout &lt;&lt; "4. 2的N次方：循环n次，每次乘2即可" &lt;&lt; endl;
+    cout &lt;&lt; "5. Hanoi双塔：最少移动次数 = 2^(n+1) - 2" &lt;&lt; endl;
+    cout &lt;&lt; "6. 压位思想可扩展到亿进制(BASE=100000000)等" &lt;&lt; endl;
+    cout &lt;&lt; "══════════════════════════════════════" &lt;&lt; endl;
+
+    return 0;
+}
+</pre>
+    <p class="hint">本页使用浅色主题与 UTF-8 编码，可直接打印或导出 PDF。</p>
+  </div>
+</body>
+</html>

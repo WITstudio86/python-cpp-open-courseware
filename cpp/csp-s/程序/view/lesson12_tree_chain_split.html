@@ -1,0 +1,374 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>lesson12_tree_chain_split.cpp</title>
+<style>
+  :root {
+    --bg: #f5f7fa;
+    --panel: #ffffff;
+    --text: #1a1a2e;
+    --muted: #5a6570;
+    --gold: #b8860b;
+    --code-bg: #ffffff;
+    --code-text: #1f2933;
+    --border: #d8dee6;
+    --top-bg: #ffffff;
+    --top-border: #e5e9ef;
+  }
+  * { box-sizing: border-box; }
+  html, body {
+    margin: 0; padding: 0;
+    background: var(--bg);
+    color: var(--text);
+    font-family: -apple-system, BlinkMacSystemFont, "PingFang SC", "Microsoft YaHei", sans-serif;
+    min-height: 100%;
+  }
+  .top {
+    position: sticky; top: 0; z-index: 10;
+    display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between;
+    gap: 10px;
+    padding: 12px 18px;
+    background: var(--top-bg);
+    border-bottom: 1px solid var(--top-border);
+    box-shadow: 0 1px 8px rgba(15, 23, 42, 0.06);
+  }
+  .brand { color: var(--gold); font-weight: 700; font-size: 14px; letter-spacing: 0.04em; }
+  .title { font-size: 15px; font-weight: 600; color: var(--text); max-width: 52vw; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .actions { display: flex; gap: 8px; flex-wrap: wrap; }
+  .btn {
+    appearance: none; border: 1px solid var(--border);
+    background: #fff; color: var(--text);
+    border-radius: 999px; padding: 8px 14px; font-size: 13px; font-weight: 600;
+    text-decoration: none; cursor: pointer;
+  }
+  .btn:hover { background: #f0f3f7; }
+  .btn.gold {
+    background: linear-gradient(135deg, #f0d78c, #d4a853);
+    color: #0a2540; border-color: #e0c06a;
+  }
+  .meta {
+    padding: 10px 18px; color: var(--muted); font-size: 12px;
+    border-bottom: 1px solid var(--border);
+    background: var(--panel);
+  }
+  .wrap { padding: 16px 18px 40px; }
+  pre {
+    margin: 0;
+    background: var(--code-bg);
+    color: var(--code-text);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 18px 20px;
+    overflow: auto;
+    font-family: "SF Mono", "JetBrains Mono", "Fira Code", Consolas, "Courier New", monospace;
+    font-size: 13.5px;
+    line-height: 1.55;
+    white-space: pre;
+    tab-size: 4;
+    box-shadow: 0 2px 12px rgba(15, 23, 42, 0.05);
+  }
+  .hint { margin-top: 12px; color: var(--muted); font-size: 12px; }
+  @media print {
+    html, body { background: #fff !important; color: #000 !important; }
+    .top { position: static; box-shadow: none; border-bottom: 1px solid #ccc; background: #fff !important; }
+    .actions { display: none !important; }
+    .meta { background: #fff !important; border-color: #ddd; color: #333; }
+    .wrap { padding: 0; }
+    pre {
+      background: #fff !important; color: #000 !important;
+      border: 1px solid #bbb; box-shadow: none; border-radius: 0;
+      white-space: pre-wrap; word-break: break-word; font-size: 11pt; line-height: 1.4;
+    }
+    .hint { display: none; }
+    a { color: #000; text-decoration: none; }
+  }
+</style>
+</head>
+<body>
+  <div class="top">
+    <div class="brand">CSP-S 备考 · 配套代码</div>
+    <div class="title">lesson12_tree_chain_split.cpp</div>
+    <div class="actions">
+      <a class="btn" href="../lesson12_tree_chain_split.cpp" download="lesson12_tree_chain_split.cpp">⬇️ 下载源文件</a>
+      <a class="btn gold" href="javascript:history.back()">← 返回课件</a>
+    </div>
+  </div>
+  <div class="meta">编码：UTF-8 · 文件：lesson12_tree_chain_split.cpp · 共 270 行 · 浅色主题便于打印</div>
+  <div class="wrap">
+    <pre id="code">/**
+ * 第12课：树链剖分（Heavy-Light Decomposition）
+ * 对应CSP-S考纲知识点：
+ *   - 轻重链剖分：两次DFS，确定重链和DFS序
+ *   - DFS序与连续区间映射
+ *   - 树上路径操作转化为区间操作（线段树）
+ *   - 树上路径查询与修改（O(log² n)）
+ *   - 子树操作（O(log n)）
+ *   - HLD 求 LCA（O(log n)）
+ *
+ * 包含以下实现：
+ *   1. HLD 模板（两遍 DFS）
+ *   2. 路径修改 + 路径查询（配合线段树）
+ *   3. 子树修改 + 子树查询
+ *   4. HLD 求 LCA
+ *   5. 完整真题 AC 代码
+ */
+
+#include &lt;bits/stdc++.h&gt;
+using namespace std;
+
+const int MAXN = 100005;
+
+// ============================================================
+// 线段树模板（区间加法 + 区间求和，用于配合 HLD）
+// ============================================================
+class SegTree {
+private:
+    int n;
+    vector&lt;long long&gt; tree, lazy;
+
+    void pushup(int p) { tree[p] = tree[p &lt;&lt; 1] + tree[p &lt;&lt; 1 | 1]; }
+
+    void build(int p, int l, int r, const vector&lt;long long&gt;&amp; a) {
+        lazy[p] = 0;
+        if (l == r) { tree[p] = a[l]; return; }
+        int mid = (l + r) &gt;&gt; 1;
+        build(p &lt;&lt; 1, l, mid, a);
+        build(p &lt;&lt; 1 | 1, mid + 1, r, a);
+        pushup(p);
+    }
+
+    void pushdown(int p, int l, int r) {
+        if (lazy[p]) {
+            int mid = (l + r) &gt;&gt; 1;
+            tree[p &lt;&lt; 1] += lazy[p] * (mid - l + 1);
+            tree[p &lt;&lt; 1 | 1] += lazy[p] * (r - mid);
+            lazy[p &lt;&lt; 1] += lazy[p];
+            lazy[p &lt;&lt; 1 | 1] += lazy[p];
+            lazy[p] = 0;
+        }
+    }
+
+    void update(int p, int l, int r, int ql, int qr, long long v) {
+        if (ql &lt;= l &amp;&amp; r &lt;= qr) {
+            tree[p] += v * (r - l + 1);
+            lazy[p] += v;
+            return;
+        }
+        pushdown(p, l, r);
+        int mid = (l + r) &gt;&gt; 1;
+        if (ql &lt;= mid) update(p &lt;&lt; 1, l, mid, ql, qr, v);
+        if (qr &gt; mid)  update(p &lt;&lt; 1 | 1, mid + 1, r, ql, qr, v);
+        pushup(p);
+    }
+
+    long long query(int p, int l, int r, int ql, int qr) {
+        if (ql &lt;= l &amp;&amp; r &lt;= qr) return tree[p];
+        pushdown(p, l, r);
+        int mid = (l + r) &gt;&gt; 1;
+        long long res = 0;
+        if (ql &lt;= mid) res += query(p &lt;&lt; 1, l, mid, ql, qr);
+        if (qr &gt; mid)  res += query(p &lt;&lt; 1 | 1, mid + 1, r, ql, qr);
+        return res;
+    }
+
+public:
+    SegTree() : n(0) {}
+    SegTree(int sz) : n(sz) {
+        tree.resize(4 * n + 5);
+        lazy.resize(4 * n + 5);
+    }
+
+    void build(const vector&lt;long long&gt;&amp; a) { build(1, 1, n, a); }
+    void add(int l, int r, long long v) { update(1, 1, n, l, r, v); }
+    long long sum(int l, int r) { return query(1, 1, n, l, r); }
+};
+
+// ============================================================
+// 树链剖分核心模板
+// ============================================================
+class HLD {
+private:
+    int n, timer;
+    vector&lt;vector&lt;int&gt;&gt; adj;
+
+    // 第一次 DFS
+    vector&lt;int&gt; parent, depth, siz, heavy;
+    void dfs1(int u, int fa) {
+        parent[u] = fa;
+        depth[u] = depth[fa] + 1;
+        siz[u] = 1;
+        heavy[u] = 0;
+        int max_siz = 0;
+        for (int v : adj[u]) {
+            if (v == fa) continue;
+            dfs1(v, u);
+            siz[u] += siz[v];
+            if (siz[v] &gt; max_siz) {
+                max_siz = siz[v];
+                heavy[u] = v;
+            }
+        }
+    }
+
+    // 第二次 DFS：分配 DFS 序，优先遍历重儿子
+    vector&lt;int&gt; dfn, rnk, top;
+    void dfs2(int u, int tp) {
+        dfn[u] = ++timer;
+        rnk[timer] = u;
+        top[u] = tp;
+        if (heavy[u] == 0) return;   // 叶子
+        dfs2(heavy[u], tp);          // 先走重儿子，保持重链连续
+        for (int v : adj[u]) {
+            if (v == parent[u] || v == heavy[u]) continue;
+            dfs2(v, v);              // 轻儿子：新重链的顶端
+        }
+    }
+
+public:
+    SegTree seg;
+
+    HLD(int sz) : n(sz), timer(0) {
+        adj.resize(n + 1);
+        parent.resize(n + 1);
+        depth.resize(n + 1);
+        siz.resize(n + 1);
+        heavy.resize(n + 1);
+        dfn.resize(n + 1);
+        rnk.resize(n + 1);
+        top.resize(n + 1);
+    }
+
+    void add_edge(int u, int v) {
+        adj[u].push_back(v);
+        adj[v].push_back(u);
+    }
+
+    // 根据原节点权值初始化（调用前需要先 init_hld）
+    void init_hld(int root, const vector&lt;long long&gt;&amp; w) {
+        depth[0] = -1;  // 根节点 depth = 0
+        dfs1(root, 0);
+        dfs2(root, root);
+
+        // 构建线段树：按 DFS 序排列权值
+        vector&lt;long long&gt; a(n + 1);
+        for (int i = 1; i &lt;= n; i++) {
+            a[dfn[i]] = w[i];  // 原权值映射到 DFS 序位置
+        }
+        seg = SegTree(n);
+        seg.build(a);
+    }
+
+    // 获取节点的 DFS 序
+    int get_dfn(int u) { return dfn[u]; }
+
+    // ---------- 路径操作 ----------
+
+    // 路径 u-v 上所有节点加 val
+    void update_path(int u, int v, long long val) {
+        while (top[u] != top[v]) {
+            if (depth[top[u]] &lt; depth[top[v]]) swap(u, v);
+            seg.add(dfn[top[u]], dfn[u], val);
+            u = parent[top[u]];  // 跳到链顶的父节点
+        }
+        if (depth[u] &gt; depth[v]) swap(u, v);
+        seg.add(dfn[u], dfn[v], val);
+    }
+
+    // 查询路径 u-v 上所有节点的和
+    long long query_path(int u, int v) {
+        long long res = 0;
+        while (top[u] != top[v]) {
+            if (depth[top[u]] &lt; depth[top[v]]) swap(u, v);
+            res += seg.sum(dfn[top[u]], dfn[u]);
+            u = parent[top[u]];
+        }
+        if (depth[u] &gt; depth[v]) swap(u, v);
+        res += seg.sum(dfn[u], dfn[v]);
+        return res;
+    }
+
+    // ---------- 子树操作 ----------
+    // 子树节点在 DFS 序中连续：[dfn[u], dfn[u] + siz[u] - 1]
+
+    void update_subtree(int u, long long val) {
+        seg.add(dfn[u], dfn[u] + siz[u] - 1, val);
+    }
+
+    long long query_subtree(int u) {
+        return seg.sum(dfn[u], dfn[u] + siz[u] - 1);
+    }
+
+    // ---------- LCA ----------
+    int lca(int u, int v) {
+        while (top[u] != top[v]) {
+            if (depth[top[u]] &lt; depth[top[v]]) swap(u, v);
+            u = parent[top[u]];
+        }
+        return depth[u] &lt; depth[v] ? u : v;
+    }
+};
+
+// ============================================================
+// 测试与示例程序
+// ============================================================
+
+// 题目：树上路径修改 + 路径查询 + 子树查询
+// 输入格式：
+//   n m
+//   w[1] w[2] ... w[n]          （节点初始权值）
+//   u1 v1 u2 v2 ...             (n-1 条边)
+//   m 行操作：
+//     op=1 u v x  : 路径加 x
+//     op=2 u v    : 查询路径和
+//     op=3 u x    : 子树加 x
+//     op=4 u      : 查询子树和
+void solve() {
+    int n, m;
+    cin &gt;&gt; n &gt;&gt; m;
+
+    vector&lt;long long&gt; w(n + 1);
+    for (int i = 1; i &lt;= n; i++) cin &gt;&gt; w[i];
+
+    HLD hld(n);
+    for (int i = 1; i &lt; n; i++) {
+        int u, v; cin &gt;&gt; u &gt;&gt; v;
+        hld.add_edge(u, v);
+    }
+
+    hld.init_hld(1, w);  // 以 1 为根
+
+    while (m--) {
+        int op, u, v;
+        long long x;
+        cin &gt;&gt; op;
+        if (op == 1) {
+            cin &gt;&gt; u &gt;&gt; v &gt;&gt; x;
+            hld.update_path(u, v, x);
+        } else if (op == 2) {
+            cin &gt;&gt; u &gt;&gt; v;
+            cout &lt;&lt; hld.query_path(u, v) &lt;&lt; '\n';
+        } else if (op == 3) {
+            cin &gt;&gt; u &gt;&gt; x;
+            hld.update_subtree(u, x);
+        } else if (op == 4) {
+            cin &gt;&gt; u;
+            cout &lt;&lt; hld.query_subtree(u) &lt;&lt; '\n';
+        }
+    }
+}
+
+int main() {
+    ios::sync_with_stdio(false);
+    cin.tie(nullptr);
+
+    solve();
+
+    return 0;
+}
+</pre>
+    <p class="hint">本页使用浅色主题与 UTF-8 编码，可直接打印或导出 PDF。</p>
+  </div>
+</body>
+</html>

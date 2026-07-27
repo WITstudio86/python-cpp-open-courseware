@@ -1,0 +1,343 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>L28-电子相册-下.py</title>
+<style>
+  :root {
+    --bg: #f5f7fa;
+    --panel: #ffffff;
+    --text: #1a1a2e;
+    --muted: #5a6570;
+    --gold: #b8860b;
+    --code-bg: #ffffff;
+    --code-text: #1f2933;
+    --border: #d8dee6;
+    --top-bg: #ffffff;
+    --top-border: #e5e9ef;
+  }
+  * { box-sizing: border-box; }
+  html, body {
+    margin: 0; padding: 0;
+    background: var(--bg);
+    color: var(--text);
+    font-family: -apple-system, BlinkMacSystemFont, "PingFang SC", "Microsoft YaHei", sans-serif;
+    min-height: 100%;
+  }
+  .top {
+    position: sticky; top: 0; z-index: 10;
+    display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between;
+    gap: 10px;
+    padding: 12px 18px;
+    background: var(--top-bg);
+    border-bottom: 1px solid var(--top-border);
+    box-shadow: 0 1px 8px rgba(15, 23, 42, 0.06);
+  }
+  .brand { color: var(--gold); font-weight: 700; font-size: 14px; letter-spacing: 0.04em; }
+  .title { font-size: 15px; font-weight: 600; color: var(--text); max-width: 52vw; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .actions { display: flex; gap: 8px; flex-wrap: wrap; }
+  .btn {
+    appearance: none; border: 1px solid var(--border);
+    background: #fff; color: var(--text);
+    border-radius: 999px; padding: 8px 14px; font-size: 13px; font-weight: 600;
+    text-decoration: none; cursor: pointer;
+  }
+  .btn:hover { background: #f0f3f7; }
+  .btn.gold {
+    background: linear-gradient(135deg, #f0d78c, #d4a853);
+    color: #0a2540; border-color: #e0c06a;
+  }
+  .meta {
+    padding: 10px 18px; color: var(--muted); font-size: 12px;
+    border-bottom: 1px solid var(--border);
+    background: var(--panel);
+  }
+  .wrap { padding: 16px 18px 40px; }
+  pre {
+    margin: 0;
+    background: var(--code-bg);
+    color: var(--code-text);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 18px 20px;
+    overflow: auto;
+    font-family: "SF Mono", "JetBrains Mono", "Fira Code", Consolas, "Courier New", monospace;
+    font-size: 13.5px;
+    line-height: 1.55;
+    white-space: pre;
+    tab-size: 4;
+    box-shadow: 0 2px 12px rgba(15, 23, 42, 0.05);
+  }
+  .hint { margin-top: 12px; color: var(--muted); font-size: 12px; }
+  @media print {
+    html, body { background: #fff !important; color: #000 !important; }
+    .top { position: static; box-shadow: none; border-bottom: 1px solid #ccc; background: #fff !important; }
+    .actions { display: none !important; }
+    .meta { background: #fff !important; border-color: #ddd; color: #333; }
+    .wrap { padding: 0; }
+    pre {
+      background: #fff !important; color: #000 !important;
+      border: 1px solid #bbb; box-shadow: none; border-radius: 0;
+      white-space: pre-wrap; word-break: break-word; font-size: 11pt; line-height: 1.4;
+    }
+    .hint { display: none; }
+    a { color: #000; text-decoration: none; }
+  }
+</style>
+</head>
+<body>
+  <div class="top">
+    <div class="brand">Python Tkinter · 配套代码</div>
+    <div class="title">L28-电子相册-下.py</div>
+    <div class="actions">
+      <a class="btn" href="../L28-电子相册-下.py" download="L28-电子相册-下.py">⬇️ 下载源文件</a>
+      <a class="btn gold" href="javascript:history.back()">← 返回课件</a>
+    </div>
+  </div>
+  <div class="meta">编码：UTF-8 · 文件：L28-电子相册-下.py · 共 239 行 · 浅色主题便于打印</div>
+  <div class="wrap">
+    <pre id="code">import tkinter as tk
+from PIL import Image, ImageTk, ImageDraw
+
+# ========================================
+# 第 28 节：项目 5 — 电子相册（完整版）
+# 功能：翻页浏览、自动播放、缩略图预览
+# ========================================
+
+# 1. 创建主窗口
+root = tk.Tk()
+root.title("电子相册 📸")
+root.geometry("680x650")
+root.configure(bg="#1a1a2e")  # 深蓝黑色背景，像暗房
+
+# ========================================
+# 2. 生成 5 张不同颜色的占位图片
+# ========================================
+
+photos = []  # 存储 PIL Image 对象
+
+# 5 种主题色 + 5 个场景名
+colors = ["#E74C3C", "#3498DB", "#2ECC71", "#F39C12", "#9B59B6"]
+themes = ["日出 🌅", "大海 🌊", "森林 🌲", "沙漠 🏜️", "花海 🌸"]
+
+for i in range(5):
+    # 创建一张纯色图片
+    img = Image.new("RGB", (500, 340), color=colors[i])
+    draw = ImageDraw.Draw(img)
+
+    # 画白色外边框（留一点边距）
+    draw.rectangle([5, 5, 494, 334], outline="white", width=2)
+
+    # 画装饰线
+    draw.line([(30, 55), (470, 55)], fill="white", width=1)
+    draw.line([(30, 285), (470, 285)], fill="white", width=1)
+
+    # 写主题文字
+    draw.text((180, 110), themes[i], fill="white")
+    draw.text((190, 160), f"Photo {i+1}", fill="#DDDDDD")
+
+    photos.append(img)  # 加入列表
+
+# ========================================
+# 3. 状态变量
+# ========================================
+
+current_index = 0       # 当前显示的图片索引
+playing = False         # 是否正在自动播放
+play_job_id = None      # after() 返回的 job id，用于取消定时
+
+# ========================================
+# 4. 功能函数
+# ========================================
+
+def show_photo():
+    """根据 current_index 刷新显示当前图片"""
+    # 将 PIL Image 转成 tkinter 能用的 PhotoImage
+    tk_img = ImageTk.PhotoImage(photos[current_index])
+
+    # 更新 Label 显示的图片
+    img_label.configure(image=tk_img)
+    img_label.image = tk_img  # ⚠️ 必须保存引用！
+
+    # 更新页码显示
+    page_label.configure(
+        text=f"{current_index + 1} / {len(photos)}"
+    )
+
+
+def next_photo():
+    """翻到下一张（循环）"""
+    global current_index
+    # % len(photos) 让索引循环：在最后一张 +1 回到 0
+    current_index = (current_index + 1) % len(photos)
+    show_photo()
+
+
+def prev_photo():
+    """翻到上一张（循环）"""
+    global current_index
+    # -1 % 5 = 4，所以从第 0 张往前会跳到第 4 张
+    current_index = (current_index - 1) % len(photos)
+    show_photo()
+
+
+def jump_to(index):
+    """跳到指定索引的图片（缩略图点击时调用）"""
+    global current_index
+    current_index = index
+    show_photo()
+
+
+def auto_play():
+    """自动播放：每 2 秒翻到下一张"""
+    global playing, play_job_id
+    if playing:  # 如果还在播放状态
+        next_photo()
+        # 2 秒（2000 毫秒）后再次调用自己 → 形成循环
+        play_job_id = root.after(2000, auto_play)
+
+
+def toggle_play():
+    """切换自动播放的开关"""
+    global playing, play_job_id
+
+    if playing:
+        # 当前正在播放 → 停止
+        playing = False
+        if play_job_id is not None:
+            root.after_cancel(play_job_id)  # 取消已安排的定时任务
+            play_job_id = None
+        play_btn.configure(text="▶ 自动播放")
+    else:
+        # 当前已停止 → 开始播放
+        playing = True
+        play_btn.configure(text="⏸ 停止播放")
+        auto_play()  # 启动自动播放循环
+
+
+# ========================================
+# 5. 界面布局
+# ========================================
+
+# --- 标题 ---
+title_label = tk.Label(
+    root,
+    text="📷 我的电子相册",
+    font=("微软雅黑", 22, "bold"),
+    fg="white",
+    bg="#1a1a2e"
+)
+title_label.pack(pady=(15, 5))
+
+# --- 图片显示区域 ---
+# 先显示第一张图片
+tk_img = ImageTk.PhotoImage(photos[0])
+img_label = tk.Label(root, image=tk_img, bg="#1a1a2e")
+img_label.image = tk_img
+img_label.pack(pady=10)
+
+# --- 页码显示 ---
+page_label = tk.Label(
+    root,
+    text=f"1 / {len(photos)}",
+    font=("微软雅黑", 13),
+    fg="#cccccc",
+    bg="#1a1a2e"
+)
+page_label.pack()
+
+# --- 翻页按钮区 ---
+nav_frame = tk.Frame(root, bg="#1a1a2e")
+nav_frame.pack(pady=12)
+
+# 上一张按钮
+prev_btn = tk.Button(
+    nav_frame,
+    text="◀ 上一张",
+    command=prev_photo,
+    font=("微软雅黑", 12),
+    bg="#16213e",      # 深蓝色
+    fg="white",
+    padx=15,
+    relief="flat",
+    cursor="hand2"
+)
+prev_btn.pack(side=tk.LEFT, padx=5)
+
+# 自动播放 / 停止按钮
+play_btn = tk.Button(
+    nav_frame,
+    text="▶ 自动播放",
+    command=toggle_play,
+    font=("微软雅黑", 12),
+    bg="#0f3460",      # 亮一点的蓝色
+    fg="white",
+    padx=15,
+    relief="flat",
+    cursor="hand2"
+)
+play_btn.pack(side=tk.LEFT, padx=5)
+
+# 下一张按钮
+next_btn = tk.Button(
+    nav_frame,
+    text="下一张 ▶",
+    command=next_photo,
+    font=("微软雅黑", 12),
+    bg="#16213e",
+    fg="white",
+    padx=15,
+    relief="flat",
+    cursor="hand2"
+)
+next_btn.pack(side=tk.LEFT, padx=5)
+
+# --- 缩略图预览条 ---
+# 用一个 Label 做标题
+thumb_title = tk.Label(
+    root,
+    text="📌 缩略图预览（点击跳转）",
+    font=("微软雅黑", 11),
+    fg="#888888",
+    bg="#1a1a2e"
+)
+thumb_title.pack(pady=(10, 5))
+
+# 缩略图容器
+thumb_frame = tk.Frame(root, bg="#1a1a2e")
+thumb_frame.pack(pady=5)
+
+# 为每张图片创建缩略图按钮
+for i, photo in enumerate(photos):
+    # 复制一份图片做缩略图（不修改原图）
+    thumb = photo.copy()
+    # thumbnail() 等比缩放，确保不超出 80x60
+    thumb.thumbnail((80, 60))
+
+    # 转成 tkinter 格式
+    tk_thumb = ImageTk.PhotoImage(thumb)
+
+    # 创建按钮，点击跳到对应图片
+    # ⚠️ lambda idx=i 是必须的！避免闭包陷阱
+    btn = tk.Button(
+        thumb_frame,
+        image=tk_thumb,
+        command=lambda idx=i: jump_to(idx),
+        bg="#16213e",
+        relief="flat",
+        cursor="hand2"
+    )
+    btn.image = tk_thumb  # 保存引用
+    btn.pack(side=tk.LEFT, padx=5)
+
+# ========================================
+# 6. 启动主循环
+# ========================================
+
+root.mainloop()
+</pre>
+    <p class="hint">本页使用浅色主题与 UTF-8 编码，可直接打印或导出 PDF。</p>
+  </div>
+</body>
+</html>

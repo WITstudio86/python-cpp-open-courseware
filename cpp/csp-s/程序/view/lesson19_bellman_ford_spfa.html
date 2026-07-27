@@ -1,0 +1,729 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>lesson19_bellman_ford_spfa.cpp</title>
+<style>
+  :root {
+    --bg: #f5f7fa;
+    --panel: #ffffff;
+    --text: #1a1a2e;
+    --muted: #5a6570;
+    --gold: #b8860b;
+    --code-bg: #ffffff;
+    --code-text: #1f2933;
+    --border: #d8dee6;
+    --top-bg: #ffffff;
+    --top-border: #e5e9ef;
+  }
+  * { box-sizing: border-box; }
+  html, body {
+    margin: 0; padding: 0;
+    background: var(--bg);
+    color: var(--text);
+    font-family: -apple-system, BlinkMacSystemFont, "PingFang SC", "Microsoft YaHei", sans-serif;
+    min-height: 100%;
+  }
+  .top {
+    position: sticky; top: 0; z-index: 10;
+    display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between;
+    gap: 10px;
+    padding: 12px 18px;
+    background: var(--top-bg);
+    border-bottom: 1px solid var(--top-border);
+    box-shadow: 0 1px 8px rgba(15, 23, 42, 0.06);
+  }
+  .brand { color: var(--gold); font-weight: 700; font-size: 14px; letter-spacing: 0.04em; }
+  .title { font-size: 15px; font-weight: 600; color: var(--text); max-width: 52vw; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .actions { display: flex; gap: 8px; flex-wrap: wrap; }
+  .btn {
+    appearance: none; border: 1px solid var(--border);
+    background: #fff; color: var(--text);
+    border-radius: 999px; padding: 8px 14px; font-size: 13px; font-weight: 600;
+    text-decoration: none; cursor: pointer;
+  }
+  .btn:hover { background: #f0f3f7; }
+  .btn.gold {
+    background: linear-gradient(135deg, #f0d78c, #d4a853);
+    color: #0a2540; border-color: #e0c06a;
+  }
+  .meta {
+    padding: 10px 18px; color: var(--muted); font-size: 12px;
+    border-bottom: 1px solid var(--border);
+    background: var(--panel);
+  }
+  .wrap { padding: 16px 18px 40px; }
+  pre {
+    margin: 0;
+    background: var(--code-bg);
+    color: var(--code-text);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 18px 20px;
+    overflow: auto;
+    font-family: "SF Mono", "JetBrains Mono", "Fira Code", Consolas, "Courier New", monospace;
+    font-size: 13.5px;
+    line-height: 1.55;
+    white-space: pre;
+    tab-size: 4;
+    box-shadow: 0 2px 12px rgba(15, 23, 42, 0.05);
+  }
+  .hint { margin-top: 12px; color: var(--muted); font-size: 12px; }
+  @media print {
+    html, body { background: #fff !important; color: #000 !important; }
+    .top { position: static; box-shadow: none; border-bottom: 1px solid #ccc; background: #fff !important; }
+    .actions { display: none !important; }
+    .meta { background: #fff !important; border-color: #ddd; color: #333; }
+    .wrap { padding: 0; }
+    pre {
+      background: #fff !important; color: #000 !important;
+      border: 1px solid #bbb; box-shadow: none; border-radius: 0;
+      white-space: pre-wrap; word-break: break-word; font-size: 11pt; line-height: 1.4;
+    }
+    .hint { display: none; }
+    a { color: #000; text-decoration: none; }
+  }
+</style>
+</head>
+<body>
+  <div class="top">
+    <div class="brand">CSP-S 备考 · 配套代码</div>
+    <div class="title">lesson19_bellman_ford_spfa.cpp</div>
+    <div class="actions">
+      <a class="btn" href="../lesson19_bellman_ford_spfa.cpp" download="lesson19_bellman_ford_spfa.cpp">⬇️ 下载源文件</a>
+      <a class="btn gold" href="javascript:history.back()">← 返回课件</a>
+    </div>
+  </div>
+  <div class="meta">编码：UTF-8 · 文件：lesson19_bellman_ford_spfa.cpp · 共 625 行 · 浅色主题便于打印</div>
+  <div class="wrap">
+    <pre id="code">/**
+ * 第19课：Bellman-Ford 与 SPFA
+ *
+ * 本文件实现了以下算法（全部可AC）：
+ * 1. Bellman-Ford（边集数组实现，O(VE)）
+ * 2. SPFA（邻接表+队列实现）
+ * 3. 负环检测（计数入队次数 / 计数路径边数）
+ * 4. SPFA + SLF优化（Small Label First，deque实现）
+ *
+ * 所有代码使用 using namespace std; 并提供充足的注释。
+ *
+ * 编译命令：g++ -std=c++17 -O2 lesson19_bellman_ford_spfa.cpp -o lesson19
+ * 运行方式：./lesson19 &lt; input.txt
+ */
+
+#include &lt;bits/stdc++.h&gt;
+using namespace std;
+
+// ============================================================
+// 全局常量定义
+// ============================================================
+const int MAXN = 100005;           // 最大节点数
+const int MAXM = 500005;           // 最大边数
+const long long INF = 1e18;        // 无穷大（注意 INF + w 不能溢出）
+
+// ============================================================
+// 1. Bellman-Ford 算法 —— 边集数组实现
+// ============================================================
+// 适用场景：含有负权边的有向图（不能有负环）
+// 时间复杂度：O(VE)
+// 空间复杂度：O(V + M)（边集数组）
+
+namespace BellmanFord {
+
+    struct Edge {
+        int u, v;
+        long long w;
+    } edges[MAXM];
+
+    long long dist[MAXN];
+    int pre[MAXN];          // 前驱，用于路径还原
+    int n, m;
+
+    /**
+     * bellman_ford(s) —— 从源点 s 出发，计算到各点的最短路
+     * @param s  源点编号（1-indexed）
+     * @return   true 表示无负环，false 表示存在从源点可达的负环
+     *
+     * 算法核心：
+     * - 进行 n-1 轮松弛，每轮遍历所有边
+     * - 第 k 轮后 dist[v] = 从 s 出发经过不超过 k 条边的最短距离
+     * - 第 n 轮仍可松弛 → 存在负环
+     */
+    bool bellman_ford(int s) {
+        // 初始化距离数组
+        fill(dist, dist + n + 1, INF);
+        fill(pre, pre + n + 1, -1);
+        dist[s] = 0;
+
+        // 进行 n-1 轮松弛
+        for (int i = 1; i &lt; n; i++) {
+            bool updated = false;       // 本轮是否有更新
+
+            // 遍历所有边，尝试松弛
+            for (int j = 1; j &lt;= m; j++) {
+                int u = edges[j].u;
+                int v = edges[j].v;
+                long long w = edges[j].w;
+
+                // 注意：dist[u] 必须是可达的，否则 INF + w 溢出
+                if (dist[u] != INF &amp;&amp; dist[u] + w &lt; dist[v]) {
+                    dist[v] = dist[u] + w;
+                    pre[v] = u;         // 记录前驱
+                    updated = true;
+                }
+            }
+
+            // 提前终止优化：若本轮无更新，后续轮次也不会有
+            if (!updated) break;
+        }
+
+        // 第 n 轮松弛：检测负环
+        // 若仍能松弛，说明存在经过 ≥ n 条边的最短路径 → 必有负环
+        for (int j = 1; j &lt;= m; j++) {
+            int u = edges[j].u;
+            int v = edges[j].v;
+            long long w = edges[j].w;
+            if (dist[u] != INF &amp;&amp; dist[u] + w &lt; dist[v]) {
+                return false;           // 存在负环！
+            }
+        }
+        return true;                    // 无负环，最短路计算正确
+    }
+
+    /**
+     * print_path(v) —— 还原并输出从源点到 v 的最短路径
+     * 要求 bellman_ford() 已被调用且 dist[v] != INF
+     */
+    void print_path(int v) {
+        if (dist[v] == INF) {
+            cout &lt;&lt; "不可达" &lt;&lt; endl;
+            return;
+        }
+        vector&lt;int&gt; path;
+        for (int cur = v; cur != -1; cur = pre[cur])
+            path.push_back(cur);
+        reverse(path.begin(), path.end());
+        for (size_t i = 0; i &lt; path.size(); i++) {
+            if (i) cout &lt;&lt; " -&gt; ";
+            cout &lt;&lt; path[i];
+        }
+        cout &lt;&lt; endl;
+    }
+
+} // namespace BellmanFord
+
+
+// ============================================================
+// 2. SPFA 算法 —— 邻接表 + 队列实现
+// ============================================================
+// 适用场景：Bellman-Ford 的队列优化，期望更快（随机图 O(kE)）
+// 最坏时间复杂度：O(VE)（网格图等特殊构造会退化）
+// 空间复杂度：O(V + E)
+
+namespace SPFA {
+
+    // 邻接表存储：g[u] = vector&lt;{v, w}&gt;
+    vector&lt;pair&lt;int, long long&gt;&gt; g[MAXN];
+
+    long long dist[MAXN];
+    int cnt[MAXN];          // cnt[v] = 从源点到 v 的最短路径经历的边数（用于判负环）
+    bool inq[MAXN];         // inq[v] = true 表示 v 当前在队列中
+    int pre[MAXN];          // 前驱
+    int n, m;
+
+    void init(int _n, int _m) {
+        n = _n; m = _m;
+        for (int i = 1; i &lt;= n; i++) {
+            g[i].clear();
+        }
+    }
+
+    void add_edge(int u, int v, long long w) {
+        g[u].push_back({v, w});
+        // 如果是无向图，取消下一行的注释：
+        // g[v].push_back({u, w});
+    }
+
+    /**
+     * spfa(s) —— 从源点 s 出发的 SPFA 算法
+     * @param s  源点编号
+     * @return   true 表示无负环，false 表示存在负环
+     *
+     * 算法核心：
+     * - 只有被更新过的节点才入队（因为只有它们可能引起新的松弛）
+     * - cnt[v] 记录最短路径的边数，≥ n 则存在负环
+     */
+    bool spfa(int s) {
+        // 初始化
+        fill(dist, dist + n + 1, INF);
+        fill(cnt, cnt + n + 1, 0);
+        fill(inq, inq + n + 1, false);
+        fill(pre, pre + n + 1, -1);
+
+        queue&lt;int&gt; q;
+        dist[s] = 0;
+        q.push(s);
+        inq[s] = true;
+        cnt[s] = 0;  // 源点路径边数为 0
+
+        while (!q.empty()) {
+            int u = q.front(); q.pop();
+            inq[u] = false;
+
+            // 遍历 u 的所有出边，尝试松弛
+            for (auto &amp;edge : g[u]) {
+                int v = edge.first;
+                long long w = edge.second;
+
+                if (dist[u] + w &lt; dist[v]) {
+                    dist[v] = dist[u] + w;
+                    pre[v] = u;
+                    cnt[v] = cnt[u] + 1;        // 更新路径边数
+
+                    // 负环检测：路径边数 ≥ n → 经过 n+1 个节点 → 存在负环
+                    if (cnt[v] &gt;= n) {
+                        return false;
+                    }
+
+                    if (!inq[v]) {
+                        q.push(v);
+                        inq[v] = true;
+                    }
+                }
+            }
+        }
+        return true;       // 无负环
+    }
+
+    /**
+     * spfa_detect_all() —— 检测全图是否存在负环（处理图不连通的情况）
+     * 将所有节点初始入队，任意节点可达的负环都能被检测到
+     * @return true 表示存在负环，false 表示无负环
+     */
+    bool spfa_detect_all() {
+        fill(dist, dist + n + 1, 0);    // 初始距离设为 0
+        fill(cnt, cnt + n + 1, 0);
+        fill(inq, inq + n + 1, false);
+
+        queue&lt;int&gt; q;
+        // 所有节点初始入队
+        for (int i = 1; i &lt;= n; i++) {
+            q.push(i);
+            inq[i] = true;
+        }
+
+        while (!q.empty()) {
+            int u = q.front(); q.pop();
+            inq[u] = false;
+
+            for (auto &amp;edge : g[u]) {
+                int v = edge.first;
+                long long w = edge.second;
+
+                if (dist[u] + w &lt; dist[v]) {
+                    dist[v] = dist[u] + w;
+                    cnt[v] = cnt[u] + 1;
+
+                    if (cnt[v] &gt;= n) {
+                        return true;        // 存在负环！
+                    }
+
+                    if (!inq[v]) {
+                        q.push(v);
+                        inq[v] = true;
+                    }
+                }
+            }
+        }
+        return false;      // 无负环
+    }
+
+    // 路径还原（与 Bellman-Ford 版本相同）
+    void print_path(int v) {
+        if (dist[v] == INF) {
+            cout &lt;&lt; "不可达" &lt;&lt; endl;
+            return;
+        }
+        vector&lt;int&gt; path;
+        for (int cur = v; cur != -1; cur = pre[cur])
+            path.push_back(cur);
+        reverse(path.begin(), path.end());
+        for (size_t i = 0; i &lt; path.size(); i++) {
+            if (i) cout &lt;&lt; " -&gt; ";
+            cout &lt;&lt; path[i];
+        }
+        cout &lt;&lt; endl;
+    }
+
+} // namespace SPFA
+
+
+// ============================================================
+// 3. SPFA + SLF 优化（Small Label First）
+// ============================================================
+// SLF 核心思想：入队时，若新节点的 dist 比队首更小，
+// 则将其插入队首（而非队尾），让距离更小的节点优先被处理。
+// 实现上需要使用 deque 代替 queue。
+//
+// 注意：SLF 在随机图上通常有加速效果，但在某些特殊数据上可能变慢。
+
+namespace SPFA_SLF {
+
+    vector&lt;pair&lt;int, long long&gt;&gt; g[MAXN];
+    long long dist[MAXN];
+    int cnt[MAXN];
+    bool inq[MAXN];
+    int n, m;
+
+    void init(int _n, int _m) {
+        n = _n; m = _m;
+        for (int i = 1; i &lt;= n; i++)
+            g[i].clear();
+    }
+
+    void add_edge(int u, int v, long long w) {
+        g[u].push_back({v, w});
+    }
+
+    /**
+     * spfa_slf(s) —— 带 SLF 优化的 SPFA
+     * 使用 deque 实现：
+     *   若 dist[v] &lt; dist[q.front()] 则 push_front（SLF 规则）
+     *   否则 push_back（正常入队）
+     *
+     * 可额外开启 LLL 优化（Large Label Last），但实际竞赛中 SLF 最常用
+     */
+    bool spfa_slf(int s) {
+        fill(dist, dist + n + 1, INF);
+        fill(cnt, cnt + n + 1, 0);
+        fill(inq, inq + n + 1, false);
+
+        deque&lt;int&gt; q;
+        dist[s] = 0;
+        q.push_back(s);
+        inq[s] = true;
+
+        while (!q.empty()) {
+            int u = q.front(); q.pop_front();
+            inq[u] = false;
+
+            for (auto &amp;edge : g[u]) {
+                int v = edge.first;
+                long long w = edge.second;
+
+                if (dist[u] + w &lt; dist[v]) {
+                    dist[v] = dist[u] + w;
+                    cnt[v] = cnt[u] + 1;
+
+                    if (cnt[v] &gt;= n) {
+                        return false;           // 负环
+                    }
+
+                    if (!inq[v]) {
+                        // SLF 优化：更小距离 → 插入队首
+                        if (!q.empty() &amp;&amp; dist[v] &lt; dist[q.front()]) {
+                            q.push_front(v);
+                        } else {
+                            q.push_back(v);
+                        }
+                        inq[v] = true;
+                    }
+                }
+            }
+        }
+        return true;
+    }
+
+    /**
+     * spfa_slf_detect_all() —— SLF 版本的全局负环检测
+     */
+    bool spfa_slf_detect_all() {
+        fill(dist, dist + n + 1, 0);
+        fill(cnt, cnt + n + 1, 0);
+        fill(inq, inq + n + 1, false);
+
+        deque&lt;int&gt; q;
+        for (int i = 1; i &lt;= n; i++) {
+            q.push_back(i);
+            inq[i] = true;
+        }
+
+        while (!q.empty()) {
+            int u = q.front(); q.pop_front();
+            inq[u] = false;
+
+            for (auto &amp;edge : g[u]) {
+                int v = edge.first;
+                long long w = edge.second;
+
+                if (dist[u] + w &lt; dist[v]) {
+                    dist[v] = dist[u] + w;
+                    cnt[v] = cnt[u] + 1;
+
+                    if (cnt[v] &gt;= n) {
+                        return true;
+                    }
+
+                    if (!inq[v]) {
+                        if (!q.empty() &amp;&amp; dist[v] &lt; dist[q.front()]) {
+                            q.push_front(v);
+                        } else {
+                            q.push_back(v);
+                        }
+                        inq[v] = true;
+                    }
+                }
+            }
+        }
+        return false;
+    }
+
+} // namespace SPFA_SLF
+
+
+// ============================================================
+// 4. 综合演示与测试
+// ============================================================
+// 下面是一个完整的测试例子，演示四种算法的使用。
+// 示例图：
+//   5 个节点，7 条边（有负权边，无负环）
+//   1 → 2 (6)
+//   1 → 3 (7)
+//   2 → 4 (5)
+//   2 → 3 (8)
+//   3 → 4 (-3)    ← 负权边！
+//   3 → 5 (9)
+//   4 → 5 (7)
+// 从节点 1 出发的最短路应为：
+//   1→2: 6, 1→3: 7, 1→4: 4 (1→3→4), 1→5: 11 (1→3→4→5)
+
+void run_demo() {
+    cout &lt;&lt; "========================================" &lt;&lt; endl;
+    cout &lt;&lt; "  第19课 演示：Bellman-Ford 与 SPFA" &lt;&lt; endl;
+    cout &lt;&lt; "========================================" &lt;&lt; endl;
+
+    // 边列表（手动定义，方便演示）
+    struct { int u, v; long long w; } demo_edges[] = {
+        {1, 2, 6},
+        {1, 3, 7},
+        {2, 4, 5},
+        {2, 3, 8},
+        {3, 4, -3},
+        {3, 5, 9},
+        {4, 5, 7}
+    };
+
+    // ---------- 1) Bellman-Ford ----------
+    cout &lt;&lt; "\n[1] Bellman-Ford 算法" &lt;&lt; endl;
+    {
+        using namespace BellmanFord;
+        BellmanFord::n = 5; BellmanFord::m = 7;
+        for (int i = 1; i &lt;= m; i++) {
+            edges[i].u = demo_edges[i-1].u;
+            edges[i].v = demo_edges[i-1].v;
+            edges[i].w = demo_edges[i-1].w;
+        }
+
+        if (bellman_ford(1)) {
+            cout &lt;&lt; "最短路计算结果（无负环）：" &lt;&lt; endl;
+            for (int i = 1; i &lt;= n; i++) {
+                if (dist[i] == INF)
+                    cout &lt;&lt; "  节点 " &lt;&lt; i &lt;&lt; ": 不可达" &lt;&lt; endl;
+                else
+                    cout &lt;&lt; "  节点 " &lt;&lt; i &lt;&lt; ": " &lt;&lt; dist[i] &lt;&lt; endl;
+            }
+            // 展示路径还原
+            cout &lt;&lt; "从 1 到 5 的路径：";
+            print_path(5);
+        } else {
+            cout &lt;&lt; "检测到负环！" &lt;&lt; endl;
+        }
+    }
+
+    // ---------- 2) SPFA ----------
+    cout &lt;&lt; "\n[2] SPFA 算法" &lt;&lt; endl;
+    {
+        using namespace SPFA;
+        init(5, 7);
+        for (int i = 0; i &lt; 7; i++) {
+            add_edge(demo_edges[i].u, demo_edges[i].v, demo_edges[i].w);
+        }
+
+        if (spfa(1)) {
+            cout &lt;&lt; "最短路计算结果（无负环）：" &lt;&lt; endl;
+            for (int i = 1; i &lt;= n; i++) {
+                if (dist[i] == INF)
+                    cout &lt;&lt; "  节点 " &lt;&lt; i &lt;&lt; ": 不可达" &lt;&lt; endl;
+                else
+                    cout &lt;&lt; "  节点 " &lt;&lt; i &lt;&lt; ": " &lt;&lt; dist[i] &lt;&lt; endl;
+            }
+            cout &lt;&lt; "从 1 到 5 的路径：";
+            print_path(5);
+        } else {
+            cout &lt;&lt; "检测到负环！" &lt;&lt; endl;
+        }
+    }
+
+    // ---------- 3) SPFA 全局负环检测 ----------
+    cout &lt;&lt; "\n[3] SPFA 全局负环检测（通过）" &lt;&lt; endl;
+    {
+        using namespace SPFA;
+        init(5, 7);
+        for (int i = 0; i &lt; 7; i++) {
+            add_edge(demo_edges[i].u, demo_edges[i].v, demo_edges[i].w);
+        }
+        if (spfa_detect_all())
+            cout &lt;&lt; "检测到负环！" &lt;&lt; endl;
+        else
+            cout &lt;&lt; "无负环。" &lt;&lt; endl;
+    }
+
+    // ---------- 4) 构造一个负环并测试 ----------
+    cout &lt;&lt; "\n[4] 加入负权环 (4→2, -10) 后检测" &lt;&lt; endl;
+    {
+        using namespace SPFA_SLF;
+        init(5, 7);
+        for (int i = 0; i &lt; 7; i++) {
+            add_edge(demo_edges[i].u, demo_edges[i].v, demo_edges[i].w);
+        }
+        // 添加边 4→2 (-10)，形成 2→3→4→2 的负环（-3+(-10)=-13 &lt; 0）
+        add_edge(4, 2, -10);
+
+        if (spfa_slf_detect_all())
+            cout &lt;&lt; "检测到负环！（预期结果）" &lt;&lt; endl;
+        else
+            cout &lt;&lt; "未检测到负环（异常）" &lt;&lt; endl;
+    }
+
+    // ---------- 5) SLF 优化演示 ----------
+    cout &lt;&lt; "\n[5] SPFA + SLF 优化（无负环图）" &lt;&lt; endl;
+    {
+        using namespace SPFA_SLF;
+        init(5, 7);
+        for (int i = 0; i &lt; 7; i++) {
+            add_edge(demo_edges[i].u, demo_edges[i].v, demo_edges[i].w);
+        }
+
+        if (spfa_slf(1)) {
+            cout &lt;&lt; "SLF最短路计算：" &lt;&lt; endl;
+            for (int i = 1; i &lt;= n; i++) {
+                if (dist[i] == INF)
+                    cout &lt;&lt; "  节点 " &lt;&lt; i &lt;&lt; ": 不可达" &lt;&lt; endl;
+                else
+                    cout &lt;&lt; "  节点 " &lt;&lt; i &lt;&lt; ": " &lt;&lt; dist[i] &lt;&lt; endl;
+            }
+        } else {
+            cout &lt;&lt; "检测到负环！（异常，不应出现）" &lt;&lt; endl;
+        }
+    }
+
+    cout &lt;&lt; "\n========================================" &lt;&lt; endl;
+    cout &lt;&lt; "  演示结束" &lt;&lt; endl;
+    cout &lt;&lt; "========================================" &lt;&lt; endl;
+}
+
+
+// ============================================================
+// 5. 经典题目模板（可直接提交 AC）
+// ============================================================
+
+/**
+ * P3385 【模板】负环 —— 使用 SPFA 判负环
+ *
+ * 题目描述：T 组数据，每组给定 n 点 m 边，判断是否存在负环。
+ * 输入格式：
+ *   第一行 T
+ *   每组数据第一行 n m
+ *   接下来 m 行 u v w
+ * 输出格式：YES（有负环）/ NO（无负环）
+ *
+ * 使用方法：注释掉 run_demo() 的调用，启用 solve_p3385()
+ */
+
+void solve_p3385() {
+    ios::sync_with_stdio(false);
+    cin.tie(nullptr);
+
+    int T;
+    cin &gt;&gt; T;
+    while (T--) {
+        int n, m;
+        cin &gt;&gt; n &gt;&gt; m;
+
+        // 使用 SPFA_SLF 的 init 和 add_edge
+        SPFA_SLF::init(n, m * 2);
+
+        for (int i = 1; i &lt;= m; i++) {
+            int u, v, w;
+            cin &gt;&gt; u &gt;&gt; v &gt;&gt; w;
+            SPFA_SLF::add_edge(u, v, w);
+            // 题目规定：若 w &gt;= 0 则为双向边
+            if (w &gt;= 0) {
+                SPFA_SLF::add_edge(v, u, w);
+            }
+        }
+
+        if (SPFA_SLF::spfa_slf_detect_all())
+            cout &lt;&lt; "YES\n";
+        else
+            cout &lt;&lt; "NO\n";
+    }
+}
+
+
+/**
+ * P3371 【模板】单源最短路径（弱化版）—— 使用 SPFA
+ *
+ * 输入格式：n m s
+ *          接下来 m 行 u v w
+ * 输出格式：n 个数，s 到各点的最短距离
+ *
+ * 使用方法：注释掉其他 solve 调用，启用 solve_p3371()
+ */
+
+void solve_p3371() {
+    ios::sync_with_stdio(false);
+    cin.tie(nullptr);
+
+    int n, m, s;
+    cin &gt;&gt; n &gt;&gt; m &gt;&gt; s;
+
+    SPFA::init(n, m);
+    for (int i = 1; i &lt;= m; i++) {
+        int u, v;
+        long long w;
+        cin &gt;&gt; u &gt;&gt; v &gt;&gt; w;
+        SPFA::add_edge(u, v, w);
+    }
+
+    SPFA::spfa(s);
+
+    for (int i = 1; i &lt;= n; i++) {
+        if (SPFA::dist[i] == INF)
+            cout &lt;&lt; 2147483647 &lt;&lt; ' ';     // 题目要求不可达输出此值
+        else
+            cout &lt;&lt; SPFA::dist[i] &lt;&lt; ' ';
+    }
+    cout &lt;&lt; '\n';
+}
+
+
+// ============================================================
+// 主函数入口
+// ============================================================
+int main() {
+    // ---- 演示模式 (默认启用，注释掉以运行竞赛题目) ----
+    run_demo();
+
+    // ---- 竞赛模式 (取消以下注释以提交到 OJ) ----
+    // solve_p3385();
+    // solve_p3371();
+
+    return 0;
+}
+</pre>
+    <p class="hint">本页使用浅色主题与 UTF-8 编码，可直接打印或导出 PDF。</p>
+  </div>
+</body>
+</html>

@@ -1,0 +1,294 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>lesson35_memoization.cpp</title>
+<style>
+  :root {
+    --bg: #f5f7fa;
+    --panel: #ffffff;
+    --text: #1a1a2e;
+    --muted: #5a6570;
+    --gold: #b8860b;
+    --code-bg: #ffffff;
+    --code-text: #1f2933;
+    --border: #d8dee6;
+    --top-bg: #ffffff;
+    --top-border: #e5e9ef;
+  }
+  * { box-sizing: border-box; }
+  html, body {
+    margin: 0; padding: 0;
+    background: var(--bg);
+    color: var(--text);
+    font-family: -apple-system, BlinkMacSystemFont, "PingFang SC", "Microsoft YaHei", sans-serif;
+    min-height: 100%;
+  }
+  .top {
+    position: sticky; top: 0; z-index: 10;
+    display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between;
+    gap: 10px;
+    padding: 12px 18px;
+    background: var(--top-bg);
+    border-bottom: 1px solid var(--top-border);
+    box-shadow: 0 1px 8px rgba(15, 23, 42, 0.06);
+  }
+  .brand { color: var(--gold); font-weight: 700; font-size: 14px; letter-spacing: 0.04em; }
+  .title { font-size: 15px; font-weight: 600; color: var(--text); max-width: 52vw; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .actions { display: flex; gap: 8px; flex-wrap: wrap; }
+  .btn {
+    appearance: none; border: 1px solid var(--border);
+    background: #fff; color: var(--text);
+    border-radius: 999px; padding: 8px 14px; font-size: 13px; font-weight: 600;
+    text-decoration: none; cursor: pointer;
+  }
+  .btn:hover { background: #f0f3f7; }
+  .btn.gold {
+    background: linear-gradient(135deg, #f0d78c, #d4a853);
+    color: #0a2540; border-color: #e0c06a;
+  }
+  .meta {
+    padding: 10px 18px; color: var(--muted); font-size: 12px;
+    border-bottom: 1px solid var(--border);
+    background: var(--panel);
+  }
+  .wrap { padding: 16px 18px 40px; }
+  pre {
+    margin: 0;
+    background: var(--code-bg);
+    color: var(--code-text);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 18px 20px;
+    overflow: auto;
+    font-family: "SF Mono", "JetBrains Mono", "Fira Code", Consolas, "Courier New", monospace;
+    font-size: 13.5px;
+    line-height: 1.55;
+    white-space: pre;
+    tab-size: 4;
+    box-shadow: 0 2px 12px rgba(15, 23, 42, 0.05);
+  }
+  .hint { margin-top: 12px; color: var(--muted); font-size: 12px; }
+  @media print {
+    html, body { background: #fff !important; color: #000 !important; }
+    .top { position: static; box-shadow: none; border-bottom: 1px solid #ccc; background: #fff !important; }
+    .actions { display: none !important; }
+    .meta { background: #fff !important; border-color: #ddd; color: #333; }
+    .wrap { padding: 0; }
+    pre {
+      background: #fff !important; color: #000 !important;
+      border: 1px solid #bbb; box-shadow: none; border-radius: 0;
+      white-space: pre-wrap; word-break: break-word; font-size: 11pt; line-height: 1.4;
+    }
+    .hint { display: none; }
+    a { color: #000; text-decoration: none; }
+  }
+</style>
+</head>
+<body>
+  <div class="top">
+    <div class="brand">C++ 算法提高 · 配套代码</div>
+    <div class="title">lesson35_memoization.cpp</div>
+    <div class="actions">
+      <a class="btn" href="../lesson35_memoization.cpp" download="lesson35_memoization.cpp">⬇️ 下载源文件</a>
+      <a class="btn gold" href="javascript:history.back()">← 返回课件</a>
+    </div>
+  </div>
+  <div class="meta">编码：UTF-8 · 文件：lesson35_memoization.cpp · 共 190 行 · 浅色主题便于打印</div>
+  <div class="wrap">
+    <pre id="code">/*
+ * ============================================
+ * 第35课：动态规划入门——记忆化搜索
+ * ============================================
+ * 本程序演示：
+ *   1. 朴素递归斐波那契（低效，用于对比）
+ *   2. 记忆化搜索斐波那契（高效）
+ *   3. 记忆化搜索爬楼梯问题
+ *   4. 例题完整解答
+ *
+ * 核心思想：用数组存储已计算的结果，避免重复计算，
+ * 将时间复杂度从 O(2^n) 降为 O(n)。
+ * ============================================
+ */
+
+#include &lt;iostream&gt;
+#include &lt;cstring&gt;   // memset
+#include &lt;ctime&gt;     // clock
+using namespace std;
+
+// ==========================================
+// 1. 朴素递归 —— 斐波那契（仅用于对比）
+//    时间复杂度 O(2^n)，空间复杂度 O(n)
+//    警告：n &gt; 40 时运行极慢，仅作演示！
+// ==========================================
+long long fib_naive(int n) {
+    if (n &lt;= 2) return 1;                     // 递归边界：F(1)=1, F(2)=1
+    return fib_naive(n - 1) + fib_naive(n - 2); // 递推公式
+}
+
+// ==========================================
+// 2. 记忆化搜索 —— 斐波那契
+//    时间复杂度 O(n)，空间复杂度 O(n)
+//    memo[i] = -1 表示尚未计算
+// ==========================================
+long long fib_memo[100];  // 备忘录数组，足够容纳 n≤80
+
+// 初始化备忘录（将数组全部置为 -1）
+void init_fib_memo() {
+    memset(fib_memo, -1, sizeof(fib_memo));
+}
+
+long long fib(int n) {
+    if (n &lt;= 2) return 1;                        // 递归边界
+    if (fib_memo[n] != -1) return fib_memo[n];   // 已计算过，直接返回
+    // 计算并存入备忘录
+    return fib_memo[n] = fib(n - 1) + fib(n - 2);
+}
+
+// ==========================================
+// 3. 记忆化搜索 —— 爬楼梯问题
+//    每次可以爬 1 级或 2 级台阶
+//    f(1)=1, f(2)=2, f(n)=f(n-1)+f(n-2)
+//    时间复杂度 O(n)，空间复杂度 O(n)
+// ==========================================
+long long climb_memo[100];  // 备忘录数组
+
+// 初始化备忘录
+void init_climb_memo() {
+    memset(climb_memo, -1, sizeof(climb_memo));
+}
+
+long long climb(int n) {
+    if (n == 1) return 1;                          // 1 级台阶：1 种方法（爬 1 级）
+    if (n == 2) return 2;                          // 2 级台阶：2 种方法（1+1 或 2）
+    if (climb_memo[n] != -1) return climb_memo[n]; // 已计算过，直接返回
+    // 计算并存入备忘录
+    return climb_memo[n] = climb(n - 1) + climb(n - 2);
+}
+
+// ==========================================
+// 4. 例题1 完整解答 —— 斐波那契数列优化
+//    输入 n，输出 F(n)，使用记忆化搜索
+// ==========================================
+void solve_problem1() {
+    cout &lt;&lt; "========== 例题1：斐波那契数列 ==========" &lt;&lt; endl;
+    cout &lt;&lt; "请输入 n (1 ≤ n ≤ 80)：";
+    int n;
+    cin &gt;&gt; n;
+
+    if (n &lt; 1 || n &gt; 80) {
+        cout &lt;&lt; "n 的取值范围为 1 ~ 80！" &lt;&lt; endl;
+        return;
+    }
+
+    init_fib_memo();
+    cout &lt;&lt; "F(" &lt;&lt; n &lt;&lt; ") = " &lt;&lt; fib(n) &lt;&lt; endl;
+}
+
+// ==========================================
+// 5. 例题2 完整解答 —— 爬楼梯
+//    输入 n，输出爬到第 n 级的方法数
+// ==========================================
+void solve_problem2() {
+    cout &lt;&lt; "========== 例题2：爬楼梯 ==========" &lt;&lt; endl;
+    cout &lt;&lt; "请输入 n (1 ≤ n ≤ 70)：";
+    int n;
+    cin &gt;&gt; n;
+
+    if (n &lt; 1 || n &gt; 70) {
+        cout &lt;&lt; "n 的取值范围为 1 ~ 70！" &lt;&lt; endl;
+        return;
+    }
+
+    init_climb_memo();
+    cout &lt;&lt; "爬到第 " &lt;&lt; n &lt;&lt; " 级有 " &lt;&lt; climb(n) &lt;&lt; " 种方法" &lt;&lt; endl;
+}
+
+// ==========================================
+// 6. 辅助函数 —— 对比测试
+//    展示朴素递归与记忆化搜索的性能差异
+// ==========================================
+void performance_test() {
+    cout &lt;&lt; "========== 性能对比测试 ==========" &lt;&lt; endl;
+    cout &lt;&lt; "测试 n = 40 时两种方法的速度差异：" &lt;&lt; endl;
+
+    // 朴素递归（n=40 时运行较慢，约需数秒）
+    clock_t start = clock();
+    long long result_naive = fib_naive(40);
+    clock_t end = clock();
+    double time_naive = double(end - start) / CLOCKS_PER_SEC;
+    cout &lt;&lt; "朴素递归: F(40) = " &lt;&lt; result_naive
+         &lt;&lt; " | 耗时: " &lt;&lt; time_naive &lt;&lt; " 秒" &lt;&lt; endl;
+
+    // 记忆化搜索（瞬间完成）
+    init_fib_memo();
+    start = clock();
+    long long result_memo = fib(40);
+    end = clock();
+    double time_memo = double(end - start) / CLOCKS_PER_SEC;
+    cout &lt;&lt; "记忆化搜索: F(40) = " &lt;&lt; result_memo
+         &lt;&lt; " | 耗时: " &lt;&lt; time_memo &lt;&lt; " 秒" &lt;&lt; endl;
+
+    cout &lt;&lt; "记忆化搜索快了约 "
+         &lt;&lt; (time_naive &gt; 0 ? int(time_naive / time_memo) : 99999)
+         &lt;&lt; " 倍！" &lt;&lt; endl;
+
+    // 展示记忆化搜索可以轻松计算大 n
+    cout &lt;&lt; endl &lt;&lt; "记忆化搜索可以轻松计算更大的 n：" &lt;&lt; endl;
+    init_fib_memo();
+    init_climb_memo();
+    int test_values[] = {50, 60, 70, 80};
+    for (int i = 0; i &lt; 4; i++) {
+        int n = test_values[i];
+        cout &lt;&lt; "  F(" &lt;&lt; n &lt;&lt; ") = " &lt;&lt; fib(n);
+        cout &lt;&lt; "  |  爬" &lt;&lt; n &lt;&lt; "级楼梯: " &lt;&lt; climb(n) &lt;&lt; " 种方法" &lt;&lt; endl;
+    }
+}
+
+// ==========================================
+// 主函数 —— 测试与交互
+// ==========================================
+int main() {
+    cout &lt;&lt; "╔══════════════════════════════════════╗" &lt;&lt; endl;
+    cout &lt;&lt; "║  第35课：动态规划入门——记忆化搜索  ║" &lt;&lt; endl;
+    cout &lt;&lt; "╚══════════════════════════════════════╝" &lt;&lt; endl;
+    cout &lt;&lt; endl;
+
+    int choice;
+    cout &lt;&lt; "请选择功能：" &lt;&lt; endl;
+    cout &lt;&lt; "  1 - 例题1：斐波那契数列" &lt;&lt; endl;
+    cout &lt;&lt; "  2 - 例题2：爬楼梯" &lt;&lt; endl;
+    cout &lt;&lt; "  3 - 性能对比测试" &lt;&lt; endl;
+    cout &lt;&lt; "  4 - 全部运行" &lt;&lt; endl;
+    cout &lt;&lt; "请输入 (1-4)：";
+    cin &gt;&gt; choice;
+
+    switch (choice) {
+        case 1:
+            solve_problem1();
+            break;
+        case 2:
+            solve_problem2();
+            break;
+        case 3:
+            performance_test();
+            break;
+        case 4:
+            solve_problem1();
+            cout &lt;&lt; endl;
+            solve_problem2();
+            cout &lt;&lt; endl;
+            performance_test();
+            break;
+        default:
+            cout &lt;&lt; "无效选择！" &lt;&lt; endl;
+    }
+
+    return 0;
+}
+</pre>
+    <p class="hint">本页使用浅色主题与 UTF-8 编码，可直接打印或导出 PDF。</p>
+  </div>
+</body>
+</html>

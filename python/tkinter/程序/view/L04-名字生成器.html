@@ -1,0 +1,217 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>L04-名字生成器.py</title>
+<style>
+  :root {
+    --bg: #f5f7fa;
+    --panel: #ffffff;
+    --text: #1a1a2e;
+    --muted: #5a6570;
+    --gold: #b8860b;
+    --code-bg: #ffffff;
+    --code-text: #1f2933;
+    --border: #d8dee6;
+    --top-bg: #ffffff;
+    --top-border: #e5e9ef;
+  }
+  * { box-sizing: border-box; }
+  html, body {
+    margin: 0; padding: 0;
+    background: var(--bg);
+    color: var(--text);
+    font-family: -apple-system, BlinkMacSystemFont, "PingFang SC", "Microsoft YaHei", sans-serif;
+    min-height: 100%;
+  }
+  .top {
+    position: sticky; top: 0; z-index: 10;
+    display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between;
+    gap: 10px;
+    padding: 12px 18px;
+    background: var(--top-bg);
+    border-bottom: 1px solid var(--top-border);
+    box-shadow: 0 1px 8px rgba(15, 23, 42, 0.06);
+  }
+  .brand { color: var(--gold); font-weight: 700; font-size: 14px; letter-spacing: 0.04em; }
+  .title { font-size: 15px; font-weight: 600; color: var(--text); max-width: 52vw; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .actions { display: flex; gap: 8px; flex-wrap: wrap; }
+  .btn {
+    appearance: none; border: 1px solid var(--border);
+    background: #fff; color: var(--text);
+    border-radius: 999px; padding: 8px 14px; font-size: 13px; font-weight: 600;
+    text-decoration: none; cursor: pointer;
+  }
+  .btn:hover { background: #f0f3f7; }
+  .btn.gold {
+    background: linear-gradient(135deg, #f0d78c, #d4a853);
+    color: #0a2540; border-color: #e0c06a;
+  }
+  .meta {
+    padding: 10px 18px; color: var(--muted); font-size: 12px;
+    border-bottom: 1px solid var(--border);
+    background: var(--panel);
+  }
+  .wrap { padding: 16px 18px 40px; }
+  pre {
+    margin: 0;
+    background: var(--code-bg);
+    color: var(--code-text);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 18px 20px;
+    overflow: auto;
+    font-family: "SF Mono", "JetBrains Mono", "Fira Code", Consolas, "Courier New", monospace;
+    font-size: 13.5px;
+    line-height: 1.55;
+    white-space: pre;
+    tab-size: 4;
+    box-shadow: 0 2px 12px rgba(15, 23, 42, 0.05);
+  }
+  .hint { margin-top: 12px; color: var(--muted); font-size: 12px; }
+  @media print {
+    html, body { background: #fff !important; color: #000 !important; }
+    .top { position: static; box-shadow: none; border-bottom: 1px solid #ccc; background: #fff !important; }
+    .actions { display: none !important; }
+    .meta { background: #fff !important; border-color: #ddd; color: #333; }
+    .wrap { padding: 0; }
+    pre {
+      background: #fff !important; color: #000 !important;
+      border: 1px solid #bbb; box-shadow: none; border-radius: 0;
+      white-space: pre-wrap; word-break: break-word; font-size: 11pt; line-height: 1.4;
+    }
+    .hint { display: none; }
+    a { color: #000; text-decoration: none; }
+  }
+</style>
+</head>
+<body>
+  <div class="top">
+    <div class="brand">Python Tkinter · 配套代码</div>
+    <div class="title">L04-名字生成器.py</div>
+    <div class="actions">
+      <a class="btn" href="../L04-名字生成器.py" download="L04-名字生成器.py">⬇️ 下载源文件</a>
+      <a class="btn gold" href="javascript:history.back()">← 返回课件</a>
+    </div>
+  </div>
+  <div class="meta">编码：UTF-8 · 文件：L04-名字生成器.py · 共 113 行 · 浅色主题便于打印</div>
+  <div class="wrap">
+    <pre id="code">import tkinter as tk
+
+# ========================================
+# 第 4 节：Entry 输入框 —— 名字生成器
+# ========================================
+
+root = tk.Tk()
+root.title("名字生成器")
+root.geometry("500x450")
+root.configure(bg="#f3e5f5")
+
+# --- 标题 ---
+title = tk.Label(
+    root,
+    text="✨ 名字生成器",
+    font=("微软雅黑", 22, "bold"),
+    fg="#6a1b9a",
+    bg="#f3e5f5"
+)
+title.pack(pady=20)
+
+# --- 提示文字 ---
+prompt = tk.Label(
+    root,
+    text="请输入你的名字：",
+    font=("微软雅黑", 14),
+    fg="#7b1fa2",
+    bg="#f3e5f5"
+)
+prompt.pack(pady=5)
+
+# --- 输入框 ---
+name_entry = tk.Entry(
+    root,
+    font=("微软雅黑", 16),
+    width=20,
+    bd=2,
+    relief="solid",
+    justify="center"
+)
+name_entry.pack(pady=10)
+# 默认显示提示文字
+name_entry.insert(0, "在这里输入你的名字")
+
+# --- 结果展示 Label ---
+result = tk.Label(
+    root,
+    text="",
+    font=("微软雅黑", 18, "bold"),
+    fg="#4a148c",
+    bg="#f3e5f5"
+)
+result.pack(pady=15)
+
+# --- 生成按钮 ---
+def generate():
+    """读取输入框内容，生成个性化问候"""
+    name = name_entry.get()  # ← get() 读取输入框内容
+    if name and name != "在这里输入你的名字":
+        result.config(text=f"你好，{name}！🎉\n欢迎来到编程世界！")
+    else:
+        result.config(text="⚠️ 请先输入你的名字哦～")
+
+gen_btn = tk.Button(
+    root,
+    text="🎯 生成我的专属称呼",
+    command=generate,
+    font=("微软雅黑", 14),
+    bg="#9c27b0",
+    fg="white",
+    padx=25,
+    pady=8
+)
+gen_btn.pack(pady=8)
+
+# --- 清空按钮 ---
+def clear():
+    """清空输入框"""
+    name_entry.delete(0, tk.END)  # ← 从第0个字符删到末尾
+
+clear_btn = tk.Button(
+    root,
+    text="🗑️ 清空",
+    command=clear,
+    font=("微软雅黑", 12),
+    bg="#ce93d8",
+    fg="white",
+    padx=15,
+    pady=5
+)
+clear_btn.pack(pady=5)
+
+# --- 蜜码输入演示区 ---
+pwd_label = tk.Label(
+    root,
+    text="----- 蜜码模式演示 -----",
+    font=("微软雅黑", 10),
+    fg="#ab47bc",
+    bg="#f3e5f5"
+)
+pwd_label.pack(pady=(25, 5))
+
+pwd_entry = tk.Entry(
+    root,
+    font=("微软雅黑", 14),
+    width=20,
+    show="●",  # ← show 参数：输入时显示 ● 而不是真实字符
+    justify="center"
+)
+pwd_entry.pack(pady=5)
+pwd_entry.insert(0, "试试输入蜜码")
+
+root.mainloop()
+</pre>
+    <p class="hint">本页使用浅色主题与 UTF-8 编码，可直接打印或导出 PDF。</p>
+  </div>
+</body>
+</html>

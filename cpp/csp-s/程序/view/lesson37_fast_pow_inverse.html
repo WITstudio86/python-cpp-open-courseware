@@ -1,0 +1,348 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>lesson37_fast_pow_inverse.cpp</title>
+<style>
+  :root {
+    --bg: #f5f7fa;
+    --panel: #ffffff;
+    --text: #1a1a2e;
+    --muted: #5a6570;
+    --gold: #b8860b;
+    --code-bg: #ffffff;
+    --code-text: #1f2933;
+    --border: #d8dee6;
+    --top-bg: #ffffff;
+    --top-border: #e5e9ef;
+  }
+  * { box-sizing: border-box; }
+  html, body {
+    margin: 0; padding: 0;
+    background: var(--bg);
+    color: var(--text);
+    font-family: -apple-system, BlinkMacSystemFont, "PingFang SC", "Microsoft YaHei", sans-serif;
+    min-height: 100%;
+  }
+  .top {
+    position: sticky; top: 0; z-index: 10;
+    display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between;
+    gap: 10px;
+    padding: 12px 18px;
+    background: var(--top-bg);
+    border-bottom: 1px solid var(--top-border);
+    box-shadow: 0 1px 8px rgba(15, 23, 42, 0.06);
+  }
+  .brand { color: var(--gold); font-weight: 700; font-size: 14px; letter-spacing: 0.04em; }
+  .title { font-size: 15px; font-weight: 600; color: var(--text); max-width: 52vw; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .actions { display: flex; gap: 8px; flex-wrap: wrap; }
+  .btn {
+    appearance: none; border: 1px solid var(--border);
+    background: #fff; color: var(--text);
+    border-radius: 999px; padding: 8px 14px; font-size: 13px; font-weight: 600;
+    text-decoration: none; cursor: pointer;
+  }
+  .btn:hover { background: #f0f3f7; }
+  .btn.gold {
+    background: linear-gradient(135deg, #f0d78c, #d4a853);
+    color: #0a2540; border-color: #e0c06a;
+  }
+  .meta {
+    padding: 10px 18px; color: var(--muted); font-size: 12px;
+    border-bottom: 1px solid var(--border);
+    background: var(--panel);
+  }
+  .wrap { padding: 16px 18px 40px; }
+  pre {
+    margin: 0;
+    background: var(--code-bg);
+    color: var(--code-text);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 18px 20px;
+    overflow: auto;
+    font-family: "SF Mono", "JetBrains Mono", "Fira Code", Consolas, "Courier New", monospace;
+    font-size: 13.5px;
+    line-height: 1.55;
+    white-space: pre;
+    tab-size: 4;
+    box-shadow: 0 2px 12px rgba(15, 23, 42, 0.05);
+  }
+  .hint { margin-top: 12px; color: var(--muted); font-size: 12px; }
+  @media print {
+    html, body { background: #fff !important; color: #000 !important; }
+    .top { position: static; box-shadow: none; border-bottom: 1px solid #ccc; background: #fff !important; }
+    .actions { display: none !important; }
+    .meta { background: #fff !important; border-color: #ddd; color: #333; }
+    .wrap { padding: 0; }
+    pre {
+      background: #fff !important; color: #000 !important;
+      border: 1px solid #bbb; box-shadow: none; border-radius: 0;
+      white-space: pre-wrap; word-break: break-word; font-size: 11pt; line-height: 1.4;
+    }
+    .hint { display: none; }
+    a { color: #000; text-decoration: none; }
+  }
+</style>
+</head>
+<body>
+  <div class="top">
+    <div class="brand">CSP-S 备考 · 配套代码</div>
+    <div class="title">lesson37_fast_pow_inverse.cpp</div>
+    <div class="actions">
+      <a class="btn" href="../lesson37_fast_pow_inverse.cpp" download="lesson37_fast_pow_inverse.cpp">⬇️ 下载源文件</a>
+      <a class="btn gold" href="javascript:history.back()">← 返回课件</a>
+    </div>
+  </div>
+  <div class="meta">编码：UTF-8 · 文件：lesson37_fast_pow_inverse.cpp · 共 244 行 · 浅色主题便于打印</div>
+  <div class="wrap">
+    <pre id="code">/**
+ * ============================================================
+ * 课程编号：第37课
+ * 课程标题：快速幂与逆元
+ * 对应考纲：快速幂、乘法逆元、模运算、组合数学取模
+ * CSP-S 常考知识点，掌握后可解决大量组合数学与计数问题
+ * ============================================================
+ */
+
+#include &lt;iostream&gt;
+#include &lt;algorithm&gt;
+using namespace std;
+
+typedef long long ll;
+
+// =================== 1. 快速幂（迭代版 - 推荐）===================
+// 时间复杂度：O(log b)
+// 用途：计算 a^b mod MOD，b 可高达 10^18
+ll fastPow(ll a, ll b, ll MOD) {
+    ll result = 1;
+    a %= MOD;  // 先对 a 取模，防止后续乘法溢出
+    while (b &gt; 0) {
+        if (b &amp; 1)  // 如果当前二进制位为 1
+            result = result * a % MOD;
+        a = a * a % MOD;  // a 平方：a -&gt; a^2 -&gt; a^4 -&gt; a^8
+        b &gt;&gt;= 1;
+    }
+    return result;
+}
+
+// =================== 2. 快速幂（递归版）===================
+// 更直观但可能栈溢出（b 极大时），实际竞赛推荐迭代版
+ll fastPowRecursive(ll a, ll b, ll MOD) {
+    if (b == 0) return 1;
+    ll half = fastPowRecursive(a, b / 2, MOD);
+    half = half * half % MOD;
+    if (b &amp; 1)
+        half = half * a % MOD;
+    return half;
+}
+
+// =================== 3. 费马小定理求逆元 ===================
+// 条件：MOD 必须是质数
+// 推导：a^{MOD-1} ≡ 1 (mod MOD) =&gt; a^{-1} ≡ a^{MOD-2} (mod MOD)
+// 时间复杂度：O(log MOD)
+ll invFermat(ll a, ll MOD) {
+    return fastPow(a, MOD - 2, MOD);
+}
+
+// =================== 4. 扩展欧几里得算法 ===================
+// 求解 ax + by = gcd(a, b)，返回 gcd(a, b)
+ll exgcd(ll a, ll b, ll &amp;x, ll &amp;y) {
+    if (b == 0) {
+        x = 1;
+        y = 0;
+        return a;
+    }
+    ll d = exgcd(b, a % b, y, x);
+    // 此时 y 是新的 x'，x 是新的 y'，
+    // 需要调整：y = y - (a/b) * x
+    y -= a / b * x;
+    return d;
+}
+
+// =================== 5. 扩展欧几里得求逆元 ===================
+// 条件：gcd(a, MOD) = 1（MOD 不一定是质数）
+// 思路：解 ax + MOD*y = 1，则 x 即为 a 的逆元
+// 时间复杂度：O(log min(a, MOD))
+ll invExgcd(ll a, ll MOD) {
+    ll x, y;
+    ll d = exgcd(a, MOD, x, y);
+    if (d != 1) return -1;  // 逆元不存在（a 与 MOD 不互质）
+    return (x % MOD + MOD) % MOD;  // 确保返回非负值
+}
+
+// =================== 6. 组合数取模 ===================
+const int MAXN = 1000005;
+ll fact[MAXN];     // fact[i] = i! mod MOD
+ll invFact[MAXN];  // invFact[i] = (i!)^(-1) mod MOD
+
+// 预处理阶乘和阶乘逆元
+// 时间复杂度：O(n + log MOD)
+void precomputeCombi(int n, ll MOD) {
+    // 计算阶乘
+    fact[0] = 1;
+    for (int i = 1; i &lt;= n; i++)
+        fact[i] = fact[i - 1] * i % MOD;
+
+    // 用费马小定理求 n! 的逆元
+    invFact[n] = fastPow(fact[n], MOD - 2, MOD);
+
+    // 倒推所有阶乘逆元
+    // invFact[i-1] = invFact[i] * i % MOD
+    for (int i = n; i &gt;= 1; i--)
+        invFact[i - 1] = invFact[i] * i % MOD;
+}
+
+// O(1) 查询组合数 C(n, k) mod MOD
+ll C(int n, int k, ll MOD) {
+    if (k &lt; 0 || k &gt; n) return 0;
+    return fact[n] * invFact[k] % MOD * invFact[n - k] % MOD;
+}
+
+// =================== 7. 线性求逆元 (O(n)) ===================
+// 条件：MOD 必须是质数
+// 递推公式：inv[i] = (MOD - MOD/i) * inv[MOD % i] % MOD
+// 推导：设 MOD = k*i + r，则 k*i + r ≡ 0 (mod MOD)
+//       r ≡ -k*i (mod MOD)，两边乘 i^{-1}*r^{-1}
+//       得 i^{-1} ≡ -k * r^{-1} (mod MOD)
+void linearInv(int n, ll MOD, ll inv[]) {
+    inv[1] = 1;
+    for (int i = 2; i &lt;= n; i++) {
+        inv[i] = (MOD - MOD / i) * inv[MOD % i] % MOD;
+    }
+}
+
+// =================== 主函数：演示所有功能 ===================
+int main() {
+    cout &lt;&lt; "==================== 第37课：快速幂与逆元 ====================" &lt;&lt; endl;
+    const ll MOD = 1000000007;
+
+    // ---- 1. 快速幂演示 ----
+    cout &lt;&lt; "\n【1. 快速幂】" &lt;&lt; endl;
+    ll a = 2, b = 10;
+    cout &lt;&lt; "fastPow(" &lt;&lt; a &lt;&lt; ", " &lt;&lt; b &lt;&lt; ", " &lt;&lt; MOD &lt;&lt; ") = "
+         &lt;&lt; fastPow(a, b, MOD) &lt;&lt; " (预期: 1024)" &lt;&lt; endl;
+
+    a = 3; b = 13;
+    cout &lt;&lt; "fastPow(" &lt;&lt; a &lt;&lt; ", " &lt;&lt; b &lt;&lt; ", " &lt;&lt; MOD &lt;&lt; ") = "
+         &lt;&lt; fastPow(a, b, MOD) &lt;&lt; " (预期: 1594323)" &lt;&lt; endl;
+
+    // 大指数测试
+    a = 2; b = 1000000000000000000LL; // 10^18
+    cout &lt;&lt; "fastPow(2, 10^18, " &lt;&lt; MOD &lt;&lt; ") = "
+         &lt;&lt; fastPow(a, b, MOD) &lt;&lt; endl;
+
+    // 递归版验证
+    cout &lt;&lt; "递归版 fastPow(2, 10, 1000000007) = "
+         &lt;&lt; fastPowRecursive(2, 10, MOD) &lt;&lt; " (应与上面一致)" &lt;&lt; endl;
+
+    // ---- 2. 费马小定理求逆元 ----
+    cout &lt;&lt; "\n【2. 费马小定理求逆元】" &lt;&lt; endl;
+    a = 5;
+    ll inv5 = invFermat(a, MOD);
+    cout &lt;&lt; "invFermat(" &lt;&lt; a &lt;&lt; ") = " &lt;&lt; inv5 &lt;&lt; endl;
+    cout &lt;&lt; "验证: " &lt;&lt; a &lt;&lt; " * " &lt;&lt; inv5 &lt;&lt; " % " &lt;&lt; MOD
+         &lt;&lt; " = " &lt;&lt; (a * inv5 % MOD) &lt;&lt; " (预期: 1)" &lt;&lt; endl;
+
+    a = 1234567;
+    ll invA = invFermat(a, MOD);
+    cout &lt;&lt; "invFermat(" &lt;&lt; a &lt;&lt; ") = " &lt;&lt; invA &lt;&lt; endl;
+    cout &lt;&lt; "验证: " &lt;&lt; a &lt;&lt; " * invA % " &lt;&lt; MOD
+         &lt;&lt; " = " &lt;&lt; (a * invA % MOD) &lt;&lt; " (预期: 1)" &lt;&lt; endl;
+
+    // ---- 3. 扩展欧几里得求逆元 ----
+    cout &lt;&lt; "\n【3. 扩展欧几里得算法】" &lt;&lt; endl;
+    // 用 exgcd 求 gcd
+    ll x, y;
+    ll g = exgcd(15, 35, x, y);
+    cout &lt;&lt; "exgcd(15, 35): gcd=" &lt;&lt; g
+         &lt;&lt; ", x=" &lt;&lt; x &lt;&lt; ", y=" &lt;&lt; y &lt;&lt; endl;
+    cout &lt;&lt; "验证: 15*" &lt;&lt; x &lt;&lt; " + 35*" &lt;&lt; y &lt;&lt; " = "
+         &lt;&lt; (15 * x + 35 * y) &lt;&lt; " (预期: 5)" &lt;&lt; endl;
+
+    cout &lt;&lt; "\n【4. 扩展欧几里得求逆元】" &lt;&lt; endl;
+    a = 5;
+    inv5 = invExgcd(a, MOD);
+    cout &lt;&lt; "invExgcd(" &lt;&lt; a &lt;&lt; ") = " &lt;&lt; inv5 &lt;&lt; endl;
+    cout &lt;&lt; "验证: " &lt;&lt; a &lt;&lt; " * " &lt;&lt; inv5 &lt;&lt; " % " &lt;&lt; MOD
+         &lt;&lt; " = " &lt;&lt; (a * inv5 % MOD) &lt;&lt; " (预期: 1)" &lt;&lt; endl;
+
+    // 测试非质数模数下的逆元（7 和 15 互质）
+    ll MOD2 = 15;
+    a = 7;
+    ll inv7 = invExgcd(a, MOD2);
+    cout &lt;&lt; "invExgcd(7, 15) = " &lt;&lt; inv7 &lt;&lt; endl;
+    cout &lt;&lt; "验证: 7 * " &lt;&lt; inv7 &lt;&lt; " % 15 = "
+         &lt;&lt; (7 * inv7 % MOD2) &lt;&lt; " (预期: 1)" &lt;&lt; endl;
+
+    // 测试不互质的情况
+    a = 3;
+    ll inv3 = invExgcd(a, MOD2);
+    cout &lt;&lt; "invExgcd(3, 15) = " &lt;&lt; inv3
+         &lt;&lt; " (预期: -1，因为 gcd(3,15)=3≠1，逆元不存在)" &lt;&lt; endl;
+
+    // ---- 5. 组合数取模 ----
+    cout &lt;&lt; "\n【5. 组合数取模】" &lt;&lt; endl;
+    int N = 10;
+    precomputeCombi(N, MOD);
+
+    cout &lt;&lt; "预处理阶乘和阶乘逆元 (n=" &lt;&lt; N &lt;&lt; "):" &lt;&lt; endl;
+    for (int i = 0; i &lt;= N; i++)
+        cout &lt;&lt; "fact[" &lt;&lt; i &lt;&lt; "]=" &lt;&lt; fact[i]
+             &lt;&lt; (i == N ? "\n" : ", ");
+
+    cout &lt;&lt; "组合数计算 (mod " &lt;&lt; MOD &lt;&lt; "):" &lt;&lt; endl;
+    cout &lt;&lt; "  C(5, 2) = " &lt;&lt; C(5, 2, MOD) &lt;&lt; " (预期: 10)" &lt;&lt; endl;
+    cout &lt;&lt; "  C(5, 0) = " &lt;&lt; C(5, 0, MOD) &lt;&lt; " (预期: 1)" &lt;&lt; endl;
+    cout &lt;&lt; "  C(5, 5) = " &lt;&lt; C(5, 5, MOD) &lt;&lt; " (预期: 1)" &lt;&lt; endl;
+    cout &lt;&lt; "  C(10, 3) = " &lt;&lt; C(10, 3, MOD) &lt;&lt; " (预期: 120)" &lt;&lt; endl;
+    cout &lt;&lt; "  C(10, 7) = " &lt;&lt; C(10, 7, MOD)
+         &lt;&lt; " (预期: 120, 应该等于C(10,3))" &lt;&lt; endl;
+
+    // 杨辉三角验证 C(n,k) = C(n-1,k-1) + C(n-1,k)
+    cout &lt;&lt; "  C(9,2) + C(9,3) mod MOD = "
+         &lt;&lt; (C(9, 2, MOD) + C(9, 3, MOD)) % MOD
+         &lt;&lt; " (应等于 C(10,3)=" &lt;&lt; C(10, 3, MOD) &lt;&lt; ")" &lt;&lt; endl;
+
+    // ---- 6. 线性求逆元 ----
+    cout &lt;&lt; "\n【6. 线性求逆元 O(n)】" &lt;&lt; endl;
+    const int M = 20;
+    ll inv[M + 1];
+    linearInv(M, MOD, inv);
+
+    cout &lt;&lt; "1~" &lt;&lt; M &lt;&lt; " 的逆元 (mod " &lt;&lt; MOD &lt;&lt; "):" &lt;&lt; endl;
+    for (int i = 1; i &lt;= M; i++) {
+        cout &lt;&lt; "inv[" &lt;&lt; i &lt;&lt; "]=" &lt;&lt; inv[i];
+        if (i % 5 == 0) cout &lt;&lt; endl;
+        else cout &lt;&lt; " | ";
+    }
+
+    // 验证线性求逆元的结果与费马小定理一致
+    cout &lt;&lt; "\n验证线性求逆元 (与费马小定理对比):" &lt;&lt; endl;
+    bool ok = true;
+    for (int i = 1; i &lt;= M; i++) {
+        if (invFermat(i, MOD) != inv[i]) {
+            cout &lt;&lt; "  不一致: i=" &lt;&lt; i &lt;&lt; endl;
+            ok = false;
+        }
+    }
+    if (ok) cout &lt;&lt; "  全部通过！" &lt;&lt; endl;
+
+    // ---- 7. 综合示例：大组合数 ----
+    cout &lt;&lt; "\n【7. 综合示例：大范围组合数】" &lt;&lt; endl;
+    // 注意：全局数组 MAXN = 1000005 已分配好
+    // 实际使用时根据需要调整 MAXN
+    cout &lt;&lt; "C(100, 50) mod " &lt;&lt; MOD &lt;&lt; " 的计算演示（需预处理）" &lt;&lt; endl;
+    // 小范围演示
+    precomputeCombi(100, MOD);
+    cout &lt;&lt; "  C(100, 50) mod " &lt;&lt; MOD &lt;&lt; " = " &lt;&lt; C(100, 50, MOD) &lt;&lt; endl;
+
+    cout &lt;&lt; "\n==================== 演示结束 ====================" &lt;&lt; endl;
+    return 0;
+}
+</pre>
+    <p class="hint">本页使用浅色主题与 UTF-8 编码，可直接打印或导出 PDF。</p>
+  </div>
+</body>
+</html>

@@ -1,0 +1,1158 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>第44节-冒险启程/main.py</title>
+<style>
+  :root {
+    --bg: #f5f7fa;
+    --panel: #ffffff;
+    --text: #1a1a2e;
+    --muted: #5a6570;
+    --gold: #b8860b;
+    --code-bg: #ffffff;
+    --code-text: #1f2933;
+    --border: #d8dee6;
+    --top-bg: #ffffff;
+    --top-border: #e5e9ef;
+  }
+  * { box-sizing: border-box; }
+  html, body {
+    margin: 0; padding: 0;
+    background: var(--bg);
+    color: var(--text);
+    font-family: -apple-system, BlinkMacSystemFont, "PingFang SC", "Microsoft YaHei", sans-serif;
+    min-height: 100%;
+  }
+  .top {
+    position: sticky; top: 0; z-index: 10;
+    display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between;
+    gap: 10px;
+    padding: 12px 18px;
+    background: var(--top-bg);
+    border-bottom: 1px solid var(--top-border);
+    box-shadow: 0 1px 8px rgba(15, 23, 42, 0.06);
+  }
+  .brand { color: var(--gold); font-weight: 700; font-size: 14px; letter-spacing: 0.04em; }
+  .title { font-size: 15px; font-weight: 600; color: var(--text); max-width: 52vw; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .actions { display: flex; gap: 8px; flex-wrap: wrap; }
+  .btn {
+    appearance: none; border: 1px solid var(--border);
+    background: #fff; color: var(--text);
+    border-radius: 999px; padding: 8px 14px; font-size: 13px; font-weight: 600;
+    text-decoration: none; cursor: pointer;
+  }
+  .btn:hover { background: #f0f3f7; }
+  .btn.gold {
+    background: linear-gradient(135deg, #f0d78c, #d4a853);
+    color: #0a2540; border-color: #e0c06a;
+  }
+  .meta {
+    padding: 10px 18px; color: var(--muted); font-size: 12px;
+    border-bottom: 1px solid var(--border);
+    background: var(--panel);
+  }
+  .wrap { padding: 16px 18px 40px; }
+  pre {
+    margin: 0;
+    background: var(--code-bg);
+    color: var(--code-text);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 18px 20px;
+    overflow: auto;
+    font-family: "SF Mono", "JetBrains Mono", "Fira Code", Consolas, "Courier New", monospace;
+    font-size: 13.5px;
+    line-height: 1.55;
+    white-space: pre;
+    tab-size: 4;
+    box-shadow: 0 2px 12px rgba(15, 23, 42, 0.05);
+  }
+  .hint { margin-top: 12px; color: var(--muted); font-size: 12px; }
+  @media print {
+    html, body { background: #fff !important; color: #000 !important; }
+    .top { position: static; box-shadow: none; border-bottom: 1px solid #ccc; background: #fff !important; }
+    .actions { display: none !important; }
+    .meta { background: #fff !important; border-color: #ddd; color: #333; }
+    .wrap { padding: 0; }
+    pre {
+      background: #fff !important; color: #000 !important;
+      border: 1px solid #bbb; box-shadow: none; border-radius: 0;
+      white-space: pre-wrap; word-break: break-word; font-size: 11pt; line-height: 1.4;
+    }
+    .hint { display: none; }
+    a { color: #000; text-decoration: none; }
+  }
+</style>
+</head>
+<body>
+  <div class="top">
+    <div class="brand">Pygame 零基础 · 配套代码</div>
+    <div class="title">第44节-冒险启程/main.py</div>
+    <div class="actions">
+      <a class="btn" href="../第44节-冒险启程/main.py" download="main.py">⬇️ 下载源文件</a>
+      <a class="btn gold" href="javascript:history.back()">← 返回课件</a>
+    </div>
+  </div>
+  <div class="meta">编码：UTF-8 · 文件：第44节-冒险启程/main.py · 共 1054 行 · 浅色主题便于打印</div>
+  <div class="wrap">
+    <pre id="code">"""
+第44节：冒险启程 — RPG升级与背包系统
+===========================================
+一个完整的小型RPG冒险游戏，包含：
+- 字典角色属性管理
+- 经验值自动升级系统（含升级动画）
+- 3个不同怪物（史莱姆、骷髅兵、恶龙）
+- 回合制战斗系统
+- 背包系统（道具使用）
+- JSON存档/读档
+- 所有图形用pygame的Surface绘制
+
+适合中小学生学习的Pygame进阶项目
+难度：★★★★★
+"""
+
+import pygame
+import json
+import os
+import random
+import math
+
+# ==================== 初始化 Pygame ====================
+pygame.init()
+W, H = 800, 600
+screen = pygame.display.set_mode((W, H))
+pygame.display.set_caption("冒险启程 — RPG升级与背包系统")
+clock = pygame.time.Clock()
+
+# ==================== 中文字体 ====================
+try:
+    font_12 = pygame.font.Font("/System/Library/Fonts/PingFang.ttc", 12)
+    font_14 = pygame.font.Font("/System/Library/Fonts/PingFang.ttc", 14)
+    font_16 = pygame.font.Font("/System/Library/Fonts/PingFang.ttc", 16)
+    font_20 = pygame.font.Font("/System/Library/Fonts/PingFang.ttc", 20)
+    font_24 = pygame.font.Font("/System/Library/Fonts/PingFang.ttc", 24)
+    font_28 = pygame.font.Font("/System/Library/Fonts/PingFang.ttc", 28)
+    font_36 = pygame.font.Font("/System/Library/Fonts/PingFang.ttc", 36)
+    font_48 = pygame.font.Font("/System/Library/Fonts/PingFang.ttc", 48)
+except:
+    font_12 = pygame.font.Font(None, 14)
+    font_14 = pygame.font.Font(None, 16)
+    font_16 = pygame.font.Font(None, 18)
+    font_20 = pygame.font.Font(None, 24)
+    font_24 = pygame.font.Font(None, 28)
+    font_28 = pygame.font.Font(None, 32)
+    font_36 = pygame.font.Font(None, 40)
+    font_48 = pygame.font.Font(None, 56)
+
+# ==================== 颜色常量 ====================
+C = {
+    "bg_dark":     (15, 10, 35),
+    "bg_panel":    (25, 18, 55),
+    "gold":        (255, 215, 0),
+    "gold_dim":    (180, 150, 30),
+    "brown":       (139, 115, 85),
+    "brown_dark":  (100, 70, 40),
+    "blue":        (70, 130, 210),
+    "blue_light":  (120, 170, 240),
+    "red":         (220, 60, 60),
+    "red_dark":    (160, 30, 30),
+    "green":       (60, 200, 100),
+    "green_dark":  (30, 120, 50),
+    "white":       (240, 235, 220),
+    "gray":        (140, 130, 120),
+    "gray_dark":   (60, 55, 50),
+    "purple":      (160, 100, 220),
+    "orange":      (255, 160, 50),
+    "black":       (0, 0, 0),
+}
+
+# ==================== 角色属性字典 ====================
+# 核心知识点：用字典统一管理角色的所有属性
+player = {
+    "name":   "勇者",
+    "hp":     100,
+    "max_hp": 100,
+    "mp":     50,
+    "max_mp": 50,
+    "atk":    15,
+    "def":    5,
+    "exp":    0,
+    "level":  1,
+    "gold":   0,
+}
+atk_boost = 0       # 战斗中攻击卷轴提供的临时攻击加成
+is_defending = False  # 是否处于防御状态
+
+# ==================== 背包系统 ====================
+inventory = []  # 存储物品名称字符串
+
+# 物品模板库（物品名称 → 物品属性字典）
+ITEMS = {
+    "生命药水": {"type": "恢复", "effect": "hp",  "value": 30, "desc": "恢复30点生命值", "color": C["red"]},
+    "魔法药水": {"type": "恢复", "effect": "mp",  "value": 20, "desc": "恢复20点魔法值", "color": C["blue_light"]},
+    "攻击卷轴": {"type": "增益", "effect": "atk",  "value": 5,  "desc": "本次战斗攻击+5", "color": C["orange"]},
+}
+
+# ==================== 怪物数据（也是字典列表！） ====================
+MONSTERS = [
+    {"name": "史莱姆", "hp": 40,  "max_hp": 40,  "atk": 8,  "def": 2,  "exp": 20,  "gold": 10,  "color": (100, 210, 120), "type": "slime"},
+    {"name": "骷髅兵", "hp": 70,  "max_hp": 70,  "atk": 14, "def": 6,  "exp": 40,  "gold": 25,  "color": (210, 200, 180), "type": "skeleton"},
+    {"name": "恶龙",   "hp": 150, "max_hp": 150, "atk": 22, "def": 10, "exp": 100, "gold": 60,  "color": (220, 70, 70),  "type": "dragon"},
+]
+defeated_count = 0   # 已击败的怪物数量
+current_monster = None
+
+# ==================== 游戏状态 ====================
+# 状态: "menu", "battle", "battle_win", "inventory", "level_up", "game_over", "victory"
+game_state = "menu"
+battle_log = []        # 战斗日志
+level_up_anim_timer = 0  # 升级动画计时器
+message_lines = []     # 通用消息
+message_timer = 0
+
+# ==================== 经验曲线与升级 ====================
+def exp_to_next_level(level):
+    """计算升至下一级所需经验值（线性曲线）"""
+    return level * 50
+
+def level_up():
+    """升级：属性全面增长，满血满蓝"""
+    global level_up_anim_timer
+    player["level"] += 1
+    player["max_hp"] += 20
+    player["max_mp"] += 10
+    player["atk"] += 5
+    player["def"] += 3
+    # 升级福利：满血满蓝！
+    player["hp"] = player["max_hp"]
+    player["mp"] = player["max_mp"]
+    level_up_anim_timer = 120  # 升级动画持续120帧（2秒）
+    add_message(f"升级！达到 {player['level']} 级！属性全面增长！", C["gold"])
+
+def gain_exp(amount):
+    """获得经验值，自动检测升级（while循环处理连续升级）"""
+    player["exp"] += amount
+    needed = exp_to_next_level(player["level"])
+    while player["exp"] &gt;= needed:
+        player["exp"] -= needed
+        level_up()
+        needed = exp_to_next_level(player["level"])
+
+def add_message(text, color=None):
+    """添加一条消息到屏幕显示"""
+    if color is None:
+        color = C["white"]
+    message_lines.append({"text": text, "color": color, "timer": 180})
+    # 最多保留5条消息
+    if len(message_lines) &gt; 5:
+        message_lines.pop(0)
+
+# ==================== 物品使用 ====================
+def use_item(index, in_battle=False):
+    """使用背包中的物品
+    Args:
+        index: 物品在inventory中的索引
+        in_battle: 是否在战斗中使用
+    Returns:
+        使用是否成功
+    """
+    global atk_boost
+    if index &lt; 0 or index &gt;= len(inventory):
+        add_message("背包格子是空的！", C["gray"])
+        return False
+
+    item_name = inventory[index]
+    item_info = ITEMS[item_name]
+
+    if item_info["effect"] == "hp":
+        old_hp = player["hp"]
+        player["hp"] = min(player["hp"] + item_info["value"], player["max_hp"])
+        healed = player["hp"] - old_hp
+        add_message(f"使用 {item_name}，恢复了 {healed} 点生命！", C["green"])
+
+    elif item_info["effect"] == "mp":
+        old_mp = player["mp"]
+        player["mp"] = min(player["mp"] + item_info["value"], player["max_mp"])
+        restored = player["mp"] - old_mp
+        add_message(f"使用 {item_name}，恢复了 {restored} 点魔法！", C["blue_light"])
+
+    elif item_info["effect"] == "atk":
+        if in_battle:
+            atk_boost += item_info["value"]
+            add_message(f"使用 {item_name}，本次战斗攻击力+{item_info['value']}！", C["orange"])
+        else:
+            add_message(f"{item_name} 只能在战斗中使用！", C["gray"])
+            return False
+
+    inventory.pop(index)  # 使用后从背包移除
+    return True
+
+# ==================== 战斗系统 ====================
+def init_battle():
+    """初始化战斗：选择当前要挑战的怪物"""
+    global current_monster, battle_log, atk_boost, is_defending, game_state
+    if defeated_count &gt;= len(MONSTERS):
+        game_state = "victory"
+        add_message("你已经击败了所有怪物！和平降临大地！", C["gold"])
+        return
+
+    # 复制怪物数据（避免修改原模板）
+    m = MONSTERS[defeated_count]
+    current_monster = {
+        "name": m["name"], "hp": m["hp"], "max_hp": m["max_hp"],
+        "atk": m["atk"], "def": m["def"], "exp": m["exp"],
+        "gold": m["gold"], "color": m["color"], "type": m["type"]
+    }
+    battle_log = []
+    atk_boost = 0
+    is_defending = False
+    game_state = "battle"
+    add_message(f"遭遇了 {current_monster['name']}！准备战斗！", C["red"])
+
+def do_player_attack():
+    """玩家攻击"""
+    global is_defending
+    is_defending = False
+    damage = max(1, (player["atk"] + atk_boost) - current_monster["def"])
+    # 10% 暴击率
+    is_crit = random.random() &lt; 0.1
+    if is_crit:
+        damage = int(damage * 1.8)
+    current_monster["hp"] -= damage
+    crit_text = "暴击！" if is_crit else ""
+    add_message(f"你攻击了 {current_monster['name']}，造成 {damage} 点伤害！{crit_text}", C["blue_light"])
+
+def do_monster_attack():
+    """怪物攻击"""
+    if is_defending:
+        # 防御状态：防御力翻倍
+        damage = max(1, current_monster["atk"] - player["def"] * 2)
+    else:
+        damage = max(1, current_monster["atk"] - player["def"])
+    player["hp"] -= damage
+    def_text = "（你正在防御！）" if is_defending else ""
+    add_message(f"{current_monster['name']} 攻击了你，造成 {damage} 点伤害！{def_text}", C["red"])
+
+def check_battle_end():
+    """检查战斗是否结束"""
+    global game_state, defeated_count
+    if current_monster["hp"] &lt;= 0:
+        # 战斗胜利
+        add_message(f"击败了 {current_monster['name']}！", C["green"])
+        exp_gain = current_monster["exp"]
+        gold_gain = current_monster["gold"]
+        gain_exp(exp_gain)
+        player["gold"] += gold_gain
+        add_message(f"获得经验 {exp_gain}，金币 {gold_gain}！", C["gold"])
+        defeated_count += 1
+
+        # 50%概率掉落物品
+        if random.random() &lt; 0.5:
+            item = random.choice(["生命药水", "魔法药水", "攻击卷轴"])
+            inventory.append(item)
+            add_message(f"获得了 [{item}]！", C["purple"])
+
+        game_state = "battle_win"
+        return True
+
+    if player["hp"] &lt;= 0:
+        player["hp"] = 0
+        add_message("你被击败了...", C["red_dark"])
+        game_state = "game_over"
+        return True
+
+    return False
+
+def player_flee():
+    """尝试逃跑"""
+    global game_state
+    if random.random() &lt; 0.5:
+        add_message("逃跑成功！", C["green"])
+        game_state = "menu"
+    else:
+        add_message("逃跑失败！", C["red"])
+        do_monster_attack()
+        check_battle_end()
+
+# ==================== 存档系统 ====================
+SAVE_FILE = "rpg_save.json"
+
+def save_game():
+    """将游戏数据保存为JSON文件"""
+    data = {
+        "player": player,
+        "inventory": inventory,
+        "defeated_count": defeated_count,
+    }
+    try:
+        with open(SAVE_FILE, "w", encoding="utf-8") as f:
+            json.dump(data, f, ensure_ascii=False, indent=2)
+        add_message("存档成功！游戏进度已保存。", C["green"])
+    except Exception as e:
+        add_message(f"存档失败：{e}", C["red"])
+
+def load_game():
+    """从JSON文件读取游戏数据"""
+    global player, inventory, defeated_count
+    if not os.path.exists(SAVE_FILE):
+        add_message("未找到存档文件！", C["gray"])
+        return False
+    try:
+        with open(SAVE_FILE, "r", encoding="utf-8") as f:
+            data = json.load(f)
+        player = data["player"]
+        inventory = data["inventory"]
+        defeated_count = data.get("defeated_count", 0)
+        add_message("读档成功！欢迎回来！", C["green"])
+        return True
+    except Exception as e:
+        add_message(f"读档失败：{e}", C["red"])
+        return False
+
+
+# ==================== 绘图函数 ====================
+
+def draw_text(surf, text, x, y, font, color, center=False, shadow=False):
+    """绘制文字，支持居中和阴影"""
+    if shadow:
+        shadow_surf = font.render(text, True, (0, 0, 0))
+        sr = shadow_surf.get_rect()
+        if center:
+            sr.center = (x + 2, y + 2)
+        else:
+            sr.topleft = (x + 2, y + 2)
+        surf.blit(shadow_surf, sr)
+    text_surf = font.render(text, True, color)
+    tr = text_surf.get_rect()
+    if center:
+        tr.center = (x, y)
+    else:
+        tr.topleft = (x, y)
+    surf.blit(text_surf, tr)
+
+def draw_bar(surf, x, y, w, h, current, max_val, fg_color, bg_color=None):
+    """绘制状态条（血条/蓝条/经验条）
+    Args:
+        surf: 目标Surface
+        x, y: 左上角坐标
+        w, h: 宽高
+        current: 当前值
+        max_val: 最大值
+        fg_color: 前景色
+        bg_color: 背景色（可选）
+    """
+    if bg_color is None:
+        bg_color = C["gray_dark"]
+    # 背景
+    pygame.draw.rect(surf, bg_color, (x, y, w, h), border_radius=4)
+    # 填充
+    if max_val &gt; 0:
+        ratio = max(0, min(1, current / max_val))
+        fill_w = int(w * ratio)
+        if fill_w &gt; 0:
+            pygame.draw.rect(surf, fg_color, (x, y, fill_w, h), border_radius=4)
+    # 边框
+    pygame.draw.rect(surf, C["gold_dim"], (x, y, w, h), 2, border_radius=4)
+
+def draw_button(surf, rect, text, font, text_color, bg_color, hover=False, border_color=None):
+    """绘制按钮
+    Args:
+        rect: pygame.Rect
+        hover: 是否鼠标悬停（悬停时颜色更亮）
+    """
+    if border_color is None:
+        border_color = C["gold"] if hover else C["gold_dim"]
+    if hover:
+        bg_color = tuple(min(255, c + 30) for c in bg_color)
+    pygame.draw.rect(surf, bg_color, rect, border_radius=10)
+    pygame.draw.rect(surf, border_color, rect, 3, border_radius=10)
+    draw_text(surf, text, rect.centerx, rect.centery, font, text_color, center=True)
+
+def draw_panel(surf, x, y, w, h, alpha=200):
+    """绘制半透明面板"""
+    panel = pygame.Surface((w, h), pygame.SRCALPHA)
+    panel.fill((*C["bg_panel"], alpha))
+    surf.blit(panel, (x, y))
+    pygame.draw.rect(surf, C["gold_dim"], (x, y, w, h), 2, border_radius=8)
+
+def draw_player_sprite(surf, x, y, scale=1.0):
+    """绘制勇者角色（用基本图形拼出一个骑士）"""
+    cx, cy = x, y
+    # 身体（盔甲）
+    body_color = (70, 120, 200)
+    armor_points = [
+        (cx - 25, cy + 15),  # 左腰
+        (cx + 25, cy + 15),  # 右腰
+        (cx + 20, cy + 70),  # 右下
+        (cx - 20, cy + 70),  # 左下
+    ]
+    pygame.draw.polygon(surf, body_color, armor_points)
+    pygame.draw.polygon(surf, (40, 80, 160), armor_points, 2)  # 边框
+
+    # 胸甲装饰
+    pygame.draw.line(surf, C["gold"], (cx, cy + 20), (cx, cy + 60), 3)
+
+    # 头部
+    pygame.draw.circle(surf, (255, 220, 180), (cx, cy - 5), 20)  # 脸
+    pygame.draw.circle(surf, (180, 150, 120), (cx, cy - 5), 20, 2)  # 轮廓
+
+    # 头盔
+    helmet_color = (160, 160, 180)
+    helmet_rect = pygame.Rect(cx - 22, cy - 30, 44, 28)
+    pygame.draw.ellipse(surf, helmet_color, helmet_rect)
+    pygame.draw.ellipse(surf, (120, 120, 140), helmet_rect, 2)
+    # 头盔顶部装饰
+    pygame.draw.rect(surf, C["red"], (cx - 3, cy - 38, 6, 12), border_radius=2)
+
+    # 眼睛
+    pygame.draw.circle(surf, (40, 30, 20), (cx - 7, cy - 8), 3)
+    pygame.draw.circle(surf, (40, 30, 20), (cx + 7, cy - 8), 3)
+
+    # 武器（剑，在身体右侧）
+    sword_color = (200, 200, 210)
+    # 剑柄
+    pygame.draw.rect(surf, C["brown"], (cx + 20, cy + 10, 6, 15), border_radius=2)
+    # 剑身
+    pygame.draw.rect(surf, sword_color, (cx + 22, cy - 30, 3, 45), border_radius=1)
+    # 剑尖
+    pygame.draw.polygon(surf, sword_color, [(cx + 22, cy - 35), (cx + 25, cy - 30), (cx + 19, cy - 30)])
+
+    # 盾牌（在身体左侧）
+    shield_color = (180, 140, 60)
+    pygame.draw.ellipse(surf, shield_color, (cx - 45, cy + 10, 30, 45))
+    pygame.draw.ellipse(surf, C["gold"], (cx - 45, cy + 10, 30, 45), 2)
+    # 盾牌十字
+    pygame.draw.line(surf, C["gold"], (cx - 30, cy + 15), (cx - 30, cy + 50), 2)
+    pygame.draw.line(surf, C["gold"], (cx - 42, cy + 32), (cx - 18, cy + 32), 2)
+
+    # 腿
+    leg_color = (60, 50, 45)
+    pygame.draw.rect(surf, leg_color, (cx - 12, cy + 68, 10, 20), border_radius=3)
+    pygame.draw.rect(surf, leg_color, (cx + 2, cy + 68, 10, 20), border_radius=3)
+
+def draw_monster_sprite(surf, x, y, monster):
+    """根据怪物类型绘制不同的怪物图形"""
+    mtype = monster.get("type", "slime")
+    color = monster.get("color", (100, 200, 100))
+    cx, cy = x, y
+
+    if mtype == "slime":
+        # 史莱姆 — 半圆形绿色软泥怪
+        body_rect = pygame.Rect(cx - 40, cy - 20, 80, 55)
+        pygame.draw.ellipse(surf, color, body_rect)
+        pygame.draw.ellipse(surf, tuple(max(0, c - 40) for c in color), body_rect, 3)
+        # 阴影/高光
+        pygame.draw.ellipse(surf, tuple(min(255, c + 50) for c in color), (cx - 25, cy - 30, 30, 20))
+        # 眼睛
+        pygame.draw.circle(surf, C["white"], (cx - 14, cy - 8), 8)
+        pygame.draw.circle(surf, C["white"], (cx + 14, cy - 8), 8)
+        pygame.draw.circle(surf, (20, 20, 20), (cx - 12, cy - 8), 4)
+        pygame.draw.circle(surf, (20, 20, 20), (cx + 12, cy - 8), 4)
+        # 微笑
+        pygame.draw.arc(surf, (20, 20, 20), (cx - 10, cy - 5, 20, 10), 0, math.pi, 2)
+
+    elif mtype == "skeleton":
+        # 骷髅兵 — 白色骨架
+        # 头颅
+        pygame.draw.circle(surf, color, (cx, cy - 20), 20)
+        pygame.draw.circle(surf, (140, 130, 110), (cx, cy - 20), 20, 2)
+        # 眼睛洞
+        pygame.draw.ellipse(surf, (30, 25, 20), (cx - 12, cy - 28, 8, 10))
+        pygame.draw.ellipse(surf, (30, 25, 20), (cx + 4, cy - 28, 8, 10))
+        # 鼻子洞
+        pygame.draw.polygon(surf, (30, 25, 20), [(cx - 2, cy - 18), (cx + 2, cy - 18), (cx, cy - 14)])
+        # 牙齿
+        for i in range(4):
+            pygame.draw.line(surf, (30, 25, 20), (cx - 8 + i * 5, cy - 10), (cx - 8 + i * 5, cy - 4), 2)
+        # 脊柱
+        pygame.draw.line(surf, color, (cx, cy), (cx, cy + 40), 5)
+        # 肋骨
+        for i in range(3):
+            pygame.draw.line(surf, color, (cx, cy + 8 + i * 12), (cx - 18, cy + 14 + i * 12), 3)
+            pygame.draw.line(surf, color, (cx, cy + 8 + i * 12), (cx + 18, cy + 14 + i * 12), 3)
+        # 手臂（骨头）
+        pygame.draw.line(surf, color, (cx - 18, cy + 10), (cx - 35, cy + 30), 4)
+        pygame.draw.line(surf, color, (cx + 18, cy + 10), (cx + 35, cy + 30), 4)
+        # 武器（斧头）
+        pygame.draw.rect(surf, C["gray"], (cx + 30, cy + 20, 4, 25), border_radius=1)
+        pygame.draw.polygon(surf, C["gray_dark"], [(cx + 18, cy + 24), (cx + 48, cy + 20), (cx + 44, cy + 35)])
+        # 腿骨
+        pygame.draw.line(surf, color, (cx - 8, cy + 40), (cx - 14, cy + 70), 5)
+        pygame.draw.line(surf, color, (cx + 8, cy + 40), (cx + 14, cy + 70), 5)
+
+    elif mtype == "dragon":
+        # 恶龙 — 红色巨龙
+        # 身体
+        body_rect = pygame.Rect(cx - 45, cy - 15, 90, 55)
+        pygame.draw.ellipse(surf, color, body_rect)
+        pygame.draw.ellipse(surf, tuple(max(0, c - 40) for c in color), body_rect, 3)
+        # 肚皮
+        belly_color = tuple(min(255, c + 40) for c in color)
+        pygame.draw.ellipse(surf, belly_color, (cx - 25, cy + 5, 50, 25))
+
+        # 头部
+        pygame.draw.circle(surf, color, (cx + 40, cy - 30), 22)
+        pygame.draw.circle(surf, tuple(max(0, c - 40) for c in color), (cx + 40, cy - 30), 22, 2)
+        # 眼睛（凶恶）
+        pygame.draw.circle(surf, (255, 240, 100), (cx + 46, cy - 36), 7)
+        pygame.draw.circle(surf, (0, 0, 0), (cx + 48, cy - 36), 3)
+        # 鼻孔
+        pygame.draw.circle(surf, (40, 20, 20), (cx + 55, cy - 28), 3)
+        pygame.draw.circle(surf, (40, 20, 20), (cx + 55, cy - 22), 3)
+        # 嘴（喷火）
+        pygame.draw.arc(surf, (20, 10, 10), (cx + 48, cy - 35, 15, 25), -0.5, 2.5, 2)
+        # 火焰
+        flame_points = [(cx + 60, cy - 30), (cx + 78, cy - 40), (cx + 72, cy - 30),
+                       (cx + 85, cy - 28), (cx + 72, cy - 22), (cx + 78, cy - 14), (cx + 60, cy - 22)]
+        pygame.draw.polygon(surf, C["orange"], flame_points)
+        pygame.draw.polygon(surf, (255, 200, 50), flame_points, 1)
+
+        # 角
+        pygame.draw.polygon(surf, (100, 60, 30), [(cx + 35, cy - 45), (cx + 28, cy - 70), (cx + 42, cy - 48)])
+        pygame.draw.polygon(surf, (100, 60, 30), [(cx + 45, cy - 42), (cx + 52, cy - 68), (cx + 50, cy - 44)])
+
+        # 翅膀
+        wing_color = tuple(max(0, c - 30) for c in color)
+        pygame.draw.polygon(surf, wing_color, [(cx - 15, cy - 10), (cx - 20, cy - 55), (cx + 5, cy - 20)])
+        pygame.draw.polygon(surf, wing_color, [(cx + 0, cy - 10), (cx - 5, cy - 50), (cx + 15, cy - 15)])
+
+        # 尾巴
+        tail_points = [(cx - 40, cy + 10), (cx - 70, cy + 5), (cx - 80, cy + 15), (cx - 70, cy + 25)]
+        pygame.draw.lines(surf, color, False, tail_points, 6)
+        # 尾巴尖刺
+        pygame.draw.polygon(surf, (255, 200, 150), [(cx - 80, cy + 5), (cx - 92, cy + 8), (cx - 82, cy + 18)])
+
+        # 腿
+        pygame.draw.rect(surf, color, (cx - 25, cy + 35, 15, 20), border_radius=4)
+        pygame.draw.rect(surf, color, (cx + 10, cy + 35, 15, 20), border_radius=4)
+        # 爪子
+        for lx in [cx - 25, cx + 10]:
+            pygame.draw.polygon(surf, (80, 50, 40), [(lx, cy + 55), (lx - 4, cy + 65), (lx + 4, cy + 65)])
+            pygame.draw.polygon(surf, (80, 50, 40), [(lx + 8, cy + 55), (lx + 4, cy + 65), (lx + 12, cy + 65)])
+
+def draw_item_icon(surf, x, y, item_name, size=40):
+    """绘制物品图标（小药水瓶/卷轴图案）"""
+    info = ITEMS.get(item_name)
+    if info is None:
+        return
+    color = info.get("color", C["white"])
+    if info["effect"] == "hp":
+        # 红色药水瓶
+        bottle_rect = pygame.Rect(x + 8, y + 4, size - 16, size - 8)
+        pygame.draw.rect(surf, color, bottle_rect, border_radius=6)
+        pygame.draw.rect(surf, (200, 200, 210), (x + 16, y + 2, size - 32, 6), border_radius=2)
+        pygame.draw.rect(surf, (200, 200, 210), (x + 10, y + 4, size - 20, size - 8), 2, border_radius=6)
+    elif info["effect"] == "mp":
+        # 蓝色药水瓶
+        bottle_rect = pygame.Rect(x + 8, y + 4, size - 16, size - 8)
+        pygame.draw.rect(surf, color, bottle_rect, border_radius=6)
+        pygame.draw.rect(surf, (200, 200, 210), (x + 16, y + 2, size - 32, 6), border_radius=2)
+        pygame.draw.rect(surf, (200, 200, 210), (x + 10, y + 4, size - 20, size - 8), 2, border_radius=6)
+    elif info["effect"] == "atk":
+        # 卷轴
+        scroll_rect = pygame.Rect(x + 4, y + 8, size - 8, size - 16)
+        pygame.draw.rect(surf, (240, 220, 180), scroll_rect, border_radius=3)
+        pygame.draw.rect(surf, C["brown"], scroll_rect, 2, border_radius=3)
+        pygame.draw.line(surf, C["red"], (x + 10, y + 12), (x + 10, y + size - 12), 2)
+        pygame.draw.line(surf, C["red"], (x + size - 10, y + 12), (x + size - 10, y + size - 12), 2)
+        pygame.draw.rect(surf, color, (x + 6, y + 6, size - 12, 6), border_radius=2)
+
+# ==================== 场景绘制函数 ====================
+
+def draw_player_status_panel(surf, x, y, w, h):
+    """绘制角色状态面板（菜单左侧）"""
+    draw_panel(surf, x, y, w, h)
+
+    p = player
+    # 标题
+    draw_text(surf, f"Lv.{p['level']} {p['name']}", x + 15, y + 10, font_24, C["gold"])
+    # HP条
+    draw_text(surf, f"HP", x + 15, y + 48, font_14, C["red"])
+    draw_bar(surf, x + 45, y + 45, 140, 18, p["hp"], p["max_hp"], C["red"])
+    draw_text(surf, f"{p['hp']}/{p['max_hp']}", x + 45, y + 43, font_12, C["white"], center=False)
+    # MP条
+    draw_text(surf, f"MP", x + 15, y + 72, font_14, C["blue_light"])
+    draw_bar(surf, x + 45, y + 69, 140, 18, p["mp"], p["max_mp"], C["blue_light"])
+    draw_text(surf, f"{p['mp']}/{p['max_mp']}", x + 45, y + 67, font_12, C["white"], center=False)
+    # 经验条
+    draw_text(surf, f"EXP", x + 15, y + 96, font_14, C["green"])
+    needed = exp_to_next_level(p["level"])
+    draw_bar(surf, x + 45, y + 93, 140, 14, p["exp"], needed, C["green"])
+    draw_text(surf, f"{p['exp']}/{needed}", x + 45, y + 91, font_12, C["white"], center=False)
+
+    # 属性列表
+    y_off = y + 118
+    attrs = [
+        ("攻击力", p["atk"], C["orange"]),
+        ("防御力", p["def"], C["blue"]),
+        ("金币", p["gold"], C["gold"]),
+    ]
+    for label, val, color in attrs:
+        draw_text(surf, f"{label}: {val}", x + 15, y_off, font_16, color)
+        y_off += 24
+
+    # 背包物品数量
+    draw_text(surf, f"背包: {len(inventory)} 件物品", x + 15, y_off + 5, font_14, C["purple"])
+
+def draw_battle_screen(surf):
+    """绘制战斗画面"""
+    # 背景
+    surf.fill(C["bg_dark"])
+
+    # 战斗区域分隔线
+    pygame.draw.line(surf, C["brown"], (0, 420), (W, 420), 3)
+
+    # 怪物区域（上方）
+    if current_monster:
+        m = current_monster
+        draw_text(surf, m["name"], 400, 30, font_28, C["red"], center=True)
+        # 怪物的HP条
+        bar_x, bar_y = 280, 60
+        draw_bar(surf, bar_x, bar_y, 240, 20, m["hp"], m["max_hp"], C["red"])
+        draw_text(surf, f"HP: {m['hp']}/{m['max_hp']}", bar_x + 120, bar_y + 2, font_12, C["white"], center=True)
+        # 绘制怪物
+        draw_monster_sprite(surf, 400, 250, m)
+
+    # 玩家区域（下方）
+    p = player
+    # 玩家角色绘制
+    draw_player_sprite(surf, 150, 340)
+
+    # 玩家状态条（右下角）
+    status_x = 430
+    draw_text(surf, f"Lv.{p['level']} {p['name']}", status_x, 440, font_20, C["gold"])
+    draw_bar(surf, status_x, 465, 200, 16, p["hp"], p["max_hp"], C["red"])
+    draw_text(surf, f"HP: {p['hp']}/{p['max_hp']}", status_x + 100, 463, font_12, C["white"], center=True)
+    draw_bar(surf, status_x, 485, 200, 14, p["mp"], p["max_mp"], C["blue_light"])
+    draw_text(surf, f"MP: {p['mp']}/{p['max_mp']}", status_x + 100, 483, font_12, C["white"], center=True)
+    if atk_boost &gt; 0:
+        draw_text(surf, f"攻击+{atk_boost} (卷轴)", status_x, 503, font_14, C["orange"])
+
+    # 战斗选项按钮
+    btn_w, btn_h = 120, 40
+    btn_y = 540
+    buttons = [
+        ("⚔ 攻击", (40, btn_y)),
+        ("🛡 防御", (170, btn_y)),
+        ("🎒 道具", (300, btn_y)),
+        ("🏃 逃跑", (430, btn_y)),
+    ]
+    mouse_pos = pygame.mouse.get_pos()
+    for text, (bx, by) in buttons:
+        btn_rect = pygame.Rect(bx, by, btn_w, btn_h)
+        hover = btn_rect.collidepoint(mouse_pos)
+        draw_button(surf, btn_rect, text, font_18, C["white"], C["bg_panel"], hover)
+
+    # 战斗信息区
+    info_y = 440
+    for i, msg in enumerate(battle_log[-4:]):  # 显示最近4条
+        draw_text(surf, msg["text"], 40, info_y + i * 20, font_14, msg.get("color", C["white"]))
+
+def draw_menu_screen(surf):
+    """绘制主菜单画面"""
+    surf.fill(C["bg_dark"])
+
+    # 标题
+    draw_text(surf, "冒险启程", 400, 35, font_48, C["gold"], center=True)
+    draw_text(surf, "RPG 升级与背包系统", 400, 75, font_16, C["brown"], center=True)
+
+    # 左侧：角色状态面板
+    draw_player_status_panel(surf, 30, 110, 220, 340)
+
+    # 右侧：角色立绘
+    draw_player_sprite(surf, 620, 320)
+
+    # 中央下方：主菜单按钮
+    btn_w, btn_h = 180, 55
+    btn_start_y = 350
+    btn_center_x = 400
+
+    mouse_pos = pygame.mouse.get_pos()
+    menu_btns = [
+        ("🗺  探索冒险", "explore", (110, 170, 50)),
+        ("🎒  查看背包", "inventory", (70, 100, 160)),
+        ("💾  保存存档", "save", (150, 100, 40)),
+    ]
+
+    for i, (text, action, bg_color) in enumerate(menu_btns):
+        bx = btn_center_x - btn_w // 2
+        by = btn_start_y + i * (btn_h + 15)
+        btn_rect = pygame.Rect(bx, by, btn_w, btn_h)
+        hover = btn_rect.collidepoint(mouse_pos)
+        draw_button(surf, btn_rect, text, font_20, C["white"], bg_color, hover)
+
+    # 读档按钮（小一点）
+    load_rect = pygame.Rect(btn_center_x + btn_w // 2 + 20, btn_start_y, 100, 55)
+    hover = load_rect.collidepoint(mouse_pos)
+    draw_button(surf, load_rect, "📂 读档", font_16, C["white"], (60, 60, 80), hover)
+
+    # 操作提示
+    draw_text(surf, "提示：按 S 键存档，按 L 键读档", 400, 510, font_14, C["gray"], center=True)
+
+    # 已击败怪物标记
+    draw_text(surf, f"已击败: {defeated_count}/{len(MONSTERS)} 个怪物", 400, 540, font_14, C["gold"], center=True)
+
+def draw_inventory_screen(surf):
+    """绘制背包界面"""
+    surf.fill(C["bg_dark"])
+
+    draw_text(surf, "🎒 背包", 400, 30, font_36, C["gold"], center=True)
+    draw_text(surf, f"共 {len(inventory)} 件物品", 400, 65, font_16, C["gray"], center=True)
+
+    # 物品格子（3列）
+    cols = 3
+    cell_w, cell_h = 180, 120
+    gap_x, gap_y = 20, 20
+    start_x = (W - (cols * cell_w + (cols - 1) * gap_x)) // 2
+    start_y = 110
+
+    mouse_pos = pygame.mouse.get_pos()
+
+    for i, item_name in enumerate(inventory):
+        col = i % cols
+        row = i // cols
+        cx = start_x + col * (cell_w + gap_x)
+        cy = start_y + row * (cell_h + gap_y)
+
+        # 格子背景
+        cell_rect = pygame.Rect(cx, cy, cell_w, cell_h)
+        hover = cell_rect.collidepoint(mouse_pos)
+        cell_bg = tuple(min(255, c + 20) for c in C["bg_panel"]) if hover else C["bg_panel"]
+        pygame.draw.rect(surf, cell_bg, cell_rect, border_radius=10)
+        pygame.draw.rect(surf, C["gold_dim"] if not hover else C["gold"], cell_rect, 2, border_radius=10)
+
+        # 物品图标
+        draw_item_icon(surf, cx + 70, cy + 5, item_name, 50)
+
+        # 物品名
+        draw_text(surf, item_name, cx + cell_w // 2, cy + 70, font_16, C["gold"], center=True)
+
+        # 物品描述（小字）
+        desc = ITEMS.get(item_name, {}).get("desc", "")
+        draw_text(surf, desc, cx + cell_w // 2, cy + 90, font_12, C["gray"], center=True)
+
+        # 使用按钮
+        use_btn_w, use_btn_h = 70, 28
+        use_btn_x = cx + cell_w // 2 - use_btn_w // 2
+        use_btn_y = cy + cell_h - 36
+        use_rect = pygame.Rect(use_btn_x, use_btn_y, use_btn_w, use_btn_h)
+        use_hover = use_rect.collidepoint(mouse_pos)
+        draw_button(surf, use_rect, "使用", font_14, C["white"],
+                    C["green_dark"] if not use_hover else C["green"], use_hover)
+
+    # 空白格子提示
+    if len(inventory) == 0:
+        draw_text(surf, "背包空空如也~ 去探索战斗获取物品吧！", 400, 280, font_20, C["gray"], center=True)
+
+    # 返回按钮
+    back_rect = pygame.Rect(350, 530, 100, 40)
+    hover = back_rect.collidepoint(mouse_pos)
+    draw_button(surf, back_rect, "返回", font_18, C["white"], C["brown"], hover)
+
+    # 右键返回提示
+    draw_text(surf, "点击物品可查看详情 · 按 ESC 或点击返回", 400, 578, font_12, C["gray"], center=True)
+
+def draw_battle_win_screen(surf):
+    """绘制战斗胜利界面"""
+    surf.fill(C["bg_dark"])
+    draw_text(surf, "战斗胜利！", 400, 120, font_48, C["gold"], center=True)
+
+    if current_monster:
+        exp_gain = current_monster["exp"]
+        gold_gain = current_monster["gold"]
+        draw_text(surf, f"击败了 {current_monster['name']}", 400, 185, font_28, C["white"], center=True)
+        draw_text(surf, f"获得经验: {exp_gain}  |  获得金币: {gold_gain}", 400, 230, font_20, C["gold"], center=True)
+
+    draw_text(surf, f"当前等级: {player['level']}  总经验: {player['exp']}", 400, 280, font_18, C["gray"], center=True)
+
+    # 继续按钮
+    cont_rect = pygame.Rect(300, 360, 200, 50)
+    mouse_pos = pygame.mouse.get_pos()
+    hover = cont_rect.collidepoint(mouse_pos)
+    draw_button(surf, cont_rect, "继续冒险", font_24, C["white"], C["green_dark"], hover)
+
+    draw_text(surf, "点击继续或按空格键", 400, 440, font_14, C["gray"], center=True)
+
+def draw_game_over_screen(surf):
+    """绘制游戏失败界面"""
+    surf.fill(C["bg_dark"])
+    draw_text(surf, "你倒下了...", 400, 180, font_48, C["red_dark"], center=True)
+    draw_text(surf, "别灰心，重新来过吧！", 400, 240, font_24, C["gray"], center=True)
+
+    # 重新开始按钮
+    restart_rect = pygame.Rect(300, 320, 200, 50)
+    mouse_pos = pygame.mouse.get_pos()
+    hover = restart_rect.collidepoint(mouse_pos)
+    draw_button(surf, restart_rect, "重新开始", font_24, C["white"], C["red_dark"], hover)
+
+def draw_victory_screen(surf):
+    """绘制通关胜利界面"""
+    surf.fill(C["bg_dark"])
+    draw_text(surf, "恭喜通关！", 400, 100, font_48, C["gold"], center=True)
+    draw_text(surf, "你击败了所有怪物，和平降临大地！", 400, 160, font_24, C["white"], center=True)
+    draw_text(surf, f"最终等级: {player['level']}  金币: {player['gold']}", 400, 210, font_20, C["gold"], center=True)
+
+    # 绘制胜利的勇者
+    draw_player_sprite(surf, 400, 400)
+
+    draw_text(surf, "按 ESC 退出游戏", 400, 550, font_14, C["gray"], center=True)
+
+def draw_level_up_overlay(surf, alpha):
+    """绘制升级动画叠加层"""
+    if alpha &lt;= 0:
+        return
+    overlay = pygame.Surface((W, H), pygame.SRCALPHA)
+    overlay.fill((255, 215, 0, alpha))
+    surf.blit(overlay, (0, 0))
+
+    # 升级文字
+    lv_text = font_48.render(f"升级！Lv.{player['level']}", True, (255, 255, 255))
+    lv_rect = lv_text.get_rect(center=(W // 2, H // 2 - 30))
+    # 缩放效果
+    scale = 1 + alpha / 300
+    scaled = pygame.transform.scale(lv_text,
+        (int(lv_rect.width * scale), int(lv_rect.height * scale)))
+    scaled_rect = scaled.get_rect(center=(W // 2, H // 2 - 30))
+    surf.blit(scaled, scaled_rect)
+
+    # 属性增长文字
+    growth_text = font_20.render("HP上限+20  MP上限+10  攻击+5  防御+3", True, (255, 255, 255))
+    gr = growth_text.get_rect(center=(W // 2, H // 2 + 30))
+    surf.blit(growth_text, gr)
+
+def draw_messages(surf):
+    """在屏幕底部绘制消息"""
+    y = H - 20 - len(message_lines) * 22
+    for msg in message_lines:
+        draw_text(surf, msg["text"], W // 2, y, font_16, msg["color"], center=True)
+        y += 22
+
+
+# ==================== 主循环 ====================
+def main():
+    global game_state, level_up_anim_timer, message_lines, message_timer, atk_boost, is_defending
+
+    running = True
+
+    while running:
+        dt = clock.tick(60)  # 60 FPS
+
+        # 更新消息计时器
+        for msg in message_lines[:]:
+            msg["timer"] -= 1
+            if msg["timer"] &lt;= 0:
+                message_lines.remove(msg)
+
+        # 更新升级动画
+        if level_up_anim_timer &gt; 0:
+            level_up_anim_timer -= 1
+
+        # ============ 事件处理 ============
+        mouse_pos = pygame.mouse.get_pos()
+        mouse_clicked = False
+
+        for event in pygame.event.get():
+            if event.type == pygame.QUIT:
+                running = False
+                break
+
+            if event.type == pygame.MOUSEBUTTONDOWN and event.button == 1:
+                mouse_clicked = True
+
+            if event.type == pygame.KEYDOWN:
+                # 全局快捷键
+                if event.key == pygame.K_s:
+                    save_game()
+                elif event.key == pygame.K_l:
+                    load_game()
+
+                # 状态相关快捷键
+                if game_state == "menu":
+                    if event.key == pygame.K_e or event.key == pygame.K_SPACE:
+                        init_battle()
+                    elif event.key == pygame.K_i:
+                        game_state = "inventory"
+
+                elif game_state == "battle":
+                    if event.key == pygame.K_1 or event.key == pygame.K_a:
+                        # 攻击
+                        do_player_attack()
+                        if not check_battle_end() and game_state == "battle":
+                            do_monster_attack()
+                            check_battle_end()
+                    elif event.key == pygame.K_2 or event.key == pygame.K_d:
+                        # 防御
+                        is_defending = True
+                        add_message("你摆出了防御姿态！（本回合防御力翻倍）", C["blue"])
+                        do_monster_attack()
+                        check_battle_end()
+                    elif event.key == pygame.K_3 or event.key == pygame.K_i:
+                        # 打开背包使用物品
+                        game_state = "inventory"
+                    elif event.key == pygame.K_4 or event.key == pygame.K_f:
+                        player_flee()
+
+                elif game_state == "battle_win":
+                    if event.key == pygame.K_SPACE or event.key == pygame.K_RETURN:
+                        game_state = "menu"
+
+                elif game_state == "inventory":
+                    if event.key == pygame.K_ESCAPE:
+                        # 如果在战斗中打开的背包，返回战斗；否则返回菜单
+                        game_state = "battle" if current_monster and current_monster["hp"] &gt; 0 else "menu"
+
+                elif game_state == "game_over":
+                    if event.key == pygame.K_r:
+                        # 重新开始
+                        reset_game()
+
+                elif game_state == "victory":
+                    if event.key == pygame.K_ESCAPE:
+                        running = False
+
+        if not running:
+            break
+
+        # ============ 鼠标点击处理 ============
+        if mouse_clicked:
+            if game_state == "menu":
+                # 探索按钮
+                explore_rect = pygame.Rect(310, 350, 180, 55)
+                if explore_rect.collidepoint(mouse_pos):
+                    init_battle()
+                # 背包按钮
+                inv_rect = pygame.Rect(310, 420, 180, 55)
+                if inv_rect.collidepoint(mouse_pos):
+                    game_state = "inventory"
+                # 存档按钮
+                save_rect = pygame.Rect(310, 490, 180, 55)
+                if save_rect.collidepoint(mouse_pos):
+                    save_game()
+                # 读档按钮
+                load_rect = pygame.Rect(510, 350, 100, 55)
+                if load_rect.collidepoint(mouse_pos):
+                    load_game()
+
+            elif game_state == "battle":
+                btn_w, btn_h = 120, 40
+                btn_y = 540
+                # 攻击
+                if pygame.Rect(40, btn_y, btn_w, btn_h).collidepoint(mouse_pos):
+                    do_player_attack()
+                    if not check_battle_end() and game_state == "battle":
+                        do_monster_attack()
+                        check_battle_end()
+                # 防御
+                elif pygame.Rect(170, btn_y, btn_w, btn_h).collidepoint(mouse_pos):
+                    is_defending = True
+                    add_message("你摆出了防御姿态！", C["blue"])
+                    do_monster_attack()
+                    check_battle_end()
+                # 道具
+                elif pygame.Rect(300, btn_y, btn_w, btn_h).collidepoint(mouse_pos):
+                    game_state = "inventory"
+                # 逃跑
+                elif pygame.Rect(430, btn_y, btn_w, btn_h).collidepoint(mouse_pos):
+                    player_flee()
+
+            elif game_state == "battle_win":
+                cont_rect = pygame.Rect(300, 360, 200, 50)
+                if cont_rect.collidepoint(mouse_pos):
+                    game_state = "menu"
+
+            elif game_state == "inventory":
+                # 物品使用
+                cols = 3
+                cell_w, cell_h = 180, 120
+                gap_x, gap_y = 20, 20
+                start_x = (W - (cols * cell_w + (cols - 1) * gap_x)) // 2
+                start_y = 110
+                for i, item_name in enumerate(inventory):
+                    col = i % cols
+                    row = i // cols
+                    cx = start_x + col * (cell_w + gap_x)
+                    cy = start_y + row * (cell_h + gap_y)
+                    use_btn_x = cx + cell_w // 2 - 35
+                    use_btn_y = cy + cell_h - 36
+                    use_rect = pygame.Rect(use_btn_x, use_btn_y, 70, 28)
+                    if use_rect.collidepoint(mouse_pos):
+                        # 判断是否在战斗中使用
+                        in_battle = (game_state == "battle" or
+                                    (current_monster and current_monster["hp"] &gt; 0))
+                        use_item(i, in_battle=in_battle)
+                        break
+                # 返回按钮
+                back_rect = pygame.Rect(350, 530, 100, 40)
+                if back_rect.collidepoint(mouse_pos):
+                    if current_monster and current_monster["hp"] &gt; 0 and player["hp"] &gt; 0:
+                        game_state = "battle"
+                    else:
+                        game_state = "menu"
+
+            elif game_state == "game_over":
+                restart_rect = pygame.Rect(300, 320, 200, 50)
+                if restart_rect.collidepoint(mouse_pos):
+                    reset_game()
+
+        # ============ 渲染 ============
+        if game_state == "menu":
+            draw_menu_screen(screen)
+
+        elif game_state == "battle":
+            draw_battle_screen(screen)
+
+        elif game_state == "battle_win":
+            draw_battle_win_screen(screen)
+
+        elif game_state == "inventory":
+            draw_inventory_screen(screen)
+
+        elif game_state == "game_over":
+            draw_game_over_screen(screen)
+
+        elif game_state == "victory":
+            draw_victory_screen(screen)
+
+        # 升级动画叠加
+        if level_up_anim_timer &gt; 0:
+            alpha = int(level_up_anim_timer / 120 * 150)
+            draw_level_up_overlay(screen, alpha)
+
+        # 消息显示
+        draw_messages(screen)
+
+        pygame.display.flip()
+
+    pygame.quit()
+
+
+def reset_game():
+    """重置游戏到初始状态"""
+    global player, inventory, defeated_count, game_state, battle_log
+    global atk_boost, is_defending, level_up_anim_timer, message_lines
+    player = {
+        "name": "勇者", "hp": 100, "max_hp": 100,
+        "mp": 50, "max_mp": 50, "atk": 15, "def": 5,
+        "exp": 0, "level": 1, "gold": 0,
+    }
+    inventory = []
+    defeated_count = 0
+    game_state = "menu"
+    battle_log = []
+    atk_boost = 0
+    is_defending = False
+    level_up_anim_timer = 0
+    message_lines = []
+    add_message("新的冒险开始了！", C["gold"])
+
+
+# ==================== 程序入口 ====================
+if __name__ == "__main__":
+    main()
+</pre>
+    <p class="hint">本页使用浅色主题与 UTF-8 编码，可直接打印或导出 PDF。</p>
+  </div>
+</body>
+</html>

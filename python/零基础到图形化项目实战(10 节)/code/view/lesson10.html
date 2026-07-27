@@ -1,0 +1,634 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>lesson10.py</title>
+<style>
+  :root {
+    --bg: #f5f7fa;
+    --panel: #ffffff;
+    --text: #1a1a2e;
+    --muted: #5a6570;
+    --gold: #b8860b;
+    --code-bg: #ffffff;
+    --code-text: #1f2933;
+    --border: #d8dee6;
+    --top-bg: #ffffff;
+    --top-border: #e5e9ef;
+  }
+  * { box-sizing: border-box; }
+  html, body {
+    margin: 0; padding: 0;
+    background: var(--bg);
+    color: var(--text);
+    font-family: -apple-system, BlinkMacSystemFont, "PingFang SC", "Microsoft YaHei", sans-serif;
+    min-height: 100%;
+  }
+  .top {
+    position: sticky; top: 0; z-index: 10;
+    display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between;
+    gap: 10px;
+    padding: 12px 18px;
+    background: var(--top-bg);
+    border-bottom: 1px solid var(--top-border);
+    box-shadow: 0 1px 8px rgba(15, 23, 42, 0.06);
+  }
+  .brand { color: var(--gold); font-weight: 700; font-size: 14px; letter-spacing: 0.04em; }
+  .title { font-size: 15px; font-weight: 600; color: var(--text); max-width: 52vw; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .actions { display: flex; gap: 8px; flex-wrap: wrap; }
+  .btn {
+    appearance: none; border: 1px solid var(--border);
+    background: #fff; color: var(--text);
+    border-radius: 999px; padding: 8px 14px; font-size: 13px; font-weight: 600;
+    text-decoration: none; cursor: pointer;
+  }
+  .btn:hover { background: #f0f3f7; }
+  .btn.gold {
+    background: linear-gradient(135deg, #f0d78c, #d4a853);
+    color: #0a2540; border-color: #e0c06a;
+  }
+  .meta {
+    padding: 10px 18px; color: var(--muted); font-size: 12px;
+    border-bottom: 1px solid var(--border);
+    background: var(--panel);
+  }
+  .wrap { padding: 16px 18px 40px; }
+  pre {
+    margin: 0;
+    background: var(--code-bg);
+    color: var(--code-text);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 18px 20px;
+    overflow: auto;
+    font-family: "SF Mono", "JetBrains Mono", "Fira Code", Consolas, "Courier New", monospace;
+    font-size: 13.5px;
+    line-height: 1.55;
+    white-space: pre;
+    tab-size: 4;
+    box-shadow: 0 2px 12px rgba(15, 23, 42, 0.05);
+  }
+  .hint { margin-top: 12px; color: var(--muted); font-size: 12px; }
+  @media print {
+    html, body { background: #fff !important; color: #000 !important; }
+    .top { position: static; box-shadow: none; border-bottom: 1px solid #ccc; background: #fff !important; }
+    .actions { display: none !important; }
+    .meta { background: #fff !important; border-color: #ddd; color: #333; }
+    .wrap { padding: 0; }
+    pre {
+      background: #fff !important; color: #000 !important;
+      border: 1px solid #bbb; box-shadow: none; border-radius: 0;
+      white-space: pre-wrap; word-break: break-word; font-size: 11pt; line-height: 1.4;
+    }
+    .hint { display: none; }
+    a { color: #000; text-decoration: none; }
+  }
+</style>
+</head>
+<body>
+  <div class="top">
+    <div class="brand">零基础到图形化 · 配套代码</div>
+    <div class="title">lesson10.py</div>
+    <div class="actions">
+      <a class="btn" href="../lesson10.py" download="lesson10.py">⬇️ 下载源文件</a>
+      <a class="btn gold" href="javascript:history.back()">← 返回课件</a>
+    </div>
+  </div>
+  <div class="meta">编码：UTF-8 · 文件：lesson10.py · 共 530 行 · 浅色主题便于打印</div>
+  <div class="wrap">
+    <pre id="code"># ============================================
+# 第 10 课（最终版）：我的备忘录 — 完整程序
+# 可直接用 PyInstaller 打包
+# ============================================
+
+import tkinter as tk
+from tkinter import ttk, messagebox
+import os
+import sys
+
+# ==================== 配置 ====================
+
+APP_NAME = "我的备忘录"
+APP_VERSION = "1.0"
+DATA_FILE = "todos.txt"
+CATEGORIES = ["学习 📚", "生活 🏠", "娱乐 🎮", "其他 📌"]
+
+# ==================== 路径处理（兼容打包后运行）====================
+
+def get_data_path(filename):
+    """获取数据文件的正确路径（兼容开发环境和 PyInstaller 打包后）"""
+    if getattr(sys, 'frozen', False):
+        # PyInstaller 打包后：数据文件在 exe 所在目录
+        base_path = os.path.dirname(sys.executable)
+    else:
+        # 开发环境：数据文件在脚本所在目录
+        base_path = os.path.dirname(os.path.abspath(__file__))
+    return os.path.join(base_path, filename)
+
+DATA_FILE = get_data_path("todos.txt")
+
+# ==================== 创建窗口 ====================
+
+window = tk.Tk()
+window.title(APP_NAME)
+window.geometry("500x700")
+window.minsize(400, 500)  # 最小窗口尺寸
+
+# 设置主题
+style = ttk.Style()
+if "clam" in style.theme_names():
+    style.theme_use("clam")
+
+# 自定义样式
+style.configure("Title.TLabel", font=("微软雅黑", 20, "bold"), foreground="#333333")
+style.configure("Subtitle.TLabel", font=("微软雅黑", 10), foreground="#888888")
+style.configure("Status.TLabel", font=("微软雅黑", 9), foreground="#999999")
+style.configure("Header.TLabel", font=("微软雅黑", 12, "bold"), foreground="#555555")
+
+# 窗口缩放配置
+window.grid_rowconfigure(6, weight=1)   # 列表行
+window.grid_columnconfigure(0, weight=1)
+
+# ==================== 数据结构 ====================
+
+todos = []
+search_var = tk.StringVar()
+
+# ==================== 文件操作 ====================
+
+def save_todos():
+    """将待办列表保存到文件"""
+    try:
+        with open(DATA_FILE, "w", encoding="utf-8") as file:
+            for todo in todos:
+                status = "1" if todo["done"] else "0"
+                category = todo.get("category", "其他 📌")
+                file.write(f"{status}|{category}|{todo['text']}\n")
+    except Exception as e:
+        print(f"⚠️ 保存失败：{e}")
+
+def load_todos():
+    """从文件加载待办列表"""
+    if not os.path.exists(DATA_FILE):
+        return
+
+    try:
+        with open(DATA_FILE, "r", encoding="utf-8") as file:
+            for line in file:
+                line = line.strip()
+                if not line:
+                    continue
+                parts = line.split("|")
+                if len(parts) == 3:
+                    status_str, category, text = parts
+                elif len(parts) == 2:
+                    status_str, text = parts
+                    category = "其他 📌"
+                else:
+                    continue
+                todo = {"text": text, "done": status_str == "1", "category": category}
+                todos.append(todo)
+    except Exception as e:
+        print(f"⚠️ 加载失败：{e}")
+
+def export_to_file():
+    """导出为人类可读的文本文件"""
+    if not todos:
+        messagebox.showwarning("提示", "列表为空，没有可导出的内容！")
+        return
+
+    export_path = os.path.join(
+        os.path.dirname(DATA_FILE), "备忘录_导出.txt"
+    )
+
+    try:
+        with open(export_path, "w", encoding="utf-8") as file:
+            file.write(f"📝 {APP_NAME} — 导出记录\n")
+            file.write("=" * 40 + "\n\n")
+
+            # 按类别分组统计
+            from collections import Counter
+            cat_count = Counter(t["category"] for t in todos)
+            file.write("📊 分类统计：\n")
+            for cat in CATEGORIES:
+                count = cat_count.get(cat, 0)
+                file.write(f"  {cat}: {count} 条\n")
+            file.write(f"  总计: {len(todos)} 条\n\n")
+
+            file.write("📋 详细列表：\n")
+            file.write("-" * 40 + "\n")
+            for i, todo in enumerate(todos, 1):
+                status = "☑" if todo["done"] else "☐"
+                file.write(f"{i:3d}. [{status}] [{todo['category']}] {todo['text']}\n")
+
+        messagebox.showinfo(
+            "导出成功",
+            f"已导出到「备忘录_导出.txt」！\n共 {len(todos)} 条待办事项。"
+        )
+    except Exception as e:
+        messagebox.showerror("导出失败", f"导出时发生错误：{e}")
+
+# ==================== 界面：标题（row 0-1）====================
+
+ttk.Label(window, text=f"📝 {APP_NAME}", style="Title.TLabel").grid(
+    row=0, column=0, pady=(15, 5), sticky="n"
+)
+ttk.Label(
+    window,
+    text=f"v{APP_VERSION} | 输入即搜索 | 类别筛选 | 自动保存",
+    style="Subtitle.TLabel"
+).grid(row=1, column=0, pady=(0, 5), sticky="n")
+
+# ==================== 界面：搜索栏（row 2）====================
+
+search_frame = ttk.Frame(window)
+search_frame.grid(row=2, column=0, pady=(10, 5), padx=20, sticky="ew")
+
+ttk.Label(search_frame, text="🔍", font=("微软雅黑", 12)).pack(
+    side=tk.LEFT, padx=(0, 5)
+)
+
+search_entry = ttk.Entry(
+    search_frame,
+    textvariable=search_var,
+    font=("微软雅黑", 11),
+    width=18
+)
+search_entry.pack(side=tk.LEFT, fill=tk.X, expand=True, padx=(0, 5))
+
+def clear_search():
+    search_var.set("")
+    search_entry.focus()
+
+clear_search_btn = ttk.Button(search_frame, text="✕", width=3, command=clear_search)
+clear_search_btn.pack(side=tk.LEFT, padx=(0, 10))
+
+ttk.Label(search_frame, text="筛选：", font=("微软雅黑", 9)).pack(
+    side=tk.LEFT, padx=(5, 3)
+)
+
+filter_values = ["全部 📋"] + CATEGORIES
+filter_combo = ttk.Combobox(
+    search_frame,
+    values=filter_values,
+    state="readonly",
+    font=("微软雅黑", 9),
+    width=10
+)
+filter_combo.pack(side=tk.LEFT)
+filter_combo.set("全部 📋")
+
+# ==================== 界面：输入区域（row 3）====================
+
+input_frame = ttk.Frame(window)
+input_frame.grid(row=3, column=0, pady=10, padx=20, sticky="ew")
+input_frame.grid_columnconfigure(1, weight=1)
+
+ttk.Label(input_frame, text="类别：", font=("微软雅黑", 10)).grid(
+    row=0, column=0, padx=(0, 5), sticky="w"
+)
+
+category_combo = ttk.Combobox(
+    input_frame,
+    values=CATEGORIES,
+    state="readonly",
+    font=("微软雅黑", 10),
+    width=10
+)
+category_combo.grid(row=0, column=1, sticky="w")
+category_combo.set("学习 📚")
+
+entry = ttk.Entry(input_frame, font=("微软雅黑", 13))
+entry.grid(row=1, column=0, columnspan=2, pady=(8, 8), sticky="ew")
+
+btn_frame = ttk.Frame(input_frame)
+btn_frame.grid(row=2, column=0, columnspan=2, sticky="w")
+
+add_btn = ttk.Button(btn_frame, text="添加 ✅")
+add_btn.grid(row=0, column=0, padx=(0, 5))
+
+toggle_btn = ttk.Button(btn_frame, text="标记 ✔️")
+toggle_btn.grid(row=0, column=1, padx=(0, 5))
+
+delete_btn = ttk.Button(btn_frame, text="删除 ❌")
+delete_btn.grid(row=0, column=2, padx=(0, 5))
+
+clear_btn = ttk.Button(btn_frame, text="清空 🗑️")
+clear_btn.grid(row=0, column=3)
+
+# ==================== 界面：列表头（row 5）====================
+
+header_frame = ttk.Frame(window)
+header_frame.grid(row=5, column=0, pady=(15, 0), padx=20, sticky="ew")
+ttk.Label(header_frame, text="📋 待办列表", style="Header.TLabel").pack(side=tk.LEFT)
+ttk.Label(
+    header_frame,
+    text="（双击标记 | 右键菜单 | Delete 删除）",
+    font=("微软雅黑", 8)
+).pack(side=tk.LEFT, padx=10)
+
+# ==================== 界面：列表（row 6）====================
+
+list_frame = ttk.Frame(window)
+list_frame.grid(row=6, column=0, pady=5, padx=20, sticky="nsew")
+list_frame.grid_rowconfigure(0, weight=1)
+list_frame.grid_columnconfigure(0, weight=1)
+
+scrollbar = ttk.Scrollbar(list_frame, orient=tk.VERTICAL)
+scrollbar.grid(row=0, column=1, sticky="ns")
+
+listbox = tk.Listbox(
+    list_frame,
+    font=("微软雅黑", 12),
+    height=15,
+    selectbackground="#C8E6C9",
+    selectforeground="#333333",
+    yscrollcommand=scrollbar.set
+)
+listbox.grid(row=0, column=0, sticky="nsew")
+scrollbar.config(command=listbox.yview)
+
+# ==================== 界面：状态栏（row 7）====================
+
+status_frame = ttk.Frame(window)
+status_frame.grid(row=7, column=0, pady=8, padx=20, sticky="ew")
+
+status_label = ttk.Label(status_frame, text="共 0 条待办", style="Status.TLabel")
+status_label.pack(side=tk.RIGHT)
+
+# ==================== 核心：过滤与显示 ====================
+
+def refresh_display():
+    """根据搜索词和类别筛选，刷新 Listbox 显示"""
+    keyword = search_var.get().strip().lower()
+    category_filter = filter_combo.get()
+
+    selected_indices = listbox.curselection()
+    selected_display = None
+    if selected_indices:
+        selected_display = listbox.get(selected_indices[0])
+
+    listbox.delete(0, tk.END)
+
+    for todo in todos:
+        text_match = (not keyword) or (keyword in todo["text"].lower())
+        category_match = (
+            category_filter == "全部 📋" or
+            category_filter == todo["category"]
+        )
+
+        if text_match and category_match:
+            display_text = f"[{todo['category']}] {todo['text']}"
+            listbox.insert(tk.END, display_text)
+
+            if todo["done"]:
+                idx = listbox.size() - 1
+                listbox.itemconfig(idx, fg="gray")
+                listbox.itemconfig(idx, font=("微软雅黑", 12, "overstrike"))
+
+            if selected_display and display_text == selected_display:
+                listbox.selection_set(listbox.size() - 1)
+
+    update_status()
+
+    if listbox.size() == 0 and todos:
+        listbox.insert(tk.END, "（无匹配结果）")
+        listbox.itemconfig(0, fg="#AAAAAA")
+
+def update_status():
+    keyword = search_var.get().strip()
+    category_filter = filter_combo.get()
+
+    displayed = 0
+    done_count = 0
+    for todo in todos:
+        text_match = (not keyword) or (keyword in todo["text"].lower())
+        category_match = (
+            category_filter == "全部 📋" or
+            category_filter == todo["category"]
+        )
+        if text_match and category_match:
+            displayed += 1
+            if todo["done"]:
+                done_count += 1
+
+    # 丰富的状态信息
+    parts = [f"显示 {displayed} 条"]
+    if displayed &gt; 0 and done_count &gt; 0:
+        parts.append(f"已完成 {done_count} 条")
+    parts.append(f"共 {len(todos)} 条")
+    status_label.config(text=" | ".join(parts))
+
+# ==================== 核心：数据匹配 ====================
+
+def find_todo_by_display(display_text):
+    if not display_text or display_text == "（无匹配结果）":
+        return None
+    for todo in todos:
+        expected = f"[{todo['category']}] {todo['text']}"
+        if expected == display_text:
+            return todo
+    return None
+
+def get_selected_todo():
+    selected = listbox.curselection()
+    if not selected:
+        return None
+    display_text = listbox.get(selected[0])
+    if display_text == "（无匹配结果）":
+        return None
+    return find_todo_by_display(display_text)
+
+# ==================== 核心：CRUD 操作 ====================
+
+def add_todo():
+    text = entry.get().strip()
+    if text:
+        category = category_combo.get()
+        todo = {"text": text, "done": False, "category": category}
+        todos.append(todo)
+        entry.delete(0, tk.END)
+        save_todos()
+        refresh_display()
+    else:
+        messagebox.showwarning("提示", "请输入待办事项！")
+
+def toggle_done():
+    todo = get_selected_todo()
+    if not todo:
+        if not (listbox.size() &gt; 0 and listbox.get(0) == "（无匹配结果）"):
+            messagebox.showwarning("提示", "请先选择要标记的事项！")
+        return
+    todo["done"] = not todo["done"]
+    save_todos()
+    refresh_display()
+
+def delete_todo():
+    todo = get_selected_todo()
+    if not todo:
+        messagebox.showwarning("提示", "请先选择要删除的事项！")
+        return
+    result = messagebox.askyesno("确认删除", f"确定要删除「{todo['text']}」吗？")
+    if result:
+        todos.remove(todo)
+        save_todos()
+        refresh_display()
+
+def clear_all():
+    if not todos:
+        return
+    result = messagebox.askyesno(
+        "确认清空",
+        f"数据中共有 {len(todos)} 条事项，确定全部清空吗？\n\n⚠️ 清空后无法恢复！"
+    )
+    if result:
+        todos.clear()
+        save_todos()
+        refresh_display()
+
+def on_closing():
+    save_todos()
+    window.destroy()
+
+# ==================== 帮助 / 关于 ====================
+
+def show_help():
+    help_text = (
+        f"📝 {APP_NAME} 使用说明\n\n"
+        "➤ 添加待办：输入文字，选类别，回车或点「添加」\n"
+        "➤ 搜索过滤：输入关键词实时筛选\n"
+        "➤ 类别筛选：下拉选择只看某个类别\n"
+        "➤ 标记完成：选中 → 双击 / 点「标记」/ Ctrl+D\n"
+        "➤ 删除：选中 → Delete / 点「删除」/ 右键菜单\n"
+        "➤ 右键菜单：更多快捷操作\n"
+        "➤ 清空全部：删除所有数据\n\n"
+        "💾 数据自动保存到 todos.txt"
+    )
+    messagebox.showinfo("使用说明", help_text)
+
+def show_about():
+    about_text = (
+        f"📝 {APP_NAME} v{APP_VERSION}\n\n"
+        "用 Python + tkinter 制作\n"
+        "「零基础到图形化项目实战」\n\n"
+        "🎉 恭喜完成全部 10 节课！\n\n"
+        "功能清单：\n"
+        "✅ 添加 / 删除 / 标记完成\n"
+        "✅ 类别标签 🏷️\n"
+        "✅ 文件自动保存 💾\n"
+        "✅ 菜单栏 + 快捷键 ⌨️\n"
+        "✅ 实时搜索过滤 🔍\n"
+        "✅ 右键上下文菜单\n"
+        "✅ ttk 现代主题界面\n"
+        "✅ 导出为文本文件\n"
+        "✅ 支持 PyInstaller 打包 📦"
+    )
+    messagebox.showinfo("关于", about_text)
+
+# ==================== 菜单栏 ====================
+
+def create_menus():
+    menubar = tk.Menu(window)
+    window.config(menu=menubar)
+
+    # 文件菜单
+    file_menu = tk.Menu(menubar, tearoff=0)
+    menubar.add_cascade(label="文件", menu=file_menu)
+    file_menu.add_command(
+        label="导出为文本文件",
+        command=export_to_file,
+        accelerator="Ctrl+E"
+    )
+    file_menu.add_separator()
+    file_menu.add_command(
+        label="退出",
+        command=on_closing,
+        accelerator="Ctrl+Q"
+    )
+
+    # 操作菜单
+    action_menu = tk.Menu(menubar, tearoff=0)
+    menubar.add_cascade(label="操作", menu=action_menu)
+    action_menu.add_command(
+        label="跳到输入框",
+        command=lambda: entry.focus(),
+        accelerator="Ctrl+N"
+    )
+    action_menu.add_command(
+        label="标记完成/取消",
+        command=toggle_done,
+        accelerator="Ctrl+D"
+    )
+    action_menu.add_command(
+        label="删除选中",
+        command=delete_todo,
+        accelerator="Delete"
+    )
+    action_menu.add_separator()
+    action_menu.add_command(
+        label="清空全部",
+        command=clear_all,
+        accelerator="Ctrl+Shift+X"
+    )
+
+    # 帮助菜单
+    help_menu = tk.Menu(menubar, tearoff=0)
+    menubar.add_cascade(label="帮助", menu=help_menu)
+    help_menu.add_command(label="使用说明", command=show_help)
+    help_menu.add_command(label="关于", command=show_about)
+
+    # 右键菜单
+    context_menu = tk.Menu(window, tearoff=0)
+    context_menu.add_command(label="标记完成/取消", command=toggle_done)
+    context_menu.add_command(label="删除", command=delete_todo)
+    context_menu.add_separator()
+    context_menu.add_command(label="清空全部", command=clear_all)
+
+    listbox.bind("&lt;Button-3&gt;", lambda e: context_menu.post(e.x_root, e.y_root))
+    listbox.bind("&lt;Button-2&gt;", lambda e: context_menu.post(e.x_root, e.y_root))
+
+# ==================== 快捷键 ====================
+
+def create_shortcuts():
+    window.bind_all("&lt;Control-n&gt;", lambda e: entry.focus())
+    window.bind_all("&lt;Control-d&gt;", lambda e: toggle_done())
+    window.bind_all("&lt;Control-e&gt;", lambda e: export_to_file())
+    window.bind_all("&lt;Control-q&gt;", lambda e: on_closing())
+    window.bind_all("&lt;Control-f&gt;", lambda e: search_entry.focus())
+    window.bind_all("&lt;Control-l&gt;", lambda e: clear_search())
+    window.bind("&lt;Delete&gt;", lambda e: delete_todo())
+    window.bind_all("&lt;Control-Shift-X&gt;", lambda e: clear_all())
+
+# ==================== 绑定事件 ====================
+
+search_var.trace("w", lambda *args: refresh_display())
+filter_combo.bind("&lt;&lt;ComboboxSelected&gt;&gt;", lambda e: refresh_display())
+
+add_btn.config(command=add_todo)
+toggle_btn.config(command=toggle_done)
+delete_btn.config(command=delete_todo)
+clear_btn.config(command=clear_all)
+
+entry.bind("&lt;Return&gt;", lambda e: add_todo())
+listbox.bind("&lt;Double-1&gt;", lambda e: toggle_done())
+
+window.protocol("WM_DELETE_WINDOW", on_closing)
+
+# ==================== 主函数 ====================
+
+def main():
+    create_menus()
+    create_shortcuts()
+    load_todos()
+    refresh_display()
+    entry.focus()
+    window.mainloop()
+
+if __name__ == "__main__":
+    main()
+</pre>
+    <p class="hint">本页使用浅色主题与 UTF-8 编码，可直接打印或导出 PDF。</p>
+  </div>
+</body>
+</html>

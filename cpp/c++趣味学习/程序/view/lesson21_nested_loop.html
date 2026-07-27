@@ -1,0 +1,391 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>lesson21_nested_loop.cpp</title>
+<style>
+  :root {
+    --bg: #f5f7fa;
+    --panel: #ffffff;
+    --text: #1a1a2e;
+    --muted: #5a6570;
+    --gold: #b8860b;
+    --code-bg: #ffffff;
+    --code-text: #1f2933;
+    --border: #d8dee6;
+    --top-bg: #ffffff;
+    --top-border: #e5e9ef;
+  }
+  * { box-sizing: border-box; }
+  html, body {
+    margin: 0; padding: 0;
+    background: var(--bg);
+    color: var(--text);
+    font-family: -apple-system, BlinkMacSystemFont, "PingFang SC", "Microsoft YaHei", sans-serif;
+    min-height: 100%;
+  }
+  .top {
+    position: sticky; top: 0; z-index: 10;
+    display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between;
+    gap: 10px;
+    padding: 12px 18px;
+    background: var(--top-bg);
+    border-bottom: 1px solid var(--top-border);
+    box-shadow: 0 1px 8px rgba(15, 23, 42, 0.06);
+  }
+  .brand { color: var(--gold); font-weight: 700; font-size: 14px; letter-spacing: 0.04em; }
+  .title { font-size: 15px; font-weight: 600; color: var(--text); max-width: 52vw; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .actions { display: flex; gap: 8px; flex-wrap: wrap; }
+  .btn {
+    appearance: none; border: 1px solid var(--border);
+    background: #fff; color: var(--text);
+    border-radius: 999px; padding: 8px 14px; font-size: 13px; font-weight: 600;
+    text-decoration: none; cursor: pointer;
+  }
+  .btn:hover { background: #f0f3f7; }
+  .btn.gold {
+    background: linear-gradient(135deg, #f0d78c, #d4a853);
+    color: #0a2540; border-color: #e0c06a;
+  }
+  .meta {
+    padding: 10px 18px; color: var(--muted); font-size: 12px;
+    border-bottom: 1px solid var(--border);
+    background: var(--panel);
+  }
+  .wrap { padding: 16px 18px 40px; }
+  pre {
+    margin: 0;
+    background: var(--code-bg);
+    color: var(--code-text);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 18px 20px;
+    overflow: auto;
+    font-family: "SF Mono", "JetBrains Mono", "Fira Code", Consolas, "Courier New", monospace;
+    font-size: 13.5px;
+    line-height: 1.55;
+    white-space: pre;
+    tab-size: 4;
+    box-shadow: 0 2px 12px rgba(15, 23, 42, 0.05);
+  }
+  .hint { margin-top: 12px; color: var(--muted); font-size: 12px; }
+  @media print {
+    html, body { background: #fff !important; color: #000 !important; }
+    .top { position: static; box-shadow: none; border-bottom: 1px solid #ccc; background: #fff !important; }
+    .actions { display: none !important; }
+    .meta { background: #fff !important; border-color: #ddd; color: #333; }
+    .wrap { padding: 0; }
+    pre {
+      background: #fff !important; color: #000 !important;
+      border: 1px solid #bbb; box-shadow: none; border-radius: 0;
+      white-space: pre-wrap; word-break: break-word; font-size: 11pt; line-height: 1.4;
+    }
+    .hint { display: none; }
+    a { color: #000; text-decoration: none; }
+  }
+</style>
+</head>
+<body>
+  <div class="top">
+    <div class="brand">C++ 趣味学习 · 配套代码</div>
+    <div class="title">lesson21_nested_loop.cpp</div>
+    <div class="actions">
+      <a class="btn" href="../lesson21_nested_loop.cpp" download="lesson21_nested_loop.cpp">⬇️ 下载源文件</a>
+      <a class="btn gold" href="javascript:history.back()">← 返回课件</a>
+    </div>
+  </div>
+  <div class="meta">编码：UTF-8 · 文件：lesson21_nested_loop.cpp · 共 287 行 · 浅色主题便于打印</div>
+  <div class="wrap">
+    <pre id="code">/*
+ * C++趣味学习 - 第21课：循环套循环——嵌套循环入门
+ * 知识点：嵌套for、内外层关系、循环次数分析
+ * 项目：打印数字正方形
+ */
+
+#include &lt;iostream&gt;
+#include &lt;iomanip&gt;
+using namespace std;
+
+// ============ 示例1：打印数字正方形 ============
+void example1_number_square() {
+    cout &lt;&lt; "════════════════════════════════" &lt;&lt; endl;
+    cout &lt;&lt; "  示例1：🟦 数字正方形生成器" &lt;&lt; endl;
+    cout &lt;&lt; "════════════════════════════════" &lt;&lt; endl;
+
+    int n;
+    cout &lt;&lt; "请输入正方形的边长：";
+    cin &gt;&gt; n;
+
+    cout &lt;&lt; endl &lt;&lt; "边长为 " &lt;&lt; n &lt;&lt; " 的数字正方形：" &lt;&lt; endl;
+    cout &lt;&lt; "┌";
+    for (int j = 1; j &lt;= n * 2 - 1; j++) cout &lt;&lt; "─";
+    cout &lt;&lt; "┐" &lt;&lt; endl;
+
+    for (int i = 1; i &lt;= n; i++) {         // 外层：控制行
+        cout &lt;&lt; "│";
+        for (int j = 1; j &lt;= n; j++) {     // 内层：控制列
+            cout &lt;&lt; " " &lt;&lt; j;              // 打印列号
+        }
+        cout &lt;&lt; " │" &lt;&lt; endl;              // 每行结束
+    }
+
+    cout &lt;&lt; "└";
+    for (int j = 1; j &lt;= n * 2 - 1; j++) cout &lt;&lt; "─";
+    cout &lt;&lt; "┘" &lt;&lt; endl;
+
+    cout &lt;&lt; "🌟 总执行次数：" &lt;&lt; n &lt;&lt; " × " &lt;&lt; n &lt;&lt; " = " &lt;&lt; n * n &lt;&lt; " 次" &lt;&lt; endl;
+    cout &lt;&lt; endl;
+}
+
+// ============ 示例2：打印坐标网格 ============
+void example2_coordinate_grid() {
+    cout &lt;&lt; "════════════════════════════════" &lt;&lt; endl;
+    cout &lt;&lt; "  示例2：📍 坐标网格系统" &lt;&lt; endl;
+    cout &lt;&lt; "════════════════════════════════" &lt;&lt; endl;
+
+    int rows, cols;
+    cout &lt;&lt; "请输入行数：";
+    cin &gt;&gt; rows;
+    cout &lt;&lt; "请输入列数：";
+    cin &gt;&gt; cols;
+
+    cout &lt;&lt; endl &lt;&lt; "坐标网格（" &lt;&lt; rows &lt;&lt; "行 × " &lt;&lt; cols &lt;&lt; "列）：" &lt;&lt; endl;
+    cout &lt;&lt; "每个位置用(行号,列号)表示" &lt;&lt; endl;
+    cout &lt;&lt; "-------------------------------------------" &lt;&lt; endl;
+
+    // 表头
+    cout &lt;&lt; "      ";
+    for (int col = 1; col &lt;= cols; col++) {
+        cout &lt;&lt; setw(8) &lt;&lt; ("列" + to_string(col));
+    }
+    cout &lt;&lt; endl;
+
+    // 分隔线
+    cout &lt;&lt; "     ┌";
+    for (int col = 1; col &lt;= cols; col++) {
+        cout &lt;&lt; "────────";
+    }
+    cout &lt;&lt; "┐" &lt;&lt; endl;
+
+    // 网格内容
+    for (int row = 1; row &lt;= rows; row++) {
+        cout &lt;&lt; "行" &lt;&lt; setw(2) &lt;&lt; row &lt;&lt; " │";
+        for (int col = 1; col &lt;= cols; col++) {
+            cout &lt;&lt; " (" &lt;&lt; setw(2) &lt;&lt; row &lt;&lt; "," &lt;&lt; setw(2) &lt;&lt; col &lt;&lt; ") ";
+        }
+        cout &lt;&lt; "│" &lt;&lt; endl;
+    }
+
+    // 底部分隔线
+    cout &lt;&lt; "     └";
+    for (int col = 1; col &lt;= cols; col++) {
+        cout &lt;&lt; "────────";
+    }
+    cout &lt;&lt; "┘" &lt;&lt; endl;
+
+    cout &lt;&lt; "🌟 总坐标数：" &lt;&lt; rows &lt;&lt; " × " &lt;&lt; cols &lt;&lt; " = " &lt;&lt; rows * cols &lt;&lt; " 个" &lt;&lt; endl;
+    cout &lt;&lt; endl;
+}
+
+// ============ 示例3：嵌套循环次数分析 ============
+void example3_loop_analysis() {
+    cout &lt;&lt; "════════════════════════════════" &lt;&lt; endl;
+    cout &lt;&lt; "  示例3：🔢 嵌套循环次数分析" &lt;&lt; endl;
+    cout &lt;&lt; "════════════════════════════════" &lt;&lt; endl;
+
+    cout &lt;&lt; "实验1：内层次数固定" &lt;&lt; endl;
+    cout &lt;&lt; "for(i=1; i&lt;=3; i++)            " &lt;&lt; endl;
+    cout &lt;&lt; "    for(j=1; j&lt;=4; j++)        " &lt;&lt; endl;
+    cout &lt;&lt; "总次数 = 3 × 4 = 12 次" &lt;&lt; endl;
+    cout &lt;&lt; endl;
+
+    cout &lt;&lt; "实验2：内层次数随外层变化" &lt;&lt; endl;
+    cout &lt;&lt; "for(i=1; i&lt;=5; i++)            " &lt;&lt; endl;
+    cout &lt;&lt; "    for(j=1; j&lt;=i; j++)        " &lt;&lt; endl;
+    cout &lt;&lt; "总次数 = 1 + 2 + 3 + 4 + 5 = 15 次" &lt;&lt; endl;
+    cout &lt;&lt; endl;
+
+    // 可视化嵌套循环的执行过程
+    cout &lt;&lt; "------- 执行过程可视化 -------" &lt;&lt; endl;
+    for (int i = 1; i &lt;= 3; i++) {
+        cout &lt;&lt; "外层 i=" &lt;&lt; i &lt;&lt; " 开始 → ";
+        for (int j = 1; j &lt;= 3; j++) {
+            cout &lt;&lt; "(内层 j=" &lt;&lt; j &lt;&lt; ") ";
+        }
+        cout &lt;&lt; "→ 外层 i=" &lt;&lt; i &lt;&lt; " 结束" &lt;&lt; endl;
+    }
+    cout &lt;&lt; "------------------------------" &lt;&lt; endl;
+    cout &lt;&lt; "👀 观察：外层每走1圈，内层完整走3圈！" &lt;&lt; endl;
+    cout &lt;&lt; endl;
+}
+
+// ============ 练习答案 ============
+
+// 练习1：打印星号矩形
+void practice1_star_rectangle() {
+    cout &lt;&lt; "════════════════════════════════" &lt;&lt; endl;
+    cout &lt;&lt; "  练习1答案：打印5×8星号矩形" &lt;&lt; endl;
+    cout &lt;&lt; "════════════════════════════════" &lt;&lt; endl;
+
+    int rows = 5, cols = 8;
+
+    cout &lt;&lt; rows &lt;&lt; "行 × " &lt;&lt; cols &lt;&lt; "列的星号矩形：" &lt;&lt; endl;
+    for (int i = 1; i &lt;= rows; i++) {
+        for (int j = 1; j &lt;= cols; j++) {
+            cout &lt;&lt; "* ";
+        }
+        cout &lt;&lt; endl;
+    }
+    cout &lt;&lt; endl;
+}
+
+// 练习2：九九加法表
+void practice2_addition_table() {
+    cout &lt;&lt; "════════════════════════════════" &lt;&lt; endl;
+    cout &lt;&lt; "  练习2答案：九九加法表" &lt;&lt; endl;
+    cout &lt;&lt; "════════════════════════════════" &lt;&lt; endl;
+
+    cout &lt;&lt; "     ";
+    for (int col = 1; col &lt;= 9; col++) {
+        cout &lt;&lt; setw(5) &lt;&lt; col;
+    }
+    cout &lt;&lt; endl;
+    cout &lt;&lt; "    ┌─────────────────────────────────────────────┐" &lt;&lt; endl;
+
+    for (int i = 1; i &lt;= 9; i++) {
+        cout &lt;&lt; setw(3) &lt;&lt; i &lt;&lt; " │";
+        for (int j = 1; j &lt;= 9; j++) {
+            cout &lt;&lt; setw(5) &lt;&lt; (i + j);
+        }
+        cout &lt;&lt; endl;
+    }
+    cout &lt;&lt; endl;
+}
+
+// 练习3：两个骰子的所有组合
+void practice3_dice_combinations() {
+    cout &lt;&lt; "════════════════════════════════" &lt;&lt; endl;
+    cout &lt;&lt; "  练习3答案：骰子组合统计" &lt;&lt; endl;
+    cout &lt;&lt; "════════════════════════════════" &lt;&lt; endl;
+
+    int count = 0;
+
+    cout &lt;&lt; "两个骰子（1-6）的所有组合：" &lt;&lt; endl;
+    cout &lt;&lt; "-------------------------------------------" &lt;&lt; endl;
+
+    for (int dice1 = 1; dice1 &lt;= 6; dice1++) {
+        for (int dice2 = 1; dice2 &lt;= 6; dice2++) {
+            cout &lt;&lt; "(" &lt;&lt; dice1 &lt;&lt; "," &lt;&lt; dice2 &lt;&lt; ")=" &lt;&lt; dice1 + dice2 &lt;&lt; "\t";
+            count++;
+            if (count % 6 == 0) cout &lt;&lt; endl;
+        }
+    }
+
+    cout &lt;&lt; "-------------------------------------------" &lt;&lt; endl;
+    cout &lt;&lt; "🌟 一共有 " &lt;&lt; count &lt;&lt; " 种组合（6×6=36）。" &lt;&lt; endl;
+    cout &lt;&lt; "   和为7的组合最可能（6种），和为2或12的组合最少（各1种）。" &lt;&lt; endl;
+    cout &lt;&lt; endl;
+}
+
+// ============ 挑战任务：数字螺旋方阵 ============
+void challenge_spiral_square() {
+    cout &lt;&lt; "════════════════════════════════" &lt;&lt; endl;
+    cout &lt;&lt; "  挑战任务：🌀 数字螺旋方阵（简化版）" &lt;&lt; endl;
+    cout &lt;&lt; "════════════════════════════════" &lt;&lt; endl;
+
+    int n;
+    cout &lt;&lt; "请输入方阵边长（建议3-9）：";
+    cin &gt;&gt; n;
+
+    // 使用二维数组存储螺旋方阵
+    // 这里简化处理：先生成行优先的方阵（按顺序填数）
+    cout &lt;&lt; endl &lt;&lt; n &lt;&lt; "×" &lt;&lt; n &lt;&lt; " 按顺序填充的方阵：" &lt;&lt; endl;
+    cout &lt;&lt; "-------------------------------------------" &lt;&lt; endl;
+
+    int counter = 1;
+    for (int i = 1; i &lt;= n; i++) {
+        cout &lt;&lt; "  ";
+        for (int j = 1; j &lt;= n; j++) {
+            cout &lt;&lt; setw(4) &lt;&lt; counter;
+            counter++;
+        }
+        cout &lt;&lt; endl;
+    }
+
+    cout &lt;&lt; "-------------------------------------------" &lt;&lt; endl;
+    cout &lt;&lt; "💡 要生成真正的螺旋方阵，需要用到数组的知识，" &lt;&lt; endl;
+    cout &lt;&lt; "   我们会在后面的课程中学习哦！" &lt;&lt; endl;
+    cout &lt;&lt; endl;
+
+    // 加分：打印蛇形填充（奇数行正序、偶数行倒序）
+    cout &lt;&lt; "🌟 加分挑战：蛇形填充方阵" &lt;&lt; endl;
+    cout &lt;&lt; "-------------------------------------------" &lt;&lt; endl;
+    counter = 1;
+    for (int i = 1; i &lt;= n; i++) {
+        cout &lt;&lt; "  ";
+        if (i % 2 == 1) {
+            // 奇数行：正序
+            for (int j = 1; j &lt;= n; j++) {
+                cout &lt;&lt; setw(4) &lt;&lt; counter;
+                counter++;
+            }
+        } else {
+            // 偶数行：倒序
+            int end = counter + n - 1;
+            for (int j = end; j &gt;= counter; j--) {
+                cout &lt;&lt; setw(4) &lt;&lt; j;
+            }
+            counter = end + 1;
+        }
+        cout &lt;&lt; endl;
+    }
+    cout &lt;&lt; endl;
+}
+
+// ============ 主函数 ============
+int main() {
+    cout &lt;&lt; "╔══════════════════════════════════════════╗" &lt;&lt; endl;
+    cout &lt;&lt; "║  第21课：循环套循环——嵌套循环入门     ║" &lt;&lt; endl;
+    cout &lt;&lt; "║  知识点：嵌套for、内外层关系           ║" &lt;&lt; endl;
+    cout &lt;&lt; "╚══════════════════════════════════════════╝" &lt;&lt; endl;
+    cout &lt;&lt; endl;
+
+    int choice;
+    while (true) {
+        cout &lt;&lt; "请选择要运行的示例：" &lt;&lt; endl;
+        cout &lt;&lt; "1. 数字正方形生成器" &lt;&lt; endl;
+        cout &lt;&lt; "2. 坐标网格系统" &lt;&lt; endl;
+        cout &lt;&lt; "3. 嵌套循环次数分析" &lt;&lt; endl;
+        cout &lt;&lt; "4. 练习1：打印星号矩形" &lt;&lt; endl;
+        cout &lt;&lt; "5. 练习2：九九加法表" &lt;&lt; endl;
+        cout &lt;&lt; "6. 练习3：骰子组合统计" &lt;&lt; endl;
+        cout &lt;&lt; "7. 🏆 挑战：数字方阵" &lt;&lt; endl;
+        cout &lt;&lt; "0. 退出程序" &lt;&lt; endl;
+        cout &lt;&lt; "请输入选择（0-7）：";
+        cin &gt;&gt; choice;
+        cout &lt;&lt; endl;
+
+        if (choice == 0) break;
+
+        switch (choice) {
+            case 1: example1_number_square(); break;
+            case 2: example2_coordinate_grid(); break;
+            case 3: example3_loop_analysis(); break;
+            case 4: practice1_star_rectangle(); break;
+            case 5: practice2_addition_table(); break;
+            case 6: practice3_dice_combinations(); break;
+            case 7: challenge_spiral_square(); break;
+            default:
+                cout &lt;&lt; "无效选择，请重新输入！" &lt;&lt; endl;
+        }
+    }
+
+    cout &lt;&lt; "感谢学习！我们下一课再见！👋" &lt;&lt; endl;
+    return 0;
+}
+</pre>
+    <p class="hint">本页使用浅色主题与 UTF-8 编码，可直接打印或导出 PDF。</p>
+  </div>
+</body>
+</html>

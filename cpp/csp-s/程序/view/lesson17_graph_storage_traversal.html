@@ -1,0 +1,566 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>lesson17_graph_storage_traversal.cpp</title>
+<style>
+  :root {
+    --bg: #f5f7fa;
+    --panel: #ffffff;
+    --text: #1a1a2e;
+    --muted: #5a6570;
+    --gold: #b8860b;
+    --code-bg: #ffffff;
+    --code-text: #1f2933;
+    --border: #d8dee6;
+    --top-bg: #ffffff;
+    --top-border: #e5e9ef;
+  }
+  * { box-sizing: border-box; }
+  html, body {
+    margin: 0; padding: 0;
+    background: var(--bg);
+    color: var(--text);
+    font-family: -apple-system, BlinkMacSystemFont, "PingFang SC", "Microsoft YaHei", sans-serif;
+    min-height: 100%;
+  }
+  .top {
+    position: sticky; top: 0; z-index: 10;
+    display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between;
+    gap: 10px;
+    padding: 12px 18px;
+    background: var(--top-bg);
+    border-bottom: 1px solid var(--top-border);
+    box-shadow: 0 1px 8px rgba(15, 23, 42, 0.06);
+  }
+  .brand { color: var(--gold); font-weight: 700; font-size: 14px; letter-spacing: 0.04em; }
+  .title { font-size: 15px; font-weight: 600; color: var(--text); max-width: 52vw; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .actions { display: flex; gap: 8px; flex-wrap: wrap; }
+  .btn {
+    appearance: none; border: 1px solid var(--border);
+    background: #fff; color: var(--text);
+    border-radius: 999px; padding: 8px 14px; font-size: 13px; font-weight: 600;
+    text-decoration: none; cursor: pointer;
+  }
+  .btn:hover { background: #f0f3f7; }
+  .btn.gold {
+    background: linear-gradient(135deg, #f0d78c, #d4a853);
+    color: #0a2540; border-color: #e0c06a;
+  }
+  .meta {
+    padding: 10px 18px; color: var(--muted); font-size: 12px;
+    border-bottom: 1px solid var(--border);
+    background: var(--panel);
+  }
+  .wrap { padding: 16px 18px 40px; }
+  pre {
+    margin: 0;
+    background: var(--code-bg);
+    color: var(--code-text);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 18px 20px;
+    overflow: auto;
+    font-family: "SF Mono", "JetBrains Mono", "Fira Code", Consolas, "Courier New", monospace;
+    font-size: 13.5px;
+    line-height: 1.55;
+    white-space: pre;
+    tab-size: 4;
+    box-shadow: 0 2px 12px rgba(15, 23, 42, 0.05);
+  }
+  .hint { margin-top: 12px; color: var(--muted); font-size: 12px; }
+  @media print {
+    html, body { background: #fff !important; color: #000 !important; }
+    .top { position: static; box-shadow: none; border-bottom: 1px solid #ccc; background: #fff !important; }
+    .actions { display: none !important; }
+    .meta { background: #fff !important; border-color: #ddd; color: #333; }
+    .wrap { padding: 0; }
+    pre {
+      background: #fff !important; color: #000 !important;
+      border: 1px solid #bbb; box-shadow: none; border-radius: 0;
+      white-space: pre-wrap; word-break: break-word; font-size: 11pt; line-height: 1.4;
+    }
+    .hint { display: none; }
+    a { color: #000; text-decoration: none; }
+  }
+</style>
+</head>
+<body>
+  <div class="top">
+    <div class="brand">CSP-S 备考 · 配套代码</div>
+    <div class="title">lesson17_graph_storage_traversal.cpp</div>
+    <div class="actions">
+      <a class="btn" href="../lesson17_graph_storage_traversal.cpp" download="lesson17_graph_storage_traversal.cpp">⬇️ 下载源文件</a>
+      <a class="btn gold" href="javascript:history.back()">← 返回课件</a>
+    </div>
+  </div>
+  <div class="meta">编码：UTF-8 · 文件：lesson17_graph_storage_traversal.cpp · 共 462 行 · 浅色主题便于打印</div>
+  <div class="wrap">
+    <pre id="code">/**
+ * ===========================================================================
+ * 课程编号：第17课
+ * 课程标题：图的存储与遍历
+ * 对应考纲：图的存储方式（邻接矩阵、邻接表、链式前向星）、DFS/BFS、
+ *           连通分量计数、二分图判定
+ * ===========================================================================
+ */
+
+#include &lt;iostream&gt;
+#include &lt;vector&gt;
+#include &lt;queue&gt;
+#include &lt;stack&gt;
+#include &lt;cstring&gt;
+#include &lt;algorithm&gt;
+#include &lt;utility&gt;
+using namespace std;
+
+// ============================================================================
+// 全局常量定义
+// ============================================================================
+const int MAXN = 1e5 + 5;   // 最大顶点数
+const int MAXM = 2e5 + 5;   // 最大边数（无向图需 x2）
+const int INF = 0x3f3f3f3f; // 无穷大
+
+// ============================================================================
+// 1. 邻接矩阵存图
+// ============================================================================
+namespace AdjacencyMatrix {
+
+int n, m;                     // 顶点数 n，边数 m
+int g[1005][1005];            // 邻接矩阵，仅适合 n &lt;= 1000 的稠密图
+bool vis[MAXN];
+
+// 初始化邻接矩阵
+void init(int _n) {
+    n = _n;
+    // 将矩阵初始化为 INF 表示无边（带权图），或 0 表示无边（无权图）
+    memset(g, 0x3f, sizeof(g));
+    for (int i = 1; i &lt;= n; i++) g[i][i] = 0; // 自环距离为 0
+}
+
+// 添加无向边（无权图）
+void add_undirected(int u, int v) {
+    g[u][v] = g[v][u] = 1;
+}
+
+// 添加无向边（带权图）
+void add_weighted(int u, int v, int w) {
+    g[u][v] = g[v][u] = w;
+}
+
+// DFS 遍历（邻接矩阵版本）—— O(V^2)
+void dfs(int u) {
+    vis[u] = true;
+    for (int v = 1; v &lt;= n; v++) {
+        if (g[u][v] != INF &amp;&amp; !vis[v]) {
+            dfs(v);
+        }
+    }
+}
+
+// BFS 遍历（邻接矩阵版本）—— O(V^2)
+void bfs(int start) {
+    queue&lt;int&gt; q;
+    memset(vis, 0, sizeof(vis));
+    q.push(start);
+    vis[start] = true;
+    while (!q.empty()) {
+        int u = q.front(); q.pop();
+        for (int v = 1; v &lt;= n; v++) {
+            if (g[u][v] != INF &amp;&amp; !vis[v]) {
+                vis[v] = true;
+                q.push(v);
+            }
+        }
+    }
+}
+
+} // namespace AdjacencyMatrix
+
+// ============================================================================
+// 2. vector 邻接表存图（最常用）
+// ============================================================================
+namespace AdjacencyList {
+
+int n, m;
+vector&lt;int&gt; g[MAXN];               // 无权图邻接表
+vector&lt;pair&lt;int, int&gt;&gt; gw[MAXN];   // 带权图邻接表：pair&lt;邻接点, 权重&gt;
+bool vis[MAXN];
+
+void init(int _n) {
+    n = _n;
+    for (int i = 1; i &lt;= n; i++) {
+        g[i].clear();
+        gw[i].clear();
+    }
+}
+
+// 添加无向边（无权图）
+void add_edge(int u, int v) {
+    g[u].push_back(v);
+    g[v].push_back(u); // 无向图必须加反向边
+}
+
+// 添加有向边（无权图）
+void add_directed(int u, int v) {
+    g[u].push_back(v);
+}
+
+// 添加无向边（带权图）
+void add_weighted(int u, int v, int w) {
+    gw[u].push_back({v, w});
+    gw[v].push_back({u, w});
+}
+
+// DFS 遍历 —— O(V + E)
+void dfs(int u) {
+    vis[u] = true;
+    // 在此处处理顶点 u（如输出、统计等）
+    for (int v : g[u]) {
+        if (!vis[v]) dfs(v);
+    }
+}
+
+// 迭代式 DFS —— 避免递归爆栈（链图深度可达 10^5）
+void dfs_iterative(int start) {
+    stack&lt;int&gt; st;
+    st.push(start);
+    vis[start] = true;
+    while (!st.empty()) {
+        int u = st.top(); st.pop();
+        // 处理顶点 u
+        for (int v : g[u]) {
+            if (!vis[v]) {
+                vis[v] = true;
+                st.push(v);
+            }
+        }
+    }
+}
+
+// BFS 遍历 —— O(V + E)，同时计算从 start 出发的最短距离（无权图）
+int dist[MAXN]; // dist[v] = 从 start 到 v 的最短距离
+
+void bfs(int start) {
+    queue&lt;int&gt; q;
+    memset(vis, 0, sizeof(vis));
+    memset(dist, -1, sizeof(dist)); // -1 表示未访问
+    q.push(start);
+    vis[start] = true;
+    dist[start] = 0;
+    while (!q.empty()) {
+        int u = q.front(); q.pop();
+        for (int v : g[u]) {
+            if (!vis[v]) {
+                vis[v] = true;
+                dist[v] = dist[u] + 1;
+                q.push(v);
+            }
+        }
+    }
+}
+
+// 连通分量计数：对每个未访问顶点执行一次 DFS
+int count_components() {
+    memset(vis, 0, sizeof(vis));
+    int comp = 0;
+    for (int i = 1; i &lt;= n; i++) {
+        if (!vis[i]) {
+            comp++;
+            dfs(i); // 或 bfs(i)
+        }
+    }
+    return comp;
+}
+
+// 统计每个连通分量的大小
+vector&lt;int&gt; component_sizes() {
+    memset(vis, 0, sizeof(vis));
+    vector&lt;int&gt; sizes;
+    for (int i = 1; i &lt;= n; i++) {
+        if (!vis[i]) {
+            // BFS 统计该分量大小
+            queue&lt;int&gt; q;
+            q.push(i);
+            vis[i] = true;
+            int sz = 0;
+            while (!q.empty()) {
+                int u = q.front(); q.pop();
+                sz++;
+                for (int v : g[u]) {
+                    if (!vis[v]) {
+                        vis[v] = true;
+                        q.push(v);
+                    }
+                }
+            }
+            sizes.push_back(sz);
+        }
+    }
+    return sizes;
+}
+
+// ============================================================================
+// 二分图判定（染色法） —— O(V + E)
+// 思路：用 0/1 两种颜色染色，相邻顶点必须异色
+// ============================================================================
+int color[MAXN]; // -1 未染色，0 黑色，1 白色
+
+// 对单个连通分量进行染色判定
+bool dfs_bipartite(int u, int c) {
+    color[u] = c;
+    for (int v : g[u]) {
+        if (color[v] == -1) {
+            // 邻接点未染色，染成相反颜色
+            if (!dfs_bipartite(v, c ^ 1)) return false;
+        } else if (color[v] == c) {
+            // 邻接点已染色且颜色相同 → 非二分图
+            return false;
+        }
+    }
+    return true;
+}
+
+// BFS 实现染色法判定二分图
+bool bfs_bipartite(int start) {
+    queue&lt;int&gt; q;
+    q.push(start);
+    color[start] = 0;
+    while (!q.empty()) {
+        int u = q.front(); q.pop();
+        for (int v : g[u]) {
+            if (color[v] == -1) {
+                color[v] = color[u] ^ 1;
+                q.push(v);
+            } else if (color[v] == color[u]) {
+                return false;
+            }
+        }
+    }
+    return true;
+}
+
+// 对整个图进行二分图判定（可能不连通）
+bool is_bipartite() {
+    memset(color, -1, sizeof(color));
+    for (int i = 1; i &lt;= n; i++) {
+        if (color[i] == -1) {
+            // 任选 DFS 或 BFS 实现
+            if (!dfs_bipartite(i, 0)) return false;
+            // if (!bfs_bipartite(i)) return false;
+        }
+    }
+    return true;
+}
+
+} // namespace AdjacencyList
+
+// ============================================================================
+// 3. 链式前向星存图（数组模拟链表，常数最小）
+// ============================================================================
+namespace ForwardStar {
+
+int n, m;
+int head[MAXN];   // head[u]：以 u 为起点的第一条边的编号（0 表示无出边）
+int to[MAXM * 2]; // to[i]：第 i 条边的终点
+int nxt[MAXM * 2];// nxt[i]：与第 i 条边同起点的下一条边的编号
+int w[MAXM * 2];  // w[i]：第 i 条边的权值
+int cnt;          // 边的编号计数器（从 1 开始）
+
+void init(int _n) {
+    n = _n;
+    cnt = 0;
+    memset(head, 0, sizeof(head)); // 0 表示空
+}
+
+// 添加一条有向边（头插法）
+void add_edge(int u, int v, int weight = 1) {
+    to[++cnt] = v;       // 记录终点
+    w[cnt] = weight;     // 记录权值
+    nxt[cnt] = head[u];  // 新边的 next 指向 head[u]
+    head[u] = cnt;       // head[u] 指向新边
+}
+
+// 添加无向边：添加两条方向相反的有向边
+void add_undirected(int u, int v, int weight = 1) {
+    add_edge(u, v, weight);
+    add_edge(v, u, weight);
+}
+
+// 遍历 u 的所有出边
+// for (int i = head[u]; i; i = nxt[i]) {
+//     int v = to[i], weight = w[i];
+//     // 处理边 (u, v, weight)
+// }
+
+// DFS 遍历（链式前向星版本）
+bool vis[MAXN];
+void dfs(int u) {
+    vis[u] = true;
+    for (int i = head[u]; i; i = nxt[i]) {
+        int v = to[i];
+        if (!vis[v]) dfs(v);
+    }
+}
+
+// BFS 遍历（链式前向星版本）
+void bfs(int start) {
+    queue&lt;int&gt; q;
+    memset(vis, 0, sizeof(vis));
+    q.push(start);
+    vis[start] = true;
+    while (!q.empty()) {
+        int u = q.front(); q.pop();
+        for (int i = head[u]; i; i = nxt[i]) {
+            int v = to[i];
+            if (!vis[v]) {
+                vis[v] = true;
+                q.push(v);
+            }
+        }
+    }
+}
+
+// 连通分量计数
+int count_components() {
+    memset(vis, 0, sizeof(vis));
+    int comp = 0;
+    for (int i = 1; i &lt;= n; i++) {
+        if (!vis[i]) {
+            comp++;
+            dfs(i);
+        }
+    }
+    return comp;
+}
+
+// 染色法二分图判定
+int color[MAXN];
+bool dfs_bipartite(int u, int c) {
+    color[u] = c;
+    for (int i = head[u]; i; i = nxt[i]) {
+        int v = to[i];
+        if (color[v] == -1) {
+            if (!dfs_bipartite(v, c ^ 1)) return false;
+        } else if (color[v] == c) {
+            return false;
+        }
+    }
+    return true;
+}
+
+bool is_bipartite() {
+    memset(color, -1, sizeof(color));
+    for (int i = 1; i &lt;= n; i++) {
+        if (color[i] == -1) {
+            if (!dfs_bipartite(i, 0)) return false;
+        }
+    }
+    return true;
+}
+
+} // namespace ForwardStar
+
+// ============================================================================
+// 综合测试：演示各存储方式及遍历算法
+// ============================================================================
+int main() {
+    ios::sync_with_stdio(false);
+    cin.tie(0);
+
+    cout &lt;&lt; "===== 第17课：图的存储与遍历 演示 =====\n\n";
+
+    // -----------------------------------------------------------------------
+    // 测试数据：一个包含 6 个顶点、6 条边的无向图
+    // 顶点 1-2-3-4 构成一个连通分量（含环），顶点 5-6 构成另一个
+    // 图结构：
+    //   1 -- 2 -- 3
+    //   |    |    |
+    //   +----+----4     5 -- 6
+    // -----------------------------------------------------------------------
+    int n = 6;
+    vector&lt;pair&lt;int, int&gt;&gt; edges = {
+        {1, 2}, {2, 3}, {3, 4},
+        {1, 3}, {2, 4}, {5, 6}
+    };
+
+    // --- 演示 1：vector 邻接表 ---
+    cout &lt;&lt; "【1. vector 邻接表示例】\n";
+    {
+        using namespace AdjacencyList;
+        init(n);
+        for (auto &amp;e : edges) add_edge(e.first, e.second);
+
+        // DFS 遍历
+        cout &lt;&lt; "DFS 遍历顺序（从顶点1开始）：";
+        memset(vis, 0, sizeof(vis));
+        dfs(1);
+        cout &lt;&lt; "\n";
+
+        // BFS 遍历
+        cout &lt;&lt; "BFS 遍历顺序（从顶点1开始）：";
+        memset(vis, 0, sizeof(vis));
+        bfs(1);
+        cout &lt;&lt; "\n";
+
+        // 连通分量计数
+        int comp = count_components();
+        cout &lt;&lt; "连通分量数：" &lt;&lt; comp &lt;&lt; "\n";
+
+        // 各连通分量大小
+        auto sizes = component_sizes();
+        cout &lt;&lt; "连通分量大小：";
+        for (size_t i = 0; i &lt; sizes.size(); i++)
+            cout &lt;&lt; sizes[i] &lt;&lt; " \n"[i + 1 == sizes.size()];
+
+        // 二分图判定（这个图包含奇环 1-2-3，所以不是二分图）
+        bool ok = is_bipartite();
+        cout &lt;&lt; "是否为二分图：" &lt;&lt; (ok ? "是" : "否") &lt;&lt; "\n\n";
+    }
+
+    // --- 演示 2：链式前向星 ---
+    cout &lt;&lt; "【2. 链式前向星示例】\n";
+    {
+        using namespace ForwardStar;
+        init(n);
+        for (auto &amp;e : edges) add_undirected(e.first, e.second);
+
+        // DFS 遍历
+        cout &lt;&lt; "DFS 遍历顺序（从顶点1开始）：";
+        memset(vis, 0, sizeof(vis));
+        dfs(1);
+        cout &lt;&lt; "\n";
+
+        // 连通分量计数
+        int comp = count_components();
+        cout &lt;&lt; "连通分量数：" &lt;&lt; comp &lt;&lt; "\n";
+
+        // 二分图判定
+        bool ok = is_bipartite();
+        cout &lt;&lt; "是否为二分图：" &lt;&lt; (ok ? "是" : "否") &lt;&lt; "\n\n";
+    }
+
+    // --- 演示 3：二分图（链式前向星）---
+    // 构造一个实际的二分图：左部 {1,3,5}，右部 {2,4,6}
+    cout &lt;&lt; "【3. 二分图判定示例】\n";
+    {
+        using namespace ForwardStar;
+        init(6);
+        // 完全二分图 K_{3,3}
+        add_undirected(1, 2); add_undirected(1, 4); add_undirected(1, 6);
+        add_undirected(3, 2); add_undirected(3, 4); add_undirected(3, 6);
+        add_undirected(5, 2); add_undirected(5, 4); add_undirected(5, 6);
+
+        bool ok = is_bipartite();
+        cout &lt;&lt; "完全二分图 K(3,3) 是否为二分图：" &lt;&lt; (ok ? "是" : "否") &lt;&lt; "\n";
+    }
+
+    cout &lt;&lt; "\n===== 演示结束 =====\n";
+    return 0;
+}
+</pre>
+    <p class="hint">本页使用浅色主题与 UTF-8 编码，可直接打印或导出 PDF。</p>
+  </div>
+</body>
+</html>

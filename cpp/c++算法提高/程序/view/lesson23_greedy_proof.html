@@ -1,0 +1,513 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>lesson23_greedy_proof.cpp</title>
+<style>
+  :root {
+    --bg: #f5f7fa;
+    --panel: #ffffff;
+    --text: #1a1a2e;
+    --muted: #5a6570;
+    --gold: #b8860b;
+    --code-bg: #ffffff;
+    --code-text: #1f2933;
+    --border: #d8dee6;
+    --top-bg: #ffffff;
+    --top-border: #e5e9ef;
+  }
+  * { box-sizing: border-box; }
+  html, body {
+    margin: 0; padding: 0;
+    background: var(--bg);
+    color: var(--text);
+    font-family: -apple-system, BlinkMacSystemFont, "PingFang SC", "Microsoft YaHei", sans-serif;
+    min-height: 100%;
+  }
+  .top {
+    position: sticky; top: 0; z-index: 10;
+    display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between;
+    gap: 10px;
+    padding: 12px 18px;
+    background: var(--top-bg);
+    border-bottom: 1px solid var(--top-border);
+    box-shadow: 0 1px 8px rgba(15, 23, 42, 0.06);
+  }
+  .brand { color: var(--gold); font-weight: 700; font-size: 14px; letter-spacing: 0.04em; }
+  .title { font-size: 15px; font-weight: 600; color: var(--text); max-width: 52vw; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .actions { display: flex; gap: 8px; flex-wrap: wrap; }
+  .btn {
+    appearance: none; border: 1px solid var(--border);
+    background: #fff; color: var(--text);
+    border-radius: 999px; padding: 8px 14px; font-size: 13px; font-weight: 600;
+    text-decoration: none; cursor: pointer;
+  }
+  .btn:hover { background: #f0f3f7; }
+  .btn.gold {
+    background: linear-gradient(135deg, #f0d78c, #d4a853);
+    color: #0a2540; border-color: #e0c06a;
+  }
+  .meta {
+    padding: 10px 18px; color: var(--muted); font-size: 12px;
+    border-bottom: 1px solid var(--border);
+    background: var(--panel);
+  }
+  .wrap { padding: 16px 18px 40px; }
+  pre {
+    margin: 0;
+    background: var(--code-bg);
+    color: var(--code-text);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 18px 20px;
+    overflow: auto;
+    font-family: "SF Mono", "JetBrains Mono", "Fira Code", Consolas, "Courier New", monospace;
+    font-size: 13.5px;
+    line-height: 1.55;
+    white-space: pre;
+    tab-size: 4;
+    box-shadow: 0 2px 12px rgba(15, 23, 42, 0.05);
+  }
+  .hint { margin-top: 12px; color: var(--muted); font-size: 12px; }
+  @media print {
+    html, body { background: #fff !important; color: #000 !important; }
+    .top { position: static; box-shadow: none; border-bottom: 1px solid #ccc; background: #fff !important; }
+    .actions { display: none !important; }
+    .meta { background: #fff !important; border-color: #ddd; color: #333; }
+    .wrap { padding: 0; }
+    pre {
+      background: #fff !important; color: #000 !important;
+      border: 1px solid #bbb; box-shadow: none; border-radius: 0;
+      white-space: pre-wrap; word-break: break-word; font-size: 11pt; line-height: 1.4;
+    }
+    .hint { display: none; }
+    a { color: #000; text-decoration: none; }
+  }
+</style>
+</head>
+<body>
+  <div class="top">
+    <div class="brand">C++ 算法提高 · 配套代码</div>
+    <div class="title">lesson23_greedy_proof.cpp</div>
+    <div class="actions">
+      <a class="btn" href="../lesson23_greedy_proof.cpp" download="lesson23_greedy_proof.cpp">⬇️ 下载源文件</a>
+      <a class="btn gold" href="javascript:history.back()">← 返回课件</a>
+    </div>
+  </div>
+  <div class="meta">编码：UTF-8 · 文件：lesson23_greedy_proof.cpp · 共 409 行 · 浅色主题便于打印</div>
+  <div class="wrap">
+    <pre id="code">/*
+ * ================================================================
+ * C++算法提高 第23课：贪心策略证明——交换论证与归纳法
+ * ================================================================
+ *
+ * 算法知识点：
+ *   - 贪心策略证明的两种方法：交换论证、归纳法
+ *   - 交换论证：假设存在更优解，用贪心选择替换，证明结果不差
+ *   - 归纳法：基础步骤（第一步贪心选择正确）+ 归纳步骤（第k步→第k+1步）
+ *   - 排序贪心模式：通过排序确定操作顺序
+ *   - 优先队列贪心模式：每次取最优（最小）元素进行操作
+ *
+ * 经典例题：
+ *   例题1 - 排队接水：N个人排队接水，按接水时间升序排列使总等待时间最小
+ *   例题2 - 合并果子：N堆果子，每次合并最小的两堆，总代价最小（哈夫曼）
+ */
+
+#include &lt;iostream&gt;
+#include &lt;algorithm&gt;   // sort
+#include &lt;queue&gt;       // priority_queue
+#include &lt;vector&gt;      // vector
+#include &lt;iomanip&gt;     // setw
+using namespace std;
+
+// ================================================================
+// 例题1：排队接水
+// 题目：有 n 个人排队接水，每人需要 t[i] 时间。
+//       求一种排队顺序，使所有人的等待时间之和最小。
+//
+// 贪心策略：按接水时间从小到大排序
+//
+// 交换论证证明（简述）：
+//   假设最优排列中，存在某人A在某人B前面，但 t_A &gt; t_B。
+//   交换A和B的位置。
+//   - A前面的人：等待时间不变
+//   - B后面的人：等待时间不变（因为A和B的总接水时间没变）
+//   - A和B之间的人（如果有）：等待时间都减少了 (t_A - t_B) &gt; 0
+//   因此总等待时间严格减少，矛盾！
+//   结论：任何最优排列中，接水时间短的人必须在前面。
+//   所以按时间升序排列就是最优解。
+//
+// 时间复杂度：O(n log n) —— 排序是瓶颈
+// 空间复杂度：O(n) —— 存储n个人的信息
+// ================================================================
+
+// 定义人员结构体
+struct Person {
+    int id;      // 原始编号（输入顺序，从1开始）
+    int time;    // 接水所需时间（分钟）
+};
+
+// 排序比较函数：按接水时间升序排列
+bool cmpByTime(Person a, Person b) {
+    return a.time &lt; b.time;
+}
+
+void solveQueueForWater() {
+    cout &lt;&lt; "╔══════════════════════════════════════════╗" &lt;&lt; endl;
+    cout &lt;&lt; "║     例题1：排队接水                        ║" &lt;&lt; endl;
+    cout &lt;&lt; "╚══════════════════════════════════════════╝" &lt;&lt; endl;
+    cout &lt;&lt; endl;
+
+    // ---- 测试数据 ----
+    // n = 5 个人，接水时间分别为：3, 6, 1, 4, 2
+    const int n = 5;
+    Person persons[n] = {
+        {1, 3},
+        {2, 6},
+        {3, 1},
+        {4, 4},
+        {5, 2}
+    };
+
+    cout &lt;&lt; "【输入数据】" &lt;&lt; endl;
+    cout &lt;&lt; "人数 n = " &lt;&lt; n &lt;&lt; endl;
+    cout &lt;&lt; "接水时间：";
+    for (int i = 0; i &lt; n; i++) {
+        cout &lt;&lt; persons[i].time &lt;&lt; " ";
+    }
+    cout &lt;&lt; endl &lt;&lt; endl;
+
+    // ---- 贪心核心：按接水时间升序排列 ----
+    // 这就是贪心选择——让接水快的人排在前面
+    sort(persons, persons + n, cmpByTime);
+
+    // ---- 计算最小总等待时间 ----
+    // 方法：遍历排序后的数组，维护一个"已接水时间总和"的前缀和
+    // 第 i 个人的等待时间 = 前面 i-1 个人的接水时间之和
+    long long totalWait = 0;   // 所有人等待时间之和
+    long long prefixSum = 0;   // 前面所有人的接水时间之和（前缀和）
+
+    cout &lt;&lt; "【排序后的排队顺序】" &lt;&lt; endl;
+    cout &lt;&lt; "顺序 | 编号 | 接水时间 | 等待时间" &lt;&lt; endl;
+    cout &lt;&lt; "-----+------+----------+----------" &lt;&lt; endl;
+
+    for (int i = 0; i &lt; n; i++) {
+        // 当前这个人的等待时间 = 前面所有人的接水时间之和
+        long long waitTime = prefixSum;
+        totalWait += waitTime;
+
+        cout &lt;&lt; "  " &lt;&lt; (i + 1) &lt;&lt; "   |  "
+             &lt;&lt; setw(2) &lt;&lt; persons[i].id &lt;&lt; "  |    "
+             &lt;&lt; setw(2) &lt;&lt; persons[i].time &lt;&lt; "    |    "
+             &lt;&lt; setw(3) &lt;&lt; waitTime &lt;&lt; endl;
+
+        // 更新前缀和：加上当前这个人的接水时间
+        // 这样后面的人等待时间就会包含这个人的接水时间
+        prefixSum += persons[i].time;
+    }
+
+    cout &lt;&lt; "-----+------+----------+----------" &lt;&lt; endl;
+    cout &lt;&lt; endl;
+
+    // ---- 输出结果 ----
+    cout &lt;&lt; "【最优排队顺序（按编号输出）】" &lt;&lt; endl;
+    for (int i = 0; i &lt; n; i++) {
+        cout &lt;&lt; persons[i].id;
+        if (i &lt; n - 1) cout &lt;&lt; " ";
+    }
+    cout &lt;&lt; endl;
+
+    cout &lt;&lt; "【最小总等待时间】" &lt;&lt; totalWait &lt;&lt; " 分钟" &lt;&lt; endl;
+    cout &lt;&lt; endl;
+
+    // ---- 验证交换论证 ----
+    // 演示：如果故意把时间长的放在前面会怎样？
+    cout &lt;&lt; "【交换论证验证】" &lt;&lt; endl;
+    cout &lt;&lt; "假设把接水时间 6 的人放在接水时间 1 的人前面：" &lt;&lt; endl;
+    cout &lt;&lt; "  原始最优顺序（部分）：... , 1分钟, 6分钟, ..." &lt;&lt; endl;
+    cout &lt;&lt; "  若交换成：... , 6分钟, 1分钟, ..." &lt;&lt; endl;
+    cout &lt;&lt; "  中间所有人的等待时间增加 (6-1)=5 分钟" &lt;&lt; endl;
+    cout &lt;&lt; "  =&gt; 总等待时间必定增加，不可能是最优解" &lt;&lt; endl;
+    cout &lt;&lt; "  结论：时间短的必须在前面！✓" &lt;&lt; endl;
+    cout &lt;&lt; endl;
+}
+
+// ================================================================
+// 例题2：合并果子
+// 题目：有 n 堆果子，每堆重量为 a[i]。每次可以合并任意两堆，
+//       合并的代价等于两堆重量之和。求合并成一堆的最小总代价。
+//
+// 贪心策略：每次选取最小的两堆进行合并（使用最小堆/优先队列）
+//
+// 归纳法证明（简述）：
+//   基础步骤（n=2）：只有两堆时，只有一种合并方式，显然最优。
+//
+//   归纳步骤：
+//     设所有堆中最小的两堆重量为 a 和 b（a ≤ b）。
+//     我们可以证明：存在一个最优方案，a 和 b 是第一次合并的两堆。
+//
+//     证明方法（反证 + 交换论证）：
+//       假设最优方案中，第一次合并的不是 a 和 b，而是某两堆 x 和 y，
+//       且 a ≤ b ≤ x ≤ y（因为是"最小的两堆"）。
+//       把最优方案中 x 和 y 的位置替换为 a 和 b（调整后续合并），
+//       可以证明新方案的总代价 ≤ 原方案的总代价。
+//       因此，"先合并 a 和 b" 一定不差。
+//
+//     合并 a 和 b 后，问题变成 n-1 堆的子问题（多了一堆 a+b）。
+//     由归纳假设，贪心策略在子问题上也最优。
+//     因此整体最优。得证。
+//
+// 时间复杂度：O(n log n) —— 每次堆操作 O(log n)，共 n-1 次合并
+// 空间复杂度：O(n) —— 优先队列存储最多 n 个元素
+// ================================================================
+
+void solveMergeFruits() {
+    cout &lt;&lt; "╔══════════════════════════════════════════╗" &lt;&lt; endl;
+    cout &lt;&lt; "║     例题2：合并果子                        ║" &lt;&lt; endl;
+    cout &lt;&lt; "╚══════════════════════════════════════════╝" &lt;&lt; endl;
+    cout &lt;&lt; endl;
+
+    // ---- 测试数据 ----
+    // n = 5 堆果子，重量分别为：1, 3, 4, 2, 5
+    const int n = 5;
+    int piles[n] = {1, 3, 4, 2, 5};
+
+    cout &lt;&lt; "【输入数据】" &lt;&lt; endl;
+    cout &lt;&lt; "果子堆数 n = " &lt;&lt; n &lt;&lt; endl;
+    cout &lt;&lt; "各堆重量：";
+    for (int i = 0; i &lt; n; i++) {
+        cout &lt;&lt; piles[i] &lt;&lt; " ";
+    }
+    cout &lt;&lt; endl &lt;&lt; endl;
+
+    // ---- 贪心核心：使用最小堆（优先队列） ----
+    // priority_queue 默认是大顶堆，加 greater&lt;int&gt; 变成小顶堆
+    // 这样每次 top() 取出的都是最小的元素
+    priority_queue&lt;int, vector&lt;int&gt;, greater&lt;int&gt;&gt; minHeap;
+
+    // 将所有果子堆的重量加入最小堆
+    for (int i = 0; i &lt; n; i++) {
+        minHeap.push(piles[i]);
+    }
+
+    long long totalCost = 0;   // 总合并代价（体力消耗）
+    int step = 0;              // 合并步骤计数
+
+    cout &lt;&lt; "【合并过程】" &lt;&lt; endl;
+    cout &lt;&lt; "步骤 | 堆1 | 堆2 | 新堆 | 本步代价 | 累计代价" &lt;&lt; endl;
+    cout &lt;&lt; "-----+-----+-----+------+----------+----------" &lt;&lt; endl;
+
+    // 循环直到只剩一堆（堆大小为1）
+    while (minHeap.size() &gt; 1) {
+        step++;
+
+        // 贪心选择：取出最小的两堆
+        int smallest1 = minHeap.top();  // 最小堆
+        minHeap.pop();
+        int smallest2 = minHeap.top();  // 次小堆
+        minHeap.pop();
+
+        // 合并这两堆
+        int mergedPile = smallest1 + smallest2;
+        totalCost += mergedPile;
+
+        // 将合并后的新堆放回优先队列
+        minHeap.push(mergedPile);
+
+        // 输出本步详情
+        cout &lt;&lt; "  " &lt;&lt; setw(2) &lt;&lt; step &lt;&lt; "  | "
+             &lt;&lt; setw(3) &lt;&lt; smallest1 &lt;&lt; " | "
+             &lt;&lt; setw(3) &lt;&lt; smallest2 &lt;&lt; " | "
+             &lt;&lt; setw(4) &lt;&lt; mergedPile &lt;&lt; " | "
+             &lt;&lt; setw(8) &lt;&lt; smallest1 + smallest2 &lt;&lt; " | "
+             &lt;&lt; setw(8) &lt;&lt; totalCost &lt;&lt; endl;
+    }
+
+    cout &lt;&lt; "-----+-----+-----+------+----------+----------" &lt;&lt; endl;
+    cout &lt;&lt; endl;
+
+    // ---- 输出结果 ----
+    cout &lt;&lt; "【最小总体力消耗】" &lt;&lt; totalCost &lt;&lt; endl;
+    cout &lt;&lt; endl;
+
+    // ---- 图解合并树 ----
+    // 展示哈夫曼树的合并过程
+    cout &lt;&lt; "【合并树（类似哈夫曼树）】" &lt;&lt; endl;
+    cout &lt;&lt; "  每次选最小的两堆合并，合并后的新堆参与后续选择" &lt;&lt; endl;
+    cout &lt;&lt; endl;
+
+    // 手动模拟哈夫曼合并树以便清晰展示
+    cout &lt;&lt; "          15 ← 最终一堆" &lt;&lt; endl;
+    cout &lt;&lt; "         /  \\" &lt;&lt; endl;
+    cout &lt;&lt; "        6    9" &lt;&lt; endl;
+    cout &lt;&lt; "       / \\  / \\" &lt;&lt; endl;
+    cout &lt;&lt; "      3   3 4  5" &lt;&lt; endl;
+    cout &lt;&lt; "     / \\" &lt;&lt; endl;
+    cout &lt;&lt; "    1   2" &lt;&lt; endl;
+    cout &lt;&lt; endl;
+    cout &lt;&lt; "  合并顺序：" &lt;&lt; endl;
+    cout &lt;&lt; "    步骤1: 1+2=3  (代价3)" &lt;&lt; endl;
+    cout &lt;&lt; "    步骤2: 3+3=6  (代价6)" &lt;&lt; endl;
+    cout &lt;&lt; "    步骤3: 4+5=9  (代价9)" &lt;&lt; endl;
+    cout &lt;&lt; "    步骤4: 6+9=15 (代价15)" &lt;&lt; endl;
+    cout &lt;&lt; "    总代价: 3+6+9+15 = 33" &lt;&lt; endl;
+    cout &lt;&lt; endl;
+
+    // ---- 对比：如果不贪心会怎样 ----
+    cout &lt;&lt; "【贪心 vs 非贪心对比】" &lt;&lt; endl;
+    cout &lt;&lt; "  贪心策略（每次选最小两堆）：总代价 = " &lt;&lt; totalCost &lt;&lt; endl;
+    cout &lt;&lt; "  如果随便合并（比如从左到右）：" &lt;&lt; endl;
+    cout &lt;&lt; "    1+3=4, 4+4=8, 8+2=10, 10+5=15" &lt;&lt; endl;
+    cout &lt;&lt; "    总代价 = 4+8+10+15 = 37 &gt; " &lt;&lt; totalCost &lt;&lt; endl;
+    cout &lt;&lt; "  =&gt; 贪心策略确实更优！✓" &lt;&lt; endl;
+    cout &lt;&lt; endl;
+}
+
+// ================================================================
+// 附加例题：排队接水 —— 多水龙头版本（选学）
+// 题目：有 m 个水龙头，n 个人，求最小总等待时间
+//
+// 贪心策略：仍按接水时间升序排序，然后轮流分配给人最少的水龙头
+// 证明思路：与单水龙头类似，交换论证仍然适用
+// ================================================================
+
+void solveMultiTapQueue() {
+    cout &lt;&lt; "╔══════════════════════════════════════════╗" &lt;&lt; endl;
+    cout &lt;&lt; "║  附加题：多水龙头排队接水（选学）          ║" &lt;&lt; endl;
+    cout &lt;&lt; "╚══════════════════════════════════════════╝" &lt;&lt; endl;
+    cout &lt;&lt; endl;
+
+    const int n = 6;  // 6个人
+    const int m = 2;  // 2个水龙头
+    int times[n] = {1, 2, 5, 3, 7, 4};
+
+    // 按接水时间升序排序
+    sort(times, times + n);
+
+    // m 个水龙头的累计接水时间
+    // tapTime[i] 表示第 i 个水龙头当前已安排的总接水时间
+    // 初始化为0（相当于小顶堆，但没有用 priority_queue 是为了教学清晰）
+    long long tapTime[m] = {0};
+
+    cout &lt;&lt; "【输入】" &lt;&lt; endl;
+    cout &lt;&lt; n &lt;&lt; " 个人, " &lt;&lt; m &lt;&lt; " 个水龙头" &lt;&lt; endl;
+    cout &lt;&lt; "接水时间（排序后）：";
+    for (int i = 0; i &lt; n; i++) cout &lt;&lt; times[i] &lt;&lt; " ";
+    cout &lt;&lt; endl &lt;&lt; endl;
+
+    cout &lt;&lt; "【分配过程】" &lt;&lt; endl;
+    long long totalWait = 0;
+
+    for (int i = 0; i &lt; n; i++) {
+        // 找到当前累计接水时间最少的水龙头（贪心选择）
+        int minTap = 0;
+        for (int j = 1; j &lt; m; j++) {
+            if (tapTime[j] &lt; tapTime[minTap]) {
+                minTap = j;
+            }
+        }
+
+        // 当前这个人被分配到 minTap 号水龙头
+        // 他的等待时间 = 该水龙头已有的累计接水时间
+        long long wait = tapTime[minTap];
+        totalWait += wait;
+
+        cout &lt;&lt; "  接水时间 " &lt;&lt; times[i] &lt;&lt; " 的人 → 水龙头" &lt;&lt; (minTap + 1)
+             &lt;&lt; "（等待" &lt;&lt; wait &lt;&lt; "分钟）" &lt;&lt; endl;
+
+        // 更新该水龙头的累计接水时间
+        tapTime[minTap] += times[i];
+    }
+
+    cout &lt;&lt; endl;
+    cout &lt;&lt; "【最小总等待时间】" &lt;&lt; totalWait &lt;&lt; " 分钟" &lt;&lt; endl;
+    cout &lt;&lt; endl;
+}
+
+// ================================================================
+// 辅助函数：演示交换论证的直观过程
+// ================================================================
+void demoExchangeArgument() {
+    cout &lt;&lt; "╔══════════════════════════════════════════╗" &lt;&lt; endl;
+    cout &lt;&lt; "║  交换论证直观演示                         ║" &lt;&lt; endl;
+    cout &lt;&lt; "╚══════════════════════════════════════════╝" &lt;&lt; endl;
+    cout &lt;&lt; endl;
+
+    cout &lt;&lt; "【交换论证五步法】" &lt;&lt; endl;
+    cout &lt;&lt; endl;
+
+    cout &lt;&lt; "  ┌─────────────────────────────────────────────────────┐" &lt;&lt; endl;
+    cout &lt;&lt; "  │ 第1步：假设存在最优解 OPT                            │" &lt;&lt; endl;
+    cout &lt;&lt; "  │ 第2步：找到 OPT 中第一个与贪心解不同的位置            │" &lt;&lt; endl;
+    cout &lt;&lt; "  │ 第3步：用贪心选择替换 OPT 中该位置的选择              │" &lt;&lt; endl;
+    cout &lt;&lt; "  │ 第4步：证明替换后结果不会变差                        │" &lt;&lt; endl;
+    cout &lt;&lt; "  │ 第5步：重复2-4步，直到 OPT = 贪心解，结论成立        │" &lt;&lt; endl;
+    cout &lt;&lt; "  └─────────────────────────────────────────────────────┘" &lt;&lt; endl;
+    cout &lt;&lt; endl;
+
+    // 用排队接水做具体演示
+    cout &lt;&lt; "【实例：排队接水中的交换论证】" &lt;&lt; endl;
+    cout &lt;&lt; endl;
+
+    cout &lt;&lt; "  接水时间：[A=5分钟, B=2分钟, C=3分钟, D=1分钟]" &lt;&lt; endl;
+    cout &lt;&lt; endl;
+    cout &lt;&lt; "  假设某人声称最优顺序是：[A(5), B(2), C(3), D(1)]" &lt;&lt; endl;
+    cout &lt;&lt; "                         ↑贪心说A不该在这里" &lt;&lt; endl;
+    cout &lt;&lt; endl;
+    cout &lt;&lt; "  执行交换论证：" &lt;&lt; endl;
+    cout &lt;&lt; "    第1步：找到第一个「贪心解和OPT不同」的位置 → 位置0" &lt;&lt; endl;
+    cout &lt;&lt; "    第2步：贪心解在此处放的是D(1分钟)，OPT放的是A(5分钟)" &lt;&lt; endl;
+    cout &lt;&lt; "    第3步：把OPT中的A(5)和D(1)交换" &lt;&lt; endl;
+    cout &lt;&lt; "           交换前 OPT: A(5), B(2), C(3), D(1)" &lt;&lt; endl;
+    cout &lt;&lt; "           交换后     : D(1), B(2), C(3), A(5)" &lt;&lt; endl;
+    cout &lt;&lt; "    第4步：计算等待时间" &lt;&lt; endl;
+    cout &lt;&lt; "           交换前: 0+5+7+10 = 22" &lt;&lt; endl;
+    cout &lt;&lt; "           交换后: 0+1+3+6  = 10 ← 明显更小！" &lt;&lt; endl;
+    cout &lt;&lt; "    第5步：继续调整直到完全按时间升序" &lt;&lt; endl;
+    cout &lt;&lt; "           最终: [D(1), B(2), C(3), A(5)] → 等待时间=10" &lt;&lt; endl;
+    cout &lt;&lt; "           这是真正的最优解 ✓" &lt;&lt; endl;
+    cout &lt;&lt; endl;
+}
+
+// ================================================================
+// 主函数：测试所有例题
+// ================================================================
+int main() {
+    cout &lt;&lt; "╔══════════════════════════════════════════════════╗" &lt;&lt; endl;
+    cout &lt;&lt; "║   C++ 算法提高 —— 第23课：贪心策略证明            ║" &lt;&lt; endl;
+    cout &lt;&lt; "║   交换论证与归纳法 —— 为什么贪心是对的？           ║" &lt;&lt; endl;
+    cout &lt;&lt; "╚══════════════════════════════════════════════════╝" &lt;&lt; endl;
+    cout &lt;&lt; endl;
+
+    // 交换论证演示
+    demoExchangeArgument();
+
+    // 例题1：排队接水
+    solveQueueForWater();
+
+    // 例题2：合并果子
+    solveMergeFruits();
+
+    // 附加题：多水龙头排队接水
+    solveMultiTapQueue();
+
+    // 本课小结
+    cout &lt;&lt; "╔══════════════════════════════════════════════════╗" &lt;&lt; endl;
+    cout &lt;&lt; "║                   本课小结                        ║" &lt;&lt; endl;
+    cout &lt;&lt; "╠══════════════════════════════════════════════════╣" &lt;&lt; endl;
+    cout &lt;&lt; "║  1. 贪心算法需要证明：局部最优 → 全局最优        ║" &lt;&lt; endl;
+    cout &lt;&lt; "║  2. 交换论证法：假设更优解，替换后证明不差        ║" &lt;&lt; endl;
+    cout &lt;&lt; "║  3. 归纳法：基础步骤 + 归纳步骤，步步为营        ║" &lt;&lt; endl;
+    cout &lt;&lt; "║  4. 排队接水：排序贪心，交换论证证明              ║" &lt;&lt; endl;
+    cout &lt;&lt; "║  5. 合并果子：堆贪心，归纳法 + 交换论证证明       ║" &lt;&lt; endl;
+    cout &lt;&lt; "║  6. 竞赛技巧：换一下试试，找反例验证              ║" &lt;&lt; endl;
+    cout &lt;&lt; "╚══════════════════════════════════════════════════╝" &lt;&lt; endl;
+
+    return 0;
+}
+</pre>
+    <p class="hint">本页使用浅色主题与 UTF-8 编码，可直接打印或导出 PDF。</p>
+  </div>
+</body>
+</html>

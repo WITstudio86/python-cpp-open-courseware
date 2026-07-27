@@ -1,0 +1,428 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>lesson07_游戏模拟.cpp</title>
+<style>
+  :root {
+    --bg: #f5f7fa;
+    --panel: #ffffff;
+    --text: #1a1a2e;
+    --muted: #5a6570;
+    --gold: #b8860b;
+    --code-bg: #ffffff;
+    --code-text: #1f2933;
+    --border: #d8dee6;
+    --top-bg: #ffffff;
+    --top-border: #e5e9ef;
+  }
+  * { box-sizing: border-box; }
+  html, body {
+    margin: 0; padding: 0;
+    background: var(--bg);
+    color: var(--text);
+    font-family: -apple-system, BlinkMacSystemFont, "PingFang SC", "Microsoft YaHei", sans-serif;
+    min-height: 100%;
+  }
+  .top {
+    position: sticky; top: 0; z-index: 10;
+    display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between;
+    gap: 10px;
+    padding: 12px 18px;
+    background: var(--top-bg);
+    border-bottom: 1px solid var(--top-border);
+    box-shadow: 0 1px 8px rgba(15, 23, 42, 0.06);
+  }
+  .brand { color: var(--gold); font-weight: 700; font-size: 14px; letter-spacing: 0.04em; }
+  .title { font-size: 15px; font-weight: 600; color: var(--text); max-width: 52vw; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .actions { display: flex; gap: 8px; flex-wrap: wrap; }
+  .btn {
+    appearance: none; border: 1px solid var(--border);
+    background: #fff; color: var(--text);
+    border-radius: 999px; padding: 8px 14px; font-size: 13px; font-weight: 600;
+    text-decoration: none; cursor: pointer;
+  }
+  .btn:hover { background: #f0f3f7; }
+  .btn.gold {
+    background: linear-gradient(135deg, #f0d78c, #d4a853);
+    color: #0a2540; border-color: #e0c06a;
+  }
+  .meta {
+    padding: 10px 18px; color: var(--muted); font-size: 12px;
+    border-bottom: 1px solid var(--border);
+    background: var(--panel);
+  }
+  .wrap { padding: 16px 18px 40px; }
+  pre {
+    margin: 0;
+    background: var(--code-bg);
+    color: var(--code-text);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 18px 20px;
+    overflow: auto;
+    font-family: "SF Mono", "JetBrains Mono", "Fira Code", Consolas, "Courier New", monospace;
+    font-size: 13.5px;
+    line-height: 1.55;
+    white-space: pre;
+    tab-size: 4;
+    box-shadow: 0 2px 12px rgba(15, 23, 42, 0.05);
+  }
+  .hint { margin-top: 12px; color: var(--muted); font-size: 12px; }
+  @media print {
+    html, body { background: #fff !important; color: #000 !important; }
+    .top { position: static; box-shadow: none; border-bottom: 1px solid #ccc; background: #fff !important; }
+    .actions { display: none !important; }
+    .meta { background: #fff !important; border-color: #ddd; color: #333; }
+    .wrap { padding: 0; }
+    pre {
+      background: #fff !important; color: #000 !important;
+      border: 1px solid #bbb; box-shadow: none; border-radius: 0;
+      white-space: pre-wrap; word-break: break-word; font-size: 11pt; line-height: 1.4;
+    }
+    .hint { display: none; }
+    a { color: #000; text-decoration: none; }
+  }
+</style>
+</head>
+<body>
+  <div class="top">
+    <div class="brand">C++ 算法提高 · 配套代码</div>
+    <div class="title">lesson07_游戏模拟.cpp</div>
+    <div class="actions">
+      <a class="btn" href="../lesson07_游戏模拟.cpp" download="lesson07_游戏模拟.cpp">⬇️ 下载源文件</a>
+      <a class="btn gold" href="javascript:history.back()">← 返回课件</a>
+    </div>
+  </div>
+  <div class="meta">编码：UTF-8 · 文件：lesson07_游戏模拟.cpp · 共 324 行 · 浅色主题便于打印</div>
+  <div class="wrap">
+    <pre id="code">/*
+ * ================================================================
+ * C++算法提高 第07课：游戏模拟——规则驱动
+ * ================================================================
+ *
+ * 算法知识点：
+ *   - 环形结构的数组模拟：用取模运算 (pos+1)%n 实现循环
+ *   - 约瑟夫环问题：模拟法 vs 递推公式法
+ *   - 报数游戏模拟：状态追踪 + 条件判断
+ *   - 淘汰/出列的处理：bool数组标记状态
+ *   - 递推公式：f(i) = (f(i-1) + m) % i
+ *
+ * 经典例题：
+ *   例题1 - 约瑟夫环：n个人数到m出列，输出出列顺序或求最后幸存者
+ *   例题2 - 报数游戏：含7或7的倍数拍手，求第k次拍手的人
+ *
+ * 关键技巧：
+ *   - 取模实现环形：(current % n) + 1 得到1~n的循环
+ *   - 淘汰标记：bool eliminated[] 记录是否已出列
+ *   - 只数未出列的人：if(!eliminated[pos]) count++
+ */
+
+#include &lt;iostream&gt;
+#include &lt;vector&gt;
+#include &lt;iomanip&gt;
+using namespace std;
+
+// ================================================================
+// 演示：取模运算实现环形遍历
+// 这是理解约瑟夫环等环形游戏的关键基础
+// ================================================================
+void demoCircularArray() {
+    cout &lt;&lt; "══════════════════════════════════════" &lt;&lt; endl;
+    cout &lt;&lt; "  环形遍历演示：取模运算" &lt;&lt; endl;
+    cout &lt;&lt; "══════════════════════════════════════" &lt;&lt; endl;
+
+    int n = 8;  // 8个人围成一圈
+    cout &lt;&lt; n &lt;&lt; " 个人围成一圈，遍历两圈（16步）：" &lt;&lt; endl;
+
+    cout &lt;&lt; "方法1: pos = (pos % n) + 1;" &lt;&lt; endl;
+    int pos = 0;
+    for (int i = 1; i &lt;= 16; i++) {
+        pos = (pos % n) + 1;
+        cout &lt;&lt; pos &lt;&lt; " ";
+        if (i == n) cout &lt;&lt; "← 第一圈结束";
+        cout &lt;&lt; endl;
+    }
+
+    cout &lt;&lt; "\n方法2: 直接用 i%n+1" &lt;&lt; endl;
+    for (int i = 0; i &lt; 16; i++) {
+        cout &lt;&lt; (i % n) + 1 &lt;&lt; " ";
+        if ((i + 1) % n == 0) cout &lt;&lt; "← 一圈结束";
+        cout &lt;&lt; endl;
+    }
+    cout &lt;&lt; endl;
+}
+
+// ================================================================
+// 例题1：约瑟夫环（Josephus Problem）
+// 题目：n个人围成一圈，编号1~n。从1号开始报数1~m，
+//       数到m的人出列。下一个人重新从1开始报。
+//       输出：最后剩下的人的编号，以及全部出列顺序。
+//
+// 解法一：模拟法（直接模拟游戏过程）
+//   用 bool eliminated[] 标记出列状态
+//   循环报数，只数还在圈内的人
+//
+// 解法二：递推公式法（数学归纳）
+//   f(1) = 0
+//   f(i) = (f(i-1) + m) % i
+//   答案 = f(n) + 1
+// ================================================================
+void solveJosephus() {
+    cout &lt;&lt; "══════════════════════════════════════" &lt;&lt; endl;
+    cout &lt;&lt; "  例题1：约瑟夫环（Josephus Problem）" &lt;&lt; endl;
+    cout &lt;&lt; "══════════════════════════════════════" &lt;&lt; endl;
+
+    int n, m;
+    cout &lt;&lt; "请输入人数 n: ";
+    cin &gt;&gt; n;
+    cout &lt;&lt; "请输入报数上限 m: ";
+    cin &gt;&gt; m;
+
+    // ---- 解法一：模拟法（输出出列顺序） ----
+    cout &lt;&lt; "\n【解法一：模拟法】" &lt;&lt; endl;
+    cout &lt;&lt; "出列顺序：";
+
+    // eliminated[i] = true 表示 i 号已出列
+    // 索引 1~n 使用，eliminated[0] 不用
+    bool eliminated[1005] = {false};
+    int remain = n;    // 剩余人数
+    int pos = 0;       // 当前位置（下一个从1开始）
+
+    while (remain &gt; 0) {
+        // 报数：需要跳过 m 个还没出列的人
+        int cnt = 0;
+        while (cnt &lt; m) {
+            pos = (pos % n) + 1;       // 环形移动到下一个人
+            if (!eliminated[pos]) cnt++; // 只数还没出列的
+        }
+
+        // pos 位置的人出列
+        eliminated[pos] = true;
+        remain--;
+        cout &lt;&lt; pos;
+        if (remain &gt; 0) cout &lt;&lt; " → ";
+    }
+    cout &lt;&lt; endl;
+
+    // ---- 解法一续：显示逐轮淘汰过程 ----
+    cout &lt;&lt; "\n是否显示逐轮淘汰过程？(1=是/0=否): ";
+    int debug;
+    cin &gt;&gt; debug;
+
+    if (debug) {
+        // 重置状态，重新模拟
+        for (int i = 1; i &lt;= n; i++) eliminated[i] = false;
+        remain = n;
+        pos = 0;
+
+        cout &lt;&lt; "\n--- 逐轮淘汰过程（n=" &lt;&lt; n &lt;&lt; ", m=" &lt;&lt; m &lt;&lt; "）---" &lt;&lt; endl;
+
+        // 显示初始圆圈
+        cout &lt;&lt; "初始圆圈: ";
+        for (int i = 1; i &lt;= n; i++) cout &lt;&lt; setw(3) &lt;&lt; i;
+        cout &lt;&lt; endl;
+
+        int round = 0;
+        while (remain &gt; 0) {
+            round++;
+            int cnt = 0;
+            while (cnt &lt; m) {
+                pos = (pos % n) + 1;
+                if (!eliminated[pos]) cnt++;
+            }
+            eliminated[pos] = true;
+            remain--;
+
+            cout &lt;&lt; "第" &lt;&lt; setw(2) &lt;&lt; round &lt;&lt; "轮: ";
+            cout &lt;&lt; pos &lt;&lt; "号出列 → 剩余: [";
+            bool first = true;
+            for (int i = 1; i &lt;= n; i++) {
+                if (!eliminated[i]) {
+                    if (!first) cout &lt;&lt; ", ";
+                    cout &lt;&lt; i;
+                    first = false;
+                }
+            }
+            cout &lt;&lt; "] (" &lt;&lt; remain &lt;&lt; "人)" &lt;&lt; endl;
+        }
+    }
+
+    // ---- 解法二：递推公式法（只求最后幸存者） ----
+    cout &lt;&lt; "\n【解法二：递推公式法】" &lt;&lt; endl;
+    int survivor = 0;  // f(1) = 0
+    for (int i = 2; i &lt;= n; i++) {
+        survivor = (survivor + m) % i;
+    }
+    cout &lt;&lt; "最后幸存者编号 = f(" &lt;&lt; n &lt;&lt; ")+1 = "
+         &lt;&lt; survivor &lt;&lt; "+1 = " &lt;&lt; (survivor + 1) &lt;&lt; endl;
+
+    // 验证
+    cout &lt;&lt; "模拟法结果与递推法结果"
+         &lt;&lt; (survivor + 1 == pos ? "一致 ✓" : "不一致 ✗") &lt;&lt; endl;
+
+    // 解释递推公式
+    cout &lt;&lt; "\n递推公式推导（供进阶学习）：" &lt;&lt; endl;
+    cout &lt;&lt; "  f(1) = 0" &lt;&lt; endl;
+    cout &lt;&lt; "  f(i) = (f(i-1) + m) % i  （i=2,3,...,n）" &lt;&lt; endl;
+    cout &lt;&lt; "  最终答案 = f(n) + 1" &lt;&lt; endl;
+    cout &lt;&lt; "  含义：i个人时的幸存者位置 = (i-1个人时的幸存位置 + m) 对 i 取模" &lt;&lt; endl;
+    cout &lt;&lt; endl;
+}
+
+// ================================================================
+// 例题2：报数游戏（含7或7的倍数拍手）
+// 题目：n个小朋友围成一圈，从1号开始从数字1开始报数。
+//       当报到的数字包含数字7或是7的倍数时拍手。
+//       问第k次拍手时是哪个小朋友？
+//
+// 模拟思路：
+//   - 记录当前报到的数字 number
+//   - 记录当前小朋友 person（环形移动）
+//   - 判断是否需要拍手（needClap函数）
+//   - 计数拍手次数，到第k次时停止
+// ================================================================
+bool needClap(int x) {
+    // 判断数字x是否包含数字7或是7的倍数
+    if (x % 7 == 0) return true;  // 7的倍数
+
+    // 检查每一位是否包含数字7
+    while (x &gt; 0) {
+        if (x % 10 == 7) return true;
+        x /= 10;
+    }
+    return false;
+}
+
+void solveClappingGame() {
+    cout &lt;&lt; "══════════════════════════════════════" &lt;&lt; endl;
+    cout &lt;&lt; "  例题2：报数游戏（含7或7的倍数拍手）" &lt;&lt; endl;
+    cout &lt;&lt; "══════════════════════════════════════" &lt;&lt; endl;
+
+    int n, k;
+    cout &lt;&lt; "请输入小朋友人数 n: ";
+    cin &gt;&gt; n;
+    cout &lt;&lt; "请输入第几次拍手 k: ";
+    cin &gt;&gt; k;
+
+    int person = 1;      // 当前报数的小朋友编号
+    int number = 1;      // 当前报的数字
+    int clapCount = 0;   // 已拍手次数
+
+    // 显示前几次拍手的过程
+    cout &lt;&lt; "\n拍手记录（前10次）：" &lt;&lt; endl;
+    int shown = 0;
+
+    while (clapCount &lt; k) {
+        if (needClap(number)) {
+            clapCount++;
+            if (clapCount &lt;= 10) {
+                cout &lt;&lt; "第" &lt;&lt; setw(3) &lt;&lt; clapCount &lt;&lt; "次拍手: ";
+                cout &lt;&lt; "小朋友" &lt;&lt; setw(3) &lt;&lt; person;
+                cout &lt;&lt; "，报到数字 " &lt;&lt; setw(4) &lt;&lt; number;
+                // 说明原因
+                cout &lt;&lt; "（";
+                if (number % 7 == 0)
+                    cout &lt;&lt; "7的倍数: " &lt;&lt; number &lt;&lt; " = 7×" &lt;&lt; number/7;
+                else
+                    cout &lt;&lt; "包含数字7";
+                cout &lt;&lt; "）" &lt;&lt; endl;
+                shown++;
+            }
+            if (clapCount == k) {
+                cout &lt;&lt; "\n===== 结果 =====" &lt;&lt; endl;
+                cout &lt;&lt; "第 " &lt;&lt; k &lt;&lt; " 次拍手的是: " &lt;&lt; person &lt;&lt; " 号小朋友！" &lt;&lt; endl;
+                cout &lt;&lt; "此时报到的数字是: " &lt;&lt; number &lt;&lt; endl;
+                break;
+            }
+        }
+
+        // 下一个小朋友（环形移动）
+        person = person % n + 1;
+        // 下一个数字
+        number++;
+    }
+
+    // 验证：列出前30个需要拍手的数字
+    cout &lt;&lt; "\n前30个需要拍手的数字（验证用）：" &lt;&lt; endl;
+    int check = 0;
+    for (int num = 1; check &lt; 30; num++) {
+        if (needClap(num)) {
+            cout &lt;&lt; num &lt;&lt; " ";
+            check++;
+            if (check % 10 == 0) cout &lt;&lt; endl;
+        }
+    }
+    cout &lt;&lt; endl &lt;&lt; endl;
+}
+
+// ================================================================
+// 附加演示：从约瑟夫环到递推公式的推导过程
+// ================================================================
+void demoJosephusDerivation() {
+    cout &lt;&lt; "══════════════════════════════════════" &lt;&lt; endl;
+    cout &lt;&lt; "  附加：约瑟夫环递推公式推导" &lt;&lt; endl;
+    cout &lt;&lt; "══════════════════════════════════════" &lt;&lt; endl;
+
+    int m = 3;
+    cout &lt;&lt; "以 m=" &lt;&lt; m &lt;&lt; " 为例，展示递推过程：" &lt;&lt; endl;
+    cout &lt;&lt; endl;
+
+    int f = 0;  // f(1) = 0
+    cout &lt;&lt; setw(8) &lt;&lt; "n" &lt;&lt; " | " &lt;&lt; setw(15) &lt;&lt; "f(n)" &lt;&lt; " | " &lt;&lt; "幸存者编号" &lt;&lt; endl;
+    cout &lt;&lt; "---------+-----------------+-----------" &lt;&lt; endl;
+
+    for (int n = 1; n &lt;= 10; n++) {
+        if (n &gt; 1) {
+            f = (f + m) % n;
+        }
+        cout &lt;&lt; setw(8) &lt;&lt; n &lt;&lt; " | "
+             &lt;&lt; "f(" &lt;&lt; n &lt;&lt; ")=" &lt;&lt; setw(2) &lt;&lt; f
+             &lt;&lt; "         | " &lt;&lt; setw(3) &lt;&lt; (f + 1) &lt;&lt; "号" &lt;&lt; endl;
+    }
+    cout &lt;&lt; endl;
+    cout &lt;&lt; "解释：f(n) 表示编号从0开始的幸存者位置。" &lt;&lt; endl;
+    cout &lt;&lt; "      实际编号从1开始，所以答案是 f(n)+1。" &lt;&lt; endl;
+    cout &lt;&lt; endl;
+}
+
+// ================================================================
+// 主函数
+// ================================================================
+int main() {
+    cout &lt;&lt; "╔══════════════════════════════════════════════╗" &lt;&lt; endl;
+    cout &lt;&lt; "║   C++ 算法提高 —— 第07课：游戏模拟            ║" &lt;&lt; endl;
+    cout &lt;&lt; "║   规则驱动 —— 环形结构 + 回合制模拟           ║" &lt;&lt; endl;
+    cout &lt;&lt; "╚══════════════════════════════════════════════╝" &lt;&lt; endl;
+    cout &lt;&lt; endl;
+
+    // 环形遍历演示
+    demoCircularArray();
+
+    // 例题1：约瑟夫环
+    solveJosephus();
+
+    // 例题2：报数游戏
+    solveClappingGame();
+
+    // 附加：递推公式推导演示
+    demoJosephusDerivation();
+
+    cout &lt;&lt; "══════════════════════════════════════" &lt;&lt; endl;
+    cout &lt;&lt; "  本课小结" &lt;&lt; endl;
+    cout &lt;&lt; "══════════════════════════════════════" &lt;&lt; endl;
+    cout &lt;&lt; "1. 环形结构 = 取模运算：(pos % n) + 1" &lt;&lt; endl;
+    cout &lt;&lt; "2. 约瑟夫环模拟法：bool数组 + 报数计数" &lt;&lt; endl;
+    cout &lt;&lt; "3. 约瑟夫环递推法：f(i) = (f(i-1)+m) % i" &lt;&lt; endl;
+    cout &lt;&lt; "4. 报数游戏：状态追踪 + 条件函数化" &lt;&lt; endl;
+    cout &lt;&lt; "5. 游戏模拟核心：准确翻译规则为代码" &lt;&lt; endl;
+    cout &lt;&lt; "══════════════════════════════════════" &lt;&lt; endl;
+
+    return 0;
+}
+</pre>
+    <p class="hint">本页使用浅色主题与 UTF-8 编码，可直接打印或导出 PDF。</p>
+  </div>
+</body>
+</html>

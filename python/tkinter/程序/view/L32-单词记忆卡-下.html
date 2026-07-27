@@ -1,0 +1,473 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>L32-单词记忆卡-下.py</title>
+<style>
+  :root {
+    --bg: #f5f7fa;
+    --panel: #ffffff;
+    --text: #1a1a2e;
+    --muted: #5a6570;
+    --gold: #b8860b;
+    --code-bg: #ffffff;
+    --code-text: #1f2933;
+    --border: #d8dee6;
+    --top-bg: #ffffff;
+    --top-border: #e5e9ef;
+  }
+  * { box-sizing: border-box; }
+  html, body {
+    margin: 0; padding: 0;
+    background: var(--bg);
+    color: var(--text);
+    font-family: -apple-system, BlinkMacSystemFont, "PingFang SC", "Microsoft YaHei", sans-serif;
+    min-height: 100%;
+  }
+  .top {
+    position: sticky; top: 0; z-index: 10;
+    display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between;
+    gap: 10px;
+    padding: 12px 18px;
+    background: var(--top-bg);
+    border-bottom: 1px solid var(--top-border);
+    box-shadow: 0 1px 8px rgba(15, 23, 42, 0.06);
+  }
+  .brand { color: var(--gold); font-weight: 700; font-size: 14px; letter-spacing: 0.04em; }
+  .title { font-size: 15px; font-weight: 600; color: var(--text); max-width: 52vw; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .actions { display: flex; gap: 8px; flex-wrap: wrap; }
+  .btn {
+    appearance: none; border: 1px solid var(--border);
+    background: #fff; color: var(--text);
+    border-radius: 999px; padding: 8px 14px; font-size: 13px; font-weight: 600;
+    text-decoration: none; cursor: pointer;
+  }
+  .btn:hover { background: #f0f3f7; }
+  .btn.gold {
+    background: linear-gradient(135deg, #f0d78c, #d4a853);
+    color: #0a2540; border-color: #e0c06a;
+  }
+  .meta {
+    padding: 10px 18px; color: var(--muted); font-size: 12px;
+    border-bottom: 1px solid var(--border);
+    background: var(--panel);
+  }
+  .wrap { padding: 16px 18px 40px; }
+  pre {
+    margin: 0;
+    background: var(--code-bg);
+    color: var(--code-text);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 18px 20px;
+    overflow: auto;
+    font-family: "SF Mono", "JetBrains Mono", "Fira Code", Consolas, "Courier New", monospace;
+    font-size: 13.5px;
+    line-height: 1.55;
+    white-space: pre;
+    tab-size: 4;
+    box-shadow: 0 2px 12px rgba(15, 23, 42, 0.05);
+  }
+  .hint { margin-top: 12px; color: var(--muted); font-size: 12px; }
+  @media print {
+    html, body { background: #fff !important; color: #000 !important; }
+    .top { position: static; box-shadow: none; border-bottom: 1px solid #ccc; background: #fff !important; }
+    .actions { display: none !important; }
+    .meta { background: #fff !important; border-color: #ddd; color: #333; }
+    .wrap { padding: 0; }
+    pre {
+      background: #fff !important; color: #000 !important;
+      border: 1px solid #bbb; box-shadow: none; border-radius: 0;
+      white-space: pre-wrap; word-break: break-word; font-size: 11pt; line-height: 1.4;
+    }
+    .hint { display: none; }
+    a { color: #000; text-decoration: none; }
+  }
+</style>
+</head>
+<body>
+  <div class="top">
+    <div class="brand">Python Tkinter · 配套代码</div>
+    <div class="title">L32-单词记忆卡-下.py</div>
+    <div class="actions">
+      <a class="btn" href="../L32-单词记忆卡-下.py" download="L32-单词记忆卡-下.py">⬇️ 下载源文件</a>
+      <a class="btn gold" href="javascript:history.back()">← 返回课件</a>
+    </div>
+  </div>
+  <div class="meta">编码：UTF-8 · 文件：L32-单词记忆卡-下.py · 共 369 行 · 浅色主题便于打印</div>
+  <div class="wrap">
+    <pre id="code">import tkinter as tk
+import random
+
+# ========================================
+# 第 32 节：项目 7 — 单词记忆卡（完整版）
+# 功能：分类词库、掌握/未掌握标记、学习统计、复习模式
+# ========================================
+
+# 1. 创建主窗口
+root = tk.Tk()
+root.title("单词记忆卡 📖")
+root.geometry("540x600")
+root.configure(bg="#fff8e7")
+
+# ========================================
+# 2. 分类词库（嵌套字典）
+# ========================================
+
+word_bank = {
+    "🐾 动物": {
+        "cat": "猫", "dog": "狗", "elephant": "大象",
+        "lion": "狮子", "tiger": "老虎", "rabbit": "兔子",
+        "bird": "鸟", "fish": "鱼", "monkey": "猴子", "horse": "马",
+    },
+    "🍎 水果": {
+        "apple": "苹果", "banana": "香蕉", "orange": "橙子",
+        "grape": "葡萄", "watermelon": "西瓜", "strawberry": "草莓",
+        "mango": "芒果", "peach": "桃子",
+    },
+    "🏫 学校": {
+        "book": "书", "pen": "笔", "desk": "课桌",
+        "teacher": "老师", "student": "学生", "classroom": "教室",
+        "homework": "作业", "exam": "考试",
+    },
+    "🌈 自然": {
+        "sun": "太阳", "moon": "月亮", "star": "星星",
+        "rain": "雨", "snow": "雪", "wind": "风",
+        "ocean": "海洋", "mountain": "山", "river": "河流",
+    },
+}
+
+# 把所有单词合并到一个大字典，方便查询释义
+all_words = {}
+for category_words in word_bank.values():
+    all_words.update(category_words)
+
+# ========================================
+# 3. 状态变量
+# ========================================
+
+current_word = ""          # 当前显示的英文单词
+current_meaning = ""       # 对应的中文释义
+current_word_list = []     # 当前分类下的所有单词列表
+is_front = True            # 正面（英文）= True / 背面（中文）= False
+
+mastered = []              # 已掌握的单词列表
+unmastered = []            # 未掌握的单词列表
+
+# ========================================
+# 4. 功能函数
+# ========================================
+
+def change_category(*args):
+    """切换分类时的处理：重置所有状态"""
+    global current_word_list, mastered, unmastered
+
+    cat = category_var.get()
+    current_word_list = list(word_bank[cat].keys())  # 获取该分类的所有单词
+
+    # 重置掌握/未掌握列表
+    mastered = []
+    unmastered = []
+
+    # 更新统计
+    update_stats()
+
+    # 抽取第一张卡片
+    next_card()
+
+
+def next_card():
+    """抽取下一张记忆卡"""
+    global current_word, current_meaning, is_front
+
+    if not current_word_list:
+        return
+
+    # 根据复习模式决定从哪个池子里抽词
+    if review_var.get() == "unmastered" and unmastered:
+        # "只复习未掌握"模式：从未掌握的单词中筛选属于当前分类的
+        pool = [w for w in unmastered if w in current_word_list]
+        if not pool:
+            # 如果当前分类的单词都已掌握，就全部随机
+            pool = current_word_list
+    else:
+        pool = current_word_list
+
+    # 随机选一个单词
+    current_word = random.choice(pool)
+    current_meaning = all_words[current_word]
+
+    # 显示正面（英文）
+    is_front = True
+    word_label.config(text=current_word, fg="#3a2a1a")
+    flip_btn.config(text="🔍 翻面看释义")
+
+    # 更新状态指示
+    update_status_display()
+
+
+def flip():
+    """翻面：切换正/反面显示"""
+    global is_front
+
+    if is_front:
+        # 翻到背面 → 显示中文释义
+        word_label.config(text=current_meaning, fg="#8b4513")
+        flip_btn.config(text="↩ 翻回正面")
+        is_front = False
+    else:
+        # 翻回正面 → 显示英文单词
+        word_label.config(text=current_word, fg="#3a2a1a")
+        flip_btn.config(text="🔍 翻面看释义")
+        is_front = True
+
+
+def mark(status):
+    """
+    标记当前单词的掌握状态
+    status: "mastered" = 已掌握, "unmastered" = 未掌握
+    """
+    if status == "mastered":
+        if current_word not in mastered:
+            mastered.append(current_word)
+        if current_word in unmastered:
+            unmastered.remove(current_word)
+    else:
+        if current_word not in unmastered:
+            unmastered.append(current_word)
+        if current_word in mastered:
+            mastered.remove(current_word)
+
+    # 更新统计和状态显示
+    update_stats()
+    update_status_display()
+
+    # 自动跳到下一张卡片
+    next_card()
+
+
+def update_status_display():
+    """更新当前单词的状态指示"""
+    if current_word in mastered:
+        status_label.config(text="✅ 已掌握", fg="#27ae60")
+    elif current_word in unmastered:
+        status_label.config(text="❌ 未掌握", fg="#e74c3c")
+    else:
+        status_label.config(
+            text=f"📚 共 {len(current_word_list)} 个单词",
+            fg="#aaa"
+        )
+
+
+def update_stats():
+    """更新学习统计显示"""
+    total = len(current_word_list)
+    # 计算当前分类中已掌握的单词数
+    learned = len([w for w in mastered if w in current_word_list])
+    percent = int(learned / total * 100) if total &gt; 0 else 0
+
+    stats_label.config(
+        text=f"📊 已掌握 {learned} / {total}（{percent}%）"
+    )
+
+
+# ========================================
+# 5. 界面布局
+# ========================================
+
+# --- 标题 ---
+title_label = tk.Label(
+    root,
+    text="📖 单词记忆卡",
+    font=("微软雅黑", 24, "bold"),
+    bg="#fff8e7",
+    fg="#5a3e2b"
+)
+title_label.pack(pady=(25, 10))
+
+# --- 分类选择行 ---
+cat_frame = tk.Frame(root, bg="#fff8e7")
+cat_frame.pack(pady=5)
+
+tk.Label(
+    cat_frame,
+    text="分类：",
+    font=("微软雅黑", 12),
+    bg="#fff8e7",
+    fg="#5a3e2b"
+).pack(side=tk.LEFT)
+
+category_var = tk.StringVar()
+category_var.set("🐾 动物")  # 默认选中"动物"
+
+# 监听 category_var 的变化 → 自动切换分类
+category_var.trace("w", change_category)
+
+cat_menu = tk.OptionMenu(
+    cat_frame,
+    category_var,
+    *word_bank.keys()  # 所有分类名作为选项
+)
+cat_menu.config(
+    font=("微软雅黑", 11),
+    bg="white",
+    relief="solid",
+    bd=1
+)
+cat_menu.pack(side=tk.LEFT, padx=5)
+
+# --- 复习模式选择 ---
+review_var = tk.StringVar(value="all")
+
+tk.Radiobutton(
+    cat_frame,
+    text="全部",
+    variable=review_var,
+    value="all",
+    bg="#fff8e7",
+    font=("微软雅黑", 10),
+    command=next_card
+).pack(side=tk.LEFT, padx=(20, 5))
+
+tk.Radiobutton(
+    cat_frame,
+    text="只复习未掌握",
+    variable=review_var,
+    value="unmastered",
+    bg="#fff8e7",
+    font=("微软雅黑", 10),
+    command=next_card
+).pack(side=tk.LEFT)
+
+# --- 卡片区域 ---
+card_frame = tk.Frame(
+    root,
+    bg="#fffef5",
+    relief="solid",
+    bd=2,
+    width=360,
+    height=190
+)
+card_frame.pack(pady=18)
+card_frame.pack_propagate(False)
+
+word_label = tk.Label(
+    card_frame,
+    text="选择一个分类开始 📚",
+    font=("微软雅黑", 30, "bold"),
+    bg="#fffef5",
+    fg="#3a2a1a"
+)
+word_label.pack(expand=True)
+
+# --- 当前单词状态 ---
+status_label = tk.Label(
+    root,
+    text="",
+    font=("微软雅黑", 11),
+    bg="#fff8e7",
+    fg="#aaa"
+)
+status_label.pack()
+
+# --- 学习统计 ---
+stats_label = tk.Label(
+    root,
+    text="📊 已掌握 0 / 0（0%）",
+    font=("微软雅黑", 12),
+    bg="#fff8e7",
+    fg="#7d9d6e"
+)
+stats_label.pack(pady=(3, 0))
+
+# --- 按钮区域 ---
+btn_frame = tk.Frame(root, bg="#fff8e7")
+btn_frame.pack(pady=18)
+
+# 翻面按钮
+flip_btn = tk.Button(
+    btn_frame,
+    text="🔍 翻面看释义",
+    command=flip,
+    font=("微软雅黑", 13),
+    bg="#f0c060",
+    fg="#3a2a1a",
+    padx=15,
+    pady=7,
+    relief="flat",
+    cursor="hand2"
+)
+flip_btn.pack(side=tk.LEFT, padx=5)
+
+# 已掌握按钮
+mastered_btn = tk.Button(
+    btn_frame,
+    text="✅ 掌握",
+    command=lambda: mark("mastered"),
+    font=("微软雅黑", 13),
+    bg="#7d9d6e",
+    fg="white",
+    padx=15,
+    pady=7,
+    relief="flat",
+    cursor="hand2"
+)
+mastered_btn.pack(side=tk.LEFT, padx=5)
+
+# 未掌握按钮
+unmastered_btn = tk.Button(
+    btn_frame,
+    text="❌ 未掌握",
+    command=lambda: mark("unmastered"),
+    font=("微软雅黑", 13),
+    bg="#e07060",
+    fg="white",
+    padx=15,
+    pady=7,
+    relief="flat",
+    cursor="hand2"
+)
+unmastered_btn.pack(side=tk.LEFT, padx=5)
+
+# 下一张按钮
+next_btn = tk.Button(
+    btn_frame,
+    text="➡ 下一张",
+    command=next_card,
+    font=("微软雅黑", 13),
+    bg="#60a0c0",
+    fg="white",
+    padx=15,
+    pady=7,
+    relief="flat",
+    cursor="hand2"
+)
+next_btn.pack(side=tk.LEFT, padx=5)
+
+# --- 底部提示 ---
+hint_label = tk.Label(
+    root,
+    text="💡 先浏览全部 → 标记掌握/未掌握 → 开启「只复习未掌握」模式！",
+    font=("微软雅黑", 9),
+    bg="#fff8e7",
+    fg="#ccbbaa"
+)
+hint_label.pack(side=tk.BOTTOM, pady=15)
+
+# ========================================
+# 6. 启动程序
+# ========================================
+
+# 初始化第一个分类
+change_category()
+
+# 让第一个按钮获得焦点
+flip_btn.focus_set()
+
+root.mainloop()
+</pre>
+    <p class="hint">本页使用浅色主题与 UTF-8 编码，可直接打印或导出 PDF。</p>
+  </div>
+</body>
+</html>

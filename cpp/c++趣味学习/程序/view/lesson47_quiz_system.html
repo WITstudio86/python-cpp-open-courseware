@@ -1,0 +1,642 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>lesson47_quiz_system.cpp</title>
+<style>
+  :root {
+    --bg: #f5f7fa;
+    --panel: #ffffff;
+    --text: #1a1a2e;
+    --muted: #5a6570;
+    --gold: #b8860b;
+    --code-bg: #ffffff;
+    --code-text: #1f2933;
+    --border: #d8dee6;
+    --top-bg: #ffffff;
+    --top-border: #e5e9ef;
+  }
+  * { box-sizing: border-box; }
+  html, body {
+    margin: 0; padding: 0;
+    background: var(--bg);
+    color: var(--text);
+    font-family: -apple-system, BlinkMacSystemFont, "PingFang SC", "Microsoft YaHei", sans-serif;
+    min-height: 100%;
+  }
+  .top {
+    position: sticky; top: 0; z-index: 10;
+    display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between;
+    gap: 10px;
+    padding: 12px 18px;
+    background: var(--top-bg);
+    border-bottom: 1px solid var(--top-border);
+    box-shadow: 0 1px 8px rgba(15, 23, 42, 0.06);
+  }
+  .brand { color: var(--gold); font-weight: 700; font-size: 14px; letter-spacing: 0.04em; }
+  .title { font-size: 15px; font-weight: 600; color: var(--text); max-width: 52vw; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .actions { display: flex; gap: 8px; flex-wrap: wrap; }
+  .btn {
+    appearance: none; border: 1px solid var(--border);
+    background: #fff; color: var(--text);
+    border-radius: 999px; padding: 8px 14px; font-size: 13px; font-weight: 600;
+    text-decoration: none; cursor: pointer;
+  }
+  .btn:hover { background: #f0f3f7; }
+  .btn.gold {
+    background: linear-gradient(135deg, #f0d78c, #d4a853);
+    color: #0a2540; border-color: #e0c06a;
+  }
+  .meta {
+    padding: 10px 18px; color: var(--muted); font-size: 12px;
+    border-bottom: 1px solid var(--border);
+    background: var(--panel);
+  }
+  .wrap { padding: 16px 18px 40px; }
+  pre {
+    margin: 0;
+    background: var(--code-bg);
+    color: var(--code-text);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 18px 20px;
+    overflow: auto;
+    font-family: "SF Mono", "JetBrains Mono", "Fira Code", Consolas, "Courier New", monospace;
+    font-size: 13.5px;
+    line-height: 1.55;
+    white-space: pre;
+    tab-size: 4;
+    box-shadow: 0 2px 12px rgba(15, 23, 42, 0.05);
+  }
+  .hint { margin-top: 12px; color: var(--muted); font-size: 12px; }
+  @media print {
+    html, body { background: #fff !important; color: #000 !important; }
+    .top { position: static; box-shadow: none; border-bottom: 1px solid #ccc; background: #fff !important; }
+    .actions { display: none !important; }
+    .meta { background: #fff !important; border-color: #ddd; color: #333; }
+    .wrap { padding: 0; }
+    pre {
+      background: #fff !important; color: #000 !important;
+      border: 1px solid #bbb; box-shadow: none; border-radius: 0;
+      white-space: pre-wrap; word-break: break-word; font-size: 11pt; line-height: 1.4;
+    }
+    .hint { display: none; }
+    a { color: #000; text-decoration: none; }
+  }
+</style>
+</head>
+<body>
+  <div class="top">
+    <div class="brand">C++ 趣味学习 · 配套代码</div>
+    <div class="title">lesson47_quiz_system.cpp</div>
+    <div class="actions">
+      <a class="btn" href="../lesson47_quiz_system.cpp" download="lesson47_quiz_system.cpp">⬇️ 下载源文件</a>
+      <a class="btn gold" href="javascript:history.back()">← 返回课件</a>
+    </div>
+  </div>
+  <div class="meta">编码：UTF-8 · 文件：lesson47_quiz_system.cpp · 共 538 行 · 浅色主题便于打印</div>
+  <div class="wrap">
+    <pre id="code">/*
+ * ============================================================
+ * 第47课：知识问答王——题库系统
+ * C++趣味学习课程
+ * ============================================================
+ *
+ * 本课学习内容：
+ *   1. 设计题库结构体（题干、选项、答案一体化）
+ *   2. 结构体数组的初始化（嵌套花括号）
+ *   3. 随机出题（不重复抽题）
+ *   4. 答案验证（大小写统一处理）
+ *   5. 计分统计与评语（正确率、总分、等级评语）
+ *
+ * 本文件包含以下程序：
+ *   程序1：简单问答系统 —— 3道题，顺序答题，入门演示
+ *   程序2：完整知识竞赛 —— 8道题，随机顺序，计分统计，含解析
+ *   程序3：练习题参考答案 —— 自定义题库，随机抽2题
+ *
+ * 编译方式（以 g++ 为例）：
+ *   g++ -std=c++11 lesson47_quiz_system.cpp -o lesson47
+ *   ./lesson47
+ * ============================================================
+ */
+
+#include &lt;iostream&gt;
+#include &lt;string&gt;
+#include &lt;cstdlib&gt;   // 包含 rand() 和 srand()
+#include &lt;ctime&gt;     // 包含 time()，用于随机种子
+#include &lt;cctype&gt;    // 包含 toupper()，用于答案大小写转换
+using namespace std;
+
+// ============================================================
+// 第一部分：结构体定义
+// ============================================================
+
+// 基础题目结构体 —— 用于简单问答
+struct Question {
+    string question;       // 题干
+    string options[4];    // 四个选项（索引 0/1/2/3 对应 A/B/C/D）
+    char answer;          // 正确答案（'A'/'B'/'C'/'D'）
+};
+
+// 完整题目结构体 —— 比基础版多了"解析"字段
+struct FullQuestion {
+    string question;       // 题干
+    string options[4];    // 四个选项
+    char answer;          // 正确答案
+    string explanation;   // 答案解析（答完后展示，帮助学习）
+};
+
+// 玩家信息结构体 —— 用于课后挑战任务
+struct Player {
+    string name;          // 玩家姓名
+    int score;            // 得分
+    int correctCount;     // 答对题数
+};
+
+// ============================================================
+// 第二部分：辅助函数
+// ============================================================
+
+// 打印分隔线，让输出更美观
+void printSeparator(string title = "") {
+    cout &lt;&lt; "\n";
+    if (title != "") {
+        cout &lt;&lt; title &lt;&lt; endl;
+    }
+    cout &lt;&lt; "============================================================" &lt;&lt; endl;
+}
+
+// 显示一道题目（包含题干和四个选项）
+void displayQuestion(const FullQuestion&amp; q, int questionNum) {
+    cout &lt;&lt; "\n第 " &lt;&lt; questionNum &lt;&lt; " 题：" &lt;&lt; q.question &lt;&lt; endl;
+    for (int j = 0; j &lt; 4; j++) {
+        cout &lt;&lt; "  " &lt;&lt; q.options[j] &lt;&lt; endl;
+    }
+}
+
+// 获取用户答案并统一转为大写
+char getUserAnswer() {
+    char ans;
+    cout &lt;&lt; "请输入你的答案（A/B/C/D）：";
+    cin &gt;&gt; ans;
+    return toupper(ans);  // 转成大写，防止用户输入小写
+}
+
+// 显示最终答题成绩
+void showFinalResult(int correct, int total, int score) {
+    double accuracy = (double)correct / total * 100;
+    cout &lt;&lt; "\n========================================" &lt;&lt; endl;
+    cout &lt;&lt; "           答 题 结 束" &lt;&lt; endl;
+    cout &lt;&lt; "========================================" &lt;&lt; endl;
+    cout &lt;&lt; "📊 总题数：" &lt;&lt; total &lt;&lt; " 题" &lt;&lt; endl;
+    cout &lt;&lt; "✅ 答对数：" &lt;&lt; correct &lt;&lt; " 题" &lt;&lt; endl;
+    cout &lt;&lt; "📈 正确率：" &lt;&lt; accuracy &lt;&lt; "%" &lt;&lt; endl;
+    cout &lt;&lt; "⭐ 总得分：" &lt;&lt; score &lt;&lt; " 分（满分 " &lt;&lt; total * 10 &lt;&lt; " 分）" &lt;&lt; endl;
+    cout &lt;&lt; "----------------------------------------" &lt;&lt; endl;
+    if (accuracy == 100) {
+        cout &lt;&lt; "🏆 满分！你是当之无愧的「知识问答王」！" &lt;&lt; endl;
+    } else if (accuracy &gt;= 80) {
+        cout &lt;&lt; "🥇 非常优秀！你是「知识达人」！" &lt;&lt; endl;
+    } else if (accuracy &gt;= 60) {
+        cout &lt;&lt; "🥈 表现不错，继续努力争上游！" &lt;&lt; endl;
+    } else if (accuracy &gt;= 40) {
+        cout &lt;&lt; "🥉 还有进步空间，多读书哦！" &lt;&lt; endl;
+    } else {
+        cout &lt;&lt; "💪 不要气馁，学习是长期积累的过程！" &lt;&lt; endl;
+    }
+    cout &lt;&lt; "========================================\n" &lt;&lt; endl;
+}
+
+// ============================================================
+// 程序1：简单问答系统
+// 只有3道题，按顺序出题，帮助理解基本流程
+// 每道题答对 +10分，答错不扣分
+// ============================================================
+void program1_simpleQuiz() {
+    printSeparator("【程序1】简单问答系统 —— 3道题，顺序答题");
+
+    // ---- 1. 初始化题库（结构体数组） ----
+    // 使用嵌套花括号：外层是题目，内层是选项数组
+    Question quiz[3] = {
+        {"中国的首都是哪里？",
+         {"A. 上海", "B. 北京", "C. 广州", "D. 深圳"},
+         'B'},
+        {"1 + 1 等于几？",
+         {"A. 1", "B. 2", "C. 3", "D. 4"},
+         'B'},
+        {"太阳从哪个方向升起？",
+         {"A. 东边", "B. 西边", "C. 南边", "D. 北边"},
+         'A'}
+    };
+
+    // ---- 2. 答题变量 ----
+    int score = 0;           // 总得分
+    int correctCount = 0;    // 答对题数
+    const int TOTAL = 3;     // 总题数
+
+    // ---- 3. 欢迎界面 ----
+    cout &lt;&lt; "╔════════════════════════════════╗" &lt;&lt; endl;
+    cout &lt;&lt; "║    知识问答王 —— 简单挑战    ║" &lt;&lt; endl;
+    cout &lt;&lt; "╚════════════════════════════════╝" &lt;&lt; endl;
+    cout &lt;&lt; "共有 " &lt;&lt; TOTAL &lt;&lt; " 道题，每道题10分。准备好了吗？\n" &lt;&lt; endl;
+
+    // ---- 4. 逐题问答 ----
+    for (int i = 0; i &lt; TOTAL; i++) {
+        // 显示题目
+        cout &lt;&lt; "第 " &lt;&lt; i + 1 &lt;&lt; " 题：" &lt;&lt; quiz[i].question &lt;&lt; endl;
+        for (int j = 0; j &lt; 4; j++) {
+            cout &lt;&lt; "  " &lt;&lt; quiz[i].options[j] &lt;&lt; endl;
+        }
+
+        // 获取用户答案
+        char userAnswer;
+        cout &lt;&lt; "请输入你的答案（A/B/C/D）：";
+        cin &gt;&gt; userAnswer;
+        userAnswer = toupper(userAnswer);  // 统一转大写
+
+        // 判断正误并计分
+        if (userAnswer == quiz[i].answer) {
+            cout &lt;&lt; "✅ 回答正确！+10分\n" &lt;&lt; endl;
+            score += 10;
+            correctCount++;
+        } else {
+            cout &lt;&lt; "❌ 回答错误！正确答案是 " &lt;&lt; quiz[i].answer &lt;&lt; "\n" &lt;&lt; endl;
+        }
+    }
+
+    // ---- 5. 输出成绩 ----
+    cout &lt;&lt; "========== 答题结束 ==========" &lt;&lt; endl;
+    cout &lt;&lt; "答对：" &lt;&lt; correctCount &lt;&lt; " / " &lt;&lt; TOTAL &lt;&lt; " 题" &lt;&lt; endl;
+    cout &lt;&lt; "总分：" &lt;&lt; score &lt;&lt; " 分" &lt;&lt; endl;
+    double accuracy = (double)correctCount / TOTAL * 100;
+    cout &lt;&lt; "正确率：" &lt;&lt; accuracy &lt;&lt; "%" &lt;&lt; endl;
+
+    if (accuracy == 100) {
+        cout &lt;&lt; "🏆 满分！你是知识问答王！" &lt;&lt; endl;
+    } else if (accuracy &gt;= 66) {
+        cout &lt;&lt; "👍 不错哦！继续加油！" &lt;&lt; endl;
+    } else {
+        cout &lt;&lt; "💪 多多学习，下次一定行！" &lt;&lt; endl;
+    }
+}
+
+// ============================================================
+// 程序2：完整知识竞赛
+// 8道题，随机顺序不重复，计分统计，含答案解析
+// 综合运用：结构体数组、随机数、标记数组、循环、条件判断
+// ============================================================
+void program2_fullCompetition() {
+    printSeparator("【程序2】完整知识竞赛 —— 随机出题，计分统计");
+
+    // ---- 1. 初始化随机数生成器 ----
+    // srand(time(0)) 用当前时间做种子，保证每次运行结果不同
+    srand(time(0));
+
+    // ---- 2. 初始化完整题库（带解析） ----
+    const int TOTAL = 8;
+    FullQuestion quiz[TOTAL] = {
+        {"中国的首都是哪里？",
+         {"A. 上海", "B. 北京", "C. 广州", "D. 深圳"},
+         'B',
+         "北京是中华人民共和国的首都，是一座拥有三千多年历史的古都。"},
+
+        {"地球上最大的海洋是？",
+         {"A. 大西洋", "B. 印度洋", "C. 太平洋", "D. 北冰洋"},
+         'C',
+         "太平洋是世界上面积最大、最深的海洋，面积约1.8亿平方千米。"},
+
+        {"一年有多少天？（平年）",
+         {"A. 360天", "B. 365天", "C. 366天", "D. 350天"},
+         'B',
+         "平年有365天，闰年有366天。能被4整除但不能被100整除的年份是闰年。"},
+
+        {"以下哪个不是四大发明？",
+         {"A. 造纸术", "B. 指南针", "C. 蒸汽机", "D. 火药"},
+         'C',
+         "中国古代四大发明是：造纸术、指南针、火药、印刷术。蒸汽机是西方工业革命的产物。"},
+
+        {"水的化学式是什么？",
+         {"A. CO₂", "B. H₂O", "C. O₂", "D. NaCl"},
+         'B',
+         "水由两个氢原子（H）和一个氧原子（O）组成，化学式为H₂O。"},
+
+        {"《静夜思》的作者是谁？",
+         {"A. 杜甫", "B. 白居易", "C. 李白", "D. 王维"},
+         'C',
+         "《静夜思》是唐代大诗人李白的名作：「床前明月光，疑是地上霜。」"},
+
+        {"人体最大的器官是？",
+         {"A. 心脏", "B. 肝脏", "C. 皮肤", "D. 大脑"},
+         'C',
+         "皮肤是人体最大的器官，一个成年人的皮肤面积约为1.5~2平方米。"},
+
+        {"光年是什么单位？",
+         {"A. 时间单位", "B. 距离单位", "C. 速度单位", "D. 重量单位"},
+         'B',
+         "光年是距离单位，表示光在真空中一年所走的距离，约9.46万亿千米。"}
+    };
+
+    // ---- 3. 准备变量 ----
+    int score = 0;
+    int correctCount = 0;
+    int questionOrder[TOTAL];   // 存储随机出题顺序
+    bool used[TOTAL] = {false}; // 标记某题是否已出过（初始全false）
+
+    // ---- 4. 随机生成出题顺序（不重复） ----
+    // 思路：每次随机选一个没用过的题，标记为已使用
+    for (int i = 0; i &lt; TOTAL; i++) {
+        int idx;
+        do {
+            idx = rand() % TOTAL;  // 随机 0 ~ TOTAL-1
+        } while (used[idx]);       // 如果已用过，重新选
+        questionOrder[i] = idx;    // 记录到顺序数组
+        used[idx] = true;          // 标记为已使用
+    }
+
+    // ---- 5. 欢迎界面 ----
+    cout &lt;&lt; "╔════════════════════════════════════════╗" &lt;&lt; endl;
+    cout &lt;&lt; "║     🏆 知识问答王 —— 趣味知识竞赛   ║" &lt;&lt; endl;
+    cout &lt;&lt; "╚════════════════════════════════════════╝" &lt;&lt; endl;
+    cout &lt;&lt; "\n欢迎参加知识问答竞赛！" &lt;&lt; endl;
+    cout &lt;&lt; "题库共有 " &lt;&lt; TOTAL &lt;&lt; " 道题，将随机抽取。" &lt;&lt; endl;
+    cout &lt;&lt; "每道题10分，答对加分，答错不扣分。\n" &lt;&lt; endl;
+    cout &lt;&lt; "准备好了吗？按 Enter 键开始..." &lt;&lt; endl;
+    cin.get();  // 等待用户按回车
+
+    // ---- 6. 逐题问答 ----
+    for (int i = 0; i &lt; TOTAL; i++) {
+        int qIndex = questionOrder[i];  // 按随机顺序取出当前题目下标
+
+        // 显示题目
+        displayQuestion(quiz[qIndex], i + 1);
+
+        // 获取答案
+        char userAnswer = getUserAnswer();
+
+        // 判断正误
+        if (userAnswer == quiz[qIndex].answer) {
+            cout &lt;&lt; "✅ 回答正确！+10分" &lt;&lt; endl;
+            score += 10;
+            correctCount++;
+        } else {
+            cout &lt;&lt; "❌ 回答错误！正确答案是 " &lt;&lt; quiz[qIndex].answer &lt;&lt; endl;
+        }
+
+        // 显示解析（无论对错，帮助学习）
+        cout &lt;&lt; "💡 解析：" &lt;&lt; quiz[qIndex].explanation &lt;&lt; endl;
+    }
+
+    // ---- 7. 显示最终成绩 ----
+    showFinalResult(correctCount, TOTAL, score);
+}
+
+// ============================================================
+// 程序3：练习题参考答案 —— 自定义题库
+// 演示如何创建自己的题库，并随机抽取2道题进行问答
+// 对应课文中"练习2：补全程序"的完整版
+// ============================================================
+void program3_customQuiz() {
+    printSeparator("【程序3】自定义题库 —— 随机抽2题（练习题参考答案）");
+
+    // 初始化随机数
+    srand(time(0));
+
+    // ---- 自定义题库 ----
+    // 这里展示了如何创建自己的题目。你可以按这个格式添加更多题目！
+    Question quiz[3] = {
+        {"一年有几个季节？",
+         {"A. 2个", "B. 3个", "C. 4个", "D. 5个"},
+         'C'},
+        {"一周有几天？",
+         {"A. 5天", "B. 6天", "C. 7天", "D. 8天"},
+         'C'},
+        {"一个月最多有多少天？",
+         {"A. 28天", "B. 29天", "C. 30天", "D. 31天"},
+         'D'}
+    };
+
+    int score = 0;
+    bool used[3] = {false};
+
+    cout &lt;&lt; "╔════════════════════════════════╗" &lt;&lt; endl;
+    cout &lt;&lt; "║     自定义题库 —— 随机答题   ║" &lt;&lt; endl;
+    cout &lt;&lt; "╚════════════════════════════════╝" &lt;&lt; endl;
+    cout &lt;&lt; "从3道题中随机抽取2道。\n" &lt;&lt; endl;
+
+    // ---- 随机抽取2道题，不重复 ----
+    for (int i = 0; i &lt; 2; i++) {
+        int idx;
+        do {
+            idx = rand() % 3;
+        } while (used[idx]);
+        used[idx] = true;
+
+        // 显示题目
+        cout &lt;&lt; "第 " &lt;&lt; i + 1 &lt;&lt; " 题：" &lt;&lt; quiz[idx].question &lt;&lt; endl;
+        for (int j = 0; j &lt; 4; j++) {
+            cout &lt;&lt; "  " &lt;&lt; quiz[idx].options[j] &lt;&lt; endl;
+        }
+
+        // 获取答案
+        char userAnswer;
+        cout &lt;&lt; "你的答案：";
+        cin &gt;&gt; userAnswer;
+        userAnswer = toupper(userAnswer);
+
+        // 判断正误
+        if (userAnswer == quiz[idx].answer) {
+            cout &lt;&lt; "✅ 正确！+10分\n" &lt;&lt; endl;
+            score += 10;
+        } else {
+            cout &lt;&lt; "❌ 错误！正确答案是 " &lt;&lt; quiz[idx].answer &lt;&lt; "\n" &lt;&lt; endl;
+        }
+    }
+
+    // ---- 输出最终成绩 ----
+    cout &lt;&lt; "========== 成绩 ==========" &lt;&lt; endl;
+    cout &lt;&lt; "总得分：" &lt;&lt; score &lt;&lt; " 分（满分20分）" &lt;&lt; endl;
+
+    if (score == 20) {
+        cout &lt;&lt; "🏆 满分！太厉害了！" &lt;&lt; endl;
+    } else if (score == 10) {
+        cout &lt;&lt; "👍 答对一半，继续加油！" &lt;&lt; endl;
+    } else {
+        cout &lt;&lt; "💪 别灰心，多练习就会进步的！" &lt;&lt; endl;
+    }
+}
+
+// ============================================================
+// 程序4：挑战任务 —— 带难度分级的题库（进阶版）
+// 给每道题添加 level 字段（1=简单, 2=中等, 3=困难）
+// 用户选择难度后只出对应难度的题目
+// ============================================================
+void program4_levelChallenge() {
+    printSeparator("【挑战任务】带难度分级的题库竞赛");
+
+    srand(time(0));
+
+    // ---- 定义带难度的题目结构体 ----
+    struct LevelQuestion {
+        string question;
+        string options[4];
+        char answer;
+        string explanation;
+        int level;   // 1=简单, 2=中等, 3=困难
+    };
+
+    // ---- 初始化分级题库 ----
+    LevelQuestion quiz[] = {
+        // level 1: 简单题
+        {"1 + 1 = ?",
+         {"A. 1", "B. 2", "C. 3", "D. 4"},
+         'B', "最基础的数学题。", 1},
+        {"太阳从哪个方向升起？",
+         {"A. 东边", "B. 西边", "C. 南边", "D. 北边"},
+         'A', "东升西落是自然规律。", 1},
+        {"一周有几天？",
+         {"A. 5天", "B. 6天", "C. 7天", "D. 8天"},
+         'C', "星期一到星期日共7天。", 1},
+
+        // level 2: 中等题
+        {"中国的首都是？",
+         {"A. 上海", "B. 北京", "C. 广州", "D. 深圳"},
+         'B', "北京是中国的首都。", 2},
+        {"水的化学式是？",
+         {"A. CO₂", "B. H₂O", "C. O₂", "D. NaCl"},
+         'B', "水由H和O组成，化学式H₂O。", 2},
+        {"《静夜思》的作者是？",
+         {"A. 杜甫", "B. 白居易", "C. 李白", "D. 王维"},
+         'C', "李白是唐代大诗人。", 2},
+
+        // level 3: 困难题
+        {"光年是什么单位？",
+         {"A. 时间", "B. 距离", "C. 速度", "D. 重量"},
+         'B', "光年是距离单位，约9.46万亿千米。", 3},
+        {"人体最大的器官是？",
+         {"A. 心脏", "B. 肝脏", "C. 皮肤", "D. 大脑"},
+         'C', "皮肤面积约1.5~2平方米。", 3},
+        {"以下哪个不是四大发明？",
+         {"A. 造纸术", "B. 指南针", "C. 蒸汽机", "D. 火药"},
+         'C', "蒸汽机是工业革命的产物。", 3}
+    };
+
+    const int TOTAL = sizeof(quiz) / sizeof(quiz[0]);  // 自动计算题库大小
+
+    // ---- 用户选择难度 ----
+    int chosenLevel;
+    cout &lt;&lt; "请选择难度等级：" &lt;&lt; endl;
+    cout &lt;&lt; "  1. 🌱 简单" &lt;&lt; endl;
+    cout &lt;&lt; "  2. 🌿 中等" &lt;&lt; endl;
+    cout &lt;&lt; "  3. 🌳 困难" &lt;&lt; endl;
+    cout &lt;&lt; "请输入你的选择（1/2/3）：";
+    cin &gt;&gt; chosenLevel;
+
+    if (chosenLevel &lt; 1 || chosenLevel &gt; 3) {
+        cout &lt;&lt; "输入无效，默认选择简单难度。" &lt;&lt; endl;
+        chosenLevel = 1;
+    }
+
+    // ---- 筛选出对应难度的题目下标 ----
+    int filteredIndex[TOTAL];  // 存储符合难度的题目下标
+    int filteredCount = 0;     // 符合条件的题目数量
+    for (int i = 0; i &lt; TOTAL; i++) {
+        if (quiz[i].level == chosenLevel) {
+            filteredIndex[filteredCount] = i;
+            filteredCount++;
+        }
+    }
+
+    if (filteredCount == 0) {
+        cout &lt;&lt; "该难度下没有题目！" &lt;&lt; endl;
+        return;
+    }
+
+    cout &lt;&lt; "\n该难度下共有 " &lt;&lt; filteredCount &lt;&lt; " 道题。开始答题！\n" &lt;&lt; endl;
+
+    // ---- 随机不重复出题 ----
+    int score = 0;
+    int correctCount = 0;
+    bool used[TOTAL] = {false};
+
+    for (int i = 0; i &lt; filteredCount; i++) {
+        int pick;
+        do {
+            pick = rand() % filteredCount;
+        } while (used[pick]);
+        used[pick] = true;
+
+        int qIndex = filteredIndex[pick];  // 实际题目下标
+
+        // 显示题目（直接输出，不使用 displayQuestion 避免类型强转）
+        cout &lt;&lt; "\n第 " &lt;&lt; i + 1 &lt;&lt; " 题：" &lt;&lt; quiz[qIndex].question &lt;&lt; endl;
+        for (int j = 0; j &lt; 4; j++) {
+            cout &lt;&lt; "  " &lt;&lt; quiz[qIndex].options[j] &lt;&lt; endl;
+        }
+
+        char userAnswer = getUserAnswer();
+        if (userAnswer == quiz[qIndex].answer) {
+            cout &lt;&lt; "✅ 正确！+10分" &lt;&lt; endl;
+            score += 10;
+            correctCount++;
+        } else {
+            cout &lt;&lt; "❌ 错误！正确答案是 " &lt;&lt; quiz[qIndex].answer &lt;&lt; endl;
+        }
+        cout &lt;&lt; "💡 " &lt;&lt; quiz[qIndex].explanation &lt;&lt; endl;
+    }
+
+    showFinalResult(correctCount, filteredCount, score);
+}
+
+// ============================================================
+// main 函数：程序入口
+// 依次运行所有演示程序
+// ============================================================
+int main() {
+    // 设置输出中文（根据不同操作系统可能需要调整）
+    // Windows 用户可能需要取消下面的注释：
+    // system("chcp 65001");
+    // 本程序在支持 UTF-8 的终端中直接运行即可
+
+    cout &lt;&lt; "╔══════════════════════════════════════════════════════════╗" &lt;&lt; endl;
+    cout &lt;&lt; "║     第47课：知识问答王 —— 题库系统                     ║" &lt;&lt; endl;
+    cout &lt;&lt; "║     C++ 趣味学习课程                                    ║" &lt;&lt; endl;
+    cout &lt;&lt; "╚══════════════════════════════════════════════════════════╝" &lt;&lt; endl;
+    cout &lt;&lt; "\n本程序将依次演示：" &lt;&lt; endl;
+    cout &lt;&lt; "  1. 简单问答系统 —— 3道题顺序答题" &lt;&lt; endl;
+    cout &lt;&lt; "  2. 完整知识竞赛 —— 随机出题，计分统计" &lt;&lt; endl;
+    cout &lt;&lt; "  3. 练习题参考答案 —— 自定义题库" &lt;&lt; endl;
+    cout &lt;&lt; "  4. 挑战任务 —— 难度分级问答" &lt;&lt; endl;
+    cout &lt;&lt; endl;
+
+    // ---- 依次运行各个程序 ----
+    program1_simpleQuiz();
+
+    cout &lt;&lt; "\n按 Enter 键继续观看下一个程序...";
+    cin.get();  // 消耗残留换行符
+    cin.get();  // 等待用户按回车
+
+    program2_fullCompetition();
+
+    cout &lt;&lt; "\n按 Enter 键继续观看下一个程序...";
+    cin.get();
+
+    program3_customQuiz();
+
+    cout &lt;&lt; "\n按 Enter 键继续观看下一个程序...";
+    cin.get();
+
+    program4_levelChallenge();
+
+    cout &lt;&lt; "\n╔══════════════════════════════════════════════════════════╗" &lt;&lt; endl;
+    cout &lt;&lt; "║     本课所有程序演示完毕！                              ║" &lt;&lt; endl;
+    cout &lt;&lt; "║     下一课预告：魔法图书馆 —— 文件读写入门             ║" &lt;&lt; endl;
+    cout &lt;&lt; "╚══════════════════════════════════════════════════════════╝" &lt;&lt; endl;
+
+    return 0;
+}
+</pre>
+    <p class="hint">本页使用浅色主题与 UTF-8 编码，可直接打印或导出 PDF。</p>
+  </div>
+</body>
+</html>

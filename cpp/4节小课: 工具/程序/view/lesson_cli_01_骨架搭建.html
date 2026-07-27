@@ -1,0 +1,194 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>lesson_cli_01_骨架搭建.cpp</title>
+<style>
+  :root {
+    --bg: #f5f7fa;
+    --panel: #ffffff;
+    --text: #1a1a2e;
+    --muted: #5a6570;
+    --gold: #b8860b;
+    --code-bg: #ffffff;
+    --code-text: #1f2933;
+    --border: #d8dee6;
+    --top-bg: #ffffff;
+    --top-border: #e5e9ef;
+  }
+  * { box-sizing: border-box; }
+  html, body {
+    margin: 0; padding: 0;
+    background: var(--bg);
+    color: var(--text);
+    font-family: -apple-system, BlinkMacSystemFont, "PingFang SC", "Microsoft YaHei", sans-serif;
+    min-height: 100%;
+  }
+  .top {
+    position: sticky; top: 0; z-index: 10;
+    display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between;
+    gap: 10px;
+    padding: 12px 18px;
+    background: var(--top-bg);
+    border-bottom: 1px solid var(--top-border);
+    box-shadow: 0 1px 8px rgba(15, 23, 42, 0.06);
+  }
+  .brand { color: var(--gold); font-weight: 700; font-size: 14px; letter-spacing: 0.04em; }
+  .title { font-size: 15px; font-weight: 600; color: var(--text); max-width: 52vw; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .actions { display: flex; gap: 8px; flex-wrap: wrap; }
+  .btn {
+    appearance: none; border: 1px solid var(--border);
+    background: #fff; color: var(--text);
+    border-radius: 999px; padding: 8px 14px; font-size: 13px; font-weight: 600;
+    text-decoration: none; cursor: pointer;
+  }
+  .btn:hover { background: #f0f3f7; }
+  .btn.gold {
+    background: linear-gradient(135deg, #f0d78c, #d4a853);
+    color: #0a2540; border-color: #e0c06a;
+  }
+  .meta {
+    padding: 10px 18px; color: var(--muted); font-size: 12px;
+    border-bottom: 1px solid var(--border);
+    background: var(--panel);
+  }
+  .wrap { padding: 16px 18px 40px; }
+  pre {
+    margin: 0;
+    background: var(--code-bg);
+    color: var(--code-text);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 18px 20px;
+    overflow: auto;
+    font-family: "SF Mono", "JetBrains Mono", "Fira Code", Consolas, "Courier New", monospace;
+    font-size: 13.5px;
+    line-height: 1.55;
+    white-space: pre;
+    tab-size: 4;
+    box-shadow: 0 2px 12px rgba(15, 23, 42, 0.05);
+  }
+  .hint { margin-top: 12px; color: var(--muted); font-size: 12px; }
+  @media print {
+    html, body { background: #fff !important; color: #000 !important; }
+    .top { position: static; box-shadow: none; border-bottom: 1px solid #ccc; background: #fff !important; }
+    .actions { display: none !important; }
+    .meta { background: #fff !important; border-color: #ddd; color: #333; }
+    .wrap { padding: 0; }
+    pre {
+      background: #fff !important; color: #000 !important;
+      border: 1px solid #bbb; box-shadow: none; border-radius: 0;
+      white-space: pre-wrap; word-break: break-word; font-size: 11pt; line-height: 1.4;
+    }
+    .hint { display: none; }
+    a { color: #000; text-decoration: none; }
+  }
+</style>
+</head>
+<body>
+  <div class="top">
+    <div class="brand">C++ 四节小课 · 工具 · 配套代码</div>
+    <div class="title">lesson_cli_01_骨架搭建.cpp</div>
+    <div class="actions">
+      <a class="btn" href="../lesson_cli_01_骨架搭建.cpp" download="lesson_cli_01_骨架搭建.cpp">⬇️ 下载源文件</a>
+      <a class="btn gold" href="javascript:history.back()">← 返回课件</a>
+    </div>
+  </div>
+  <div class="meta">编码：UTF-8 · 文件：lesson_cli_01_骨架搭建.cpp · 共 90 行 · 浅色主题便于打印</div>
+  <div class="wrap">
+    <pre id="code">/*
+ * 第1课：搭建骨架 —— CLI 菜单与输入处理
+ * 项目：任务管理器 v1.0（骨架版）
+ *
+ * 知识点：
+ *   1. CLI 程序的基本结构（主循环 + 菜单 + switch）
+ *   2. do-while 循环
+ *   3. 用户输入处理（cin &gt;&gt;, getline, cin.ignore）
+ *   4. 函数封装与增量开发
+ *
+ * 编译方法：
+ *   g++ -std=c++11 lesson_cli_01_骨架搭建.cpp -o lesson_cli_01_骨架搭建
+ *   运行：./lesson_cli_01_骨架搭建
+ */
+
+#include &lt;iostream&gt;
+#include &lt;string&gt;
+using namespace std;
+
+// ---------- 菜单显示 ----------
+void showMenu() {
+    cout &lt;&lt; "\n╔══════════════════════════╗" &lt;&lt; endl;
+    cout &lt;&lt; "║    📋 任务管理器 v1.0    ║" &lt;&lt; endl;
+    cout &lt;&lt; "╠══════════════════════════╣" &lt;&lt; endl;
+    cout &lt;&lt; "║  1. ➕ 添加新任务        ║" &lt;&lt; endl;
+    cout &lt;&lt; "║  2. 📋 查看所有任务      ║" &lt;&lt; endl;
+    cout &lt;&lt; "║  3. ✅ 标记任务完成      ║" &lt;&lt; endl;
+    cout &lt;&lt; "║  4. 🗑️  删除任务         ║" &lt;&lt; endl;
+    cout &lt;&lt; "║  0. 🚪 退出程序          ║" &lt;&lt; endl;
+    cout &lt;&lt; "╚══════════════════════════╝" &lt;&lt; endl;
+    cout &lt;&lt; "请输入你的选择：";
+}
+
+// ---------- 占位功能函数（后续课程逐步实现） ----------
+void addTask() {
+    cout &lt;&lt; "  ⏳ [功能开发中] 添加任务功能将在第2课实现！" &lt;&lt; endl;
+    cout &lt;&lt; "     届时你可以输入任务标题和优先级。" &lt;&lt; endl;
+}
+
+void viewTasks() {
+    cout &lt;&lt; "  ⏳ [功能开发中] 查看任务功能将在第2课实现！" &lt;&lt; endl;
+    cout &lt;&lt; "     届时你可以看到所有任务的表格列表。" &lt;&lt; endl;
+}
+
+void markDone() {
+    cout &lt;&lt; "  ⏳ [功能开发中] 标记完成功能将在第3课实现！" &lt;&lt; endl;
+    cout &lt;&lt; "     届时你可以标记任务为「已完成」或「未完成」。" &lt;&lt; endl;
+}
+
+void deleteTask() {
+    cout &lt;&lt; "  ⏳ [功能开发中] 删除任务功能将在第3课实现！" &lt;&lt; endl;
+    cout &lt;&lt; "     届时你可以删除不需要的任务。" &lt;&lt; endl;
+}
+
+// ---------- 主函数 ----------
+int main() {
+    int choice;
+
+    cout &lt;&lt; "╔══════════════════════════════════════════════════╗" &lt;&lt; endl;
+    cout &lt;&lt; "║     第1课：搭建骨架 —— CLI 菜单与输入处理       ║" &lt;&lt; endl;
+    cout &lt;&lt; "║     C++ 4节小课：从零构建 CLI 任务管理器         ║" &lt;&lt; endl;
+    cout &lt;&lt; "╚══════════════════════════════════════════════════╝" &lt;&lt; endl;
+
+    do {
+        showMenu();
+        cin &gt;&gt; choice;
+
+        // ★ 关键：清空输入缓冲区，防止影响后续 getline 读取
+        cin.ignore();
+
+        cout &lt;&lt; endl;
+
+        switch (choice) {
+            case 1: addTask();    break;
+            case 2: viewTasks();  break;
+            case 3: markDone();   break;
+            case 4: deleteTask(); break;
+            case 0:
+                cout &lt;&lt; "👋 感谢使用任务管理器，再见！" &lt;&lt; endl;
+                cout &lt;&lt; "   下节课我们将添加真正的数据存储功能！" &lt;&lt; endl;
+                break;
+            default:
+                cout &lt;&lt; "❌ 无效选择！请输入 0~4 之间的数字。" &lt;&lt; endl;
+                cout &lt;&lt; "   提示：输入菜单中显示的数字来选择功能。" &lt;&lt; endl;
+                break;
+        }
+    } while (choice != 0);
+
+    return 0;
+}
+</pre>
+    <p class="hint">本页使用浅色主题与 UTF-8 编码，可直接打印或导出 PDF。</p>
+  </div>
+</body>
+</html>

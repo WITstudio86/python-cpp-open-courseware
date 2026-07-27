@@ -1,0 +1,532 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>第19节-数字会合并/main.py</title>
+<style>
+  :root {
+    --bg: #f5f7fa;
+    --panel: #ffffff;
+    --text: #1a1a2e;
+    --muted: #5a6570;
+    --gold: #b8860b;
+    --code-bg: #ffffff;
+    --code-text: #1f2933;
+    --border: #d8dee6;
+    --top-bg: #ffffff;
+    --top-border: #e5e9ef;
+  }
+  * { box-sizing: border-box; }
+  html, body {
+    margin: 0; padding: 0;
+    background: var(--bg);
+    color: var(--text);
+    font-family: -apple-system, BlinkMacSystemFont, "PingFang SC", "Microsoft YaHei", sans-serif;
+    min-height: 100%;
+  }
+  .top {
+    position: sticky; top: 0; z-index: 10;
+    display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between;
+    gap: 10px;
+    padding: 12px 18px;
+    background: var(--top-bg);
+    border-bottom: 1px solid var(--top-border);
+    box-shadow: 0 1px 8px rgba(15, 23, 42, 0.06);
+  }
+  .brand { color: var(--gold); font-weight: 700; font-size: 14px; letter-spacing: 0.04em; }
+  .title { font-size: 15px; font-weight: 600; color: var(--text); max-width: 52vw; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .actions { display: flex; gap: 8px; flex-wrap: wrap; }
+  .btn {
+    appearance: none; border: 1px solid var(--border);
+    background: #fff; color: var(--text);
+    border-radius: 999px; padding: 8px 14px; font-size: 13px; font-weight: 600;
+    text-decoration: none; cursor: pointer;
+  }
+  .btn:hover { background: #f0f3f7; }
+  .btn.gold {
+    background: linear-gradient(135deg, #f0d78c, #d4a853);
+    color: #0a2540; border-color: #e0c06a;
+  }
+  .meta {
+    padding: 10px 18px; color: var(--muted); font-size: 12px;
+    border-bottom: 1px solid var(--border);
+    background: var(--panel);
+  }
+  .wrap { padding: 16px 18px 40px; }
+  pre {
+    margin: 0;
+    background: var(--code-bg);
+    color: var(--code-text);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 18px 20px;
+    overflow: auto;
+    font-family: "SF Mono", "JetBrains Mono", "Fira Code", Consolas, "Courier New", monospace;
+    font-size: 13.5px;
+    line-height: 1.55;
+    white-space: pre;
+    tab-size: 4;
+    box-shadow: 0 2px 12px rgba(15, 23, 42, 0.05);
+  }
+  .hint { margin-top: 12px; color: var(--muted); font-size: 12px; }
+  @media print {
+    html, body { background: #fff !important; color: #000 !important; }
+    .top { position: static; box-shadow: none; border-bottom: 1px solid #ccc; background: #fff !important; }
+    .actions { display: none !important; }
+    .meta { background: #fff !important; border-color: #ddd; color: #333; }
+    .wrap { padding: 0; }
+    pre {
+      background: #fff !important; color: #000 !important;
+      border: 1px solid #bbb; box-shadow: none; border-radius: 0;
+      white-space: pre-wrap; word-break: break-word; font-size: 11pt; line-height: 1.4;
+    }
+    .hint { display: none; }
+    a { color: #000; text-decoration: none; }
+  }
+</style>
+</head>
+<body>
+  <div class="top">
+    <div class="brand">Pygame 零基础 · 配套代码</div>
+    <div class="title">第19节-数字会合并/main.py</div>
+    <div class="actions">
+      <a class="btn" href="../第19节-数字会合并/main.py" download="main.py">⬇️ 下载源文件</a>
+      <a class="btn gold" href="javascript:history.back()">← 返回课件</a>
+    </div>
+  </div>
+  <div class="meta">编码：UTF-8 · 文件：第19节-数字会合并/main.py · 共 428 行 · 浅色主题便于打印</div>
+  <div class="wrap">
+    <pre id="code">"""
+第19节：数字会合并 —— 2048 游戏核心机制
+============================================
+面向10-15岁中小学生的Pygame课程代码
+用Surface和draw.rect/font绘制数字网格，不依赖外部图片文件
+
+功能：
+- 4x4 二维列表棋盘
+- 方向键移动数字（上下左右）
+- 相同数字相邻合并
+- 每次移动后在空位随机生成 2 或 4（90%概率生成2）
+
+运行要求：pip install pygame
+"""
+
+import pygame
+import random
+import sys
+
+# ==================== 常量与配置 ====================
+GRID_SIZE = 4           # 棋盘大小 4x4
+CELL_SIZE = 100         # 每个格子的像素大小
+GAP = 10                # 格子之间的间距
+MARGIN = 10             # 棋盘边距
+
+# 窗口大小：4个格子 + 3个间隙 + 2个边距（水平），再加上顶部标题栏
+BOARD_WIDTH = GRID_SIZE * CELL_SIZE + (GRID_SIZE - 1) * GAP + MARGIN * 2
+BOARD_HEIGHT = BOARD_WIDTH  # 棋盘区域是正方形
+HEADER_HEIGHT = 70      # 顶部标题栏高度
+WINDOW_WIDTH = BOARD_WIDTH
+WINDOW_HEIGHT = BOARD_HEIGHT + HEADER_HEIGHT
+
+# 颜色定义 —— 参考经典2048配色
+BG_COLOR = (250, 248, 239)          # 整体背景色（米白）
+BOARD_BG_COLOR = (187, 173, 160)    # 棋盘背景色
+HEADER_BG_COLOR = (250, 248, 239)   # 标题栏背景
+
+# 每个数字对应的背景颜色（0表示空格）
+TILE_COLORS = {
+    0:    (205, 193, 180),   # 空格 - 浅灰褐
+    2:    (238, 228, 218),   # 浅米色
+    4:    (237, 224, 200),   # 略深米色
+    8:    (242, 177, 121),   # 橙色
+    16:   (245, 149, 99),    # 深橙
+    32:   (246, 124, 95),    # 橙红
+    64:   (246, 94, 59),     # 红色
+    128:  (237, 207, 114),   # 金黄色
+    256:  (237, 204, 97),
+    512:  (237, 200, 80),
+    1024: (237, 197, 63),
+    2048: (237, 194, 46),
+}
+
+# 数字文字的亮色 / 暗色（小数字用深色字，大数字用浅色字）
+TEXT_COLORS = {
+    2:    (119, 110, 101),
+    4:    (119, 110, 101),
+    8:    (249, 246, 242),
+    16:   (249, 246, 242),
+    32:   (249, 246, 242),
+    64:   (249, 246, 242),
+    128:  (249, 246, 242),
+    256:  (249, 246, 242),
+    512:  (249, 246, 242),
+    1024: (249, 246, 242),
+    2048: (249, 246, 242),
+}
+
+# ==================== 工具函数 ====================
+
+def get_tile_pos(row, col):
+    """根据棋盘坐标(row, col)计算格子的屏幕像素坐标(x, y)"""
+    x = MARGIN + col * (CELL_SIZE + GAP)
+    y = HEADER_HEIGHT + MARGIN + row * (CELL_SIZE + GAP)
+    return x, y
+
+
+def get_font_size(value):
+    """根据数字位数返回合适的字体大小"""
+    if value &lt; 100:
+        return 48
+    elif value &lt; 1000:
+        return 40
+    elif value &lt; 10000:
+        return 32
+    else:
+        return 28
+
+
+# ==================== 游戏逻辑 ====================
+
+def init_board():
+    """初始化一个空的 4x4 棋盘（全 0 表示空格），并随机放入两个数字"""
+    board = [[0] * GRID_SIZE for _ in range(GRID_SIZE)]
+    add_new_number(board)
+    add_new_number(board)
+    return board
+
+
+def add_new_number(board):
+    """
+    在棋盘的空位中随机选一个位置，生成 2 或 4。
+    90% 概率生成 2，10% 概率生成 4。
+    """
+    # 第一步：收集所有空位（值为 0 的格子）
+    empty_cells = []
+    for r in range(GRID_SIZE):
+        for c in range(GRID_SIZE):
+            if board[r][c] == 0:
+                empty_cells.append((r, c))
+
+    # 如果没有空位，返回 False（表示生成失败，可能游戏结束）
+    if len(empty_cells) == 0:
+        return False
+
+    # 第二步：随机选一个空位
+    r, c = random.choice(empty_cells)
+
+    # 第三步：90% 概率生成 2，10% 概率生成 4
+    # 方法：列表中放 9 个 2 和 1 个 4，random.choice 随机选取
+    board[r][c] = random.choice([2, 2, 2, 2, 2, 2, 2, 2, 2, 4])
+    return True
+
+
+def compress(row):
+    """
+    压缩函数：将一行中所有非零数字挤到左边，右边的空位补 0。
+    例如：[0, 2, 0, 4] → [2, 4, 0, 0]
+    """
+    new_row = []
+    for num in row:
+        if num != 0:
+            new_row.append(num)
+    # 补 0 到长度为 4
+    while len(new_row) &lt; GRID_SIZE:
+        new_row.append(0)
+    return new_row
+
+
+def merge(row):
+    """
+    合并函数：从左到右扫描，相邻两个相同数字合并（翻倍）。
+    注意：每个数字在一轮移动中最多被合并一次。
+    例如：[2, 2, 4, 0] → [4, 0, 4, 0]
+         [4, 4, 4, 0] → [8, 0, 4, 0]（前两个合并，第三个不动）
+    """
+    for i in range(GRID_SIZE - 1):  # 只扫描前 3 个位置
+        if row[i] != 0 and row[i] == row[i + 1]:
+            row[i] = row[i] * 2     # 翻倍合并
+            row[i + 1] = 0          # 被合并的位置清空
+    return row
+
+
+def move_left(board):
+    """左移：逐行执行 压缩 → 合并 → 再压缩"""
+    moved = False
+    for i in range(GRID_SIZE):
+        old_row = board[i][:]  # 保存移动前的行（用于判断是否发生了变化）
+        board[i] = compress(board[i])
+        board[i] = merge(board[i])
+        board[i] = compress(board[i])
+        if board[i] != old_row:
+            moved = True
+    return moved
+
+
+def move_right(board):
+    """右移：每行反转 → 左移 → 反转回来"""
+    moved = False
+    for i in range(GRID_SIZE):
+        old_row = board[i][:]
+        # 反转行，使用左移逻辑，再反转回来
+        row = board[i][::-1]
+        row = compress(row)
+        row = merge(row)
+        row = compress(row)
+        board[i] = row[::-1]
+        if board[i] != old_row:
+            moved = True
+    return moved
+
+
+def transpose(board):
+    """矩阵转置：行列互换（用于上下移动的方向转换）"""
+    new_board = [[0] * GRID_SIZE for _ in range(GRID_SIZE)]
+    for r in range(GRID_SIZE):
+        for c in range(GRID_SIZE):
+            new_board[c][r] = board[r][c]
+    return new_board
+
+
+def move_up(board):
+    """上移：转置 → 左移 → 转置回来"""
+    # 先转置棋盘
+    board_transposed = transpose(board)
+    moved = move_left(board_transposed)
+    # 再转置回来，更新原棋盘
+    board_back = transpose(board_transposed)
+    for r in range(GRID_SIZE):
+        board[r] = board_back[r][:]
+    return moved
+
+
+def move_down(board):
+    """下移：转置 → 右移 → 转置回来"""
+    # 先转置棋盘
+    board_transposed = transpose(board)
+    moved = move_right(board_transposed)
+    # 再转置回来，更新原棋盘
+    board_back = transpose(board_transposed)
+    for r in range(GRID_SIZE):
+        board[r] = board_back[r][:]
+    return moved
+
+
+def can_move(board):
+    """
+    判断棋盘是否还有可用的移动。
+    如果棋盘满了且四个方向都无法移动，则游戏结束。
+    """
+    # 检查是否有空格
+    for r in range(GRID_SIZE):
+        for c in range(GRID_SIZE):
+            if board[r][c] == 0:
+                return True
+
+    # 检查是否有相邻相同的数字（水平方向）
+    for r in range(GRID_SIZE):
+        for c in range(GRID_SIZE - 1):
+            if board[r][c] == board[r][c + 1]:
+                return True
+
+    # 检查是否有相邻相同的数字（垂直方向）
+    for r in range(GRID_SIZE - 1):
+        for c in range(GRID_SIZE):
+            if board[r][c] == board[r + 1][c]:
+                return True
+
+    return False
+
+
+def has_won(board):
+    """检查是否达成 2048，返回 True 表示胜利"""
+    for r in range(GRID_SIZE):
+        for c in range(GRID_SIZE):
+            if board[r][c] &gt;= 2048:
+                return True
+    return False
+
+
+# ==================== 绘制函数 ====================
+
+def draw_tile(surface, value, x, y):
+    """在屏幕坐标 (x, y) 处绘制一个数字方块"""
+    # 获取方块颜色
+    color = TILE_COLORS.get(value, (60, 58, 50))
+    # 绘制圆角方块
+    rect = pygame.Rect(x, y, CELL_SIZE, CELL_SIZE)
+    pygame.draw.rect(surface, color, rect, border_radius=8)
+
+    # 如果数字不为 0，绘制文字
+    if value != 0:
+        font_size = get_font_size(value)
+        font = pygame.font.Font(None, font_size)
+        text_color = TEXT_COLORS.get(value, (249, 246, 242))
+        text_surface = font.render(str(value), True, text_color)
+        text_rect = text_surface.get_rect(center=rect.center)
+        surface.blit(text_surface, text_rect)
+
+
+def draw_board(surface, board):
+    """绘制整个棋盘"""
+    # 绘制棋盘背景
+    board_rect = pygame.Rect(
+        MARGIN,
+        HEADER_HEIGHT + MARGIN,
+        BOARD_WIDTH - MARGIN * 2,
+        BOARD_HEIGHT - MARGIN * 2
+    )
+    pygame.draw.rect(surface, BOARD_BG_COLOR, board_rect, border_radius=10)
+
+    # 逐格绘制数字方块
+    for r in range(GRID_SIZE):
+        for c in range(GRID_SIZE):
+            x, y = get_tile_pos(r, c)
+            draw_tile(surface, board[r][c], x, y)
+
+
+def draw_header(surface, title="2048"):
+    """绘制顶部的标题和提示信息"""
+    # 标题
+    font_title = pygame.font.Font(None, 48)
+    title_text = font_title.render(title, True, (119, 110, 101))
+    title_rect = title_text.get_rect(midleft=(MARGIN + 10, HEADER_HEIGHT // 2))
+    surface.blit(title_text, title_rect)
+
+    # 操作提示
+    font_hint = pygame.font.Font(None, 24)
+    hint_text = font_hint.render(
+        u"方向键移动  |  R键重新开始  |  ESC退出",
+        True, (160, 150, 140)
+    )
+    hint_rect = hint_text.get_rect(
+        midleft=(MARGIN + 10, HEADER_HEIGHT // 2 + 20)
+    )
+    surface.blit(hint_text, hint_rect)
+
+
+def draw_game_over(surface):
+    """绘制游戏结束画面"""
+    # 半透明遮罩
+    overlay = pygame.Surface((WINDOW_WIDTH, WINDOW_HEIGHT))
+    overlay.set_alpha(180)
+    overlay.fill((238, 228, 218))
+    surface.blit(overlay, (0, 0))
+
+    # "游戏结束" 文字
+    font_over = pygame.font.Font(None, 64)
+    over_text = font_over.render(u"游戏结束", True, (119, 110, 101))
+    over_rect = over_text.get_rect(center=(WINDOW_WIDTH // 2, WINDOW_HEIGHT // 2 - 20))
+    surface.blit(over_text, over_rect)
+
+    # 提示重新开始
+    font_restart = pygame.font.Font(None, 32)
+    restart_text = font_restart.render(u"按 R 键重新开始", True, (119, 110, 101))
+    restart_rect = restart_text.get_rect(
+        center=(WINDOW_WIDTH // 2, WINDOW_HEIGHT // 2 + 30)
+    )
+    surface.blit(restart_text, restart_rect)
+
+
+def draw_win(surface):
+    """绘制胜利画面"""
+    overlay = pygame.Surface((WINDOW_WIDTH, WINDOW_HEIGHT))
+    overlay.set_alpha(160)
+    overlay.fill((237, 194, 46))
+    surface.blit(overlay, (0, 0))
+
+    font_win = pygame.font.Font(None, 64)
+    win_text = font_win.render(u"你赢了！", True, (249, 246, 242))
+    win_rect = win_text.get_rect(center=(WINDOW_WIDTH // 2, WINDOW_HEIGHT // 2 - 20))
+    surface.blit(win_text, win_rect)
+
+    font_cont = pygame.font.Font(None, 28)
+    cont_text = font_cont.render(u"按任意方向键继续挑战  |  R键重新开始", True, (249, 246, 242))
+    cont_rect = cont_text.get_rect(center=(WINDOW_WIDTH // 2, WINDOW_HEIGHT // 2 + 30))
+    surface.blit(cont_text, cont_rect)
+
+
+# ==================== 主程序 ====================
+
+def main():
+    """游戏主函数"""
+    pygame.init()
+    screen = pygame.display.set_mode((WINDOW_WIDTH, WINDOW_HEIGHT))
+    pygame.display.set_caption("2048 - 第19节：数字会合并")
+    clock = pygame.time.Clock()
+
+    # 初始化棋盘
+    board = init_board()
+
+    # 游戏状态
+    game_over = False   # 是否游戏结束（棋盘满且无法移动）
+    game_won = False    # 是否达到 2048
+    running = True      # 主循环控制
+
+    # ==================== 主循环 ====================
+    while running:
+        # ----- 事件处理 -----
+        for event in pygame.event.get():
+            if event.type == pygame.QUIT:
+                running = False
+
+            elif event.type == pygame.KEYDOWN:
+                # ESC 退出
+                if event.key == pygame.K_ESCAPE:
+                    running = False
+
+                # R 键重新开始
+                elif event.key == pygame.K_r:
+                    board = init_board()
+                    game_over = False
+                    game_won = False
+
+                # 方向键移动（游戏未结束时才能移动）
+                elif not game_over:
+                    moved = False
+                    if event.key == pygame.K_LEFT:
+                        moved = move_left(board)
+                    elif event.key == pygame.K_RIGHT:
+                        moved = move_right(board)
+                    elif event.key == pygame.K_UP:
+                        moved = move_up(board)
+                    elif event.key == pygame.K_DOWN:
+                        moved = move_down(board)
+
+                    # 如果发生了有效移动，尝试添加新数字
+                    if moved:
+                        add_new_number(board)
+
+                        # 判断胜利
+                        if has_won(board):
+                            game_won = True
+
+                        # 判断游戏结束
+                        if not can_move(board):
+                            game_over = True
+
+        # ----- 绘制画面 -----
+        screen.fill(BG_COLOR)            # 背景
+        draw_header(screen, "2048")      # 顶部标题栏
+        draw_board(screen, board)        # 棋盘
+
+        if game_over and not game_won:
+            draw_game_over(screen)       # 游戏结束画面
+        elif game_won:
+            draw_win(screen)             # 胜利画面
+
+        pygame.display.flip()            # 刷新屏幕
+        clock.tick(60)                   # 限制帧率 60 FPS
+
+    pygame.quit()
+    sys.exit()
+
+
+# ==================== 程序入口 ====================
+if __name__ == "__main__":
+    main()
+</pre>
+    <p class="hint">本页使用浅色主题与 UTF-8 编码，可直接打印或导出 PDF。</p>
+  </div>
+</body>
+</html>

@@ -1,0 +1,324 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>lesson02_枚举优化.cpp</title>
+<style>
+  :root {
+    --bg: #f5f7fa;
+    --panel: #ffffff;
+    --text: #1a1a2e;
+    --muted: #5a6570;
+    --gold: #b8860b;
+    --code-bg: #ffffff;
+    --code-text: #1f2933;
+    --border: #d8dee6;
+    --top-bg: #ffffff;
+    --top-border: #e5e9ef;
+  }
+  * { box-sizing: border-box; }
+  html, body {
+    margin: 0; padding: 0;
+    background: var(--bg);
+    color: var(--text);
+    font-family: -apple-system, BlinkMacSystemFont, "PingFang SC", "Microsoft YaHei", sans-serif;
+    min-height: 100%;
+  }
+  .top {
+    position: sticky; top: 0; z-index: 10;
+    display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between;
+    gap: 10px;
+    padding: 12px 18px;
+    background: var(--top-bg);
+    border-bottom: 1px solid var(--top-border);
+    box-shadow: 0 1px 8px rgba(15, 23, 42, 0.06);
+  }
+  .brand { color: var(--gold); font-weight: 700; font-size: 14px; letter-spacing: 0.04em; }
+  .title { font-size: 15px; font-weight: 600; color: var(--text); max-width: 52vw; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .actions { display: flex; gap: 8px; flex-wrap: wrap; }
+  .btn {
+    appearance: none; border: 1px solid var(--border);
+    background: #fff; color: var(--text);
+    border-radius: 999px; padding: 8px 14px; font-size: 13px; font-weight: 600;
+    text-decoration: none; cursor: pointer;
+  }
+  .btn:hover { background: #f0f3f7; }
+  .btn.gold {
+    background: linear-gradient(135deg, #f0d78c, #d4a853);
+    color: #0a2540; border-color: #e0c06a;
+  }
+  .meta {
+    padding: 10px 18px; color: var(--muted); font-size: 12px;
+    border-bottom: 1px solid var(--border);
+    background: var(--panel);
+  }
+  .wrap { padding: 16px 18px 40px; }
+  pre {
+    margin: 0;
+    background: var(--code-bg);
+    color: var(--code-text);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 18px 20px;
+    overflow: auto;
+    font-family: "SF Mono", "JetBrains Mono", "Fira Code", Consolas, "Courier New", monospace;
+    font-size: 13.5px;
+    line-height: 1.55;
+    white-space: pre;
+    tab-size: 4;
+    box-shadow: 0 2px 12px rgba(15, 23, 42, 0.05);
+  }
+  .hint { margin-top: 12px; color: var(--muted); font-size: 12px; }
+  @media print {
+    html, body { background: #fff !important; color: #000 !important; }
+    .top { position: static; box-shadow: none; border-bottom: 1px solid #ccc; background: #fff !important; }
+    .actions { display: none !important; }
+    .meta { background: #fff !important; border-color: #ddd; color: #333; }
+    .wrap { padding: 0; }
+    pre {
+      background: #fff !important; color: #000 !important;
+      border: 1px solid #bbb; box-shadow: none; border-radius: 0;
+      white-space: pre-wrap; word-break: break-word; font-size: 11pt; line-height: 1.4;
+    }
+    .hint { display: none; }
+    a { color: #000; text-decoration: none; }
+  }
+</style>
+</head>
+<body>
+  <div class="top">
+    <div class="brand">C++ 算法提高 · 配套代码</div>
+    <div class="title">lesson02_枚举优化.cpp</div>
+    <div class="actions">
+      <a class="btn" href="../lesson02_枚举优化.cpp" download="lesson02_枚举优化.cpp">⬇️ 下载源文件</a>
+      <a class="btn gold" href="javascript:history.back()">← 返回课件</a>
+    </div>
+  </div>
+  <div class="meta">编码：UTF-8 · 文件：lesson02_枚举优化.cpp · 共 220 行 · 浅色主题便于打印</div>
+  <div class="wrap">
+    <pre id="code">/*
+ * ================================================================
+ * C++算法提高 第02课：枚举优化——减少搜索空间
+ * ================================================================
+ *
+ * 算法知识点：
+ *   - 枚举优化四策略：缩小范围、剪枝、减少嵌套、利用对称性
+ *   - break 与 continue 在枚举优化中的使用
+ *   - 利用等式关系减少循环层数
+ *   - 利用排序约定（b ≤ c ≤ d）避免重复枚举
+ *
+ * 经典例题：
+ *   例题1 - 完美立方：a^3 = b^3 + c^3 + d^3 (a ≤ N)
+ *   例题2 - 回文平方数：找1~N中平方是回文数的数
+ *
+ * 优化对比（以完美立方 N=100 为例）：
+ *   朴素算法：O(N^4) ≈ 100^4 = 1亿次
+ *   优化算法：剪枝 + 缩小范围 ≈ 实际运行约10万次，提升上千倍
+ */
+
+#include &lt;iostream&gt;
+#include &lt;cmath&gt;
+#include &lt;iomanip&gt;
+using namespace std;
+
+// ================================================================
+// 辅助函数：判断一个整数是否为回文数
+// 回文数：正读和反读相同的数，如 121、12321
+// 算法：将数字反转后与原数比较
+// ================================================================
+bool isPalindrome(int n) {
+    int original = n;       // 保存原数
+    int reversed = 0;       // 存储反转后的数
+
+    // 逐位反转
+    while (n &gt; 0) {
+        int digit = n % 10;              // 取最后一位
+        reversed = reversed * 10 + digit; // 拼接到反转数末尾
+        n /= 10;                          // 去掉最后一位
+    }
+
+    return original == reversed;  // 比较原数和反转数
+}
+
+// ================================================================
+// 例题1：完美立方
+// 题目：给定 N（N ≤ 100），找出所有 a ≤ N 的等式 a^3 = b^3 + c^3 + d^3
+//       其中 b, c, d &gt; 1 且 b ≤ c ≤ d
+//
+// 优化策略分析：
+//   1. 范围缩小：b, c, d 都小于 a（因为立方和等于 a^3，各项小于总和）
+//   2. 排序约定：约定 b ≤ c ≤ d，避免同一组解的排列重复
+//   3. 剪枝1：b^3 ≥ a^3 时 break（b 已经太大）
+//   4. 剪枝2：b^3 + c^3 ≥ a^3 时 break（c 已经太大）
+//   5. 剪枝3：当和超过 a^3 时 break（d 已经太大，且 d 递增）
+// ================================================================
+void solvePerfectCube(int N) {
+    cout &lt;&lt; "══════════════════════════════════════" &lt;&lt; endl;
+    cout &lt;&lt; "  例题1：完美立方 (N = " &lt;&lt; N &lt;&lt; ")" &lt;&lt; endl;
+    cout &lt;&lt; "══════════════════════════════════════" &lt;&lt; endl;
+    cout &lt;&lt; "寻找 a^3 = b^3 + c^3 + d^3 的所有解" &lt;&lt; endl;
+    cout &lt;&lt; "其中 1 &lt; b ≤ c ≤ d &lt; a ≤ N" &lt;&lt; endl;
+    cout &lt;&lt; "--------------------------------------" &lt;&lt; endl;
+
+    int count = 0;  // 解计数器
+
+    // 枚举 a：从2开始（a=1 时 b,c,d 不可能都大于1）
+    for (int a = 2; a &lt;= N; a++) {
+        int a3 = a * a * a;  // 预计算 a^3，避免重复计算
+
+        // 枚举 b：b &lt; a（因为 b^3 &lt; a^3）
+        for (int b = 2; b &lt; a; b++) {
+            int b3 = b * b * b;
+
+            // 剪枝1：如果 b^3 已经 ≥ a^3，更大的 b 更不可能
+            if (b3 &gt;= a3) break;
+
+            // 枚举 c：b ≤ c &lt; a（从小到大，避免重复）
+            for (int c = b; c &lt; a; c++) {
+                int c3 = c * c * c;
+                int bc3 = b3 + c3;  // 预计算部分和
+
+                // 剪枝2：如果 b^3 + c^3 已经 ≥ a^3，更大的 c 不可能
+                if (bc3 &gt;= a3) break;
+
+                // 枚举 d：c ≤ d &lt; a
+                for (int d = c; d &lt; a; d++) {
+                    int d3 = d * d * d;
+                    int sum = bc3 + d3;
+
+                    if (sum == a3) {
+                        count++;
+                        cout &lt;&lt; "解" &lt;&lt; count &lt;&lt; ": ";
+                        cout &lt;&lt; "Cube = " &lt;&lt; setw(3) &lt;&lt; a;
+                        cout &lt;&lt; ", Triple = (" &lt;&lt; setw(2) &lt;&lt; b;
+                        cout &lt;&lt; "," &lt;&lt; setw(2) &lt;&lt; c;
+                        cout &lt;&lt; "," &lt;&lt; setw(2) &lt;&lt; d &lt;&lt; ")";
+                        // 验证
+                        cout &lt;&lt; "  [验证: " &lt;&lt; a &lt;&lt; "^3 = " &lt;&lt; a3
+                             &lt;&lt; " = " &lt;&lt; b3 &lt;&lt; "+" &lt;&lt; c3 &lt;&lt; "+" &lt;&lt; d3 &lt;&lt; "]";
+                        cout &lt;&lt; endl;
+                    }
+
+                    // 剪枝3：如果和已经超过 a^3，更大的 d 不可能
+                    if (sum &gt; a3) break;
+                }
+            }
+        }
+    }
+
+    if (count == 0)
+        cout &lt;&lt; "（无解）" &lt;&lt; endl;
+    else
+        cout &lt;&lt; "--------------------------------------" &lt;&lt; endl
+             &lt;&lt; "共找到 " &lt;&lt; count &lt;&lt; " 组解" &lt;&lt; endl;
+    cout &lt;&lt; endl;
+}
+
+// ================================================================
+// 例题2：回文平方数
+// 题目：给定 N，找出 1~N 中所有平方也是回文数的数
+//
+// 枚举思路：
+//   - 枚举对象：i ∈ [1, N]
+//   - 判断条件：i*i 是回文数
+//   - 优化空间不大（每个数都要检查），但回文判断是 O(log i) 的
+// ================================================================
+void solvePalindromicSquare(int N) {
+    cout &lt;&lt; "══════════════════════════════════════" &lt;&lt; endl;
+    cout &lt;&lt; "  例题2：回文平方数 (N = " &lt;&lt; N &lt;&lt; ")" &lt;&lt; endl;
+    cout &lt;&lt; "══════════════════════════════════════" &lt;&lt; endl;
+    cout &lt;&lt; "寻找 1~" &lt;&lt; N &lt;&lt; " 中平方也是回文数的数" &lt;&lt; endl;
+    cout &lt;&lt; "--------------------------------------" &lt;&lt; endl;
+
+    int count = 0;
+
+    for (int i = 1; i &lt;= N; i++) {
+        int square = i * i;
+
+        if (isPalindrome(square)) {
+            count++;
+            cout &lt;&lt; i &lt;&lt; " × " &lt;&lt; i &lt;&lt; " = " &lt;&lt; square;
+            // 对于较大的平方数，补充说明
+            if (square &gt;= 1000) {
+                cout &lt;&lt; " ← 回文！";
+            }
+            cout &lt;&lt; endl;
+        }
+    }
+
+    cout &lt;&lt; "--------------------------------------" &lt;&lt; endl;
+    cout &lt;&lt; "1~" &lt;&lt; N &lt;&lt; " 中共有 " &lt;&lt; count &lt;&lt; " 个回文平方数" &lt;&lt; endl;
+    cout &lt;&lt; endl;
+}
+
+// ================================================================
+// 演示：枚举优化效果对比
+// 用单层枚举 + continue/break 演示剪枝效果
+// ================================================================
+void demoOptimization() {
+    cout &lt;&lt; "══════════════════════════════════════" &lt;&lt; endl;
+    cout &lt;&lt; "  演示：continue 和 break 的使用" &lt;&lt; endl;
+    cout &lt;&lt; "══════════════════════════════════════" &lt;&lt; endl;
+
+    // continue 示例：只输出奇数
+    cout &lt;&lt; "【continue 示例】1~20 中的奇数：" &lt;&lt; endl;
+    for (int i = 1; i &lt;= 20; i++) {
+        if (i % 2 == 0) continue;  // 偶数跳过
+        cout &lt;&lt; i &lt;&lt; " ";
+    }
+    cout &lt;&lt; endl;
+
+    // break 示例：找到第一个满足条件的就停止
+    cout &lt;&lt; "\n【break 示例】第一个能被17整除的三位数：" &lt;&lt; endl;
+    for (int i = 100; i &lt;= 999; i++) {
+        if (i % 17 == 0) {
+            cout &lt;&lt; i &lt;&lt; "（" &lt;&lt; i &lt;&lt; " = 17 × " &lt;&lt; i/17 &lt;&lt; "）" &lt;&lt; endl;
+            break;  // 找到就停
+        }
+    }
+    cout &lt;&lt; endl;
+}
+
+// ================================================================
+// 主函数
+// ================================================================
+int main() {
+    cout &lt;&lt; "╔══════════════════════════════════════════════╗" &lt;&lt; endl;
+    cout &lt;&lt; "║   C++ 算法提高 —— 第02课：枚举优化            ║" &lt;&lt; endl;
+    cout &lt;&lt; "║   减少搜索空间 —— 更聪明地穷举                ║" &lt;&lt; endl;
+    cout &lt;&lt; "╚══════════════════════════════════════════════╝" &lt;&lt; endl;
+    cout &lt;&lt; endl;
+
+    // 演示剪枝
+    demoOptimization();
+
+    // 例题1：完美立方
+    int N1;
+    cout &lt;&lt; "请输入完美立方的 N（建议 24，演示用）: ";
+    cin &gt;&gt; N1;
+    solvePerfectCube(N1);
+
+    // 例题2：回文平方数
+    int N2;
+    cout &lt;&lt; "请输入回文平方数的 N（建议 30，演示用）: ";
+    cin &gt;&gt; N2;
+    solvePalindromicSquare(N2);
+
+    cout &lt;&lt; "══════════════════════════════════════" &lt;&lt; endl;
+    cout &lt;&lt; "  本课小结" &lt;&lt; endl;
+    cout &lt;&lt; "══════════════════════════════════════" &lt;&lt; endl;
+    cout &lt;&lt; "1. 缩小枚举范围：利用数学关系确定更紧的上下界" &lt;&lt; endl;
+    cout &lt;&lt; "2. 剪枝（break）：当条件不可能满足时提前终止循环" &lt;&lt; endl;
+    cout &lt;&lt; "3. 跳过（continue）：跳过不满足条件的情况" &lt;&lt; endl;
+    cout &lt;&lt; "4. 减少嵌套：用等式推导减少一层循环" &lt;&lt; endl;
+    cout &lt;&lt; "5. 约定顺序（b≤c≤d）：避免排列重复" &lt;&lt; endl;
+    cout &lt;&lt; "══════════════════════════════════════" &lt;&lt; endl;
+
+    return 0;
+}
+</pre>
+    <p class="hint">本页使用浅色主题与 UTF-8 编码，可直接打印或导出 PDF。</p>
+  </div>
+</body>
+</html>

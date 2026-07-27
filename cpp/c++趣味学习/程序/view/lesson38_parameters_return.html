@@ -1,0 +1,641 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>lesson38_parameters_return.cpp</title>
+<style>
+  :root {
+    --bg: #f5f7fa;
+    --panel: #ffffff;
+    --text: #1a1a2e;
+    --muted: #5a6570;
+    --gold: #b8860b;
+    --code-bg: #ffffff;
+    --code-text: #1f2933;
+    --border: #d8dee6;
+    --top-bg: #ffffff;
+    --top-border: #e5e9ef;
+  }
+  * { box-sizing: border-box; }
+  html, body {
+    margin: 0; padding: 0;
+    background: var(--bg);
+    color: var(--text);
+    font-family: -apple-system, BlinkMacSystemFont, "PingFang SC", "Microsoft YaHei", sans-serif;
+    min-height: 100%;
+  }
+  .top {
+    position: sticky; top: 0; z-index: 10;
+    display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between;
+    gap: 10px;
+    padding: 12px 18px;
+    background: var(--top-bg);
+    border-bottom: 1px solid var(--top-border);
+    box-shadow: 0 1px 8px rgba(15, 23, 42, 0.06);
+  }
+  .brand { color: var(--gold); font-weight: 700; font-size: 14px; letter-spacing: 0.04em; }
+  .title { font-size: 15px; font-weight: 600; color: var(--text); max-width: 52vw; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .actions { display: flex; gap: 8px; flex-wrap: wrap; }
+  .btn {
+    appearance: none; border: 1px solid var(--border);
+    background: #fff; color: var(--text);
+    border-radius: 999px; padding: 8px 14px; font-size: 13px; font-weight: 600;
+    text-decoration: none; cursor: pointer;
+  }
+  .btn:hover { background: #f0f3f7; }
+  .btn.gold {
+    background: linear-gradient(135deg, #f0d78c, #d4a853);
+    color: #0a2540; border-color: #e0c06a;
+  }
+  .meta {
+    padding: 10px 18px; color: var(--muted); font-size: 12px;
+    border-bottom: 1px solid var(--border);
+    background: var(--panel);
+  }
+  .wrap { padding: 16px 18px 40px; }
+  pre {
+    margin: 0;
+    background: var(--code-bg);
+    color: var(--code-text);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 18px 20px;
+    overflow: auto;
+    font-family: "SF Mono", "JetBrains Mono", "Fira Code", Consolas, "Courier New", monospace;
+    font-size: 13.5px;
+    line-height: 1.55;
+    white-space: pre;
+    tab-size: 4;
+    box-shadow: 0 2px 12px rgba(15, 23, 42, 0.05);
+  }
+  .hint { margin-top: 12px; color: var(--muted); font-size: 12px; }
+  @media print {
+    html, body { background: #fff !important; color: #000 !important; }
+    .top { position: static; box-shadow: none; border-bottom: 1px solid #ccc; background: #fff !important; }
+    .actions { display: none !important; }
+    .meta { background: #fff !important; border-color: #ddd; color: #333; }
+    .wrap { padding: 0; }
+    pre {
+      background: #fff !important; color: #000 !important;
+      border: 1px solid #bbb; box-shadow: none; border-radius: 0;
+      white-space: pre-wrap; word-break: break-word; font-size: 11pt; line-height: 1.4;
+    }
+    .hint { display: none; }
+    a { color: #000; text-decoration: none; }
+  }
+</style>
+</head>
+<body>
+  <div class="top">
+    <div class="brand">C++ 趣味学习 · 配套代码</div>
+    <div class="title">lesson38_parameters_return.cpp</div>
+    <div class="actions">
+      <a class="btn" href="../lesson38_parameters_return.cpp" download="lesson38_parameters_return.cpp">⬇️ 下载源文件</a>
+      <a class="btn gold" href="javascript:history.back()">← 返回课件</a>
+    </div>
+  </div>
+  <div class="meta">编码：UTF-8 · 文件：lesson38_parameters_return.cpp · 共 537 行 · 浅色主题便于打印</div>
+  <div class="wrap">
+    <pre id="code">/*
+ * 第38课：邮递员送信——参数与返回值
+ * 主题：📬 数据快递站
+ *
+ * 知识点：
+ *   1. 函数的形参（形式参数）与实参（实际参数）
+ *   2. return 语句——把计算结果"寄回"给调用方
+ *   3. void 函数——"只干活不退货"
+ *   4. 传递多个参数——数量、类型、顺序要一一对应
+ *
+ * 课程项目：
+ * - 示例1：快递计费计算器（有参数有返回值的函数）
+ * - 示例2：电子面单打印机（void 函数，只干活不退货）
+ * - 示例3：快递分拣系统（多参数函数，"快递站"综合应用）
+ * - 示例4：练习答案展示
+ *
+ * 编译方法：
+ *   g++ -std=c++11 lesson38_parameters_return.cpp -o lesson38_parameters_return
+ *   运行：./lesson38_parameters_return
+ */
+
+#include &lt;iostream&gt;
+#include &lt;string&gt;
+#include &lt;iomanip&gt;
+using namespace std;
+
+// ============================================================
+// 示例1：快递计费计算器 —— 有参数、有返回值的函数
+// 说明：这是一个"有来有回"的函数，收到数据，返回计算结果
+// 形参 weight, distance, isUrgent 就像快递单上的空白栏
+// 调用时传入的实参就像填写了具体的内容
+// ============================================================
+double calculateFee(double weight, int distance, bool isUrgent) {
+    // 形参说明：
+    //   weight   —— 形参，代表包裹重量（调用时由实参赋值）
+    //   distance —— 形参，代表运送距离
+    //   isUrgent —— 形参，代表是否加急
+
+    double fee = 0.0;
+
+    // 基础费用：每千克 2 元
+    fee = weight * 2.0;
+
+    // 远距离附加费：超过1000公里加收10元
+    if (distance &gt; 1000) {
+        fee += 10.0;
+        cout &lt;&lt; "     [系统提示] 检测到远距离运输，附加10元长途费" &lt;&lt; endl;
+    }
+
+    // 加急服务费：加急加收15元
+    if (isUrgent) {
+        fee += 15.0;
+        cout &lt;&lt; "     [系统提示] 检测到加急服务，附加15元加急费" &lt;&lt; endl;
+    }
+
+    // 限时优惠：如果总费用超过30元，打9折
+    if (fee &gt; 30.0) {
+        cout &lt;&lt; "     [系统提示] 大额订单享9折优惠！" &lt;&lt; endl;
+        fee = fee * 0.9;
+    }
+
+    return fee;  // return：把计算结果"寄回"给调用方
+}
+
+
+// ============================================================
+// 示例2：电子面单打印机 —— void 函数（只干活，不退货）
+// 说明：void 表示"我不返回任何值"，只管执行任务
+//       就像邮递员把通知贴到公告栏就走，不需要带回签收单
+// ============================================================
+void printReceipt(string sender, string receiver,
+                  double weight, int distance, bool isUrgent) {
+    // void 函数的特点：
+    // 1. 函数名前写 void
+    // 2. 没有 return 语句（执行完就自动结束）
+    // 3. 调用方不能用变量接收它的"返回值"（因为它没有返回值）
+
+    // 在 void 函数内部，我们可以调用其他函数来帮忙
+    double fee = calculateFee(weight, distance, isUrgent);
+
+    cout &lt;&lt; endl;
+    cout &lt;&lt; "╔══════════════════════════════════════════╗" &lt;&lt; endl;
+    cout &lt;&lt; "║       📬 数据快递站 · 电子面单           ║" &lt;&lt; endl;
+    cout &lt;&lt; "╠══════════════════════════════════════════╣" &lt;&lt; endl;
+    cout &lt;&lt; "║  快递单号：KD2024" &lt;&lt; (1000 + (int)weight * 100 + distance % 100) &lt;&lt; "            ║" &lt;&lt; endl;
+    cout &lt;&lt; "╠══════════════════════════════════════════╣" &lt;&lt; endl;
+
+    // 发件人
+    cout &lt;&lt; "║  发件人：";
+    cout &lt;&lt; sender;
+    int padLen = 26 - (int)sender.length() * 2;
+    if (padLen &lt; 0) padLen = 0;
+    for (int i = 0; i &lt; padLen; i++) cout &lt;&lt; " ";
+    cout &lt;&lt; "║" &lt;&lt; endl;
+
+    // 收件人
+    cout &lt;&lt; "║  收件人：";
+    cout &lt;&lt; receiver;
+    padLen = 26 - (int)receiver.length() * 2;
+    if (padLen &lt; 0) padLen = 0;
+    for (int i = 0; i &lt; padLen; i++) cout &lt;&lt; " ";
+    cout &lt;&lt; "║" &lt;&lt; endl;
+
+    // 重量
+    cout &lt;&lt; "║  重量：  " &lt;&lt; weight &lt;&lt; " kg";
+    padLen = 20;
+    for (int i = 0; i &lt; padLen; i++) cout &lt;&lt; " ";
+    cout &lt;&lt; "║" &lt;&lt; endl;
+
+    // 距离
+    cout &lt;&lt; "║  距离：  " &lt;&lt; distance &lt;&lt; " 公里";
+    padLen = 18;
+    for (int i = 0; i &lt; padLen; i++) cout &lt;&lt; " ";
+    cout &lt;&lt; "║" &lt;&lt; endl;
+
+    // 服务类型
+    cout &lt;&lt; "║  服务：  ";
+    cout &lt;&lt; (isUrgent ? "加急快递" : "普通快递");
+    padLen = 20;
+    for (int i = 0; i &lt; padLen; i++) cout &lt;&lt; " ";
+    cout &lt;&lt; "║" &lt;&lt; endl;
+
+    cout &lt;&lt; "╠══════════════════════════════════════════╣" &lt;&lt; endl;
+
+    // 费用
+    cout &lt;&lt; "║  费用合计：￥";
+    cout &lt;&lt; fixed &lt;&lt; setprecision(2) &lt;&lt; fee;
+    padLen = 22;
+    for (int i = 0; i &lt; padLen; i++) cout &lt;&lt; " ";
+    cout &lt;&lt; "║" &lt;&lt; endl;
+
+    cout &lt;&lt; "╚══════════════════════════════════════════╝" &lt;&lt; endl;
+    cout &lt;&lt; endl;
+
+    // void 函数不需要 return —— 执行到这里就自动结束了
+}
+
+
+// ============================================================
+// 示例3：快递分拣系统 —— 多参数函数综合应用
+// 说明：这个系统模拟了一个快递站的分拣流程
+//       发件人把包裹交给快递站 → 快递站分拣配送 → 收件人签收
+// ============================================================
+
+// 3.1 分拣判断：根据目的地决定投递方式
+string determineDeliveryMethod(string destination, double weight) {
+    if (weight &gt; 20.0) {
+        return "🚛 货车配送（超重包裹，20kg以上）";
+    }
+    if (destination == "本地" || destination == "同城") {
+        return "🛵 电动车配送（本地件）";
+    }
+    if (destination == "省内") {
+        return "🚚 卡车配送（省内件）";
+    }
+    return "✈️ 航空配送（跨省/国际件）";
+}
+
+// 3.2 预计送达时间计算
+int calculateDeliveryDays(string destination, bool isUrgent) {
+    if (isUrgent) {
+        return 1;  // 加急次日达
+    }
+    if (destination == "本地" || destination == "同城") {
+        return 1;  // 同城次日达
+    }
+    if (destination == "省内") {
+        return 2;  // 省内2天
+    }
+    if (destination == "跨省") {
+        return 4;  // 跨省4天
+    }
+    return 7;  // 国际件7天
+}
+
+// 3.3 快递分拣主函数 —— 综合所有信息
+void processPackage(string sender, string receiver,
+                    string destination, double weight, bool isUrgent) {
+    // 这个函数展示了如何在函数内部调用其他函数
+    // 就像快递站的各个岗位互相协作
+
+    cout &lt;&lt; "╔══════════════════════════════════════════╗" &lt;&lt; endl;
+    cout &lt;&lt; "║     📦 快递分拣系统 · 包裹处理中...     ║" &lt;&lt; endl;
+    cout &lt;&lt; "╚══════════════════════════════════════════╝" &lt;&lt; endl;
+    cout &lt;&lt; endl;
+
+    // 步骤1：打印基本信息
+    cout &lt;&lt; "📋 包裹信息确认：" &lt;&lt; endl;
+    cout &lt;&lt; "   发件人：" &lt;&lt; sender &lt;&lt; "    收件人：" &lt;&lt; receiver &lt;&lt; endl;
+    cout &lt;&lt; "   目的地：" &lt;&lt; destination &lt;&lt; "    重量：" &lt;&lt; weight &lt;&lt; " kg" &lt;&lt; endl;
+    cout &lt;&lt; "   模式：" &lt;&lt; (isUrgent ? "加急" : "普通") &lt;&lt; endl;
+    cout &lt;&lt; endl;
+
+    // 步骤2：确定投递方式（调用 determineDeliveryMethod）
+    cout &lt;&lt; "🔍 正在匹配最佳配送路线..." &lt;&lt; endl;
+    string method = determineDeliveryMethod(destination, weight);
+    cout &lt;&lt; "   → " &lt;&lt; method &lt;&lt; endl;
+    cout &lt;&lt; endl;
+
+    // 步骤3：计算费用（调用 calculateFee）
+    int distance = 0;
+    if (destination == "本地" || destination == "同城") distance = 30;
+    else if (destination == "省内") distance = 300;
+    else if (destination == "跨省") distance = 1500;
+    else distance = 5000;
+
+    double fee = calculateFee(weight, distance, isUrgent);
+    // 注意：calculateFee 内部的 cout 会在此处输出提示信息
+    cout &lt;&lt; "   → 快递费用：￥" &lt;&lt; fixed &lt;&lt; setprecision(2) &lt;&lt; fee &lt;&lt; endl;
+    cout &lt;&lt; endl;
+
+    // 步骤4：预计送达时间（调用 calculateDeliveryDays）
+    int days = calculateDeliveryDays(destination, isUrgent);
+    cout &lt;&lt; "📅 预计送达时间：" &lt;&lt; days &lt;&lt; " 天" &lt;&lt; endl;
+    cout &lt;&lt; endl;
+
+    // 步骤5：模拟发货过程
+    cout &lt;&lt; "📬 包裹状态更新：" &lt;&lt; endl;
+    cout &lt;&lt; "   [✓] 已揽收 —— 快递员已取件" &lt;&lt; endl;
+    cout &lt;&lt; "   [✓] 已分拣 —— " &lt;&lt; method &lt;&lt; endl;
+    cout &lt;&lt; "   [→] 运输中 —— 预计 " &lt;&lt; days &lt;&lt; " 天后送达" &lt;&lt; endl;
+    cout &lt;&lt; endl;
+    cout &lt;&lt; "   感谢使用数据快递站！您的包裹正在路上~ 🚀" &lt;&lt; endl;
+    cout &lt;&lt; endl;
+}
+
+
+// ============================================================
+// 练习答案
+// ============================================================
+
+// 练习1答案：圆面积计算器
+void ejercicio1_respuesta() {
+    cout &lt;&lt; "╔══════════════════════════════════════════╗" &lt;&lt; endl;
+    cout &lt;&lt; "║       练习1答案：圆面积计算器           ║" &lt;&lt; endl;
+    cout &lt;&lt; "╚══════════════════════════════════════════╝" &lt;&lt; endl;
+    cout &lt;&lt; endl;
+
+    // 正确的函数定义
+    cout &lt;&lt; "补全后的代码：" &lt;&lt; endl;
+    cout &lt;&lt; "┌──────────────────────────────────────────┐" &lt;&lt; endl;
+    cout &lt;&lt; "│ double circleArea(double r) {            │" &lt;&lt; endl;
+    cout &lt;&lt; "│     const double PI = 3.14159;           │" &lt;&lt; endl;
+    cout &lt;&lt; "│     return PI * r * r;                   │" &lt;&lt; endl;
+    cout &lt;&lt; "│ }                                        │" &lt;&lt; endl;
+    cout &lt;&lt; "└──────────────────────────────────────────┘" &lt;&lt; endl;
+    cout &lt;&lt; endl;
+
+    // 实际运行演示
+    double testRadii[] = {1.0, 2.0, 3.5};
+    cout &lt;&lt; "运行演示：" &lt;&lt; endl;
+    for (int i = 0; i &lt; 3; i++) {
+        double r = testRadii[i];
+        const double PI = 3.14159;
+        double area = PI * r * r;
+        cout &lt;&lt; "   半径 r = " &lt;&lt; r &lt;&lt; " → 面积 = " &lt;&lt; area &lt;&lt; endl;
+    }
+    cout &lt;&lt; endl;
+}
+
+// 练习2答案：判断正误
+void ejercicio2_respuesta() {
+    cout &lt;&lt; "╔══════════════════════════════════════════╗" &lt;&lt; endl;
+    cout &lt;&lt; "║        练习2答案：判断正误              ║" &lt;&lt; endl;
+    cout &lt;&lt; "╚══════════════════════════════════════════╝" &lt;&lt; endl;
+    cout &lt;&lt; endl;
+
+    cout &lt;&lt; "1. '形参可以不给名字' → ❌ 错误" &lt;&lt; endl;
+    cout &lt;&lt; "   函数定义中的形参必须有名字，因为函数体需要通过" &lt;&lt; endl;
+    cout &lt;&lt; "   形参名来使用传入的值。" &lt;&lt; endl;
+    cout &lt;&lt; endl;
+
+    cout &lt;&lt; "2. 'void 函数中可以写 return 0' → ❌ 错误" &lt;&lt; endl;
+    cout &lt;&lt; "   void 函数表示不返回任何值，如果要提前退出，" &lt;&lt; endl;
+    cout &lt;&lt; "   只能写 return; （不带值），不能写 return 0;" &lt;&lt; endl;
+    cout &lt;&lt; endl;
+
+    cout &lt;&lt; "3. '实参和形参的名字必须相同' → ❌ 错误" &lt;&lt; endl;
+    cout &lt;&lt; "   形参和实参的名字可以完全不同。关键是位置对应，" &lt;&lt; endl;
+    cout &lt;&lt; "   不是名字对应。例：int add(int x, int y) 可以" &lt;&lt; endl;
+    cout &lt;&lt; "   用 add(a, b) 调用，其中 a 和 b 是实参。" &lt;&lt; endl;
+    cout &lt;&lt; endl;
+
+    cout &lt;&lt; "4. '2个int形参必须传2个int实参' → ✅ 正确" &lt;&lt; endl;
+    cout &lt;&lt; "   调用函数时，实参的数量和类型必须与形参一一对应。" &lt;&lt; endl;
+    cout &lt;&lt; "   int calculate(int x, int y) 需要正好2个 int 实参。" &lt;&lt; endl;
+    cout &lt;&lt; endl;
+}
+
+// 练习3答案：代码改错
+void ejercicio3_respuesta() {
+    cout &lt;&lt; "╔══════════════════════════════════════════╗" &lt;&lt; endl;
+    cout &lt;&lt; "║        练习3答案：代码改错              ║" &lt;&lt; endl;
+    cout &lt;&lt; "╚══════════════════════════════════════════╝" &lt;&lt; endl;
+    cout &lt;&lt; endl;
+
+    cout &lt;&lt; "错误①: int multiply(int x, y)" &lt;&lt; endl;
+    cout &lt;&lt; "   每个形参都必须有自己的类型。改为：" &lt;&lt; endl;
+    cout &lt;&lt; "   int multiply(int x, int y)" &lt;&lt; endl;
+    cout &lt;&lt; endl;
+
+    cout &lt;&lt; "错误②: void 函数中 return answer;" &lt;&lt; endl;
+    cout &lt;&lt; "   void 函数不能返回任何值。删掉这行即可。" &lt;&lt; endl;
+    cout &lt;&lt; endl;
+
+    cout &lt;&lt; "错误③: multiply(a) 只传了1个实参" &lt;&lt; endl;
+    cout &lt;&lt; "   multiply 需要2个 int 实参。改为：multiply(a, b)" &lt;&lt; endl;
+    cout &lt;&lt; endl;
+
+    cout &lt;&lt; "错误④: int d = printResult(c)" &lt;&lt; endl;
+    cout &lt;&lt; "   不能把 void 函数的调用赋给变量。改为：printResult(c);" &lt;&lt; endl;
+    cout &lt;&lt; endl;
+
+    // 运行修正后的代码
+    cout &lt;&lt; "修正后运行演示：" &lt;&lt; endl;
+    int a = 7, b = 8;
+    int c = a * b;  // 模拟 multiply 的结果
+    cout &lt;&lt; "   multiply(7, 8) = " &lt;&lt; c &lt;&lt; endl;
+    cout &lt;&lt; "   printResult -&gt; 结果是：" &lt;&lt; c &lt;&lt; endl;
+    cout &lt;&lt; endl;
+}
+
+
+// ============================================================
+// 挑战任务：快递费用计算系统（完整版）
+// ============================================================
+void desafio_expressSystem() {
+    cout &lt;&lt; "╔══════════════════════════════════════════╗" &lt;&lt; endl;
+    cout &lt;&lt; "║   挑战任务：快递费用计算系统            ║" &lt;&lt; endl;
+    cout &lt;&lt; "╚══════════════════════════════════════════╝" &lt;&lt; endl;
+    cout &lt;&lt; endl;
+
+    cout &lt;&lt; "🚚 === 数据快递站 · 今日订单处理 === 🚚" &lt;&lt; endl;
+    cout &lt;&lt; endl;
+
+    // 订单1：小明寄给小红 —— 普通本地件
+    cout &lt;&lt; "订单 #1：同城普通件" &lt;&lt; endl;
+    cout &lt;&lt; "──────────────────────────────────────────" &lt;&lt; endl;
+    processPackage("小明", "小红", "本地", 2.5, false);
+
+    // 分隔线
+    cout &lt;&lt; "═══════════════════════════════════════════" &lt;&lt; endl;
+    cout &lt;&lt; endl;
+
+    // 订单2：北京寄上海 —— 加急跨省件
+    cout &lt;&lt; "订单 #2：跨省加急件" &lt;&lt; endl;
+    cout &lt;&lt; "──────────────────────────────────────────" &lt;&lt; endl;
+    processPackage("北京分公司", "上海分公司", "跨省", 12.0, true);
+
+    // 分隔线
+    cout &lt;&lt; "═══════════════════════════════════════════" &lt;&lt; endl;
+    cout &lt;&lt; endl;
+
+    // 订单3：妈妈寄给奶奶 —— 省内重件
+    cout &lt;&lt; "订单 #3：省内普通重件" &lt;&lt; endl;
+    cout &lt;&lt; "──────────────────────────────────────────" &lt;&lt; endl;
+    processPackage("妈妈", "奶奶", "省内", 25.0, false);
+
+    cout &lt;&lt; "📊 今日包裹统计：" &lt;&lt; endl;
+    cout &lt;&lt; "   共处理 3 个包裹，所有订单已完成分拣。" &lt;&lt; endl;
+    cout &lt;&lt; "   感谢使用数据快递站，明天见！" &lt;&lt; endl;
+    cout &lt;&lt; endl;
+}
+
+
+// ============================================================
+// 交互式演示：让用户自己试用快递系统
+// ============================================================
+void interactiveDemo() {
+    cout &lt;&lt; "╔══════════════════════════════════════════╗" &lt;&lt; endl;
+    cout &lt;&lt; "║   📬 数据快递站 · 交互式体验            ║" &lt;&lt; endl;
+    cout &lt;&lt; "║   来当一次快递站管理员吧！              ║" &lt;&lt; endl;
+    cout &lt;&lt; "╚══════════════════════════════════════════╝" &lt;&lt; endl;
+    cout &lt;&lt; endl;
+
+    string sender, receiver, destination;
+    double weight;
+    char urgentChoice;
+    bool isUrgent;
+
+    cout &lt;&lt; "请输入发件人姓名：";
+    getline(cin, sender);
+
+    cout &lt;&lt; "请输入收件人姓名：";
+    getline(cin, receiver);
+
+    cout &lt;&lt; "请输入目的地（本地/省内/跨省/国际）：";
+    getline(cin, destination);
+
+    cout &lt;&lt; "请输入包裹重量（kg）：";
+    cin &gt;&gt; weight;
+
+    cout &lt;&lt; "是否加急？(y/n)：";
+    cin &gt;&gt; urgentChoice;
+    cin.ignore();  // 清除缓冲区
+
+    isUrgent = (urgentChoice == 'y' || urgentChoice == 'Y');
+
+    cout &lt;&lt; endl;
+    processPackage(sender, receiver, destination, weight, isUrgent);
+}
+
+
+// ============================================================
+// 主函数：程序入口
+// ============================================================
+int main() {
+    cout &lt;&lt; endl;
+    cout &lt;&lt; "╔══════════════════════════════════════════════════════╗" &lt;&lt; endl;
+    cout &lt;&lt; "║     第38课：邮递员送信——参数与返回值               ║" &lt;&lt; endl;
+    cout &lt;&lt; "║     📬 数据快递站 —— C++ 趣味学习                  ║" &lt;&lt; endl;
+    cout &lt;&lt; "╚══════════════════════════════════════════════════════╝" &lt;&lt; endl;
+    cout &lt;&lt; endl;
+
+    int opcion;
+
+    do {
+        cout &lt;&lt; "┌────────────────────────────────────────────────┐" &lt;&lt; endl;
+        cout &lt;&lt; "│           📬 数据快递站 · 功能菜单             │" &lt;&lt; endl;
+        cout &lt;&lt; "├────────────────────────────────────────────────┤" &lt;&lt; endl;
+        cout &lt;&lt; "│  1. 示例1：快递计费计算器（参数+返回值）      │" &lt;&lt; endl;
+        cout &lt;&lt; "│  2. 示例2：电子面单打印机（void函数）         │" &lt;&lt; endl;
+        cout &lt;&lt; "│  3. 示例3：快递分拣系统（多参数综合）         │" &lt;&lt; endl;
+        cout &lt;&lt; "│  4. 练习1答案：圆面积计算器                   │" &lt;&lt; endl;
+        cout &lt;&lt; "│  5. 练习2答案：判断正误                       │" &lt;&lt; endl;
+        cout &lt;&lt; "│  6. 练习3答案：代码改错                       │" &lt;&lt; endl;
+        cout &lt;&lt; "│  7. 挑战任务：快递费用计算系统（完整版）      │" &lt;&lt; endl;
+        cout &lt;&lt; "│  8. 交互式体验：自己当快递站管理员            │" &lt;&lt; endl;
+        cout &lt;&lt; "│  0. 退出程序                                  │" &lt;&lt; endl;
+        cout &lt;&lt; "└────────────────────────────────────────────────┘" &lt;&lt; endl;
+        cout &lt;&lt; "请输入数字选择：";
+        cin &gt;&gt; opcion;
+        cin.ignore();  // 清除缓冲区中的换行符
+        cout &lt;&lt; endl;
+
+        switch (opcion) {
+            case 1: {
+                // 示例1：演示 calculateFee 函数
+                cout &lt;&lt; "╔══════════════════════════════════════════╗" &lt;&lt; endl;
+                cout &lt;&lt; "║  示例1：快递计费计算器                   ║" &lt;&lt; endl;
+                cout &lt;&lt; "║  （有参数、有返回值的函数）              ║" &lt;&lt; endl;
+                cout &lt;&lt; "╚══════════════════════════════════════════╝" &lt;&lt; endl;
+                cout &lt;&lt; endl;
+
+                cout &lt;&lt; "演示1：普通包裹 2.5kg，500公里，非加急" &lt;&lt; endl;
+                double fee1 = calculateFee(2.5, 500, false);
+                cout &lt;&lt; "   → 最终费用：￥" &lt;&lt; fee1 &lt;&lt; endl;
+                cout &lt;&lt; endl;
+
+                cout &lt;&lt; "演示2：加急包裹 8.0kg，1500公里，加急" &lt;&lt; endl;
+                double fee2 = calculateFee(8.0, 1500, true);
+                cout &lt;&lt; "   → 最终费用：￥" &lt;&lt; fee2 &lt;&lt; endl;
+                cout &lt;&lt; endl;
+
+                cout &lt;&lt; "【知识点小结】" &lt;&lt; endl;
+                cout &lt;&lt; "  calculateFee 有3个形参：(double weight, int distance, bool isUrgent)" &lt;&lt; endl;
+                cout &lt;&lt; "  调用时传入3个实参，类型必须匹配，顺序必须正确！" &lt;&lt; endl;
+                cout &lt;&lt; "  函数通过 return 把计算结果'寄回'给调用方。" &lt;&lt; endl;
+                cout &lt;&lt; endl;
+                break;
+            }
+
+            case 2: {
+                // 示例2：演示 void 函数
+                cout &lt;&lt; "╔══════════════════════════════════════════╗" &lt;&lt; endl;
+                cout &lt;&lt; "║  示例2：电子面单打印机                   ║" &lt;&lt; endl;
+                cout &lt;&lt; "║  （void 函数 —— 只干活，不退货）          ║" &lt;&lt; endl;
+                cout &lt;&lt; "╚══════════════════════════════════════════╝" &lt;&lt; endl;
+
+                // void 函数直接调用，不需要赋值
+                printReceipt("小红", "小刚的奶奶", 1.2, 200, false);
+                printReceipt("小明", "小华的爸爸", 15.0, 2000, true);
+
+                cout &lt;&lt; "【知识点小结】" &lt;&lt; endl;
+                cout &lt;&lt; "  printReceipt 是 void 函数，它只是'干活'（打印面单），" &lt;&lt; endl;
+                cout &lt;&lt; "  不返回任何值。不能写成 int x = printReceipt(...);" &lt;&lt; endl;
+                cout &lt;&lt; "  void 函数内部还可以调用其他函数（如 calculateFee）。" &lt;&lt; endl;
+                cout &lt;&lt; endl;
+                break;
+            }
+
+            case 3: {
+                // 示例3：演示多参数函数
+                cout &lt;&lt; "╔══════════════════════════════════════════╗" &lt;&lt; endl;
+                cout &lt;&lt; "║  示例3：快递分拣系统                     ║" &lt;&lt; endl;
+                cout &lt;&lt; "║  （多参数函数综合应用）                  ║" &lt;&lt; endl;
+                cout &lt;&lt; "╚══════════════════════════════════════════╝" &lt;&lt; endl;
+                cout &lt;&lt; endl;
+
+                processPackage("小明", "小红", "本地", 1.5, false);
+                cout &lt;&lt; "──────────────────────────────────────────" &lt;&lt; endl;
+                processPackage("快递站", "上海分公司", "跨省", 8.0, true);
+
+                cout &lt;&lt; "【知识点小结】" &lt;&lt; endl;
+                cout &lt;&lt; "  processPackage 接收5个参数，展示多参数函数的用法。" &lt;&lt; endl;
+                cout &lt;&lt; "  函数内部调用其他函数（determineDeliveryMethod、calculateFee等），" &lt;&lt; endl;
+                cout &lt;&lt; "  体现了函数之间的互相协作——模块化编程的核心思想。" &lt;&lt; endl;
+                cout &lt;&lt; endl;
+                break;
+            }
+
+            case 4:
+                ejercicio1_respuesta();
+                break;
+
+            case 5:
+                ejercicio2_respuesta();
+                break;
+
+            case 6:
+                ejercicio3_respuesta();
+                break;
+
+            case 7:
+                desafio_expressSystem();
+                break;
+
+            case 8:
+                interactiveDemo();
+                break;
+
+            case 0:
+                cout &lt;&lt; "📬 感谢使用数据快递站！" &lt;&lt; endl;
+                cout &lt;&lt; "   记住：形参是占位符，实参是真数据；" &lt;&lt; endl;
+                cout &lt;&lt; "        return 带回来，void 不退货！" &lt;&lt; endl;
+                cout &lt;&lt; "   再见！" &lt;&lt; endl;
+                cout &lt;&lt; endl;
+                break;
+
+            default:
+                cout &lt;&lt; "无效选择，请输入 0-8 之间的数字！" &lt;&lt; endl;
+                cout &lt;&lt; endl;
+        }
+    } while (opcion != 0);
+
+    return 0;
+}
+</pre>
+    <p class="hint">本页使用浅色主题与 UTF-8 编码，可直接打印或导出 PDF。</p>
+  </div>
+</body>
+</html>

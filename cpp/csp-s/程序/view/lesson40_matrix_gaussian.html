@@ -1,0 +1,700 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>lesson40_matrix_gaussian.cpp</title>
+<style>
+  :root {
+    --bg: #f5f7fa;
+    --panel: #ffffff;
+    --text: #1a1a2e;
+    --muted: #5a6570;
+    --gold: #b8860b;
+    --code-bg: #ffffff;
+    --code-text: #1f2933;
+    --border: #d8dee6;
+    --top-bg: #ffffff;
+    --top-border: #e5e9ef;
+  }
+  * { box-sizing: border-box; }
+  html, body {
+    margin: 0; padding: 0;
+    background: var(--bg);
+    color: var(--text);
+    font-family: -apple-system, BlinkMacSystemFont, "PingFang SC", "Microsoft YaHei", sans-serif;
+    min-height: 100%;
+  }
+  .top {
+    position: sticky; top: 0; z-index: 10;
+    display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between;
+    gap: 10px;
+    padding: 12px 18px;
+    background: var(--top-bg);
+    border-bottom: 1px solid var(--top-border);
+    box-shadow: 0 1px 8px rgba(15, 23, 42, 0.06);
+  }
+  .brand { color: var(--gold); font-weight: 700; font-size: 14px; letter-spacing: 0.04em; }
+  .title { font-size: 15px; font-weight: 600; color: var(--text); max-width: 52vw; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .actions { display: flex; gap: 8px; flex-wrap: wrap; }
+  .btn {
+    appearance: none; border: 1px solid var(--border);
+    background: #fff; color: var(--text);
+    border-radius: 999px; padding: 8px 14px; font-size: 13px; font-weight: 600;
+    text-decoration: none; cursor: pointer;
+  }
+  .btn:hover { background: #f0f3f7; }
+  .btn.gold {
+    background: linear-gradient(135deg, #f0d78c, #d4a853);
+    color: #0a2540; border-color: #e0c06a;
+  }
+  .meta {
+    padding: 10px 18px; color: var(--muted); font-size: 12px;
+    border-bottom: 1px solid var(--border);
+    background: var(--panel);
+  }
+  .wrap { padding: 16px 18px 40px; }
+  pre {
+    margin: 0;
+    background: var(--code-bg);
+    color: var(--code-text);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 18px 20px;
+    overflow: auto;
+    font-family: "SF Mono", "JetBrains Mono", "Fira Code", Consolas, "Courier New", monospace;
+    font-size: 13.5px;
+    line-height: 1.55;
+    white-space: pre;
+    tab-size: 4;
+    box-shadow: 0 2px 12px rgba(15, 23, 42, 0.05);
+  }
+  .hint { margin-top: 12px; color: var(--muted); font-size: 12px; }
+  @media print {
+    html, body { background: #fff !important; color: #000 !important; }
+    .top { position: static; box-shadow: none; border-bottom: 1px solid #ccc; background: #fff !important; }
+    .actions { display: none !important; }
+    .meta { background: #fff !important; border-color: #ddd; color: #333; }
+    .wrap { padding: 0; }
+    pre {
+      background: #fff !important; color: #000 !important;
+      border: 1px solid #bbb; box-shadow: none; border-radius: 0;
+      white-space: pre-wrap; word-break: break-word; font-size: 11pt; line-height: 1.4;
+    }
+    .hint { display: none; }
+    a { color: #000; text-decoration: none; }
+  }
+</style>
+</head>
+<body>
+  <div class="top">
+    <div class="brand">CSP-S 备考 · 配套代码</div>
+    <div class="title">lesson40_matrix_gaussian.cpp</div>
+    <div class="actions">
+      <a class="btn" href="../lesson40_matrix_gaussian.cpp" download="lesson40_matrix_gaussian.cpp">⬇️ 下载源文件</a>
+      <a class="btn gold" href="javascript:history.back()">← 返回课件</a>
+    </div>
+  </div>
+  <div class="meta">编码：UTF-8 · 文件：lesson40_matrix_gaussian.cpp · 共 596 行 · 浅色主题便于打印</div>
+  <div class="wrap">
+    <pre id="code">/**
+ * 第40课：矩阵快速幂与高斯消元
+ * 对应CSP-S考纲知识点：
+ *   - 矩阵乘法（定义、结合律、不满足交换律）
+ *   - 矩阵快速幂（加速线性递推，如斐波那契 O(log n)）
+ *   - 高斯消元解线性方程组（无解、唯一解、无穷多解）
+ *   - 高斯消元求行列式（上三角化 + 对角线乘积）
+ *   - 高斯消元求逆矩阵（增广矩阵法）
+ *
+ * 包含以下实现：
+ *   1. 矩阵乘法（模板，支持任意大小）
+ *   2. 矩阵快速幂（模板）
+ *   3. 斐波那契数列的矩阵快速幂解法
+ *   4. 通用线性递推加速（k阶递推 → k×k矩阵）
+ *   5. 高斯消元解线性方程组（浮点数版，处理三种解情况）
+ *   6. 高斯消元求行列式（模质数版）
+ *   7. 高斯消元求逆矩阵（模质数版）
+ */
+
+#include &lt;iostream&gt;
+#include &lt;vector&gt;
+#include &lt;algorithm&gt;
+#include &lt;cmath&gt;
+#include &lt;cstdlib&gt;
+#include &lt;ctime&gt;
+#include &lt;iomanip&gt;
+using namespace std;
+using ll = long long;
+
+const ll MOD = 1000000007;  // 常用模数
+const double EPS = 1e-9;   // 浮点数精度
+
+// ============================================================
+// 一、快速幂（整数版，用于求逆元等）
+// ============================================================
+ll qpow(ll a, ll b, ll mod = MOD) {
+    ll res = 1;
+    a %= mod;
+    while (b) {
+        if (b &amp; 1) res = res * a % mod;
+        a = a * a % mod;
+        b &gt;&gt;= 1;
+    }
+    return res;
+}
+
+// ============================================================
+// 二、矩阵乘法（模 MOD 版本）
+// C = A × B，其中 A 是 n×m，B 是 m×p，结果 C 是 n×p
+// 时间复杂度：O(n*m*p)，使用 i-k-j 循环顺序优化缓存
+// ============================================================
+using Matrix = vector&lt;vector&lt;ll&gt;&gt;;
+
+Matrix mat_mul(const Matrix&amp; A, const Matrix&amp; B, ll mod = MOD) {
+    int n = A.size();          // A 的行数
+    int m = B.size();          // A 的列数 = B 的行数
+    int p = B[0].size();       // B 的列数
+    Matrix C(n, vector&lt;ll&gt;(p, 0));
+
+    // i-k-j 循环顺序：对缓存更友好
+    for (int i = 0; i &lt; n; i++) {
+        for (int k = 0; k &lt; m; k++) {
+            if (A[i][k] == 0) continue;  // 稀疏优化
+            ll aik = A[i][k];
+            for (int j = 0; j &lt; p; j++) {
+                C[i][j] = (C[i][j] + aik * B[k][j]) % mod;
+            }
+        }
+    }
+    return C;
+}
+
+// 矩阵加法（用于某些应用场景）
+Matrix mat_add(const Matrix&amp; A, const Matrix&amp; B, ll mod = MOD) {
+    int n = A.size(), m = A[0].size();
+    Matrix C(n, vector&lt;ll&gt;(m, 0));
+    for (int i = 0; i &lt; n; i++)
+        for (int j = 0; j &lt; m; j++)
+            C[i][j] = (A[i][j] + B[i][j]) % mod;
+    return C;
+}
+
+// 创建单位矩阵
+Matrix identity(int n) {
+    Matrix I(n, vector&lt;ll&gt;(n, 0));
+    for (int i = 0; i &lt; n; i++) I[i][i] = 1;
+    return I;
+}
+
+// 打印矩阵（调试用）
+void print_matrix(const Matrix&amp; mat, const string&amp; name = "") {
+    if (!name.empty()) cout &lt;&lt; name &lt;&lt; " =" &lt;&lt; endl;
+    for (auto&amp; row : mat) {
+        for (auto&amp; val : row) cout &lt;&lt; val &lt;&lt; " ";
+        cout &lt;&lt; endl;
+    }
+}
+
+// ============================================================
+// 三、矩阵快速幂
+// A^n，A 必须是方阵（n×n）
+// 时间复杂度：O(sz^3 · log n)
+// ============================================================
+Matrix mat_pow(Matrix A, ll n, ll mod = MOD) {
+    int sz = A.size();
+    Matrix res = identity(sz);
+    while (n) {
+        if (n &amp; 1) res = mat_mul(res, A, mod);
+        A = mat_mul(A, A, mod);
+        n &gt;&gt;= 1;
+    }
+    return res;
+}
+
+// ============================================================
+// 四、斐波那契数列的矩阵快速幂解法
+// fib(0) = 0, fib(1) = 1, fib(n) = fib(n-1) + fib(n-2)
+// 转移矩阵 T = [[1, 1], [1, 0]]
+// [fib(n), fib(n-1)]^T = T^(n-1) * [fib(1), fib(0)]^T
+// 时间复杂度：O(log n)
+// ============================================================
+ll fibonacci(ll n, ll mod = MOD) {
+    if (n == 0) return 0;
+    if (n == 1) return 1;
+    Matrix T = {{1, 1}, {1, 0}};
+    T = mat_pow(T, n - 1, mod);
+    // 初始向量 [fib(1), fib(0)] = [1, 0]
+    // 结果向量的第一个分量就是 fib(n)
+    return T[0][0];
+}
+
+// 斐波那契数列（返回第 n 项，用于对比验证）
+ll fibonacci_linear(ll n, ll mod = MOD) {
+    if (n == 0) return 0;
+    if (n == 1) return 1;
+    ll a = 0, b = 1;
+    for (ll i = 2; i &lt;= n; i++) {
+        ll c = (a + b) % mod;
+        a = b;
+        b = c;
+    }
+    return b;
+}
+
+// ============================================================
+// 五、通用 k 阶线性递推加速
+// 递推式：a_n = c1 * a_{n-1} + c2 * a_{n-2} + ... + ck * a_{n-k}
+// 构造 k×k 转移矩阵，第一行为系数 [c1, c2, ..., ck]
+// 下方为偏移单位矩阵
+// 初始向量：V = [a_{k-1}, a_{k-2}, ..., a_0]^T（注意顺序）
+// 结果：T^(n-k+1) * V 得到 [a_n, a_{n-1}, ..., a_{n-k+1}]^T
+// ============================================================
+
+// 构建 k 阶递推的转移矩阵
+// coeffs = [c1, c2, ..., ck]（注意 c1 是 a_{n-1} 的系数）
+Matrix build_recurrence_matrix(const vector&lt;ll&gt;&amp; coeffs) {
+    int k = coeffs.size();
+    Matrix T(k, vector&lt;ll&gt;(k, 0));
+    // 第一行填系数
+    for (int j = 0; j &lt; k; j++) T[0][j] = coeffs[j] % MOD;
+    // 下方偏移单位矩阵
+    for (int i = 1; i &lt; k; i++) T[i][i-1] = 1;
+    return T;
+}
+
+// 通用递推求解 a_n
+// coeffs: [c1, c2, ..., ck]
+// init_vals: [a_0, a_1, a_2, ..., a_{k-1}]（前 k 项的初始值，顺序为从小到大）
+ll solve_recurrence(ll n, const vector&lt;ll&gt;&amp; coeffs, const vector&lt;ll&gt;&amp; init_vals) {
+    int k = coeffs.size();
+    if (n &lt; k) return init_vals[n] % MOD;
+
+    Matrix T = build_recurrence_matrix(coeffs);
+    T = mat_pow(T, n - k + 1);
+
+    // 计算 a_n = Σ T[0][j] * init_vals[k-1-j]
+    // 初始向量的排列：V = [a_{k-1}, a_{k-2}, ..., a_0]^T
+    ll res = 0;
+    for (int j = 0; j &lt; k; j++) {
+        res = (res + T[0][j] * init_vals[k-1-j]) % MOD;
+    }
+    return res;
+}
+
+// ============================================================
+// 六、高斯消元解线性方程组（浮点数版本）
+// 输入：增广矩阵 a（n × (n+1)），a[i][n] 为等式右边
+// 输出：x 为解向量
+// 返回值：-1 = 无解，0 = 无穷多解，1 = 唯一解
+// 时间复杂度：O(n^3)
+// ============================================================
+int gauss_solve(vector&lt;vector&lt;double&gt;&gt; a, vector&lt;double&gt;&amp; x) {
+    int n = a.size();
+    int m = n + 1;  // 增广矩阵的列数
+
+    // 记录每个变量对应的主元行，-1 表示自由变量
+    vector&lt;int&gt; pivot_row(n, -1);
+
+    // ---- 第一步：前向消元（化为行阶梯形） ----
+    int row = 0;  // 当前处理到哪一行
+    for (int col = 0; col &lt; n &amp;&amp; row &lt; n; col++) {
+        // 选主元：在第 row 行及以下中找 col 列绝对值最大的行
+        int best = row;
+        for (int i = row + 1; i &lt; n; i++) {
+            if (fabs(a[i][col]) &gt; fabs(a[best][col])) {
+                best = i;
+            }
+        }
+
+        // 如果主元接近 0，该列跳过（成为自由变量）
+        if (fabs(a[best][col]) &lt; EPS) continue;
+
+        // 将主元行交换到当前行
+        swap(a[row], a[best]);
+        pivot_row[col] = row;
+
+        // 消去下方所有行的第 col 列
+        for (int i = row + 1; i &lt; n; i++) {
+            double factor = a[i][col] / a[row][col];
+            // 从 col 列开始消（col 之前的列已经是 0）
+            for (int j = col; j &lt; m; j++) {
+                a[i][j] -= factor * a[row][j];
+            }
+        }
+        row++;
+    }
+
+    // ---- 第二步：检查是否有矛盾行（无解判定） ----
+    for (int i = row; i &lt; n; i++) {
+        // 如果某行系数全为 0 但 b 不为 0，则无解
+        bool all_zero = true;
+        for (int j = 0; j &lt; n; j++) {
+            if (fabs(a[i][j]) &gt; EPS) { all_zero = false; break; }
+        }
+        if (all_zero &amp;&amp; fabs(a[i][n]) &gt; EPS) {
+            return -1;  // 无解
+        }
+    }
+
+    // ---- 第三步：检查是否有自由变量（无穷多解判定） ----
+    for (int col = 0; col &lt; n; col++) {
+        if (pivot_row[col] == -1) {
+            return 0;  // 存在自由变量 → 无穷多解
+        }
+    }
+
+    // ---- 第四步：回代求解（唯一解） ----
+    x.assign(n, 0);
+    for (int col = n - 1; col &gt;= 0; col--) {
+        int r = pivot_row[col];
+        double sum = a[r][n];  // 等式右边
+        for (int j = col + 1; j &lt; n; j++) {
+            sum -= a[r][j] * x[j];
+        }
+        x[col] = sum / a[r][col];
+    }
+    return 1;  // 唯一解
+}
+
+// ============================================================
+// 七、高斯消元求行列式（模质数版本）
+// 将矩阵化为上三角矩阵，对角线乘积即为行列式
+// 注意：交换行时行列式变号
+// 时间复杂度：O(n^3)
+// ============================================================
+ll determinant(Matrix a, ll mod = MOD) {
+    int n = a.size();
+    ll det = 1;
+
+    for (int col = 0; col &lt; n; col++) {
+        // 找主元（非零元素）
+        int pivot = -1;
+        for (int r = col; r &lt; n; r++) {
+            if (a[r][col] != 0) {
+                pivot = r;
+                break;
+            }
+        }
+
+        // 该列全为 0，行列式为 0
+        if (pivot == -1) return 0;
+
+        // 如果主元不在当前行，交换行（行列式变号）
+        if (pivot != col) {
+            swap(a[col], a[pivot]);
+            det = (mod - det) % mod;  // 乘以 -1
+        }
+
+        // 乘上主元（在消元之前记录）
+        det = det * a[col][col] % mod;
+
+        // 消去下方行
+        ll inv_pivot = qpow(a[col][col], mod - 2, mod);
+        for (int r = col + 1; r &lt; n; r++) {
+            if (a[r][col] == 0) continue;
+            ll factor = a[r][col] * inv_pivot % mod;
+            for (int c = col; c &lt; n; c++) {
+                a[r][c] = (a[r][c] - factor * a[col][c] % mod + mod) % mod;
+            }
+        }
+    }
+    return det;
+}
+
+// 高斯消元求行列式（浮点数版本，用于对比验证）
+double determinant_double(vector&lt;vector&lt;double&gt;&gt; a) {
+    int n = a.size();
+    double det = 1.0;
+
+    for (int col = 0; col &lt; n; col++) {
+        // 选主元
+        int pivot = col;
+        for (int r = col + 1; r &lt; n; r++) {
+            if (fabs(a[r][col]) &gt; fabs(a[pivot][col])) {
+                pivot = r;
+            }
+        }
+
+        if (fabs(a[pivot][col]) &lt; EPS) return 0.0;
+
+        if (pivot != col) {
+            swap(a[col], a[pivot]);
+            det = -det;
+        }
+
+        det *= a[col][col];
+
+        for (int r = col + 1; r &lt; n; r++) {
+            double factor = a[r][col] / a[col][col];
+            for (int c = col; c &lt; n; c++) {
+                a[r][c] -= factor * a[col][c];
+            }
+        }
+    }
+    return det;
+}
+
+// ============================================================
+// 八、高斯消元求逆矩阵（模质数版本）
+// 增广矩阵法：[A | I] → 行变换 → [I | A^(-1)]
+// 返回值：true = 成功，false = 矩阵不可逆
+// 时间复杂度：O(n^3)
+// ============================================================
+bool mat_inverse(const Matrix&amp; A, Matrix&amp; inv, ll mod = MOD) {
+    int n = A.size();
+
+    // 构造增广矩阵 augmented = [A | I]
+    Matrix aug(n, vector&lt;ll&gt;(2 * n, 0));
+    for (int i = 0; i &lt; n; i++) {
+        for (int j = 0; j &lt; n; j++) {
+            aug[i][j] = A[i][j] % mod;
+        }
+        aug[i][n + i] = 1;  // 右侧单位矩阵
+    }
+
+    // 高斯-约当消元
+    for (int col = 0; col &lt; n; col++) {
+        // 找主元
+        int pivot = -1;
+        for (int r = col; r &lt; n; r++) {
+            if (aug[r][col] != 0) {
+                pivot = r;
+                break;
+            }
+        }
+        if (pivot == -1) return false;  // 不可逆
+        swap(aug[col], aug[pivot]);
+
+        // 将主元化为 1
+        ll inv_pivot = qpow(aug[col][col], mod - 2, mod);
+        for (int j = 0; j &lt; 2 * n; j++) {
+            aug[col][j] = aug[col][j] * inv_pivot % mod;
+        }
+
+        // 消去其他所有行的第 col 列（不仅仅是下方行）
+        for (int r = 0; r &lt; n; r++) {
+            if (r == col) continue;
+            ll factor = aug[r][col];
+            if (factor == 0) continue;
+            for (int j = 0; j &lt; 2 * n; j++) {
+                aug[r][j] = (aug[r][j] - factor * aug[col][j] % mod + mod) % mod;
+            }
+        }
+    }
+
+    // 提取逆矩阵
+    inv.assign(n, vector&lt;ll&gt;(n, 0));
+    for (int i = 0; i &lt; n; i++) {
+        for (int j = 0; j &lt; n; j++) {
+            inv[i][j] = aug[i][n + j];
+        }
+    }
+    return true;
+}
+
+// ============================================================
+// 辅助函数：生成 n×n 的随机矩阵（用于测试）
+// ============================================================
+Matrix random_matrix(int n, ll mod = MOD) {
+    Matrix mat(n, vector&lt;ll&gt;(n, 0));
+    for (int i = 0; i &lt; n; i++)
+        for (int j = 0; j &lt; n; j++)
+            mat[i][j] = rand() % mod;
+    return mat;
+}
+
+// ============================================================
+// 主函数：演示所有功能
+// ============================================================
+int main() {
+    ios::sync_with_stdio(false);
+    cin.tie(nullptr);
+    srand(time(0));
+
+    cout &lt;&lt; fixed &lt;&lt; setprecision(6);
+    cout &lt;&lt; "═══════════════════════════════════════" &lt;&lt; endl;
+    cout &lt;&lt; "  第40课：矩阵快速幂与高斯消元 — 代码演示" &lt;&lt; endl;
+    cout &lt;&lt; "═══════════════════════════════════════" &lt;&lt; endl &lt;&lt; endl;
+
+    // ---------- 1. 矩阵乘法演示 ----------
+    cout &lt;&lt; "【1】矩阵乘法" &lt;&lt; endl;
+    Matrix A = {{1, 2}, {3, 4}};
+    Matrix B = {{5, 6}, {7, 8}};
+    Matrix C = mat_mul(A, B);
+    print_matrix(A, "  A");
+    print_matrix(B, "  B");
+    print_matrix(C, "  A×B");
+    cout &lt;&lt; "  验证：(1)(5)+(2)(7)=" &lt;&lt; 1*5+2*7 &lt;&lt; " (1)(6)+(2)(8)=" &lt;&lt; 1*6+2*8 &lt;&lt; endl;
+    cout &lt;&lt; "        (3)(5)+(4)(7)=" &lt;&lt; 3*5+4*7 &lt;&lt; " (3)(6)+(4)(8)=" &lt;&lt; 3*6+4*8 &lt;&lt; endl &lt;&lt; endl;
+
+    // ---------- 2. 矩阵快速幂演示 ----------
+    cout &lt;&lt; "【2】矩阵快速幂" &lt;&lt; endl;
+    Matrix T = {{2, 1}, {1, 0}};
+    cout &lt;&lt; "  T = [[2,1],[1,0]]" &lt;&lt; endl;
+    Matrix T3 = mat_pow(T, 3);
+    print_matrix(T3, "  T^3");
+    // 手工验证 T^2 = [[5,2],[2,1]], T^3 = T^2 * T = [[12,5],[5,2]]
+    cout &lt;&lt; "  验证：T^3[0][0] 应为 12，实际 " &lt;&lt; T3[0][0] &lt;&lt; endl &lt;&lt; endl;
+
+    // ---------- 3. 斐波那契数列 ----------
+    cout &lt;&lt; "【3】斐波那契数列矩阵快速幂解法" &lt;&lt; endl;
+    vector&lt;ll&gt; fib_tests = {0, 1, 2, 3, 5, 10, 20, 50};
+    for (ll n : fib_tests) {
+        cout &lt;&lt; "  fib(" &lt;&lt; n &lt;&lt; ") = " &lt;&lt; fibonacci(n) &lt;&lt; endl;
+    }
+    // 大数测试
+    ll big_n = 1000000000000000000LL;  // 1e18
+    cout &lt;&lt; "  fib(10^18) mod 1e9+7 = " &lt;&lt; fibonacci(big_n) &lt;&lt; endl;
+    // 用线性递推验证小数据
+    cout &lt;&lt; "  fib(20) 线性验证 = " &lt;&lt; fibonacci_linear(20) &lt;&lt; endl &lt;&lt; endl;
+
+    // ---------- 4. 通用线性递推 ----------
+    cout &lt;&lt; "【4】通用线性递推加速（三阶递推示例）" &lt;&lt; endl;
+    // 例：a_n = a_{n-1} + 2*a_{n-2} + a_{n-3}，初值 a0=1, a1=1, a2=3
+    vector&lt;ll&gt; coeffs = {1, 2, 1};  // c1=1, c2=2, c3=1
+    vector&lt;ll&gt; init = {1, 1, 3};    // a0=1, a1=1, a2=3
+    cout &lt;&lt; "  递推: a_n = a_{n-1} + 2*a_{n-2} + a_{n-3}" &lt;&lt; endl;
+    cout &lt;&lt; "  初值: a0=1, a1=1, a2=3" &lt;&lt; endl;
+    for (ll n = 0; n &lt;= 10; n++) {
+        cout &lt;&lt; "  a_" &lt;&lt; n &lt;&lt; " = " &lt;&lt; solve_recurrence(n, coeffs, init) &lt;&lt; endl;
+    }
+    cout &lt;&lt; endl;
+
+    // ---------- 5. 高斯消元解方程组 ----------
+    cout &lt;&lt; "【5】高斯消元解线性方程组" &lt;&lt; endl;
+
+    // 测试1：唯一解
+    cout &lt;&lt; "  --- 测试1：唯一解 ---" &lt;&lt; endl;
+    // x + y = 3
+    // 2x - y = 0
+    // 解：x=1, y=2
+    vector&lt;vector&lt;double&gt;&gt; eq1 = {
+        {1, 1, 3},
+        {2, -1, 0}
+    };
+    vector&lt;double&gt; sol1;
+    int ret1 = gauss_solve(eq1, sol1);
+    if (ret1 == 1) {
+        cout &lt;&lt; "  解为: x=" &lt;&lt; sol1[0] &lt;&lt; ", y=" &lt;&lt; sol1[1] &lt;&lt; endl;
+        cout &lt;&lt; "  期望: x=1, y=2" &lt;&lt; endl;
+    }
+
+    // 测试2：无穷多解
+    cout &lt;&lt; "  --- 测试2：无穷多解 ---" &lt;&lt; endl;
+    // x + y = 3
+    // 2x + 2y = 6  （第二个方程是第一个的2倍）
+    vector&lt;vector&lt;double&gt;&gt; eq2 = {
+        {1, 1, 3},
+        {2, 2, 6}
+    };
+    vector&lt;double&gt; sol2;
+    int ret2 = gauss_solve(eq2, sol2);
+    cout &lt;&lt; "  结果: " &lt;&lt; (ret2 == 0 ? "无穷多解" : (ret2 == -1 ? "无解" : "唯一解")) &lt;&lt; endl;
+
+    // 测试3：无解
+    cout &lt;&lt; "  --- 测试3：无解 ---" &lt;&lt; endl;
+    // x + y = 3
+    // x + y = 5  （矛盾）
+    vector&lt;vector&lt;double&gt;&gt; eq3 = {
+        {1, 1, 3},
+        {1, 1, 5}
+    };
+    vector&lt;double&gt; sol3;
+    int ret3 = gauss_solve(eq3, sol3);
+    cout &lt;&lt; "  结果: " &lt;&lt; (ret3 == 0 ? "无穷多解" : (ret3 == -1 ? "无解" : "唯一解")) &lt;&lt; endl;
+
+    // 测试4：三元方程组
+    cout &lt;&lt; "  --- 测试4：三元方程组（唯一解） ---" &lt;&lt; endl;
+    // x + y + z = 6
+    // x - y + z = 2
+    // x + y - z = 0
+    // 解：x=1, y=2, z=3
+    vector&lt;vector&lt;double&gt;&gt; eq4 = {
+        {1, 1, 1, 6},
+        {1, -1, 1, 2},
+        {1, 1, -1, 0}
+    };
+    vector&lt;double&gt; sol4;
+    int ret4 = gauss_solve(eq4, sol4);
+    if (ret4 == 1) {
+        cout &lt;&lt; "  解为: x=" &lt;&lt; sol4[0] &lt;&lt; ", y=" &lt;&lt; sol4[1] &lt;&lt; ", z=" &lt;&lt; sol4[2] &lt;&lt; endl;
+        cout &lt;&lt; "  期望: x=1, y=2, z=3" &lt;&lt; endl;
+    }
+    cout &lt;&lt; endl;
+
+    // ---------- 6. 求行列式 ----------
+    cout &lt;&lt; "【6】高斯消元求行列式" &lt;&lt; endl;
+
+    // 测试矩阵
+    Matrix mat_det = {
+        {2, 1, 3},
+        {1, 0, 4},
+        {3, 2, 1}
+    };
+    cout &lt;&lt; "  矩阵:" &lt;&lt; endl;
+    for (auto&amp; row : mat_det) {
+        cout &lt;&lt; "    ";
+        for (auto&amp; v : row) cout &lt;&lt; v &lt;&lt; " ";
+        cout &lt;&lt; endl;
+    }
+    ll det_val = determinant(mat_det);
+    cout &lt;&lt; "  det mod 1e9+7 = " &lt;&lt; det_val &lt;&lt; endl;
+
+    // 浮点数验证
+    vector&lt;vector&lt;double&gt;&gt; mat_det_double = {
+        {2, 1, 3},
+        {1, 0, 4},
+        {3, 2, 1}
+    };
+    double det_double = determinant_double(mat_det_double);
+    cout &lt;&lt; "  det (double) = " &lt;&lt; det_double &lt;&lt; endl;
+    // 手工：det = 2*(0*1-4*2) - 1*(1*1-4*3) + 3*(1*2-0*3)
+    //      = 2*(-8) - 1*(1-12) + 3*(2) = -16 - 1*(-11) + 6 = -16+11+6 = 1
+    cout &lt;&lt; "  手工验证结果应为 1" &lt;&lt; endl &lt;&lt; endl;
+
+    // ---------- 7. 求逆矩阵 ----------
+    cout &lt;&lt; "【7】高斯消元求逆矩阵" &lt;&lt; endl;
+
+    Matrix mat_inv_test = {
+        {1, 2},
+        {3, 4}
+    };
+    cout &lt;&lt; "  原矩阵:" &lt;&lt; endl;
+    for (auto&amp; row : mat_inv_test) {
+        cout &lt;&lt; "    ";
+        for (auto&amp; v : row) cout &lt;&lt; v &lt;&lt; " ";
+        cout &lt;&lt; endl;
+    }
+    Matrix inv_result;
+    bool inv_ok = mat_inverse(mat_inv_test, inv_result);
+    if (inv_ok) {
+        cout &lt;&lt; "  逆矩阵:" &lt;&lt; endl;
+        for (auto&amp; row : inv_result) {
+            cout &lt;&lt; "    ";
+            for (auto&amp; v : row) cout &lt;&lt; v &lt;&lt; " ";
+            cout &lt;&lt; endl;
+        }
+        // 验证：A * A^(-1) 应等于单位矩阵
+        Matrix verify = mat_mul(mat_inv_test, inv_result);
+        cout &lt;&lt; "  验证 A * A^{-1}:" &lt;&lt; endl;
+        for (auto&amp; row : verify) {
+            cout &lt;&lt; "    ";
+            for (auto&amp; v : row) cout &lt;&lt; v &lt;&lt; " ";
+            cout &lt;&lt; endl;
+        }
+        cout &lt;&lt; "  （应为单位矩阵 [[1,0],[0,1]]）" &lt;&lt; endl;
+    } else {
+        cout &lt;&lt; "  矩阵不可逆！" &lt;&lt; endl;
+    }
+
+    cout &lt;&lt; "\n═══════════════════════════════════════" &lt;&lt; endl;
+    cout &lt;&lt; "  所有功能演示完毕！" &lt;&lt; endl;
+    cout &lt;&lt; "═══════════════════════════════════════" &lt;&lt; endl;
+
+    return 0;
+}
+</pre>
+    <p class="hint">本页使用浅色主题与 UTF-8 编码，可直接打印或导出 PDF。</p>
+  </div>
+</body>
+</html>

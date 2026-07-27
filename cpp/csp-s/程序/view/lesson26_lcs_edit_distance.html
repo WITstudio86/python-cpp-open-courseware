@@ -1,0 +1,335 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>lesson26_lcs_edit_distance.cpp</title>
+<style>
+  :root {
+    --bg: #f5f7fa;
+    --panel: #ffffff;
+    --text: #1a1a2e;
+    --muted: #5a6570;
+    --gold: #b8860b;
+    --code-bg: #ffffff;
+    --code-text: #1f2933;
+    --border: #d8dee6;
+    --top-bg: #ffffff;
+    --top-border: #e5e9ef;
+  }
+  * { box-sizing: border-box; }
+  html, body {
+    margin: 0; padding: 0;
+    background: var(--bg);
+    color: var(--text);
+    font-family: -apple-system, BlinkMacSystemFont, "PingFang SC", "Microsoft YaHei", sans-serif;
+    min-height: 100%;
+  }
+  .top {
+    position: sticky; top: 0; z-index: 10;
+    display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between;
+    gap: 10px;
+    padding: 12px 18px;
+    background: var(--top-bg);
+    border-bottom: 1px solid var(--top-border);
+    box-shadow: 0 1px 8px rgba(15, 23, 42, 0.06);
+  }
+  .brand { color: var(--gold); font-weight: 700; font-size: 14px; letter-spacing: 0.04em; }
+  .title { font-size: 15px; font-weight: 600; color: var(--text); max-width: 52vw; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .actions { display: flex; gap: 8px; flex-wrap: wrap; }
+  .btn {
+    appearance: none; border: 1px solid var(--border);
+    background: #fff; color: var(--text);
+    border-radius: 999px; padding: 8px 14px; font-size: 13px; font-weight: 600;
+    text-decoration: none; cursor: pointer;
+  }
+  .btn:hover { background: #f0f3f7; }
+  .btn.gold {
+    background: linear-gradient(135deg, #f0d78c, #d4a853);
+    color: #0a2540; border-color: #e0c06a;
+  }
+  .meta {
+    padding: 10px 18px; color: var(--muted); font-size: 12px;
+    border-bottom: 1px solid var(--border);
+    background: var(--panel);
+  }
+  .wrap { padding: 16px 18px 40px; }
+  pre {
+    margin: 0;
+    background: var(--code-bg);
+    color: var(--code-text);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 18px 20px;
+    overflow: auto;
+    font-family: "SF Mono", "JetBrains Mono", "Fira Code", Consolas, "Courier New", monospace;
+    font-size: 13.5px;
+    line-height: 1.55;
+    white-space: pre;
+    tab-size: 4;
+    box-shadow: 0 2px 12px rgba(15, 23, 42, 0.05);
+  }
+  .hint { margin-top: 12px; color: var(--muted); font-size: 12px; }
+  @media print {
+    html, body { background: #fff !important; color: #000 !important; }
+    .top { position: static; box-shadow: none; border-bottom: 1px solid #ccc; background: #fff !important; }
+    .actions { display: none !important; }
+    .meta { background: #fff !important; border-color: #ddd; color: #333; }
+    .wrap { padding: 0; }
+    pre {
+      background: #fff !important; color: #000 !important;
+      border: 1px solid #bbb; box-shadow: none; border-radius: 0;
+      white-space: pre-wrap; word-break: break-word; font-size: 11pt; line-height: 1.4;
+    }
+    .hint { display: none; }
+    a { color: #000; text-decoration: none; }
+  }
+</style>
+</head>
+<body>
+  <div class="top">
+    <div class="brand">CSP-S 备考 · 配套代码</div>
+    <div class="title">lesson26_lcs_edit_distance.cpp</div>
+    <div class="actions">
+      <a class="btn" href="../lesson26_lcs_edit_distance.cpp" download="lesson26_lcs_edit_distance.cpp">⬇️ 下载源文件</a>
+      <a class="btn gold" href="javascript:history.back()">← 返回课件</a>
+    </div>
+  </div>
+  <div class="meta">编码：UTF-8 · 文件：lesson26_lcs_edit_distance.cpp · 共 231 行 · 浅色主题便于打印</div>
+  <div class="wrap">
+    <pre id="code">/*
+ * 第26课：LCS（最长公共子序列）与编辑距离
+ * 考纲知识点：LCS的二维DP与滚动数组优化、编辑距离DP、序列比对思想
+ */
+
+#include &lt;bits/stdc++.h&gt;
+using namespace std;
+
+// ==================== 1. LCS - O(n*m) 二维DP ====================
+// dp[i][j] 表示 s1 的前 i 个字符与 s2 的前 j 个字符的 LCS 长度
+int lcs(const string&amp; s1, const string&amp; s2) {
+    int n = s1.size(), m = s2.size();
+    vector&lt;vector&lt;int&gt;&gt; dp(n + 1, vector&lt;int&gt;(m + 1, 0));
+    for (int i = 1; i &lt;= n; ++i) {
+        for (int j = 1; j &lt;= m; ++j) {
+            if (s1[i-1] == s2[j-1])
+                dp[i][j] = dp[i-1][j-1] + 1;
+            else
+                dp[i][j] = max(dp[i-1][j], dp[i][j-1]);
+        }
+    }
+    return dp[n][m];
+}
+
+// ==================== 2. LCS - O(min(n,m)) 滚动数组优化 ====================
+// 核心：dp[i][j] 只依赖于 dp[i-1][j-1]（左上）、dp[i-1][j]（上）、dp[i][j-1]（左）
+// 使用一维数组 + prev 变量保存左上角的值
+int lcs_optimized(const string&amp; s1, const string&amp; s2) {
+    int n = s1.size(), m = s2.size();
+    vector&lt;int&gt; dp(m + 1, 0);
+    for (int i = 1; i &lt;= n; ++i) {
+        int prev = 0;  // 保存 dp[i-1][j-1]
+        for (int j = 1; j &lt;= m; ++j) {
+            int temp = dp[j];  // 暂存 dp[i-1][j]，下一轮的左上角
+            if (s1[i-1] == s2[j-1])
+                dp[j] = prev + 1;
+            else
+                dp[j] = max(dp[j], dp[j-1]);
+            prev = temp;
+        }
+    }
+    return dp[m];
+}
+
+// ==================== 3. LCS 路径回溯（构造子序列） ====================
+// 使用 dir 数组记录转移方向：0=左上(match), 1=上, 2=左
+string lcs_trace(const string&amp; s1, const string&amp; s2) {
+    int n = s1.size(), m = s2.size();
+    vector&lt;vector&lt;int&gt;&gt; dp(n + 1, vector&lt;int&gt;(m + 1, 0));
+    vector&lt;vector&lt;int&gt;&gt; dir(n + 1, vector&lt;int&gt;(m + 1, 0));
+
+    for (int i = 1; i &lt;= n; ++i) {
+        for (int j = 1; j &lt;= m; ++j) {
+            if (s1[i-1] == s2[j-1]) {
+                dp[i][j] = dp[i-1][j-1] + 1;
+                dir[i][j] = 0;  // 来自左上（匹配）
+            } else if (dp[i-1][j] &gt;= dp[i][j-1]) {
+                dp[i][j] = dp[i-1][j];
+                dir[i][j] = 1;  // 来自上方
+            } else {
+                dp[i][j] = dp[i][j-1];
+                dir[i][j] = 2;  // 来自左方
+            }
+        }
+    }
+
+    // 从右下角回溯
+    string result;
+    int i = n, j = m;
+    while (i &gt; 0 &amp;&amp; j &gt; 0) {
+        if (dir[i][j] == 0) {
+            result += s1[i-1];  // 或 s2[j-1]
+            --i; --j;
+        } else if (dir[i][j] == 1) {
+            --i;
+        } else {
+            --j;
+        }
+    }
+    reverse(result.begin(), result.end());
+    return result;
+}
+
+// ==================== 4. 编辑距离（Levenshtein 距离）标准DP ====================
+// 操作：插入、删除、替换，各代价为1
+int edit_distance(const string&amp; word1, const string&amp; word2) {
+    int n = word1.size(), m = word2.size();
+    vector&lt;vector&lt;int&gt;&gt; dp(n + 1, vector&lt;int&gt;(m + 1));
+
+    // 初始化边界
+    for (int i = 0; i &lt;= n; ++i) dp[i][0] = i;  // 全部删除
+    for (int j = 0; j &lt;= m; ++j) dp[0][j] = j;  // 全部插入
+
+    for (int i = 1; i &lt;= n; ++i) {
+        for (int j = 1; j &lt;= m; ++j) {
+            if (word1[i-1] == word2[j-1]) {
+                dp[i][j] = dp[i-1][j-1];  // 字符相同，无需操作
+            } else {
+                dp[i][j] = 1 + min({dp[i-1][j],      // 删除 word1[i-1]
+                                    dp[i][j-1],      // 插入 word2[j-1]
+                                    dp[i-1][j-1]});  // 替换
+            }
+        }
+    }
+    return dp[n][m];
+}
+
+// ==================== 5. 编辑距离 - 滚动数组空间优化 ====================
+int edit_distance_optimized(const string&amp; word1, const string&amp; word2) {
+    int n = word1.size(), m = word2.size();
+    vector&lt;int&gt; dp(m + 1);
+    iota(dp.begin(), dp.end(), 0);  // dp[j] = j
+
+    for (int i = 1; i &lt;= n; ++i) {
+        int prev = dp[0];  // dp[i-1][0]
+        dp[0] = i;         // dp[i][0] = i
+        for (int j = 1; j &lt;= m; ++j) {
+            int temp = dp[j];  // 暂存 dp[i-1][j]
+            if (word1[i-1] == word2[j-1]) {
+                dp[j] = prev;
+            } else {
+                dp[j] = 1 + min({dp[j],      // dp[i-1][j]（删除）
+                                 dp[j-1],    // dp[i][j-1]（插入）
+                                 prev});     // dp[i-1][j-1]（替换）
+            }
+            prev = temp;
+        }
+    }
+    return dp[m];
+}
+
+// ==================== 6. 编辑距离带权重（自定义操作代价） ====================
+// insert_cost, delete_cost, replace_cost 可自定义
+int edit_distance_weighted(const string&amp; word1, const string&amp; word2,
+                           int ins, int del, int rep) {
+    int n = word1.size(), m = word2.size();
+    vector&lt;int&gt; dp(m + 1);
+    for (int j = 0; j &lt;= m; ++j) dp[j] = j * ins;  // 插入代价
+
+    for (int i = 1; i &lt;= n; ++i) {
+        int prev = dp[0];
+        dp[0] = i * del;  // 删除代价
+        for (int j = 1; j &lt;= m; ++j) {
+            int temp = dp[j];
+            if (word1[i-1] == word2[j-1]) {
+                dp[j] = prev;
+            } else {
+                dp[j] = min({dp[j] + del,      // 删除
+                             dp[j-1] + ins,    // 插入
+                             prev + rep});     // 替换
+            }
+            prev = temp;
+        }
+    }
+    return dp[m];
+}
+
+// ==================== 7. 真题1：LCS 模板题 ====================
+// 题目：给定两个字符串，求最长公共子序列长度
+void solve_lcs_template() {
+    string s1, s2;
+    cin &gt;&gt; s1 &gt;&gt; s2;
+    cout &lt;&lt; lcs(s1, s2) &lt;&lt; endl;
+}
+
+// ==================== 8. 真题2：编辑距离（字符串变换） ====================
+// 题目：将 word1 转换为 word2 的最少操作次数
+void solve_edit_distance() {
+    string word1, word2;
+    cin &gt;&gt; word1 &gt;&gt; word2;
+    cout &lt;&lt; edit_distance(word1, word2) &lt;&lt; endl;
+}
+
+// ==================== 9. 真题3：判断子序列（编辑距离的简化版） ====================
+// 判断 s 是否为 t 的子序列（双指针法，O(n+m)）
+// 这是编辑距离中"只允许删除"的特例
+bool is_subsequence(const string&amp; s, const string&amp; t) {
+    int i = 0, j = 0;
+    while (i &lt; (int)s.size() &amp;&amp; j &lt; (int)t.size()) {
+        if (s[i] == t[j]) ++i;
+        ++j;
+    }
+    return i == (int)s.size();
+}
+
+// ==================== 10. 最短公共超序列（Shortest Common Supersequence） ====================
+// SCS 长度 = n + m - LCS 长度
+// 这是因为 LCS 中的字符在两个字符串中都被使用，其余字符各出现一次
+int shortest_common_supersequence_length(const string&amp; s1, const string&amp; s2) {
+    return s1.size() + s2.size() - lcs(s1, s2);
+}
+
+// ==================== 主函数：测试与演示 ====================
+int main() {
+    ios::sync_with_stdio(false);
+    cin.tie(nullptr);
+
+    // -------------------- LCS 测试 --------------------
+    string s1 = "ABCBDAB", s2 = "BDCABA";
+    cout &lt;&lt; "=== LCS 测试 ===" &lt;&lt; endl;
+    cout &lt;&lt; "s1 = " &lt;&lt; s1 &lt;&lt; ", s2 = " &lt;&lt; s2 &lt;&lt; endl;
+    cout &lt;&lt; "LCS 二维DP: " &lt;&lt; lcs(s1, s2) &lt;&lt; endl;
+    cout &lt;&lt; "LCS 滚动优化: " &lt;&lt; lcs_optimized(s1, s2) &lt;&lt; endl;
+    cout &lt;&lt; "LCS 路径回溯: " &lt;&lt; lcs_trace(s1, s2) &lt;&lt; endl;
+    cout &lt;&lt; "最短公共超序列长度: " &lt;&lt; shortest_common_supersequence_length(s1, s2) &lt;&lt; endl;
+    cout &lt;&lt; endl;
+
+    // -------------------- 编辑距离测试 --------------------
+    cout &lt;&lt; "=== 编辑距离测试 ===" &lt;&lt; endl;
+    string w1 = "horse", w2 = "ros";
+    cout &lt;&lt; "word1 = " &lt;&lt; w1 &lt;&lt; ", word2 = " &lt;&lt; w2 &lt;&lt; endl;
+    cout &lt;&lt; "编辑距离 二维DP: " &lt;&lt; edit_distance(w1, w2) &lt;&lt; endl;
+    cout &lt;&lt; "编辑距离 滚动优化: " &lt;&lt; edit_distance_optimized(w1, w2) &lt;&lt; endl;
+    cout &lt;&lt; "编辑距离 带权重(ins=2,del=1,rep=3): "
+         &lt;&lt; edit_distance_weighted(w1, w2, 2, 1, 3) &lt;&lt; endl;
+    cout &lt;&lt; endl;
+
+    // -------------------- 更多测试 --------------------
+    cout &lt;&lt; "=== 更多测试 ===" &lt;&lt; endl;
+    string a1 = "abcdef", a2 = "acef";
+    cout &lt;&lt; "LCS('abcdef', 'acef') = " &lt;&lt; lcs(a1, a2) &lt;&lt; endl;
+    cout &lt;&lt; "LCS path = " &lt;&lt; lcs_trace(a1, a2) &lt;&lt; endl;
+
+    string b1 = "intention", b2 = "execution";
+    cout &lt;&lt; "EditDist('intention', 'execution') = " &lt;&lt; edit_distance(b1, b2) &lt;&lt; endl;
+
+    cout &lt;&lt; "Is 'abc' subsequence of 'ahbgdc'? "
+         &lt;&lt; (is_subsequence("abc", "ahbgdc") ? "Yes" : "No") &lt;&lt; endl;
+
+    return 0;
+}
+</pre>
+    <p class="hint">本页使用浅色主题与 UTF-8 编码，可直接打印或导出 PDF。</p>
+  </div>
+</body>
+</html>

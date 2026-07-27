@@ -1,0 +1,423 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>lesson39_scope.cpp</title>
+<style>
+  :root {
+    --bg: #f5f7fa;
+    --panel: #ffffff;
+    --text: #1a1a2e;
+    --muted: #5a6570;
+    --gold: #b8860b;
+    --code-bg: #ffffff;
+    --code-text: #1f2933;
+    --border: #d8dee6;
+    --top-bg: #ffffff;
+    --top-border: #e5e9ef;
+  }
+  * { box-sizing: border-box; }
+  html, body {
+    margin: 0; padding: 0;
+    background: var(--bg);
+    color: var(--text);
+    font-family: -apple-system, BlinkMacSystemFont, "PingFang SC", "Microsoft YaHei", sans-serif;
+    min-height: 100%;
+  }
+  .top {
+    position: sticky; top: 0; z-index: 10;
+    display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between;
+    gap: 10px;
+    padding: 12px 18px;
+    background: var(--top-bg);
+    border-bottom: 1px solid var(--top-border);
+    box-shadow: 0 1px 8px rgba(15, 23, 42, 0.06);
+  }
+  .brand { color: var(--gold); font-weight: 700; font-size: 14px; letter-spacing: 0.04em; }
+  .title { font-size: 15px; font-weight: 600; color: var(--text); max-width: 52vw; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .actions { display: flex; gap: 8px; flex-wrap: wrap; }
+  .btn {
+    appearance: none; border: 1px solid var(--border);
+    background: #fff; color: var(--text);
+    border-radius: 999px; padding: 8px 14px; font-size: 13px; font-weight: 600;
+    text-decoration: none; cursor: pointer;
+  }
+  .btn:hover { background: #f0f3f7; }
+  .btn.gold {
+    background: linear-gradient(135deg, #f0d78c, #d4a853);
+    color: #0a2540; border-color: #e0c06a;
+  }
+  .meta {
+    padding: 10px 18px; color: var(--muted); font-size: 12px;
+    border-bottom: 1px solid var(--border);
+    background: var(--panel);
+  }
+  .wrap { padding: 16px 18px 40px; }
+  pre {
+    margin: 0;
+    background: var(--code-bg);
+    color: var(--code-text);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 18px 20px;
+    overflow: auto;
+    font-family: "SF Mono", "JetBrains Mono", "Fira Code", Consolas, "Courier New", monospace;
+    font-size: 13.5px;
+    line-height: 1.55;
+    white-space: pre;
+    tab-size: 4;
+    box-shadow: 0 2px 12px rgba(15, 23, 42, 0.05);
+  }
+  .hint { margin-top: 12px; color: var(--muted); font-size: 12px; }
+  @media print {
+    html, body { background: #fff !important; color: #000 !important; }
+    .top { position: static; box-shadow: none; border-bottom: 1px solid #ccc; background: #fff !important; }
+    .actions { display: none !important; }
+    .meta { background: #fff !important; border-color: #ddd; color: #333; }
+    .wrap { padding: 0; }
+    pre {
+      background: #fff !important; color: #000 !important;
+      border: 1px solid #bbb; box-shadow: none; border-radius: 0;
+      white-space: pre-wrap; word-break: break-word; font-size: 11pt; line-height: 1.4;
+    }
+    .hint { display: none; }
+    a { color: #000; text-decoration: none; }
+  }
+</style>
+</head>
+<body>
+  <div class="top">
+    <div class="brand">C++ 趣味学习 · 配套代码</div>
+    <div class="title">lesson39_scope.cpp</div>
+    <div class="actions">
+      <a class="btn" href="../lesson39_scope.cpp" download="lesson39_scope.cpp">⬇️ 下载源文件</a>
+      <a class="btn gold" href="javascript:history.back()">← 返回课件</a>
+    </div>
+  </div>
+  <div class="meta">编码：UTF-8 · 文件：lesson39_scope.cpp · 共 319 行 · 浅色主题便于打印</div>
+  <div class="wrap">
+    <pre id="code">/*
+ * ============================================================================
+ * Lesson 39: 变量的小天地——作用域
+ * 🏠 家的地图——变量的"房间"分布
+ * ============================================================================
+ *
+ * 本程序通过"家"的比喻，展示 C++ 中变量的作用域规则：
+ *
+ * 【核心概念】
+ * 1. 局部变量：定义在函数/代码块内部，只在"自己的房间"里有效
+ * 2. 全局变量：定义在所有函数外面，整个"家"的任何角落都能访问
+ * 3. 名字遮盖（Name Shadowing）：局部变量与全局变量同名时，局部优先
+ * 4. 代码块作用域：if / for / while 的 { } 也构成独立的作用域
+ * 5. 生命周期：进入作用域时变量"出生"，离开作用域时变量"消失"
+ *
+ * 【家的地图】（各程序的变量分布）
+ *
+ *         ┌──────────────────────────────────────────┐
+ *         │          🏠 第39号 · 阳光花园              │
+ *         │                                          │
+ *         │   【花园（全局区域）】                      │
+ *         │   - gardenName = "阳光花园"               │
+ *         │   - houseNumber = 39                     │
+ *         │   - totalGuests = 0                      │
+ *         │                                          │
+ *         │   ┌─────────┐  ┌─────────┐  ┌─────────┐ │
+ *         │   │  客厅    │  │  厨房    │  │  卧室    │ │
+ *         │   │ ─────── │  │ ─────── │  │ ─────── │ │
+ *         │   │ sofa    │  │ stove   │  │ bed     │ │
+ *         │   │ guests  │  │ guests  │  │ guests  │ │
+ *         │   │ (局部)  │  │ (局部)  │  │ (局部)  │ │
+ *         │   │         │  │ light!  │  │         │ │
+ *         │   │         │  │ (遮盖)  │  │         │ │
+ *         │   └─────────┘  └─────────┘  └─────────┘ │
+ *         │                                          │
+ *         │   【院子（main 函数）】                     │
+ *         │   - 能看到花园（全局变量）                   │
+ *         │   - 看不到各房间里的东西（局部变量）          │
+ *         └──────────────────────────────────────────┘
+ *
+ * 编译运行：
+ *   g++ -std=c++11 lesson39_scope.cpp -o lesson39_scope
+ *   ./lesson39_scope
+ * ============================================================================
+ */
+
+#include &lt;iostream&gt;
+using namespace std;
+
+// ==================== 全局变量·花园区域 ====================
+// 这些变量定义在所有函数外面，整个程序的每个角落都能看到它们。
+// 它们就像房子外面花园里的公告牌，每个房间的人都能看到。
+
+string gardenName = "阳光花园";    // 花园的名字
+int    houseNumber = 39;           // 门牌号
+int    totalGuests = 0;            // 来访总人数（会被各房间累加）
+
+// ==================== 函数声明 ====================
+void livingRoom();   // 客厅
+void kitchen();      // 厨房
+void bedroom();      // 卧室
+void shadowDemo();   // 遮盖演示
+void blockScopeDemo(); // 代码块作用域演示
+
+
+// ====================================================================
+// 程序一：局部变量与全局变量的基本用法
+// ====================================================================
+
+void livingRoom() {
+    // sofa 是客厅的"私有物品"——局部变量
+    // 只有客厅里的人（livingRoom 函数内的代码）能看到和使用它
+    string sofa = "蓝色沙发";
+    int guests = 5;   // 客厅来了 5 位客人
+
+    cout &lt;&lt; "┌─────────────────────┐" &lt;&lt; endl;
+    cout &lt;&lt; "│  🛋️  客厅             │" &lt;&lt; endl;
+    cout &lt;&lt; "├─────────────────────┤" &lt;&lt; endl;
+    cout &lt;&lt; "│  家具：" &lt;&lt; sofa &lt;&lt; "        │" &lt;&lt; endl;
+    cout &lt;&lt; "│  访客：" &lt;&lt; guests &lt;&lt; " 人            │" &lt;&lt; endl;
+    cout &lt;&lt; "│  花园名：" &lt;&lt; gardenName;       // ✅ 能看到全局变量
+    if (gardenName.length() &lt; 9) cout &lt;&lt; "    │" &lt;&lt; endl;
+    else cout &lt;&lt; "│" &lt;&lt; endl;
+    cout &lt;&lt; "│  门牌号：" &lt;&lt; houseNumber &lt;&lt; " 号          │" &lt;&lt; endl;
+    // cout &lt;&lt; bed;  // ❌ 编译错误！客厅看不到卧室的床
+    totalGuests += guests;  // ✅ 修改全局变量
+    cout &lt;&lt; "└─────────────────────┘" &lt;&lt; endl;
+}
+
+void kitchen() {
+    string stove = "燃气灶";  // 厨房的私有物品——局部变量
+    int guests = 3;           // 厨房来了 3 位客人（每个房间的 guests 互不影响！）
+
+    cout &lt;&lt; "┌─────────────────────┐" &lt;&lt; endl;
+    cout &lt;&lt; "│  🍳  厨房             │" &lt;&lt; endl;
+    cout &lt;&lt; "├─────────────────────┤" &lt;&lt; endl;
+    cout &lt;&lt; "│  厨具：" &lt;&lt; stove &lt;&lt; "        │" &lt;&lt; endl;
+    cout &lt;&lt; "│  访客：" &lt;&lt; guests &lt;&lt; " 人            │" &lt;&lt; endl;
+    cout &lt;&lt; "│  花园名：" &lt;&lt; gardenName &lt;&lt; "│" &lt;&lt; endl;
+    // cout &lt;&lt; sofa;  // ❌ 编译错误！厨房看不到客厅的沙发
+    totalGuests += guests;  // ✅ 修改全局变量
+    cout &lt;&lt; "└─────────────────────┘" &lt;&lt; endl;
+}
+
+void bedroom() {
+    string bed = "双人床";   // 卧室的私有物品——局部变量
+    int guests = 2;          // 卧室来了 2 位客人
+
+    cout &lt;&lt; "┌─────────────────────┐" &lt;&lt; endl;
+    cout &lt;&lt; "│  🛏️  卧室             │" &lt;&lt; endl;
+    cout &lt;&lt; "├─────────────────────┤" &lt;&lt; endl;
+    cout &lt;&lt; "│  家具：" &lt;&lt; bed &lt;&lt; "        │" &lt;&lt; endl;
+    cout &lt;&lt; "│  访客：" &lt;&lt; guests &lt;&lt; " 人            │" &lt;&lt; endl;
+    cout &lt;&lt; "│  花园名：" &lt;&lt; gardenName &lt;&lt; "│" &lt;&lt; endl;
+    // cout &lt;&lt; sofa;  // ❌ 编译错误！卧室看不到客厅的沙发
+    totalGuests += guests;  // ✅ 修改全局变量
+    cout &lt;&lt; "└─────────────────────┘" &lt;&lt; endl;
+}
+
+// ====================================================================
+// 程序二：名字遮盖（Name Shadowing）演示
+// "灯光的故事"——不同房间的灯 vs 屋外的路灯
+// ====================================================================
+
+int light = 1;  // 全局变量：屋外的路灯，编号为 1
+
+void shadowDemo() {
+    cout &lt;&lt; "\n═══════════════════════════════════════════" &lt;&lt; endl;
+    cout &lt;&lt; "💡 名字遮盖实验 —— 灯光的故事" &lt;&lt; endl;
+    cout &lt;&lt; "═══════════════════════════════════════════" &lt;&lt; endl;
+
+    // 在主程序中（院子），看到的是全局的路灯
+    cout &lt;&lt; "\n📍 站在院子里向外看：" &lt;&lt; endl;
+    cout &lt;&lt; "   light = " &lt;&lt; light &lt;&lt; "（路灯，编号①）" &lt;&lt; endl;
+
+    // 走进厨房——厨房有自己的灯！
+    {
+        int light = 2;  // 局部变量：厨房的灯，编号为 2
+        // 注意：这里的局部 light "遮盖"了全局 light！
+        cout &lt;&lt; "\n📍 走进厨房后：" &lt;&lt; endl;
+        cout &lt;&lt; "   light = " &lt;&lt; light &lt;&lt; "（厨房的灯，编号②）⚠️ 遮盖了路灯！" &lt;&lt; endl;
+        cout &lt;&lt; "   虽然路灯 light 还存在，但在厨房里只能看到厨房的灯。" &lt;&lt; endl;
+    }  // 离开厨房——厨房的灯 light(2) 消失，路灯 light(1) 重新可见
+
+    // 走出厨房，回到院子
+    cout &lt;&lt; "\n📍 走出厨房，回到院子：" &lt;&lt; endl;
+    cout &lt;&lt; "   light = " &lt;&lt; light &lt;&lt; "（又是路灯了，编号①）" &lt;&lt; endl;
+    cout &lt;&lt; "   厨房的灯已经灭了（生命周期结束），路灯重新亮起。" &lt;&lt; endl;
+
+    // 验证：全局 light 的值从未被厨房改变过
+    cout &lt;&lt; "\n✅ 全局变量 light 始终是 " &lt;&lt; light &lt;&lt; "，从未被修改过。" &lt;&lt; endl;
+}
+
+// ====================================================================
+// 程序三：代码块作用域演示
+// 房间里的"小隔间"——if / for / while 的 { } 也是作用域！
+// ====================================================================
+
+void blockScopeDemo() {
+    cout &lt;&lt; "\n═══════════════════════════════════════════" &lt;&lt; endl;
+    cout &lt;&lt; "📦 代码块作用域实验 —— 房间里的纸箱子" &lt;&lt; endl;
+    cout &lt;&lt; "═══════════════════════════════════════════" &lt;&lt; endl;
+
+    string owner = "小明";  // main 函数作用域内的局部变量
+
+    // --- 演示 1：if 语句的代码块 ---
+    cout &lt;&lt; "\n📌 实验一：if 语句的代码块" &lt;&lt; endl;
+    if (true) {
+        string note = "这个纸条放在 if 代码块的纸箱里";  // 只在 if {} 内有效
+        int boxNumber = 1;
+        cout &lt;&lt; "   进 if 块 → 第 " &lt;&lt; boxNumber &lt;&lt; " 号纸箱里的纸条：" &lt;&lt; note &lt;&lt; endl;
+        cout &lt;&lt; "   进 if 块 → 还能看到 owner：" &lt;&lt; owner &lt;&lt; " ✅（owner 在外层）" &lt;&lt; endl;
+        // 内层可以"向外看"——看到外层的变量
+    }  // note 和 boxNumber 在这里消失！
+    // cout &lt;&lt; note;  // ❌ 编译错误！note 已经不存在了
+    cout &lt;&lt; "   出 if 块 → owner 还在：" &lt;&lt; owner &lt;&lt; " ✅" &lt;&lt; endl;
+    // cout &lt;&lt; "   出 if 块 → 纸条还在吗？" &lt;&lt; note;  // ❌ 这行不能编译
+
+    // --- 演示 2：for 循环的代码块 ---
+    cout &lt;&lt; "\n📌 实验二：for 循环的代码块" &lt;&lt; endl;
+    for (int i = 1; i &lt;= 3; i++) {
+        string loopMsg = "第 " + to_string(i) + " 次循环";
+        cout &lt;&lt; "   " &lt;&lt; loopMsg &lt;&lt; " → i 在循环体内有效" &lt;&lt; endl;
+        // 每次循环迭代结束，loopMsg 的生命周期就结束了
+        // 下一次循环开始时，一个新的 loopMsg 被创建
+    }  // i 在这里消失！
+    // cout &lt;&lt; i;  // ❌ 编译错误！i 只在 for 代码块内存在
+
+    // --- 演示 3：嵌套作用域 ---
+    cout &lt;&lt; "\n📌 实验三：嵌套作用域" &lt;&lt; endl;
+    cout &lt;&lt; "   外层：" &lt;&lt; endl;
+    int outerValue = 100;
+    {
+        int innerValue = 200;
+        cout &lt;&lt; "      中层：outerValue = " &lt;&lt; outerValue &lt;&lt; " ✅" &lt;&lt; endl;
+        cout &lt;&lt; "      中层：innerValue = " &lt;&lt; innerValue &lt;&lt; " ✅" &lt;&lt; endl;
+        {
+            int deepValue = 300;
+            cout &lt;&lt; "         内层：outerValue = " &lt;&lt; outerValue &lt;&lt; " ✅" &lt;&lt; endl;
+            cout &lt;&lt; "         内层：innerValue = " &lt;&lt; innerValue &lt;&lt; " ✅" &lt;&lt; endl;
+            cout &lt;&lt; "         内层：deepValue = " &lt;&lt; deepValue &lt;&lt; " ✅" &lt;&lt; endl;
+        }  // deepValue 消失
+        // cout &lt;&lt; deepValue;  // ❌ deepValue 已消失
+        cout &lt;&lt; "      回到中层：innerValue 还在 = " &lt;&lt; innerValue &lt;&lt; " ✅" &lt;&lt; endl;
+    }  // innerValue 消失
+    cout &lt;&lt; "   回到外层：outerValue = " &lt;&lt; outerValue &lt;&lt; " ✅" &lt;&lt; endl;
+    // cout &lt;&lt; innerValue;  // ❌ innerValue 已消失
+
+    cout &lt;&lt; "\n💡 规则：外层看不到内层，内层能看到外层！" &lt;&lt; endl;
+}
+
+// ====================================================================
+// 程序四：练习答案验证
+// ====================================================================
+
+void exerciseAnswers() {
+    cout &lt;&lt; "\n═══════════════════════════════════════════" &lt;&lt; endl;
+    cout &lt;&lt; "📝 课堂练习答案验证" &lt;&lt; endl;
+    cout &lt;&lt; "═══════════════════════════════════════════" &lt;&lt; endl;
+
+    // 练习 1：猜输出
+    cout &lt;&lt; "\n--- 练习 1：猜输出 ---" &lt;&lt; endl;
+    int a_test = 5;  // 模拟全局 a
+    cout &lt;&lt; "在 main 中，a = " &lt;&lt; a_test &lt;&lt; endl;
+    {
+        int a_test = 10;  // 局部遮盖
+        cout &lt;&lt; "在内层块中，a = " &lt;&lt; a_test &lt;&lt; " ← 局部变量遮盖了外层的 a" &lt;&lt; endl;
+    }
+    cout &lt;&lt; "回到外层，a = " &lt;&lt; a_test &lt;&lt; " ← 外层的 a 没有被改变" &lt;&lt; endl;
+
+    // 练习 2：生命周期验证
+    cout &lt;&lt; "\n--- 练习 2：生命周期验证 ---" &lt;&lt; endl;
+    cout &lt;&lt; "变量 secret 定义在内层 {} 中，" &lt;&lt; endl;
+    cout &lt;&lt; "离开 {} 后 secret 就消失了，" &lt;&lt; endl;
+    cout &lt;&lt; "所以外层的 cout &lt;&lt; secret 会编译报错！" &lt;&lt; endl;
+
+    // 练习 3：作用域判断
+    cout &lt;&lt; "\n--- 练习 3：作用域判断 ---" &lt;&lt; endl;
+    cout &lt;&lt; "① ✅ saveMoney() 内的 piggyBank 在作用域内" &lt;&lt; endl;
+    cout &lt;&lt; "② ✅ money 是全局变量，任何地方都能访问" &lt;&lt; endl;
+    cout &lt;&lt; "③ ✅ money 是全局变量，main() 里也能用" &lt;&lt; endl;
+    cout &lt;&lt; "④ ❌ piggyBank 是 saveMoney() 的局部变量，main() 看不到它" &lt;&lt; endl;
+}
+
+
+// ====================================================================
+// 主函数：家的主人（程序入口）
+// ====================================================================
+
+int main() {
+    // 标题
+    cout &lt;&lt; endl;
+    cout &lt;&lt; "╔═══════════════════════════════════════════╗" &lt;&lt; endl;
+    cout &lt;&lt; "║  🏠 第 39 课：变量的小天地——作用域          ║" &lt;&lt; endl;
+    cout &lt;&lt; "║                                         ║" &lt;&lt; endl;
+    cout &lt;&lt; "║  " &lt;&lt; gardenName &lt;&lt; " · 第 " &lt;&lt; houseNumber &lt;&lt; " 号                           ║" &lt;&lt; endl;
+    cout &lt;&lt; "╚═══════════════════════════════════════════╝" &lt;&lt; endl;
+    cout &lt;&lt; endl;
+
+    // ============================================================
+    // 运行程序一：房间访问演示
+    // ============================================================
+    cout &lt;&lt; "┏━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┓" &lt;&lt; endl;
+    cout &lt;&lt; "┃  程序一：房间访问 —— 局部变量与全局变量     ┃" &lt;&lt; endl;
+    cout &lt;&lt; "┗━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┛" &lt;&lt; endl;
+    cout &lt;&lt; endl;
+
+    cout &lt;&lt; "家在 " &lt;&lt; gardenName &lt;&lt; "，门牌号 " &lt;&lt; houseNumber &lt;&lt; "。" &lt;&lt; endl;
+    cout &lt;&lt; "开始参观各个房间...\n" &lt;&lt; endl;
+
+    livingRoom();
+    cout &lt;&lt; endl;
+    kitchen();
+    cout &lt;&lt; endl;
+    bedroom();
+
+    cout &lt;&lt; "\n📊 参观完毕！全屋总共来了 " &lt;&lt; totalGuests &lt;&lt; " 位客人。" &lt;&lt; endl;
+
+    // 在 main() 中尝试访问各房间的局部变量
+    cout &lt;&lt; "\n⚠️  注意：在院子里（main函数）只能看到：" &lt;&lt; endl;
+    cout &lt;&lt; "   ✅ gardenName = \"" &lt;&lt; gardenName &lt;&lt; "\"" &lt;&lt; endl;
+    cout &lt;&lt; "   ✅ houseNumber = " &lt;&lt; houseNumber &lt;&lt; endl;
+    cout &lt;&lt; "   ✅ totalGuests = " &lt;&lt; totalGuests &lt;&lt; endl;
+    cout &lt;&lt; "   ❌ sofa（客厅的沙发）—— 看不到！" &lt;&lt; endl;
+    cout &lt;&lt; "   ❌ stove（厨房的灶台）—— 看不到！" &lt;&lt; endl;
+    cout &lt;&lt; "   ❌ bed（卧室的床）—— 看不到！" &lt;&lt; endl;
+
+    // ============================================================
+    // 运行程序二：名字遮盖演示
+    // ============================================================
+    shadowDemo();
+
+    // ============================================================
+    // 运行程序三：代码块作用域演示
+    // ============================================================
+    blockScopeDemo();
+
+    // ============================================================
+    // 运行程序四：练习答案
+    // ============================================================
+    exerciseAnswers();
+
+    // ============================================================
+    // 结束
+    // ============================================================
+    cout &lt;&lt; "\n\n╔═══════════════════════════════════════════╗" &lt;&lt; endl;
+    cout &lt;&lt; "║  本课总结：                               ║" &lt;&lt; endl;
+    cout &lt;&lt; "║                                          ║" &lt;&lt; endl;
+    cout &lt;&lt; "║  🏠 全局变量 = 花园里的公告牌（大家都能看）   ║" &lt;&lt; endl;
+    cout &lt;&lt; "║  🚪 局部变量 = 房间里的私人物品（自己专用）   ║" &lt;&lt; endl;
+    cout &lt;&lt; "║  🙈 名字遮盖 = 房间灯亮了，就看不到路灯了    ║" &lt;&lt; endl;
+    cout &lt;&lt; "║  ⏱️  生命周期 = 进门时点亮，出门时熄灭       ║" &lt;&lt; endl;
+    cout &lt;&lt; "║                                          ║" &lt;&lt; endl;
+    cout &lt;&lt; "║  记住：变量的'家'就是它的作用域！           ║" &lt;&lt; endl;
+    cout &lt;&lt; "╚═══════════════════════════════════════════╝" &lt;&lt; endl;
+    cout &lt;&lt; endl;
+
+    return 0;
+}
+</pre>
+    <p class="hint">本页使用浅色主题与 UTF-8 编码，可直接打印或导出 PDF。</p>
+  </div>
+</body>
+</html>
