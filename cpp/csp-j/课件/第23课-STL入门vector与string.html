@@ -1,680 +1,347 @@
 <!DOCTYPE html>
-
 <html lang="zh-CN">
 <head>
 <meta charset="utf-8"/>
 <meta content="width=device-width, initial-scale=1.0" name="viewport"/>
-<title>CSP-J 备考课程 - 第23课 STL入门：vector与string</title>
+<title>CSP-J 备考课程 - 第23课：STL入门 vector与string</title>
 <style>
-* { margin: 0; padding: 0; box-sizing: border-box; }
-body {
-    font-family: "PingFang SC", "Microsoft YaHei", "Hiragino Sans GB", sans-serif;
-    background: #f5f5f5;
-    color: #333;
-    overflow: hidden;
-    height: 100vh;
-}
-#title-bar {
-    background: #1a237e;
-    color: #ffd600;
-    padding: 8px 24px;
-    font-size: 14px;
-    font-weight: bold;
-    letter-spacing: 2px;
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    position: fixed;
-    top: 0; left: 0; right: 0;
-    z-index: 1000;
-    height: 40px;
-}
-#slide-container {
-    position: absolute;
-    top: 40px; left: 0; right: 0; bottom: 60px;
-    overflow: hidden;
-}
-.slide {
-    display: none;
-    background: white;
-    height: 100%;
-    padding: 40px 60px;
-    overflow-y: auto;
-    animation: fadeSlide 0.4s ease;
-}
-.slide.active { display: block; }
-@keyframes fadeSlide {
-    from { opacity: 0; transform: translateX(30px); }
-    to { opacity: 1; transform: translateX(0); }
-}
-h1 { font-size: 32px; color: #1a237e; margin-bottom: 16px; border-bottom: 3px solid #ffd600; padding-bottom: 12px; }
-h2 { font-size: 24px; color: #1a237e; margin: 20px 0 12px; }
-h3 { font-size: 18px; color: #283593; margin: 14px 0 8px; }
-p, li { font-size: 16px; line-height: 1.8; margin-bottom: 6px; }
-ul, ol { margin-left: 24px; }
-table { border-collapse: collapse; width: 100%; margin: 12px 0; }
-th { background: #1a237e; color: white; padding: 10px 12px; text-align: left; font-size: 14px; }
-td { padding: 8px 12px; border-bottom: 1px solid #e0e0e0; font-size: 14px; }
-tr:nth-child(even) td { background: #f5f5f5; }
-.code-block {
-    background: #1e1e1e;
-    color: #d4d4d4;
-    padding: 16px 20px;
-    border-radius: 8px;
-    font-family: Consolas, Monaco, "Courier New", monospace;
-    font-size: 13px;
-    line-height: 1.7;
-    overflow-x: auto;
-    margin: 10px 0;
-    white-space: pre-wrap;
-    word-wrap: break-word;
-}
-.code-block .keyword { color: #569cd6; }
-.code-block .type { color: #4ec9b0; }
-.code-block .string { color: #ce9178; }
-.code-block .comment { color: #6a9955; }
-.code-block .number { color: #b5cea8; }
-.code-block .builtin { color: #dcdcaa; }
-.exam-tips {
-    border: 2px solid #ff9800;
-    border-left: 6px solid #ff9800;
-    background: #fff8e1;
-    padding: 14px 18px;
-    margin: 14px 0;
-    border-radius: 4px;
-}
-.exam-tips h4 { color: #e65100; margin-bottom: 6px; font-size: 15px; }
-.exam-tips ul { margin-left: 18px; }
-.exam-tips li { font-size: 14px; line-height: 1.7; }
-.key-point {
-    background: #e8eaf6;
-    border-left: 4px solid #1a237e;
-    padding: 10px 16px;
-    margin: 10px 0;
-    border-radius: 4px;
-}
-.highlight { color: #e65100; font-weight: bold; }
-.gold { color: #ffd600; }
-.slide.title-slide.active {
-    display: flex;
-    flex-direction: column;
-    justify-content: center;
-    align-items: center;
-    text-align: center;
-    background: linear-gradient(135deg, #1a237e 0%, #283593 50%, #3949ab 100%);
-    color: white;
-}
-.slide.title-slide.active h1 { color: #ffd600; font-size: 44px; border: none; margin-bottom: 20px; }
-.slide.title-slide.active h2 { color: white; font-size: 24px; margin-bottom: 12px; font-weight: normal; }
-.slide.title-slide.active p { color: #bbdefb; font-size: 18px; }
-#nav-bar {
-    position: fixed;
-    bottom: 0; left: 0; right: 0;
-    height: 60px;
-    background: white;
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    gap: 12px;
-    border-top: 1px solid #e0e0e0;
-    z-index: 1000;
-}
-.nav-btn {
-    background: #1a237e;
-    color: white;
-    border: none;
-    padding: 10px 28px;
-    border-radius: 20px;
-    cursor: pointer;
-    font-size: 14px;
-    font-family: inherit;
-    transition: background 0.2s;
-}
-.nav-btn:hover { background: #283593; }
-.nav-btn:disabled { background: #bdbdbd; cursor: not-allowed; }
-#page-indicator { font-size: 14px; color: #666; min-width: 60px; text-align: center; }
-.sample-io { background: #f5f5f5; padding: 10px 16px; border-radius: 4px; margin: 8px 0; font-family: Consolas, Monaco, monospace; font-size: 13px; }
-@media (max-width: 768px) {
-    .slide { padding: 24px 16px; }
-    h1 { font-size: 22px; }
-    h2 { font-size: 18px; }
-    p, li { font-size: 13px; }
-    .code-block { font-size: 11px; }
-}
+    :root {
+        --primary: #1a237e; --secondary: #283593; --accent: #ffd600;
+        --bg: #ffffff; --text: #212121; --code-bg: #1e1e1e; --code-text: #d4d4d4;
+        --light-gray: #f5f5f5; --border: #e0e0e0;
+    }
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body {
+        font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "PingFang SC", "Microsoft YaHei", sans-serif;
+        background: #e8eaf6; display: flex; flex-direction: column; align-items: center;
+        min-height: 100vh; color: var(--text); line-height: 1.7;
+    }
+    .title-bar {
+        position: fixed; top: 0; left: 0; right: 0; height: 48px;
+        background: var(--primary); color: #fff; display: flex; align-items: center;
+        padding: 0 24px; font-size: 16px; font-weight: 600; z-index: 100;
+        box-shadow: 0 2px 8px rgba(0,0,0,0.15);
+    }
+    .title-bar .badge {
+        background: var(--accent); color: var(--primary); padding: 2px 12px;
+        border-radius: 12px; font-size: 12px; margin-left: 12px; font-weight: 700;
+    }
+    .slides-container { margin-top: 64px; width: 100%; max-width: 960px; padding: 0 20px 100px; }
+    .slide {
+        display: none; background: var(--bg); border-radius: 16px; padding: 44px 52px;
+        box-shadow: 0 4px 24px rgba(0,0,0,0.08); min-height: 520px;
+    }
+    .slide.active { display: block; animation: fadeSlideIn 0.4s ease; }
+    @keyframes fadeSlideIn {
+        from { opacity: 0; transform: translateY(20px); }
+        to { opacity: 1; transform: translateY(0); }
+    }
+    .slide h2 {
+        color: var(--primary); font-size: 26px; border-bottom: 3px solid var(--accent);
+        padding-bottom: 12px; margin-bottom: 18px;
+    }
+    .slide h3 { color: var(--secondary); font-size: 17px; margin: 12px 0 8px; }
+    .slide p { font-size: 15px; margin-bottom: 8px; }
+    .slide ul, .slide ol { padding-left: 24px; margin-bottom: 10px; font-size: 14.5px; }
+    .slide li { margin-bottom: 5px; }
+    .slide-title { text-align: center; padding-top: 80px; }
+    .slide-title h1 { font-size: 34px; color: var(--primary); margin-bottom: 14px; }
+    .slide-title .subtitle { font-size: 20px; color: #5c6bc0; margin-bottom: 24px; }
+    .slide-title .lesson-info { font-size: 15px; color: #78909c; }
+    .code-block {
+        background: var(--code-bg); color: var(--code-text); border-radius: 8px;
+        padding: 12px 16px; margin: 8px 0; overflow-x: auto;
+        font-family: Consolas, "Courier New", monospace; font-size: 12.5px;
+        line-height: 1.55; white-space: pre;
+    }
+    .code-block .kw { color: #569cd6; } .code-block .fn { color: #dcdcaa; }
+    .code-block .str { color: #ce9178; } .code-block .num { color: #b5cea8; }
+    .code-block .cm { color: #6a9955; }
+    .code-inline {
+        background: #e8eaf6; color: var(--primary); padding: 1px 6px;
+        border-radius: 4px; font-family: Consolas, monospace; font-size: 0.9em;
+    }
+    .info-table { width: 100%; border-collapse: collapse; margin: 10px 0; font-size: 13px; }
+    .info-table th { background: var(--primary); color: #fff; padding: 8px 10px; text-align: left; }
+    .info-table td { padding: 7px 10px; border-bottom: 1px solid var(--border); }
+    .info-table tr:nth-child(even) td { background: var(--light-gray); }
+    .tip-box { border-left: 4px solid #ff9800; background: #fff8e1; padding: 10px 14px; margin: 10px 0; border-radius: 6px; font-size: 13.5px; color: #e65100; }
+    .warn-box { border-left: 4px solid #f44336; background: #ffebee; padding: 10px 14px; margin: 10px 0; border-radius: 6px; font-size: 13.5px; }
+    .ok-box { border-left: 4px solid #43a047; background: #e8f5e9; padding: 10px 14px; margin: 10px 0; border-radius: 6px; font-size: 13.5px; }
+    .gold-box { border-left: 5px solid var(--accent); background: #fffde7; padding: 10px 14px; margin: 10px 0; border-radius: 0 8px 8px 0; font-size: 14px; font-weight: 600; }
+    .info-list { list-style: none; padding: 0; }
+    .info-list li { padding: 5px 0 5px 22px; position: relative; font-size: 14.5px; }
+    .info-list li::before { content: "▸"; position: absolute; left: 4px; color: var(--accent); font-weight: bold; }
+    .two-col { display: flex; gap: 14px; } .two-col > div { flex: 1; }
+    .exam-card { background: #fafafa; border: 1px solid #e0e0e0; border-radius: 10px; padding: 12px; margin: 8px 0; font-size: 13.5px; }
+    .exam-card h4 { color: var(--primary); margin-bottom: 6px; }
+    .summary-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin: 12px 0; }
+    .summary-item { background: var(--light-gray); padding: 11px 12px; border-radius: 8px; font-size: 13px; border-left: 3px solid var(--primary); }
+    .nav-bar {
+        position: fixed; bottom: 0; left: 0; right: 0; background: #fff;
+        border-top: 1px solid var(--border); padding: 12px 0;
+        display: flex; justify-content: center; align-items: center; gap: 24px;
+        box-shadow: 0 -2px 8px rgba(0,0,0,0.06); z-index: 100;
+    }
+    .nav-btn { background: var(--primary); color: #fff; border: none; padding: 10px 32px; border-radius: 24px; font-size: 15px; cursor: pointer; font-weight: 600; }
+    .nav-btn:disabled { background: #bdbdbd; cursor: not-allowed; }
+    .page-indicator { font-size: 14px; color: #78909c; min-width: 80px; text-align: center; }
+    .page-dots { display: flex; gap: 5px; flex-wrap: wrap; max-width: 360px; justify-content: center; }
+    .page-dot { width: 10px; height: 10px; border-radius: 50%; background: #cfd8dc; cursor: pointer; }
+    .page-dot.active { background: var(--primary); width: 28px; border-radius: 5px; }
+    @media (max-width: 768px) {
+        .slide { padding: 28px 16px; } .two-col { flex-direction: column; }
+        .summary-grid { grid-template-columns: 1fr; }
+    }
 </style>
 </head>
 <body>
-<div id="title-bar">
-<span>CSP-J 备考课程</span>
-<span>第23课：STL入门——vector与string</span>
-</div>
-<div id="slide-container">
-<!-- ======== 幻灯片 1：标题页 ======== -->
-<div class="slide active title-slide">
-<h1>STL入门：vector与string</h1>
-<h2>第23课 · CSP-J 备考课程</h2>
-<p>让STL成为你的竞赛加速器</p>
-<p style="margin-top:40px; font-size:14px; color:#90caf9;">
-            vector动态数组 | 迭代器 | string高级操作 | auto | 范围for循环
-        </p>
+<div class="title-bar">CSP-J 备考课程 <span class="badge">L23</span></div>
+<div class="slides-container">
 
-<aside class="notes">【开场】第 1/9 页 · STL入门：vector与string
-用 30 秒说明本课目标与学完能做什么，再进入正题。
-大纲考点：vector动态数组、迭代器、常用操作
-配套练习方向：vector应用与动态数组题
-封面关键词：
-· 让STL成为你的竞赛加速器
-· vector动态数组 | 迭代器 | string高级操作 | auto | 范围for循环
-互动：问学生「今天最想搞清楚什么？」，收 1–2 个期待。</aside>
+<div class="slide slide-title active" data-slide="1">
+<h1>第23课：STL 入门<br/>vector 与 string</h1>
+<div class="subtitle">动态数组 · 迭代器 · 字符串 · auto/范围 for</div>
+<div class="lesson-info">CSP-J 备考 · 配套 lesson23_STL入门vector与string.cpp</div>
+<aside class="notes">【开场】STL 让注意力回到算法本身。</aside>
 </div>
-<!-- ======== 幻灯片 2：Vector 基础 ======== -->
-<div class="slide">
-<h1>Vector——会自己长大的数组</h1>
-<h2>什么是vector？</h2>
-<p>vector是一个<strong>动态数组</strong>。普通数组大小编译时固定，vector可以在运行时自动扩容。</p>
-<h2>声明与初始化（5种方式）</h2>
-<div class="code-block">
-<span class="comment">// 包含头文件</span>
-<span class="keyword">#include</span> <span class="string">&lt;vector&gt;</span>
-<span class="type">vector</span>&lt;<span class="keyword">int</span>&gt; v;                  <span class="comment">// 空vector，size=0</span>
-<span class="type">vector</span>&lt;<span class="keyword">int</span>&gt; v(<span class="number">10</span>);              <span class="comment">// 10个元素，默认都是0</span>
-<span class="type">vector</span>&lt;<span class="keyword">int</span>&gt; v(<span class="number">10</span>, <span class="number">5</span>);           <span class="comment">// 10个元素，每个都是5</span>
-<span class="type">vector</span>&lt;<span class="keyword">int</span>&gt; v = {<span class="number">1</span>, <span class="number">2</span>, <span class="number">3</span>};       <span class="comment">// C++11列表初始化</span>
-<span class="type">vector</span>&lt;<span class="keyword">int</span>&gt; v2(v);              <span class="comment">// 拷贝构造</span>
-</div>
-<h2>常用操作速查表</h2>
-<table>
-<tr><th>操作</th><th>说明</th><th>复杂度</th></tr>
-<tr><td>v.push_back(x)</td><td>在末尾添加元素x</td><td>均摊O(1)</td></tr>
-<tr><td>v.pop_back()</td><td>删除末尾元素</td><td>O(1)</td></tr>
-<tr><td>v.size()</td><td>返回元素个数</td><td>O(1)</td></tr>
-<tr><td>v.empty()</td><td>判断是否为空</td><td>O(1)</td></tr>
-<tr><td>v.clear()</td><td>清空所有元素</td><td>O(n)</td></tr>
-<tr><td>v.front() / v.back()</td><td>首元素 / 尾元素</td><td>O(1)</td></tr>
-<tr><td>v[i]</td><td>下标访问（无越界检查）</td><td>O(1)</td></tr>
+
+<div class="slide" data-slide="2">
+<h2>考纲与为什么学 STL</h2>
+<table class="info-table">
+<tr><th>知识点</th><th>要求</th></tr>
+<tr><td>vector</td><td>定义、push_back、[]、size、clear</td></tr>
+<tr><td>迭代器初步</td><td>begin / end 基本用法</td></tr>
+<tr><td>string 高级</td><td>find、substr、insert、erase、getline</td></tr>
+<tr><td>C++11</td><td>auto、范围 for</td></tr>
 </table>
-<div class="key-point">
-<strong>注意：</strong><code>v[i]</code> 不检查越界，你必须自己保证 <code>0 ≤ i &lt; v.size()</code>。
-            <code>v.at(i)</code> 会检查越界但速度更慢，竞赛中常用 <code>v[i]</code>。
-        </div>
-
-<aside class="notes">【讲解】Vector——会自己长大的数组
-结合讲义《二、vector详解——会自己长大的数组》强调：
-· vector是一个**动态数组**。普通数组（int a[100]）的大小在编译时就必须确定，而vector可以**在运行时自动扩容**。你今天不知道数据有多少个？没关系，往vector里塞就行。
-· 使用vector需要引入头文件：
-· vector v; // 空vector，size为0
-· vector v(10); // 10个元素，默认初始化为0
-· vector v(10, 5); // 10个元素，每个都是5
-幻灯片上可见要点：
-· vector是一个 动态数组 。普通数组大小编译时固定，vector可以在运行时自动扩容。
-· 动态数组
-讲解时放慢关键术语；用 1 个生活类比 + 1 个反例加深印象。
-本课大纲考点（可适时点题）：vector动态数组、迭代器、常用操作</aside>
-</div>
-<!-- ======== 幻灯片 3：Vector 操作详解 ======== -->
-<div class="slide">
-<h1>Vector 操作详解</h1>
-<h2>push_back / pop_back / size / empty / clear</h2>
-<div class="code-block">
-<span class="type">vector</span>&lt;<span class="keyword">int</span>&gt; v;
-
-v.push_back(<span class="number">10</span>);              <span class="comment">// v = {10}</span>
-v.push_back(<span class="number">20</span>);              <span class="comment">// v = {10, 20}</span>
-v.push_back(<span class="number">30</span>);              <span class="comment">// v = {10, 20, 30}</span>
-
-cout &lt;&lt; v.size();          <span class="comment">// 输出 3</span>
-cout &lt;&lt; v.front();         <span class="comment">// 输出 10（第一个元素）</span>
-cout &lt;&lt; v.back();          <span class="comment">// 输出 30（最后一个元素）</span>
-
-v.pop_back();               <span class="comment">// v = {10, 20}</span>
-
-v.clear();                  <span class="comment">// v = {}，size变为0</span>
-cout &lt;&lt; v.empty();         <span class="comment">// 输出 1 (true)</span>
-</div>
-<h2>三种遍历方式</h2>
-<div class="code-block">
-<span class="comment">// 方式1：下标循环（需要用到索引时）</span>
-<span class="keyword">for</span> (<span class="keyword">int</span> i = <span class="number">0</span>; i &lt; v.size(); i++) {
-    cout &lt;&lt; v[i] &lt;&lt; <span class="string">" "</span>;
-}
-
-<span class="comment">// 方式2：迭代器（配合STL算法时）</span>
-<span class="keyword">for</span> (<span class="keyword">auto</span> it = v.begin(); it != v.end(); ++it) {
-    cout &lt;&lt; *it &lt;&lt; <span class="string">" "</span>;
-}
-
-<span class="comment">// 方式3：范围for循环（最简洁，C++11）</span>
-<span class="keyword">for</span> (<span class="keyword">int</span> x : v) {
-    cout &lt;&lt; x &lt;&lt; <span class="string">" "</span>;
-}
-        </div>
-<h2>二维vector（邻接表基础）</h2>
-<div class="code-block">
-<span class="type">vector</span>&lt;<span class="type">vector</span>&lt;<span class="keyword">int</span>&gt;&gt; graph(n + <span class="number">1</span>);    <span class="comment">// n个节点，1-indexed</span>
-graph[<span class="number">1</span>].push_back(<span class="number">2</span>);                    <span class="comment">// 节点1→节点2</span>
-graph[<span class="number">1</span>].push_back(<span class="number">3</span>);                    <span class="comment">// 节点1→节点3</span>
-<span class="keyword">for</span> (<span class="keyword">int</span> neighbor : graph[<span class="number">1</span>]) {  <span class="comment">// 遍历节点1的所有邻居</span>
-    cout &lt;&lt; neighbor &lt;&lt; <span class="string">" "</span>;       <span class="comment">// 输出: 2 3</span>
-}
-        </div>
-<div class="exam-tips">
-<h4>竞赛提示</h4>
-<ul>
-<li>邻接表用 <code>vector&lt;vector&lt;int&gt;&gt;</code> 是最简洁的实现方式</li>
-<li>如果预先知道元素数量，用 <code>reserve(n)</code> 提前分配空间，避免多次扩容</li>
-<li><code>size()</code> 返回的是实际元素数，<code>capacity()</code> 是已分配的空间大小——不要搞混</li>
+<ul class="info-list">
+<li>省时间：动态数组一行搞定</li>
+<li>少 Bug：成熟实现，少内存错误</li>
+<li>可读：v.push_back 语义清晰</li>
 </ul>
+<aside class="notes">【讲解】竞赛不是造轮子。</aside>
 </div>
 
-<aside class="notes">【讲解】Vector 操作详解
-本页要点（照着讲即可）：
-· 竞赛提示
-· 邻接表用 vector&gt; 是最简洁的实现方式
-· 如果预先知道元素数量，用 reserve(n) 提前分配空间，避免多次扩容
-· size() 返回的是实际元素数， capacity() 是已分配的空间大小——不要搞混
-讲解时放慢关键术语；用 1 个生活类比 + 1 个反例加深印象。</aside>
+<div class="slide" data-slide="3">
+<h2>一、vector：声明与常用操作</h2>
+<div class="code-block">#include &lt;vector&gt;
+vector&lt;<span class="kw">int</span>&gt; v;                 <span class="cm">// 空</span>
+vector&lt;<span class="kw">int</span>&gt; v2(<span class="num">10</span>);           <span class="cm">// 10 个 0</span>
+vector&lt;<span class="kw">int</span>&gt; v3(<span class="num">10</span>, <span class="num">5</span>);        <span class="cm">// 10 个 5</span>
+vector&lt;<span class="kw">int</span>&gt; v4 = {<span class="num">1</span>,<span class="num">2</span>,<span class="num">3</span>};</div>
+<table class="info-table">
+<tr><th>操作</th><th>含义</th><th>复杂度</th></tr>
+<tr><td>push_back / pop_back</td><td>尾增 / 尾删</td><td>均摊 O(1) / O(1)</td></tr>
+<tr><td>size / empty / clear</td><td>大小 / 空 / 清空</td><td>O(1) / O(1) / O(n)</td></tr>
+<tr><td>front / back / [i]</td><td>首尾 / 下标</td><td>O(1)</td></tr>
+<tr><td>resize / reserve</td><td>改大小 / 预留容量</td><td>O(n)</td></tr>
+</table>
+<div class="warn-box"><code>vector&lt;int&gt; v(10)</code> 是 10 个 0，不是容量 10 的空向量。预留用 reserve。</div>
+<aside class="notes">【讲解】演示 push 后 size。</aside>
 </div>
-<!-- ======== 幻灯片 4：迭代器初步 ======== -->
-<div class="slide">
-<h1>迭代器——广义的"指针"</h1>
-<h2>什么是迭代器？</h2>
-<p>迭代器（iterator）是一种遍历容器元素的对象，可以理解为<strong>封装的指针</strong>：
-        <code>*it</code> 取值，<code>++it</code> 后移。</p>
-<div class="code-block">
-<span class="type">vector</span>&lt;<span class="keyword">int</span>&gt; v = {<span class="number">10</span>, <span class="number">20</span>, <span class="number">30</span>, <span class="number">40</span>, <span class="number">50</span>};
 
-<span class="comment">// begin() → 第一个元素     end() → 最后一个元素之后</span>
-<span class="keyword">auto</span> it = v.begin();    <span class="comment">// *it = 10</span>
-cout &lt;&lt; *it;            <span class="comment">// 输出 10</span>
-<span class="comment">// 遍历</span>
-<span class="keyword">for</span> (<span class="keyword">auto</span> it = v.begin(); it != v.end(); ++it) {
-    cout &lt;&lt; *it &lt;&lt; <span class="string">" "</span>;   <span class="comment">// 10 20 30 40 50</span>
-}
-        </div>
-<h2>迭代器的常用配合（algorithm库）</h2>
-<div class="code-block">
-<span class="comment">// 排序</span>
+<div class="slide" data-slide="4">
+<h2>vector 遍历与二维</h2>
+<div class="code-block" style="font-size:12px;"><span class="cm">// 下标</span>
+<span class="kw">for</span> (<span class="kw">int</span> i = <span class="num">0</span>; i &lt; (<span class="kw">int</span>)v.size(); i++) cout &lt;&lt; v[i];
+<span class="cm">// 范围 for</span>
+<span class="kw">for</span> (<span class="kw">int</span> x : v) cout &lt;&lt; x;
+<span class="cm">// 二维 / 邻接表</span>
+vector&lt;vector&lt;<span class="kw">int</span>&gt;&gt; g(n + <span class="num">1</span>);
+g[u].push_back(v); g[v].push_back(u);</div>
+<div class="tip-box">知道规模时 <code>reserve(n)</code> 减扩容；竞赛用 <code>v[i]</code> 自己保证不越界。</div>
+<aside class="notes">【讲解】邻接表为图论预告。</aside>
+</div>
+
+<div class="slide" data-slide="5">
+<h2>二、迭代器初步</h2>
+<p>迭代器 ≈ 封装的指针：<code>*it</code> 取值，<code>++it</code> 前进。</p>
+<div class="code-block">vector&lt;<span class="kw">int</span>&gt; v = {<span class="num">10</span>,<span class="num">20</span>,<span class="num">30</span>};
+<span class="kw">for</span> (<span class="kw">auto</span> it = v.begin(); it != v.end(); ++it)
+    cout &lt;&lt; *it &lt;&lt; <span class="str">" "</span>;
+<span class="cm">// end() 是「尾后」位置，不要 *end()</span>
 sort(v.begin(), v.end());
-
-<span class="comment">// 反转</span>
-reverse(v.begin(), v.end());
-
-<span class="comment">// 查找</span>
-<span class="keyword">auto</span> it = find(v.begin(), v.end(), <span class="number">30</span>);
-<span class="keyword">if</span> (it != v.end()) {
-    cout &lt;&lt; <span class="string">"找到! 索引="</span> &lt;&lt; (it - v.begin());
-}
-
-<span class="comment">// 插入/删除</span>
-v.insert(v.begin() + <span class="number">2</span>, <span class="number">100</span>);   <span class="comment">// 在下标2处插入100</span>
-v.erase(v.begin() + <span class="number">1</span>);          <span class="comment">// 删除下标1处的元素</span>
-</div>
-<div class="key-point">
-<strong>关键记忆：</strong><code>begin()</code> 是第一个元素，<code>end()</code> 是最后一个元素的<strong>下一个位置</strong>
-            （不是最后一个元素）。所以遍历条件永远是 <code>it != v.end()</code>。
-        </div>
-<div class="exam-tips">
-<h4>竞赛建议</h4>
-<ul>
-<li>遍历容器优先使用范围for，简洁不易错</li>
-<li>配合 <code>algorithm</code> 库函数时必须使用迭代器</li>
-<li><code>auto</code> 让迭代器声明简单10倍——<code>auto it = v.begin()</code></li>
-</ul>
+v.erase(v.begin() + <span class="num">1</span>);
+<span class="kw">auto</span> it = find(v.begin(), v.end(), <span class="num">30</span>);</div>
+<div class="ok-box">sort / unique / find 都要 begin、end。区间半开 [begin, end)。</div>
+<aside class="notes">【讲解】与指针类比。</aside>
 </div>
 
-<aside class="notes">【讲解】迭代器——广义的"指针"
-结合讲义《三、迭代器初步——广义的"指针"》强调：
-· 迭代器（iterator）是一种可以遍历容器中元素的对象。你可以把它理解成一个**封装的指针**：*it 取它指向的值，++it 让它指向下一个元素。
-· vector v = {10, 20, 30, 40, 50};
-· // begin() 指向第一个元素
-· vector::iterator it = v.begin();
-· cout &lt;&lt; *it &lt;&lt; endl; // 输出 10
-幻灯片上可见要点：
-· 迭代器（iterator）是一种遍历容器元素的对象，可以理解为 封装的指针 ： *it 取值， ++it 后移。
-· 封装的指针
-· 关键记忆：
-· 下一个位置
-讲解时放慢关键术语；用 1 个生活类比 + 1 个反例加深印象。</aside>
-</div>
-<!-- ======== 幻灯片 5：String 高级操作 ======== -->
-<div class="slide">
-<h1>String 高级操作——CSP-J字符串处理利器</h1>
-<h2>getline()——读一整行（含空格）</h2>
-<div class="code-block">
-<span class="keyword">#include</span> <span class="string">&lt;string&gt;</span>
-<span class="keyword">string</span> line;
-getline(cin, line);      <span class="comment">// 读入一整行，包括空格</span>
-<span class="comment">// ⚠️ 陷阱：cin &gt;&gt; 之后必须 cin.ignore()</span>
-<span class="keyword">int</span> n; cin &gt;&gt; n;
-cin.ignore();            <span class="comment">// 清除残留的换行符！</span>
-<span class="keyword">string</span> s;
-getline(cin, s);         <span class="comment">// 现在才能正确读取</span>
-</div>
-<h2>find()——查找子串</h2>
-<div class="code-block">
-<span class="keyword">string</span> s = <span class="string">"hello world, hello cpp"</span>;
+<div class="slide" data-slide="6">
+<h2>三、string：getline / find / substr</h2>
+<div class="code-block">#include &lt;string&gt;
+string line; getline(cin, line);   <span class="cm">// 整行含空格</span>
+<span class="cm">// cin&gt;&gt;n 后用 getline 前：cin.ignore();</span>
 
-<span class="keyword">size_t</span> p1 = s.find(<span class="string">"hello"</span>);       <span class="comment">// p1 = 0 (第一个出现位置)</span>
-<span class="keyword">size_t</span> p2 = s.find(<span class="string">"hello"</span>, <span class="number">5</span>);    <span class="comment">// p2 = 13 (从下标5开始找)</span>
-<span class="keyword">if</span> (s.find(<span class="string">"java"</span>) == <span class="keyword">string</span>::npos) {
-    cout &lt;&lt; <span class="string">"没找到"</span>;          <span class="comment">// npos = 没找到</span>
-}
-        </div>
-<h2>substr()——截取子串</h2>
-<div class="code-block">
-<span class="keyword">string</span> s = <span class="string">"0123456789"</span>;
-s.substr(<span class="number">0</span>, <span class="number">3</span>);   <span class="comment">// "012"    (从0开始，取3个字符)</span>
-s.substr(<span class="number">5</span>);      <span class="comment">// "56789"  (从5到末尾)</span>
-</div>
-<h2>insert() / erase()——修改字符串</h2>
-<div class="code-block">
-<span class="keyword">string</span> s = <span class="string">"Hello World"</span>;
-s.insert(<span class="number">5</span>, <span class="string">" beautiful"</span>);   <span class="comment">// "Hello beautiful World"</span>
-<span class="keyword">string</span> t = <span class="string">"abcdef"</span>;
-t.erase(<span class="number">2</span>, <span class="number">3</span>);                <span class="comment">// "abf" (从2开始删3个)</span>
-</div>
-<h2>字符串比较与转换</h2>
-<div class="code-block">
-<span class="comment">// 字符串可直接用 ==, &lt;, &gt; 比较（字典序）</span>
-<span class="keyword">if</span> (<span class="string">"abc"</span> &lt; <span class="string">"abd"</span>) { ... }   <span class="comment">// true</span>
-<span class="comment">// 数字与字符串互转 (C++11)</span>
-<span class="keyword">string</span> s1 = to_string(<span class="number">123</span>);     <span class="comment">// "123"</span>
-<span class="keyword">int</span>    n1 = stoi(<span class="string">"456"</span>);        <span class="comment">// 456</span>
-<span class="keyword">double</span> d1 = stod(<span class="string">"3.14"</span>);      <span class="comment">// 3.14</span>
+string s = <span class="str">"hello world, hello cpp"</span>;
+<span class="kw">size_t</span> p = s.find(<span class="str">"hello"</span>);       <span class="cm">// 0</span>
+<span class="kw">if</span> (s.find(<span class="str">"java"</span>) == string::npos) { <span class="cm">/* 没找到 */</span> }
+string sub = s.substr(<span class="num">0</span>, <span class="num">5</span>);      <span class="cm">// "hello"</span>
+string tail = s.substr(<span class="num">6</span>);        <span class="cm">// 到末尾</span></div>
+<div class="warn-box">判断失败写 <code>== string::npos</code>，勿写 <code>find &lt; 0</code>（size_t 无符号）。</div>
+<aside class="notes">【讲解】npos 是巨大无符号数。</aside>
 </div>
 
-<aside class="notes">【讲解】String 高级操作——CSP-J字符串处理利器
-本页要点（照着讲即可）：
-· String 高级操作——CSP-J字符串处理利器
-· getline()——读一整行（含空格）
-· #include
-· string
-· line;
-· getline(cin, line);
-讲解时放慢关键术语；用 1 个生活类比 + 1 个反例加深印象。</aside>
+<div class="slide" data-slide="7">
+<h2>string：insert / erase / 数转</h2>
+<div class="code-block">string s = <span class="str">"Hello World"</span>;
+s.insert(<span class="num">5</span>, <span class="str">" beautiful"</span>);
+string t = <span class="str">"abcdef"</span>; t.erase(<span class="num">2</span>, <span class="num">3</span>);  <span class="cm">// "abf"</span>
+cout &lt;&lt; s.length() &lt;&lt; s.size();   <span class="cm">// 等价</span>
+<span class="cm">// 字典序：a &lt; b 可直接比较</span>
+string s1 = to_string(<span class="num">123</span>);
+<span class="kw">int</span> num = stoi(<span class="str">"456"</span>);
+<span class="kw">long long</span> big = stoll(<span class="str">"1234567890123"</span>);</div>
+<div class="tip-box">to_string / stoi / stoll 为 C++11，CSP-J 可用。</div>
+<aside class="notes">【讲解】解析题常用 substr+stoi。</aside>
 </div>
-<!-- ======== 幻灯片 6：C++11 特性 + 代码模板 ======== -->
-<div class="slide">
-<h1>C++11利器：auto + 范围for</h1>
-<h2>auto——编译时类型推导</h2>
-<div class="code-block">
-<span class="keyword">auto</span> x = <span class="number">42</span>;              <span class="comment">// int</span>
-<span class="keyword">auto</span> y = <span class="number">3.14</span>;            <span class="comment">// double</span>
-<span class="keyword">auto</span> it = v.begin();    <span class="comment">// vector&lt;int&gt;::iterator（省太多字了！）</span>
-<span class="keyword">auto</span> s = <span class="string">"hello"</span>;        <span class="comment">// const char*</span>
-</div>
-<h2>范围for——三种模式的记忆口诀</h2>
-<table>
-<tr><th>写法</th><th>含义</th><th>何时使用</th></tr>
-<tr><td><code>for (auto x : v)</code></td><td>拷贝每个元素</td><td>值类型小，不需要修改</td></tr>
-<tr><td><code>for (auto&amp; x : v)</code></td><td>引用每个元素</td><td>需要修改原容器中的值</td></tr>
-<tr><td><code>for (const auto&amp; x : v)</code></td><td>只读引用</td><td>值类型大（如string）且不修改</td></tr>
+
+<div class="slide" data-slide="8">
+<h2>四、auto 与范围 for</h2>
+<div class="code-block"><span class="kw">auto</span> x = <span class="num">10</span>;                 <span class="cm">// int</span>
+<span class="kw">auto</span> it = v.begin();         <span class="cm">// 省掉冗长类型</span>
+<span class="kw">for</span> (<span class="kw">auto</span> x : v) { }         <span class="cm">// 拷贝</span>
+<span class="kw">for</span> (<span class="kw">auto</span>&amp; x : v) { x *= <span class="num">2</span>; }  <span class="cm">// 可改</span>
+<span class="kw">for</span> (<span class="kw">const auto</span>&amp; x : v) { }  <span class="cm">// 大对象只读</span></div>
+<table class="info-table">
+<tr><th>写法</th><th>何时</th></tr>
+<tr><td>auto x : v</td><td>小类型只读</td></tr>
+<tr><td>auto&amp; x : v</td><td>要修改元素</td></tr>
+<tr><td>const auto&amp; x : v</td><td>string 等避免拷贝</td></tr>
 </table>
-<h2>实战模板：去重排序</h2>
-<div class="code-block">
-<span class="type">vector</span>&lt;<span class="keyword">int</span>&gt; a(n);
-<span class="keyword">for</span> (<span class="keyword">int</span> i = <span class="number">0</span>; i &lt; n; i++) cin &gt;&gt; a[i];
+<aside class="notes">【讲解】auto 是编译期推导，非弱类型。</aside>
+</div>
 
-sort(a.begin(), a.end());                             <span class="comment">// 排序</span>
-<span class="keyword">auto</span> last = unique(a.begin(), a.end());               <span class="comment">// 去重</span>
-a.erase(last, a.end());
+<div class="slide" data-slide="9">
+<h2>五、CSP-J 常见模式</h2>
+<div class="code-block" style="font-size:12px;"><span class="cm">// 去重排序</span>
+sort(a.begin(), a.end());
+a.erase(unique(a.begin(), a.end()), a.end());
 
-<span class="keyword">for</span> (<span class="keyword">int</span> i = <span class="number">0</span>; i &lt; a.size(); i++) {
-    cout &lt;&lt; a[i] &lt;&lt; <span class="string">" \n"</span>[i == a.size() - <span class="number">1</span>];
+<span class="cm">// 邻接表读图</span>
+vector&lt;vector&lt;<span class="kw">int</span>&gt;&gt; g(n + <span class="num">1</span>);
+<span class="kw">for</span> (...) { cin &gt;&gt; u &gt;&gt; v; g[u].push_back(v); g[v].push_back(u); }
+
+<span class="cm">// CSV：find + substr</span>
+<span class="kw">while</span> ((pos = line.find(<span class="str">','</span>)) != string::npos) { ... }</div>
+<aside class="notes">【讲解】三模式覆盖大半基础题。</aside>
+</div>
+
+<div class="slide" data-slide="10">
+<h2>代码模板</h2>
+<div class="code-block" style="font-size:11.5px;"><span class="cm">// 模板1 vector 综合</span>
+vector&lt;<span class="kw">int</span>&gt; v; v.push_back(x); sort(v.begin(), v.end());
+
+<span class="cm">// 模板2 字符串解析字段</span>
+<span class="kw">size_t</span> start = <span class="num">0</span>, end;
+<span class="kw">while</span> ((end = line.find(<span class="str">','</span>, start)) != string::npos) {
+    fields.push_back(line.substr(start, end - start));
+    start = end + <span class="num">1</span>;
 }
-        </div>
-<h2>实战模板：CSV字符串分割</h2>
-<div class="code-block">
-<span class="keyword">string</span> line; getline(cin, line);
-<span class="type">vector</span>&lt;<span class="keyword">string</span>&gt; fields;
-<span class="keyword">size_t</span> pos;
-<span class="keyword">while</span> ((pos = line.find(<span class="string">','</span>)) != <span class="keyword">string</span>::npos) {
-    fields.push_back(line.substr(<span class="number">0</span>, pos));
-    line.erase(<span class="number">0</span>, pos + <span class="number">1</span>);
+fields.push_back(line.substr(start));
+
+<span class="cm">// 模板3 auto + 范围 for</span>
+<span class="kw">for</span> (<span class="kw">const auto</span>&amp; s : fields) cout &lt;&lt; s &lt;&lt; endl;</div>
+<aside class="notes">【讲解】套模板写真题。</aside>
+</div>
+
+<div class="slide" data-slide="11">
+<h2>易错点</h2>
+<div class="warn-box">
+<strong>1.</strong> v[i] 越界（无检查）<br/>
+<strong>2.</strong> 忘记 #include &lt;vector&gt; / &lt;string&gt;<br/>
+<strong>3.</strong> 混淆 size() 与 capacity()<br/>
+<strong>4.</strong> find 与 npos 比较写错（&lt;0）<br/>
+<strong>5.</strong> cin &gt;&gt; 后 getline 吃到空行 —— 用 cin.ignore()
+</div>
+<aside class="notes">【讲解】ignore 清掉换行。</aside>
+</div>
+
+<div class="slide" data-slide="12">
+<h2>真题1：去重排序</h2>
+<div class="exam-card">
+<h4>题目</h4>
+<p>n≤1e5 个数，排序去重，输出个数与升序列。</p>
+<p>样例：3 1 4 1 5 9 2 6 → 7 个数；1 2 3 4 5 6 9</p>
+</div>
+<div class="code-block" style="font-size:12px;">vector&lt;<span class="kw">int</span>&gt; a(n);
+<span class="kw">for</span> (<span class="kw">int</span> i = <span class="num">0</span>; i &lt; n; i++) cin &gt;&gt; a[i];
+sort(a.begin(), a.end());
+a.erase(unique(a.begin(), a.end()), a.end());
+cout &lt;&lt; a.size() &lt;&lt; endl;
+<span class="kw">for</span> (<span class="kw">int</span> i = <span class="num">0</span>; i &lt; (<span class="kw">int</span>)a.size(); i++) { ... }</div>
+<div class="tip-box">unique 只把重复挪到后部，必须 erase 才真正缩短。</div>
+<aside class="notes">【练习】强调 unique 语义。</aside>
+</div>
+
+<div class="slide" data-slide="13">
+<h2>真题2：CSV 字段解析</h2>
+<div class="exam-card">
+<h4>题目</h4>
+<p>一行逗号分隔字段，每字段一行输出。样例：Zhang,San,15,Math,95</p>
+</div>
+<div class="code-block" style="font-size:12px;">string line; getline(cin, line);
+vector&lt;string&gt; fields;
+<span class="kw">size_t</span> pos;
+<span class="kw">while</span> ((pos = line.find(<span class="str">','</span>)) != string::npos) {
+    fields.push_back(line.substr(<span class="num">0</span>, pos));
+    line.erase(<span class="num">0</span>, pos + <span class="num">1</span>);
 }
-fields.push_back(line);   <span class="comment">// 最后一段</span>
-</div>
-<div class="exam-tips">
-<h4>竞赛技巧</h4>
-<ul>
-<li><code>auto</code> + 范围for 一起用，代码量减半</li>
-<li><code>unique</code> 只是把重复元素移到末尾，必须配合 <code>erase</code> 才能真正删除</li>
-<li>字符串分割时注意最后一段要单独处理</li>
-</ul>
+fields.push_back(line);
+<span class="kw">for</span> (<span class="kw">const auto</span>&amp; f : fields) cout &lt;&lt; f &lt;&lt; endl;</div>
+<aside class="notes">【练习】也可用 start/end 不 erase 写法。</aside>
 </div>
 
-<aside class="notes">【讲解】C++11利器：auto + 范围for
-结合讲义《模板3：auto + 范围for模式》强调：
-· using namespace std;
-· int main() {
-· vector names = {"张三", "李四", "王五"};
-· // 只读遍历
-· cout &lt;&lt; "学生名单：";
-幻灯片上可见要点：
-· 竞赛技巧
-· auto + 范围for 一起用，代码量减半
-· unique 只是把重复元素移到末尾，必须配合 erase 才能真正删除
-· 字符串分割时注意最后一段要单独处理
-讲解时放慢关键术语；用 1 个生活类比 + 1 个反例加深印象。</aside>
+<div class="slide" data-slide="14">
+<h2>本课小结</h2>
+<div class="summary-grid">
+<div class="summary-item"><strong>vector</strong><br/>会变长的数组 push_back</div>
+<div class="summary-item"><strong>迭代器</strong><br/>begin~end，广义指针</div>
+<div class="summary-item"><strong>string</strong><br/>find / substr / getline</div>
+<div class="summary-item"><strong>auto/for</strong><br/>写得更短更清晰</div>
+<div class="summary-item"><strong>模式</strong><br/>去重排序 · 邻接表 · CSV</div>
+<div class="summary-item"><strong>坑</strong><br/>npos · ignore · 越界</div>
 </div>
-<!-- ======== 幻灯片 7：易错点 ======== -->
-<div class="slide">
-<h1>⚠️ 易错点——这些坑千万别踩</h1>
-<div class="exam-tips">
-<h4>易错点1：vector越界访问</h4>
-<ul>
-<li><code>vector&lt;int&gt; v(5);</code> 有 <code>v[0]</code> 到 <code>v[4]</code>，<code>v[5]</code> 就是越界！</li>
-<li>循环条件必须是 <code>i &lt; v.size()</code>，不是 <code>i &lt;= v.size()</code></li>
-</ul>
-</div>
-<div class="exam-tips">
-<h4>易错点2：忘记 include 头文件</h4>
-<ul>
-<li><code>vector</code> 需要 <code>#include &lt;vector&gt;</code></li>
-<li><code>string</code> 需要 <code>#include &lt;string&gt;</code></li>
-<li>使用 <code>sort/unique/find</code> 需要 <code>#include &lt;algorithm&gt;</code></li>
-<li>竞赛中可以用 <code>#include &lt;bits/stdc++.h&gt;</code> 一劳永逸</li>
-</ul>
-</div>
-<div class="exam-tips">
-<h4>易错点3：混淆 size() 和 capacity()</h4>
-<ul>
-<li><code>size()</code>：实际存储的元素数量</li>
-<li><code>capacity()</code>：已分配内存能容纳的元素数</li>
-<li><code>reserve(100)</code> 改capacity，不改size——此时 <code>v[0]</code> 仍然越界！</li>
-</ul>
-</div>
-<div class="exam-tips">
-<h4>易错点4：string::npos 比较错误</h4>
-<ul>
-<li><code>find()</code> 返回的是 <code>size_t</code>（无符号类型）</li>
-<li>正确：<code>if (s.find(x) == string::npos)</code></li>
-<li>错误：<code>if (s.find(x) &lt; 0)</code> —— 永远为false，因为无符号数不可能小于0</li>
-</ul>
-</div>
-<div class="exam-tips">
-<h4>易错点5：cin &gt;&gt; 后直接 getline</h4>
-<ul>
-<li><code>cin &gt;&gt; n</code> 在缓冲区留下了换行符</li>
-<li>紧接着的 <code>getline(cin, s)</code> 会读到空字符串</li>
-<li>解决方法：<code>cin &gt;&gt; n; cin.ignore(); getline(cin, s);</code></li>
-</ul>
+<p style="text-align:center;color:#78909c;margin-top:12px;">下一课：第24课 · stack 与 queue</p>
+<aside class="notes">【收尾】预习 LIFO/FIFO。</aside>
 </div>
 
-<aside class="notes">【讲解】⚠️ 易错点——这些坑千万别踩
-本页要点（照着讲即可）：
-· 易错点1：vector越界访问
-· vector v(5); 有 v[0] 到 v[4] ， v[5] 就是越界！
-· 循环条件必须是 i &lt; v.size() ，不是 i &lt;= v.size()
-· 易错点2：忘记 include 头文件
-· vector 需要 #include
-· string 需要 #include
-讲解时放慢关键术语；用 1 个生活类比 + 1 个反例加深印象。</aside>
 </div>
-<!-- ======== 幻灯片 8：真题精练 ======== -->
-<div class="slide">
-<h1>真题精练</h1>
-<h2>题目1：去重排序</h2>
-<p>给定n个整数（可能有重复），从小到大排序并输出去重后的结果。</p>
-<div class="sample-io">
-<strong>输入样例：</strong><br/>
-8<br/>
-3 1 4 1 5 9 2 6<br/><br/>
-<strong>输出样例：</strong><br/>
-7<br/>
-1 2 3 4 5 6 9
-        </div>
-<div class="code-block">
-<span class="keyword">#include</span> <span class="string">&lt;iostream&gt;</span>
-<span class="keyword">#include</span> <span class="string">&lt;vector&gt;</span>
-<span class="keyword">#include</span> <span class="string">&lt;algorithm&gt;</span>
-<span class="keyword">using namespace std</span>;
-
-<span class="keyword">int</span> main() {
-    <span class="keyword">int</span> n; cin &gt;&gt; n;
-    <span class="type">vector</span>&lt;<span class="keyword">int</span>&gt; a(n);
-    <span class="keyword">for</span> (<span class="keyword">int</span> i = <span class="number">0</span>; i &lt; n; i++) cin &gt;&gt; a[i];
-
-    sort(a.begin(), a.end());
-    <span class="keyword">auto</span> last = unique(a.begin(), a.end());
-    a.erase(last, a.end());
-
-    cout &lt;&lt; a.size() &lt;&lt; endl;
-    <span class="keyword">for</span> (<span class="keyword">int</span> i = <span class="number">0</span>; i &lt; a.size(); i++) {
-        <span class="keyword">if</span> (i &gt; <span class="number">0</span>) cout &lt;&lt; <span class="string">" "</span>;
-        cout &lt;&lt; a[i];
-    }
-    cout &lt;&lt; endl;
-    <span class="keyword">return</span> <span class="number">0</span>;
-}
-        </div>
-<h2>题目2：CSV字段解析</h2>
-<p>解析逗号分隔的字符串，每行输出一个字段。</p>
-<div class="sample-io">
-<strong>输入样例：</strong> Zhang,San,15,Math,95<br/>
-<strong>输出样例：</strong><br/>
-Zhang<br/>San<br/>15<br/>Math<br/>95
-        </div>
-<div class="code-block">
-<span class="keyword">#include</span> <span class="string">&lt;iostream&gt;</span>
-<span class="keyword">#include</span> <span class="string">&lt;string&gt;</span>
-<span class="keyword">#include</span> <span class="string">&lt;vector&gt;</span>
-<span class="keyword">using namespace std</span>;
-
-<span class="keyword">int</span> main() {
-    <span class="keyword">string</span> line; getline(cin, line);
-    <span class="type">vector</span>&lt;<span class="keyword">string</span>&gt; fields;
-    <span class="keyword">size_t</span> pos;
-    <span class="keyword">while</span> ((pos = line.find(<span class="string">','</span>)) != <span class="keyword">string</span>::npos) {
-        fields.push_back(line.substr(<span class="number">0</span>, pos));
-        line.erase(<span class="number">0</span>, pos + <span class="number">1</span>);
-    }
-    fields.push_back(line);
-    <span class="keyword">for</span> (<span class="keyword">const auto</span>&amp; f : fields)
-        cout &lt;&lt; f &lt;&lt; endl;
-    <span class="keyword">return</span> <span class="number">0</span>;
-}
-        </div>
-
-<aside class="notes">【讲解】真题精练
-本页要点（照着讲即可）：
-· 给定n个整数（可能有重复），从小到大排序并输出去重后的结果。
-· 输入样例：
-· 输出样例：
-· 解析逗号分隔的字符串，每行输出一个字段。
-练习页节奏：先独立想 1 分钟 → 再点拨思路 → 最后对答案讲为什么。
-可联系：vector应用与动态数组题</aside>
-</div>
-<!-- ======== 幻灯片 9：本课小结 ======== -->
-<div class="slide">
-<h1>本课小结</h1>
-<table>
-<tr><th>知识点</th><th>关键内容</th><th>一句记忆</th></tr>
-<tr><td><strong>vector</strong></td><td>动态数组，push_back添加，v[i]访问，sort排序</td><td>会自己变长的数组</td></tr>
-<tr><td><strong>迭代器</strong></td><td>begin()→首，end()→尾后，*it取值</td><td>广义指针，*it取值</td></tr>
-<tr><td><strong>string</strong></td><td>getline读行，find查找，substr截取，to_string转换</td><td>CSP-J字符串三件套</td></tr>
-<tr><td><strong>auto</strong></td><td>编译时类型推导，简化迭代器声明</td><td>让编译器猜类型，你写算法</td></tr>
-<tr><td><strong>范围for</strong></td><td>for(auto x:v) / auto&amp; / const auto&amp;</td><td>告别冗长的下标循环</td></tr>
-</table>
-<h2>竞赛建议</h2>
-<ul>
-<li><strong>vector</strong> 是CSP-J中最常用的容器，几乎所有"不确定个数"的数组都用它</li>
-<li>学<strong>string高级操作</strong>，一劳永逸解决字符串解析题</li>
-<li><strong>auto</strong> 和<strong>范围for</strong>让代码更短、更少出错</li>
-<li>考前务必回顾<strong>五大易错点</strong>：越界、npos、include、cin.ignore、size vs capacity</li>
-</ul>
-<div class="key-point">
-<strong>核心公式：</strong><br/>
-            STL = <strong>更少Bug + 更快编码 + 更清晰逻辑</strong><br/>
-            把时间花在思考算法上，而不是"怎么造一个能用的数组"。
-        </div>
-<p style="margin-top:30px; text-align:center; color:#1a237e; font-size:20px; font-weight:bold;">
-            STL是你的武器库，用它去解决真正的问题！
-        </p>
-
-<aside class="notes">【收尾】回顾本课主线：本课小结
-对照大纲再过一遍：vector动态数组、迭代器、常用操作
-板书/口述要点：
-· vector
-· string
-· auto
-· 范围for
-· vector 是CSP-J中最常用的容器，几乎所有"不确定个数"的数组都用它
-· 学 string高级操作 ，一劳永逸解决字符串解析题
-课后任务：vector应用与动态数组题
-结束前留 2 分钟答疑；布置 1 道小练习检验是否真正掌握。</aside>
-</div>
-</div><!-- /slide-container -->
-<div id="nav-bar">
-<button class="nav-btn" id="btn-prev" onclick="prevSlide()">◀ 上一页</button>
-<span id="page-indicator">1 / 9</span>
-<button class="nav-btn" id="btn-next" onclick="nextSlide()">下一页 ▶</button>
+<div class="nav-bar">
+<button class="nav-btn" id="prevBtn" onclick="changeSlide(-1)">◀ 上一页</button>
+<div class="page-dots" id="pageDots"></div>
+<span class="page-indicator" id="pageIndicator">1 / 14</span>
+<button class="nav-btn" id="nextBtn" onclick="changeSlide(1)">下一页 ▶</button>
 </div>
 <script>
-let currentSlide = 0;
-const slides = document.querySelectorAll('.slide');
-const totalSlides = slides.length;
-const indicator = document.getElementById('page-indicator');
-const btnPrev = document.getElementById('btn-prev');
-const btnNext = document.getElementById('btn-next');
-
-function showSlide(n) {
-    if (n < 0 || n >= totalSlides) return;
-    slides[currentSlide].classList.remove('active');
-    currentSlide = n;
-    slides[currentSlide].classList.add('active');
-    indicator.textContent = (currentSlide + 1) + ' / ' + totalSlides;
-    btnPrev.disabled = (currentSlide === 0);
-    btnNext.disabled = (currentSlide === totalSlides - 1);
-}
-
-function nextSlide() {
-    if (currentSlide < totalSlides - 1) showSlide(currentSlide + 1);
-}
-
-function prevSlide() {
-    if (currentSlide > 0) showSlide(currentSlide - 1);
-}
-
-// Keyboard navigation
-document.addEventListener('keydown', function(e) {
-    if (e.key === 'ArrowRight' || e.key === 'ArrowDown' || e.key === ' ') {
-        e.preventDefault();
-        nextSlide();
-    } else if (e.key === 'ArrowLeft' || e.key === 'ArrowUp') {
-        e.preventDefault();
-        prevSlide();
-    } else if (e.key === 'Home') {
-        e.preventDefault();
-        showSlide(0);
-    } else if (e.key === 'End') {
-        e.preventDefault();
-        showSlide(totalSlides - 1);
+(function() {
+    var slides = document.querySelectorAll('.slide');
+    var totalSlides = slides.length, currentSlide = 0;
+    var dotsContainer = document.getElementById('pageDots');
+    for (var i = 0; i < totalSlides; i++) {
+        var dot = document.createElement('span');
+        dot.className = 'page-dot' + (i === 0 ? ' active' : '');
+        dot.onclick = (function(idx) { return function() { goToSlide(idx); }; })(i);
+        dotsContainer.appendChild(dot);
     }
-});
-
-// Initialize
-showSlide(0);
+    function updateUI() {
+        slides.forEach(function(s, i) { s.classList.toggle('active', i === currentSlide); });
+        document.getElementById('pageIndicator').textContent = (currentSlide + 1) + ' / ' + totalSlides;
+        document.querySelectorAll('.page-dot').forEach(function(d, i) { d.classList.toggle('active', i === currentSlide); });
+        document.getElementById('prevBtn').disabled = currentSlide === 0;
+        document.getElementById('nextBtn').disabled = currentSlide === totalSlides - 1;
+    }
+    window.goToSlide = function(i) { if (i >= 0 && i < totalSlides) { currentSlide = i; updateUI(); } };
+    window.changeSlide = function(d) { goToSlide(currentSlide + d); };
+    document.addEventListener('keydown', function(e) {
+        if (e.key === 'ArrowLeft' || e.key === 'ArrowUp') { e.preventDefault(); changeSlide(-1); }
+        else if (e.key === 'ArrowRight' || e.key === 'ArrowDown' || e.key === ' ') { e.preventDefault(); changeSlide(1); }
+        else if (e.key === 'Home') { e.preventDefault(); goToSlide(0); }
+        else if (e.key === 'End') { e.preventDefault(); goToSlide(totalSlides - 1); }
+    });
+    updateUI();
+})();
 </script>
 <script src="courseware-ui.js"></script>
 <script src="presenter.js"></script>

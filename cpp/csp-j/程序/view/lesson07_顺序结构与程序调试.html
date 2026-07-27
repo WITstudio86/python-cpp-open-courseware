@@ -71,31 +71,19 @@
     box-shadow: 0 2px 12px rgba(15, 23, 42, 0.05);
   }
   .hint { margin-top: 12px; color: var(--muted); font-size: 12px; }
-
-  /* 打印：浅底、去阴影、省墨 */
   @media print {
     html, body { background: #fff !important; color: #000 !important; }
     .top {
-      position: static;
-      box-shadow: none;
-      border-bottom: 1px solid #ccc;
-      background: #fff !important;
-      -webkit-print-color-adjust: exact;
-      print-color-adjust: exact;
+      position: static; box-shadow: none; border-bottom: 1px solid #ccc;
+      background: #fff !important; -webkit-print-color-adjust: exact; print-color-adjust: exact;
     }
     .actions { display: none !important; }
     .meta { background: #fff !important; border-color: #ddd; color: #333; }
     .wrap { padding: 0; }
     pre {
-      background: #fff !important;
-      color: #000 !important;
-      border: 1px solid #bbb;
-      box-shadow: none;
-      border-radius: 0;
-      white-space: pre-wrap;
-      word-break: break-word;
-      font-size: 11pt;
-      line-height: 1.4;
+      background: #fff !important; color: #000 !important; border: 1px solid #bbb;
+      box-shadow: none; border-radius: 0; white-space: pre-wrap; word-break: break-word;
+      font-size: 11pt; line-height: 1.4;
     }
     .hint { display: none; }
     a { color: #000; text-decoration: none; }
@@ -111,158 +99,394 @@
       <a class="btn gold" href="javascript:history.back()">← 返回课件</a>
     </div>
   </div>
-  <div class="meta">编码：UTF-8 · 文件：lesson07_顺序结构与程序调试.cpp · 共 152 行 · 浅色主题便于打印</div>
+  <div class="meta">编码：UTF-8 · 文件：lesson07_顺序结构与程序调试.cpp · 共 388 行 · 浅色主题便于打印</div>
   <div class="wrap">
     <pre id="code">/*
  * CSP-J 备考课程
  * 第7课：顺序结构与程序调试
  * 考纲知识点：顺序执行、断点调试、变量监视、常见编译错误、程序阅读方法
  *
- * 本文件包含：
+ * 本文件模块：
  * 1. 顺序执行演示
- * 2. 变量追踪练习
- * 3. 调试输出技巧
- * 4. 常见错误示例
+ * 2. 变量追踪（交换 / 多变量）
+ * 3. 调试输出宏技巧
+ * 4. 常见错误说明（安全演示）
+ * 5. 读程：变量追踪表
+ * 6. 常见陷阱
+ * 7. 真题1：多变量顺序追踪 AC
+ * 8. 真题2：三变量交换读程 AC
+ *
+ * 编译：g++ -std=c++17 -Wall -o lesson07 lesson07_顺序结构与程序调试.cpp
  */
 
 #include &lt;iostream&gt;
 #include &lt;iomanip&gt;
+#include &lt;string&gt;
 using namespace std;
 
-// 调试开关：注释掉可关闭调试输出
+// -------------------- 调试宏 --------------------
+// 演示默认开启；正式提交竞赛代码时应关闭
 #define DEBUG_MODE
 
-int main() {
-    cout &lt;&lt; "========== CSP-J 第7课：顺序结构与程序调试 ==========" &lt;&lt; endl;
-    cout &lt;&lt; endl;
+#ifdef DEBUG_MODE
+#define DBG(x) cerr &lt;&lt; &quot;[DEBUG] &quot; &lt;&lt; #x &lt;&lt; &quot; = &quot; &lt;&lt; (x) &lt;&lt; &#x27;\n&#x27;
+#else
+#define DBG(x) do {} while (0)
+#endif
 
-    // ===== 一、顺序执行演示 =====
-    cout &lt;&lt; "【一、顺序执行演示】" &lt;&lt; endl;
+// -------------------- 工具函数 --------------------
+void print_divider(const string&amp; title) {
+    cout &lt;&lt; &quot;\n========================================\n&quot;;
+    cout &lt;&lt; &quot;  &quot; &lt;&lt; title &lt;&lt; &#x27;\n&#x27;;
+    cout &lt;&lt; &quot;========================================\n&quot;;
+}
+
+void print_state3(const char* step, int a, int b, int c) {
+    cout &lt;&lt; left &lt;&lt; setw(14) &lt;&lt; step
+         &lt;&lt; &quot; a=&quot; &lt;&lt; setw(5) &lt;&lt; a
+         &lt;&lt; &quot; b=&quot; &lt;&lt; setw(5) &lt;&lt; b
+         &lt;&lt; &quot; c=&quot; &lt;&lt; setw(5) &lt;&lt; c &lt;&lt; &#x27;\n&#x27;;
+}
+
+void print_state2(const char* step, int x, int y) {
+    cout &lt;&lt; left &lt;&lt; setw(14) &lt;&lt; step
+         &lt;&lt; &quot; x=&quot; &lt;&lt; setw(5) &lt;&lt; x
+         &lt;&lt; &quot; y=&quot; &lt;&lt; setw(5) &lt;&lt; y &lt;&lt; &#x27;\n&#x27;;
+}
+
+// -------------------- 演示 1：顺序执行 --------------------
+void demo01_sequential_execution() {
+    print_divider(&quot;演示1：顺序执行&quot;);
+    cout &lt;&lt; &quot;程序默认按书写顺序从上到下执行。\n\n&quot;;
 
     int a = 10;
-    cout &lt;&lt; "语句1: a = " &lt;&lt; a &lt;&lt; endl;
+    cout &lt;&lt; &quot;语句1: int a = 10;          → a=&quot; &lt;&lt; a &lt;&lt; &#x27;\n&#x27;;
 
     int b = 20;
-    cout &lt;&lt; "语句2: b = " &lt;&lt; b &lt;&lt; endl;
+    cout &lt;&lt; &quot;语句2: int b = 20;          → b=&quot; &lt;&lt; b &lt;&lt; &#x27;\n&#x27;;
 
     int c = a + b;
-    cout &lt;&lt; "语句3: c = a + b = " &lt;&lt; c &lt;&lt; endl;
+    cout &lt;&lt; &quot;语句3: int c = a + b;       → c=&quot; &lt;&lt; c &lt;&lt; &#x27;\n&#x27;;
 
     c = c * 2;
-    cout &lt;&lt; "语句4: c = c * 2 = " &lt;&lt; c &lt;&lt; endl;
+    cout &lt;&lt; &quot;语句4: c = c * 2;           → c=&quot; &lt;&lt; c &lt;&lt; &#x27;\n&#x27;;
 
-    cout &lt;&lt; "每条语句按从上到下的顺序执行" &lt;&lt; endl;
-    cout &lt;&lt; endl;
+    cout &lt;&lt; &quot;\n结论：后句可以使用前句结果；前句未完成，后句不会开始。\n&quot;;
+}
 
-    // ===== 二、变量追踪练习 =====
-    cout &lt;&lt; "【二、变量追踪练习】" &lt;&lt; endl;
+// -------------------- 演示 2：变量追踪（交换） --------------------
+void demo02_swap_trace() {
+    print_divider(&quot;演示2：变量追踪 - 临时变量交换&quot;);
 
-    cout &lt;&lt; "练习1: 变量值交换" &lt;&lt; endl;
     int x = 5, y = 8;
-    cout &lt;&lt; "初始: x=" &lt;&lt; x &lt;&lt; ", y=" &lt;&lt; y &lt;&lt; endl;
+    print_state2(&quot;初始&quot;, x, y);
 
+    int t = x;
+    print_state2(&quot;t=x&quot;, x, y);
+    cout &lt;&lt; &quot;  (t=&quot; &lt;&lt; t &lt;&lt; &quot;)\n&quot;;
+
+    x = y;
+    print_state2(&quot;x=y&quot;, x, y);
+
+    y = t;
+    print_state2(&quot;y=t&quot;, x, y);
+
+    cout &lt;&lt; &quot;\n交换成功：x=&quot; &lt;&lt; x &lt;&lt; &quot;, y=&quot; &lt;&lt; y &lt;&lt; &#x27;\n&#x27;;
+
+    cout &lt;&lt; &quot;\n--- 对比：无临时变量的错误写法 ---\n&quot;;
+    x = 5;
+    y = 8;
+    print_state2(&quot;初始&quot;, x, y);
+    x = y;
+    print_state2(&quot;x=y&quot;, x, y);
+    y = x;
+    print_state2(&quot;y=x&quot;, x, y);
+    cout &lt;&lt; &quot;结果错误：两个都变成了原 y 的值。\n&quot;;
+}
+
+// -------------------- 演示 3：加减法交换 + 多变量 --------------------
+void demo03_multi_var_trace() {
+    print_divider(&quot;演示3：加减交换 与 多变量追踪&quot;);
+
+    cout &lt;&lt; &quot;【3.1 加减法交换（了解，注意溢出风险）】\n&quot;;
+    int x = 5, y = 8;
+    print_state2(&quot;初始&quot;, x, y);
     x = x + y;
-    cout &lt;&lt; "x = x + y → x=" &lt;&lt; x &lt;&lt; ", y=" &lt;&lt; y &lt;&lt; endl;
-
+    print_state2(&quot;x=x+y&quot;, x, y);
     y = x - y;
-    cout &lt;&lt; "y = x - y → x=" &lt;&lt; x &lt;&lt; ", y=" &lt;&lt; y &lt;&lt; endl;
-
+    print_state2(&quot;y=x-y&quot;, x, y);
     x = x - y;
-    cout &lt;&lt; "x = x - y → x=" &lt;&lt; x &lt;&lt; ", y=" &lt;&lt; y &lt;&lt; endl;
-    cout &lt;&lt; "成功交换！(不使用临时变量)" &lt;&lt; endl;
-    cout &lt;&lt; endl;
+    print_state2(&quot;x=x-y&quot;, x, y);
+    cout &lt;&lt; &quot;最终：x=&quot; &lt;&lt; x &lt;&lt; &quot;, y=&quot; &lt;&lt; y &lt;&lt; &quot;（已交换）\n\n&quot;;
 
-    cout &lt;&lt; "练习2: 多变量追踪" &lt;&lt; endl;
+    cout &lt;&lt; &quot;【3.2 三变量顺序计算】\n&quot;;
     int p = 3, q = 7, r = 4;
-    cout &lt;&lt; "初始: p=" &lt;&lt; p &lt;&lt; ", q=" &lt;&lt; q &lt;&lt; ", r=" &lt;&lt; r &lt;&lt; endl;
+    print_state3(&quot;初始&quot;, p, q, r);
+    p = q - p;
+    print_state3(&quot;p=q-p&quot;, p, q, r);
+    q = r * p;
+    print_state3(&quot;q=r*p&quot;, p, q, r);
+    r = q + p;
+    print_state3(&quot;r=q+p&quot;, p, q, r);
+    cout &lt;&lt; &quot;最终：p=&quot; &lt;&lt; p &lt;&lt; &quot;, q=&quot; &lt;&lt; q &lt;&lt; &quot;, r=&quot; &lt;&lt; r &lt;&lt; &#x27;\n&#x27;;
+}
 
-    p = q - p;        cout &lt;&lt; "p=q-p → p=" &lt;&lt; p &lt;&lt; endl;
-    q = r * p;        cout &lt;&lt; "q=r*p → q=" &lt;&lt; q &lt;&lt; endl;
-    r = q + p;        cout &lt;&lt; "r=q+p → r=" &lt;&lt; r &lt;&lt; endl;
-    cout &lt;&lt; "最终: p=" &lt;&lt; p &lt;&lt; ", q=" &lt;&lt; q &lt;&lt; ", r=" &lt;&lt; r &lt;&lt; endl;
-    cout &lt;&lt; endl;
-
-    // ===== 三、调试输出技巧 =====
-    cout &lt;&lt; "【三、调试输出技巧】" &lt;&lt; endl;
+// -------------------- 演示 4：调试输出技巧 --------------------
+void demo04_debug_output() {
+    print_divider(&quot;演示4：调试输出技巧&quot;);
 
 #ifdef DEBUG_MODE
-    cout &lt;&lt; "[DEBUG] 调试模式已开启" &lt;&lt; endl;
+    cout &lt;&lt; &quot;当前 DEBUG_MODE 已开启（调试信息输出到 cerr）。\n&quot;;
+#else
+    cout &lt;&lt; &quot;当前 DEBUG_MODE 已关闭。\n&quot;;
 #endif
 
     int total = 0;
     for (int i = 1; i &lt;= 5; i++) {
         total += i;
-#ifdef DEBUG_MODE
-        cout &lt;&lt; "[DEBUG] i=" &lt;&lt; i &lt;&lt; ", total=" &lt;&lt; total &lt;&lt; endl;
-#endif
+        DBG(i);
+        DBG(total);
     }
-    cout &lt;&lt; "最终结果: total = " &lt;&lt; total &lt;&lt; endl;
-    cout &lt;&lt; endl;
+    cout &lt;&lt; &quot;正式结果 total = &quot; &lt;&lt; total &lt;&lt; &quot;  （应走 cout）\n&quot;;
 
-    // ===== 四、常见编译错误演示 =====
-    cout &lt;&lt; "【四、常见错误说明】" &lt;&lt; endl;
-    cout &lt;&lt; "以下错误在注释中展示，取消注释会导致编译失败:" &lt;&lt; endl;
-    cout &lt;&lt; endl;
+    cout &lt;&lt; &quot;\n技巧：\n&quot;;
+    cout &lt;&lt; &quot;1) 中间量用 cerr / DBG 宏，避免污染标准答案输出；\n&quot;;
+    cout &lt;&lt; &quot;2) 提交前注释 #define DEBUG_MODE；\n&quot;;
+    cout &lt;&lt; &quot;3) 全文搜索 DEBUG / cerr 做最后检查。\n&quot;;
+}
 
-    cout &lt;&lt; "1. 缺少分号: ";
-    // cout &lt;&lt; "error"  ← 少了分号
-    cout &lt;&lt; "应为: cout &lt;&lt; \"text\";" &lt;&lt; endl;
+// -------------------- 演示 5：常见错误说明（注释形式） --------------------
+void demo05_common_errors() {
+    print_divider(&quot;演示5：常见编译/逻辑错误说明&quot;);
+    cout &lt;&lt; &quot;以下错误以注释展示，取消注释会导致编译失败或逻辑错误。\n\n&quot;;
 
-    cout &lt;&lt; "2. 变量未定义: ";
-    // cout &lt;&lt; unknownVar;  ← 变量未声明
-    cout &lt;&lt; "使用前必须先声明变量" &lt;&lt; endl;
+    cout &lt;&lt; &quot;1) 缺少分号\n&quot;;
+    cout &lt;&lt; &quot;   // cout &lt;&lt; \&quot;error\&quot;\n&quot;;
+    cout &lt;&lt; &quot;   正确：cout &lt;&lt; \&quot;text\&quot;;\n\n&quot;;
 
-    cout &lt;&lt; "3. 类型不匹配: ";
-    // int x = "hello";  ← 类型错误
-    cout &lt;&lt; "类型必须兼容" &lt;&lt; endl;
-    cout &lt;&lt; endl;
+    cout &lt;&lt; &quot;2) 变量未声明\n&quot;;
+    cout &lt;&lt; &quot;   // cout &lt;&lt; unknownVar;\n&quot;;
+    cout &lt;&lt; &quot;   正确：先声明再使用。\n\n&quot;;
 
-    // ===== 五、变量追踪表练习 =====
-    cout &lt;&lt; "【五、程序阅读：变量追踪表】" &lt;&lt; endl;
-    cout &lt;&lt; "阅读以下代码，追踪变量变化:" &lt;&lt; endl;
+    cout &lt;&lt; &quot;3) 类型不匹配\n&quot;;
+    cout &lt;&lt; &quot;   // int x = \&quot;hello\&quot;;\n&quot;;
+    cout &lt;&lt; &quot;   正确：string s = \&quot;hello\&quot;;\n\n&quot;;
+
+    cout &lt;&lt; &quot;4) 花括号不匹配\n&quot;;
+    cout &lt;&lt; &quot;   报错常见：expected &#x27;}&#x27; at end of input\n\n&quot;;
+
+    cout &lt;&lt; &quot;5) 主函数签名\n&quot;;
+    cout &lt;&lt; &quot;   // void main()  —— 不推荐/不标准\n&quot;;
+    cout &lt;&lt; &quot;   正确：int main() { ... return 0; }\n\n&quot;;
+
+    cout &lt;&lt; &quot;6) 中文分号/全角括号\n&quot;;
+    cout &lt;&lt; &quot;   从网页复制时务必检查标点是否为英文符号。\n&quot;;
+}
+
+// -------------------- 演示 6：读程变量表 --------------------
+void demo06_trace_table() {
+    print_divider(&quot;演示6：程序阅读 - 变量追踪表&quot;);
+    cout &lt;&lt; &quot;代码：m=10,n=3; m=m+n; n=m-n; m=m-n;\n\n&quot;;
 
     int m = 10, n = 3;
-    cout &lt;&lt; "初始: m=" &lt;&lt; setw(3) &lt;&lt; m &lt;&lt; ", n=" &lt;&lt; setw(3) &lt;&lt; n &lt;&lt; endl;
+    cout &lt;&lt; left &lt;&lt; setw(12) &lt;&lt; &quot;步骤&quot; &lt;&lt; setw(8) &lt;&lt; &quot;m&quot; &lt;&lt; setw(8) &lt;&lt; &quot;n&quot; &lt;&lt; &quot;说明\n&quot;;
+    cout &lt;&lt; string(40, &#x27;-&#x27;) &lt;&lt; &#x27;\n&#x27;;
+    cout &lt;&lt; left &lt;&lt; setw(12) &lt;&lt; &quot;初始&quot; &lt;&lt; setw(8) &lt;&lt; m &lt;&lt; setw(8) &lt;&lt; n &lt;&lt; &quot;声明\n&quot;;
 
-    m = m + n;    // m=13
-    cout &lt;&lt; "m=m+n: m=" &lt;&lt; setw(3) &lt;&lt; m &lt;&lt; ", n=" &lt;&lt; setw(3) &lt;&lt; n &lt;&lt; endl;
+    m = m + n;  // 13
+    cout &lt;&lt; left &lt;&lt; setw(12) &lt;&lt; &quot;m=m+n&quot; &lt;&lt; setw(8) &lt;&lt; m &lt;&lt; setw(8) &lt;&lt; n &lt;&lt; &quot;10+3=13\n&quot;;
 
-    n = m - n;    // n=10
-    cout &lt;&lt; "n=m-n: m=" &lt;&lt; setw(3) &lt;&lt; m &lt;&lt; ", n=" &lt;&lt; setw(3) &lt;&lt; n &lt;&lt; endl;
+    n = m - n;  // 10
+    cout &lt;&lt; left &lt;&lt; setw(12) &lt;&lt; &quot;n=m-n&quot; &lt;&lt; setw(8) &lt;&lt; m &lt;&lt; setw(8) &lt;&lt; n &lt;&lt; &quot;13-3=10\n&quot;;
 
-    m = m - n;    // m=3
-    cout &lt;&lt; "m=m-n: m=" &lt;&lt; setw(3) &lt;&lt; m &lt;&lt; ", n=" &lt;&lt; setw(3) &lt;&lt; n &lt;&lt; endl;
+    m = m - n;  // 3
+    cout &lt;&lt; left &lt;&lt; setw(12) &lt;&lt; &quot;m=m-n&quot; &lt;&lt; setw(8) &lt;&lt; m &lt;&lt; setw(8) &lt;&lt; n &lt;&lt; &quot;13-10=3\n&quot;;
 
-    cout &lt;&lt; "结果: m=" &lt;&lt; m &lt;&lt; ", n=" &lt;&lt; n &lt;&lt; " (值已互换!)" &lt;&lt; endl;
-    cout &lt;&lt; endl;
+    cout &lt;&lt; &quot;\n结果：m=&quot; &lt;&lt; m &lt;&lt; &quot;, n=&quot; &lt;&lt; n &lt;&lt; &quot;（值已互换）\n&quot;;
+    cout &lt;&lt; &quot;读程口诀：一步一更新，绝不跳步心算。\n&quot;;
+}
 
-    // ===== 六、常见陷阱示例 =====
-    cout &lt;&lt; "【六、常见陷阱示例】" &lt;&lt; endl;
+// -------------------- 演示 7：常见陷阱 --------------------
+void demo07_traps() {
+    print_divider(&quot;演示7：常见陷阱&quot;);
 
     // 陷阱1：整数除法
-    cout &lt;&lt; "陷阱1：整数除法" &lt;&lt; endl;
+    cout &lt;&lt; &quot;【陷阱1】整数除法\n&quot;;
     int u = 5, v = 2;
-    cout &lt;&lt; "5 / 2 = " &lt;&lt; (u / v) &lt;&lt; " (不是2.5!)" &lt;&lt; endl;
-    cout &lt;&lt; "正确: 5.0 / 2 = " &lt;&lt; (5.0 / 2) &lt;&lt; endl;
-    cout &lt;&lt; endl;
+    cout &lt;&lt; &quot;5 / 2 = &quot; &lt;&lt; (u / v) &lt;&lt; &quot;（不是 2.5）\n&quot;;
+    cout &lt;&lt; &quot;5.0 / 2 = &quot; &lt;&lt; (5.0 / 2) &lt;&lt; &#x27;\n&#x27;;
+    cout &lt;&lt; &quot;a/2*2 当 a=5 时 = &quot; &lt;&lt; (u / 2 * 2) &lt;&lt; &quot;（不等于 a）\n\n&quot;;
 
-    // 陷阱2：未初始化变量
-    cout &lt;&lt; "陷阱2：未初始化变量" &lt;&lt; endl;
-    cout &lt;&lt; "局部变量必须初始化，否则值是随机的!" &lt;&lt; endl;
-    int initialized = 0;  // 正确做法
-    cout &lt;&lt; "初始化后的变量: " &lt;&lt; initialized &lt;&lt; endl;
-    cout &lt;&lt; endl;
+    // 陷阱2：未初始化
+    cout &lt;&lt; &quot;【陷阱2】未初始化局部变量\n&quot;;
+    cout &lt;&lt; &quot;int s; s = s + 1;  // s 是垃圾值（此处不演示未定义行为）\n&quot;;
+    int initialized = 0;
+    initialized = initialized + 1;
+    cout &lt;&lt; &quot;正确：先初始化再使用 → &quot; &lt;&lt; initialized &lt;&lt; &quot;\n\n&quot;;
 
-    // 陷阱3：= 与 == 混淆
-    cout &lt;&lt; "陷阱3: = 与 == 混淆" &lt;&lt; endl;
-    int val1 = 5;
-    if (val1 = 10) {  // 注意：这是赋值，不是比较！
-        cout &lt;&lt; "if(val1=10) 是赋值语句，始终为true!" &lt;&lt; endl;
-        cout &lt;&lt; "val1 被改为: " &lt;&lt; val1 &lt;&lt; endl;
+    // 陷阱3：= 与 ==
+    cout &lt;&lt; &quot;【陷阱3】= 与 == 混淆\n&quot;;
+    int val = 5;
+    cout &lt;&lt; &quot;执行 if (val = 10) 前 val=&quot; &lt;&lt; val &lt;&lt; &#x27;\n&#x27;;
+    if (val = 10) {  // 赋值，结果为 10，条件为真
+        cout &lt;&lt; &quot;条件成立，但这里是赋值！val 现为 &quot; &lt;&lt; val &lt;&lt; &#x27;\n&#x27;;
     }
-    cout &lt;&lt; "正确写法: if(val1 == 10)" &lt;&lt; endl;
+    cout &lt;&lt; &quot;正确比较应写：if (val == 10)\n\n&quot;;
 
-    cout &lt;&lt; endl &lt;&lt; "========== 第7课演示结束 ==========" &lt;&lt; endl;
+    // 陷阱4：空语句
+    cout &lt;&lt; &quot;【陷阱4】if 后多余分号\n&quot;;
+    int t = -1;
+    cout &lt;&lt; &quot;t=&quot; &lt;&lt; t &lt;&lt; &quot;，执行 if(t&gt;0); { cout &lt;&lt; \&quot;执行了\&quot;; }\n&quot;;
+    if (t &gt; 0);  // 空语句
+    {
+        cout &lt;&lt; &quot;花括号内代码无条件执行！\n&quot;;
+    }
+}
+
+// -------------------- 演示 8：断点调试操作说明 --------------------
+void demo08_breakpoint_guide() {
+    print_divider(&quot;演示8：断点调试操作指南（文字版）&quot;);
+    cout &lt;&lt; &quot;以 VS Code / CLion / Dev-C++ 通用流程为例：\n\n&quot;;
+    cout &lt;&lt; &quot;1. 在目标行左侧单击，设置红色断点；\n&quot;;
+    cout &lt;&lt; &quot;2. 使用“调试运行”（不是普通运行）；\n&quot;;
+    cout &lt;&lt; &quot;3. 程序在断点处暂停；\n&quot;;
+    cout &lt;&lt; &quot;4. 打开 Variables / Watch 窗口观察变量；\n&quot;;
+    cout &lt;&lt; &quot;5. Step Over：执行当前行；\n&quot;;
+    cout &lt;&lt; &quot;6. Step Into：进入函数内部；\n&quot;;
+    cout &lt;&lt; &quot;7. Continue：跑到下一个断点；\n&quot;;
+    cout &lt;&lt; &quot;8. 每一步对比“实际值”和“预期值”。\n\n&quot;;
+
+    cout &lt;&lt; &quot;下面用顺序计算模拟“单步监视”：\n&quot;;
+    int a = 2, b = 3, c = 0;
+    DBG(a);
+    DBG(b);
+    c = a * a + b * b;
+    DBG(c);
+    c = c + 1;
+    DBG(c);
+    cout &lt;&lt; &quot;正式输出 c = &quot; &lt;&lt; c &lt;&lt; &#x27;\n&#x27;;
+}
+
+// -------------------- 真题 1：多变量顺序追踪 --------------------
+void exam01_trace_abc() {
+    print_divider(&quot;真题1：多变量顺序追踪（AC）&quot;);
+    cout &lt;&lt; &quot;原题：a=3,b=7,c=4; a=b-a; b=c*a; c=b+a; 输出 c\n&quot;;
+    cout &lt;&lt; &quot;样例答案：20\n\n&quot;;
+
+    int a = 3, b = 7, c = 4;
+    print_state3(&quot;初始&quot;, a, b, c);
+
+    a = b - a;
+    print_state3(&quot;a=b-a&quot;, a, b, c);
+
+    b = c * a;
+    print_state3(&quot;b=c*a&quot;, a, b, c);
+
+    c = b + a;
+    print_state3(&quot;c=b+a&quot;, a, b, c);
+
+    cout &lt;&lt; &quot;\n输出：&quot;;
+    cout &lt;&lt; c &lt;&lt; &#x27;\n&#x27;;
+    cout &lt;&lt; &quot;判定：与答案 20 一致。\n&quot;;
+}
+
+// -------------------- 真题 2：交换读程 --------------------
+void exam02_swap_read() {
+    print_divider(&quot;真题2：交换变量读程（AC）&quot;);
+    cout &lt;&lt; &quot;原题：x=15,y=8; t=x; x=y; y=t; 输出 x y\n&quot;;
+    cout &lt;&lt; &quot;样例答案：8 15\n\n&quot;;
+
+    int x = 15, y = 8;
+    print_state2(&quot;初始&quot;, x, y);
+
+    int t = x;
+    cout &lt;&lt; &quot;t = &quot; &lt;&lt; t &lt;&lt; &#x27;\n&#x27;;
+    x = y;
+    print_state2(&quot;x=y&quot;, x, y);
+    y = t;
+    print_state2(&quot;y=t&quot;, x, y);
+
+    cout &lt;&lt; &quot;\n输出：&quot;;
+    cout &lt;&lt; x &lt;&lt; &#x27; &#x27; &lt;&lt; y &lt;&lt; &#x27;\n&#x27;;
+    cout &lt;&lt; &quot;功能：使用临时变量完成两变量交换。\n&quot;;
+}
+
+// -------------------- 附加：带整数除法的综合读程 --------------------
+void exam03_div_trace() {
+    print_divider(&quot;附加练习：含整数除法的顺序追踪&quot;);
+    cout &lt;&lt; &quot;代码：a=10,b=3; c=a/b; a=a+c; b=a%b+c;\n&quot;;
+    cout &lt;&lt; &quot;预期输出：13 4 3\n\n&quot;;
+
+    int a = 10, b = 3, c = 0;
+    print_state3(&quot;初始&quot;, a, b, c);
+
+    c = a / b;
+    print_state3(&quot;c=a/b&quot;, a, b, c);
+
+    a = a + c;
+    print_state3(&quot;a=a+c&quot;, a, b, c);
+
+    b = a % b + c;
+    print_state3(&quot;b=a%b+c&quot;, a, b, c);
+
+    cout &lt;&lt; &quot;\n输出：&quot;;
+    cout &lt;&lt; a &lt;&lt; &#x27; &#x27; &lt;&lt; b &lt;&lt; &#x27; &#x27; &lt;&lt; c &lt;&lt; &#x27;\n&#x27;;
+}
+
+// -------------------- 菜单 --------------------
+void show_menu() {
+    cout &lt;&lt; &quot;\n========================================\n&quot;;
+    cout &lt;&lt; &quot;  CSP-J 第7课：顺序结构与程序调试\n&quot;;
+    cout &lt;&lt; &quot;========================================\n&quot;;
+    cout &lt;&lt; &quot;  [1] 顺序执行演示\n&quot;;
+    cout &lt;&lt; &quot;  [2] 变量追踪：临时变量交换\n&quot;;
+    cout &lt;&lt; &quot;  [3] 加减交换 与 多变量追踪\n&quot;;
+    cout &lt;&lt; &quot;  [4] 调试输出宏技巧\n&quot;;
+    cout &lt;&lt; &quot;  [5] 常见错误说明\n&quot;;
+    cout &lt;&lt; &quot;  [6] 读程：变量追踪表\n&quot;;
+    cout &lt;&lt; &quot;  [7] 常见陷阱\n&quot;;
+    cout &lt;&lt; &quot;  [8] 断点调试操作指南\n&quot;;
+    cout &lt;&lt; &quot;  [9] 真题1：多变量顺序追踪\n&quot;;
+    cout &lt;&lt; &quot;  [10] 真题2：交换变量读程\n&quot;;
+    cout &lt;&lt; &quot;  [11] 附加：整数除法综合读程\n&quot;;
+    cout &lt;&lt; &quot;  [0] 退出\n&quot;;
+    cout &lt;&lt; &quot;========================================\n&quot;;
+    cout &lt;&lt; &quot;请选择：&quot;;
+}
+
+int main() {
+    ios::sync_with_stdio(false);
+    cin.tie(nullptr);
+
+    int choice = -1;
+    do {
+        show_menu();
+        if (!(cin &gt;&gt; choice)) {
+            break;
+        }
+        cout &lt;&lt; &#x27;\n&#x27;;
+
+        switch (choice) {
+            case 1: demo01_sequential_execution(); break;
+            case 2: demo02_swap_trace(); break;
+            case 3: demo03_multi_var_trace(); break;
+            case 4: demo04_debug_output(); break;
+            case 5: demo05_common_errors(); break;
+            case 6: demo06_trace_table(); break;
+            case 7: demo07_traps(); break;
+            case 8: demo08_breakpoint_guide(); break;
+            case 9: exam01_trace_abc(); break;
+            case 10: exam02_swap_read(); break;
+            case 11: exam03_div_trace(); break;
+            case 0:
+                cout &lt;&lt; &quot;感谢学习第7课！下一课：if-else 分支结构。\n&quot;;
+                break;
+            default:
+                cout &lt;&lt; &quot;无效选项，请输入 0-11。\n&quot;;
+                break;
+        }
+    } while (choice != 0);
+
     return 0;
 }
 </pre>

@@ -1,680 +1,440 @@
 <!DOCTYPE html>
-
 <html lang="zh-CN">
 <head>
 <meta charset="utf-8"/>
 <meta content="width=device-width, initial-scale=1.0" name="viewport"/>
-<title>CSP-J 备考课程 - 第41课：图论基础</title>
+<title>第41课：图论基础 — CSP-J 备考课程</title>
 <style>
-        :root {
-            --primary: #1a237e;
-            --primary-light: #283593;
-            --accent: #ffd600;
-            --accent-light: #ffea00;
-            --bg: #ffffff;
-            --text: #212121;
-            --text-light: #616161;
-            --code-bg: #1e1e1e;
-            --code-text: #d4d4d4;
-            --slide-radius: 12px;
-            --shadow: 0 4px 24px rgba(0,0,0,0.12);
-            --tip-border: #ff8f00;
-            --tip-bg: #fff8e1;
-        }
-
-        * { margin: 0; padding: 0; box-sizing: border-box; }
-
-        body {
-            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "PingFang SC", "Microsoft YaHei", sans-serif;
-            background: #f0f2f5;
-            color: var(--text);
-            min-height: 100vh;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-        }
-
-        /* Title Bar */
-        .title-bar {
-            width: 100%;
-            background: var(--primary);
-            color: white;
-            padding: 14px 32px;
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-            box-shadow: 0 2px 8px rgba(0,0,0,0.15);
-            position: sticky;
-            top: 0;
-            z-index: 100;
-        }
-        .title-bar .course-name {
-            font-size: 18px;
-            font-weight: 700;
-            letter-spacing: 1px;
-        }
-        .title-bar .lesson-info {
-            font-size: 14px;
-            opacity: 0.9;
-        }
-        .title-bar .progress {
-            font-size: 14px;
-            background: rgba(255,255,255,0.2);
-            padding: 4px 14px;
-            border-radius: 20px;
-        }
-
-        /* Main Container */
-        .container {
-            width: 100%;
-            max-width: 1000px;
-            padding: 32px 20px;
-            flex: 1;
-        }
-
-        /* Slide */
-        .slide {
-            display: none;
-            background: var(--bg);
-            border-radius: var(--slide-radius);
-            box-shadow: var(--shadow);
-            padding: 48px 56px;
-            min-height: 520px;
-            animation: fadeSlideIn 0.4s ease;
-        }
-        .slide.active {
-            display: block;
-        }
-
-        @keyframes fadeSlideIn {
-            from { opacity: 0; transform: translateY(20px); }
-            to { opacity: 1; transform: translateY(0); }
-        }
-
-        /* Slide Content Styles */
-        .slide h1 {
-            font-size: 36px;
-            color: var(--primary);
-            margin-bottom: 16px;
-            border-bottom: 3px solid var(--accent);
-            padding-bottom: 12px;
-            display: inline-block;
-        }
-        .slide h2 {
-            font-size: 28px;
-            color: var(--primary);
-            margin-bottom: 20px;
-            margin-top: 8px;
-        }
-        .slide h3 {
-            font-size: 22px;
-            color: var(--primary-light);
-            margin-bottom: 12px;
-            margin-top: 24px;
-        }
-        .slide p {
-            font-size: 17px;
-            line-height: 1.8;
-            margin-bottom: 16px;
-            color: #333;
-        }
-        .slide ul, .slide ol {
-            font-size: 17px;
-            line-height: 2;
-            margin-left: 24px;
-            margin-bottom: 16px;
-            color: #333;
-        }
-        .slide ul li::marker {
-            color: var(--accent);
-        }
-
-        /* Title Slide */
-        .slide-title {
-            text-align: center;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            justify-content: center;
-            min-height: 520px;
-        }
-        .slide-title .lesson-number {
-            font-size: 72px;
-            font-weight: 900;
-            color: var(--primary);
-            margin-bottom: 8px;
-        }
-        .slide-title .lesson-title {
-            font-size: 32px;
-            color: var(--primary-light);
-            margin-bottom: 24px;
-        }
-        .slide-title .subtitle {
-            font-size: 18px;
-            color: var(--text-light);
-            margin-bottom: 8px;
-        }
-        .slide-title .accent-bar {
-            width: 80px;
-            height: 4px;
-            background: var(--accent);
-            margin: 20px auto;
-            border-radius: 2px;
-        }
-
-        /* Code Blocks */
-        pre {
-            background: var(--code-bg);
-            border-radius: 8px;
-            padding: 20px 24px;
-            overflow-x: auto;
-            margin: 16px 0;
-            font-size: 14px;
-            line-height: 1.6;
-        }
-        code {
-            font-family: "Consolas", "Monaco", "Courier New", monospace;
-            color: var(--code-text);
-        }
-        .code-inline {
-            background: #f5f5f5;
-            color: #c62828;
-            padding: 2px 8px;
-            border-radius: 4px;
-            font-size: 15px;
-            border: 1px solid #e0e0e0;
-        }
-
-        /* Syntax Highlighting */
-        .kw { color: #569cd6; } /* keyword */
-        .ty { color: #4ec9b0; } /* type */
-        .fn { color: #dcdcaa; } /* function */
-        .nu { color: #b5cea8; } /* number */
-        .st { color: #ce9178; } /* string */
-        .cm { color: #6a9955; } /* comment */
-        .op { color: #d4d4d4; } /* operator */
-
-        /* Tip Box */
-        .tip-box {
-            border-left: 4px solid var(--tip-border);
-            background: var(--tip-bg);
-            padding: 16px 20px;
-            margin: 20px 0;
-            border-radius: 0 8px 8px 0;
-            font-size: 15px;
-        }
-        .tip-box .tip-title {
-            font-weight: 700;
-            color: #e65100;
-            margin-bottom: 6px;
-        }
-        .tip-box.warning {
-            border-left-color: #c62828;
-            background: #ffebee;
-        }
-        .tip-box.warning .tip-title {
-            color: #c62828;
-        }
-        .tip-box.success {
-            border-left-color: #2e7d32;
-            background: #e8f5e9;
-        }
-        .tip-box.success .tip-title {
-            color: #2e7d32;
-        }
-
-        /* Table */
-        table {
-            width: 100%;
-            border-collapse: collapse;
-            margin: 16px 0;
-            font-size: 15px;
-        }
-        th {
-            background: var(--primary);
-            color: white;
-            padding: 10px 16px;
-            text-align: left;
-        }
-        td {
-            padding: 10px 16px;
-            border-bottom: 1px solid #e0e0e0;
-        }
-        tr:nth-child(even) td {
-            background: #fafafa;
-        }
-
-        /* Grid */
-        .grid-2 {
-            display: grid;
-            grid-template-columns: 1fr 1fr;
-            gap: 24px;
-            margin: 16px 0;
-        }
-        .grid-2 .card {
-            background: #f5f7ff;
-            border-radius: 8px;
-            padding: 20px;
-            border: 1px solid #e8eaf6;
-        }
-        .grid-2 .card h3 {
-            margin-top: 0;
-        }
-
-        /* Navigation */
-        .nav-bar {
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            gap: 20px;
-            padding: 20px 0;
-        }
-        .nav-btn {
-            background: var(--primary);
-            color: white;
-            border: none;
-            padding: 10px 28px;
-            border-radius: 24px;
-            font-size: 15px;
-            cursor: pointer;
-            transition: all 0.2s;
-            font-weight: 600;
-        }
-        .nav-btn:hover {
-            background: var(--primary-light);
-            transform: translateY(-1px);
-            box-shadow: 0 4px 12px rgba(26,35,126,0.3);
-        }
-        .nav-btn:disabled {
-            background: #bdbdbd;
-            cursor: not-allowed;
-            transform: none;
-            box-shadow: none;
-        }
-        .slide-dots {
-            display: flex;
-            gap: 8px;
-        }
-        .dot {
-            width: 10px;
-            height: 10px;
-            border-radius: 50%;
-            background: #ccc;
-            cursor: pointer;
-            transition: all 0.3s;
-        }
-        .dot.active {
-            background: var(--primary);
-            width: 28px;
-            border-radius: 12px;
-        }
-        .dot:hover {
-            background: var(--primary-light);
-        }
-
-        /* Keywords highlighted */
-        .highlight {
-            background: linear-gradient(180deg, transparent 60%, var(--accent) 60%);
-            padding: 0 4px;
-        }
-
-        /* Summary Slide */
-        .summary-list li {
-            padding: 8px 0;
-            font-size: 18px;
-        }
-        .summary-list li strong {
-            color: var(--primary);
-        }
-
-        /* Responsive */
-        @media (max-width: 768px) {
-            .slide {
-                padding: 32px 24px;
-            }
-            .slide h1 { font-size: 26px; }
-            .slide h2 { font-size: 22px; }
-            .slide p, .slide li { font-size: 15px; }
-            .grid-2 { grid-template-columns: 1fr; }
-            .slide-title .lesson-number { font-size: 48px; }
-            .slide-title .lesson-title { font-size: 24px; }
-        }
-    </style>
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+body {
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "PingFang SC", "Microsoft YaHei", sans-serif;
+    background: #f5f5f5; color: #333;
+    display: flex; flex-direction: column; align-items: center; min-height: 100vh;
+}
+.header-bar {
+    width: 100%; background: #1a237e; color: #fff; text-align: center;
+    padding: 12px 16px; font-size: 18px; font-weight: 700; letter-spacing: 2px;
+    position: sticky; top: 0; z-index: 100;
+}
+.header-bar span { color: #ffd600; }
+.slides-container { width: 100%; max-width: 960px; margin: 20px auto; padding: 0 16px; flex: 1; }
+.slide {
+    display: none; background: #fff; border-radius: 12px;
+    box-shadow: 0 4px 20px rgba(0,0,0,0.1); padding: 40px 48px; min-height: 480px;
+    animation: fadeIn 0.3s ease;
+}
+.slide.active { display: block; }
+@keyframes fadeIn {
+    from { opacity: 0; transform: translateY(10px); }
+    to   { opacity: 1; transform: translateY(0); }
+}
+.slide h1 { color: #1a237e; font-size: 28px; border-bottom: 3px solid #ffd600; padding-bottom: 12px; margin-bottom: 24px; }
+.slide h2 { color: #1a237e; font-size: 22px; margin-bottom: 16px; }
+.slide h3 { color: #283593; font-size: 18px; margin-top: 16px; margin-bottom: 10px; }
+.slide p, .slide li { font-size: 16px; line-height: 1.8; margin-bottom: 8px; }
+.slide ul, .slide ol { padding-left: 24px; margin-bottom: 12px; }
+.code-block {
+    background: #1e1e1e; color: #d4d4d4;
+    font-family: "Consolas", "Monaco", "Courier New", monospace; font-size: 13px;
+    padding: 14px 18px; border-radius: 8px; overflow-x: auto; white-space: pre; line-height: 1.55; margin: 12px 0;
+}
+.code-block .kw { color: #569cd6; } .code-block .dt { color: #4ec9b0; }
+.code-block .fn { color: #dcdcaa; } .code-block .nu { color: #b5cea8; }
+.code-block .cm { color: #6a9955; } .code-block .st { color: #ce9178; }
+.tip-box {
+    background: #fffde7; border-left: 5px solid #ffd600; border-radius: 6px;
+    padding: 14px 18px; margin: 16px 0; font-size: 15px; color: #5d4037;
+}
+.tip-box::before { content: "💡 考试技巧："; font-weight: bold; color: #ff8f00; }
+.warn-box {
+    background: #fff3e0; border-left: 5px solid #ff9800; border-radius: 6px;
+    padding: 14px 18px; margin: 16px 0; font-size: 15px; color: #bf360c;
+}
+.highlight-box {
+    background: #e8eaf6; border-left: 5px solid #1a237e; border-radius: 6px;
+    padding: 14px 18px; margin: 16px 0; font-size: 15px;
+}
+.data-table { width: 100%; border-collapse: collapse; margin: 16px 0; font-size: 14px; }
+.data-table th { background: #1a237e; color: #fff; padding: 10px 12px; text-align: center; }
+.data-table td { border: 1px solid #e0e0e0; padding: 8px 12px; text-align: center; }
+.data-table tr:nth-child(even) { background: #f5f5ff; }
+.nav-buttons { display: flex; justify-content: center; gap: 16px; margin: 20px 0 40px; }
+.nav-btn {
+    background: #1a237e; color: #fff; border: none; padding: 10px 28px;
+    border-radius: 6px; font-size: 15px; cursor: pointer;
+}
+.nav-btn:hover { background: #283593; }
+.nav-btn:disabled { background: #9fa8da; cursor: not-allowed; }
+.page-indicator { text-align: center; color: #666; font-size: 14px; margin-bottom: 8px; }
+.slide.title-slide.active {
+    text-align: center; display: flex; flex-direction: column;
+    justify-content: center; align-items: center; min-height: 480px;
+}
+.slide.title-slide.active h1 { font-size: 36px; border-bottom: none; margin-bottom: 16px; }
+.slide.title-slide.active .subtitle {
+    font-size: 20px; color: #ffd600; background: #1a237e;
+    display: inline-block; padding: 6px 24px; border-radius: 20px; margin-bottom: 24px;
+}
+.slide.title-slide.active .info { color: #666; font-size: 15px; line-height: 2; }
+.inline-code {
+    background: #e8eaf6; color: #1a237e; font-family: Consolas, Monaco, monospace;
+    padding: 1px 6px; border-radius: 3px; font-size: 0.92em;
+}
+.motto-box {
+    background: linear-gradient(135deg, #1a237e 0%, #283593 100%);
+    color: #ffd600; font-size: 20px; font-weight: 700; text-align: center;
+    padding: 18px; border-radius: 12px; margin: 16px 0; letter-spacing: 2px;
+}
+@media (max-width: 768px) {
+    .slide { padding: 24px 20px; min-height: auto; }
+    .slide h1 { font-size: 22px; }
+    .code-block { font-size: 12px; }
+}
+</style>
 </head>
 <body>
-<!-- Title Bar -->
-<div class="title-bar">
-<span class="course-name">CSP-J 备考课程</span>
-<span class="lesson-info">第41课：图论基础</span>
-<span class="progress" id="progressText">1 / 7</span>
-</div>
-<div class="container">
-<!-- Slide 1: Title -->
-<div class="slide slide-title active" id="slide1">
-<div class="lesson-number">41</div>
-<div class="lesson-title">图论基础</div>
-<div class="accent-bar"></div>
-<p class="subtitle">Graph Theory Fundamentals</p>
-<p class="subtitle">顶点 | 边 | 有向图 | 邻接矩阵 | 邻接表</p>
+<div class="header-bar"><span>CSP-J</span> 备考课程 — 第41课：图论基础</div>
+<div class="slides-container">
 
-<aside class="notes">【开场】第 1/7 页 · 图论基础
-用 30 秒说明本课目标与学完能做什么，再进入正题。
-大纲考点：图的概念/存储（邻接矩阵/邻接表）、度、路径
-配套练习方向：图的存储与遍历基础题
-封面关键词：
-· Graph Theory Fundamentals
-· 顶点 | 边 | 有向图 | 邻接矩阵 | 邻接表
-互动：问学生「今天最想搞清楚什么？」，收 1–2 个期待。</aside>
+<!-- 1 标题 -->
+<div class="slide active title-slide" id="slide-1">
+<h1>第41课：图论基础</h1>
+<div class="subtitle">CSP-J 备考课程</div>
+<div class="info">
+<p>图 = 顶点 + 边 · 有向 / 无向 · 带权 / 无权</p>
+<p>邻接矩阵 vs 邻接表 · 度数 · 路径与连通</p>
+<p>存图模板扎实，DFS / BFS 才站得住</p>
 </div>
-<!-- Slide 2: 图的定义与分类 -->
-<div class="slide" id="slide2">
-<h2>一、图的定义与分类</h2>
-<p><strong>图 G = (V, E)</strong> 由顶点集合 V 和边集合 E 构成。顶点编号通常从 1 到 n。</p>
-<div class="grid-2">
-<div class="card">
-<h3>无向图</h3>
-<ul>
-<li>边没有方向</li>
-<li>(u, v) 等价于 (v, u)</li>
-<li>好比 <span class="highlight">双向道路</span></li>
-<li>存图需双向存储</li>
-</ul>
-<pre><code><span class="cm">// 无向图加边</span>
-<span class="fn">g</span>[u].<span class="fn">push_back</span>(v);
-<span class="fn">g</span>[v].<span class="fn">push_back</span>(u);</code></pre>
-</div>
-<div class="card">
-<h3>有向图</h3>
-<ul>
-<li>边有方向</li>
-<li>(u, v) 只能 u → v</li>
-<li>好比 <span class="highlight">单行道</span></li>
-<li>只存一个方向</li>
-</ul>
-<pre><code><span class="cm">// 有向图加边</span>
-<span class="fn">g</span>[u].<span class="fn">push_back</span>(v);</code></pre>
-</div>
-</div>
-<div class="tip-box">
-<div class="tip-title">考试要点</div>
-<p>无向图的边数 m 如果很大（接近 n²），称为<strong>稠密图</strong>；边数很小（接近 n）则为<strong>稀疏图</strong>。存储方式的选择取决于图的稠密程度！</p>
+<aside class="notes">【开场】第 1/14 页 · 图论基础。本课目标：抽象成图、选对存储、默写模板、统计度数。</aside>
 </div>
 
-<aside class="notes">【讲解】一、图的定义与分类
-本页要点（照着讲即可）：
-· 图 G = (V, E) 由顶点集合 V 和边集合 E 构成。顶点编号通常从 1 到 n。
-· 图 G = (V, E)
-· 边没有方向
-· (u, v) 等价于 (v, u)
-· 好比 双向道路
-· 存图需双向存储
-讲解时放慢关键术语；用 1 个生活类比 + 1 个反例加深印象。
-本课大纲考点（可适时点题）：图的概念/存储（邻接矩阵/邻接表）、度、路径</aside>
-</div>
-<!-- Slide 3: 存储方式对比 -->
-<div class="slide" id="slide3">
-<h2>二、图的存储方式</h2>
-<p>这是 CSP-J 考试的重中之重！两种存储方式必须烂熟于心。</p>
-<h3>1. 邻接矩阵 g[i][j]</h3>
-<pre><code><span class="kw">int</span> <span class="fn">g</span>[<span class="nu">1005</span>][<span class="nu">1005</span>];
-<span class="kw">memset</span>(g, <span class="nu">0</span>, <span class="kw">sizeof</span>(g));
-g[u][v] = <span class="nu">1</span>;              <span class="cm">// 无权图</span>
-g[u][v] = w;              <span class="cm">// 带权图</span></code></pre>
-<p>判断边是否存在：<span class="code-inline">if (g[u][v])</span> — <strong>O(1)</strong></p>
-<h3>2. 邻接表 vector&lt;int&gt; g[N]</h3>
-<pre><code><span class="kw">vector</span>&lt;<span class="kw">int</span>&gt; <span class="fn">g</span>[<span class="nu">N</span>];
-g[u].<span class="fn">push_back</span>(v);
-<span class="cm">// 遍历邻接点</span>
-<span class="kw">for</span> (<span class="kw">int</span> v : g[u]) { ... }</code></pre>
-<table>
-<tr><th>特性</th><th>邻接矩阵</th><th>邻接表</th></tr>
-<tr><td>空间复杂度</td><td>O(n²)</td><td>O(n+m)</td></tr>
-<tr><td>判断边</td><td>O(1)</td><td>O(度数)</td></tr>
-<tr><td>遍历邻接点</td><td>O(n)</td><td>O(度数)</td></tr>
-<tr><td>适用场景</td><td>n ≤ 1000 稠密图</td><td>n 可达 10⁵ 稀疏图</td></tr>
+<!-- 2 目标与概念 -->
+<div class="slide" id="slide-2">
+<h1>一、考纲目标 &amp; 什么是图</h1>
+<table class="data-table">
+<tr><th>知识点</th><th>要求</th></tr>
+<tr><td>图的定义</td><td>理解顶点、边，G=(V,E)</td></tr>
+<tr><td>分类</td><td>有向/无向、带权/无权</td></tr>
+<tr><td>邻接矩阵 / 邻接表</td><td>掌握建图、判边、遍历邻点</td></tr>
+<tr><td>度、路径、连通</td><td>概念清晰，能统计度数</td></tr>
+<tr><td>遍历基础</td><td>了解 DFS/BFS 与 vis（下两课展开）</td></tr>
 </table>
-<div class="tip-box warning">
-<div class="tip-title">易错警告</div>
-<p>如果 n = 100000 还用邻接矩阵 <span class="code-inline">g[100000][100000]</span>，内存直接爆炸（约 40GB）！必须用邻接表。</p>
+<h2>图的定义</h2>
+<p>图由<strong>顶点</strong>集合 V 与<strong>边</strong>集合 E 构成：<span class="inline-code">G = (V, E)</span></p>
+<ul>
+<li>V：常编号 1..n（也有 0..n-1）</li>
+<li>E：无向边 {u,v} 或有向边 (u,v)</li>
+</ul>
+<p>可表示：道路、好友关系、超链接、课程先修、迷宫格子相邻……</p>
+<div class="tip-box">做题第一步：点是什么？边是什么？有没有方向？有没有权？</div>
+<aside class="notes">强调抽象建模：先说清点边方向权，再写代码。</aside>
 </div>
 
-<aside class="notes">【讲解】二、图的存储方式
-结合讲义《四、图的存储方式（重点）》强调：
-· 这是CSP-J考试的重中之重，必须熟练掌握两种存储方式及其适用场景。
-· 用一个二维数组 g[i][j] 表示顶点 i 到顶点 j 是否有边（或边的权值）。
-· int g[1005][1005]; // 邻接矩阵
-· // 无权图：g[i][j] = 1 表示有边，0 表示无边
-· g[u][v] = 1;
-幻灯片上可见要点：
-· 这是 CSP-J 考试的重中之重！两种存储方式必须烂熟于心。
-· 判断边是否存在： if (g[u][v]) — O(1)
-· O(1)
-· 如果 n = 100000 还用邻接矩阵 g[100000][100000] ，内存直接爆炸（约 40GB）！必须用邻接表。
-讲解时放慢关键术语；用 1 个生活类比 + 1 个反例加深印象。</aside>
+<!-- 3 有向无向带权 -->
+<div class="slide" id="slide-3">
+<h1>二、有向 / 无向 · 带权 / 无权</h1>
+<h2>无向图：边无方向</h2>
+<div class="code-block"><span class="kw">vector</span>&lt;<span class="kw">int</span>&gt; g[N];
+g[u].push_back(v);
+g[v].push_back(u);  <span class="cm">// 必须双向</span></div>
+<h2>有向图：边有方向</h2>
+<div class="code-block">g[u].push_back(v);  <span class="cm">// 只存一个方向</span></div>
+<div class="motto-box">无向写两行，有向写一行</div>
+<table class="data-table">
+<tr><th>类型</th><th>含义</th><th>存储</th></tr>
+<tr><td>无权</td><td>只关心是否相连</td><td><span class="inline-code">push(v)</span> 或矩阵 0/1</td></tr>
+<tr><td>带权</td><td>距离 / 费用 / 时间</td><td><span class="inline-code">{to,w}</span> 或矩阵存权</td></tr>
+</table>
+<div class="code-block"><span class="kw">struct</span> Edge { <span class="kw">int</span> to, weight; };
+<span class="kw">vector</span>&lt;Edge&gt; g[N];
+g[u].push_back({v, w});
+<span class="cm">// 无向：再 g[v].push_back({u, w});</span></div>
+<aside class="notes">无权边代价常视为 1，最短路可用 BFS（第43课）。</aside>
 </div>
-<!-- Slide 4: 顶点度与路径 -->
-<div class="slide" id="slide4">
-<h2>三、顶点的度与路径回路</h2>
-<div class="grid-2">
-<div>
-<h3>顶点的度</h3>
+
+<!-- 4 术语 -->
+<div class="slide" id="slide-4">
+<h1>三、基本术语扫盲</h1>
 <ul>
-<li><strong>度 (Degree)</strong>：与该顶点相连的边数</li>
-<li><strong>入度</strong>：指向该顶点的边数（有向图）</li>
-<li><strong>出度</strong>：从该顶点出发的边数（有向图）</li>
+<li><strong>自环</strong>：两端是同一顶点</li>
+<li><strong>重边</strong>：同一对点之间多条边</li>
+<li><strong>简单图</strong>：无自环、无重边（多数题默认）</li>
+<li><strong>稀疏图</strong>：m 远小于 n²，如 m = O(n)</li>
+<li><strong>稠密图</strong>：m 接近 n²</li>
+<li><strong>完全图</strong>：任意两点都有边，无向边数 n(n-1)/2</li>
 </ul>
-<div class="tip-box success">
-<div class="tip-title">重要性质</div>
-<p>无向图：度数之和 = 2m<br/>
-                        有向图：入度和 = 出度和 = m</p>
+<div class="highlight-box">
+<strong>CSP-J 多数题目</strong>：简单稀疏图 → 默认优先 <strong>邻接表</strong>。
 </div>
-</div>
-<div>
-<h3>路径与回路</h3>
+<p>其他概念：</p>
 <ul>
-<li><strong>路径</strong>：顶点序列 v₀→v₁→...→vₖ</li>
+<li><strong>路径</strong>：相邻有边的顶点序列；长度常指边数</li>
 <li><strong>简单路径</strong>：顶点不重复</li>
 <li><strong>回路（环）</strong>：起点 = 终点</li>
-<li><strong>连通图</strong>：任意两点间有路径</li>
+<li><strong>连通（无向）</strong>：任意两点都有路径；连通块 = 极大连通子图</li>
+<li><strong>强连通（有向）</strong>：任意两点互相可达</li>
 </ul>
+<aside class="notes">稀疏/稠密直接决定存储选型。</aside>
 </div>
+
+<!-- 5 邻接矩阵 -->
+<div class="slide" id="slide-5">
+<h1>四、邻接矩阵</h1>
+<p>二维数组 <span class="inline-code">g[i][j]</span> 表示 i→j 是否有边（或边权）。</p>
+<div class="code-block"><span class="kw">int</span> g[<span class="nu">1005</span>][<span class="nu">1005</span>];
+<span class="cm">// 无权无向</span>
+g[u][v] = g[v][u] = <span class="nu">1</span>;
+<span class="cm">// 带权有向</span>
+g[u][v] = w;  <span class="cm">// 无边：0 或 INF</span>
+memset(g, <span class="nu">0</span>, <span class="kw">sizeof</span>(g));</div>
+<table class="data-table">
+<tr><th>优点</th><th>缺点</th></tr>
+<tr><td>判边 O(1)</td><td>空间 O(n²)，n=1e4 易 MLE</td></tr>
+<tr><td>代码短好写</td><td>枚举邻点 O(n)，即使度数很小</td></tr>
+</table>
+<p><strong>适用</strong>：n ≤ 1000 左右，或需要频繁判边的稠密图。</p>
+<div class="warn-box"><strong>注意：</strong>n &gt; 5000 几乎不能开矩阵。最短路矩阵无边应是 INF 不是 0。</div>
+<aside class="notes">判边狂多 + n 小 → 矩阵很香。</aside>
 </div>
-<pre><code><span class="cm">// 计算入度和出度</span>
-<span class="kw">int</span> indeg[<span class="nu">N</span>] = {<span class="nu">0</span>}, outdeg[<span class="nu">N</span>] = {<span class="nu">0</span>};
-<span class="kw">for</span> (<span class="kw">int</span> u = <span class="nu">1</span>; u &lt;= n; u++) {
+
+<!-- 6 邻接表 -->
+<div class="slide" id="slide-6">
+<h1>五、邻接表（CSP-J 主力）</h1>
+<p><span class="inline-code">g[i]</span> 存所有与 i 相邻的点（及边权）。</p>
+<div class="code-block"><span class="kw">vector</span>&lt;<span class="kw">int</span>&gt; g[N];
+g[u].push_back(v);
+g[v].push_back(u);  <span class="cm">// 无向</span>
+<span class="kw">for</span> (<span class="kw">int</span> v : g[u]) { <span class="cm">/* 遍历邻点 */</span> }</div>
+<table class="data-table">
+<tr><th>特性</th><th>邻接矩阵</th><th>邻接表</th></tr>
+<tr><td>空间</td><td>O(n²)</td><td>O(n+m)</td></tr>
+<tr><td>判边</td><td>O(1)</td><td>O(度)</td></tr>
+<tr><td>遍历邻点</td><td>O(n)</td><td>O(度)</td></tr>
+<tr><td>适用</td><td>n≤1000 稠密/多判边</td><td>n 大稀疏</td></tr>
+</table>
+<div class="tip-box">
+<strong>选型口诀：</strong>n &gt; 5000 几乎只能表；n ≤ 1000 且狂问「有没有边」→ 矩阵；其余默认邻接表。
+</div>
+<p>链式前向星：竞赛进阶数组模拟邻接表；CSP-J 用 <span class="inline-code">vector</span> 足够。</p>
+<aside class="notes">链式前向星了解形态即可，不必深究。</aside>
+</div>
+
+<!-- 7 度 -->
+<div class="slide" id="slide-7">
+<h1>六、顶点的度</h1>
+<h2>无向图</h2>
+<ul>
+<li><strong>度 deg(v)</strong>：与 v 相连的边数</li>
+<li><strong>握手定理</strong>：∑ deg(v) = 2|E|</li>
+</ul>
+<h2>有向图</h2>
+<ul>
+<li><strong>出度</strong>：从 v 出发的边数 · <strong>入度</strong>：指向 v 的边数</li>
+<li>∑ 入度 = ∑ 出度 = |E|</li>
+</ul>
+<div class="code-block"><span class="kw">int</span> indeg[N], outdeg[N];
+<span class="kw">for</span> (<span class="kw">int</span> u = <span class="nu">1</span>; u &lt;= n; u++)
     <span class="kw">for</span> (<span class="kw">int</span> v : g[u]) {
         outdeg[u]++;
         indeg[v]++;
     }
-}</code></pre>
-<p>图的遍历是后续 DFS/BFS 算法的基础，需要用一个 <span class="code-inline">bool vis[N]</span> 数组标记已访问的顶点，防止重复访问和死循环。</p>
-
-<aside class="notes">【讲解】三、顶点的度与路径回路
-本页要点（照着讲即可）：
-· 度 (Degree) ：与该顶点相连的边数
-· 度 (Degree)
-· 入度 ：指向该顶点的边数（有向图）
-· 出度 ：从该顶点出发的边数（有向图）
-· 无向图：度数之和 = 2m 有向图：入度和 = 出度和 = m
-· 路径 ：顶点序列 v₀→v₁→...→vₖ
-讲解时放慢关键术语；用 1 个生活类比 + 1 个反例加深印象。</aside>
+<span class="cm">// 无向：读边时 deg[u]++, deg[v]++</span></div>
+<div class="highlight-box">预告：拓扑排序依赖入度；欧拉路径看奇度点个数。</div>
+<aside class="notes">无向 ∑deg=2m，不是 m —— 易错！</aside>
 </div>
-<!-- Slide 5: 真题训练1 -->
-<div class="slide" id="slide5">
-<h2>四、真题精练 1：图的存储与度数统计</h2>
-<p><strong>题目：</strong>给定一个包含 n 个顶点和 m 条边的<strong>无向图</strong>，输出每个顶点的度数，以及度数最大的顶点编号。</p>
-<div class="tip-box">
-<div class="tip-title">输入样例</div>
-<pre style="margin:8px 0"><code>5 4
+
+<!-- 8 路径连通遍历 -->
+<div class="slide" id="slide-8">
+<h1>七、路径 · 连通 · 遍历骨架</h1>
+<p><strong>可达性</strong>：从 s 到 t → DFS/BFS + <span class="inline-code">vis</span><br/>
+<strong>连通块数</strong>：对每个未访问点开一次 DFS/BFS，次数即块数</p>
+<table class="data-table">
+<tr><th>方式</th><th>思想</th><th>结构</th><th>下节</th></tr>
+<tr><td>DFS</td><td>一路走到底再回溯</td><td>递归栈</td><td>第42课</td></tr>
+<tr><td>BFS</td><td>按层扩展</td><td>队列</td><td>第43课</td></tr>
+</table>
+<div class="code-block"><span class="cm">// DFS 骨架</span>
+<span class="kw">void</span> <span class="fn">dfs</span>(<span class="kw">int</span> u) {
+    vis[u] = <span class="kw">true</span>;
+    <span class="kw">for</span> (<span class="kw">int</span> v : g[u])
+        <span class="kw">if</span> (!vis[v]) <span class="fn">dfs</span>(v);
+}
+<span class="cm">// BFS 骨架</span>
+<span class="kw">void</span> <span class="fn">bfs</span>(<span class="kw">int</span> s) {
+    queue&lt;<span class="kw">int</span>&gt; q; q.push(s); vis[s] = <span class="kw">true</span>;
+    <span class="kw">while</span> (!q.empty()) {
+        <span class="kw">int</span> u = q.front(); q.pop();
+        <span class="kw">for</span> (<span class="kw">int</span> v : g[u])
+            <span class="kw">if</span> (!vis[v]) { vis[v] = <span class="kw">true</span>; q.push(v); }
+    }
+}</div>
+<div class="warn-box">共同点：必须有 <strong>vis</strong>，有环时否则死循环。</div>
+<aside class="notes">本课重点是存图；遍历下两课展开。</aside>
+</div>
+
+<!-- 9 读图模板 -->
+<div class="slide" id="slide-9">
+<h1>八、读图习惯 &amp; 代码模板</h1>
+<p>常见输入：先 <span class="inline-code">n m</span>，再 m 行边（可能带 w）。注意：编号从 0/1？有向无向？是否连通？</p>
+<div class="code-block"><span class="kw">const int</span> N = <span class="nu">100005</span>;
+<span class="kw">vector</span>&lt;<span class="kw">int</span>&gt; g[N];
+cin &gt;&gt; n &gt;&gt; m;
+<span class="kw">for</span> (<span class="kw">int</span> i = <span class="nu">0</span>; i &lt; m; i++) {
+    <span class="kw">int</span> u, v; cin &gt;&gt; u &gt;&gt; v;
+    g[u].push_back(v);
+    g[v].push_back(u); <span class="cm">// 无向</span>
+}
+<span class="cm">// 多组数据：for (i=1;i&lt;=n;i++) g[i].clear();</span></div>
+<h3>带权邻接表 · 度数最大点</h3>
+<div class="code-block"><span class="kw">struct</span> Edge { <span class="kw">int</span> to, weight; };
+<span class="kw">vector</span>&lt;Edge&gt; g[N];
+<span class="cm">// 读边后：</span>
+deg[u]++; deg[v]++;  <span class="cm">// 无向</span>
+<span class="cm">// 最大度：用 &gt; 更新，并列取编号最小</span></div>
+<div class="tip-box">网格迷宫：格子是点，四连通是边；也可直接在网格上搜，不必显式建表。</div>
+<aside class="notes">调试可打印邻接表/矩阵，对查建图错误很有用。</aside>
+</div>
+
+<!-- 10 易错 -->
+<div class="slide" id="slide-10">
+<h1>九、易错点清单</h1>
+<ol>
+<li><strong>无向图只存一边</strong> → 遍历丢半张图</li>
+<li><strong>点编号 0/1 混用</strong> → 数组开 N+5，统一 1..n</li>
+<li><strong>n 大却开矩阵</strong> → MLE，n&gt;5000 优先表</li>
+<li><strong>度数误解</strong>：无向 ∑deg=2m，不是 m</li>
+<li><strong>有向当无向建</strong>（或反过来）</li>
+<li><strong>多组数据未 clear</strong> vector</li>
+<li><strong>遍历无 vis</strong> → 有环死循环</li>
+<li><strong>重边</strong>：矩阵覆盖；表会存多份</li>
+<li><strong>边权初始化</strong>：最短路矩阵无边 = INF 不是 0</li>
+</ol>
+<div class="highlight-box">
+<strong>自检：</strong>有向无向说清了吗？存储匹配 n 吗？读边 m 次？需要双向 push 吗？
+</div>
+<aside class="notes">考前把这份清单背熟，建图环节少一半错。</aside>
+</div>
+
+<!-- 11 题1 题意+思路 -->
+<div class="slide" id="slide-11">
+<h1>十、真题1：度数统计 · 题意与思路</h1>
+<p><strong>题意</strong>：n 点 m 条<strong>无向</strong>边（1≤n≤1e5，m≤2e5）。输出每个点度数，以及度数最大的顶点编号（并列取编号最小）。</p>
+<p><strong>样例</strong></p>
+<div class="code-block">输入：
+5 4
 1 2
 2 3
 3 4
-4 5</code></pre>
-<p><strong>输出：</strong><br/>
-                1 2 2 2 1<br/>
-                3</p>
+4 5
+输出：
+1 2 2 2 1
+2</div>
+<p>deg=[1,2,2,2,1]，最大度 2，编号最小为 <strong>2</strong>。</p>
+<div class="tip-box">
+<strong>思路：</strong>n=1e5 必须邻接表（或只开 deg 数组，甚至不必存边）。读边时 deg[u]++、deg[v]++；扫一遍输出；再用 <span class="inline-code">&gt;</span> 更新最大值取最小编号。
 </div>
-<pre><code><span class="cm">// AC代码要点</span>
-<span class="kw">for</span> (<span class="kw">int</span> i = <span class="nu">0</span>; i &lt; m; i++) {
-    <span class="kw">int</span> u, v; cin &gt;&gt; u &gt;&gt; v;
-    g[u].<span class="fn">push_back</span>(v);
-    g[v].<span class="fn">push_back</span>(u);   <span class="cm">// 无向图：双向存储！</span>
-    deg[u]++; deg[v]++;      <span class="cm">// 度数+1</span>
+<aside class="notes">若题意“任意一个最大度点”，2/3/4 均可；本题强调最小编号。</aside>
+</div>
+
+<!-- 12 题1 代码 + 题2 -->
+<div class="slide" id="slide-12">
+<h1>真题1 核心代码 · 真题2 判边</h1>
+<div class="code-block"><span class="kw">const int</span> N = <span class="nu">100005</span>;
+<span class="kw">int</span> deg[N];
+<span class="kw">int</span> main() {
+    <span class="kw">int</span> n, m; cin &gt;&gt; n &gt;&gt; m;
+    <span class="kw">for</span> (<span class="kw">int</span> i = <span class="nu">0</span>; i &lt; m; i++) {
+        <span class="kw">int</span> u, v; cin &gt;&gt; u &gt;&gt; v;
+        deg[u]++; deg[v]++;
+    }
+    <span class="kw">for</span> (<span class="kw">int</span> i = <span class="nu">1</span>; i &lt;= n; i++)
+        cout &lt;&lt; deg[i] &lt;&lt; (i == n ? <span class="st">'\n'</span> : <span class="st">' '</span>);
+    <span class="kw">int</span> maxDeg = -<span class="nu">1</span>, ans = <span class="nu">1</span>;
+    <span class="kw">for</span> (<span class="kw">int</span> i = <span class="nu">1</span>; i &lt;= n; i++)
+        <span class="kw">if</span> (deg[i] &gt; maxDeg) { maxDeg = deg[i]; ans = i; }
+    cout &lt;&lt; ans &lt;&lt; endl;
+}</div>
+<h2>真题2：邻接矩阵判边</h2>
+<p>n≤1000 有向边 m 条，q 次询问是否存在 u→v。矩阵 O(1) 判边，只赋 <span class="inline-code">g[u][v]=1</span>。</p>
+<div class="code-block"><span class="kw">int</span> g[<span class="nu">1005</span>][<span class="nu">1005</span>];
+<span class="cm">// 读 m 条边 g[u][v]=1；询问 if(g[u][v]) Yes else No</span></div>
+<aside class="notes">题2样例：1→4 无、2→1 无、1→3 有。</aside>
+</div>
+
+<!-- 13 题3 连通块 -->
+<div class="slide" id="slide-13">
+<h1>十一、真题3：连通块计数（遍历预热）</h1>
+<p><strong>题意</strong>：n 点 m 条无向边，求连通块个数（n≤1e5）。</p>
+<p><strong>思路</strong>：邻接表建图；对每个未访问点 DFS/BFS 一次，cnt++。</p>
+<div class="code-block"><span class="kw">vector</span>&lt;<span class="kw">int</span>&gt; g[N];
+<span class="kw">bool</span> vis[N];
+<span class="kw">void</span> <span class="fn">dfs</span>(<span class="kw">int</span> u) {
+    vis[u] = <span class="kw">true</span>;
+    <span class="kw">for</span> (<span class="kw">int</span> v : g[u]) <span class="kw">if</span> (!vis[v]) <span class="fn">dfs</span>(v);
 }
-<span class="kw">int</span> maxDeg = -<span class="nu">1</span>, ans = <span class="nu">1</span>;
-<span class="kw">for</span> (<span class="kw">int</span> i = <span class="nu">1</span>; i &lt;= n; i++)
-    <span class="kw">if</span> (deg[i] &gt; maxDeg)
-        maxDeg = deg[i], ans = i;</code></pre>
-<div class="tip-box warning">
-<div class="tip-title">注意</div>
-<p>有多解时输出编号最小的：因为代码中只在 <span class="code-inline">deg[i] &gt; maxDeg</span> 时更新（不是 &gt;=），所以自动保留了最小编号。</p>
+<span class="kw">int</span> main() {
+    <span class="cm">// 无向建图后：</span>
+    <span class="kw">int</span> cnt = <span class="nu">0</span>;
+    <span class="kw">for</span> (<span class="kw">int</span> i = <span class="nu">1</span>; i &lt;= n; i++)
+        <span class="kw">if</span> (!vis[i]) { <span class="fn">dfs</span>(i); cnt++; }
+    cout &lt;&lt; cnt &lt;&lt; endl;
+}</div>
+<div class="warn-box">链很长时递归可能爆栈，稳健写法用 BFS；CSP-J 常见规模多数可过。</div>
+<aside class="notes">为第42/43课做铺垫：存图不牢，搜索全塌。</aside>
 </div>
 
-<aside class="notes">【讲解】四、真题精练 1：图的存储与度数统计
-本页要点（照着讲即可）：
-· 题目： 给定一个包含 n 个顶点和 m 条边的 无向图 ，输出每个顶点的度数，以及度数最大的顶点编号。
-· 输出： 1 2 2 2 1 3
-· 有多解时输出编号最小的：因为代码中只在 deg[i] &gt; maxDeg 时更新（不是 &gt;=），所以自动保留了最小编号。
-练习页节奏：先独立想 1 分钟 → 再点拨思路 → 最后对答案讲为什么。
-可联系：图的存储与遍历基础题</aside>
-</div>
-<!-- Slide 6: 真题训练2 -->
-<div class="slide" id="slide6">
-<h2>五、真题精练 2：邻接矩阵判断边</h2>
-<p><strong>题目：</strong>给定一个有向图，q 次询问 u→v 是否有边。n ≤ 1000，因此适合使用<strong>邻接矩阵</strong>。</p>
-<pre><code><span class="kw">int</span> g[<span class="nu">1005</span>][<span class="nu">1005</span>] = {<span class="nu">0</span>};
-<span class="kw">int</span> n, m, q; cin &gt;&gt; n &gt;&gt; m &gt;&gt; q;
-
-<span class="cm">// 读入边</span>
-<span class="kw">for</span> (<span class="kw">int</span> i = <span class="nu">0</span>; i &lt; m; i++) {
-    <span class="kw">int</span> u, v; cin &gt;&gt; u &gt;&gt; v;
-    g[u][v] = <span class="nu">1</span>;              <span class="cm">// 有向图只存一个方向</span>
-}
-
-<span class="cm">// 处理询问</span>
-<span class="kw">while</span> (q--) {
-    <span class="kw">int</span> u, v; cin &gt;&gt; u &gt;&gt; v;
-    <span class="kw">if</span> (g[u][v]) cout &lt;&lt; <span class="st">"Yes"</span> &lt;&lt; endl;
-    <span class="kw">else</span> cout &lt;&lt; <span class="st">"No"</span> &lt;&lt; endl;
-}</code></pre>
-<div class="tip-box success">
-<div class="tip-title">选择策略总结</div>
-<table style="margin:8px 0">
-<tr><th>条件</th><th>选择</th></tr>
-<tr><td>n &gt; 5000（稀疏图）</td><td>✅ 邻接表 vector</td></tr>
-<tr><td>n ≤ 1000 且频繁判边</td><td>✅ 邻接矩阵 g[i][j]</td></tr>
-<tr><td>n ≤ 1000 且只需遍历</td><td>✅ 两者皆可</td></tr>
-</table>
+<!-- 14 小结 -->
+<div class="slide" id="slide-14">
+<h1>十二、本课小结</h1>
+<ol>
+<li><strong>图</strong> = 点 + 边；先分清有向/无向、带权/无权</li>
+<li><strong>邻接矩阵</strong>：O(n²)，O(1) 判边，适合 n 小</li>
+<li><strong>邻接表</strong>：O(n+m)，稀疏大图主力，CSP-J 默认</li>
+<li><strong>度</strong>：无向 ∑deg=2m；有向 ∑in=∑out=m</li>
+<li><strong>路径/连通</strong>：为 DFS、BFS 做概念准备</li>
+<li><strong>易错</strong>：双向存、编号一致、大 n 不用矩阵、遍历要 vis</li>
+</ol>
+<div class="motto-box">表存稀疏、阵存稠密；无向双边、有向单边；有 vis 才敢逛</div>
+<p style="text-align:center; margin-top:12px; color:#1a237e; font-weight:bold;">
+下一课 <strong>DFS</strong>，再下一课 <strong>BFS</strong> —— 请把本课模板默写熟练！
+</p>
+<aside class="notes">布置：默写邻接表建图 + 度数统计；手算小图邻接表与矩阵。</aside>
 </div>
 
-<aside class="notes">【讲解】五、真题精练 2：邻接矩阵判断边
-本页要点（照着讲即可）：
-· 题目： 给定一个有向图，q 次询问 u→v 是否有边。n ≤ 1000，因此适合使用 邻接矩阵 。
-· 邻接矩阵
-练习页节奏：先独立想 1 分钟 → 再点拨思路 → 最后对答案讲为什么。
-可联系：图的存储与遍历基础题</aside>
-</div>
-<!-- Slide 7: Summary -->
-<div class="slide" id="slide7">
-<h2>六、本课小结</h2>
-<ul class="summary-list">
-<li><strong>图的构成</strong>：顶点 V + 边 E，记作 G = (V, E)</li>
-<li><strong>四种分类</strong>：有向/无向、带权/无权</li>
-<li><strong>邻接矩阵 g[i][j]</strong>：空间 O(n²)，判边 O(1)，适合<strong>稠密图</strong></li>
-<li><strong>邻接表 vector g[N]</strong>：空间 O(n+m)，适合<strong>稀疏图</strong>（绝大多数情况）</li>
-<li><strong>顶点的度</strong>：入度/出度，总度数 = 2m（无向图）</li>
-<li><strong>路径与回路</strong>：连通性判断是图遍历的基础</li>
-<li><strong>选择铁律</strong>：n &gt; 5000 必用邻接表；n ≤ 1000 且需频繁判边用邻接矩阵</li>
-</ul>
-<div class="accent-bar" style="margin: 32px auto 0;"></div>
-<p style="text-align:center; color: var(--text-light); margin-top: 16px;">
-                下一课预习：深度优先搜索 DFS — "一条路走到黑"
-            </p>
-
-<aside class="notes">【收尾】回顾本课主线：六、本课小结
-对照大纲再过一遍：图的概念/存储（邻接矩阵/邻接表）、度、路径
-板书/口述要点：
-· 图的构成 ：顶点 V + 边 E，记作 G = (V, E)
-· 图的构成
-· 四种分类 ：有向/无向、带权/无权
-· 四种分类
-· 邻接矩阵 g[i][j] ：空间 O(n²)，判边 O(1)，适合 稠密图
-· 邻接矩阵 g[i][j]
-课后任务：图的存储与遍历基础题
-结束前留 2 分钟答疑；布置 1 道小练习检验是否真正掌握。</aside>
-</div>
-</div>
-<!-- Navigation Bar -->
-<div class="nav-bar">
-<button class="nav-btn" disabled="" id="prevBtn" onclick="prevSlide()">← 上一页</button>
-<div class="slide-dots" id="slideDots"></div>
-<button class="nav-btn" id="nextBtn" onclick="nextSlide()">下一页 →</button>
+</div><!-- .slides-container -->
+<div class="page-indicator" id="page-indicator">1 / 14</div>
+<div class="nav-buttons">
+<button class="nav-btn" disabled="" id="prev-btn" onclick="prevSlide()">上一页</button>
+<button class="nav-btn" id="next-btn" onclick="nextSlide()">下一页</button>
 </div>
 <script>
-        const totalSlides = 7;
-        let currentSlide = 1;
-
-        // Generate dots
-        const dotsContainer = document.getElementById('slideDots');
-        for (let i = 1; i <= totalSlides; i++) {
-            const dot = document.createElement('span');
-            dot.className = 'dot' + (i === 1 ? ' active' : '');
-            dot.onclick = () => goToSlide(i);
-            dotsContainer.appendChild(dot);
-        }
-
-        function showSlide(n) {
-            document.querySelectorAll('.slide').forEach(s => s.classList.remove('active'));
-            const slide = document.getElementById('slide' + n);
-            if (slide) slide.classList.add('active');
-
-            document.querySelectorAll('.dot').forEach((d, i) => {
-                d.classList.toggle('active', i + 1 === n);
-            });
-
-            document.getElementById('prevBtn').disabled = (n === 1);
-            document.getElementById('nextBtn').disabled = (n === totalSlides);
-
-            document.getElementById('progressText').textContent = n + ' / ' + totalSlides;
-            currentSlide = n;
-        }
-
-        function nextSlide() {
-            if (currentSlide < totalSlides) showSlide(currentSlide + 1);
-        }
-
-        function prevSlide() {
-            if (currentSlide > 1) showSlide(currentSlide - 1);
-        }
-
-        function goToSlide(n) {
-            showSlide(n);
-        }
-
-        // Keyboard navigation
-        document.addEventListener('keydown', function(e) {
-            if (e.key === 'ArrowRight' || e.key === 'ArrowDown' || e.key === ' ') {
-                e.preventDefault();
-                nextSlide();
-            } else if (e.key === 'ArrowLeft' || e.key === 'ArrowUp') {
-                e.preventDefault();
-                prevSlide();
-            }
-        });
-
-        // Touch swipe support
-        let touchStartX = 0;
-        document.addEventListener('touchstart', (e) => {
-            touchStartX = e.changedTouches[0].screenX;
-        });
-        document.addEventListener('touchend', (e) => {
-            const diff = touchStartX - e.changedTouches[0].screenX;
-            if (Math.abs(diff) > 50) {
-                if (diff > 0) nextSlide();
-                else prevSlide();
-            }
-        });
-    </script>
+let currentSlide = 0;
+const slides = document.querySelectorAll('.slide');
+const totalSlides = slides.length;
+const indicator = document.getElementById('page-indicator');
+const prevBtn = document.getElementById('prev-btn');
+const nextBtn = document.getElementById('next-btn');
+function showSlide(index) {
+    slides.forEach(s => s.classList.remove('active'));
+    slides[index].classList.add('active');
+    indicator.textContent = (index + 1) + ' / ' + totalSlides;
+    prevBtn.disabled = (index === 0);
+    nextBtn.disabled = (index === totalSlides - 1);
+}
+function nextSlide() {
+    if (currentSlide < totalSlides - 1) { currentSlide++; showSlide(currentSlide); }
+}
+function prevSlide() {
+    if (currentSlide > 0) { currentSlide--; showSlide(currentSlide); }
+}
+document.addEventListener('keydown', function(e) {
+    if (e.key === 'ArrowRight' || e.key === 'ArrowDown' || e.key === ' ') {
+        e.preventDefault(); nextSlide();
+    } else if (e.key === 'ArrowLeft' || e.key === 'ArrowUp') {
+        e.preventDefault(); prevSlide();
+    }
+});
+</script>
 <script src="courseware-ui.js"></script>
 <script src="presenter.js"></script>
 </body>

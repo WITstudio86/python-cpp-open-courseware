@@ -320,7 +320,52 @@ void knapsack01_exact_full() {
 }
 
 // ============================================================
-// 六、01背包 vs 完全背包 核心对比
+// 六、采药（01背包固定样例）
+// ============================================================
+void demo_herbs() {
+    cout << "========== 采药（01背包样例）==========" << endl;
+    cout << "样例：M=70, N=3" << endl;
+    cout << "  草药1: t=71 v=100" << endl;
+    cout << "  草药2: t=69 v=1" << endl;
+    cout << "  草药3: t=1  v=2" << endl;
+    cout << endl;
+
+    const int M = 70, N = 3;
+    int t[] = {0, 71, 69, 1};
+    int v[] = {0, 100, 1, 2};
+    int dp[1005] = {0};
+
+    for (int i = 1; i <= N; i++) {
+        for (int j = M; j >= t[i]; j--) {
+            dp[j] = max(dp[j], dp[j - t[i]] + v[i]);
+        }
+    }
+    cout << "最大价值 = " << dp[M] << "（期望 3）" << endl;
+    cout << "解释：草药1超时不能采；采 2+3 得 1+2=3。" << endl << endl;
+}
+
+// ============================================================
+// 七、货币系统（完全背包方案数样例）
+// ============================================================
+void demo_coin_ways() {
+    cout << "========== 货币系统（完全背包方案数）==========" << endl;
+    cout << "面值 1,2,5 组成 10 的方案数" << endl;
+
+    int a[] = {0, 1, 2, 5};
+    int n = 3, m = 10;
+    long long dp[10005] = {0};
+    dp[0] = 1;
+    for (int i = 1; i <= n; i++) {
+        for (int j = a[i]; j <= m; j++) {
+            dp[j] += dp[j - a[i]];
+        }
+    }
+    cout << "方案数 = " << dp[m] << "（期望 10）" << endl;
+    cout << "要点：外层物品、内层金额 → 组合数；dp[0]=1；正序。" << endl << endl;
+}
+
+// ============================================================
+// 八、01背包 vs 完全背包 核心对比
 // ============================================================
 void comparison_summary() {
     cout << "========== 01背包 vs 完全背包 核心对比 ==========" << endl;
@@ -363,7 +408,9 @@ int main() {
         cout << "  3. 正序 vs 倒序 对比实验（直观理解原理）" << endl;
         cout << "  4. 完全背包 一维DP（正序遍历）" << endl;
         cout << "  5. 恰好装满的01背包（-INF初始化）" << endl;
-        cout << "  6. 01背包 vs 完全背包 核心对比表" << endl;
+        cout << "  6. 采药固定样例（01）" << endl;
+        cout << "  7. 货币系统固定样例（完全-方案数）" << endl;
+        cout << "  8. 01背包 vs 完全背包 核心对比表" << endl;
         cout << "  0. 退出" << endl;
         cout << "请输入编号：";
 
@@ -384,7 +431,9 @@ int main() {
             case 3: knapsack01_order_comparison(); break;
             case 4: knapsack_complete(); break;
             case 5: knapsack01_exact_full(); break;
-            case 6: comparison_summary(); break;
+            case 6: demo_herbs(); break;
+            case 7: demo_coin_ways(); break;
+            case 8: comparison_summary(); break;
             default: cout << "无效选择，请重试。" << endl << endl;
         }
     }

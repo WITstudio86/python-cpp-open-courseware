@@ -6,797 +6,335 @@
 <meta content="width=device-width, initial-scale=1.0" name="viewport"/>
 <title>第18课：参数传递与作用域 — CSP-J 备考课程</title>
 <style>
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-        }
-
+        * { margin: 0; padding: 0; box-sizing: border-box; }
         body {
-            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "PingFang SC", "Hiragino Sans GB", "Microsoft YaHei", "Helvetica Neue", Arial, sans-serif;
-            background: #f5f5f5;
-            color: #333;
-            line-height: 1.8;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            min-height: 100vh;
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "PingFang SC", "Hiragino Sans GB", "Microsoft YaHei", sans-serif;
+            background: #f5f5f5; color: #333; line-height: 1.8;
+            display: flex; flex-direction: column; align-items: center; min-height: 100vh;
         }
-
-        /* 顶部标题栏 */
         .title-bar {
-            background: #1a237e;
-            color: #ffd600;
-            width: 100%;
-            text-align: center;
-            padding: 12px 20px;
-            font-size: 1.15rem;
-            font-weight: 700;
-            letter-spacing: 2px;
-            position: sticky;
-            top: 0;
-            z-index: 100;
-            box-shadow: 0 2px 8px rgba(0,0,0,0.3);
+            background: #1a237e; color: #ffd600; width: 100%; text-align: center;
+            padding: 12px 20px; font-size: 1.15rem; font-weight: 700; letter-spacing: 2px;
+            position: sticky; top: 0; z-index: 100; box-shadow: 0 2px 8px rgba(0,0,0,0.3);
         }
-
-        .title-bar .gold-line {
-            display: inline-block;
-            border-top: 2px solid #ffd600;
-            width: 60px;
-            margin: 0 10px;
-            vertical-align: middle;
-        }
-
-        /* 主容器 */
-        .main-container {
-            width: 100%;
-            max-width: 960px;
-            padding: 20px;
-            flex: 1;
-        }
-
-        /* 幻灯片容器 */
+        .main-container { width: 100%; max-width: 960px; padding: 20px; flex: 1; }
         .slides-wrapper {
-            position: relative;
-            background: #ffffff;
-            border-radius: 12px;
-            box-shadow: 0 4px 24px rgba(0,0,0,0.12);
-            min-height: 580px;
-            overflow: hidden;
+            position: relative; background: #fff; border-radius: 12px;
+            box-shadow: 0 4px 24px rgba(0,0,0,0.12); min-height: 580px; overflow: hidden;
         }
-
-        .slide {
-            display: none;
-            padding: 48px 56px 40px 56px;
-            animation: fadeSlideIn 0.4s ease;
-        }
-
-        .slide.active {
-            display: block;
-        }
-
+        .slide { display: none; padding: 40px 48px 36px; animation: fadeSlideIn 0.4s ease; }
+        .slide.active { display: block; }
         @keyframes fadeSlideIn {
-            from {
-                opacity: 0;
-                transform: translateY(12px);
-            }
-            to {
-                opacity: 1;
-                transform: translateY(0);
-            }
+            from { opacity: 0; transform: translateY(12px); }
+            to { opacity: 1; transform: translateY(0); }
         }
-
-        /* 幻灯片标题 */
         .slide h2 {
-            color: #1a237e;
-            font-size: 1.75rem;
-            border-left: 5px solid #ffd600;
-            padding-left: 16px;
-            margin-bottom: 28px;
-            line-height: 1.4;
+            color: #1a237e; font-size: 1.55rem; border-left: 5px solid #ffd600;
+            padding-left: 16px; margin-bottom: 20px;
         }
-
-        .slide h3 {
-            color: #1a237e;
-            font-size: 1.25rem;
-            margin: 22px 0 12px 0;
-        }
-
-        .slide p, .slide li {
-            font-size: 1.05rem;
-            margin-bottom: 10px;
-        }
-
-        .slide ul, .slide ol {
-            padding-left: 24px;
-            margin-bottom: 16px;
-        }
-
-        /* 标题页特殊样式 */
+        .slide h3 { color: #1a237e; font-size: 1.1rem; margin: 14px 0 8px; }
+        .slide p, .slide li { font-size: 0.98rem; margin-bottom: 8px; }
+        .slide ul, .slide ol { padding-left: 24px; margin-bottom: 12px; }
         .slide-title {
-            text-align: center;
-            display: flex;
-            flex-direction: column;
-            justify-content: center;
-            align-items: center;
-            min-height: 500px;
+            text-align: center; display: flex; flex-direction: column;
+            justify-content: center; align-items: center; min-height: 500px;
         }
-
-        .slide-title .lesson-number {
-            font-size: 5rem;
-            font-weight: 900;
-            color: #1a237e;
-            line-height: 1;
-        }
-
-        .slide-title .lesson-name {
-            font-size: 2.2rem;
-            font-weight: 700;
-            color: #1a237e;
-            margin: 12px 0;
-        }
-
-        .slide-title .gold-separator {
-            width: 120px;
-            height: 4px;
-            background: #ffd600;
-            margin: 18px auto;
-            border-radius: 2px;
-        }
-
-        .slide-title .subtitle {
-            font-size: 1.15rem;
-            color: #666;
-            margin-top: 10px;
-        }
-
-        /* 表格 */
-        .styled-table {
-            width: 100%;
-            border-collapse: collapse;
-            margin: 16px 0;
-            font-size: 0.95rem;
-        }
-
-        .styled-table th {
-            background: #1a237e;
-            color: #ffd600;
-            padding: 10px 14px;
-            text-align: left;
-            font-weight: 600;
-        }
-
-        .styled-table td {
-            padding: 10px 14px;
-            border-bottom: 1px solid #e0e0e0;
-        }
-
-        .styled-table tr:nth-child(even) td {
-            background: #f8f9ff;
-        }
-
-        .styled-table tr:nth-child(odd) td {
-            background: #ffffff;
-        }
-
-        /* 代码块 */
+        .slide-title .lesson-number { font-size: 4.5rem; font-weight: 900; color: #1a237e; }
+        .slide-title .lesson-name { font-size: 2rem; font-weight: 700; color: #1a237e; margin: 12px 0; }
+        .slide-title .gold-separator { width: 120px; height: 4px; background: #ffd600; margin: 18px auto; border-radius: 2px; }
+        .slide-title .subtitle { font-size: 1.05rem; color: #666; }
+        .styled-table { width: 100%; border-collapse: collapse; margin: 12px 0; font-size: 0.9rem; }
+        .styled-table th { background: #1a237e; color: #ffd600; padding: 9px 12px; text-align: left; }
+        .styled-table td { padding: 8px 12px; border-bottom: 1px solid #e0e0e0; }
+        .styled-table tr:nth-child(even) td { background: #f8f9ff; }
         .code-block {
-            background: #1e1e1e;
-            color: #d4d4d4;
-            font-family: "Consolas", "Monaco", "Courier New", "Source Code Pro", monospace;
-            font-size: 0.85rem;
-            padding: 18px 22px;
-            border-radius: 8px;
-            overflow-x: auto;
-            margin: 14px 0;
-            line-height: 1.7;
-            white-space: pre;
-            tab-size: 4;
+            background: #1e1e1e; color: #d4d4d4; font-family: Consolas, Monaco, monospace;
+            font-size: 0.84rem; padding: 14px 18px; border-radius: 8px; overflow-x: auto;
+            margin: 12px 0; line-height: 1.55; white-space: pre;
         }
-
-        /* 简单的语法高亮 */
-        .kw { color: #569cd6; }
-        .fn { color: #dcdcaa; }
-        .str { color: #ce9178; }
-        .cm { color: #6a9955; }
-        .num { color: #b5cea8; }
-        .tp { color: #4ec9b0; }
-        .pp { color: #c586c0; }
-        .op { color: #d4d4d4; }
-
-        /* 考试提示框 */
+        .kw { color: #569cd6; } .fn { color: #dcdcaa; } .str { color: #ce9178; }
+        .cm { color: #6a9955; } .num { color: #b5cea8; } .tp { color: #4ec9b0; }
         .exam-tip {
-            background: #fffde7;
-            border-left: 5px solid #ff9800;
-            border-top: 1px solid #ffe0b2;
-            border-right: 1px solid #ffe0b2;
-            border-bottom: 1px solid #ffe0b2;
-            border-radius: 6px;
-            padding: 16px 20px;
-            margin: 20px 0;
-            font-size: 0.95rem;
+            background: #fffde7; border-left: 5px solid #ff9800; border-radius: 6px;
+            padding: 14px 18px; margin: 12px 0; font-size: 0.92rem;
         }
-
-        .exam-tip strong {
-            color: #e65100;
-        }
-
-        /* 信息卡片 */
+        .exam-tip strong { color: #e65100; }
         .info-card {
-            background: #e8eaf6;
-            border-radius: 8px;
-            padding: 16px 20px;
-            margin: 14px 0;
+            background: #e8eaf6; border-radius: 8px; padding: 14px 18px; margin: 12px 0;
             border-left: 4px solid #1a237e;
         }
-
-        .info-card strong {
-            color: #1a237e;
-        }
-
-        /* 对比网格 */
-        .compare-grid {
-            display: grid;
-            grid-template-columns: 1fr 1fr;
-            gap: 18px;
-            margin: 18px 0;
-        }
-
-        .compare-card {
-            border-radius: 10px;
-            padding: 20px;
-            text-align: center;
-        }
-
-        .compare-card.pass-by-value {
-            background: linear-gradient(135deg, #fff3e0 0%, #ffe0b2 100%);
-            border: 2px solid #ff9800;
-        }
-
-        .compare-card.pass-by-ref {
-            background: linear-gradient(135deg, #e8f5e9 0%, #c8e6c9 100%);
-            border: 2px solid #4caf50;
-        }
-
-        .compare-card h4 {
-            font-size: 1.15rem;
-            margin-bottom: 8px;
-        }
-
-        .compare-card.pass-by-value h4 { color: #e65100; }
-        .compare-card.pass-by-ref h4 { color: #2e7d32; }
-
-        /* 变量类型卡片 */
-        .var-type-grid {
-            display: grid;
-            grid-template-columns: 1fr 1fr 1fr;
-            gap: 14px;
-            margin: 18px 0;
-        }
-
-        .var-card {
-            background: #fafafa;
-            border: 1px solid #e0e0e0;
-            border-radius: 8px;
-            padding: 16px;
-            text-align: center;
-        }
-
-        .var-card .var-name {
-            font-weight: 700;
-            font-size: 1.1rem;
-            color: #1a237e;
-            margin-bottom: 6px;
-        }
-
-        .var-card .var-detail {
-            font-size: 0.85rem;
-            color: #666;
-            line-height: 1.6;
-        }
-
-        /* 导航按钮 */
-        .nav-buttons {
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            gap: 24px;
-            padding: 20px;
-        }
-
+        .nav-buttons { display: flex; justify-content: center; align-items: center; gap: 24px; padding: 20px; }
         .nav-btn {
-            background: #1a237e;
-            color: #ffd600;
-            border: none;
-            padding: 10px 28px;
-            font-size: 1rem;
-            font-weight: 600;
-            border-radius: 6px;
-            cursor: pointer;
-            transition: all 0.2s;
-            letter-spacing: 1px;
+            background: #1a237e; color: #ffd600; border: none; padding: 10px 28px;
+            font-size: 1rem; font-weight: 600; border-radius: 6px; cursor: pointer;
         }
-
-        .nav-btn:hover {
-            background: #283593;
-            transform: translateY(-1px);
-            box-shadow: 0 3px 10px rgba(26, 35, 126, 0.4);
-        }
-
-        .nav-btn:disabled {
-            background: #bdbdbd;
-            color: #fff;
-            cursor: not-allowed;
-            transform: none;
-            box-shadow: none;
-        }
-
-        .slide-indicator {
-            font-size: 0.95rem;
-            color: #666;
-            min-width: 80px;
-            text-align: center;
-        }
-
-        /* 输出示例框 */
-        .output-box {
-            background: #263238;
-            color: #b2dfdb;
-            font-family: "Consolas", "Monaco", "Courier New", monospace;
-            font-size: 0.85rem;
-            padding: 14px 18px;
-            border-radius: 6px;
-            margin: 10px 0;
-            white-space: pre;
-            line-height: 1.6;
-        }
-
-        /* 响应式设计 */
+        .nav-btn:hover { background: #283593; }
+        .nav-btn:disabled { background: #bdbdbd; color: #fff; cursor: not-allowed; }
+        .slide-indicator { font-size: 0.95rem; color: #666; min-width: 80px; text-align: center; }
+        .two-col { display: flex; gap: 16px; }
+        .two-col > div { flex: 1; min-width: 0; }
         @media (max-width: 768px) {
-            .slide {
-                padding: 32px 24px 28px 24px;
-            }
-            .slide h2 {
-                font-size: 1.35rem;
-            }
-            .slide-title .lesson-number {
-                font-size: 3.5rem;
-            }
-            .slide-title .lesson-name {
-                font-size: 1.6rem;
-            }
-            .compare-grid {
-                grid-template-columns: 1fr;
-            }
-            .var-type-grid {
-                grid-template-columns: 1fr;
-            }
-            .code-block {
-                font-size: 0.76rem;
-                padding: 12px 14px;
-            }
-            .nav-btn {
-                padding: 8px 18px;
-                font-size: 0.9rem;
-            }
-        }
-
-        @media (max-width: 480px) {
-            .slide {
-                padding: 24px 16px 20px 16px;
-            }
-            .slide h2 {
-                font-size: 1.2rem;
-            }
-            .main-container {
-                padding: 10px;
-            }
-        }
-
-        @media print {
-            .title-bar { position: static; }
-            .nav-buttons { display: none; }
-            .slide { display: block !important; page-break-after: always; }
+            .slide { padding: 28px 20px; }
+            .two-col { flex-direction: column; }
+            .code-block { font-size: 0.76rem; }
         }
     </style>
 </head>
 <body>
-<!-- 顶部标题栏 -->
-<div class="title-bar">
-<span class="gold-line"></span>
-        CSP-J 备考课程
-        <span class="gold-line"></span>
-</div>
-<!-- 主容器 -->
+<div class="title-bar">CSP-J 备考课程 · 第18课</div>
 <div class="main-container">
 <div class="slides-wrapper">
-<!-- ============ 幻灯片 1：标题页 ============ -->
+
 <div class="slide slide-title active" data-slide="1">
 <div class="lesson-number">18</div>
 <div class="lesson-name">参数传递与作用域</div>
 <div class="gold-separator"></div>
-<div class="subtitle">从"值"与"引用"到变量的"生命周期"</div>
-<p style="color:#999; margin-top:24px; font-size:0.9rem;">
-                    值传递 vs 引用传递 | 数组参数 | 全局/局部/静态变量
-                </p>
-
-<aside class="notes">【开场】第 1/7 页 · 参数传递与作用域
-用 30 秒说明本课目标与学完能做什么，再进入正题。
-大纲考点：值传递/引用传递、全局变量/局部变量、静态变量
-配套练习方向：参数传递方式与作用域判断题
-封面关键词：
-· 值传递 vs 引用传递 | 数组参数 | 全局/局部/静态变量
-互动：问学生「今天最想搞清楚什么？」，收 1–2 个期待。</aside>
+<p class="subtitle">形参实参 · 值传递 · 引用传递 · 数组参数 · 全局/局部 · static</p>
+<aside class="notes">【开场】初赛常考读代码输出；配套 lesson18。</aside>
 </div>
-<!-- ============ 幻灯片 2：值传递 vs 引用传递 ============ -->
+
 <div class="slide" data-slide="2">
-<h2>值传递 vs 引用传递</h2>
-<div class="compare-grid">
-<div class="compare-card pass-by-value">
-<h4>值传递（默认）</h4>
-<p style="font-size:0.9rem; margin-bottom:8px;">传递实参的<strong>副本</strong></p>
-<p style="font-size:0.9rem; margin-bottom:8px;">函数内修改<strong>不影响</strong>原始变量</p>
-<div class="code-block" style="font-size:0.78rem; padding:10px 14px; margin:8px 0;"><span class="kw">void</span> <span class="fn">f</span>(<span class="tp">int</span> x) {
-    x = <span class="num">999</span>;
-}
-<span class="cm">// a 不变！</span></div>
-</div>
-<div class="compare-card pass-by-ref">
-<h4>引用传递（&amp;）</h4>
-<p style="font-size:0.9rem; margin-bottom:8px;">传递实参<strong>本身</strong></p>
-<p style="font-size:0.9rem; margin-bottom:8px;">函数内修改<strong>直接影响</strong>原始变量</p>
-<div class="code-block" style="font-size:0.78rem; padding:10px 14px; margin:8px 0;"><span class="kw">void</span> <span class="fn">f</span>(<span class="tp">int</span> <span class="op">&amp;</span>x) {
-    x = <span class="num">999</span>;
-}
-<span class="cm">// a 被改变！</span></div>
-</div>
-</div>
-<h3>经典示例：swap 函数</h3>
-<div class="code-block"><span class="cm">// 引用传递版 —— 真正交换</span>
-<span class="kw">void</span> <span class="fn">swap</span>(<span class="tp">int</span> <span class="op">&amp;</span>a, <span class="tp">int</span> <span class="op">&amp;</span>b) {
-    <span class="tp">int</span> temp = a;
-    a = b;
-    b = temp;
-}
-
-<span class="tp">int</span> x = <span class="num">10</span>, y = <span class="num">20</span>;
-<span class="fn">swap</span>(x, y);  <span class="cm">// x=20, y=10  ← 成功交换！</span></div>
-<div class="exam-tip">
-<strong>高频考点：</strong>CSP-J 初赛选择题经常给出一段含有值传递和引用传递的代码，问最终输出结果。请务必区分：默认是值传递（不改变实参），加了 &amp; 才是引用传递（改变实参）。
-                </div>
-
-<aside class="notes">【讲解】值传递 vs 引用传递
-结合讲义《二、值传递（Pass by Value）》强调：
-· 值传递是 C++ 默认的参数传递方式。当使用值传递时，函数调用会发生以下过程：
-· 计算实参表达式的值
-· 在函数栈帧中创建形参变量
-· 将实参的值**复制**给形参
-· 函数内部对形参的任何操作都限于这个副本
-幻灯片上可见要点：
-· 值传递（默认）
-· 传递实参的 副本
-· 函数内修改 不影响 原始变量
-· 引用传递（&amp;）
-讲解时放慢关键术语；用 1 个生活类比 + 1 个反例加深印象。
-本课大纲考点（可适时点题）：值传递/引用传递、全局变量/局部变量、静态变量</aside>
-</div>
-<!-- ============ 幻灯片 3：数组作为参数 ============ -->
-<div class="slide" data-slide="3">
-<h2>数组作为函数参数</h2>
-<h3>传递本质</h3>
-<p>数组作为参数时，传递的是<strong>数组首元素的地址</strong>（指针），而不是整个数组的副本。因此函数内部对数组元素的修改会<strong>直接影响原始数组</strong>。</p>
-<div class="code-block"><span class="kw">void</span> <span class="fn">doubleElements</span>(<span class="tp">int</span> arr[], <span class="tp">int</span> n) {
-    <span class="kw">for</span> (<span class="tp">int</span> i = <span class="num">0</span>; i &lt; n; i++) {
-        arr[i] *= <span class="num">2</span>;  <span class="cm">// 修改原始数组！</span>
-    }
-}
-
-<span class="tp">int</span> a[] = {<span class="num">1</span>, <span class="num">2</span>, <span class="num">3</span>, <span class="num">4</span>, <span class="num">5</span>};
-<span class="fn">doubleElements</span>(a, <span class="num">5</span>);
-<span class="cm">// a 变为 {2, 4, 6, 8, 10}</span></div>
-<h3>关键注意事项</h3>
-<ol>
-<li><strong>必须额外传递数组长度</strong>：函数内部 <code>sizeof(arr)</code> 返回的是指针大小（4 或 8 字节），不是数组总大小。</li>
-<li><strong>数组参数是"类引用"效果</strong>：虽然没写 &amp;，但修改数组元素会同步到原始数组，这与普通值传递完全不同。</li>
-<li><strong>多维数组</strong>：除第一维外，其他维度的大小必须显式指定。</li>
-</ol>
-<div class="info-card">
-<strong>记忆技巧：</strong>普通变量 → 值传递（副本）；数组 → 地址传递（直接操作原数组）。因此在 CSP-J 中，数组参数实际上是一种"隐式的引用传递"。
-                </div>
-
-<aside class="notes">【讲解】数组作为函数参数
-结合讲义《四、数组作为函数参数》强调：
-· 在 C++ 中，将数组作为函数参数传递时，实际上传递的是**数组首元素的地址**（指针）。因此，函数内部对数组元素的修改会直接影响调用处的原始数组。
-· using namespace std;
-· // 数组参数：方括号中的数字可以写也可以不写（编译器会忽略）
-· void doubleElements(int arr[], int n) { // arr 实际接收的是地址
-· for (int i = 0; i &lt; n; i++) {
-幻灯片上可见要点：
-· 数组作为参数时，传递的是 数组首元素的地址 （指针），而不是整个数组的副本。因此函数内部对数组元素的修改会 直接影响原始数组 。
-· 数组首元素的地址
-· 直接影响原始数组
-· 必须额外传递数组长度 ：函数内部 sizeof(arr) 返回的是指针大小（4 或 8 字节），不是数组总大小。
-讲解时放慢关键术语；用 1 个生活类比 + 1 个反例加深印象。</aside>
-</div>
-<!-- ============ 幻灯片 4：全局 / 局部 / 静态变量 ============ -->
-<div class="slide" data-slide="4">
-<h2>全局变量 / 局部变量 / 静态变量</h2>
-<div class="var-type-grid">
-<div class="var-card">
-<div class="var-name">局部变量</div>
-<div class="var-detail">
-                            作用域：定义处到代码块结束<br/>
-                            生命周期：进入代码块 → 离开代码块<br/>
-                            初始化：不自动初始化（垃圾值）<br/>
-                            存储位置：栈
-                        </div>
-</div>
-<div class="var-card">
-<div class="var-name">全局变量</div>
-<div class="var-detail">
-                            作用域：整个文件（定义处到文件尾）<br/>
-                            生命周期：程序开始 → 程序结束<br/>
-                            初始化：自动初始化为 0<br/>
-                            存储位置：静态存储区
-                        </div>
-</div>
-<div class="var-card">
-<div class="var-name">静态变量（static）</div>
-<div class="var-detail">
-                            作用域：定义它的函数内部<br/>
-                            生命周期：第一次进入 → 程序结束<br/>
-                            初始化：自动初始化为 0（仅一次）<br/>
-                            存储位置：静态存储区
-                        </div>
-</div>
-</div>
-<h3>静态变量的关键特征</h3>
-<div class="code-block"><span class="kw">void</span> <span class="fn">countCall</span>() {
-    <span class="kw">static</span> <span class="tp">int</span> cnt = <span class="num">0</span>;  <span class="cm">// 只初始化一次！</span>
-    cnt++;
-    cout &lt;&lt; <span class="str">"调用次数: "</span> &lt;&lt; cnt &lt;&lt; endl;
-}
-
-<span class="fn">countCall</span>();  <span class="cm">// 输出：调用次数: 1</span>
-<span class="fn">countCall</span>();  <span class="cm">// 输出：调用次数: 2</span>
-<span class="fn">countCall</span>();  <span class="cm">// 输出：调用次数: 3</span>
-<span class="cm">// 如果是 int cnt = 0;（普通局部变量），每次都输出"调用次数: 1"</span></div>
-<div class="exam-tip">
-<strong>考点提醒：</strong>判断 static 变量的输出也是初赛常见题型。关键点——static 变量的初始化代码只执行一次，之后每次调用都保留上一次的值。
-                </div>
-
-<aside class="notes">【讲解】全局变量 / 局部变量 / 静态变量
-结合讲义《六、静态变量（static）》强调：
-· 在局部变量前加上 static 关键字，该变量就变成了**静态局部变量**。静态局部变量与普通局部变量有本质区别：
-· 只初始化一次：静态局部变量的初始化代码只在第一次执行到时执行一次，之后每次进入函数都跳过初始化。
-· 生命周期贯穿整个程序运行：函数返回后，静态局部变量不会被销毁，而是保存其当前值，供下一次调用时使用。
-· 作用域仍然是局部的：只能在定义它的函数内部访问。
-· using namespace std;
-幻灯片上可见要点：
-· 考点提醒：
-讲解时放慢关键术语；用 1 个生活类比 + 1 个反例加深印象。</aside>
-</div>
-<!-- ============ 幻灯片 5：值传递与引用传递代码模板 ============ -->
-<div class="slide" data-slide="5">
-<h2>代码模板：值传递 vs 引用传递</h2>
-<h3>模板一：swap 函数的两种实现对比</h3>
-<div class="code-block"><span class="pp">#include</span> <span class="str">&lt;iostream&gt;</span>
-<span class="kw">using namespace</span> std;
-
-<span class="cm">// 值传递 —— 无效交换</span>
-<span class="kw">void</span> <span class="fn">badSwap</span>(<span class="tp">int</span> a, <span class="tp">int</span> b) {
-    <span class="tp">int</span> t = a; a = b; b = t;
-}
-
-<span class="cm">// 引用传递 —— 真正交换</span>
-<span class="kw">void</span> <span class="fn">swap</span>(<span class="tp">int</span> <span class="op">&amp;</span>a, <span class="tp">int</span> <span class="op">&amp;</span>b) {
-    <span class="tp">int</span> t = a; a = b; b = t;
-}
-
-<span class="tp">int</span> <span class="fn">main</span>() {
-    <span class="tp">int</span> x = <span class="num">10</span>, y = <span class="num">20</span>;
-    <span class="fn">badSwap</span>(x, y);
-    cout &lt;&lt; x &lt;&lt; <span class="str">" "</span> &lt;&lt; y;  <span class="cm">// 10 20（没交换！）</span>
-<span class="fn">swap</span>(x, y);
-    cout &lt;&lt; x &lt;&lt; <span class="str">" "</span> &lt;&lt; y;  <span class="cm">// 20 10（真正交换）</span>
-<span class="kw">return</span> <span class="num">0</span>;
-}</div>
-<h3>模板二：通过引用"返回"多个值</h3>
-<div class="code-block"><span class="kw">void</span> <span class="fn">getMinMax</span>(<span class="tp">int</span> a, <span class="tp">int</span> b, <span class="tp">int</span> c,
-                <span class="tp">int</span> <span class="op">&amp;</span>minVal, <span class="tp">int</span> <span class="op">&amp;</span>maxVal) {
-    minVal = maxVal = a;
-    <span class="kw">if</span> (b &lt; minVal) minVal = b;
-    <span class="kw">if</span> (c &lt; minVal) minVal = c;
-    <span class="kw">if</span> (b &gt; maxVal) maxVal = b;
-    <span class="kw">if</span> (c &gt; maxVal) maxVal = c;
-}
-
-<span class="tp">int</span> <span class="fn">main</span>() {
-    <span class="tp">int</span> mn, mx;
-    <span class="fn">getMinMax</span>(<span class="num">42</span>, <span class="num">17</span>, <span class="num">88</span>, mn, mx);
-    cout &lt;&lt; <span class="str">"最小:"</span> &lt;&lt; mn &lt;&lt; <span class="str">" 最大:"</span> &lt;&lt; mx;
-    <span class="kw">return</span> <span class="num">0</span>;
-}</div>
-<div class="info-card">
-<strong>技巧：</strong>函数只能有一个返回值（return），但可以通过多个引用参数把多个计算结果"带出来"。
-                </div>
-
-<aside class="notes">【讲解】代码模板：值传递 vs 引用传递
-结合讲义《二、值传递（Pass by Value）》强调：
-· 值传递是 C++ 默认的参数传递方式。当使用值传递时，函数调用会发生以下过程：
-· 计算实参表达式的值
-· 在函数栈帧中创建形参变量
-· 将实参的值**复制**给形参
-· 函数内部对形参的任何操作都限于这个副本
-幻灯片上可见要点：
-· 代码模板：值传递 vs 引用传递
-· 模板一：swap 函数的两种实现对比
-· #include
-· using namespace
-代码页节奏：先读懂输入输出 → 再走主流程 → 最后点出易错点（边界/类型/下标）。
-可让学生预测下一行输出，再运行对照。</aside>
-</div>
-<!-- ============ 幻灯片 6：真题精练 ============ -->
-<div class="slide" data-slide="6">
-<h2>真题精练</h2>
-<h3>题目一：交换变量并计算差值</h3>
-<p>定义 <code>void swap(int &amp;a, int &amp;b)</code> 和 <code>int diff(int a, int b)</code>。读入两个整数，交换后输出两数及差的绝对值。</p>
-<p><strong>样例</strong>：输入 <code>10 30</code>，输出 <code>30 10</code> 和 <code>20</code>。</p>
-<div class="code-block"><span class="kw">void</span> <span class="fn">swap</span>(<span class="tp">int</span> <span class="op">&amp;</span>a, <span class="tp">int</span> <span class="op">&amp;</span>b) {
-    <span class="tp">int</span> t = a; a = b; b = t;
-}
-
-<span class="tp">int</span> <span class="fn">diff</span>(<span class="tp">int</span> a, <span class="tp">int</span> b) {
-    <span class="kw">return</span> a &gt; b ? a - b : b - a;
-}
-
-<span class="tp">int</span> <span class="fn">main</span>() {
-    <span class="tp">int</span> x, y;
-    cin &gt;&gt; x &gt;&gt; y;
-    <span class="fn">swap</span>(x, y);
-    cout &lt;&lt; x &lt;&lt; <span class="str">" "</span> &lt;&lt; y &lt;&lt; endl;
-    cout &lt;&lt; <span class="fn">diff</span>(x, y) &lt;&lt; endl;
-    <span class="kw">return</span> <span class="num">0</span>;
-}</div>
-<h3>题目二：使用静态变量统计函数调用次数</h3>
-<p>定义 <code>int sumOfDigits(int n)</code>，在其内部使用 <code>static int callCount</code> 统计总调用次数。读入 T 个数字，对每个数字输出各位数字之和及当前调用次数。</p>
-<p><strong>样例</strong>：输入 <code>3</code> 然后 <code>123</code>、<code>45</code>、<code>6789</code>，依次输出 <code>6 1</code>、<code>9 2</code>、<code>30 3</code>。</p>
-<div class="code-block"><span class="tp">int</span> <span class="fn">sumOfDigits</span>(<span class="tp">int</span> n) {
-    <span class="kw">static</span> <span class="tp">int</span> callCount = <span class="num">0</span>;
-    callCount++;
-    <span class="tp">int</span> sum = <span class="num">0</span>;
-    <span class="kw">while</span> (n &gt; <span class="num">0</span>) { sum += n % <span class="num">10</span>; n /= <span class="num">10</span>; }
-    cout &lt;&lt; sum &lt;&lt; <span class="str">" "</span> &lt;&lt; callCount &lt;&lt; endl;
-    <span class="kw">return</span> <span class="num">0</span>;
-}</div>
-<div class="exam-tip">
-<strong>得分技巧：</strong>题目要求使用 static 时，一定不能省略 <code>static</code> 关键字。判题系统可能会检查函数内部是否包含指定关键字的变量声明。
-                </div>
-
-<aside class="notes">【讲解】真题精练
-本页要点（照着讲即可）：
-· 定义 void swap(int &amp;a, int &amp;b) 和 int diff(int a, int b) 。读入两个整数，交换后输出两数及差的绝对值。
-· 样例 ：输入 10 30 ，输出 30 10 和 20 。
-· 定义 int sumOfDigits(int n) ，在其内部使用 static int callCount 统计总调用次数。读入 T 个数字，对每个数字输出各位数字之和及当前调用次数。
-· 样例 ：输入 3 然后 123 、 45 、 6789 ，依次输出 6 1 、 9 2 、 30 3 。
-· 得分技巧：
-练习页节奏：先独立想 1 分钟 → 再点拨思路 → 最后对答案讲为什么。
-可联系：参数传递方式与作用域判断题</aside>
-</div>
-<!-- ============ 幻灯片 7：本课小结 ============ -->
-<div class="slide" data-slide="7">
-<h2>本课小结</h2>
+<h2>一、形参与实参</h2>
 <table class="styled-table">
-<thead>
-<tr><th>知识模块</th><th>核心要点</th></tr>
-</thead>
+<thead><tr><th></th><th>形参</th><th>实参</th></tr></thead>
 <tbody>
-<tr>
-<td><strong>形参与实参</strong></td>
-<td>形参是定义时的变量声明，实参是调用时的具体值；同名也互不影响</td>
-</tr>
-<tr>
-<td><strong>值传递</strong></td>
-<td>默认方式，传递副本；函数内修改不影响原始变量；适合"只读"参数</td>
-</tr>
-<tr>
-<td><strong>引用传递</strong></td>
-<td>类型后加 &amp;，传递变量本身；函数内修改同步到原始变量；适合 swap、"返回"多个值</td>
-</tr>
-<tr>
-<td><strong>数组参数</strong></td>
-<td>传递首地址；修改元素影响原始数组；必须额外传递长度；sizeof 在函数内失效</td>
-</tr>
-<tr>
-<td><strong>局部变量</strong></td>
-<td>作用域限于代码块，离开即销毁；每次进入重新创建；不自动初始化</td>
-</tr>
-<tr>
-<td><strong>全局变量</strong></td>
-<td>所有函数共享；生命周期贯穿整个程序；自动初始化为 0；过多使用导致难以维护</td>
-</tr>
-<tr>
-<td><strong>静态变量 (static)</strong></td>
-<td>只初始化一次；生命周期贯穿整个程序；作用域限于定义它的函数；适合统计调用次数</td>
-</tr>
+<tr><td>位置</td><td>定义/声明参数列表</td><td>调用时括号内</td></tr>
+<tr><td>本质</td><td>函数内局部变量</td><td>表达式/变量/常量</td></tr>
+<tr><td>生命周期</td><td>调用期间</td><td>取决于自身作用域</td></tr>
 </tbody>
 </table>
-<div class="info-card">
-<strong>下阶段预告：递归函数</strong><br/>
-                    函数调用自身 —— 分治思想的核心工具。经典应用：阶乘、斐波那契数列、汉诺塔、二分查找。
-                </div>
-
-<aside class="notes">【收尾】回顾本课主线：本课小结
-对照大纲再过一遍：值传递/引用传递、全局变量/局部变量、静态变量
-板书/口述要点：
-· 形参与实参
-· 引用传递
-· 数组参数
-· 局部变量
-· 全局变量
-· 静态变量 (static)
-课后任务：参数传递方式与作用域判断题
-结束前留 2 分钟答疑；布置 1 道小练习检验是否真正掌握。</aside>
+<div class="code-block"><span class="tp">void</span> <span class="fn">func</span>(<span class="tp">int</span> x) { x = <span class="num">100</span>; }  <span class="cm">// 形参</span>
+<span class="tp">int</span> main() {
+    <span class="tp">int</span> x = <span class="num">10</span>;  <span class="cm">// 实参变量</span>
+    <span class="fn">func</span>(x);
+    cout &lt;&lt; x;   <span class="cm">// 10 —— 同名也是不同变量</span>
+}</div>
+<aside class="notes">【讲解】名字可相同，内存不同。</aside>
 </div>
-</div><!-- /.slides-wrapper -->
-<!-- 导航按钮 -->
+
+<div class="slide" data-slide="3">
+<h2>二、值传递（默认）</h2>
+<ol>
+<li>计算实参 → 创建形参 → <strong>复制</strong>值</li>
+<li>函数只改副本，<strong>不影响</strong>实参</li>
+<li>适合“只读参数”：factorial、isPrime</li>
+</ol>
+<div class="code-block"><span class="tp">void</span> <span class="fn">tryToModify</span>(<span class="tp">int</span> num) {
+    num = <span class="num">999</span>;
+}
+<span class="tp">int</span> a = <span class="num">10</span>;
+<span class="fn">tryToModify</span>(a);
+<span class="cm">// 调用后 a 仍是 10</span></div>
+<div class="exam-tip"><strong>初赛高频：</strong>给出函数内改参数，问外部变量是否变化 → 值传递则不变。</div>
+<aside class="notes">【讲解】安全：不会误改调用者数据。</aside>
+</div>
+
+<div class="slide" data-slide="4">
+<h2>三、引用传递（&amp;）</h2>
+<p>引用 = 变量的<strong>别名</strong>；形参写 <code>int &amp;num</code> 时改的是实参本身。</p>
+<div class="two-col">
+<div>
+<div class="code-block"><span class="cm">// 错误：值传递 swap</span>
+<span class="tp">void</span> <span class="fn">swapWrong</span>(<span class="tp">int</span> a, <span class="tp">int</span> b) {
+    <span class="tp">int</span> t=a; a=b; b=t;
+}</div>
+</div>
+<div>
+<div class="code-block"><span class="cm">// 正确：引用 swap</span>
+<span class="tp">void</span> <span class="fn">swap</span>(<span class="tp">int</span> &amp;a, <span class="tp">int</span> &amp;b) {
+    <span class="tp">int</span> t=a; a=b; b=t;
+}</div>
+</div>
+</div>
+<div class="code-block"><span class="cm">// 通过引用“返回”多值</span>
+<span class="tp">void</span> <span class="fn">calc</span>(<span class="tp">int</span> a, <span class="tp">int</span> b, <span class="tp">int</span> &amp;sum, <span class="tp">int</span> &amp;product) {
+    sum = a+b; product = a*b;
+}</div>
+<aside class="notes">【讲解】引用实参必须是可修改左值，不能传 5 或 a+b。</aside>
+</div>
+
+<div class="slide" data-slide="5">
+<h2>四、数组作为参数</h2>
+<ul>
+<li>传的是<strong>首元素地址</strong>，函数内改数组会影响原数组</li>
+<li>必须<strong>额外传长度 n</strong>；函数内 sizeof(arr) 是指针大小</li>
+<li>多维：除第一维外，其余维大小必须写</li>
+</ul>
+<div class="code-block"><span class="tp">void</span> <span class="fn">doubleElements</span>(<span class="tp">int</span> arr[], <span class="tp">int</span> n) {
+    <span class="kw">for</span> (<span class="tp">int</span> i=<span class="num">0</span>; i&lt;n; i++) arr[i] *= <span class="num">2</span>;
+}
+<span class="cm">// void print(int mat[][3], int rows);  // 列必须指定</span></div>
+<aside class="notes">【讲解】类似“引用式”传递元素。</aside>
+</div>
+
+<div class="slide" data-slide="6">
+<h2>五、局部变量与全局变量</h2>
+<table class="styled-table">
+<thead><tr><th></th><th>局部</th><th>全局</th></tr></thead>
+<tbody>
+<tr><td>定义位置</td><td>函数/块内</td><td>所有函数外</td></tr>
+<tr><td>作用域</td><td>所在块</td><td>定义处到文件尾</td></tr>
+<tr><td>生命周期</td><td>进入→离开块</td><td>程序全程</td></tr>
+<tr><td>初始化</td><td>默认垃圾值</td><td>默认 0</td></tr>
+</tbody>
+</table>
+<div class="code-block"><span class="tp">int</span> value = <span class="num">100</span>;  <span class="cm">// 全局</span>
+<span class="tp">int</span> main() {
+    <span class="tp">int</span> value = <span class="num">50</span>;  <span class="cm">// 遮蔽全局</span>
+    cout &lt;&lt; value;   <span class="cm">// 50</span>
+    cout &lt;&lt; ::value; <span class="cm">// 100 显式访问全局</span>
+}</div>
+<aside class="notes">【讲解】共享数据可用全局，但优先参数传递。</aside>
+</div>
+
+<div class="slide" data-slide="7">
+<h2>六、静态变量 static</h2>
+<ul>
+<li>局部 static：<strong>只初始化一次</strong></li>
+<li>生命周期贯穿程序；作用域仍在函数内</li>
+<li>典型：统计调用次数、生成递增 ID</li>
+</ul>
+<div class="code-block"><span class="tp">void</span> <span class="fn">countCalls</span>() {
+    <span class="kw">static int</span> callCount = <span class="num">0</span>;  <span class="cm">// 仅首次</span>
+    callCount++;
+    cout &lt;&lt; callCount;
+}
+<span class="cm">// 调 5 次 → 1 2 3 4 5</span>
+<span class="cm">// 若无 static，每次都是 1</span></div>
+<aside class="notes">【讲解】别把 static 当“每次从 0 累加”。</aside>
+</div>
+
+<div class="slide" data-slide="8">
+<h2>七、生命周期与作用域总表</h2>
+<table class="styled-table">
+<thead><tr><th>类型</th><th>作用域</th><th>生命周期</th><th>初始化</th></tr></thead>
+<tbody>
+<tr><td>局部</td><td>块内</td><td>进出块</td><td>不自动</td></tr>
+<tr><td>全局</td><td>文件</td><td>全程</td><td>0</td></tr>
+<tr><td>static 局部</td><td>函数内</td><td>全程</td><td>0（一次）</td></tr>
+<tr><td>形参</td><td>函数内</td><td>调用期间</td><td>由实参</td></tr>
+</tbody>
+</table>
+<aside class="notes">【讲解】存储：局部/形参在栈；全局/static 在静态区。</aside>
+</div>
+
+<div class="slide" data-slide="9">
+<h2>💻 代码模板（1）值 vs 引用 · swap</h2>
+<div class="code-block"><span class="tp">void</span> <span class="fn">badSwap</span>(<span class="tp">int</span> a, <span class="tp">int</span> b) {
+    <span class="tp">int</span> t=a; a=b; b=t;  <span class="cm">// 无效</span>
+}
+<span class="tp">void</span> <span class="fn">swap</span>(<span class="tp">int</span> &amp;a, <span class="tp">int</span> &amp;b) {
+    <span class="tp">int</span> t=a; a=b; b=t;  <span class="cm">// 有效</span>
+}
+<span class="tp">void</span> <span class="fn">getMinMax</span>(<span class="tp">int</span> a,<span class="tp">int</span> b,<span class="tp">int</span> c,
+              <span class="tp">int</span> &amp;mn, <span class="tp">int</span> &amp;mx) {
+    mn = mx = a;
+    <span class="kw">if</span> (b&lt;mn) mn=b; <span class="kw">if</span> (c&lt;mn) mn=c;
+    <span class="kw">if</span> (b&gt;mx) mx=b; <span class="kw">if</span> (c&gt;mx) mx=c;
+}</div>
+<aside class="notes">【讲解】模板一演示输出。</aside>
+</div>
+
+<div class="slide" data-slide="10">
+<h2>💻 代码模板（2）作用域综合</h2>
+<div class="code-block"><span class="tp">int</span> globalValue = <span class="num">0</span>;
+<span class="tp">void</span> <span class="fn">trackCalls</span>() {
+    <span class="kw">static int</span> callCount = <span class="num">0</span>;
+    callCount++;
+}
+<span class="tp">void</span> <span class="fn">localLifecycle</span>() {
+    <span class="tp">int</span> localVar = <span class="num">1</span>;
+    <span class="kw">static int</span> staticVar = <span class="num">1</span>;
+    localVar++; staticVar++;
+    <span class="cm">// 每次 local 重新 1 再变 2；static 累积</span>
+}</div>
+<aside class="notes">【讲解】模板二。</aside>
+</div>
+
+<div class="slide" data-slide="11">
+<h2>📝 真题精练</h2>
+<p><strong>题1：</strong>swap 引用交换后输出，再算绝对值差。输入 10 30 → 30 10 / 20</p>
+<div class="code-block"><span class="tp">void</span> <span class="fn">swap</span>(<span class="tp">int</span> &amp;a, <span class="tp">int</span> &amp;b) { ... }
+<span class="tp">int</span> <span class="fn">diff</span>(<span class="tp">int</span> a, <span class="tp">int</span> b) {
+    <span class="tp">int</span> d=a-b; <span class="kw">return</span> d&gt;<span class="num">0</span>?d:-d;
+}</div>
+<p><strong>题2：</strong>sumOfDigits 内 static 计调用次数；T 组，输出 各位和 与 次数</p>
+<div class="code-block"><span class="kw">static int</span> callCount = <span class="num">0</span>;
+callCount++;
+<span class="cm">// 样例 123/45/6789 → 6 1 / 9 2 / 30 3</span></div>
+<aside class="notes">【讲解】static 与全局两种暴露 callCount 的设计。</aside>
+</div>
+
+<div class="slide" data-slide="12">
+<h2>⚠ 易错点</h2>
+<ol>
+<li>以为值传递能改实参 → 要加 <code>&amp;</code></li>
+<li>数组参数里用 sizeof 求长度 → 必须传 n</li>
+<li>引用绑定常量/表达式 → 非法</li>
+<li>static 只初始化一次，不是每次清零</li>
+<li>局部遮蔽全局时忘记 <code>::</code></li>
+</ol>
+<div class="exam-tip"><strong>读题口诀：</strong>有没有 <code>&amp;</code>？是数组吗？有 static 吗？同名遮蔽了吗？</div>
+<aside class="notes">【讲解】对照讲义四易错。</aside>
+</div>
+
+<div class="slide" data-slide="13">
+<h2>🎯 本课小结</h2>
+<table class="styled-table">
+<thead><tr><th>模块</th><th>核心</th></tr></thead>
+<tbody>
+<tr><td>形参/实参</td><td>定义 vs 调用；同名不同变量</td></tr>
+<tr><td>值传递</td><td>副本；不改实参</td></tr>
+<tr><td>引用传递</td><td>&amp; 别名；swap / 多返回</td></tr>
+<tr><td>数组参数</td><td>传地址；必须传长度</td></tr>
+<tr><td>局部/全局</td><td>作用域与生命周期；遮蔽</td></tr>
+<tr><td>static</td><td>一次初始化，状态跨调用</td></tr>
+</tbody>
+</table>
+<div class="info-card"><strong>下一课：</strong>递归函数 —— 函数调用自身，分治与经典问题。</div>
+<aside class="notes">【收尾】布置读代码输出题。</aside>
+</div>
+
+</div>
 <div class="nav-buttons">
 <button class="nav-btn" id="prevBtn" onclick="changeSlide(-1)">◀ 上一页</button>
-<span class="slide-indicator" id="slideIndicator">1 / 7</span>
+<span class="slide-indicator" id="slideIndicator">1 / 13</span>
 <button class="nav-btn" id="nextBtn" onclick="changeSlide(1)">下一页 ▶</button>
 </div>
 </div>
 <script>
         let currentSlide = 1;
         const totalSlides = document.querySelectorAll('.slide').length;
-
         function changeSlide(direction) {
             const slides = document.querySelectorAll('.slide');
             slides[currentSlide - 1].classList.remove('active');
-
             currentSlide += direction;
             if (currentSlide < 1) currentSlide = 1;
             if (currentSlide > totalSlides) currentSlide = totalSlides;
-
             slides[currentSlide - 1].classList.add('active');
-
             updateUI();
         }
-
         function updateUI() {
             document.getElementById('slideIndicator').textContent = currentSlide + ' / ' + totalSlides;
             document.getElementById('prevBtn').disabled = (currentSlide === 1);
             document.getElementById('nextBtn').disabled = (currentSlide === totalSlides);
         }
-
-        // 键盘导航
         document.addEventListener('keydown', function(e) {
-            if (e.key === 'ArrowLeft' || e.key === 'ArrowUp') {
-                changeSlide(-1);
-            } else if (e.key === 'ArrowRight' || e.key === 'ArrowDown' || e.key === ' ') {
-                e.preventDefault();
-                changeSlide(1);
+            if (e.key === 'ArrowLeft' || e.key === 'ArrowUp') changeSlide(-1);
+            else if (e.key === 'ArrowRight' || e.key === 'ArrowDown' || e.key === ' ') {
+                e.preventDefault(); changeSlide(1);
             }
         });
-
-        // 触摸滑动支持
         let touchStartX = 0;
-        document.querySelector('.slides-wrapper').addEventListener('touchstart', function(e) {
+        document.querySelector('.slides-wrapper').addEventListener('touchstart', e => {
             touchStartX = e.touches[0].clientX;
         });
-
-        document.querySelector('.slides-wrapper').addEventListener('touchend', function(e) {
-            const touchEndX = e.changedTouches[0].clientX;
-            const diff = touchStartX - touchEndX;
-            if (Math.abs(diff) > 50) {
-                if (diff > 0) changeSlide(1);
-                else changeSlide(-1);
-            }
+        document.querySelector('.slides-wrapper').addEventListener('touchend', e => {
+            const diff = touchStartX - e.changedTouches[0].clientX;
+            if (Math.abs(diff) > 50) changeSlide(diff > 0 ? 1 : -1);
         });
-
-        // 初始化
         updateUI();
-    </script>
+</script>
 <script src="courseware-ui.js"></script>
 <script src="presenter.js"></script>
 </body>

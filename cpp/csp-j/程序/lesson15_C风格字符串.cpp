@@ -9,7 +9,7 @@
  * 3. 回文判断
  * 4. 真题AC代码
  *
- * 编译：g++ -std=c++11 lesson15_C风格字符串.cpp -o lesson15
+ * 编译：g++ -std=c++17 lesson15_C风格字符串.cpp -o lesson15
  * 运行：./lesson15
  */
 

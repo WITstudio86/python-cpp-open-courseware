@@ -463,6 +463,182 @@ int main() {
 }
 ```
 
+---
+
+### 题目3：迷宫能否到达
+
+**题目描述**：  
+N×M 迷宫，`.` 可走，`#` 墙。给出起点 (sx,sy) 与终点 (tx,ty)（1-index）。判断是否可达。
+
+**输入格式**：  
+第一行 N M  
+接下来 N 行迷宫  
+最后一行 sx sy tx ty  
+
+**输出格式**：  
+`Yes` 或 `No`
+
+**样例输入**：
+```
+3 4
+....
+.#..
+....
+1 1 3 4
+```
+
+**样例输出**：
+```
+Yes
+```
+
+**AC 代码**：
+```cpp
+#include <iostream>
+using namespace std;
+
+const int MAXN = 105;
+char maze[MAXN][MAXN];
+bool vis[MAXN][MAXN];
+int N, M, tx, ty;
+int dx[4] = {0, 0, 1, -1};
+int dy[4] = {1, -1, 0, 0};
+
+bool dfs(int x, int y) {
+    if (x == tx && y == ty) return true;
+    vis[x][y] = true;
+    for (int i = 0; i < 4; i++) {
+        int nx = x + dx[i], ny = y + dy[i];
+        if (nx >= 1 && nx <= N && ny >= 1 && ny <= M
+            && maze[nx][ny] == '.' && !vis[nx][ny]) {
+            if (dfs(nx, ny)) return true;
+        }
+    }
+    return false;
+}
+
+int main() {
+    cin >> N >> M;
+    for (int i = 1; i <= N; i++)
+        for (int j = 1; j <= M; j++)
+            cin >> maze[i][j];
+    int sx, sy;
+    cin >> sx >> sy >> tx >> ty;
+    // 若起点终点可能是墙，先判断
+    if (maze[sx][sy] == '#' || maze[tx][ty] == '#') {
+        cout << "No\n";
+        return 0;
+    }
+    cout << (dfs(sx, sy) ? "Yes" : "No") << "\n";
+    return 0;
+}
+```
+
+---
+
+## 🧩 进阶精讲
+
+### 九、组合型 DFS（与排列对比）
+
+选 k 个数的组合（顺序无关）：
+
+```cpp
+void dfs(int start, int k) {
+    if ((int)path.size() == k) { /* 输出 */ return; }
+    for (int i = start; i <= n; i++) {
+        path.push_back(i);
+        dfs(i + 1, k);       // 下一选更大编号，保证有序
+        path.pop_back();     // 回溯
+    }
+}
+```
+
+排列用 `used[]`；组合用 **start 下界** 防重复。
+
+### 十、连通块进阶：染色与最大块
+
+```cpp
+int color[N], col = 0, sz[N];
+void dfs(int u, int c) {
+    vis[u] = true;
+    color[u] = c;
+    sz[c]++;
+    for (int v : g[u]) if (!vis[v]) dfs(v, c);
+}
+// 主过程
+for (int i = 1; i <= n; i++) if (!vis[i]) {
+    ++col;
+    dfs(i, col);
+}
+```
+
+可输出：连通块个数、最大连通块大小、每个点所属块编号。
+
+### 十一、剪枝常识
+
+1. **可行性剪枝**：当前已不可能合法则 return（如剩余格子不够）。  
+2. **最优性剪枝**：已超过已知最优答案则 return（搜索最优解时）。  
+3. **顺序剪枝**：先搜约束紧的分支。  
+
+CSP-J 排列 n≤8~10，组合注意 C(n,k) 规模。
+
+### 十二、DFS 框架记忆口诀
+
+```
+标记 → 处理 → 枚举邻居/选择 → 合法则递归 → （回溯题）撤销标记
+```
+
+图遍历型：进入时 `vis=true`，一般**不撤销**（连通块）。  
+路径/排列型：需要再走其它分支时**必须撤销**。
+
+### 十三、迷宫四方向与八方向
+
+四方向：上下左右。  
+八方向：再加四个对角，`dx,dy` 各 8 个偏移。  
+题目说“相邻”时要看是否含对角。
+
+### 十四、与 BFS 分工（预告第43课）
+
+| 需求 | 用 |
+|------|----|
+| 能否到达 / 连通块 / 全部方案 | DFS 或 BFS |
+| 无权最短路 / 最少步数 | **BFS** |
+| 排列组合搜索树 | DFS 回溯 |
+| 拓扑序相关 | 有时 DFS |
+
+### 十五、调试技巧
+
+1. 小图手动画递归树。  
+2. 打印进入/离开节点日志查死循环（多半是 vis）。  
+3. 无向图建边是否双向。  
+4. 边界 `nx,ny` 是否检查。  
+5. n=1、m=0、起点=终点等边界。
+
+---
+
+## 💻 补充模板：统计连通块大小
+
+```cpp
+int dfsSize(int u) {
+    vis[u] = true;
+    int s = 1;
+    for (int v : g[u])
+        if (!vis[v]) s += dfsSize(v);
+    return s;
+}
+int main() {
+    // 建图后
+    int maxBlock = 0, blocks = 0;
+    for (int i = 1; i <= n; i++) if (!vis[i]) {
+        blocks++;
+        maxBlock = max(maxBlock, dfsSize(i));
+    }
+    cout << blocks << " " << maxBlock << endl;
+}
+```
+
+---
+
 ## 🎯 本课小结
 
-本课深入学习了DFS深度优先搜索算法，包括递归实现框架、vis标记数组的必要性、回溯法的"试探-递归-恢复"三步曲，以及三个重要应用：连通块计数（每调用一次DFS发现一个连通块）、迷宫寻路（四个方向递归探索）、排列枚举（回溯法生成所有排列）。DFS是CSP-J复赛的必考算法，建议将代码模板背到滚瓜烂熟，同时通过大量练习形成肌肉记忆。注意：求无权图最短路径请用BFS；回溯问题务必记得恢复状态；图的规模较大时考虑DFS栈溢出风险。
+本课深入学习了DFS深度优先搜索算法，包括递归实现框架、vis标记数组的必要性、回溯法的"试探-递归-恢复"三步曲，以及多个重要应用：连通块计数（每调用一次DFS发现一个连通块）、迷宫寻路（四个方向递归探索）、排列/组合枚举（回溯法）。DFS是CSP-J复赛的必考算法，建议将代码模板背到滚瓜烂熟，同时通过大量练习形成肌肉记忆。注意：求无权图最短路径请用BFS；回溯问题务必记得恢复状态；图遍历型 vis 通常不回溯，搜索型必须回溯；图的规模较大时考虑DFS栈溢出风险。

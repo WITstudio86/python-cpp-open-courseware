@@ -1,688 +1,415 @@
 <!DOCTYPE html>
-
 <html lang="zh-CN">
 <head>
 <meta charset="utf-8"/>
 <meta content="width=device-width, initial-scale=1.0" name="viewport"/>
 <title>CSP-J 备考课程 — 第33课：贪心算法（上）</title>
 <style>
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-        }
-
-        body {
-            font-family: "Microsoft YaHei", "PingFang SC", "Helvetica Neue", sans-serif;
-            background: #f5f5f5;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            min-height: 100vh;
-        }
-
-        /* 标题栏 */
-        .header {
-            width: 100%;
-            background: linear-gradient(135deg, #1a237e 0%, #283593 100%);
-            color: white;
-            padding: 12px 24px;
-            font-size: 18px;
-            font-weight: bold;
-            text-align: center;
-            letter-spacing: 2px;
-            position: fixed;
-            top: 0;
-            z-index: 100;
-            box-shadow: 0 2px 12px rgba(26, 35, 126, 0.3);
-        }
-
-        .header span {
-            color: #ffd600;
-        }
-
-        /* 主容器 */
-        .container {
-            margin-top: 60px;
-            width: 100%;
-            max-width: 1100px;
-            padding: 20px;
-        }
-
-        /* 幻灯片 */
-        .slide {
-            display: none;
-            background: white;
-            border-radius: 16px;
-            padding: 48px 56px;
-            margin: 20px auto;
-            box-shadow: 0 4px 24px rgba(0, 0, 0, 0.08);
-            min-height: 520px;
-            animation: fadeSlideIn 0.4s ease;
-        }
-
-        .slide.active {
-            display: block;
-        }
-
-        @keyframes fadeSlideIn {
-            from {
-                opacity: 0;
-                transform: translateY(18px);
-            }
-            to {
-                opacity: 1;
-                transform: translateY(0);
-            }
-        }
-
-        /* 标题页 */
-        .slide-title h1 {
-            font-size: 42px;
-            color: #1a237e;
-            margin-bottom: 16px;
-            line-height: 1.3;
-        }
-
-        .slide-title .subtitle {
-            font-size: 22px;
-            color: #5c6bc0;
-            margin-bottom: 32px;
-        }
-
-        .slide-title .badge {
-            display: inline-block;
-            background: #ffd600;
-            color: #1a237e;
-            padding: 8px 24px;
-            border-radius: 24px;
-            font-size: 16px;
-            font-weight: bold;
-            letter-spacing: 1px;
-        }
-
-        .slide-title .meta {
-            margin-top: 36px;
-            color: #9e9e9e;
-            font-size: 15px;
-        }
-
-        /* 内容幻灯片 */
-        .slide h2 {
-            font-size: 30px;
-            color: #1a237e;
-            margin-bottom: 24px;
-            padding-bottom: 12px;
-            border-bottom: 3px solid #ffd600;
-            display: inline-block;
-        }
-
-        .slide h3 {
-            font-size: 22px;
-            color: #283593;
-            margin: 24px 0 12px 0;
-        }
-
-        .slide p {
-            font-size: 17px;
-            line-height: 1.9;
-            color: #333;
-            margin-bottom: 14px;
-        }
-
-        .slide ul {
-            list-style: none;
-            padding-left: 0;
-        }
-
-        .slide ul li {
-            font-size: 17px;
-            line-height: 2;
-            color: #333;
-            padding-left: 28px;
-            position: relative;
-            margin-bottom: 6px;
-        }
-
-        .slide ul li::before {
-            content: "▸";
-            position: absolute;
-            left: 4px;
-            color: #ffd600;
-            font-weight: bold;
-        }
-
-        .slide ul li.nested::before {
-            content: "•";
-            color: #5c6bc0;
-        }
-
-        /* 代码块 */
-        .code-block {
-            background: #1e1e1e;
-            border-radius: 10px;
-            padding: 20px 24px;
-            margin: 16px 0;
-            overflow-x: auto;
-            font-family: "Consolas", "Monaco", "Courier New", monospace;
-            font-size: 15px;
-            line-height: 1.7;
-            color: #d4d4d4;
-            border: 1px solid #333;
-        }
-
-        .code-block .keyword {
-            color: #569cd6;
-        }
-        .code-block .type {
-            color: #4ec9b0;
-        }
-        .code-block .function {
-            color: #dcdcaa;
-        }
-        .code-block .string {
-            color: #ce9178;
-        }
-        .code-block .number {
-            color: #b5cea8;
-        }
-        .code-block .comment {
-            color: #6a9955;
-            font-style: italic;
-        }
-        .code-block .macro {
-            color: #c586c0;
-        }
-
-        /* 提示框 */
-        .tip-box {
-            background: #fff8e1;
-            border-left: 5px solid #ffc107;
-            padding: 16px 20px;
-            margin: 18px 0;
-            border-radius: 6px;
-            font-size: 16px;
-            color: #5d4037;
-            line-height: 1.7;
-        }
-
-        .tip-box strong {
-            color: #e65100;
-        }
-
-        .tip-box.warning {
-            background: #ffebee;
-            border-left-color: #f44336;
-            color: #b71c1c;
-        }
-
-        .tip-box.warning strong {
-            color: #c62828;
-        }
-
-        .tip-box.success {
-            background: #e8f5e9;
-            border-left-color: #4caf50;
-            color: #1b5e20;
-        }
-
-        /* 比较表格 */
-        .compare-table {
-            width: 100%;
-            border-collapse: collapse;
-            margin: 16px 0;
-            font-size: 15px;
-        }
-
-        .compare-table th {
-            background: #1a237e;
-            color: white;
-            padding: 12px 16px;
-            text-align: center;
-        }
-
-        .compare-table td {
-            padding: 10px 16px;
-            border-bottom: 1px solid #e0e0e0;
-            text-align: center;
-        }
-
-        .compare-table tr:nth-child(even) {
-            background: #f5f5f5;
-        }
-
-        .compare-table .highlight {
-            background: #fff8e1;
-            font-weight: bold;
-        }
-
-        /* 步骤列表 */
-        .steps {
-            counter-reset: step;
-        }
-
-        .steps li {
-            counter-increment: step;
-            padding-left: 48px !important;
-            margin-bottom: 14px !important;
-            line-height: 1.8 !important;
-        }
-
-        .steps li::before {
-            content: counter(step) !important;
-            position: absolute !important;
-            left: 0 !important;
-            width: 32px !important;
-            height: 32px !important;
-            background: #1a237e !important;
-            color: white !important;
-            border-radius: 50% !important;
-            text-align: center !important;
-            line-height: 32px !important;
-            font-size: 14px !important;
-            font-weight: bold !important;
-        }
-
-        /* 真题卡片 */
-        .problem-card {
-            background: #fafafa;
-            border: 1px solid #e0e0e0;
-            border-radius: 10px;
-            padding: 20px 24px;
-            margin: 16px 0;
-        }
-
-        .problem-card .problem-title {
-            font-size: 20px;
-            color: #1a237e;
-            font-weight: bold;
-            margin-bottom: 12px;
-        }
-
-        .problem-card .problem-section {
-            font-size: 16px;
-            color: #333;
-            line-height: 1.8;
-            margin: 8px 0;
-        }
-
-        .problem-card .problem-section strong {
-            color: #283593;
-        }
-
-        /* 导航按钮 */
-        .nav-buttons {
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            gap: 20px;
-            padding: 20px;
-            margin-bottom: 30px;
-        }
-
-        .nav-btn {
-            background: #1a237e;
-            color: white;
-            border: none;
-            padding: 12px 32px;
-            border-radius: 28px;
-            font-size: 16px;
-            cursor: pointer;
-            transition: all 0.25s;
-            letter-spacing: 1px;
-            font-weight: bold;
-        }
-
-        .nav-btn:hover {
-            background: #283593;
-            transform: translateY(-2px);
-            box-shadow: 0 4px 16px rgba(26, 35, 126, 0.35);
-        }
-
-        .nav-btn:disabled {
-            background: #ccc;
-            cursor: not-allowed;
-            transform: none;
-            box-shadow: none;
-        }
-
-        .page-indicator {
-            font-size: 16px;
-            color: #757575;
-            min-width: 80px;
-            text-align: center;
-        }
-
-        /* 响应式 */
-        @media (max-width: 768px) {
-            .slide {
-                padding: 28px 20px;
-                border-radius: 8px;
-                min-height: auto;
-            }
-
-            .slide-title h1 {
-                font-size: 28px;
-            }
-
-            .slide h2 {
-                font-size: 24px;
-            }
-
-            .slide p, .slide ul li {
-                font-size: 15px;
-            }
-
-            .code-block {
-                font-size: 13px;
-                padding: 14px 16px;
-            }
-
-            .compare-table {
-                font-size: 13px;
-            }
-
-            .header {
-                font-size: 15px;
-                padding: 10px 16px;
-            }
-        }
-
-        /* 打印样式 */
-        @media print {
-            .slide {
-                display: block !important;
-                break-inside: avoid;
-                page-break-after: always;
-                box-shadow: none;
-                border: 1px solid #eee;
-            }
-            .nav-buttons {
-                display: none;
-            }
-            .header {
-                position: static;
-            }
-        }
-    </style>
+* { margin: 0; padding: 0; box-sizing: border-box; }
+body { font-family: "Microsoft YaHei", "PingFang SC", "Helvetica Neue", sans-serif; background: #f5f5f5; display: flex; flex-direction: column; align-items: center; min-height: 100vh; }
+.header { width: 100%; background: linear-gradient(135deg, #1a237e 0%, #283593 100%); color: white; padding: 12px 24px; font-size: 18px; font-weight: bold; text-align: center; letter-spacing: 2px; position: fixed; top: 0; z-index: 100; box-shadow: 0 2px 12px rgba(26, 35, 126, 0.3); }
+.header span { color: #ffd600; }
+.container { margin-top: 60px; width: 100%; max-width: 1100px; padding: 20px; }
+.slide { display: none; background: white; border-radius: 16px; padding: 48px 56px; margin: 20px auto; box-shadow: 0 4px 24px rgba(0, 0, 0, 0.08); min-height: 520px; animation: fadeSlideIn 0.4s ease; }
+.slide.active { display: block; }
+@keyframes fadeSlideIn { from { opacity: 0; transform: translateY(18px); } to { opacity: 1; transform: translateY(0); } }
+.slide-title h1 { font-size: 42px; color: #1a237e; margin-bottom: 16px; line-height: 1.3; }
+.slide-title .subtitle { font-size: 22px; color: #5c6bc0; margin-bottom: 32px; }
+.slide-title .badge { display: inline-block; background: #ffd600; color: #1a237e; padding: 8px 24px; border-radius: 24px; font-size: 16px; font-weight: bold; letter-spacing: 1px; }
+.slide-title .meta { margin-top: 36px; color: #9e9e9e; font-size: 15px; }
+.slide h2 { font-size: 30px; color: #1a237e; margin-bottom: 24px; padding-bottom: 12px; border-bottom: 3px solid #ffd600; display: inline-block; }
+.slide h3 { font-size: 22px; color: #283593; margin: 24px 0 12px 0; }
+.slide p { font-size: 17px; line-height: 1.9; color: #333; margin-bottom: 14px; }
+.slide ul { list-style: none; padding-left: 0; }
+.slide ul li { font-size: 17px; line-height: 2; color: #333; padding-left: 28px; position: relative; margin-bottom: 6px; }
+.slide ul li::before { content: "▸"; position: absolute; left: 4px; color: #ffd600; font-weight: bold; }
+.slide ol { padding-left: 24px; margin-bottom: 12px; }
+.slide ol li { font-size: 17px; line-height: 1.9; color: #333; margin-bottom: 8px; }
+.code-block { background: #1e1e1e; border-radius: 10px; padding: 20px 24px; margin: 16px 0; overflow-x: auto; font-family: "Consolas", "Monaco", "Courier New", monospace; font-size: 14px; line-height: 1.7; color: #d4d4d4; border: 1px solid #333; white-space: pre; }
+.code-block .keyword { color: #569cd6; }
+.code-block .type { color: #4ec9b0; }
+.code-block .function { color: #dcdcaa; }
+.code-block .string { color: #ce9178; }
+.code-block .number { color: #b5cea8; }
+.code-block .comment { color: #6a9955; font-style: italic; }
+.tip-box { background: #fff8e1; border-left: 5px solid #ffc107; padding: 16px 20px; margin: 18px 0; border-radius: 6px; font-size: 16px; color: #5d4037; line-height: 1.7; }
+.tip-box strong { color: #e65100; }
+.tip-box.warning { background: #ffebee; border-left-color: #f44336; color: #b71c1c; }
+.tip-box.warning strong { color: #c62828; }
+.tip-box.success { background: #e8f5e9; border-left-color: #4caf50; color: #1b5e20; }
+.compare-table { width: 100%; border-collapse: collapse; margin: 16px 0; font-size: 15px; }
+.compare-table th { background: #1a237e; color: white; padding: 12px 16px; text-align: center; }
+.compare-table td { padding: 10px 16px; border-bottom: 1px solid #e0e0e0; text-align: center; }
+.compare-table tr:nth-child(even) { background: #f5f5f5; }
+.steps { counter-reset: step; list-style: none; padding-left: 0; }
+.steps li { counter-increment: step; padding-left: 48px !important; margin-bottom: 14px !important; line-height: 1.8 !important; position: relative; font-size: 17px; }
+.steps li::before { content: counter(step) !important; position: absolute !important; left: 0 !important; width: 32px !important; height: 32px !important; background: #1a237e !important; color: white !important; border-radius: 50% !important; text-align: center !important; line-height: 32px !important; font-size: 14px !important; font-weight: bold !important; }
+.problem-card { background: #fafafa; border: 1px solid #e0e0e0; border-radius: 10px; padding: 20px 24px; margin: 16px 0; }
+.problem-card .problem-title { font-size: 20px; color: #1a237e; font-weight: bold; margin-bottom: 12px; }
+.problem-card .problem-section { font-size: 16px; color: #333; line-height: 1.8; margin: 8px 0; }
+.problem-card .problem-section strong { color: #283593; }
+.nav-buttons { display: flex; justify-content: center; align-items: center; gap: 20px; padding: 20px; margin-bottom: 30px; }
+.nav-btn { background: #1a237e; color: white; border: none; padding: 12px 32px; border-radius: 28px; font-size: 16px; cursor: pointer; transition: all 0.25s; letter-spacing: 1px; font-weight: bold; }
+.nav-btn:hover { background: #283593; transform: translateY(-2px); box-shadow: 0 4px 16px rgba(26, 35, 126, 0.35); }
+.nav-btn:disabled { background: #ccc; cursor: not-allowed; transform: none; box-shadow: none; }
+.page-indicator { font-size: 16px; color: #757575; min-width: 80px; text-align: center; }
+.summary-box { background: #e8eaf6; border-radius: 12px; padding: 24px; margin: 16px 0; }
+.summary-box li { color: #1a237e; font-weight: 500; }
+@media (max-width: 768px) {
+  .slide { padding: 28px 20px; border-radius: 8px; min-height: auto; }
+  .slide-title h1 { font-size: 28px; }
+  .slide h2 { font-size: 24px; }
+  .slide p, .slide ul li { font-size: 15px; }
+  .code-block { font-size: 12px; padding: 14px 16px; }
+  .compare-table { font-size: 13px; }
+  .header { font-size: 15px; padding: 10px 16px; }
+}
+@media print {
+  .slide { display: block !important; break-inside: avoid; page-break-after: always; box-shadow: none; border: 1px solid #eee; }
+  .nav-buttons { display: none; }
+  .header { position: static; }
+}
+</style>
 </head>
 <body>
 <div class="header">📘 <span>CSP-J 备考课程</span> — 第33课：贪心算法（上）</div>
 <div class="container">
-<!-- 幻灯片 1：标题页 -->
+
+<!-- 1 标题 -->
 <div class="slide slide-title active" id="slide1">
 <h1>第33课<br/>贪心算法（上）</h1>
 <div class="subtitle">局部最优 → 全局最优</div>
-<div class="badge">第9阶段 · 贪心与递归进阶</div>
+<div class="badge">第9阶段 · 贪心与递推进阶</div>
 <div class="meta">
-                📋 考纲知识点：贪心思想 · 活动选择 · 硬币找零 · 区间覆盖 · 贪心正确性条件<br/>
-                ⏱️ 建议学习时长：60 分钟
-            </div>
-
-<aside class="notes">【开场】第 1/6 页 · 贪心算法（上）
-用 30 秒说明本课目标与学完能做什么，再进入正题。
-大纲考点：贪心思想、最优选择策略、区间调度
-配套练习方向：活动选择与区间覆盖题
-封面关键词：
-· 第33课
-· 贪心算法（上）
-· 局部最优 → 全局最优
-· 第9阶段 · 贪心与递归进阶
-互动：问学生「今天最想搞清楚什么？」，收 1–2 个期待。</aside>
+📋 考纲：贪心思想 · 活动选择 · 硬币找零 · 区间覆盖 · 正确性条件<br/>
+⏱️ 建议学习时长：60–75 分钟 · 本课件共 14 页
 </div>
-<!-- 幻灯片 2：贪心算法核心思想 -->
+<aside class="notes">【开场】第 1/14 页 · 贪心算法（上）
+用 30 秒说明本课目标：会判断能否贪心、会设计排序策略、会写活动选择/区间覆盖/找零模板。
+大纲考点：贪心思想、最优选择策略、区间调度。
+互动：问学生「今天最想搞清楚什么？」</aside>
+</div>
+
+<!-- 2 考纲与目标 -->
 <div class="slide" id="slide2">
-<h2>一、贪心算法核心思想</h2>
+<h2>考纲要求与学习目标</h2>
+<table class="compare-table">
+<tr><th>知识点</th><th>要求程度</th><th>本课对应</th></tr>
+<tr><td>贪心核心思想</td><td>理解并会表述</td><td>第 3–4 页</td></tr>
+<tr><td>贪心选择性质 / 最优子结构</td><td>会判断是否适用</td><td>第 3、11 页</td></tr>
+<tr><td>活动选择（区间调度）</td><td>能独立 AC</td><td>第 5–6 页</td></tr>
+<tr><td>区间覆盖 / 区间选点</td><td>掌握策略差异</td><td>第 7–8 页</td></tr>
+<tr><td>硬币找零</td><td>知贪心边界，会 DP 保底</td><td>第 9–10 页</td></tr>
+<tr><td>排队接水 / 最优装载</td><td>排序 + 一次扫描</td><td>第 10–11 页</td></tr>
+</table>
 <div class="tip-box success">
-<strong>核心定义：</strong>贪心算法在每一步选择中都采取<strong>当前状态下最优</strong>的选择（局部最优），从而希望导致结果是<strong>全局最优</strong>的算法策略。
-            </div>
+<strong>学完你应能：</strong>① 用「替换法」口头验证策略；② 默写活动选择与区间覆盖模板；③ 对硬币系统判断能否贪心；④ 对照区间类贪心表选对排序关键字。
+</div>
+<aside class="notes">【讲解】考纲地图
+先建立「本课地图」，后续每页对应一块。强调 CSP-J 贪心几乎都是「排序 + 一次遍历」。</aside>
+</div>
+
+<!-- 3 核心思想 -->
+<div class="slide" id="slide3">
+<h2>一、什么是贪心算法</h2>
+<div class="tip-box success">
+<strong>一句话：</strong>每一步都采取<strong>当前状态下最优</strong>的选择，并希望这些局部最优能推出<strong>全局最优</strong>。
+</div>
 <h3>两个关键性质（缺一不可）</h3>
 <ul>
-<li><strong>贪心选择性质</strong>：整体最优解可以通过一系列<em>局部最优选择</em>来达到。每一步选择不需回溯，不可撤销。</li>
-<li><strong>最优子结构性质</strong>：问题的最优解<em>包含</em>其子问题的最优解。这是贪心和DP的共同基础。</li>
+<li><strong>贪心选择性质</strong>：整体最优可通过一系列局部最优达到；每步选择<strong>不可撤销、不需回溯</strong>。</li>
+<li><strong>最优子结构性质</strong>：问题的最优解<strong>包含</strong>其子问题的最优解（DP 也需要，但贪心用更高效的方式利用它）。</li>
 </ul>
-<h3>贪心策略设计四步骤</h3>
-<ol class="steps">
-<li>分析问题，确定<strong>候选集合</strong>（所有可能的选择）</li>
-<li>设计<strong>贪心策略</strong>（按什么标准选择——这是最关键的一步）</li>
-<li>验证<strong>正确性</strong>（尝试构造反例，找不到反例则策略可能正确）</li>
-<li>实现算法（通常是<strong>排序 + 一次遍历</strong>，O(n log n)）</li>
-</ol>
+<h3>与其它算法对比（先建立直觉）</h3>
+<table class="compare-table">
+<tr><th>维度</th><th>贪心</th><th>动态规划</th><th>回溯/枚举</th></tr>
+<tr><td>选择方式</td><td>当前最优，不回溯</td><td>记录所有子问题最优</td><td>穷举所有方案</td></tr>
+<tr><td>正确性</td><td>需证明/验证</td><td>状态对则最优</td><td>保证最优</td></tr>
+<tr><td>复杂度</td><td>常 O(n log n)</td><td>常 O(n²)/O(nW)</td><td>常指数</td></tr>
+</table>
 <div class="tip-box warning">
-<strong>⚠️ 注意：</strong>贪心并不总是正确的！必须先判断问题是否满足贪心选择性质和最优子结构性质，再决定是否使用贪心。
-            </div>
+<strong>⚠️：</strong>贪心<strong>不是</strong>万能的。不能证明且存在反例时，不要硬用贪心。
+</div>
+<aside class="notes">【讲解】核心定义 + 两性质
+类比：每天存最多的钱 vs 能否攒出最多总资产——有时会失败。
+点出与 DP/回溯的分工。</aside>
+</div>
 
-<aside class="notes">【讲解】一、贪心算法核心思想
-本页要点（照着讲即可）：
-· 核心定义：
-· 当前状态下最优
-· 全局最优
-· 贪心选择性质 ：整体最优解可以通过一系列 局部最优选择 来达到。每一步选择不需回溯，不可撤销。
-· 贪心选择性质
-· 最优子结构性质 ：问题的最优解 包含 其子问题的最优解。这是贪心和DP的共同基础。
-讲解时放慢关键术语；用 1 个生活类比 + 1 个反例加深印象。
-本课大纲考点（可适时点题）：贪心思想、最优选择策略、区间调度</aside>
-</div>
-<!-- 幻灯片 3：活动选择问题（区间调度） -->
-<div class="slide" id="slide3">
-<h2>二、经典问题：活动选择（区间调度）</h2>
+<!-- 4 设计步骤 -->
+<div class="slide" id="slide4">
+<h2>二、贪心策略设计四步骤</h2>
+<ol class="steps">
+<li><strong>分析问题，确定候选集合</strong>——所有可能被选择的对象（活动、硬币、区间…）</li>
+<li><strong>设计贪心策略</strong>——按哪个关键字排序？升序还是降序？这是成败关键。</li>
+<li><strong>验证正确性</strong>——比赛中用「反证/替换法」或「找反例」；找不到反例 + 样例通过 → 大概率可用。</li>
+<li><strong>编码实现</strong>——多数是 <strong>排序 + 一次遍历</strong>，时间常由排序决定 O(n log n)。</li>
+</ol>
 <div class="tip-box">
-<strong>📌 问题：</strong>有 n 个活动，每个活动有开始时间 s[i] 和结束时间 f[i]。同一时间只能参加一个活动。<strong>最多能参加多少个活动？</strong>
+<strong>判断是否用贪心的四步法：</strong><br/>
+① n≤20 → 可直接枚举/回溯；② 尝试构造反例；③ 定排序标准；④ 小样例与边界验证。
 </div>
-<h3>贪心策略：按结束时间升序排序</h3>
-<div class="code-block">
-<span class="comment">// 核心贪心代码</span>
-<span class="type">int</span> <span class="function">greedySelect</span>(Activity a[], <span class="type">int</span> n) {
-    <span class="function">sort</span>(a, a + n, <span class="function">cmp</span>);  <span class="comment">// 按结束时间升序</span>
-<span class="type">int</span> ans = <span class="number">1</span>;
-    <span class="type">int</span> lastEnd = a[<span class="number">0</span>].end;
+<div class="tip-box warning">
+<strong>反例提醒：</strong>两端取硬币 [1,100,10,1] 若「每次取两端较大」会出错——说明策略必须验证。
+</div>
+<aside class="notes">【讲解】四步骤
+板书流程：候选 → 策略 → 证明/反例 → 实现。
+强调「排序标准选错 = 全盘错」。</aside>
+</div>
+
+<!-- 5 活动选择思想 -->
+<div class="slide" id="slide5">
+<h2>三、活动选择（区间调度）</h2>
+<div class="tip-box">
+<strong>问题：</strong>n 个活动 [s, f)，同一时间只能做一个，最多参加多少个？
+</div>
+<p><strong>贪心策略：</strong>按<strong>结束时间升序</strong>排序，依次选与已选活动不冲突的活动（s ≥ lastEnd）。</p>
+<p><strong>为何正确（替换法）：</strong>若最优解第一个不是结束最早的 g，用 g 替换后仍合法且数量不少 → 存在以 g 开头的最优解，归纳即可。</p>
+<div class="code-block"><span class="comment">// 手推样例（按结束时间排序后）</span>
+<span class="comment">// [1,4) [3,5) [0,6) [5,7) [5,9) [8,9)</span>
+<span class="comment">// lastEnd=0 → 选[1,4) lastEnd=4</span>
+<span class="comment">// [3,5) 冲突；[0,6) 冲突</span>
+<span class="comment">// 选[5,7) lastEnd=7；[5,9)冲突；选[8,9)</span>
+<span class="comment">// 答案 = 3</span></div>
+<div class="tip-box warning">
+<strong>错策略：</strong>按开始时间或区间长度排序可能选中长区间占住时间，答案更差。例：[1,10][2,4][5,6] 按开始只能 1 个，按结束可得 2 个。
+</div>
+<aside class="notes">【讲解】活动选择
+黑板上画时间轴，边选边标 lastEnd。
+一定强调「结束最早 = 为后面留空间」。</aside>
+</div>
+
+<!-- 6 活动选择代码 -->
+<div class="slide" id="slide6">
+<h2>活动选择 — 完整模板</h2>
+<div class="code-block"><span class="keyword">struct</span> Activity { <span class="type">int</span> start, end; } a[MAXN];
+<span class="type">bool</span> <span class="function">cmp</span>(Activity x, Activity y) {
+    <span class="keyword">return</span> x.end &lt; y.end;  <span class="comment">// 严格 &lt;，禁止 &lt;=</span>
+}
+<span class="type">int</span> <span class="function">main</span>() {
+    ios::sync_with_stdio(<span class="keyword">false</span>); cin.tie(<span class="number">0</span>);
+    <span class="type">int</span> n; cin &gt;&gt; n;
+    <span class="keyword">for</span> (<span class="type">int</span> i = <span class="number">0</span>; i &lt; n; i++) cin &gt;&gt; a[i].start &gt;&gt; a[i].end;
+    <span class="function">sort</span>(a, a + n, cmp);
+    <span class="type">int</span> ans = <span class="number">1</span>, lastEnd = a[<span class="number">0</span>].end;
     <span class="keyword">for</span> (<span class="type">int</span> i = <span class="number">1</span>; i &lt; n; i++) {
-        <span class="keyword">if</span> (a[i].start &gt;= lastEnd) {  <span class="comment">// 不冲突</span>
-            ans++;
-            lastEnd = a[i].end;
+        <span class="keyword">if</span> (a[i].start &gt;= lastEnd) {
+            ans++; lastEnd = a[i].end;  <span class="comment">// 选中后必须更新</span>
         }
     }
-    <span class="keyword">return</span> ans;
-}
-            </div>
-<table class="compare-table">
-<tr><th>变种问题</th><th>排序标准</th><th>贪心策略</th><th>复杂度</th></tr>
-<tr><td>最多区间选择</td><td>按结束时间 ↑</td><td>选不冲突的区间</td><td>O(n log n)</td></tr>
-<tr><td>最少区间覆盖</td><td>按开始时间 ↑</td><td>选延伸最远的区间</td><td>O(n log n)</td></tr>
-<tr><td>区间选点</td><td>按结束时间 ↑</td><td>在右端点放置点</td><td>O(n log n)</td></tr>
-<tr><td>移除最少区间</td><td>按结束时间 ↑</td><td>n - 最多可选数</td><td>O(n log n)</td></tr>
-</table>
+    cout &lt;&lt; ans &lt;&lt; endl;
+}</div>
 <div class="tip-box">
-<strong>🎯 考试技巧：</strong>区间类问题最重要的是<strong>选对排序标准</strong>。建议写代码前先用纸笔推演小样例，确认排序标准正确。
-            </div>
-
-<aside class="notes">【讲解】二、经典问题：活动选择（区间调度）
-结合讲义《三、经典问题一：活动选择问题（区间调度）》强调：
-· 问题描述：有 n 个活动，每个活动有一个开始时间 s[i] 和结束时间 f[i]。同一时间只能参加一个活动，且每个活动一旦开始就必须完整参加。问最多能参加多少个活动？
-· 贪心策略：按照**结束时间从小到大**排序，每次选择结束时间最早且与已选活动不冲突的活动。
-· 为什么按结束时间排序是正确的？因为选择结束时间最早的活动，可以为后面留出尽可能多的时间空间。我们可以用"替换法"来证明：假设最优解中第一个活动不是结束最早的，我们可以把最优解中的第一个活动替换为结束最早的那个活动——替换后不减少活动数量，因此结束最早的活动一定属于某个最优解。
-· 下面演示一个具体例子：
-· 活动编号： 1 2 3 4 5 6
-幻灯片上可见要点：
-· 📌 问题：
-· 最多能参加多少个活动？
-· 🎯 考试技巧：
-· 选对排序标准
-讲解时放慢关键术语；用 1 个生活类比 + 1 个反例加深印象。</aside>
+<strong>复杂度：</strong>O(n log n)（排序主导）。n 可达 1e5，勿用 O(n²) DP。左闭右开时 start ≥ lastEnd 即可。
 </div>
-<!-- 幻灯片 4：硬币找零 + 代码模板 -->
-<div class="slide" id="slide4">
-<h2>三、硬币找零问题</h2>
-<h3>贪心策略：每次选最大面额（仅适用于规范硬币系统）</h3>
-<div class="code-block">
-<span class="comment">// 贪心法 —— 仅适用人民币等规范硬币系统</span>
-<span class="type">int</span> <span class="function">coinChange</span>(<span class="type">int</span> coins[], <span class="type">int</span> m, <span class="type">int</span> amount) {
+<aside class="notes">【讲解】模板
+对照程序 lesson33 的 activitySelection。
+易错：cmp 写成 &lt;=；忘记更新 lastEnd；n=0 边界可补充说明。</aside>
+</div>
+
+<!-- 7 区间对照表 -->
+<div class="slide" id="slide7">
+<h2>四、区间类贪心对照表（必背）</h2>
+<table class="compare-table">
+<tr><th>问题</th><th>排序关键字</th><th>扫描决策</th><th>输出</th></tr>
+<tr class="highlight"><td>最多不重叠区间</td><td>右端点 ↑</td><td>不冲突则选</td><td>个数</td></tr>
+<tr><td>移除最少重叠</td><td>同上</td><td>n − 最多不重叠</td><td>个数</td></tr>
+<tr><td>区间选点</td><td>右端点 ↑</td><td>右端点放点</td><td>点数</td></tr>
+<tr class="highlight"><td>区间覆盖</td><td>左端点 ↑</td><td>覆盖当前点且右端最远</td><td>区间数或 -1</td></tr>
+<tr><td>排队接水</td><td>时间 ↑</td><td>累加等待</td><td>总等待</td></tr>
+<tr><td>最优装载（件数）</td><td>重量 ↑</td><td>能装就装</td><td>件数</td></tr>
+</table>
+<div class="tip-box success">
+<strong>记忆：</strong>「要多选 / 要少点」→ 多按<strong>右端</strong>；「要盖满」→ 按<strong>左端</strong> + 每次延伸最远。
+</div>
+<aside class="notes">【讲解】对照表
+考前必过。可让学生闭卷说出每种排序关键字。</aside>
+</div>
+
+<!-- 8 区间覆盖与选点 -->
+<div class="slide" id="slide8">
+<h2>区间覆盖 + 区间选点</h2>
+<h3>区间覆盖：用最少区间盖住 [L,R]</h3>
+<div class="code-block"><span class="function">sort</span>(a, a + n, cmpByLeft);  <span class="comment">// 左端点升序</span>
+<span class="type">int</span> ans = <span class="number">0</span>, currentR = targetL, i = <span class="number">0</span>;
+<span class="keyword">while</span> (currentR &lt; targetR) {
+    <span class="type">int</span> maxR = currentR;
+    <span class="keyword">while</span> (i &lt; n &amp;&amp; a[i].left &lt;= currentR) {
+        maxR = max(maxR, a[i].right); i++;
+    }
+    <span class="keyword">if</span> (maxR == currentR) { ans = -<span class="number">1</span>; <span class="keyword">break</span>; } <span class="comment">// 无解</span>
+    ans++; currentR = maxR;
+}</div>
+<h3>区间选点：最少点使每个区间至少含一点</h3>
+<div class="code-block"><span class="comment">// 按右端点升序；若当前区间未被 last 覆盖，则在右端放点</span>
+<span class="keyword">if</span> (a[i].first &gt; last) { last = a[i].second; ans++; }</div>
+<div class="tip-box warning">
+<strong>覆盖题易错：</strong>忘记 maxR==currentR 时输出 -1；目标区间外的区间要正确跳过。
+</div>
+<aside class="notes">【讲解】覆盖与选点
+覆盖：贪心延伸；选点：右端放点。对照程序 intervalCover。</aside>
+</div>
+
+<!-- 9 硬币找零 -->
+<div class="slide" id="slide9">
+<h2>五、硬币找零</h2>
+<p><strong>贪心：</strong>每次选不超过剩余金额的最大面额（人民币等<strong>规范硬币系统</strong>可用）。</p>
+<div class="code-block"><span class="comment">// coins 从大到小</span>
+<span class="type">int</span> <span class="function">greedyCoinChange</span>(<span class="type">int</span> coins[], <span class="type">int</span> m, <span class="type">int</span> amount) {
     <span class="type">int</span> count = <span class="number">0</span>;
     <span class="keyword">for</span> (<span class="type">int</span> i = <span class="number">0</span>; i &lt; m; i++) {
-        count += amount / coins[i];     <span class="comment">// 尽可能多用</span>
-        amount %= coins[i];             <span class="comment">// 剩余金额</span>
+        count += amount / coins[i];
+        amount %= coins[i];
     }
-    <span class="keyword">return</span> (amount == <span class="number">0</span>) ? count : -<span class="number">1</span>;
-}
-            </div>
+    <span class="keyword">return</span> amount == <span class="number">0</span> ? count : -<span class="number">1</span>;
+}</div>
 <div class="tip-box warning">
-<strong>⚠️ 重要反例：</strong>硬币面额 {1, 3, 4}，找零 6 元<br/>
-                贪心：4+1+1 = <strong>3 枚</strong>（错误！）<br/>
-                最优：3+3 = <strong>2 枚</strong>（DP 得出）<br/>
-                → 面额不满足规范硬币系统时，贪心会失效！
-            </div>
+<strong>反例 {1,3,4} 找零 6：</strong>贪心 4+1+1=3 枚；最优 3+3=2 枚。非规范系统贪心失效！
+</div>
 <div class="tip-box">
-<strong>🎯 考试应对：</strong>如果题目<strong>未明确</strong>说明面额规律，且数据范围不大（金额 ≤ 10000），请优先使用<strong>动态规划（完全背包）</strong>，保证正确性。
-            </div>
-<div class="code-block">
-<span class="comment">// DP法（完全背包）—— 保证正确</span>
-<span class="type">int</span> dp[MAX_AMOUNT];
-<span class="function">memset</span>(dp, <span class="number">0x3f</span>, <span class="keyword">sizeof</span>(dp));
-dp[<span class="number">0</span>] = <span class="number">0</span>;
+<strong>考试策略：</strong>未说明面额规律且金额≤1e4、面额种类少 → 用完全背包 DP 保底。
+</div>
+<aside class="notes">【讲解】找零
+现场算 87 元人民币：50+20+10+5+1+1=6。
+再讲反例，过渡到 DP。</aside>
+</div>
+
+<!-- 10 DP找零 + 排队 -->
+<div class="slide" id="slide10">
+<h2>找零 DP 保底 + 排队接水</h2>
+<h3>完全背包最少硬币</h3>
+<div class="code-block"><span class="function">memset</span>(dp, <span class="number">0x3f</span>, <span class="keyword">sizeof</span>(dp)); dp[<span class="number">0</span>] = <span class="number">0</span>;
 <span class="keyword">for</span> (<span class="type">int</span> i = <span class="number">1</span>; i &lt;= amount; i++)
     <span class="keyword">for</span> (<span class="type">int</span> j = <span class="number">0</span>; j &lt; m; j++)
         <span class="keyword">if</span> (i &gt;= coins[j])
-            dp[i] = <span class="function">min</span>(dp[i], dp[i - coins[j]] + <span class="number">1</span>);
-            </div>
-
-<aside class="notes">【讲解】三、硬币找零问题
-结合讲义《四、经典问题二：硬币找零问题》强调：
-· 问题描述：给定不同面额的硬币和一个总金额，计算可以凑成总金额所需的最少硬币个数。如果无法凑出，返回 -1。
-· 贪心策略：每次选择面额最大且不超过剩余金额的硬币。
-· 以人民币硬币面额（1元、5元、10元、20元、50元、100元）为例，找零 87 元的过程如下：
-· 剩余 87 元 → 面额 50 ≤ 87，选 1 枚 50 元 → 剩余 37 元
-· 剩余 37 元 → 面额 20 ≤ 37，选 1 枚 20 元 → 剩余 17 元
-幻灯片上可见要点：
-· ⚠️ 重要反例：
-· 🎯 考试应对：
-· 动态规划（完全背包）
-讲解时放慢关键术语；用 1 个生活类比 + 1 个反例加深印象。</aside>
-</div>
-<!-- 幻灯片 5：真题精练 -->
-<div class="slide" id="slide5">
-<h2>四、真题精练</h2>
-<div class="problem-card">
-<div class="problem-title">📝 题目一：活动选择</div>
-<div class="problem-section">
-<strong>题目：</strong>有 n 个社团申请使用礼堂，时间段为 [s_i, f_i)，同一时间只能一个社团使用。求最多能安排多少个社团。<br/>
-<strong>输入：</strong>第一行 n (1 ≤ n ≤ 100000)，接下来 n 行每行两个整数 s_i, f_i。<br/>
-<strong>输出：</strong>一个整数，表示最多能安排的社团数。
-                </div>
-<div class="problem-section">
-<strong>样例输入：</strong><br/>
-<code>6<br/>1 4<br/>3 5<br/>0 6<br/>5 7<br/>8 9<br/>5 9</code><br/>
-<strong>样例输出：</strong><code>3</code>
-</div>
-</div>
-<div class="problem-card">
-<div class="problem-title">📝 题目二：排队接水</div>
-<div class="problem-section">
-<strong>题目：</strong>n 个人排队接水，第 i 人需 t_i 分钟。求最小总等待时间（每个人的完成时间之和）。<br/>
-<strong>输入：</strong>第一行 n，第二行 n 个整数 t_i。<br/>
-<strong>样例输入：</strong><code>4 \n 3 1 4 2</code><br/>
-<strong>样例输出：</strong><code>20</code>
-                    （排序后 1,2,3,4，完成时间 1,3,6,10，总和 = 20）
-                </div>
-</div>
+            dp[i] = min(dp[i], dp[i - coins[j]] + <span class="number">1</span>);
+<span class="comment">// 答案：dp[amount]==INF ? -1 : dp[amount]</span></div>
+<h3>排队接水：短作业优先</h3>
+<p>n 人接水时间 t[i]，最小化总完成时间之和。</p>
+<div class="code-block"><span class="function">sort</span>(t, t + n);  <span class="comment">// 升序</span>
+<span class="type">long long</span> total = <span class="number">0</span>, cur = <span class="number">0</span>;
+<span class="keyword">for</span> (<span class="type">int</span> i = <span class="number">0</span>; i &lt; n; i++) {
+    cur += t[i]; total += cur;
+}</div>
 <div class="tip-box">
-<strong>🎯 解题关键：</strong>两道题都使用<strong>排序 + 贪心</strong>模式。题目一按<strong>结束时间</strong>排序，题目二按<strong>接水时间</strong>排序。注意题目二中总等待时间可能超过 int 范围，需使用 <code>long long</code>。
-            </div>
-
-<aside class="notes">【讲解】四、真题精练
-本页要点（照着讲即可）：
-· 样例输入：
-· 样例输出：
-· 🎯 解题关键：
-· 排序 + 贪心
-· 结束时间
-· 接水时间
-练习页节奏：先独立想 1 分钟 → 再点拨思路 → 最后对答案讲为什么。
-可联系：活动选择与区间覆盖题</aside>
+<strong>样例：</strong>3 1 4 2 → 排序 1,2,3,4 → 完成 1+3+6+10=20。务必 <code>long long</code>。
 </div>
-<!-- 幻灯片 6：易错点 + 总结 -->
-<div class="slide" id="slide6">
-<h2>五、易错点 + 本课小结</h2>
-<h3>⚠️ 五大易错点</h3>
+<aside class="notes">【讲解】DP 找零 + 排队
+解释为何短的先接：长的排前面会拖累所有后面的人。</aside>
+</div>
+
+<!-- 11 最优装载 + 对比 -->
+<div class="slide" id="slide11">
+<h2>最优装载 + 何时不用贪心</h2>
+<p><strong>件数最多：</strong>按重量升序，能装就装（每件「价值」都是 1）。</p>
+<div class="code-block"><span class="function">sort</span>(w, w + n);
+<span class="type">int</span> ans = <span class="number">0</span>; <span class="type">long long</span> sum = <span class="number">0</span>;
+<span class="keyword">for</span> (<span class="type">int</span> i = <span class="number">0</span>; i &lt; n; i++) {
+    <span class="keyword">if</span> (sum + w[i] &lt;= C) { sum += w[i]; ans++; }
+    <span class="keyword">else break</span>;
+}</div>
 <ul>
-<li><strong>排序标准选错：</strong>活动选择应按<em>结束时间</em>排序，而非开始时间或区间长度。写代码前先用纸笔验证。</li>
-<li><strong>贪心并非总是正确：</strong>硬币找零中 {1,3,4} 面额时贪心失效。不明确时优先用 DP。</li>
-<li><strong>忘记无解判断：</strong>区间覆盖中当 maxR == currentR 时表示无法继续，应输出 -1。</li>
-<li><strong>cmp 函数写错：</strong>必须写 <code>return a.end &lt; b.end</code>（严格小于），不能写成 &lt;=。</li>
-<li><strong>数据溢出：</strong>排队接水的总等待时间可能很大，务必使用 <code>long long</code>。</li>
+<li>若求<strong>价值最大</strong>且价值不同 → 一般是 01 背包，不能按重量简单贪心。</li>
+<li>硬币非规范、需要全局权衡、能构造反例 → 别贪心。</li>
+<li>状态依赖复杂、像 DP → 按 DP 做。</li>
 </ul>
-<h3>📋 本课总结</h3>
-<table class="compare-table">
-<tr><th>问题类型</th><th>贪心策略</th><th>排序标准</th><th>复杂度</th></tr>
-<tr><td>活动选择</td><td>选不冲突的区间</td><td>结束时间 ↑</td><td>O(n log n)</td></tr>
-<tr><td>硬币找零</td><td>选最大面额</td><td>面额 ↓（已排序）</td><td>O(m)</td></tr>
-<tr><td>区间覆盖</td><td>选延伸最远的区间</td><td>开始时间 ↑</td><td>O(n log n)</td></tr>
-<tr><td>排队接水</td><td>短作业优先</td><td>接水时间 ↑</td><td>O(n log n)</td></tr>
-</table>
-<div class="tip-box success" style="margin-top:20px;">
-<strong>✅ 核心方法论：</strong>贪心 = <strong>正确的排序标准 + 一次遍历</strong>。难点在于<strong>判断能否用贪心</strong>和<strong>设计贪心策略</strong>，代码本身通常很简洁。
-            </div>
-
-<aside class="notes">【收尾】回顾本课主线：五、易错点 + 本课小结
-对照大纲再过一遍：贪心思想、最优选择策略、区间调度
-板书/口述要点：
-· 排序标准选错： 活动选择应按 结束时间 排序，而非开始时间或区间长度。写代码前先用纸笔验证。
-· 排序标准选错：
-· 贪心并非总是正确： 硬币找零中 {1,3,4} 面额时贪心失效。不明确时优先用 DP。
-· 贪心并非总是正确：
-· 忘记无解判断： 区间覆盖中当 maxR == currentR 时表示无法继续，应输出 -1。
-· 忘记无解判断：
-课后任务：活动选择与区间覆盖题
-结束前留 2 分钟答疑；布置 1 道小练习检验是否真正掌握。</aside>
+<div class="tip-box success">
+<strong>CSP-J 贪心主旋律：</strong>排序定优先级 + 一次扫描决策 + 注意 long long 与 cmp 严格弱序。
 </div>
-<!-- 导航按钮 -->
+<aside class="notes">【讲解】装载 vs 背包
+件数 vs 价值：价值不同就回到第39课背包。</aside>
+</div>
+
+<!-- 12 真题活动选择 -->
+<div class="slide" id="slide12">
+<h2>真题精练① 活动选择</h2>
+<div class="problem-card">
+<div class="problem-title">📝 社团使用礼堂</div>
+<div class="problem-section">
+<strong>题意：</strong>n 个社团申请 [s_i, f_i)，同一时间只能一个。最多安排多少个？<br/>
+<strong>范围：</strong>1 ≤ n ≤ 1e5，0 ≤ s &lt; f ≤ 1e9。<br/>
+<strong>样例：</strong>6 个区间 → 输出 <strong>3</strong>（如 [1,4)[5,7)[8,9)）。
+</div>
+</div>
+<div class="code-block"><span class="function">sort</span>(a, a+n, [](Activity x, Activity y){ <span class="keyword">return</span> x.end &lt; y.end; });
+<span class="type">int</span> ans = <span class="number">1</span>, last = a[<span class="number">0</span>].end;
+<span class="keyword">for</span> (<span class="type">int</span> i = <span class="number">1</span>; i &lt; n; i++)
+    <span class="keyword">if</span> (a[i].start &gt;= last) { ans++; last = a[i].end; }
+cout &lt;&lt; ans;</div>
+<div class="tip-box">
+<strong>得分点：</strong>n=1e5 必须 O(n log n)；结构体排序；冲突判断 start ≥ lastEnd。
+</div>
+<aside class="notes">【讲解】真题①
+让学生先独立想 1 分钟再给模板。对应内容.md 题目一。</aside>
+</div>
+
+<!-- 13 真题排队 + 易错 -->
+<div class="slide" id="slide13">
+<h2>真题精练② + 易错点</h2>
+<div class="problem-card">
+<div class="problem-title">📝 排队接水</div>
+<div class="problem-section">
+<strong>题意：</strong>n 人 t_i 分钟，求最小总等待（各完成时间之和）。样例 4 人 3 1 4 2 → <strong>20</strong>。
+</div>
+</div>
+<h3>五大易错点</h3>
+<ul>
+<li><strong>排序标准选错</strong>——活动选择必须按结束时间，不是开始/长度。</li>
+<li><strong>贪心未必正确</strong>——{1,3,4} 找零 6 贪心错；不确定时用 DP。</li>
+<li><strong>区间覆盖无解</strong>——maxR==currentR 输出 -1。</li>
+<li><strong>cmp 写成 ≤</strong>——破坏严格弱序，可能 RE/答案乱。</li>
+<li><strong>溢出</strong>——排队/装载累计用 long long。</li>
+</ul>
+<aside class="notes">【讲解】真题② + 易错
+让学生口述 5 条易错。强调 long long 与 cmp。</aside>
+</div>
+
+<!-- 14 小结 -->
+<div class="slide" id="slide14">
+<h2>本课小结</h2>
+<div class="summary-box">
+<ul>
+<li>贪心 = 局部最优步步推进；需<strong>贪心选择性质 + 最优子结构</strong>。</li>
+<li>设计流：候选集合 → 策略（排序）→ 验证 → 实现（排序+扫描）。</li>
+<li>活动选择：结束时间 ↑；区间覆盖：左端 ↑ + 延伸最远；选点：右端放点。</li>
+<li>硬币找零：规范系统可贪，否则完全背包 DP。</li>
+<li>排队接水 / 最优装载（件数）：时间或重量升序。</li>
+<li>难点在「能否贪心」与「排序关键字」，代码通常很短。</li>
+</ul>
+</div>
+<div class="tip-box success">
+<strong>下节预告：</strong>第34课 — 合并果子（堆）、删数（单调栈）、贪心 vs DP 选择。
+</div>
+<aside class="notes">【收尾】第 14/14 页
+回顾对照表；布置：默写活动选择模板 + 找一道区间覆盖题。
+答疑 2 分钟。</aside>
+</div>
+
 <div class="nav-buttons">
 <button class="nav-btn" id="prevBtn" onclick="prevSlide()">◀ 上一页</button>
-<span class="page-indicator" id="pageIndicator">1 / 6</span>
+<span class="page-indicator" id="pageIndicator">1 / 14</span>
 <button class="nav-btn" id="nextBtn" onclick="nextSlide()">下一页 ▶</button>
 </div>
 </div>
 <script>
-        let currentSlide = 0;
-        const slides = document.querySelectorAll('.slide');
-        const totalSlides = slides.length;
-
-        function showSlide(index) {
-            slides.forEach(slide => slide.classList.remove('active'));
-            slides[index].classList.add('active');
-            document.getElementById('pageIndicator').textContent = (index + 1) + ' / ' + totalSlides;
-            document.getElementById('prevBtn').disabled = (index === 0);
-            document.getElementById('nextBtn').disabled = (index === totalSlides - 1);
-            window.scrollTo({ top: 0, behavior: 'smooth' });
-        }
-
-        function nextSlide() {
-            if (currentSlide < totalSlides - 1) {
-                currentSlide++;
-                showSlide(currentSlide);
-            }
-        }
-
-        function prevSlide() {
-            if (currentSlide > 0) {
-                currentSlide--;
-                showSlide(currentSlide);
-            }
-        }
-
-        // 键盘导航
-        document.addEventListener('keydown', function(e) {
-            if (e.key === 'ArrowRight' || e.key === ' ') {
-                e.preventDefault();
-                nextSlide();
-            } else if (e.key === 'ArrowLeft') {
-                e.preventDefault();
-                prevSlide();
-            }
-        });
-
-        // 初始化
-        showSlide(0);
-    </script>
+let currentSlide = 0;
+const slides = document.querySelectorAll('.slide');
+const totalSlides = slides.length;
+function showSlide(index) {
+  slides.forEach(s => s.classList.remove('active'));
+  slides[index].classList.add('active');
+  document.getElementById('pageIndicator').textContent = (index + 1) + ' / ' + totalSlides;
+  document.getElementById('prevBtn').disabled = (index === 0);
+  document.getElementById('nextBtn').disabled = (index === totalSlides - 1);
+  window.scrollTo({ top: 0, behavior: 'smooth' });
+}
+function nextSlide() { if (currentSlide < totalSlides - 1) { currentSlide++; showSlide(currentSlide); } }
+function prevSlide() { if (currentSlide > 0) { currentSlide--; showSlide(currentSlide); } }
+document.addEventListener('keydown', function(e) {
+  if (e.key === 'ArrowRight' || e.key === ' ') { e.preventDefault(); nextSlide(); }
+  else if (e.key === 'ArrowLeft') { e.preventDefault(); prevSlide(); }
+});
+showSlide(0);
+</script>
 <script src="courseware-ui.js"></script>
 <script src="presenter.js"></script>
 </body>

@@ -71,31 +71,19 @@
     box-shadow: 0 2px 12px rgba(15, 23, 42, 0.05);
   }
   .hint { margin-top: 12px; color: var(--muted); font-size: 12px; }
-
-  /* 打印：浅底、去阴影、省墨 */
   @media print {
     html, body { background: #fff !important; color: #000 !important; }
     .top {
-      position: static;
-      box-shadow: none;
-      border-bottom: 1px solid #ccc;
-      background: #fff !important;
-      -webkit-print-color-adjust: exact;
-      print-color-adjust: exact;
+      position: static; box-shadow: none; border-bottom: 1px solid #ccc;
+      background: #fff !important; -webkit-print-color-adjust: exact; print-color-adjust: exact;
     }
     .actions { display: none !important; }
     .meta { background: #fff !important; border-color: #ddd; color: #333; }
     .wrap { padding: 0; }
     pre {
-      background: #fff !important;
-      color: #000 !important;
-      border: 1px solid #bbb;
-      box-shadow: none;
-      border-radius: 0;
-      white-space: pre-wrap;
-      word-break: break-word;
-      font-size: 11pt;
-      line-height: 1.4;
+      background: #fff !important; color: #000 !important; border: 1px solid #bbb;
+      box-shadow: none; border-radius: 0; white-space: pre-wrap; word-break: break-word;
+      font-size: 11pt; line-height: 1.4;
     }
     .hint { display: none; }
     a { color: #000; text-decoration: none; }
@@ -111,174 +99,399 @@
       <a class="btn gold" href="javascript:history.back()">← 返回课件</a>
     </div>
   </div>
-  <div class="meta">编码：UTF-8 · 文件：lesson05_运算符与表达式上.cpp · 共 168 行 · 浅色主题便于打印</div>
+  <div class="meta">编码：UTF-8 · 文件：lesson05_运算符与表达式上.cpp · 共 393 行 · 浅色主题便于打印</div>
   <div class="wrap">
     <pre id="code">/*
  * CSP-J 备考课程
  * 第5课：运算符与表达式（上）
- * 考纲知识点：算术运算符(+ - * / %)、赋值运算符(= += -= *= /= %=)、自增自减(++ --)、运算符优先级
+ * 考纲知识点：算术运算符(+ - * / %)、赋值运算符(= += -= *= /= %=)、
+ *            自增自减(++ --)、运算符优先级、表达式求值
  *
  * 本文件包含：
  * 1. 算术运算符演示
- * 2. 自增自减详解
- * 3. 复合赋值运算符
- * 4. 优先级演示
+ * 2. 取模技巧与数位分离
+ * 3. 自增自减（含安全拆分写法）
+ * 4. 复合赋值与优先级
+ * 5. 表达式求值综合
+ * 6. 真题1/真题2 AC 验证
+ *
+ * 编译：g++ -std=c++17 -Wall -o lesson05 lesson05_运算符与表达式上.cpp
+ * 说明：同一表达式中对同一变量多次 ++/-- 会产生 unsequenced 告警，
+ *       考试常考但实际应避免；本文件用分开语句演示效果。
  */
 
 #include &lt;iostream&gt;
 #include &lt;iomanip&gt;
 using namespace std;
 
-int main() {
-    cout &lt;&lt; "========== CSP-J 第5课：运算符与表达式（上） ==========" &lt;&lt; endl;
+// ==================== 工具：打印分隔线 ====================
+void print_title(const char* title) {
     cout &lt;&lt; endl;
+    cout &lt;&lt; &quot;========================================&quot; &lt;&lt; endl;
+    cout &lt;&lt; &quot;  &quot; &lt;&lt; title &lt;&lt; endl;
+    cout &lt;&lt; &quot;========================================&quot; &lt;&lt; endl;
+}
 
-    // ===== 一、算术运算符 =====
-    cout &lt;&lt; "【一、算术运算符】" &lt;&lt; endl;
+// ==================== 演示1：算术运算符 ====================
+void demo01_arithmetic() {
+    print_title(&quot;演示1：算术运算符 + - * / %&quot;);
 
     int a = 17, b = 5;
-    cout &lt;&lt; "a = " &lt;&lt; a &lt;&lt; ", b = " &lt;&lt; b &lt;&lt; endl;
-    cout &lt;&lt; "a + b = " &lt;&lt; a + b &lt;&lt; endl;      // 22
-    cout &lt;&lt; "a - b = " &lt;&lt; a - b &lt;&lt; endl;      // 12
-    cout &lt;&lt; "a * b = " &lt;&lt; a * b &lt;&lt; endl;      // 85
-    cout &lt;&lt; "a / b = " &lt;&lt; a / b &lt;&lt; " (整数除法!)" &lt;&lt; endl;  // 3
-    cout &lt;&lt; "a % b = " &lt;&lt; a % b &lt;&lt; endl;      // 2
+    cout &lt;&lt; &quot;a = &quot; &lt;&lt; a &lt;&lt; &quot;, b = &quot; &lt;&lt; b &lt;&lt; endl;
+    cout &lt;&lt; &quot;a + b = &quot; &lt;&lt; (a + b) &lt;&lt; endl;
+    cout &lt;&lt; &quot;a - b = &quot; &lt;&lt; (a - b) &lt;&lt; endl;
+    cout &lt;&lt; &quot;a * b = &quot; &lt;&lt; (a * b) &lt;&lt; endl;
+    cout &lt;&lt; &quot;a / b = &quot; &lt;&lt; (a / b) &lt;&lt; &quot;  (整数除法，截断小数)&quot; &lt;&lt; endl;
+    cout &lt;&lt; &quot;a % b = &quot; &lt;&lt; (a % b) &lt;&lt; endl;
+    cout &lt;&lt; &quot;浮点除法 (double)a / b = &quot; &lt;&lt; fixed &lt;&lt; setprecision(4)
+         &lt;&lt; ((double)a / b) &lt;&lt; endl;
+    cout &lt;&lt; &quot;错误示范 (double)(a / b) = &quot; &lt;&lt; ((double)(a / b))
+         &lt;&lt; &quot;  (先整除再转，仍是整数)&quot; &lt;&lt; endl;
 
-    cout &lt;&lt; "浮点除法: " &lt;&lt; (double)a / b &lt;&lt; endl;
+    cout &lt;&lt; endl &lt;&lt; &quot;向零取整（C++11）：&quot; &lt;&lt; endl;
+    cout &lt;&lt; &quot; 5 / 2 = &quot; &lt;&lt; (5 / 2) &lt;&lt; endl;
+    cout &lt;&lt; &quot;-5 / 2 = &quot; &lt;&lt; (-5 / 2) &lt;&lt; endl;
+    cout &lt;&lt; &quot; 5 / -2 = &quot; &lt;&lt; (5 / -2) &lt;&lt; endl;
+    cout &lt;&lt; &quot;-5 / -2 = &quot; &lt;&lt; (-5 / -2) &lt;&lt; endl;
+
+    cout &lt;&lt; endl &lt;&lt; &quot;单目正负号：&quot; &lt;&lt; endl;
+    int x = 5;
+    cout &lt;&lt; &quot;x = &quot; &lt;&lt; x &lt;&lt; &quot;, -x = &quot; &lt;&lt; (-x) &lt;&lt; &quot;, +x = &quot; &lt;&lt; (+x) &lt;&lt; endl;
     cout &lt;&lt; endl;
+}
 
-    // ===== 二、取模运算 =====
-    cout &lt;&lt; "【二、取模运算（%）】" &lt;&lt; endl;
+// ==================== 演示2：取模规则与技巧 ====================
+void demo02_modulo() {
+    print_title(&quot;演示2：取模规则与数位技巧&quot;);
+
+    cout &lt;&lt; &quot;取模符号跟随被除数（左操作数）：&quot; &lt;&lt; endl;
+    cout &lt;&lt; &quot; 5 %  3 = &quot; &lt;&lt; (5 % 3) &lt;&lt; endl;
+    cout &lt;&lt; &quot; 5 % -3 = &quot; &lt;&lt; (5 % -3) &lt;&lt; endl;
+    cout &lt;&lt; &quot;-5 %  3 = &quot; &lt;&lt; (-5 % 3) &lt;&lt; endl;
+    cout &lt;&lt; &quot;-5 % -3 = &quot; &lt;&lt; (-5 % -3) &lt;&lt; endl;
+
+    cout &lt;&lt; endl &lt;&lt; &quot;验证 a = (a/b)*b + (a%b)：&quot; &lt;&lt; endl;
+    int pairs[][2] = {{17, 5}, {-17, 5}, {17, -5}, {-17, -5}};
+    for (int i = 0; i &lt; 4; i++) {
+        int p = pairs[i][0], q = pairs[i][1];
+        cout &lt;&lt; &quot;  &quot; &lt;&lt; p &lt;&lt; &quot; = (&quot; &lt;&lt; p &lt;&lt; &quot;/&quot; &lt;&lt; q &lt;&lt; &quot;)*&quot; &lt;&lt; q
+             &lt;&lt; &quot; + (&quot; &lt;&lt; p &lt;&lt; &quot;%&quot; &lt;&lt; q &lt;&lt; &quot;) → &quot;
+             &lt;&lt; (p / q) * q &lt;&lt; &quot; + &quot; &lt;&lt; (p % q) &lt;&lt; &quot; = &quot;
+             &lt;&lt; (p / q) * q + (p % q) &lt;&lt; endl;
+    }
 
     int n = 12345;
-    cout &lt;&lt; "数字: " &lt;&lt; n &lt;&lt; endl;
-    cout &lt;&lt; "个位: " &lt;&lt; n % 10 &lt;&lt; endl;          // 5
-    cout &lt;&lt; "十位: " &lt;&lt; n / 10 % 10 &lt;&lt; endl;     // 4
-    cout &lt;&lt; "百位: " &lt;&lt; n / 100 % 10 &lt;&lt; endl;    // 3
-    cout &lt;&lt; "千位: " &lt;&lt; n / 1000 % 10 &lt;&lt; endl;   // 2
-    cout &lt;&lt; "万位: " &lt;&lt; n / 10000 &lt;&lt; endl;       // 1
-    cout &lt;&lt; endl;
+    cout &lt;&lt; endl &lt;&lt; &quot;数位分离 n = &quot; &lt;&lt; n &lt;&lt; endl;
+    cout &lt;&lt; &quot;  个位: &quot; &lt;&lt; n % 10 &lt;&lt; endl;
+    cout &lt;&lt; &quot;  十位: &quot; &lt;&lt; n / 10 % 10 &lt;&lt; endl;
+    cout &lt;&lt; &quot;  百位: &quot; &lt;&lt; n / 100 % 10 &lt;&lt; endl;
+    cout &lt;&lt; &quot;  千位: &quot; &lt;&lt; n / 1000 % 10 &lt;&lt; endl;
+    cout &lt;&lt; &quot;  万位: &quot; &lt;&lt; n / 10000 &lt;&lt; endl;
+    cout &lt;&lt; &quot;  后两位: &quot; &lt;&lt; n % 100 &lt;&lt; endl;
 
-    // 取模符号规则
-    cout &lt;&lt; "取模符号规则（结果符号跟随被除数）:" &lt;&lt; endl;
-    cout &lt;&lt; "5 % 3 = " &lt;&lt; (5 % 3) &lt;&lt; endl;       // 2
-    cout &lt;&lt; "5 % -3 = " &lt;&lt; (5 % -3) &lt;&lt; endl;     // 2
-    cout &lt;&lt; "-5 % 3 = " &lt;&lt; (-5 % 3) &lt;&lt; endl;     // -2
-    cout &lt;&lt; "-5 % -3 = " &lt;&lt; (-5 % -3) &lt;&lt; endl;   // -2
-    cout &lt;&lt; endl;
-
-    // 判断奇偶
-    cout &lt;&lt; "奇偶判断:" &lt;&lt; endl;
-    for (int i = 1; i &lt;= 10; i++) {
-        cout &lt;&lt; i &lt;&lt; (i % 2 == 0 ? "是偶数" : "是奇数") &lt;&lt; "  ";
+    int sum = 0, t = n;
+    while (t &gt; 0) {
+        sum += t % 10;
+        t /= 10;
     }
-    cout &lt;&lt; endl &lt;&lt; endl;
+    cout &lt;&lt; &quot;  数位和: &quot; &lt;&lt; sum &lt;&lt; endl;
 
-    // ===== 三、自增自减（重点） =====
-    cout &lt;&lt; "【三、自增自减运算符（考试重点）】" &lt;&lt; endl;
+    cout &lt;&lt; endl &lt;&lt; &quot;奇偶判断 (1~10)：&quot; &lt;&lt; endl;
+    for (int i = 1; i &lt;= 10; i++) {
+        cout &lt;&lt; &quot;  &quot; &lt;&lt; i &lt;&lt; (i % 2 == 0 ? &quot; 偶&quot; : &quot; 奇&quot;);
+        if (i % 5 == 0) cout &lt;&lt; endl;
+    }
 
-    // 前置自增
+    cout &lt;&lt; endl &lt;&lt; &quot;环形时钟：当前 23 点，下一小时 = &quot;
+         &lt;&lt; (23 + 1) % 24 &lt;&lt; endl;
+    cout &lt;&lt; endl;
+}
+
+// ==================== 演示3：自增自减 ====================
+void demo03_inc_dec() {
+    print_title(&quot;演示3：自增自减 ++ / --&quot;);
+
+    // 前置
     int x1 = 5, y1;
-    y1 = ++x1;  // 先加后用
-    cout &lt;&lt; "前置++: x1=5; y1=++x1 → x1=" &lt;&lt; x1 &lt;&lt; ", y1=" &lt;&lt; y1 &lt;&lt; endl;
+    y1 = ++x1;
+    cout &lt;&lt; &quot;前置++: x1=5; y1=++x1 → x1=&quot; &lt;&lt; x1 &lt;&lt; &quot;, y1=&quot; &lt;&lt; y1 &lt;&lt; endl;
 
-    // 后置自增
+    // 后置
     int x2 = 5, y2;
-    y2 = x2++;  // 先用后加
-    cout &lt;&lt; "后置++: x2=5; y2=x2++ → x2=" &lt;&lt; x2 &lt;&lt; ", y2=" &lt;&lt; y2 &lt;&lt; endl;
+    y2 = x2++;
+    cout &lt;&lt; &quot;后置++: x2=5; y2=x2++ → x2=&quot; &lt;&lt; x2 &lt;&lt; &quot;, y2=&quot; &lt;&lt; y2 &lt;&lt; endl;
 
     // 前置自减
     int x3 = 5, y3;
-    y3 = --x3;  // 先减后用
-    cout &lt;&lt; "前置--: x3=5; y3=--x3 → x3=" &lt;&lt; x3 &lt;&lt; ", y3=" &lt;&lt; y3 &lt;&lt; endl;
+    y3 = --x3;
+    cout &lt;&lt; &quot;前置--: x3=5; y3=--x3 → x3=&quot; &lt;&lt; x3 &lt;&lt; &quot;, y3=&quot; &lt;&lt; y3 &lt;&lt; endl;
 
     // 后置自减
     int x4 = 5, y4;
-    y4 = x4--;  // 先用后减
-    cout &lt;&lt; "后置--: x4=5; y4=x4-- → x4=" &lt;&lt; x4 &lt;&lt; ", y4=" &lt;&lt; y4 &lt;&lt; endl;
-    cout &lt;&lt; endl;
+    y4 = x4--;
+    cout &lt;&lt; &quot;后置--: x4=5; y4=x4-- → x4=&quot; &lt;&lt; x4 &lt;&lt; &quot;, y4=&quot; &lt;&lt; y4 &lt;&lt; endl;
 
-    // 复杂自增表达式分析
-    cout &lt;&lt; "复杂表达式分析:" &lt;&lt; endl;
-    int p = 3;
-    int q = ++p + p++;
-    cout &lt;&lt; "p=3; q = ++p + p++;" &lt;&lt; endl;
-    cout &lt;&lt; "分析: ++p先加→p=4,值为4; p++先用值4,再加→p=5" &lt;&lt; endl;
-    cout &lt;&lt; "结果: p=" &lt;&lt; p &lt;&lt; ", q=" &lt;&lt; q &lt;&lt; endl;
-    cout &lt;&lt; endl;
+    cout &lt;&lt; endl &lt;&lt; &quot;单独成语句时，前置后置效果相同：&quot; &lt;&lt; endl;
+    int s1 = 10, s2 = 10;
+    s1++;
+    ++s2;
+    cout &lt;&lt; &quot;  s1++ 后 s1=&quot; &lt;&lt; s1 &lt;&lt; &quot;, ++s2 后 s2=&quot; &lt;&lt; s2 &lt;&lt; endl;
 
-    // 自增自减逐步分析
-    cout &lt;&lt; "逐步分析示例:" &lt;&lt; endl;
+    cout &lt;&lt; endl &lt;&lt; &quot;输出流中的自增：&quot; &lt;&lt; endl;
     int m = 10;
-    cout &lt;&lt; "初始: m = " &lt;&lt; m &lt;&lt; endl;
-    cout &lt;&lt; "cout &lt;&lt; m++ 输出: " &lt;&lt; m++ &lt;&lt; " (先输出10,再m=11)" &lt;&lt; endl;
-    cout &lt;&lt; "现在: m = " &lt;&lt; m &lt;&lt; endl;
-    cout &lt;&lt; "cout &lt;&lt; ++m 输出: " &lt;&lt; ++m &lt;&lt; " (先m=12,再输出12)" &lt;&lt; endl;
-    cout &lt;&lt; "现在: m = " &lt;&lt; m &lt;&lt; endl;
-    cout &lt;&lt; endl;
+    cout &lt;&lt; &quot;  初始 m=&quot; &lt;&lt; m &lt;&lt; endl;
+    cout &lt;&lt; &quot;  cout &lt;&lt; m++ 输出: &quot; &lt;&lt; m++ &lt;&lt; &quot;  (先用后加)&quot; &lt;&lt; endl;
+    cout &lt;&lt; &quot;  现在 m=&quot; &lt;&lt; m &lt;&lt; endl;
+    cout &lt;&lt; &quot;  cout &lt;&lt; ++m 输出: &quot; &lt;&lt; ++m &lt;&lt; &quot;  (先加后用)&quot; &lt;&lt; endl;
+    cout &lt;&lt; &quot;  现在 m=&quot; &lt;&lt; m &lt;&lt; endl;
 
-    // ===== 四、复合赋值运算符 =====
-    cout &lt;&lt; "【四、复合赋值运算符】" &lt;&lt; endl;
+    cout &lt;&lt; endl &lt;&lt; &quot;不同变量混合（定义良好）：&quot; &lt;&lt; endl;
+    int x = 5, y = 10;
+    int z = x++ + ++y;
+    cout &lt;&lt; &quot;  x=5,y=10; z=x++ + ++y&quot; &lt;&lt; endl;
+    cout &lt;&lt; &quot;  → x=&quot; &lt;&lt; x &lt;&lt; &quot;, y=&quot; &lt;&lt; y &lt;&lt; &quot;, z=&quot; &lt;&lt; z &lt;&lt; endl;
+    cout &lt;&lt; &quot;  解释: x++用5→x=6; ++y→y=11用11; z=16&quot; &lt;&lt; endl;
+
+    // 考试常考但实际应避免：同一变量多次修改
+    // 下面用分开语句模拟「从左到右」考试常见答案，避免 unsequenced 警告
+    cout &lt;&lt; endl &lt;&lt; &quot;同一变量多次修改（考试常考，实际应避免）：&quot; &lt;&lt; endl;
+    cout &lt;&lt; &quot;  危险写法: q = ++p + p++;  // unsequenced / 未定义风险&quot; &lt;&lt; endl;
+    int p = 3;
+    int left = ++p;    // 先加后用 → left=4, p=4
+    int right = p++;   // 先用后加 → right=4, p=5
+    int q = left + right;
+    cout &lt;&lt; &quot;  安全拆分模拟从左到右: p 初值3 → p=&quot; &lt;&lt; p
+         &lt;&lt; &quot;, q=&quot; &lt;&lt; q &lt;&lt; &quot; (期望 5, 8)&quot; &lt;&lt; endl;
+    cout &lt;&lt; &quot;  工程建议: 永远拆成多条语句，不要在同一表达式改同一变量两次&quot; &lt;&lt; endl;
+    cout &lt;&lt; endl;
+}
+
+// ==================== 演示4：复合赋值 ====================
+void demo04_compound_assign() {
+    print_title(&quot;演示4：复合赋值运算符&quot;);
 
     int val = 10;
-    cout &lt;&lt; "初始 val = " &lt;&lt; val &lt;&lt; endl;
+    cout &lt;&lt; &quot;初始 val = &quot; &lt;&lt; val &lt;&lt; endl;
+    val += 5;
+    cout &lt;&lt; &quot;val += 5 → &quot; &lt;&lt; val &lt;&lt; endl;
+    val -= 3;
+    cout &lt;&lt; &quot;val -= 3 → &quot; &lt;&lt; val &lt;&lt; endl;
+    val *= 2;
+    cout &lt;&lt; &quot;val *= 2 → &quot; &lt;&lt; val &lt;&lt; endl;
+    val /= 4;
+    cout &lt;&lt; &quot;val /= 4 → &quot; &lt;&lt; val &lt;&lt; endl;
+    val %= 3;
+    cout &lt;&lt; &quot;val %= 3 → &quot; &lt;&lt; val &lt;&lt; endl;
 
-    val += 5;   cout &lt;&lt; "val += 5 → " &lt;&lt; val &lt;&lt; endl;   // 15
-    val -= 3;   cout &lt;&lt; "val -= 3 → " &lt;&lt; val &lt;&lt; endl;   // 12
-    val *= 2;   cout &lt;&lt; "val *= 2 → " &lt;&lt; val &lt;&lt; endl;   // 24
-    val /= 5;   cout &lt;&lt; "val /= 5 → " &lt;&lt; val &lt;&lt; endl;   // 4
-    val %= 3;   cout &lt;&lt; "val %= 3 → " &lt;&lt; val &lt;&lt; endl;   // 1
-    cout &lt;&lt; endl;
-
-    // ===== 五、运算符优先级演示 =====
-    cout &lt;&lt; "【五、运算符优先级演示】" &lt;&lt; endl;
-
-    int result;
-
-    result = 3 + 5 * 2;
-    cout &lt;&lt; "3 + 5 * 2 = " &lt;&lt; result &lt;&lt; " (乘号优先于加号)" &lt;&lt; endl;
-
-    result = (3 + 5) * 2;
-    cout &lt;&lt; "(3 + 5) * 2 = " &lt;&lt; result &lt;&lt; " (括号改变优先级)" &lt;&lt; endl;
-
-    result = 10 - 3 - 2;
-    cout &lt;&lt; "10 - 3 - 2 = " &lt;&lt; result &lt;&lt; " (左结合)" &lt;&lt; endl;
-
-    // 复合赋值优先级低
+    cout &lt;&lt; endl &lt;&lt; &quot;复合赋值右侧整体优先：&quot; &lt;&lt; endl;
     int r = 5;
-    r *= 2 + 3;  // 等价于 r *= (2+3) = r *= 5
-    cout &lt;&lt; "r=5; r *= 2 + 3 → r = " &lt;&lt; r &lt;&lt; " (先算2+3=5, 再r*=5)" &lt;&lt; endl;
+    cout &lt;&lt; &quot;  r=5; r *= 2 + 3;&quot; &lt;&lt; endl;
+    r *= 2 + 3;  // r = 5 * 5 = 25
+    cout &lt;&lt; &quot;  → r = &quot; &lt;&lt; r &lt;&lt; &quot;  (先算 2+3=5，再 r*=5)&quot; &lt;&lt; endl;
+    cout &lt;&lt; &quot;  不是 (5*2)+3=13！&quot; &lt;&lt; endl;
 
-    // 赋值运算符右结合
+    cout &lt;&lt; endl &lt;&lt; &quot;连续赋值（右结合）：&quot; &lt;&lt; endl;
     int u, v, w;
     u = v = w = 100;
-    cout &lt;&lt; "u = v = w = 100 → u=" &lt;&lt; u &lt;&lt; ", v=" &lt;&lt; v &lt;&lt; ", w=" &lt;&lt; w &lt;&lt; endl;
-    cout &lt;&lt; endl;
+    cout &lt;&lt; &quot;  u = v = w = 100 → u=&quot; &lt;&lt; u &lt;&lt; &quot;, v=&quot; &lt;&lt; v &lt;&lt; &quot;, w=&quot; &lt;&lt; w &lt;&lt; endl;
 
-    // ===== 六、综合练习 =====
-    cout &lt;&lt; "【六、表达式求值综合练习】" &lt;&lt; endl;
+    cout &lt;&lt; endl &lt;&lt; &quot;赋值链：a += b += c&quot; &lt;&lt; endl;
+    int aa = 2, bb = 3, cc = 4;
+    aa += bb += cc;  // bb = 7, aa = 9
+    cout &lt;&lt; &quot;  a=2,b=3,c=4; a += b += c → a=&quot; &lt;&lt; aa &lt;&lt; &quot;, b=&quot; &lt;&lt; bb
+         &lt;&lt; &quot;, c=&quot; &lt;&lt; cc &lt;&lt; endl;
+    cout &lt;&lt; endl;
+}
+
+// ==================== 演示5：运算符优先级 ====================
+void demo05_precedence() {
+    print_title(&quot;演示5：运算符优先级与结合性&quot;);
+
+    int result;
+    result = 3 + 5 * 2;
+    cout &lt;&lt; &quot;3 + 5 * 2 = &quot; &lt;&lt; result &lt;&lt; &quot;  (乘优先)&quot; &lt;&lt; endl;
+
+    result = (3 + 5) * 2;
+    cout &lt;&lt; &quot;(3 + 5) * 2 = &quot; &lt;&lt; result &lt;&lt; &quot;  (括号优先)&quot; &lt;&lt; endl;
+
+    result = 10 - 3 - 2;
+    cout &lt;&lt; &quot;10 - 3 - 2 = &quot; &lt;&lt; result &lt;&lt; &quot;  (左结合 → 5)&quot; &lt;&lt; endl;
+
+    result = 10 - (3 - 2);
+    cout &lt;&lt; &quot;10 - (3 - 2) = &quot; &lt;&lt; result &lt;&lt; &quot;  (括号改变 → 9)&quot; &lt;&lt; endl;
+
+    int t = 5;
+    int u = -t + 3;
+    cout &lt;&lt; &quot;-t + 3 (t=5) = &quot; &lt;&lt; u &lt;&lt; &quot;  (单目负号优先 → -2)&quot; &lt;&lt; endl;
+
+    cout &lt;&lt; endl &lt;&lt; &quot;混合：&quot; &lt;&lt; endl;
+    int a = 2, b = 3, c = 4;
+    cout &lt;&lt; &quot;a=2,b=3,c=4&quot; &lt;&lt; endl;
+    cout &lt;&lt; &quot;a + b * c = &quot; &lt;&lt; (a + b * c) &lt;&lt; endl;
+    cout &lt;&lt; &quot;(a + b) * c = &quot; &lt;&lt; ((a + b) * c) &lt;&lt; endl;
+    cout &lt;&lt; &quot;a * b + c * a = &quot; &lt;&lt; (a * b + c * a) &lt;&lt; endl;
+
+    cout &lt;&lt; endl &lt;&lt; &quot;口诀: 单目 &gt; 算术 &gt; 关系 &gt; 逻辑 &gt; 赋值&quot; &lt;&lt; endl;
+    cout &lt;&lt; &quot;不确定时：加括号！&quot; &lt;&lt; endl;
+    cout &lt;&lt; endl;
+}
+
+// ==================== 演示6：溢出与类型转换 ====================
+void demo06_overflow_cast() {
+    print_title(&quot;演示6：溢出与类型转换&quot;);
+
+    int a = 100000, b = 100000;
+    int bad = a * b;  // 溢出
+    long long good = (long long)a * b;
+    cout &lt;&lt; &quot;a = b = 100000&quot; &lt;&lt; endl;
+    cout &lt;&lt; &quot;int 乘法 a*b (溢出): &quot; &lt;&lt; bad &lt;&lt; endl;
+    cout &lt;&lt; &quot;(long long)a * b: &quot; &lt;&lt; good &lt;&lt; endl;
+
+    cout &lt;&lt; endl &lt;&lt; &quot;整数除法再赋值给 double：&quot; &lt;&lt; endl;
+    int x = 5, y = 2;
+    double z1 = x / y;
+    double z2 = 1.0 * x / y;
+    double z3 = (double)x / y;
+    cout &lt;&lt; &quot;  double z = 5/2 → &quot; &lt;&lt; z1 &lt;&lt; endl;
+    cout &lt;&lt; &quot;  double z = 1.0*5/2 → &quot; &lt;&lt; z2 &lt;&lt; endl;
+    cout &lt;&lt; &quot;  double z = (double)5/2 → &quot; &lt;&lt; z3 &lt;&lt; endl;
+    cout &lt;&lt; endl;
+}
+
+// ==================== 演示7：表达式求值综合练习 ====================
+void demo07_expression_drill() {
+    print_title(&quot;演示7：表达式求值综合&quot;);
 
     int A = 10, B = 3;
-    cout &lt;&lt; "A = 10, B = 3" &lt;&lt; endl;
-    cout &lt;&lt; "A / B = " &lt;&lt; A / B &lt;&lt; endl;           // 3
-    cout &lt;&lt; "A % B = " &lt;&lt; A % B &lt;&lt; endl;           // 1
-
+    cout &lt;&lt; &quot;A=10, B=3&quot; &lt;&lt; endl;
+    cout &lt;&lt; &quot;A / B = &quot; &lt;&lt; (A / B) &lt;&lt; endl;
+    cout &lt;&lt; &quot;A % B = &quot; &lt;&lt; (A % B) &lt;&lt; endl;
     A += B;
-    cout &lt;&lt; "A += B → A = " &lt;&lt; A &lt;&lt; endl;          // 13
-
+    cout &lt;&lt; &quot;A += B → A = &quot; &lt;&lt; A &lt;&lt; endl;
     A *= 2 + 3;
-    cout &lt;&lt; "A *= 2 + 3 → A = " &lt;&lt; A &lt;&lt; endl;      // 65
+    cout &lt;&lt; &quot;A *= 2 + 3 → A = &quot; &lt;&lt; A &lt;&lt; endl;
+
+    cout &lt;&lt; endl &lt;&lt; &quot;再练一组：&quot; &lt;&lt; endl;
+    int p = 8, q = 3, r = 2;
+    cout &lt;&lt; &quot;p=8,q=3,r=2&quot; &lt;&lt; endl;
+    cout &lt;&lt; &quot;p / q * r = &quot; &lt;&lt; (p / q * r) &lt;&lt; &quot;  (左结合: 2*2=4)&quot; &lt;&lt; endl;
+    cout &lt;&lt; &quot;p / (q * r) = &quot; &lt;&lt; (p / (q * r)) &lt;&lt; &quot;  (8/6=1)&quot; &lt;&lt; endl;
+    cout &lt;&lt; &quot;p % q + r = &quot; &lt;&lt; (p % q + r) &lt;&lt; endl;
+    p += q *= r;  // q=6, p=14
+    cout &lt;&lt; &quot;p += q *= r → p=&quot; &lt;&lt; p &lt;&lt; &quot;, q=&quot; &lt;&lt; q &lt;&lt; &quot;, r=&quot; &lt;&lt; r &lt;&lt; endl;
     cout &lt;&lt; endl;
+}
 
-    // 经典题目：自增混合
-    cout &lt;&lt; "经典自增题:" &lt;&lt; endl;
-    int i = 5;
-    int j = i++ + ++i;
-    cout &lt;&lt; "i=5; j = i++ + ++i;" &lt;&lt; endl;
-    cout &lt;&lt; "i++: 先用5, i变6; ++i: 先i变7, 用7; j = 5+7 = 12" &lt;&lt; endl;
-    cout &lt;&lt; "结果: i=" &lt;&lt; i &lt;&lt; ", j=" &lt;&lt; j &lt;&lt; endl;
+// ==================== 真题1 AC ====================
+void exam01_expression() {
+    print_title(&quot;真题1：表达式求值（AC 验证）&quot;);
+    cout &lt;&lt; &quot;程序逻辑：&quot; &lt;&lt; endl;
+    cout &lt;&lt; &quot;  int a=10,b=3;&quot; &lt;&lt; endl;
+    cout &lt;&lt; &quot;  cout &lt;&lt; a/b; a%b; a+=b; a*=2+3;&quot; &lt;&lt; endl;
+    cout &lt;&lt; &quot;预期输出：&quot; &lt;&lt; endl;
+    cout &lt;&lt; &quot;3\n1\n13\n65&quot; &lt;&lt; endl;
+    cout &lt;&lt; &quot;实际输出：&quot; &lt;&lt; endl;
 
-    cout &lt;&lt; endl &lt;&lt; "========== 第5课演示结束 ==========" &lt;&lt; endl;
+    int a = 10, b = 3;
+    cout &lt;&lt; a / b &lt;&lt; endl;
+    cout &lt;&lt; a % b &lt;&lt; endl;
+    a += b;
+    cout &lt;&lt; a &lt;&lt; endl;
+    a *= 2 + 3;
+    cout &lt;&lt; a &lt;&lt; endl;
+    cout &lt;&lt; endl;
+}
+
+// ==================== 真题2 AC ====================
+void exam02_inc_dec() {
+    print_title(&quot;真题2：自增自减混合（AC 验证）&quot;);
+    cout &lt;&lt; &quot;  int x=5,y=10; int z=x++ + ++y;&quot; &lt;&lt; endl;
+    cout &lt;&lt; &quot;预期: x=6, y=11, z=16&quot; &lt;&lt; endl;
+
+    int x = 5, y = 10;
+    int z = x++ + ++y;
+    cout &lt;&lt; &quot;实际: x=&quot; &lt;&lt; x &lt;&lt; &quot;, y=&quot; &lt;&lt; y &lt;&lt; &quot;, z=&quot; &lt;&lt; z &lt;&lt; endl;
+    cout &lt;&lt; endl;
+}
+
+// ==================== 真题3 拓展：数位和 ====================
+void exam03_digit_sum() {
+    print_title(&quot;真题3拓展：数位和与个位（演示固定样例）&quot;);
+    int n = 12345;
+    cout &lt;&lt; &quot;样例 n = &quot; &lt;&lt; n &lt;&lt; endl;
+    int ones = n % 10;
+    int sum = 0, t = n;
+    while (t &gt; 0) {
+        sum += t % 10;
+        t /= 10;
+    }
+    cout &lt;&lt; &quot;输出: &quot; &lt;&lt; sum &lt;&lt; &quot; &quot; &lt;&lt; ones &lt;&lt; &quot;  (预期 15 5)&quot; &lt;&lt; endl;
+    cout &lt;&lt; endl;
+}
+
+// ==================== 一键运行全部演示 ====================
+void run_all() {
+    demo01_arithmetic();
+    demo02_modulo();
+    demo03_inc_dec();
+    demo04_compound_assign();
+    demo05_precedence();
+    demo06_overflow_cast();
+    demo07_expression_drill();
+    exam01_expression();
+    exam02_inc_dec();
+    exam03_digit_sum();
+}
+
+// ==================== 主菜单 ====================
+int main() {
+    ios::sync_with_stdio(false);
+    cin.tie(nullptr);
+
+    int choice;
+    do {
+        cout &lt;&lt; &quot;========================================&quot; &lt;&lt; endl;
+        cout &lt;&lt; &quot;  CSP-J 第5课：运算符与表达式（上）&quot; &lt;&lt; endl;
+        cout &lt;&lt; &quot;========================================&quot; &lt;&lt; endl;
+        cout &lt;&lt; &quot; 1. 算术运算符&quot; &lt;&lt; endl;
+        cout &lt;&lt; &quot; 2. 取模与数位技巧&quot; &lt;&lt; endl;
+        cout &lt;&lt; &quot; 3. 自增自减&quot; &lt;&lt; endl;
+        cout &lt;&lt; &quot; 4. 复合赋值&quot; &lt;&lt; endl;
+        cout &lt;&lt; &quot; 5. 优先级与结合性&quot; &lt;&lt; endl;
+        cout &lt;&lt; &quot; 6. 溢出与类型转换&quot; &lt;&lt; endl;
+        cout &lt;&lt; &quot; 7. 表达式求值综合&quot; &lt;&lt; endl;
+        cout &lt;&lt; &quot; 8. 真题1：表达式求值 AC&quot; &lt;&lt; endl;
+        cout &lt;&lt; &quot; 9. 真题2：自增自减 AC&quot; &lt;&lt; endl;
+        cout &lt;&lt; &quot;10. 真题3：数位和演示&quot; &lt;&lt; endl;
+        cout &lt;&lt; &quot;11. 运行全部演示&quot; &lt;&lt; endl;
+        cout &lt;&lt; &quot; 0. 退出&quot; &lt;&lt; endl;
+        cout &lt;&lt; &quot;----------------------------------------&quot; &lt;&lt; endl;
+        cout &lt;&lt; &quot;请输入选项: &quot;;
+        if (!(cin &gt;&gt; choice)) {
+            break;
+        }
+        cout &lt;&lt; endl;
+
+        switch (choice) {
+            case 0:
+                cout &lt;&lt; &quot;再见！&quot; &lt;&lt; endl;
+                break;
+            case 1: demo01_arithmetic(); break;
+            case 2: demo02_modulo(); break;
+            case 3: demo03_inc_dec(); break;
+            case 4: demo04_compound_assign(); break;
+            case 5: demo05_precedence(); break;
+            case 6: demo06_overflow_cast(); break;
+            case 7: demo07_expression_drill(); break;
+            case 8: exam01_expression(); break;
+            case 9: exam02_inc_dec(); break;
+            case 10: exam03_digit_sum(); break;
+            case 11: run_all(); break;
+            default:
+                cout &lt;&lt; &quot;无效选项，请重新选择。&quot; &lt;&lt; endl &lt;&lt; endl;
+        }
+    } while (choice != 0);
+
     return 0;
 }
 </pre>

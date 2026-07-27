@@ -1,576 +1,355 @@
 <!DOCTYPE html>
-
 <html lang="zh-CN">
 <head>
 <meta charset="utf-8"/>
 <meta content="width=device-width, initial-scale=1.0" name="viewport"/>
 <title>CSP-J 备考课程 - 第21课：结构体定义与使用</title>
 <style>
-* { margin: 0; padding: 0; box-sizing: border-box; }
-body {
-    font-family: 'Microsoft YaHei', 'PingFang SC', sans-serif;
-    background: #0a0f24;
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    min-height: 100vh;
-}
-.slide-container {
-    width: 100%;
-    max-width: 1000px;
-    height: 600px;
-    background: #ffffff;
-    border-radius: 12px;
-    overflow: hidden;
-    box-shadow: 0 20px 60px rgba(0,0,0,0.4);
-    position: relative;
-    display: flex;
-    flex-direction: column;
-}
-.title-bar {
-    background: linear-gradient(135deg, #1a237e 0%, #283593 100%);
-    color: #ffffff;
-    padding: 10px 30px;
-    font-size: 14px;
-    font-weight: 500;
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    flex-shrink: 0;
-}
-.title-bar .course-name {
-    font-size: 15px;
-    font-weight: bold;
-    letter-spacing: 1px;
-}
-.title-bar .lesson-num {
-    font-size: 13px;
-    opacity: 0.9;
-}
-.slides-wrapper {
-    flex: 1;
-    position: relative;
-    overflow: hidden;
-}
-.slide {
-    position: absolute;
-    top: 0; left: 0; right: 0; bottom: 0;
-    padding: 35px 45px;
-    display: none;
-    flex-direction: column;
-    overflow-y: auto;
-}
-.slide.active { display: flex; }
-.slide h1 {
-    color: #1a237e;
-    font-size: 32px;
-    margin-bottom: 8px;
-    border-bottom: 3px solid #ffd600;
-    padding-bottom: 10px;
-}
-.slide h2 {
-    color: #1a237e;
-    font-size: 26px;
-    margin-bottom: 18px;
-    border-left: 5px solid #ffd600;
-    padding-left: 14px;
-}
-.slide h3 {
-    color: #283593;
-    font-size: 20px;
-    margin: 15px 0 8px;
-}
-.slide p, .slide li {
-    color: #333;
-    font-size: 16px;
-    line-height: 1.8;
-}
-.slide ul { padding-left: 24px; }
-.code-block {
-    background: #1e1e1e;
-    color: #d4d4d4;
-    font-family: 'Consolas', 'Courier New', 'Source Code Pro', monospace;
-    padding: 16px 20px;
-    border-radius: 8px;
-    font-size: 14px;
-    line-height: 1.7;
-    margin: 10px 0;
-    white-space: pre-wrap;
-    word-break: break-all;
-    overflow-x: auto;
-}
-.code-block .keyword { color: #569cd6; }
-.code-block .type { color: #4ec9b0; }
-.code-block .string { color: #ce9178; }
-.code-block .comment { color: #6a9955; }
-.code-block .number { color: #b5cea8; }
-.code-block .func { color: #dcdcaa; }
-.exam-tip {
-    background: #fff8e1;
-    border-left: 5px solid #ff8f00;
-    padding: 14px 18px;
-    margin: 14px 0;
-    border-radius: 0 8px 8px 0;
-    font-size: 15px;
-    color: #5d4037;
-    line-height: 1.6;
-}
-.exam-tip strong { color: #e65100; }
-.nav-bar {
-    background: #f5f5f5;
-    padding: 10px 30px;
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    flex-shrink: 0;
-    border-top: 1px solid #e0e0e0;
-}
-.nav-btn {
-    background: #1a237e;
-    color: #fff;
-    border: none;
-    padding: 8px 22px;
-    border-radius: 6px;
-    cursor: pointer;
-    font-size: 14px;
-    font-family: inherit;
-    transition: background 0.2s;
-}
-.nav-btn:hover { background: #283593; }
-.nav-btn:disabled { background: #9fa8da; cursor: not-allowed; }
-.slide-indicator {
-    color: #666;
-    font-size: 14px;
-}
-.two-col {
-    display: flex;
-    gap: 20px;
-}
-.two-col > div { flex: 1; }
-table {
-    border-collapse: collapse;
-    width: 100%;
-    margin: 10px 0;
-    font-size: 14px;
-}
-table th, table td {
-    border: 1px solid #ddd;
-    padding: 8px 12px;
-    text-align: left;
-}
-table th {
-    background: #1a237e;
-    color: #fff;
-}
-table tr:nth-child(even) { background: #f5f5f5; }
-.gold-text { color: #ffd600; font-weight: bold; }
-.error-box {
-    background: #ffebee;
-    border-left: 5px solid #c62828;
-    padding: 10px 15px;
-    margin: 8px 0;
-    border-radius: 0 6px 6px 0;
-    font-size: 14px;
-}
-.success-box {
-    background: #e8f5e9;
-    border-left: 5px solid #2e7d32;
-    padding: 10px 15px;
-    margin: 8px 0;
-    border-radius: 0 6px 6px 0;
-    font-size: 14px;
-}
-ol.problem-list li { margin-bottom: 8px; }
+    :root {
+        --primary: #1a237e; --secondary: #283593; --accent: #ffd600;
+        --bg: #ffffff; --text: #212121; --code-bg: #1e1e1e; --code-text: #d4d4d4;
+        --light-gray: #f5f5f5; --border: #e0e0e0;
+    }
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body {
+        font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "PingFang SC", "Microsoft YaHei", sans-serif;
+        background: #e8eaf6; display: flex; flex-direction: column; align-items: center;
+        min-height: 100vh; color: var(--text); line-height: 1.7;
+    }
+    .title-bar {
+        position: fixed; top: 0; left: 0; right: 0; height: 48px;
+        background: var(--primary); color: #fff; display: flex; align-items: center;
+        padding: 0 24px; font-size: 16px; font-weight: 600; z-index: 100;
+        box-shadow: 0 2px 8px rgba(0,0,0,0.15);
+    }
+    .title-bar .badge {
+        background: var(--accent); color: var(--primary); padding: 2px 12px;
+        border-radius: 12px; font-size: 12px; margin-left: 12px; font-weight: 700;
+    }
+    .slides-container { margin-top: 64px; width: 100%; max-width: 960px; padding: 0 20px 100px; }
+    .slide {
+        display: none; background: var(--bg); border-radius: 16px; padding: 44px 52px;
+        box-shadow: 0 4px 24px rgba(0,0,0,0.08); min-height: 520px;
+    }
+    .slide.active { display: block; animation: fadeSlideIn 0.4s ease; }
+    @keyframes fadeSlideIn {
+        from { opacity: 0; transform: translateY(20px); }
+        to { opacity: 1; transform: translateY(0); }
+    }
+    .slide h2 {
+        color: var(--primary); font-size: 26px; border-bottom: 3px solid var(--accent);
+        padding-bottom: 12px; margin-bottom: 18px;
+    }
+    .slide h3 { color: var(--secondary); font-size: 17px; margin: 12px 0 8px; }
+    .slide p { font-size: 15px; margin-bottom: 8px; }
+    .slide ul, .slide ol { padding-left: 24px; margin-bottom: 10px; font-size: 14.5px; }
+    .slide li { margin-bottom: 5px; }
+    .slide-title { text-align: center; padding-top: 80px; }
+    .slide-title h1 { font-size: 36px; color: var(--primary); margin-bottom: 14px; }
+    .slide-title .subtitle { font-size: 20px; color: #5c6bc0; margin-bottom: 24px; }
+    .slide-title .lesson-info { font-size: 15px; color: #78909c; }
+    .code-block {
+        background: var(--code-bg); color: var(--code-text); border-radius: 8px;
+        padding: 12px 16px; margin: 8px 0; overflow-x: auto;
+        font-family: Consolas, "Courier New", monospace; font-size: 12.5px;
+        line-height: 1.55; white-space: pre;
+    }
+    .code-block .kw { color: #569cd6; } .code-block .fn { color: #dcdcaa; }
+    .code-block .str { color: #ce9178; } .code-block .num { color: #b5cea8; }
+    .code-block .cm { color: #6a9955; }
+    .code-inline {
+        background: #e8eaf6; color: var(--primary); padding: 1px 6px;
+        border-radius: 4px; font-family: Consolas, monospace; font-size: 0.9em;
+    }
+    .info-table { width: 100%; border-collapse: collapse; margin: 10px 0; font-size: 13.5px; }
+    .info-table th { background: var(--primary); color: #fff; padding: 8px 10px; text-align: left; }
+    .info-table td { padding: 8px 10px; border-bottom: 1px solid var(--border); }
+    .info-table tr:nth-child(even) td { background: var(--light-gray); }
+    .tip-box { border-left: 4px solid #ff9800; background: #fff8e1; padding: 10px 14px; margin: 10px 0; border-radius: 6px; font-size: 13.5px; color: #e65100; }
+    .warn-box { border-left: 4px solid #f44336; background: #ffebee; padding: 10px 14px; margin: 10px 0; border-radius: 6px; font-size: 13.5px; }
+    .ok-box { border-left: 4px solid #43a047; background: #e8f5e9; padding: 10px 14px; margin: 10px 0; border-radius: 6px; font-size: 13.5px; }
+    .gold-box { border-left: 5px solid var(--accent); background: #fffde7; padding: 10px 14px; margin: 10px 0; border-radius: 0 8px 8px 0; font-size: 14px; font-weight: 600; }
+    .info-list { list-style: none; padding: 0; }
+    .info-list li { padding: 5px 0 5px 22px; position: relative; font-size: 14.5px; }
+    .info-list li::before { content: "▸"; position: absolute; left: 4px; color: var(--accent); font-weight: bold; }
+    .two-col { display: flex; gap: 14px; } .two-col > div { flex: 1; }
+    .exam-card { background: #fafafa; border: 1px solid #e0e0e0; border-radius: 10px; padding: 12px; margin: 8px 0; font-size: 13.5px; }
+    .exam-card h4 { color: var(--primary); margin-bottom: 6px; }
+    .summary-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin: 12px 0; }
+    .summary-item { background: var(--light-gray); padding: 11px 12px; border-radius: 8px; font-size: 13px; border-left: 3px solid var(--primary); }
+    .nav-bar {
+        position: fixed; bottom: 0; left: 0; right: 0; background: #fff;
+        border-top: 1px solid var(--border); padding: 12px 0;
+        display: flex; justify-content: center; align-items: center; gap: 24px;
+        box-shadow: 0 -2px 8px rgba(0,0,0,0.06); z-index: 100;
+    }
+    .nav-btn { background: var(--primary); color: #fff; border: none; padding: 10px 32px; border-radius: 24px; font-size: 15px; cursor: pointer; font-weight: 600; }
+    .nav-btn:disabled { background: #bdbdbd; cursor: not-allowed; }
+    .page-indicator { font-size: 14px; color: #78909c; min-width: 80px; text-align: center; }
+    .page-dots { display: flex; gap: 5px; flex-wrap: wrap; max-width: 360px; justify-content: center; }
+    .page-dot { width: 10px; height: 10px; border-radius: 50%; background: #cfd8dc; cursor: pointer; }
+    .page-dot.active { background: var(--primary); width: 28px; border-radius: 5px; }
+    @media (max-width: 768px) {
+        .slide { padding: 28px 16px; } .two-col { flex-direction: column; }
+        .summary-grid { grid-template-columns: 1fr; }
+    }
 </style>
 </head>
 <body>
-<div class="slide-container">
-<div class="title-bar">
-<span class="course-name">CSP-J 备考课程</span>
-<span class="lesson-num">第21课：结构体定义与使用</span>
-</div>
-<div class="slides-wrapper">
-<!-- Slide 1: 标题页 -->
-<div class="slide active">
-<div style="display:flex;flex:1;flex-direction:column;justify-content:center;align-items:center;text-align:center;">
-<div style="font-size:20px;color:#ff8f00;margin-bottom:10px;">C++ 数据结构基础</div>
-<h1 style="border:none;font-size:42px;margin-bottom:16px;">第21课：结构体定义与使用</h1>
-<div style="width:100px;height:4px;background:#ffd600;margin:20px auto;"></div>
-<p style="font-size:20px;color:#555;">struct · 成员访问 · 结构体数组 · 排序</p>
-<div style="margin-top:40px;display:flex;gap:30px;">
-<div style="text-align:center;">
-<div style="font-size:36px;color:#1a237e;font-weight:bold;">📦</div>
-<div style="font-size:13px;color:#888;">数据封装</div>
-</div>
-<div style="text-align:center;">
-<div style="font-size:36px;color:#1a237e;font-weight:bold;">📊</div>
-<div style="font-size:13px;color:#888;">批量管理</div>
-</div>
-<div style="text-align:center;">
-<div style="font-size:36px;color:#1a237e;font-weight:bold;">🔢</div>
-<div style="font-size:13px;color:#888;">灵活排序</div>
-</div>
-<div style="text-align:center;">
-<div style="font-size:36px;color:#1a237e;font-weight:bold;">⚡</div>
-<div style="font-size:13px;color:#888;">高效传参</div>
-</div>
-</div>
+<div class="title-bar">CSP-J 备考课程 <span class="badge">L21</span></div>
+<div class="slides-container">
+
+<div class="slide slide-title active" data-slide="1">
+<h1>第21课：结构体定义与使用</h1>
+<div class="subtitle">打包数据 · 数组 · 排序 · 传参</div>
+<div class="lesson-info">CSP-J 备考 · 配套 lesson21_结构体定义与使用.cpp</div>
+<aside class="notes">【开场】把学生档案从散变量升级为 struct。</aside>
 </div>
 
-<aside class="notes">【开场】第 1/10 页 · 结构体定义与使用
-用 30 秒说明本课目标与学完能做什么，再进入正题。
-大纲考点：struct定义/成员访问/结构体数组、结构体排序
-配套练习方向：结构体存储与排序题
-封面关键词：
-· struct · 成员访问 · 结构体数组 · 排序
-互动：问学生「今天最想搞清楚什么？」，收 1–2 个期待。</aside>
+<div class="slide" data-slide="2">
+<h2>考纲与为什么需要结构体</h2>
+<table class="info-table">
+<tr><th>知识点</th><th>要求</th></tr>
+<tr><td>struct 定义 / 成员访问</td><td>掌握 · 点运算符 .</td></tr>
+<tr><td>初始化方式</td><td>掌握</td></tr>
+<tr><td>结构体数组 + sort/cmp</td><td>掌握（高频）</td></tr>
+<tr><td>函数参数值/引用</td><td>掌握 const &</td></tr>
+<tr><td>嵌套结构体</td><td>理解</td></tr>
+</table>
+<div class="warn-box">散变量 name1,age1,chinese1… 难管理。结构体 = 自定义类型，把相关字段打包成「档案袋」。</div>
+<aside class="notes">【讲解】现实类比学生档案。</aside>
 </div>
-<!-- Slide 2: 结构体的定义 -->
-<div class="slide">
-<h2>结构体的定义</h2>
-<p>结构体（<code style="color:#c62828;font-weight:bold;">struct</code>）是将多个<strong>相关数据</strong>组合成一个整体的自定义数据类型。</p>
-<div class="exam-tip">
-<strong>类比：</strong>学生档案袋 = 结构体；档案上的各项信息（姓名、年龄、成绩）= 成员变量。
-            </div>
-<h3>定义语法</h3>
-<div class="code-block"><span class="keyword">struct</span> <span class="type">Student</span> {
-    <span class="type">string</span> name;    <span class="comment">// 姓名</span>
-<span class="type">int</span> age;        <span class="comment">// 年龄</span>
-<span class="type">int</span> chinese;    <span class="comment">// 语文</span>
-<span class="type">int</span> math;       <span class="comment">// 数学</span>
-<span class="type">int</span> english;    <span class="comment">// 英语</span>
-};  <span class="comment">// 注意：分号不能忘！</span></div>
-<div class="error-box">
-<strong>易错：</strong>右花括号 <code>}</code> 后面必须写分号 <code>;</code>，否则编译错误！
-            </div>
-<p>结构体定义后，<code>Student</code> 就成为一个新的<strong>数据类型</strong>，可以像 <code>int</code>、<code>string</code> 一样使用。</p>
 
-<aside class="notes">【讲解】结构体的定义
-本页要点（照着讲即可）：
-· 结构体（ struct ）是将多个 相关数据 组合成一个整体的自定义数据类型。
-· 相关数据
-· 结构体定义后， Student 就成为一个新的 数据类型 ，可以像 int 、 string 一样使用。
-· 数据类型
-讲解时放慢关键术语；用 1 个生活类比 + 1 个反例加深印象。
-本课大纲考点（可适时点题）：struct定义/成员访问/结构体数组、结构体排序</aside>
+<div class="slide" data-slide="3">
+<h2>一、定义结构体</h2>
+<div class="code-block"><span class="kw">struct</span> Student {
+    string name;
+    <span class="kw">int</span> age;
+    <span class="kw">int</span> chinese, math, english;
+};  <span class="cm">// ⚠️ 右花括号后必须有分号！</span></div>
+<ul class="info-list">
+<li><span class="code-inline">struct</span> 关键字 + 类型名 + 成员列表</li>
+<li>定义后 <span class="code-inline">Student</span> 就是新类型，可声明变量/数组</li>
+<li>最易忘：<strong>末尾分号</strong></li>
+</ul>
+<aside class="notes">【讲解】对比 class，CSP-J 用 struct 即可。</aside>
 </div>
-<!-- Slide 3: 成员访问与初始化 -->
-<div class="slide">
-<h2>成员访问与初始化</h2>
+
+<div class="slide" data-slide="4">
+<h2>二、创建与初始化</h2>
+<div class="code-block"><span class="cm">// 1 先声明再赋值</span>
+Student s1;
+s1.name = <span class="str">"张三"</span>; s1.age = <span class="num">12</span>;
+s1.chinese = <span class="num">90</span>; s1.math = <span class="num">85</span>; s1.english = <span class="num">88</span>;
+
+<span class="cm">// 2 初始化列表</span>
+Student s2 = {<span class="str">"李四"</span>, <span class="num">13</span>, <span class="num">88</span>, <span class="num">92</span>, <span class="num">95</span>};
+
+<span class="cm">// 3 C++11 统一初始化</span>
+Student s3{<span class="str">"王五"</span>, <span class="num">12</span>, <span class="num">78</span>, <span class="num">85</span>, <span class="num">80</span>};</div>
+<div class="tip-box">初始化顺序与成员声明顺序一致。未写的成员默认初始化（POD 可能未定义，竞赛中建议写全）。</div>
+<aside class="notes">【讲解】三种方式都合法，考场任选一种熟练。</aside>
+</div>
+
+<div class="slide" data-slide="5">
+<h2>三、点运算符访问成员</h2>
+<div class="code-block">Student stu = {<span class="str">"张三"</span>, <span class="num">90</span>, <span class="num">85</span>, <span class="num">88</span>};  <span class="cm">// 按实际成员调整</span>
+<span class="kw">int</span> total = stu.chinese + stu.math + stu.english;
+<span class="kw">double</span> avg = total / <span class="num">3.0</span>;
+stu.math = <span class="num">95</span>;   <span class="cm">// 修改成员</span>
+cout &lt;&lt; stu.name &lt;&lt; <span class="str">" 总分 "</span> &lt;&lt; total &lt;&lt; endl;</div>
+<ul class="info-list">
+<li>读：<span class="code-inline">int a = s.age;</span></li>
+<li>写：<span class="code-inline">s.chinese = 95;</span></li>
+<li>表达式中直接用成员参与运算</li>
+</ul>
+<aside class="notes">【讲解】. 与指针 -&gt; 对比（下节课）。</aside>
+</div>
+
+<div class="slide" data-slide="6">
+<h2>四、结构体数组</h2>
+<div class="code-block">Student stus[<span class="num">100</span>];
+<span class="kw">int</span> n; cin &gt;&gt; n;
+<span class="kw">for</span> (<span class="kw">int</span> i = <span class="num">0</span>; i &lt; n; i++) {
+    cin &gt;&gt; stus[i].name &gt;&gt; stus[i].chinese
+        &gt;&gt; stus[i].math &gt;&gt; stus[i].english;
+    stus[i].total = stus[i].chinese + stus[i].math + stus[i].english;
+}
+<span class="cm">// 扫描最高分：比较 stus[i].total</span></div>
+<div class="ok-box">用法与普通数组相同，元素类型是结构体。批量管理学生/点/边的标准做法。</div>
+<aside class="notes">【讲解】演示最高/最低/平均统计思路。</aside>
+</div>
+
+<div class="slide" data-slide="7">
+<h2>五、结构体排序：sort + cmp</h2>
+<div class="code-block"><span class="kw">bool</span> <span class="fn">cmp</span>(<span class="kw">const</span> Student &amp;a, <span class="kw">const</span> Student &amp;b) {
+    <span class="kw">if</span> (a.total != b.total)
+        <span class="kw">return</span> a.total &gt; b.total;   <span class="cm">// 总分降序</span>
+    <span class="kw">return</span> a.name &lt; b.name;         <span class="cm">// 同名次按姓名升序</span>
+}
+<span class="cm">// sort(stus, stus + n, cmp);</span></div>
+<ul class="info-list">
+<li>cmp 返回 true 表示 a 应排在 b <strong>前面</strong></li>
+<li>参数推荐 <span class="code-inline">const T&amp;</span>，避免复制大结构体</li>
+<li>范围 [begin, end) → stus ~ stus+n</li>
+</ul>
+<div class="gold-box">CSP-J 高频：多关键字排序几乎必考结构体 + cmp。</div>
+<aside class="notes">【讲解】严格弱序：不要写不稳定相等时两边 true。</aside>
+</div>
+
+<div class="slide" data-slide="8">
+<h2>六、结构体作为函数参数</h2>
 <div class="two-col">
 <div>
-<h3>三种初始化方式</h3>
-<div class="code-block"><span class="comment">// 1. 逐个赋值</span>
-<span class="type">Student</span> s1;
-s1.name = <span class="string">"张三"</span>;
-s1.age = <span class="number">12</span>;
-s1.chinese = <span class="number">90</span>;
-
-<span class="comment">// 2. 初始化列表</span>
-<span class="type">Student</span> s2 = {<span class="string">"李四"</span>, <span class="number">13</span>, <span class="number">88</span>, <span class="number">92</span>, <span class="number">95</span>};
-
-<span class="comment">// 3. C++11 统一初始化</span>
-<span class="type">Student</span> s3{<span class="string">"王五"</span>, <span class="number">12</span>, <span class="number">78</span>, <span class="number">85</span>, <span class="number">80</span>};</div>
-</div>
-<div>
-<h3>点运算符 <code>.</code></h3>
-<div class="code-block"><span class="comment">// 读取成员</span>
-<span class="type">int</span> a = s1.age;
-
-<span class="comment">// 修改成员</span>
-s1.math = <span class="number">95</span>;
-
-<span class="comment">// 计算表达式</span>
-<span class="type">int</span> total = s1.chinese
-           + s1.math
-           + s1.english;</div>
-<div class="exam-tip">
-<strong>记忆口诀：</strong>「变量名<code>.</code>成员名」，就像「档案袋.姓名」。
-                    </div>
-</div>
-</div>
-
-<aside class="notes">【讲解】成员访问与初始化
-本页要点（照着讲即可）：
-· 记忆口诀：
-讲解时放慢关键术语；用 1 个生活类比 + 1 个反例加深印象。</aside>
-</div>
-<!-- Slide 4: 结构体数组 -->
-<div class="slide">
-<h2>结构体数组</h2>
-<p>可以创建结构体类型的数组，方便批量管理数据：</p>
-<div class="code-block"><span class="type">Student</span> stus[<span class="number">100</span>];  <span class="comment">// 最多存储 100 个学生</span>
-<span class="type">int</span> n;
-cin &gt;&gt; n;
-<span class="keyword">for</span> (<span class="type">int</span> i = <span class="number">0</span>; i &lt; n; i++) {
-    cin &gt;&gt; stus[i].name
-        &gt;&gt; stus[i].chinese
-        &gt;&gt; stus[i].math
-        &gt;&gt; stus[i].english;
-    stus[i].total = stus[i].chinese
-                  + stus[i].math
-                  + stus[i].english;
-}</div>
-<div class="exam-tip">
-<strong>常见操作：</strong>遍历结构体数组，统计最高分/最低分/平均分。使用循环遍历每个元素，通过 <code>stus[i].成员名</code> 访问数据。
-            </div>
-<p style="margin-top:10px;">与普通数组的区别仅在于：<strong>数组元素的类型是结构体</strong>，需要使用点运算符访问内部成员。</p>
-
-<aside class="notes">【讲解】结构体数组
-结合讲义《5. 结构体数组》强调：
-· 当需要管理多个学生的信息时，可以使用结构体数组。这与普通数组的使用方式类似，只是数组元素的类型变成了结构体。
-· 定义结构体数组：
-· Student stus[100]; // 最多存储100个学生
-· int n; // 实际学生数量
-· cin &gt;&gt; n;
-幻灯片上可见要点：
-· 可以创建结构体类型的数组，方便批量管理数据：
-· 常见操作：
-· 与普通数组的区别仅在于： 数组元素的类型是结构体 ，需要使用点运算符访问内部成员。
-· 数组元素的类型是结构体
-讲解时放慢关键术语；用 1 个生活类比 + 1 个反例加深印象。</aside>
-</div>
-<!-- Slide 5: 结构体排序 -->
-<div class="slide">
-<h2>结构体排序 —— sort + cmp</h2>
-<p>CSP-J 高频考点！使用 <code>sort()</code> 配合<strong>自定义比较函数</strong>实现按任意字段排序。</p>
-<h3>比较函数模板</h3>
-<div class="code-block"><span class="type">bool</span> <span class="func">cmp</span>(<span class="keyword">const</span> <span class="type">Student</span> &amp;a, <span class="keyword">const</span> <span class="type">Student</span> &amp;b) {
-    <span class="keyword">if</span> (a.total != b.total)
-        <span class="keyword">return</span> a.total &gt; b.total;  <span class="comment">// 总分降序</span>
-<span class="keyword">return</span> a.name &lt; b.name;        <span class="comment">// 总分相同按姓名升序</span>
+<h3>值传递</h3>
+<div class="code-block" style="font-size:11.5px;"><span class="kw">void</span> <span class="fn">f</span>(Student s) {
+  s.total += <span class="num">10</span>;  <span class="cm">// 改副本</span>
 }
-
-<span class="func">sort</span>(stus, stus + n, cmp);</div>
-<table>
-<tr><th>排序需求</th><th>cmp 核心代码</th></tr>
-<tr><td>总分降序</td><td><code>return a.total &gt; b.total;</code></td></tr>
-<tr><td>按姓名升序</td><td><code>return a.name &lt; b.name;</code></td></tr>
-<tr><td>总分降序，同分按姓名升序</td><td>先用 <code>if</code> 判断总分，再判断姓名</td></tr>
-</table>
-<div class="error-box">
-<strong>易错：</strong>cmp 的返回值必须是 <code>bool</code>，参数必须用 <code>const &amp;</code> 避免复制！
-            </div>
-
-<aside class="notes">【讲解】结构体排序 —— sort + cmp
-结合讲义《6. 结构体排序——配合 `sort()` + 自定义比较函数》强调：
-· CSP-J 考试中非常常见的题型：对结构体数组按照某个字段进行排序。
-· sort() 函数需要三个参数：
-· 排序的起始地址
-· 排序的结束地址（不包含）
-· 比较函数（cmp）：决定排序规则
-幻灯片上可见要点：
-· CSP-J 高频考点！使用 sort() 配合 自定义比较函数 实现按任意字段排序。
-· 自定义比较函数
-讲解时放慢关键术语；用 1 个生活类比 + 1 个反例加深印象。</aside>
-</div>
-<!-- Slide 6: 值传递 vs 引用传递 -->
-<div class="slide">
-<h2>结构体作为函数参数</h2>
-<div class="two-col">
-<div>
-<h3>值传递（不推荐）</h3>
-<div class="code-block"><span class="type">void</span> <span class="func">print</span>(<span class="type">Student</span> s) {
-    cout &lt;&lt; s.name;
-    s.total = <span class="number">0</span>;  <span class="comment">// 改的是副本</span>
-}</div>
-<div class="error-box">
-<strong>缺点：</strong>会复制整个结构体，效率低。修改不影响原数据。
-                    </div>
+<span class="cm">// 原对象不变；大结构慢</span></div>
 </div>
 <div>
-<h3>引用传递（推荐）</h3>
-<div class="code-block"><span class="comment">// 只读引用（最常用）</span>
-<span class="type">void</span> <span class="func">print</span>(<span class="keyword">const</span> <span class="type">Student</span> &amp;s) {
-    cout &lt;&lt; s.name;
+<h3>引用传递</h3>
+<div class="code-block" style="font-size:11.5px;"><span class="kw">void</span> <span class="fn">g</span>(Student &amp;s) {
+  s.total += <span class="num">10</span>;  <span class="cm">// 改原对象</span>
 }
+<span class="kw">void</span> <span class="fn">print</span>(<span class="kw">const</span> Student &amp;s);</div>
+</div>
+</div>
+<div class="ok-box">只读 → <code>const Student&amp;</code>；要改 → <code>Student&amp;</code>。竞赛默认 const 引用。</div>
+<aside class="notes">【讲解】对照第18课传参。</aside>
+</div>
 
-<span class="comment">// 可修改引用</span>
-<span class="type">void</span> <span class="func">addBonus</span>(<span class="type">Student</span> &amp;s) {
-    s.total += <span class="number">10</span>;
-}</div>
-<div class="success-box">
-<strong>优点：</strong>不复制，效率高。<code>const &amp;</code> 既安全又快速，是 CSP-J 最佳实践。
-                    </div>
-</div>
-</div>
-<div class="exam-tip" style="margin-top:12px;">
-<strong>口诀：</strong>「只读用 const &amp;，修改用 &amp;，永远不用值传递传大结构体！」
-            </div>
-
-<aside class="notes">【讲解】结构体作为函数参数
-结合讲义《7. 结构体作为函数参数》强调：
-· （1）值传递（Pass by Value）：
-· void printStudent(Student s) { // 会复制整个结构体！
-· cout &lt;&lt; s.name &lt;&lt; " " &lt;&lt; s.total &lt;&lt; endl;
-· 函数内部操作的是**原始结构体的副本**
-· 修改副本**不会影响**原始数据
-幻灯片上可见要点：
-· 结构体作为函数参数
-· 值传递（不推荐）
-· void
-· print
-讲解时放慢关键术语；用 1 个生活类比 + 1 个反例加深印象。</aside>
-</div>
-<!-- Slide 7: 代码模板 -->
-<div class="slide">
-<h2>代码模板 —— 学生成绩排序</h2>
-<p>定义 Student 结构体，输入 n 个学生，按总分降序排序，输出前三名：</p>
-<div class="code-block"><span class="keyword">struct</span> <span class="type">Student</span> {
-    <span class="type">string</span> name;
-    <span class="type">int</span> chinese, math, english, total;
+<div class="slide" data-slide="9">
+<h2>七、嵌套结构体</h2>
+<div class="code-block"><span class="kw">struct</span> Date { <span class="kw">int</span> year, month, day; };
+<span class="kw">struct</span> Student {
+    string name;
+    Date birthday;   <span class="cm">// 嵌套</span>
+    <span class="kw">int</span> total;
 };
+Student stu;
+stu.birthday.year = <span class="num">2012</span>;
+stu.birthday.month = <span class="num">6</span>;
+stu.birthday.day = <span class="num">15</span>;
+<span class="cm">// 多级点号：stu.birthday.year</span></div>
+<div class="tip-box">点坐标 Point{x,y} 嵌套在边/图形中同理。访问链式点号即可。</div>
+<aside class="notes">【讲解】为真题最近点对铺垫 Point。</aside>
+</div>
 
-<span class="type">bool</span> <span class="func">cmp</span>(<span class="keyword">const</span> <span class="type">Student</span> &amp;a, <span class="keyword">const</span> <span class="type">Student</span> &amp;b) {
-    <span class="keyword">return</span> a.total &gt; b.total;
-}
-
-<span class="type">int</span> <span class="func">main</span>() {
-    <span class="type">int</span> n;
-    cin &gt;&gt; n;
-    <span class="type">Student</span> stus[<span class="number">105</span>];
-    <span class="keyword">for</span> (<span class="type">int</span> i = <span class="number">0</span>; i &lt; n; i++) {
-        cin &gt;&gt; stus[i].name &gt;&gt; stus[i].chinese
-            &gt;&gt; stus[i].math &gt;&gt; stus[i].english;
-        stus[i].total = stus[i].chinese + stus[i].math + stus[i].english;
-    }
-    <span class="func">sort</span>(stus, stus + n, cmp);
-    <span class="keyword">for</span> (<span class="type">int</span> i = <span class="number">0</span>; i &lt; <span class="func">min</span>(<span class="number">3</span>, n); i++)
-        cout &lt;&lt; stus[i].name &lt;&lt; <span class="string">" "</span> &lt;&lt; stus[i].total &lt;&lt; endl;
-    <span class="keyword">return</span> <span class="number">0</span>;
-}</div>
-
-<aside class="notes">【讲解】代码模板 —— 学生成绩排序
-本页要点（照着讲即可）：
-· 定义 Student 结构体，输入 n 个学生，按总分降序排序，输出前三名：
-代码页节奏：先读懂输入输出 → 再走主流程 → 最后点出易错点（边界/类型/下标）。
-可让学生预测下一行输出，再运行对照。</aside>
-</div>
-<!-- Slide 8: 易错点 -->
-<div class="slide">
-<h2>易错点总结</h2>
-<div class="error-box">
-<strong>错误1：</strong>结构体定义末尾忘记加分号 <code>;</code><br/>
-<code style="font-size:13px;">struct Student { ... } // ❌ 编译错误！</code>
-</div>
-<div class="error-box">
-<strong>错误2：</strong>混淆结构体名与变量名<br/>
-<code style="font-size:13px;">Student.name = "张三"; // ❌ Student 是类型，不是变量！</code>
-</div>
-<div class="error-box">
-<strong>错误3：</strong>cmp 函数签名错误<br/>
-<code style="font-size:13px;">int cmp(Student a, Student b) { ... } // ❌ 返回类型应为 bool，参数应加 const &amp;</code>
-</div>
-<div class="error-box">
-<strong>错误4：</strong>值传递复制大结构体导致效率低<br/>
-<code style="font-size:13px;">void f(Student s) { ... } // ❌ 每次都复制，应该用 const Student &amp;s</code>
-</div>
-<div class="error-box">
-<strong>错误5：</strong>结构体数组下标越界<br/>
-                数组大小固定为 100，但输入的 n 可能超过 100，注意题目范围限制。
-            </div>
-
-<aside class="notes">【收尾】回顾本课主线：易错点总结
-对照大纲再过一遍：struct定义/成员访问/结构体数组、结构体排序
-板书/口述要点：
-· 错误1：
-· 错误2：
-· 错误3：
-· 错误4：
-· 错误5：
-课后任务：结构体存储与排序题
-结束前留 2 分钟答疑；布置 1 道小练习检验是否真正掌握。</aside>
-</div>
-<!-- Slide 9: 真题精练 -->
-<div class="slide">
-<h2>真题精练</h2>
-<div class="exam-tip">
-<strong>题目1：学生成绩排名</strong><br/>
-                输入 N 个学生（姓名、语文、数学、英语），计算总分，按总分降序排序（同分按姓名升序），输出排名。
-            </div>
-<div class="exam-tip">
-<strong>题目2：最近点对</strong><br/>
-                平面上 N 个点 (x, y)，找出距离最近的两个点，输出距离（保留两位小数）。<br/>
-                距离公式：√((x₁-x₂)² + (y₁-y₂)²)
-            </div>
-<h3 style="margin-top:12px;">嵌套结构体</h3>
-<div class="code-block"><span class="keyword">struct</span> <span class="type">Date</span> { <span class="type">int</span> year, month, day; };
-<span class="keyword">struct</span> <span class="type">Student</span> {
-    <span class="type">string</span> name;
-    <span class="type">Date</span> birthday;     <span class="comment">// 嵌套结构体</span>
-<span class="type">int</span> total;
+<div class="slide" data-slide="10">
+<h2>代码模板：学生成绩 + 点距离</h2>
+<div class="code-block" style="font-size:11.5px;"><span class="kw">struct</span> Student {
+    string name; <span class="kw">int</span> chinese, math, english, total;
 };
-<span class="comment">// 访问：stu.birthday.year</span></div>
-<p>通过多级点运算符访问嵌套成员，如 <code>stu.birthday.month</code>。</p>
+<span class="kw">bool</span> <span class="fn">cmp</span>(<span class="kw">const</span> Student &amp;a, <span class="kw">const</span> Student &amp;b) {
+    <span class="kw">if</span> (a.total != b.total) <span class="kw">return</span> a.total &gt; b.total;
+    <span class="kw">return</span> a.name &lt; b.name;
+}
+<span class="cm">// 读入 → 算 total → sort(stus, stus+n, cmp) → 输出排名</span>
 
-<aside class="notes">【讲解】真题精练
-本页要点（照着讲即可）：
-· 题目1：学生成绩排名
-· 题目2：最近点对
-· 通过多级点运算符访问嵌套成员，如 stu.birthday.month 。
-练习页节奏：先独立想 1 分钟 → 再点拨思路 → 最后对答案讲为什么。
-可联系：结构体存储与排序题</aside>
-</div>
-<!-- Slide 10: 本课小结 -->
-<div class="slide">
-<div style="display:flex;flex:1;flex-direction:column;justify-content:center;align-items:center;text-align:center;">
-<h1 style="border:none;font-size:36px;margin-bottom:20px;">本课小结</h1>
-<div style="width:80px;height:3px;background:#ffd600;margin-bottom:24px;"></div>
-<table style="width:80%;font-size:15px;">
-<tr><th style="width:25%;">知识点</th><th>要点</th></tr>
-<tr><td><strong>结构体定义</strong></td><td><code>struct</code> 关键字，花括号后必须加分号</td></tr>
-<tr><td><strong>成员访问</strong></td><td>点运算符 <code>.</code>，变量名.成员名</td></tr>
-<tr><td><strong>初始化</strong></td><td>逐个赋值 / 初始化列表 / 统一初始化</td></tr>
-<tr><td><strong>结构体数组</strong></td><td>批量管理同类型数据</td></tr>
-<tr><td><strong>排序</strong></td><td><code>sort()</code> + <code>bool cmp(const T &amp;a, const T &amp;b)</code></td></tr>
-<tr><td><strong>传参</strong></td><td>推荐 <code>const &amp;</code>，避免值传递复制</td></tr>
-<tr><td><strong>嵌套结构体</strong></td><td>多级点运算符访问</td></tr>
-</table>
-<p style="margin-top:24px;font-size:18px;color:#1a237e;">结构体是自定义数据类型的基石，也是理解「类」的起点！</p>
+<span class="kw">struct</span> Point { <span class="kw">int</span> x, y; };
+<span class="kw">double</span> <span class="fn">dist</span>(<span class="kw">const</span> Point &amp;a, <span class="kw">const</span> Point &amp;b) {
+    <span class="kw">int</span> dx = a.x - b.x, dy = a.y - b.y;
+    <span class="kw">return</span> sqrt(dx * dx + dy * dy);
+}</div>
+<aside class="notes">【讲解】两模板覆盖成绩榜与几何点。</aside>
 </div>
 
-<aside class="notes">【收尾】回顾本课主线：本课小结
-对照大纲再过一遍：struct定义/成员访问/结构体数组、结构体排序
-板书/口述要点：
-· 结构体定义
-· 成员访问
-· 结构体数组
-· 嵌套结构体
-· 结构体是自定义数据类型的基石，也是理解「类」的起点！
-课后任务：结构体存储与排序题
-结束前留 2 分钟答疑；布置 1 道小练习检验是否真正掌握。</aside>
+<div class="slide" data-slide="11">
+<h2>易错点</h2>
+<div class="warn-box">
+<strong>1.</strong> 结构体定义漏分号 → 编译错<br/>
+<strong>2.</strong> 混淆类型名 Student 与变量名 s<br/>
+<strong>3.</strong> 大结构体值传递拖慢 / 改不动原数据<br/>
+<strong>4.</strong> cmp 签名错误：必须 bool，两参数同类型<br/>
+<strong>5.</strong> 结构体数组下标越界 / n 读错
 </div>
+<div class="code-block" style="font-size:12px;"><span class="cm">// ❌ bool cmp(Student a, Student b) 可用但慢</span>
+<span class="cm">// ✅ bool cmp(const Student&amp; a, const Student&amp; b)</span>
+<span class="cm">// ❌ return a.total &gt;= b.total;  // 相等时不该 true</span></div>
+<aside class="notes">【讲解】cmp 相等返回 false。</aside>
+</div>
+
+<div class="slide" data-slide="12">
+<h2>真题1：学生成绩排名</h2>
+<div class="exam-card">
+<h4>题目</h4>
+<p>N 名学生，三科成绩，按总分降序；同分按姓名字典序升序。输出排名与各科+总分。</p>
+<p>样例要点：赵六与李四同 275 分，赵 &lt; 李 → 赵排前。</p>
+</div>
+<div class="code-block" style="font-size:11.5px;"><span class="kw">bool</span> <span class="fn">cmp</span>(<span class="kw">const</span> Student &amp;a, <span class="kw">const</span> Student &amp;b) {
+    <span class="kw">if</span> (a.total != b.total) <span class="kw">return</span> a.total &gt; b.total;
+    <span class="kw">return</span> a.name &lt; b.name;
+}
+<span class="cm">// 读 n 行 → total=c+m+e → sort → 输出 i+1 与字段</span></div>
+<aside class="notes">【练习】完整 AC 见讲义。</aside>
+</div>
+
+<div class="slide" data-slide="13">
+<h2>真题2：最近点对</h2>
+<div class="exam-card">
+<h4>题目</h4>
+<p>平面 N 个点（2≤N≤100），求最近两点欧氏距离，保留两位小数。</p>
+</div>
+<div class="code-block" style="font-size:12px;"><span class="kw">struct</span> Point { <span class="kw">int</span> x, y; };
+<span class="kw">double</span> minDist = <span class="num">1e18</span>;
+<span class="kw">for</span> (<span class="kw">int</span> i = <span class="num">0</span>; i &lt; n; i++)
+  <span class="kw">for</span> (<span class="kw">int</span> j = i + <span class="num">1</span>; j &lt; n; j++)
+    minDist = min(minDist, dist(pts[i], pts[j]));
+printf(<span class="str">"%.2f\n"</span>, minDist);</div>
+<div class="tip-box">N≤100 暴力 O(n²) 足够。结构体封装坐标，距离函数用 const 引用。</div>
+<aside class="notes">【练习】样例四点最小 1.00。</aside>
+</div>
+
+<div class="slide" data-slide="14">
+<h2>本课小结</h2>
+<div class="summary-grid">
+<div class="summary-item"><strong>定义</strong><br/>struct + 成员 + 分号</div>
+<div class="summary-item"><strong>访问</strong><br/>变量.成员</div>
+<div class="summary-item"><strong>数组</strong><br/>Student a[N] 批量管理</div>
+<div class="summary-item"><strong>排序</strong><br/>sort + const&amp; cmp</div>
+<div class="summary-item"><strong>传参</strong><br/>const&amp; 只读；&amp; 可改</div>
+<div class="summary-item"><strong>嵌套</strong><br/>a.b.c 多级点号</div>
+</div>
+<p style="text-align:center;color:#78909c;margin-top:12px;">下一课：第22课 · 指针基础</p>
+<aside class="notes">【收尾】布置成绩排名默写 cmp。</aside>
+</div>
+
 </div>
 <div class="nav-bar">
-<button class="nav-btn" id="prevBtn" onclick="changeSlide(-1)">上一页</button>
-<span class="slide-indicator" id="slideIndicator">1 / 10</span>
-<button class="nav-btn" id="nextBtn" onclick="changeSlide(1)">下一页</button>
-</div>
+<button class="nav-btn" id="prevBtn" onclick="changeSlide(-1)">◀ 上一页</button>
+<div class="page-dots" id="pageDots"></div>
+<span class="page-indicator" id="pageIndicator">1 / 14</span>
+<button class="nav-btn" id="nextBtn" onclick="changeSlide(1)">下一页 ▶</button>
 </div>
 <script>
-let currentSlide = 0;
-const slides = document.querySelectorAll('.slide');
-const totalSlides = slides.length;
-
-function showSlide(n) {
-    currentSlide = (n + totalSlides) % totalSlides;
-    slides.forEach(s => s.classList.remove('active'));
-    slides[currentSlide].classList.add('active');
-    document.getElementById('slideIndicator').textContent = (currentSlide + 1) + ' / ' + totalSlides;
-    document.getElementById('prevBtn').disabled = (currentSlide === 0);
-    document.getElementById('nextBtn').disabled = (currentSlide === totalSlides - 1);
-}
-
-function changeSlide(dir) {
-    showSlide(currentSlide + dir);
-}
-
-document.addEventListener('keydown', function(e) {
-    if (e.key === 'ArrowLeft') changeSlide(-1);
-    if (e.key === 'ArrowRight') changeSlide(1);
-});
-
-showSlide(0);
+(function() {
+    var slides = document.querySelectorAll('.slide');
+    var totalSlides = slides.length, currentSlide = 0;
+    var dotsContainer = document.getElementById('pageDots');
+    for (var i = 0; i < totalSlides; i++) {
+        var dot = document.createElement('span');
+        dot.className = 'page-dot' + (i === 0 ? ' active' : '');
+        dot.onclick = (function(idx) { return function() { goToSlide(idx); }; })(i);
+        dotsContainer.appendChild(dot);
+    }
+    function updateUI() {
+        slides.forEach(function(s, i) { s.classList.toggle('active', i === currentSlide); });
+        document.getElementById('pageIndicator').textContent = (currentSlide + 1) + ' / ' + totalSlides;
+        document.querySelectorAll('.page-dot').forEach(function(d, i) { d.classList.toggle('active', i === currentSlide); });
+        document.getElementById('prevBtn').disabled = currentSlide === 0;
+        document.getElementById('nextBtn').disabled = currentSlide === totalSlides - 1;
+    }
+    window.goToSlide = function(i) { if (i >= 0 && i < totalSlides) { currentSlide = i; updateUI(); } };
+    window.changeSlide = function(d) { goToSlide(currentSlide + d); };
+    document.addEventListener('keydown', function(e) {
+        if (e.key === 'ArrowLeft' || e.key === 'ArrowUp') { e.preventDefault(); changeSlide(-1); }
+        else if (e.key === 'ArrowRight' || e.key === 'ArrowDown' || e.key === ' ') { e.preventDefault(); changeSlide(1); }
+        else if (e.key === 'Home') { e.preventDefault(); goToSlide(0); }
+        else if (e.key === 'End') { e.preventDefault(); goToSlide(totalSlides - 1); }
+    });
+    updateUI();
+})();
 </script>
 <script src="courseware-ui.js"></script>
 <script src="presenter.js"></script>

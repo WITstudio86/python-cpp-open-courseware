@@ -447,11 +447,252 @@ int main() {
 
 ---
 
+### 真题3：字符串查找与替换统计
+
+**题目描述**：  
+给定文本串 `T` 与模式串 `P`（均不含空格），请完成：
+1. 输出 `P` 在 `T` 中**第一次出现**的起始下标（从 0 开始）；若不存在输出 `-1`。
+2. 统计 `P` 在 `T` 中**不重叠**出现的次数（从左到右贪心匹配）。
+3. 将 `T` 中第一次出现的 `P` 替换为字符串 `R`，输出替换后的结果；若未出现则输出原串。
+
+**输入格式**：  
+三行，分别为 `T`、`P`、`R`，长度均不超过 1000。
+
+**输出格式**：  
+第一行：首次位置（或 `-1`）。  
+第二行：不重叠出现次数。  
+第三行：替换后的字符串。
+
+**样例输入**：
+```
+ababababa
+aba
+XY
+```
+
+**样例输出**：
+```
+0
+2
+XYbababa
+```
+
+**说明**：  
+首次在下标 0；不重叠匹配可取 `[0,2]` 与 `[4,6]`，共 2 次；仅替换第一次 → `XY` + `bababa`。
+
+**AC 代码**：
+
+```cpp
+#include <iostream>
+#include <string>
+using namespace std;
+
+int main() {
+    string T, P, R;
+    getline(cin, T);
+    getline(cin, P);
+    getline(cin, R);
+
+    // 1) 首次出现
+    size_t first = T.find(P);
+    if (first == string::npos) cout << -1 << endl;
+    else cout << first << endl;
+
+    // 2) 不重叠计数
+    int cnt = 0;
+    size_t pos = 0;
+    while (true) {
+        size_t p = T.find(P, pos);
+        if (p == string::npos) break;
+        cnt++;
+        pos = p + P.size();  // 不重叠：跳过整个模式
+    }
+    cout << cnt << endl;
+
+    // 3) 仅替换第一次
+    if (first == string::npos) {
+        cout << T << endl;
+    } else {
+        // 手动拼接：前缀 + R + 后缀
+        string ans = T.substr(0, first) + R + T.substr(first + P.size());
+        cout << ans << endl;
+    }
+    return 0;
+}
+```
+
+**考点分析**：  
+- `.find(str, pos)` 的第二参数表示**从 pos 开始**找，是统计多次出现的标准写法。  
+- 不重叠与重叠计数的区别：不重叠用 `pos = p + P.size()`；若允许重叠则 `pos = p + 1`（如在 `aaa` 中找 `aa`）。  
+- 考试中若未学 `.replace`，用 `substr` 拼接即可完成替换。
+
+---
+
+## 🧩 进阶知识与竞赛技巧
+
+### 七、string 更多实用成员函数
+
+CSP-J 编程题中，除了 `substr` / `find` / `length`，下列操作也很常见：
+
+| 函数 | 作用 | 示例 |
+|------|------|------|
+| `s.empty()` | 是否为空 | `s.empty()` → true/false |
+| `s.clear()` | 清空为 `""` | |
+| `s.push_back(c)` / `s += c` | 末尾追加一个字符 | |
+| `s.pop_back()` | 删除最后一个字符 | C++11 |
+| `s.insert(pos, str)` | 在 pos 插入字符串 | |
+| `s.erase(pos, len)` | 从 pos 删 len 个字符 | |
+| `s.replace(pos, len, str)` | 用 str 替换 [pos, pos+len) | |
+| `s.compare(t)` | 字典序比较，类似 strcmp | 0 相等，<0 更小，>0 更大 |
+| `s.c_str()` | 转为 `const char*` | 给旧接口用 |
+
+```cpp
+string s = "hello";
+s.push_back('!');           // "hello!"
+s.insert(5, " CSP");        // "hello CSP!"
+s.erase(5, 4);              // "hello!"（删掉 " CSP"）
+s.replace(0, 5, "Hi");      // "Hi!"
+```
+
+**注意**：`insert` / `erase` / `replace` 的时间复杂度与字符串长度有关（整体可能 O(n)），但 CSP-J 数据规模下通常足够。
+
+### 八、遍历 string 的多种写法
+
+```cpp
+string s = "abc";
+
+// 1) 下标（最常用，可修改）
+for (int i = 0; i < (int)s.size(); i++) {
+    cout << s[i];
+}
+
+// 2) 范围 for（可读性好）
+for (char c : s) cout << c;
+
+// 3) 引用修改
+for (char &c : s) c = toupper(c);
+
+// 4) 反向遍历（回文判断等）
+for (int i = (int)s.size() - 1; i >= 0; i--) cout << s[i];
+```
+
+**易错**：`s.size()` 返回 `size_t`（无符号）。写 `for (int i = s.size() - 1; i >= 0; i--)` 时，若 `s` 为空，`s.size()-1` 会下溢成很大的无符号数。安全写法：
+
+```cpp
+for (int i = (int)s.size() - 1; i >= 0; i--) { ... }
+// 或
+if (!s.empty()) { ... }
+```
+
+### 九、string 与 C 风格字符串互转
+
+```cpp
+// string → C 风格
+string s = "hello";
+const char *p = s.c_str();   // 只读，不要 delete
+// 需要可修改副本时：
+char buf[100];
+strcpy(buf, s.c_str());
+
+// C 风格 → string
+char a[] = "world";
+string t = a;                // 直接赋值
+string u(a);                 // 构造
+```
+
+**考试建议**：新写代码优先 `string`；读旧题、调 `printf("%s", ...)` 时再用 `.c_str()`。
+
+### 十、字符统计的“桶”写法（高频）
+
+除了 `isdigit` / `isalpha`，竞赛中常开数组统计频率：
+
+```cpp
+int cnt[256] = {0};          // 或 cnt[26] 只统计字母
+string s;
+getline(cin, s);
+for (unsigned char c : s) cnt[c]++;
+
+// 统计小写字母
+int letter[26] = {0};
+for (char c : s) {
+    if (islower(c)) letter[c - 'a']++;
+}
+```
+
+ASCII 码：`'0'~'9'` 为 48~57，`'A'~'Z'` 为 65~90，`'a'~'z'` 为 97~122。`'0' + d` 可把数字 `d` 变成字符。
+
+### 十一、常见字符串题型套路
+
+1. **统计类**：字母/数字/空格个数 → 遍历 + `cctype`。  
+2. **查找类**：子串位置、出现次数 → `find` 循环。  
+3. **变换类**：大小写翻转、删除指定字符 → 引用修改或新建串。  
+4. **构造类**：拼接、重复、插空格 → `+` / `push_back` / 循环。  
+5. **比较类**：字典序最大/最小单词 → 按空格拆词后比较。  
+6. **回文类**：双指针 `s[i]` 与 `s[n-1-i]`。
+
+**按空格拆词模板**：
+
+```cpp
+#include <sstream>
+string line, word;
+getline(cin, line);
+stringstream ss(line);
+while (ss >> word) {
+    // 处理每个 word
+}
+```
+
+### 十二、输入陷阱专题（考试必会）
+
+```cpp
+// 场景 A：先读整数，再读一行
+int n;
+cin >> n;
+cin.ignore();              // 丢掉行末 '\n'
+string s;
+getline(cin, s);
+
+// 场景 B：读 n 个可能含空格的字符串
+int n;
+cin >> n;
+cin.ignore();
+for (int i = 0; i < n; i++) {
+    string s;
+    getline(cin, s);
+}
+
+// 场景 C：多组直到 EOF
+string s;
+while (getline(cin, s)) {
+    // 处理 s
+}
+```
+
+`cin.ignore()` 默认只忽略 1 个字符。若缓冲可能残留多个空白，可用：
+
+```cpp
+cin.ignore(numeric_limits<streamsize>::max(), '\n');
+// 需 #include <limits>
+```
+
+---
+
+## 📌 课堂练习（建议限时）
+
+**练习 A**：读入一行，输出其中数字字符组成的“数字串”（保持相对顺序）。例如 `a1b23` → `123`。
+
+**练习 B**：判断读入的字符串是否回文（忽略大小写，只考虑字母数字）。可先筛出 `isalnum` 字符并 `tolower`，再双指针。
+
+**练习 C**：读入 `n` 和 `n` 个单词（无空格），输出字典序最小的单词。
+
+---
+
 ## 🎯 本课小结
 
 1. **string 类的优势**：自动内存管理、直观的运算符重载（`+`、`+=`、`==` 等）、丰富的成员函数，比 C 风格字符串更安全、更便捷。
 2. **string 的定义与初始化**：多种构造方式，灵活方便；`+` 拼接至少需要一个 `string` 类型的操作数。
 3. **输入方式**：`cin >> s` 遇空格停止；`getline(cin, s)` 读整行。混用时注意用 `cin.ignore()` 清除换行符。
-4. **核心操作**：`.length() / .size()` 获取长度；`.substr(pos, len)` 取子串（len 是长度）；`.find(str)` 查找子串（返回位置或 `string::npos`）。
+4. **核心操作**：`.length() / .size()` 获取长度；`.substr(pos, len)` 取子串（len 是长度）；`.find(str)` 查找子串（返回位置或 `string::npos`）；可配合 `find(str, pos)` 统计多次出现。
 5. **字符判断函数**：`isdigit` / `isalpha` / `islower` / `isupper` / `tolower` / `toupper`，需 `#include <cctype>`，参数和返回值均为 `int` 类型。
 6. **string 与 C 风格字符串**：CSP-J 考试中两者都可能出现，要根据题目要求灵活选用。字符串操作频繁时优先使用 `string` 类。
+7. **进阶记忆**：`push_back` / `erase` / `insert` / 桶统计 / `stringstream` 拆词，是字符处理题提速的常用工具。

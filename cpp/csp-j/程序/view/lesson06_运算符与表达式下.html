@@ -71,31 +71,19 @@
     box-shadow: 0 2px 12px rgba(15, 23, 42, 0.05);
   }
   .hint { margin-top: 12px; color: var(--muted); font-size: 12px; }
-
-  /* 打印：浅底、去阴影、省墨 */
   @media print {
     html, body { background: #fff !important; color: #000 !important; }
     .top {
-      position: static;
-      box-shadow: none;
-      border-bottom: 1px solid #ccc;
-      background: #fff !important;
-      -webkit-print-color-adjust: exact;
-      print-color-adjust: exact;
+      position: static; box-shadow: none; border-bottom: 1px solid #ccc;
+      background: #fff !important; -webkit-print-color-adjust: exact; print-color-adjust: exact;
     }
     .actions { display: none !important; }
     .meta { background: #fff !important; border-color: #ddd; color: #333; }
     .wrap { padding: 0; }
     pre {
-      background: #fff !important;
-      color: #000 !important;
-      border: 1px solid #bbb;
-      box-shadow: none;
-      border-radius: 0;
-      white-space: pre-wrap;
-      word-break: break-word;
-      font-size: 11pt;
-      line-height: 1.4;
+      background: #fff !important; color: #000 !important; border: 1px solid #bbb;
+      box-shadow: none; border-radius: 0; white-space: pre-wrap; word-break: break-word;
+      font-size: 11pt; line-height: 1.4;
     }
     .hint { display: none; }
     a { color: #000; text-decoration: none; }
@@ -111,7 +99,7 @@
       <a class="btn gold" href="javascript:history.back()">← 返回课件</a>
     </div>
   </div>
-  <div class="meta">编码：UTF-8 · 文件：lesson06_运算符与表达式下.cpp · 共 188 行 · 浅色主题便于打印</div>
+  <div class="meta">编码：UTF-8 · 文件：lesson06_运算符与表达式下.cpp · 共 434 行 · 浅色主题便于打印</div>
   <div class="wrap">
     <pre id="code">/*
  * CSP-J 备考课程
@@ -120,185 +108,431 @@
  *
  * 本文件包含：
  * 1. 关系运算符演示
- * 2. 逻辑运算符与短路特性
- * 3. 位运算符详解
- * 4. 三目运算符
+ * 2. 逻辑运算与真值表
+ * 3. 短路特性（重点）
+ * 4. 位运算符与经典技巧
+ * 5. 三目运算符
+ * 6. 真题 AC 验证
+ *
+ * 编译：g++ -std=c++17 -Wall -o lesson06 lesson06_运算符与表达式下.cpp
  */
 
 #include &lt;iostream&gt;
 #include &lt;bitset&gt;
+#include &lt;string&gt;
+#include &lt;cmath&gt;
 using namespace std;
 
-int main() {
-    cout &lt;&lt; "========== CSP-J 第6课：运算符与表达式（下） ==========" &lt;&lt; endl;
+void print_title(const char* title) {
     cout &lt;&lt; endl;
+    cout &lt;&lt; &quot;========================================&quot; &lt;&lt; endl;
+    cout &lt;&lt; &quot;  &quot; &lt;&lt; title &lt;&lt; endl;
+    cout &lt;&lt; &quot;========================================&quot; &lt;&lt; endl;
+}
 
-    // ===== 一、关系运算符 =====
-    cout &lt;&lt; "【一、关系运算符】" &lt;&lt; endl;
+// ==================== 演示1：关系运算符 ====================
+void demo01_relational() {
+    print_title(&quot;演示1：关系运算符 &gt; &lt; &gt;= &lt;= == !=&quot;);
 
     int a = 10, b = 20, c = 10;
-    cout &lt;&lt; "a = " &lt;&lt; a &lt;&lt; ", b = " &lt;&lt; b &lt;&lt; ", c = " &lt;&lt; c &lt;&lt; endl;
-    cout &lt;&lt; "a &lt; b:  " &lt;&lt; (a &lt; b) &lt;&lt; " (true=1)" &lt;&lt; endl;
-    cout &lt;&lt; "a &gt; b:  " &lt;&lt; (a &gt; b) &lt;&lt; " (false=0)" &lt;&lt; endl;
-    cout &lt;&lt; "a &lt;= c: " &lt;&lt; (a &lt;= c) &lt;&lt; " (true=1)" &lt;&lt; endl;
-    cout &lt;&lt; "a &gt;= b: " &lt;&lt; (a &gt;= b) &lt;&lt; " (false=0)" &lt;&lt; endl;
-    cout &lt;&lt; "a == c: " &lt;&lt; (a == c) &lt;&lt; " (true=1)" &lt;&lt; endl;
-    cout &lt;&lt; "a != b: " &lt;&lt; (a != b) &lt;&lt; " (true=1)" &lt;&lt; endl;
-    cout &lt;&lt; endl;
+    cout &lt;&lt; &quot;a=&quot; &lt;&lt; a &lt;&lt; &quot;, b=&quot; &lt;&lt; b &lt;&lt; &quot;, c=&quot; &lt;&lt; c &lt;&lt; endl;
+    cout &lt;&lt; boolalpha;
+    cout &lt;&lt; &quot;a &lt; b  : &quot; &lt;&lt; (a &lt; b) &lt;&lt; endl;
+    cout &lt;&lt; &quot;a &gt; b  : &quot; &lt;&lt; (a &gt; b) &lt;&lt; endl;
+    cout &lt;&lt; &quot;a &lt;= c : &quot; &lt;&lt; (a &lt;= c) &lt;&lt; endl;
+    cout &lt;&lt; &quot;a &gt;= b : &quot; &lt;&lt; (a &gt;= b) &lt;&lt; endl;
+    cout &lt;&lt; &quot;a == c : &quot; &lt;&lt; (a == c) &lt;&lt; endl;
+    cout &lt;&lt; &quot;a != b : &quot; &lt;&lt; (a != b) &lt;&lt; endl;
+    cout &lt;&lt; noboolalpha;
+    cout &lt;&lt; &quot;输出为 0/1 时: (a&lt;b)=&quot; &lt;&lt; (a &lt; b) &lt;&lt; endl;
 
-    // 字符比较(比ASCII码)
-    cout &lt;&lt; "字符比较(ASCII码):" &lt;&lt; endl;
-    cout &lt;&lt; "'A' &lt; 'B': " &lt;&lt; ('A' &lt; 'B') &lt;&lt; endl;  // true
-    cout &lt;&lt; "'a' &lt; 'A': " &lt;&lt; ('a' &lt; 'A') &lt;&lt; endl;  // false (97 &lt; 65)
-    cout &lt;&lt; endl;
+    cout &lt;&lt; endl &lt;&lt; &quot;关系结果参与算术: (5&gt;3)+10 = &quot; &lt;&lt; ((5 &gt; 3) + 10) &lt;&lt; endl;
 
-    // ===== 二、逻辑运算符与短路特性 =====
-    cout &lt;&lt; "【二、逻辑运算符与短路特性】" &lt;&lt; endl;
+    cout &lt;&lt; endl &lt;&lt; &quot;字符按 ASCII 比较:&quot; &lt;&lt; endl;
+    cout &lt;&lt; &quot;  &#x27;A&#x27; &lt; &#x27;B&#x27; : &quot; &lt;&lt; (&#x27;A&#x27; &lt; &#x27;B&#x27;) &lt;&lt; &quot;  (65&lt;66)&quot; &lt;&lt; endl;
+    cout &lt;&lt; &quot;  &#x27;a&#x27; &gt; &#x27;A&#x27; : &quot; &lt;&lt; (&#x27;a&#x27; &gt; &#x27;A&#x27;) &lt;&lt; &quot;  (97&gt;65)&quot; &lt;&lt; endl;
+    cout &lt;&lt; &quot;  &#x27;0&#x27; &lt; &#x27;9&#x27; : &quot; &lt;&lt; (&#x27;0&#x27; &lt; &#x27;9&#x27;) &lt;&lt; endl;
 
-    // 逻辑运算真值表示例
-    cout &lt;&lt; "真值表演示:" &lt;&lt; endl;
-    cout &lt;&lt; "true &amp;&amp; true   = " &lt;&lt; (true &amp;&amp; true) &lt;&lt; endl;
-    cout &lt;&lt; "true &amp;&amp; false  = " &lt;&lt; (true &amp;&amp; false) &lt;&lt; endl;
-    cout &lt;&lt; "false &amp;&amp; true  = " &lt;&lt; (false &amp;&amp; true) &lt;&lt; endl;
-    cout &lt;&lt; "false &amp;&amp; false = " &lt;&lt; (false &amp;&amp; false) &lt;&lt; endl;
-    cout &lt;&lt; "true || true   = " &lt;&lt; (true || true) &lt;&lt; endl;
-    cout &lt;&lt; "true || false  = " &lt;&lt; (true || false) &lt;&lt; endl;
-    cout &lt;&lt; "false || false = " &lt;&lt; (false || false) &lt;&lt; endl;
-    cout &lt;&lt; "!true          = " &lt;&lt; (!true) &lt;&lt; endl;
-    cout &lt;&lt; "!false         = " &lt;&lt; (!false) &lt;&lt; endl;
-    cout &lt;&lt; endl;
+    cout &lt;&lt; endl &lt;&lt; &quot;数学链式比较陷阱:&quot; &lt;&lt; endl;
+    int x = 5;
+    cout &lt;&lt; &quot;  x=5; 数学希望 0&lt;x&lt;10&quot; &lt;&lt; endl;
+    cout &lt;&lt; &quot;  错误写法 0&lt;x&lt;10 的值 = &quot; &lt;&lt; (0 &lt; x &lt; 10)
+         &lt;&lt; &quot;  (先算 0&lt;x 得1，再 1&lt;10 得1，恒易错)&quot; &lt;&lt; endl;
+    cout &lt;&lt; &quot;  正确写法 0&lt;x &amp;&amp; x&lt;10 = &quot; &lt;&lt; (0 &lt; x &amp;&amp; x &lt; 10) &lt;&lt; endl;
 
-    // 短路特性演示（重点！）
-    cout &lt;&lt; "短路特性演示（考试重点）:" &lt;&lt; endl;
-
-    int x = 0, y = 0;
-    cout &lt;&lt; "初始: x=" &lt;&lt; x &lt;&lt; ", y=" &lt;&lt; y &lt;&lt; endl;
-
-    // &amp;&amp; 短路：左边为false，右边不执行
-    cout &lt;&lt; "执行: (x != 0) &amp;&amp; (y = 100)" &lt;&lt; endl;
-    bool r1 = (x != 0) &amp;&amp; (y = 100);
-    cout &lt;&lt; "结果: x=" &lt;&lt; x &lt;&lt; ", y=" &lt;&lt; y &lt;&lt; " (y未被赋值，因为短路!)" &lt;&lt; endl;
-
-    // || 短路：左边为true，右边不执行
-    int p = 5;
-    cout &lt;&lt; "执行: (p &gt; 0) || (p = 999)" &lt;&lt; endl;
-    bool r2 = (p &gt; 0) || (p = 999);
-    cout &lt;&lt; "结果: p=" &lt;&lt; p &lt;&lt; " (p未被改为999，因为短路!)" &lt;&lt; endl;
-    cout &lt;&lt; endl;
-
-    // 短路特性的实际应用
-    cout &lt;&lt; "短路特性的实际应用:" &lt;&lt; endl;
-    int num = 0;
-    // 安全除法：先判断除数不为0
-    if (num != 0 &amp;&amp; 100 / num &gt; 10) {
-        cout &lt;&lt; "这个不会执行" &lt;&lt; endl;
-    } else {
-        cout &lt;&lt; "num=0时，100/num不会执行（安全!）" &lt;&lt; endl;
+    cout &lt;&lt; endl &lt;&lt; &quot;== 与 = 的区别:&quot; &lt;&lt; endl;
+    int t = 3;
+    cout &lt;&lt; &quot;  t 初始 = &quot; &lt;&lt; t &lt;&lt; endl;
+    if (t = 5) {
+        cout &lt;&lt; &quot;  if(t=5) 进入了！t 被赋值为 &quot; &lt;&lt; t &lt;&lt; endl;
+    }
+    if (t == 5) {
+        cout &lt;&lt; &quot;  if(t==5) 判断相等，正确进入&quot; &lt;&lt; endl;
     }
     cout &lt;&lt; endl;
+}
 
-    // ===== 三、位运算符 =====
-    cout &lt;&lt; "【三位运算符】" &lt;&lt; endl;
+// ==================== 演示2：逻辑运算真值表 ====================
+void demo02_logic_truth() {
+    print_title(&quot;演示2：逻辑运算符 &amp;&amp; || !&quot;);
 
-    int m = 5, n = 3;  // m=0101, n=0011
-    cout &lt;&lt; "m = " &lt;&lt; m &lt;&lt; " (二进制: " &lt;&lt; bitset&lt;4&gt;(m) &lt;&lt; ")" &lt;&lt; endl;
-    cout &lt;&lt; "n = " &lt;&lt; n &lt;&lt; " (二进制: " &lt;&lt; bitset&lt;4&gt;(n) &lt;&lt; ")" &lt;&lt; endl;
-    cout &lt;&lt; endl;
-
-    cout &lt;&lt; "按位与  m &amp; n = " &lt;&lt; (m &amp; n) &lt;&lt; " (" &lt;&lt; bitset&lt;4&gt;(m &amp; n) &lt;&lt; ")" &lt;&lt; endl;
-    cout &lt;&lt; "按位或  m | n = " &lt;&lt; (m | n) &lt;&lt; " (" &lt;&lt; bitset&lt;4&gt;(m | n) &lt;&lt; ")" &lt;&lt; endl;
-    cout &lt;&lt; "按位异或 m ^ n = " &lt;&lt; (m ^ n) &lt;&lt; " (" &lt;&lt; bitset&lt;4&gt;(m ^ n) &lt;&lt; ")" &lt;&lt; endl;
-    cout &lt;&lt; "按位取反 ~m = " &lt;&lt; (~m) &lt;&lt; " (补码表示)" &lt;&lt; endl;
-    cout &lt;&lt; endl;
-
-    // 移位运算
-    cout &lt;&lt; "移位运算:" &lt;&lt; endl;
-    cout &lt;&lt; "m &lt;&lt; 1 = " &lt;&lt; (m &lt;&lt; 1) &lt;&lt; " (" &lt;&lt; bitset&lt;4&gt;(m &lt;&lt; 1) &lt;&lt; ") = m * 2" &lt;&lt; endl;
-    cout &lt;&lt; "m &lt;&lt; 2 = " &lt;&lt; (m &lt;&lt; 2) &lt;&lt; " (" &lt;&lt; bitset&lt;4&gt;(m &lt;&lt; 2) &lt;&lt; ") = m * 4" &lt;&lt; endl;
-    cout &lt;&lt; "m &gt;&gt; 1 = " &lt;&lt; (m &gt;&gt; 1) &lt;&lt; " (" &lt;&lt; bitset&lt;4&gt;(m &gt;&gt; 1) &lt;&lt; ") = m / 2" &lt;&lt; endl;
-    cout &lt;&lt; endl;
-
-    // 位运算经典应用
-    cout &lt;&lt; "位运算经典应用:" &lt;&lt; endl;
-
-    // 1. 判断奇偶
-    cout &lt;&lt; "1. 判断奇偶 (n &amp; 1):" &lt;&lt; endl;
-    for (int i = 1; i &lt;= 8; i++) {
-        cout &lt;&lt; i &lt;&lt; (i &amp; 1 ? "(奇) " : "(偶) ");
-    }
-    cout &lt;&lt; endl;
-
-    // 2. 交换两个数
-    int A = 10, B = 20;
-    cout &lt;&lt; "2. 不用临时变量交换:" &lt;&lt; endl;
-    cout &lt;&lt; "交换前: A=" &lt;&lt; A &lt;&lt; ", B=" &lt;&lt; B &lt;&lt; endl;
-    A ^= B; B ^= A; A ^= B;
-    cout &lt;&lt; "交换后: A=" &lt;&lt; A &lt;&lt; ", B=" &lt;&lt; B &lt;&lt; endl;
-
-    // 3. 获取第k位
-    cout &lt;&lt; "3. 获取第k位 (n &gt;&gt; k) &amp; 1:" &lt;&lt; endl;
-    int val = 13;  // 1101
-    cout &lt;&lt; val &lt;&lt; " 的二进制: " &lt;&lt; bitset&lt;4&gt;(val) &lt;&lt; endl;
-    for (int k = 3; k &gt;= 0; k--) {
-        cout &lt;&lt; "第" &lt;&lt; k &lt;&lt; "位: " &lt;&lt; ((val &gt;&gt; k) &amp; 1) &lt;&lt; endl;
-    }
-
-    // 4. 判断2的幂
-    cout &lt;&lt; "4. 判断2的幂 (n &amp; (n-1) == 0):" &lt;&lt; endl;
-    for (int i = 1; i &lt;= 16; i++) {
-        if ((i &amp; (i - 1)) == 0) {
-            cout &lt;&lt; i &lt;&lt; " 是2的幂" &lt;&lt; endl;
+    cout &lt;&lt; &quot;真值表 (用 1/0 表示 true/false):&quot; &lt;&lt; endl;
+    cout &lt;&lt; &quot; a b | &amp;&amp; | || | !a&quot; &lt;&lt; endl;
+    cout &lt;&lt; &quot; ----+----+----+----&quot; &lt;&lt; endl;
+    for (int a = 1; a &gt;= 0; a--) {
+        for (int b = 1; b &gt;= 0; b--) {
+            cout &lt;&lt; &quot; &quot; &lt;&lt; a &lt;&lt; &quot; &quot; &lt;&lt; b &lt;&lt; &quot; |  &quot;
+                 &lt;&lt; (a &amp;&amp; b) &lt;&lt; &quot; |  &quot; &lt;&lt; (a || b)
+                 &lt;&lt; &quot; |  &quot; &lt;&lt; (!a) &lt;&lt; endl;
         }
     }
+
+    cout &lt;&lt; endl &lt;&lt; &quot;非0即真:&quot; &lt;&lt; endl;
+    cout &lt;&lt; &quot;  (bool)5 = &quot; &lt;&lt; (bool)5 &lt;&lt; &quot;, (bool)0 = &quot; &lt;&lt; (bool)0
+         &lt;&lt; &quot;, (bool)-1 = &quot; &lt;&lt; (bool)-1 &lt;&lt; endl;
+    cout &lt;&lt; &quot;  5 &amp;&amp; 3 = &quot; &lt;&lt; (5 &amp;&amp; 3) &lt;&lt; &quot;  (逻辑与，两边非0)&quot; &lt;&lt; endl;
+    cout &lt;&lt; &quot;  5 &amp; 3  = &quot; &lt;&lt; (5 &amp; 3) &lt;&lt; &quot;  (按位与，0101&amp;0011=0001)&quot; &lt;&lt; endl;
+    cout &lt;&lt; &quot;  4 &amp;&amp; 2 = &quot; &lt;&lt; (4 &amp;&amp; 2) &lt;&lt; &quot;  (逻辑 → 1)&quot; &lt;&lt; endl;
+    cout &lt;&lt; &quot;  4 &amp; 2  = &quot; &lt;&lt; (4 &amp; 2) &lt;&lt; &quot;  (按位 → 0，不同！)&quot; &lt;&lt; endl;
+
+    cout &lt;&lt; endl &lt;&lt; &quot;! 与 ~ 对比:&quot; &lt;&lt; endl;
+    cout &lt;&lt; &quot;  !5 = &quot; &lt;&lt; (!5) &lt;&lt; &quot;  (逻辑非)&quot; &lt;&lt; endl;
+    cout &lt;&lt; &quot;  ~5 = &quot; &lt;&lt; (~5) &lt;&lt; &quot;  (按位取反)&quot; &lt;&lt; endl;
+    cout &lt;&lt; &quot;  !!5 = &quot; &lt;&lt; (!!5) &lt;&lt; &quot;  (规范化为 0/1)&quot; &lt;&lt; endl;
+    cout &lt;&lt; endl;
+}
+
+// ==================== 演示3：短路特性 ====================
+void demo03_short_circuit() {
+    print_title(&quot;演示3：短路特性（考试重点）&quot;);
+
+    // &amp;&amp; 短路
+    int x = 0, y = 0;
+    cout &lt;&lt; &quot;初始: x=0, y=0&quot; &lt;&lt; endl;
+    cout &lt;&lt; &quot;执行: bool r = (x != 0) &amp;&amp; (y = 100);&quot; &lt;&lt; endl;
+    bool r1 = (x != 0) &amp;&amp; (y = 100);
+    cout &lt;&lt; &quot;结果: r1=&quot; &lt;&lt; r1 &lt;&lt; &quot;, x=&quot; &lt;&lt; x &lt;&lt; &quot;, y=&quot; &lt;&lt; y
+         &lt;&lt; &quot;  (y 未改，因 &amp;&amp; 短路)&quot; &lt;&lt; endl;
+
+    // || 短路
+    int p = 5;
+    cout &lt;&lt; endl &lt;&lt; &quot;初始: p=5&quot; &lt;&lt; endl;
+    cout &lt;&lt; &quot;执行: (p &gt; 0) || (p = 999);&quot; &lt;&lt; endl;
+    bool r2 = (p &gt; 0) || (p = 999);
+    cout &lt;&lt; &quot;结果: r2=&quot; &lt;&lt; r2 &lt;&lt; &quot;, p=&quot; &lt;&lt; p
+         &lt;&lt; &quot;  (p 未改，因 || 短路)&quot; &lt;&lt; endl;
+
+    // 安全除法
+    cout &lt;&lt; endl &lt;&lt; &quot;安全除法: num=0&quot; &lt;&lt; endl;
+    int num = 0;
+    if (num != 0 &amp;&amp; 100 / num &gt; 10) {
+        cout &lt;&lt; &quot;  不会执行&quot; &lt;&lt; endl;
+    } else {
+        cout &lt;&lt; &quot;  100/num 未执行，避免除零&quot; &lt;&lt; endl;
+    }
+
+    // 经典题 a++ &amp;&amp; b++
+    cout &lt;&lt; endl &lt;&lt; &quot;经典: a=0,b=0; if(a++ &amp;&amp; b++) a++;&quot; &lt;&lt; endl;
+    int a = 0, b = 0;
+    if (a++ &amp;&amp; b++) {
+        a++;
+    }
+    cout &lt;&lt; &quot;  → a=&quot; &lt;&lt; a &lt;&lt; &quot;, b=&quot; &lt;&lt; b &lt;&lt; &quot;  (预期 1 0)&quot; &lt;&lt; endl;
+
+    cout &lt;&lt; endl &lt;&lt; &quot;对比 || : c=0,d=0; if(c++ || d++) ;&quot; &lt;&lt; endl;
+    int c = 0, d = 0;
+    if (c++ || d++) {
+        // empty
+    }
+    cout &lt;&lt; &quot;  → c=&quot; &lt;&lt; c &lt;&lt; &quot;, d=&quot; &lt;&lt; d &lt;&lt; &quot;  (两边都执行，1 1)&quot; &lt;&lt; endl;
+
+    cout &lt;&lt; endl &lt;&lt; &quot;|| 左真短路: e=1,f=0; if(e++ || f++) e++;&quot; &lt;&lt; endl;
+    int e = 1, f = 0;
+    if (e++ || f++) {
+        e++;
+    }
+    cout &lt;&lt; &quot;  → e=&quot; &lt;&lt; e &lt;&lt; &quot;, f=&quot; &lt;&lt; f &lt;&lt; &quot;  (f++被短路，e=3 f=0)&quot; &lt;&lt; endl;
+
+    // 数组安全访问示意
+    cout &lt;&lt; endl &lt;&lt; &quot;下标安全顺序: 先判范围再访问&quot; &lt;&lt; endl;
+    int arr[3] = {10, 20, 30};
+    int n = 3, i = 5;
+    if (i &gt;= 0 &amp;&amp; i &lt; n &amp;&amp; arr[i] &gt; 0) {
+        cout &lt;&lt; &quot;  访问 arr[&quot; &lt;&lt; i &lt;&lt; &quot;]&quot; &lt;&lt; endl;
+    } else {
+        cout &lt;&lt; &quot;  i=&quot; &lt;&lt; i &lt;&lt; &quot; 越界，短路保护未访问 arr[i]&quot; &lt;&lt; endl;
+    }
+    cout &lt;&lt; endl;
+}
+
+// ==================== 演示4：位运算符基础 ====================
+void demo04_bitwise_basic() {
+    print_title(&quot;演示4：位运算符 &amp; | ^ ~ &lt;&lt; &gt;&gt;&quot;);
+
+    int m = 5, n = 3;
+    cout &lt;&lt; &quot;m = &quot; &lt;&lt; m &lt;&lt; &quot; 二进制 &quot; &lt;&lt; bitset&lt;8&gt;(m) &lt;&lt; endl;
+    cout &lt;&lt; &quot;n = &quot; &lt;&lt; n &lt;&lt; &quot; 二进制 &quot; &lt;&lt; bitset&lt;8&gt;(n) &lt;&lt; endl;
+    cout &lt;&lt; endl;
+    cout &lt;&lt; &quot;m &amp; n = &quot; &lt;&lt; (m &amp; n) &lt;&lt; &quot;  &quot; &lt;&lt; bitset&lt;8&gt;(m &amp; n) &lt;&lt; &quot;  按位与&quot; &lt;&lt; endl;
+    cout &lt;&lt; &quot;m | n = &quot; &lt;&lt; (m | n) &lt;&lt; &quot;  &quot; &lt;&lt; bitset&lt;8&gt;(m | n) &lt;&lt; &quot;  按位或&quot; &lt;&lt; endl;
+    cout &lt;&lt; &quot;m ^ n = &quot; &lt;&lt; (m ^ n) &lt;&lt; &quot;  &quot; &lt;&lt; bitset&lt;8&gt;(m ^ n) &lt;&lt; &quot;  按位异或&quot; &lt;&lt; endl;
+    cout &lt;&lt; &quot;~m    = &quot; &lt;&lt; (~m) &lt;&lt; &quot;  (补码，32位全取反)&quot; &lt;&lt; endl;
+    cout &lt;&lt; &quot;m &lt;&lt; 1 = &quot; &lt;&lt; (m &lt;&lt; 1) &lt;&lt; &quot;  (= m*2)&quot; &lt;&lt; endl;
+    cout &lt;&lt; &quot;m &lt;&lt; 2 = &quot; &lt;&lt; (m &lt;&lt; 2) &lt;&lt; &quot;  (= m*4)&quot; &lt;&lt; endl;
+    cout &lt;&lt; &quot;m &gt;&gt; 1 = &quot; &lt;&lt; (m &gt;&gt; 1) &lt;&lt; &quot;  (= m/2)&quot; &lt;&lt; endl;
+    cout &lt;&lt; &quot;m &gt;&gt; 2 = &quot; &lt;&lt; (m &gt;&gt; 2) &lt;&lt; endl;
+
+    cout &lt;&lt; endl &lt;&lt; &quot;移位与乘除对照 (正数):&quot; &lt;&lt; endl;
+    for (int k = 0; k &lt;= 4; k++) {
+        int v = 3;
+        cout &lt;&lt; &quot;  3 &lt;&lt; &quot; &lt;&lt; k &lt;&lt; &quot; = &quot; &lt;&lt; (v &lt;&lt; k)
+             &lt;&lt; &quot;, 3 * 2^&quot; &lt;&lt; k &lt;&lt; &quot; = &quot; &lt;&lt; (3 * (1 &lt;&lt; k)) &lt;&lt; endl;
+    }
+
+    cout &lt;&lt; endl &lt;&lt; &quot;大移位请用 1LL:&quot; &lt;&lt; endl;
+    cout &lt;&lt; &quot;  1LL &lt;&lt; 40 = &quot; &lt;&lt; (1LL &lt;&lt; 40) &lt;&lt; endl;
+    cout &lt;&lt; endl;
+}
+
+// ==================== 演示5：位运算经典技巧 ====================
+void demo05_bitwise_tricks() {
+    print_title(&quot;演示5：位运算经典技巧&quot;);
+
+    cout &lt;&lt; &quot;1) n &amp; 1 判断奇偶:&quot; &lt;&lt; endl;
+    for (int i = 1; i &lt;= 8; i++) {
+        cout &lt;&lt; &quot;  &quot; &lt;&lt; i &lt;&lt; ((i &amp; 1) ? &quot;(奇)&quot; : &quot;(偶)&quot;);
+    }
     cout &lt;&lt; endl;
 
-    // ===== 四、三目运算符 =====
-    cout &lt;&lt; "【四、三目运算符（?:）】" &lt;&lt; endl;
+    cout &lt;&lt; endl &lt;&lt; &quot;2) 异或交换 (a、b 必须是不同变量):&quot; &lt;&lt; endl;
+    int A = 10, B = 20;
+    cout &lt;&lt; &quot;  交换前 A=&quot; &lt;&lt; A &lt;&lt; &quot; B=&quot; &lt;&lt; B &lt;&lt; endl;
+    A ^= B;
+    B ^= A;
+    A ^= B;
+    cout &lt;&lt; &quot;  交换后 A=&quot; &lt;&lt; A &lt;&lt; &quot; B=&quot; &lt;&lt; B &lt;&lt; endl;
+
+    cout &lt;&lt; endl &lt;&lt; &quot;3) 取第 k 位 (n &gt;&gt; k) &amp; 1, n=13=1101:&quot; &lt;&lt; endl;
+    int val = 13;
+    cout &lt;&lt; &quot;  二进制: &quot; &lt;&lt; bitset&lt;4&gt;(val) &lt;&lt; endl;
+    for (int k = 3; k &gt;= 0; k--) {
+        cout &lt;&lt; &quot;  第&quot; &lt;&lt; k &lt;&lt; &quot;位: &quot; &lt;&lt; ((val &gt;&gt; k) &amp; 1) &lt;&lt; endl;
+    }
+
+    cout &lt;&lt; endl &lt;&lt; &quot;4) 置位 / 清零 / 翻转 第 k 位:&quot; &lt;&lt; endl;
+    int n = 0;
+    n |= (1 &lt;&lt; 2);   // 置第2位 → 4
+    cout &lt;&lt; &quot;  置第2位: &quot; &lt;&lt; n &lt;&lt; &quot; &quot; &lt;&lt; bitset&lt;8&gt;(n) &lt;&lt; endl;
+    n |= (1 &lt;&lt; 0);   // 再置第0位 → 5
+    cout &lt;&lt; &quot;  置第0位: &quot; &lt;&lt; n &lt;&lt; &quot; &quot; &lt;&lt; bitset&lt;8&gt;(n) &lt;&lt; endl;
+    n &amp;= ~(1 &lt;&lt; 2);  // 清第2位 → 1
+    cout &lt;&lt; &quot;  清第2位: &quot; &lt;&lt; n &lt;&lt; &quot; &quot; &lt;&lt; bitset&lt;8&gt;(n) &lt;&lt; endl;
+    n ^= (1 &lt;&lt; 3);   // 翻第3位 → 9
+    cout &lt;&lt; &quot;  翻第3位: &quot; &lt;&lt; n &lt;&lt; &quot; &quot; &lt;&lt; bitset&lt;8&gt;(n) &lt;&lt; endl;
+
+    cout &lt;&lt; endl &lt;&lt; &quot;5) 判断 2 的幂: n&gt;0 &amp;&amp; (n &amp; (n-1))==0&quot; &lt;&lt; endl;
+    for (int i = 1; i &lt;= 16; i++) {
+        if ((i &amp; (i - 1)) == 0) {
+            cout &lt;&lt; &quot;  &quot; &lt;&lt; i &lt;&lt; &quot; 是 2 的幂&quot; &lt;&lt; endl;
+        }
+    }
+
+    cout &lt;&lt; endl &lt;&lt; &quot;6) lowbit = n &amp; -n (最低位的1):&quot; &lt;&lt; endl;
+    int lb_n = 12;  // 1100
+    cout &lt;&lt; &quot;  n=12 &quot; &lt;&lt; bitset&lt;8&gt;(lb_n)
+         &lt;&lt; &quot; lowbit=&quot; &lt;&lt; (lb_n &amp; -lb_n) &lt;&lt; endl;
+    cout &lt;&lt; endl;
+}
+
+// ==================== 演示6：三目运算符 ====================
+void demo06_ternary() {
+    print_title(&quot;演示6：三目运算符 ?:&quot;);
 
     int score = 85;
-    cout &lt;&lt; "成绩: " &lt;&lt; score &lt;&lt; endl;
+    cout &lt;&lt; &quot;成绩 score = &quot; &lt;&lt; score &lt;&lt; endl;
+    string result = (score &gt;= 60) ? &quot;及格&quot; : &quot;不及格&quot;;
+    cout &lt;&lt; &quot;基本: &quot; &lt;&lt; result &lt;&lt; endl;
 
-    // 基本用法
-    string result = (score &gt;= 60) ? "及格" : "不及格";
-    cout &lt;&lt; "基本用法: " &lt;&lt; result &lt;&lt; endl;
+    char grade = (score &gt;= 90) ? &#x27;A&#x27; :
+                 (score &gt;= 80) ? &#x27;B&#x27; :
+                 (score &gt;= 70) ? &#x27;C&#x27; :
+                 (score &gt;= 60) ? &#x27;D&#x27; : &#x27;E&#x27;;
+    cout &lt;&lt; &quot;嵌套等级: &quot; &lt;&lt; grade &lt;&lt; &quot;  (右结合)&quot; &lt;&lt; endl;
 
-    // 嵌套用法
-    char grade = (score &gt;= 90) ? 'A' :
-                 (score &gt;= 80) ? 'B' :
-                 (score &gt;= 70) ? 'C' :
-                 (score &gt;= 60) ? 'D' : 'E';
-    cout &lt;&lt; "等级(嵌套): " &lt;&lt; grade &lt;&lt; endl;
-
-    // 求最大值
     int v1 = 15, v2 = 25;
     int maxVal = (v1 &gt; v2) ? v1 : v2;
-    cout &lt;&lt; "max(" &lt;&lt; v1 &lt;&lt; ", " &lt;&lt; v2 &lt;&lt; ") = " &lt;&lt; maxVal &lt;&lt; endl;
+    int minVal = (v1 &lt; v2) ? v1 : v2;
+    cout &lt;&lt; &quot;max(&quot; &lt;&lt; v1 &lt;&lt; &quot;,&quot; &lt;&lt; v2 &lt;&lt; &quot;) = &quot; &lt;&lt; maxVal &lt;&lt; endl;
+    cout &lt;&lt; &quot;min(&quot; &lt;&lt; v1 &lt;&lt; &quot;,&quot; &lt;&lt; v2 &lt;&lt; &quot;) = &quot; &lt;&lt; minVal &lt;&lt; endl;
 
-    // 求绝对值
     int neg = -10;
     int absVal = (neg &gt;= 0) ? neg : -neg;
-    cout &lt;&lt; "|" &lt;&lt; neg &lt;&lt; "| = " &lt;&lt; absVal &lt;&lt; endl;
+    cout &lt;&lt; &quot;|&quot; &lt;&lt; neg &lt;&lt; &quot;| = &quot; &lt;&lt; absVal &lt;&lt; endl;
+
+    int odd = 7;
+    cout &lt;&lt; odd &lt;&lt; &quot; 是 &quot; &lt;&lt; ((odd &amp; 1) ? &quot;奇数&quot; : &quot;偶数&quot;) &lt;&lt; endl;
+
+    // 结合性说明
+    cout &lt;&lt; endl &lt;&lt; &quot;右结合: a?b:c?d:e 等价于 a?b:(c?d:e)&quot; &lt;&lt; endl;
+    int a = 0, b = 1, c = 1, d = 2, e = 3;
+    int r = a ? b : c ? d : e;
+    cout &lt;&lt; &quot;  0?1:1?2:3 = &quot; &lt;&lt; r &lt;&lt; &quot;  (走 c?d:e → 2)&quot; &lt;&lt; endl;
     cout &lt;&lt; endl;
+}
 
-    // ===== 五、综合练习 =====
-    cout &lt;&lt; "【五、综合练习】" &lt;&lt; endl;
+// ==================== 演示7：混合表达式与优先级 ====================
+void demo07_mixed() {
+    print_title(&quot;演示7：关系/逻辑/位 混合与括号&quot;);
 
-    // 逻辑短路题目
-    int t1 = 0, t2 = 0;
-    if (t1++ &amp;&amp; t2++) {
-        t1++;
+    int a = 3, b = 5, c = 2;
+    cout &lt;&lt; &quot;a=3,b=5,c=2&quot; &lt;&lt; endl;
+    cout &lt;&lt; &quot;(a &lt; b) &amp;&amp; (b &gt; c) = &quot; &lt;&lt; ((a &lt; b) &amp;&amp; (b &gt; c)) &lt;&lt; endl;
+    cout &lt;&lt; &quot;a || b &amp;&amp; c 注意: &amp;&amp; 优先于 ||&quot; &lt;&lt; endl;
+    cout &lt;&lt; &quot;  a||b&amp;&amp;c 值(非0作真) 逻辑结果 = &quot;
+         &lt;&lt; (a || b &amp;&amp; c) &lt;&lt; endl;
+
+    cout &lt;&lt; endl &lt;&lt; &quot;位运算请加括号:&quot; &lt;&lt; endl;
+    int x = 5, y = 3;
+    cout &lt;&lt; &quot;  (x &amp; y) &amp;&amp; (x &gt; 0) = &quot; &lt;&lt; ((x &amp; y) &amp;&amp; (x &gt; 0)) &lt;&lt; endl;
+    cout &lt;&lt; &quot;  (x &amp; y) ? (x &lt;&lt; 1) : (y &lt;&lt; 1) = &quot;
+         &lt;&lt; ((x &amp; y) ? (x &lt;&lt; 1) : (y &lt;&lt; 1)) &lt;&lt; endl;
+
+    cout &lt;&lt; endl &lt;&lt; &quot;浮点比较:&quot; &lt;&lt; endl;
+    double d1 = 0.1 + 0.2;
+    double d2 = 0.3;
+    cout &lt;&lt; &quot;  0.1+0.2 == 0.3 ? &quot; &lt;&lt; (d1 == d2) &lt;&lt; endl;
+    cout &lt;&lt; &quot;  fabs 比较: &quot; &lt;&lt; (fabs(d1 - d2) &lt; 1e-9) &lt;&lt; endl;
+    cout &lt;&lt; endl;
+}
+
+// ==================== 真题1 ====================
+void exam01_short_circuit() {
+    print_title(&quot;真题1：逻辑短路 AC 验证&quot;);
+    cout &lt;&lt; &quot;代码: a=0,b=0; if(a++ &amp;&amp; b++) a++; cout&lt;&lt;a&lt;&lt;&#x27; &#x27;&lt;&lt;b;&quot; &lt;&lt; endl;
+    cout &lt;&lt; &quot;预期: 1 0&quot; &lt;&lt; endl;
+    int a = 0, b = 0;
+    if (a++ &amp;&amp; b++) {
+        a++;
     }
-    cout &lt;&lt; "短路题: t1=0; if(t1++ &amp;&amp; t2++) {...}" &lt;&lt; endl;
-    cout &lt;&lt; "t1=" &lt;&lt; t1 &lt;&lt; ", t2=" &lt;&lt; t2 &lt;&lt; " (t2++被短路，未执行)" &lt;&lt; endl;
-
-    // 位运算+三目题目
-    int X = 5, Y = 3;
-    int Z = (X &amp; Y) ? (X &lt;&lt; 1) : (Y &lt;&lt; 1);
+    cout &lt;&lt; &quot;实际: &quot; &lt;&lt; a &lt;&lt; &quot; &quot; &lt;&lt; b &lt;&lt; endl;
     cout &lt;&lt; endl;
-    cout &lt;&lt; "位运算+三目: X=5, Y=3; Z = (X&amp;Y) ? (X&lt;&lt;1) : (Y&lt;&lt;1)" &lt;&lt; endl;
-    cout &lt;&lt; "X &amp; Y = " &lt;&lt; (X &amp; Y) &lt;&lt; " (非0=真), 所以 Z = X&lt;&lt;1 = " &lt;&lt; Z &lt;&lt; endl;
+}
 
-    cout &lt;&lt; endl &lt;&lt; "========== 第6课演示结束 ==========" &lt;&lt; endl;
+// ==================== 真题2 ====================
+void exam02_bit_ternary() {
+    print_title(&quot;真题2：位运算+三目 AC 验证&quot;);
+    cout &lt;&lt; &quot;x=5,y=3; z=(x&amp;y)?(x&lt;&lt;1):(y&lt;&lt;1);&quot; &lt;&lt; endl;
+    cout &lt;&lt; &quot;x&amp;y=1 真 → z=x&lt;&lt;1=10&quot; &lt;&lt; endl;
+    int x = 5, y = 3;
+    int z = (x &amp; y) ? (x &lt;&lt; 1) : (y &lt;&lt; 1);
+    cout &lt;&lt; &quot;实际 z = &quot; &lt;&lt; z &lt;&lt; endl;
+    cout &lt;&lt; &quot;辅助: x&amp;y=&quot; &lt;&lt; (x &amp; y) &lt;&lt; &quot;, x&lt;&lt;1=&quot; &lt;&lt; (x &lt;&lt; 1) &lt;&lt; endl;
+    cout &lt;&lt; endl;
+}
+
+// ==================== 真题3 拓展 ====================
+void exam03_short_circuit_plus() {
+    print_title(&quot;真题3拓展：短路综合&quot;);
+    int a = 1, b = 2, c = 3;
+    int r1 = a &lt; b &amp;&amp; b &lt; c;
+    int r2 = a &gt; b || b &lt; c;
+    int x = 0, y = 5;
+    int r3 = x &amp;&amp; (y = 100);
+    cout &lt;&lt; &quot;r1=&quot; &lt;&lt; r1 &lt;&lt; &quot; r2=&quot; &lt;&lt; r2 &lt;&lt; &quot; r3=&quot; &lt;&lt; r3
+         &lt;&lt; &quot; y(在r3后)=&quot; &lt;&lt; y &lt;&lt; endl;
+    int r4 = x || (y = 100);
+    cout &lt;&lt; &quot;r4=&quot; &lt;&lt; r4 &lt;&lt; &quot; y(在r4后)=&quot; &lt;&lt; y &lt;&lt; endl;
+    cout &lt;&lt; &quot;整行输出: &quot; &lt;&lt; r1 &lt;&lt; &quot; &quot; &lt;&lt; r2 &lt;&lt; &quot; &quot; &lt;&lt; r3 &lt;&lt; &quot; &quot;
+         &lt;&lt; y &lt;&lt; &quot; &quot; &lt;&lt; r4 &lt;&lt; &quot;  (预期 1 1 0 100 1)&quot; &lt;&lt; endl;
+    cout &lt;&lt; endl;
+}
+
+// ==================== 真题4 奇偶与2的幂 ====================
+void exam04_odd_power2() {
+    print_title(&quot;真题4拓展：奇偶与2的幂（固定样例）&quot;);
+    long long samples[] = {1, 2, 3, 8};
+    int n = 4;
+    cout &lt;&lt; &quot;输入 n=4 及 1 2 3 8&quot; &lt;&lt; endl;
+    cout &lt;&lt; &quot;输出:&quot; &lt;&lt; endl;
+    for (int i = 0; i &lt; n; i++) {
+        long long x = samples[i];
+        if (x &amp; 1) {
+            cout &lt;&lt; &quot;odd&quot;;
+        } else {
+            cout &lt;&lt; &quot;even&quot;;
+        }
+        if (x &gt; 0 &amp;&amp; (x &amp; (x - 1)) == 0) {
+            cout &lt;&lt; &quot; power2&quot;;
+        }
+        cout &lt;&lt; endl;
+    }
+    cout &lt;&lt; endl;
+}
+
+void run_all() {
+    demo01_relational();
+    demo02_logic_truth();
+    demo03_short_circuit();
+    demo04_bitwise_basic();
+    demo05_bitwise_tricks();
+    demo06_ternary();
+    demo07_mixed();
+    exam01_short_circuit();
+    exam02_bit_ternary();
+    exam03_short_circuit_plus();
+    exam04_odd_power2();
+}
+
+int main() {
+    ios::sync_with_stdio(false);
+    cin.tie(nullptr);
+
+    int choice;
+    do {
+        cout &lt;&lt; &quot;========================================&quot; &lt;&lt; endl;
+        cout &lt;&lt; &quot;  CSP-J 第6课：运算符与表达式（下）&quot; &lt;&lt; endl;
+        cout &lt;&lt; &quot;========================================&quot; &lt;&lt; endl;
+        cout &lt;&lt; &quot; 1. 关系运算符&quot; &lt;&lt; endl;
+        cout &lt;&lt; &quot; 2. 逻辑运算真值表&quot; &lt;&lt; endl;
+        cout &lt;&lt; &quot; 3. 短路特性（重点）&quot; &lt;&lt; endl;
+        cout &lt;&lt; &quot; 4. 位运算符基础&quot; &lt;&lt; endl;
+        cout &lt;&lt; &quot; 5. 位运算经典技巧&quot; &lt;&lt; endl;
+        cout &lt;&lt; &quot; 6. 三目运算符&quot; &lt;&lt; endl;
+        cout &lt;&lt; &quot; 7. 混合表达式与优先级&quot; &lt;&lt; endl;
+        cout &lt;&lt; &quot; 8. 真题1：逻辑短路 AC&quot; &lt;&lt; endl;
+        cout &lt;&lt; &quot; 9. 真题2：位运算+三目 AC&quot; &lt;&lt; endl;
+        cout &lt;&lt; &quot;10. 真题3：短路综合&quot; &lt;&lt; endl;
+        cout &lt;&lt; &quot;11. 真题4：奇偶与2的幂&quot; &lt;&lt; endl;
+        cout &lt;&lt; &quot;12. 运行全部演示&quot; &lt;&lt; endl;
+        cout &lt;&lt; &quot; 0. 退出&quot; &lt;&lt; endl;
+        cout &lt;&lt; &quot;----------------------------------------&quot; &lt;&lt; endl;
+        cout &lt;&lt; &quot;请输入选项: &quot;;
+        if (!(cin &gt;&gt; choice)) {
+            break;
+        }
+        cout &lt;&lt; endl;
+
+        switch (choice) {
+            case 0:
+                cout &lt;&lt; &quot;再见！&quot; &lt;&lt; endl;
+                break;
+            case 1: demo01_relational(); break;
+            case 2: demo02_logic_truth(); break;
+            case 3: demo03_short_circuit(); break;
+            case 4: demo04_bitwise_basic(); break;
+            case 5: demo05_bitwise_tricks(); break;
+            case 6: demo06_ternary(); break;
+            case 7: demo07_mixed(); break;
+            case 8: exam01_short_circuit(); break;
+            case 9: exam02_bit_ternary(); break;
+            case 10: exam03_short_circuit_plus(); break;
+            case 11: exam04_odd_power2(); break;
+            case 12: run_all(); break;
+            default:
+                cout &lt;&lt; &quot;无效选项，请重新选择。&quot; &lt;&lt; endl &lt;&lt; endl;
+        }
+    } while (choice != 0);
+
     return 0;
 }
 </pre>

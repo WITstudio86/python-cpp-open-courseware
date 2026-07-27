@@ -71,31 +71,19 @@
     box-shadow: 0 2px 12px rgba(15, 23, 42, 0.05);
   }
   .hint { margin-top: 12px; color: var(--muted); font-size: 12px; }
-
-  /* 打印：浅底、去阴影、省墨 */
   @media print {
     html, body { background: #fff !important; color: #000 !important; }
     .top {
-      position: static;
-      box-shadow: none;
-      border-bottom: 1px solid #ccc;
-      background: #fff !important;
-      -webkit-print-color-adjust: exact;
-      print-color-adjust: exact;
+      position: static; box-shadow: none; border-bottom: 1px solid #ccc;
+      background: #fff !important; -webkit-print-color-adjust: exact; print-color-adjust: exact;
     }
     .actions { display: none !important; }
     .meta { background: #fff !important; border-color: #ddd; color: #333; }
     .wrap { padding: 0; }
     pre {
-      background: #fff !important;
-      color: #000 !important;
-      border: 1px solid #bbb;
-      box-shadow: none;
-      border-radius: 0;
-      white-space: pre-wrap;
-      word-break: break-word;
-      font-size: 11pt;
-      line-height: 1.4;
+      background: #fff !important; color: #000 !important; border: 1px solid #bbb;
+      box-shadow: none; border-radius: 0; white-space: pre-wrap; word-break: break-word;
+      font-size: 11pt; line-height: 1.4;
     }
     .hint { display: none; }
     a { color: #000; text-decoration: none; }
@@ -111,137 +99,453 @@
       <a class="btn gold" href="javascript:history.back()">← 返回课件</a>
     </div>
   </div>
-  <div class="meta">编码：UTF-8 · 文件：lesson04_输入输出与格式化.cpp · 共 131 行 · 浅色主题便于打印</div>
+  <div class="meta">编码：UTF-8 · 文件：lesson04_输入输出与格式化.cpp · 共 447 行 · 浅色主题便于打印</div>
   <div class="wrap">
     <pre id="code">/*
  * CSP-J 备考课程
  * 第4课：输入输出与格式化
- * 考纲知识点：cin/cout、scanf/printf、格式化输出(setw/setprecision/fixed)、转义字符、getchar/putchar
+ * 考纲：cin/cout、scanf/printf、setw/setprecision/fixed、转义字符、getchar/putchar、I/O 加速
  *
- * 本文件包含：
- * 1. cin/cout 基本输入输出
- * 2. scanf/printf 格式化输入输出
- * 3. 格式化控制演示
- * 4. 转义字符演示
+ * 编译运行：
+ *   g++ -std=c++17 -O2 lesson04_输入输出与格式化.cpp -o lesson04 &amp;&amp; ./lesson04
+ *
+ * 说明：
+ *   - 所有本需键盘输入的演示均使用写死示例值，避免交互卡住
+ *   - 真实输入写法在注释中保留，便于对照学习
  */
 
 #include &lt;iostream&gt;
 #include &lt;iomanip&gt;
 #include &lt;cstdio&gt;
+#include &lt;string&gt;
 using namespace std;
 
-int main() {
-    cout &lt;&lt; "========== CSP-J 第4课：输入输出与格式化 ==========" &lt;&lt; endl;
-    cout &lt;&lt; endl;
+// ------------------------------------------------------------
+// 工具
+// ------------------------------------------------------------
+void print_banner(const string&amp; title) {
+    cout &lt;&lt; &quot;\n========== &quot; &lt;&lt; title &lt;&lt; &quot; ==========\n&quot;;
+}
 
-    // ===== 一、cin/cout 基本用法 =====
-    cout &lt;&lt; "【一、cin/cout 基本用法】" &lt;&lt; endl;
+void print_line() {
+    cout &lt;&lt; &quot;----------------------------------------\n&quot;;
+}
 
-    int a, b;
-    cout &lt;&lt; "请输入两个整数（空格分隔）: ";
-    cin &gt;&gt; a &gt;&gt; b;
-    cout &lt;&lt; "你输入的是: a=" &lt;&lt; a &lt;&lt; ", b=" &lt;&lt; b &lt;&lt; endl;
-    cout &lt;&lt; "a + b = " &lt;&lt; a + b &lt;&lt; endl;
-    cout &lt;&lt; endl;
+// ------------------------------------------------------------
+// Demo 1：cout 基本输出
+// ------------------------------------------------------------
+void demo01_cout_basic() {
+    print_banner(&quot;Demo1: cout 基本输出&quot;);
+    int a = 3, b = 5;
+    cout &lt;&lt; &quot;Hello, CSP-J!&quot; &lt;&lt; endl;
+    cout &lt;&lt; &quot;a=&quot; &lt;&lt; a &lt;&lt; &quot;, b=&quot; &lt;&lt; b &lt;&lt; &quot;\n&quot;;
+    cout &lt;&lt; &quot;a + b = &quot; &lt;&lt; a + b &lt;&lt; &quot;\n&quot;;
+    cout &lt;&lt; &quot;使用 endl 换行并刷新；使用 \\n 仅换行。\n&quot;;
 
-    // ===== 二、scanf/printf 基本用法 =====
-    cout &lt;&lt; "【二、scanf/printf 基本用法】" &lt;&lt; endl;
+    bool ok = true;
+    cout &lt;&lt; &quot;bool 默认输出: &quot; &lt;&lt; ok &lt;&lt; &quot; (true-&gt;1)\n&quot;;
+}
 
-    int x, y;
-    cout &lt;&lt; "请输入两个整数（空格分隔）: ";
-    scanf("%d %d", &amp;x, &amp;y);  // 注意：必须加 &amp;
-    printf("你输入的是: x=%d, y=%d\n", x, y);
-    printf("x + y = %d\n", x + y);
-    cout &lt;&lt; endl;
+// ------------------------------------------------------------
+// Demo 2：cin 模拟（写死值）
+// ------------------------------------------------------------
+void demo02_cin_simulated() {
+    print_banner(&quot;Demo2: cin 输入模拟（写死示例）&quot;);
+    cout &lt;&lt; &quot;【真实写法】int a,b; cin &gt;&gt; a &gt;&gt; b;\n&quot;;
+    cout &lt;&lt; &quot;【模拟输入】10 20\n&quot;;
 
-    // ===== 三、格式化输出 =====
-    cout &lt;&lt; "【三、格式化输出演示】" &lt;&lt; endl;
+    int a = 10, b = 20;  // 模拟 cin &gt;&gt; a &gt;&gt; b;
+    cout &lt;&lt; &quot;读入结果: a=&quot; &lt;&lt; a &lt;&lt; &quot;, b=&quot; &lt;&lt; b &lt;&lt; endl;
+    cout &lt;&lt; &quot;a + b = &quot; &lt;&lt; a + b &lt;&lt; endl;
 
-    double pi = 3.1415926535;
+    cout &lt;&lt; &quot;\n再模拟：读入 n 和 x（3 3.5）\n&quot;;
+    int n = 3;
+    double x = 3.5;  // 模拟 cin &gt;&gt; n &gt;&gt; x;
+    cout &lt;&lt; &quot;n=&quot; &lt;&lt; n &lt;&lt; &quot;, x=&quot; &lt;&lt; x &lt;&lt; &quot;, n*x=&quot; &lt;&lt; n * x &lt;&lt; endl;
+}
 
-    // cout 格式化
-    cout &lt;&lt; "--- cout 格式化 ---" &lt;&lt; endl;
-    cout &lt;&lt; "默认输出: " &lt;&lt; pi &lt;&lt; endl;
+// ------------------------------------------------------------
+// Demo 3：I/O 加速说明 + 写法展示
+// ------------------------------------------------------------
+void demo03_fast_io() {
+    print_banner(&quot;Demo3: I/O 加速写法&quot;);
+    cout &lt;&lt; &quot;竞赛常用两行（main 开头）：\n&quot;;
+    cout &lt;&lt; &quot;  ios::sync_with_stdio(false);\n&quot;;
+    cout &lt;&lt; &quot;  cin.tie(nullptr);\n&quot;;
+    cout &lt;&lt; &quot;效果：显著加快 cin/cout。\n&quot;;
+    cout &lt;&lt; &quot;注意：之后不要混用 scanf/printf。\n&quot;;
+    cout &lt;&lt; &quot;本演示文件为对照 cout/printf，main 中未关闭同步。\n&quot;;
 
-    cout &lt;&lt; fixed &lt;&lt; setprecision(3);
-    cout &lt;&lt; "保留3位小数: " &lt;&lt; pi &lt;&lt; endl;
+    // 展示“若只使用流 I/O 时”的推荐写法（注释级模板）
+    cout &lt;&lt; &quot;\n推荐比赛模板片段：\n&quot;;
+    cout &lt;&lt; &quot;int main() {\n&quot;;
+    cout &lt;&lt; &quot;    ios::sync_with_stdio(false);\n&quot;;
+    cout &lt;&lt; &quot;    cin.tie(nullptr);\n&quot;;
+    cout &lt;&lt; &quot;    // ... 仅 cin/cout ...\n&quot;;
+    cout &lt;&lt; &quot;    return 0;\n&quot;;
+    cout &lt;&lt; &quot;}\n&quot;;
+}
 
-    cout &lt;&lt; setprecision(6);
-    cout &lt;&lt; "保留6位小数: " &lt;&lt; pi &lt;&lt; endl;
-
-    cout &lt;&lt; "宽度10右对齐: " &lt;&lt; setw(10) &lt;&lt; pi &lt;&lt; endl;
-
-    // printf 格式化
-    cout &lt;&lt; endl &lt;&lt; "--- printf 格式化 ---" &lt;&lt; endl;
-    printf("默认输出: %f\n", pi);
-    printf("保留2位小数: %.2f\n", pi);
-    printf("宽度10，2位小数: %10.2f\n", pi);
-    printf("左对齐，宽度10: %-10.2f|\n", pi);
-    printf("前导0填充: %010.2f\n", pi);
-    printf("科学计数法: %e\n", pi);
-    cout &lt;&lt; endl;
-
-    // ===== 四、其他格式化演示 =====
-    cout &lt;&lt; "【四、对齐与填充演示】" &lt;&lt; endl;
-
-    cout &lt;&lt; left;
-    cout &lt;&lt; setw(12) &lt;&lt; "Name" &lt;&lt; setw(8) &lt;&lt; "Age" &lt;&lt; setw(10) &lt;&lt; "Score" &lt;&lt; endl;
-    cout &lt;&lt; setw(12) &lt;&lt; "Alice" &lt;&lt; setw(8) &lt;&lt; 15 &lt;&lt; setw(10) &lt;&lt; 98.5 &lt;&lt; endl;
-    cout &lt;&lt; setw(12) &lt;&lt; "Bob" &lt;&lt; setw(8) &lt;&lt; 16 &lt;&lt; setw(10) &lt;&lt; 92.0 &lt;&lt; endl;
-
-    // printf 方式
-    printf("\n%-12s%-8s%-10s\n", "Name", "Age", "Score");
-    printf("%-12s%-8d%-10.1f\n", "Alice", 15, 98.5);
-    printf("%-12s%-8d%-10.1f\n", "Bob", 16, 92.0);
-    cout &lt;&lt; endl;
-
-    // ===== 五、转义字符演示 =====
-    cout &lt;&lt; "【五、转义字符演示】" &lt;&lt; endl;
-
-    cout &lt;&lt; "换行符 \\n: 第一行\n第二行" &lt;&lt; endl;
-    cout &lt;&lt; "制表符 \\t: A\tB\tC" &lt;&lt; endl;
-    cout &lt;&lt; "双引号: \"Hello\"" &lt;&lt; endl;
-    cout &lt;&lt; "单引号: \'A\'" &lt;&lt; endl;
-    cout &lt;&lt; "反斜杠: C:\\\\Program Files\\\\" &lt;&lt; endl;
-    cout &lt;&lt; "百分号: printf(\"100%%\");" &lt;&lt; endl;
-    cout &lt;&lt; endl;
-
-    // ===== 六、printf 格式符大全 =====
-    cout &lt;&lt; "【六、常用格式符参考】" &lt;&lt; endl;
-
+// ------------------------------------------------------------
+// Demo 4：printf 格式符大全
+// ------------------------------------------------------------
+void demo04_printf_specifiers() {
+    print_banner(&quot;Demo4: printf 常用格式符&quot;);
     int num = 42;
     long long bigNum = 10000000000LL;
     double val = 3.14159;
-    char ch = 'X';
+    char ch = &#x27;X&#x27;;
+    const char* s = &quot;Hello&quot;;
 
-    printf("%%d (int):        %d\n", num);
-    printf("%%lld (long long): %lld\n", bigNum);
-    printf("%%f (double):      %f\n", val);
-    printf("%%c (char):        %c\n", ch);
-    printf("%%x (十六进制):    %x\n", num);
-    printf("%%X (十六进制大写): %X\n", num);
-    printf("%%o (八进制):      %o\n", num);
-    printf("%%%% (百分号):    100%%\n");
-    cout &lt;&lt; endl;
+    printf(&quot;%%d   (int)        : %d\n&quot;, num);
+    printf(&quot;%%lld (long long)  : %lld\n&quot;, bigNum);
+    printf(&quot;%%f   (double)     : %f\n&quot;, val);
+    printf(&quot;%%c   (char)       : %c\n&quot;, ch);
+    printf(&quot;%%s   (string)     : %s\n&quot;, s);
+    printf(&quot;%%x   (hex lower)  : %x\n&quot;, num);
+    printf(&quot;%%X   (hex upper)  : %X\n&quot;, num);
+    printf(&quot;%%o   (octal)      : %o\n&quot;, num);
+    printf(&quot;%%%%  (percent)    : 100%%\n&quot;);
+}
 
-    // ===== 七、字符输入输出 =====
-    cout &lt;&lt; "【七、字符输入输出演示】" &lt;&lt; endl;
+// ------------------------------------------------------------
+// Demo 5：printf 宽度与精度
+// ------------------------------------------------------------
+void demo05_printf_width_precision() {
+    print_banner(&quot;Demo5: printf 宽度 / 精度 / 对齐&quot;);
+    double pi = 3.1415926535;
+    int n = 42;
 
-    cout &lt;&lt; "请输入一个字符: ";
-    // 清理输入缓冲区
-    while (getchar() != '\n');  // 清掉之前的换行
-    char c = getchar();
-    cout &lt;&lt; "getchar() 读到的字符: '";
+    printf(&quot;默认:           [%f]\n&quot;, pi);
+    printf(&quot;两位小数:       [%.2f]\n&quot;, pi);
+    printf(&quot;宽度10两位小数: [%10.2f]\n&quot;, pi);
+    printf(&quot;左对齐宽度10:   [%-10.2f]\n&quot;, pi);
+    printf(&quot;前导0宽度10:    [%010.2f]\n&quot;, pi);
+    printf(&quot;整数宽度8:      [%8d]\n&quot;, n);
+    printf(&quot;整数左对齐8:    [%-8d]\n&quot;, n);
+    printf(&quot;整数前导0宽8:   [%08d]\n&quot;, n);
+    printf(&quot;科学计数法:     [%e]\n&quot;, pi);
+}
+
+// ------------------------------------------------------------
+// Demo 6：scanf 模拟（写死值 + 注释真写法）
+// ------------------------------------------------------------
+void demo06_scanf_simulated() {
+    print_banner(&quot;Demo6: scanf 输入模拟（写死示例）&quot;);
+    cout &lt;&lt; &quot;【真实写法】scanf(\&quot;%d %d\&quot;, &amp;x, &amp;y);  // 必须 &amp;\n&quot;;
+    cout &lt;&lt; &quot;【模拟输入】7 8\n&quot;;
+
+    int x = 7, y = 8;  // 模拟 scanf(&quot;%d %d&quot;, &amp;x, &amp;y);
+    printf(&quot;scanf 模拟结果: x=%d, y=%d, x+y=%d\n&quot;, x, y, x + y);
+
+    cout &lt;&lt; &quot;\n【真实写法】scanf(\&quot;%lf\&quot;, &amp;d);  // double 用 %lf\n&quot;;
+    cout &lt;&lt; &quot;【模拟输入】2.5\n&quot;;
+    double d = 2.5;  // 模拟 scanf(&quot;%lf&quot;, &amp;d);
+    printf(&quot;double d = %.2f\n&quot;, d);
+
+    cout &lt;&lt; &quot;\n错误示范（注释）：\n&quot;;
+    cout &lt;&lt; &quot;  // scanf(\&quot;%d\&quot;, x);   // 漏 &amp;\n&quot;;
+    cout &lt;&lt; &quot;  // scanf(\&quot;%f\&quot;, &amp;d);  // double 误用 %f\n&quot;;
+    cout &lt;&lt; &quot;  // printf(\&quot;%d\&quot;, big_long_long); // 格式不匹配\n&quot;;
+}
+
+// ------------------------------------------------------------
+// Demo 7：iomanip — setw / setprecision / fixed
+// ------------------------------------------------------------
+void demo07_iomanip() {
+    print_banner(&quot;Demo7: iomanip 格式化&quot;);
+    double pi = 3.1415926535;
+
+    cout &lt;&lt; &quot;默认输出: &quot; &lt;&lt; pi &lt;&lt; endl;
+
+    cout &lt;&lt; fixed &lt;&lt; setprecision(3);
+    cout &lt;&lt; &quot;fixed + setprecision(3): &quot; &lt;&lt; pi &lt;&lt; endl;
+
+    cout &lt;&lt; setprecision(6);
+    cout &lt;&lt; &quot;setprecision(6): &quot; &lt;&lt; pi &lt;&lt; endl;
+
+    cout &lt;&lt; &quot;setw(10) 右对齐: [&quot; &lt;&lt; setw(10) &lt;&lt; pi &lt;&lt; &quot;]\n&quot;;
+    cout &lt;&lt; left;
+    cout &lt;&lt; &quot;setw(10) 左对齐: [&quot; &lt;&lt; setw(10) &lt;&lt; pi &lt;&lt; &quot;]\n&quot;;
+    cout &lt;&lt; right;
+
+    cout &lt;&lt; &quot;\nsetw 只作用于下一次输出:\n&quot;;
+    cout &lt;&lt; &quot;[&quot; &lt;&lt; setw(5) &lt;&lt; 1 &lt;&lt; 2 &lt;&lt; 3 &lt;&lt; &quot;]\n&quot;;
+    cout &lt;&lt; &quot;正确写法: &quot;;
+    cout &lt;&lt; &quot;[&quot; &lt;&lt; setw(5) &lt;&lt; 1 &lt;&lt; setw(5) &lt;&lt; 2 &lt;&lt; setw(5) &lt;&lt; 3 &lt;&lt; &quot;]\n&quot;;
+
+    cout &lt;&lt; setfill(&#x27;0&#x27;);
+    cout &lt;&lt; &quot;setfill(&#x27;0&#x27;) + setw(5): &quot; &lt;&lt; setw(5) &lt;&lt; 42 &lt;&lt; endl;
+    cout &lt;&lt; setfill(&#x27; &#x27;);  // 恢复
+    cout &lt;&lt; defaultfloat;
+}
+
+// ------------------------------------------------------------
+// Demo 8：表格对齐（cout vs printf）
+// ------------------------------------------------------------
+void demo08_table() {
+    print_banner(&quot;Demo8: 表格对齐输出&quot;);
+    cout &lt;&lt; fixed &lt;&lt; setprecision(1);
+
+    cout &lt;&lt; left;
+    cout &lt;&lt; setw(12) &lt;&lt; &quot;Name&quot; &lt;&lt; setw(8) &lt;&lt; &quot;Age&quot; &lt;&lt; setw(10) &lt;&lt; &quot;Score&quot; &lt;&lt; endl;
+    print_line();
+    cout &lt;&lt; setw(12) &lt;&lt; &quot;Alice&quot; &lt;&lt; setw(8) &lt;&lt; 15 &lt;&lt; setw(10) &lt;&lt; 98.5 &lt;&lt; endl;
+    cout &lt;&lt; setw(12) &lt;&lt; &quot;Bob&quot; &lt;&lt; setw(8) &lt;&lt; 16 &lt;&lt; setw(10) &lt;&lt; 92.0 &lt;&lt; endl;
+    cout &lt;&lt; setw(12) &lt;&lt; &quot;Carol&quot; &lt;&lt; setw(8) &lt;&lt; 15 &lt;&lt; setw(10) &lt;&lt; 100.0 &lt;&lt; endl;
+    cout &lt;&lt; right;
+
+    printf(&quot;\n--- printf 对照 ---\n&quot;);
+    printf(&quot;%-12s%-8s%-10s\n&quot;, &quot;Name&quot;, &quot;Age&quot;, &quot;Score&quot;);
+    printf(&quot;%-12s%-8d%-10.1f\n&quot;, &quot;Alice&quot;, 15, 98.5);
+    printf(&quot;%-12s%-8d%-10.1f\n&quot;, &quot;Bob&quot;, 16, 92.0);
+    printf(&quot;%-12s%-8d%-10.1f\n&quot;, &quot;Carol&quot;, 15, 100.0);
+    cout &lt;&lt; defaultfloat;
+}
+
+// ------------------------------------------------------------
+// Demo 9：转义字符
+// ------------------------------------------------------------
+void demo09_escape() {
+    print_banner(&quot;Demo9: 转义字符&quot;);
+    cout &lt;&lt; &quot;换行 \\n : 第一行\n第二行\n&quot;;
+    cout &lt;&lt; &quot;制表 \\t : A\tB\tC\n&quot;;
+    cout &lt;&lt; &quot;双引号: \&quot;Hello, CSP-J\&quot;\n&quot;;
+    cout &lt;&lt; &quot;单引号: \&#x27;A\&#x27;\n&quot;;
+    cout &lt;&lt; &quot;反斜杠: C:\\Program Files\\\n&quot;;
+    printf(&quot;printf 百分号: 100%%\n&quot;);
+    cout &lt;&lt; &quot;空字符 \\0 是 C 字符串结束标志（ASCII 0）\n&quot;;
+
+    cout &lt;&lt; &quot;\n阅读题演示: cout &lt;&lt; \&quot;A\\tB\\nC\\\\D\\\&quot;E\&quot;;\n&quot;;
+    cout &lt;&lt; &quot;实际输出:\n&quot;;
+    cout &lt;&lt; &quot;A\tB\nC\\D\&quot;E&quot; &lt;&lt; endl;
+}
+
+// ------------------------------------------------------------
+// Demo 10：getchar / putchar（非交互）
+// ------------------------------------------------------------
+void demo10_getchar_putchar() {
+    print_banner(&quot;Demo10: getchar / putchar（非交互演示）&quot;);
+    cout &lt;&lt; &quot;【真实写法】char c = getchar();\n&quot;;
+    cout &lt;&lt; &quot;【模拟】假设读到字符 &#x27;Z&#x27;\n&quot;;
+
+    char c = &#x27;Z&#x27;;  // 模拟 getchar()
+    cout &lt;&lt; &quot;getchar 模拟得到: &#x27;&quot;;
     putchar(c);
-    cout &lt;&lt; "' (ASCII=" &lt;&lt; (int)c &lt;&lt; ")" &lt;&lt; endl;
+    cout &lt;&lt; &quot;&#x27; ASCII=&quot; &lt;&lt; (int)c &lt;&lt; endl;
 
-    cout &lt;&lt; "\"Hello\" 每个字符的ASCII码:" &lt;&lt; endl;
-    const char* str = "Hello";
-    for (int i = 0; str[i] != '\0'; i++) {
-        printf("  '%c' -&gt; %d\n", str[i], (int)str[i]);
+    cout &lt;&lt; &quot;\nputchar 输出 Hello:\n  &quot;;
+    const char* msg = &quot;Hello&quot;;
+    for (int i = 0; msg[i] != &#x27;\0&#x27;; i++) {
+        putchar(msg[i]);
+    }
+    putchar(&#x27;\n&#x27;);
+
+    cout &lt;&lt; &quot;\n各字符 ASCII:\n&quot;;
+    for (int i = 0; msg[i] != &#x27;\0&#x27;; i++) {
+        printf(&quot;  &#x27;%c&#x27; -&gt; %d\n&quot;, msg[i], (int)msg[i]);
     }
 
-    cout &lt;&lt; endl &lt;&lt; "========== 第4课演示结束 ==========" &lt;&lt; endl;
+    cout &lt;&lt; &quot;\n对比: cin&gt;&gt;ch 会跳过空白; getchar 不会跳过空白。\n&quot;;
+}
+
+// ------------------------------------------------------------
+// Demo 11：cout 与 printf 小数对照
+// ------------------------------------------------------------
+void demo11_float_format_compare() {
+    print_banner(&quot;Demo11: 小数格式化对照&quot;);
+    double x = 3.1415926535;
+
+    cout &lt;&lt; fixed &lt;&lt; setprecision(0) &lt;&lt; &quot;0位: &quot; &lt;&lt; x &lt;&lt; endl;
+    cout &lt;&lt; setprecision(2) &lt;&lt; &quot;2位: &quot; &lt;&lt; x &lt;&lt; endl;
+    cout &lt;&lt; setprecision(4) &lt;&lt; &quot;4位: &quot; &lt;&lt; x &lt;&lt; endl;
+
+    printf(&quot;printf 0位: %.0f\n&quot;, x);
+    printf(&quot;printf 2位: %.2f\n&quot;, x);
+    printf(&quot;printf 4位: %.4f\n&quot;, x);
+
+    // 四舍五入观察
+    double y = 2.5;
+    printf(&quot;printf %.0f of 2.5 -&gt; %.0f (实现相关，常见四舍五入到偶数/远离0，此处观察输出)\n&quot;, y, y);
+    cout &lt;&lt; defaultfloat;
+}
+
+// ------------------------------------------------------------
+// Demo 12：真题 — 格式化阅读结果复现
+// ------------------------------------------------------------
+void demo12_problem_format_read() {
+    print_banner(&quot;Demo12: 真题复现 — fixed/setw&quot;);
+    double x = 3.14159;
+    cout &lt;&lt; fixed &lt;&lt; setprecision(3);
+    cout &lt;&lt; x &lt;&lt; endl;
+    cout &lt;&lt; setw(10) &lt;&lt; x &lt;&lt; endl;
+    printf(&quot;printf 对照: %10.3f\n&quot;, x);
+    cout &lt;&lt; defaultfloat;
+}
+
+// ------------------------------------------------------------
+// Demo 13：真题 — A+B 风格 scanf/printf
+// ------------------------------------------------------------
+void demo13_problem_ab() {
+    print_banner(&quot;Demo13: 真题复现 — scanf A+B&quot;);
+    cout &lt;&lt; &quot;模拟输入: 10 20\n&quot;;
+    int a = 10, b = 20;  // scanf(&quot;%d%d&quot;, &amp;a, &amp;b);
+    printf(&quot;a=%d\n&quot;, a);
+    printf(&quot;b=%d\n&quot;, b);
+    printf(&quot;a+b=%d\n&quot;, a + b);
+}
+
+// ------------------------------------------------------------
+// Demo 14：圆的周长与面积（保留两位小数）
+// ------------------------------------------------------------
+void demo14_circle() {
+    print_banner(&quot;Demo14: 圆的周长与面积（保留2位）&quot;);
+    const double PI = 3.14159;
+    cout &lt;&lt; &quot;【真实写法】cin &gt;&gt; r;\n&quot;;
+    cout &lt;&lt; &quot;【模拟输入】r = 5\n&quot;;
+    double r = 5.0;
+    double circumference = 2 * PI * r;
+    double area = PI * r * r;
+
+    cout &lt;&lt; fixed &lt;&lt; setprecision(2);
+    cout &lt;&lt; &quot;cout: &quot; &lt;&lt; circumference &lt;&lt; &quot; &quot; &lt;&lt; area &lt;&lt; endl;
+    printf(&quot;printf: %.2f %.2f\n&quot;, circumference, area);
+    cout &lt;&lt; defaultfloat;
+}
+
+// ------------------------------------------------------------
+// Demo 15：多变量混合输出模式
+// ------------------------------------------------------------
+void demo15_mixed_patterns() {
+    print_banner(&quot;Demo15: 常见输入输出模式&quot;);
+
+    // 模式 A
+    cout &lt;&lt; &quot;[模式A] 单行多整数 3 5 7\n&quot;;
+    int a = 3, b = 5, c = 7;
+    cout &lt;&lt; &quot;和 = &quot; &lt;&lt; a + b + c &lt;&lt; endl;
+
+    // 模式 B
+    cout &lt;&lt; &quot;\n[模式B] 先 n 后 n 个数: n=4, 1 2 3 4\n&quot;;
+    int n = 4;
+    int arr[4] = {1, 2, 3, 4};
+    long long sum = 0;
+    for (int i = 0; i &lt; n; i++) sum += arr[i];
+    cout &lt;&lt; &quot;sum = &quot; &lt;&lt; sum &lt;&lt; endl;
+
+    // 模式 C：字符+数字
+    cout &lt;&lt; &quot;\n[模式C] 字符与数字: A 65\n&quot;;
+    char ch = &#x27;A&#x27;;
+    int code = 65;
+    cout &lt;&lt; &quot;ch=&#x27;&quot; &lt;&lt; ch &lt;&lt; &quot;&#x27; code=&quot; &lt;&lt; code
+         &lt;&lt; &quot; 校验ASCII=&quot; &lt;&lt; (int)ch &lt;&lt; endl;
+
+    // long long 输出
+    long long big = 10000000000LL;
+    cout &lt;&lt; &quot;\n[long long] cout -&gt; &quot; &lt;&lt; big &lt;&lt; endl;
+    printf(&quot;[long long] printf %%lld -&gt; %lld\n&quot;, big);
+}
+
+// ------------------------------------------------------------
+// Demo 16：setprecision 无 fixed 的差异说明
+// ------------------------------------------------------------
+void demo16_precision_without_fixed() {
+    print_banner(&quot;Demo16: setprecision 有无 fixed&quot;);
+    double v = 123.456789;
+
+    cout &lt;&lt; &quot;默认: &quot; &lt;&lt; v &lt;&lt; endl;
+    cout &lt;&lt; &quot;仅 setprecision(4): &quot; &lt;&lt; setprecision(4) &lt;&lt; v &lt;&lt; endl;
+    cout &lt;&lt; fixed;
+    cout &lt;&lt; &quot;fixed + setprecision(4): &quot; &lt;&lt; setprecision(4) &lt;&lt; v &lt;&lt; endl;
+    cout &lt;&lt; defaultfloat;
+    cout &lt;&lt; &quot;结论: 要“小数点后k位”，用 fixed + setprecision(k) 或 printf。\n&quot;;
+}
+
+// ------------------------------------------------------------
+// 运行全部
+// ------------------------------------------------------------
+void run_all() {
+    demo01_cout_basic();
+    demo02_cin_simulated();
+    demo03_fast_io();
+    demo04_printf_specifiers();
+    demo05_printf_width_precision();
+    demo06_scanf_simulated();
+    demo07_iomanip();
+    demo08_table();
+    demo09_escape();
+    demo10_getchar_putchar();
+    demo11_float_format_compare();
+    demo12_problem_format_read();
+    demo13_problem_ab();
+    demo14_circle();
+    demo15_mixed_patterns();
+    demo16_precision_without_fixed();
+}
+
+// ------------------------------------------------------------
+// 主菜单
+// ------------------------------------------------------------
+int main() {
+    // 注意：本演示文件会混用 cout 与 printf 做对照教学，
+    // 因此 main 中**不**关闭同步，避免输出顺序错乱。
+    // 正式做题时若只用 cin/cout，可在 main 开头写：
+    //   ios::sync_with_stdio(false);
+    //   cin.tie(nullptr);
+    // 详见 demo03_fast_io()。
+
+    cout &lt;&lt; &quot;================================================\n&quot;;
+    cout &lt;&lt; &quot;  CSP-J 第4课：输入输出与格式化 — 代码演示\n&quot;;
+    cout &lt;&lt; &quot;================================================\n&quot;;
+    cout &lt;&lt; &quot;  0. 运行全部演示（默认）\n&quot;;
+    cout &lt;&lt; &quot;  1. cout 基础\n&quot;;
+    cout &lt;&lt; &quot;  2. cin 模拟\n&quot;;
+    cout &lt;&lt; &quot;  3. I/O 加速说明\n&quot;;
+    cout &lt;&lt; &quot;  4. printf 格式符\n&quot;;
+    cout &lt;&lt; &quot;  5. printf 宽度精度\n&quot;;
+    cout &lt;&lt; &quot;  6. scanf 模拟\n&quot;;
+    cout &lt;&lt; &quot;  7. iomanip\n&quot;;
+    cout &lt;&lt; &quot;  8. 表格对齐\n&quot;;
+    cout &lt;&lt; &quot;  9. 转义字符\n&quot;;
+    cout &lt;&lt; &quot; 10. getchar/putchar\n&quot;;
+    cout &lt;&lt; &quot; 11. 小数格式对照\n&quot;;
+    cout &lt;&lt; &quot; 12. 真题 fixed/setw\n&quot;;
+    cout &lt;&lt; &quot; 13. 真题 A+B\n&quot;;
+    cout &lt;&lt; &quot; 14. 圆面积周长\n&quot;;
+    cout &lt;&lt; &quot; 15. 常见 I/O 模式\n&quot;;
+    cout &lt;&lt; &quot; 16. precision 差异\n&quot;;
+    cout &lt;&lt; &quot;================================================\n&quot;;
+    cout &lt;&lt; &quot;说明：为避免交互卡住，自动执行全部演示。\n&quot;;
+    cout &lt;&lt; &quot;输入相关 demo 均用写死示例值，真实 cin/scanf 见注释。\n&quot;;
+
+    int choice = 0;
+    // 交互写法（需要时取消注释）：
+    // cout &lt;&lt; &quot;请选择 (0-16): &quot;;
+    // cin &gt;&gt; choice;
+
+    cout &lt;&lt; &quot;当前 choice = &quot; &lt;&lt; choice &lt;&lt; endl;
+
+    switch (choice) {
+        case 0: run_all(); break;
+        case 1: demo01_cout_basic(); break;
+        case 2: demo02_cin_simulated(); break;
+        case 3: demo03_fast_io(); break;
+        case 4: demo04_printf_specifiers(); break;
+        case 5: demo05_printf_width_precision(); break;
+        case 6: demo06_scanf_simulated(); break;
+        case 7: demo07_iomanip(); break;
+        case 8: demo08_table(); break;
+        case 9: demo09_escape(); break;
+        case 10: demo10_getchar_putchar(); break;
+        case 11: demo11_float_format_compare(); break;
+        case 12: demo12_problem_format_read(); break;
+        case 13: demo13_problem_ab(); break;
+        case 14: demo14_circle(); break;
+        case 15: demo15_mixed_patterns(); break;
+        case 16: demo16_precision_without_fixed(); break;
+        default: cout &lt;&lt; &quot;无效选择\n&quot;; break;
+    }
+
+    cout &lt;&lt; &quot;\n========== 第4课演示结束 ==========\n&quot;;
     return 0;
 }
 </pre>

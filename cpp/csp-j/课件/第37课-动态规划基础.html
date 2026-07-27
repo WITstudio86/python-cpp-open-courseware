@@ -1,784 +1,269 @@
 <!DOCTYPE html>
-
 <html lang="zh-CN">
 <head>
 <meta charset="utf-8"/>
 <meta content="width=device-width, initial-scale=1.0" name="viewport"/>
-<title>第37课：动态规划基础 — CSP-J 备考课程</title>
+<title>CSP-J 备考课程 — 第37课：动态规划基础</title>
 <style>
-  * { margin: 0; padding: 0; box-sizing: border-box; }
-
-  body {
-    font-family: -apple-system, BlinkMacSystemFont, "Microsoft YaHei", "PingFang SC", sans-serif;
-    background: #f5f5f5;
-    color: #333;
-    min-height: 100vh;
-  }
-
-  /* ===== 顶部标题栏 ===== */
-  .title-bar {
-    background: linear-gradient(135deg, #1a237e, #283593);
-    color: #fff;
-    padding: 10px 20px;
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    position: sticky;
-    top: 0;
-    z-index: 1000;
-    box-shadow: 0 2px 8px rgba(0,0,0,0.3);
-  }
-  .title-bar .course-name {
-    font-size: 1em;
-    font-weight: 700;
-    letter-spacing: 2px;
-  }
-  .title-bar .course-name span {
-    color: #ffd600;
-  }
-  .title-bar .lesson-info {
-    font-size: 0.9em;
-    opacity: 0.9;
-  }
-  .title-bar .slide-dots {
-    display: flex;
-    gap: 6px;
-  }
-  .title-bar .slide-dots .dot {
-    width: 10px; height: 10px;
-    border-radius: 50%;
-    background: rgba(255,255,255,0.3);
-    transition: all 0.3s;
-    cursor: pointer;
-  }
-  .title-bar .slide-dots .dot.active {
-    background: #ffd600;
-    transform: scale(1.3);
-  }
-
-  /* ===== 主内容区域 ===== */
-  .main-container {
-    max-width: 960px;
-    margin: 0 auto;
-    padding: 30px 20px 100px;
-  }
-
-  /* ===== 幻灯片 ===== */
-  .slide {
-    display: none;
-    background: #fff;
-    border-radius: 16px;
-    padding: 40px 50px;
-    box-shadow: 0 8px 30px rgba(0,0,0,0.08);
-    animation: fadeIn 0.4s ease;
-    min-height: 500px;
-  }
-  .slide.active { display: block; }
-
-  @keyframes fadeIn {
-    from { opacity: 0; transform: translateY(15px); }
-    to   { opacity: 1; transform: translateY(0); }
-  }
-
-  .slide h2 {
-    font-size: 2em;
-    color: #1a237e;
-    margin-bottom: 8px;
-    padding-bottom: 12px;
-    border-bottom: 3px solid #ffd600;
-    display: inline-block;
-  }
-  .slide h3 {
-    font-size: 1.35em;
-    color: #283593;
-    margin: 20px 0 10px;
-  }
-  .slide p, .slide li {
-    font-size: 1.05em;
-    line-height: 1.8;
-    margin-bottom: 10px;
-  }
-  .slide ul, .slide ol {
-    padding-left: 24px;
-    margin-bottom: 16px;
-  }
-  .slide ul li, .slide ol li {
-    margin-bottom: 6px;
-  }
-
-  /* 代码块 */
-  .code-block {
-    background: #1e1e1e;
-    color: #d4d4d4;
-    border-radius: 10px;
-    padding: 20px 24px;
-    margin: 16px 0;
-    overflow-x: auto;
-    font-family: "Consolas", "Monaco", "Courier New", monospace;
-    font-size: 0.9em;
-    line-height: 1.7;
-    white-space: pre;
-    box-shadow: inset 0 0 10px rgba(0,0,0,0.5);
-  }
-  .code-block .kw  { color: #569cd6; } /* 关键字 */
-  .code-block .fn  { color: #dcdcaa; } /* 函数名 */
-  .code-block .num { color: #b5cea8; } /* 数字 */
-  .code-block .str { color: #ce9178; } /* 字符串 */
-  .code-block .cmt { color: #6a9955; } /* 注释 */
-  .code-block .pp  { color: #c586c0; } /* 预处理 */
-
-  /* 提示框 */
-  .tip-box {
-    background: #fffde7;
-    border-left: 5px solid #ffd600;
-    border-radius: 8px;
-    padding: 16px 20px;
-    margin: 16px 0;
-    font-size: 1em;
-  }
-  .tip-box strong { color: #e65100; }
-
-  .warning-box {
-    background: #fff3e0;
-    border: 2px solid #ff9800;
-    border-radius: 8px;
-    padding: 16px 20px;
-    margin: 16px 0;
-    font-size: 1em;
-  }
-  .warning-box strong { color: #e65100; }
-
-  /* DP步骤卡片 */
-  .step-grid {
-    display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
-    gap: 12px;
-    margin: 16px 0;
-  }
-  .step-card {
-    background: #e8eaf6;
-    border-radius: 10px;
-    padding: 16px;
-    text-align: center;
-    border: 2px solid transparent;
-    transition: all 0.3s;
-  }
-  .step-card:hover { border-color: #1a237e; transform: translateY(-2px); }
-  .step-card .step-num {
-    display: inline-block;
-    width: 32px; height: 32px;
-    line-height: 32px;
-    background: #1a237e;
-    color: #fff;
-    border-radius: 50%;
-    font-weight: 700;
-    margin-bottom: 8px;
-    font-size: 0.9em;
-  }
-  .step-card .step-text { font-size: 0.95em; font-weight: 600; color: #283593; }
-
-  /* 对比表格 */
-  .compare-table {
-    width: 100%;
-    border-collapse: collapse;
-    margin: 16px 0;
-    font-size: 0.95em;
-  }
-  .compare-table th {
-    background: #1a237e;
-    color: #fff;
-    padding: 12px 16px;
-    text-align: left;
-  }
-  .compare-table td {
-    padding: 10px 16px;
-    border-bottom: 1px solid #e0e0e0;
-  }
-  .compare-table tr:nth-child(even) td {
-    background: #fafafa;
-  }
-
-  /* ===== 标题页特殊样式 ===== */
-  .slide.title-slide.active {
-    text-align: center;
-    display: flex;
-    flex-direction: column;
-    justify-content: center;
-    align-items: center;
-    min-height: 500px;
-  }
-  .slide.title-slide.active .lesson-number {
-    font-size: 6em;
-    font-weight: 900;
-    color: #1a237e;
-    line-height: 1;
-    margin-bottom: 10px;
-  }
-  .slide.title-slide.active .lesson-title {
-    font-size: 2.2em;
-    font-weight: 700;
-    color: #333;
-    margin-bottom: 10px;
-  }
-  .slide.title-slide.active .lesson-subtitle {
-    font-size: 1.1em;
-    color: #666;
-    margin-bottom: 20px;
-  }
-  .slide.title-slide.active .keyword-tags {
-    display: flex;
-    gap: 10px;
-    flex-wrap: wrap;
-    justify-content: center;
-  }
-  .slide.title-slide.active .keyword-tags span {
-    background: #ffd600;
-    color: #1a237e;
-    padding: 6px 16px;
-    border-radius: 20px;
-    font-weight: 700;
-    font-size: 0.9em;
-  }
-
-  /* ===== 总结页 ===== */
-  .summary-grid {
-    display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
-    gap: 14px;
-    margin: 16px 0;
-  }
-  .summary-item {
-    background: linear-gradient(135deg, #e8eaf6, #c5cae9);
-    border-radius: 10px;
-    padding: 18px;
-    border-left: 4px solid #1a237e;
-  }
-  .summary-item h4 {
-    color: #1a237e;
-    margin-bottom: 6px;
-    font-size: 1.05em;
-  }
-  .summary-item p {
-    font-size: 0.9em;
-    color: #555;
-    line-height: 1.6;
-    margin: 0;
-  }
-
-  /* ===== 导航按钮 ===== */
-  .nav-bar {
-    position: fixed;
-    bottom: 0;
-    left: 0;
-    right: 0;
-    background: rgba(26,35,126,0.95);
-    backdrop-filter: blur(10px);
-    padding: 12px 20px;
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    gap: 20px;
-    z-index: 999;
-    box-shadow: 0 -2px 12px rgba(0,0,0,0.2);
-  }
-  .nav-bar button {
-    background: transparent;
-    border: 2px solid rgba(255,255,255,0.5);
-    color: #fff;
-    padding: 10px 24px;
-    border-radius: 25px;
-    cursor: pointer;
-    font-size: 0.95em;
-    font-weight: 600;
-    transition: all 0.3s;
-    letter-spacing: 1px;
-  }
-  .nav-bar button:hover {
-    background: rgba(255,255,255,0.15);
-    border-color: #ffd600;
-    color: #ffd600;
-  }
-  .nav-bar button:disabled {
-    opacity: 0.35;
-    cursor: not-allowed;
-    border-color: rgba(255,255,255,0.25);
-    color: rgba(255,255,255,0.5);
-  }
-  .nav-bar .page-indicator {
-    color: #fff;
-    font-size: 0.95em;
-    min-width: 80px;
-    text-align: center;
-    font-weight: 600;
-  }
-
-  /* 响应式 */
-  @media (max-width: 768px) {
-    .main-container { padding: 20px 12px 90px; }
-    .slide { padding: 24px 20px; border-radius: 10px; }
-    .slide h2 { font-size: 1.5em; }
-    .slide.title-slide.active .lesson-number { font-size: 4em; }
-    .slide.title-slide.active .lesson-title { font-size: 1.5em; }
-    .code-block { font-size: 0.78em; padding: 14px 16px; }
-    .step-grid { grid-template-columns: 1fr 1fr; }
-  }
-  @media (max-width: 480px) {
-    .slide.title-slide.active .lesson-number { font-size: 3em; }
-    .slide.title-slide.active .lesson-title { font-size: 1.2em; }
-    .step-grid { grid-template-columns: 1fr; }
-    .nav-bar button { padding: 8px 16px; font-size: 0.85em; }
-  }
-
-  /* 键盘提示 */
-  .key-hint {
-    text-align: center;
-    color: #999;
-    font-size: 0.8em;
-    margin-top: 20px;
-  }
+* { margin: 0; padding: 0; box-sizing: border-box; }
+body { font-family: "Microsoft YaHei", "PingFang SC", sans-serif; background: #f5f5f5; display: flex; flex-direction: column; align-items: center; min-height: 100vh; }
+.header { width: 100%; background: linear-gradient(135deg, #1a237e 0%, #283593 100%); color: white; padding: 12px 24px; font-size: 18px; font-weight: bold; text-align: center; position: fixed; top: 0; z-index: 100; }
+.header span { color: #ffd600; }
+.container { margin-top: 60px; width: 100%; max-width: 1100px; padding: 20px; }
+.slide { display: none; background: white; border-radius: 16px; padding: 48px 56px; margin: 20px auto; box-shadow: 0 4px 24px rgba(0,0,0,0.08); min-height: 520px; }
+.slide.active { display: block; animation: fadeIn 0.4s ease; }
+@keyframes fadeIn { from { opacity: 0; transform: translateY(12px); } to { opacity: 1; transform: none; } }
+.slide-title h1 { font-size: 40px; color: #1a237e; margin-bottom: 16px; }
+.slide-title .subtitle { font-size: 22px; color: #5c6bc0; margin-bottom: 28px; }
+.slide-title .badge { display: inline-block; background: #ffd600; color: #1a237e; padding: 8px 24px; border-radius: 24px; font-weight: bold; }
+.slide-title .meta { margin-top: 32px; color: #9e9e9e; font-size: 15px; }
+.slide h2 { font-size: 28px; color: #1a237e; margin-bottom: 20px; padding-bottom: 10px; border-bottom: 3px solid #ffd600; display: inline-block; }
+.slide h3 { font-size: 20px; color: #283593; margin: 18px 0 10px; }
+.slide p, .slide li { font-size: 17px; line-height: 1.85; color: #333; }
+.slide ul { list-style: none; padding: 0; }
+.slide ul li { padding-left: 28px; position: relative; margin-bottom: 6px; }
+.slide ul li::before { content: "▸"; position: absolute; left: 4px; color: #ffd600; font-weight: bold; }
+.steps { counter-reset: step; list-style: none; padding: 0; }
+.steps li { counter-increment: step; padding-left: 48px; position: relative; margin-bottom: 12px; font-size: 17px; line-height: 1.8; }
+.steps li::before { content: counter(step); position: absolute; left: 0; width: 32px; height: 32px; background: #1a237e; color: white; border-radius: 50%; text-align: center; line-height: 32px; font-size: 14px; font-weight: bold; }
+.code-block { background: #1e1e1e; border-radius: 10px; padding: 16px 20px; margin: 12px 0; overflow-x: auto; font-family: Consolas, Monaco, monospace; font-size: 14px; line-height: 1.65; color: #d4d4d4; white-space: pre; }
+.code-block .keyword { color: #569cd6; } .code-block .type { color: #4ec9b0; } .code-block .function { color: #dcdcaa; }
+.code-block .number { color: #b5cea8; } .code-block .comment { color: #6a9955; }
+.tip-box { background: #fff8e1; border-left: 5px solid #ffc107; padding: 14px 18px; margin: 14px 0; border-radius: 6px; font-size: 16px; color: #5d4037; line-height: 1.7; }
+.tip-box strong { color: #e65100; }
+.tip-box.warning { background: #ffebee; border-left-color: #f44336; color: #b71c1c; }
+.tip-box.success { background: #e8f5e9; border-left-color: #4caf50; color: #1b5e20; }
+.compare-table { width: 100%; border-collapse: collapse; margin: 12px 0; font-size: 15px; }
+.compare-table th { background: #1a237e; color: white; padding: 10px; }
+.compare-table td { padding: 8px 10px; border-bottom: 1px solid #e0e0e0; text-align: center; }
+.compare-table tr:nth-child(even) { background: #f5f5f5; }
+.problem-card { background: #fafafa; border: 1px solid #e0e0e0; border-radius: 10px; padding: 16px 20px; margin: 12px 0; }
+.problem-card .problem-title { font-size: 18px; color: #1a237e; font-weight: bold; margin-bottom: 8px; }
+.nav-buttons { display: flex; justify-content: center; align-items: center; gap: 20px; padding: 20px; margin-bottom: 30px; }
+.nav-btn { background: #1a237e; color: white; border: none; padding: 12px 32px; border-radius: 28px; font-size: 16px; cursor: pointer; font-weight: bold; }
+.nav-btn:disabled { background: #ccc; cursor: not-allowed; }
+.page-indicator { font-size: 16px; color: #757575; min-width: 80px; text-align: center; }
+.summary-box { background: #e8eaf6; border-radius: 12px; padding: 20px; }
+.summary-box li { color: #1a237e; font-weight: 500; padding-left: 28px; position: relative; list-style: none; margin-bottom: 8px; }
+.summary-box li::before { content: "▸"; position: absolute; left: 4px; color: #ffd600; }
+.math { font-family: "Times New Roman", serif; font-style: italic; color: #1a237e; }
+@media print { .slide { display: block !important; page-break-after: always; } .nav-buttons { display: none; } .header { position: static; } }
 </style>
 </head>
 <body>
-<!-- ========== 顶部标题栏 ========== -->
-<div class="title-bar">
-<div class="course-name"><span>CSP-J</span> 备考课程</div>
-<div class="slide-dots" id="slideDots"></div>
-<div class="lesson-info">第37课</div>
-</div>
-<!-- ========== 主内容 ========== -->
-<div class="main-container">
-<!-- 幻灯片 1：标题页 -->
-<div class="slide active" id="slide1">
-<div class="title-slide">
-<div class="lesson-number">37</div>
-<div class="lesson-title">动态规划基础</div>
-<div class="lesson-subtitle">第10阶段 · 动态规划入门</div>
-<div class="keyword-tags">
-<span>状态定义</span>
-<span>转移方程</span>
-<span>数字三角形</span>
-<span>路径计数</span>
-</div>
-<p style="margin-top:30px; color:#888; font-size:0.9em;">⏱ 建议学习时长：60分钟 ｜ 课程难度：★★★☆☆</p>
+<div class="header">📘 <span>CSP-J 备考课程</span> — 第37课：动态规划基础</div>
+<div class="container">
+
+<div class="slide slide-title active" id="slide1">
+<h1>第37课<br/>动态规划基础</h1>
+<div class="subtitle">状态 · 转移 · 记忆化 · 数字三角形 · 路径计数</div>
+<div class="badge">DP 入门核心课</div>
+<div class="meta">📋 四要素 · 六步法 · 自顶向下/自底向上<br/>⏱️ 70–90 分钟 · 共 14 页</div>
+<aside class="notes">【开场】1/14 DP = 带记忆的枚举。本课打基础，后面线性/背包都靠它。</aside>
 </div>
 
-<aside class="notes">【开场】第 1/8 页 · 动态规划基础
-用 30 秒说明本课目标与学完能做什么，再进入正题。
-大纲考点：DP概念、状态/转移方程、记忆化搜索
-配套练习方向：数字三角形与路径问题
-封面关键词：
-· ⏱ 建议学习时长：60分钟 ｜ 课程难度：★★★☆☆
-互动：问学生「今天最想搞清楚什么？」，收 1–2 个期待。</aside>
-</div>
-<!-- 幻灯片 2：DP核心概念 -->
 <div class="slide" id="slide2">
-<h2>一、DP的四大核心概念</h2>
-<h3>1. 什么是动态规划？</h3>
-<p>动态规划（Dynamic Programming）的核心思想：<strong>将复杂问题分解为重叠子问题，缓存子问题结果以避免重复计算。</strong></p>
-<div class="step-grid">
-<div class="step-card">
-<div class="step-num">1</div>
-<div class="step-text">状态定义</div>
-<p style="font-size:0.8em;color:#666;">用数学语言描述子问题局面</p>
-</div>
-<div class="step-card">
-<div class="step-num">2</div>
-<div class="step-text">状态转移</div>
-<p style="font-size:0.8em;color:#666;">从前驱状态推导当前状态</p>
-</div>
-<div class="step-card">
-<div class="step-num">3</div>
-<div class="step-text">最优子结构</div>
-<p style="font-size:0.8em;color:#666;">最优解包含子问题最优解</p>
-</div>
-<div class="step-card">
-<div class="step-num">4</div>
-<div class="step-text">无后效性</div>
-<p style="font-size:0.8em;color:#666;">状态值不受后续决策影响</p>
-</div>
-</div>
-<h3>2. 状态定义的关键原则</h3>
+<h2>考纲与目标</h2>
 <ul>
-<li>状态必须<strong>唯一描述</strong>一个子问题</li>
-<li>状态空间应<strong>便于写出转移方程</strong></li>
-<li>可根据数据范围预估状态数量和维数</li>
+<li>掌握：状态定义、转移方程、最优子结构、无后效性</li>
+<li>会写：记忆化搜索与递推 DP</li>
+<li>经典题：数字三角形两种写法、网格路径计数（可带障碍）</li>
+<li>能按「DP 六步法」分析新题</li>
 </ul>
-<div class="tip-box">
-<strong>考试技巧：</strong>拿到DP题，先不要急着写代码，花3分钟在草稿纸上写清楚「状态定义」「转移方程」「边界条件」三项，再开始编码。
-    </div>
-
-<aside class="notes">【讲解】一、DP的四大核心概念
-本页要点（照着讲即可）：
-· 动态规划（Dynamic Programming）的核心思想： 将复杂问题分解为重叠子问题，缓存子问题结果以避免重复计算。
-· 将复杂问题分解为重叠子问题，缓存子问题结果以避免重复计算。
-· 用数学语言描述子问题局面
-· 从前驱状态推导当前状态
-· 最优解包含子问题最优解
-· 状态值不受后续决策影响
-讲解时放慢关键术语；用 1 个生活类比 + 1 个反例加深印象。
-本课大纲考点（可适时点题）：DP概念、状态/转移方程、记忆化搜索</aside>
+<div class="tip-box success"><strong>一句话：</strong>把大问题拆成重叠子问题，存结果避免重复计算。</div>
+<aside class="notes">【讲解】与递推关系：递推是实现手段，DP 强调状态与最优性。</aside>
 </div>
-<!-- 幻灯片 3：两种实现方式对比 -->
+
 <div class="slide" id="slide3">
-<h2>二、DP的两种实现方式</h2>
-<h3>记忆化搜索 vs 递推DP</h3>
-<table class="compare-table">
-<tr>
-<th>对比维度</th>
-<th>记忆化搜索（自顶向下）</th>
-<th>递推DP（自底向上）</th>
-</tr>
-<tr>
-<td><strong>方向</strong></td>
-<td>从原问题递归分解</td>
-<td>从最小子问题递推</td>
-</tr>
-<tr>
-<td><strong>实现</strong></td>
-<td>递归 + 缓存数组</td>
-<td>循环 + dp数组</td>
-</tr>
-<tr>
-<td><strong>优点</strong></td>
-<td>思维直观，只算需要的状态</td>
-<td>效率高，无递归开销</td>
-</tr>
-<tr>
-<td><strong>缺点</strong></td>
-<td>递归深度大可能栈溢出</td>
-<td>需仔细设计递推顺序</td>
-</tr>
-<tr>
-<td><strong>推荐场景</strong></td>
-<td>递推顺序不直观时</td>
-<td><strong>CSP-J首选</strong></td>
-</tr>
-</table>
-<div class="tip-box">
-<strong>考试建议：</strong>CSP-J考试中优先使用递推DP（自底向上），常数小、不易出错、不会栈溢出。
-    </div>
-<h3>记忆化搜索代码框架</h3>
-<div class="code-block"><span class="kw">int</span> <span class="fn">dfs</span>(<span class="kw">int</span> i, <span class="kw">int</span> j) {
-    <span class="kw">if</span> (i == n) <span class="kw">return</span> a[i][j];       <span class="cmt">// 边界</span>
-<span class="kw">if</span> (vis[i][j]) <span class="kw">return</span> memo[i][j]; <span class="cmt">// 已计算</span>
-    vis[i][j] = <span class="kw">true</span>;
-    <span class="kw">return</span> memo[i][j] = <span class="fn">max</span>(<span class="fn">dfs</span>(i+<span class="num">1</span>,j), <span class="fn">dfs</span>(i+<span class="num">1</span>,j+<span class="num">1</span>)) + a[i][j];
-}</div>
-
-<aside class="notes">【讲解】二、DP的两种实现方式
-结合讲义《三、DP的两种实现方式》强调：
-· 记忆化搜索从原问题出发，递归地将问题分解为子问题。对于每个遇到的子问题，先检查是否已经求解过：如果求解过就直接返回缓存的结果，否则计算并存入缓存。
-· int memo[MAXN][MAXN];
-· bool vis[MAXN][MAXN]; // 标记是否已经计算过
-· int dfs(int i, int j) {
-· if (i == 1 &amp;&amp; j == 1) return a[1][1]; // 边界
-幻灯片上可见要点：
-· 推荐场景
-· CSP-J首选
-· 考试建议：
-讲解时放慢关键术语；用 1 个生活类比 + 1 个反例加深印象。</aside>
+<h2>一、什么是动态规划</h2>
+<p>Bellman 提出：复杂问题 → 重叠子问题 → 保存子问题解 → 高效求原问题。</p>
+<ul>
+<li>与<strong>暴力递归</strong>：同枚举思想，但消除重复</li>
+<li>与<strong>贪心</strong>：都要最优子结构；DP 考虑多种选择并记录最优，贪心只走当前最优</li>
+<li>与<strong>递推</strong>：递推是计算顺序；DP 是问题分析框架</li>
+</ul>
+<div class="code-block"><span class="comment">// 爬楼梯：f[i] = f[i-1] + f[i-2]</span>
+f[<span class="number">0</span>] = f[<span class="number">1</span>] = <span class="number">1</span>;
+<span class="keyword">for</span> (<span class="type">int</span> i = <span class="number">2</span>; i &lt;= n; i++) f[i] = f[i-<span class="number">1</span>] + f[i-<span class="number">2</span>];</div>
+<aside class="notes">【讲解】爬楼梯引出四要素。</aside>
 </div>
-<!-- 幻灯片 4：数字三角形 -->
+
 <div class="slide" id="slide4">
-<h2>三、经典问题：数字三角形</h2>
-<h3>问题描述</h3>
-<div class="code-block"> <span class="num">7</span>
-<span class="num">3</span> <span class="num">8</span>
-<span class="num">8</span> <span class="num">1</span> <span class="num">0</span>
-<span class="num">2</span> <span class="num">7</span> <span class="num">4</span> <span class="num">4</span>
-<span class="num">4</span> <span class="num">5</span> <span class="num">2</span> <span class="num">6</span> <span class="num">5</span></div>
-<p>从顶部出发，每次向左下或右下移动，到达底部。<strong>求路径数字和的最大值。</strong></p>
-<h3>从底向上递推（推荐写法）</h3>
-<div class="code-block"><span class="cmt">// dp[i][j] 表示从 (i,j) 出发到达底部的最大和</span>
-<span class="kw">for</span> (<span class="kw">int</span> j = <span class="num">1</span>; j &lt;= n; j++) dp[n][j] = a[n][j];
-
-<span class="kw">for</span> (<span class="kw">int</span> i = n - <span class="num">1</span>; i &gt;= <span class="num">1</span>; i--)
-    <span class="kw">for</span> (<span class="kw">int</span> j = <span class="num">1</span>; j &lt;= i; j++)
-        dp[i][j] = <span class="fn">max</span>(dp[i+<span class="num">1</span>][j], dp[i+<span class="num">1</span>][j+<span class="num">1</span>]) + a[i][j];
-
-cout &lt;&lt; dp[<span class="num">1</span>][<span class="num">1</span>];  <span class="cmt">// 答案直接是 dp[1][1]</span></div>
-<div class="warning-box">
-<strong>易错提醒：</strong>从上向下递推也可以，但最终答案需要遍历最后一行取max（<code>max(dp[n][1..n])</code>），容易忘记。从底向上写法直接输出dp[1][1]，更不容易出错。
-    </div>
-
-<aside class="notes">【讲解】三、经典问题：数字三角形
-结合讲义《四、经典问题：数字三角形》强调：
-· 问题描述：给定一个n行的数字三角形，从顶部出发，每次可以向左下或右下走一步，到达底部。求路径上所有数字之和的最大值。
-· 8 1 0
-· 2 7 4 4
-· 4 5 2 6 5
-· 分析过程：
-幻灯片上可见要点：
-· 从顶部出发，每次向左下或右下移动，到达底部。 求路径数字和的最大值。
-· 求路径数字和的最大值。
-· 易错提醒：
-讲解时放慢关键术语；用 1 个生活类比 + 1 个反例加深印象。</aside>
+<h2>二、DP 四核心概念</h2>
+<table class="compare-table">
+<tr><th>概念</th><th>含义</th></tr>
+<tr><td><strong>状态定义</strong></td><td>用变量描述子问题局面，如 dp[i][j]</td></tr>
+<tr><td><strong>转移方程</strong></td><td>如何由前驱状态得到当前最优</td></tr>
+<tr><td><strong>最优子结构</strong></td><td>全局最优由子问题最优构成</td></tr>
+<tr><td><strong>无后效性</strong></td><td>状态值确定后不依赖「如何到达」的历史细节</td></tr>
+</table>
+<ul>
+<li>状态唯一描述子问题；空间受数据范围约束</li>
+<li>有后效性时需加维度记录历史</li>
+</ul>
+<aside class="notes">【讲解】四要素 板书固定格式。</aside>
 </div>
-<!-- 幻灯片 5：路径计数 -->
+
 <div class="slide" id="slide5">
-<h2>四、路径计数问题</h2>
-<h3>基本模型</h3>
-<p>m*n网格，从(1,1)出发，每次只能<strong>向右</strong>或<strong>向下</strong>移动，到达(m,n)。<br/>求总共有多少条不同的路径。</p>
-<h3>状态与转移</h3>
-<p><strong>状态：</strong>dp[i][j] = 到达 (i, j) 的路径数</p>
-<p><strong>转移：</strong>dp[i][j] = dp[i-1][j] + dp[i][j-1]</p>
-<p><strong>边界：</strong>第一行和第一列初始化为1（只有一种走法）</p>
-<div class="code-block"><span class="cmt">// 初始化</span>
-<span class="kw">for</span> (<span class="kw">int</span> j = <span class="num">1</span>; j &lt;= n; j++) dp[<span class="num">1</span>][j] = <span class="num">1</span>;
-<span class="kw">for</span> (<span class="kw">int</span> i = <span class="num">1</span>; i &lt;= m; i++) dp[i][<span class="num">1</span>] = <span class="num">1</span>;
-
-<span class="cmt">// 递推</span>
-<span class="kw">for</span> (<span class="kw">int</span> i = <span class="num">2</span>; i &lt;= m; i++)
-    <span class="kw">for</span> (<span class="kw">int</span> j = <span class="num">2</span>; j &lt;= n; j++)
-        dp[i][j] = (dp[i-<span class="num">1</span>][j] + dp[i][j-<span class="num">1</span>]) % MOD;</div>
-<h3>带障碍物的扩展</h3>
-<p>如果某些格子是障碍（不可通行），则这些格子的dp值为0：</p>
-<div class="code-block"><span class="kw">if</span> (block[i][j])
-    dp[i][j] = <span class="num">0</span>;  <span class="cmt">// 无法到达</span>
-<span class="kw">else</span>
-    dp[i][j] = dp[i-<span class="num">1</span>][j] + dp[i][j-<span class="num">1</span>];</div>
-<div class="tip-box">
-<strong>考试技巧：</strong>路径计数类问题的答案可能非常大，记得按题目要求取模（通常是 1e9+7）。
-    </div>
-
-<aside class="notes">【讲解】四、路径计数问题
-结合讲义《五、路径计数问题》强调：
-· 问题描述：一个 m * n 的网格，从左上角出发，每次只能向右或向下移动一格，到达右下角。求总共有多少条不同的路径。
-· 状态定义：dp[i][j] 表示从起点 (1,1) 到达 (i,j) 的路径总数
-· 转移方程：到达 (i,j) 只能从上方 (i-1,j) 或左方 (i,j-1) 过来，因此 dp[i][j] = dp[i-1][j] + dp[i][j-1]
-· 边界条件：第一行和第一列只有一种走法，即 dp[1][j] = 1，dp[i][1] = 1
-· 答案：dp[m][n]
-幻灯片上可见要点：
-· m*n网格，从(1,1)出发，每次只能 向右 或 向下 移动，到达(m,n)。 求总共有多少条不同的路径。
-· 状态： dp[i][j] = 到达 (i, j) 的路径数
-· 转移： dp[i][j] = dp[i-1][j] + dp[i][j-1]
-· 边界： 第一行和第一列初始化为1（只有一种走法）
-讲解时放慢关键术语；用 1 个生活类比 + 1 个反例加深印象。</aside>
+<h2>状态与转移怎么想</h2>
+<ol class="steps">
+<li>当前状态可由哪些<strong>前驱</strong>到达？</li>
+<li>每条转移的<strong>代价/收益</strong>是什么？</li>
+<li>在所有可能中取 max/min/sum</li>
+</ol>
+<div class="code-block"><span class="comment">// 数字三角形从上到下</span>
+dp[i][j] = max(dp[i-<span class="number">1</span>][j-<span class="number">1</span>], dp[i-<span class="number">1</span>][j]) + a[i][j];
+<span class="comment">// 网格路径计数</span>
+dp[i][j] = dp[i-<span class="number">1</span>][j] + dp[i][j-<span class="number">1</span>];</div>
+<div class="tip-box">写转移前先用中文说清 dp 的含义，否则极易写错。</div>
+<aside class="notes">【讲解】先定义后转移。</aside>
 </div>
-<!-- 幻灯片 6：DP六步法 -->
+
 <div class="slide" id="slide6">
-<h2>五、DP解题六步法</h2>
-<div class="step-grid">
-<div class="step-card">
-<div class="step-num">1</div>
-<div class="step-text">判断问题类型</div>
-<p style="font-size:0.8em;color:#666;">确认最优子结构和无后效性</p>
+<h2>三、两种实现：记忆化 vs 递推</h2>
+<table class="compare-table">
+<tr><th></th><th>记忆化（Top-Down）</th><th>递推（Bottom-Up）</th></tr>
+<tr><td>方向</td><td>从原问题递归拆</td><td>从小问题推到大</td></tr>
+<tr><td>优点</td><td>思维直观；只算需要的状态</td><td>常数好；无栈溢出</td></tr>
+<tr><td>缺点</td><td>递归开销/深栈</td><td>要设计循环顺序</td></tr>
+</table>
+<div class="tip-box success">CSP-J <strong>优先递推 DP</strong>。转移顺序难写时用记忆化。</div>
+<aside class="notes">【讲解】实现选型。</aside>
 </div>
-<div class="step-card">
-<div class="step-num">2</div>
-<div class="step-text">定义状态</div>
-<p style="font-size:0.8em;color:#666;">确定dp数组含义和维度</p>
-</div>
-<div class="step-card">
-<div class="step-num">3</div>
-<div class="step-text">推导转移方程</div>
-<p style="font-size:0.8em;color:#666;">分析前驱状态和转移代价</p>
-</div>
-<div class="step-card">
-<div class="step-num">4</div>
-<div class="step-text">确定边界条件</div>
-<p style="font-size:0.8em;color:#666;">初始化最小子问题</p>
-</div>
-<div class="step-card">
-<div class="step-num">5</div>
-<div class="step-text">确定计算顺序</div>
-<p style="font-size:0.8em;color:#666;">保证前驱已计算</p>
-</div>
-<div class="step-card">
-<div class="step-num">6</div>
-<div class="step-text">定位答案</div>
-<p style="font-size:0.8em;color:#666;">明确答案在dp数组的位置</p>
-</div>
-</div>
-<h3>真题实战：过河卒（经典CSP-J题目）</h3>
-<p>棋盘上卒从(0,0)到(n,m)，马在(x,y)及控制点处不可走。卒只能向右或向下走，求路径数。</p>
-<div class="tip-box">
-<strong>解题思路：</strong>先标记马的控制点（9个位置），将障碍格dp值设为0，其余正常递推。这是路径计数模型+障碍物处理的综合应用。
-    </div>
 
-<aside class="notes">【讲解】五、DP解题六步法
-本页要点（照着讲即可）：
-· 确认最优子结构和无后效性
-· 确定dp数组含义和维度
-· 分析前驱状态和转移代价
-· 初始化最小子问题
-· 保证前驱已计算
-· 明确答案在dp数组的位置
-讲解时放慢关键术语；用 1 个生活类比 + 1 个反例加深印象。</aside>
-</div>
-<!-- 幻灯片 7：真题精讲 -->
 <div class="slide" id="slide7">
-<h2>六、真题精讲：数字三角形</h2>
-<h3>题目</h3>
-<p>给定n（1≤n≤1000）行数字三角形，从顶部出发每次向左下/右下移动，求到达底部的最大路径和。</p>
-<h3>AC代码</h3>
-<div class="code-block"><span class="pp">#include</span> <span class="str">&lt;bits/stdc++.h&gt;</span>
-<span class="kw">using</span> <span class="kw">namespace</span> std;
-
-<span class="kw">const</span> <span class="kw">int</span> MAXN = <span class="num">1005</span>;
-<span class="kw">int</span> a[MAXN][MAXN], dp[MAXN][MAXN];
-
-<span class="kw">int</span> <span class="fn">main</span>() {
-    <span class="kw">int</span> n; cin &gt;&gt; n;
-    <span class="kw">for</span> (<span class="kw">int</span> i = <span class="num">1</span>; i &lt;= n; i++)
-        <span class="kw">for</span> (<span class="kw">int</span> j = <span class="num">1</span>; j &lt;= i; j++)
-            cin &gt;&gt; a[i][j];
-
-    <span class="kw">for</span> (<span class="kw">int</span> j = <span class="num">1</span>; j &lt;= n; j++)
-        dp[n][j] = a[n][j];
-
-    <span class="kw">for</span> (<span class="kw">int</span> i = n-<span class="num">1</span>; i &gt;= <span class="num">1</span>; i--)
-        <span class="kw">for</span> (<span class="kw">int</span> j = <span class="num">1</span>; j &lt;= i; j++)
-            dp[i][j] = <span class="fn">max</span>(dp[i+<span class="num">1</span>][j], dp[i+<span class="num">1</span>][j+<span class="num">1</span>]) + a[i][j];
-
-    cout &lt;&lt; dp[<span class="num">1</span>][<span class="num">1</span>] &lt;&lt; <span class="str">'\n'</span>;
-    <span class="kw">return</span> <span class="num">0</span>;
+<h2>记忆化搜索示例</h2>
+<div class="code-block"><span class="type">int</span> memo[MAXN][MAXN]; <span class="type">bool</span> vis[MAXN][MAXN];
+<span class="type">int</span> <span class="function">dfs</span>(<span class="type">int</span> i, <span class="type">int</span> j) {
+    <span class="keyword">if</span> (i == <span class="number">1</span> &amp;&amp; j == <span class="number">1</span>) <span class="keyword">return</span> a[<span class="number">1</span>][<span class="number">1</span>];
+    <span class="keyword">if</span> (i &lt; <span class="number">1</span> || j &lt; <span class="number">1</span> || j &gt; i) <span class="keyword">return</span> -INF;
+    <span class="keyword">if</span> (vis[i][j]) <span class="keyword">return</span> memo[i][j];
+    vis[i][j] = <span class="keyword">true</span>;
+    <span class="keyword">return</span> memo[i][j] = max(dfs(i-<span class="number">1</span>, j-<span class="number">1</span>), dfs(i-<span class="number">1</span>, j)) + a[i][j];
 }</div>
-<p><strong>输入样例：</strong>n=5，三角形如本页图，<strong>输出：</strong>30</p>
-<div class="warning-box">
-<strong>必考知识点：</strong>数字三角形是CSP-J中最常考的DP入门题。必须熟练掌握从底向上递推的写法，并理解为什么这样做是正确的。
-    </div>
-
-<aside class="notes">【讲解】六、真题精讲：数字三角形
-结合讲义《四、经典问题：数字三角形》强调：
-· 问题描述：给定一个n行的数字三角形，从顶部出发，每次可以向左下或右下走一步，到达底部。求路径上所有数字之和的最大值。
-· 8 1 0
-· 2 7 4 4
-· 4 5 2 6 5
-· 分析过程：
-幻灯片上可见要点：
-· 给定n（1≤n≤1000）行数字三角形，从顶部出发每次向左下/右下移动，求到达底部的最大路径和。
-· 输入样例： n=5，三角形如本页图， 输出： 30
-· 输入样例：
-· 必考知识点：
-练习页节奏：先独立想 1 分钟 → 再点拨思路 → 最后对答案讲为什么。
-可联系：数字三角形与路径问题</aside>
+<aside class="notes">【讲解】vis 防重复；边界与非法状态。</aside>
 </div>
-<!-- 幻灯片 8：总结 -->
+
 <div class="slide" id="slide8">
-<h2>本课总结</h2>
-<div class="summary-grid">
-<div class="summary-item">
-<h4>DP本质</h4>
-<p>分解为重叠子问题，缓存结果避免重复计算。是一种「带记忆的枚举」。</p>
+<h2>四、数字三角形</h2>
+<pre style="font-size:16px;line-height:1.5;margin:12px 0;color:#333;">     7
+    3 8
+   8 1 0
+  2 7 4 4
+ 4 5 2 6 5
+答案路径和 30（如 7-3-8-7-5）</pre>
+<ul>
+<li><strong>状态：</strong>dp[i][j] = 从顶到 (i,j) 的最大和 <em>或</em> 从 (i,j) 到底的最大和</li>
+<li><strong>从上到下：</strong>答案 = max(dp[n][*])</li>
+<li><strong>从下到上：</strong>答案 = dp[1][1]（更简洁）</li>
+</ul>
+<aside class="notes">【讲解】手推三角形，对照 lesson37。</aside>
 </div>
-<div class="summary-item">
-<h4>四大核心</h4>
-<p>状态定义、状态转移方程、最优子结构、无后效性——四者缺一不可。</p>
-</div>
-<div class="summary-item">
-<h4>两种实现</h4>
-<p>记忆化搜索（递归+缓存）和递推DP（循环+数组）。考试优先递推DP。</p>
-</div>
-<div class="summary-item">
-<h4>DP六步法</h4>
-<p>判断类型→定义状态→推导转移→确定边界→确定顺序→定位答案。</p>
-</div>
-<div class="summary-item">
-<h4>数字三角形</h4>
-<p>从底向上递推：<code>dp[i][j]=max(dp[i+1][j],dp[i+1][j+1])+a[i][j]</code></p>
-</div>
-<div class="summary-item">
-<h4>路径计数</h4>
-<p><code>dp[i][j]=dp[i-1][j]+dp[i][j-1]</code>，注意取模和障碍物处理。</p>
-</div>
-</div>
-<div class="tip-box" style="margin-top:20px;">
-<strong>课后作业：</strong>① 用两种方法（递推DP和记忆化搜索）分别实现数字三角形；② 完成过河卒问题并理解带障碍物的DP处理方式；③ 尝试用DP六步法分析一道新的DP题目。
-    </div>
 
-<aside class="notes">【收尾】回顾本课主线：本课总结
-对照大纲再过一遍：DP概念、状态/转移方程、记忆化搜索
-板书/口述要点：
-· DP本质
-· 分解为重叠子问题，缓存结果避免重复计算。是一种「带记忆的枚举」。
-· 四大核心
-· 状态定义、状态转移方程、最优子结构、无后效性——四者缺一不可。
-· 两种实现
-· 记忆化搜索（递归+缓存）和递推DP（循环+数组）。考试优先递推DP。
-课后任务：数字三角形与路径问题
-结束前留 2 分钟答疑；布置 1 道小练习检验是否真正掌握。</aside>
+<div class="slide" id="slide9">
+<h2>数字三角形 — 从底向上模板</h2>
+<div class="code-block"><span class="keyword">for</span> (<span class="type">int</span> j = <span class="number">1</span>; j &lt;= n; j++) dp[n][j] = a[n][j];
+<span class="keyword">for</span> (<span class="type">int</span> i = n - <span class="number">1</span>; i &gt;= <span class="number">1</span>; i--)
+    <span class="keyword">for</span> (<span class="type">int</span> j = <span class="number">1</span>; j &lt;= i; j++)
+        dp[i][j] = max(dp[i+<span class="number">1</span>][j], dp[i+<span class="number">1</span>][j+<span class="number">1</span>]) + a[i][j];
+cout &lt;&lt; dp[<span class="number">1</span>][<span class="number">1</span>];</div>
+<div class="tip-box">转移：只能左下/右下。边界：最底行 = 自身。复杂度 O(n²)。</div>
+<aside class="notes">【讲解】模板 必须默写。</aside>
+</div>
+
+<div class="slide" id="slide10">
+<h2>五、路径计数</h2>
+<p>m×n 网格，只能右或下，从左上到右下路径数。</p>
+<div class="code-block"><span class="keyword">for</span> (<span class="type">int</span> j = <span class="number">1</span>; j &lt;= n; j++) dp[<span class="number">1</span>][j] = <span class="number">1</span>;
+<span class="keyword">for</span> (<span class="type">int</span> i = <span class="number">1</span>; i &lt;= m; i++) dp[i][<span class="number">1</span>] = <span class="number">1</span>;
+<span class="keyword">for</span> (<span class="type">int</span> i = <span class="number">2</span>; i &lt;= m; i++)
+    <span class="keyword">for</span> (<span class="type">int</span> j = <span class="number">2</span>; j &lt;= n; j++)
+        dp[i][j] = dp[i-<span class="number">1</span>][j] + dp[i][j-<span class="number">1</span>];</div>
+<p><strong>障碍：</strong>若 (i,j) 不可走，dp[i][j]=0；否则仍为上+左。</p>
+<div class="tip-box warning">答案可能很大，用 long long；障碍在第一行/列时边界初始化要小心。</div>
+<aside class="notes">【讲解】路径计数 过河卒思想。</aside>
+</div>
+
+<div class="slide" id="slide11">
+<h2>六、DP 六步法（考场流程）</h2>
+<ol class="steps">
+<li>判断：最优子结构 + 无后效性？</li>
+<li>定义状态：dp 含义与维度</li>
+<li>推导转移方程</li>
+<li>确定边界/初始化</li>
+<li>确定计算顺序（依赖已算完）</li>
+<li>确定答案位置（未必是 dp[n]）</li>
+</ol>
+<div class="tip-box success">每道 DP 题按六步写在草稿纸上，再写代码，正确率显著提升。</div>
+<aside class="notes">【讲解】六步法 反复强调。</aside>
+</div>
+
+<div class="slide" id="slide12">
+<h2>真题精练</h2>
+<div class="problem-card">
+<div class="problem-title">数字三角形（NOIP 经典）</div>
+<p>n≤1000，求最大路径和。→ 从底向上 O(n²) 递推。</p>
+</div>
+<div class="problem-card">
+<div class="problem-title">方格取数 / 路径条数</div>
+<p>网格路径数或带障碍。→ dp[i][j]=上+左；障碍置 0。</p>
+</div>
+<aside class="notes">【讲解】真题</aside>
+</div>
+
+<div class="slide" id="slide13">
+<h2>易错点</h2>
+<ul>
+<li>状态含义不清，转移抄错维度</li>
+<li>边界未初始化 / 第一行第一列障碍处理错</li>
+<li>循环顺序导致用到未计算状态</li>
+<li>答案取 dp[n] 却应取 max(dp[*])</li>
+<li>记忆化未标记 vis，或递归深度过大</li>
+<li>int 存路径数溢出</li>
+</ul>
+<aside class="notes">【讲解】易错</aside>
+</div>
+
+<div class="slide" id="slide14">
+<h2>本课小结</h2>
+<div class="summary-box">
+<ul>
+<li>DP = 重叠子问题 + 最优子结构 + 存结果。</li>
+<li>四要素：状态、转移、边界、顺序（+答案位置）。</li>
+<li>优先自底向上递推；难时用记忆化。</li>
+<li>数字三角形、路径计数是入门标准模板。</li>
+<li>牢记六步法，进入线性 DP / 背包。</li>
+</ul>
+</div>
+<div class="tip-box success"><strong>下节：</strong>第38课 线性 DP — LIS / LCS / 最大子段和 / 编辑距离。</div>
+<aside class="notes">【收尾】14/14</aside>
+</div>
+
+<div class="nav-buttons">
+<button class="nav-btn" id="prevBtn" onclick="prevSlide()">◀ 上一页</button>
+<span class="page-indicator" id="pageIndicator">1 / 14</span>
+<button class="nav-btn" id="nextBtn" onclick="nextSlide()">下一页 ▶</button>
 </div>
 </div>
-<!-- ========== 底部导航栏 ========== -->
-<div class="nav-bar">
-<button id="prevBtn" onclick="goPrev()">◀ 上一页</button>
-<span class="page-indicator" id="pageIndicator">1 / 8</span>
-<button id="nextBtn" onclick="goNext()">下一页 ▶</button>
-</div>
-<!-- ========== JavaScript 幻灯片控制 ========== -->
 <script>
-(function() {
-  var slides = document.querySelectorAll('.slide');
-  var totalSlides = slides.length;
-  var currentSlide = 0;
-  var prevBtn = document.getElementById('prevBtn');
-  var nextBtn = document.getElementById('nextBtn');
-  var pageIndicator = document.getElementById('pageIndicator');
-  var slideDots = document.getElementById('slideDots');
-
-  // 创建圆点指示器
-  for (var i = 0; i < totalSlides; i++) {
-    var dot = document.createElement('span');
-    dot.className = 'dot' + (i === 0 ? ' active' : '');
-    dot.setAttribute('data-index', i);
-    dot.onclick = (function(idx) {
-      return function() { showSlide(idx); };
-    })(i);
-    slideDots.appendChild(dot);
-  }
-
-  function showSlide(index) {
-    slides[currentSlide].classList.remove('active');
-    currentSlide = index;
-    slides[currentSlide].classList.add('active');
-
-    // 更新按钮状态
-    prevBtn.disabled = (currentSlide === 0);
-    nextBtn.disabled = (currentSlide === totalSlides - 1);
-
-    // 更新页码
-    pageIndicator.textContent = (currentSlide + 1) + ' / ' + totalSlides;
-
-    // 更新圆点
-    var dots = slideDots.querySelectorAll('.dot');
-    for (var i = 0; i < dots.length; i++) {
-      dots[i].classList.toggle('active', i === currentSlide);
-    }
-
-    // 滚动到顶部
-    window.scrollTo({ top: 0, behavior: 'smooth' });
-  }
-
-  window.goNext = function() {
-    if (currentSlide < totalSlides - 1) showSlide(currentSlide + 1);
-  };
-
-  window.goPrev = function() {
-    if (currentSlide > 0) showSlide(currentSlide - 1);
-  };
-
-  // 键盘导航
-  document.addEventListener('keydown', function(e) {
-    if (e.key === 'ArrowRight' || e.key === 'ArrowDown') {
-      e.preventDefault(); goNext();
-    } else if (e.key === 'ArrowLeft' || e.key === 'ArrowUp') {
-      e.preventDefault(); goPrev();
-    }
-  });
-
-  // 触摸滑动（移动端）
-  var touchStartX = 0;
-  document.addEventListener('touchstart', function(e) {
-    touchStartX = e.touches[0].clientX;
-  });
-  document.addEventListener('touchend', function(e) {
-    var diff = touchStartX - e.changedTouches[0].clientX;
-    if (Math.abs(diff) > 50) {
-      if (diff > 0) goNext(); else goPrev();
-    }
-  });
-})();
+let currentSlide = 0;
+const slides = document.querySelectorAll('.slide');
+const totalSlides = slides.length;
+function showSlide(i) {
+  slides.forEach(s => s.classList.remove('active'));
+  slides[i].classList.add('active');
+  document.getElementById('pageIndicator').textContent = (i+1)+' / '+totalSlides;
+  document.getElementById('prevBtn').disabled = (i===0);
+  document.getElementById('nextBtn').disabled = (i===totalSlides-1);
+  window.scrollTo({top:0,behavior:'smooth'});
+}
+function nextSlide(){ if(currentSlide<totalSlides-1){currentSlide++;showSlide(currentSlide);} }
+function prevSlide(){ if(currentSlide>0){currentSlide--;showSlide(currentSlide);} }
+document.addEventListener('keydown', e => {
+  if(e.key==='ArrowRight'||e.key===' '){e.preventDefault();nextSlide();}
+  else if(e.key==='ArrowLeft'){e.preventDefault();prevSlide();}
+});
+showSlide(0);
 </script>
 <script src="courseware-ui.js"></script>
 <script src="presenter.js"></script>

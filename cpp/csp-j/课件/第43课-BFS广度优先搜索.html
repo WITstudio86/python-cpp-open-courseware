@@ -1,641 +1,379 @@
 <!DOCTYPE html>
-
 <html lang="zh-CN">
 <head>
 <meta charset="utf-8"/>
 <meta content="width=device-width, initial-scale=1.0" name="viewport"/>
-<title>第43课：BFS 广度优先搜索 — CSP-J 备考课程</title>
+<title>第43课：BFS广度优先搜索 — CSP-J 备考课程</title>
 <style>
-* { margin: 0; padding: 0; box-sizing: border-box; }
-
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 body {
-    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "PingFang SC", "Microsoft YaHei", "Helvetica Neue", sans-serif;
-    background: #f5f5f5;
-    color: #212121;
-    overflow: hidden;
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "PingFang SC", "Microsoft YaHei", sans-serif;
+    background: #f5f5f5; color: #333;
+    display: flex; flex-direction: column; align-items: center; min-height: 100vh;
 }
-
-/* 顶部标题栏 */
-.title-bar {
-    background: #1a237e;
-    color: #ffffff;
-    padding: 12px 24px;
-    font-size: 18px;
-    font-weight: 700;
-    display: flex;
-    align-items: center;
-    gap: 12px;
-    position: fixed;
-    top: 0;
-    left: 0;
-    right: 0;
-    z-index: 100;
-    box-shadow: 0 2px 8px rgba(0,0,0,0.2);
+.header-bar {
+    width: 100%; background: #1a237e; color: #fff; text-align: center;
+    padding: 12px 16px; font-size: 18px; font-weight: 700; letter-spacing: 2px;
+    position: sticky; top: 0; z-index: 100;
 }
-.title-bar .badge {
-    background: #ffd600;
-    color: #1a237e;
-    padding: 2px 10px;
-    border-radius: 12px;
-    font-size: 13px;
-    font-weight: 600;
-}
-
-/* 幻灯片容器 */
-.slides-container {
-    position: absolute;
-    top: 50px;
-    left: 0;
-    right: 0;
-    bottom: 60px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    padding: 16px;
-}
-
+.header-bar span { color: #ffd600; }
+.slides-container { width: 100%; max-width: 960px; margin: 20px auto; padding: 0 16px; flex: 1; }
 .slide {
-    display: none;
-    background: #ffffff;
-    border-radius: 12px;
-    box-shadow: 0 4px 24px rgba(0,0,0,0.10);
-    max-width: 960px;
-    width: 100%;
-    max-height: 100%;
-    overflow-y: auto;
-    padding: 32px 40px;
-    position: relative;
+    display: none; background: #fff; border-radius: 12px;
+    box-shadow: 0 4px 20px rgba(0,0,0,0.1); padding: 40px 48px; min-height: 480px;
+    animation: fadeIn 0.3s ease;
 }
 .slide.active { display: block; }
-
-.slide h1 {
-    font-size: 28px;
-    color: #1a237e;
-    margin-bottom: 8px;
-    border-bottom: 3px solid #ffd600;
-    padding-bottom: 10px;
-    display: inline-block;
+@keyframes fadeIn {
+    from { opacity: 0; transform: translateY(10px); }
+    to   { opacity: 1; transform: translateY(0); }
 }
-.slide h2 {
-    font-size: 22px;
-    color: #1a237e;
-    margin: 20px 0 10px;
-}
-.slide h3 {
-    font-size: 18px;
-    color: #283593;
-    margin: 14px 0 8px;
-}
-.slide p, .slide li {
-    font-size: 15px;
-    line-height: 1.75;
-    color: #333;
-    margin-bottom: 6px;
-}
-.slide ul, .slide ol {
-    padding-left: 24px;
-    margin-bottom: 10px;
-}
-
-/* 代码块 */
+.slide h1 { color: #1a237e; font-size: 28px; border-bottom: 3px solid #ffd600; padding-bottom: 12px; margin-bottom: 24px; }
+.slide h2 { color: #1a237e; font-size: 22px; margin-bottom: 16px; }
+.slide h3 { color: #283593; font-size: 18px; margin-top: 16px; margin-bottom: 10px; }
+.slide p, .slide li { font-size: 16px; line-height: 1.8; margin-bottom: 8px; }
+.slide ul, .slide ol { padding-left: 24px; margin-bottom: 12px; }
 .code-block {
-    background: #1e1e1e;
-    color: #d4d4d4;
-    border-radius: 8px;
-    padding: 14px 18px;
-    margin: 10px 0 16px;
-    font-family: "Consolas", "Monaco", "Courier New", monospace;
-    font-size: 13px;
-    line-height: 1.6;
-    overflow-x: auto;
-    white-space: pre-wrap;
-    word-break: break-word;
+    background: #1e1e1e; color: #d4d4d4;
+    font-family: "Consolas", "Monaco", "Courier New", monospace; font-size: 13px;
+    padding: 14px 18px; border-radius: 8px; overflow-x: auto; white-space: pre; line-height: 1.55; margin: 12px 0;
 }
-.code-block .keyword { color: #569cd6; }
-.code-block .func   { color: #dcdcaa; }
-.code-block .number { color: #b5cea8; }
-.code-block .string { color: #ce9178; }
-.code-block .comment { color: #6a9955; font-style: italic; }
-.code-block .preprocessor { color: #c586c0; }
-.code-block .type { color: #4ec9b0; }
-
-/* 考试技巧提示框 */
+.code-block .kw { color: #569cd6; } .code-block .fn { color: #dcdcaa; }
+.code-block .nu { color: #b5cea8; } .code-block .cm { color: #6a9955; }
+.code-block .st { color: #ce9178; }
 .tip-box {
-    border-left: 4px solid #ffd600;
-    background: #fffde7;
-    padding: 12px 16px;
-    margin: 12px 0;
-    border-radius: 0 8px 8px 0;
-    font-size: 14px;
+    background: #fffde7; border-left: 5px solid #ffd600; border-radius: 6px;
+    padding: 14px 18px; margin: 16px 0; font-size: 15px; color: #5d4037;
 }
-.tip-box strong {
-    color: #f57f17;
-}
-
-/* 警告框 */
+.tip-box::before { content: "💡 考试技巧："; font-weight: bold; color: #ff8f00; }
 .warn-box {
-    border-left: 4px solid #ff9800;
-    background: #fff3e0;
-    padding: 12px 16px;
-    margin: 12px 0;
-    border-radius: 0 8px 8px 0;
-    font-size: 14px;
+    background: #fff3e0; border-left: 5px solid #ff9800; border-radius: 6px;
+    padding: 14px 18px; margin: 16px 0; font-size: 15px; color: #bf360c;
 }
-.warn-box strong {
-    color: #e65100;
+.highlight-box {
+    background: #e8eaf6; border-left: 5px solid #1a237e; border-radius: 6px;
+    padding: 14px 18px; margin: 16px 0; font-size: 15px;
 }
-
-/* 对比表格 */
-.compare-table {
-    width: 100%;
-    border-collapse: collapse;
-    margin: 12px 0 16px;
-    font-size: 14px;
-}
-.compare-table th {
-    background: #1a237e;
-    color: #ffffff;
-    padding: 8px 12px;
-    text-align: left;
-}
-.compare-table td {
-    padding: 8px 12px;
-    border-bottom: 1px solid #e0e0e0;
-}
-.compare-table tr:nth-child(even) td {
-    background: #fafafa;
-}
-
-/* 步骤编号 */
-.step-num {
-    display: inline-block;
-    background: #1a237e;
-    color: #fff;
-    width: 26px;
-    height: 26px;
-    line-height: 26px;
-    text-align: center;
-    border-radius: 50%;
-    font-size: 13px;
-    font-weight: bold;
-    margin-right: 6px;
-}
-
-/* 底部导航 */
-.nav-bar {
-    position: fixed;
-    bottom: 0;
-    left: 0;
-    right: 0;
-    height: 60px;
-    background: #ffffff;
-    border-top: 1px solid #e0e0e0;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    gap: 20px;
-    z-index: 100;
-}
+.data-table { width: 100%; border-collapse: collapse; margin: 16px 0; font-size: 14px; }
+.data-table th { background: #1a237e; color: #fff; padding: 10px 12px; text-align: center; }
+.data-table td { border: 1px solid #e0e0e0; padding: 8px 12px; text-align: center; }
+.data-table tr:nth-child(even) { background: #f5f5ff; }
+.nav-buttons { display: flex; justify-content: center; gap: 16px; margin: 20px 0 40px; }
 .nav-btn {
-    background: #1a237e;
-    color: #ffffff;
-    border: none;
-    padding: 8px 24px;
-    border-radius: 20px;
-    font-size: 14px;
-    cursor: pointer;
-    font-weight: 600;
-    transition: background 0.2s;
+    background: #1a237e; color: #fff; border: none; padding: 10px 28px;
+    border-radius: 6px; font-size: 15px; cursor: pointer;
 }
-.nav-btn:hover {
-    background: #283593;
+.nav-btn:hover { background: #283593; }
+.nav-btn:disabled { background: #9fa8da; cursor: not-allowed; }
+.page-indicator { text-align: center; color: #666; font-size: 14px; margin-bottom: 8px; }
+.slide.title-slide.active {
+    text-align: center; display: flex; flex-direction: column;
+    justify-content: center; align-items: center; min-height: 480px;
 }
-.nav-btn:disabled {
-    background: #bdbdbd;
-    cursor: not-allowed;
+.slide.title-slide.active h1 { font-size: 36px; border-bottom: none; margin-bottom: 16px; }
+.slide.title-slide.active .subtitle {
+    font-size: 20px; color: #ffd600; background: #1a237e;
+    display: inline-block; padding: 6px 24px; border-radius: 20px; margin-bottom: 24px;
 }
-.nav-btn.gold {
-    background: #ffd600;
-    color: #1a237e;
+.slide.title-slide.active .info { color: #666; font-size: 15px; line-height: 2; }
+.inline-code {
+    background: #e8eaf6; color: #1a237e; font-family: Consolas, Monaco, monospace;
+    padding: 1px 6px; border-radius: 3px; font-size: 0.92em;
 }
-.nav-btn.gold:hover {
-    background: #fdd835;
+.motto-box {
+    background: linear-gradient(135deg, #1a237e 0%, #283593 100%);
+    color: #ffd600; font-size: 18px; font-weight: 700; text-align: center;
+    padding: 18px; border-radius: 12px; margin: 16px 0;
 }
-.slide-indicator {
-    font-size: 14px;
-    color: #666;
-    min-width: 60px;
-    text-align: center;
-}
-
-/* 响应式 */
 @media (max-width: 768px) {
-    .slide { padding: 20px 16px; }
+    .slide { padding: 24px 20px; min-height: auto; }
     .slide h1 { font-size: 22px; }
-    .slide h2 { font-size: 18px; }
-    .code-block { font-size: 11px; padding: 10px; }
+    .code-block { font-size: 12px; }
 }
 </style>
 </head>
 <body>
-<!-- 标题栏 -->
-<div class="title-bar">
-<span>CSP-J 备考课程</span>
-<span class="badge">第43课</span>
-<span>BFS 广度优先搜索</span>
-</div>
-<!-- 幻灯片容器 -->
+<div class="header-bar"><span>CSP-J</span> 备考课程 — 第43课：BFS广度优先搜索</div>
 <div class="slides-container">
-<!-- ========== 第1页：标题页 ========== -->
-<div class="slide active" id="slide1">
-<h1>第43课：BFS 广度优先搜索</h1>
-<h3>Breadth-First Search</h3>
-<br/>
-<p><strong>考纲对应：</strong>图的遍历算法 — 广度优先搜索（BFS）</p>
-<p><strong>核心内容：</strong>队列实现 | 最短路径 | 网格搜索 | DFS vs BFS</p>
-<br/>
-<div class="tip-box">
-<strong>本课目标：</strong>掌握BFS标准框架，能独立解决无权图最短路径、迷宫类问题，理解BFS与DFS的适用场景差异。
-        </div>
-<br/>
-<p style="color:#888; font-size:13px;">使用方向键 ← → 或点击下方按钮切换幻灯片</p>
 
-<aside class="notes">【开场】第 1/7 页 · BFS 广度优先搜索
-用 30 秒说明本课目标与学完能做什么，再进入正题。
-大纲考点：BFS队列实现、最短路径、层序遍历
-配套练习方向：BFS求最短路径题
-封面关键词：
-· 考纲对应： 图的遍历算法 — 广度优先搜索（BFS）
-· 考纲对应：
-· 核心内容： 队列实现 | 最短路径 | 网格搜索 | DFS vs BFS
-· 核心内容：
-互动：问学生「今天最想搞清楚什么？」，收 1–2 个期待。</aside>
+<div class="slide active title-slide" id="slide-1">
+<h1>第43课：BFS广度优先搜索</h1>
+<div class="subtitle">CSP-J 备考课程</div>
+<div class="info">
+<p>水波纹式扩展 · 先近后远</p>
+<p>队列实现 · 无权最短路 · 迷宫最少步数</p>
+<p>入队即标记 · 框架必须背熟</p>
 </div>
-<!-- ========== 第2页：BFS 核心思想 ========== -->
-<div class="slide" id="slide2">
-<h1>一、BFS 核心思想与队列框架</h1>
-<h3>1.1 什么是 BFS？</h3>
-<p>BFS — 广度优先搜索，<strong>逐层扩展：先近后远</strong>。从起点出发，先访问所有距离为1的节点，再访问所有距离为2的节点……类似水波纹从中心向外扩散。</p>
-<h3>1.2 为什么用队列？</h3>
-<p>BFS 需要保证"<strong>先被发现的节点先被访问</strong>" — 这是典型的 FIFO（先进先出）特性，恰好对应队列（queue）的行为。</p>
-<div class="code-block">
-<span class="keyword">#include</span> <span class="string">&lt;queue&gt;</span>
-<span class="keyword">using</span> <span class="keyword">namespace</span> std;
+<aside class="notes">开场：BFS 是无权最短路的标准解法。</aside>
+</div>
 
-queue&lt;<span class="type">int</span>&gt; q;
-q.<span class="func">push</span>(x);      <span class="comment">// 入队</span>
-q.<span class="func">pop</span>();           <span class="comment">// 出队</span>
-q.<span class="func">front</span>();         <span class="comment">// 访问队首</span>
-q.<span class="func">empty</span>();         <span class="comment">// 判空</span>
-q.<span class="func">size</span>();          <span class="comment">// 队列大小</span></div>
-<h3>1.3 BFS 标准框架</h3>
-<div class="code-block"><span class="keyword">void</span> <span class="func">bfs</span>(<span class="type">int</span> start) {
-    queue&lt;<span class="type">int</span>&gt; q;
-    q.<span class="func">push</span>(start);          <span class="comment">// 1. 起点入队</span>
-    vis[start] = <span class="keyword">true</span>;        <span class="comment">// 2. 标记已访问</span>
-    dist[start] = <span class="number">0</span>;           <span class="comment">// 3. 起点距离为0</span>
-<span class="keyword">while</span> (!q.<span class="func">empty</span>()) {     <span class="comment">// 4. 队列非空就继续</span>
-<span class="type">int</span> u = q.<span class="func">front</span>();      <span class="comment">// 5. 取队首</span>
-        q.<span class="func">pop</span>();                  <span class="comment">// 6. 出队</span>
-<span class="keyword">for</span> (<span class="type">int</span> v : G[u]) {     <span class="comment">// 7. 遍历邻接点</span>
-<span class="keyword">if</span> (!vis[v]) {        <span class="comment">// 8. 未访问？</span>
-                vis[v] = <span class="keyword">true</span>;    <span class="comment">// 9. 标记</span>
-                dist[v] = dist[u] + <span class="number">1</span>; <span class="comment">// 10. 更新距离</span>
-                q.<span class="func">push</span>(v);          <span class="comment">// 11. 入队</span>
+<div class="slide" id="slide-2">
+<h1>一、什么是 BFS？</h1>
+<p><strong>广度优先搜索</strong>：从起点按层扩展，先访问距离 1 的点，再访问距离 2 的点……像水波纹。</p>
+<p>对比 DFS「一条路走到底」，BFS 是「齐头并进」。</p>
+<div class="highlight-box">
+生活类比：找关系最近的朋友——先问完所有直接朋友，再问朋友的朋友。
+</div>
+<h2>核心数据结构：队列 queue</h2>
+<div class="code-block">#include &lt;queue&gt;
+queue&lt;<span class="kw">int</span>&gt; q;
+q.push(x); q.pop(); q.front(); q.empty(); q.size();</div>
+<p>FIFO（先进先出）保证「先被发现的先处理」。</p>
+<aside class="notes">复习第24课 queue 基本操作。</aside>
+</div>
+
+<div class="slide" id="slide-3">
+<h1>二、BFS 标准框架（必背）</h1>
+<div class="code-block"><span class="kw">void</span> <span class="fn">bfs</span>(<span class="kw">int</span> start) {
+    queue&lt;<span class="kw">int</span>&gt; q;
+    q.push(start);
+    vis[start] = <span class="kw">true</span>;
+    dist[start] = <span class="nu">0</span>;
+    <span class="kw">while</span> (!q.empty()) {
+        <span class="kw">int</span> u = q.front(); q.pop();
+        <span class="kw">for</span> (<span class="kw">int</span> v : G[u]) {
+            <span class="kw">if</span> (!vis[v]) {
+                vis[v] = <span class="kw">true</span>;      <span class="cm">// 入队时标记！</span>
+                dist[v] = dist[u] + <span class="nu">1</span>;
+                q.push(v);
             }
         }
     }
 }</div>
-<div class="warn-box">
-<strong>关键：</strong>必须在入队时标记 vis，不是在出队时！否则同一节点会被重复入队多次，导致 TLE/MLE。
-        </div>
-
-<aside class="notes">【讲解】一、BFS 核心思想与队列框架
-本页要点（照着讲即可）：
-· BFS — 广度优先搜索， 逐层扩展：先近后远 。从起点出发，先访问所有距离为1的节点，再访问所有距离为2的节点……类似水波纹从中心向外扩散。
-· 逐层扩展：先近后远
-· BFS 需要保证" 先被发现的节点先被访问 " — 这是典型的 FIFO（先进先出）特性，恰好对应队列（queue）的行为。
-· 先被发现的节点先被访问
-讲解时放慢关键术语；用 1 个生活类比 + 1 个反例加深印象。
-本课大纲考点（可适时点题）：BFS队列实现、最短路径、层序遍历</aside>
+<ol>
+<li>起点入队并标记</li>
+<li>while 队列非空</li>
+<li>取队首，扩展邻点</li>
+<li><strong>未访问 → 标记 + 入队</strong></li>
+</ol>
+<div class="warn-box">标记必须在<strong>入队时</strong>，不是出队时！否则同一点多次入队 → TLE/MLE。</div>
+<aside class="notes">用 A 连 B、C，B、C 都连 D 的例子讲重复入队。</aside>
 </div>
-<!-- ========== 第3页：BFS 求最短路径 ========== -->
-<div class="slide" id="slide3">
-<h1>二、BFS 求最短路径</h1>
-<h3>核心性质（常考）</h3>
-<p><strong>在无权图中，BFS 天然求出的是起点到各点的最短路径（经过边数最少）。</strong></p>
-<p>证明思路：BFS 按层扩展，第 k 层扩展到的所有节点距离起点恰好为 k。如果一个节点在第 k 层被首次访问，不存在更短路径。</p>
-<h3>路径回溯：记录前驱节点</h3>
-<div class="code-block"><span class="type">int</span> pre[MAXN];  <span class="comment">// 记录每个节点的前驱</span>
-<span class="keyword">for</span> (<span class="type">int</span> v : G[u]) {
-    <span class="keyword">if</span> (!vis[v]) {
-        vis[v] = <span class="keyword">true</span>;
-        dist[v] = dist[u] + <span class="number">1</span>;
-        pre[v] = u;  <span class="comment">// 记录前驱节点</span>
-        q.<span class="func">push</span>(v);
+
+<div class="slide" id="slide-4">
+<h1>三、无权图最短路径</h1>
+<p><strong>性质</strong>：BFS 首次到达某点时，经过的边数最少。</p>
+<p>原因：按层扩展，第 k 层点距离恰为 k；若有更短路径，会在更早层被访问。</p>
+<div class="code-block"><span class="kw">int</span> pre[MAXN];  <span class="cm">// 记录前驱，可回溯路径</span>
+<span class="cm">// 扩展时：pre[v] = u;</span>
+<span class="kw">void</span> <span class="fn">print_path</span>(<span class="kw">int</span> s, <span class="kw">int</span> e) {
+    <span class="kw">if</span> (s == e) { cout &lt;&lt; s; <span class="kw">return</span>; }
+    <span class="fn">print_path</span>(s, pre[e]);
+    cout &lt;&lt; <span class="st">" -&gt; "</span> &lt;&lt; e;
+}</div>
+<div class="tip-box">
+可用 <span class="inline-code">dist</span> 兼作标记：初始化 -1，dist[v]==-1 表示未访问。
+</div>
+<aside class="notes">有权图最短路要用 Dijkstra，CSP-J 进阶了解。</aside>
+</div>
+
+<div class="slide" id="slide-5">
+<h1>四、网格 BFS（迷宫最短步）</h1>
+<div class="code-block"><span class="kw">int</span> dx[<span class="nu">4</span>]={0,0,1,-1}, dy[<span class="nu">4</span>]={1,-1,0,0};
+<span class="kw">int</span> <span class="fn">bfs_grid</span>(<span class="kw">int</span> sx,<span class="kw">int</span> sy,<span class="kw">int</span> ex,<span class="kw">int</span> ey) {
+    queue&lt;pair&lt;<span class="kw">int</span>,<span class="kw">int</span>&gt;&gt; q;
+    q.push({sx,sy}); vis[sx][sy]=<span class="kw">true</span>; dist[sx][sy]=<span class="nu">0</span>;
+    <span class="kw">while</span> (!q.empty()) {
+        <span class="kw">int</span> x=q.front().first, y=q.front().second; q.pop();
+        <span class="kw">if</span> (x==ex &amp;&amp; y==ey) <span class="kw">return</span> dist[x][y];
+        <span class="kw">for</span> (<span class="kw">int</span> i=<span class="nu">0</span>; i&lt;<span class="nu">4</span>; i++) {
+            <span class="kw">int</span> nx=x+dx[i], ny=y+dy[i];
+            <span class="kw">if</span> (nx&gt;=<span class="nu">0</span> &amp;&amp; nx&lt;n &amp;&amp; ny&gt;=<span class="nu">0</span> &amp;&amp; ny&lt;m
+                &amp;&amp; grid[nx][ny]!=<span class="st">'#'</span> &amp;&amp; !vis[nx][ny]) {
+                vis[nx][ny]=<span class="kw">true</span>;
+                dist[nx][ny]=dist[x][y]+<span class="nu">1</span>;
+                q.push({nx,ny});
+            }
+        }
+    }
+    <span class="kw">return</span> -<span class="nu">1</span>;
+}</div>
+<div class="warn-box">边界检查必须<strong>写在前面</strong>（短路），否则 grid[nx][ny] 越界 RE！</div>
+<aside class="notes">也可用 struct Node{x,y} 或三元组带 step。</aside>
+</div>
+
+<div class="slide" id="slide-6">
+<h1>五、层序遍历技巧</h1>
+<p>需要「按层处理」时：用 <span class="inline-code">sz = q.size()</span> 固定本层节点数。</p>
+<div class="code-block"><span class="kw">while</span> (!q.empty()) {
+    <span class="kw">int</span> sz = q.size();
+    <span class="kw">for</span> (<span class="kw">int</span> i = <span class="nu">0</span>; i &lt; sz; i++) {
+        <span class="kw">int</span> u = q.front(); q.pop();
+        <span class="cm">// 处理 u，扩展邻点入队</span>
+    }
+    level++;
+}</div>
+<div class="highlight-box">树的层序遍历、按层统计最值，都用此技巧。与第44课二叉树层序相通。</div>
+<aside class="notes">强调 sz 在循环外取，不能在 for 里用 q.size() 当上限（会变）。</aside>
+</div>
+
+<div class="slide" id="slide-7">
+<h1>六、DFS / BFS 怎么选</h1>
+<table class="data-table">
+<tr><th>需求</th><th>选择</th></tr>
+<tr><td>无权最短路 / 最少步数</td><td><strong>BFS</strong></td></tr>
+<tr><td>全部路径 / 排列组合</td><td><strong>DFS 回溯</strong></td></tr>
+<tr><td>连通性 / 能否到达</td><td>两者均可</td></tr>
+<tr><td>图特别深（链）</td><td>BFS 更安全</td></tr>
+<tr><td>图特别宽（星形）</td><td>DFS 空间可能更省</td></tr>
+<tr><td>按层处理</td><td>BFS</td></tr>
+</table>
+<p>时间复杂度（邻接表）：O(V+E)；邻接矩阵 O(V²)——稀疏图务必用表。</p>
+<div class="motto-box">最短看 BFS，全部看 DFS，连通看哪个都行</div>
+<aside class="notes">考试选择策略反复强调。</aside>
+</div>
+
+<div class="slide" id="slide-8">
+<h1>七、模板汇总</h1>
+<div class="code-block"><span class="cm">// 图上 BFS 求 1 到各点距离</span>
+memset(dist, -<span class="nu">1</span>, <span class="kw">sizeof</span>(dist));
+queue&lt;<span class="kw">int</span>&gt; q; q.push(<span class="nu">1</span>); dist[<span class="nu">1</span>] = <span class="nu">0</span>;
+<span class="kw">while</span> (!q.empty()) {
+    <span class="kw">int</span> u = q.front(); q.pop();
+    <span class="kw">for</span> (<span class="kw">int</span> v : G[u])
+        <span class="kw">if</span> (dist[v] == -<span class="nu">1</span>) {
+            dist[v] = dist[u] + <span class="nu">1</span>;
+            q.push(v);
+        }
+}
+<span class="cm">// 不可达保持 -1</span></div>
+<p>多组数据：每组前重置 vis、dist（memset / fill）。</p>
+<aside class="notes">对照 lesson43 程序演示。</aside>
+</div>
+
+<div class="slide" id="slide-9">
+<h1>八、易错点</h1>
+<ol>
+<li>入队不标 vis → 重复入队</li>
+<li>网格边界检查顺序错 → RE</li>
+<li>多组数据未清空 vis/dist</li>
+<li>混用 DFS/BFS 场景</li>
+<li>图不连通：只从一个起点搜，外层要扫全点</li>
+<li>稀疏图用邻接矩阵 → TLE</li>
+<li>无向图忘记双向建边</li>
+</ol>
+<div class="tip-box">自检口诀：入队必标记 · 边界写前面 · 无向写两边 · 不可达输出 -1</div>
+<aside class="notes">让学生检查自己写的模板是否入队时标 vis。</aside>
+</div>
+
+<div class="slide" id="slide-10">
+<h1>九、真题1：社交距离 · 题意思路</h1>
+<p><strong>题意</strong>：n 用户 m 好友关系（无向），输出用户 1 到每个人的最短社交距离；不可达 -1。n≤1e5,m≤2e5。</p>
+<p><strong>样例</strong>：边 1-2,2-3,3-4,1-5 → 输出 0,1,2,3,1</p>
+<div class="tip-box">
+<strong>思路：</strong>标准 BFS 最短路。dist 初值 -1 兼作 vis；无向双向建边；从 1 出发。
+</div>
+<aside class="notes">输出 n 行每个 dist[i]。</aside>
+</div>
+
+<div class="slide" id="slide-11">
+<h1>真题1：核心代码</h1>
+<div class="code-block"><span class="kw">vector</span>&lt;<span class="kw">int</span>&gt; G[MAXN];
+<span class="kw">int</span> dist[MAXN];
+<span class="cm">// 建无向图后：</span>
+memset(dist, -<span class="nu">1</span>, <span class="kw">sizeof</span>(dist));
+queue&lt;<span class="kw">int</span>&gt; q;
+q.push(<span class="nu">1</span>); dist[<span class="nu">1</span>] = <span class="nu">0</span>;
+<span class="kw">while</span> (!q.empty()) {
+    <span class="kw">int</span> u = q.front(); q.pop();
+    <span class="kw">for</span> (<span class="kw">int</span> v : G[u])
+        <span class="kw">if</span> (dist[v] == -<span class="nu">1</span>) {
+            dist[v] = dist[u] + <span class="nu">1</span>;
+            q.push(v);
+        }
+}
+<span class="kw">for</span> (<span class="kw">int</span> i = <span class="nu">1</span>; i &lt;= n; i++)
+    cout &lt;&lt; dist[i] &lt;&lt; endl;</div>
+<aside class="notes">n 大必须邻接表 + 可选 fast IO。</aside>
+</div>
+
+<div class="slide" id="slide-12">
+<h1>十、真题2：迷宫逃脱 · 题意思路</h1>
+<p><strong>题意</strong>：n×m 迷宫，<span class="inline-code">.</span> 空地，<span class="inline-code">#</span> 墙，<span class="inline-code">S</span> 起点，<span class="inline-code">E</span> 终点。最短步数；不可达输出 Impossible。</p>
+<p><strong>样例</strong> 5×5 → 输出 <strong>8</strong></p>
+<div class="tip-box">
+<strong>思路：</strong>读图时记录 S/E 坐标；网格 BFS 四方向；到达 E 得 dist；否则 Impossible。
+</div>
+<aside class="notes">S、E 也可当作可通行格。</aside>
+</div>
+
+<div class="slide" id="slide-13">
+<h1>真题2：核心代码</h1>
+<div class="code-block"><span class="kw">struct</span> Node { <span class="kw">int</span> x, y; };
+<span class="cm">// 找到 sx,sy,ex,ey 后：</span>
+queue&lt;Node&gt; q;
+q.push({sx, sy});
+vis[sx][sy] = <span class="kw">true</span>; dist[sx][sy] = <span class="nu">0</span>;
+<span class="kw">int</span> ans = -<span class="nu">1</span>;
+<span class="kw">while</span> (!q.empty()) {
+    Node cur = q.front(); q.pop();
+    <span class="kw">if</span> (cur.x == ex &amp;&amp; cur.y == ey) {
+        ans = dist[cur.x][cur.y]; <span class="kw">break</span>;
+    }
+    <span class="kw">for</span> (<span class="kw">int</span> i = <span class="nu">0</span>; i &lt; <span class="nu">4</span>; i++) {
+        <span class="kw">int</span> nx = cur.x + dx[i], ny = cur.y + dy[i];
+        <span class="kw">if</span> (nx&gt;=<span class="nu">0</span> &amp;&amp; nx&lt;n &amp;&amp; ny&gt;=<span class="nu">0</span> &amp;&amp; ny&lt;m
+            &amp;&amp; grid[nx][ny]!=<span class="st">'#'</span> &amp;&amp; !vis[nx][ny]) {
+            vis[nx][ny] = <span class="kw">true</span>;
+            dist[nx][ny] = dist[cur.x][cur.y] + <span class="nu">1</span>;
+            q.push({nx, ny});
+        }
     }
 }
-
-<span class="comment">// 回溯路径：从终点沿pre数组倒推到起点</span>
-<span class="keyword">void</span> <span class="func">print_path</span>(<span class="type">int</span> start, <span class="type">int</span> end) {
-    <span class="keyword">if</span> (start == end) { cout &lt;&lt; start; <span class="keyword">return</span>; }
-    <span class="func">print_path</span>(start, pre[end]);
-    cout &lt;&lt; <span class="string">" -&gt; "</span> &lt;&lt; end;
-}</div>
-<h3>时间复杂度</h3>
-<p>邻接表 BFS：<strong>O(V + E)</strong> — 每个节点入队一次、出队一次，每条边被检查一次。</p>
-<p>邻接矩阵 BFS：<strong>O(V²)</strong> — 大规模数据会导致超时，<strong>强烈建议使用邻接表</strong>。</p>
-<div class="tip-box">
-<strong>考试技巧：</strong>dist 数组初始化为 -1，可以同时承担"距离记录"和"访问标记"两个功能（-1 = 未访问，&gt;= 0 = 已访问且记录距离）。省掉一个 vis 数组。
-        </div>
-
-<aside class="notes">【讲解】二、BFS 求最短路径
-结合讲义《四、BFS求最短路径》强调：
-· BFS最重要的性质是：**在无权图中，BFS天然求出的是起点到各点的最短路径**（经过的边数最少）。
-· 证明思路：BFS按层扩展，第k层扩展到的所有节点，距离起点恰好为k。如果一个节点在第k层被首次访问，那么不存在一条更短的路径到达它（因为如果有更短路径，它应该在第k-1层或更早的层被访问）。
-· 代码扩展：在标准BFS框架的基础上，我们可以记录每个节点的"前驱"节点，从而在BFS结束后回溯出最短路径：
-· int pre[MAXN]; // 记录前驱节点
-· void bfs_with_path(int start) {
-幻灯片上可见要点：
-· 在无权图中，BFS 天然求出的是起点到各点的最短路径（经过边数最少）。
-· 证明思路：BFS 按层扩展，第 k 层扩展到的所有节点距离起点恰好为 k。如果一个节点在第 k 层被首次访问，不存在更短路径。
-· 邻接表 BFS： O(V + E) — 每个节点入队一次、出队一次，每条边被检查一次。
-· O(V + E)
-讲解时放慢关键术语；用 1 个生活类比 + 1 个反例加深印象。</aside>
+cout &lt;&lt; (ans == -<span class="nu">1</span> ? <span class="st">"Impossible"</span> : to_string(ans)) &lt;&lt; endl;</div>
+<aside class="notes">实际可直接 if(ans==-1) 分支输出，不必 to_string。</aside>
 </div>
-<!-- ========== 第4页：网格 BFS ========== -->
-<div class="slide" id="slide4">
-<h1>三、网格 BFS（迷宫问题）</h1>
-<p>CSP-J 最常见的一类 BFS 应用。给定 n*m 网格，有些格子是墙，求从 S 到 E 的最短步数。</p>
-<h3>网格 BFS 框架</h3>
-<div class="code-block"><span class="type">int</span> dx[<span class="number">4</span>] = {<span class="number">0</span>, <span class="number">0</span>, <span class="number">1</span>, -<span class="number">1</span>};  <span class="comment">// 四个方向：右左下上</span>
-<span class="type">int</span> dy[<span class="number">4</span>] = {<span class="number">1</span>, -<span class="number">1</span>, <span class="number">0</span>, <span class="number">0</span>};
 
-<span class="keyword">struct</span> <span class="type">Node</span> { <span class="type">int</span> x, y; };
-queue&lt;Node&gt; q;
-q.<span class="func">push</span>({sx, sy});
-vis[sx][sy] = <span class="keyword">true</span>;
-dist[sx][sy] = <span class="number">0</span>;
-
-<span class="keyword">while</span> (!q.<span class="func">empty</span>()) {
-    Node cur = q.<span class="func">front</span>(); q.<span class="func">pop</span>();
-    <span class="keyword">if</span> (cur.x == ex &amp;&amp; cur.y == ey) <span class="keyword">return</span> dist[cur.x][cur.y];
-
-    <span class="keyword">for</span> (<span class="type">int</span> i = <span class="number">0</span>; i &lt; <span class="number">4</span>; i++) {
-        <span class="type">int</span> nx = cur.x + dx[i];
-        <span class="type">int</span> ny = cur.y + dy[i];
-        <span class="comment">// 边界检查 必须 在内容检查之前！</span>
-<span class="keyword">if</span> (nx &gt;= <span class="number">0</span> &amp;&amp; nx &lt; n &amp;&amp; ny &gt;= <span class="number">0</span> &amp;&amp; ny &lt; m
-            &amp;&amp; grid[nx][ny] != <span class="string">'#'</span> &amp;&amp; !vis[nx][ny]) {
-            vis[nx][ny] = <span class="keyword">true</span>;
-            dist[nx][ny] = dist[cur.x][cur.y] + <span class="number">1</span>;
-            q.<span class="func">push</span>({nx, ny});
-        }
-    }
-}</div>
-<div class="warn-box">
-<strong>易错点：</strong>边界检查必须在内容检查之前！<code>grid[nx][ny] != '#'</code> 放在 <code>nx &gt;= 0 &amp;&amp; nx &lt; n</code> 之后，利用短路求值避免越界访问导致 RE（运行时错误）。
-        </div>
-
-<aside class="notes">【讲解】三、网格 BFS（迷宫问题）
-结合讲义《五、网格BFS（迷宫问题）》强调：
-· CSP-J中非常常见的一类BFS应用是网格迷宫问题。给定一个n*m的网格，有些格子是墙（不可通过），有些是空地（可通过），求从起点到终点的最短步数。
-· 网格BFS与图BFS的区别在于，网格的"邻接点"是上下左右四个方向（或八个方向），而不是通过邻接表获取。
-· int n, m;
-· char grid[105][105];
-· bool vis[105][105];
-幻灯片上可见要点：
-· CSP-J 最常见的一类 BFS 应用。给定 n*m 网格，有些格子是墙，求从 S 到 E 的最短步数。
-· 易错点：
-讲解时放慢关键术语；用 1 个生活类比 + 1 个反例加深印象。</aside>
-</div>
-<!-- ========== 第5页：DFS vs BFS ========== -->
-<div class="slide" id="slide5">
-<h1>四、DFS 与 BFS 的选择</h1>
-<table class="compare-table">
-<tr>
-<th>特性</th>
-<th>DFS（深度优先）</th>
-<th>BFS（广度优先）</th>
-</tr>
-<tr>
-<td>数据结构</td>
-<td>栈（递归 / 显式stack）</td>
-<td>队列（queue）</td>
-</tr>
-<tr>
-<td>空间复杂度</td>
-<td>O(深度) — 链状图可能很深</td>
-<td>O(宽度) — 星形图可能很大</td>
-</tr>
-<tr>
-<td>最短路径</td>
-<td>不能保证</td>
-<td>无权图天然最短</td>
-</tr>
-<tr>
-<td>求所有解</td>
-<td>适合（回溯枚举）</td>
-<td>不方便</td>
-</tr>
-<tr>
-<td>连通性判断</td>
-<td>适合（递归标记）</td>
-<td>适合（队列标记）</td>
-</tr>
-<tr>
-<td>拓扑排序</td>
-<td>适合（后序遍历）</td>
-<td>适合（Kahn算法）</td>
-</tr>
-</table>
-<h3>选择策略（记住口诀）</h3>
-<div class="tip-box">
-<strong>"最短看 BFS，全部看 DFS，连通看哪个都行。"</strong>
-</div>
-<ul>
-<li><strong>求最短路径 / 最少步数</strong> → 首选 BFS</li>
-<li><strong>求所有可能的路径 / 方案</strong> → 首选 DFS</li>
-<li><strong>判断连通性 / 能否到达</strong> → DFS 和 BFS 均可，DFS 递归更简洁</li>
-<li><strong>图特别深</strong>（链状图）→ BFS 更安全（DFS 可能爆栈）</li>
-<li><strong>图特别宽</strong>（星形图）→ DFS 更安全（BFS 队列可能过大）</li>
-<li><strong>需要按层处理</strong> → BFS（层序遍历特性）</li>
-</ul>
-
-<aside class="notes">【讲解】四、DFS 与 BFS 的选择
-结合讲义《七、DFS与BFS的选择》强调：
-· 这是考试中的高频考点，务必理解两者的适用场景：
-· 选择策略：
-· 求最短路径/最少步数 → 首选BFS（无权图场景）
-· 求所有可能的路径/方案 → 首选DFS（需要回溯枚举）
-· 判断连通性/能否到达 → DFS和BFS均可，DFS代码更简单（递归写法）
-幻灯片上可见要点：
-· "最短看 BFS，全部看 DFS，连通看哪个都行。"
-· 求最短路径 / 最少步数 → 首选 BFS
-· 求最短路径 / 最少步数
-· 求所有可能的路径 / 方案 → 首选 DFS
-讲解时放慢关键术语；用 1 个生活类比 + 1 个反例加深印象。</aside>
-</div>
-<!-- ========== 第6页：真题演练 ========== -->
-<div class="slide" id="slide6">
-<h1>五、真题演练：迷宫逃脱</h1>
-<p><strong>题目描述：</strong>给定 n*m 迷宫，'.' 为空地，'#' 为墙壁，'S' 为起点，'E' 为终点。每次可向上下左右移动一格。求从 S 到 E 的最短步数，不可达则输出 "Impossible"。</p>
-<h3>输入样例</h3>
-<div class="code-block"><span class="number">5</span> <span class="number">5</span>
-S.#..
-.#...
-..#..
-...#.
-....E</div>
-<h3>AC 代码</h3>
-<div class="code-block"><span class="keyword">#include</span> <span class="string">&lt;iostream&gt;</span>
-<span class="keyword">#include</span> <span class="string">&lt;queue&gt;</span>
-<span class="keyword">using</span> <span class="keyword">namespace</span> std;
-
-<span class="type">char</span> grid[<span class="number">105</span>][<span class="number">105</span>];
-<span class="type">bool</span> vis[<span class="number">105</span>][<span class="number">105</span>];
-<span class="type">int</span> dist[<span class="number">105</span>][<span class="number">105</span>];
-<span class="type">int</span> dx[<span class="number">4</span>] = {<span class="number">0</span>, <span class="number">0</span>, <span class="number">1</span>, -<span class="number">1</span>};
-<span class="type">int</span> dy[<span class="number">4</span>] = {<span class="number">1</span>, -<span class="number">1</span>, <span class="number">0</span>, <span class="number">0</span>};
-<span class="keyword">struct</span> <span class="type">Node</span> { <span class="type">int</span> x, y; };
-
-<span class="type">int</span> <span class="func">main</span>() {
-    <span class="type">int</span> n, m, sx, sy, ex, ey;
-    cin &gt;&gt; n &gt;&gt; m;
-    <span class="keyword">for</span> (<span class="type">int</span> i = <span class="number">0</span>; i &lt; n; i++) {
-        cin &gt;&gt; grid[i];
-        <span class="keyword">for</span> (<span class="type">int</span> j = <span class="number">0</span>; j &lt; m; j++) {
-            <span class="keyword">if</span> (grid[i][j] == <span class="string">'S'</span>) { sx = i; sy = j; }
-            <span class="keyword">if</span> (grid[i][j] == <span class="string">'E'</span>) { ex = i; ey = j; }
-        }
-    }
-
-    queue&lt;Node&gt; q;
-    q.<span class="func">push</span>({sx, sy});
-    vis[sx][sy] = <span class="keyword">true</span>;
-    <span class="type">int</span> ans = -<span class="number">1</span>;
-
-    <span class="keyword">while</span> (!q.<span class="func">empty</span>()) {
-        Node cur = q.<span class="func">front</span>(); q.<span class="func">pop</span>();
-        <span class="keyword">if</span> (cur.x == ex &amp;&amp; cur.y == ey) {
-            ans = dist[cur.x][cur.y]; <span class="keyword">break</span>;
-        }
-        <span class="keyword">for</span> (<span class="type">int</span> i = <span class="number">0</span>; i &lt; <span class="number">4</span>; i++) {
-            <span class="type">int</span> nx = cur.x + dx[i], ny = cur.y + dy[i];
-            <span class="keyword">if</span> (nx &gt;= <span class="number">0</span> &amp;&amp; nx &lt; n
-                &amp;&amp; ny &gt;= <span class="number">0</span> &amp;&amp; ny &lt; m
-                &amp;&amp; grid[nx][ny] != <span class="string">'#'</span> &amp;&amp; !vis[nx][ny]) {
-                vis[nx][ny] = <span class="keyword">true</span>;
-                dist[nx][ny] = dist[cur.x][cur.y] + <span class="number">1</span>;
-                q.<span class="func">push</span>({nx, ny});
-            }
-        }
-    }
-    <span class="keyword">if</span> (ans == -<span class="number">1</span>) cout &lt;&lt; <span class="string">"Impossible"</span>;
-    <span class="keyword">else</span> cout &lt;&lt; ans;
-}</div>
-<p><strong>输出结果：</strong><code>8</code></p>
-
-<aside class="notes">【讲解】五、真题演练：迷宫逃脱
-结合讲义《题目2：迷宫逃脱》强调：
-· 题目描述：给定一个n行m列的迷宫，用字符矩阵表示。其中'.'表示空地，'#'表示墙壁，'S'表示起点，'E'表示终点。每次可以向上、下、左、右移动一格，不能穿过墙壁。请问从起点到终点的最短步数是多少？如果无法到达，输出"Impossible"。
-· 输入格式：
-· 第一行两个整数n, m（1 &lt;= n, m &lt;= 100）。
-· 接下来n行，每行一个长度为m的字符串，表示迷宫。
-· 输出格式：
-幻灯片上可见要点：
-· 题目描述： 给定 n*m 迷宫，'.' 为空地，'#' 为墙壁，'S' 为起点，'E' 为终点。每次可向上下左右移动一格。求从 S 到 E 的最短步数，不可达则输出 "Impossible"。
-· 题目描述：
-· 输出结果： 8
-· 输出结果：
-练习页节奏：先独立想 1 分钟 → 再点拨思路 → 最后对答案讲为什么。
-可联系：BFS求最短路径题</aside>
-</div>
-<!-- ========== 第7页：本课小结 ========== -->
-<div class="slide" id="slide7">
-<h1>本课小结</h1>
+<div class="slide" id="slide-14">
+<h1>十一、本课小结</h1>
 <ol>
-<li><strong>BFS 核心思想：</strong>逐层扩展，先近后远。队列实现 FIFO。</li>
-<li><strong>标准框架（必须熟记）：</strong>初始化队列 → while(!empty) → front+pop → 遍历邻接点 → 未访问则标记并入队。</li>
-<li><strong>最短路径：</strong>无权图中 BFS 天然求最短路径（最少步数），这是 BFS 最重要的性质。</li>
-<li><strong>标记时机：</strong>必须在<strong>入队时</strong>标记 vis，不是在出队时。否则同一节点重复入队导致 TLE/MLE。</li>
-<li><strong>网格 BFS：</strong>四个方向遍历，边界检查必须在内容检查之前（短路求值）。</li>
-<li><strong>DFS vs BFS：</strong>"最短看 BFS，全部看 DFS，连通看哪个都行。"</li>
-<li><strong>时间复杂度：</strong>O(V + E)（邻接表），O(V²)（邻接矩阵），优先使用邻接表。</li>
+<li>BFS：队列 + 逐层扩展，先近后远</li>
+<li>框架：入队标记 → while → 扩展邻点</li>
+<li><strong>无权最短路</strong>是 BFS 最重要性质</li>
+<li>网格：四方向 + 边界先判</li>
+<li>层序：sz = q.size()</li>
+<li>与 DFS 分工：最短 BFS，全部 DFS</li>
 </ol>
-<div class="tip-box">
-<strong>课后练习建议：</strong>动手写一遍 BFS 标准框架和网格 BFS 模板代码，确保能脱稿写出。尝试修改代码实现多源 BFS 和记录路径的 BFS。
-        </div>
-
-<aside class="notes">【收尾】回顾本课主线：本课小结
-对照大纲再过一遍：BFS队列实现、最短路径、层序遍历
-板书/口述要点：
-· BFS 核心思想： 逐层扩展，先近后远。队列实现 FIFO。
-· BFS 核心思想：
-· 标准框架（必须熟记）： 初始化队列 → while(!empty) → front+pop → 遍历邻接点 → 未访问则标记并入队。
-· 标准框架（必须熟记）：
-· 最短路径： 无权图中 BFS 天然求最短路径（最少步数），这是 BFS 最重要的性质。
-· 最短路径：
-课后任务：BFS求最短路径题
-结束前留 2 分钟答疑；布置 1 道小练习检验是否真正掌握。</aside>
+<div class="motto-box">入队即标记 · 无权最短路 · 边界写在前</div>
+<p style="text-align:center; color:#1a237e; font-weight:bold; margin-top:12px;">
+下一课：树的基础 · 遍历与并查集
+</p>
+<aside class="notes">布置：默写网格 BFS；做一道图上距离题。</aside>
 </div>
-</div><!-- /slides-container -->
-<!-- 底部导航 -->
-<div class="nav-bar">
-<button class="nav-btn" id="prevBtn" onclick="changeSlide(-1)">◀ 上一页</button>
-<span class="slide-indicator" id="slideIndicator">1 / 7</span>
-<button class="nav-btn gold" id="nextBtn" onclick="changeSlide(1)">下一页 ▶</button>
+
+</div>
+<div class="page-indicator" id="page-indicator">1 / 14</div>
+<div class="nav-buttons">
+<button class="nav-btn" disabled="" id="prev-btn" onclick="prevSlide()">上一页</button>
+<button class="nav-btn" id="next-btn" onclick="nextSlide()">下一页</button>
 </div>
 <script>
-var currentSlide = 0;
-var slides = document.querySelectorAll('.slide');
-var totalSlides = slides.length;
-
+let currentSlide = 0;
+const slides = document.querySelectorAll('.slide');
+const totalSlides = slides.length;
+const indicator = document.getElementById('page-indicator');
+const prevBtn = document.getElementById('prev-btn');
+const nextBtn = document.getElementById('next-btn');
 function showSlide(index) {
-    slides.forEach(function(slide) { slide.classList.remove('active'); });
+    slides.forEach(s => s.classList.remove('active'));
     slides[index].classList.add('active');
-    document.getElementById('slideIndicator').textContent = (index + 1) + ' / ' + totalSlides;
-    document.getElementById('prevBtn').disabled = (index === 0);
-    document.getElementById('nextBtn').disabled = (index === totalSlides - 1);
+    indicator.textContent = (index + 1) + ' / ' + totalSlides;
+    prevBtn.disabled = (index === 0);
+    nextBtn.disabled = (index === totalSlides - 1);
 }
-
-function changeSlide(delta) {
-    var next = currentSlide + delta;
-    if (next >= 0 && next < totalSlides) {
-        currentSlide = next;
-        showSlide(currentSlide);
-    }
+function nextSlide() {
+    if (currentSlide < totalSlides - 1) { currentSlide++; showSlide(currentSlide); }
 }
-
-// 键盘导航
+function prevSlide() {
+    if (currentSlide > 0) { currentSlide--; showSlide(currentSlide); }
+}
 document.addEventListener('keydown', function(e) {
-    if (e.key === 'ArrowRight' || e.key === 'ArrowDown') {
-        changeSlide(1);
+    if (e.key === 'ArrowRight' || e.key === 'ArrowDown' || e.key === ' ') {
+        e.preventDefault(); nextSlide();
     } else if (e.key === 'ArrowLeft' || e.key === 'ArrowUp') {
-        changeSlide(-1);
-    } else if (e.key === 'Home') {
-        currentSlide = 0;
-        showSlide(currentSlide);
-    } else if (e.key === 'End') {
-        currentSlide = totalSlides - 1;
-        showSlide(currentSlide);
+        e.preventDefault(); prevSlide();
     }
 });
-
-// 触摸滑动支持
-var touchStartX = 0;
-document.addEventListener('touchstart', function(e) {
-    touchStartX = e.changedTouches[0].screenX;
-});
-document.addEventListener('touchend', function(e) {
-    var diff = touchStartX - e.changedTouches[0].screenX;
-    if (Math.abs(diff) > 50) {
-        changeSlide(diff > 0 ? 1 : -1);
-    }
-});
-
-// 初始化
-showSlide(0);
 </script>
 <script src="courseware-ui.js"></script>
 <script src="presenter.js"></script>

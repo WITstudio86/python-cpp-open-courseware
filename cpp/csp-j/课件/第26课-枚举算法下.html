@@ -7,379 +7,445 @@
 <title>CSP-J 备考课程 - 第26课：枚举算法（下）</title>
 <style>
 * { margin: 0; padding: 0; box-sizing: border-box; }
-body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Microsoft YaHei', sans-serif; background: #f0f2f5; display: flex; justify-content: center; align-items: center; min-height: 100vh; padding: 20px; }
-.container { max-width: 900px; width: 100%; background: white; border-radius: 16px; box-shadow: 0 8px 40px rgba(0,0,0,0.12); overflow: hidden; }
-.header { background: linear-gradient(135deg, #1a237e, #283593); color: white; padding: 16px 24px; display: flex; justify-content: space-between; align-items: center; }
-.header .course-tag { background: #ffd600; color: #1a237e; padding: 4px 12px; border-radius: 20px; font-size: 14px; font-weight: bold; }
-.slide-container { padding: 40px; min-height: 500px; }
-.slide { display: none; }
-.slide.active { display: block; animation: fadeIn 0.4s ease; }
-@keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
-.slide h2 { color: #1a237e; font-size: 28px; margin-bottom: 20px; border-bottom: 3px solid #ffd600; padding-bottom: 10px; display: inline-block; }
-.slide h3 { color: #283593; font-size: 22px; margin: 20px 0 12px; }
-.slide p, .slide li { font-size: 17px; line-height: 1.8; color: #333; margin-bottom: 8px; }
-.slide ul, .slide ol { padding-left: 24px; margin-bottom: 16px; }
-.exam-tip { background: #fff8e1; border-left: 4px solid #ff8f00; border-radius: 8px; padding: 16px 20px; margin: 20px 0; font-size: 15px; }
-.exam-tip strong { color: #e65100; }
-.code-block { background: #1e1e1e; border-radius: 8px; padding: 16px; margin: 12px 0; overflow-x: auto; font-family: Consolas, Monaco, 'Courier New', monospace; font-size: 14px; line-height: 1.6; color: #d4d4d4; }
-.code-block code { white-space: pre; }
-.slide.title-slide.active { text-align: center; padding-top: 80px; }
-.slide.title-slide.active h1 { font-size: 42px; color: #1a237e; margin-bottom: 16px; }
-.slide.title-slide.active .subtitle { font-size: 22px; color: #5c6bc0; margin-bottom: 40px; }
-.slide.title-slide.active .badge { display: inline-block; background: #ffd600; color: #1a237e; padding: 8px 24px; border-radius: 30px; font-size: 18px; font-weight: bold; }
-.navigation { display: flex; justify-content: center; align-items: center; gap: 16px; padding: 20px; background: #fafafa; border-top: 1px solid #e0e0e0; }
-.nav-btn { background: #1a237e; color: white; border: none; padding: 10px 24px; border-radius: 8px; font-size: 16px; cursor: pointer; transition: background 0.3s; }
-.nav-btn:hover { background: #283593; }
-.nav-btn:disabled { background: #9fa8da; cursor: not-allowed; }
-.slide-indicator { font-size: 16px; color: #666; min-width: 60px; text-align: center; }
-.summary-box { background: #e8eaf6; border-radius: 12px; padding: 24px; margin: 16px 0; }
-.summary-box li { color: #1a237e; font-weight: 500; }
-table { border-collapse: collapse; width: 100%; margin: 16px 0; }
-th { background: #1a237e; color: white; padding: 10px; text-align: left; }
-td { padding: 8px 10px; border-bottom: 1px solid #e0e0e0; }
+body {
+    font-family: "PingFang SC", "Microsoft YaHei", "Hiragino Sans GB", sans-serif;
+    background: #f5f5f5; color: #333;
+    overflow: hidden; height: 100vh;
+}
+#title-bar {
+    background: #1a237e; color: #ffd600;
+    padding: 8px 24px; font-size: 14px; font-weight: bold;
+    letter-spacing: 2px;
+    display: flex; justify-content: space-between; align-items: center;
+    position: fixed; top: 0; left: 0; right: 0;
+    z-index: 1000; height: 40px;
+}
+#slide-container {
+    position: absolute;
+    top: 40px; left: 0; right: 0; bottom: 60px;
+    overflow: hidden;
+}
+.slide {
+    display: none; background: white;
+    height: 100%; padding: 40px 60px;
+    overflow-y: auto;
+    animation: fadeSlide 0.4s ease;
+}
+.slide.active { display: block; }
+@keyframes fadeSlide {
+    from { opacity: 0; transform: translateX(30px); }
+    to { opacity: 1; transform: translateX(0); }
+}
+h1 { font-size: 32px; color: #1a237e; margin-bottom: 16px; border-bottom: 3px solid #ffd600; padding-bottom: 12px; }
+h2 { font-size: 24px; color: #1a237e; margin: 20px 0 12px; }
+h3 { font-size: 18px; color: #283593; margin: 14px 0 8px; }
+p, li { font-size: 16px; line-height: 1.8; margin-bottom: 6px; }
+ul, ol { margin-left: 24px; }
+table { border-collapse: collapse; width: 100%; margin: 12px 0; }
+th { background: #1a237e; color: white; padding: 10px 12px; text-align: left; font-size: 14px; }
+td { padding: 8px 12px; border-bottom: 1px solid #e0e0e0; font-size: 14px; }
 tr:nth-child(even) td { background: #f5f5f5; }
-.keyword { color: #569cd6; }
-.string { color: #ce9178; }
-.comment { color: #6a9955; }
-.number { color: #b5cea8; }
-.func { color: #dcdcaa; }
-@media (max-width: 600px) {
-  .slide-container { padding: 24px; }
-  .slide.title-slide.active h1 { font-size: 28px; }
-  .slide.title-slide.active .subtitle { font-size: 18px; }
-  .slide h2 { font-size: 24px; }
+.code-block {
+    background: #1e1e1e; color: #d4d4d4;
+    padding: 16px 20px; border-radius: 8px;
+    font-family: Consolas, Monaco, "Courier New", monospace;
+    font-size: 13px; line-height: 1.7;
+    overflow-x: auto; margin: 10px 0;
+    white-space: pre-wrap; word-wrap: break-word;
+}
+.code-block .keyword { color: #569cd6; }
+.code-block .type { color: #4ec9b0; }
+.code-block .string { color: #ce9178; }
+.code-block .comment { color: #6a9955; }
+.code-block .number { color: #b5cea8; }
+.code-block .builtin { color: #dcdcaa; }
+.exam-tips {
+    border: 2px solid #ff9800; border-left: 6px solid #ff9800;
+    background: #fff8e1; padding: 14px 18px; margin: 14px 0;
+    border-radius: 4px;
+}
+.exam-tips h4 { color: #e65100; margin-bottom: 6px; font-size: 15px; }
+.key-point {
+    background: #e8eaf6; border-left: 4px solid #1a237e;
+    padding: 10px 16px; margin: 10px 0; border-radius: 4px;
+}
+.highlight { color: #e65100; font-weight: bold; }
+.slide.title-slide.active {
+    display: flex; flex-direction: column;
+    justify-content: center; align-items: center; text-align: center;
+    background: linear-gradient(135deg, #1a237e 0%, #283593 50%, #3949ab 100%);
+    color: white;
+}
+.slide.title-slide.active h1 { color: #ffd600; font-size: 44px; border: none; margin-bottom: 20px; }
+.slide.title-slide.active h2 { color: white; font-size: 24px; margin-bottom: 12px; font-weight: normal; }
+.slide.title-slide.active p { color: #bbdefb; font-size: 18px; }
+#nav-bar {
+    position: fixed; bottom: 0; left: 0; right: 0;
+    height: 60px; background: white;
+    display: flex; justify-content: center; align-items: center;
+    gap: 12px; border-top: 1px solid #e0e0e0; z-index: 1000;
+}
+.nav-btn {
+    background: #1a237e; color: white; border: none;
+    padding: 10px 28px; border-radius: 20px;
+    cursor: pointer; font-size: 14px; font-family: inherit;
+}
+.nav-btn:hover { background: #283593; }
+.nav-btn:disabled { background: #bdbdbd; cursor: not-allowed; }
+#page-indicator { font-size: 14px; color: #666; min-width: 60px; text-align: center; }
+.sample-io { background: #f5f5f5; padding: 10px 16px; border-radius: 4px; margin: 8px 0; font-family: Consolas, Monaco, monospace; font-size: 13px; }
+.flex-row { display: flex; gap: 24px; }
+.flex-col { flex: 1; }
+@media (max-width: 768px) {
+    .slide { padding: 24px 16px; }
+    h1 { font-size: 22px; } h2 { font-size: 18px; }
+    p, li { font-size: 13px; }
+    .code-block { font-size: 11px; }
+    .flex-row { flex-direction: column; }
 }
 </style>
 </head>
 <body>
-<div class="container">
-<div class="header">
-<span style="font-weight:bold;font-size:18px;">第26课：枚举算法（下）</span>
-<span class="course-tag">CSP-J 备考课程</span>
+<div id="title-bar">
+<span>CSP-J 备考课程</span>
+<span>第26课：枚举算法（下）</span>
 </div>
-<div class="slide-container">
-<!-- SLIDE 1: Title -->
-<div class="slide active" id="slide1">
-<div class="title-slide">
+<div id="slide-container">
+
+<div class="slide active title-slide">
 <h1>枚举算法（下）</h1>
-<p class="subtitle">排列、子集与回溯 — 枚举的进阶艺术</p>
-<div class="badge">🔍 CSP-J 基础组</div>
-<p style="margin-top: 40px; color: #666; font-size: 16px;">掌握 STL 全排列、子集枚举位运算与回溯搜索</p>
+<h2>第26课 · CSP-J 备考课程</h2>
+<p>排列 · 子集 · 回溯 · N皇后</p>
+<p style="margin-top:40px; font-size:14px; color:#90caf9;">
+next_permutation | 位运算子集 | 回溯框架 | 4皇后 | 子集和真题
+</p>
+<aside class="notes">【开场】第1/14页。上节线性枚举，本节排列/子集/回溯。</aside>
 </div>
 
-<aside class="notes">【开场】第 1/7 页 · 枚举算法（下）
-用 30 秒说明本课目标与学完能做什么，再进入正题。
-大纲考点：排列枚举、子集枚举、回溯思想入门
-配套练习方向：全排列与子集生成题
-封面关键词：
-· 排列、子集与回溯 — 枚举的进阶艺术
-· 掌握 STL 全排列、子集枚举位运算与回溯搜索
-互动：问学生「今天最想搞清楚什么？」，收 1–2 个期待。</aside>
-</div>
-<!-- SLIDE 2: next_permutation -->
-<div class="slide" id="slide2">
-<h2>一、全排列生成 — next_permutation</h2>
-<h3>1.1 什么是全排列？</h3>
-<p>将 n 个不同的元素按照<strong>所有可能的顺序</strong>进行排列。n 个元素的全排列共有 <strong>n! 种</strong>。</p>
-<ul>
-<li>例如 {1, 2, 3} 的全排列：123, 132, 213, 231, 312, 321（共 3! = 6 种）</li>
-</ul>
-<h3>1.2 C++ STL — next_permutation</h3>
-<p>C++ 标准库提供了 <strong>next_permutation</strong> 函数，可以按<strong>字典序</strong>生成下一个排列。</p>
-<ul>
-<li>头文件：<code>&lt;algorithm&gt;</code></li>
-<li>语法：<code>next_permutation(begin, end)</code>，返回 <code>true</code> 表示生成了新排列，<code>false</code> 表示已经是最后一个排列</li>
-<li>使用前必须<strong>先排序</strong>，确保从最小的字典序开始</li>
-</ul>
-<div class="code-block"><code><span style="color:#6a9955;">// 全排列示例</span>
-<span style="color:#569cd6;">int</span> a[] = {<span style="color:#b5cea8;">1</span>, <span style="color:#b5cea8;">2</span>, <span style="color:#b5cea8;">3</span>};
-<span style="color:#dcdcaa;">sort</span>(a, a + <span style="color:#b5cea8;">3</span>);  <span style="color:#6a9955;">// 必须先排序</span>
-<span style="color:#569cd6;">do</span> {
-    <span style="color:#dcdcaa;">cout</span> &lt;&lt; a[<span style="color:#b5cea8;">0</span>] &lt;&lt; <span style="color:#ce9178;">" "</span> &lt;&lt; a[<span style="color:#b5cea8;">1</span>] &lt;&lt; <span style="color:#ce9178;">" "</span> &lt;&lt; a[<span style="color:#b5cea8;">2</span>] &lt;&lt; <span style="color:#dcdcaa;">endl</span>;
-} <span style="color:#569cd6;">while</span> (<span style="color:#dcdcaa;">next_permutation</span>(a, a + <span style="color:#b5cea8;">3</span>));</code></div>
-<h3>1.3 prev_permutation</h3>
-<p><code>prev_permutation</code> 生成<strong>前一个</strong>字典序排列。使用时需要先降序排列。</p>
-<div class="exam-tip">
-<strong>💡 考试技巧：</strong>next_permutation 的时间复杂度为 <strong>O(n)</strong> 每次调用，全排列枚举总复杂度为 <strong>O(n!)</strong>。当 n ≤ 10 时可行，n ≤ 8 时非常安全。千万不要忘记先 sort！
-      </div>
-
-<aside class="notes">【讲解】一、全排列生成 — next_permutation
-结合讲义《一、全排列枚举与next_permutation》强调：
-· 全排列（Permutation）是指将一组元素按照所有可能的顺序进行排列。例如集合{1, 2, 3}的全排列有6种：123、132、213、231、312、321。对于n个不同元素，全排列总数为n!。
-· 在CSP-J考试中，next_permutation是处理全排列问题的"大杀器"，它定义在头文件中，可以将一个序列重新排列为字典序的下一个排列。
-· next_permutation函数的参数是两个迭代器（或指针），表示排列的起止范围。它返回bool值：如果存在下一个排列则返回true（并将序列变为下一个排列），如果当前序列已经是最后一个排列（降序排列）则返回false（并将序列重置为升序的第一个排列）。
-· using namespace std;
-· int main() {
-幻灯片上可见要点：
-· 将 n 个不同的元素按照 所有可能的顺序 进行排列。n 个元素的全排列共有 n! 种 。
-· 所有可能的顺序
-· n! 种
-· 例如 {1, 2, 3} 的全排列：123, 132, 213, 231, 312, 321（共 3! = 6 种）
-讲解时放慢关键术语；用 1 个生活类比 + 1 个反例加深印象。
-本课大纲考点（可适时点题）：排列枚举、子集枚举、回溯思想入门</aside>
-</div>
-<!-- SLIDE 3: 子集枚举 -->
-<div class="slide" id="slide3">
-<h2>二、子集枚举 — 位运算的威力</h2>
-<h3>2.1 什么是子集枚举？</h3>
-<p>给定 n 个元素的集合，枚举其<strong>所有子集</strong>（共 2<sup>n</sup> 个）。比如 {A, B, C} 的子集有 2³ = 8 个：{}, {A}, {B}, {C}, {A,B}, {A,C}, {B,C}, {A,B,C}。</p>
-<h3>2.2 位运算方法</h3>
-<p>用一个 n 位的<strong>二进制数 mask</strong> 表示子集，第 i 位为 1 表示包含第 i 个元素。</p>
-<ul>
-<li>mask 从 0 到 2<sup>n</sup>-1 循环（共 2<sup>n</sup> 种状态）</li>
-<li>判断第 i 位是否为 1：<code>(mask &gt;&gt; i) &amp; 1</code> 或 <code>mask &amp; (1 &lt;&lt; i)</code></li>
-<li>时间复杂度：O(n × 2<sup>n</sup>)，n ≤ 20 时可行</li>
-</ul>
-<div class="code-block"><code><span style="color:#6a9955;">// 枚举 {A, B, C} 的所有子集</span>
-<span style="color:#569cd6;">char</span> elems[] = {<span style="color:#ce9178;">'A'</span>, <span style="color:#ce9178;">'B'</span>, <span style="color:#ce9178;">'C'</span>};
-<span style="color:#569cd6;">int</span> n = <span style="color:#b5cea8;">3</span>;
-<span style="color:#569cd6;">for</span> (<span style="color:#569cd6;">int</span> mask = <span style="color:#b5cea8;">0</span>; mask &lt; (<span style="color:#b5cea8;">1</span> &lt;&lt; n); mask++) {
-    <span style="color:#dcdcaa;">cout</span> &lt;&lt; <span style="color:#ce9178;">"{"</span>;
-    <span style="color:#569cd6;">for</span> (<span style="color:#569cd6;">int</span> i = <span style="color:#b5cea8;">0</span>; i &lt; n; i++) {
-        <span style="color:#569cd6;">if</span> (mask &amp; (<span style="color:#b5cea8;">1</span> &lt;&lt; i)) <span style="color:#dcdcaa;">cout</span> &lt;&lt; elems[i];
-    }
-    <span style="color:#dcdcaa;">cout</span> &lt;&lt; <span style="color:#ce9178;">"}"</span> &lt;&lt; <span style="color:#dcdcaa;">endl</span>;
-}</code></div>
-<h3>2.3 递归方法</h3>
-<p>递归地"选/不选"每个元素，调用的递归树天然对应所有子集。代码更直观，但常数略大。</p>
-<div class="code-block"><code><span style="color:#569cd6;">void</span> <span style="color:#dcdcaa;">dfs</span>(<span style="color:#569cd6;">int</span> pos) {
-    <span style="color:#569cd6;">if</span> (pos == n) {
-        <span style="color:#6a9955;">// 到达叶子节点，输出当前选中的元素</span>
-<span style="color:#569cd6;">return</span>;
-    }
-    selected[pos] = <span style="color:#569cd6;">true</span>;  <span style="color:#6a9955;">// 选择第 pos 个元素</span>
-<span style="color:#dcdcaa;">dfs</span>(pos + <span style="color:#b5cea8;">1</span>);
-    selected[pos] = <span style="color:#569cd6;">false</span>; <span style="color:#6a9955;">// 不选第 pos 个元素</span>
-<span style="color:#dcdcaa;">dfs</span>(pos + <span style="color:#b5cea8;">1</span>);
-}</code></div>
-<div class="exam-tip">
-<strong>💡 考试技巧：</strong>位运算子集枚举在 CSP-J 中非常高频。注意 <code>1 &lt;&lt; n</code> 表示 2<sup>n</sup>，当 n=20 时约 10⁶，刚好够用。n 再大就需要剪枝或动态规划。
-      </div>
-
-<aside class="notes">【讲解】二、子集枚举 — 位运算的威力
-结合讲义《二、子集枚举》强调：
-· 子集枚举是另一种重要的枚举形式。对于n个元素的集合，共有2^n个子集（包括空集）。我们需要枚举出所有可能的子集。
-· 这是最经典也最优雅的子集枚举方法。核心思想：用一个n位的二进制数mask表示一个子集，第i位为1表示选择第i个元素，为0表示不选。mask从0到(1&lt;&lt;n)-1遍历，每个mask对应一个子集。
-· using namespace std;
-· int main() {
-· int n;
-幻灯片上可见要点：
-· 给定 n 个元素的集合，枚举其 所有子集 （共 2 n 个）。比如 {A, B, C} 的子集有 2³ = 8 个：{}, {A}, {B}, {C}, {A,B}, {A,C}, {B,C}, {A,B,C}。
-· 所有子集
-· 用一个 n 位的 二进制数 mask 表示子集，第 i 位为 1 表示包含第 i 个元素。
-· 二进制数 mask
-讲解时放慢关键术语；用 1 个生活类比 + 1 个反例加深印象。</aside>
-</div>
-<!-- SLIDE 4: 回溯思想入门 -->
-<div class="slide" id="slide4">
-<h2>三、回溯思想入门</h2>
-<h3>3.1 什么是回溯？</h3>
-<p>回溯（Backtracking）是一种<strong>深度优先的试探搜索</strong>算法，核心框架是：</p>
-<ol>
-<li><strong>尝试</strong>：选择一个可行的选项</li>
-<li><strong>判断</strong>：检查当前状态是否合法</li>
-<li><strong>回退</strong>：如果不合法或搜索完毕，撤销当前选择</li>
-</ol>
-<h3>3.2 回溯通用框架</h3>
-<div class="code-block"><code><span style="color:#569cd6;">void</span> <span style="color:#dcdcaa;">backtrack</span>(<span style="color:#569cd6;">int</span> step) {
-    <span style="color:#569cd6;">if</span> (step == n) {  <span style="color:#6a9955;">// 找到一组解</span>
-<span style="color:#dcdcaa;">record_answer</span>();
-        <span style="color:#569cd6;">return</span>;
-    }
-    <span style="color:#569cd6;">for</span> (<span style="color:#569cd6;">int</span> i = <span style="color:#b5cea8;">0</span>; i &lt; choices; i++) {
-        <span style="color:#569cd6;">if</span> (valid(i)) {     <span style="color:#6a9955;">// 剪枝：判断是否合法</span>
-            apply(i);         <span style="color:#6a9955;">// 尝试</span>
-<span style="color:#dcdcaa;">backtrack</span>(step + <span style="color:#b5cea8;">1</span>);
-            undo(i);          <span style="color:#6a9955;">// 回退（回溯）</span>
-        }
-    }
-}</code></div>
-<h3>3.3 经典例题：N 皇后（4 皇后演示）</h3>
-<p>在 <strong>4×4 的棋盘</strong>上放置 4 个皇后，使它们互不攻击（任意两个皇后不在同一行、同一列、同一对角线）。</p>
+<div class="slide">
+<h1>考纲要求与本课路线</h1>
 <table>
-<tr><th>列 (col)</th><th>主对角线 (d1)</th><th>副对角线 (d2)</th></tr>
-<tr><td>一维数组 col[n]</td><td>row + col</td><td>row - col + n - 1</td></tr>
+<tr><th>考纲点</th><th>要点</th></tr>
+<tr><td>next_permutation 全排列</td><td>先 sort + do-while</td></tr>
+<tr><td>子集枚举：位运算 / 递归</td><td>n≤20 用 mask</td></tr>
+<tr><td>回溯：尝试-判断-回退</td><td>标记-递归-恢复</td></tr>
+<tr><td>N皇后入门</td><td>行放皇后 + 列/对角线检查</td></tr>
+<tr><td>排列 vs 子集选型</td><td>有序用排列，无序用子集</td></tr>
 </table>
-<p>关键约束：<strong>每行必须放一个皇后</strong>，逐行放置，对每一列试探。4 皇后共有 <strong>2 种</strong>本质不同的解：</p>
-<p>解 1：第 1 行第 3 列，第 2 行第 1 列，第 3 行第 4 列，第 4 行第 2 列</p>
-<p>解 2：第 1 行第 2 列，第 2 行第 4 列，第 3 行第 1 列，第 4 行第 3 列</p>
-<div class="exam-tip">
-<strong>💡 考试技巧：</strong>回溯 = DFS + 剪枝 + 状态恢复。写回溯代码最忌讳忘了"回退"——恢复状态，否则后面的搜索会受影响。对角线判断用 <code>row + col</code> 和 <code>row - col + n - 1</code> 的技巧是高频考点。
-      </div>
-
-<aside class="notes">【讲解】三、回溯思想入门
-本页要点（照着讲即可）：
-· 回溯（Backtracking）是一种 深度优先的试探搜索 算法，核心框架是：
-· 深度优先的试探搜索
-· 尝试 ：选择一个可行的选项
-· 判断 ：检查当前状态是否合法
-· 回退 ：如果不合法或搜索完毕，撤销当前选择
-· 在 4×4 的棋盘 上放置 4 个皇后，使它们互不攻击（任意两个皇后不在同一行、同一列、同一对角线）。
-讲解时放慢关键术语；用 1 个生活类比 + 1 个反例加深印象。</aside>
+<div class="key-point">
+<strong>复杂度心算：</strong>n!（排列）、2ⁿ（子集）。n=8→40320，n=10→3.6e6，n=20→1e6 子集，CSP-J 常用上界。
 </div>
-<!-- SLIDE 5: 代码模板 -->
-<div class="slide" id="slide5">
-<h2>四、代码模板汇总</h2>
-<h3>4.1 全排列模板</h3>
-<div class="code-block"><code><span style="color:#6a9955;">// STL 全排列模板</span>
-<span style="color:#569cd6;">#include</span> <span style="color:#ce9178;">&lt;algorithm&gt;</span>
-<span style="color:#569cd6;">int</span> a[MAXN];
-<span style="color:#dcdcaa;">sort</span>(a, a + n);           <span style="color:#6a9955;">// 必须排序！</span>
-<span style="color:#569cd6;">do</span> {
-    <span style="color:#6a9955;">// 处理当前排列 a[0..n-1]</span>
-} <span style="color:#569cd6;">while</span> (<span style="color:#dcdcaa;">next_permutation</span>(a, a + n));</code></div>
-<h3>4.2 子集枚举位运算模板</h3>
-<div class="code-block"><code><span style="color:#6a9955;">// 子集枚举位运算模板</span>
-<span style="color:#569cd6;">int</span> n;  <span style="color:#6a9955;">// 元素个数</span>
-<span style="color:#569cd6;">for</span> (<span style="color:#569cd6;">int</span> mask = <span style="color:#b5cea8;">0</span>; mask &lt; (<span style="color:#b5cea8;">1</span> &lt;&lt; n); mask++) {
-    <span style="color:#6a9955;">// mask 的二进制位表示子集中包含哪些元素</span>
-<span style="color:#569cd6;">for</span> (<span style="color:#569cd6;">int</span> i = <span style="color:#b5cea8;">0</span>; i &lt; n; i++) {
-        <span style="color:#569cd6;">if</span> (mask &amp; (<span style="color:#b5cea8;">1</span> &lt;&lt; i)) {
-            <span style="color:#6a9955;">// 第 i 个元素在子集中</span>
-        }
-    }
-}</code></div>
-<h3>4.3 回溯框架模板</h3>
-<div class="code-block"><code><span style="color:#6a9955;">// 回溯通用框架</span>
-<span style="color:#569cd6;">bool</span> used[MAXN];
-<span style="color:#569cd6;">int</span> ans[MAXN];
-
-<span style="color:#569cd6;">void</span> <span style="color:#dcdcaa;">backtrack</span>(<span style="color:#569cd6;">int</span> step) {
-    <span style="color:#569cd6;">if</span> (step == n) {
-        <span style="color:#6a9955;">// 找到一组解，输出或统计</span>
-<span style="color:#569cd6;">return</span>;
-    }
-    <span style="color:#569cd6;">for</span> (<span style="color:#569cd6;">int</span> i = <span style="color:#b5cea8;">0</span>; i &lt; n; i++) {
-        <span style="color:#569cd6;">if</span> (!used[i]) {      <span style="color:#6a9955;">// 剪枝判断</span>
-            used[i] = <span style="color:#569cd6;">true</span>;    <span style="color:#6a9955;">// 尝试</span>
-            ans[step] = i;
-            <span style="color:#dcdcaa;">backtrack</span>(step + <span style="color:#b5cea8;">1</span>);
-            used[i] = <span style="color:#569cd6;">false</span>;   <span style="color:#6a9955;">// 回退</span>
-        }
-    }
-}</code></div>
-
-<aside class="notes">【讲解】四、代码模板汇总
-本页要点（照着讲即可）：
-· 四、代码模板汇总
-· 4.1 全排列模板
-· // STL 全排列模板
-· #include
-· a[MAXN];
-· sort
-代码页节奏：先读懂输入输出 → 再走主流程 → 最后点出易错点（边界/类型/下标）。
-可让学生预测下一行输出，再运行对照。</aside>
+<aside class="notes">【讲解】画 n! 与 2^n 对照表。</aside>
 </div>
-<!-- SLIDE 6: 真题精练 -->
-<div class="slide" id="slide6">
-<h2>五、真题精练 — 子集和问题</h2>
-<h3>题目描述</h3>
-<p>给定 <strong>n 个正整数</strong>和一个目标值 <strong>S</strong>，判断是否存在一个子集，其元素之和恰好等于 S。如果存在，输出 "YES"；否则输出 "NO"。（n ≤ 20，元素值 ≤ 10⁶，S ≤ 2 × 10⁷）</p>
-<h3>输入格式</h3>
-<p>第一行：两个整数 n 和 S。第二行：n 个正整数 a₁, a₂, ..., aₙ。</p>
-<h3>输出格式</h3>
-<p>一行："YES" 或 "NO"。</p>
-<h3>输入样例</h3>
-<div class="code-block"><code>5 10
-1 3 5 7 9</code></div>
-<h3>输出样例</h3>
-<div class="code-block"><code>YES
-<span style="color:#6a9955;">// 解释：可以选择 {1, 9} 或 {3, 7}</span></code></div>
-<h3>解题思路</h3>
-<p>使用<strong>子集枚举位运算</strong>，枚举 2<sup>n</sup> 种选法，对每种选法求和并与 S 比较。n ≤ 20 时 2²⁰ ≈ 10⁶，完全可行。</p>
-<h3>参考代码</h3>
-<div class="code-block"><code><span style="color:#569cd6;">#include</span> <span style="color:#ce9178;">&lt;iostream&gt;</span>
-<span style="color:#569cd6;">using</span> <span style="color:#569cd6;">namespace</span> std;
 
-<span style="color:#569cd6;">int</span> <span style="color:#dcdcaa;">main</span>() {
-    <span style="color:#569cd6;">int</span> n, S, a[<span style="color:#b5cea8;">25</span>];
-    cin &gt;&gt; n &gt;&gt; S;
-    <span style="color:#569cd6;">for</span> (<span style="color:#569cd6;">int</span> i = <span style="color:#b5cea8;">0</span>; i &lt; n; i++) cin &gt;&gt; a[i];
-
-    <span style="color:#569cd6;">for</span> (<span style="color:#569cd6;">int</span> mask = <span style="color:#b5cea8;">0</span>; mask &lt; (<span style="color:#b5cea8;">1</span> &lt;&lt; n); mask++) {
-        <span style="color:#569cd6;">int</span> sum = <span style="color:#b5cea8;">0</span>;
-        <span style="color:#569cd6;">for</span> (<span style="color:#569cd6;">int</span> i = <span style="color:#b5cea8;">0</span>; i &lt; n; i++) {
-            <span style="color:#569cd6;">if</span> (mask &amp; (<span style="color:#b5cea8;">1</span> &lt;&lt; i)) sum += a[i];
-        }
-        <span style="color:#569cd6;">if</span> (sum == S) {
-            cout &lt;&lt; <span style="color:#ce9178;">"YES"</span> &lt;&lt; endl;
-            <span style="color:#569cd6;">return</span> <span style="color:#b5cea8;">0</span>;
-        }
-    }
-    cout &lt;&lt; <span style="color:#ce9178;">"NO"</span> &lt;&lt; endl;
-    <span style="color:#569cd6;">return</span> <span style="color:#b5cea8;">0</span>;
-}</code></div>
-<div class="exam-tip">
-<strong>💡 考试技巧：</strong>子集和问题是 CSP-J 常客。n 较大时（n &gt; 20），可用「折半搜索」（Meet in the Middle）将复杂度降为 O(2<sup>n/2</sup>)，这是进阶考点。
-      </div>
-
-<aside class="notes">【讲解】五、真题精练 — 子集和问题
-本页要点（照着讲即可）：
-· 给定 n 个正整数 和一个目标值 S ，判断是否存在一个子集，其元素之和恰好等于 S。如果存在，输出 "YES"；否则输出 "NO"。（n ≤ 20，元素值 ≤ 10⁶，S ≤ 2 × 10⁷）
-· n 个正整数
-· 第一行：两个整数 n 和 S。第二行：n 个正整数 a₁, a₂, ..., aₙ。
-· 一行："YES" 或 "NO"。
-· 使用 子集枚举位运算 ，枚举 2 n 种选法，对每种选法求和并与 S 比较。n ≤ 20 时 2²⁰ ≈ 10⁶，完全可行。
-· 子集枚举位运算
-练习页节奏：先独立想 1 分钟 → 再点拨思路 → 最后对答案讲为什么。
-可联系：全排列与子集生成题</aside>
+<div class="slide">
+<h1>一、全排列与 next_permutation</h1>
+<p>{1,2,3} 共 3!=6 种：123,132,213,231,312,321。定义在 <code>&lt;algorithm&gt;</code>。</p>
+<div class="code-block">
+<span class="keyword">int</span> arr[] = {<span class="number">1</span>, <span class="number">2</span>, <span class="number">3</span>};
+<span class="keyword">int</span> n = <span class="number">3</span>;
+<span class="builtin">sort</span>(arr, arr + n);  <span class="comment">// 必须先排序！</span>
+<span class="keyword">do</span> {
+    <span class="keyword">for</span> (<span class="keyword">int</span> i = <span class="number">0</span>; i &lt; n; i++) cout &lt;&lt; arr[i] &lt;&lt; <span class="string">" "</span>;
+    cout &lt;&lt; endl;
+} <span class="keyword">while</span> (<span class="builtin">next_permutation</span>(arr, arr + n));
 </div>
-<!-- SLIDE 7: Summary -->
-<div class="slide" id="slide7">
-<h2>六、本课小结</h2>
-<div class="summary-box">
 <ol>
-<li><strong>next_permutation</strong> 是 C++ STL 提供的全排列利器，使用前必须 <strong>sort</strong>，n ≤ 10 时 O(n!) 可行</li>
-<li><strong>子集枚举位运算法</strong>：mask 从 0 到 2<sup>n</sup>-1，用 &amp; 运算判断元素是否在子集中，n ≤ 20 可行</li>
-<li><strong>子集枚举递归法</strong>：每个元素"选/不选"的递归树天然对应所有子集</li>
-<li><strong>回溯 = DFS + 剪枝 + 状态恢复</strong>：尝试 → 判断 → 回退，千万不要忘记恢复状态！</li>
-<li>N 皇后问题的对角线技巧：<code>row + col</code>（主对角线）和 <code>row - col + n - 1</code>（副对角线）</li>
-<li><strong>子集和问题</strong>是典型应用，位运算枚举 2<sup>n</sup> 种选法即可解决 n ≤ 20 的情况</li>
+<li><strong>必须先 sort</strong>：否则漏掉更小的排列</li>
+<li><strong>用 do-while</strong>：确保第一个（最小）排列也被处理</li>
+<li><strong>复杂度 O(n!)</strong>：n≥10 要小心，CSP-J 常 n≤8～10</li>
 </ol>
+<div class="exam-tips">
+<h4>返回值</h4>
+<p>存在下一排列 → true 并改序列；已是最大（降序）→ false 并重置为升序。</p>
 </div>
-<p style="text-align:center; margin-top:30px; color:#5c6bc0; font-size:18px;">枚举进阶的核心是：<strong>用正确的方式穷举，用智慧的方式剪枝</strong>。</p>
+<aside class="notes">【讲解】对照程序 demoNextPermutation。</aside>
+</div>
 
-<aside class="notes">【收尾】回顾本课主线：六、本课小结
-对照大纲再过一遍：排列枚举、子集枚举、回溯思想入门
-板书/口述要点：
-· next_permutation 是 C++ STL 提供的全排列利器，使用前必须 sort ，n ≤ 10 时 O(n!) 可行
-· next_permutation
-· sort
-· 子集枚举位运算法 ：mask 从 0 到 2 n -1，用 &amp; 运算判断元素是否在子集中，n ≤ 20 可行
-· 子集枚举位运算法
-· 子集枚举递归法 ：每个元素"选/不选"的递归树天然对应所有子集
-课后任务：全排列与子集生成题
-结束前留 2 分钟答疑；布置 1 道小练习检验是否真正掌握。</aside>
+<div class="slide">
+<h1>二、手动递归全排列（回溯）</h1>
+<div class="code-block">
+<span class="keyword">bool</span> used[<span class="number">15</span>];
+<span class="keyword">int</span> result[<span class="number">15</span>], arr[<span class="number">15</span>], n;
+
+<span class="keyword">void</span> <span class="builtin">dfs</span>(<span class="keyword">int</span> depth) {
+    <span class="keyword">if</span> (depth == n) {
+        <span class="keyword">for</span> (<span class="keyword">int</span> i = <span class="number">0</span>; i &lt; n; i++) cout &lt;&lt; result[i] &lt;&lt; <span class="string">" "</span>;
+        cout &lt;&lt; endl;
+        <span class="keyword">return</span>;
+    }
+    <span class="keyword">for</span> (<span class="keyword">int</span> i = <span class="number">0</span>; i &lt; n; i++) {
+        <span class="keyword">if</span> (!used[i]) {
+            used[i] = <span class="keyword">true</span>;
+            result[depth] = arr[i];
+            dfs(depth + <span class="number">1</span>);
+            used[i] = <span class="keyword">false</span>;  <span class="comment">// 回溯：恢复状态</span>
+        }
+    }
+}
 </div>
+<div class="key-point">
+<strong>精髓：</strong>「标记 → 递归 → 恢复」。忘记 <code>used[i]=false</code> 是最常见 bug。
 </div>
-<div class="navigation">
-<button class="nav-btn" id="prevBtn" onclick="changeSlide(-1)">◀ 上一页</button>
-<span class="slide-indicator" id="slideIndicator">1 / 7</span>
-<button class="nav-btn" id="nextBtn" onclick="changeSlide(1)">下一页 ▶</button>
+<p>也可用 <strong>swap 法</strong>：在原数组上交换 pos 与 i，递归 pos+1，再 swap 回来（见程序 demoRecursivePermutation）。</p>
+<aside class="notes">【讲解】画决策树：depth 定位置，used 管元素。</aside>
 </div>
+
+<div class="slide">
+<h1>三、子集枚举：位运算法</h1>
+<p>n 元集合有 2ⁿ 个子集。用 mask 的第 i 位表示是否选 a[i]。</p>
+<div class="code-block">
+<span class="keyword">for</span> (<span class="keyword">int</span> mask = <span class="number">0</span>; mask &lt; (<span class="number">1</span> &lt;&lt; n); mask++) {
+    <span class="keyword">for</span> (<span class="keyword">int</span> i = <span class="number">0</span>; i &lt; n; i++) {
+        <span class="keyword">if</span> (mask &amp; (<span class="number">1</span> &lt;&lt; i)) {
+            <span class="comment">// a[i] 在当前子集中</span>
+        }
+    }
+}
+</div>
+<table>
+<tr><th>操作</th><th>含义</th><th>示例</th></tr>
+<tr><td><code>1 &lt;&lt; n</code></td><td>2ⁿ</td><td>1&lt;&lt;3 = 8</td></tr>
+<tr><td><code>mask &amp; (1&lt;&lt;i)</code></td><td>第 i 位是否为 1</td><td>5&amp;(1&lt;&lt;2)=4≠0</td></tr>
+<tr><td><code>mask | (1&lt;&lt;i)</code></td><td>第 i 位置 1</td><td>—</td></tr>
+<tr><td><code>1LL&lt;&lt;n</code></td><td>防 int 溢出</td><td>n≥31 必须</td></tr>
+</table>
+<div class="exam-tips">
+<h4>优先级陷阱</h4>
+<p>错误：<code>mask &amp; (1&lt;&lt;i) == 0</code>（== 先算）。正确：<code>(mask &amp; (1&lt;&lt;i)) == 0</code>。</p>
+</div>
+<aside class="notes">【讲解】n=3 手写 8 个 mask 表。</aside>
+</div>
+
+<div class="slide">
+<h1>四、子集递归生成 &amp; 剪枝</h1>
+<div class="code-block">
+<span class="keyword">bool</span> chosen[<span class="number">25</span>];
+<span class="keyword">void</span> <span class="builtin">generateSubset</span>(<span class="keyword">int</span> idx) {
+    <span class="keyword">if</span> (idx == n) { <span class="comment">/* 输出当前子集 */</span> <span class="keyword">return</span>; }
+    chosen[idx] = <span class="keyword">false</span>; generateSubset(idx + <span class="number">1</span>); <span class="comment">// 不选</span>
+    chosen[idx] = <span class="keyword">true</span>;  generateSubset(idx + <span class="number">1</span>); <span class="comment">// 选</span>
+}
+</div>
+<p>递归优势：过程中可剪枝。子集和问题中，若当前和已 &gt; target（元素为正），直接 return。</p>
+<div class="key-point">
+<strong>选型：</strong>代码短、无剪枝 → 位运算；需要深剪枝/记录路径 → 递归回溯。
+</div>
+<aside class="notes">【讲解】对比位运算与递归。</aside>
+</div>
+
+<div class="slide">
+<h1>五、回溯算法框架</h1>
+<div class="code-block">
+<span class="keyword">void</span> <span class="builtin">backtrack</span>(当前状态) {
+    <span class="keyword">if</span> (满足结束条件) { 记录解; <span class="keyword">return</span>; }
+    <span class="keyword">for</span> (枚举所有可能选择) {
+        <span class="keyword">if</span> (该选择可行) {
+            做出选择;           <span class="comment">// 改状态</span>
+            backtrack(下一状态);
+            撤销选择;           <span class="comment">// 回溯</span>
+        }
+    }
+}
+</div>
+<ul>
+<li><strong>普通枚举</strong>：盲目扫完所有叶子</li>
+<li><strong>回溯</strong>：中间发现无解就剪枝回退</li>
+</ul>
+<p>例：6 个数选 3 个和为 10；若第一个数已 7，则不必再选后两个。</p>
+<aside class="notes">【讲解】尝试→判断→继续/回退。</aside>
+</div>
+
+<div class="slide">
+<h1>六、N皇后（以 4 皇后为例）</h1>
+<p>N×N 棋盘放 N 个皇后，不同行、列、对角线。每行恰放一个：<code>pos[row]=col</code>。</p>
+<div class="code-block">
+<span class="keyword">bool</span> <span class="builtin">check</span>(<span class="keyword">int</span> row, <span class="keyword">int</span> col) {
+    <span class="keyword">for</span> (<span class="keyword">int</span> i = <span class="number">0</span>; i &lt; row; i++) {
+        <span class="keyword">if</span> (pos[i] == col) <span class="keyword">return false</span>;              <span class="comment">// 同列</span>
+        <span class="keyword">if</span> (abs(row - i) == abs(col - pos[i])) <span class="keyword">return false</span>; <span class="comment">// 对角线</span>
+    }
+    <span class="keyword">return true</span>;
+}
+<span class="keyword">void</span> <span class="builtin">solve</span>(<span class="keyword">int</span> row) {
+    <span class="keyword">if</span> (row == n) { ans++; <span class="keyword">return</span>; }
+    <span class="keyword">for</span> (<span class="keyword">int</span> col = <span class="number">0</span>; col &lt; n; col++)
+        <span class="keyword">if</span> (check(row, col)) {
+            pos[row] = col;
+            solve(row + <span class="number">1</span>);
+        }
+}
+</div>
+<div class="key-point">4 皇后共 <span class="highlight">2</span> 种解；列位置序列 (1,3,0,2) 与 (2,0,3,1)（0-based）。复杂度 O(N!)。</div>
+<aside class="notes">【讲解】对照程序 printBoard 演示。</aside>
+</div>
+
+<div class="slide">
+<h1>七、4皇后回溯过程示意</h1>
+<ol>
+<li>row=0 放 col=0 → row=1</li>
+<li>row=1：col=0 同列、col=1 对角冲突，col=2 合法 → row=2</li>
+<li>row=2 全部冲突 → 回退 row=1</li>
+<li>row=1 试 col=3 合法 → … 继续搜索</li>
+<li>最终找到 2 组完整方案</li>
+</ol>
+<div class="sample-io">
+方案1 棋盘示意：. Q . .<br/>
+. . . Q<br/>
+Q . . .<br/>
+. . Q .
+</div>
+<div class="exam-tips">
+<h4>为何不用显式撤销 pos？</h4>
+<p>下一轮 for 会覆盖 <code>pos[row]</code>；used 类标记则必须显式恢复。</p>
+</div>
+<aside class="notes">【讲解】在黑板走一遍冲突判断。</aside>
+</div>
+
+<div class="slide">
+<h1>八、代码模板汇总</h1>
+<div class="code-block">
+<span class="comment">// 1. next_permutation</span>
+sort(a, a+n);
+<span class="keyword">do</span> { <span class="comment">/* 处理 a */</span> } <span class="keyword">while</span> (next_permutation(a, a+n));
+
+<span class="comment">// 2. 位运算子集和</span>
+<span class="keyword">for</span> (<span class="keyword">int</span> mask = <span class="number">0</span>; mask &lt; (<span class="number">1</span>&lt;&lt;n); mask++) {
+    <span class="keyword">int</span> sum = <span class="number">0</span>;
+    <span class="keyword">for</span> (<span class="keyword">int</span> i=<span class="number">0</span>; i&lt;n; i++) <span class="keyword">if</span> (mask &amp; (<span class="number">1</span>&lt;&lt;i)) sum += a[i];
+}
+
+<span class="comment">// 3. 回溯全排列框架</span>
+<span class="keyword">void</span> backtrack(<span class="keyword">int</span> depth) {
+    <span class="keyword">if</span> (depth == n) { <span class="comment">/* 输出 */</span> <span class="keyword">return</span>; }
+    <span class="keyword">for</span> (<span class="keyword">int</span> i=<span class="number">0</span>; i&lt;n; i++) <span class="keyword">if</span> (!visited[i]) {
+        visited[i]=true; result[depth]=i+1;
+        backtrack(depth+1);
+        visited[i]=false;
+    }
+}
+
+<span class="comment">// 4. N皇后：check + dfs(row) 见上页</span>
+</div>
+<aside class="notes">【讲解】四模板对照默写。</aside>
+</div>
+
+<div class="slide">
+<h1>九、五大易错点</h1>
+<div class="exam-tips"><h4>1. next_permutation 忘记排序</h4><p>漏掉字典序更小的排列。do-while 前永远 sort。</p></div>
+<div class="exam-tips"><h4>2. 位运算优先级</h4><p><code>(mask &amp; (1&lt;&lt;i))</code> 必须加括号。</p></div>
+<div class="exam-tips"><h4>3. 回溯忘记恢复</h4><p><code>visited[i]=false</code> 与修改对称书写。</p></div>
+<div class="exam-tips"><h4>4. 排列与组合混淆</h4><p>有顺序→排列；无顺序→子集/组合。</p></div>
+<div class="exam-tips"><h4>5. 1&lt;&lt;n 溢出</h4><p>n≥31 用 <code>1LL&lt;&lt;n</code>；CSP-J 通常 n≤20 用 int 即可。</p></div>
+<aside class="notes">【讲解】每条 15 秒反例。</aside>
+</div>
+
+<div class="slide">
+<h1>十、真题①：全排列输出</h1>
+<p>给定互异小写字母串，字典序输出所有排列。1≤n≤8。</p>
+<div class="sample-io">
+<strong>输入：</strong> 3 / abc<br/>
+<strong>输出：</strong> abc acb bac bca cab cba（各占一行）
+</div>
+<div class="code-block">
+<span class="keyword">int</span> n; <span class="keyword">char</span> s[<span class="number">10</span>];
+cin &gt;&gt; n &gt;&gt; s;
+<span class="builtin">sort</span>(s, s + n);
+<span class="keyword">do</span> {
+    cout &lt;&lt; s &lt;&lt; endl;
+} <span class="keyword">while</span> (<span class="builtin">next_permutation</span>(s, s + n));
+</div>
+<p>8!=40320，完全可行。字符互异无需去重。</p>
+<aside class="notes">【练习】先写再对答案。</aside>
+</div>
+
+<div class="slide">
+<h1>十一、真题②：子集和</h1>
+<p>n 个正整数，是否存在非空子集和 = target。1≤n≤20。</p>
+<div class="sample-io">
+5 10 / 1 2 3 4 5 → YES<br/>
+3 10 / 5 3 7 → NO
+</div>
+<div class="code-block">
+<span class="keyword">for</span> (<span class="keyword">int</span> mask = <span class="number">1</span>; mask &lt; (<span class="number">1</span> &lt;&lt; n); mask++) { <span class="comment">// 从1跳过空集</span>
+    <span class="keyword">int</span> sum = <span class="number">0</span>;
+    <span class="keyword">for</span> (<span class="keyword">int</span> i = <span class="number">0</span>; i &lt; n; i++) {
+        <span class="keyword">if</span> (mask &amp; (<span class="number">1</span> &lt;&lt; i)) {
+            sum += a[i];
+            <span class="keyword">if</span> (sum &gt; target) <span class="keyword">break</span>;
+        }
+    }
+    <span class="keyword">if</span> (sum == target) { cout &lt;&lt; <span class="string">"YES"</span>; <span class="keyword">return</span> <span class="number">0</span>; }
+}
+cout &lt;&lt; <span class="string">"NO"</span>;
+</div>
+<p>O(n·2ⁿ)，n=20≈2e7，C++ 可过。n=30 需折半搜索（超纲）。</p>
+<aside class="notes">【练习】强调 mask 从 1 开始。</aside>
+</div>
+
+<div class="slide">
+<h1>十二、选型指南</h1>
+<table>
+<tr><th>问题特征</th><th>方法</th></tr>
+<tr><td>需要所有顺序、n≤10</td><td>next_permutation / 回溯排列</td></tr>
+<tr><td>选或不选、无顺序、n≤20</td><td>位运算子集</td></tr>
+<tr><td>带复杂约束、可中途剪枝</td><td>回溯（N皇后类）</td></tr>
+<tr><td>线性范围数值枚举</td><td>上节：for 循环枚举</td></tr>
+</table>
+<div class="key-point" style="text-align:center; font-size:18px; padding:16px;">
+有序用排列，无序用子集；能剪枝就回溯，n 小就暴力。
+</div>
+<aside class="notes">【讲解】为模拟算法章节做过渡。</aside>
+</div>
+
+<div class="slide">
+<h1>十三、本课小结</h1>
+<table>
+<tr><th>知识点</th><th>一句记忆</th></tr>
+<tr><td>next_permutation</td><td>先 sort，用 do-while</td></tr>
+<tr><td>递归排列</td><td>标记-递归-恢复</td></tr>
+<tr><td>位运算子集</td><td>mask∈[0,2ⁿ)，判 mask&amp;(1&lt;&lt;i)</td></tr>
+<tr><td>回溯框架</td><td>尝试→判断→回退</td></tr>
+<tr><td>N皇后</td><td>同行不放，查列与 |Δr|=|Δc|</td></tr>
+<tr><td>子集和</td><td>n≤20，mask 从 1 起</td></tr>
+</table>
+<p style="margin-top:24px; text-align:center; color:#1a237e; font-size:18px; font-weight:bold;">
+掌握排列与子集两种「组合枚举」，再配合回溯剪枝，CSP-J 搜索题就有了标准武器库。
+</p>
+<aside class="notes">【收尾】布置：手算 3 的全排列 + 4 皇后 2 解。</aside>
+</div>
+
+</div>
+<div id="nav-bar">
+<button class="nav-btn" id="btn-prev" onclick="prevSlide()">◀ 上一页</button>
+<span id="page-indicator">1 / 14</span>
+<button class="nav-btn" id="btn-next" onclick="nextSlide()">下一页 ▶</button>
 </div>
 <script>
-let currentSlide = 1;
-const totalSlides = 7;
-
+let currentSlide = 0;
+const slides = document.querySelectorAll('.slide');
+const totalSlides = slides.length;
+const indicator = document.getElementById('page-indicator');
+const btnPrev = document.getElementById('btn-prev');
+const btnNext = document.getElementById('btn-next');
 function showSlide(n) {
-  document.querySelectorAll('.slide').forEach(s => s.classList.remove('active'));
-  document.getElementById('slide' + n).classList.add('active');
-  document.getElementById('slideIndicator').textContent = n + ' / ' + totalSlides;
-  document.getElementById('prevBtn').disabled = (n === 1);
-  document.getElementById('nextBtn').disabled = (n === totalSlides);
-  currentSlide = n;
+    if (n < 0 || n >= totalSlides) return;
+    slides[currentSlide].classList.remove('active');
+    currentSlide = n;
+    slides[currentSlide].classList.add('active');
+    indicator.textContent = (currentSlide + 1) + ' / ' + totalSlides;
+    btnPrev.disabled = (currentSlide === 0);
+    btnNext.disabled = (currentSlide === totalSlides - 1);
 }
-
-function changeSlide(delta) {
-  let next = currentSlide + delta;
-  if (next >= 1 && next <= totalSlides) showSlide(next);
-}
-
+function nextSlide() { if (currentSlide < totalSlides - 1) showSlide(currentSlide + 1); }
+function prevSlide() { if (currentSlide > 0) showSlide(currentSlide - 1); }
 document.addEventListener('keydown', function(e) {
-  if (e.key === 'ArrowLeft') changeSlide(-1);
-  if (e.key === 'ArrowRight') changeSlide(1);
+    if (e.key === 'ArrowRight' || e.key === 'ArrowDown' || e.key === ' ') { e.preventDefault(); nextSlide(); }
+    else if (e.key === 'ArrowLeft' || e.key === 'ArrowUp') { e.preventDefault(); prevSlide(); }
+    else if (e.key === 'Home') { e.preventDefault(); showSlide(0); }
+    else if (e.key === 'End') { e.preventDefault(); showSlide(totalSlides - 1); }
 });
+showSlide(0);
 </script>
 <script src="courseware-ui.js"></script>
 <script src="presenter.js"></script>

@@ -71,31 +71,19 @@
     box-shadow: 0 2px 12px rgba(15, 23, 42, 0.05);
   }
   .hint { margin-top: 12px; color: var(--muted); font-size: 12px; }
-
-  /* 打印：浅底、去阴影、省墨 */
   @media print {
     html, body { background: #fff !important; color: #000 !important; }
     .top {
-      position: static;
-      box-shadow: none;
-      border-bottom: 1px solid #ccc;
-      background: #fff !important;
-      -webkit-print-color-adjust: exact;
-      print-color-adjust: exact;
+      position: static; box-shadow: none; border-bottom: 1px solid #ccc;
+      background: #fff !important; -webkit-print-color-adjust: exact; print-color-adjust: exact;
     }
     .actions { display: none !important; }
     .meta { background: #fff !important; border-color: #ddd; color: #333; }
     .wrap { padding: 0; }
     pre {
-      background: #fff !important;
-      color: #000 !important;
-      border: 1px solid #bbb;
-      box-shadow: none;
-      border-radius: 0;
-      white-space: pre-wrap;
-      word-break: break-word;
-      font-size: 11pt;
-      line-height: 1.4;
+      background: #fff !important; color: #000 !important; border: 1px solid #bbb;
+      box-shadow: none; border-radius: 0; white-space: pre-wrap; word-break: break-word;
+      font-size: 11pt; line-height: 1.4;
     }
     .hint { display: none; }
     a { color: #000; text-decoration: none; }
@@ -111,108 +99,395 @@
       <a class="btn gold" href="javascript:history.back()">← 返回课件</a>
     </div>
   </div>
-  <div class="meta">编码：UTF-8 · 文件：lesson01_计算机基础与进制转换.cpp · 共 102 行 · 浅色主题便于打印</div>
+  <div class="meta">编码：UTF-8 · 文件：lesson01_计算机基础与进制转换.cpp · 共 389 行 · 浅色主题便于打印</div>
   <div class="wrap">
     <pre id="code">/*
  * CSP-J 备考课程
  * 第1课：计算机基础与进制转换
- * 考纲知识点：计算机发展史、硬件组成、进制转换、ASCII编码
+ * 考纲知识点：计算机发展史、冯·诺依曼结构、硬件组成、
+ *           二进制/八进制/十六进制互转、ASCII 编码
  *
- * 本文件包含：
- * 1. 进制输出演示
- * 2. ASCII码操作演示
- * 3. 真题/模拟题 AC 代码
+ * 本文件演示清单：
+ * 1. demoStorageUnits      —— 存储单位与 sizeof
+ * 2. demoBaseLiterals      —— 整型字面量（十/八/十六进制）
+ * 3. demoBaseOutput        —— dec/oct/hex/bitset 输出
+ * 4. demoBinToDec          —— 二进制按权展开 / 字符串转十进制
+ * 5. demoDecToBinSteps     —— 除 2 取余过程模拟
+ * 6. demoOctHexGroup       —— 二⇔八（3 位）与 二⇔十六（4 位）
+ * 7. demoAsciiBasics       —— ASCII 锚点与大小写/数字转换
+ * 8. demoAsciiExpression   —— 字符表达式求值
+ * 9. demoQuickTable        —— 0~15 对照表
+ * 10. demoExamProblems     —— 讲义真题验证
  */
 
 #include &lt;iostream&gt;
 #include &lt;bitset&gt;
 #include &lt;iomanip&gt;
+#include &lt;string&gt;
 using namespace std;
 
-int main() {
-    cout &lt;&lt; "========== CSP-J 第1课：计算机基础与进制转换 ==========" &lt;&lt; endl;
-    cout &lt;&lt; endl;
+// ==================== 工具函数 ====================
 
-    // ===== 一、进制输出演示 =====
-    cout &lt;&lt; "【一、进制输出演示】" &lt;&lt; endl;
+void printTitle(const string &amp;title) {
+    cout &lt;&lt; &quot;\n========================================&quot; &lt;&lt; endl;
+    cout &lt;&lt; &quot;  &quot; &lt;&lt; title &lt;&lt; endl;
+    cout &lt;&lt; &quot;========================================&quot; &lt;&lt; endl;
+}
+
+void printSub(const string &amp;s) {
+    cout &lt;&lt; &quot;\n--- &quot; &lt;&lt; s &lt;&lt; &quot; ---&quot; &lt;&lt; endl;
+}
+
+// 将非负整数转为二进制字符串（不含前导 0，0 则返回 &quot;0&quot;）
+string toBinString(unsigned long long n) {
+    if (n == 0) return &quot;0&quot;;
+    string s;
+    while (n &gt; 0) {
+        s = char(&#x27;0&#x27; + (n % 2)) + s;
+        n /= 2;
+    }
+    return s;
+}
+
+// 二进制字符串 → 十进制
+long long binStringToDec(const string &amp;bin) {
+    long long ans = 0;
+    for (size_t i = 0; i &lt; bin.size(); i++) {
+        char c = bin[i];
+        if (c != &#x27;0&#x27; &amp;&amp; c != &#x27;1&#x27;) continue;
+        ans = ans * 2 + (c - &#x27;0&#x27;);
+    }
+    return ans;
+}
+
+// ==================== 1. 存储单位与 sizeof ====================
+
+void demoStorageUnits() {
+    printTitle(&quot;1. 存储单位与数据类型大小&quot;);
+
+    cout &lt;&lt; &quot;换算关系（CSP-J 常用 1024）：&quot; &lt;&lt; endl;
+    cout &lt;&lt; &quot;  1 Byte = 8 bit&quot; &lt;&lt; endl;
+    cout &lt;&lt; &quot;  1 KB   = 1024 B&quot; &lt;&lt; endl;
+    cout &lt;&lt; &quot;  1 MB   = 1024 KB&quot; &lt;&lt; endl;
+    cout &lt;&lt; &quot;  1 GB   = 1024 MB&quot; &lt;&lt; endl;
+
+    cout &lt;&lt; &quot;\nsizeof 结果（单位：字节）：&quot; &lt;&lt; endl;
+    cout &lt;&lt; &quot;  sizeof(char)      = &quot; &lt;&lt; sizeof(char)
+         &lt;&lt; &quot;  → &quot; &lt;&lt; sizeof(char) * 8 &lt;&lt; &quot; bit&quot; &lt;&lt; endl;
+    cout &lt;&lt; &quot;  sizeof(bool)      = &quot; &lt;&lt; sizeof(bool) &lt;&lt; endl;
+    cout &lt;&lt; &quot;  sizeof(int)       = &quot; &lt;&lt; sizeof(int)
+         &lt;&lt; &quot;  → &quot; &lt;&lt; sizeof(int) * 8 &lt;&lt; &quot; bit&quot; &lt;&lt; endl;
+    cout &lt;&lt; &quot;  sizeof(long long) = &quot; &lt;&lt; sizeof(long long)
+         &lt;&lt; &quot;  → &quot; &lt;&lt; sizeof(long long) * 8 &lt;&lt; &quot; bit&quot; &lt;&lt; endl;
+    cout &lt;&lt; &quot;  sizeof(float)     = &quot; &lt;&lt; sizeof(float) &lt;&lt; endl;
+    cout &lt;&lt; &quot;  sizeof(double)    = &quot; &lt;&lt; sizeof(double) &lt;&lt; endl;
+
+    // 简单内存估算示例：1024x768 真彩色
+    long long pixels = 1024LL * 768;
+    long long bytes = pixels * 3; // 每像素 3 字节
+    cout &lt;&lt; &quot;\n示例：1024×768 真彩色(3B/像素) 约 &quot;
+         &lt;&lt; bytes &lt;&lt; &quot; 字节 ≈ &quot;
+         &lt;&lt; fixed &lt;&lt; setprecision(2)
+         &lt;&lt; (bytes / 1024.0 / 1024.0) &lt;&lt; &quot; MB&quot; &lt;&lt; endl;
+    cout &lt;&lt; defaultfloat;
+}
+
+// ==================== 2. 字面量 ====================
+
+void demoBaseLiterals() {
+    printTitle(&quot;2. C++ 整型字面量（前缀）&quot;);
+
+    int dec = 26;
+    int oct = 032;    // 3*8 + 2 = 26
+    int hex = 0x1A;   // 1*16 + 10 = 26
+    int hex2 = 0X1a;  // 大小写均可
+
+    cout &lt;&lt; &quot;int dec = 26;    → &quot; &lt;&lt; dec &lt;&lt; endl;
+    cout &lt;&lt; &quot;int oct = 032;   → &quot; &lt;&lt; oct &lt;&lt; &quot;  (八进制 32)&quot; &lt;&lt; endl;
+    cout &lt;&lt; &quot;int hex = 0x1A;  → &quot; &lt;&lt; hex &lt;&lt; &quot;  (十六进制 1A)&quot; &lt;&lt; endl;
+    cout &lt;&lt; &quot;int hex2= 0X1a;  → &quot; &lt;&lt; hex2 &lt;&lt; endl;
+
+    cout &lt;&lt; &quot;\n易错对比：&quot; &lt;&lt; endl;
+    cout &lt;&lt; &quot;  012 的十进制值 = &quot; &lt;&lt; 012 &lt;&lt; &quot; （不是 12！）&quot; &lt;&lt; endl;
+    cout &lt;&lt; &quot;  0x12 的十进制值 = &quot; &lt;&lt; 0x12 &lt;&lt; &quot; （不是 12！）&quot; &lt;&lt; endl;
+    cout &lt;&lt; &quot;  12 的十进制值 = &quot; &lt;&lt; 12 &lt;&lt; endl;
+
+    cout &lt;&lt; &quot;\n常见十六进制：&quot; &lt;&lt; endl;
+    cout &lt;&lt; &quot;  0xFF = &quot; &lt;&lt; 0xFF &lt;&lt; &quot;, 0x10 = &quot; &lt;&lt; 0x10
+         &lt;&lt; &quot;, 0x2F = &quot; &lt;&lt; 0x2F &lt;&lt; endl;
+}
+
+// ==================== 3. 进制输出 ====================
+
+void demoBaseOutput() {
+    printTitle(&quot;3. dec / oct / hex / bitset 输出&quot;);
+
     int n = 2024;
+    cout &lt;&lt; &quot;n = &quot; &lt;&lt; n &lt;&lt; endl;
+    cout &lt;&lt; &quot;  十进制:     &quot; &lt;&lt; dec &lt;&lt; n &lt;&lt; endl;
+    cout &lt;&lt; &quot;  八进制:     &quot; &lt;&lt; oct &lt;&lt; n &lt;&lt; endl;
+    cout &lt;&lt; &quot;  十六进制:   &quot; &lt;&lt; hex &lt;&lt; n &lt;&lt; endl;
+    cout &lt;&lt; &quot;  十六进制大写: &quot; &lt;&lt; hex &lt;&lt; uppercase &lt;&lt; n &lt;&lt; endl;
+    cout &lt;&lt; nouppercase &lt;&lt; dec;
 
-    cout &lt;&lt; "十进制: " &lt;&lt; dec &lt;&lt; n &lt;&lt; endl;
-    cout &lt;&lt; "八进制: " &lt;&lt; oct &lt;&lt; n &lt;&lt; endl;
-    cout &lt;&lt; "十六进制(小写): " &lt;&lt; hex &lt;&lt; n &lt;&lt; endl;
-    cout &lt;&lt; "十六进制(大写): " &lt;&lt; hex &lt;&lt; uppercase &lt;&lt; n &lt;&lt; endl;
-    cout &lt;&lt; "二进制(16位): " &lt;&lt; bitset&lt;16&gt;(n) &lt;&lt; endl;
-    cout &lt;&lt; dec;  // 恢复十进制输出
+    cout &lt;&lt; &quot;  二进制(16位): &quot; &lt;&lt; bitset&lt;16&gt;(n) &lt;&lt; endl;
+    cout &lt;&lt; &quot;  二进制(32位): &quot; &lt;&lt; bitset&lt;32&gt;(n) &lt;&lt; endl;
+    cout &lt;&lt; &quot;  手写二进制串: &quot; &lt;&lt; toBinString((unsigned long long)n) &lt;&lt; endl;
+
+    // 演示 hex 会“粘住”
+    printSub(&quot;注意：hex 会改变后续整数输出格式&quot;);
+    cout &lt;&lt; &quot;  输出 hex 后直接输出 10 → &quot; &lt;&lt; hex &lt;&lt; 10 &lt;&lt; endl;
+    cout &lt;&lt; &quot;  恢复 dec 后输出 10 → &quot; &lt;&lt; dec &lt;&lt; 10 &lt;&lt; endl;
+}
+
+// ==================== 4. 二进制 → 十进制 ====================
+
+void demoBinToDec() {
+    printTitle(&quot;4. 二进制 → 十进制（按权展开）&quot;);
+
+    // 例：1011. 这里只演示整数部分 1011
+    string samples[] = {&quot;1011&quot;, &quot;11001&quot;, &quot;10110110&quot;, &quot;11111101000&quot;};
+    int expected[] = {11, 25, 182, 2024};
+
+    for (int i = 0; i &lt; 4; i++) {
+        long long v = binStringToDec(samples[i]);
+        cout &lt;&lt; &quot;  (&quot; &lt;&lt; samples[i] &lt;&lt; &quot;)2 = &quot; &lt;&lt; v
+             &lt;&lt; &quot;  [期望 &quot; &lt;&lt; expected[i] &lt;&lt; &quot;]&quot;
+             &lt;&lt; (v == expected[i] ? &quot; OK&quot; : &quot; FAIL&quot;) &lt;&lt; endl;
+    }
+
+    printSub(&quot;逐步按权展开 10110110&quot;);
+    // 从左到右：权 128..1
+    int weights[] = {128, 64, 32, 16, 8, 4, 2, 1};
+    string b = &quot;10110110&quot;;
+    int sum = 0;
+    for (int i = 0; i &lt; 8; i++) {
+        int bit = b[i] - &#x27;0&#x27;;
+        int term = bit * weights[i];
+        sum += term;
+        cout &lt;&lt; &quot;  bit[&quot; &lt;&lt; i &lt;&lt; &quot;]=&quot; &lt;&lt; bit
+             &lt;&lt; &quot; × &quot; &lt;&lt; weights[i] &lt;&lt; &quot; = &quot; &lt;&lt; term &lt;&lt; endl;
+    }
+    cout &lt;&lt; &quot;  合计 = &quot; &lt;&lt; sum &lt;&lt; endl;
+}
+
+// ==================== 5. 十进制 → 二进制步骤 ====================
+
+void demoDecToBinSteps() {
+    printTitle(&quot;5. 十进制整数 → 二进制（除 2 取余倒序）&quot;);
+
+    int n = 25;
+    cout &lt;&lt; &quot;将 &quot; &lt;&lt; n &lt;&lt; &quot; 转为二进制：&quot; &lt;&lt; endl;
+
+    int remainders[64];
+    int cnt = 0;
+    int x = n;
+    if (x == 0) {
+        cout &lt;&lt; &quot;  0 的二进制是 0&quot; &lt;&lt; endl;
+        return;
+    }
+    while (x &gt; 0) {
+        int r = x % 2;
+        remainders[cnt++] = r;
+        cout &lt;&lt; &quot;  &quot; &lt;&lt; x &lt;&lt; &quot; ÷ 2 = &quot; &lt;&lt; (x / 2)
+             &lt;&lt; &quot; 余 &quot; &lt;&lt; r &lt;&lt; endl;
+        x /= 2;
+    }
+    cout &lt;&lt; &quot;  余数从下往上写（倒序）：&quot;;
+    for (int i = cnt - 1; i &gt;= 0; i--) cout &lt;&lt; remainders[i];
     cout &lt;&lt; endl;
+    cout &lt;&lt; &quot;  bitset 验证: &quot; &lt;&lt; bitset&lt;8&gt;(n) &lt;&lt; endl;
+    cout &lt;&lt; &quot;  字符串验证: &quot; &lt;&lt; toBinString((unsigned long long)n) &lt;&lt; endl;
 
-    // ===== 二、进制转换练习 =====
-    cout &lt;&lt; "【二、进制转换练习】" &lt;&lt; endl;
+    printSub(&quot;再演示 2024&quot;);
+    cout &lt;&lt; &quot;  2024 二进制 = &quot; &lt;&lt; toBinString(2024) &lt;&lt; endl;
+    cout &lt;&lt; &quot;  bitset&lt;16&gt;  = &quot; &lt;&lt; bitset&lt;16&gt;(2024) &lt;&lt; endl;
+}
 
-    // 示例：二进制 10110110 的转换
-    int val = 1*128 + 0*64 + 1*32 + 1*16 + 0*8 + 1*4 + 1*2 + 0*1;
-    cout &lt;&lt; "二进制 10110110 的十进制值: " &lt;&lt; val &lt;&lt; endl;
-    cout &lt;&lt; "二进制 10110110 的八进制值: " &lt;&lt; oct &lt;&lt; val &lt;&lt; endl;
-    cout &lt;&lt; "二进制 10110110 的十六进制值: " &lt;&lt; hex &lt;&lt; uppercase &lt;&lt; val &lt;&lt; endl;
-    cout &lt;&lt; dec;
+// ==================== 6. 分组转换 ====================
+
+void demoOctHexGroup() {
+    printTitle(&quot;6. 二进制 ⇔ 八进制 / 十六进制（分组）&quot;);
+
+    string bin = &quot;10101110&quot;;
+    long long val = binStringToDec(bin);
+    cout &lt;&lt; &quot;原二进制: &quot; &lt;&lt; bin &lt;&lt; &quot; → 十进制 &quot; &lt;&lt; val &lt;&lt; endl;
+
+    // 补齐到 3 的倍数再按 3 位转八进制（演示）
+    string b3 = bin;
+    while (b3.size() % 3 != 0) b3 = &quot;0&quot; + b3;
+    cout &lt;&lt; &quot;  补齐后(3位一组): &quot; &lt;&lt; b3 &lt;&lt; &quot; → &quot;;
+    for (size_t i = 0; i &lt; b3.size(); i += 3) {
+        int d = (b3[i] - &#x27;0&#x27;) * 4 + (b3[i + 1] - &#x27;0&#x27;) * 2 + (b3[i + 2] - &#x27;0&#x27;);
+        cout &lt;&lt; d;
+    }
+    cout &lt;&lt; &quot; (八进制)&quot; &lt;&lt; endl;
+    cout &lt;&lt; &quot;  oct 操纵符验证: &quot; &lt;&lt; oct &lt;&lt; val &lt;&lt; dec &lt;&lt; endl;
+
+    // 4 位一组转十六进制
+    string b4 = bin;
+    while (b4.size() % 4 != 0) b4 = &quot;0&quot; + b4;
+    cout &lt;&lt; &quot;  补齐后(4位一组): &quot; &lt;&lt; b4 &lt;&lt; &quot; → &quot;;
+    const char *hexDigits = &quot;0123456789ABCDEF&quot;;
+    for (size_t i = 0; i &lt; b4.size(); i += 4) {
+        int d = (b4[i] - &#x27;0&#x27;) * 8 + (b4[i + 1] - &#x27;0&#x27;) * 4
+              + (b4[i + 2] - &#x27;0&#x27;) * 2 + (b4[i + 3] - &#x27;0&#x27;);
+        cout &lt;&lt; hexDigits[d];
+    }
+    cout &lt;&lt; &quot; (十六进制)&quot; &lt;&lt; endl;
+    cout &lt;&lt; &quot;  hex 操纵符验证: &quot; &lt;&lt; hex &lt;&lt; uppercase &lt;&lt; val &lt;&lt; dec &lt;&lt; nouppercase &lt;&lt; endl;
+
+    printSub(&quot;十六进制 0x2F → 二进制&quot;);
+    int x = 0x2F;
+    cout &lt;&lt; &quot;  0x2F = &quot; &lt;&lt; x &lt;&lt; &quot; → &quot; &lt;&lt; bitset&lt;8&gt;(x) &lt;&lt; endl;
+
+    printSub(&quot;2024 的十六进制&quot;);
+    cout &lt;&lt; &quot;  &quot; &lt;&lt; hex &lt;&lt; uppercase &lt;&lt; 2024 &lt;&lt; dec &lt;&lt; nouppercase
+         &lt;&lt; &quot; （期望 7E8）&quot; &lt;&lt; endl;
+}
+
+// ==================== 7. ASCII 基础 ====================
+
+void demoAsciiBasics() {
+    printTitle(&quot;7. ASCII 锚点与常用变换&quot;);
+
+    cout &lt;&lt; &quot;三大锚点：&quot; &lt;&lt; endl;
+    cout &lt;&lt; &quot;  &#x27;0&#x27; = &quot; &lt;&lt; (int)&#x27;0&#x27; &lt;&lt; endl;
+    cout &lt;&lt; &quot;  &#x27;A&#x27; = &quot; &lt;&lt; (int)&#x27;A&#x27; &lt;&lt; endl;
+    cout &lt;&lt; &quot;  &#x27;a&#x27; = &quot; &lt;&lt; (int)&#x27;a&#x27; &lt;&lt; endl;
+    cout &lt;&lt; &quot;  空格 = &quot; &lt;&lt; (int)&#x27; &#x27; &lt;&lt; endl;
+    cout &lt;&lt; &quot;  &#x27;\\n&#x27; = &quot; &lt;&lt; (int)&#x27;\n&#x27; &lt;&lt; endl;
+
+    cout &lt;&lt; &quot;\n大小写相差 32：&quot; &lt;&lt; endl;
+    cout &lt;&lt; &quot;  &#x27;a&#x27; - &#x27;A&#x27; = &quot; &lt;&lt; (&#x27;a&#x27; - &#x27;A&#x27;) &lt;&lt; endl;
+    cout &lt;&lt; &quot;  &#x27;A&#x27; + 32 = &#x27;&quot; &lt;&lt; (char)(&#x27;A&#x27; + 32) &lt;&lt; &quot;&#x27;&quot; &lt;&lt; endl;
+    cout &lt;&lt; &quot;  &#x27;z&#x27; - 32 = &#x27;&quot; &lt;&lt; (char)(&#x27;z&#x27; - 32) &lt;&lt; &quot;&#x27;&quot; &lt;&lt; endl;
+
+    cout &lt;&lt; &quot;\n数字字符 ↔ 数值：&quot; &lt;&lt; endl;
+    char digit = &#x27;7&#x27;;
+    int num = digit - &#x27;0&#x27;;
+    cout &lt;&lt; &quot;  &#x27;&quot; &lt;&lt; digit &lt;&lt; &quot;&#x27; - &#x27;0&#x27; = &quot; &lt;&lt; num &lt;&lt; endl;
+    cout &lt;&lt; &quot;  3 + &#x27;0&#x27; = &#x27;&quot; &lt;&lt; (char)(3 + &#x27;0&#x27;) &lt;&lt; &quot;&#x27;&quot; &lt;&lt; endl;
+
+    cout &lt;&lt; &quot;\n字母序号：&quot; &lt;&lt; endl;
+    cout &lt;&lt; &quot;  &#x27;D&#x27; - &#x27;A&#x27; = &quot; &lt;&lt; (&#x27;D&#x27; - &#x27;A&#x27;) &lt;&lt; &quot; (从 0 起)&quot; &lt;&lt; endl;
+    cout &lt;&lt; &quot;  &#x27;D&#x27; - &#x27;A&#x27; + 1 = &quot; &lt;&lt; (&#x27;D&#x27; - &#x27;A&#x27; + 1) &lt;&lt; &quot; (从 1 起)&quot; &lt;&lt; endl;
+
+    printSub(&quot;输出 A~Z 与部分码值&quot;);
+    for (char c = &#x27;A&#x27;; c &lt;= &#x27;Z&#x27;; c++) {
+        if (c == &#x27;A&#x27; || c == &#x27;M&#x27; || c == &#x27;Z&#x27;) {
+            cout &lt;&lt; &quot;  &#x27;&quot; &lt;&lt; c &lt;&lt; &quot;&#x27;=&quot; &lt;&lt; (int)c;
+        }
+    }
     cout &lt;&lt; endl;
+}
 
-    // 示例：十进制 2024 转二进制和十六进制
+// ==================== 8. ASCII 表达式 ====================
+
+void demoAsciiExpression() {
+    printTitle(&quot;8. ASCII 表达式求值演示&quot;);
+
+    char r1 = &#x27;E&#x27; - &#x27;A&#x27; + &#x27;d&#x27;;
+    cout &lt;&lt; &quot;  &#x27;E&#x27; - &#x27;A&#x27; + &#x27;d&#x27; = &#x27;&quot; &lt;&lt; r1
+         &lt;&lt; &quot;&#x27; (码值 &quot; &lt;&lt; (int)r1 &lt;&lt; &quot;)&quot; &lt;&lt; endl;
+
+    char r2 = &#x27;B&#x27; - &#x27;A&#x27; + &#x27;a&#x27;;
+    cout &lt;&lt; &quot;  &#x27;B&#x27; - &#x27;A&#x27; + &#x27;a&#x27; = &#x27;&quot; &lt;&lt; r2 &lt;&lt; &quot;&#x27;&quot; &lt;&lt; endl;
+
+    int r3 = &#x27;9&#x27; - &#x27;0&#x27; + &#x27;1&#x27; - &#x27;0&#x27;;
+    cout &lt;&lt; &quot;  (&#x27;9&#x27;-&#x27;0&#x27;) + (&#x27;1&#x27;-&#x27;0&#x27;) = &quot; &lt;&lt; r3 &lt;&lt; endl;
+
+    // 连续字符
+    cout &lt;&lt; &quot;  &#x27;A&#x27;+3 作为字符: &#x27;&quot; &lt;&lt; (char)(&#x27;A&#x27; + 3) &lt;&lt; &quot;&#x27;&quot; &lt;&lt; endl;
+    cout &lt;&lt; &quot;  &#x27;A&#x27;+3 作为整数: &quot; &lt;&lt; (&#x27;A&#x27; + 3) &lt;&lt; endl;
+}
+
+// ==================== 9. 0~15 对照表 ====================
+
+void demoQuickTable() {
+    printTitle(&quot;9. 0~15 二进制/八/十/十六进制对照&quot;);
+
+    cout &lt;&lt; &quot;  dec  bin   oct  hex&quot; &lt;&lt; endl;
+    cout &lt;&lt; &quot;  -------------------&quot; &lt;&lt; endl;
+    for (int i = 0; i &lt;= 15; i++) {
+        cout &lt;&lt; &quot;  &quot; &lt;&lt; setw(2) &lt;&lt; dec &lt;&lt; i &lt;&lt; &quot;  &quot;
+             &lt;&lt; bitset&lt;4&gt;(i) &lt;&lt; &quot;   &quot;
+             &lt;&lt; oct &lt;&lt; i &lt;&lt; &quot;    &quot;
+             &lt;&lt; hex &lt;&lt; uppercase &lt;&lt; i
+             &lt;&lt; nouppercase &lt;&lt; dec &lt;&lt; endl;
+    }
+}
+
+// ==================== 10. 真题验证 ====================
+
+void demoExamProblems() {
+    printTitle(&quot;10. 讲义真题 / 模拟题验证&quot;);
+
+    printSub(&quot;题目1：二进制 10110110&quot;);
+    string bin = &quot;10110110&quot;;
+    int decVal = (int)binStringToDec(bin);
+    cout &lt;&lt; &quot;  十进制 = &quot; &lt;&lt; decVal &lt;&lt; &quot; (期望 182)&quot; &lt;&lt; endl;
+    cout &lt;&lt; &quot;  八进制 = &quot; &lt;&lt; oct &lt;&lt; decVal &lt;&lt; &quot; (期望 266)&quot; &lt;&lt; endl;
+    cout &lt;&lt; &quot;  十六进制 = &quot; &lt;&lt; hex &lt;&lt; uppercase &lt;&lt; decVal
+         &lt;&lt; &quot; (期望 B6)&quot; &lt;&lt; dec &lt;&lt; nouppercase &lt;&lt; endl;
+    cout &lt;&lt; &quot;  bitset&lt;8&gt; = &quot; &lt;&lt; bitset&lt;8&gt;(decVal) &lt;&lt; endl;
+
+    printSub(&quot;题目2：&#x27;E&#x27; - &#x27;A&#x27; + &#x27;d&#x27;&quot;);
+    char ans = &#x27;E&#x27; - &#x27;A&#x27; + &#x27;d&#x27;;
+    cout &lt;&lt; &quot;  结果字符 = &#x27;&quot; &lt;&lt; ans &lt;&lt; &quot;&#x27; (期望 &#x27;h&#x27;)&quot; &lt;&lt; endl;
+    cout &lt;&lt; &quot;  码值 = &quot; &lt;&lt; (int)ans &lt;&lt; &quot; (期望 104)&quot; &lt;&lt; endl;
+
+    printSub(&quot;题目4：0x2F 的二进制&quot;);
+    cout &lt;&lt; &quot;  &quot; &lt;&lt; bitset&lt;8&gt;(0x2F) &lt;&lt; &quot; (期望 00101111)&quot; &lt;&lt; endl;
+
+    printSub(&quot;综合：2024 的多进制&quot;);
     int year = 2024;
-    cout &lt;&lt; "十进制 " &lt;&lt; year &lt;&lt; " 的二进制: " &lt;&lt; bitset&lt;16&gt;(year) &lt;&lt; endl;
-    cout &lt;&lt; "十进制 " &lt;&lt; year &lt;&lt; " 的十六进制: " &lt;&lt; hex &lt;&lt; uppercase &lt;&lt; year &lt;&lt; endl;
-    cout &lt;&lt; dec;
-    cout &lt;&lt; endl;
+    cout &lt;&lt; &quot;  dec=&quot; &lt;&lt; year
+         &lt;&lt; &quot; oct=&quot; &lt;&lt; oct &lt;&lt; year
+         &lt;&lt; &quot; hex=&quot; &lt;&lt; hex &lt;&lt; uppercase &lt;&lt; year
+         &lt;&lt; &quot; bin=&quot; &lt;&lt; bitset&lt;16&gt;(year)
+         &lt;&lt; dec &lt;&lt; nouppercase &lt;&lt; endl;
+}
 
-    // ===== 三、ASCII码操作演示 =====
-    cout &lt;&lt; "【三、ASCII码操作演示】" &lt;&lt; endl;
+// ==================== 附加：小数乘 2 取整示意 ====================
 
-    // 字符与ASCII码互转
-    char ch = 'A';
-    cout &lt;&lt; "字符 '" &lt;&lt; ch &lt;&lt; "' 的ASCII码: " &lt;&lt; (int)ch &lt;&lt; endl;
+void demoFracToBin() {
+    printTitle(&quot;附加：十进制小数 → 二进制（乘 2 取整）&quot;);
+    // 0.625 → 0.101
+    double frac = 0.625;
+    cout &lt;&lt; &quot;  小数 &quot; &lt;&lt; frac &lt;&lt; &quot; → 二进制 0.&quot;;
+    for (int step = 0; step &lt; 8; step++) {
+        frac *= 2;
+        int bit = (int)frac;
+        cout &lt;&lt; bit;
+        frac -= bit;
+        if (frac &lt; 1e-12) break;
+    }
+    cout &lt;&lt; &quot;  (期望 0.101)&quot; &lt;&lt; endl;
+}
 
-    // 大小写转换
-    cout &lt;&lt; "'A' + 32 = '" &lt;&lt; (char)(ch + 32) &lt;&lt; "' (小写)" &lt;&lt; endl;
-    cout &lt;&lt; "'a' - 32 = '" &lt;&lt; (char)('a' - 32) &lt;&lt; "' (大写)" &lt;&lt; endl;
+// ==================== main ====================
 
-    // 数字字符转数值
-    char digit = '7';
-    int num = digit - '0';
-    cout &lt;&lt; "字符 '" &lt;&lt; digit &lt;&lt; "' 转数值: " &lt;&lt; num &lt;&lt; endl;
+int main() {
+    cout &lt;&lt; &quot;############################################&quot; &lt;&lt; endl;
+    cout &lt;&lt; &quot;#  CSP-J 第1课：计算机基础与进制转换 演示  #&quot; &lt;&lt; endl;
+    cout &lt;&lt; &quot;############################################&quot; &lt;&lt; endl;
 
-    // 字符运算
-    cout &lt;&lt; "'E' - 'A' + 'd' = '" &lt;&lt; (char)('E' - 'A' + 'd') &lt;&lt; "'" &lt;&lt; endl;
+    demoStorageUnits();
+    demoBaseLiterals();
+    demoBaseOutput();
+    demoBinToDec();
+    demoDecToBinSteps();
+    demoOctHexGroup();
+    demoAsciiBasics();
+    demoAsciiExpression();
+    demoQuickTable();
+    demoExamProblems();
+    demoFracToBin();
 
-    // 输出常见字符的ASCII码
-    cout &lt;&lt; endl &lt;&lt; "常见字符ASCII码对照表:" &lt;&lt; endl;
-    cout &lt;&lt; "'0' = " &lt;&lt; (int)'0' &lt;&lt; endl;
-    cout &lt;&lt; "'A' = " &lt;&lt; (int)'A' &lt;&lt; endl;
-    cout &lt;&lt; "'a' = " &lt;&lt; (int)'a' &lt;&lt; endl;
-    cout &lt;&lt; "' ' = " &lt;&lt; (int)' ' &lt;&lt; endl;
-    cout &lt;&lt; "'\\n' = " &lt;&lt; (int)'\n' &lt;&lt; endl;
-    cout &lt;&lt; endl;
-
-    // ===== 四、存储单位换算 =====
-    cout &lt;&lt; "【四、数据类型大小】" &lt;&lt; endl;
-    cout &lt;&lt; "sizeof(int)      = " &lt;&lt; sizeof(int) &lt;&lt; " 字节 = " &lt;&lt; sizeof(int) * 8 &lt;&lt; " bit" &lt;&lt; endl;
-    cout &lt;&lt; "sizeof(long long)= " &lt;&lt; sizeof(long long) &lt;&lt; " 字节" &lt;&lt; endl;
-    cout &lt;&lt; "sizeof(char)     = " &lt;&lt; sizeof(char) &lt;&lt; " 字节" &lt;&lt; endl;
-    cout &lt;&lt; "sizeof(bool)     = " &lt;&lt; sizeof(bool) &lt;&lt; " 字节" &lt;&lt; endl;
-    cout &lt;&lt; "sizeof(double)   = " &lt;&lt; sizeof(double) &lt;&lt; " 字节" &lt;&lt; endl;
-    cout &lt;&lt; endl;
-
-    // ===== 五、进制输入练习 =====
-    cout &lt;&lt; "【五、进制输入练习】" &lt;&lt; endl;
-    cout &lt;&lt; "请输入一个十进制整数: ";
-    int input;
-    cin &gt;&gt; input;
-
-    cout &lt;&lt; "→ 二进制: " &lt;&lt; bitset&lt;16&gt;(input) &lt;&lt; endl;
-    cout &lt;&lt; "→ 八进制: " &lt;&lt; oct &lt;&lt; input &lt;&lt; endl;
-    cout &lt;&lt; "→ 十六进制: " &lt;&lt; hex &lt;&lt; uppercase &lt;&lt; input &lt;&lt; endl;
-    cout &lt;&lt; dec;
-
-    cout &lt;&lt; endl;
-    cout &lt;&lt; "========== 第1课演示结束 ==========" &lt;&lt; endl;
+    cout &lt;&lt; &quot;\n############################################&quot; &lt;&lt; endl;
+    cout &lt;&lt; &quot;#              第1课演示结束               #&quot; &lt;&lt; endl;
+    cout &lt;&lt; &quot;############################################&quot; &lt;&lt; endl;
     return 0;
 }
 </pre>

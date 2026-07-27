@@ -71,31 +71,19 @@
     box-shadow: 0 2px 12px rgba(15, 23, 42, 0.05);
   }
   .hint { margin-top: 12px; color: var(--muted); font-size: 12px; }
-
-  /* 打印：浅底、去阴影、省墨 */
   @media print {
     html, body { background: #fff !important; color: #000 !important; }
     .top {
-      position: static;
-      box-shadow: none;
-      border-bottom: 1px solid #ccc;
-      background: #fff !important;
-      -webkit-print-color-adjust: exact;
-      print-color-adjust: exact;
+      position: static; box-shadow: none; border-bottom: 1px solid #ccc;
+      background: #fff !important; -webkit-print-color-adjust: exact; print-color-adjust: exact;
     }
     .actions { display: none !important; }
     .meta { background: #fff !important; border-color: #ddd; color: #333; }
     .wrap { padding: 0; }
     pre {
-      background: #fff !important;
-      color: #000 !important;
-      border: 1px solid #bbb;
-      box-shadow: none;
-      border-radius: 0;
-      white-space: pre-wrap;
-      word-break: break-word;
-      font-size: 11pt;
-      line-height: 1.4;
+      background: #fff !important; color: #000 !important; border: 1px solid #bbb;
+      box-shadow: none; border-radius: 0; white-space: pre-wrap; word-break: break-word;
+      font-size: 11pt; line-height: 1.4;
     }
     .hint { display: none; }
     a { color: #000; text-decoration: none; }
@@ -111,90 +99,131 @@
       <a class="btn gold" href="javascript:history.back()">← 返回课件</a>
     </div>
   </div>
-  <div class="meta">编码：UTF-8 · 文件：lesson08_if_else分支结构.cpp · 共 203 行 · 浅色主题便于打印</div>
+  <div class="meta">编码：UTF-8 · 文件：lesson08_if_else分支结构.cpp · 共 472 行 · 浅色主题便于打印</div>
   <div class="wrap">
     <pre id="code">/*
  * CSP-J 备考课程
  * 第8课：if-else 分支结构
- * 考纲知识点：单分支if、双分支if-else、多分支if-else if-else、嵌套if、悬空else问题
+ * 考纲知识点：单/双/多分支、嵌套 if、悬空 else、条件表达式
  *
- * 本文件包含：
- * 1. 三种分支结构演示
- * 2. 嵌套if
- * 3. 悬空else问题详解
- * 4. 成绩等级判定
- * 5. 闰年判断
+ * 本文件模块：
+ * 1. 单分支 if
+ * 2. 双分支 if-else
+ * 3. 多分支 if-else if-else（含错误顺序对比）
+ * 4. 嵌套 if（三数最值与排序）
+ * 5. 悬空 else（dangling-else）考点演示
+ * 6. 闰年判断
+ * 7. 条件表达式与常见陷阱
+ * 8. 真题1：悬空 else 读程 AC
+ * 9. 真题2：多分支顺序 / 成绩等级 AC
+ * 10. 真题3：分段函数 AC
+ *
+ * 编译：g++ -std=c++17 -Wall -o lesson08 lesson08_if_else分支结构.cpp
+ * 说明：悬空 else 演示可能触发 -Wdangling-else，已在注释中标明考点。
  */
 
 #include &lt;iostream&gt;
 #include &lt;algorithm&gt;
+#include &lt;cmath&gt;
+#include &lt;string&gt;
 using namespace std;
 
-int main() {
-    cout &lt;&lt; "========== CSP-J 第8课：if-else 分支结构 ==========" &lt;&lt; endl;
-    cout &lt;&lt; endl;
+// -------------------- 工具 --------------------
+void print_divider(const string&amp; title) {
+    cout &lt;&lt; &quot;\n========================================\n&quot;;
+    cout &lt;&lt; &quot;  &quot; &lt;&lt; title &lt;&lt; &#x27;\n&#x27;;
+    cout &lt;&lt; &quot;========================================\n&quot;;
+}
 
-    // ===== 一、单分支 if =====
-    cout &lt;&lt; "【一、单分支 if】" &lt;&lt; endl;
+// -------------------- 演示 1：单分支 if --------------------
+void demo01_single_if() {
+    print_divider(&quot;演示1：单分支 if&quot;);
 
     int score1 = 85;
-    cout &lt;&lt; "成绩: " &lt;&lt; score1 &lt;&lt; " → ";
+    cout &lt;&lt; &quot;成绩 &quot; &lt;&lt; score1 &lt;&lt; &quot; → &quot;;
     if (score1 &gt;= 60) {
-        cout &lt;&lt; "及格" &lt;&lt; endl;
+        cout &lt;&lt; &quot;及格&quot;;
     }
+    cout &lt;&lt; &#x27;\n&#x27;;
 
     int score2 = 55;
-    cout &lt;&lt; "成绩: " &lt;&lt; score2 &lt;&lt; " → ";
+    cout &lt;&lt; &quot;成绩 &quot; &lt;&lt; score2 &lt;&lt; &quot; → &quot;;
     if (score2 &gt;= 60) {
-        cout &lt;&lt; "及格" &lt;&lt; endl;
+        cout &lt;&lt; &quot;及格&quot;;
     } else {
-        cout &lt;&lt; "（无输出，因为条件不满足）" &lt;&lt; endl;
+        // 这里用 else 仅作对照说明“单分支时条件不成立则无输出”
+        cout &lt;&lt; &quot;（单分支 if 时此处本可无输出；演示用 else 提示）&quot;;
     }
-    cout &lt;&lt; endl;
+    cout &lt;&lt; &quot;\n\n要点：条件为真执行块，为假跳过，然后继续后续语句。\n&quot;;
+}
 
-    // ===== 二、双分支 if-else =====
-    cout &lt;&lt; "【二、双分支 if-else】" &lt;&lt; endl;
+// -------------------- 演示 2：双分支 if-else --------------------
+void demo02_if_else() {
+    print_divider(&quot;演示2：双分支 if-else&quot;);
 
+    cout &lt;&lt; &quot;请输入一个整数：&quot;;
     int n;
-    cout &lt;&lt; "请输入一个整数: ";
     cin &gt;&gt; n;
 
     if (n % 2 == 0) {
-        cout &lt;&lt; n &lt;&lt; " 是偶数" &lt;&lt; endl;
+        cout &lt;&lt; n &lt;&lt; &quot; 是偶数\n&quot;;
     } else {
-        cout &lt;&lt; n &lt;&lt; " 是奇数" &lt;&lt; endl;
+        cout &lt;&lt; n &lt;&lt; &quot; 是奇数\n&quot;;
     }
-    cout &lt;&lt; endl;
 
-    // ===== 三、多分支 if-else if-else =====
-    cout &lt;&lt; "【三、多分支 if-else if-else】" &lt;&lt; endl;
-
-    int grade_score;
-    cout &lt;&lt; "请输入成绩 (0-100): ";
-    cin &gt;&gt; grade_score;
-
-    // 注意：条件必须从严格到宽松排列！
-    if (grade_score &gt;= 90) {
-        cout &lt;&lt; "等级: A (优秀)" &lt;&lt; endl;
-    } else if (grade_score &gt;= 80) {
-        cout &lt;&lt; "等级: B (良好)" &lt;&lt; endl;
-    } else if (grade_score &gt;= 70) {
-        cout &lt;&lt; "等级: C (中等)" &lt;&lt; endl;
-    } else if (grade_score &gt;= 60) {
-        cout &lt;&lt; "等级: D (及格)" &lt;&lt; endl;
+    // 符号判断
+    if (n &gt; 0) {
+        cout &lt;&lt; &quot;正数\n&quot;;
+    } else if (n &lt; 0) {
+        cout &lt;&lt; &quot;负数\n&quot;;
     } else {
-        cout &lt;&lt; "等级: E (不及格)" &lt;&lt; endl;
+        cout &lt;&lt; &quot;零\n&quot;;
     }
-    cout &lt;&lt; endl;
+}
 
-    // ===== 四、嵌套 if =====
-    cout &lt;&lt; "【四、嵌套 if 演示】" &lt;&lt; endl;
+// -------------------- 演示 3：多分支 --------------------
+void demo03_multi_branch() {
+    print_divider(&quot;演示3：多分支 if-else if-else&quot;);
 
+    cout &lt;&lt; &quot;请输入成绩 (0-100)：&quot;;
+    int score;
+    cin &gt;&gt; score;
+
+    cout &lt;&lt; &quot;\n【正确顺序：从严到宽】\n&quot;;
+    if (score &gt;= 90) {
+        cout &lt;&lt; &quot;等级: A (优秀)\n&quot;;
+    } else if (score &gt;= 80) {
+        cout &lt;&lt; &quot;等级: B (良好)\n&quot;;
+    } else if (score &gt;= 70) {
+        cout &lt;&lt; &quot;等级: C (中等)\n&quot;;
+    } else if (score &gt;= 60) {
+        cout &lt;&lt; &quot;等级: D (及格)\n&quot;;
+    } else {
+        cout &lt;&lt; &quot;等级: E (不及格)\n&quot;;
+    }
+
+    cout &lt;&lt; &quot;\n【错误顺序演示：从宽到严】\n&quot;;
+    if (score &gt;= 60) {
+        cout &lt;&lt; &quot;错误链命中: 及格  （后面的良好/优秀不可达）\n&quot;;
+    } else if (score &gt;= 80) {
+        cout &lt;&lt; &quot;良好\n&quot;;
+    } else if (score &gt;= 90) {
+        cout &lt;&lt; &quot;优秀\n&quot;;
+    } else {
+        cout &lt;&lt; &quot;不及格\n&quot;;
+    }
+
+    cout &lt;&lt; &quot;结论：else if 命中即停，范围条件必须从严到宽。\n&quot;;
+}
+
+// -------------------- 演示 4：嵌套 if --------------------
+void demo04_nested_if() {
+    print_divider(&quot;演示4：嵌套 if&quot;);
+
+    cout &lt;&lt; &quot;请输入三个整数（空格分隔）：&quot;;
     int a, b, c;
-    cout &lt;&lt; "请输入三个整数（空格分隔）: ";
     cin &gt;&gt; a &gt;&gt; b &gt;&gt; c;
 
-    // 方法1：嵌套if找最大值
     int maxVal;
     if (a &gt;= b) {
         if (a &gt;= c) {
@@ -209,111 +238,339 @@ int main() {
             maxVal = c;
         }
     }
-    cout &lt;&lt; "最大值(嵌套if): " &lt;&lt; maxVal &lt;&lt; endl;
+    cout &lt;&lt; &quot;最大值(嵌套 if) = &quot; &lt;&lt; maxVal &lt;&lt; &#x27;\n&#x27;;
+    cout &lt;&lt; &quot;最大值(max 函数) = &quot; &lt;&lt; max({a, b, c}) &lt;&lt; &#x27;\n&#x27;;
 
-    // 方法2：使用 max 函数（更简洁）
-    cout &lt;&lt; "最大值(max函数): " &lt;&lt; max({a, b, c}) &lt;&lt; endl;
-
-    // 排序三个数
     int x = a, y = b, z = c;
     if (x &gt; y) swap(x, y);
     if (x &gt; z) swap(x, z);
     if (y &gt; z) swap(y, z);
-    cout &lt;&lt; "排序结果: " &lt;&lt; x &lt;&lt; " " &lt;&lt; y &lt;&lt; " " &lt;&lt; z &lt;&lt; endl;
-    cout &lt;&lt; endl;
+    cout &lt;&lt; &quot;升序排序: &quot; &lt;&lt; x &lt;&lt; &#x27; &#x27; &lt;&lt; y &lt;&lt; &#x27; &#x27; &lt;&lt; z &lt;&lt; &#x27;\n&#x27;;
 
-    // ===== 五、悬空 else 问题（重点） =====
-    cout &lt;&lt; "【五、悬空 else 问题（考试重点）】" &lt;&lt; endl;
+    // 象限判断：嵌套 vs 拍平
+    cout &lt;&lt; &quot;\n以 (a,b) 做平面象限判断：\n&quot;;
+    if (a == 0 || b == 0) {
+        cout &lt;&lt; &quot;在坐标轴上\n&quot;;
+    } else if (a &gt; 0) {
+        if (b &gt; 0) cout &lt;&lt; &quot;第一象限\n&quot;;
+        else cout &lt;&lt; &quot;第四象限\n&quot;;
+    } else {
+        if (b &gt; 0) cout &lt;&lt; &quot;第二象限\n&quot;;
+        else cout &lt;&lt; &quot;第三象限\n&quot;;
+    }
+}
 
-    cout &lt;&lt; "示例1: 不带花括号的嵌套if" &lt;&lt; endl;
+// -------------------- 演示 5：悬空 else（重点） --------------------
+void demo05_dangling_else() {
+    print_divider(&quot;演示5：悬空 else（dangling else）&quot;);
+
+    cout &lt;&lt; &quot;规则：else 与最近的、尚未配对的 if 匹配（与缩进无关）。\n\n&quot;;
+
+    // ========== 考点：悬空 else ==========
+    // 下列无花括号嵌套可能触发编译器警告：-Wdangling-else
+    // 这是 CSP-J 读程高频考点，故保留“危险写法”用于演示语义。
+    cout &lt;&lt; &quot;【示例1】x=1, y=0\n&quot;;
+    cout &lt;&lt; &quot;代码：if(x&gt;0) if(y&gt;0) cout&lt;&lt;\&quot;A\&quot;; else cout&lt;&lt;\&quot;B\&quot;;\n&quot;;
     int xx = 1, yy = 0;
-    cout &lt;&lt; "x=" &lt;&lt; xx &lt;&lt; ", y=" &lt;&lt; yy &lt;&lt; endl;
-
-    cout &lt;&lt; "执行: if(x&gt;0) if(y&gt;0) cout&lt;&lt;\"A\"; else cout&lt;&lt;\"B\";" &lt;&lt; endl;
-    cout &lt;&lt; "输出: ";
+    cout &lt;&lt; &quot;输出: &quot;;
     if (xx &gt; 0)
         if (yy &gt; 0)
-            cout &lt;&lt; "A" &lt;&lt; endl;
+            cout &lt;&lt; &quot;A\n&quot;;
         else
-            cout &lt;&lt; "B" &lt;&lt; endl;
-    cout &lt;&lt; "解释: else与最近的if(y&gt;0)匹配，y&gt;0为false，所以输出B" &lt;&lt; endl;
-    cout &lt;&lt; endl;
+            cout &lt;&lt; &quot;B\n&quot;;  // 匹配内层 if(y&gt;0)
+    cout &lt;&lt; &quot;解释: else 匹配 if(y&gt;0)；y 不大于 0，故输出 B。\n\n&quot;;
 
-    cout &lt;&lt; "示例2: 改变条件" &lt;&lt; endl;
+    cout &lt;&lt; &quot;【示例2】x=-1, y=0（危险写法下应无输出）\n&quot;;
     int x2 = -1, y2 = 0;
-    cout &lt;&lt; "x=" &lt;&lt; x2 &lt;&lt; ", y=" &lt;&lt; y2 &lt;&lt; endl;
-    cout &lt;&lt; "执行: if(x&gt;0) if(y&gt;0) cout&lt;&lt;\"A\"; else cout&lt;&lt;\"B\";" &lt;&lt; endl;
-    cout &lt;&lt; "输出: （无输出）";
+    cout &lt;&lt; &quot;输出: &quot;;
+    // 考点代码（可能 -Wdangling-else）：else 仍匹配内层 if(y2&gt;0)
     if (x2 &gt; 0)
         if (y2 &gt; 0)
-            cout &lt;&lt; "A" &lt;&lt; endl;
+            cout &lt;&lt; &quot;A&quot;;
         else
-            cout &lt;&lt; "B" &lt;&lt; endl;
-    cout &lt;&lt; " (因为x&gt;0为false，整个内层跳过)" &lt;&lt; endl;
-    cout &lt;&lt; endl;
+            cout &lt;&lt; &quot;B&quot;;
+    // x2&gt;0 为假 → 内层整段跳过，上面两个 cout 都不执行
+    cout &lt;&lt; &quot;（无输出）\n&quot;;
+    cout &lt;&lt; &quot;解释: 外层 x&gt;0 为假，整个内层 if-else 被跳过。\n\n&quot;;
 
-    cout &lt;&lt; "示例3: 使用花括号明确范围（推荐）" &lt;&lt; endl;
+    cout &lt;&lt; &quot;【示例3】正确写法：花括号明确配对外层 else\n&quot;;
     int x3 = -1;
-    if (x3 &gt; 0) {  // 花括号明确外层
+    if (x3 &gt; 0) {
         if (yy &gt; 0) {
-            cout &lt;&lt; "A" &lt;&lt; endl;
+            cout &lt;&lt; &quot;A\n&quot;;
         }
-    } else {        // 这个else与外层if配对
-        cout &lt;&lt; "B (外层else)" &lt;&lt; endl;
+    } else {
+        cout &lt;&lt; &quot;B (外层 else)\n&quot;;
     }
-    cout &lt;&lt; endl;
 
-    // ===== 六、闰年判断 =====
-    cout &lt;&lt; "【六、闰年判断】" &lt;&lt; endl;
+    cout &lt;&lt; &quot;\n【示例4】正确写法：花括号明确配对内层 else\n&quot;;
+    int x4 = 5, y4 = 0;
+    if (x4 &gt; 0) {
+        if (y4 &gt; 0) {
+            cout &lt;&lt; &quot;A\n&quot;;
+        } else {
+            cout &lt;&lt; &quot;B (内层 else)\n&quot;;
+        }
+    }
 
+    cout &lt;&lt; &quot;\n建议：任何嵌套 if 都写 {}，从根源消灭悬空 else 歧义。\n&quot;;
+}
+
+// -------------------- 演示 6：闰年 --------------------
+void demo06_leap_year() {
+    print_divider(&quot;演示6：闰年判断&quot;);
+
+    cout &lt;&lt; &quot;请输入年份：&quot;;
     int year;
-    cout &lt;&lt; "请输入年份: ";
     cin &gt;&gt; year;
 
-    // 闰年条件：能被4整除但不能被100整除，或能被400整除
+    // 能被4整除且不能被100整除，或能被400整除
     if ((year % 4 == 0 &amp;&amp; year % 100 != 0) || year % 400 == 0) {
-        cout &lt;&lt; year &lt;&lt; " 是闰年" &lt;&lt; endl;
+        cout &lt;&lt; year &lt;&lt; &quot; 是闰年\n&quot;;
     } else {
-        cout &lt;&lt; year &lt;&lt; " 不是闰年（平年）" &lt;&lt; endl;
+        cout &lt;&lt; year &lt;&lt; &quot; 不是闰年（平年）\n&quot;;
     }
-    cout &lt;&lt; endl;
 
-    // ===== 七、if 条件陷阱演示 =====
-    cout &lt;&lt; "【七、常见陷阱演示】" &lt;&lt; endl;
+    cout &lt;&lt; &quot;\n自测参考：2000 闰，1900 平，2024 闰，2023 平。\n&quot;;
+}
 
-    // 陷阱1：if后多加分号
-    int trap1 = 10;
-    cout &lt;&lt; "陷阱1: if后多加分号" &lt;&lt; endl;
-    cout &lt;&lt; "if(trap1 &gt; 0); ← 分号构成空语句！" &lt;&lt; endl;
-    if (trap1 &gt; 0);  // 空语句！下面代码无条件执行
+// -------------------- 演示 7：条件与陷阱 --------------------
+void demo07_condition_traps() {
+    print_divider(&quot;演示7：条件表达式与常见陷阱&quot;);
+
+    // 陷阱1：if 后分号
+    cout &lt;&lt; &quot;【陷阱1】if 后多加分号\n&quot;;
+    int trap1 = -5;
+    cout &lt;&lt; &quot;trap1=&quot; &lt;&lt; trap1 &lt;&lt; &quot;\n&quot;;
+    if (trap1 &gt; 0);  // 空语句！
     {
-        cout &lt;&lt; "这行代码会无条件执行（即使条件不满足）" &lt;&lt; endl;
+        cout &lt;&lt; &quot;花括号内无条件执行（即使条件为假）\n&quot;;
     }
-    cout &lt;&lt; endl;
+    cout &lt;&lt; &#x27;\n&#x27;;
 
-    // 陷阱2：将=误写为==
+    // 陷阱2：= 与 ==
+    cout &lt;&lt; &quot;【陷阱2】if (x = 5) 是赋值\n&quot;;
     int trap2 = 0;
-    cout &lt;&lt; "陷阱2: if(trap2 = 5) ← 这是赋值，结果为5(非0=真)" &lt;&lt; endl;
     if (trap2 = 5) {
-        cout &lt;&lt; "条件\"成立\"！而且trap2被改为: " &lt;&lt; trap2 &lt;&lt; endl;
+        cout &lt;&lt; &quot;条件“成立”，且 trap2 被改成 &quot; &lt;&lt; trap2 &lt;&lt; &#x27;\n&#x27;;
     }
-    cout &lt;&lt; "正确写法: if(trap2 == 5)" &lt;&lt; endl;
-    cout &lt;&lt; endl;
+    cout &lt;&lt; &quot;正确：if (trap2 == 5)\n\n&quot;;
 
-    // 陷阱3：浮点数直接==比较
-    cout &lt;&lt; "陷阱3: 浮点数比较" &lt;&lt; endl;
+    // 陷阱3：浮点比较
+    cout &lt;&lt; &quot;【陷阱3】浮点数 == 比较\n&quot;;
     double d1 = 0.1 + 0.2;
     double d2 = 0.3;
-    cout &lt;&lt; "0.1 + 0.2 = " &lt;&lt; d1 &lt;&lt; endl;
-    cout &lt;&lt; "0.3 = " &lt;&lt; d2 &lt;&lt; endl;
+    cout &lt;&lt; &quot;0.1+0.2 = &quot; &lt;&lt; d1 &lt;&lt; &quot;, 0.3 = &quot; &lt;&lt; d2 &lt;&lt; &#x27;\n&#x27;;
     if (d1 == d2) {
-        cout &lt;&lt; "相等" &lt;&lt; endl;
+        cout &lt;&lt; &quot;直接 == ：相等\n&quot;;
     } else {
-        cout &lt;&lt; "不相等! (浮点数精度问题)" &lt;&lt; endl;
+        cout &lt;&lt; &quot;直接 == ：不相等（精度问题）\n&quot;;
     }
-    cout &lt;&lt; "正确比较: fabs(d1 - d2) &lt; 1e-9" &lt;&lt; endl;
+    if (fabs(d1 - d2) &lt; 1e-9) {
+        cout &lt;&lt; &quot;近似比较 fabs(d1-d2)&lt;1e-9 ：视为相等\n&quot;;
+    }
+    cout &lt;&lt; &#x27;\n&#x27;;
 
-    cout &lt;&lt; endl &lt;&lt; "========== 第8课演示结束 ==========" &lt;&lt; endl;
+    // 陷阱4：优先级
+    cout &lt;&lt; &quot;【陷阱4】&amp;&amp; 优先于 ||\n&quot;;
+    int a = 0, b = 1, c = 1;
+    bool r = a &gt; 0 || b &gt; 0 &amp;&amp; c &gt; 0;  // a&gt;0 || (b&gt;0 &amp;&amp; c&gt;0)
+    cout &lt;&lt; &quot;a=0,b=1,c=1;  a&gt;0 || b&gt;0 &amp;&amp; c&gt;0  → &quot; &lt;&lt; r
+         &lt;&lt; &quot; （等价于 a&gt;0 || (b&gt;0 &amp;&amp; c&gt;0)）\n&quot;;
+
+    // 非零为真
+    cout &lt;&lt; &quot;\n【补充】非零为真\n&quot;;
+    int k = 3;
+    if (k) cout &lt;&lt; &quot;if(k) 当 k=3 时为真\n&quot;;
+    if (k % 2) cout &lt;&lt; &quot;if(k%2) 奇数时为真\n&quot;;
+}
+
+// -------------------- 演示 8：票价 / 复合条件 --------------------
+void demo08_ticket_price() {
+    print_divider(&quot;演示8：分段票价（复合多分支）&quot;);
+
+    cout &lt;&lt; &quot;请输入年龄：&quot;;
+    int age;
+    cin &gt;&gt; age;
+
+    int price;
+    if (age &lt; 0) {
+        cout &lt;&lt; &quot;年龄非法\n&quot;;
+        return;
+    } else if (age &lt; 6) {
+        price = 0;
+    } else if (age &lt;= 12) {
+        price = 20;
+    } else if (age &lt; 60) {
+        price = 40;
+    } else {
+        price = 20;  // 老人优惠
+    }
+    cout &lt;&lt; &quot;票价 = &quot; &lt;&lt; price &lt;&lt; &quot; 元\n&quot;;
+}
+
+// -------------------- 真题 1：悬空 else --------------------
+void exam01_dangling_else() {
+    print_divider(&quot;真题1：悬空 else 读程（AC）&quot;);
+    cout &lt;&lt; &quot;原题：x=5,y=0; if(x&gt;0) if(y&gt;0) A; else B;\n&quot;;
+    cout &lt;&lt; &quot;标准答案：B\n\n&quot;;
+
+    int x = 5, y = 0;
+    cout &lt;&lt; &quot;运行输出：&quot;;
+    // 考点代码（可能 -Wdangling-else）：else 匹配内层 if(y&gt;0)
+    if (x &gt; 0)
+        if (y &gt; 0)
+            cout &lt;&lt; &quot;A&quot; &lt;&lt; endl;
+        else
+            cout &lt;&lt; &quot;B&quot; &lt;&lt; endl;
+
+    cout &lt;&lt; &quot;\n正确加括号（语义同原题，消除警告）：\n&quot;;
+    if (x &gt; 0) {
+        if (y &gt; 0) {
+            cout &lt;&lt; &quot;A&quot; &lt;&lt; endl;
+        } else {
+            cout &lt;&lt; &quot;B&quot; &lt;&lt; endl;
+        }
+    }
+}
+
+// -------------------- 真题 2：成绩等级（正确顺序） --------------------
+void exam02_grade() {
+    print_divider(&quot;真题2：成绩多分支（AC）&quot;);
+    cout &lt;&lt; &quot;请输入成绩，将按正确顺序输出等级：&quot;;
+    int score;
+    cin &gt;&gt; score;
+
+    // AC：从严到宽
+    if (score &gt;= 90) {
+        cout &lt;&lt; &quot;优秀\n&quot;;
+    } else if (score &gt;= 80) {
+        cout &lt;&lt; &quot;良好\n&quot;;
+    } else if (score &gt;= 60) {
+        cout &lt;&lt; &quot;及格\n&quot;;
+    } else {
+        cout &lt;&lt; &quot;不及格\n&quot;;
+    }
+
+    cout &lt;&lt; &quot;\n对照：若错误地把 &gt;=60 放第一，输入 85 会得到“及格”。\n&quot;;
+}
+
+// -------------------- 真题 3：分段函数 --------------------
+void exam03_piecewise() {
+    print_divider(&quot;真题3：分段函数（AC）&quot;);
+    cout &lt;&lt; &quot;y = x (x&lt;1);  2x-1 (1&lt;=x&lt;10);  3x-11 (x&gt;=10)\n&quot;;
+    cout &lt;&lt; &quot;请输入整数 x：&quot;;
+    int x;
+    cin &gt;&gt; x;
+
+    int y;
+    if (x &lt; 1) {
+        y = x;
+    } else if (x &lt; 10) {
+        y = 2 * x - 1;
+    } else {
+        y = 3 * x - 11;
+    }
+    cout &lt;&lt; &quot;y = &quot; &lt;&lt; y &lt;&lt; &#x27;\n&#x27;;
+}
+
+// -------------------- 真题 4：闰年 Y/N --------------------
+void exam04_leap_yn() {
+    print_divider(&quot;真题4：闰年 Y/N（AC）&quot;);
+    cout &lt;&lt; &quot;请输入年份：&quot;;
+    int year;
+    cin &gt;&gt; year;
+
+    if ((year % 4 == 0 &amp;&amp; year % 100 != 0) || year % 400 == 0) {
+        cout &lt;&lt; &quot;Y\n&quot;;
+    } else {
+        cout &lt;&lt; &quot;N\n&quot;;
+    }
+}
+
+// -------------------- 附加：三数关系分类 --------------------
+void demo09_triangle_type() {
+    print_divider(&quot;附加：三角形类型判断&quot;);
+    cout &lt;&lt; &quot;请输入三边 a b c：&quot;;
+    int a, b, c;
+    cin &gt;&gt; a &gt;&gt; b &gt;&gt; c;
+
+    // 排序便于判断
+    if (a &gt; b) swap(a, b);
+    if (a &gt; c) swap(a, c);
+    if (b &gt; c) swap(b, c);
+
+    if (a + b &lt;= c) {
+        cout &lt;&lt; &quot;不能构成三角形\n&quot;;
+    } else if (a == b &amp;&amp; b == c) {
+        cout &lt;&lt; &quot;等边三角形\n&quot;;
+    } else if (a == b || b == c) {
+        cout &lt;&lt; &quot;等腰三角形\n&quot;;
+    } else if (a * a + b * b == c * c) {
+        cout &lt;&lt; &quot;直角三角形\n&quot;;
+    } else {
+        cout &lt;&lt; &quot;一般三角形\n&quot;;
+    }
+}
+
+// -------------------- 菜单 --------------------
+void show_menu() {
+    cout &lt;&lt; &quot;\n========================================\n&quot;;
+    cout &lt;&lt; &quot;  CSP-J 第8课：if-else 分支结构\n&quot;;
+    cout &lt;&lt; &quot;========================================\n&quot;;
+    cout &lt;&lt; &quot;  [1] 单分支 if\n&quot;;
+    cout &lt;&lt; &quot;  [2] 双分支 if-else\n&quot;;
+    cout &lt;&lt; &quot;  [3] 多分支 if-else if（含错误顺序）\n&quot;;
+    cout &lt;&lt; &quot;  [4] 嵌套 if（最值/排序/象限）\n&quot;;
+    cout &lt;&lt; &quot;  [5] 悬空 else 专题（含 -Wdangling-else 考点）\n&quot;;
+    cout &lt;&lt; &quot;  [6] 闰年判断\n&quot;;
+    cout &lt;&lt; &quot;  [7] 条件表达式与陷阱\n&quot;;
+    cout &lt;&lt; &quot;  [8] 分段票价\n&quot;;
+    cout &lt;&lt; &quot;  [9] 真题1：悬空 else 读程\n&quot;;
+    cout &lt;&lt; &quot;  [10] 真题2：成绩等级 AC\n&quot;;
+    cout &lt;&lt; &quot;  [11] 真题3：分段函数 AC\n&quot;;
+    cout &lt;&lt; &quot;  [12] 真题4：闰年 Y/N AC\n&quot;;
+    cout &lt;&lt; &quot;  [13] 附加：三角形类型\n&quot;;
+    cout &lt;&lt; &quot;  [0] 退出\n&quot;;
+    cout &lt;&lt; &quot;========================================\n&quot;;
+    cout &lt;&lt; &quot;请选择：&quot;;
+}
+
+int main() {
+    ios::sync_with_stdio(false);
+    cin.tie(nullptr);
+
+    int choice = -1;
+    do {
+        show_menu();
+        if (!(cin &gt;&gt; choice)) {
+            break;
+        }
+        cout &lt;&lt; &#x27;\n&#x27;;
+
+        switch (choice) {
+            case 1: demo01_single_if(); break;
+            case 2: demo02_if_else(); break;
+            case 3: demo03_multi_branch(); break;
+            case 4: demo04_nested_if(); break;
+            case 5: demo05_dangling_else(); break;
+            case 6: demo06_leap_year(); break;
+            case 7: demo07_condition_traps(); break;
+            case 8: demo08_ticket_price(); break;
+            case 9: exam01_dangling_else(); break;
+            case 10: exam02_grade(); break;
+            case 11: exam03_piecewise(); break;
+            case 12: exam04_leap_yn(); break;
+            case 13: demo09_triangle_type(); break;
+            case 0:
+                cout &lt;&lt; &quot;感谢学习第8课！下一课：switch-case 多分支。\n&quot;;
+                break;
+            default:
+                cout &lt;&lt; &quot;无效选项，请输入 0-13。\n&quot;;
+                break;
+        }
+    } while (choice != 0);
+
     return 0;
 }
 </pre>

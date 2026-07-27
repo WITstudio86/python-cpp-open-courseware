@@ -7,367 +7,401 @@
 <title>CSP-J 备考课程 - 第27课：模拟算法（上）</title>
 <style>
 * { margin: 0; padding: 0; box-sizing: border-box; }
-body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Microsoft YaHei', sans-serif; background: #f0f2f5; display: flex; justify-content: center; align-items: center; min-height: 100vh; padding: 20px; }
-.container { max-width: 900px; width: 100%; background: white; border-radius: 16px; box-shadow: 0 8px 40px rgba(0,0,0,0.12); overflow: hidden; }
-.header { background: linear-gradient(135deg, #1a237e, #283593); color: white; padding: 16px 24px; display: flex; justify-content: space-between; align-items: center; }
-.header .course-tag { background: #ffd600; color: #1a237e; padding: 4px 12px; border-radius: 20px; font-size: 14px; font-weight: bold; }
-.slide-container { padding: 40px; min-height: 500px; }
-.slide { display: none; }
-.slide.active { display: block; animation: fadeIn 0.4s ease; }
-@keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
-.slide h2 { color: #1a237e; font-size: 28px; margin-bottom: 20px; border-bottom: 3px solid #ffd600; padding-bottom: 10px; display: inline-block; }
-.slide h3 { color: #283593; font-size: 22px; margin: 20px 0 12px; }
-.slide p, .slide li { font-size: 17px; line-height: 1.8; color: #333; margin-bottom: 8px; }
-.slide ul, .slide ol { padding-left: 24px; margin-bottom: 16px; }
-.exam-tip { background: #fff8e1; border-left: 4px solid #ff8f00; border-radius: 8px; padding: 16px 20px; margin: 20px 0; font-size: 15px; }
-.exam-tip strong { color: #e65100; }
-.code-block { background: #1e1e1e; border-radius: 8px; padding: 16px; margin: 12px 0; overflow-x: auto; font-family: Consolas, Monaco, 'Courier New', monospace; font-size: 14px; line-height: 1.6; color: #d4d4d4; }
-.code-block code { white-space: pre; }
-.slide.title-slide.active { text-align: center; padding-top: 80px; }
-.slide.title-slide.active h1 { font-size: 42px; color: #1a237e; margin-bottom: 16px; }
-.slide.title-slide.active .subtitle { font-size: 22px; color: #5c6bc0; margin-bottom: 40px; }
-.slide.title-slide.active .badge { display: inline-block; background: #ffd600; color: #1a237e; padding: 8px 24px; border-radius: 30px; font-size: 18px; font-weight: bold; }
-.navigation { display: flex; justify-content: center; align-items: center; gap: 16px; padding: 20px; background: #fafafa; border-top: 1px solid #e0e0e0; }
-.nav-btn { background: #1a237e; color: white; border: none; padding: 10px 24px; border-radius: 8px; font-size: 16px; cursor: pointer; transition: background 0.3s; }
-.nav-btn:hover { background: #283593; }
-.nav-btn:disabled { background: #9fa8da; cursor: not-allowed; }
-.slide-indicator { font-size: 16px; color: #666; min-width: 60px; text-align: center; }
-.summary-box { background: #e8eaf6; border-radius: 12px; padding: 24px; margin: 16px 0; }
-.summary-box li { color: #1a237e; font-weight: 500; }
-table { border-collapse: collapse; width: 100%; margin: 16px 0; }
-th { background: #1a237e; color: white; padding: 10px; text-align: left; }
-td { padding: 8px 10px; border-bottom: 1px solid #e0e0e0; }
+body {
+    font-family: "PingFang SC", "Microsoft YaHei", "Hiragino Sans GB", sans-serif;
+    background: #f5f5f5; color: #333;
+    overflow: hidden; height: 100vh;
+}
+#title-bar {
+    background: #1a237e; color: #ffd600;
+    padding: 8px 24px; font-size: 14px; font-weight: bold;
+    letter-spacing: 2px;
+    display: flex; justify-content: space-between; align-items: center;
+    position: fixed; top: 0; left: 0; right: 0;
+    z-index: 1000; height: 40px;
+}
+#slide-container {
+    position: absolute;
+    top: 40px; left: 0; right: 0; bottom: 60px;
+    overflow: hidden;
+}
+.slide {
+    display: none; background: white;
+    height: 100%; padding: 40px 60px;
+    overflow-y: auto;
+    animation: fadeSlide 0.4s ease;
+}
+.slide.active { display: block; }
+@keyframes fadeSlide {
+    from { opacity: 0; transform: translateX(30px); }
+    to { opacity: 1; transform: translateX(0); }
+}
+h1 { font-size: 32px; color: #1a237e; margin-bottom: 16px; border-bottom: 3px solid #ffd600; padding-bottom: 12px; }
+h2 { font-size: 24px; color: #1a237e; margin: 20px 0 12px; }
+h3 { font-size: 18px; color: #283593; margin: 14px 0 8px; }
+p, li { font-size: 16px; line-height: 1.8; margin-bottom: 6px; }
+ul, ol { margin-left: 24px; }
+table { border-collapse: collapse; width: 100%; margin: 12px 0; }
+th { background: #1a237e; color: white; padding: 10px 12px; text-align: left; font-size: 14px; }
+td { padding: 8px 12px; border-bottom: 1px solid #e0e0e0; font-size: 14px; }
 tr:nth-child(even) td { background: #f5f5f5; }
-.keyword { color: #569cd6; }
-.string { color: #ce9178; }
-.comment { color: #6a9955; }
-.number { color: #b5cea8; }
-.func { color: #dcdcaa; }
-@media (max-width: 600px) {
-  .slide-container { padding: 24px; }
-  .slide.title-slide.active h1 { font-size: 28px; }
-  .slide.title-slide.active .subtitle { font-size: 18px; }
-  .slide h2 { font-size: 24px; }
+.code-block {
+    background: #1e1e1e; color: #d4d4d4;
+    padding: 16px 20px; border-radius: 8px;
+    font-family: Consolas, Monaco, "Courier New", monospace;
+    font-size: 13px; line-height: 1.7;
+    overflow-x: auto; margin: 10px 0;
+    white-space: pre-wrap; word-wrap: break-word;
+}
+.code-block .keyword { color: #569cd6; }
+.code-block .type { color: #4ec9b0; }
+.code-block .string { color: #ce9178; }
+.code-block .comment { color: #6a9955; }
+.code-block .number { color: #b5cea8; }
+.code-block .builtin { color: #dcdcaa; }
+.exam-tips {
+    border: 2px solid #ff9800; border-left: 6px solid #ff9800;
+    background: #fff8e1; padding: 14px 18px; margin: 14px 0;
+    border-radius: 4px;
+}
+.exam-tips h4 { color: #e65100; margin-bottom: 6px; font-size: 15px; }
+.key-point {
+    background: #e8eaf6; border-left: 4px solid #1a237e;
+    padding: 10px 16px; margin: 10px 0; border-radius: 4px;
+}
+.highlight { color: #e65100; font-weight: bold; }
+.slide.title-slide.active {
+    display: flex; flex-direction: column;
+    justify-content: center; align-items: center; text-align: center;
+    background: linear-gradient(135deg, #1a237e 0%, #283593 50%, #3949ab 100%);
+    color: white;
+}
+.slide.title-slide.active h1 { color: #ffd600; font-size: 44px; border: none; margin-bottom: 20px; }
+.slide.title-slide.active h2 { color: white; font-size: 24px; margin-bottom: 12px; font-weight: normal; }
+.slide.title-slide.active p { color: #bbdefb; font-size: 18px; }
+#nav-bar {
+    position: fixed; bottom: 0; left: 0; right: 0;
+    height: 60px; background: white;
+    display: flex; justify-content: center; align-items: center;
+    gap: 12px; border-top: 1px solid #e0e0e0; z-index: 1000;
+}
+.nav-btn {
+    background: #1a237e; color: white; border: none;
+    padding: 10px 28px; border-radius: 20px;
+    cursor: pointer; font-size: 14px; font-family: inherit;
+}
+.nav-btn:hover { background: #283593; }
+.nav-btn:disabled { background: #bdbdbd; cursor: not-allowed; }
+#page-indicator { font-size: 14px; color: #666; min-width: 60px; text-align: center; }
+.sample-io { background: #f5f5f5; padding: 10px 16px; border-radius: 4px; margin: 8px 0; font-family: Consolas, Monaco, monospace; font-size: 13px; }
+.flex-row { display: flex; gap: 24px; }
+.flex-col { flex: 1; }
+@media (max-width: 768px) {
+    .slide { padding: 24px 16px; }
+    h1 { font-size: 22px; } h2 { font-size: 18px; }
+    p, li { font-size: 13px; }
+    .code-block { font-size: 11px; }
+    .flex-row { flex-direction: column; }
 }
 </style>
 </head>
 <body>
-<div class="container">
-<div class="header">
-<span style="font-weight:bold;font-size:18px;">第27课：模拟算法（上）</span>
-<span class="course-tag">CSP-J 备考课程</span>
+<div id="title-bar">
+<span>CSP-J 备考课程</span>
+<span>第27课：模拟算法（上）</span>
 </div>
-<div class="slide-container">
-<!-- SLIDE 1: Title -->
-<div class="slide active" id="slide1">
-<div class="title-slide">
+<div id="slide-container">
+
+<div class="slide active title-slide">
 <h1>模拟算法（上）</h1>
-<p class="subtitle">按规则步步为营 — 最朴实也最可靠的算法</p>
-<div class="badge">🔍 CSP-J 基础组</div>
-<p style="margin-top: 40px; color: #666; font-size: 16px;">掌握过程模拟、日期计算与高精度加法</p>
+<h2>第27课 · CSP-J 备考课程</h2>
+<p>按规则逐步复现——细心就是算法</p>
+<p style="margin-top:40px; font-size:14px; color:#90caf9;">
+过程模拟 | 状态模拟 | 日期计算 | 高精度加法 | 闰年
+</p>
+<aside class="notes">【开场】第1/14页。模拟=把题面规则翻译成代码。</aside>
 </div>
 
-<aside class="notes">【开场】第 1/7 页 · 模拟算法（上）
-用 30 秒说明本课目标与学完能做什么，再进入正题。
-大纲考点：过程模拟、状态模拟、高精度加法
-配套练习方向：日期计算与过程模拟题
-封面关键词：
-· 按规则步步为营 — 最朴实也最可靠的算法
-· 掌握过程模拟、日期计算与高精度加法
-互动：问学生「今天最想搞清楚什么？」，收 1–2 个期待。</aside>
-</div>
-<!-- SLIDE 2: 模拟算法思想 -->
-<div class="slide" id="slide2">
-<h2>一、模拟算法思想</h2>
-<h3>1.1 什么是模拟算法？</h3>
-<p>模拟算法就是<strong>"题目怎么说，代码就怎么写"</strong>。将题目中的规则和过程用代码一步步还原，让计算机按照规则执行。</p>
-<ul>
-<li>模拟 = 把现实问题的过程翻译为程序的执行流程</li>
-<li>模拟不需要高深的数学推导，关键是<strong>细心和严谨</strong></li>
-<li>CSP-J 中模拟题占比可达 <strong>30% 以上</strong>，是必考题型</li>
-</ul>
-<h3>1.2 两类模拟</h3>
+<div class="slide">
+<h1>考纲与核心思想</h1>
 <table>
-<tr><th>类型</th><th>特征</th><th>典型例题</th></tr>
-<tr><td><strong>过程模拟</strong></td><td>按时间线一步步执行特定操作</td><td>日期计算、约瑟夫环、游戏模拟</td></tr>
-<tr><td><strong>状态模拟</strong></td><td>根据规则更新状态，直到达到某种条件</td><td>高精度运算、进制转换、矩阵变换</td></tr>
+<tr><th>要求</th><th>说明</th></tr>
+<tr><td>过程模拟</td><td>把操作流程逐步翻译成代码</td></tr>
+<tr><td>状态模拟</td><td>维护状态变量，按指令更新</td></tr>
+<tr><td>日期计算</td><td>闰年、月天数、日期差</td></tr>
+<tr><td>高精度加法</td><td>字符串模拟竖式进位</td></tr>
 </table>
-<h3>1.3 适用题型</h3>
+<div class="key-point">
+<strong>核心：</strong>① 准确理解规则；② 正确维护状态。难点在<strong>细节</strong>（边界、特殊情况），不在高深理论。
+</div>
+<div class="exam-tips">
+<h4>考试心态</h4>
+<p>模拟题代码可能很长，但分步写、样例手算对照，往往比「想巧解」更稳拿分。</p>
+</div>
+<aside class="notes">【讲解】强调细心与结构化。</aside>
+</div>
+
+<div class="slide">
+<h1>一、过程模拟：数字反转</h1>
+<div class="code-block">
+<span class="keyword">int</span> n; cin &gt;&gt; n;
+<span class="keyword">int</span> sign = <span class="number">1</span>;
+<span class="keyword">if</span> (n &lt; <span class="number">0</span>) { sign = -<span class="number">1</span>; n = -n; }
+<span class="keyword">int</span> reversed = <span class="number">0</span>;
+<span class="keyword">while</span> (n &gt; <span class="number">0</span>) {
+    <span class="keyword">int</span> digit = n % <span class="number">10</span>;
+    reversed = reversed * <span class="number">10</span> + digit;
+    n /= <span class="number">10</span>;
+}
+cout &lt;&lt; sign * reversed &lt;&lt; endl;
+</div>
+<p>模拟「取最低位 → 追加到结果」。状态：<code>reversed</code>=已反转，<code>n</code>=剩余。</p>
+<h3>约分：模拟辗转相除</h3>
+<div class="code-block">
+<span class="keyword">while</span> (denominator != <span class="number">0</span>) {
+    <span class="keyword">int</span> temp = denominator;
+    denominator = numerator % denominator;
+    numerator = temp;
+}
+<span class="keyword">int</span> g = numerator;  <span class="comment">// gcd</span>
+cout &lt;&lt; a/g &lt;&lt; <span class="string">"/"</span> &lt;&lt; b/g &lt;&lt; endl;
+</div>
+<aside class="notes">【讲解】过程模拟=手工步骤的程序化。</aside>
+</div>
+
+<div class="slide">
+<h1>二、状态模拟：开关灯</h1>
+<p>n 盏灯初关；第 i 人翻转编号为 i 倍数的灯。输出最终开着的灯。</p>
+<div class="code-block">
+<span class="keyword">bool</span> lights[<span class="number">5005</span>] = {false};
+<span class="keyword">for</span> (<span class="keyword">int</span> i = <span class="number">1</span>; i &lt;= n; i++)
+    <span class="keyword">for</span> (<span class="keyword">int</span> j = i; j &lt;= n; j += i)
+        lights[j] = !lights[j];
+<span class="keyword">for</span> (<span class="keyword">int</span> i = <span class="number">1</span>; i &lt;= n; i++)
+    <span class="keyword">if</span> (lights[i]) cout &lt;&lt; i &lt;&lt; <span class="string">" "</span>;
+</div>
+<div class="key-point">
+<strong>框架：</strong>初始化状态 → 对每个时刻/指令更新 → 输出。若同一轮既读旧状态又写新状态，常用<strong>双数组</strong>暂存。
+</div>
+<div class="exam-tips">
+<h4>数学彩蛋</h4>
+<p>最后开着的恰是完全平方数编号的灯（因子成对，平方数多一个因子）。模拟仍是最稳写法。</p>
+</div>
+<aside class="notes">【讲解】状态数组 lights[] 映射现实。</aside>
+</div>
+
+<div class="slide">
+<h1>三、日期计算：闰年与月天数</h1>
+<div class="code-block">
+<span class="keyword">bool</span> <span class="builtin">isLeap</span>(<span class="keyword">int</span> year) {
+    <span class="keyword">return</span> (year % <span class="number">4</span> == <span class="number">0</span> &amp;&amp; year % <span class="number">100</span> != <span class="number">0</span>)
+        || (year % <span class="number">400</span> == <span class="number">0</span>);
+}
+<span class="keyword">int</span> daysInMonth[<span class="number">13</span>] = {<span class="number">0</span>,<span class="number">31</span>,<span class="number">28</span>,<span class="number">31</span>,<span class="number">30</span>,<span class="number">31</span>,<span class="number">30</span>,
+                         <span class="number">31</span>,<span class="number">31</span>,<span class="number">30</span>,<span class="number">31</span>,<span class="number">30</span>,<span class="number">31</span>};
+<span class="keyword">int</span> <span class="builtin">getDays</span>(<span class="keyword">int</span> y, <span class="keyword">int</span> m) {
+    <span class="keyword">if</span> (m == <span class="number">2</span> &amp;&amp; isLeap(y)) <span class="keyword">return</span> <span class="number">29</span>;
+    <span class="keyword">return</span> daysInMonth[m];
+}
+</div>
 <ul>
-<li>题目描述了一个明确的逐步操作流程</li>
-<li>数据范围较小，不涉及复杂优化</li>
-<li>"阅读理解型"题目：题目较长，但逻辑清晰</li>
-<li>数学计算类：大整数、日期、进制</li>
+<li>数组下标从 <strong>1</strong> 开始，[0] 占位</li>
+<li>1900 非闰，2000 是闰——用 %400 覆盖世纪年</li>
 </ul>
-<div class="exam-tip">
-<strong>💡 考试技巧：</strong>模拟题的核心是<strong>准确理解题意</strong>。建议：① 先手动模拟小样例；② 注意边界条件；③ 善用函数拆分复杂逻辑；④ 正确率优先于速度，模拟题通常没有超时风险。
-      </div>
-
-<aside class="notes">【讲解】一、模拟算法思想
-本页要点（照着讲即可）：
-· 模拟算法就是 "题目怎么说，代码就怎么写" 。将题目中的规则和过程用代码一步步还原，让计算机按照规则执行。
-· "题目怎么说，代码就怎么写"
-· 模拟 = 把现实问题的过程翻译为程序的执行流程
-· 模拟不需要高深的数学推导，关键是 细心和严谨
-· 细心和严谨
-· CSP-J 中模拟题占比可达 30% 以上 ，是必考题型
-讲解时放慢关键术语；用 1 个生活类比 + 1 个反例加深印象。
-本课大纲考点（可适时点题）：过程模拟、状态模拟、高精度加法</aside>
+<aside class="notes">【讲解】默写 isLeap 是硬要求。</aside>
 </div>
-<!-- SLIDE 3: 日期计算 -->
-<div class="slide" id="slide3">
-<h2>二、日期计算</h2>
-<h3>2.1 闰年判断</h3>
-<p>闰年满足：① 能被 400 整除；或 ② 能被 4 整除但不能被 100 整除。</p>
-<div class="code-block"><code><span style="color:#569cd6;">bool</span> <span style="color:#dcdcaa;">isLeap</span>(<span style="color:#569cd6;">int</span> year) {
-    <span style="color:#569cd6;">return</span> (year % <span style="color:#b5cea8;">400</span> == <span style="color:#b5cea8;">0</span>) || (year % <span style="color:#b5cea8;">4</span> == <span style="color:#b5cea8;">0</span> &amp;&amp; year % <span style="color:#b5cea8;">100</span> != <span style="color:#b5cea8;">0</span>);
-}</code></div>
-<h3>2.2 月份天数</h3>
-<p>每月天数口诀：<strong>"一三五七八十腊，三十一天永不差；四六九冬三十天，平年二月二十八，闰年二月二十九。"</strong></p>
-<div class="code-block"><code><span style="color:#569cd6;">int</span> daysInMonth[<span style="color:#b5cea8;">13</span>] = {<span style="color:#b5cea8;">0</span>, <span style="color:#b5cea8;">31</span>, <span style="color:#b5cea8;">28</span>, <span style="color:#b5cea8;">31</span>, <span style="color:#b5cea8;">30</span>, <span style="color:#b5cea8;">31</span>, <span style="color:#b5cea8;">30</span>, <span style="color:#b5cea8;">31</span>, <span style="color:#b5cea8;">31</span>, <span style="color:#b5cea8;">30</span>, <span style="color:#b5cea8;">31</span>, <span style="color:#b5cea8;">30</span>, <span style="color:#b5cea8;">31</span>};
 
-<span style="color:#569cd6;">int</span> <span style="color:#dcdcaa;">getDays</span>(<span style="color:#569cd6;">int</span> year, <span style="color:#569cd6;">int</span> month) {
-    <span style="color:#569cd6;">if</span> (month == <span style="color:#b5cea8;">2</span> &amp;&amp; <span style="color:#dcdcaa;">isLeap</span>(year)) <span style="color:#569cd6;">return</span> <span style="color:#b5cea8;">29</span>;
-    <span style="color:#569cd6;">return</span> daysInMonth[month];
-}</code></div>
-<h3>2.3 日期差计算</h3>
-<p>计算两个日期的间隔天数：</p>
-<ol>
-<li>定义一个"起点日期"（如公元 1 年 1 月 1 日）</li>
-<li>分别计算两个日期距离起点的<strong>绝对天数</strong></li>
-<li>两数相减得到结果</li>
-</ol>
-<div class="code-block"><code><span style="color:#569cd6;">int</span> <span style="color:#dcdcaa;">daysFromStart</span>(<span style="color:#569cd6;">int</span> y, <span style="color:#569cd6;">int</span> m, <span style="color:#569cd6;">int</span> d) {
-    <span style="color:#569cd6;">int</span> days = <span style="color:#b5cea8;">0</span>;
-    <span style="color:#569cd6;">for</span> (<span style="color:#569cd6;">int</span> i = <span style="color:#b5cea8;">1</span>; i &lt; y; i++)
-        days += <span style="color:#dcdcaa;">isLeap</span>(i) ? <span style="color:#b5cea8;">366</span> : <span style="color:#b5cea8;">365</span>;
-    <span style="color:#569cd6;">for</span> (<span style="color:#569cd6;">int</span> i = <span style="color:#b5cea8;">1</span>; i &lt; m; i++)
-        days += <span style="color:#dcdcaa;">getDays</span>(y, i);
-    days += d;
-    <span style="color:#569cd6;">return</span> days;
-}</code></div>
-
-<aside class="notes">【讲解】二、日期计算
-结合讲义《四、日期计算》强调：
-· 日期计算是CSP-J中常考的模拟题型，考察对日历规则的理解和细心程度。
-· 闰年规则：能被4整除但不能被100整除，或者能被400整除。
-· bool isLeap(int year) {
-· return (year % 4 == 0 &amp;&amp; year % 100 != 0) || (year % 400 == 0);
-· 使用数组预先存储每月的天数，避免大量if-else判断：
-幻灯片上可见要点：
-· 闰年满足：① 能被 400 整除；或 ② 能被 4 整除但不能被 100 整除。
-· 每月天数口诀： "一三五七八十腊，三十一天永不差；四六九冬三十天，平年二月二十八，闰年二月二十九。"
-· "一三五七八十腊，三十一天永不差；四六九冬三十天，平年二月二十八，闰年二月二十九。"
-· 计算两个日期的间隔天数：
-讲解时放慢关键术语；用 1 个生活类比 + 1 个反例加深印象。</aside>
-</div>
-<!-- SLIDE 4: 高精度加法 -->
-<div class="slide" id="slide4">
-<h2>三、高精度加法 — 竖式模拟</h2>
-<h3>3.1 问题背景</h3>
-<p>当整数超出 <strong>long long</strong> 的范围（约 9 × 10¹⁸）时，需要手动模拟竖式加法。使用<strong>字符串</strong>读入，<strong>数组</strong>存储每一位。</p>
-<h3>3.2 竖式模拟原理</h3>
-<p>模拟小学竖式加法：<strong>从最低位开始逐位相加，处理进位。</strong></p>
-<ol>
-<li>将两个数的每一位存入数组（低位在前，即个位在 a[0]）</li>
-<li>从低位到高位逐位相加：c[i] = a[i] + b[i] + carry</li>
-<li>carry = c[i] / 10，c[i] %= 10（保留个位）</li>
-<li>最后若 carry &gt; 0，需额外加一个进位</li>
-</ol>
-<h3>3.3 核心代码</h3>
-<div class="code-block"><code><span style="color:#569cd6;">string</span> <span style="color:#dcdcaa;">bigAdd</span>(<span style="color:#569cd6;">string</span> s1, <span style="color:#569cd6;">string</span> s2) {
-    <span style="color:#6a9955;">// 反转，使低位在索引 0</span>
-<span style="color:#dcdcaa;">reverse</span>(s1.<span style="color:#dcdcaa;">begin</span>(), s1.<span style="color:#dcdcaa;">end</span>());
-    <span style="color:#dcdcaa;">reverse</span>(s2.<span style="color:#dcdcaa;">begin</span>(), s2.<span style="color:#dcdcaa;">end</span>());
-
-    <span style="color:#569cd6;">string</span> result;
-    <span style="color:#569cd6;">int</span> carry = <span style="color:#b5cea8;">0</span>, i = <span style="color:#b5cea8;">0</span>;
-    <span style="color:#569cd6;">while</span> (i &lt; s1.<span style="color:#dcdcaa;">size</span>() || i &lt; s2.<span style="color:#dcdcaa;">size</span>() || carry) {
-        <span style="color:#569cd6;">int</span> d1 = (i &lt; s1.<span style="color:#dcdcaa;">size</span>()) ? s1[i] - <span style="color:#ce9178;">'0'</span> : <span style="color:#b5cea8;">0</span>;
-        <span style="color:#569cd6;">int</span> d2 = (i &lt; s2.<span style="color:#dcdcaa;">size</span>()) ? s2[i] - <span style="color:#ce9178;">'0'</span> : <span style="color:#b5cea8;">0</span>;
-        <span style="color:#569cd6;">int</span> sum = d1 + d2 + carry;
-        result += (<span style="color:#569cd6;">char</span>)(sum % <span style="color:#b5cea8;">10</span> + <span style="color:#ce9178;">'0'</span>);
-        carry = sum / <span style="color:#b5cea8;">10</span>;
-        i++;
-    }
-    <span style="color:#dcdcaa;">reverse</span>(result.<span style="color:#dcdcaa;">begin</span>(), result.<span style="color:#dcdcaa;">end</span>());
-    <span style="color:#569cd6;">return</span> result;
-}</code></div>
-<div class="exam-tip">
-<strong>💡 考试技巧：</strong>高精度加法的核心是 <strong>反转字符串 + 逐位相加 + 进位处理</strong>。特别注意 while 条件中要带上 <code>|| carry</code>，否则最高位进位会丢失。输入时用 string 而非 int。
-      </div>
-
-<aside class="notes">【讲解】三、高精度加法 — 竖式模拟
-结合讲义《五、高精度加法》强调：
-· C++中int类型最大能表示约21亿（2^31-1），long long类型最大约9×10^18。当数字超过这个范围时（比如100位的整数相加），就需要用**高精度计算**——用字符串模拟手工计算的竖式加法。
-· 手工计算竖式加法时，我们从最低位开始，逐位相加，如果和&gt;=10则进位。高精度加法完全模拟这个过程。
-· 算法步骤：
-· 将两个数字以字符串形式读入。
-· 从最低位（字符串末尾）开始，逐位相加。
-幻灯片上可见要点：
-· 当整数超出 long long 的范围（约 9 × 10¹⁸）时，需要手动模拟竖式加法。使用 字符串 读入， 数组 存储每一位。
-· long long
-· 模拟小学竖式加法： 从最低位开始逐位相加，处理进位。
-· 从最低位开始逐位相加，处理进位。
-讲解时放慢关键术语；用 1 个生活类比 + 1 个反例加深印象。</aside>
-</div>
-<!-- SLIDE 5: 代码模板 -->
-<div class="slide" id="slide5">
-<h2>五、代码模板汇总</h2>
-<h3>5.1 闰年判断模板</h3>
-<div class="code-block"><code><span style="color:#569cd6;">bool</span> <span style="color:#dcdcaa;">isLeap</span>(<span style="color:#569cd6;">int</span> y) {
-    <span style="color:#569cd6;">return</span> y % <span style="color:#b5cea8;">400</span> == <span style="color:#b5cea8;">0</span> || (y % <span style="color:#b5cea8;">4</span> == <span style="color:#b5cea8;">0</span> &amp;&amp; y % <span style="color:#b5cea8;">100</span> != <span style="color:#b5cea8;">0</span>);
-}</code></div>
-<h3>5.2 日期计算模板</h3>
-<div class="code-block"><code><span style="color:#569cd6;">int</span> mdays[<span style="color:#b5cea8;">13</span>] = {<span style="color:#b5cea8;">0</span>,<span style="color:#b5cea8;">31</span>,<span style="color:#b5cea8;">28</span>,<span style="color:#b5cea8;">31</span>,<span style="color:#b5cea8;">30</span>,<span style="color:#b5cea8;">31</span>,<span style="color:#b5cea8;">30</span>,<span style="color:#b5cea8;">31</span>,<span style="color:#b5cea8;">31</span>,<span style="color:#b5cea8;">30</span>,<span style="color:#b5cea8;">31</span>,<span style="color:#b5cea8;">30</span>,<span style="color:#b5cea8;">31</span>};
-
-<span style="color:#569cd6;">int</span> <span style="color:#dcdcaa;">totalDays</span>(<span style="color:#569cd6;">int</span> y, <span style="color:#569cd6;">int</span> m, <span style="color:#569cd6;">int</span> d) {
-    <span style="color:#569cd6;">int</span> ans = <span style="color:#b5cea8;">0</span>;
-    <span style="color:#569cd6;">for</span> (<span style="color:#569cd6;">int</span> i = <span style="color:#b5cea8;">1</span>; i &lt; y; i++) ans += <span style="color:#dcdcaa;">isLeap</span>(i) ? <span style="color:#b5cea8;">366</span> : <span style="color:#b5cea8;">365</span>;
-    <span style="color:#569cd6;">for</span> (<span style="color:#569cd6;">int</span> i = <span style="color:#b5cea8;">1</span>; i &lt; m; i++) {
-        ans += mdays[i];
-        <span style="color:#569cd6;">if</span> (i == <span style="color:#b5cea8;">2</span> &amp;&amp; <span style="color:#dcdcaa;">isLeap</span>(y)) ans++;
-    }
-    ans += d;
-    <span style="color:#569cd6;">return</span> ans;
+<div class="slide">
+<h1>四、日期差：换算总天数</h1>
+<div class="code-block">
+<span class="keyword">int</span> <span class="builtin">totalDays</span>(<span class="keyword">int</span> year, <span class="keyword">int</span> month, <span class="keyword">int</span> day) {
+    <span class="keyword">int</span> total = <span class="number">0</span>;
+    <span class="keyword">for</span> (<span class="keyword">int</span> y = <span class="number">1</span>; y &lt; year; y++)
+        total += isLeap(y) ? <span class="number">366</span> : <span class="number">365</span>;
+    <span class="keyword">for</span> (<span class="keyword">int</span> m = <span class="number">1</span>; m &lt; month; m++)
+        total += getDays(year, m);
+    total += day;
+    <span class="keyword">return</span> total;
 }
-<span style="color:#6a9955;">// 日期差 = totalDays(y2,m2,d2) - totalDays(y1,m1,d1)</span></code></div>
-<h3>5.3 高精度加法模板</h3>
-<div class="code-block"><code><span style="color:#6a9955;">// 反转 + 逐位加 + 进位</span>
-<span style="color:#569cd6;">string</span> <span style="color:#dcdcaa;">add</span>(<span style="color:#569cd6;">string</span> a, <span style="color:#569cd6;">string</span> b) {
-    <span style="color:#dcdcaa;">reverse</span>(a.<span style="color:#dcdcaa;">begin</span>(), a.<span style="color:#dcdcaa;">end</span>());
-    <span style="color:#dcdcaa;">reverse</span>(b.<span style="color:#dcdcaa;">begin</span>(), b.<span style="color:#dcdcaa;">end</span>());
-    <span style="color:#569cd6;">string</span> c; <span style="color:#569cd6;">int</span> carry = <span style="color:#b5cea8;">0</span>;
-    <span style="color:#569cd6;">for</span> (<span style="color:#569cd6;">int</span> i = <span style="color:#b5cea8;">0</span>; i &lt; <span style="color:#dcdcaa;">max</span>(a.<span style="color:#dcdcaa;">size</span>(), b.<span style="color:#dcdcaa;">size</span>()) || carry; i++) {
-        <span style="color:#569cd6;">int</span> da = i &lt; a.<span style="color:#dcdcaa;">size</span>() ? a[i]-<span style="color:#ce9178;">'0'</span> : <span style="color:#b5cea8;">0</span>;
-        <span style="color:#569cd6;">int</span> db = i &lt; b.<span style="color:#dcdcaa;">size</span>() ? b[i]-<span style="color:#ce9178;">'0'</span> : <span style="color:#b5cea8;">0</span>;
-        <span style="color:#569cd6;">int</span> s = da + db + carry;
-        c += <span style="color:#569cd6;">char</span>(s % <span style="color:#b5cea8;">10</span> + <span style="color:#ce9178;">'0'</span>);
-        carry = s / <span style="color:#b5cea8;">10</span>;
-    }
-    <span style="color:#dcdcaa;">reverse</span>(c.<span style="color:#dcdcaa;">begin</span>(), c.<span style="color:#dcdcaa;">end</span>());
-    <span style="color:#569cd6;">return</span> c;
-}</code></div>
-
-<aside class="notes">【讲解】五、代码模板汇总
-本页要点（照着讲即可）：
-· 五、代码模板汇总
-· 5.1 闰年判断模板
-· bool
-· isLeap
-· y) {
-· return
-代码页节奏：先读懂输入输出 → 再走主流程 → 最后点出易错点（边界/类型/下标）。
-可让学生预测下一行输出，再运行对照。</aside>
+<span class="comment">// 两日期差（含起止）</span>
+cout &lt;&lt; abs(totalDays(y2,m2,d2) - totalDays(y1,m1,d1)) + <span class="number">1</span>;
 </div>
-<!-- SLIDE 6: 真题精练 -->
-<div class="slide" id="slide6">
-<h2>六、真题精练 — 日期差值计算</h2>
-<h3>题目描述</h3>
-<p>给定两个日期，计算它们之间<strong>相差的天数</strong>。日期格式为 YYYYMMDD。（日期范围：1 年 1 月 1 日 ~ 9999 年 12 月 31 日，两个日期可能先后顺序不定）</p>
-<h3>输入格式</h3>
-<p>两行，每行一个 8 位整数（YYYYMMDD），分别表示两个日期。</p>
-<h3>输出格式</h3>
-<p>一个整数，表示两个日期相差的天数（绝对值）。</p>
-<h3>输入样例</h3>
-<div class="code-block"><code>20240101
-20231225</code></div>
-<h3>输出样例</h3>
-<div class="code-block"><code>7</code></div>
-<h3>参考代码</h3>
-<div class="code-block"><code><span style="color:#569cd6;">#include</span> <span style="color:#ce9178;">&lt;iostream&gt;</span>
-<span style="color:#569cd6;">#include</span> <span style="color:#ce9178;">&lt;cmath&gt;</span>
-<span style="color:#569cd6;">using</span> <span style="color:#569cd6;">namespace</span> std;
-
-<span style="color:#569cd6;">int</span> mdays[<span style="color:#b5cea8;">13</span>] = {<span style="color:#b5cea8;">0</span>,<span style="color:#b5cea8;">31</span>,<span style="color:#b5cea8;">28</span>,<span style="color:#b5cea8;">31</span>,<span style="color:#b5cea8;">30</span>,<span style="color:#b5cea8;">31</span>,<span style="color:#b5cea8;">30</span>,<span style="color:#b5cea8;">31</span>,<span style="color:#b5cea8;">31</span>,<span style="color:#b5cea8;">30</span>,<span style="color:#b5cea8;">31</span>,<span style="color:#b5cea8;">30</span>,<span style="color:#b5cea8;">31</span>};
-
-<span style="color:#569cd6;">bool</span> <span style="color:#dcdcaa;">leap</span>(<span style="color:#569cd6;">int</span> y) {
-    <span style="color:#569cd6;">return</span> y%<span style="color:#b5cea8;">400</span>==<span style="color:#b5cea8;">0</span> || (y%<span style="color:#b5cea8;">4</span>==<span style="color:#b5cea8;">0</span> &amp;&amp; y%<span style="color:#b5cea8;">100</span>!=<span style="color:#b5cea8;">0</span>);
-}
-
-<span style="color:#569cd6;">int</span> <span style="color:#dcdcaa;">calc</span>(<span style="color:#569cd6;">int</span> y, <span style="color:#569cd6;">int</span> m, <span style="color:#569cd6;">int</span> d) {
-    <span style="color:#569cd6;">int</span> ans = <span style="color:#b5cea8;">0</span>;
-    <span style="color:#569cd6;">for</span> (<span style="color:#569cd6;">int</span> i=<span style="color:#b5cea8;">1</span>; i&lt;y; i++) ans += <span style="color:#dcdcaa;">leap</span>(i)?<span style="color:#b5cea8;">366</span>:<span style="color:#b5cea8;">365</span>;
-    <span style="color:#569cd6;">for</span> (<span style="color:#569cd6;">int</span> i=<span style="color:#b5cea8;">1</span>; i&lt;m; i++) {
-        ans += mdays[i];
-        <span style="color:#569cd6;">if</span> (i==<span style="color:#b5cea8;">2</span> &amp;&amp; <span style="color:#dcdcaa;">leap</span>(y)) ans++;
-    }
-    ans += d; <span style="color:#569cd6;">return</span> ans;
-}
-
-<span style="color:#569cd6;">int</span> <span style="color:#dcdcaa;">main</span>() {
-    <span style="color:#569cd6;">int</span> a, b; cin &gt;&gt; a &gt;&gt; b;
-    <span style="color:#569cd6;">int</span> y1=a/<span style="color:#b5cea8;">10000</span>, m1=a/<span style="color:#b5cea8;">100</span>%<span style="color:#b5cea8;">100</span>, d1=a%<span style="color:#b5cea8;">100</span>;
-    <span style="color:#569cd6;">int</span> y2=b/<span style="color:#b5cea8;">10000</span>, m2=b/<span style="color:#b5cea8;">100</span>%<span style="color:#b5cea8;">100</span>, d2=b%<span style="color:#b5cea8;">100</span>;
-    cout &lt;&lt; <span style="color:#dcdcaa;">abs</span>(<span style="color:#dcdcaa;">calc</span>(y1,m1,d1) - <span style="color:#dcdcaa;">calc</span>(y2,m2,d2)) &lt;&lt; endl;
-    <span style="color:#569cd6;">return</span> <span style="color:#b5cea8;">0</span>;
-}</code></div>
-
-<aside class="notes">【讲解】六、真题精练 — 日期差值计算
-本页要点（照着讲即可）：
-· 给定两个日期，计算它们之间 相差的天数 。日期格式为 YYYYMMDD。（日期范围：1 年 1 月 1 日 ~ 9999 年 12 月 31 日，两个日期可能先后顺序不定）
-· 相差的天数
-· 两行，每行一个 8 位整数（YYYYMMDD），分别表示两个日期。
-· 一个整数，表示两个日期相差的天数（绝对值）。
-练习页节奏：先独立想 1 分钟 → 再点拨思路 → 最后对答案讲为什么。
-可联系：日期计算与过程模拟题</aside>
+<div class="exam-tips">
+<h4>易错</h4>
+<ul>
+<li>2 月闰年 +1 天别忘</li>
+<li>是否 +1 含起始日要读题</li>
+<li>年份范围过大时注意效率（可优化但 CSP-J 通常够）</li>
+</ul>
 </div>
-<!-- SLIDE 7: Summary -->
-<div class="slide" id="slide7">
-<h2>七、本课小结</h2>
-<div class="summary-box">
+<aside class="notes">【讲解】统一基准日再相减。</aside>
+</div>
+
+<div class="slide">
+<h1>五、高精度加法原理</h1>
+<p>超过 long long（~10¹⁸）时用<strong>字符串竖式加法</strong>。</p>
 <ol>
-<li><strong>模拟算法的本质</strong>：照题目规则编写代码，不需要高级数学技巧，但需要<strong>细心和严谨</strong></li>
-<li>模拟题在 CSP-J 中占比高（约 30%），通常没有超时风险，<strong>正确率优先</strong></li>
-<li><strong>闰年判断公式</strong>：(year % 400 == 0) || (year % 4 == 0 &amp;&amp; year % 100 != 0)</li>
-<li><strong>日期差计算</strong>的核心思路：先算绝对天数，再相减取绝对值。注意闰年二月单独处理</li>
-<li><strong>高精度加法</strong>三部曲：① 反转字符串（低位在前）；② 逐位相加 + 进位；③ 反转结果（恢复高位在前）</li>
-<li>做模拟题时，建议<strong>先在纸上手动模拟小样例</strong>，验证理解是否正确，再动手编码</li>
+<li>从最低位（串末）逐位相加</li>
+<li>维护进位 carry</li>
+<li>当前位 = (da+db+carry)%10，新 carry=(da+db+carry)/10</li>
+<li>处理完后若仍有 carry，补最高位</li>
+<li>结果逆序（或边算边拼前）</li>
 </ol>
+<div class="key-point">
+字符转数字：<code>a[i]-'0'</code>；数字转字符：<code>char(d+'0')</code>。sum 最大 9+9+1=19，carry 仅 0/1。
 </div>
-<p style="text-align:center; margin-top:30px; color:#5c6bc0; font-size:18px;">模拟无他，唯手熟尔 — 多做练习，培养"翻译规则为代码"的能力。</p>
+<aside class="notes">【讲解】先在黑板竖式 999+1。</aside>
+</div>
 
-<aside class="notes">【收尾】回顾本课主线：七、本课小结
-对照大纲再过一遍：过程模拟、状态模拟、高精度加法
-板书/口述要点：
-· 模拟算法的本质 ：照题目规则编写代码，不需要高级数学技巧，但需要 细心和严谨
-· 模拟算法的本质
-· 细心和严谨
-· 模拟题在 CSP-J 中占比高（约 30%），通常没有超时风险， 正确率优先
-· 正确率优先
-· 闰年判断公式 ：(year % 400 == 0) || (year % 4 == 0 &amp;&amp; year % 100 != 0)
-课后任务：日期计算与过程模拟题
-结束前留 2 分钟答疑；布置 1 道小练习检验是否真正掌握。</aside>
+<div class="slide">
+<h1>六、高精度加法完整代码</h1>
+<div class="code-block">
+<span class="keyword">string</span> <span class="builtin">add</span>(<span class="keyword">string</span> a, <span class="keyword">string</span> b) {
+    <span class="keyword">string</span> res = <span class="string">""</span>;
+    <span class="keyword">int</span> carry = <span class="number">0</span>;
+    <span class="keyword">int</span> i = a.size() - <span class="number">1</span>, j = b.size() - <span class="number">1</span>;
+    <span class="keyword">while</span> (i &gt;= <span class="number">0</span> || j &gt;= <span class="number">0</span> || carry) {
+        <span class="keyword">int</span> da = (i &gt;= <span class="number">0</span>) ? a[i] - <span class="string">'0'</span> : <span class="number">0</span>;
+        <span class="keyword">int</span> db = (j &gt;= <span class="number">0</span>) ? b[j] - <span class="string">'0'</span> : <span class="number">0</span>;
+        <span class="keyword">int</span> sum = da + db + carry;
+        res += <span class="keyword">char</span>(sum % <span class="number">10</span> + <span class="string">'0'</span>);
+        carry = sum / <span class="number">10</span>;
+        i--; j--;
+    }
+    <span class="builtin">reverse</span>(res.begin(), res.end());
+    <span class="keyword">return</span> res;
+}
 </div>
+<p>另一种写法：先补前导零对齐，结果用 <code>char(...) + res</code> 拼在前面，可省 reverse。</p>
+<aside class="notes">【讲解】对照程序演示。</aside>
 </div>
-<div class="navigation">
-<button class="nav-btn" id="prevBtn" onclick="changeSlide(-1)">◀ 上一页</button>
-<span class="slide-indicator" id="slideIndicator">1 / 7</span>
-<button class="nav-btn" id="nextBtn" onclick="changeSlide(1)">下一页 ▶</button>
+
+<div class="slide">
+<h1>七、代码模板汇总</h1>
+<div class="code-block">
+<span class="comment">// 模板1：闰年 + 日期差（见前页 totalDays）</span>
+<span class="comment">// 模板2：高精度加法 add(a,b)</span>
+<span class="comment">// 模板3：状态模拟框架</span>
+<span class="keyword">int</span> state = <span class="number">0</span>;
+<span class="keyword">int</span> T; cin &gt;&gt; T;
+<span class="keyword">for</span> (<span class="keyword">int</span> t = <span class="number">0</span>; t &lt; T; t++) {
+    <span class="keyword">int</span> op; cin &gt;&gt; op;
+    <span class="keyword">if</span> (op == <span class="number">1</span>) { <span class="comment">/* 更新 */</span> }
+    <span class="keyword">else if</span> (op == <span class="number">2</span>) { <span class="comment">/* 更新 */</span> }
+}
+<span class="comment">// 模板4：数字逐位处理</span>
+<span class="keyword">while</span> (n &gt; <span class="number">0</span>) {
+    <span class="keyword">int</span> digit = n % <span class="number">10</span>;
+    <span class="comment">// 处理 digit</span>
+    n /= <span class="number">10</span>;
+}
 </div>
+<aside class="notes">【讲解】四套模板考试直接套。</aside>
+</div>
+
+<div class="slide">
+<h1>八、易错点</h1>
+<div class="exam-tips"><h4>1. 闰年公式漏世纪年</h4><p>只写 %4 会把 1900 当闰年。必须 (y%4==0 &amp;&amp; y%100!=0) || y%400==0。</p></div>
+<div class="exam-tips"><h4>2. 月份数组 off-by-one</h4><p>下标从 1；2 月在闰年单独 return 29。</p></div>
+<div class="exam-tips"><h4>3. 高精度忘记最后进位</h4><p>循环条件要含 <code>|| carry</code>，否则 999+1=000 错成 000。</p></div>
+<div class="exam-tips"><h4>4. 字符与数字混淆</h4><p><code>'5'+'3'</code> 不是 8；必须 -'0' 再算。</p></div>
+<div class="exam-tips"><h4>5. 同轮读写状态互相污染</h4><p>需要时用新旧两个数组。</p></div>
+<aside class="notes">【讲解】高精度进位最常忘。</aside>
+</div>
+
+<div class="slide">
+<h1>九、真题风格①：日期相关</h1>
+<p>给定两个日期，求相差天数（含首尾）。</p>
+<div class="sample-io">
+输入：2020 1 1 / 2020 1 3<br/>
+输出：3
+</div>
+<div class="key-point">
+套路：totalDays 两次相减 +1。注意 2 月 29 与跨年累加。
+</div>
+<div class="code-block">
+cout &lt;&lt; abs(totalDays(y2,m2,d2) - totalDays(y1,m1,d1)) + <span class="number">1</span> &lt;&lt; endl;
+</div>
+<aside class="notes">【练习】手算 2020-2-28 到 2020-3-1。</aside>
+</div>
+
+<div class="slide">
+<h1>十、真题风格②：大整数加法</h1>
+<div class="sample-io">
+输入：12345678901234567890<br/>
+　　　98765432109876543210<br/>
+输出：111111111011111111100
+</div>
+<p>直接套 <code>add(a,b)</code>。注意：输入用 string，不要 cin 到 long long。</p>
+<div class="exam-tips">
+<h4>调试建议</h4>
+<p>先测 9+1、99+1、999+1、0+0，确认进位与前导。</p>
+</div>
+<aside class="notes">【练习】当堂写 add 函数骨架。</aside>
+</div>
+
+<div class="slide">
+<h1>十一、过程 vs 状态对照</h1>
+<table>
+<tr><th>类型</th><th>特征</th><th>例子</th></tr>
+<tr><td>过程模拟</td><td>固定步骤序列</td><td>反转、约分、竖式</td></tr>
+<tr><td>状态模拟</td><td>状态+事件循环更新</td><td>开关灯、电梯、游戏</td></tr>
+<tr><td>规则翻译</td><td>题面条件逐条 if</td><td>计分、判定</td></tr>
+</table>
+<div class="key-point" style="text-align:center; padding:16px; font-size:17px;">
+读题画状态表 → 写更新规则 → 用样例逐步验证。
+</div>
+<aside class="notes">【讲解】下节：游戏、约瑟夫、高精度乘、进制。</aside>
+</div>
+
+<div class="slide">
+<h1>十二、本课小结</h1>
+<table>
+<tr><th>知识点</th><th>一句记忆</th></tr>
+<tr><td>模拟本质</td><td>规则→代码，细心第一</td></tr>
+<tr><td>过程模拟</td><td>逐步执行手工步骤</td></tr>
+<tr><td>状态模拟</td><td>变量始终反映真实状态</td></tr>
+<tr><td>闰年</td><td>4 且非 100，或 400</td></tr>
+<tr><td>日期差</td><td>换算总天数再相减</td></tr>
+<tr><td>高精度加</td><td>低位起，carry，最后 reverse</td></tr>
+</table>
+<p style="margin-top:28px; text-align:center; color:#1a237e; font-size:18px; font-weight:bold;">
+模拟题：不怕长，怕漏细节——样例手推一遍再提交。
+</p>
+<aside class="notes">【收尾】默写 isLeap 与 add 核心循环。</aside>
+</div>
+
+</div>
+<div id="nav-bar">
+<button class="nav-btn" id="btn-prev" onclick="prevSlide()">◀ 上一页</button>
+<span id="page-indicator">1 / 14</span>
+<button class="nav-btn" id="btn-next" onclick="nextSlide()">下一页 ▶</button>
 </div>
 <script>
-let currentSlide = 1;
-const totalSlides = 7;
-
+let currentSlide = 0;
+const slides = document.querySelectorAll('.slide');
+const totalSlides = slides.length;
+const indicator = document.getElementById('page-indicator');
+const btnPrev = document.getElementById('btn-prev');
+const btnNext = document.getElementById('btn-next');
 function showSlide(n) {
-  document.querySelectorAll('.slide').forEach(s => s.classList.remove('active'));
-  document.getElementById('slide' + n).classList.add('active');
-  document.getElementById('slideIndicator').textContent = n + ' / ' + totalSlides;
-  document.getElementById('prevBtn').disabled = (n === 1);
-  document.getElementById('nextBtn').disabled = (n === totalSlides);
-  currentSlide = n;
+    if (n < 0 || n >= totalSlides) return;
+    slides[currentSlide].classList.remove('active');
+    currentSlide = n;
+    slides[currentSlide].classList.add('active');
+    indicator.textContent = (currentSlide + 1) + ' / ' + totalSlides;
+    btnPrev.disabled = (currentSlide === 0);
+    btnNext.disabled = (currentSlide === totalSlides - 1);
 }
-
-function changeSlide(delta) {
-  let next = currentSlide + delta;
-  if (next >= 1 && next <= totalSlides) showSlide(next);
-}
-
+function nextSlide() { if (currentSlide < totalSlides - 1) showSlide(currentSlide + 1); }
+function prevSlide() { if (currentSlide > 0) showSlide(currentSlide - 1); }
 document.addEventListener('keydown', function(e) {
-  if (e.key === 'ArrowLeft') changeSlide(-1);
-  if (e.key === 'ArrowRight') changeSlide(1);
+    if (e.key === 'ArrowRight' || e.key === 'ArrowDown' || e.key === ' ') { e.preventDefault(); nextSlide(); }
+    else if (e.key === 'ArrowLeft' || e.key === 'ArrowUp') { e.preventDefault(); prevSlide(); }
+    else if (e.key === 'Home') { e.preventDefault(); showSlide(0); }
+    else if (e.key === 'End') { e.preventDefault(); showSlide(totalSlides - 1); }
 });
+showSlide(0);
 </script>
 <script src="courseware-ui.js"></script>
 <script src="presenter.js"></script>

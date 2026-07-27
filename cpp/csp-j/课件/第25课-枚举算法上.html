@@ -7,310 +7,531 @@
 <title>CSP-J 备考课程 - 第25课：枚举算法（上）</title>
 <style>
 * { margin: 0; padding: 0; box-sizing: border-box; }
-body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Microsoft YaHei', sans-serif; background: #f0f2f5; display: flex; justify-content: center; align-items: center; min-height: 100vh; padding: 20px; }
-.container { max-width: 900px; width: 100%; background: white; border-radius: 16px; box-shadow: 0 8px 40px rgba(0,0,0,0.12); overflow: hidden; }
-.header { background: linear-gradient(135deg, #1a237e, #283593); color: white; padding: 16px 24px; display: flex; justify-content: space-between; align-items: center; }
-.header .course-tag { background: #ffd600; color: #1a237e; padding: 4px 12px; border-radius: 20px; font-size: 14px; font-weight: bold; }
-.slide-container { padding: 40px; min-height: 500px; }
-.slide { display: none; }
-.slide.active { display: block; animation: fadeIn 0.4s ease; }
-@keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
-.slide h2 { color: #1a237e; font-size: 28px; margin-bottom: 20px; border-bottom: 3px solid #ffd600; padding-bottom: 10px; display: inline-block; }
-.slide h3 { color: #283593; font-size: 22px; margin: 20px 0 12px; }
-.slide p, .slide li { font-size: 17px; line-height: 1.8; color: #333; margin-bottom: 8px; }
-.slide ul, .slide ol { padding-left: 24px; margin-bottom: 16px; }
-.exam-tip { background: #fff8e1; border-left: 4px solid #ff8f00; border-radius: 8px; padding: 16px 20px; margin: 20px 0; font-size: 15px; }
-.exam-tip strong { color: #e65100; }
-.code-block { background: #1e1e1e; border-radius: 8px; padding: 16px; margin: 12px 0; overflow-x: auto; font-family: Consolas, Monaco, 'Courier New', monospace; font-size: 14px; line-height: 1.6; color: #d4d4d4; }
-.code-block code { white-space: pre; }
-.slide.title-slide.active { text-align: center; padding-top: 80px; }
-.slide.title-slide.active h1 { font-size: 42px; color: #1a237e; margin-bottom: 16px; }
-.slide.title-slide.active .subtitle { font-size: 22px; color: #5c6bc0; margin-bottom: 40px; }
-.slide.title-slide.active .badge { display: inline-block; background: #ffd600; color: #1a237e; padding: 8px 24px; border-radius: 30px; font-size: 18px; font-weight: bold; }
-.navigation { display: flex; justify-content: center; align-items: center; gap: 16px; padding: 20px; background: #fafafa; border-top: 1px solid #e0e0e0; }
-.nav-btn { background: #1a237e; color: white; border: none; padding: 10px 24px; border-radius: 8px; font-size: 16px; cursor: pointer; transition: background 0.3s; }
-.nav-btn:hover { background: #283593; }
-.nav-btn:disabled { background: #9fa8da; cursor: not-allowed; }
-.slide-indicator { font-size: 16px; color: #666; min-width: 60px; text-align: center; }
-.summary-box { background: #e8eaf6; border-radius: 12px; padding: 24px; margin: 16px 0; }
-.summary-box li { color: #1a237e; font-weight: 500; }
-table { border-collapse: collapse; width: 100%; margin: 16px 0; }
-th { background: #1a237e; color: white; padding: 10px; text-align: left; }
-td { padding: 8px 10px; border-bottom: 1px solid #e0e0e0; }
+body {
+    font-family: "PingFang SC", "Microsoft YaHei", "Hiragino Sans GB", sans-serif;
+    background: #f5f5f5; color: #333;
+    overflow: hidden; height: 100vh;
+}
+#title-bar {
+    background: #1a237e; color: #ffd600;
+    padding: 8px 24px; font-size: 14px; font-weight: bold;
+    letter-spacing: 2px;
+    display: flex; justify-content: space-between; align-items: center;
+    position: fixed; top: 0; left: 0; right: 0;
+    z-index: 1000; height: 40px;
+}
+#slide-container {
+    position: absolute;
+    top: 40px; left: 0; right: 0; bottom: 60px;
+    overflow: hidden;
+}
+.slide {
+    display: none; background: white;
+    height: 100%; padding: 40px 60px;
+    overflow-y: auto;
+    animation: fadeSlide 0.4s ease;
+}
+.slide.active { display: block; }
+@keyframes fadeSlide {
+    from { opacity: 0; transform: translateX(30px); }
+    to { opacity: 1; transform: translateX(0); }
+}
+h1 { font-size: 32px; color: #1a237e; margin-bottom: 16px; border-bottom: 3px solid #ffd600; padding-bottom: 12px; }
+h2 { font-size: 24px; color: #1a237e; margin: 20px 0 12px; }
+h3 { font-size: 18px; color: #283593; margin: 14px 0 8px; }
+p, li { font-size: 16px; line-height: 1.8; margin-bottom: 6px; }
+ul, ol { margin-left: 24px; }
+table { border-collapse: collapse; width: 100%; margin: 12px 0; }
+th { background: #1a237e; color: white; padding: 10px 12px; text-align: left; font-size: 14px; }
+td { padding: 8px 12px; border-bottom: 1px solid #e0e0e0; font-size: 14px; }
 tr:nth-child(even) td { background: #f5f5f5; }
-@media (max-width: 600px) {
-  .slide-container { padding: 24px; }
-  .slide.title-slide.active h1 { font-size: 28px; }
-  .slide.title-slide.active .subtitle { font-size: 18px; }
-  .slide h2 { font-size: 24px; }
+.code-block {
+    background: #1e1e1e; color: #d4d4d4;
+    padding: 16px 20px; border-radius: 8px;
+    font-family: Consolas, Monaco, "Courier New", monospace;
+    font-size: 13px; line-height: 1.7;
+    overflow-x: auto; margin: 10px 0;
+    white-space: pre-wrap; word-wrap: break-word;
+}
+.code-block .keyword { color: #569cd6; }
+.code-block .type { color: #4ec9b0; }
+.code-block .string { color: #ce9178; }
+.code-block .comment { color: #6a9955; }
+.code-block .number { color: #b5cea8; }
+.code-block .builtin { color: #dcdcaa; }
+.exam-tips {
+    border: 2px solid #ff9800; border-left: 6px solid #ff9800;
+    background: #fff8e1; padding: 14px 18px; margin: 14px 0;
+    border-radius: 4px;
+}
+.exam-tips h4 { color: #e65100; margin-bottom: 6px; font-size: 15px; }
+.exam-tips ul { margin-left: 18px; }
+.exam-tips li { font-size: 14px; line-height: 1.7; }
+.key-point {
+    background: #e8eaf6; border-left: 4px solid #1a237e;
+    padding: 10px 16px; margin: 10px 0; border-radius: 4px;
+}
+.highlight { color: #e65100; font-weight: bold; }
+.slide.title-slide.active {
+    display: flex;
+    flex-direction: column;
+    justify-content: center; align-items: center;
+    text-align: center;
+    background: linear-gradient(135deg, #1a237e 0%, #283593 50%, #3949ab 100%);
+    color: white;
+}
+.slide.title-slide.active h1 { color: #ffd600; font-size: 44px; border: none; margin-bottom: 20px; }
+.slide.title-slide.active h2 { color: white; font-size: 24px; margin-bottom: 12px; font-weight: normal; }
+.slide.title-slide.active p { color: #bbdefb; font-size: 18px; }
+#nav-bar {
+    position: fixed; bottom: 0; left: 0; right: 0;
+    height: 60px; background: white;
+    display: flex; justify-content: center; align-items: center;
+    gap: 12px; border-top: 1px solid #e0e0e0; z-index: 1000;
+}
+.nav-btn {
+    background: #1a237e; color: white; border: none;
+    padding: 10px 28px; border-radius: 20px;
+    cursor: pointer; font-size: 14px; font-family: inherit;
+    transition: background 0.2s;
+}
+.nav-btn:hover { background: #283593; }
+.nav-btn:disabled { background: #bdbdbd; cursor: not-allowed; }
+#page-indicator { font-size: 14px; color: #666; min-width: 60px; text-align: center; }
+.sample-io { background: #f5f5f5; padding: 10px 16px; border-radius: 4px; margin: 8px 0; font-family: Consolas, Monaco, monospace; font-size: 13px; }
+.flex-row { display: flex; gap: 24px; }
+.flex-col { flex: 1; }
+@media (max-width: 768px) {
+    .slide { padding: 24px 16px; }
+    h1 { font-size: 22px; } h2 { font-size: 18px; }
+    p, li { font-size: 13px; }
+    .code-block { font-size: 11px; }
+    .flex-row { flex-direction: column; }
 }
 </style>
 </head>
 <body>
-<div class="container">
-<div class="header">
-<span style="font-weight:bold;font-size:18px;">第25课：枚举算法（上）</span>
-<span class="course-tag">CSP-J 备考课程</span>
+<div id="title-bar">
+<span>CSP-J 备考课程</span>
+<span>第25课：枚举算法（上）</span>
 </div>
-<div class="slide-container">
-<!-- SLIDE 1: Title -->
-<div class="slide active" id="slide1">
-<div class="title-slide">
+<div id="slide-container">
+
+<!-- 1 标题 -->
+<div class="slide active title-slide">
 <h1>枚举算法（上）</h1>
-<p class="subtitle">穷举的智慧 — 从暴力到高效</p>
-<div class="badge">🔍 CSP-J 基础组</div>
-<p style="margin-top: 40px; color: #666; font-size: 16px;">掌握枚举三要素、百钱百鸡问题与枚举剪枝策略</p>
-</div>
-
-<aside class="notes">【开场】第 1/6 页 · 枚举算法（上）
-用 30 秒说明本课目标与学完能做什么，再进入正题。
+<h2>第25课 · CSP-J 备考课程</h2>
+<p>穷举的智慧——从暴力到高效</p>
+<p style="margin-top:40px; font-size:14px; color:#90caf9;">
+枚举三要素 | 单/双/三层循环 | 百钱百鸡 | 水仙花数 | 买铅笔真题
+</p>
+<aside class="notes">【开场】第 1/14 页 · 枚举算法（上）
 大纲考点：简单枚举、循环枚举、枚举优化（减少范围）
-配套练习方向：百钱百鸡与数字枚举题
-封面关键词：
-· 穷举的智慧 — 从暴力到高效
-· 掌握枚举三要素、百钱百鸡问题与枚举剪枝策略
-互动：问学生「今天最想搞清楚什么？」，收 1–2 个期待。</aside>
+配套练习：百钱百鸡与数字枚举题
+互动：问学生「什么叫把所有可能都试一遍？」</aside>
 </div>
-<!-- SLIDE 2: 枚举算法思想 -->
-<div class="slide" id="slide2">
-<h2>一、枚举算法思想</h2>
-<h3>1.1 什么是枚举？</h3>
-<p>枚举算法（Enumeration Algorithm）是一种通过<strong>逐一列举所有可能情况</strong>来求解问题的方法。它是算法设计中最基础、最直接的策略，也是 CSP-J 中<strong>最高频</strong>的考点之一。</p>
-<ul>
-<li><strong>核心思想：</strong>在问题解空间中，逐一验证每一个候选解，直到找到满足所有约束条件的可行解。</li>
-<li><strong>本质：</strong>把"所有可能性"变成一个可遍历的集合，然后用循环去检查每一个。</li>
-</ul>
-<h3>1.2 枚举三要素</h3>
+
+<!-- 2 考纲与目标 -->
+<div class="slide">
+<h1>考纲要求与学习目标</h1>
 <table>
-<tr><th>要素</th><th>含义</th><th>示例（百钱百鸡）</th></tr>
-<tr><td><strong>枚举对象</strong></td><td>我们要枚举什么？解空间中的候选解是什么？</td><td>公鸡 x、母鸡 y、小鸡 z 的数量组合</td></tr>
-<tr><td><strong>枚举范围</strong></td><td>每个对象的取值上下界，避免无意义穷举</td><td>0 ≤ x ≤ 20, 0 ≤ y ≤ 33, z = 100 - x - y</td></tr>
-<tr><td><strong>约束条件</strong></td><td>判断候选解是否可行的检验标准</td><td>5x + 3y + z/3 = 100 且 z 能被 3 整除</td></tr>
+<tr><th>考纲点</th><th>掌握程度</th></tr>
+<tr><td>枚举基本思想：有限范围逐一遍历候选解</td><td>必须掌握</td></tr>
+<tr><td>单层 / 双层 / 三层循环实现枚举</td><td>必须掌握</td></tr>
+<tr><td>枚举优化：缩小范围、剪枝、减少循环层数</td><td>必须掌握</td></tr>
+<tr><td>百钱百鸡、水仙花数、数字统计等经典题</td><td>必须掌握</td></tr>
+<tr><td>时间复杂度分析与优化方向</td><td>理解并能估算</td></tr>
 </table>
-<h3>1.3 适用场景</h3>
-<ul>
-<li>数据规模较小（n ≤ 10³ ~ 10⁴），枚举所有情况在时限内可行</li>
-<li>问题有明确的判定条件，且解空间结构良好</li>
-<li>没有现成的数学公式可以直接求解</li>
-<li>题目描述中有"找出所有..."、"判断是否存在..."等表述</li>
-</ul>
-<div class="exam-tip">
-<strong>💡 考试技巧：</strong>枚举不意味着"暴力尝试所有数字"！聪明的枚举是：<strong>先想清楚范围，再动手写代码</strong>。拿到题后三步走：① 分析问题结构，确定枚举对象属于哪种类型（排列/组合/子集）；② 估计枚举范围多大，判断是否超时；③ 找出隐藏的数学性质来剪枝优化。
-      </div>
-
-<aside class="notes">【讲解】一、枚举算法思想
-本页要点（照着讲即可）：
-· 枚举算法（Enumeration Algorithm）是一种通过 逐一列举所有可能情况 来求解问题的方法。它是算法设计中最基础、最直接的策略，也是 CSP-J 中 最高频 的考点之一。
-· 逐一列举所有可能情况
-· 核心思想： 在问题解空间中，逐一验证每一个候选解，直到找到满足所有约束条件的可行解。
-· 核心思想：
-· 本质： 把"所有可能性"变成一个可遍历的集合，然后用循环去检查每一个。
-· 枚举对象
-讲解时放慢关键术语；用 1 个生活类比 + 1 个反例加深印象。
-本课大纲考点（可适时点题）：简单枚举、循环枚举、枚举优化（减少范围）</aside>
+<div class="key-point">
+<strong>学完能做什么：</strong>拿到一道「数据不大」的题，能迅速确定枚举对象与范围，写出正确循环，并用数学约束把复杂度压到时限内。
 </div>
-<!-- SLIDE 3: 百钱百鸡问题 -->
-<div class="slide" id="slide3">
-<h2>二、百钱百鸡问题 — 经典枚举</h2>
-<h3>2.1 问题描述</h3>
-<p>中国古代数学家张丘建在《算经》中提出：</p>
-<blockquote style="background:#fff8e1; border-left: 4px solid #ff8f00; padding: 12px 16px; margin: 12px 0; font-style: italic;">
-        "鸡翁一，值钱五；鸡母一，值钱三；鸡雏三，值钱一。百钱买百鸡，问鸡翁、母、雏各几何？"
-      </blockquote>
-<p>翻译：公鸡 5 钱一只，母鸡 3 钱一只，小鸡 1 钱三只。用 100 钱买 100 只鸡，问公鸡、母鸡、小鸡各多少只？</p>
-<h3>2.2 朴素暴力解法 — O(n³)</h3>
-<p>设公鸡 x 只，母鸡 y 只，小鸡 z 只。则约束为：x + y + z = 100（数量），5x + 3y + z/3 = 100（钱数），且 z 是 3 的倍数。</p>
-<div class="code-block"><code><span style="color:#6a9955;">// 朴素三重循环 — 100 × 100 × 100 = 10⁶ 次判断</span>
-<span style="color:#569cd6;">for</span> (<span style="color:#569cd6;">int</span> x = <span style="color:#b5cea8;">0</span>; x &lt;= <span style="color:#b5cea8;">100</span>; x++) {
-    <span style="color:#569cd6;">for</span> (<span style="color:#569cd6;">int</span> y = <span style="color:#b5cea8;">0</span>; y &lt;= <span style="color:#b5cea8;">100</span>; y++) {
-        <span style="color:#569cd6;">for</span> (<span style="color:#569cd6;">int</span> z = <span style="color:#b5cea8;">0</span>; z &lt;= <span style="color:#b5cea8;">100</span>; z++) {
-            <span style="color:#569cd6;">if</span> (x + y + z == <span style="color:#b5cea8;">100</span> &amp;&amp; <span style="color:#b5cea8;">5</span>*x + <span style="color:#b5cea8;">3</span>*y + z/<span style="color:#b5cea8;">3</span> == <span style="color:#b5cea8;">100</span> &amp;&amp; z % <span style="color:#b5cea8;">3</span> == <span style="color:#b5cea8;">0</span>)
-                <span style="color:#dcdcaa;">cout</span> &lt;&lt; x &lt;&lt; <span style="color:#ce9178;">" "</span> &lt;&lt; y &lt;&lt; <span style="color:#ce9178;">" "</span> &lt;&lt; z &lt;&lt; <span style="color:#dcdcaa;">endl</span>;
-        }
-    }
-}</code></div>
-<h3>2.3 优化策略 — 缩小范围 + 消元</h3>
-<p><strong>观察 1：</strong>公鸡最贵（5 钱），最多买 100/5 = 20 只，所以 x 范围缩小到 0~20。</p>
-<p><strong>观察 2：</strong>母鸡 3 钱一只，最多买 100/3 ≈ 33 只。</p>
-<p><strong>观察 3：</strong>利用方程消元：z = 100 - x - y，代入钱数方程得：5x + 3y + (100-x-y)/3 = 100。化简后只需两重循环，z 由公式直接算出。</p>
-<div class="code-block"><code><span style="color:#6a9955;">// 优化版：两重循环 + 数学消元 — 约 20 × 33 = 660 次</span>
-<span style="color:#569cd6;">for</span> (<span style="color:#569cd6;">int</span> x = <span style="color:#b5cea8;">0</span>; x &lt;= <span style="color:#b5cea8;">20</span>; x++) {          <span style="color:#6a9955;">// 公鸡最多 20 只</span>
-<span style="color:#569cd6;">for</span> (<span style="color:#569cd6;">int</span> y = <span style="color:#b5cea8;">0</span>; y &lt;= <span style="color:#b5cea8;">33</span>; y++) {      <span style="color:#6a9955;">// 母鸡最多 33 只</span>
-<span style="color:#569cd6;">int</span> z = <span style="color:#b5cea8;">100</span> - x - y;          <span style="color:#6a9955;">// 小鸡数量由总数确定</span>
-<span style="color:#569cd6;">if</span> (z % <span style="color:#b5cea8;">3</span> == <span style="color:#b5cea8;">0</span> &amp;&amp; <span style="color:#b5cea8;">5</span>*x + <span style="color:#b5cea8;">3</span>*y + z/<span style="color:#b5cea8;">3</span> == <span style="color:#b5cea8;">100</span>)
-            <span style="color:#dcdcaa;">printf</span>(<span style="color:#ce9178;">"公鸡:%d 母鸡:%d 小鸡:%d\n"</span>, x, y, z);
+<div class="exam-tips">
+<h4>CSP-J 为什么爱考枚举？</h4>
+<p>数据规模常 n≤1000 或更小；枚举<strong>确定性好</strong>（范围对就不漏解），比贪心/DP 更不容易想偏。很多满分题就是「聪明的暴力」。</p>
+</div>
+<aside class="notes">【讲解】考纲与目标。强调：枚举不是笨办法，是 CSP-J 最高频策略之一。</aside>
+</div>
+
+<!-- 3 核心思想 -->
+<div class="slide">
+<h1>一、枚举算法的核心思想</h1>
+<p>枚举（穷举）：<strong>把所有候选解逐一列举，逐一检验，找到满足条件的解</strong>。</p>
+<div class="code-block">
+<span class="comment">// 枚举通用框架</span>
+<span class="keyword">for</span> (<span class="comment">/* 遍历所有候选解 */</span>) {
+    <span class="keyword">if</span> (<span class="comment">/* 候选解满足条件 */</span>) {
+        <span class="comment">// 记录或输出该解</span>
     }
 }
-<span style="color:#6a9955;">// 输出：公鸡:0 母鸡:25 小鸡:75</span>
-<span style="color:#6a9955;">//       公鸡:4 母鸡:18 小鸡:78</span>
-<span style="color:#6a9955;">//       公鸡:8 母鸡:11 小鸡:81</span>
-<span style="color:#6a9955;">//       公鸡:12 母鸡:4 小鸡:84</span></code></div>
-<div class="exam-tip">
-<strong>💡 考试技巧：</strong>优化枚举的核心手段：① <strong>利用数学性质缩小范围</strong>（如公鸡最多 20 只）；② <strong>利用方程消元减少循环层数</strong>（用两个变量表示第三个）；③ <strong>提前剪枝</strong>（不满足条件时直接 continue）。
-      </div>
-
-<aside class="notes">【讲解】二、百钱百鸡问题 — 经典枚举
-本页要点（照着讲即可）：
-· 中国古代数学家张丘建在《算经》中提出：
-· 翻译：公鸡 5 钱一只，母鸡 3 钱一只，小鸡 1 钱三只。用 100 钱买 100 只鸡，问公鸡、母鸡、小鸡各多少只？
-· 设公鸡 x 只，母鸡 y 只，小鸡 z 只。则约束为：x + y + z = 100（数量），5x + 3y + z/3 = 100（钱数），且 z 是 3 的倍数。
-· 观察 1： 公鸡最贵（5 钱），最多买 100/5 = 20 只，所以 x 范围缩小到 0~20。
-· 观察 1：
-· 观察 2： 母鸡 3 钱一只，最多买 100/3 ≈ 33 只。
-讲解时放慢关键术语；用 1 个生活类比 + 1 个反例加深印象。</aside>
 </div>
-<!-- SLIDE 4: 代码模板 -->
-<div class="slide" id="slide4">
-<h2>三、代码模板</h2>
-<h3>3.1 单层枚举框架</h3>
-<p>适用于：在一个序列中查找满足条件的元素，或对每个元素进行某种操作。</p>
-<div class="code-block"><code><span style="color:#6a9955;">// 单层枚举：遍历数组，查找满足条件的元素</span>
-<span style="color:#569cd6;">for</span> (<span style="color:#569cd6;">int</span> i = <span style="color:#b5cea8;">0</span>; i &lt; n; i++) {
-    <span style="color:#569cd6;">if</span> (<span style="color:#dcdcaa;">check</span>(a[i])) {     <span style="color:#6a9955;">// 判断 a[i] 是否满足条件</span>
-<span style="color:#dcdcaa;">ans</span>++;               <span style="color:#6a9955;">// 计数或记录答案</span>
-    }
-}
-<span style="color:#dcdcaa;">cout</span> &lt;&lt; ans &lt;&lt; endl;</code></div>
-<h3>3.2 双层枚举框架</h3>
-<p>适用于：枚举数对 (i, j)，判断两两之间的关系。时间复杂度 O(n²)。</p>
-<div class="code-block"><code><span style="color:#6a9955;">// 双层枚举：枚举所有 (i, j) 对，找满足条件的组合</span>
-<span style="color:#569cd6;">for</span> (<span style="color:#569cd6;">int</span> i = <span style="color:#b5cea8;">0</span>; i &lt; n; i++) {
-    <span style="color:#569cd6;">for</span> (<span style="color:#569cd6;">int</span> j = i + <span style="color:#b5cea8;">1</span>; j &lt; n; j++) {  <span style="color:#6a9955;">// j 从 i+1 开始，避免重复</span>
-<span style="color:#569cd6;">if</span> (a[i] + a[j] == target) {      <span style="color:#6a9955;">// 两数之和</span>
-<span style="color:#dcdcaa;">cout</span> &lt;&lt; i &lt;&lt; <span style="color:#ce9178;">" "</span> &lt;&lt; j &lt;&lt; <span style="color:#dcdcaa;">endl</span>;
-        }
-    }
-}</code></div>
-<h3>3.3 枚举 + 剪枝框架</h3>
-<p>适用于：搜索空间大但可以通过约束条件提前排除无效分支的场景。</p>
-<div class="code-block"><code><span style="color:#6a9955;">// 枚举 + 剪枝：在循环中提前排除不可能的情况</span>
-<span style="color:#569cd6;">for</span> (<span style="color:#569cd6;">int</span> a = <span style="color:#b5cea8;">mina</span>; a &lt;= <span style="color:#b5cea8;">maxa</span>; a++) {
-    <span style="color:#569cd6;">if</span> (a 不满足某必要条件) <span style="color:#569cd6;">continue</span>;  <span style="color:#6a9955;">// 剪枝</span>
-<span style="color:#569cd6;">for</span> (<span style="color:#569cd6;">int</span> b = <span style="color:#b5cea8;">minb</span>; b &lt;= <span style="color:#b5cea8;">maxb</span>; b++) {
-        <span style="color:#569cd6;">if</span> (a + b 超出限制) <span style="color:#569cd6;">break</span>;     <span style="color:#6a9955;">// 剪枝：由于 b 递增，后面只会更大</span>
-<span style="color:#569cd6;">int</span> c = calc(a, b);                <span style="color:#6a9955;">// 用公式直接算第三个变量</span>
-<span style="color:#569cd6;">if</span> (<span style="color:#dcdcaa;">check</span>(a, b, c)) record(a, b, c);
-    }
-}</code></div>
-
-<aside class="notes">【讲解】三、代码模板
-本页要点（照着讲即可）：
-· 适用于：在一个序列中查找满足条件的元素，或对每个元素进行某种操作。
-· 适用于：枚举数对 (i, j)，判断两两之间的关系。时间复杂度 O(n²)。
-· 适用于：搜索空间大但可以通过约束条件提前排除无效分支的场景。
-代码页节奏：先读懂输入输出 → 再走主流程 → 最后点出易错点（边界/类型/下标）。
-可让学生预测下一行输出，再运行对照。</aside>
-</div>
-<!-- SLIDE 5: 真题精练 -->
-<div class="slide" id="slide5">
-<h2>四、真题精练 — 质因数分解</h2>
-<h3>题目描述</h3>
-<p>已知正整数 n（2 ≤ n ≤ 10⁹），将其分解为<strong>质因数</strong>的乘积。从小到大输出每个质因数（重复的也要输出）。</p>
-<h3>输入格式</h3>
-<p>一行一个正整数 n。</p>
-<h3>输出格式</h3>
-<p>若干行，每行一个质因数（从小到大）。</p>
-<h3>输入样例</h3>
-<div class="code-block"><code>12</code></div>
-<h3>输出样例</h3>
-<div class="code-block"><code>2
-2
-3
-<span style="color:#6a9955;">// 12 = 2 × 2 × 3</span></code></div>
-<h3>解题思路</h3>
-<p>枚举 i 从 2 到 sqrt(n)：如果 n 能被 i 整除，则 i 是质因数（因为 i 是最小的可能因数，必然是质数——反证法可证）。不断用 i 除 n，直到 n 不能被 i 整除为止。最后如果 n &gt; 1，说明 n 本身是一个大于 sqrt(n) 的质因数。</p>
-<h3>参考代码</h3>
-<div class="code-block"><code><span style="color:#569cd6;">#include</span> <span style="color:#ce9178;">&lt;iostream&gt;</span>
-<span style="color:#569cd6;">using</span> <span style="color:#569cd6;">namespace</span> std;
-
-<span style="color:#569cd6;">int</span> <span style="color:#dcdcaa;">main</span>() {
-    <span style="color:#569cd6;">int</span> n;
-    cin &gt;&gt; n;
-
-    <span style="color:#6a9955;">// 枚举可能的因数 i，从 2 开始</span>
-<span style="color:#569cd6;">for</span> (<span style="color:#569cd6;">int</span> i = <span style="color:#b5cea8;">2</span>; i * i &lt;= n; i++) {
-        <span style="color:#6a9955;">// 如果 i 是 n 的因数，则不断除以 i</span>
-<span style="color:#569cd6;">while</span> (n % i == <span style="color:#b5cea8;">0</span>) {
-            cout &lt;&lt; i &lt;&lt; <span style="color:#dcdcaa;">endl</span>;  <span style="color:#6a9955;">// 输出质因数</span>
-            n /= i;                <span style="color:#6a9955;">// 去掉这个因数</span>
-        }
-    }
-
-    <span style="color:#6a9955;">// 如果 n &gt; 1，说明剩下的 n 本身是一个质数</span>
-<span style="color:#569cd6;">if</span> (n &gt; <span style="color:#b5cea8;">1</span>) cout &lt;&lt; n &lt;&lt; endl;
-
-    <span style="color:#569cd6;">return</span> <span style="color:#b5cea8;">0</span>;
-}</code></div>
-<div class="exam-tip">
-<strong>💡 考试技巧：</strong>质因数分解的枚举上界是 <strong>sqrt(n)</strong>，因为任何合数 n 必有一个因子 ≤ sqrt(n)。所以循环条件写 <code>i * i &lt;= n</code>，时间复杂度 O(sqrt(n))。n 最大 10⁹ 时，最多循环约 31623 次，非常快。
-      </div>
-
-<aside class="notes">【讲解】四、真题精练 — 质因数分解
-本页要点（照着讲即可）：
-· 已知正整数 n（2 ≤ n ≤ 10⁹），将其分解为 质因数 的乘积。从小到大输出每个质因数（重复的也要输出）。
-· 一行一个正整数 n。
-· 若干行，每行一个质因数（从小到大）。
-· 💡 考试技巧：
-· sqrt(n)
-练习页节奏：先独立想 1 分钟 → 再点拨思路 → 最后对答案讲为什么。
-可联系：百钱百鸡与数字枚举题</aside>
-</div>
-<!-- SLIDE 6: Summary -->
-<div class="slide" id="slide6">
-<h2>五、本课小结</h2>
-<div class="summary-box">
+<h2>三个关键问题</h2>
 <ol>
-<li><strong>枚举三要素</strong>：枚举对象（解空间中的候选解是什么）、枚举范围（合理上下界）、约束条件（判定可行解的标准）</li>
-<li><strong>百钱百鸡问题</strong>是枚举优化的经典案例：利用单价限制缩小范围（公鸡 0~20，母鸡 0~33），利用方程消元减少循环层数（z = 100 - x - y）</li>
-<li><strong>优化手段</strong>：① 数学性质缩小范围；② 方程消元减少变量；③ 提前剪枝（continue/break）；④ 利用单调性</li>
-<li><strong>单层枚举</strong> O(n) 适合遍历序列，<strong>双层枚举</strong> O(n²) 适合枚举数对，<strong>枚举+剪枝</strong>适合搜索空间大的场景</li>
-<li><strong>质因数分解</strong>是枚举的典型应用：循环上界 sqrt(n)，找到因数就不断除以它。最后 n &gt; 1 说明剩下的是质数</li>
-<li>枚举是 CSP-J 最高频考点，核心不是"能不能写循环"，而是<strong>"能不能把问题转化为可枚举的形式"</strong></li>
+<li><strong>枚举范围是什么？</strong>必须有限、可列举</li>
+<li><strong>如何判断候选解？</strong>判定逻辑正确且尽量高效</li>
+<li><strong>如何避免多余枚举？</strong>缩小范围或剪枝</li>
+</ol>
+<table>
+<tr><th>要素</th><th>含义</th><th>百钱百鸡示例</th></tr>
+<tr><td>枚举对象</td><td>候选解是什么</td><td>公鸡 x、母鸡 y、小鸡 z</td></tr>
+<tr><td>枚举范围</td><td>合法上下界</td><td>0≤x≤20，0≤y≤33，z=100-x-y</td></tr>
+<tr><td>约束条件</td><td>可行性检验</td><td>5x+3y+z/3=100 且 z%3==0</td></tr>
+</table>
+<aside class="notes">【讲解】先画三要素表，再讲框架。强调「先想范围再写代码」。</aside>
+</div>
+
+<!-- 4 单层循环 -->
+<div class="slide">
+<h1>二、单层循环枚举</h1>
+<p>候选解只需一个变量描述时用单层循环。经典：质数判断（试除法）。</p>
+<div class="code-block">
+<span class="keyword">bool</span> <span class="builtin">isPrime</span>(<span class="keyword">int</span> n) {
+    <span class="keyword">if</span> (n &lt; <span class="number">2</span>) <span class="keyword">return false</span>;
+    <span class="comment">// 只需枚举到 sqrt(n)：用 i*i&lt;=n，避免浮点误差</span>
+    <span class="keyword">for</span> (<span class="keyword">int</span> i = <span class="number">2</span>; i * i &lt;= n; i++) {
+        <span class="keyword">if</span> (n % i == <span class="number">0</span>) <span class="keyword">return false</span>;
+    }
+    <span class="keyword">return true</span>;
+}
+</div>
+<div class="key-point">
+<strong>优化要点：</strong>范围从 [2, n-1] 缩到 [2, √n]，O(n)→O(√n)。n=10⁹ 时约 31623 次，完全可行。
+</div>
+<div class="exam-tips">
+<h4>写法注意</h4>
+<p>优先写 <code>i * i &lt;= n</code>，不要写 <code>i &lt;= sqrt(n)</code>（浮点精度 + 需 cmath）。n 很大时注意 <code>i*i</code> 溢出，用 <code>long long</code>。</p>
+</div>
+<aside class="notes">【讲解】单层枚举 + 缩小范围。可现场算 √1e9≈3e4。</aside>
+</div>
+
+<!-- 5 双层与三层 -->
+<div class="slide">
+<h1>三、双层 / 三层循环枚举</h1>
+<div class="flex-row">
+<div class="flex-col">
+<h2>双层：两数之和</h2>
+<div class="code-block">
+<span class="keyword">for</span> (<span class="keyword">int</span> i = <span class="number">0</span>; i &lt; n; i++) {
+  <span class="keyword">for</span> (<span class="keyword">int</span> j = i + <span class="number">1</span>; j &lt; n; j++) {
+    <span class="keyword">if</span> (a[i] + a[j] == target) {
+      <span class="comment">// 找到解</span>
+    }
+  }
+}
+</div>
+<p><code>j</code> 从 <code>i+1</code> 开始：避免 (i,j)/(j,i) 重复，且自动 i≠j，枚举量减半。</p>
+</div>
+<div class="flex-col">
+<h2>三层：勾股数</h2>
+<div class="code-block">
+<span class="keyword">for</span> (<span class="keyword">int</span> a = <span class="number">1</span>; a &lt;= n; a++)
+  <span class="keyword">for</span> (<span class="keyword">int</span> b = a+<span class="number">1</span>; b &lt;= n; b++)
+    <span class="keyword">for</span> (<span class="keyword">int</span> c = b+<span class="number">1</span>; c &lt;= n; c++)
+      <span class="keyword">if</span> (a*a + b*b == c*c)
+        cout &lt;&lt; a &lt;&lt; <span class="string">" "</span> &lt;&lt; b
+             &lt;&lt; <span class="string">" "</span> &lt;&lt; c &lt;&lt; endl;
+</div>
+<p>O(n³)：n=100 约 50 万可行；n=1000 约 1e8 可能卡时限 → 必须优化。</p>
+</div>
+</div>
+<table>
+<tr><th>层数</th><th>复杂度</th><th>CSP-J 经验 n 上限（粗估）</th></tr>
+<tr><td>1</td><td>O(n) / O(√n)</td><td>10⁷～10⁹（视常数）</td></tr>
+<tr><td>2</td><td>O(n²)</td><td>n≈1000～3000</td></tr>
+<tr><td>3</td><td>O(n³)</td><td>n≈100～200</td></tr>
+</table>
+<aside class="notes">【讲解】强调组合枚举 j=i+1、a&lt;b&lt;c 的习惯。</aside>
+</div>
+
+<!-- 6 优化策略 -->
+<div class="slide">
+<h1>四、枚举优化三法宝</h1>
+<ol>
+<li><strong>缩小枚举范围</strong>：用数学约束定上下界（公鸡最多 100/5=20）</li>
+<li><strong>利用等式减层</strong>：x+y+z=100 ⇒ z=100-x-y，三层变两层</li>
+<li><strong>剪枝</strong>：排序后若前缀和已超 target，break 掉内层</li>
+</ol>
+<div class="code-block">
+<span class="builtin">sort</span>(a, a + n);  <span class="comment">// 排序后便于剪枝</span>
+<span class="keyword">for</span> (<span class="keyword">int</span> i = <span class="number">0</span>; i &lt; n; i++) {
+    <span class="keyword">if</span> (a[i] &gt; target) <span class="keyword">break</span>;
+    <span class="keyword">for</span> (<span class="keyword">int</span> j = i + <span class="number">1</span>; j &lt; n; j++) {
+        <span class="keyword">if</span> (a[i] + a[j] &gt; target) <span class="keyword">break</span>;  <span class="comment">// 后续更大</span>
+        <span class="keyword">for</span> (<span class="keyword">int</span> k = j + <span class="number">1</span>; k &lt; n; k++) {
+            <span class="keyword">if</span> (a[i] + a[j] + a[k] &gt; target) <span class="keyword">break</span>;
+            <span class="keyword">if</span> (a[i] + a[j] + a[k] == target) { <span class="comment">/* 输出 */</span> }
+        }
+    }
+}
+</div>
+<div class="exam-tips">
+<h4>剪枝条件别写反</h4>
+<p>升序时：<code>sum &gt; target</code> 才 break；若 <code>sum &lt; target</code> 应 continue 找更大 k，不能 break。</p>
+</div>
+<aside class="notes">【讲解】三法宝配合百钱百鸡数字对比 100万→660。</aside>
+</div>
+
+<!-- 7 百钱百鸡 -->
+<div class="slide">
+<h1>五、经典例题：百钱百鸡</h1>
+<p>公鸡 5 文/只，母鸡 3 文/只，小鸡 1 文 3 只。100 文买 100 只，各多少？（可含 0）</p>
+<div class="flex-row">
+<div class="flex-col">
+<h3>朴素三层：约 100³=100 万次</h3>
+<div class="code-block">
+<span class="keyword">for</span> (x=<span class="number">0</span>; x&lt;=<span class="number">100</span>; x++)
+  <span class="keyword">for</span> (y=<span class="number">0</span>; y&lt;=<span class="number">100</span>; y++)
+    <span class="keyword">for</span> (z=<span class="number">0</span>; z&lt;=<span class="number">100</span>; z++)
+      <span class="keyword">if</span> (x+y+z==<span class="number">100</span>
+       &amp;&amp; <span class="number">5</span>*x+<span class="number">3</span>*y+z/<span class="number">3</span>==<span class="number">100</span>
+       &amp;&amp; z%<span class="number">3</span>==<span class="number">0</span>)
+        cout &lt;&lt; x&lt;&lt;y&lt;&lt;z;
+</div>
+</div>
+<div class="flex-col">
+<h3>优化两层：20×33=660 次</h3>
+<div class="code-block">
+<span class="keyword">for</span> (<span class="keyword">int</span> x = <span class="number">0</span>; x &lt;= <span class="number">20</span>; x++) {
+  <span class="keyword">for</span> (<span class="keyword">int</span> y = <span class="number">0</span>; y &lt;= <span class="number">33</span>; y++) {
+    <span class="keyword">int</span> z = <span class="number">100</span> - x - y;
+    <span class="keyword">if</span> (z &gt;= <span class="number">0</span> &amp;&amp; z % <span class="number">3</span> == <span class="number">0</span>
+     &amp;&amp; <span class="number">5</span>*x + <span class="number">3</span>*y + z/<span class="number">3</span> == <span class="number">100</span>)
+      cout &lt;&lt; x &lt;&lt; <span class="string">" "</span> &lt;&lt; y
+           &lt;&lt; <span class="string">" "</span> &lt;&lt; z &lt;&lt; endl;
+  }
+}
+</div>
+</div>
+</div>
+<div class="key-point">
+<strong>解（含 0）：</strong> (0,25,75) (4,18,78) (8,11,81) (12,4,84) 等。优化到朴素的 <span class="highlight">0.066%</span> 量级——数学分析带来数量级提升。
+</div>
+<aside class="notes">【讲解】对照程序 lesson25 演示 2-a / 2-b。</aside>
+</div>
+
+<!-- 8 水仙花与数字统计 -->
+<div class="slide">
+<h1>六、水仙花数 &amp; 数字统计</h1>
+<div class="flex-row">
+<div class="flex-col">
+<h2>水仙花数</h2>
+<p>三位数，各位立方和等于自身。如 153=1³+5³+3³。</p>
+<div class="code-block">
+<span class="keyword">for</span> (<span class="keyword">int</span> num = <span class="number">100</span>; num &lt;= <span class="number">999</span>; num++) {
+  <span class="keyword">int</span> a = num / <span class="number">100</span>;
+  <span class="keyword">int</span> b = (num / <span class="number">10</span>) % <span class="number">10</span>;
+  <span class="keyword">int</span> c = num % <span class="number">10</span>;
+  <span class="keyword">if</span> (a*a*a + b*b*b + c*c*c == num)
+    cout &lt;&lt; num &lt;&lt; endl;
+}
+<span class="comment">// 输出：153 370 371 407</span>
+</div>
+</div>
+<div class="flex-col">
+<h2>数字统计</h2>
+<p>统计 [L,R] 中数字 2 出现次数（22 计 2 次）。</p>
+<div class="code-block">
+<span class="keyword">int</span> <span class="builtin">countDigit</span>(<span class="keyword">int</span> n, <span class="keyword">int</span> d) {
+  <span class="keyword">int</span> cnt = <span class="number">0</span>;
+  <span class="keyword">while</span> (n &gt; <span class="number">0</span>) {
+    <span class="keyword">if</span> (n % <span class="number">10</span> == d) cnt++;
+    n /= <span class="number">10</span>;
+  }
+  <span class="keyword">return</span> cnt;
+}
+<span class="comment">// 外层 for i=L..R 累加</span>
+</div>
+<p>O((R-L)·log₁₀ R)。R≤10⁵ 足够；10⁹ 级需数位 DP（超纲）。</p>
+</div>
+</div>
+<aside class="notes">【讲解】拆位通用：%10 取最低位，/10 去掉。</aside>
+</div>
+
+<!-- 9 代码模板 -->
+<div class="slide">
+<h1>七、代码模板汇总</h1>
+<div class="code-block">
+<span class="comment">// 模板1：质数（单层优化）</span>
+<span class="keyword">bool</span> isPrime(<span class="keyword">int</span> n) {
+    <span class="keyword">if</span> (n &lt; <span class="number">2</span>) <span class="keyword">return false</span>;
+    <span class="keyword">for</span> (<span class="keyword">int</span> i = <span class="number">2</span>; i * i &lt;= n; i++)
+        <span class="keyword">if</span> (n % i == <span class="number">0</span>) <span class="keyword">return false</span>;
+    <span class="keyword">return true</span>;
+}
+
+<span class="comment">// 模板2：百钱百鸡（两层优化）</span>
+<span class="keyword">for</span> (<span class="keyword">int</span> cock = <span class="number">0</span>; cock &lt;= <span class="number">20</span>; cock++)
+  <span class="keyword">for</span> (<span class="keyword">int</span> hen = <span class="number">0</span>; hen &lt;= <span class="number">33</span>; hen++) {
+    <span class="keyword">int</span> chick = <span class="number">100</span> - cock - hen;
+    <span class="keyword">if</span> (chick &gt;= <span class="number">0</span> &amp;&amp; chick % <span class="number">3</span> == <span class="number">0</span>
+     &amp;&amp; <span class="number">5</span>*cock + <span class="number">3</span>*hen + chick/<span class="number">3</span> == <span class="number">100</span>)
+      cout &lt;&lt; cock &lt;&lt; <span class="string">" "</span> &lt;&lt; hen &lt;&lt; <span class="string">" "</span> &lt;&lt; chick &lt;&lt; endl;
+  }
+
+<span class="comment">// 模板3：区间数字统计</span>
+<span class="keyword">int</span> ans = <span class="number">0</span>;
+<span class="keyword">for</span> (<span class="keyword">int</span> i = L; i &lt;= R; i++) ans += countDigitInNum(i, <span class="number">2</span>);
+</div>
+<aside class="notes">【讲解】让学生默写 isPrime 与 chick%3 条件。</aside>
+</div>
+
+<!-- 10 易错点 -->
+<div class="slide">
+<h1>八、五大易错点</h1>
+<div class="exam-tips"><h4>1. 枚举边界错误</h4>
+<p>公鸡写成 ≤100 而非 ≤20；质数写成 i≤n。写循环前先草稿纸定界。</p></div>
+<div class="exam-tips"><h4>2. 忘记整除条件</h4>
+<p>小鸡必须 <code>chick % 3 == 0</code>，否则 <code>chick/3</code> 整数截断导致假解。</p></div>
+<div class="exam-tips"><h4>3. 重复 / 遗漏枚举</h4>
+<p>双层从 j=0 会重复 (i,j)(j,i)。无序组合：内层从 <code>j=i+1</code> 开始。</p></div>
+<div class="exam-tips"><h4>4. sqrt 精度</h4>
+<p>一律 <code>i*i &lt;= n</code>，不用 <code>i &lt;= sqrt(n)</code>。</p></div>
+<div class="exam-tips"><h4>5. 剪枝条件写反</h4>
+<p>升序数组：<code>sum &gt; target</code> 才 break；小于时应继续找更大元素。</p></div>
+<aside class="notes">【讲解】易错页：每条举反例 10 秒。</aside>
+</div>
+
+<!-- 11 真题1 买铅笔 -->
+<div class="slide">
+<h1>九、真题精练①：买铅笔（CSP-J 2016）</h1>
+<p>需要 n 支铅笔；3 种包装（数量 cnt、单价 price）；只买同一种且不拆包，求最少花费。</p>
+<div class="sample-io">
+<strong>输入：</strong><br/>57<br/>2 2<br/>50 30<br/>30 27<br/>
+<strong>输出：</strong> 54
+</div>
+<div class="code-block">
+<span class="keyword">int</span> n; cin &gt;&gt; n;
+<span class="keyword">int</span> ans = <span class="number">1e9</span>;
+<span class="keyword">for</span> (<span class="keyword">int</span> i = <span class="number">0</span>; i &lt; <span class="number">3</span>; i++) {
+    <span class="keyword">int</span> cnt, price; cin &gt;&gt; cnt &gt;&gt; price;
+    <span class="keyword">int</span> packs = (n % cnt == <span class="number">0</span>) ? n / cnt : n / cnt + <span class="number">1</span>; <span class="comment">// 向上取整</span>
+    ans = min(ans, packs * price);
+}
+cout &lt;&lt; ans &lt;&lt; endl;
+</div>
+<div class="key-point">
+<strong>解析：</strong>枚举 3 种包装；包数 = ⌈n/cnt⌉。样例：包装 30 支 27 元，买 2 包=60 支，花费 54 最优。
+</div>
+<aside class="notes">【练习】先独立想 1 分钟再讲向上取整。</aside>
+</div>
+
+<!-- 12 真题2 质因数 -->
+<div class="slide">
+<h1>十、真题精练②：质因数分解</h1>
+<p>n 是两个不同质数之积（2≤n≤10⁹），求较大那个质数。</p>
+<div class="sample-io"><strong>输入：</strong> 21　<strong>输出：</strong> 7</div>
+<div class="code-block">
+<span class="keyword">long long</span> n; cin &gt;&gt; n;
+<span class="keyword">for</span> (<span class="keyword">long long</span> i = <span class="number">2</span>; i * i &lt;= n; i++) {
+    <span class="keyword">if</span> (n % i == <span class="number">0</span>) {
+        cout &lt;&lt; n / i &lt;&lt; endl;  <span class="comment">// i 较小，n/i 较大</span>
+        <span class="keyword">break</span>;
+    }
+}
+</div>
+<ul>
+<li>从 2 起第一个因子必为较小质因数（合数因子会先被其质因子除尽）</li>
+<li>必须用 <code>long long</code>：i*i 可达 10¹⁸</li>
+<li>时间 O(√n)≈3×10⁴，轻松通过</li>
+</ul>
+<aside class="notes">【练习】强调 long long 与无需 isPrime 的巧妙点。</aside>
+</div>
+
+<!-- 13 适用场景对照 -->
+<div class="slide">
+<h1>十一、何时用枚举？复杂度速查</h1>
+<table>
+<tr><th>场景特征</th><th>策略</th></tr>
+<tr><td>n 小、有明确判定条件</td><td>直接枚举</td></tr>
+<tr><td>变量间有等式关系</td><td>消元减层</td></tr>
+<tr><td>有单价/容量等上界</td><td>缩小范围</td></tr>
+<tr><td>数组有序或可排序</td><td>剪枝 break</td></tr>
+<tr><td>题目说「找所有…」「是否存在…」</td><td>优先想枚举</td></tr>
+</table>
+<div class="key-point">
+<strong>一句话：</strong>枚举的智慧不是穷尽所有数字，而是<strong>精准打击可能区域</strong>——先想清对象、范围、约束，再动手写循环。
+</div>
+<div class="exam-tips">
+<h4>考试三步走</h4>
+<ol>
+<li>确定枚举对象（排列/组合/子集/数值）</li>
+<li>估计复杂度是否超时</li>
+<li>找数学性质剪枝优化</li>
 </ol>
 </div>
-<p style="text-align:center; margin-top:30px; color:#5c6bc0; font-size:18px;">枚举的智慧：不是穷尽所有，而是<strong>精准打击</strong>可能区域。</p>
+<aside class="notes">【讲解】过渡到下节：排列、子集、回溯。</aside>
+</div>
 
-<aside class="notes">【收尾】回顾本课主线：五、本课小结
-对照大纲再过一遍：简单枚举、循环枚举、枚举优化（减少范围）
-板书/口述要点：
-· 枚举三要素 ：枚举对象（解空间中的候选解是什么）、枚举范围（合理上下界）、约束条件（判定可行解的标准）
-· 枚举三要素
-· 百钱百鸡问题 是枚举优化的经典案例：利用单价限制缩小范围（公鸡 0~20，母鸡 0~33），利用方程消元减少循环层数（z = 100 - x - y）
-· 百钱百鸡问题
-· 优化手段 ：① 数学性质缩小范围；② 方程消元减少变量；③ 提前剪枝（continue/break）；④ 利用单调性
-· 优化手段
-课后任务：百钱百鸡与数字枚举题
-结束前留 2 分钟答疑；布置 1 道小练习检验是否真正掌握。</aside>
+<!-- 14 小结 -->
+<div class="slide">
+<h1>十二、本课小结</h1>
+<table>
+<tr><th>知识点</th><th>关键内容</th><th>一句记忆</th></tr>
+<tr><td>枚举思想</td><td>遍历候选解并检验</td><td>范围对就不漏解</td></tr>
+<tr><td>三要素</td><td>对象 / 范围 / 约束</td><td>写循环前先填表</td></tr>
+<tr><td>单/双/三层</td><td>O(n)/O(n²)/O(n³)</td><td>按数据范围选型</td></tr>
+<tr><td>优化三法宝</td><td>缩范围、减层、剪枝</td><td>百万→660</td></tr>
+<tr><td>百钱百鸡</td><td>z=100-x-y + 范围</td><td>经典优化模板</td></tr>
+<tr><td>水仙花/拆位</td><td>/100、/10%10、%10</td><td>拆位套路</td></tr>
+<tr><td>买铅笔</td><td>向上取整枚举包装</td><td>⌈n/cnt⌉×price</td></tr>
+</table>
+<div class="key-point" style="font-size:18px; text-align:center; padding:20px;">
+先想范围再写码；j 从 i+1；chick 必 %3；质数用 i*i≤n。
 </div>
+<p style="margin-top:24px; text-align:center; color:#1a237e; font-size:18px; font-weight:bold;">
+下节预告：全排列 next_permutation、子集位运算、回溯与 N 皇后
+</p>
+<aside class="notes">【收尾】回顾三要素与优化；布置百钱百鸡手算三组解。</aside>
 </div>
-<div class="navigation">
-<button class="nav-btn" id="prevBtn" onclick="changeSlide(-1)">◀ 上一页</button>
-<span class="slide-indicator" id="slideIndicator">1 / 6</span>
-<button class="nav-btn" id="nextBtn" onclick="changeSlide(1)">下一页 ▶</button>
-</div>
+
+</div><!-- /slide-container -->
+<div id="nav-bar">
+<button class="nav-btn" id="btn-prev" onclick="prevSlide()">◀ 上一页</button>
+<span id="page-indicator">1 / 14</span>
+<button class="nav-btn" id="btn-next" onclick="nextSlide()">下一页 ▶</button>
 </div>
 <script>
-let currentSlide = 1;
-const totalSlides = 6;
+let currentSlide = 0;
+const slides = document.querySelectorAll('.slide');
+const totalSlides = slides.length;
+const indicator = document.getElementById('page-indicator');
+const btnPrev = document.getElementById('btn-prev');
+const btnNext = document.getElementById('btn-next');
 
 function showSlide(n) {
-  document.querySelectorAll('.slide').forEach(s => s.classList.remove('active'));
-  document.getElementById('slide' + n).classList.add('active');
-  document.getElementById('slideIndicator').textContent = n + ' / ' + totalSlides;
-  document.getElementById('prevBtn').disabled = (n === 1);
-  document.getElementById('nextBtn').disabled = (n === totalSlides);
-  currentSlide = n;
+    if (n < 0 || n >= totalSlides) return;
+    slides[currentSlide].classList.remove('active');
+    currentSlide = n;
+    slides[currentSlide].classList.add('active');
+    indicator.textContent = (currentSlide + 1) + ' / ' + totalSlides;
+    btnPrev.disabled = (currentSlide === 0);
+    btnNext.disabled = (currentSlide === totalSlides - 1);
 }
 
-function changeSlide(delta) {
-  let next = currentSlide + delta;
-  if (next >= 1 && next <= totalSlides) showSlide(next);
+function nextSlide() {
+    if (currentSlide < totalSlides - 1) showSlide(currentSlide + 1);
+}
+
+function prevSlide() {
+    if (currentSlide > 0) showSlide(currentSlide - 1);
 }
 
 document.addEventListener('keydown', function(e) {
-  if (e.key === 'ArrowLeft') changeSlide(-1);
-  if (e.key === 'ArrowRight') changeSlide(1);
+    if (e.key === 'ArrowRight' || e.key === 'ArrowDown' || e.key === ' ') {
+        e.preventDefault();
+        nextSlide();
+    } else if (e.key === 'ArrowLeft' || e.key === 'ArrowUp') {
+        e.preventDefault();
+        prevSlide();
+    } else if (e.key === 'Home') {
+        e.preventDefault();
+        showSlide(0);
+    } else if (e.key === 'End') {
+        e.preventDefault();
+        showSlide(totalSlides - 1);
+    }
 });
+
+showSlide(0);
 </script>
 <script src="courseware-ui.js"></script>
 <script src="presenter.js"></script>

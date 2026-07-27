@@ -317,6 +317,49 @@ void demo_path_check() {
     cout << endl;
 }
 
+// ======================== 8. 连通块计数 ========================
+
+void demo_connected_components() {
+    cout << "========== 8. 连通块计数 ==========" << endl;
+
+    // 三个连通块：1-2-3，4-5，以及孤立点 6
+    const int n = 6;
+    int edges[][2] = {{1, 2}, {2, 3}, {4, 5}};
+    const int m = 3;
+    vector<int> g[N];
+    for (int i = 0; i < m; i++) {
+        int u = edges[i][0], v = edges[i][1];
+        g[u].push_back(v);
+        g[v].push_back(u);
+    }
+
+    bool visited[N];
+    memset(visited, false, sizeof(visited));
+
+    // 使用普通 DFS，避免依赖递归 lambda
+    // 这里用静态辅助：直接写循环式 BFS 更稳妥
+    int cnt = 0;
+    for (int i = 1; i <= n; i++) {
+        if (visited[i]) continue;
+        cnt++;
+        queue<int> q;
+        q.push(i);
+        visited[i] = true;
+        while (!q.empty()) {
+            int u = q.front();
+            q.pop();
+            for (int v : g[u]) {
+                if (!visited[v]) {
+                    visited[v] = true;
+                    q.push(v);
+                }
+            }
+        }
+    }
+    cout << "图：1-2-3，4-5，6 孤立 → 连通块数 = " << cnt << "（期望 3）" << endl;
+    cout << endl;
+}
+
 // ======================== 主函数 ========================
 
 int main() {
@@ -335,6 +378,7 @@ int main() {
     demo_dfs_traversal();
     demo_bfs_traversal();
     demo_path_check();
+    demo_connected_components();
 
     cout << "========== 演示完毕 ==========" << endl;
     cout << "\n关键要点：" << endl;
@@ -343,6 +387,7 @@ int main() {
     cout << "3. 无向图：双向都要存储！" << endl;
     cout << "4. 有向图：入度/出度要分清" << endl;
     cout << "5. 遍历时务必使用 vis 数组标记已访问" << endl;
+    cout << "编译：g++ -std=c++17 lesson41_图论基础.cpp -o lesson41" << endl;
 
     return 0;
 }

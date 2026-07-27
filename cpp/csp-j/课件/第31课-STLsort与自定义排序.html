@@ -7,372 +7,364 @@
 <title>CSP-J 备考课程 - 第31课：STL sort 与自定义排序</title>
 <style>
 * { margin: 0; padding: 0; box-sizing: border-box; }
-body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Microsoft YaHei', sans-serif; background: #f0f2f5; display: flex; justify-content: center; align-items: center; min-height: 100vh; padding: 20px; }
-.container { max-width: 900px; width: 100%; background: white; border-radius: 16px; box-shadow: 0 8px 40px rgba(0,0,0,0.12); overflow: hidden; }
-.header { background: linear-gradient(135deg, #1a237e, #283593); color: white; padding: 16px 24px; display: flex; justify-content: space-between; align-items: center; }
-.header .course-tag { background: #ffd600; color: #1a237e; padding: 4px 12px; border-radius: 20px; font-size: 14px; font-weight: bold; }
-.slide-container { padding: 40px; min-height: 500px; }
-.slide { display: none; }
-.slide.active { display: block; animation: fadeIn 0.4s ease; }
-@keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
-.slide h2 { color: #1a237e; font-size: 28px; margin-bottom: 20px; border-bottom: 3px solid #ffd600; padding-bottom: 10px; display: inline-block; }
-.slide h3 { color: #283593; font-size: 22px; margin: 20px 0 12px; }
-.slide p, .slide li { font-size: 17px; line-height: 1.8; color: #333; margin-bottom: 8px; }
-.slide ul, .slide ol { padding-left: 24px; margin-bottom: 16px; }
-.exam-tip { background: #fff8e1; border-left: 4px solid #ff8f00; border-radius: 8px; padding: 16px 20px; margin: 20px 0; font-size: 15px; }
-.exam-tip strong { color: #e65100; }
-.code-block { background: #1e1e1e; border-radius: 8px; padding: 16px; margin: 12px 0; overflow-x: auto; font-family: Consolas, Monaco, 'Courier New', monospace; font-size: 14px; line-height: 1.6; color: #d4d4d4; }
-.code-block code { white-space: pre; }
-.keyword { color: #569cd6; }
-.string { color: #ce9178; }
-.comment { color: #6a9955; }
-.number { color: #b5cea8; }
-.func { color: #dcdcaa; }
-.slide.title-slide.active { text-align: center; padding-top: 80px; }
-.slide.title-slide.active h1 { font-size: 42px; color: #1a237e; margin-bottom: 16px; }
-.slide.title-slide.active .subtitle { font-size: 22px; color: #5c6bc0; margin-bottom: 40px; }
-.slide.title-slide.active .badge { display: inline-block; background: #ffd600; color: #1a237e; padding: 8px 24px; border-radius: 30px; font-size: 18px; font-weight: bold; }
-.navigation { display: flex; justify-content: center; align-items: center; gap: 16px; padding: 20px; background: #fafafa; border-top: 1px solid #e0e0e0; }
-.nav-btn { background: #1a237e; color: white; border: none; padding: 10px 24px; border-radius: 8px; font-size: 16px; cursor: pointer; transition: background 0.3s; }
-.nav-btn:hover { background: #283593; }
-.nav-btn:disabled { background: #9fa8da; cursor: not-allowed; }
-.slide-indicator { font-size: 16px; color: #666; min-width: 60px; text-align: center; }
-.summary-box { background: #e8eaf6; border-radius: 12px; padding: 24px; margin: 16px 0; }
-.summary-box li { color: #1a237e; font-weight: 500; }
-table { border-collapse: collapse; width: 100%; margin: 16px 0; }
-th { background: #1a237e; color: white; padding: 10px; text-align: left; }
-td { padding: 8px 10px; border-bottom: 1px solid #e0e0e0; }
+body {
+    font-family: "PingFang SC", "Microsoft YaHei", "Hiragino Sans GB", sans-serif;
+    background: #f5f5f5; color: #333;
+    overflow: hidden; height: 100vh;
+}
+#title-bar {
+    background: #1a237e; color: #ffd600;
+    padding: 8px 24px; font-size: 14px; font-weight: bold;
+    letter-spacing: 2px;
+    display: flex; justify-content: space-between; align-items: center;
+    position: fixed; top: 0; left: 0; right: 0;
+    z-index: 1000; height: 40px;
+}
+#slide-container {
+    position: absolute;
+    top: 40px; left: 0; right: 0; bottom: 60px;
+    overflow: hidden;
+}
+.slide {
+    display: none; background: white;
+    height: 100%; padding: 40px 60px;
+    overflow-y: auto;
+    animation: fadeSlide 0.4s ease;
+}
+.slide.active { display: block; }
+@keyframes fadeSlide {
+    from { opacity: 0; transform: translateX(30px); }
+    to { opacity: 1; transform: translateX(0); }
+}
+h1 { font-size: 32px; color: #1a237e; margin-bottom: 16px; border-bottom: 3px solid #ffd600; padding-bottom: 12px; }
+h2 { font-size: 24px; color: #1a237e; margin: 20px 0 12px; }
+h3 { font-size: 18px; color: #283593; margin: 14px 0 8px; }
+p, li { font-size: 16px; line-height: 1.8; margin-bottom: 6px; }
+ul, ol { margin-left: 24px; }
+table { border-collapse: collapse; width: 100%; margin: 12px 0; }
+th { background: #1a237e; color: white; padding: 10px 12px; text-align: left; font-size: 14px; }
+td { padding: 8px 12px; border-bottom: 1px solid #e0e0e0; font-size: 14px; }
 tr:nth-child(even) td { background: #f5f5f5; }
-.info-box { background: #e3f2fd; border-left: 4px solid #1a237e; border-radius: 8px; padding: 16px 20px; margin: 20px 0; font-size: 16px; }
-@media (max-width: 600px) {
-  .slide-container { padding: 24px; }
-  .slide.title-slide.active h1 { font-size: 28px; }
-  .slide.title-slide.active .subtitle { font-size: 18px; }
-  .slide h2 { font-size: 24px; }
+.code-block {
+    background: #1e1e1e; color: #d4d4d4;
+    padding: 16px 20px; border-radius: 8px;
+    font-family: Consolas, Monaco, "Courier New", monospace;
+    font-size: 13px; line-height: 1.7;
+    overflow-x: auto; margin: 10px 0;
+    white-space: pre-wrap; word-wrap: break-word;
+}
+.code-block .keyword { color: #569cd6; }
+.code-block .type { color: #4ec9b0; }
+.code-block .string { color: #ce9178; }
+.code-block .comment { color: #6a9955; }
+.code-block .number { color: #b5cea8; }
+.code-block .builtin { color: #dcdcaa; }
+.exam-tips {
+    border: 2px solid #ff9800; border-left: 6px solid #ff9800;
+    background: #fff8e1; padding: 14px 18px; margin: 14px 0;
+    border-radius: 4px;
+}
+.exam-tips h4 { color: #e65100; margin-bottom: 6px; font-size: 15px; }
+.key-point {
+    background: #e8eaf6; border-left: 4px solid #1a237e;
+    padding: 10px 16px; margin: 10px 0; border-radius: 4px;
+}
+.highlight { color: #e65100; font-weight: bold; }
+.slide.title-slide.active {
+    display: flex; flex-direction: column;
+    justify-content: center; align-items: center; text-align: center;
+    background: linear-gradient(135deg, #1a237e 0%, #283593 50%, #3949ab 100%);
+    color: white;
+}
+.slide.title-slide.active h1 { color: #ffd600; font-size: 40px; border: none; margin-bottom: 20px; }
+.slide.title-slide.active h2 { color: white; font-size: 24px; margin-bottom: 12px; font-weight: normal; }
+.slide.title-slide.active p { color: #bbdefb; font-size: 18px; }
+#nav-bar {
+    position: fixed; bottom: 0; left: 0; right: 0;
+    height: 60px; background: white;
+    display: flex; justify-content: center; align-items: center;
+    gap: 12px; border-top: 1px solid #e0e0e0; z-index: 1000;
+}
+.nav-btn {
+    background: #1a237e; color: white; border: none;
+    padding: 10px 28px; border-radius: 20px;
+    cursor: pointer; font-size: 14px; font-family: inherit;
+}
+.nav-btn:hover { background: #283593; }
+.nav-btn:disabled { background: #bdbdbd; cursor: not-allowed; }
+#page-indicator { font-size: 14px; color: #666; min-width: 60px; text-align: center; }
+.sample-io { background: #f5f5f5; padding: 10px 16px; border-radius: 4px; margin: 8px 0; font-family: Consolas, Monaco, monospace; font-size: 13px; }
+.flex-row { display: flex; gap: 24px; }
+.flex-col { flex: 1; }
+@media (max-width: 768px) {
+    .slide { padding: 24px 16px; }
+    h1 { font-size: 22px; } h2 { font-size: 18px; }
+    p, li { font-size: 13px; }
+    .code-block { font-size: 11px; }
+    .flex-row { flex-direction: column; }
 }
 </style>
 </head>
 <body>
-<div class="container">
-<div class="header">
-<span style="font-weight:bold;font-size:18px;">第31课：STL sort 与自定义排序</span>
-<span class="course-tag">CSP-J 备考课程</span>
+<div id="title-bar">
+<span>CSP-J 备考课程</span>
+<span>第31课：STL sort 与自定义排序</span>
 </div>
-<div class="slide-container">
-<!-- Slide 1: Title -->
-<div class="slide active" id="slide1">
-<div class="title-slide">
+<div id="slide-container">
+
+<div class="slide active title-slide">
 <h1>STL sort 与自定义排序</h1>
-<div class="subtitle">竞赛排序利器 — 从模板到灵活定制</div>
-<p style="font-size:18px;color:#555;">掌握 sort() 函数、cmp 自定义规则、多关键字排序与 Lambda 表达式</p>
-<div class="badge" style="margin-top:30px;">第 31 课</div>
+<h2>第31课 · CSP-J 备考课程</h2>
+<p>竞赛真正用的排序——O(n log n)</p>
+<p style="margin-top:40px; font-size:14px; color:#90caf9;">
+sort | greater | cmp | 结构体多关键字 | stable_sort
+</p>
+<aside class="notes">【开场】第1/14页。手写排序理解原理，比赛用 sort。</aside>
 </div>
 
-<aside class="notes">【开场】第 1/8 页 · STL sort 与自定义排序
-用 30 秒说明本课目标与学完能做什么，再进入正题。
-大纲考点：sort函数使用、cmp比较函数、结构体排序
-配套练习方向：sort排序与多关键字排序题
-封面关键词：
-· 掌握 sort() 函数、cmp 自定义规则、多关键字排序与 Lambda 表达式
-互动：问学生「今天最想搞清楚什么？」，收 1–2 个期待。</aside>
+<div class="slide">
+<h1>考纲要求</h1>
+<table>
+<tr><th>考点</th><th>要点</th></tr>
+<tr><td>sort 基本用法</td><td>默认升序，[begin, end)</td></tr>
+<tr><td>自定义 cmp</td><td>true = a 排在 b 前</td></tr>
+<tr><td>greater / less</td><td>仿函数降序/升序</td></tr>
+<tr><td>结构体多关键字</td><td>成绩降、学号升</td></tr>
+<tr><td>stable_sort</td><td>需要稳定性时</td></tr>
+</table>
+<div class="key-point">头文件 <code>&lt;algorithm&gt;</code>。时间 O(n log n)，远快于 O(n²) 手写排序。</div>
+<aside class="notes">【讲解】复赛几乎不手写冒泡。</aside>
 </div>
-<!-- Slide 2: sort 基础用法 -->
-<div class="slide" id="slide2">
-<h2>sort() 基础用法</h2>
-<h3>头文件 &lt;algorithm&gt;，O(n log n) 的快速排序实现</h3>
+
+<div class="slide">
+<h1>一、sort 基本用法</h1>
+<div class="code-block">
+<span class="keyword">#include</span> <span class="string">&lt;algorithm&gt;</span>
+<span class="keyword">int</span> a[] = {<span class="number">5</span>,<span class="number">3</span>,<span class="number">8</span>,<span class="number">1</span>,<span class="number">9</span>,<span class="number">2</span>,<span class="number">7</span>,<span class="number">4</span>,<span class="number">6</span>};
+<span class="builtin">sort</span>(a, a + n);           <span class="comment">// a[0]..a[n-1] 升序</span>
+<span class="builtin">sort</span>(a + <span class="number">2</span>, a + <span class="number">7</span>);       <span class="comment">// 只排 a[2]..a[6]</span>
+vector&lt;<span class="keyword">int</span>&gt; v = {...};
+<span class="builtin">sort</span>(v.begin(), v.end()); <span class="comment">// vector</span>
+</div>
 <ul>
-<li><strong>基本语法：</strong><code>sort(begin, end)</code> — 对 [begin, end) 区间（左闭右开）进行升序排列。</li>
-<li><strong>降序排列：</strong><code>sort(begin, end, greater&lt;int&gt;())</code> — 第三个参数传入比较函数对象。</li>
-<li><strong>底层实现：</strong>C++ 标准库的 sort 使用<strong>内省排序（Introsort）</strong>，混合了快速排序、堆排序和插入排序，保证最坏 O(n log n)。</li>
-<li><strong>使用前提：</strong>元素类型必须支持 <code>&lt;</code> 运算符，或提供自定义比较函数。</li>
+<li>区间是<strong>左闭右开</strong> [begin, end)</li>
+<li><code>a+n</code> 指向末元素的下一个位置</li>
 </ul>
-<pre class="code-block"><code><span class="comment">// 头文件</span>
-<span class="meta">#include &lt;algorithm&gt;</span>
-
-<span class="keyword">int</span> a[] = {<span class="number">5</span>, <span class="number">2</span>, <span class="number">8</span>, <span class="number">1</span>, <span class="number">9</span>};
-<span class="keyword">int</span> n = <span class="number">5</span>;
-
-<span class="comment">// 升序排序</span>
-<span class="func">sort</span>(a, a + n);                         <span class="comment">// 结果: [1, 2, 5, 8, 9]</span>
-
-<span class="comment">// 降序排序</span>
-<span class="func">sort</span>(a, a + n, greater&lt;<span class="keyword">int</span>&gt;());         <span class="comment">// 结果: [9, 8, 5, 2, 1]</span>
-
-<span class="comment">// 对 vector 的用法</span>
-vector&lt;<span class="keyword">int</span>&gt; v = {<span class="number">5</span>, <span class="number">2</span>, <span class="number">8</span>};
-<span class="func">sort</span>(v.begin(), v.end());              <span class="comment">// 结果: [2, 5, 8]</span></code></pre>
-<div class="exam-tip">
-<strong>📝 考试技巧：</strong> sort 的区间是<strong>左闭右开 [begin, end)</strong>。对数组 a[0..n-1] 排序，应写 <code>sort(a, a + n)</code> 而不是 <code>sort(a, a + n - 1)</code>。
-      </div>
-
-<aside class="notes">【讲解】sort() 基础用法
-本页要点（照着讲即可）：
-· 基本语法： sort(begin, end) — 对 [begin, end) 区间（左闭右开）进行升序排列。
-· 基本语法：
-· 降序排列： sort(begin, end, greater()) — 第三个参数传入比较函数对象。
-· 降序排列：
-· 底层实现： C++ 标准库的 sort 使用 内省排序（Introsort） ，混合了快速排序、堆排序和插入排序，保证最坏 O(n log n)。
-· 底层实现：
-讲解时放慢关键术语；用 1 个生活类比 + 1 个反例加深印象。
-本课大纲考点（可适时点题）：sort函数使用、cmp比较函数、结构体排序</aside>
+<aside class="notes">【讲解】画数组指针。</aside>
 </div>
-<!-- Slide 3: 自定义 cmp 函数 -->
-<div class="slide" id="slide3">
-<h2>自定义 cmp 函数</h2>
-<h3>核心规则：cmp(a, b) 返回 true 表示 a 应该排在 b 的前面</h3>
-<ul>
-<li><strong>升序：</strong><code>return a &lt; b;</code> — a 小于 b 时 a 排前面。</li>
-<li><strong>降序：</strong><code>return a &gt; b;</code> — a 大于 b 时 a 排前面。</li>
-<li><strong>cmp 必须满足严格弱序：</strong>不能同时 cmp(a,b) 和 cmp(b,a) 都为 true，否则排序行为未定义。</li>
-</ul>
-<h3>示例一：按绝对值升序排序</h3>
-<pre class="code-block"><code><span class="keyword">bool</span> <span class="func">cmpAbs</span>(<span class="keyword">int</span> a, <span class="keyword">int</span> b) {
-    <span class="keyword">return</span> <span class="func">abs</span>(a) &lt; <span class="func">abs</span>(b);   <span class="comment">// 绝对值小的排前面</span>
-}
-<span class="comment">// 输入: [-5, 3, -1, 8, -8]</span>
-<span class="comment">// 输出: [-1, 3, -5, 8, -8]  (abs值: 1,3,5,8,8，相等时不稳定)</span></code></pre>
-<h3>示例二：奇偶分组排序（奇数在前升序，偶数在后升序）</h3>
-<pre class="code-block"><code><span class="keyword">bool</span> <span class="func">cmpOddEven</span>(<span class="keyword">int</span> a, <span class="keyword">int</span> b) {
-    <span class="keyword">if</span> (a % <span class="number">2</span> != b % <span class="number">2</span>)
-        <span class="keyword">return</span> a % <span class="number">2</span> &gt; b % <span class="number">2</span>;  <span class="comment">// 奇数(1) &gt; 偶数(0)，奇数优先</span>
-    <span class="keyword">return</span> a &lt; b;                    <span class="comment">// 同组内升序</span>
-}
-<span class="comment">// 输入: [5, 2, 8, 1, 9, 4]</span>
-<span class="comment">// 输出: [1, 5, 9, 2, 4, 8]</span></code></pre>
 
-<aside class="notes">【讲解】自定义 cmp 函数
-结合讲义《二、自定义比较函数 cmp》强调：
-· sort() 的完整调用形式实际上是三参数版本：
-· sort(起始地址, 结束地址, 比较函数);
-· 第三个参数是一个**比较函数**（或仿函数），用于定义排序规则。比较函数 cmp(a, b) 需要返回一个 bool 值：
-· 返回 true：表示 a 应该**排在 b 的前面**
-· 返回 false：表示 a 不应该排在 b 的前面（即 b 排在 a 前面或二者等价）
-幻灯片上可见要点：
-· 升序： return a &lt; b; — a 小于 b 时 a 排前面。
-· 降序： return a &gt; b; — a 大于 b 时 a 排前面。
-· cmp 必须满足严格弱序： 不能同时 cmp(a,b) 和 cmp(b,a) 都为 true，否则排序行为未定义。
-· cmp 必须满足严格弱序：
-讲解时放慢关键术语；用 1 个生活类比 + 1 个反例加深印象。</aside>
+<div class="slide">
+<h1>二、自定义 cmp</h1>
+<p><code>sort(begin, end, cmp)</code>：cmp(a,b) 返回 true 表示 <strong>a 应排在 b 前面</strong>。</p>
+<div class="code-block">
+<span class="keyword">bool</span> <span class="builtin">cmp</span>(<span class="keyword">int</span> a, <span class="keyword">int</span> b) {
+    <span class="keyword">return</span> a &gt; b;  <span class="comment">// 大的在前 → 降序</span>
+}
+sort(a, a + n, cmp);
 </div>
-<!-- Slide 4: 结构体多关键字排序 -->
-<div class="slide" id="slide4">
-<h2>结构体多关键字排序</h2>
-<h3>典型应用：学生成绩排名 — 按总分降序、总分相同按学号升序、学号相同按姓名字典序</h3>
-<pre class="code-block"><code><span class="keyword">struct</span> Student {
-    <span class="keyword">string</span> name;
-    <span class="keyword">int</span> id, score;
+<div class="exam-tips">
+<h4>口诀</h4>
+<p>想让「谁」在前，就在 return 里让「谁」比较胜出。a=5,b=3 时 a&gt;b 为 true → 5 在 3 前 → 降序。</p>
+</div>
+<aside class="notes">【讲解】不是 return a&lt;b 却期望降序。</aside>
+</div>
+
+<div class="slide">
+<h1>三、greater 与 less</h1>
+<div class="code-block">
+<span class="keyword">#include</span> <span class="string">&lt;functional&gt;</span>
+sort(a, a + n, greater&lt;<span class="keyword">int</span>&gt;());  <span class="comment">// 降序</span>
+sort(a, a + n, less&lt;<span class="keyword">int</span>&gt;());     <span class="comment">// 升序（默认）</span>
+</div>
+<div class="key-point">
+简单降序用 <code>greater&lt;int&gt;()</code>；复杂规则写 cmp。仿函数可被内联，略快。
+</div>
+<aside class="notes">【讲解】竞赛两种都行。</aside>
+</div>
+
+<div class="slide">
+<h1>四、结构体多关键字</h1>
+<div class="code-block">
+<span class="keyword">struct</span> Student {
+    <span class="keyword">int</span> id; string name; <span class="keyword">int</span> score;
 };
-
-<span class="keyword">bool</span> <span class="func">cmp</span>(<span class="keyword">const</span> Student&amp; a, <span class="keyword">const</span> Student&amp; b) {
+<span class="keyword">bool</span> <span class="builtin">cmp</span>(<span class="keyword">const</span> Student&amp; a, <span class="keyword">const</span> Student&amp; b) {
     <span class="keyword">if</span> (a.score != b.score)
-        <span class="keyword">return</span> a.score &gt; b.score;        <span class="comment">// 成绩高的在前</span>
-    <span class="keyword">if</span> (a.id != b.id)
-        <span class="keyword">return</span> a.id &lt; b.id;              <span class="comment">// 学号小的在前</span>
-    <span class="keyword">return</span> a.name &lt; b.name;               <span class="comment">// 名字字典序小的在前</span>
+        <span class="keyword">return</span> a.score &gt; b.score;  <span class="comment">// 成绩降序</span>
+    <span class="keyword">return</span> a.id &lt; b.id;           <span class="comment">// 同分学号升序</span>
+}
+sort(stu, stu + n, cmp);
+</div>
+<p>通用模式：高优先级 if 不等则 return；最后一键直接 return 比较。</p>
+<aside class="notes">【讲解】输出 Bob92 Eve92 Alice85…</aside>
+</div>
+
+<div class="slide">
+<h1>五、pair 取负技巧</h1>
+<div class="code-block">
+pair&lt;<span class="keyword">int</span>, <span class="keyword">int</span>&gt; arr[] = {
+    {-<span class="number">85</span>, <span class="number">101</span>}, {-<span class="number">92</span>, <span class="number">102</span>}, {-<span class="number">85</span>, <span class="number">103</span>}, ...
+};
+sort(arr, arr + n);  <span class="comment">// first 升序 = 成绩降序</span>
+<span class="comment">// 成绩 = -arr[i].first，学号 = arr[i].second</span>
+</div>
+<div class="key-point">
+pair 默认：先 first 升序，再 second 升序。需要 first 降序时存<strong>负数</strong>，免写 cmp。
+</div>
+<aside class="notes">【讲解】优先队列小根堆也常用取负。</aside>
+</div>
+
+<div class="slide">
+<h1>六、stable_sort</h1>
+<div class="code-block">
+stable_sort(a, a + n, cmp);  <span class="comment">// 相等元素保相对顺序</span>
+</div>
+<ul>
+<li>用法同 sort，保证<strong>稳定</strong></li>
+<li>内部多归并，常数略大；不需稳定时优先 sort</li>
+<li>场景：已按 A 排好，再按 B 排且要保留 A 的次序</li>
+</ul>
+<aside class="notes">【讲解】sort 不稳定（内省排序）。</aside>
+</div>
+
+<div class="slide">
+<h1>七、严格弱序：相等必须 false</h1>
+<div class="exam-tips">
+<h4>致命错误</h4>
+<p><code>return a &gt;= b;</code> 当 a==b 时返回 true，同时 b&gt;=a 也 true → 违反严格弱序 → 崩溃/乱序。</p>
+<p>正确：<code>return a &gt; b;</code>（相等时 false）</p>
+</div>
+<div class="key-point">cmp 必须：非自反、非对称、传递。相等时双方都 return false。</div>
+<aside class="notes">【讲解】Runtime Error 常因 cmp 写错。</aside>
+</div>
+
+<div class="slide">
+<h1>八、代码模板汇总</h1>
+<div class="code-block">
+sort(a, a+n);
+sort(a, a+n, greater&lt;<span class="keyword">int</span>&gt;());
+sort(v.begin(), v.end());
+
+<span class="keyword">bool</span> cmpDesc(<span class="keyword">int</span> a, <span class="keyword">int</span> b) { <span class="keyword">return</span> a &gt; b; }
+
+<span class="keyword">bool</span> cmpNode(<span class="keyword">const</span> Node&amp; x, <span class="keyword">const</span> Node&amp; y) {
+    <span class="keyword">if</span> (x.a != y.a) <span class="keyword">return</span> x.a &gt; y.a;
+    <span class="keyword">if</span> (x.b != y.b) <span class="keyword">return</span> x.b &lt; y.b;
+    <span class="keyword">return</span> x.c &lt; y.c;
 }
 
-<span class="comment">// 调用</span>
-<span class="func">sort</span>(stu, stu + n, cmp);</code></pre>
-<h3>Lambda 表达式写法（推荐！简洁易读）</h3>
-<pre class="code-block"><code><span class="func">sort</span>(stu, stu + n, [](<span class="keyword">const</span> Student&amp; a, <span class="keyword">const</span> Student&amp; b) {
+stable_sort(a, a+n, cmp);
+</div>
+<aside class="notes">【讲解】四模板。</aside>
+</div>
+
+<div class="slide">
+<h1>九、易错点</h1>
+<div class="exam-tips"><h4>1. cmp 方向反</h4><p>true=排前面；降序写 a&gt;b。</p></div>
+<div class="exam-tips"><h4>2. 相等返回 true</h4><p>禁用 &gt;= / &lt;= 当主比较。</p></div>
+<div class="exam-tips"><h4>3. 忘记 algorithm</h4><p>#include &lt;algorithm&gt;</p></div>
+<div class="exam-tips"><h4>4. 区间写错</h4><p>sort(a, a+n) 不是 a+n-1 作 end（end 是开区间端）。</p></div>
+<div class="exam-tips"><h4>5. 结构体没写全关键字</h4><p>成绩相同未规定学号 → 顺序不定，输出对拍失败。</p></div>
+<aside class="notes">【讲解】五条过一遍。</aside>
+</div>
+
+<div class="slide">
+<h1>十、真题风格①：成绩排名</h1>
+<p>n 名学生：成绩降序，同分学号升序，输出排名表。</p>
+<div class="code-block">
+<span class="keyword">bool</span> cmp(<span class="keyword">const</span> Student&amp; a, <span class="keyword">const</span> Student&amp; b) {
     <span class="keyword">if</span> (a.score != b.score) <span class="keyword">return</span> a.score &gt; b.score;
-    <span class="keyword">if</span> (a.id != b.id) <span class="keyword">return</span> a.id &lt; b.id;
-    <span class="keyword">return</span> a.name &lt; b.name;
-});</code></pre>
-<div class="exam-tip">
-<strong>📝 考试技巧：</strong> Lambda 表达式是 C++11 特性，CSP-J 复赛环境（如 NOI Linux 2.0）完全支持。Lambda 写法将比较逻辑写在 sort 调用处，<strong>避免定义全局函数</strong>，减少命名冲突，强烈推荐使用！
-      </div>
-
-<aside class="notes">【讲解】结构体多关键字排序
-结合讲义《四、结构体多关键字排序》强调：
-· 这是 CSP-J 中最常考、最实用的自定义排序场景。比如有一个学生信息结构体，要求：
-· 先按总成绩降序排列（成绩高的在前）
-· 成绩相同时按学号升序排列（学号小的在前）
-· 完整示例：
-· using namespace std;
-幻灯片上可见要点：
-· 📝 考试技巧：
-· 避免定义全局函数
-讲解时放慢关键术语；用 1 个生活类比 + 1 个反例加深印象。</aside>
-</div>
-<!-- Slide 5: stable_sort -->
-<div class="slide" id="slide5">
-<h2>stable_sort — 稳定排序</h2>
-<h3>sort vs stable_sort</h3>
-<table>
-<tr><th>特性</th><th>sort()</th><th>stable_sort()</th></tr>
-<tr><td>底层算法</td><td>内省排序（快速+堆+插入）</td><td>归并排序</td></tr>
-<tr><td>稳定性</td><td>❌ 不稳定</td><td>✅ 稳定</td></tr>
-<tr><td>时间复杂度</td><td>O(n log n)</td><td>O(n log n)，最坏 O(n log² n)</td></tr>
-<tr><td>空间复杂度</td><td>O(log n)</td><td>O(n)（需要辅助数组）</td></tr>
-<tr><td>使用场景</td><td>不关心相等元素顺序</td><td>需要保持相等元素的原始顺序</td></tr>
-</table>
-<h3>稳定排序的典型应用</h3>
-<pre class="code-block"><code><span class="comment">// 场景：先按某个属性排序，再按另一个属性排序，</span>
-<span class="comment">// 需要保留第一次排序的相对顺序时使用 stable_sort</span>
-
-<span class="comment">// 示例：学生先按成绩降序排，成绩相同保留原始输入顺序</span>
-Student stu[] = {{<span class="string">"Alice"</span>, <span class="number">90</span>}, {<span class="string">"Bob"</span>, <span class="number">90</span>}, {<span class="string">"Tom"</span>, <span class="number">85</span>}};
-
-<span class="func">sort</span>(stu, stu + <span class="number">3</span>, cmpByScore);       <span class="comment">// 不稳定：Alice和Bob可能交换</span>
-<span class="func">stable_sort</span>(stu, stu + <span class="number">3</span>, cmpByScore);  <span class="comment">// 稳定：Alice一定在Bob前</span></code></pre>
-<div class="info-box">
-<strong>记忆口诀：</strong>"sort 排序快如风，stable_sort 稳如松。" — 如果题目明确要求"稳定排序"，直接用 stable_sort 或归并排序。
-      </div>
-
-<aside class="notes">【讲解】stable_sort — 稳定排序
-结合讲义《五、stable_sort 稳定排序》强调：
-· stable_sort() 与 sort() 用法几乎完全相同，唯一的区别是：**stable_sort() 保证排序的稳定性**（相等元素的相对顺序不变）。
-· using namespace std;
-· struct Item {
-· int value;
-· int originalIndex;
-幻灯片上可见要点：
-· 记忆口诀：
-讲解时放慢关键术语；用 1 个生活类比 + 1 个反例加深印象。</aside>
-</div>
-<!-- Slide 6: 代码模板 -->
-<div class="slide" id="slide6">
-<h2>代码模板汇总</h2>
-<h3>模板一：sort 基本用法</h3>
-<pre class="code-block"><code><span class="meta">#include &lt;algorithm&gt;</span>
-<span class="comment">// 数组升序</span>
-<span class="func">sort</span>(a, a + n);
-<span class="comment">// 数组降序</span>
-<span class="func">sort</span>(a, a + n, greater&lt;<span class="keyword">int</span>&gt;());
-<span class="comment">// vector</span>
-<span class="func">sort</span>(v.begin(), v.end());</code></pre>
-<h3>模板二：结构体多关键字排序（Lambda）</h3>
-<pre class="code-block"><code><span class="func">sort</span>(stu, stu + n, [](<span class="keyword">const</span> Student&amp; a, <span class="keyword">const</span> Student&amp; b) {
-    <span class="comment">// 第一关键字：总分降序</span>
-    <span class="keyword">if</span> (a.total != b.total) <span class="keyword">return</span> a.total &gt; b.total;
-    <span class="comment">// 第二关键字：语文降序</span>
-    <span class="keyword">if</span> (a.chinese != b.chinese) <span class="keyword">return</span> a.chinese &gt; b.chinese;
-    <span class="comment">// 第三关键字：学号升序</span>
     <span class="keyword">return</span> a.id &lt; b.id;
-});</code></pre>
-<h3>模板三：自定义 cmp 函数</h3>
-<pre class="code-block"><code><span class="comment">// 绝对值升序</span>
-<span class="keyword">bool</span> <span class="func">cmpAbs</span>(<span class="keyword">int</span> a, <span class="keyword">int</span> b) { <span class="keyword">return</span> <span class="func">abs</span>(a) &lt; <span class="func">abs</span>(b); }
-
-<span class="comment">// 字符串按长度排序</span>
-<span class="keyword">bool</span> <span class="func">cmpLen</span>(<span class="keyword">const</span> string&amp; a, <span class="keyword">const</span> string&amp; b) {
-    <span class="keyword">if</span> (a.length() != b.length())
-        <span class="keyword">return</span> a.length() &lt; b.length();
-    <span class="keyword">return</span> a &lt; b;  <span class="comment">// 长度相同按字典序</span>
-}</code></pre>
-
-<aside class="notes">【讲解】代码模板汇总
-本页要点（照着讲即可）：
-· 代码模板汇总
-· 模板一：sort 基本用法
-· #include
-· // 数组升序
-· sort
-· (a, a + n);
-代码页节奏：先读懂输入输出 → 再走主流程 → 最后点出易错点（边界/类型/下标）。
-可让学生预测下一行输出，再运行对照。</aside>
+}
+sort(stu, stu + n, cmp);
 </div>
-<!-- Slide 7: 真题精练 -->
-<div class="slide" id="slide7">
-<h2>真题精练 — 学生成绩排名</h2>
-<div class="info-box">
-<strong>题目描述：</strong>有 n 名同学参加期末考试，每名同学有三个成绩：语文、数学、英语，以及一个学号。<br/>
-        请按以下规则排名：<br/>
-        (1) 按<strong>总分</strong>从高到低排序；<br/>
-        (2) 总分相同，按<strong>语文</strong>成绩从高到低排序；<br/>
-        (3) 语文也相同，按<strong>学号</strong>从小到大排序。<br/>
-        数据范围：n ≤ 1000，每科成绩 0~100。
-      </div>
-<h3>解题关键</h3>
-<ol>
-<li><strong>结构体定义：</strong>包含 id, chinese, math, english, total。</li>
-<li><strong>计算总分：</strong>读入后计算 total = chinese + math + english。</li>
-<li><strong>多关键字排序：</strong>使用 Lambda 表达式，先比较 total，再比较 chinese，最后比较 id。</li>
-<li><strong>注意比较方向：</strong>总分和语文是降序（高的在前），学号是升序（小的在前）。</li>
-</ol>
-<h3>输入样例</h3>
-<pre class="code-block"><code><span class="number">4</span>
-<span class="number">1</span> <span class="number">90</span> <span class="number">85</span> <span class="number">95</span>    <span class="comment">// 学号1: 总分270, 语文90</span>
-<span class="number">2</span> <span class="number">95</span> <span class="number">80</span> <span class="number">95</span>    <span class="comment">// 学号2: 总分270, 语文95</span>
-<span class="number">3</span> <span class="number">88</span> <span class="number">92</span> <span class="number">90</span>    <span class="comment">// 学号3: 总分270, 语文88</span>
-<span class="number">4</span> <span class="number">80</span> <span class="number">85</span> <span class="number">90</span>    <span class="comment">// 学号4: 总分255</span></code></pre>
-<h3>输出结果</h3>
+<aside class="notes">【练习】当堂写 cmp。</aside>
+</div>
+
+<div class="slide">
+<h1>十一、真题风格②：坐标排序</h1>
+<p>点 (x,y)：先 x 升序，x 同则 y 升序。</p>
+<div class="code-block">
+<span class="keyword">bool</span> cmp(<span class="keyword">const</span> pair&lt;<span class="keyword">int</span>,<span class="keyword">int</span>&gt;&amp; a,
+         <span class="keyword">const</span> pair&lt;<span class="keyword">int</span>,<span class="keyword">int</span>&gt;&amp; b) {
+    <span class="keyword">if</span> (a.first != b.first) <span class="keyword">return</span> a.first &lt; b.first;
+    <span class="keyword">return</span> a.second &lt; b.second;
+}
+<span class="comment">// 其实 pair 默认就是这样，直接 sort(p, p+n) 即可！</span>
+</div>
+<aside class="notes">【讲解】默认 pair 排序很香。</aside>
+</div>
+
+<div class="slide">
+<h1>十二、真题风格③：需要稳定时</h1>
+<p>先按班级排序，再按成绩排序，要求同成绩保持原班级内相对序 → 用 stable_sort 按成绩；或把班级并入关键字。</p>
+<div class="key-point">
+不需稳定：sort。需要稳定或分步排序保序：stable_sort。
+</div>
+<aside class="notes">【讲解】读题关键字「相对顺序不变」。</aside>
+</div>
+
+<div class="slide">
+<h1>十三、选型速查</h1>
 <table>
-<tr><th>排名</th><th>学号</th><th>总分</th><th>语文</th><th>说明</th></tr>
-<tr><td>1</td><td>2</td><td>270</td><td>95</td><td>总分并列，语文最高</td></tr>
-<tr><td>2</td><td>1</td><td>270</td><td>90</td><td>语文次之</td></tr>
-<tr><td>3</td><td>3</td><td>270</td><td>88</td><td>第三关键字 id 用不上</td></tr>
-<tr><td>4</td><td>4</td><td>255</td><td>80</td><td>总分最低</td></tr>
+<tr><th>需求</th><th>写法</th></tr>
+<tr><td>普通升序</td><td>sort(a,a+n)</td></tr>
+<tr><td>普通降序</td><td>greater&lt;int&gt;()</td></tr>
+<tr><td>多关键字</td><td>自定义 cmp</td></tr>
+<tr><td>稳定</td><td>stable_sort</td></tr>
+<tr><td>双关键字简单</td><td>pair / 取负</td></tr>
 </table>
+<aside class="notes">【讲解】过渡二分。</aside>
+</div>
 
-<aside class="notes">【讲解】真题精练 — 学生成绩排名
-本页要点（照着讲即可）：
-· 题目描述：
-· 结构体定义： 包含 id, chinese, math, english, total。
-· 结构体定义：
-· 计算总分： 读入后计算 total = chinese + math + english。
-· 计算总分：
-· 多关键字排序： 使用 Lambda 表达式，先比较 total，再比较 chinese，最后比较 id。
-练习页节奏：先独立想 1 分钟 → 再点拨思路 → 最后对答案讲为什么。
-可联系：sort排序与多关键字排序题</aside>
+<div class="slide">
+<h1>十四、本课小结</h1>
+<table>
+<tr><th>知识点</th><th>一句记忆</th></tr>
+<tr><td>sort</td><td>[begin,end) 默认升序</td></tr>
+<tr><td>cmp</td><td>true = a 在前</td></tr>
+<tr><td>greater</td><td>一行降序</td></tr>
+<tr><td>多关键字</td><td>if 不等 return；相等比下一键</td></tr>
+<tr><td>严格弱序</td><td>相等必须 false</td></tr>
+<tr><td>stable_sort</td><td>要稳定才用</td></tr>
+</table>
+<p style="margin-top:24px; text-align:center; color:#1a237e; font-size:18px; font-weight:bold;">
+下节：二分查找——有序序列上的 O(log n) 神器
+</p>
+<aside class="notes">【收尾】默写成绩+学号 cmp。</aside>
 </div>
-<!-- Slide 8: 本课小结 -->
-<div class="slide" id="slide8">
-<h2>本课小结</h2>
-<div class="summary-box">
-<ul style="font-size:17px;line-height:2.2;">
-<li><strong>sort() 基础：</strong><code>sort(begin, end)</code> 升序，<code>sort(begin, end, greater&lt;T&gt;())</code> 降序。时间复杂度 O(n log n)。</li>
-<li><strong>自定义 cmp：</strong><code>cmp(a, b)</code> 返回 true 表示 a 排 b 前。支持按绝对值、奇偶分组等任意规则。</li>
-<li><strong>多关键字排序：</strong>逐层 if-return，先比较第一关键字，相等再比较第二关键字，以此类推。</li>
-<li><strong>Lambda 表达式：</strong>在 sort 调用处直接写比较逻辑，代码更清晰紧凑。格式：<code>[](const T&amp; a, const T&amp; b) { ... }</code>。</li>
-<li><strong>stable_sort：</strong>稳定排序，底层归并，相等元素保持原始顺序。需头文件 &lt;algorithm&gt;。</li>
-</ul>
-</div>
-<h3>下节预告</h3>
-<p>第 32 课将学习<strong>二分查找</strong>——在有序序列中快速定位目标，以及二分答案的转化思想。</p>
 
-<aside class="notes">【收尾】回顾本课主线：本课小结
-对照大纲再过一遍：sort函数使用、cmp比较函数、结构体排序
-板书/口述要点：
-· sort() 基础： sort(begin, end) 升序， sort(begin, end, greater()) 降序。时间复杂度 O(n log n)。
-· sort() 基础：
-· 自定义 cmp： cmp(a, b) 返回 true 表示 a 排 b 前。支持按绝对值、奇偶分组等任意规则。
-· 自定义 cmp：
-· 多关键字排序： 逐层 if-return，先比较第一关键字，相等再比较第二关键字，以此类推。
-· 多关键字排序：
-课后任务：sort排序与多关键字排序题
-结束前留 2 分钟答疑；布置 1 道小练习检验是否真正掌握。</aside>
 </div>
-</div>
-<div class="navigation">
-<button class="nav-btn" id="prevBtn" onclick="changeSlide(-1)">◀ 上一页</button>
-<span class="slide-indicator" id="slideIndicator">1 / 8</span>
-<button class="nav-btn" id="nextBtn" onclick="changeSlide(1)">下一页 ▶</button>
-</div>
+<div id="nav-bar">
+<button class="nav-btn" id="btn-prev" onclick="prevSlide()">◀ 上一页</button>
+<span id="page-indicator">1 / 14</span>
+<button class="nav-btn" id="btn-next" onclick="nextSlide()">下一页 ▶</button>
 </div>
 <script>
-let currentSlide = 1;
-const totalSlides = 8;
-
+let currentSlide = 0;
+const slides = document.querySelectorAll('.slide');
+const totalSlides = slides.length;
+const indicator = document.getElementById('page-indicator');
+const btnPrev = document.getElementById('btn-prev');
+const btnNext = document.getElementById('btn-next');
 function showSlide(n) {
-  document.querySelectorAll('.slide').forEach(s => s.classList.remove('active'));
-  document.getElementById('slide' + n).classList.add('active');
-  document.getElementById('slideIndicator').textContent = n + ' / ' + totalSlides;
-  document.getElementById('prevBtn').disabled = (n === 1);
-  document.getElementById('nextBtn').disabled = (n === totalSlides);
-  currentSlide = n;
+    if (n < 0 || n >= totalSlides) return;
+    slides[currentSlide].classList.remove('active');
+    currentSlide = n;
+    slides[currentSlide].classList.add('active');
+    indicator.textContent = (currentSlide + 1) + ' / ' + totalSlides;
+    btnPrev.disabled = (currentSlide === 0);
+    btnNext.disabled = (currentSlide === totalSlides - 1);
 }
-
-function changeSlide(delta) {
-  let next = currentSlide + delta;
-  if (next >= 1 && next <= totalSlides) showSlide(next);
-}
-
+function nextSlide() { if (currentSlide < totalSlides - 1) showSlide(currentSlide + 1); }
+function prevSlide() { if (currentSlide > 0) showSlide(currentSlide - 1); }
 document.addEventListener('keydown', function(e) {
-  if (e.key === 'ArrowLeft') changeSlide(-1);
-  if (e.key === 'ArrowRight') changeSlide(1);
+    if (e.key === 'ArrowRight' || e.key === 'ArrowDown' || e.key === ' ') { e.preventDefault(); nextSlide(); }
+    else if (e.key === 'ArrowLeft' || e.key === 'ArrowUp') { e.preventDefault(); prevSlide(); }
+    else if (e.key === 'Home') { e.preventDefault(); showSlide(0); }
+    else if (e.key === 'End') { e.preventDefault(); showSlide(totalSlides - 1); }
 });
+showSlide(0);
 </script>
 <script src="courseware-ui.js"></script>
 <script src="presenter.js"></script>

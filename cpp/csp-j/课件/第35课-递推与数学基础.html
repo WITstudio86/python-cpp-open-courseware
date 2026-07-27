@@ -1,561 +1,277 @@
 <!DOCTYPE html>
-
 <html lang="zh-CN">
 <head>
 <meta charset="utf-8"/>
 <meta content="width=device-width, initial-scale=1.0" name="viewport"/>
-<title>第35课：递推与数学基础 — CSP-J 备考课程</title>
+<title>CSP-J 备考课程 — 第35课：递推与数学基础</title>
 <style>
-*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
-
-body {
-    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "PingFang SC", "Microsoft YaHei", sans-serif;
-    background: #f5f5f5;
-    color: #333;
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    min-height: 100vh;
-}
-
-/* 顶部标题栏 */
-.header-bar {
-    width: 100%;
-    background: #1a237e;
-    color: #fff;
-    text-align: center;
-    padding: 12px 16px;
-    font-size: 18px;
-    font-weight: 700;
-    letter-spacing: 2px;
-    position: sticky;
-    top: 0;
-    z-index: 100;
-}
-.header-bar span { color: #ffd600; }
-
-/* 幻灯片容器 */
-.slides-container {
-    width: 100%;
-    max-width: 960px;
-    margin: 20px auto;
-    padding: 0 16px;
-    flex: 1;
-}
-
-/* 单张幻灯片 */
-.slide {
-    display: none;
-    background: #fff;
-    border-radius: 12px;
-    box-shadow: 0 4px 20px rgba(0,0,0,0.1);
-    padding: 40px 48px;
-    min-height: 480px;
-    animation: fadeIn 0.3s ease;
-}
-.slide.active { display: block; }
-
-@keyframes fadeIn {
-    from { opacity: 0; transform: translateY(10px); }
-    to   { opacity: 1; transform: translateY(0); }
-}
-
-/* 幻灯片标题 */
-.slide h1 {
-    color: #1a237e;
-    font-size: 28px;
-    border-bottom: 3px solid #ffd600;
-    padding-bottom: 12px;
-    margin-bottom: 24px;
-}
-.slide h2 {
-    color: #1a237e;
-    font-size: 22px;
-    margin-bottom: 16px;
-}
-.slide h3 {
-    color: #283593;
-    font-size: 18px;
-    margin-top: 20px;
-    margin-bottom: 10px;
-}
-
-/* 正文段落 */
-.slide p, .slide li {
-    font-size: 16px;
-    line-height: 1.8;
-    margin-bottom: 8px;
-}
-.slide ul, .slide ol {
-    padding-left: 24px;
-    margin-bottom: 12px;
-}
-
-/* 代码块 */
-.code-block {
-    background: #1e1e1e;
-    color: #d4d4d4;
-    font-family: "Consolas", "Monaco", "Courier New", monospace;
-    font-size: 14px;
-    padding: 16px 20px;
-    border-radius: 8px;
-    overflow-x: auto;
-    white-space: pre;
-    line-height: 1.6;
-    margin: 12px 0;
-}
-.code-block .kw { color: #569cd6; }
-.code-block .dt { color: #4ec9b0; }
-.code-block .fn { color: #dcdcaa; }
-.code-block .nu { color: #b5cea8; }
-.code-block .cm { color: #6a9955; }
-.code-block .op { color: #d4d4d4; }
-.code-block .st { color: #ce9178; }
-.code-block .pp { color: #c586c0; }
-
-/* 公式 */
-.math { font-style: italic; color: #1a237e; }
-
-/* 考试技巧提示框 */
-.tip-box {
-    background: #fffde7;
-    border-left: 5px solid #ffd600;
-    border-top: 1px solid #ffe082;
-    border-right: 1px solid #ffe082;
-    border-bottom: 1px solid #ffe082;
-    border-radius: 6px;
-    padding: 14px 18px;
-    margin: 16px 0;
-    font-size: 15px;
-    color: #5d4037;
-}
+* { margin: 0; padding: 0; box-sizing: border-box; }
+body { font-family: "Microsoft YaHei", "PingFang SC", sans-serif; background: #f5f5f5; display: flex; flex-direction: column; align-items: center; min-height: 100vh; }
+.header { width: 100%; background: linear-gradient(135deg, #1a237e 0%, #283593 100%); color: white; padding: 12px 24px; font-size: 18px; font-weight: bold; text-align: center; position: fixed; top: 0; z-index: 100; }
+.header span { color: #ffd600; }
+.container { margin-top: 60px; width: 100%; max-width: 1100px; padding: 20px; }
+.slide { display: none; background: white; border-radius: 16px; padding: 48px 56px; margin: 20px auto; box-shadow: 0 4px 24px rgba(0,0,0,0.08); min-height: 520px; }
+.slide.active { display: block; animation: fadeIn 0.4s ease; }
+@keyframes fadeIn { from { opacity: 0; transform: translateY(12px); } to { opacity: 1; transform: none; } }
+.slide-title h1 { font-size: 40px; color: #1a237e; margin-bottom: 16px; }
+.slide-title .subtitle { font-size: 22px; color: #5c6bc0; margin-bottom: 28px; }
+.slide-title .badge { display: inline-block; background: #ffd600; color: #1a237e; padding: 8px 24px; border-radius: 24px; font-weight: bold; }
+.slide-title .meta { margin-top: 32px; color: #9e9e9e; font-size: 15px; }
+.slide h2 { font-size: 28px; color: #1a237e; margin-bottom: 20px; padding-bottom: 10px; border-bottom: 3px solid #ffd600; display: inline-block; }
+.slide h3 { font-size: 20px; color: #283593; margin: 18px 0 10px; }
+.slide p, .slide li { font-size: 17px; line-height: 1.85; color: #333; }
+.slide ul { list-style: none; padding: 0; }
+.slide ul li { padding-left: 28px; position: relative; margin-bottom: 6px; }
+.slide ul li::before { content: "▸"; position: absolute; left: 4px; color: #ffd600; font-weight: bold; }
+.code-block { background: #1e1e1e; border-radius: 10px; padding: 16px 20px; margin: 12px 0; overflow-x: auto; font-family: Consolas, Monaco, monospace; font-size: 14px; line-height: 1.65; color: #d4d4d4; white-space: pre; }
+.code-block .keyword { color: #569cd6; } .code-block .type { color: #4ec9b0; } .code-block .function { color: #dcdcaa; }
+.code-block .string { color: #ce9178; } .code-block .number { color: #b5cea8; } .code-block .comment { color: #6a9955; }
+.tip-box { background: #fff8e1; border-left: 5px solid #ffc107; padding: 14px 18px; margin: 14px 0; border-radius: 6px; font-size: 16px; color: #5d4037; line-height: 1.7; }
 .tip-box strong { color: #e65100; }
-.tip-box::before { content: "💡 考试技巧："; font-weight: bold; color: #ff8f00; }
-
-/* 警告框 */
-.warn-box {
-    background: #fff3e0;
-    border-left: 5px solid #ff9800;
-    border-radius: 6px;
-    padding: 14px 18px;
-    margin: 16px 0;
-    font-size: 15px;
-    color: #bf360c;
-}
-.warn-box strong { color: #d84315; }
-
-/* 表格 */
-.data-table {
-    width: 100%;
-    border-collapse: collapse;
-    margin: 16px 0;
-    font-size: 14px;
-}
-.data-table th {
-    background: #1a237e;
-    color: #fff;
-    padding: 10px 14px;
-    text-align: center;
-}
-.data-table td {
-    border: 1px solid #e0e0e0;
-    padding: 8px 14px;
-    text-align: center;
-}
-.data-table tr:nth-child(even) { background: #f5f5ff; }
-
-/* 导航按钮 */
-.nav-buttons {
-    display: flex;
-    justify-content: center;
-    gap: 16px;
-    margin: 20px 0 40px;
-}
-.nav-btn {
-    background: #1a237e;
-    color: #fff;
-    border: none;
-    padding: 10px 28px;
-    border-radius: 6px;
-    font-size: 15px;
-    cursor: pointer;
-    transition: background 0.2s;
-}
-.nav-btn:hover { background: #283593; }
-.nav-btn:disabled {
-    background: #9fa8da;
-    cursor: not-allowed;
-}
-
-/* 页码指示器 */
-.page-indicator {
-    text-align: center;
-    color: #666;
-    font-size: 14px;
-    margin-bottom: 8px;
-}
-
-/* 标题页特殊样式 */
-.slide.title-slide.active {
-    text-align: center;
-    display: flex;
-    flex-direction: column;
-    justify-content: center;
-    align-items: center;
-    min-height: 480px;
-}
-.slide.title-slide.active h1 {
-    font-size: 36px;
-    border-bottom: none;
-    margin-bottom: 16px;
-}
-.slide.title-slide.active .subtitle {
-    font-size: 20px;
-    color: #ffd600;
-    background: #1a237e;
-    display: inline-block;
-    padding: 6px 24px;
-    border-radius: 20px;
-    margin-bottom: 24px;
-}
-.slide.title-slide.active .info {
-    color: #666;
-    font-size: 15px;
-    line-height: 2;
-}
-
-/* 响应式 */
-@media (max-width: 768px) {
-    .slide { padding: 24px 20px; min-height: auto; }
-    .slide h1 { font-size: 22px; }
-    .slide h2 { font-size: 18px; }
-    .code-block { font-size: 12px; padding: 10px 14px; }
-    .nav-btn { padding: 8px 20px; font-size: 14px; }
-}
-
-/* 内联代码 */
-.inline-code {
-    background: #e8eaf6;
-    color: #1a237e;
-    font-family: "Consolas", "Monaco", monospace;
-    padding: 1px 6px;
-    border-radius: 3px;
-    font-size: 0.92em;
-}
+.tip-box.warning { background: #ffebee; border-left-color: #f44336; color: #b71c1c; }
+.tip-box.success { background: #e8f5e9; border-left-color: #4caf50; color: #1b5e20; }
+.compare-table { width: 100%; border-collapse: collapse; margin: 12px 0; font-size: 15px; }
+.compare-table th { background: #1a237e; color: white; padding: 10px; }
+.compare-table td { padding: 8px 10px; border-bottom: 1px solid #e0e0e0; text-align: center; }
+.compare-table tr:nth-child(even) { background: #f5f5f5; }
+.problem-card { background: #fafafa; border: 1px solid #e0e0e0; border-radius: 10px; padding: 16px 20px; margin: 12px 0; }
+.problem-card .problem-title { font-size: 18px; color: #1a237e; font-weight: bold; margin-bottom: 8px; }
+.nav-buttons { display: flex; justify-content: center; align-items: center; gap: 20px; padding: 20px; margin-bottom: 30px; }
+.nav-btn { background: #1a237e; color: white; border: none; padding: 12px 32px; border-radius: 28px; font-size: 16px; cursor: pointer; font-weight: bold; }
+.nav-btn:disabled { background: #ccc; cursor: not-allowed; }
+.page-indicator { font-size: 16px; color: #757575; min-width: 80px; text-align: center; }
+.summary-box { background: #e8eaf6; border-radius: 12px; padding: 20px; }
+.summary-box li { color: #1a237e; font-weight: 500; padding-left: 28px; position: relative; list-style: none; margin-bottom: 8px; }
+.summary-box li::before { content: "▸"; position: absolute; left: 4px; color: #ffd600; }
+.math { font-family: "Times New Roman", serif; font-style: italic; color: #1a237e; }
+@media print { .slide { display: block !important; page-break-after: always; } .nav-buttons { display: none; } .header { position: static; } }
 </style>
 </head>
 <body>
-<div class="header-bar">
-<span>CSP-J</span> 备考课程 — 第35课：递推与数学基础
-</div>
-<div class="slides-container">
-<!-- ============ 幻灯片 1：标题页 ============ -->
-<div class="slide active title-slide" id="slide-1">
-<h1>第35课：递推与数学基础</h1>
-<div class="subtitle">CSP-J 备考课程</div>
-<div class="info">
-<p>等差数列 / 等比数列</p>
-<p>递推关系（斐波那契 / 卡特兰数）</p>
-<p>前缀和（一维 / 二维）</p>
-<p>差分数组</p>
+<div class="header">📘 <span>CSP-J 备考课程</span> — 第35课：递推与数学基础</div>
+<div class="container">
+
+<div class="slide slide-title active" id="slide1">
+<h1>第35课<br/>递推与数学基础</h1>
+<div class="subtitle">数列 · 递推 · 前缀和 · 差分</div>
+<div class="badge">算法数学工具课</div>
+<div class="meta">📋 等差等比 · 斐波那契/卡特兰 · 一维/二维前缀和 · 差分数组<br/>⏱️ 60–75 分钟 · 共 14 页</div>
+<aside class="notes">【开场】1/14 本课是 DP/区间题的预处理基础，前缀和与差分必会。</aside>
 </div>
 
-<aside class="notes">【开场】第 1/7 页 · 递推与数学基础
-用 30 秒说明本课目标与学完能做什么，再进入正题。
-大纲考点：等差数列/等比数列、前缀和、差分数组
-配套练习方向：数列递推与前缀和应用题
-封面关键词：
-· 等差数列 / 等比数列
-· 递推关系（斐波那契 / 卡特兰数）
-· 前缀和（一维 / 二维）
-· 差分数组
-互动：问学生「今天最想搞清楚什么？」，收 1–2 个期待。</aside>
+<div class="slide" id="slide2">
+<h2>考纲与目标</h2>
+<table class="compare-table">
+<tr><th>知识点</th><th>关键公式/操作</th><th>复杂度</th></tr>
+<tr><td>等差/等比数列</td><td>通项与求和</td><td>O(1)/O(log n)</td></tr>
+<tr><td>递推（Fib/Catalan）</td><td>F(n)=F(n-1)+F(n-2)</td><td>O(n)</td></tr>
+<tr><td>一维前缀和</td><td>sum(l,r)=pre[r]-pre[l-1]</td><td>预处理 O(n) 查询 O(1)</td></tr>
+<tr><td>二维前缀和</td><td>容斥四角</td><td>O(nm) / O(1)</td></tr>
+<tr><td>差分数组</td><td>d[l]+=x, d[r+1]-=x</td><td>修改 O(1)</td></tr>
+</table>
+<div class="tip-box success"><strong>目标：</strong>默写一维/二维前缀和与差分模板；会迭代写斐波那契并取模。</div>
+<aside class="notes">【讲解】地图</aside>
 </div>
-<!-- ============ 幻灯片 2：等差数列与等比数列 ============ -->
-<div class="slide" id="slide-2">
-<h1>一、等差数列与等比数列</h1>
-<h2>等差数列</h2>
-<p>通项公式：<span class="math">a<sub>n</sub> = a<sub>1</sub> + (n-1)d</span></p>
-<p>前 n 项和：<span class="math">S<sub>n</sub> = n(a<sub>1</sub> + a<sub>n</sub>) / 2</span></p>
-<div class="code-block"><span class="kw">long long</span> <span class="fn">arithmeticSum</span>(<span class="kw">long long</span> a1, <span class="kw">long long</span> d, <span class="kw">long long</span> n) {
-    <span class="kw">long long</span> an = a1 + (n - <span class="nu">1</span>) * d;
-    <span class="kw">return</span> n * (a1 + an) / <span class="nu">2</span>;
+
+<div class="slide" id="slide3">
+<h2>一、等差数列与等比数列</h2>
+<p><strong>等差：</strong>公差 d，通项 <span class="math">aₙ = a₁+(n-1)d</span></p>
+<p>前 n 项和 <span class="math">Sₙ = n(a₁+aₙ)/2</span></p>
+<div class="code-block"><span class="type">long long</span> <span class="function">arithmeticSum</span>(<span class="type">long long</span> a1, <span class="type">long long</span> d, <span class="type">long long</span> n) {
+    <span class="type">long long</span> an = a1 + (n - <span class="number">1</span>) * d;
+    <span class="keyword">return</span> n * (a1 + an) / <span class="number">2</span>;
 }</div>
-<h2>等比数列</h2>
-<p>通项公式：<span class="math">a<sub>n</sub> = a<sub>1</sub> × q<sup>n-1</sup></span></p>
-<p>前 n 项和：<span class="math">S<sub>n</sub> = a<sub>1</sub>(1 - q<sup>n</sup>) / (1 - q)</span>（q ≠ 1）</p>
-<div class="tip-box">
-        记住高斯求和公式：<strong>（首项 + 末项）× 项数 ÷ 2</strong>，这是等差数列和的最快求法！
-    </div>
-
-<aside class="notes">【讲解】一、等差数列与等比数列
-结合讲义《一、等差数列与等比数列》强调：
-· 等差数列是指从第二项起，每一项与前一项的差等于同一个常数 $d$（公差）的数列。其通项公式为：
-· $$a_n = a_1 + (n-1) \times d$$
-· 前 $n$ 项和公式（高斯求和公式）为：
-· $$S_n = \frac{n \times (a_1 + a_n)}{2} = n \times a_1 + \frac{n(n-1)d}{2}$$
-· 在实际编程中，我们可以这样计算等差数列的和：
-幻灯片上可见要点：
-· 通项公式： a n = a 1 + (n-1)d
-· 前 n 项和： S n = n(a 1 + a n ) / 2
-· 通项公式： a n = a 1 × q n-1
-· 前 n 项和： S n = a 1 (1 - q n ) / (1 - q) （q ≠ 1）
-讲解时放慢关键术语；用 1 个生活类比 + 1 个反例加深印象。
-本课大纲考点（可适时点题）：等差数列/等比数列、前缀和、差分数组</aside>
+<p><strong>等比：</strong>公比 q，通项 <span class="math">aₙ = a₁·qⁿ⁻¹</span>；q≠1 时 <span class="math">Sₙ = a₁(1-qⁿ)/(1-q)</span></p>
+<div class="tip-box">口诀：<strong>等差数对乘，等比指数幂</strong>。qⁿ 可用快速幂（第36课）。注意 long long 防溢出。</div>
+<aside class="notes">【讲解】数列 高斯求和故事可一提。</aside>
 </div>
-<!-- ============ 幻灯片 3：递推关系 ============ -->
-<div class="slide" id="slide-3">
-<h1>二、递推关系</h1>
-<h2>斐波那契数列</h2>
-<p>定义：<span class="math">F(1)=1, F(2)=1, F(n)=F(n-1)+F(n-2)</span></p>
-<div class="code-block"><span class="kw">int</span> <span class="fn">fib</span>(<span class="kw">int</span> n) {
-    <span class="kw">if</span> (n &lt;= <span class="nu">2</span>) <span class="kw">return</span> <span class="nu">1</span>;
-    <span class="kw">int</span> a = <span class="nu">1</span>, b = <span class="nu">1</span>, c;
-    <span class="kw">for</span> (<span class="kw">int</span> i = <span class="nu">3</span>; i &lt;= n; i++) {
-        c = a + b;
-        a = b;
-        b = c;
+
+<div class="slide" id="slide4">
+<h2>二、递推关系 · 斐波那契</h2>
+<p><span class="math">F(1)=F(2)=1，F(n)=F(n-1)+F(n-2)</span></p>
+<div class="code-block"><span class="comment">// 迭代 O(n) O(1) 空间 — 竞赛推荐</span>
+<span class="type">long long</span> <span class="function">fib</span>(<span class="type">int</span> n) {
+    <span class="keyword">if</span> (n &lt;= <span class="number">2</span>) <span class="keyword">return</span> <span class="number">1</span>;
+    <span class="type">long long</span> a = <span class="number">1</span>, b = <span class="number">1</span>, c;
+    <span class="keyword">for</span> (<span class="type">int</span> i = <span class="number">3</span>; i &lt;= n; i++) {
+        c = (a + b) % MOD; a = b; b = c;
     }
-    <span class="kw">return</span> b;
+    <span class="keyword">return</span> b;
 }</div>
-<h2>卡特兰数</h2>
-<p>递推：<span class="math">C<sub>0</sub>=1, C<sub>n+1</sub> = Σ C<sub>i</sub> × C<sub>n-i</sub></span></p>
-<p>前几项：<strong>1, 1, 2, 5, 14, 42, 132...</strong></p>
-<p>应用：合法括号序列、二叉树形态数、凸多边形三角剖分</p>
-<div class="warn-box">
-<strong>注意：</strong>斐波那契数列从第93项起超出 <code>long long</code> 范围！考试中几乎都需要<strong>取模</strong>。
-    </div>
-
-<aside class="notes">【讲解】二、递推关系
-结合讲义《二、递推关系》强调：
-· 递推（Recurrence）是算法竞赛中最核心的数学工具之一。递推关系的本质是：当前状态可以由之前的状态推导出来。
-· 斐波那契数列是最经典的递推关系：
-· $$F(1) = 1, \quad F(2) = 1, \quad F(n) = F(n-1) + F(n-2) \quad (n \geq 3)$$
-· 递推的两种实现方式——递归与迭代：
-· // 递归写法（不推荐竞赛使用，有大量重复计算）
-幻灯片上可见要点：
-· 定义： F(1)=1, F(2)=1, F(n)=F(n-1)+F(n-2)
-· 递推： C 0 =1, C n+1 = Σ C i × C n-i
-· 前几项： 1, 1, 2, 5, 14, 42, 132...
-· 1, 1, 2, 5, 14, 42, 132...
-讲解时放慢关键术语；用 1 个生活类比 + 1 个反例加深印象。</aside>
+<div class="tip-box warning">
+<strong>禁止</strong>裸递归 Fib：指数级重复计算。每步取模；MOD 常用 1e9+7。
 </div>
-<!-- ============ 幻灯片 4：前缀和 ============ -->
-<div class="slide" id="slide-4">
-<h1>三、前缀和（Prefix Sum）</h1>
-<h2>核心公式</h2>
-<p>构建：<span class="math">pre[i] = pre[i-1] + a[i]</span></p>
-<p>查询 [l, r] 的和：<span class="math">sum = pre[r] - pre[l-1]</span></p>
-<h2>一维前缀和代码模板</h2>
-<div class="code-block"><span class="dt">vector</span>&lt;<span class="kw">long long</span>&gt; pre(n + <span class="nu">1</span>, <span class="nu">0</span>);
-<span class="kw">for</span> (<span class="kw">int</span> i = <span class="nu">1</span>; i &lt;= n; i++) {
-    pre[i] = pre[i - <span class="nu">1</span>] + a[i];
-}
-<span class="cm">// 查询 O(1)</span>
-<span class="kw">long long</span> sum = pre[r] - pre[l - <span class="nu">1</span>];</div>
+<aside class="notes">【讲解】递推本质：当前由过去推出。对照 lesson35 demo_fibonacci。</aside>
+</div>
+
+<div class="slide" id="slide5">
+<h2>卡特兰数入门</h2>
+<p><span class="math">C₀=1，Cₙ₊₁ = Σ Cᵢ·Cₙ₋ᵢ</span>（i=0..n）</p>
+<p>前几项：1, 1, 2, 5, 14, 42, 132…</p>
+<div class="code-block"><span class="type">long long</span> <span class="function">catalan</span>(<span class="type">int</span> n) {
+    vector&lt;<span class="type">long long</span>&gt; C(n + <span class="number">1</span>, <span class="number">0</span>);
+    C[<span class="number">0</span>] = <span class="number">1</span>;
+    <span class="keyword">for</span> (<span class="type">int</span> i = <span class="number">1</span>; i &lt;= n; i++)
+        <span class="keyword">for</span> (<span class="type">int</span> j = <span class="number">0</span>; j &lt; i; j++)
+            C[i] += C[j] * C[i - <span class="number">1</span> - j];
+    <span class="keyword">return</span> C[n];
+}</div>
+<ul>
+<li>应用：合法括号序列数、二叉树形态数、凸多边形三角剖分等</li>
+<li>解题：分析关系式 → 初值 → 递推方向 → 取模</li>
+</ul>
+<aside class="notes">【讲解】卡特兰 CSP-J 了解公式与应用即可。</aside>
+</div>
+
+<div class="slide" id="slide6">
+<h2>三、一维前缀和</h2>
+<p>定义 <span class="math">pre[i] = a[1]+…+a[i]</span>，则 <span class="math">sum(l,r) = pre[r] − pre[l−1]</span></p>
+<div class="code-block"><span class="keyword">for</span> (<span class="type">int</span> i = <span class="number">1</span>; i &lt;= n; i++)
+    pre[i] = pre[i - <span class="number">1</span>] + a[i];
+<span class="comment">// 查询 [l,r]</span>
+<span class="type">long long</span> rangeSum = pre[r] - pre[l - <span class="number">1</span>];</div>
+<div class="tip-box success">
+<strong>场景：</strong>多次区间求和；数组不变、查询多。预处理 O(n)，每次查询 O(1)。下标建议从 1 开始，避免 l-1 越界。
+</div>
+<aside class="notes">【讲解】前缀和 画数轴示意减左边。</aside>
+</div>
+
+<div class="slide" id="slide7">
 <h2>二维前缀和</h2>
 <p>构建：<span class="math">pre[i][j] = pre[i-1][j] + pre[i][j-1] − pre[i-1][j-1] + a[i][j]</span></p>
-<p>查询 (x1,y1) 到 (x2,y2)：<span class="math">sum = pre[x2][y2] − pre[x1-1][y2] − pre[x2][y1-1] + pre[x1-1][y1-1]</span></p>
-<div class="code-block"><span class="cm">// 二维前缀和构建</span>
-<span class="kw">for</span> (<span class="kw">int</span> i = <span class="nu">1</span>; i &lt;= n; i++)
-    <span class="kw">for</span> (<span class="kw">int</span> j = <span class="nu">1</span>; j &lt;= m; j++)
-        pre[i][j] = pre[i-<span class="nu">1</span>][j] + pre[i][j-<span class="nu">1</span>]
-                   - pre[i-<span class="nu">1</span>][j-<span class="nu">1</span>] + a[i][j];
-
-<span class="cm">// 查询 O(1)</span>
-<span class="kw">long long</span> sum = pre[x2][y2] - pre[x1-<span class="nu">1</span>][y2]
-                - pre[x2][y1-<span class="nu">1</span>] + pre[x1-<span class="nu">1</span>][y1-<span class="nu">1</span>];</div>
-<div class="tip-box">
-        前缀和的思想是<strong>"空间换时间"</strong>，用 O(n) 的预处理换取 O(1) 的查询。二维公式记住<strong>"容斥原理"：加奇数层，减偶数层</strong>。
-    </div>
-
-<aside class="notes">【讲解】三、前缀和（Prefix Sum）
-结合讲义《三、前缀和（Prefix Sum）》强调：
-· 前缀和是一种空间换时间的预处理技术，解决"多次查询区间和"的问题。
-· 一维前缀和：定义 $pre[i] = a[1] + a[2] + \cdots + a[i]$。则任意区间 $[l, r]$ 的和可以在 $O(1)$ 时间内计算：
-· $$sum(l, r) = pre[r] - pre[l-1]$$
-· 前缀和数组的构建是 $O(n)$ 的，$pre[i] = pre[i-1] + a[i]$。
-· // 一维前缀和
-幻灯片上可见要点：
-· 构建： pre[i] = pre[i-1] + a[i]
-· 查询 [l, r] 的和： sum = pre[r] - pre[l-1]
-· 构建： pre[i][j] = pre[i-1][j] + pre[i][j-1] − pre[i-1][j-1] + a[i][j]
-· 查询 (x1,y1) 到 (x2,y2)： sum = pre[x2][y2] − pre[x1-1][y2] − pre[x2][y1-1] + pre[x1-1][y1-1]
-讲解时放慢关键术语；用 1 个生活类比 + 1 个反例加深印象。</aside>
+<p>矩形 (x1,y1)–(x2,y2)：</p>
+<p class="math">sum = pre[x2][y2] − pre[x1-1][y2] − pre[x2][y1-1] + pre[x1-1][y1-1]</p>
+<div class="code-block"><span class="keyword">for</span> (<span class="type">int</span> i = <span class="number">1</span>; i &lt;= n; i++)
+  <span class="keyword">for</span> (<span class="type">int</span> j = <span class="number">1</span>; j &lt;= m; j++)
+    pre[i][j] = pre[i-<span class="number">1</span>][j] + pre[i][j-<span class="number">1</span>]
+              - pre[i-<span class="number">1</span>][j-<span class="number">1</span>] + a[i][j];</div>
+<div class="tip-box">容斥：减上、减左，左上减了两次要加回。与一维一样：空间换时间。</div>
+<aside class="notes">【讲解】二维 画 2x2 方格演示容斥。</aside>
 </div>
-<!-- ============ 幻灯片 5：差分数组 ============ -->
-<div class="slide" id="slide-5">
-<h1>四、差分数组（Difference Array）</h1>
-<h2>核心思想</h2>
-<p>差分是前缀和的逆运算：<span class="math">d[i] = a[i] - a[i-1]</span></p>
-<p>区间 [l, r] 加上 x 只需要操作两步：</p>
-<p class="math" style="font-size:18px;">d[l] += x,    d[r+1] -= x</p>
-<p>最后对 d 求前缀和，即可还原修改后的数组。</p>
-<div class="code-block"><span class="dt">vector</span>&lt;<span class="kw">long long</span>&gt; d(n + <span class="nu">2</span>, <span class="nu">0</span>);  <span class="cm">// 多开一位防越界</span>
-<span class="cm">// 构建差分数组</span>
-<span class="kw">for</span> (<span class="kw">int</span> i = <span class="nu">1</span>; i &lt;= n; i++)
-    d[i] = a[i] - a[i - <span class="nu">1</span>];
 
-<span class="cm">// 区间 [l,r] 加上 x — 仅需 O(1)！</span>
-d[l] += x;
-d[r + <span class="nu">1</span>] -= x;
-
-<span class="cm">// 还原 — O(n)</span>
-<span class="kw">for</span> (<span class="kw">int</span> i = <span class="nu">1</span>; i &lt;= n; i++) {
-    d[i] += d[i - <span class="nu">1</span>];
-    <span class="cm">// 此时 d[i] 就是修改后的 a[i]</span>
+<div class="slide" id="slide8">
+<h2>四、差分数组</h2>
+<p>差分是前缀和的<strong>逆运算</strong>：多次<strong>区间修改</strong>，最后统一查询。</p>
+<p>对 [l,r] 全体 +x：仅 <span class="math">d[l]+=x，d[r+1]-=x</span></p>
+<div class="code-block">vector&lt;<span class="type">int</span>&gt; d(n + <span class="number">2</span>, <span class="number">0</span>);
+d[l] += x; d[r + <span class="number">1</span>] -= x;  <span class="comment">// 区间加</span>
+<span class="keyword">for</span> (<span class="type">int</span> i = <span class="number">1</span>; i &lt;= n; i++) {
+    d[i] += d[i - <span class="number">1</span>];  <span class="comment">// 还原后 d[i] 即 a[i]</span>
 }</div>
-<div class="warn-box">
-<strong>易错：</strong>差分数组大小必须为 <code>n+2</code>，因为要对 <code>r+1</code> 位置操作。如果 r = n，r+1 = n+1 需要有效的数组位置！
-    </div>
-<h3>前缀和 vs 差分 对比</h3>
-<table class="data-table">
-<tr><th></th><th>前缀和</th><th>差分</th></tr>
-<tr><td>适用场景</td><td>多次查询区间和</td><td>多次区间修改，最后查询</td></tr>
-<tr><td>预处理</td><td>O(n)</td><td>O(n)</td></tr>
-<tr><td>操作复杂度</td><td>查询 O(1)</td><td>修改 O(1)</td></tr>
+<div class="tip-box success"><strong>选择口诀：</strong>多次查询 → 前缀和；多次区间修改 → 差分。</div>
+<aside class="notes">【讲解】差分 延迟计算思想。</aside>
+</div>
+
+<div class="slide" id="slide9">
+<h2>前缀和 ↔ 差分关系</h2>
+<table class="compare-table">
+<tr><th>操作</th><th>结构</th><th>单次复杂度</th></tr>
+<tr><td>区间求和（数组不变）</td><td>前缀和</td><td>O(1) 查询</td></tr>
+<tr><td>区间加减（最后查）</td><td>差分</td><td>O(1) 修改</td></tr>
+<tr><td>既改又查频繁</td><td>树状数组/线段树（提高）</td><td>—</td></tr>
 </table>
-
-<aside class="notes">【讲解】四、差分数组（Difference Array）
-结合讲义《四、差分数组（Difference Array）》强调：
-· 差分数组是前缀和的"逆运算"，解决"多次区间修改，最后统一查询"的问题。
-· 一维差分：定义 $d[i] = a[i] - a[i-1]$（设 $a[0] = 0$）。对区间 $[l, r]$ 统一加上 $x$，只需：
-· $$d[l] \mathrel{+}= x, \quad d[r+1] \mathrel{-}= x$$
-· 最后对差分数组求一次前缀和即可还原修改后的数组：$a[i] = d[1] + d[2] + \cdots + d[i]$。
-· // 一维差分数组
-幻灯片上可见要点：
-· 差分是前缀和的逆运算： d[i] = a[i] - a[i-1]
-· 区间 [l, r] 加上 x 只需要操作两步：
-· d[l] += x, d[r+1] -= x
-· 最后对 d 求前缀和，即可还原修改后的数组。
-讲解时放慢关键术语；用 1 个生活类比 + 1 个反例加深印象。</aside>
+<ul>
+<li>前缀和的差分 = 原数组</li>
+<li>差分数组的前缀和 = 原数组</li>
+<li>注意 d 数组开 n+2，防 r+1 越界</li>
+</ul>
+<aside class="notes">【讲解】互逆关系 加深记忆。</aside>
 </div>
-<!-- ============ 幻灯片 6：真题示例 ============ -->
-<div class="slide" id="slide-6">
-<h1>五、真题示例</h1>
-<h2>题目：区间和查询（CSP-J 风格）</h2>
-<p>给定长度为 n 的序列和 q 个询问，每个询问给出 [l, r]，输出区间和。n, q ≤ 10<sup>5</sup>。</p>
-<h3>完整 AC 代码</h3>
-<div class="code-block"><span class="pp">#include</span> <span class="st">&lt;iostream&gt;</span>
-<span class="pp">#include</span> <span class="st">&lt;vector&gt;</span>
-<span class="kw">using namespace std</span>;
-<span class="kw">typedef long long</span> ll;
 
-<span class="kw">int</span> <span class="fn">main</span>() {
-    ios::sync_with_stdio(<span class="kw">false</span>);
-    cin.tie(<span class="kw">nullptr</span>);
-
-    <span class="kw">int</span> n, q;
-    cin &gt;&gt; n &gt;&gt; q;
-    <span class="dt">vector</span>&lt;ll&gt; pre(n + <span class="nu">1</span>, <span class="nu">0</span>);
-
-    <span class="kw">for</span> (<span class="kw">int</span> i = <span class="nu">1</span>; i &lt;= n; i++) {
-        ll x; cin &gt;&gt; x;
-        pre[i] = pre[i - <span class="nu">1</span>] + x;
-    }
-
-    <span class="kw">while</span> (q--) {
-        <span class="kw">int</span> l, r;
-        cin &gt;&gt; l &gt;&gt; r;
-        cout &lt;&lt; pre[r] - pre[l - <span class="nu">1</span>] &lt;&lt; <span class="st">'\n'</span>;
-    }
-    <span class="kw">return</span> <span class="nu">0</span>;
-}</div>
-<div class="tip-box">
-        数据范围 <strong>n, q ≤ 10<sup>5</sup></strong> 意味着 O(nq) = 10<sup>10</sup> 必定超时。前缀和将每次查询降为 O(1)，总复杂度 O(n+q) 完美通过。
-    </div>
-
-<aside class="notes">【讲解】五、真题示例
-本页要点（照着讲即可）：
-· 给定长度为 n 的序列和 q 个询问，每个询问给出 [l, r]，输出区间和。n, q ≤ 10 5 。
-· n, q ≤ 10 5
-代码页节奏：先读懂输入输出 → 再走主流程 → 最后点出易错点（边界/类型/下标）。
-可让学生预测下一行输出，再运行对照。</aside>
+<div class="slide" id="slide10">
+<h2>代码模板合集</h2>
+<div class="code-block"><span class="comment">// Fib 取模 + 一维前缀 + 差分 核心行</span>
+c = (a + b) % MOD;
+pre[i] = pre[i-<span class="number">1</span>] + a[i];
+sum = pre[r] - pre[l-<span class="number">1</span>];
+d[l] += x; d[r+<span class="number">1</span>] -= x;</div>
+<div class="code-block"><span class="comment">// 二维查询一行记牢</span>
+s = pre[x2][y2] - pre[x1-<span class="number">1</span>][y2]
+  - pre[x2][y1-<span class="number">1</span>] + pre[x1-<span class="number">1</span>][y1-<span class="number">1</span>];</div>
+<div class="tip-box warning">累加与 pre 建议 long long；取模时注意负数 (x%MOD+MOD)%MOD。</div>
+<aside class="notes">【讲解】模板页 让学生齐背公式。</aside>
 </div>
-<!-- ============ 幻灯片 7：本课总结 ============ -->
-<div class="slide" id="slide-7">
-<h1>六、本课总结</h1>
-<h2>核心技能清单</h2>
-<table class="data-table">
-<tr><th>知识点</th><th>核心公式</th><th>复杂度</th></tr>
-<tr><td>等差数列和</td><td>S<sub>n</sub> = n(a<sub>1</sub>+a<sub>n</sub>)/2</td><td>O(1)</td></tr>
-<tr><td>斐波那契递推</td><td>F(n) = F(n-1) + F(n-2)</td><td>O(n) 迭代</td></tr>
-<tr><td>一维前缀和</td><td>pre[r] - pre[l-1]</td><td>查询 O(1)</td></tr>
-<tr><td>二维前缀和</td><td>容斥原理（减上减左加上角）</td><td>查询 O(1)</td></tr>
-<tr><td>差分数组</td><td>d[l] += x, d[r+1] -= x</td><td>修改 O(1)</td></tr>
-</table>
-<h2>解题思路</h2>
-<ol>
-<li><strong>多次查询区间和</strong> → 前缀和</li>
-<li><strong>多次修改区间值</strong> → 差分数组</li>
-<li><strong>递推关系</strong> → 找递推式 → 确定初始值 → 迭代求解 → 记得取模</li>
-</ol>
-<div class="tip-box">
-<strong>考场口诀：</strong>查和多，用前缀；改区间，用差分；推数列，要取模；下标从1，防越界。
-    </div>
-<p style="text-align:center; margin-top:20px; color:#1a237e; font-weight:bold;">
-        ✦ 熟练掌握这些模板，区间问题迎刃而解 ✦
-    </p>
 
-<aside class="notes">【收尾】回顾本课主线：六、本课总结
-对照大纲再过一遍：等差数列/等比数列、前缀和、差分数组
-板书/口述要点：
-· 多次查询区间和 → 前缀和
-· 多次查询区间和
-· 多次修改区间值 → 差分数组
-· 多次修改区间值
-· 递推关系 → 找递推式 → 确定初始值 → 迭代求解 → 记得取模
-· 递推关系
-课后任务：数列递推与前缀和应用题
-结束前留 2 分钟答疑；布置 1 道小练习检验是否真正掌握。</aside>
+<div class="slide" id="slide11">
+<h2>真题精练①</h2>
+<div class="problem-card">
+<div class="problem-title">区间和查询</div>
+<p>给定 n 个数与 q 次询问，每次给 l,r 求区间和。n,q ≤ 1e5。</p>
+<p><strong>做法：</strong>建一维前缀和，每次 O(1) 输出 pre[r]-pre[l-1]。</p>
 </div>
-</div><!-- .slides-container -->
-<!-- 页面指示器 + 导航按钮 -->
-<div class="page-indicator" id="page-indicator">1 / 7</div>
+<div class="problem-card">
+<div class="problem-title">矩形区域和</div>
+<p>n×m 矩阵，多次询问子矩形和。→ 二维前缀和容斥。</p>
+</div>
+<aside class="notes">【讲解】真题 强调为何不能每次暴力 O(n)。</aside>
+</div>
+
+<div class="slide" id="slide12">
+<h2>真题精练②</h2>
+<div class="problem-card">
+<div class="problem-title">区间加最后输出序列</div>
+<p>初始全 0，q 次操作 [l,r]+=x，最后输出 a[1..n]。→ 差分 + 一次前缀还原。</p>
+</div>
+<div class="problem-card">
+<div class="problem-title">斐波那契第 n 项</div>
+<p>n ≤ 1e6，对 1e9+7 取模。→ 迭代递推，禁止指数递归。</p>
+</div>
+<aside class="notes">【讲解】差分题画 d 数组小例子。</aside>
+</div>
+
+<div class="slide" id="slide13">
+<h2>易错点</h2>
+<ul>
+<li>前缀和下标从 0/1 混用，l-1 越界</li>
+<li>二维容斥漏加左上角</li>
+<li>差分 r+1 未开空间 / 最后忘记前缀还原</li>
+<li>Fib 递归爆栈/超时；忘记取模</li>
+<li>等差求和公式写成等比；int 溢出</li>
+</ul>
+<div class="tip-box warning"><strong>检查：</strong>边界 l=1、整段 [1,n]、空修改、n=1。</div>
+<aside class="notes">【讲解】易错清单</aside>
+</div>
+
+<div class="slide" id="slide14">
+<h2>本课小结</h2>
+<div class="summary-box">
+<ul>
+<li>等差/等比：通项 + 求和，注意溢出与快速幂。</li>
+<li>递推：迭代写 Fib/Catalan，分析关系式与初值。</li>
+<li>前缀和：多次区间和；二维用容斥。</li>
+<li>差分：多次区间改；与前缀和互逆。</li>
+<li>口诀：多查前缀，多改差分。</li>
+</ul>
+</div>
+<div class="tip-box success"><strong>下节：</strong>第36课 数论 — 质数筛、GCD/LCM、快速幂。</div>
+<aside class="notes">【收尾】14/14</aside>
+</div>
+
 <div class="nav-buttons">
-<button class="nav-btn" disabled="" id="prev-btn" onclick="prevSlide()">◀ 上一页</button>
-<button class="nav-btn" id="next-btn" onclick="nextSlide()">下一页 ▶</button>
+<button class="nav-btn" id="prevBtn" onclick="prevSlide()">◀ 上一页</button>
+<span class="page-indicator" id="pageIndicator">1 / 14</span>
+<button class="nav-btn" id="nextBtn" onclick="nextSlide()">下一页 ▶</button>
+</div>
 </div>
 <script>
 let currentSlide = 0;
 const slides = document.querySelectorAll('.slide');
 const totalSlides = slides.length;
-const indicator = document.getElementById('page-indicator');
-const prevBtn = document.getElementById('prev-btn');
-const nextBtn = document.getElementById('next-btn');
-
-function showSlide(index) {
-    slides.forEach(s => s.classList.remove('active'));
-    slides[index].classList.add('active');
-    indicator.textContent = (index + 1) + ' / ' + totalSlides;
-    prevBtn.disabled = (index === 0);
-    nextBtn.disabled = (index === totalSlides - 1);
+function showSlide(i) {
+  slides.forEach(s => s.classList.remove('active'));
+  slides[i].classList.add('active');
+  document.getElementById('pageIndicator').textContent = (i+1) + ' / ' + totalSlides;
+  document.getElementById('prevBtn').disabled = (i===0);
+  document.getElementById('nextBtn').disabled = (i===totalSlides-1);
+  window.scrollTo({top:0, behavior:'smooth'});
 }
-
-function nextSlide() {
-    if (currentSlide < totalSlides - 1) {
-        currentSlide++;
-        showSlide(currentSlide);
-    }
-}
-
-function prevSlide() {
-    if (currentSlide > 0) {
-        currentSlide--;
-        showSlide(currentSlide);
-    }
-}
-
-// 键盘导航
-document.addEventListener('keydown', function(e) {
-    if (e.key === 'ArrowRight' || e.key === 'ArrowDown' || e.key === ' ') {
-        e.preventDefault();
-        nextSlide();
-    } else if (e.key === 'ArrowLeft' || e.key === 'ArrowUp') {
-        e.preventDefault();
-        prevSlide();
-    }
+function nextSlide(){ if(currentSlide<totalSlides-1){ currentSlide++; showSlide(currentSlide);} }
+function prevSlide(){ if(currentSlide>0){ currentSlide--; showSlide(currentSlide);} }
+document.addEventListener('keydown', e => {
+  if(e.key==='ArrowRight'||e.key===' '){ e.preventDefault(); nextSlide(); }
+  else if(e.key==='ArrowLeft'){ e.preventDefault(); prevSlide(); }
 });
+showSlide(0);
 </script>
 <script src="courseware-ui.js"></script>
 <script src="presenter.js"></script>

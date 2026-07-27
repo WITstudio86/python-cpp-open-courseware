@@ -1,828 +1,353 @@
 <!DOCTYPE html>
-
 <html lang="zh-CN">
 <head>
 <meta charset="utf-8"/>
 <meta content="width=device-width, initial-scale=1.0" name="viewport"/>
 <title>第47课：综合模拟（三） — CSP-J 备考课程</title>
 <style>
-* {
-  margin: 0;
-  padding: 0;
-  box-sizing: border-box;
-}
-
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 body {
-  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "PingFang SC", "Hiragino Sans GB", "Microsoft YaHei", "Helvetica Neue", Helvetica, Arial, sans-serif;
-  background-color: #1a237e;
-  color: #333;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  min-height: 100vh;
-  padding: 10px;
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "PingFang SC", "Microsoft YaHei", sans-serif;
+    background: #f5f5f5; color: #333;
+    display: flex; flex-direction: column; align-items: center; min-height: 100vh;
 }
-
-/* ── Title Bar ── */
-.title-bar {
-  width: 100%;
-  max-width: 960px;
-  background: linear-gradient(135deg, #0d1542 0%, #1a237e 100%);
-  color: #ffd600;
-  text-align: center;
-  padding: 14px 20px;
-  font-size: 1.3rem;
-  font-weight: 700;
-  letter-spacing: 2px;
-  border-radius: 12px 12px 0 0;
-  box-shadow: 0 4px 16px rgba(0,0,0,0.25);
-  border: 1px solid rgba(255,214,0,0.3);
-  border-bottom: none;
+.header-bar {
+    width: 100%; background: #1a237e; color: #fff; text-align: center;
+    padding: 12px 16px; font-size: 18px; font-weight: 700; letter-spacing: 2px;
+    position: sticky; top: 0; z-index: 100;
 }
-
-/* ── Slide Container ── */
-.slides-container {
-  width: 100%;
-  max-width: 960px;
-  background: #fff;
-  border-radius: 0 0 12px 12px;
-  box-shadow: 0 8px 32px rgba(0,0,0,0.35);
-  overflow: hidden;
-  position: relative;
-  min-height: 560px;
-}
-
+.header-bar span { color: #ffd600; }
+.slides-container { width: 100%; max-width: 960px; margin: 20px auto; padding: 0 16px; flex: 1; }
 .slide {
-  display: none;
-  padding: 40px 50px 60px;
-  animation: fadeSlideIn 0.45s ease;
-  min-height: 520px;
+    display: none; background: #fff; border-radius: 12px;
+    box-shadow: 0 4px 20px rgba(0,0,0,0.1); padding: 40px 48px; min-height: 480px;
+    animation: fadeIn 0.3s ease;
 }
-
-.slide.active {
-  display: block;
+.slide.active { display: block; }
+@keyframes fadeIn {
+    from { opacity: 0; transform: translateY(10px); }
+    to   { opacity: 1; transform: translateY(0); }
 }
-
-@keyframes fadeSlideIn {
-  from { opacity: 0; transform: translateY(16px); }
-  to   { opacity: 1; transform: translateY(0); }
-}
-
-/* ── Typography ── */
-.slide h1 {
-  font-size: 2rem;
-  color: #1a237e;
-  border-bottom: 3px solid #ffd600;
-  padding-bottom: 10px;
-  margin-bottom: 24px;
-}
-
-.slide h2 {
-  font-size: 1.5rem;
-  color: #1a237e;
-  margin-bottom: 14px;
-  border-left: 5px solid #ffd600;
-  padding-left: 14px;
-}
-
-.slide h3 {
-  font-size: 1.15rem;
-  color: #283593;
-  margin: 16px 0 8px;
-}
-
-.slide p, .slide li {
-  line-height: 1.8;
-  font-size: 1.02rem;
-}
-
-.slide ul, .slide ol {
-  margin-left: 24px;
-  margin-bottom: 12px;
-}
-
-.slide ul li, .slide ol li {
-  margin-bottom: 6px;
-}
-
-/* ── Code Block ── */
+.slide h1 { color: #1a237e; font-size: 26px; border-bottom: 3px solid #ffd600; padding-bottom: 12px; margin-bottom: 20px; }
+.slide h2 { color: #1a237e; font-size: 20px; margin-bottom: 12px; }
+.slide p, .slide li { font-size: 15px; line-height: 1.75; margin-bottom: 6px; }
+.slide ul, .slide ol { padding-left: 24px; margin-bottom: 10px; }
 .code-block {
-  background: #1e1e1e;
-  color: #d4d4d4;
-  border-radius: 8px;
-  padding: 16px 20px;
-  margin: 12px 0 18px;
-  overflow-x: auto;
-  font-family: "Consolas", "Monaco", "Courier New", "Source Code Pro", monospace;
-  font-size: 0.88rem;
-  line-height: 1.65;
-  box-shadow: inset 0 1px 6px rgba(0,0,0,0.5);
-  border: 1px solid #333;
+    background: #1e1e1e; color: #d4d4d4;
+    font-family: "Consolas", "Monaco", monospace; font-size: 12.5px;
+    padding: 12px 16px; border-radius: 8px; overflow-x: auto; white-space: pre; line-height: 1.5; margin: 10px 0;
 }
-
-.code-block pre {
-  margin: 0;
-  white-space: pre;
-}
-
-.code-block code {
-  font-family: inherit;
-}
-
-/* ── Syntax Colors ── */
-.kw  { color: #569cd6; font-weight: bold; }  /* keyword */
-.dt  { color: #4ec9b0; }                     /* data type */
-.fn  { color: #dcdcaa; }                     /* function */
-.str { color: #ce9178; }                     /* string */
-.num { color: #b5cea8; }                     /* number */
-.cmt { color: #6a9955; font-style: italic; } /* comment */
-.mcr { color: #c586c0; }                     /* macro / include */
-.op  { color: #d4d4d4; }                     /* operator */
-.var { color: #9cdcfe; }                     /* variable */
-
-/* ── Exam Tip Box ── */
+.code-block .kw { color: #569cd6; } .code-block .fn { color: #dcdcaa; }
+.code-block .nu { color: #b5cea8; } .code-block .cm { color: #6a9955; }
+.code-block .st { color: #ce9178; }
 .tip-box {
-  border-left: 5px solid #ffd600;
-  background: #fffde7;
-  padding: 12px 18px;
-  margin: 16px 0;
-  border-radius: 6px;
-  font-size: 0.97rem;
-  line-height: 1.7;
-  box-shadow: 0 2px 6px rgba(0,0,0,0.08);
+    background: #fffde7; border-left: 5px solid #ffd600; border-radius: 6px;
+    padding: 12px 16px; margin: 12px 0; font-size: 14px; color: #5d4037;
 }
-
-.tip-box strong {
-  color: #e65100;
+.tip-box::before { content: "💡 考试技巧："; font-weight: bold; color: #ff8f00; }
+.warn-box {
+    background: #fff3e0; border-left: 5px solid #ff9800; border-radius: 6px;
+    padding: 12px 16px; margin: 12px 0; font-size: 14px; color: #bf360c;
 }
-
-.tip-box.orange {
-  border-left-color: #ff9800;
-  background: #fff3e0;
+.highlight-box {
+    background: #e8eaf6; border-left: 5px solid #1a237e; border-radius: 6px;
+    padding: 12px 16px; margin: 12px 0; font-size: 14px;
 }
-
-.tip-box.orange strong {
-  color: #e65100;
-}
-
-/* ── Grid / Columns ── */
-.cols {
-  display: flex;
-  gap: 24px;
-  margin: 12px 0;
-}
-
-.cols > div {
-  flex: 1;
-}
-
-/* ── Badge ── */
-.badge {
-  display: inline-block;
-  background: #ffd600;
-  color: #1a237e;
-  font-weight: 700;
-  padding: 2px 10px;
-  border-radius: 4px;
-  font-size: 0.82rem;
-  margin-right: 6px;
-}
-
-/* ── Title Slide Specials ── */
-.slide.title-slide.active {
-  text-align: center;
-  display: flex;
-  flex-direction: column;
-  justify-content: center;
-  align-items: center;
-  padding-top: 80px;
-  padding-bottom: 80px;
-}
-
-.slide.title-slide.active h1 {
-  font-size: 2.4rem;
-  border-bottom: none;
-  margin-bottom: 12px;
-}
-
-.slide.title-slide.active .subtitle {
-  font-size: 1.2rem;
-  color: #555;
-  margin-bottom: 20px;
-}
-
-.slide.title-slide.active .tags {
-  font-size: 1rem;
-  color: #ffd600;
-  background: #1a237e;
-  padding: 10px 28px;
-  border-radius: 30px;
-  margin-top: 16px;
-}
-
-/* ── Check List ── */
-.checklist {
-  list-style: none;
-  margin-left: 0;
-}
-
-.checklist li::before {
-  content: "☐ ";
-  color: #1a237e;
-  font-size: 1.1rem;
-  margin-right: 6px;
-}
-
-.checklist li {
-  margin-bottom: 8px;
-}
-
-/* ── Navigation ── */
-.nav-bar {
-  margin-top: 16px;
-  display: flex;
-  align-items: center;
-  gap: 16px;
-  justify-content: center;
-}
-
+.data-table { width: 100%; border-collapse: collapse; margin: 12px 0; font-size: 13px; }
+.data-table th { background: #1a237e; color: #fff; padding: 8px 10px; text-align: center; }
+.data-table td { border: 1px solid #e0e0e0; padding: 6px 10px; text-align: center; }
+.data-table tr:nth-child(even) { background: #f5f5ff; }
+.nav-buttons { display: flex; justify-content: center; gap: 16px; margin: 20px 0 40px; }
 .nav-btn {
-  background: #ffd600;
-  color: #1a237e;
-  border: none;
-  padding: 10px 28px;
-  font-size: 1rem;
-  font-weight: 700;
-  border-radius: 28px;
-  cursor: pointer;
-  transition: all 0.2s;
-  letter-spacing: 1px;
-  box-shadow: 0 4px 12px rgba(0,0,0,0.2);
+    background: #1a237e; color: #fff; border: none; padding: 10px 28px;
+    border-radius: 6px; font-size: 15px; cursor: pointer;
 }
-
-.nav-btn:hover {
-  background: #ffea00;
-  transform: translateY(-2px);
-  box-shadow: 0 6px 18px rgba(0,0,0,0.3);
+.nav-btn:hover { background: #283593; }
+.nav-btn:disabled { background: #9fa8da; cursor: not-allowed; }
+.page-indicator { text-align: center; color: #666; font-size: 14px; margin-bottom: 8px; }
+.slide.title-slide.active {
+    text-align: center; display: flex; flex-direction: column;
+    justify-content: center; align-items: center; min-height: 480px;
 }
-
-.nav-btn:active {
-  transform: translateY(0);
-  box-shadow: 0 2px 8px rgba(0,0,0,0.25);
+.slide.title-slide.active h1 { font-size: 34px; border-bottom: none; margin-bottom: 16px; }
+.slide.title-slide.active .subtitle {
+    font-size: 20px; color: #ffd600; background: #1a237e;
+    display: inline-block; padding: 6px 24px; border-radius: 20px; margin-bottom: 24px;
 }
-
-.nav-btn:disabled {
-  background: #5c6bc0;
-  color: #c5cae9;
-  cursor: not-allowed;
-  box-shadow: none;
-  transform: none;
+.slide.title-slide.active .info { color: #666; font-size: 15px; line-height: 2; }
+.inline-code {
+    background: #e8eaf6; color: #1a237e; font-family: Consolas, Monaco, monospace;
+    padding: 1px 6px; border-radius: 3px; font-size: 0.92em;
 }
-
-.slide-counter {
-  color: #ffd600;
-  font-weight: 700;
-  font-size: 1.05rem;
-  background: rgba(0,0,0,0.3);
-  padding: 6px 18px;
-  border-radius: 20px;
-  min-width: 80px;
-  text-align: center;
+.motto-box {
+    background: linear-gradient(135deg, #1a237e 0%, #283593 100%);
+    color: #ffd600; font-size: 18px; font-weight: 700; text-align: center;
+    padding: 16px; border-radius: 12px; margin: 14px 0;
 }
-
-/* ── Progress Dots ── */
-.dots {
-  display: flex;
-  gap: 6px;
-  justify-content: center;
-  margin-top: 8px;
-}
-
-.dot {
-  width: 10px;
-  height: 10px;
-  border-radius: 50%;
-  background: #5c6bc0;
-  transition: background 0.3s;
-}
-
-.dot.active-dot {
-  background: #ffd600;
-}
-
-/* ── Responsive ── */
-@media (max-width: 700px) {
-  .slide {
-    padding: 24px 22px 50px;
-  }
-  .slide h1 { font-size: 1.5rem; }
-  .slide h2 { font-size: 1.2rem; }
-  .cols { flex-direction: column; gap: 8px; }
-  .slide.title-slide.active { padding-top: 48px; padding-bottom: 48px; }
-  .slide.title-slide.active h1 { font-size: 1.6rem; }
-  .code-block { font-size: 0.75rem; padding: 10px 12px; }
-  .nav-btn { padding: 8px 18px; font-size: 0.9rem; }
+@media (max-width: 768px) {
+    .slide { padding: 24px 20px; min-height: auto; }
+    .slide h1 { font-size: 20px; }
+    .code-block { font-size: 11px; }
 }
 </style>
 </head>
 <body>
-<!-- ═══════════════ TITLE BAR ═══════════════ -->
-<div class="title-bar">🏆 CSP-J 备考课程</div>
-<!-- ═══════════════ SLIDES ═══════════════ -->
+<div class="header-bar"><span>CSP-J</span> 备考课程 — 第47课：综合模拟（三）</div>
 <div class="slides-container">
-<!-- ── Slide 1: Title ── -->
-<div class="slide active title-slide" data-index="0">
+
+<div class="slide active title-slide" id="slide-1">
 <h1>第47课：综合模拟（三）</h1>
-<p class="subtitle">CSP-J 第二轮编程模拟专项训练</p>
-<p class="tags">动态规划  |  搜索  |  图论  |  数论</p>
-<p style="margin-top: 28px; color: #666; font-size: 0.95rem;">📅 2025 · 综合模拟考前冲刺</p>
-
-<aside class="notes">【开场】第 1/8 页 · 综合模拟（三）
-用 30 秒说明本课目标与学完能做什么，再进入正题。
-大纲考点：编程题专项训练：DP+搜索+图论
-配套练习方向：CSP-J 全真模拟题3
-封面关键词：
-· CSP-J 第二轮编程模拟专项训练
-· 动态规划 | 搜索 | 图论 | 数论
-· 📅 2025 · 综合模拟考前冲刺
-互动：问学生「今天最想搞清楚什么？」，收 1–2 个期待。</aside>
+<div class="subtitle">DP · 搜索 · 图论 · 数论综合</div>
+<div class="info">
+<p>01 背包 / LIS · DFS 全排列 · BFS 迷宫</p>
+<p>Dijkstra · 并查集 · 质数筛 · GCD</p>
+<p>采购方案 · 逃离迷宫 真题精练</p>
 </div>
-<!-- ── Slide 2: 动态规划 ── -->
-<div class="slide" data-index="1">
-<h1>动态规划 — DP状态设计</h1>
-<h2>01背包问题核心要点</h2>
-<p><span class="badge">状态定义</span> <code style="background:#f3e5f5; padding:2px 6px; border-radius:3px;">dp[j]</code> 表示容量为 <code style="background:#f3e5f5; padding:2px 6px; border-radius:3px;">j</code> 的背包能获得的最大价值。</p>
-<p><span class="badge">状态转移</span> <code style="background:#f3e5f5; padding:2px 6px; border-radius:3px;">dp[j] = max(dp[j], dp[j - w[i]] + v[i])</code></p>
-<div class="code-block"><pre><code><span class="cmt">// 01背包 — 一维DP优化模板</span>
-<span class="kw">int</span> <span class="var">dp</span>[<span class="num">1005</span>];  <span class="cmt">// 数组大小根据最大容量设定</span>
-<span class="kw">for</span> (<span class="kw">int</span> <span class="var">i</span> = <span class="num">1</span>; <span class="var">i</span> &lt;= <span class="var">n</span>; <span class="var">i</span>++) {
-    <span class="kw">for</span> (<span class="kw">int</span> <span class="var">j</span> = <span class="var">V</span>; <span class="var">j</span> &gt;= <span class="var">w</span>[<span class="var">i</span>]; <span class="var">j</span>--) {
-        <span class="var">dp</span>[<span class="var">j</span>] = <span class="fn">max</span>(<span class="var">dp</span>[<span class="var">j</span>], <span class="var">dp</span>[<span class="var">j</span> - <span class="var">w</span>[<span class="var">i</span>]] + <span class="var">v</span>[<span class="var">i</span>]);
-    }
+<aside class="notes">进阶算法综合，对应第二轮中后段难度。</aside>
+</div>
+
+<div class="slide" id="slide-2">
+<h1>一、动态规划速通</h1>
+<p>三要素：状态 · 转移 · 边界。CSP-J 重中之重。</p>
+<table class="data-table">
+<tr><th>模型</th><th>要点</th></tr>
+<tr><td>01 背包</td><td>容量<strong>倒序</strong>：dp[j]=max(dp[j], dp[j-v]+w)</td></tr>
+<tr><td>完全背包</td><td>容量<strong>正序</strong></td></tr>
+<tr><td>LIS</td><td>dp[i]=max(dp[j])+1（a[j]&lt;a[i]），O(n²)</td></tr>
+</table>
+<div class="code-block"><span class="cm">// 01 背包一维</span>
+<span class="kw">for</span> (<span class="kw">int</span> i = <span class="nu">1</span>; i &lt;= N; i++) {
+    cin &gt;&gt; v &gt;&gt; w;
+    <span class="kw">for</span> (<span class="kw">int</span> j = M; j &gt;= v; j--)
+        dp[j] = max(dp[j], dp[j - v] + w);
+}</div>
+<div class="warn-box">01 与完全：内层方向写反 = 答案全错。口诀「01 倒」。</div>
+<aside class="notes">数字三角形、最大子段和也是线性 DP 常客。</aside>
+</div>
+
+<div class="slide" id="slide-3">
+<h1>二、搜索：DFS / BFS</h1>
+<ul>
+<li><strong>DFS</strong>：全部方案、排列组合、连通块；回溯要撤销</li>
+<li><strong>BFS</strong>：无权最短步；入队即 vis</li>
+</ul>
+<div class="code-block"><span class="cm">// 全排列骨架</span>
+<span class="kw">if</span> (depth == N) { <span class="cm">/* 输出 path */</span> <span class="kw">return</span>; }
+<span class="kw">for</span> (i=<span class="nu">1</span>;i&lt;=N;i++) <span class="kw">if</span> (!vis[i]) {
+    vis[i]=1; path.push_back(i); dfs(depth+1);
+    path.pop_back(); vis[i]=0;
 }
-<span class="var">cout</span> &lt;&lt; <span class="var">dp</span>[<span class="var">V</span>] &lt;&lt; <span class="var">endl</span>;</code></pre></div>
-<p style="margin-top:10px;"><strong>关键细节：</strong></p>
-<ul>
-<li>内层循环必须<strong>倒序</strong>遍历（从 <code>V</code> 到 <code>w[i]</code>），保证每个物品只被选一次</li>
-<li>若正序遍历，会变成完全背包（物品可无限选）</li>
-<li>时间复杂度 <code>O(nV)</code>，空间复杂度 <code>O(V)</code></li>
-</ul>
-<div class="tip-box">
-<strong>⚠ 考试提醒：</strong>01背包必须倒序遍历容量！正序遍历是错误代码，会变成完全背包，丢分严重！
-  </div>
+<span class="cm">// 迷宫最短：queue 存 {x,y,step}，四方向</span></div>
+<div class="tip-box">最短步数必 BFS；枚举方案必 DFS。大深度慎用递归。</div>
+<aside class="notes">与第42/43课模板一致，考场直接套。</aside>
+</div>
 
-<aside class="notes">【讲解】动态规划 — DP状态设计
-结合讲义《一、动态规划（DP）》强调：
-· 动态规划是CSP-J第二轮考查的重中之重。其核心思想是将原问题分解为若干子问题，通过求解子问题来递推出原问题的解。DP的三个关键要素是：状态定义、状态转移方程和边界条件。
-· 01背包问题是最经典的DP模型。设有N件物品和一个容量为M的背包，第i件物品的体积为v[i]，价值为w[i]，每件物品只能选一次，求解将哪些物品装入背包可使总价值最大。我们定义dp[j]表示容量为j的背包能获得的最大价值，则状态转移方程为dp[j] = max(dp[j], dp[j - v[i]] + w[i])，其中j需要从M倒序枚举到v[i]，以保证每件物品只被考虑一次。这一维优化的技巧是01背包的重点——如果正序枚举j，就会退化成完全背包，即每件物品可以被无限次选择。时间复杂度O(NM)，空间复杂度O(M)。
-· 线性DP是另一类高频考点，通常涉及一维或二维序列上的递推。以最长上升子序列（LIS）为例：给定一个长度为N的序列a[1..N]，求其中最长的严格递增子序列的长度。定义dp[i]表示以a[i]结尾的最长上升子序列长度，则dp[i] = max{ dp[j] + 1 | 1 &lt;= j &lt; i 且 a[j] &lt; a[i] }，初始dp[i] = 1。朴素做法的时间复杂度为O(N^2)，对于N &lt;= 1000的情况可以直接使用；对于更大规模的数据，可以用贪心+二分优化到O(N log N)。此外，最大子段和、编辑距离、数字三角形等经典模型也需要熟练掌握。
-· // 01背包 一维优化模板
-· using namespace std;
-幻灯片上可见要点：
-· 状态定义 dp[j] 表示容量为 j 的背包能获得的最大价值。
-· 状态转移 dp[j] = max(dp[j], dp[j - w[i]] + v[i])
-· 关键细节：
-· 内层循环必须 倒序 遍历（从 V 到 w[i] ），保证每个物品只被选一次
-讲解时放慢关键术语；用 1 个生活类比 + 1 个反例加深印象。
-本课大纲考点（可适时点题）：编程题专项训练：DP+搜索+图论</aside>
-</div>
-<!-- ── Slide 3: 搜索算法 ── -->
-<div class="slide" data-index="2">
-<h1>搜索算法 — DFS与BFS</h1>
-<div class="cols">
-<div>
-<h2>DFS（深度优先搜索）</h2>
-<ul>
-<li>使用<strong>栈</strong>（递归实现）</li>
-<li>适合求<strong>所有解</strong>、连通性问题</li>
-<li>适合图/树的<strong>遍历与回溯</strong></li>
-<li>经典应用：全排列、N皇后、迷宫路径</li>
-</ul>
-<div class="code-block" style="margin-top:12px;"><pre><code><span class="cmt">// DFS 递归模板</span>
-<span class="kw">void</span> <span class="fn">dfs</span>(<span class="kw">int</span> <span class="var">x</span>) {
-    <span class="kw">if</span> (<span class="cmt">/* 终止条件 */</span>) {
-        <span class="cmt">// 处理答案</span>
-        <span class="kw">return</span>;
+<div class="slide" id="slide-4">
+<h1>三、图论：最短路 &amp; 并查集</h1>
+<p><strong>Dijkstra</strong>（非负权）：堆优化 O((V+E)log V)</p>
+<div class="code-block">pq 小根堆 {dis, u};
+<span class="kw">while</span> (!pq.empty()) {
+    u = pq.top().second; pq.pop();
+    <span class="kw">if</span> (vis[u]) <span class="kw">continue</span>;
+    vis[u] = <span class="kw">true</span>;
+    <span class="kw">for</span> (邻边 v,w) <span class="kw">if</span> (dis[v] &gt; dis[u]+w) {
+        dis[v] = dis[u]+w; pq.push({dis[v], v});
     }
-    <span class="var">vis</span>[<span class="var">x</span>] = <span class="num">1</span>;
-    <span class="kw">for</span> (<span class="kw">int</span> <span class="var">nx</span> : <span class="var">adj</span>[<span class="var">x</span>]) {
-        <span class="kw">if</span> (!<span class="var">vis</span>[<span class="var">nx</span>])
-            <span class="fn">dfs</span>(<span class="var">nx</span>);
-    }
-}</code></pre></div>
+}</div>
+<p><strong>并查集</strong>：find 路径压缩 + unite；连通 / 朋友圈 / Kruskal。</p>
+<aside class="notes">出队判 vis 跳过已确定节点。</aside>
 </div>
-<div>
-<h2>BFS（广度优先搜索）</h2>
+
+<div class="slide" id="slide-5">
+<h1>四、数论：质数 · GCD · LCM</h1>
 <ul>
-<li>使用<strong>队列</strong>（迭代实现）</li>
-<li>适合求<strong>最短路径</strong>（无权图）</li>
-<li>按层扩展，<strong>第一次到达即为最短</strong></li>
-<li>经典应用：走迷宫最少步数、层次遍历</li>
+<li>试除判质：2..√n，特判 n≤1</li>
+<li>埃氏筛 / <strong>欧拉线性筛</strong> O(n)</li>
+<li>gcd(a,b)=gcd(b,a%b)；lcm=a/gcd*b（先除后乘防溢出）</li>
 </ul>
-<div class="code-block" style="margin-top:12px;"><pre><code><span class="cmt">// BFS 队列模板</span>
-<span class="dt">queue</span>&lt;<span class="kw">int</span>&gt; <span class="var">q</span>;
-<span class="var">q</span>.<span class="fn">push</span>(<span class="var">start</span>);
-<span class="var">vis</span>[<span class="var">start</span>] = <span class="num">1</span>;
-<span class="var">dist</span>[<span class="var">start</span>] = <span class="num">0</span>;
-<span class="kw">while</span> (!<span class="var">q</span>.<span class="fn">empty</span>()) {
-    <span class="kw">int</span> <span class="var">cur</span> = <span class="var">q</span>.<span class="fn">front</span>(); <span class="var">q</span>.<span class="fn">pop</span>();
-    <span class="kw">for</span> (<span class="kw">int</span> <span class="var">nx</span> : <span class="var">adj</span>[<span class="var">cur</span>]) {
-        <span class="kw">if</span> (!<span class="var">vis</span>[<span class="var">nx</span>]) {
-            <span class="var">vis</span>[<span class="var">nx</span>] = <span class="num">1</span>;
-            <span class="var">dist</span>[<span class="var">nx</span>] = <span class="var">dist</span>[<span class="var">cur</span>] + <span class="num">1</span>;
-            <span class="var">q</span>.<span class="fn">push</span>(<span class="var">nx</span>);
+<div class="code-block"><span class="kw">void</span> <span class="fn">eulerSieve</span>(<span class="kw">int</span> n) {
+    fill(isPrime, isPrime+n+1, <span class="kw">true</span>);
+    isPrime[0]=isPrime[1]=<span class="kw">false</span>;
+    <span class="kw">for</span> (<span class="kw">int</span> i=<span class="nu">2</span>; i&lt;=n; i++) {
+        <span class="kw">if</span> (isPrime[i]) primes.push_back(i);
+        <span class="kw">for</span> (<span class="kw">int</span> p : primes) {
+            <span class="kw">if</span> (i*p &gt; n) <span class="kw">break</span>;
+            isPrime[i*p] = <span class="kw">false</span>;
+            <span class="kw">if</span> (i % p == <span class="nu">0</span>) <span class="kw">break</span>;
         }
     }
-}</code></pre></div>
+}</div>
+<aside class="notes">i*p 注意溢出时用 1LL 或 i&gt;n/p。</aside>
 </div>
+
+<div class="slide" id="slide-6">
+<h1>五、模板墙（考场默写）</h1>
+<table class="data-table">
+<tr><th>模板</th><th>关键词</th></tr>
+<tr><td>01/完全背包</td><td>倒序 / 正序</td></tr>
+<tr><td>LIS O(n²)</td><td>dp[i] 以 i 结尾</td></tr>
+<tr><td>DFS 全排列</td><td>used + 回溯</td></tr>
+<tr><td>BFS 迷宫</td><td>queue + 四方向</td></tr>
+<tr><td>Dijkstra</td><td>pq + 非负权</td></tr>
+<tr><td>并查集</td><td>parent[x]=find(...)</td></tr>
+<tr><td>欧拉筛 / GCD</td><td>最小质因子 break</td></tr>
+</table>
+<div class="highlight-box">考前把 7 个模板各默写一遍，比刷新题更稳。</div>
+<aside class="notes">对应 lesson47 程序中的演示块。</aside>
 </div>
-<div class="tip-box orange" style="margin-top:16px;">
-<strong>⚠ 考试提醒：</strong>BFS求最短路时，第一次到达即为最短距离！不需要像DFS那样枚举所有路径后取min。无权图最短路用BFS，带权图用Dijkstra！
-  </div>
 
-<aside class="notes">【讲解】搜索算法 — DFS与BFS
-结合讲义《二、搜索（DFS与BFS）》强调：
-· 搜索是解决组合优化和状态空间探索问题的通用方法。深度优先搜索（DFS）沿着一条路径走到底再回溯，适合枚举所有方案、排列组合、连通块等问题；广度优先搜索（BFS）逐层扩展，适合求解最短步数、最少操作次数等无权图上的最短路径问题。
-· DFS的核心框架为：设定递归终止条件 -&gt; 枚举当前状态的所有合法扩展 -&gt; 标记已访问 -&gt; 递归进入下一层 -&gt; 回溯撤销标记。在解决迷宫问题时，DFS可以找到一条通往终点的路径（不保证最短），而BFS可以找到最短路径。DFS使用系统栈实现递归，空间复杂度取决于递归深度，在极端情况下可能导致栈溢出，因此对于深度较大的问题（如N &gt;= 10^5），需要使用迭代栈或改写为BFS。
-· BFS使用队列（queue）实现，模板固定：将起点入队并标记已访问 -&gt; 循环取出队首元素 -&gt; 枚举所有相邻状态 -&gt; 若未访问则入队并标记。BFS的一个关键特性是"首次访问即最短"，只要边的权值均匀（单位长度），第一次到达某个状态时走过的步数就是最短步数。如果边权不同（有权图），则需要用Dijkstra或SPFA等最短路算法。
-· DFS和BFS的选择原则：求所有方案用DFS，求最短路径（无权）用BFS，求连通性两者皆可。剪枝是DFS中的关键技术——在搜索过程中，如果发现当前分支不可能产生比已有最优解更好的结果，就可以提前返回（可行性剪枝、最优性剪枝），大幅减少搜索量。
-· // BFS 迷宫最短路径模板
-幻灯片上可见要点：
-· 使用 栈 （递归实现）
-· 适合求 所有解 、连通性问题
-· 适合图/树的 遍历与回溯
-· 遍历与回溯
-讲解时放慢关键术语；用 1 个生活类比 + 1 个反例加深印象。</aside>
+<div class="slide" id="slide-7">
+<h1>六、易错点集中营</h1>
+<ol>
+<li>01/完全循环方向混淆</li>
+<li>BFS 出队才标 vis → 重复入队</li>
+<li>Dijkstra 出队不跳过已 vis</li>
+<li>判质数忘 n≤1；i*i 溢出</li>
+<li>DFS 深链栈溢出 → 改 BFS/并查集</li>
+<li>无向图单向建边</li>
+</ol>
+<div class="motto-box">01 倒 · 完全正 · 入队标 · find 压</div>
+<aside class="notes">每条对应一道历史错题更好记。</aside>
 </div>
-<!-- ── Slide 4: 图论 ── -->
-<div class="slide" data-index="3">
-<h1>图论 — 最短路径与连通性</h1>
-<h2>Dijkstra 堆优化</h2>
-<p>使用 <code style="background:#f3e5f5; padding:2px 6px; border-radius:3px;">priority_queue</code>（小根堆），每次取出距离最小的节点进行松弛操作。</p>
-<div class="code-block"><pre><code><span class="cmt">// Dijkstra 堆优化模板 O((V+E)logV)</span>
-<span class="mcr">#include</span> <span class="str">&lt;queue&gt;</span>
-<span class="kw">using</span> <span class="kw">namespace</span> <span class="var">std</span>;
 
-<span class="kw">const</span> <span class="kw">int</span> <span class="var">INF</span> = <span class="num">1e9</span>;
-<span class="dt">vector</span>&lt;<span class="dt">pair</span>&lt;<span class="kw">int</span>,<span class="kw">int</span>&gt;&gt; <span class="var">G</span>[<span class="num">100005</span>];
-<span class="kw">int</span> <span class="var">dist</span>[<span class="num">100005</span>];
+<div class="slide" id="slide-8">
+<h1>七、真题1：采购方案 · 题意</h1>
+<p><strong>题意</strong>：N 件商品，预算 M。每件价格 p、喜爱 v，每件最多买一次。求喜爱度最大。N≤100,M≤1000。</p>
+<p><strong>样例</strong></p>
+<div class="code-block">4 10
+2 3
+3 4
+4 5
+5 6
+→ 最大喜爱 13（选 1+2+4：价 2+3+5，值 3+4+6）</div>
+<div class="tip-box">标准 01 背包：体积=价格，价值=喜爱；内层 j 从 M 倒到 p。</div>
+<aside class="notes">讲义中曾有 11 的笔误，正确样例为 13。</aside>
+</div>
 
-<span class="kw">void</span> <span class="fn">dijkstra</span>(<span class="kw">int</span> <span class="var">s</span>) {
-    <span class="dt">priority_queue</span>&lt;<span class="dt">pair</span>&lt;<span class="kw">int</span>,<span class="kw">int</span>&gt;, <span class="dt">vector</span>&lt;<span class="dt">pair</span>&lt;<span class="kw">int</span>,<span class="kw">int</span>&gt;&gt;, greater&lt;<span class="dt">pair</span>&lt;<span class="kw">int</span>,<span class="kw">int</span>&gt;&gt;&gt; <span class="var">pq</span>;
-    <span class="fn">fill</span>(<span class="var">dist</span>, <span class="var">dist</span> + <span class="var">n</span> + <span class="num">1</span>, <span class="var">INF</span>);
-    <span class="var">dist</span>[<span class="var">s</span>] = <span class="num">0</span>;
-    <span class="var">pq</span>.<span class="fn">push</span>({<span class="num">0</span>, <span class="var">s</span>});
-    <span class="kw">while</span> (!<span class="var">pq</span>.<span class="fn">empty</span>()) {
-        <span class="kw">auto</span> [<span class="var">d</span>, <span class="var">u</span>] = <span class="var">pq</span>.<span class="fn">top</span>(); <span class="var">pq</span>.<span class="fn">pop</span>();
-        <span class="kw">if</span> (<span class="var">d</span> &gt; <span class="var">dist</span>[<span class="var">u</span>]) <span class="kw">continue</span>;
-        <span class="kw">for</span> (<span class="kw">auto</span> [<span class="var">v</span>, <span class="var">w</span>] : <span class="var">G</span>[<span class="var">u</span>]) {
-            <span class="kw">if</span> (<span class="var">dist</span>[<span class="var">v</span>] &gt; <span class="var">dist</span>[<span class="var">u</span>] + <span class="var">w</span>) {
-                <span class="var">dist</span>[<span class="var">v</span>] = <span class="var">dist</span>[<span class="var">u</span>] + <span class="var">w</span>;
-                <span class="var">pq</span>.<span class="fn">push</span>({<span class="var">dist</span>[<span class="var">v</span>], <span class="var">v</span>});
+<div class="slide" id="slide-9">
+<h1>采购方案 · 核心代码</h1>
+<div class="code-block"><span class="kw">const int</span> MAXM = <span class="nu">1005</span>;
+<span class="kw">int</span> dp[MAXM];
+<span class="kw">int</span> main() {
+    <span class="kw">int</span> N, M; cin &gt;&gt; N &gt;&gt; M;
+    <span class="kw">for</span> (<span class="kw">int</span> i = <span class="nu">1</span>; i &lt;= N; i++) {
+        <span class="kw">int</span> p, v; cin &gt;&gt; p &gt;&gt; v;
+        <span class="kw">for</span> (<span class="kw">int</span> j = M; j &gt;= p; j--)
+            dp[j] = max(dp[j], dp[j - p] + v);
+    }
+    cout &lt;&lt; dp[M] &lt;&lt; endl;
+}</div>
+<aside class="notes">O(NM)=1e5，轻松。</aside>
+</div>
+
+<div class="slide" id="slide-10">
+<h1>八、真题2：逃离迷宫 · 题意</h1>
+<p><strong>题意</strong>：N×M 网格，. 空 # 墙 S 起点 E 终点，最短步数，不可达 -1。N,M≤100。</p>
+<p><strong>样例</strong> 5×5 → <strong>8</strong></p>
+<div class="tip-box">
+<strong>思路：</strong>扫矩阵找 S/E；BFS 四方向；入队标 vis；首次到 E 即最短。
+</div>
+<aside class="notes">S、E 视为可走。</aside>
+</div>
+
+<div class="slide" id="slide-11">
+<h1>逃离迷宫 · 核心代码</h1>
+<div class="code-block"><span class="kw">struct</span> Node { <span class="kw">int</span> x, y, step; };
+<span class="kw">int</span> <span class="fn">bfs</span>(<span class="kw">int</span> sx,<span class="kw">int</span> sy,<span class="kw">int</span> ex,<span class="kw">int</span> ey) {
+    queue&lt;Node&gt; q;
+    q.push({sx,sy,<span class="nu">0</span>}); vis[sx][sy]=<span class="kw">true</span>;
+    <span class="kw">while</span> (!q.empty()) {
+        Node c = q.front(); q.pop();
+        <span class="kw">if</span> (c.x==ex &amp;&amp; c.y==ey) <span class="kw">return</span> c.step;
+        <span class="kw">for</span> (<span class="kw">int</span> i=<span class="nu">0</span>;i&lt;<span class="nu">4</span>;i++) {
+            <span class="kw">int</span> nx=c.x+dx[i], ny=c.y+dy[i];
+            <span class="kw">if</span> (nx&gt;=<span class="nu">1</span>&amp;&amp;nx&lt;=n&amp;&amp;ny&gt;=<span class="nu">1</span>&amp;&amp;ny&lt;=m
+                &amp;&amp;!vis[nx][ny]&amp;&amp;g[nx][ny]!=<span class="st">'#'</span>) {
+                vis[nx][ny]=<span class="kw">true</span>;
+                q.push({nx,ny,c.step+<span class="nu">1</span>});
             }
         }
     }
-}</code></pre></div>
-<h3 style="margin-top:20px;">并查集 (Union-Find) 快速模板</h3>
-<div class="code-block"><pre><code><span class="kw">int</span> <span class="var">fa</span>[<span class="num">100005</span>];
-<span class="kw">int</span> <span class="fn">find</span>(<span class="kw">int</span> <span class="var">x</span>) { <span class="kw">return</span> <span class="var">fa</span>[<span class="var">x</span>] == <span class="var">x</span> ? <span class="var">x</span> : <span class="var">fa</span>[<span class="var">x</span>] = <span class="fn">find</span>(<span class="var">fa</span>[<span class="var">x</span>]); }
-<span class="kw">void</span> <span class="fn">merge</span>(<span class="kw">int</span> <span class="var">a</span>, <span class="kw">int</span> <span class="var">b</span>) { <span class="var">fa</span>[<span class="fn">find</span>(<span class="var">a</span>)] = <span class="fn">find</span>(<span class="var">b</span>); }</code></pre></div>
-<div class="tip-box orange">
-<strong>⚠ 考试提醒：</strong>Dijkstra不能处理负权边，遇到负权用SPFA！并查集记得初始化 <code>fa[i] = i</code>，并带上路径压缩！
-  </div>
-
-<aside class="notes">【讲解】图论 — 最短路径与连通性
-结合讲义《三、图论（最短路径与连通性）》强调：
-· 图论是算法竞赛中的重要板块，CSP-J阶段主要考查图的存储、最短路径算法和连通性判定。图的存储有两种基本方式：邻接矩阵（适用于稠密图，空间O(V^2)）和邻接表（适用于稀疏图，空间O(V+E)）。在CSP-J的实际题目中，大部分图的边数不超过10^5级别，因此通常使用邻接表（vector&gt;）存储。
-· Dijkstra算法是求解非负权图单源最短路径的经典算法。其核心思想是贪心：每次从未确定最短距离的点中选出距离起点最近的点，用它的距离去松弛其所有邻接点的距离。朴素实现的复杂度为O(V^2)，适用于V , vector&gt;, greater&gt;&gt;实现小根堆，pair的first存储距离、second存储节点编号。Dijkstra不能处理负权边，遇到负权边需要使用SPFA或Bellman-Ford算法（但CSP-J通常不考查负权边）。
-· 连通性问题通常使用并查集（Disjoint Set Union, DSU）解决。并查集支持两种基本操作：find(x)查找元素x所在集合的代表元（带路径压缩），union(x, y)合并两个集合（按秩合并）。路径压缩使find的均摊复杂度接近O(1)，总复杂度为O(alpha(N))，其中alpha是阿克曼函数的反函数，在实际数据范围内可以视为常数。并查集常用于判断无向图中两点是否连通、检测图中的环、求解最小生成树（Kruskal算法）等。
-· // Dijkstra + 邻接表 + 优先队列优化
-· using namespace std;
-幻灯片上可见要点：
-· 使用 priority_queue （小根堆），每次取出距离最小的节点进行松弛操作。
-· ⚠ 考试提醒：
-讲解时放慢关键术语；用 1 个生活类比 + 1 个反例加深印象。</aside>
+    <span class="kw">return</span> -<span class="nu">1</span>;
+}</div>
+<aside class="notes">边界与障碍顺序不能反。</aside>
 </div>
-<!-- ── Slide 5: 数论 ── -->
-<div class="slide" data-index="4">
-<h1>数论 — 质数与GCD</h1>
-<h2>埃拉托色尼筛法 (Sieve of Eratosthenes)</h2>
-<div class="code-block"><pre><code><span class="cmt">// 埃筛 O(n log log n) — 简单实用</span>
-<span class="kw">bool</span> <span class="var">isPrime</span>[<span class="num">1000005</span>];
-<span class="kw">void</span> <span class="fn">sieve</span>(<span class="kw">int</span> <span class="var">n</span>) {
-    <span class="fn">memset</span>(<span class="var">isPrime</span>, <span class="num">1</span>, <span class="kw">sizeof</span>(<span class="var">isPrime</span>));
-    <span class="var">isPrime</span>[<span class="num">0</span>] = <span class="var">isPrime</span>[<span class="num">1</span>] = <span class="num">0</span>;
-    <span class="kw">for</span> (<span class="kw">int</span> <span class="var">i</span> = <span class="num">2</span>; <span class="var">i</span> * <span class="var">i</span> &lt;= <span class="var">n</span>; <span class="var">i</span>++) {
-        <span class="kw">if</span> (<span class="var">isPrime</span>[<span class="var">i</span>]) {
-            <span class="kw">for</span> (<span class="kw">int</span> <span class="var">j</span> = <span class="var">i</span> * <span class="var">i</span>; <span class="var">j</span> &lt;= <span class="var">n</span>; <span class="var">j</span> += <span class="var">i</span>)
-                <span class="var">isPrime</span>[<span class="var">j</span>] = <span class="num">0</span>;
-        }
-    }
-}</code></pre></div>
-<h2>欧几里得算法 (GCD) + 快速幂</h2>
-<div class="code-block"><pre><code><span class="cmt">// 辗转相除法求最大公约数</span>
-<span class="kw">int</span> <span class="fn">gcd</span>(<span class="kw">int</span> <span class="var">a</span>, <span class="kw">int</span> <span class="var">b</span>) { <span class="kw">return</span> <span class="var">b</span> == <span class="num">0</span> ? <span class="var">a</span> : <span class="fn">gcd</span>(<span class="var">b</span>, <span class="var">a</span> % <span class="var">b</span>); }
 
-<span class="cmt">// 快速幂 a^b mod MOD (O(log b))</span>
-<span class="kw">long long</span> <span class="fn">qpow</span>(<span class="kw">long long</span> <span class="var">a</span>, <span class="kw">long long</span> <span class="var">b</span>, <span class="kw">long long</span> <span class="var">mod</span>) {
-    <span class="kw">long long</span> <span class="var">res</span> = <span class="num">1</span>;
-    <span class="kw">while</span> (<span class="var">b</span>) {
-        <span class="kw">if</span> (<span class="var">b</span> &amp; <span class="num">1</span>) <span class="var">res</span> = <span class="var">res</span> * <span class="var">a</span> % <span class="var">mod</span>;
-        <span class="var">a</span> = <span class="var">a</span> * <span class="var">a</span> % <span class="var">mod</span>;
-        <span class="var">b</span> &gt;&gt;= <span class="num">1</span>;
-    }
-    <span class="kw">return</span> <span class="var">res</span>;
-}</code></pre></div>
-<div class="tip-box">
-<strong>⚠ 考试提醒：</strong>筛法数组大小至少开到 <code>n+1</code>（甚至 <code>n+5</code> 防溢出），快速幂注意开 <code>long long</code> 防止中间乘法溢出！
-  </div>
-<p style="margin-top:10px;"><strong>欧拉筛（线性筛）</strong>优化点：每个合数只被其最小质因子筛掉，时间复杂度 <code>O(n)</code>，适合 <code>n ≥ 10^7</code> 的场景。</p>
-
-<aside class="notes">【讲解】数论 — 质数与GCD
-结合讲义《四、数论（质数与最大公约数）》强调：
-· 数论在CSP-J中主要围绕质数判定、质数筛法和最大公约数展开。质数是大于1的自然数中，除了1和它本身之外没有其他因数的数。判断一个数N是否为质数的最简单方法是试除法：枚举2到sqrt(N)之间的所有整数，若存在某个数能整除N，则N不是质数。时间复杂度O(sqrt(N))，适用于单次判定。
-· 当需要批量获取一定范围内的所有质数时，需要使用筛法。埃拉托斯特尼筛法（埃氏筛）是最直观的筛法：初始化一个布尔数组isPrime，全部设为true；从2开始，若isPrime[i]为true，则将i的所有倍数标记为false。时间复杂度O(N log log N)，空间复杂度O(N)。欧拉筛（线性筛）进一步优化到O(N)：每个合数只被其最小的质因数筛掉一次。欧拉筛的核心在于内层循环判断 i % primes[j] == 0 时跳出，它保证了每个合数只被筛一次，在N达到10^7时可以显著减少常数。
-· 最大公约数（GCD）使用辗转相除法（欧几里得算法）：gcd(a, b) = gcd(b, a % b)，当b == 0时返回a。最小公倍数（LCM）通过公式 lcm(a, b) = a / gcd(a, b) * b 计算（注意先除后乘防止溢出）。对于三个及以上数字的GCD或LCM，可以利用GCD和LCM的结合律逐次计算。
-· // 欧拉线性筛 + GCD/LCM
-· using namespace std;
-幻灯片上可见要点：
-· ⚠ 考试提醒：
-· 欧拉筛（线性筛） 优化点：每个合数只被其最小质因子筛掉，时间复杂度 O(n) ，适合 n ≥ 10^7 的场景。
-· 欧拉筛（线性筛）
-讲解时放慢关键术语；用 1 个生活类比 + 1 个反例加深印象。</aside>
-</div>
-<!-- ── Slide 6: 综合例题 ── -->
-<div class="slide" data-index="5">
-<h1>综合例题 — 采药问题</h1>
-<h2>📋 题目描述（洛谷 P1048 / NOIP2005 普及组）</h2>
-<p>辰辰是个天资聪颖的孩子，他的梦想是成为世界上最伟大的医师。为此，他想拜附近最有威望的医师为师。</p>
-<p>医师给他出了一道难题：山洞里有一些不同的草药，<strong>采每一株都需要一些时间</strong>，每一株也有它自身的<strong>价值</strong>。在<strong>总时间 T</strong> 内，辰辰应该采哪些草药才能让总价值最大？</p>
-<div class="tip-box" style="margin:12px 0;">
-<strong>输入格式：</strong>第一行两个整数 <code>T</code>（总时间）和 <code>M</code>（草药数目）。接下来 <code>M</code> 行，每行两个整数 <code>t_i</code>（采摘时间）和 <code>v_i</code>（价值）。<br/>
-<strong>输出：</strong>一个整数，表示最大总价值。
-  </div>
-<h3>解题思路</h3>
-<ol>
-<li>这是一个<strong>标准的01背包问题</strong>：背包容量 = 总时间 <code>T</code>，物品重量 = 采摘时间 <code>t_i</code>，物品价值 = <code>v_i</code></li>
-<li>使用一维DP优化：<code>dp[j]</code> 表示时间 <code>j</code> 内获得的最大价值</li>
-<li><strong>外层循环</strong>遍历每一株草药，<strong>内层循环倒序</strong>更新 dp 数组</li>
-<li>答案即为 <code>dp[T]</code></li>
-</ol>
-<div class="code-block"><pre><code><span class="cmt">// 采药 — 完整AC代码</span>
-<span class="mcr">#include</span> <span class="str">&lt;iostream&gt;</span>
-<span class="kw">using</span> <span class="kw">namespace</span> <span class="var">std</span>;
-
-<span class="kw">int</span> <span class="var">dp</span>[<span class="num">1005</span>];  <span class="cmt">// dp[j]: 时间j内最大价值</span>
-<span class="kw">int</span> <span class="var">t</span>[<span class="num">105</span>], <span class="var">v</span>[<span class="num">105</span>];
-
-<span class="kw">int</span> <span class="fn">main</span>() {
-    <span class="kw">int</span> <span class="var">T</span>, <span class="var">M</span>;
-    <span class="var">cin</span> &gt;&gt; <span class="var">T</span> &gt;&gt; <span class="var">M</span>;
-    <span class="kw">for</span> (<span class="kw">int</span> <span class="var">i</span> = <span class="num">1</span>; <span class="var">i</span> &lt;= <span class="var">M</span>; <span class="var">i</span>++)
-        <span class="var">cin</span> &gt;&gt; <span class="var">t</span>[<span class="var">i</span>] &gt;&gt; <span class="var">v</span>[<span class="var">i</span>];
-
-    <span class="kw">for</span> (<span class="kw">int</span> <span class="var">i</span> = <span class="num">1</span>; <span class="var">i</span> &lt;= <span class="var">M</span>; <span class="var">i</span>++)
-        <span class="kw">for</span> (<span class="kw">int</span> <span class="var">j</span> = <span class="var">T</span>; <span class="var">j</span> &gt;= <span class="var">t</span>[<span class="var">i</span>]; <span class="var">j</span>--)
-            <span class="var">dp</span>[<span class="var">j</span>] = <span class="fn">max</span>(<span class="var">dp</span>[<span class="var">j</span>], <span class="var">dp</span>[<span class="var">j</span> - <span class="var">t</span>[<span class="var">i</span>]] + <span class="var">v</span>[<span class="var">i</span>]);
-
-    <span class="var">cout</span> &lt;&lt; <span class="var">dp</span>[<span class="var">T</span>] &lt;&lt; <span class="var">endl</span>;
-    <span class="kw">return</span> <span class="num">0</span>;
-}</code></pre></div>
-<p style="color:#666; font-size:0.9rem; margin-top:6px;">📌 变体思考：如果每种草药可以采无限次（完全背包），只需将内层循环改为<strong>正序</strong>即可。</p>
-
-<aside class="notes">【讲解】综合例题 — 采药问题
-本页要点（照着讲即可）：
-· 辰辰是个天资聪颖的孩子，他的梦想是成为世界上最伟大的医师。为此，他想拜附近最有威望的医师为师。
-· 医师给他出了一道难题：山洞里有一些不同的草药， 采每一株都需要一些时间 ，每一株也有它自身的 价值 。在 总时间 T 内，辰辰应该采哪些草药才能让总价值最大？
-· 采每一株都需要一些时间
-· 总时间 T
-· 输入格式：
-· 这是一个 标准的01背包问题 ：背包容量 = 总时间 T ，物品重量 = 采摘时间 t_i ，物品价值 = v_i
-讲解时放慢关键术语；用 1 个生活类比 + 1 个反例加深印象。</aside>
-</div>
-<!-- ── Slide 7: 应试策略 ── -->
-<div class="slide" data-index="6">
-<h1>编程题应试策略</h1>
-<h2>⏱ 时间分配建议（总分400，4题）</h2>
-<table style="width:100%; border-collapse:collapse; margin:12px 0 20px; text-align:center;">
-<thead>
-<tr style="background:#1a237e; color:#ffd600;">
-<th style="padding:8px;">题号</th>
-<th style="padding:8px;">建议用时</th>
-<th style="padding:8px;">策略</th>
-</tr>
-</thead>
-<tbody>
-<tr style="border-bottom:1px solid #ddd;">
-<td style="padding:8px;">T1</td>
-<td style="padding:8px;">30分钟</td>
-<td style="padding:8px;">简单题，争取满分</td>
-</tr>
-<tr style="border-bottom:1px solid #ddd;">
-<td style="padding:8px;">T2</td>
-<td style="padding:8px;">30分钟</td>
-<td style="padding:8px;">中等题，先拿满分</td>
-</tr>
-<tr style="border-bottom:1px solid #ddd;">
-<td style="padding:8px;">T3</td>
-<td style="padding:8px;">30分钟</td>
-<td style="padding:8px;">先写暴力，再优化</td>
-</tr>
-<tr style="border-bottom:1px solid #ddd;">
-<td style="padding:8px;">T4</td>
-<td style="padding:8px;">30分钟</td>
-<td style="padding:8px;">拿部分分，不硬磕</td>
-</tr>
-</tbody>
-</table>
-<h2>🎯 核心策略</h2>
+<div class="slide" id="slide-12">
+<h1>九、综合小题思路（选做）</h1>
 <ul>
-<li><strong>先易后难：</strong>每道题都先读一遍，挑最有把握的下手。不要卡在一道题上！</li>
-<li><strong>部分分策略：</strong>写不出正解就写暴力，有时暴力能拿60分甚至更高。特殊数据（小范围、链、菊花图）单独处理。</li>
-<li><strong>对拍验证：</strong>写完正解后，用暴力和随机数据对拍（<code>diff</code> 或 <code>fc</code>），确保正确性。</li>
-<li><strong>文件操作：</strong>确认 <code>freopen</code> 语句正确，输入输出文件名与题目要求完全一致！</li>
+<li><strong>LIS</strong>：序列最长严格上升 → O(n²) DP</li>
+<li><strong>全排列输出</strong>：n≤8 DFS 回溯</li>
+<li><strong>单源最短路</strong>：非负权 Dijkstra；全 1 权 BFS</li>
+<li><strong>朋友圈</strong>：并查集计数根</li>
+<li><strong>第 k 个质数</strong>：欧拉筛预处理</li>
 </ul>
-<div class="tip-box orange">
-<strong>⚠ 考前检查清单：</strong>
-<ul class="checklist" style="margin-top:4px;">
-<li>freopen 是否已写好且文件名正确？</li>
-<li>数组大小是否够用（至少开到题面最大范围的1.5倍）？</li>
-<li>是否使用了 <code>long long</code> 防溢出？</li>
-<li>样例是否已通过？边界情况是否测试了？</li>
-</ul>
+<div class="highlight-box">读题先分类：背包？最短步？连通？质数？再选模板，别上来硬写。</div>
+<aside class="notes">分类比编码更重要。</aside>
 </div>
-<div class="tip-box">
-<strong>💡 黄金法则：</strong>「只要不爆零就是胜利，部分分也是分！」写不出满分不要慌，暴力+特判照样能拿高分。
-  </div>
 
-<aside class="notes">【讲解】编程题应试策略
-本页要点（照着讲即可）：
-· 先易后难： 每道题都先读一遍，挑最有把握的下手。不要卡在一道题上！
-· 先易后难：
-· 部分分策略： 写不出正解就写暴力，有时暴力能拿60分甚至更高。特殊数据（小范围、链、菊花图）单独处理。
-· 部分分策略：
-· 对拍验证： 写完正解后，用暴力和随机数据对拍（ diff 或 fc ），确保正确性。
-· 对拍验证：
-讲解时放慢关键术语；用 1 个生活类比 + 1 个反例加深印象。</aside>
-</div>
-<!-- ── Slide 8: 总结 ── -->
-<div class="slide" data-index="7">
-<h1>本课总结与作业</h1>
-<h2>📌 本节课核心知识点回顾</h2>
-<table style="width:100%; border-collapse:collapse; margin:12px 0 20px;">
-<thead>
-<tr style="background:#1a237e; color:#ffd600;">
-<th style="padding:8px;">专题</th>
-<th style="padding:8px;">核心要点</th>
-</tr>
-</thead>
-<tbody>
-<tr style="border-bottom:1px solid #ddd;">
-<td style="padding:8px; font-weight:700; color:#1a237e;">动态规划</td>
-<td style="padding:8px;">01背包一维优化、倒序遍历、状态转移方程</td>
-</tr>
-<tr style="border-bottom:1px solid #ddd;">
-<td style="padding:8px; font-weight:700; color:#1a237e;">搜索</td>
-<td style="padding:8px;">BFS最短路（第一次到达即最短）、DFS回溯框架</td>
-</tr>
-<tr style="border-bottom:1px solid #ddd;">
-<td style="padding:8px; font-weight:700; color:#1a237e;">图论</td>
-<td style="padding:8px;">Dijkstra堆优化、并查集路径压缩</td>
-</tr>
-<tr style="border-bottom:1px solid #ddd;">
-<td style="padding:8px; font-weight:700; color:#1a237e;">数论</td>
-<td style="padding:8px;">埃筛/欧拉筛、GCD欧几里得、快速幂防溢出</td>
-</tr>
-</tbody>
-</table>
-<h2>📝 课后作业</h2>
+<div class="slide" id="slide-13">
+<h1>十、考场决策树</h1>
 <ol>
-<li><strong>必做：</strong>独立完成"采药"问题（洛谷 P1048），并尝试写出二维DP和一维DP两种实现</li>
-<li><strong>必做：</strong>完成BFS求迷宫最短路模板题（洛谷 P1443 马的遍历）</li>
-<li><strong>选做：</strong>完成Dijkstra模板题（洛谷 P4779 单源最短路径标准版）</li>
-<li><strong>附加：</strong>用欧拉筛完成"素数个数"（洛谷 P3912），对比埃筛与欧拉筛的运行时间差异</li>
+<li>看数据范围 → 估复杂度</li>
+<li>识别模型：背包 / 搜索 / 图 / 数论</li>
+<li>有部分分先写暴力保底</li>
+<li>套模板 → 改边界与输出格式</li>
+<li>样例 + 边界自测</li>
 </ol>
-<div class="tip-box orange" style="margin-top:16px;">
-<strong>💪 重点复习：</strong>01背包一维优化、BFS最短路、Dijkstra堆优化、欧拉筛
-  </div>
-<div class="tip-box" style="margin-top:12px;">
-<strong>🎯 下节课预告：</strong>第48课将进行<strong>考前终极模拟赛</strong>（全真4题限时训练），请提前准备好编译器环境和OJ账号！
-  </div>
+<div class="tip-box">不会做的题：小 n 暴力 + 特殊构造，绝不全空。</div>
+<aside class="notes">为第48课应试技巧铺垫。</aside>
+</div>
 
-<aside class="notes">【收尾】回顾本课主线：本课总结与作业
-对照大纲再过一遍：编程题专项训练：DP+搜索+图论
-板书/口述要点：
-· 必做： 独立完成"采药"问题（洛谷 P1048），并尝试写出二维DP和一维DP两种实现
-· 必做： 完成BFS求迷宫最短路模板题（洛谷 P1443 马的遍历）
-· 选做： 完成Dijkstra模板题（洛谷 P4779 单源最短路径标准版）
-· 附加： 用欧拉筛完成"素数个数"（洛谷 P3912），对比埃筛与欧拉筛的运行时间差异
-· 💪 重点复习：
-· 🎯 下节课预告：
-课后任务：CSP-J 全真模拟题3
-结束前留 2 分钟答疑；布置 1 道小练习检验是否真正掌握。</aside>
+<div class="slide" id="slide-14">
+<h1>十一、本课小结</h1>
+<ol>
+<li>DP：01 倒序、完全正序、LIS 基础</li>
+<li>搜索：DFS 方案 / BFS 最短</li>
+<li>图：邻接表 + Dijkstra / 并查集</li>
+<li>数论：筛法 + GCD/LCM</li>
+<li>真题：背包采购 + 迷宫 BFS 必须会</li>
+</ol>
+<div class="motto-box">先认模型再套模板 · 部分分不空手</div>
+<p style="text-align:center; color:#1a237e; font-weight:bold; margin-top:12px;">
+下节：考前冲刺与应试技巧 — 全课程收官
+</p>
+<aside class="notes">布置：默写 01 背包 + BFS + 并查集 + Dijkstra 骨架。</aside>
 </div>
-</div><!-- /slides-container -->
-<!-- ═══════════════ NAVIGATION ═══════════════ -->
-<div class="nav-bar">
-<button class="nav-btn" id="prevBtn" onclick="goSlide(-1)">◀ 上一页</button>
-<span class="slide-counter" id="slideCounter">1 / 8</span>
-<button class="nav-btn" id="nextBtn" onclick="goSlide(1)">下一页 ▶</button>
+
 </div>
-<div class="dots" id="dotsContainer"></div>
-<!-- ═══════════════ SCRIPTS ═══════════════ -->
+<div class="page-indicator" id="page-indicator">1 / 14</div>
+<div class="nav-buttons">
+<button class="nav-btn" disabled="" id="prev-btn" onclick="prevSlide()">上一页</button>
+<button class="nav-btn" id="next-btn" onclick="nextSlide()">下一页</button>
+</div>
 <script>
-(function() {
-  var slides = document.querySelectorAll('.slide');
-  var total  = slides.length;
-  var current = 0;
-
-  var prevBtn = document.getElementById('prevBtn');
-  var nextBtn = document.getElementById('nextBtn');
-  var counter = document.getElementById('slideCounter');
-  var dotsContainer = document.getElementById('dotsContainer');
-
-  // Build dots
-  for (var i = 0; i < total; i++) {
-    var dot = document.createElement('span');
-    dot.className = 'dot' + (i === 0 ? ' active-dot' : '');
-    dot.setAttribute('data-index', i);
-    dot.addEventListener('click', (function(idx) {
-      return function() { goTo(idx); };
-    })(i));
-    dotsContainer.appendChild(dot);
-  }
-
-  function updateUI() {
-    for (var i = 0; i < slides.length; i++) {
-      slides[i].classList.remove('active');
+let currentSlide = 0;
+const slides = document.querySelectorAll('.slide');
+const totalSlides = slides.length;
+const indicator = document.getElementById('page-indicator');
+const prevBtn = document.getElementById('prev-btn');
+const nextBtn = document.getElementById('next-btn');
+function showSlide(index) {
+    slides.forEach(s => s.classList.remove('active'));
+    slides[index].classList.add('active');
+    indicator.textContent = (index + 1) + ' / ' + totalSlides;
+    prevBtn.disabled = (index === 0);
+    nextBtn.disabled = (index === totalSlides - 1);
+}
+function nextSlide() {
+    if (currentSlide < totalSlides - 1) { currentSlide++; showSlide(currentSlide); }
+}
+function prevSlide() {
+    if (currentSlide > 0) { currentSlide--; showSlide(currentSlide); }
+}
+document.addEventListener('keydown', function(e) {
+    if (e.key === 'ArrowRight' || e.key === 'ArrowDown' || e.key === ' ') {
+        e.preventDefault(); nextSlide();
+    } else if (e.key === 'ArrowLeft' || e.key === 'ArrowUp') {
+        e.preventDefault(); prevSlide();
     }
-    slides[current].classList.add('active');
-
-    var dots = dotsContainer.querySelectorAll('.dot');
-    for (var j = 0; j < dots.length; j++) {
-      dots[j].classList.remove('active-dot');
-    }
-    dots[current].classList.add('active-dot');
-
-    counter.textContent = (current + 1) + ' / ' + total;
-
-    prevBtn.disabled = (current === 0);
-    nextBtn.disabled = (current === total - 1);
-  }
-
-  window.goSlide = function(dir) {
-    var next = current + dir;
-    if (next >= 0 && next < total) {
-      current = next;
-      updateUI();
-    }
-  };
-
-  window.goTo = function(index) {
-    if (index >= 0 && index < total) {
-      current = index;
-      updateUI();
-    }
-  };
-
-  // Keyboard navigation
-  document.addEventListener('keydown', function(e) {
-    if (e.key === 'ArrowLeft' || e.key === 'ArrowUp') {
-      e.preventDefault();
-      goSlide(-1);
-    } else if (e.key === 'ArrowRight' || e.key === 'ArrowDown' || e.key === ' ') {
-      e.preventDefault();
-      goSlide(1);
-    } else if (e.key === 'Home') {
-      e.preventDefault();
-      goTo(0);
-    } else if (e.key === 'End') {
-      e.preventDefault();
-      goTo(total - 1);
-    }
-  });
-
-  // Touch swipe support
-  var touchStartX = 0;
-  var touchEndX = 0;
-  var slidesContainer = document.querySelector('.slides-container');
-
-  slidesContainer.addEventListener('touchstart', function(e) {
-    touchStartX = e.changedTouches[0].screenX;
-  }, {passive: true});
-
-  slidesContainer.addEventListener('touchend', function(e) {
-    touchEndX = e.changedTouches[0].screenX;
-    var diff = touchStartX - touchEndX;
-    if (Math.abs(diff) > 50) {
-      if (diff > 0) goSlide(1);   // swipe left → next
-      else           goSlide(-1);  // swipe right → prev
-    }
-  }, {passive: true});
-
-  updateUI();
-})();
+});
 </script>
 <script src="courseware-ui.js"></script>
 <script src="presenter.js"></script>

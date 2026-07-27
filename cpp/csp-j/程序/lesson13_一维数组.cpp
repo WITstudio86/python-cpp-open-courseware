@@ -7,7 +7,10 @@
  * 1. 数组定义与初始化演示
  * 2. 数组遍历与最值查找
  * 3. 数组反转
- * 4. 真题AC代码
+ * 4. 桶计数 / 循环右移
+ * 5. 真题AC代码
+ *
+ * 编译：g++ -std=c++17 lesson13_一维数组.cpp -o lesson13
  */
 
 #include <iostream>
@@ -150,6 +153,51 @@ void demo05_search() {
     cout << endl;
 }
 
+// 演示6：桶计数（分数 0~100）
+void demo06_bucket_count() {
+    cout << "=== 演示6：桶计数统计 ===" << endl;
+    int n = 8;
+    int arr[8] = {85, 92, 78, 85, 90, 85, 73, 92};
+    int cnt[101] = {0};
+
+    cout << "成绩: ";
+    for (int i = 0; i < n; i++) {
+        cout << arr[i] << " ";
+        cnt[arr[i]]++;
+    }
+    cout << endl;
+
+    cout << "出现次数 > 0 的分数:" << endl;
+    for (int s = 0; s <= 100; s++) {
+        if (cnt[s] > 0) {
+            cout << "  分数 " << s << " 出现 " << cnt[s] << " 次" << endl;
+        }
+    }
+    cout << endl;
+}
+
+// 演示7：循环右移 k 位
+void demo07_rotate_right() {
+    cout << "=== 演示7：循环右移 ===" << endl;
+    int n = 6;
+    int arr[6] = {1, 2, 3, 4, 5, 6};
+    int k = 2;
+    k %= n;
+
+    cout << "原数组: ";
+    for (int i = 0; i < n; i++) cout << arr[i] << " ";
+    cout << endl;
+    cout << "右移 k=" << k << " 位" << endl;
+
+    int b[6];
+    for (int i = 0; i < n; i++) {
+        b[(i + k) % n] = arr[i];
+    }
+    cout << "结果: ";
+    for (int i = 0; i < n; i++) cout << b[i] << " ";
+    cout << endl << endl;
+}
+
 // ============ 真题AC代码 ============
 
 // 真题1：不与最大数相同的数字之和
@@ -219,11 +267,13 @@ int main() {
         cout << "3. 数组遍历与统计（求和、平均、最值、及格率）" << endl;
         cout << "4. 数组反转演示" << endl;
         cout << "5. 线性查找演示" << endl;
-        cout << "6. 真题1：不与最大数相同的数字之和" << endl;
-        cout << "7. 真题2：数组逆序重放" << endl;
+        cout << "6. 桶计数统计演示" << endl;
+        cout << "7. 循环右移演示" << endl;
+        cout << "8. 真题1：不与最大数相同的数字之和" << endl;
+        cout << "9. 真题2：数组逆序重放" << endl;
         cout << "0. 退出" << endl;
         cout << "----------------------------------------" << endl;
-        cout << "请输入选项 (0-7): ";
+        cout << "请输入选项 (0-9): ";
         cin >> choice;
         cout << endl;
 
@@ -247,9 +297,15 @@ int main() {
                 demo05_search();
                 break;
             case 6:
-                exam01_maxExcludeSum();
+                demo06_bucket_count();
                 break;
             case 7:
+                demo07_rotate_right();
+                break;
+            case 8:
+                exam01_maxExcludeSum();
+                break;
+            case 9:
                 exam02_reverseArray();
                 break;
             default:

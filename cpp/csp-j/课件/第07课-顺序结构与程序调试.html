@@ -31,7 +31,7 @@ body {
 h3 { font-size: 22px; font-weight: 700; color: #0a2540; margin-bottom: 16px; }
 h4 { font-size: 17px; font-weight: 700; color: #1a3a5c; margin: 14px 0 6px; }
 p, li { font-size: 15px; line-height: 1.75; color: #2d3748; }
-ul { padding-left: 22px; margin: 6px 0; }
+ul, ol { padding-left: 22px; margin: 6px 0; }
 li { margin-bottom: 6px; }
 .code-block {
   background: #1a1d23; color: #e0e0e0;
@@ -51,6 +51,11 @@ li { margin-bottom: 6px; }
   font-size: 14px; line-height: 1.65; color: #6b4c0a;
 }
 .tip-box strong { color: #8b6914; }
+.warn-box {
+  border-left: 4px solid #c53030; background: #fff5f5;
+  padding: 10px 14px; border-radius: 0 6px 6px 0; margin: 10px 0;
+  font-size: 14px; color: #742a2a;
+}
 .nav-bar {
   display: flex; align-items: center; justify-content: center; gap: 14px;
   padding: 14px 20px; background: #fff; border-top: 1px solid #e2e8f0;
@@ -61,7 +66,7 @@ li { margin-bottom: 6px; }
 }
 .nav-btn:hover { background: #1a3a5c; }
 .nav-btn:disabled { opacity: 0.35; cursor: default; }
-.dots { display: flex; gap: 7px; align-items: center; }
+.dots { display: flex; gap: 7px; align-items: center; flex-wrap: wrap; justify-content: center; max-width: 420px; }
 .dot {
   width: 10px; height: 10px; border-radius: 50%;
   background: #cbd5e0; cursor: pointer; transition: background 0.2s;
@@ -98,322 +103,382 @@ table th { background: #0a2540; color: #fff; }
 <span>第7课：顺序结构与程序调试</span>
 </div>
 <div class="slide-container" id="slideContainer">
-<!-- 幻灯片1：标题页 -->
+
+<!-- 1 标题 -->
 <div class="slide title-slide active" data-slide="1">
 <div class="slide-title">第7课：顺序结构与程序调试</div>
 <div class="accent-line"></div>
-<div class="slide-subtitle">顺序执行 | 断点调试 | 变量追踪 | 程序阅读</div>
+<div class="slide-subtitle">顺序执行 | 语句分类 | 断点调试 | 变量追踪 | 错误排查</div>
 <div class="slide-subtitle" style="margin-top:8px; font-size:14px; color:#718096;">CSP-J 备考 · 基本功训练</div>
-
-<aside class="notes">【开场】第 1/9 页 · 顺序结构与程序调试
-用 30 秒说明本课目标与学完能做什么，再进入正题。
+<aside class="notes">【开场】第 1/14 页 · 顺序结构与程序调试
 大纲考点：顺序执行、断点调试、变量监视、常见编译错误
-配套练习方向：程序阅读与调试技巧题
-封面关键词：
-· 第7课：顺序结构与程序调试
-· 顺序执行 | 断点调试 | 变量追踪 | 程序阅读
-· CSP-J 备考 · 基本功训练
-互动：问学生「今天最想搞清楚什么？」，收 1–2 个期待。</aside>
+配套练习：程序阅读与调试技巧题</aside>
 </div>
-<!-- 幻灯片2：知识点1 — 顺序结构 -->
+
+<!-- 2 顺序结构 -->
 <div class="slide" data-slide="2">
-<h3>一、顺序结构概念</h3>
-<p><strong>程序按代码书写顺序，从上到下逐条执行。</strong>没有任何跳转、循环、分支干预的情况下，每一条语句按照它在源代码中出现的先后顺序被 CPU 依次执行。</p>
-<h4>C++ 语句分类</h4>
+<h3>一、顺序结构：程序的默认执行方式</h3>
+<p><strong>只要没有分支、循环、函数跳转，语句就严格按照书写顺序从上到下逐条执行。</strong></p>
+<div class="code-block"><span class="kw">int</span> main() {
+    <span class="kw">int</span> a = <span class="nu">10</span>;           <span class="cm">// ① 先执行：a 变为 10</span>
+    <span class="kw">int</span> b = <span class="nu">20</span>;           <span class="cm">// ② 再执行：b 变为 20</span>
+    <span class="kw">int</span> c = a + b;        <span class="cm">// ③ 使用①②结果：c = 30</span>
+    cout &lt;&lt; c &lt;&lt; endl;   <span class="cm">// ④ 输出 30</span>
+    <span class="kw">return</span> <span class="nu">0</span>;            <span class="cm">// ⑤ 结束</span>
+}</div>
+<div class="grid-2">
+<div class="card">
+<strong>四个本质特点</strong>
+<ol style="font-size:14px;">
+<li><strong>一次执行</strong>：每条语句按序执行一次</li>
+<li><strong>结果依赖</strong>：后句可用前句已算好的结果</li>
+<li><strong>严格先后</strong>：前句做完才开始后句</li>
+<li><strong>默认方式</strong>：分支/循环是对默认流的“改写”</li>
+</ol>
+</div>
+<div class="card">
+<strong>竞赛主程序骨架</strong>
+<div class="code-block" style="font-size:12px;"><span class="cm">// 1. 读入</span>
+cin &gt;&gt; a &gt;&gt; b;
+<span class="cm">// 2. 处理（顺序计算）</span>
+<span class="kw">int</span> sum = a + b;
+<span class="cm">// 3. 输出</span>
+cout &lt;&lt; sum &lt;&lt; endl;</div>
+</div>
+</div>
+<aside class="notes">【讲解】顺序结构是三种基本控制结构之一。流水线类比：输入→计算1→计算2→输出。</aside>
+</div>
+
+<!-- 3 语句分类 -->
+<div class="slide" data-slide="3">
+<h3>二、C++ 语句分类（读程基础）</h3>
 <div class="grid-2">
 <div class="card">
 <strong>1. 声明语句</strong>
-<p style="font-size:13px;">定义变量、函数等：<code>int a;</code>、<code>double pi = 3.14;</code></p>
+<div class="code-block" style="font-size:12px;"><span class="kw">int</span> a;              <span class="cm">// 未初始化（危险）</span>
+<span class="kw">int</span> b = <span class="nu">10</span>;         <span class="cm">// 推荐</span>
+<span class="kw">const int</span> N = <span class="nu">100</span>;</div>
 </div>
 <div class="card">
 <strong>2. 表达式语句</strong>
-<p style="font-size:13px;">以分号结尾的表达式：<code>a = b + c;</code>、<code>cout &lt;&lt; x;</code></p>
+<div class="code-block" style="font-size:12px;">a = b + c;
+cout &lt;&lt; a;
+a++;</div>
 </div>
 <div class="card">
 <strong>3. 控制语句</strong>
-<p style="font-size:13px;">改变执行流程：<code>if</code>、<code>for</code>、<code>while</code>、<code>switch</code></p>
+<p style="font-size:13px;"><code>if</code> <code>for</code> <code>while</code> <code>switch</code> <code>return</code> <code>break</code> <code>continue</code></p>
+<p style="font-size:13px;color:#718096;">改变执行顺序；本课先聚焦顺序</p>
 </div>
 <div class="card">
-<strong>4. 复合语句</strong>
-<p style="font-size:13px;">用花括号 <code>{}</code> 包裹的多条语句，视为一个整体</p>
+<strong>4. 空语句 &amp; 5. 复合语句</strong>
+<div class="code-block" style="font-size:12px;">;                 <span class="cm">// 空语句：什么也不做</span>
+<span class="kw">if</span> (a &gt; <span class="nu">0</span>);       <span class="cm">// 危险！if 后空语句</span>
+{ t=a; a=b; b=t; } <span class="cm">// 复合：多条当一条</span></div>
 </div>
 </div>
-<p style="margin-top:12px; font-size:14px; color:#4a5568;">顺序结构是程序设计的<strong>最基础结构</strong>。理解顺序执行、逐行追踪是读懂任何复杂程序的前提。</p>
+<div class="warn-box"><strong>空语句是逻辑错误重灾区：</strong><code>if (x&gt;0);</code> 或 <code>while(cin&gt;&gt;x);</code> 语法合法，但语义常与预期相反。</div>
+<aside class="notes">【讲解】认清“什么是一条语句”。复合语句在 if/for 中极为重要：无花括号时只管后面紧跟的一条。</aside>
+</div>
 
-<aside class="notes">【讲解】一、顺序结构概念
-结合讲义《一、顺序结构》强调：
-· 顺序结构是程序最基本的执行方式：**按照代码书写的先后顺序，从上到下逐条执行**。
-· using namespace std;
-· int main() {
-· int a = 10; // ① 执行
-· int b = 20; // ② 执行
-幻灯片上可见要点：
-· 程序按代码书写顺序，从上到下逐条执行。 没有任何跳转、循环、分支干预的情况下，每一条语句按照它在源代码中出现的先后顺序被 CPU 依次执行。
-· 程序按代码书写顺序，从上到下逐条执行。
-· C++ 语句分类
-· 1. 声明语句
-讲解时放慢关键术语；用 1 个生活类比 + 1 个反例加深印象。
-本课大纲考点（可适时点题）：顺序执行、断点调试、变量监视、常见编译错误</aside>
+<!-- 4 变量赋值与交换 -->
+<div class="slide" data-slide="4">
+<h3>三、变量赋值与交换（顺序中的关键）</h3>
+<div class="grid-2">
+<div>
+<h4>赋值是“覆盖”，不是永久绑定</h4>
+<div class="code-block" style="font-size:13px;"><span class="kw">int</span> a = <span class="nu">3</span>;
+<span class="kw">int</span> b = a;   <span class="cm">// b 拿到当时的 3</span>
+a = <span class="nu">10</span>;      <span class="cm">// 改 a 不会自动改 b</span>
+<span class="cm">// 现在 a=10, b=3</span></div>
+<p style="font-size:14px;">右值先算，再写入左值：<code>a = a + b;</code> 先算右边再写 a。</p>
 </div>
-<!-- 幻灯片3：知识点2 — 常见错误类型 -->
-<div class="slide" data-slide="3">
-<h3>二、程序中的四类错误</h3>
+<div>
+<h4>标准三步交换（考试首选）</h4>
+<div class="code-block" style="font-size:13px;"><span class="kw">int</span> t = x;
+x = y;
+y = t;</div>
+<p style="font-size:13px;color:#718096;">了解：加减法 / 异或交换有溢出或可读性风险，考试优先临时变量。</p>
+</div>
+</div>
+<div class="warn-box">
+<strong>错误交换：</strong><code>x = y; y = x;</code> — 第一句后 x 已变成 y，原 x 丢失，结果两个都是原 y。
+像“两杯水交换需要第三个空杯子”。
+</div>
+<aside class="notes">【讲解】顺序结构里最容易算错的是“某时刻变量到底是多少”。CSP-J 读程常让你跟踪交换。</aside>
+</div>
+
+<!-- 5 四类错误 -->
+<div class="slide" data-slide="5">
+<h3>四、程序中的四类错误</h3>
 <div class="grid-2">
 <div class="card">
 <h4 class="error-type">1. 编译错误 (CE)</h4>
-<p style="font-size:14px;">语法错误、类型不匹配、未声明变量等。<strong>编译阶段</strong>就能被发现。</p>
-<div class="code-block" style="font-size:12px;"><span class="cm">// 缺少分号 → syntax error</span>
-<span class="km">int</span> a = <span class="nu">10</span>
-<span class="cm">// 类型不匹配 → cannot convert</span>
-<span class="km">string</span> s = <span class="nu">123</span>;</div>
+<p style="font-size:14px;">语法错误、类型不匹配、未声明。编译阶段发现。</p>
+<p style="font-size:12px;color:#718096;"><code>expected ';'</code> / <code>was not declared</code> / <code>cannot convert</code></p>
 </div>
 <div class="card">
 <h4 class="error-type">2. 链接错误 (LE)</h4>
-<p style="font-size:14px;">函数声明了但未定义、缺少库文件等。<strong>链接阶段</strong>报错。</p>
-<p style="font-size:13px; color:#718096;">典型信息：<code>undefined reference to 'xxx'</code></p>
+<p style="font-size:14px;">函数声明未定义、缺少库。<code>undefined reference to 'xxx'</code></p>
 </div>
 <div class="card">
 <h4 class="error-type">3. 运行时错误 (RE)</h4>
-<p style="font-size:14px;">程序运行时崩溃：除零、数组越界、空指针访问、栈溢出等。</p>
+<p style="font-size:14px;">除零、数组越界、空指针、栈溢出、段错误。</p>
 </div>
 <div class="card">
 <h4 class="error-type">4. 逻辑错误 (WA)</h4>
-<p style="font-size:14px;">程序正常运行但结果不对 — 算法/思路有问题。<strong>最难排查</strong>，需要通过调试定位。</p>
+<p style="font-size:14px;">能编译能跑完但结果不对——最难排查，靠读程与变量表。</p>
 </div>
 </div>
-<div class="tip-box">
-<strong>编译错误信息解读要点：</strong>看文件+行号 → 看错误类型 → 看描述信息。先修第一个错误（后面的可能是连锁反应）。常见英文提示：<code>syntax error</code>（语法错）、<code>undefined reference</code>（未定义引用）、<code>segmentation fault</code>（段错误=越界）。
-    </div>
+<table style="font-size:13px;margin-top:10px;">
+<tr><th>报错片段</th><th>含义</th><th>对策</th></tr>
+<tr><td>expected ';' before</td><td>缺分号</td><td>查报错行与上一行</td></tr>
+<tr><td>was not declared</td><td>未声明/拼写错</td><td>先声明再使用</td></tr>
+<tr><td>expected '}' at end</td><td>缺右花括号</td><td>成对书写</td></tr>
+<tr><td>segmentation fault</td><td>段错误/越界</td><td>查下标与指针</td></tr>
+</table>
+<div class="tip-box"><strong>技巧：</strong>先修第一个错误（后面常是连锁反应）。报错行号有时指“发现位置”，真正问题可能在上一行。</div>
+<aside class="notes">【讲解】理解错误类型才能知道该看编译器、运行结果还是逻辑。</aside>
+</div>
 
-<aside class="notes">【讲解】二、程序中的四类错误
-本页要点（照着讲即可）：
-· 1. 编译错误 (CE)
-· 语法错误、类型不匹配、未声明变量等。 编译阶段 就能被发现。
-· 编译阶段
-· 2. 链接错误 (LE)
-· 函数声明了但未定义、缺少库文件等。 链接阶段 报错。
-· 链接阶段
-代码页节奏：先读懂输入输出 → 再走主流程 → 最后点出易错点（边界/类型/下标）。
-可让学生预测下一行输出，再运行对照。</aside>
-</div>
-<!-- 幻灯片4：知识点3 — 程序调试方法 -->
-<div class="slide" data-slide="4">
-<h3>三、程序调试方法</h3>
+<!-- 6 调试方法 -->
+<div class="slide" data-slide="6">
+<h3>五、程序调试方法</h3>
 <div class="grid-2">
 <div>
-<h4>方法一：输出调试法</h4>
-<p>在关键位置插入 <code>cout</code> 输出变量值，观察执行过程。</p>
-<div class="code-block" style="font-size:13px;"><span class="kw">int</span> a = <span class="nu">3</span>, b = <span class="nu">7</span>;
-cout &lt;&lt; <span class="st">"【调试】a="</span> &lt;&lt; a &lt;&lt; <span class="st">", b="</span> &lt;&lt; b &lt;&lt; endl;
-a = b - a;
-cout &lt;&lt; <span class="st">"【调试】执行后 a="</span> &lt;&lt; a &lt;&lt; endl;</div>
-<p style="font-size:13px; color:#718096;">简单直接，不需要特殊工具。但提交前<strong>必须删除</strong>！</p>
+<h4>方法一：输出调试法（竞赛最实用）</h4>
+<div class="code-block" style="font-size:12px;">cin &gt;&gt; a &gt;&gt; b;
+cerr &lt;&lt; <span class="st">"[DEBUG] a="</span> &lt;&lt; a &lt;&lt; endl;
+<span class="kw">int</span> c = a + b;
+cerr &lt;&lt; <span class="st">"[DEBUG] c="</span> &lt;&lt; c &lt;&lt; endl;
+cout &lt;&lt; c &lt;&lt; endl;  <span class="cm">// 正式答案走 cout</span></div>
+<p style="font-size:13px;"><strong>推荐 cerr：</strong>标准错误流，减少污染标准答案输出。提交前仍建议删净。</p>
 </div>
 <div>
 <h4>方法二：断点调试法</h4>
-<p>在 IDE 中设置断点，然后调试运行：</p>
-<ol style="font-size:14px; line-height:2;">
-<li>在目标行<strong>左侧单击设置断点</strong>（红点）</li>
-<li>选择<strong>"调试运行"（F5）</strong>而非"运行"</li>
-<li>程序在断点处<strong>暂停</strong></li>
-<li>使用<strong>单步执行（F10/F11）</strong>逐行运行</li>
-<li>在<strong>变量窗口</strong>观察变量值变化</li>
+<ol style="font-size:14px; line-height:1.9;">
+<li>行左侧单击设断点（红点）</li>
+<li>调试运行（常见 F5）</li>
+<li>断点处暂停</li>
+<li>监视/变量窗口看当前值</li>
+<li>Step Over 单步；Step Into 进函数</li>
+<li>Continue 跑到下一断点</li>
+<li>对比“实际值”与“预期值”</li>
 </ol>
 </div>
 </div>
-<h4>调试时需要关注的点</h4>
+<h4>调试时重点关注</h4>
 <ul>
-<li><strong>变量的值：</strong>是否符合预期？何时与预期偏离？</li>
-<li><strong>执行路径：</strong>程序是否走进了预期的 if/else 分支？</li>
-<li><strong>循环次数：</strong>循环执行了多少次？边界条件是否正确？</li>
-<li><strong>表达式求值：</strong>复杂表达式每一步的中间结果是否正确？</li>
+<li>变量值是否符合预期？何时偏离？</li>
+<li>是否走进预期分支？循环次数与边界？</li>
+<li>累加器初值、数组下标、表达式中间结果</li>
 </ul>
-
-<aside class="notes">【讲解】三、程序调试方法
-结合讲义《三、程序调试方法》强调：
-· 编译错误（Compile Error）：
-· 语法错误：分号遗漏、括号不匹配、关键字拼写错误
-· 类型错误：类型不匹配的赋值或运算
-· 常见编译错误信息解读：
-· expected ';' before 'xxx' → 缺少分号
-幻灯片上可见要点：
-· 方法一：输出调试法
-· 在关键位置插入 cout 输出变量值，观察执行过程。
-· 简单直接，不需要特殊工具。但提交前 必须删除 ！
-· 必须删除
-代码页节奏：先读懂输入输出 → 再走主流程 → 最后点出易错点（边界/类型/下标）。
-可让学生预测下一行输出，再运行对照。</aside>
+<aside class="notes">【讲解】长代码可用 cerr&lt;&lt;"here" 二分隔离 bug。对拍意识本课先建立“对比预期”。</aside>
 </div>
-<!-- 幻灯片5：知识点4 — 程序阅读技巧 -->
-<div class="slide" data-slide="5">
-<h3>四、程序阅读技巧</h3>
-<h4>标准阅读流程</h4>
-<ol style="font-size:15px; line-height:2; padding-left:22px;">
-<li><strong>概览：</strong>快速浏览代码，明确输入/输出/核心变量</li>
-<li><strong>找关键变量：</strong>定位哪些变量会被修改</li>
-<li><strong>逐行模拟执行：</strong>用笔和纸模拟计算机执行每条代码</li>
-<li><strong>制作变量追踪表：</strong>记录每一步后各变量的变化</li>
+
+<!-- 7 读程方法 -->
+<div class="slide" data-slide="7">
+<h3>六、程序阅读（读程）五步法</h3>
+<ol style="font-size:15px; line-height:2;">
+<li><strong>概览：</strong>输入输出、有无循环/分支、大致在算什么</li>
+<li><strong>找关键变量：</strong>谁会变？谁是累加器？谁是中间量？</li>
+<li><strong>逐行模拟：</strong>像 CPU 一样执行，不要跳读</li>
+<li><strong>制作变量追踪表：</strong>每执行关键语句，更新一列表格</li>
+<li><strong>还原输出：</strong>严格按 cout 顺序与格式写答案</li>
 </ol>
-<h4>变量追踪表示例：交换两个变量的值</h4>
-<div class="code-block"><span class="kw">int</span> a = <span class="nu">3</span>, b = <span class="nu">7</span>, t;
-t = a;  a = b;  b = t;</div>
+<h4>变量追踪表示例（加减法交换）</h4>
+<div class="code-block" style="font-size:13px;"><span class="kw">int</span> a = <span class="nu">3</span>, b = <span class="nu">5</span>;
+a = a + b;  b = a - b;  a = a - b;  <span class="cm">// 最终 a=5, b=3</span></div>
 <table>
-<tr><th>执行前</th><th>代码</th><th>执行后 a</th><th>b</th><th>t</th><th>说明</th></tr>
-<tr><td>—</td><td>初始</td><td>3</td><td>7</td><td>?</td><td>声明并初始化</td></tr>
-<tr><td>a=3,b=7,t=?</td><td>t = a;</td><td><strong>3</strong></td><td><strong>7</strong></td><td><strong>3</strong></td><td>先把 a 的值存入 t</td></tr>
-<tr><td>a=3,b=7,t=3</td><td>a = b;</td><td><strong>7</strong></td><td>7</td><td>3</td><td>把 b 的值赋给 a</td></tr>
-<tr><td>a=7,b=7,t=3</td><td>b = t;</td><td>7</td><td><strong>3</strong></td><td>3</td><td>把 t 中存的旧 a 值赋给 b</td></tr>
+<tr><th>步骤</th><th>语句</th><th>a</th><th>b</th><th>说明</th></tr>
+<tr><td>0</td><td>初始</td><td>3</td><td>5</td><td>声明初始化</td></tr>
+<tr><td>1</td><td>a=a+b</td><td><strong>8</strong></td><td>5</td><td>3+5=8</td></tr>
+<tr><td>2</td><td>b=a-b</td><td>8</td><td><strong>3</strong></td><td>8-5=3</td></tr>
+<tr><td>3</td><td>a=a-b</td><td><strong>5</strong></td><td>3</td><td>8-3=5</td></tr>
 </table>
-<p style="margin-top:8px;"><strong>最终：</strong>a=7, b=3 — 交换成功。</p>
-
-<aside class="notes">【讲解】四、程序阅读技巧
-本页要点（照着讲即可）：
-· 标准阅读流程
-· 概览： 快速浏览代码，明确输入/输出/核心变量
-· 找关键变量： 定位哪些变量会被修改
-· 找关键变量：
-· 逐行模拟执行： 用笔和纸模拟计算机执行每条代码
-· 逐行模拟执行：
-代码页节奏：先读懂输入输出 → 再走主流程 → 最后点出易错点（边界/类型/下标）。
-可让学生预测下一行输出，再运行对照。</aside>
+<div class="tip-box"><strong>读程口诀：</strong>一步一更新，绝不跳步心算。陷阱：整数除法、自增、赋值链、新值覆盖旧值、输出格式。</div>
+<aside class="notes">【讲解】CSP-J 大量“阅读程序写输出”题。顺序结构读程是基础功。</aside>
 </div>
-<!-- 幻灯片6：代码模板 -->
-<div class="slide" data-slide="6">
-<h3>五、代码模板：调试输出与变量追踪</h3>
-<h4>使用 #ifdef 控制调试输出（推荐方法）</h4>
+
+<!-- 8 代码模板 -->
+<div class="slide" data-slide="8">
+<h3>七、代码模板：可开关调试输出</h3>
 <div class="code-block"><span class="kw">#include</span> &lt;iostream&gt;
-<span class="kw">#define</span> DEBUG  <span class="cm">// 提交前删除或注释此行</span>
 <span class="kw">using</span> <span class="kw">namespace</span> std;
+
+<span class="cm">// 提交时注释下一行，关闭全部调试输出</span>
+<span class="kw">#define</span> DEBUG
+
+<span class="kw">#ifdef</span> DEBUG
+<span class="kw">#define</span> dbg(x) cerr &lt;&lt; <span class="st">"[DEBUG] "</span> &lt;&lt; #x &lt;&lt; <span class="st">" = "</span> &lt;&lt; (x) &lt;&lt; endl
+<span class="kw">#else</span>
+<span class="kw">#define</span> dbg(x) <span class="kw">do</span> {} <span class="kw">while</span> (<span class="nu">0</span>)
+<span class="kw">#endif</span>
+
 <span class="kw">int</span> main() {
-    <span class="kw">int</span> a = <span class="nu">3</span>, b = <span class="nu">7</span>, c = <span class="nu">4</span>;
-<span class="kw">#ifdef</span> DEBUG
-    cout &lt;&lt; <span class="st">"[DEBUG] 初始 a="</span> &lt;&lt; a &lt;&lt; endl;
-<span class="kw">#endif</span>
-    a = b - a;
-    c = a + b;
-<span class="kw">#ifdef</span> DEBUG
-    cout &lt;&lt; <span class="st">"[DEBUG] a="</span> &lt;&lt; a &lt;&lt; <span class="st">" c="</span> &lt;&lt; c &lt;&lt; endl;
-<span class="kw">#endif</span>
-    cout &lt;&lt; c &lt;&lt; endl;
+    <span class="kw">int</span> a, b;
+    cin &gt;&gt; a &gt;&gt; b;
+    dbg(a); dbg(b);
+    <span class="kw">long long</span> sum = <span class="nu">1LL</span> * a + b;
+    dbg(sum);
+    cout &lt;&lt; sum &lt;&lt; <span class="st">'\n'</span>;  <span class="cm">// 正式答案</span>
     <span class="kw">return</span> <span class="nu">0</span>;
 }</div>
-<p style="font-size:14px; color:#4a5568;">提交时只需删除 <code>#define DEBUG</code> 一行，所有调试输出即失效。这是竞赛中最推荐的调试写法。</p>
 <div class="tip-box">
-<strong>竞赛最佳实践：</strong>用 <code>#ifdef DEBUG</code> 包裹调试输出，提交时删除 <code>#define DEBUG</code> 即可，不用担心遗留多余的 cout。
-    </div>
-
-<aside class="notes">【讲解】五、代码模板：调试输出与变量追踪
-本页要点（照着讲即可）：
-· 使用 #ifdef 控制调试输出（推荐方法）
-· 提交时只需删除 #define DEBUG 一行，所有调试输出即失效。这是竞赛中最推荐的调试写法。
-· 竞赛最佳实践：
-代码页节奏：先读懂输入输出 → 再走主流程 → 最后点出易错点（边界/类型/下标）。
-可让学生预测下一行输出，再运行对照。</aside>
+<strong>竞赛最佳实践：</strong>调试信息走 <code>cerr</code> / <code>dbg</code>，正式答案走 <code>cout</code>。提交前注释 <code>#define DEBUG</code>，全文搜索 DEBUG / cerr。
 </div>
-<!-- 幻灯片7：真题1 — 变量值追踪 -->
-<div class="slide" data-slide="7">
-<h3>六、真题练习一：变量值追踪</h3>
+<aside class="notes">【讲解】配套程序 lesson07 中 demo04 即此技巧。保持读入/处理/输出分区便于定位。</aside>
+</div>
+
+<!-- 9 易错点 -->
+<div class="slide" data-slide="9">
+<h3>八、易错点速查</h3>
+<table style="font-size:13px;">
+<tr><th>易错点</th><th>错误示例</th><th>对策</th></tr>
+<tr><td>调试输出未删</td><td>多打印 debug 导致 WA</td><td><code>#ifdef DEBUG</code>；提交前搜 DEBUG/cerr</td></tr>
+<tr><td>未初始化</td><td><code>int s; s=s+10;</code></td><td>累加器写 <code>int s=0;</code></td></tr>
+<tr><td>报错行≠出错行</td><td>缺分号在下一行报</td><td>上下各看 3~5 行</td></tr>
+<tr><td>空语句</td><td><code>if(x&gt;0);</code></td><td>if/for/while 后勿随手打分号</td></tr>
+<tr><td>错误交换</td><td><code>a=b; b=a;</code></td><td>必须临时变量或 swap</td></tr>
+<tr><td>整数除法</td><td><code>5/2*2 → 4</code></td><td>遇 / 先问两边是否都是 int</td></tr>
+<tr><td>中文标点</td><td>全角 <code>；</code> <code>（</code></td><td>英文输入法重打关键符号</td></tr>
+</table>
+<div class="code-block" style="font-size:13px;"><span class="cm">// 陷阱演示（= 与 ==）</span>
+<span class="kw">int</span> val = <span class="nu">5</span>;
+<span class="kw">if</span> (val = <span class="nu">10</span>) { <span class="cm">/* 赋值！条件为真，val 变成 10 */</span> }
+<span class="cm">// 正确：if (val == 10)</span></div>
+<aside class="notes">【讲解】配套程序 demo07 演示整数除法、未初始化、=与==、空语句。</aside>
+</div>
+
+<!-- 10 真题1 -->
+<div class="slide" data-slide="10">
+<h3>九、真题练习一：多变量顺序追踪</h3>
 <div class="quiz-box">
-<p><strong>题目：</strong>阅读以下代码，求最终 c 的值。</p>
+<p><strong>题目：</strong>阅读程序，写出运行结果。</p>
 <div class="code-block"><span class="kw">int</span> a = <span class="nu">3</span>, b = <span class="nu">7</span>, c = <span class="nu">4</span>;
 a = b - a;
 b = c * a;
-c = b + a;</div>
+c = b + a;
+cout &lt;&lt; c &lt;&lt; endl;</div>
 </div>
-<h4>变量追踪表 — 逐行模拟</h4>
 <table>
-<tr><th>步骤</th><th>代码</th><th>a</th><th>b</th><th>c</th><th>说明</th></tr>
-<tr><td>①</td><td>初始声明</td><td>3</td><td>7</td><td>4</td><td>—</td></tr>
-<tr><td>②</td><td>a = b - a</td><td><strong>4</strong></td><td>7</td><td>4</td><td>a = 7 - 3 = 4</td></tr>
-<tr><td>③</td><td>b = c * a</td><td>4</td><td><strong>16</strong></td><td>4</td><td>b = 4 × 4 = 16</td></tr>
-<tr><td>④</td><td>c = b + a</td><td>4</td><td>16</td><td><strong>20</strong></td><td>c = 16 + 4 = 20</td></tr>
+<tr><th>步骤</th><th>语句</th><th>a</th><th>b</th><th>c</th><th>说明</th></tr>
+<tr><td>0</td><td>初始</td><td>3</td><td>7</td><td>4</td><td>—</td></tr>
+<tr><td>1</td><td>a = b - a</td><td><strong>4</strong></td><td>7</td><td>4</td><td>7−3=4</td></tr>
+<tr><td>2</td><td>b = c * a</td><td>4</td><td><strong>16</strong></td><td>4</td><td>4×4=16</td></tr>
+<tr><td>3</td><td>c = b + a</td><td>4</td><td>16</td><td><strong>20</strong></td><td>16+4=20</td></tr>
 </table>
-<p style="margin-top:12px;"><strong>最终答案：</strong><span style="font-size:18px;color:#0a2540;">c = <strong>20</strong></span></p>
-
-<aside class="notes">【讲解】六、真题练习一：变量值追踪
-结合讲义《题目1：变量值追踪》强调：
-· 题目描述：阅读以下程序，写出运行结果。
-· using namespace std;
-· int main() {
-· int a = 3, b = 7, c = 4;
-· a = b - a;
-幻灯片上可见要点：
-· 题目： 阅读以下代码，求最终 c 的值。
-· 变量追踪表 — 逐行模拟
-· 最终答案： c = 20
-· 最终答案：
-练习页节奏：先独立想 1 分钟 → 再点拨思路 → 最后对答案讲为什么。
-可联系：程序阅读与调试技巧题</aside>
+<p style="margin-top:12px;font-size:18px;"><strong>答案：</strong><span style="color:#0a2540;">20</span>　<strong>考点：</strong>顺序赋值、新值覆盖旧值、读程制表</p>
+<aside class="notes">【练习】先独立想 1 分钟 → 再对追踪表。对应 lesson07 exam01。</aside>
 </div>
-<!-- 幻灯片8：真题2 — 交换变量 -->
-<div class="slide" data-slide="8">
-<h3>七、真题练习二：交换变量</h3>
+
+<!-- 11 真题2 -->
+<div class="slide" data-slide="11">
+<h3>十、真题练习二：交换变量读程</h3>
 <div class="quiz-box">
-<p><strong>题目：</strong>用临时变量 <code>t</code> 完成 <code>x</code> 和 <code>y</code> 的交换。</p>
-<div class="code-block"><span class="kw">int</span> x = <span class="nu">8</span>, y = <span class="nu">15</span>, t;
-<span class="cm">// 请补充交换代码，使最终 x=15, y=8</span>
-t = x;
+<p><strong>题目：</strong>下列程序输出什么？实现了什么功能？</p>
+<div class="code-block"><span class="kw">int</span> x = <span class="nu">15</span>, y = <span class="nu">8</span>;
+<span class="kw">int</span> t = x;
 x = y;
-y = t;</div>
+y = t;
+cout &lt;&lt; x &lt;&lt; <span class="st">" "</span> &lt;&lt; y &lt;&lt; endl;</div>
 </div>
-<h4>交换过程分析</h4>
 <table>
-<tr><th>步骤</th><th>代码</th><th>x</th><th>y</th><th>t</th><th>说明</th></tr>
-<tr><td>初始</td><td>声明</td><td>8</td><td>15</td><td>?</td><td>赋初值</td></tr>
-<tr><td>①</td><td>t = x</td><td>8</td><td>15</td><td><strong>8</strong></td><td>暂存 x 的值</td></tr>
-<tr><td>②</td><td>x = y</td><td><strong>15</strong></td><td>15</td><td>8</td><td>x 获取 y 的值</td></tr>
-<tr><td>③</td><td>y = t</td><td>15</td><td><strong>8</strong></td><td>8</td><td>y 获取暂存的旧 x 值</td></tr>
+<tr><th>步骤</th><th>代码</th><th>x</th><th>y</th><th>t</th></tr>
+<tr><td>初始</td><td>声明</td><td>15</td><td>8</td><td>?</td></tr>
+<tr><td>①</td><td>t = x</td><td>15</td><td>8</td><td><strong>15</strong></td></tr>
+<tr><td>②</td><td>x = y</td><td><strong>8</strong></td><td>8</td><td>15</td></tr>
+<tr><td>③</td><td>y = t</td><td>8</td><td><strong>15</strong></td><td>15</td></tr>
 </table>
-<h4>常见错误</h4>
-<ul>
-<li><strong>错误写法：</strong><code>x = y; y = x;</code> — 第一句后 x 已经变成 y 的值，第二句把 y 赋回 y；结果 x=15, y=15。</li>
-<li><strong>正确思路：</strong>必须有一个临时变量暂存原始值，就像"两杯水交换需要第三个空杯子"。</li>
-</ul>
-
-<aside class="notes">【讲解】七、真题练习二：交换变量
-本页要点（照着讲即可）：
-· 题目： 用临时变量 t 完成 x 和 y 的交换。
-· 交换过程分析
-· 常见错误
-· 错误写法： x = y; y = x; — 第一句后 x 已经变成 y 的值，第二句把 y 赋回 y；结果 x=15, y=15。
-· 错误写法：
-· 正确思路： 必须有一个临时变量暂存原始值，就像"两杯水交换需要第三个空杯子"。
-练习页节奏：先独立想 1 分钟 → 再点拨思路 → 最后对答案讲为什么。
-可联系：程序阅读与调试技巧题</aside>
+<p style="margin-top:10px;"><strong>答案：</strong><code>8 15</code>（用临时变量完成两变量交换）</p>
+<div class="warn-box"><strong>错误写法：</strong><code>x=y; y=x;</code> → 结果 <code>8 8</code>，原 x 丢失。</div>
+<aside class="notes">【练习】对应 lesson07 exam02。强调临时变量必要性。</aside>
 </div>
-<!-- 幻灯片9：总结 -->
-<div class="slide" data-slide="9">
-<h3>八、本课小结</h3>
+
+<!-- 12 真题3 -->
+<div class="slide" data-slide="12">
+<h3>十一、真题练习三：含整数除法的顺序追踪</h3>
+<div class="quiz-box">
+<p><strong>题目：</strong>写出输出结果。</p>
+<div class="code-block"><span class="kw">int</span> a = <span class="nu">10</span>, b = <span class="nu">3</span>, c;
+c = a / b;
+a = a + c;
+b = a % b + c;
+cout &lt;&lt; a &lt;&lt; <span class="st">" "</span> &lt;&lt; b &lt;&lt; <span class="st">" "</span> &lt;&lt; c &lt;&lt; endl;</div>
+</div>
+<table>
+<tr><th>步骤</th><th>语句</th><th>a</th><th>b</th><th>c</th><th>说明</th></tr>
+<tr><td>初始</td><td>—</td><td>10</td><td>3</td><td>?</td><td>—</td></tr>
+<tr><td>1</td><td>c = a / b</td><td>10</td><td>3</td><td><strong>3</strong></td><td>整数除法 10/3=3</td></tr>
+<tr><td>2</td><td>a = a + c</td><td><strong>13</strong></td><td>3</td><td>3</td><td>10+3=13</td></tr>
+<tr><td>3</td><td>b = a % b + c</td><td>13</td><td><strong>4</strong></td><td>3</td><td>13%3+3=1+3=4</td></tr>
+</table>
+<p style="margin-top:12px;font-size:18px;"><strong>答案：</strong><code>13 4 3</code>　<strong>考点：</strong>整数除法截断、取模、顺序用新值</p>
+<aside class="notes">【练习】对应 lesson07 exam03。强调 10/3=3 不是 3.xxx。</aside>
+</div>
+
+<!-- 13 提交清单 -->
+<div class="slide" data-slide="13">
+<h3>十二、提交前 / 查 WA 清单</h3>
+<div class="grid-2">
+<div class="card">
+<strong>提交前 8 问</strong>
+<ol style="font-size:14px;">
+<li>样例能否手算通过？</li>
+<li>边界 0 / 1 / 最大值？</li>
+<li>是否该用 <code>long long</code>？</li>
+<li>是否整数除法踩坑？</li>
+<li>累加器是否初始化？</li>
+<li>输出格式（空格/换行）？</li>
+<li>调试输出是否删净？</li>
+<li>是否读错题意？</li>
+</ol>
+</div>
+<div class="card">
+<strong>查 CE 关键词</strong>
+<ul style="font-size:14px;">
+<li>semicolon → 分号</li>
+<li>declared → 声明/拼写</li>
+<li>token / primary-expression → 表达式残缺</li>
+<li>conversion → 类型</li>
+<li><code>void main</code> → 改为 <code>int main</code></li>
+</ul>
+<p style="font-size:13px;margin-top:8px;color:#4a5568;">写完先手算一组数据，再运行对照——最小成本调试。</p>
+</div>
+</div>
+<div class="tip-box"><strong>下一课预告：</strong>第 8 课 if-else 分支——顺序结构会被条件跳转改写，但<strong>读程制表的方法完全通用</strong>。</div>
+<aside class="notes">【讲解】WA 先删调试输出，再查样例与边界，再用 cerr 看中间量。</aside>
+</div>
+
+<!-- 14 小结 -->
+<div class="slide" data-slide="14">
+<h3>十三、本课小结</h3>
 <table>
 <tr><th>知识点</th><th>核心要点</th></tr>
-<tr><td>顺序结构</td><td>程序从上到下逐条执行；C++四大语句类型</td></tr>
-<tr><td>三类错误</td><td>编译错误(CE)、运行时错误(RE)、逻辑错误(WA)</td></tr>
-<tr><td>调试方法</td><td>输出调试法(cout)、断点调试法(F5/F10/F11)</td></tr>
-<tr><td>变量追踪</td><td>逐行模拟执行，记录每一步变量值的变化</td></tr>
-<tr><td>最佳实践</td><td>用 <code>#ifdef DEBUG</code> 控制调试输出，提交前删除 #define</td></tr>
+<tr><td>顺序结构</td><td>默认自上而下逐条执行，后句依赖前句结果</td></tr>
+<tr><td>语句类型</td><td>声明 / 表达式 / 控制 / 空语句 / 复合语句</td></tr>
+<tr><td>错误四类</td><td>CE、链接错误、RE、逻辑错误（WA）</td></tr>
+<tr><td>输出调试</td><td>关键变量打印；建议 cerr + DEBUG 宏</td></tr>
+<tr><td>断点调试</td><td>断点、监视、单步、继续；对比预期值</td></tr>
+<tr><td>读程方法</td><td>概览→关键变量→逐行模拟→变量追踪表→还原输出</td></tr>
+<tr><td>提交规范</td><td>删调试输出、检查格式、初始化与边界</td></tr>
 </table>
-<div class="tip-box" style="margin-top:20px;">
+<div class="tip-box" style="margin-top:16px;">
 <strong>本课核心提醒：</strong><br/>
-      🔹 <strong>提交前务必删除所有调试用的 cout 语句！</strong>多余的输出会导致评测系统判为 WA。<br/>
-      🔹 遇到复杂代码，不要心算 — 用纸笔画出变量追踪表，一步一步来。<br/>
-      🔹 编译错误看第一个报错；运行时错误看报错行号；逻辑错误靠调试定位。<br/>
-      🔹 变量交换三部曲：<code>t=a; a=b; b=t;</code>（第三个杯子）不可省略。
-    </div>
-
-<aside class="notes">【收尾】回顾本课主线：八、本课小结
-对照大纲再过一遍：顺序执行、断点调试、变量监视、常见编译错误
-板书/口述要点：
-· 本课核心提醒：
-· 提交前务必删除所有调试用的 cout 语句！
-课后任务：程序阅读与调试技巧题
-结束前留 2 分钟答疑；布置 1 道小练习检验是否真正掌握。</aside>
+🔹 提交前务必删除所有调试输出！多余输出 → WA<br/>
+🔹 复杂代码不要心算——画变量追踪表，一步一步来<br/>
+🔹 变量交换三部曲：<code>t=a; a=b; b=t;</code>（第三个杯子）不可省<br/>
+🔹 下一课：if-else 分支结构
 </div>
+<aside class="notes">【收尾】对照大纲回顾；布置变量追踪小练习；留 2 分钟答疑。</aside>
+</div>
+
 </div>
 <div class="nav-bar" id="navBar">
 <button class="nav-btn" id="prevBtn" onclick="goSlide(-1)">上一页</button>
 <div class="dots" id="dots"></div>
 <button class="nav-btn" id="nextBtn" onclick="goSlide(1)">下一页</button>
-<span class="page-indicator" id="pageIndicator">1 / 9</span>
+<span class="page-indicator" id="pageIndicator">1 / 14</span>
 </div>
 <script>
 let current = 0;
@@ -422,7 +487,7 @@ const total = slides.length;
 
 function showSlide(n) {
   slides[current].classList.remove('active');
-  current = (n + total) % total;
+  current = Math.max(0, Math.min(total - 1, n));
   slides[current].classList.add('active');
   updateNav();
 }
@@ -450,8 +515,16 @@ document.addEventListener('keydown', e => {
   else if (e.key === 'End') { e.preventDefault(); showSlide(total - 1); }
 });
 
+// 触摸滑动
+let touchStartX = 0;
+const sc = document.getElementById('slideContainer');
+sc.addEventListener('touchstart', e => { touchStartX = e.changedTouches[0].screenX; });
+sc.addEventListener('touchend', e => {
+  const diff = touchStartX - e.changedTouches[0].screenX;
+  if (Math.abs(diff) > 50) goSlide(diff > 0 ? 1 : -1);
+});
+
 updateNav();
-slides[0].classList.add('active');
 </script>
 <script src="courseware-ui.js"></script>
 <script src="presenter.js"></script>
