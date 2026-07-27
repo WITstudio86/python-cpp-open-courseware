@@ -39,7 +39,7 @@
     style.textContent = [
       'html.cspj-preview, html.cspj-preview body {',
       '  margin:0!important;padding:0!important;height:100%!important;width:100%!important;',
-      '  overflow:hidden!important;',
+      '  overflow:hidden!important;background:#fff!important;',
       '}',
       'html.cspj-preview .header-bar,',
       'html.cspj-preview .nav-bar,',
@@ -49,7 +49,11 @@
       'html.cspj-preview .key-hint,',
       'html.cspj-preview .slide-dots,',
       'html.cspj-preview .progress-bar,',
-      'html.cspj-preview #progressBar {',
+      'html.cspj-preview #progressBar,',
+      'html.cspj-preview .deck-header,',
+      'html.cspj-preview .deck-footer,',
+      'html.cspj-preview .notes-overlay,',
+      'html.cspj-preview .overview {',
       '  display:none!important;',
       '}',
       'html.cspj-preview .deck,',
@@ -60,23 +64,27 @@
       '  top:0!important;left:0!important;right:0!important;bottom:0!important;',
       '  margin:0!important;padding:0!important;overflow:hidden!important;',
       '}',
-      'html.cspj-preview .slide:not(.active) {',
+      /* 兼容 .active 与 .is-active */
+      'html.cspj-preview .slide:not(.active):not(.is-active) {',
       '  display:none!important;',
       '  pointer-events:none!important;',
       '  opacity:0!important;',
       '  visibility:hidden!important;',
       '}',
-      'html.cspj-preview .slide.active {',
+      'html.cspj-preview .slide.active,',
+      'html.cspj-preview .slide.is-active {',
       '  position:fixed!important;',
       '  inset:0!important;top:0!important;left:0!important;right:0!important;bottom:0!important;',
       '  width:100%!important;height:100%!important;max-height:none!important;',
-      '  margin:0!important;',
+      '  margin:0!important;padding:24px 40px!important;',
       '  z-index:2!important;',
       '  transform:none!important;',
       '  transition:none!important;',
       '  pointer-events:auto!important;',
       '  opacity:1!important;',
       '  visibility:visible!important;',
+      '  display:flex!important;',
+      '  overflow:auto!important;',
       '}'
     ].join('\n');
     (document.head || document.documentElement).appendChild(style);
@@ -90,9 +98,26 @@
       if (!slides.length) return;
       var idx = Math.max(0, Math.min(slides.length - 1, idx0 | 0));
       for (var i = 0; i < slides.length; i++) {
-        slides[i].classList.toggle('active', i === idx);
-        if (i === idx) {
-          if (slides[i].style.display === 'none') slides[i].style.display = '';
+        var on = i === idx;
+        slides[i].classList.toggle('active', on);
+        slides[i].classList.toggle('is-active', on);
+        // 内联强制可见性，覆盖课件自身 opacity/transform 动画
+        if (on) {
+          slides[i].style.setProperty('display', 'flex', 'important');
+          slides[i].style.setProperty('opacity', '1', 'important');
+          slides[i].style.setProperty('visibility', 'visible', 'important');
+          slides[i].style.setProperty('pointer-events', 'auto', 'important');
+          slides[i].style.setProperty('transform', 'none', 'important');
+          slides[i].style.setProperty('position', 'fixed', 'important');
+          slides[i].style.setProperty('inset', '0', 'important');
+          slides[i].style.setProperty('width', '100%', 'important');
+          slides[i].style.setProperty('height', '100%', 'important');
+          slides[i].style.setProperty('z-index', '2', 'important');
+        } else {
+          slides[i].style.setProperty('display', 'none', 'important');
+          slides[i].style.setProperty('opacity', '0', 'important');
+          slides[i].style.setProperty('visibility', 'hidden', 'important');
+          slides[i].style.setProperty('pointer-events', 'none', 'important');
         }
       }
       try {
@@ -143,42 +168,44 @@
 
     try { channel = new BroadcastChannel(channelName); } catch (e) {}
 
-    document.documentElement.innerHTML = '';
-    var html = document.documentElement;
-    html.lang = 'zh-CN';
-    var head = document.createElement('head');
-    head.innerHTML = '<meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>演讲者模式</title>';
-    var style = document.createElement('style');
-    style.textContent = [
+    /*
+     * 关键：不要 document.documentElement.innerHTML='' 后再 createElement('body')。
+     * 浏览器清空 html 后会自动生成空 body；再 append 新 body 时元素挂不上 document，
+     * getElementById 得到 null，后续脚本抛错 → 演讲者页整页空白（“不可见”）。
+     * 改为复用现有 head/body，清掉旧样式后写入 UI。
+     */
+    var cssText = [
       '*{box-sizing:border-box}',
-      'html,body{margin:0;height:100%;font-family:-apple-system,BlinkMacSystemFont,"PingFang SC","Microsoft YaHei",sans-serif;background:#0f1419;color:#e7ecf3;overflow:hidden}',
-      'body{display:flex;flex-direction:column;padding:10px;gap:8px}',
+      'html,body{margin:0!important;padding:0!important;height:100%!important;width:100%!important;',
+      '  font-family:-apple-system,BlinkMacSystemFont,"PingFang SC","Microsoft YaHei",sans-serif;',
+      '  background:#0f1419!important;color:#e7ecf3;overflow:hidden!important}',
+      'body{display:flex!important;flex-direction:column!important;padding:10px!important;gap:8px!important}',
       '.top{display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap;flex-shrink:0}',
       '.brand{font-weight:700;color:#d4a853;font-size:15px;letter-spacing:.04em}',
       '.deck-title{font-size:13px;color:#9aa7b8;max-width:42%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}',
       '.keys{font-size:12px;color:#6b7a8d}',
       '.keys kbd{background:#1c2530;border:1px solid #2d3a4a;border-radius:4px;padding:1px 6px;margin:0 2px;color:#c5d0dc}',
       '.main{',
-      '  flex:1;min-height:0;',
-      '  display:grid;',
-      '  grid-template-columns:minmax(240px,var(--cur-pct,68%)) 6px minmax(160px,1fr);',
-      '  grid-template-rows:minmax(180px,1fr) 6px minmax(100px,var(--script-pct,24%));',
+      '  flex:1 1 auto!important;min-height:0!important;height:100%!important;',
+      '  display:grid!important;',
+      '  grid-template-columns:minmax(200px,2.1fr) 6px minmax(140px,1fr);',
+      '  grid-template-rows:minmax(120px,1fr) 6px minmax(90px,0.32fr);',
       '  gap:0;',
       '}',
       '.card{background:#161d27;border:1px solid #273244;border-radius:12px;display:flex;flex-direction:column;min-height:0;overflow:hidden;box-shadow:0 8px 28px rgba(0,0,0,.28)}',
       '.card-h{display:flex;align-items:center;justify-content:space-between;padding:8px 12px;border-bottom:1px solid #273244;font-size:11px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;flex-shrink:0}',
-      '.c-cur{grid-column:1;grid-row:1}',
+      '.c-cur{grid-column:1;grid-row:1;min-height:0}',
       '.c-right{grid-column:3;grid-row:1;display:flex;flex-direction:column;gap:8px;min-height:0}',
-      '.c-next{flex:1;min-height:0}',
+      '.c-next{flex:1;min-height:0;display:flex;flex-direction:column}',
       '.c-ctrl{flex:0 0 auto}',
-      '.c-script{grid-column:1 / span 3;grid-row:3}',
+      '.c-script{grid-column:1 / span 3;grid-row:3;min-height:0}',
       '.c-cur .card-h{color:#5eb1ff;background:linear-gradient(90deg,rgba(94,177,255,.12),transparent)}',
       '.c-next .card-h{color:#b794f6;background:linear-gradient(90deg,rgba(183,148,246,.12),transparent)}',
       '.c-script .card-h{color:#f6ad55;background:linear-gradient(90deg,rgba(246,173,85,.12),transparent)}',
       '.c-ctrl .card-h{color:#9fb0c3;background:linear-gradient(90deg,rgba(159,176,195,.1),transparent)}',
       '.preview-stage{flex:1;min-height:0;position:relative;background:#0a0e14;overflow:hidden}',
       '.preview-stage iframe{position:absolute;top:0;left:0;border:0;background:#fff;transform-origin:top left;pointer-events:none}',
-      '.preview-empty{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;color:#5c6b7d;font-size:14px}',
+      '.preview-empty{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;color:#5c6b7d;font-size:14px;z-index:1}',
       '.script-body{flex:1;min-height:0;overflow:auto;padding:14px 16px;font-size:15px;line-height:1.7;white-space:pre-wrap;word-break:break-word}',
       '.ctrl-body{display:flex;flex-direction:column;align-items:stretch;gap:10px;padding:12px}',
       '.slide-n{font-size:22px;font-weight:700;color:#e7ecf3;text-align:center;font-variant-numeric:tabular-nums}',
@@ -190,9 +217,7 @@
       'button.ghost{background:transparent;border-color:#334155;color:#9fb0c3;flex:0 0 auto;padding:8px 10px;font-size:12px}',
       '.badge{font-size:11px;padding:2px 8px;border-radius:999px;background:#243044;color:#9fb0c3;font-weight:600;text-transform:none;letter-spacing:0}',
       '.badge.on{background:#3d3218;color:#f0d78c}',
-      '.split-v,.split-h{',
-      '  position:relative;z-index:5;background:transparent;',
-      '}',
+      '.split-v,.split-h{position:relative;z-index:5;background:transparent}',
       '.split-v{grid-column:2;grid-row:1;cursor:col-resize}',
       '.split-h{grid-column:1 / span 3;grid-row:2;cursor:row-resize}',
       '.split-v::after,.split-h::after{',
@@ -206,7 +231,7 @@
       'body.resizing-col,body.resizing-col *{cursor:col-resize!important;user-select:none!important}',
       'body.resizing-row,body.resizing-row *{cursor:row-resize!important;user-select:none!important}',
       '@media (max-width:900px){',
-      '  .main{grid-template-columns:1fr;grid-template-rows:1.4fr 6px .7fr 6px .9fr;--cur-pct:auto;--script-pct:auto}',
+      '  .main{grid-template-columns:1fr!important;grid-template-rows:1.4fr 6px .7fr 6px .9fr!important}',
       '  .c-cur{grid-column:1;grid-row:1}',
       '  .split-v{display:none}',
       '  .c-right{grid-column:1;grid-row:3;flex-direction:row}',
@@ -216,11 +241,8 @@
       '  .c-script{grid-column:1;grid-row:5}',
       '}'
     ].join('\n');
-    head.appendChild(style);
-    document.documentElement.appendChild(head);
 
-    var body = document.createElement('body');
-    body.innerHTML = [
+    var bodyHtml = [
       '<div class="top">',
       '  <div class="brand">🎤 演讲者模式</div>',
       '  <div class="deck-title" id="deckTitle">连接主窗口中…</div>',
@@ -262,7 +284,36 @@
       '  </section>',
       '</div>'
     ].join('');
-    document.documentElement.appendChild(body);
+
+    document.documentElement.lang = 'zh-CN';
+    document.documentElement.style.cssText = 'height:100%;margin:0;padding:0;background:#0f1419;';
+
+    // 移除课件原有样式，避免覆盖演讲者 UI
+    var oldSheets = document.querySelectorAll('style, link[rel="stylesheet"]');
+    for (var si = 0; si < oldSheets.length; si++) {
+      try { oldSheets[si].parentNode.removeChild(oldSheets[si]); } catch (e) {}
+    }
+
+    var head = document.head;
+    if (!head) {
+      head = document.createElement('head');
+      document.documentElement.insertBefore(head, document.documentElement.firstChild);
+    }
+    head.innerHTML = '<meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>演讲者模式</title>';
+    var style = document.createElement('style');
+    style.id = 'cspj-presenter-style';
+    style.textContent = cssText;
+    head.appendChild(style);
+
+    var body = document.body;
+    if (!body) {
+      body = document.createElement('body');
+      document.documentElement.appendChild(body);
+    }
+    body.className = '';
+    body.removeAttribute('style');
+    body.style.cssText = 'display:flex;flex-direction:column;height:100%;margin:0;padding:10px;gap:8px;background:#0f1419;color:#e7ecf3;overflow:hidden;';
+    body.innerHTML = bodyHtml;
 
     var mainGrid = document.getElementById('mainGrid');
     var curFrame = document.getElementById('curFrame');
@@ -271,6 +322,24 @@
     var nextStage = document.getElementById('nextStage');
     var curEmpty = document.getElementById('curEmpty');
     var nextEmpty = document.getElementById('nextEmpty');
+
+    if (!mainGrid || !curFrame || !nextFrame) {
+      // 极端兜底：整页 document.write
+      try {
+        document.open();
+        document.write('<!DOCTYPE html><html lang="zh-CN"><head><meta charset="UTF-8"><title>演讲者模式</title><style>' +
+          cssText + '</style></head><body style="display:flex;flex-direction:column;height:100%;margin:0;padding:10px;gap:8px;background:#0f1419;color:#e7ecf3">' +
+          bodyHtml + '</body></html>');
+        document.close();
+      } catch (e) {}
+      mainGrid = document.getElementById('mainGrid');
+      curFrame = document.getElementById('curFrame');
+      nextFrame = document.getElementById('nextFrame');
+      curStage = document.getElementById('curStage');
+      nextStage = document.getElementById('nextStage');
+      curEmpty = document.getElementById('curEmpty');
+      nextEmpty = document.getElementById('nextEmpty');
+    }
 
     function defaultLayout() {
       return { curPct: 68, scriptPct: 24 };
@@ -301,14 +370,23 @@
     }
 
     function applyLayout(layout) {
-      mainGrid.style.setProperty('--cur-pct', layout.curPct + '%');
-      mainGrid.style.setProperty('--script-pct', layout.scriptPct + '%');
+      if (!mainGrid) return;
+      // 用 fr 比例，避免 % 在 grid 中高度未确定时塌成 0
+      var cur = layout.curPct;
+      var right = Math.max(18, 100 - cur);
+      var top = Math.max(50, 100 - layout.scriptPct);
+      var script = layout.scriptPct;
+      mainGrid.style.gridTemplateColumns =
+        'minmax(200px,' + cur + 'fr) 6px minmax(140px,' + right + 'fr)';
+      mainGrid.style.gridTemplateRows =
+        'minmax(120px,' + top + 'fr) 6px minmax(90px,' + script + 'fr)';
     }
 
     var layout = loadLayout();
     applyLayout(layout);
 
     function bindSplitter(el, axis) {
+      if (!el || !mainGrid) return;
       el.addEventListener('mousedown', function (e) {
         if (e.button !== 0) return;
         e.preventDefault();
@@ -347,12 +425,15 @@
     bindSplitter(document.getElementById('splitV'), 'col');
     bindSplitter(document.getElementById('splitH'), 'row');
 
-    document.getElementById('btnResetLayout').onclick = function () {
-      layout = defaultLayout();
-      applyLayout(layout);
-      saveLayout(layout);
-      fitAll();
-    };
+    var btnReset = document.getElementById('btnResetLayout');
+    if (btnReset) {
+      btnReset.onclick = function () {
+        layout = defaultLayout();
+        applyLayout(layout);
+        saveLayout(layout);
+        fitAll();
+      };
+    }
 
     function designSize() {
       return { w: 1280, h: 720 };
@@ -378,7 +459,7 @@
     }
 
     window.addEventListener('resize', fitAll);
-    if (window.ResizeObserver) {
+    if (window.ResizeObserver && curStage && nextStage) {
       var ro = new ResizeObserver(fitAll);
       ro.observe(curStage);
       ro.observe(nextStage);
@@ -501,8 +582,10 @@
       };
     }
 
-    document.getElementById('btnPrev').onclick = function () { send({ type: 'presenter-nav', delta: -1 }); };
-    document.getElementById('btnNext').onclick = function () { send({ type: 'presenter-nav', delta: 1 }); };
+    var btnPrev = document.getElementById('btnPrev');
+    var btnNext = document.getElementById('btnNext');
+    if (btnPrev) btnPrev.onclick = function () { send({ type: 'presenter-nav', delta: -1 }); };
+    if (btnNext) btnNext.onclick = function () { send({ type: 'presenter-nav', delta: 1 }); };
 
     document.addEventListener('keydown', function (e) {
       // 忽略系统按键连发，避免一次长按/重复 keydown 多翻几页
