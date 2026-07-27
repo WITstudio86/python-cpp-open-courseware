@@ -1,0 +1,632 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>lesson40_背包问题下与区间DP</title>
+<style>
+  :root {
+    --bg: #0f1419;
+    --panel: #161d27;
+    --text: #e7ecf3;
+    --muted: #9aa7b8;
+    --gold: #d4a853;
+    --code-bg: #1a1d23;
+    --border: #273244;
+  }
+  * { box-sizing: border-box; }
+  html, body {
+    margin: 0; padding: 0;
+    background: var(--bg);
+    color: var(--text);
+    font-family: -apple-system, BlinkMacSystemFont, "PingFang SC", "Microsoft YaHei", sans-serif;
+    min-height: 100%;
+  }
+  .top {
+    position: sticky; top: 0; z-index: 10;
+    display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between;
+    gap: 10px;
+    padding: 12px 18px;
+    background: linear-gradient(135deg, #0a2540, #1a3a5c);
+    border-bottom: 1px solid rgba(212,168,83,0.35);
+    box-shadow: 0 4px 18px rgba(0,0,0,0.25);
+  }
+  .brand { color: var(--gold); font-weight: 700; font-size: 14px; letter-spacing: 0.04em; }
+  .title { font-size: 15px; font-weight: 600; color: #fff; max-width: 52vw; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .actions { display: flex; gap: 8px; flex-wrap: wrap; }
+  .btn {
+    appearance: none; border: 1px solid rgba(255,255,255,0.18);
+    background: rgba(255,255,255,0.08); color: #fff;
+    border-radius: 999px; padding: 8px 14px; font-size: 13px; font-weight: 600;
+    text-decoration: none; cursor: pointer;
+  }
+  .btn:hover { background: rgba(255,255,255,0.16); }
+  .btn.gold { background: linear-gradient(135deg, #d4a853, #c4922e); color: #0a2540; border-color: transparent; }
+  .meta {
+    padding: 10px 18px; color: var(--muted); font-size: 12px;
+    border-bottom: 1px solid var(--border);
+    background: var(--panel);
+  }
+  .wrap { padding: 16px 18px 40px; }
+  pre {
+    margin: 0;
+    background: var(--code-bg);
+    color: #e1e4e8;
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 18px 20px;
+    overflow: auto;
+    font-family: "SF Mono", "JetBrains Mono", "Fira Code", Consolas, "Courier New", monospace;
+    font-size: 13.5px;
+    line-height: 1.55;
+    white-space: pre;
+    tab-size: 4;
+    box-shadow: 0 8px 28px rgba(0,0,0,0.28);
+  }
+  .hint { margin-top: 12px; color: var(--muted); font-size: 12px; }
+</style>
+</head>
+<body>
+  <div class="top">
+    <div class="brand">CSP-J · 配套代码</div>
+    <div class="title">lesson40_背包问题下与区间DP</div>
+    <div class="actions">
+      <a class="btn" href="../lesson40_背包问题下与区间DP.cpp" download="lesson40_背包问题下与区间DP.cpp">⬇️ 下载 .cpp</a>
+      <a class="btn gold" href="javascript:history.back()">← 返回课件</a>
+    </div>
+  </div>
+  <div class="meta">编码：UTF-8 · 文件：lesson40_背包问题下与区间DP.cpp · 共 548 行</div>
+  <div class="wrap">
+    <pre id="code">/**
+ * lesson40_背包问题下与区间DP.cpp
+ * CSP-J 备考课程 第40课
+ *
+ * 包含内容：
+ * 1. 多重背包 二进制优化演示（展示拆分过程）
+ * 2. 多重背包 朴素做法对比
+ * 3. 分组背包 正确写法演示
+ * 4. 分组背包 循环顺序对比实验（正确 vs 错误）
+ * 5. 石子合并 区间DP演示（输出DP表格）
+ * 6. 区间DP 通用框架总结
+ */
+
+#include &lt;iostream&gt;
+#include &lt;algorithm&gt;
+#include &lt;cstring&gt;
+#include &lt;vector&gt;
+#include &lt;iomanip&gt;
+using namespace std;
+
+// ============================================================
+// 一、多重背包 二进制优化演示
+// ============================================================
+// 核心：将 c[i] 个物品按 1,2,4,8,... 拆分，转化为01背包
+// 口诀："多重二进制拆"
+// -----------------------------------------------------------
+void multiple_knapsack_binary() {
+    cout &lt;&lt; "========== 多重背包 二进制优化演示 ==========" &lt;&lt; endl;
+    cout &lt;&lt; endl;
+    cout &lt;&lt; "（展示二进制拆分过程，然后01背包求解）" &lt;&lt; endl;
+    cout &lt;&lt; endl;
+
+    int N, W;
+    cout &lt;&lt; "请输入物品种类数 N 和背包容量 W：";
+    cin &gt;&gt; N &gt;&gt; W;
+
+    vector&lt;int&gt; weight(N + 1), value(N + 1), limit(N + 1);
+    cout &lt;&lt; "请依次输入每种物品的 重量 价值 数量上限：" &lt;&lt; endl;
+    for (int i = 1; i &lt;= N; i++) {
+        cout &lt;&lt; "  物品" &lt;&lt; i &lt;&lt; "：";
+        cin &gt;&gt; weight[i] &gt;&gt; value[i] &gt;&gt; limit[i];
+    }
+
+    // 二进制拆分
+    const int MAX_ITEMS = N * 15;  // log2(10000) ≈ 14
+    vector&lt;int&gt; new_w(MAX_ITEMS + 1), new_v(MAX_ITEMS + 1);
+    int cnt = 0;
+
+    cout &lt;&lt; endl;
+    cout &lt;&lt; "========== 二进制拆分过程 ==========" &lt;&lt; endl;
+    for (int i = 1; i &lt;= N; i++) {
+        int w = weight[i], v = value[i], c = limit[i];
+        cout &lt;&lt; "物品" &lt;&lt; i &lt;&lt; "（重量=" &lt;&lt; w &lt;&lt; ", 价值=" &lt;&lt; v
+             &lt;&lt; ", 数量=" &lt;&lt; c &lt;&lt; "）→ 拆分为：";
+
+        vector&lt;string&gt; parts;
+        for (int k = 1; k &lt;= c; k &lt;&lt;= 1) {
+            new_w[++cnt] = k * w;
+            new_v[cnt] = k * v;
+            c -= k;
+            parts.push_back(to_string(k) + "个(" + to_string(k * w) + "kg, " + to_string(k * v) + "元)");
+        }
+        if (c &gt; 0) {
+            new_w[++cnt] = c * w;
+            new_v[cnt] = c * v;
+            parts.push_back(to_string(c) + "个(" + to_string(c * w) + "kg, " + to_string(c * v) + "元)");
+        }
+        for (size_t p = 0; p &lt; parts.size(); p++) {
+            if (p &gt; 0) cout &lt;&lt; " + ";
+            cout &lt;&lt; parts[p];
+        }
+        cout &lt;&lt; endl;
+    }
+    cout &lt;&lt; "拆分后共 " &lt;&lt; cnt &lt;&lt; " 个打包物品" &lt;&lt; endl;
+    cout &lt;&lt; endl;
+
+    // 01背包求解
+    vector&lt;int&gt; dp(W + 1, 0);
+    for (int i = 1; i &lt;= cnt; i++) {
+        for (int j = W; j &gt;= new_w[i]; j--) {
+            dp[j] = max(dp[j], dp[j - new_w[i]] + new_v[i]);
+        }
+    }
+
+    cout &lt;&lt; "最大总价值 = " &lt;&lt; dp[W] &lt;&lt; endl;
+    cout &lt;&lt; endl;
+    cout &lt;&lt; "复杂度分析：原始物品数=" &lt;&lt; N
+         &lt;&lt; "，拆分后物品数=" &lt;&lt; cnt
+         &lt;&lt; "，每件O(log c[i])" &lt;&lt; endl;
+    cout &lt;&lt; endl;
+}
+
+// ============================================================
+// 二、多重背包 朴素做法 vs 二进制优化 对比
+// ============================================================
+// 目的：直观展示朴素做法的低效与二进制优化的高效
+// -----------------------------------------------------------
+void multiple_knapsack_compare() {
+    cout &lt;&lt; "========== 朴素做法 vs 二进制优化 对比 ==========" &lt;&lt; endl;
+    cout &lt;&lt; endl;
+    cout &lt;&lt; "使用固定数据：2种物品，容量=15" &lt;&lt; endl;
+    cout &lt;&lt; "  物品1：重量=3，价值=2，数量=7" &lt;&lt; endl;
+    cout &lt;&lt; "  物品2：重量=5，价值=4，数量=4" &lt;&lt; endl;
+    cout &lt;&lt; endl;
+
+    const int N = 2, W = 15;
+    int w[] = {0, 3, 5};
+    int v[] = {0, 2, 4};
+    int c[] = {0, 7, 4};
+
+    // --- 朴素做法（三重循环）---
+    cout &lt;&lt; "【朴素做法：三重循环 O(N*W*max(c[i]))】" &lt;&lt; endl;
+    vector&lt;int&gt; dp_naive(W + 1, 0);
+    for (int i = 1; i &lt;= N; i++) {
+        for (int j = W; j &gt;= 0; j--) {
+            for (int k = 0; k &lt;= c[i] &amp;&amp; k * w[i] &lt;= j; k++) {
+                dp_naive[j] = max(dp_naive[j], dp_naive[j - k * w[i]] + k * v[i]);
+            }
+        }
+        cout &lt;&lt; "  处理物品" &lt;&lt; i &lt;&lt; "后 dp = [";
+        for (int j = 0; j &lt;= W; j++) cout &lt;&lt; setw(3) &lt;&lt; dp_naive[j];
+        cout &lt;&lt; " ]" &lt;&lt; endl;
+    }
+    cout &lt;&lt; "  朴素做法结果 = " &lt;&lt; dp_naive[W] &lt;&lt; endl;
+    cout &lt;&lt; "  内层循环次数 ≈ " &lt;&lt; N * W * (c[1] + c[2]) / 2 &lt;&lt; " 次" &lt;&lt; endl;
+    cout &lt;&lt; endl;
+
+    // --- 二进制优化 ---
+    cout &lt;&lt; "【二进制优化：拆分后01背包 O(W*Σlog(c[i]))】" &lt;&lt; endl;
+    vector&lt;int&gt; new_w, new_v;
+    for (int i = 1; i &lt;= N; i++) {
+        int rem = c[i];
+        for (int k = 1; k &lt;= rem; k &lt;&lt;= 1) {
+            new_w.push_back(k * w[i]);
+            new_v.push_back(k * v[i]);
+            rem -= k;
+        }
+        if (rem &gt; 0) {
+            new_w.push_back(rem * w[i]);
+            new_v.push_back(rem * v[i]);
+        }
+    }
+    cout &lt;&lt; "  拆分后物品数 = " &lt;&lt; new_w.size() &lt;&lt; " 个" &lt;&lt; endl;
+    cout &lt;&lt; "  打包物品分别为：";
+    for (size_t i = 0; i &lt; new_w.size(); i++) {
+        cout &lt;&lt; "(" &lt;&lt; new_w[i] &lt;&lt; "kg, " &lt;&lt; new_v[i] &lt;&lt; "元) ";
+    }
+    cout &lt;&lt; endl;
+
+    vector&lt;int&gt; dp_bin(W + 1, 0);
+    for (size_t i = 0; i &lt; new_w.size(); i++) {
+        for (int j = W; j &gt;= new_w[i]; j--) {
+            dp_bin[j] = max(dp_bin[j], dp_bin[j - new_w[i]] + new_v[i]);
+        }
+        cout &lt;&lt; "  处理打包物品" &lt;&lt; i + 1 &lt;&lt; "后 dp = [";
+        for (int j = 0; j &lt;= W; j++) cout &lt;&lt; setw(3) &lt;&lt; dp_bin[j];
+        cout &lt;&lt; " ]" &lt;&lt; endl;
+    }
+    cout &lt;&lt; "  二进制优化结果 = " &lt;&lt; dp_bin[W] &lt;&lt; endl;
+    cout &lt;&lt; "  内层循环次数 ≈ " &lt;&lt; new_w.size() * W &lt;&lt; " 次" &lt;&lt; endl;
+    cout &lt;&lt; endl;
+
+    cout &lt;&lt; "结论：两种方法结果相同（" &lt;&lt; dp_naive[W] &lt;&lt; " = " &lt;&lt; dp_bin[W] &lt;&lt; "），" &lt;&lt; endl;
+    cout &lt;&lt; "      但二进制优化在大数据量下效率远超朴素做法！" &lt;&lt; endl;
+    cout &lt;&lt; "      当c[i]=10000时，朴素做法≈10^8次，二进制优化≈10^5次。" &lt;&lt; endl;
+    cout &lt;&lt; endl;
+}
+
+// ============================================================
+// 三、分组背包 正确写法演示
+// ============================================================
+// 核心：组 → 容量（倒序）→ 组内物品
+// 口诀："分组容量外"
+// -----------------------------------------------------------
+void group_knapsack_demo() {
+    cout &lt;&lt; "========== 分组背包 正确写法演示 ==========" &lt;&lt; endl;
+    cout &lt;&lt; endl;
+
+    int G, W;
+    cout &lt;&lt; "请输入组数 G 和背包容量 W：";
+    cin &gt;&gt; G &gt;&gt; W;
+
+    vector&lt;int&gt; dp(W + 1, 0);
+
+    for (int g = 1; g &lt;= G; g++) {
+        int cnt;
+        cout &lt;&lt; "请输入第" &lt;&lt; g &lt;&lt; "组的物品数量：";
+        cin &gt;&gt; cnt;
+
+        vector&lt;pair&lt;int, int&gt;&gt; items(cnt);  // {weight, value}
+        cout &lt;&lt; "请依次输入该组每个物品的 重量 价值：" &lt;&lt; endl;
+        for (int k = 0; k &lt; cnt; k++) {
+            cout &lt;&lt; "  第" &lt;&lt; g &lt;&lt; "组-物品" &lt;&lt; k + 1 &lt;&lt; "：";
+            cin &gt;&gt; items[k].first &gt;&gt; items[k].second;
+        }
+
+        // 关键：容量循环在外，物品循环在内
+        for (int j = W; j &gt;= 0; j--) {
+            for (int k = 0; k &lt; cnt; k++) {
+                int w = items[k].first, v = items[k].second;
+                if (j &gt;= w)
+                    dp[j] = max(dp[j], dp[j - w] + v);
+            }
+        }
+
+        cout &lt;&lt; "  处理第" &lt;&lt; g &lt;&lt; "组后 dp = [";
+        for (int j = 0; j &lt;= W; j++) {
+            if (j % 5 == 0 &amp;&amp; j &gt; 0) cout &lt;&lt; " ";
+            cout &lt;&lt; setw(3) &lt;&lt; dp[j];
+        }
+        cout &lt;&lt; " ]" &lt;&lt; endl;
+    }
+
+    cout &lt;&lt; endl;
+    cout &lt;&lt; "最大总价值 = " &lt;&lt; dp[W] &lt;&lt; endl;
+    cout &lt;&lt; endl;
+    cout &lt;&lt; "核心要点：容量循环在外→每组最多选一个物品！" &lt;&lt; endl;
+    cout &lt;&lt; endl;
+}
+
+// ============================================================
+// 四、分组背包 循环顺序对比实验
+// ============================================================
+// 目的：直观展示正确顺序（容量外）vs 错误顺序（物品外）
+// -----------------------------------------------------------
+void group_knapsack_order_comparison() {
+    cout &lt;&lt; "========== 分组背包 循环顺序对比实验 ==========" &lt;&lt; endl;
+    cout &lt;&lt; endl;
+    cout &lt;&lt; "使用固定数据：2组，容量=10" &lt;&lt; endl;
+    cout &lt;&lt; "  第1组：物品A(3kg,5元), 物品B(4kg,6元)" &lt;&lt; endl;
+    cout &lt;&lt; "  第2组：物品C(2kg,3元), 物品D(5kg,8元)" &lt;&lt; endl;
+    cout &lt;&lt; endl;
+    cout &lt;&lt; "正确结果：每组最多选1个 → 最多选2个物品" &lt;&lt; endl;
+    cout &lt;&lt; "理论最大值：选B(4kg,6元)+D(5kg,8元)=9kg,14元" &lt;&lt; endl;
+    cout &lt;&lt; endl;
+
+    const int G = 2, W = 10;
+    vector&lt;vector&lt;pair&lt;int, int&gt;&gt;&gt; groups = {
+        {},  // 占位
+        {{3, 5}, {4, 6}},   // 第1组
+        {{2, 3}, {5, 8}}    // 第2组
+    };
+
+    // --- 正确写法：容量外循环 ---
+    cout &lt;&lt; "【正确写法：组 → 容量（倒序）→ 组内物品】" &lt;&lt; endl;
+    vector&lt;int&gt; dp_right(W + 1, 0);
+    for (int g = 1; g &lt;= G; g++) {
+        for (int j = W; j &gt;= 0; j--) {
+            for (auto &amp;item : groups[g]) {
+                int w = item.first, v = item.second;
+                if (j &gt;= w)
+                    dp_right[j] = max(dp_right[j], dp_right[j - w] + v);
+            }
+        }
+        cout &lt;&lt; "  处理第" &lt;&lt; g &lt;&lt; "组后 dp = [";
+        for (int j = 0; j &lt;= W; j++) cout &lt;&lt; setw(3) &lt;&lt; dp_right[j];
+        cout &lt;&lt; " ]" &lt;&lt; endl;
+    }
+    cout &lt;&lt; "  正确结果 dp[" &lt;&lt; W &lt;&lt; "] = " &lt;&lt; dp_right[W] &lt;&lt; endl;
+    cout &lt;&lt; endl;
+
+    // --- 错误写法：物品外循环 ---
+    cout &lt;&lt; "【错误写法：组 → 物品 → 容量（正序）← 会造成同组多选！】" &lt;&lt; endl;
+    vector&lt;int&gt; dp_wrong(W + 1, 0);
+    for (int g = 1; g &lt;= G; g++) {
+        for (auto &amp;item : groups[g]) {
+            int w = item.first, v = item.second;
+            for (int j = w; j &lt;= W; j++) {
+                dp_wrong[j] = max(dp_wrong[j], dp_wrong[j - w] + v);
+            }
+            cout &lt;&lt; "  处理第" &lt;&lt; g &lt;&lt; "组-物品(" &lt;&lt; w &lt;&lt; "kg," &lt;&lt; v
+                 &lt;&lt; "元)后 dp = [";
+            for (int j = 0; j &lt;= W; j++) cout &lt;&lt; setw(3) &lt;&lt; dp_wrong[j];
+            cout &lt;&lt; " ]" &lt;&lt; endl;
+        }
+    }
+    cout &lt;&lt; "  错误结果 dp[" &lt;&lt; W &lt;&lt; "] = " &lt;&lt; dp_wrong[W]
+         &lt;&lt; " ← 可能超了！同组多选导致。" &lt;&lt; endl;
+    cout &lt;&lt; endl;
+
+    cout &lt;&lt; "对比结论：" &lt;&lt; endl;
+    cout &lt;&lt; "  正确顺序（容量外）：dp[10]=" &lt;&lt; dp_right[W]
+         &lt;&lt; " ← 每组最多选一个" &lt;&lt; endl;
+    cout &lt;&lt; "  错误顺序（物品外）：dp[10]=" &lt;&lt; dp_wrong[W]
+         &lt;&lt; " ← 同组物品可能都被选中" &lt;&lt; endl;
+    cout &lt;&lt; endl;
+    cout &lt;&lt; "记忆口诀：分组容量外！" &lt;&lt; endl;
+    cout &lt;&lt; endl;
+}
+
+// ============================================================
+// 五、石子合并 区间DP演示
+// ============================================================
+// 核心：dp[i][j] = min(dp[i][k] + dp[k+1][j]) + sum(i,j)
+// 口诀："区间先长度，石子并着走"
+// -----------------------------------------------------------
+void stone_merging_demo() {
+    cout &lt;&lt; "========== 石子合并 区间DP演示 ==========" &lt;&lt; endl;
+    cout &lt;&lt; endl;
+    cout &lt;&lt; "（小数据量，输出完整DP表格和分割点）" &lt;&lt; endl;
+    cout &lt;&lt; endl;
+
+    int N;
+    cout &lt;&lt; "请输入石子堆数 N（建议≤8，方便查看表格）：";
+    cin &gt;&gt; N;
+
+    vector&lt;int&gt; a(N + 1), pre(N + 1, 0);
+    cout &lt;&lt; "请输入" &lt;&lt; N &lt;&lt; "堆石子的数量：" &lt;&lt; endl;
+    for (int i = 1; i &lt;= N; i++) {
+        cout &lt;&lt; "  第" &lt;&lt; i &lt;&lt; "堆：";
+        cin &gt;&gt; a[i];
+        pre[i] = pre[i - 1] + a[i];
+    }
+
+    const int INF = 0x3f3f3f3f;
+    vector&lt;vector&lt;int&gt;&gt; dp(N + 1, vector&lt;int&gt;(N + 1, INF));
+    vector&lt;vector&lt;int&gt;&gt; split(N + 1, vector&lt;int&gt;(N + 1, 0));  // 记录最优分割点
+
+    // 初始化：长度为1的区间合并代价为0
+    for (int i = 1; i &lt;= N; i++) dp[i][i] = 0;
+
+    cout &lt;&lt; endl;
+    cout &lt;&lt; "========== 区间DP计算过程 ==========" &lt;&lt; endl;
+    cout &lt;&lt; endl;
+
+    for (int len = 2; len &lt;= N; len++) {
+        cout &lt;&lt; "--- 区间长度 len = " &lt;&lt; len &lt;&lt; " ---" &lt;&lt; endl;
+        for (int i = 1; i + len - 1 &lt;= N; i++) {
+            int j = i + len - 1;
+            int best_k = i;
+            int best_val = INF;
+
+            for (int k = i; k &lt; j; k++) {
+                int cost = dp[i][k] + dp[k + 1][j] + pre[j] - pre[i - 1];
+                if (cost &lt; best_val) {
+                    best_val = cost;
+                    best_k = k;
+                }
+            }
+
+            dp[i][j] = best_val;
+            split[i][j] = best_k;
+
+            cout &lt;&lt; "  dp[" &lt;&lt; i &lt;&lt; "][" &lt;&lt; j &lt;&lt; "] = ";
+            cout &lt;&lt; "min{";
+            for (int k = i; k &lt; j; k++) {
+                if (k &gt; i) cout &lt;&lt; ", ";
+                cout &lt;&lt; "dp[" &lt;&lt; i &lt;&lt; "][" &lt;&lt; k &lt;&lt; "]+dp[" &lt;&lt; k + 1 &lt;&lt; "][" &lt;&lt; j
+                     &lt;&lt; "]+sum(" &lt;&lt; i &lt;&lt; "," &lt;&lt; j &lt;&lt; ")="
+                     &lt;&lt; dp[i][k] &lt;&lt; "+" &lt;&lt; dp[k + 1][j] &lt;&lt; "+"
+                     &lt;&lt; pre[j] - pre[i - 1] &lt;&lt; "="
+                     &lt;&lt; dp[i][k] + dp[k + 1][j] + pre[j] - pre[i - 1];
+            }
+            cout &lt;&lt; "} = " &lt;&lt; dp[i][j];
+            cout &lt;&lt; "  （最优分割点 k=" &lt;&lt; best_k &lt;&lt; "）" &lt;&lt; endl;
+        }
+        cout &lt;&lt; endl;
+    }
+
+    // 输出完整DP表格
+    cout &lt;&lt; "========== 完整DP表格 ==========" &lt;&lt; endl;
+    cout &lt;&lt; "（行:i, 列:j, dp[i][j] = 合并区间[i,j]的最小代价）" &lt;&lt; endl;
+    cout &lt;&lt; endl;
+
+    // 表头
+    cout &lt;&lt; " i\\j ";
+    for (int j = 1; j &lt;= N; j++) cout &lt;&lt; setw(10) &lt;&lt; j;
+    cout &lt;&lt; endl;
+
+    for (int i = 1; i &lt;= N; i++) {
+        cout &lt;&lt; setw(3) &lt;&lt; i &lt;&lt; " ";
+        for (int j = 1; j &lt;= N; j++) {
+            if (j &lt; i) {
+                cout &lt;&lt; "          ";
+            } else if (dp[i][j] &gt;= INF / 2) {
+                cout &lt;&lt; setw(10) &lt;&lt; "INF";
+            } else {
+                cout &lt;&lt; setw(10) &lt;&lt; dp[i][j];
+            }
+        }
+        cout &lt;&lt; endl;
+    }
+    cout &lt;&lt; endl;
+
+    // 前缀和
+    cout &lt;&lt; "========== 前缀和 ==========" &lt;&lt; endl;
+    for (int i = 1; i &lt;= N; i++) cout &lt;&lt; "  pre[" &lt;&lt; i &lt;&lt; "] = " &lt;&lt; pre[i] &lt;&lt; endl;
+    cout &lt;&lt; endl;
+
+    cout &lt;&lt; "最小总代价 = " &lt;&lt; dp[1][N] &lt;&lt; endl;
+    cout &lt;&lt; endl;
+
+    // 输出最优合并顺序（递归）
+    function&lt;void(int, int)&gt; print_merge_order = [&amp;](int i, int j) {
+        if (i == j) {
+            cout &lt;&lt; "[" &lt;&lt; a[i] &lt;&lt; "]";
+            return;
+        }
+        int k = split[i][j];
+        cout &lt;&lt; "(";
+        print_merge_order(i, k);
+        cout &lt;&lt; " + ";
+        print_merge_order(k + 1, j);
+        cout &lt;&lt; "→" &lt;&lt; pre[j] - pre[i - 1] &lt;&lt; ")";
+    };
+
+    cout &lt;&lt; "最优合并顺序：";
+    print_merge_order(1, N);
+    cout &lt;&lt; endl;
+    cout &lt;&lt; endl;
+    cout &lt;&lt; "记忆口诀: 区间先长度, 石子并着走" &lt;&lt; endl;
+    cout &lt;&lt; endl;
+}
+
+// ============================================================
+// 六、区间DP 通用框架总结
+// ============================================================
+void interval_dp_summary() {
+    cout &lt;&lt; "========== 区间DP 通用框架 ==========" &lt;&lt; endl;
+    cout &lt;&lt; endl;
+
+    cout &lt;&lt; "【三层循环结构】" &lt;&lt; endl;
+    cout &lt;&lt; endl;
+    cout &lt;&lt; "// 1. 初始化长度为1的区间" &lt;&lt; endl;
+    cout &lt;&lt; "for (int i = 1; i &lt;= N; i++) dp[i][i] = 初始值;" &lt;&lt; endl;
+    cout &lt;&lt; endl;
+    cout &lt;&lt; "// 2. 枚举区间长度（从小到大，必须最外层）" &lt;&lt; endl;
+    cout &lt;&lt; "for (int len = 2; len &lt;= N; len++) {" &lt;&lt; endl;
+    cout &lt;&lt; endl;
+    cout &lt;&lt; "    // 3. 枚举区间起点" &lt;&lt; endl;
+    cout &lt;&lt; "    for (int i = 1; i + len - 1 &lt;= N; i++) {" &lt;&lt; endl;
+    cout &lt;&lt; "        int j = i + len - 1;  // 区间终点" &lt;&lt; endl;
+    cout &lt;&lt; endl;
+    cout &lt;&lt; "        // 4. 枚举分割点" &lt;&lt; endl;
+    cout &lt;&lt; "        for (int k = i; k &lt; j; k++) {" &lt;&lt; endl;
+    cout &lt;&lt; "            dp[i][j] = min/max(dp[i][j]," &lt;&lt; endl;
+    cout &lt;&lt; "                dp[i][k] + dp[k+1][j] + 合并代价);" &lt;&lt; endl;
+    cout &lt;&lt; "        }" &lt;&lt; endl;
+    cout &lt;&lt; "    }" &lt;&lt; endl;
+    cout &lt;&lt; "}" &lt;&lt; endl;
+    cout &lt;&lt; endl;
+    cout &lt;&lt; "【常见题型】" &lt;&lt; endl;
+    cout &lt;&lt; "  1. 石子合并 — 最小合并代价" &lt;&lt; endl;
+    cout &lt;&lt; "  2. 矩阵连乘 — 最少乘法次数" &lt;&lt; endl;
+    cout &lt;&lt; "  3. 回文串 — 最少插入/删除次数" &lt;&lt; endl;
+    cout &lt;&lt; "  4. 括号匹配 — 最少添加括号数" &lt;&lt; endl;
+    cout &lt;&lt; endl;
+    cout &lt;&lt; "【识别特征】" &lt;&lt; endl;
+    cout &lt;&lt; "  - 问题可以按区间/段来划分" &lt;&lt; endl;
+    cout &lt;&lt; "  - 每次操作合并相邻的两段" &lt;&lt; endl;
+    cout &lt;&lt; "  - 答案通常是 dp[1][N]" &lt;&lt; endl;
+    cout &lt;&lt; endl;
+    cout &lt;&lt; "【时间复杂度】O(N³)，N≤300 可行" &lt;&lt; endl;
+    cout &lt;&lt; endl;
+}
+
+// ============================================================
+// 七、综合对比总结
+// ============================================================
+void comprehensive_summary() {
+    cout &lt;&lt; "========== 第40课综合对比总结 ==========" &lt;&lt; endl;
+    cout &lt;&lt; endl;
+
+    cout &lt;&lt; "+------------------+--------------------------------+---------------------------+" &lt;&lt; endl;
+    cout &lt;&lt; "|     问题类型     |          核心技巧               |       记忆口诀           |" &lt;&lt; endl;
+    cout &lt;&lt; "+------------------+--------------------------------+---------------------------+" &lt;&lt; endl;
+    cout &lt;&lt; "| 多重背包         | 二进制拆分 → 01背包            | 多重二进制拆             |" &lt;&lt; endl;
+    cout &lt;&lt; "| 分组背包         | 容量外循环，物品内循环          | 分组容量外               |" &lt;&lt; endl;
+    cout &lt;&lt; "| 区间DP           | 枚举len→i→k，前缀和优化         | 区间先长度，石子并着走   |" &lt;&lt; endl;
+    cout &lt;&lt; "+------------------+--------------------------------+---------------------------+" &lt;&lt; endl;
+    cout &lt;&lt; endl;
+
+    cout &lt;&lt; "【循环顺序对比】" &lt;&lt; endl;
+    cout &lt;&lt; "  01背包：    物品 外层，容量 内层（倒序）" &lt;&lt; endl;
+    cout &lt;&lt; "  完全背包：  物品 外层，容量 内层（正序）" &lt;&lt; endl;
+    cout &lt;&lt; "  多重背包：  拆分后同上（01背包）" &lt;&lt; endl;
+    cout &lt;&lt; "  分组背包：  组 外层，容量 中层（倒序），物品 内层" &lt;&lt; endl;
+    cout &lt;&lt; "  区间DP：    长度 外层，起点 中层，分割点 内层" &lt;&lt; endl;
+    cout &lt;&lt; endl;
+
+    cout &lt;&lt; "【三类背包关系】" &lt;&lt; endl;
+    cout &lt;&lt; "  01背包   ⊂ 多重背包（c[i]=1时退化为01背包）" &lt;&lt; endl;
+    cout &lt;&lt; "  完全背包 ⊂ 多重背包（c[i]=∞时退化为完全背包）" &lt;&lt; endl;
+    cout &lt;&lt; "  多重背包 → 二进制拆分 → 01背包（通用转化！）" &lt;&lt; endl;
+    cout &lt;&lt; endl;
+
+    cout &lt;&lt; "【扩展思考】" &lt;&lt; endl;
+    cout &lt;&lt; "  - 多重背包的单调队列优化（O(N*W)，进阶内容）" &lt;&lt; endl;
+    cout &lt;&lt; "  - 环形石子合并（将环拆成2N的链）" &lt;&lt; endl;
+    cout &lt;&lt; "  - 四边形不等式优化区间DP（降为O(N²)）" &lt;&lt; endl;
+    cout &lt;&lt; endl;
+
+    cout &lt;&lt; "口诀总结：" &lt;&lt; endl;
+    cout &lt;&lt; "  多重二进制拆，分组容量外。" &lt;&lt; endl;
+    cout &lt;&lt; "  区间先长度，石子并着走。" &lt;&lt; endl;
+    cout &lt;&lt; endl;
+}
+
+// ============================================================
+// 主菜单
+// ============================================================
+int main() {
+    ios::sync_with_stdio(false);
+    cin.tie(0);
+
+    cout &lt;&lt; "========================================" &lt;&lt; endl;
+    cout &lt;&lt; "  CSP-J 第40课：背包问题（下）与区间DP" &lt;&lt; endl;
+    cout &lt;&lt; "  程序演示合集" &lt;&lt; endl;
+    cout &lt;&lt; "========================================" &lt;&lt; endl;
+    cout &lt;&lt; endl;
+
+    while (true) {
+        cout &lt;&lt; "请选择要运行的示例：" &lt;&lt; endl;
+        cout &lt;&lt; "  1. 多重背包 二进制优化演示（展示拆分过程）" &lt;&lt; endl;
+        cout &lt;&lt; "  2. 多重背包 朴素做法 vs 二进制优化 对比" &lt;&lt; endl;
+        cout &lt;&lt; "  3. 分组背包 正确写法演示" &lt;&lt; endl;
+        cout &lt;&lt; "  4. 分组背包 循环顺序对比实验（正确 vs 错误）" &lt;&lt; endl;
+        cout &lt;&lt; "  5. 石子合并 区间DP演示（输出DP表格）" &lt;&lt; endl;
+        cout &lt;&lt; "  6. 区间DP 通用框架总结" &lt;&lt; endl;
+        cout &lt;&lt; "  7. 第40课综合对比总结" &lt;&lt; endl;
+        cout &lt;&lt; "  0. 退出" &lt;&lt; endl;
+        cout &lt;&lt; "请输入编号：";
+
+        int choice;
+        cin &gt;&gt; choice;
+        cin.ignore();
+
+        if (choice == 0) {
+            cout &lt;&lt; "再见！记住口诀：多重二进制拆，分组容量外。区间先长度，石子并着走！" &lt;&lt; endl;
+            break;
+        }
+
+        cout &lt;&lt; endl;
+
+        switch (choice) {
+            case 1: multiple_knapsack_binary(); break;
+            case 2: multiple_knapsack_compare(); break;
+            case 3: group_knapsack_demo(); break;
+            case 4: group_knapsack_order_comparison(); break;
+            case 5: stone_merging_demo(); break;
+            case 6: interval_dp_summary(); break;
+            case 7: comprehensive_summary(); break;
+            default: cout &lt;&lt; "无效选择，请重试。" &lt;&lt; endl &lt;&lt; endl;
+        }
+    }
+
+    return 0;
+}
+</pre>
+    <p class="hint">若曾直接打开 .cpp 出现乱码，是因为浏览器未按 UTF-8 解析纯文本。本页已固定 UTF-8 显示。</p>
+  </div>
+</body>
+</html>

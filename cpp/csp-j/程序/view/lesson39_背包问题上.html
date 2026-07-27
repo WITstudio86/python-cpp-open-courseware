@@ -1,0 +1,477 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>lesson39_背包问题上</title>
+<style>
+  :root {
+    --bg: #0f1419;
+    --panel: #161d27;
+    --text: #e7ecf3;
+    --muted: #9aa7b8;
+    --gold: #d4a853;
+    --code-bg: #1a1d23;
+    --border: #273244;
+  }
+  * { box-sizing: border-box; }
+  html, body {
+    margin: 0; padding: 0;
+    background: var(--bg);
+    color: var(--text);
+    font-family: -apple-system, BlinkMacSystemFont, "PingFang SC", "Microsoft YaHei", sans-serif;
+    min-height: 100%;
+  }
+  .top {
+    position: sticky; top: 0; z-index: 10;
+    display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between;
+    gap: 10px;
+    padding: 12px 18px;
+    background: linear-gradient(135deg, #0a2540, #1a3a5c);
+    border-bottom: 1px solid rgba(212,168,83,0.35);
+    box-shadow: 0 4px 18px rgba(0,0,0,0.25);
+  }
+  .brand { color: var(--gold); font-weight: 700; font-size: 14px; letter-spacing: 0.04em; }
+  .title { font-size: 15px; font-weight: 600; color: #fff; max-width: 52vw; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .actions { display: flex; gap: 8px; flex-wrap: wrap; }
+  .btn {
+    appearance: none; border: 1px solid rgba(255,255,255,0.18);
+    background: rgba(255,255,255,0.08); color: #fff;
+    border-radius: 999px; padding: 8px 14px; font-size: 13px; font-weight: 600;
+    text-decoration: none; cursor: pointer;
+  }
+  .btn:hover { background: rgba(255,255,255,0.16); }
+  .btn.gold { background: linear-gradient(135deg, #d4a853, #c4922e); color: #0a2540; border-color: transparent; }
+  .meta {
+    padding: 10px 18px; color: var(--muted); font-size: 12px;
+    border-bottom: 1px solid var(--border);
+    background: var(--panel);
+  }
+  .wrap { padding: 16px 18px 40px; }
+  pre {
+    margin: 0;
+    background: var(--code-bg);
+    color: #e1e4e8;
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 18px 20px;
+    overflow: auto;
+    font-family: "SF Mono", "JetBrains Mono", "Fira Code", Consolas, "Courier New", monospace;
+    font-size: 13.5px;
+    line-height: 1.55;
+    white-space: pre;
+    tab-size: 4;
+    box-shadow: 0 8px 28px rgba(0,0,0,0.28);
+  }
+  .hint { margin-top: 12px; color: var(--muted); font-size: 12px; }
+</style>
+</head>
+<body>
+  <div class="top">
+    <div class="brand">CSP-J · 配套代码</div>
+    <div class="title">lesson39_背包问题上</div>
+    <div class="actions">
+      <a class="btn" href="../lesson39_背包问题上.cpp" download="lesson39_背包问题上.cpp">⬇️ 下载 .cpp</a>
+      <a class="btn gold" href="javascript:history.back()">← 返回课件</a>
+    </div>
+  </div>
+  <div class="meta">编码：UTF-8 · 文件：lesson39_背包问题上.cpp · 共 393 行</div>
+  <div class="wrap">
+    <pre id="code">/**
+ * lesson39_背包问题上.cpp
+ * CSP-J 备考课程 第39课
+ *
+ * 包含内容：
+ * 1. 01背包 二维DP演示（输出DP表格）
+ * 2. 01背包 一维DP（倒序遍历）
+ * 3. 01背包 一维DP的正确 vs 错误对比（正序 vs 倒序）
+ * 4. 完全背包 一维DP（正序遍历）
+ * 5. 恰好装满的01背包（-INF初始化）
+ */
+
+#include &lt;iostream&gt;
+#include &lt;algorithm&gt;
+#include &lt;cstring&gt;
+#include &lt;vector&gt;
+#include &lt;iomanip&gt;
+using namespace std;
+
+// ============================================================
+// 一、01背包 二维DP演示（小数据量，输出DP表格）
+// ============================================================
+// 状态：dp[i][j] = 前i件物品，容量j时的最大价值
+// 转移：dp[i][j] = max(dp[i-1][j], dp[i-1][j-w[i]] + v[i])
+// -----------------------------------------------------------
+void knapsack01_2d_demo() {
+    cout &lt;&lt; "========== 01背包 二维DP演示 ==========" &lt;&lt; endl;
+    cout &lt;&lt; endl;
+    cout &lt;&lt; "（演示小数据量，会输出完整的DP表格）" &lt;&lt; endl;
+    cout &lt;&lt; endl;
+
+    int N, W;
+    cout &lt;&lt; "请输入物品数量 N（建议≤5）和背包容量 W（建议≤10）：";
+    cin &gt;&gt; N &gt;&gt; W;
+
+    vector&lt;int&gt; w(N + 1), v(N + 1);
+    cout &lt;&lt; "请依次输入每件物品的重量和价值：" &lt;&lt; endl;
+    for (int i = 1; i &lt;= N; i++) {
+        cout &lt;&lt; "  物品" &lt;&lt; i &lt;&lt; "：";
+        cin &gt;&gt; w[i] &gt;&gt; v[i];
+    }
+
+    // 二维DP
+    vector&lt;vector&lt;int&gt;&gt; dp(N + 1, vector&lt;int&gt;(W + 1, 0));
+
+    for (int i = 1; i &lt;= N; i++) {
+        for (int j = 0; j &lt;= W; j++) {
+            dp[i][j] = dp[i-1][j];
+            if (j &gt;= w[i])
+                dp[i][j] = max(dp[i][j], dp[i-1][j-w[i]] + v[i]);
+        }
+    }
+
+    // 输出DP表格
+    cout &lt;&lt; endl;
+    cout &lt;&lt; "========== DP表格 ==========" &lt;&lt; endl;
+    cout &lt;&lt; "（行 = 前i件物品，列 = 容量j）" &lt;&lt; endl;
+    cout &lt;&lt; endl;
+
+    // 表头
+    cout &lt;&lt; "  i\\j ";
+    for (int j = 0; j &lt;= W; j++)
+        cout &lt;&lt; setw(4) &lt;&lt; j;
+    cout &lt;&lt; endl;
+
+    // 分隔线
+    cout &lt;&lt; "-----";
+    for (int j = 0; j &lt;= W; j++)
+        cout &lt;&lt; "----";
+    cout &lt;&lt; endl;
+
+    // 数据行
+    for (int i = 1; i &lt;= N; i++) {
+        cout &lt;&lt; setw(4) &lt;&lt; i &lt;&lt; " |";
+        for (int j = 0; j &lt;= W; j++)
+            cout &lt;&lt; setw(4) &lt;&lt; dp[i][j];
+        cout &lt;&lt; endl;
+    }
+
+    cout &lt;&lt; endl;
+    cout &lt;&lt; "最大总价值 = " &lt;&lt; dp[N][W] &lt;&lt; endl;
+
+    // 回溯输出选择的物品
+    cout &lt;&lt; "选择的物品：";
+    int j = W;
+    vector&lt;int&gt; chosen;
+    for (int i = N; i &gt;= 1; i--) {
+        if (j &gt;= w[i] &amp;&amp; dp[i][j] == dp[i-1][j-w[i]] + v[i]) {
+            chosen.push_back(i);
+            j -= w[i];
+        }
+    }
+    if (chosen.empty()) {
+        cout &lt;&lt; "无";
+    } else {
+        reverse(chosen.begin(), chosen.end());
+        for (size_t k = 0; k &lt; chosen.size(); k++) {
+            if (k &gt; 0) cout &lt;&lt; ", ";
+            cout &lt;&lt; "物品" &lt;&lt; chosen[k]
+                 &lt;&lt; "(重量" &lt;&lt; w[chosen[k]] &lt;&lt; ",价值" &lt;&lt; v[chosen[k]] &lt;&lt; ")";
+        }
+    }
+    cout &lt;&lt; endl &lt;&lt; endl;
+}
+
+// ============================================================
+// 二、01背包 一维DP（倒序遍历，标准写法）
+// ============================================================
+// 核心：dp[j] = max(dp[j], dp[j-w[i]] + v[i])
+// 关键：必须倒序遍历容量 — "零一倒着走"
+// -----------------------------------------------------------
+void knapsack01_1d() {
+    cout &lt;&lt; "========== 01背包 一维DP（倒序遍历）==========" &lt;&lt; endl;
+    cout &lt;&lt; endl;
+
+    int N, W;
+    cout &lt;&lt; "请输入物品数量 N：";
+    cin &gt;&gt; N;
+    cout &lt;&lt; "请输入背包容量 W：";
+    cin &gt;&gt; W;
+
+    vector&lt;int&gt; w(N + 1), v(N + 1);
+    cout &lt;&lt; "请依次输入每件物品的重量和价值：" &lt;&lt; endl;
+    for (int i = 1; i &lt;= N; i++) {
+        cout &lt;&lt; "  物品" &lt;&lt; i &lt;&lt; "：";
+        cin &gt;&gt; w[i] &gt;&gt; v[i];
+    }
+
+    vector&lt;int&gt; dp(W + 1, 0);
+
+    cout &lt;&lt; endl;
+    cout &lt;&lt; "算法执行过程（每处理一件物品后输出dp数组）：" &lt;&lt; endl;
+    cout &lt;&lt; endl;
+
+    for (int i = 1; i &lt;= N; i++) {
+        for (int j = W; j &gt;= w[i]; j--) {
+            dp[j] = max(dp[j], dp[j - w[i]] + v[i]);
+        }
+        // 输出当前物品处理后的dp数组
+        cout &lt;&lt; "加入物品" &lt;&lt; i &lt;&lt; "（重量" &lt;&lt; w[i] &lt;&lt; ",价值" &lt;&lt; v[i] &lt;&lt; "）后：";
+        for (int j = 0; j &lt;= W; j++) {
+            if (j % 5 == 0) cout &lt;&lt; endl &lt;&lt; "  ";
+            cout &lt;&lt; "dp[" &lt;&lt; setw(2) &lt;&lt; j &lt;&lt; "]=" &lt;&lt; setw(3) &lt;&lt; dp[j] &lt;&lt; "  ";
+        }
+        cout &lt;&lt; endl &lt;&lt; endl;
+    }
+
+    cout &lt;&lt; "最大总价值 = " &lt;&lt; dp[W] &lt;&lt; endl;
+    cout &lt;&lt; endl;
+}
+
+// ============================================================
+// 三、01背包 正序 vs 倒序 对比实验
+// ============================================================
+// 目的：直观展示正序遍历为什么会导致物品重复使用
+// -----------------------------------------------------------
+void knapsack01_order_comparison() {
+    cout &lt;&lt; "========== 正序 vs 倒序 对比实验 ==========" &lt;&lt; endl;
+    cout &lt;&lt; endl;
+    cout &lt;&lt; "使用固定数据：3件物品，容量=8" &lt;&lt; endl;
+    cout &lt;&lt; "  物品1：重量=3，价值=4" &lt;&lt; endl;
+    cout &lt;&lt; "  物品2：重量=4，价值=5" &lt;&lt; endl;
+    cout &lt;&lt; "  物品3：重量=5，价值=6" &lt;&lt; endl;
+    cout &lt;&lt; endl;
+
+    const int N = 3, W = 8;
+    int w[] = {0, 3, 4, 5};
+    int v[] = {0, 4, 5, 6};
+
+    // --- 正序遍历（错误）---
+    vector&lt;int&gt; dp_wrong(W + 1, 0);
+    cout &lt;&lt; "【错误示范：正序遍历（会变成完全背包）】" &lt;&lt; endl;
+    for (int i = 1; i &lt;= N; i++) {
+        for (int j = w[i]; j &lt;= W; j++) {
+            dp_wrong[j] = max(dp_wrong[j], dp_wrong[j - w[i]] + v[i]);
+        }
+        cout &lt;&lt; "  处理物品" &lt;&lt; i &lt;&lt; "后：";
+        for (int j = 0; j &lt;= W; j++)
+            cout &lt;&lt; setw(3) &lt;&lt; dp_wrong[j];
+        cout &lt;&lt; endl;
+    }
+    cout &lt;&lt; "  正序遍历结果 dp[" &lt;&lt; W &lt;&lt; "] = " &lt;&lt; dp_wrong[W]
+         &lt;&lt; "  ← 错误！物品被重复使用" &lt;&lt; endl;
+    cout &lt;&lt; endl;
+
+    // --- 倒序遍历（正确）---
+    vector&lt;int&gt; dp_right(W + 1, 0);
+    cout &lt;&lt; "【正确示范：倒序遍历（标准01背包）】" &lt;&lt; endl;
+    for (int i = 1; i &lt;= N; i++) {
+        for (int j = W; j &gt;= w[i]; j--) {
+            dp_right[j] = max(dp_right[j], dp_right[j - w[i]] + v[i]);
+        }
+        cout &lt;&lt; "  处理物品" &lt;&lt; i &lt;&lt; "后：";
+        for (int j = 0; j &lt;= W; j++)
+            cout &lt;&lt; setw(3) &lt;&lt; dp_right[j];
+        cout &lt;&lt; endl;
+    }
+    cout &lt;&lt; "  倒序遍历结果 dp[" &lt;&lt; W &lt;&lt; "] = " &lt;&lt; dp_right[W]
+         &lt;&lt; "  ← 正确！" &lt;&lt; endl;
+    cout &lt;&lt; endl;
+
+    cout &lt;&lt; "对比结论：正序遍历使物品1被使用了 ceil(8/3)≈3 次，" &lt;&lt; endl;
+    cout &lt;&lt; "          而01背包要求物品只能选0或1次。" &lt;&lt; endl;
+    cout &lt;&lt; "          这就是为什么必须倒序遍历！" &lt;&lt; endl;
+    cout &lt;&lt; endl;
+}
+
+// ============================================================
+// 四、完全背包 一维DP（正序遍历）
+// ============================================================
+// 核心：dp[j] = max(dp[j], dp[j-w[i]] + v[i])
+// 关键：正序遍历容量 — "完全正着走"
+// -----------------------------------------------------------
+void knapsack_complete() {
+    cout &lt;&lt; "========== 完全背包 一维DP（正序遍历）==========" &lt;&lt; endl;
+    cout &lt;&lt; endl;
+
+    int N, W;
+    cout &lt;&lt; "请输入物品数量 N：";
+    cin &gt;&gt; N;
+    cout &lt;&lt; "请输入背包容量 W：";
+    cin &gt;&gt; W;
+
+    vector&lt;int&gt; w(N + 1), v(N + 1);
+    cout &lt;&lt; "请依次输入每件物品的重量和价值：" &lt;&lt; endl;
+    for (int i = 1; i &lt;= N; i++) {
+        cout &lt;&lt; "  物品" &lt;&lt; i &lt;&lt; "：";
+        cin &gt;&gt; w[i] &gt;&gt; v[i];
+    }
+
+    vector&lt;int&gt; dp(W + 1, 0);
+
+    cout &lt;&lt; endl;
+    cout &lt;&lt; "算法执行过程（每处理一件物品后输出dp数组）：" &lt;&lt; endl;
+    cout &lt;&lt; endl;
+
+    for (int i = 1; i &lt;= N; i++) {
+        // 正序遍历 — 关键！
+        for (int j = w[i]; j &lt;= W; j++) {
+            dp[j] = max(dp[j], dp[j - w[i]] + v[i]);
+        }
+        // 输出当前物品处理后的dp数组
+        cout &lt;&lt; "加入物品" &lt;&lt; i &lt;&lt; "（重量" &lt;&lt; w[i] &lt;&lt; ",价值" &lt;&lt; v[i]
+             &lt;&lt; "，无限次）后：";
+        for (int j = 0; j &lt;= W; j++) {
+            if (j % 5 == 0) cout &lt;&lt; endl &lt;&lt; "  ";
+            cout &lt;&lt; "dp[" &lt;&lt; setw(2) &lt;&lt; j &lt;&lt; "]=" &lt;&lt; setw(3) &lt;&lt; dp[j] &lt;&lt; "  ";
+        }
+        cout &lt;&lt; endl &lt;&lt; endl;
+    }
+
+    cout &lt;&lt; "最大总价值 = " &lt;&lt; dp[W] &lt;&lt; endl;
+    cout &lt;&lt; endl;
+
+    // 解释
+    cout &lt;&lt; "提示：完全背包的正序遍历让每件物品可以被使用多次。" &lt;&lt; endl;
+    cout &lt;&lt; "      比如容量为j时，dp[j-w[i]]可能已经包含了物品i，" &lt;&lt; endl;
+    cout &lt;&lt; "      从而允许物品i被反复使用。" &lt;&lt; endl;
+    cout &lt;&lt; endl;
+}
+
+// ============================================================
+// 五、恰好装满的01背包
+// ============================================================
+// 初始化：dp[0] = 0，其余 = -INF
+// 含义：只有"恰好装满容量j"的状态可达，不可达为-INF
+// -----------------------------------------------------------
+void knapsack01_exact_full() {
+    cout &lt;&lt; "========== 恰好装满的01背包 ==========" &lt;&lt; endl;
+    cout &lt;&lt; endl;
+
+    int N, W;
+    cout &lt;&lt; "请输入物品数量 N：";
+    cin &gt;&gt; N;
+    cout &lt;&lt; "请输入背包容量 W：";
+    cin &gt;&gt; W;
+
+    vector&lt;int&gt; w(N + 1), v(N + 1);
+    cout &lt;&lt; "请依次输入每件物品的重量和价值：" &lt;&lt; endl;
+    for (int i = 1; i &lt;= N; i++) {
+        cout &lt;&lt; "  物品" &lt;&lt; i &lt;&lt; "：";
+        cin &gt;&gt; w[i] &gt;&gt; v[i];
+    }
+
+    const int INF = 0x3f3f3f3f;
+
+    // 初始化：dp[0]=0，其余=-INF
+    vector&lt;int&gt; dp(W + 1, -INF);
+    dp[0] = 0;
+
+    cout &lt;&lt; endl;
+    cout &lt;&lt; "初始化状态：" &lt;&lt; endl;
+    cout &lt;&lt; "  dp[0] = 0（容量0恰好装满，价值0）" &lt;&lt; endl;
+    cout &lt;&lt; "  dp[1.." &lt;&lt; W &lt;&lt; "] = -INF（不可达）" &lt;&lt; endl;
+    cout &lt;&lt; endl;
+
+    for (int i = 1; i &lt;= N; i++) {
+        for (int j = W; j &gt;= w[i]; j--) {
+            // 注意：dp[j-w[i]]不为-INF才转移（否则无意义）
+            if (dp[j - w[i]] != -INF)
+                dp[j] = max(dp[j], dp[j - w[i]] + v[i]);
+        }
+        // 输出dp数组
+        cout &lt;&lt; "处理物品" &lt;&lt; i &lt;&lt; "（重量" &lt;&lt; w[i] &lt;&lt; ",价值" &lt;&lt; v[i] &lt;&lt; "）后：";
+        for (int j = 0; j &lt;= W; j++) {
+            if (j % 5 == 0) cout &lt;&lt; endl &lt;&lt; "  ";
+            if (dp[j] == -INF)
+                cout &lt;&lt; "dp[" &lt;&lt; setw(2) &lt;&lt; j &lt;&lt; "]= -∞  ";
+            else
+                cout &lt;&lt; "dp[" &lt;&lt; setw(2) &lt;&lt; j &lt;&lt; "]=" &lt;&lt; setw(3) &lt;&lt; dp[j] &lt;&lt; "  ";
+        }
+        cout &lt;&lt; endl &lt;&lt; endl;
+    }
+
+    if (dp[W] &lt; 0)
+        cout &lt;&lt; "结果：无法恰好装满容量 " &lt;&lt; W &lt;&lt; " 的背包！" &lt;&lt; endl;
+    else
+        cout &lt;&lt; "恰好装满容量 " &lt;&lt; W &lt;&lt; " 的最大价值 = " &lt;&lt; dp[W] &lt;&lt; endl;
+    cout &lt;&lt; endl;
+}
+
+// ============================================================
+// 六、01背包 vs 完全背包 核心对比
+// ============================================================
+void comparison_summary() {
+    cout &lt;&lt; "========== 01背包 vs 完全背包 核心对比 ==========" &lt;&lt; endl;
+    cout &lt;&lt; endl;
+    cout &lt;&lt; "+------------------+---------------------+---------------------+" &lt;&lt; endl;
+    cout &lt;&lt; "|     对比项       |      01背包         |      完全背包       |" &lt;&lt; endl;
+    cout &lt;&lt; "+------------------+---------------------+---------------------+" &lt;&lt; endl;
+    cout &lt;&lt; "| 物品选择         | 最多选1次           | 可选无限次          |" &lt;&lt; endl;
+    cout &lt;&lt; "| 二维转移         | dp[i-1][j-w[i]]+v[i]| dp[i][j-w[i]]+v[i]  |" &lt;&lt; endl;
+    cout &lt;&lt; "| 一维遍历方向     | 倒序(j从W到w[i])   | 正序(j从w[i]到W)   |" &lt;&lt; endl;
+    cout &lt;&lt; "| dp[j]依赖        | 上一轮的旧值        | 本轮已更新的值      |" &lt;&lt; endl;
+    cout &lt;&lt; "| 初始化(最大价值) | dp全为0             | dp全为0            |" &lt;&lt; endl;
+    cout &lt;&lt; "| 初始化(恰好满)   | dp[0]=0,余=-INF     | dp[0]=0,余=-INF    |" &lt;&lt; endl;
+    cout &lt;&lt; "| 记忆口诀         | 零一倒着走          | 完全正着走          |" &lt;&lt; endl;
+    cout &lt;&lt; "+------------------+---------------------+---------------------+" &lt;&lt; endl;
+    cout &lt;&lt; endl;
+    cout &lt;&lt; "核心记忆：" &lt;&lt; endl;
+    cout &lt;&lt; "  - 01背包倒序：防止物品i被本轮更新污染 → 保证只选0或1次" &lt;&lt; endl;
+    cout &lt;&lt; "  - 完全背包正序：允许物品i被本轮更新 → 实现无限次选择" &lt;&lt; endl;
+    cout &lt;&lt; endl;
+}
+
+// ============================================================
+// 主菜单
+// ============================================================
+int main() {
+    ios::sync_with_stdio(false);
+    cin.tie(0);
+
+    cout &lt;&lt; "========================================" &lt;&lt; endl;
+    cout &lt;&lt; "  CSP-J 第39课：背包问题（上）" &lt;&lt; endl;
+    cout &lt;&lt; "  程序演示合集" &lt;&lt; endl;
+    cout &lt;&lt; "========================================" &lt;&lt; endl;
+    cout &lt;&lt; endl;
+
+    while (true) {
+        cout &lt;&lt; "请选择要运行的示例：" &lt;&lt; endl;
+        cout &lt;&lt; "  1. 01背包 二维DP演示（输出DP表格）" &lt;&lt; endl;
+        cout &lt;&lt; "  2. 01背包 一维DP（倒序遍历，标准写法）" &lt;&lt; endl;
+        cout &lt;&lt; "  3. 正序 vs 倒序 对比实验（直观理解原理）" &lt;&lt; endl;
+        cout &lt;&lt; "  4. 完全背包 一维DP（正序遍历）" &lt;&lt; endl;
+        cout &lt;&lt; "  5. 恰好装满的01背包（-INF初始化）" &lt;&lt; endl;
+        cout &lt;&lt; "  6. 01背包 vs 完全背包 核心对比表" &lt;&lt; endl;
+        cout &lt;&lt; "  0. 退出" &lt;&lt; endl;
+        cout &lt;&lt; "请输入编号：";
+
+        int choice;
+        cin &gt;&gt; choice;
+        cin.ignore();  // 清除换行符
+
+        if (choice == 0) {
+            cout &lt;&lt; "再见！记住口诀：零一倒着走，完全正着走！" &lt;&lt; endl;
+            break;
+        }
+
+        cout &lt;&lt; endl;
+
+        switch (choice) {
+            case 1: knapsack01_2d_demo(); break;
+            case 2: knapsack01_1d(); break;
+            case 3: knapsack01_order_comparison(); break;
+            case 4: knapsack_complete(); break;
+            case 5: knapsack01_exact_full(); break;
+            case 6: comparison_summary(); break;
+            default: cout &lt;&lt; "无效选择，请重试。" &lt;&lt; endl &lt;&lt; endl;
+        }
+    }
+
+    return 0;
+}
+</pre>
+    <p class="hint">若曾直接打开 .cpp 出现乱码，是因为浏览器未按 UTF-8 解析纯文本。本页已固定 UTF-8 显示。</p>
+  </div>
+</body>
+</html>

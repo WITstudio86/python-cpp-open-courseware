@@ -1,0 +1,376 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>lesson44_树的基础</title>
+<style>
+  :root {
+    --bg: #0f1419;
+    --panel: #161d27;
+    --text: #e7ecf3;
+    --muted: #9aa7b8;
+    --gold: #d4a853;
+    --code-bg: #1a1d23;
+    --border: #273244;
+  }
+  * { box-sizing: border-box; }
+  html, body {
+    margin: 0; padding: 0;
+    background: var(--bg);
+    color: var(--text);
+    font-family: -apple-system, BlinkMacSystemFont, "PingFang SC", "Microsoft YaHei", sans-serif;
+    min-height: 100%;
+  }
+  .top {
+    position: sticky; top: 0; z-index: 10;
+    display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between;
+    gap: 10px;
+    padding: 12px 18px;
+    background: linear-gradient(135deg, #0a2540, #1a3a5c);
+    border-bottom: 1px solid rgba(212,168,83,0.35);
+    box-shadow: 0 4px 18px rgba(0,0,0,0.25);
+  }
+  .brand { color: var(--gold); font-weight: 700; font-size: 14px; letter-spacing: 0.04em; }
+  .title { font-size: 15px; font-weight: 600; color: #fff; max-width: 52vw; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .actions { display: flex; gap: 8px; flex-wrap: wrap; }
+  .btn {
+    appearance: none; border: 1px solid rgba(255,255,255,0.18);
+    background: rgba(255,255,255,0.08); color: #fff;
+    border-radius: 999px; padding: 8px 14px; font-size: 13px; font-weight: 600;
+    text-decoration: none; cursor: pointer;
+  }
+  .btn:hover { background: rgba(255,255,255,0.16); }
+  .btn.gold { background: linear-gradient(135deg, #d4a853, #c4922e); color: #0a2540; border-color: transparent; }
+  .meta {
+    padding: 10px 18px; color: var(--muted); font-size: 12px;
+    border-bottom: 1px solid var(--border);
+    background: var(--panel);
+  }
+  .wrap { padding: 16px 18px 40px; }
+  pre {
+    margin: 0;
+    background: var(--code-bg);
+    color: #e1e4e8;
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 18px 20px;
+    overflow: auto;
+    font-family: "SF Mono", "JetBrains Mono", "Fira Code", Consolas, "Courier New", monospace;
+    font-size: 13.5px;
+    line-height: 1.55;
+    white-space: pre;
+    tab-size: 4;
+    box-shadow: 0 8px 28px rgba(0,0,0,0.28);
+  }
+  .hint { margin-top: 12px; color: var(--muted); font-size: 12px; }
+</style>
+</head>
+<body>
+  <div class="top">
+    <div class="brand">CSP-J · 配套代码</div>
+    <div class="title">lesson44_树的基础</div>
+    <div class="actions">
+      <a class="btn" href="../lesson44_树的基础.cpp" download="lesson44_树的基础.cpp">⬇️ 下载 .cpp</a>
+      <a class="btn gold" href="javascript:history.back()">← 返回课件</a>
+    </div>
+  </div>
+  <div class="meta">编码：UTF-8 · 文件：lesson44_树的基础.cpp · 共 292 行</div>
+  <div class="wrap">
+    <pre id="code">/**
+ * CSP-J 备考课程 — 第44课：树的基础
+ *
+ * 涵盖内容：
+ *   1. 二叉树结构定义
+ *   2. 前序 / 中序 / 后序 / 层序遍历
+ *   3. 根据前序+中序重建二叉树
+ *   4. 并查集（Union-Find）—— 路径压缩 + 按秩合并
+ *
+ * 编译运行：g++ -std=c++11 -O2 lesson44_树的基础.cpp -o tree_demo &amp;&amp; ./tree_demo
+ */
+
+#include &lt;iostream&gt;
+#include &lt;vector&gt;
+#include &lt;queue&gt;
+#include &lt;string&gt;
+#include &lt;cstring&gt;
+#include &lt;algorithm&gt;
+using namespace std;
+
+// ==============================
+// 二叉树节点定义
+// ==============================
+struct TreeNode {
+    int val;
+    TreeNode *left;
+    TreeNode *right;
+    TreeNode(int x) : val(x), left(nullptr), right(nullptr) {}
+};
+
+// ------------------------------
+// 释放二叉树内存（后序遍历删除）
+// ------------------------------
+void deleteTree(TreeNode* root) {
+    if (!root) return;
+    deleteTree(root-&gt;left);
+    deleteTree(root-&gt;right);
+    delete root;
+}
+
+// ==============================
+// 示例1：二叉树的四种遍历
+// ==============================
+void preorder(TreeNode* root) {
+    if (!root) return;
+    cout &lt;&lt; root-&gt;val &lt;&lt; " ";
+    preorder(root-&gt;left);
+    preorder(root-&gt;right);
+}
+
+void inorder(TreeNode* root) {
+    if (!root) return;
+    inorder(root-&gt;left);
+    cout &lt;&lt; root-&gt;val &lt;&lt; " ";
+    inorder(root-&gt;right);
+}
+
+void postorder(TreeNode* root) {
+    if (!root) return;
+    postorder(root-&gt;left);
+    postorder(root-&gt;right);
+    cout &lt;&lt; root-&gt;val &lt;&lt; " ";
+}
+
+void levelorder(TreeNode* root) {
+    if (!root) return;
+    queue&lt;TreeNode*&gt; q;
+    q.push(root);
+    while (!q.empty()) {
+        TreeNode* cur = q.front();
+        q.pop();
+        cout &lt;&lt; cur-&gt;val &lt;&lt; " ";
+        if (cur-&gt;left)  q.push(cur-&gt;left);
+        if (cur-&gt;right) q.push(cur-&gt;right);
+    }
+}
+
+void demo_tree_traversals() {
+    cout &lt;&lt; "========== 示例1：二叉树的四种遍历 ==========" &lt;&lt; endl;
+
+    // 构建二叉树:
+    //        1
+    //       / \
+    //      2   3
+    //     / \   \
+    //    4   5   6
+    TreeNode* root = new TreeNode(1);
+    root-&gt;left = new TreeNode(2);
+    root-&gt;right = new TreeNode(3);
+    root-&gt;left-&gt;left = new TreeNode(4);
+    root-&gt;left-&gt;right = new TreeNode(5);
+    root-&gt;right-&gt;right = new TreeNode(6);
+
+    cout &lt;&lt; "树结构：" &lt;&lt; endl;
+    cout &lt;&lt; "        1" &lt;&lt; endl;
+    cout &lt;&lt; "       / \\" &lt;&lt; endl;
+    cout &lt;&lt; "      2   3" &lt;&lt; endl;
+    cout &lt;&lt; "     / \\   \\" &lt;&lt; endl;
+    cout &lt;&lt; "    4   5   6" &lt;&lt; endl;
+    cout &lt;&lt; endl;
+
+    cout &lt;&lt; "前序遍历 (根左右): ";
+    preorder(root);
+    cout &lt;&lt; endl;
+
+    cout &lt;&lt; "中序遍历 (左根右): ";
+    inorder(root);
+    cout &lt;&lt; endl;
+
+    cout &lt;&lt; "后序遍历 (左右根): ";
+    postorder(root);
+    cout &lt;&lt; endl;
+
+    cout &lt;&lt; "层序遍历 (逐层):   ";
+    levelorder(root);
+    cout &lt;&lt; endl;
+    cout &lt;&lt; endl;
+
+    deleteTree(root);
+}
+
+// ==============================
+// 示例2：根据前序+中序重建二叉树
+// ==============================
+TreeNode* buildTree(const vector&lt;int&gt;&amp; pre, int pl, int pr,
+                    const vector&lt;int&gt;&amp; in, int il, int ir) {
+    if (pl &gt; pr || il &gt; ir) return nullptr;
+    int rootVal = pre[pl];
+    TreeNode* root = new TreeNode(rootVal);
+
+    // 在中序中找根的位置
+    int pos = il;
+    while (pos &lt;= ir &amp;&amp; in[pos] != rootVal) pos++;
+
+    int leftSize = pos - il;
+    root-&gt;left  = buildTree(pre, pl + 1, pl + leftSize, in, il, pos - 1);
+    root-&gt;right = buildTree(pre, pl + leftSize + 1, pr, in, pos + 1, ir);
+    return root;
+}
+
+void demo_build_tree() {
+    cout &lt;&lt; "========== 示例2：根据前序+中序重建二叉树 ==========" &lt;&lt; endl;
+
+    // 前序: 1 2 4 5 3 6
+    // 中序: 4 2 5 1 3 6
+    vector&lt;int&gt; pre = {1, 2, 4, 5, 3, 6};
+    vector&lt;int&gt; in  = {4, 2, 5, 1, 3, 6};
+
+    TreeNode* root = buildTree(pre, 0, (int)pre.size() - 1,
+                                in, 0, (int)in.size() - 1);
+
+    cout &lt;&lt; "前序序列: 1 2 4 5 3 6" &lt;&lt; endl;
+    cout &lt;&lt; "中序序列: 4 2 5 1 3 6" &lt;&lt; endl;
+    cout &lt;&lt; "重建后的后序遍历: ";
+    postorder(root);
+    cout &lt;&lt; " (预期: 4 5 2 6 3 1)" &lt;&lt; endl;
+    cout &lt;&lt; endl;
+
+    deleteTree(root);
+}
+
+// ==============================
+// 示例3：并查集（Union-Find）
+// ==============================
+const int MAXN = 100005;
+int parent[MAXN];
+int rnk[MAXN];
+
+void uf_init(int n) {
+    for (int i = 1; i &lt;= n; i++) {
+        parent[i] = i;
+        rnk[i] = 0;
+    }
+}
+
+int uf_find(int x) {
+    if (parent[x] == x) return x;
+    return parent[x] = uf_find(parent[x]);  // 路径压缩
+}
+
+void uf_union(int a, int b) {
+    int ra = uf_find(a);
+    int rb = uf_find(b);
+    if (ra == rb) return;
+    // 按秩合并
+    if (rnk[ra] &lt; rnk[rb]) {
+        parent[ra] = rb;
+    } else if (rnk[ra] &gt; rnk[rb]) {
+        parent[rb] = ra;
+    } else {
+        parent[rb] = ra;
+        rnk[ra]++;
+    }
+}
+
+void demo_union_find() {
+    cout &lt;&lt; "========== 示例3：并查集（Union-Find） ==========" &lt;&lt; endl;
+
+    int n = 10;
+    uf_init(n);
+
+    cout &lt;&lt; "初始状态：每个节点自成一个集合" &lt;&lt; endl;
+
+    // 建立关系
+    cout &lt;&lt; "合并 (1,2), (2,3), (4,5), (6,7,8), (9,10)" &lt;&lt; endl;
+    uf_union(1, 2);
+    uf_union(2, 3);   // {1,2,3}
+    uf_union(4, 5);   // {4,5}
+    uf_union(6, 7);
+    uf_union(7, 8);   // {6,7,8}
+    uf_union(9, 10);  // {9,10}
+
+    // 查询连通性
+    cout &lt;&lt; endl;
+    cout &lt;&lt; "查询连通性：" &lt;&lt; endl;
+    cout &lt;&lt; "  find(1) == find(3) ? " &lt;&lt; (uf_find(1) == uf_find(3) ? "true (连通)" : "false") &lt;&lt; endl;
+    cout &lt;&lt; "  find(1) == find(5) ? " &lt;&lt; (uf_find(1) == uf_find(5) ? "true" : "false (不连通)") &lt;&lt; endl;
+    cout &lt;&lt; "  find(6) == find(8) ? " &lt;&lt; (uf_find(6) == uf_find(8) ? "true (连通)" : "false") &lt;&lt; endl;
+
+    // 合并两个集合
+    cout &lt;&lt; endl;
+    cout &lt;&lt; "合并 (3,4) —— 连接 {1,2,3} 和 {4,5}" &lt;&lt; endl;
+    uf_union(3, 4);
+    cout &lt;&lt; "  find(1) == find(5) ? " &lt;&lt; (uf_find(1) == uf_find(5) ? "true (连通)" : "false") &lt;&lt; endl;
+
+    // 统计集合数量
+    int setCount = 0;
+    for (int i = 1; i &lt;= n; i++) {
+        if (uf_find(i) == i) setCount++;
+    }
+    cout &lt;&lt; endl;
+    cout &lt;&lt; "当前集合数量: " &lt;&lt; setCount &lt;&lt; " (预期: 4个)" &lt;&lt; endl;
+
+    // 列出各集合
+    cout &lt;&lt; "各节点所属集合代表：" &lt;&lt; endl;
+    for (int i = 1; i &lt;= n; i++) {
+        cout &lt;&lt; "  节点" &lt;&lt; i &lt;&lt; "的代表: " &lt;&lt; uf_find(i) &lt;&lt; endl;
+    }
+    cout &lt;&lt; endl;
+}
+
+// ==============================
+// 示例4：并查集应用 — 统计连通分量
+// ==============================
+void demo_union_find_components() {
+    cout &lt;&lt; "========== 示例4：并查集 — 统计连通分量 ==========" &lt;&lt; endl;
+
+    // 模拟一个社交网络：5个用户，3对好友关系
+    // 关系：(1,2), (2,3), (4,5)
+    // 期望：2个朋友圈 {1,2,3} 和 {4,5}
+    int n = 5;
+    uf_init(n);
+
+    uf_union(1, 2);
+    uf_union(2, 3);
+    uf_union(4, 5);
+
+    // 检查1-3是否在同一个朋友圈
+    cout &lt;&lt; "用户1和3在同一朋友圈？ ";
+    cout &lt;&lt; (uf_find(1) == uf_find(3) ? "是" : "否") &lt;&lt; endl;
+
+    // 检查1-4是否在同一个朋友圈
+    cout &lt;&lt; "用户1和4在同一朋友圈？ ";
+    cout &lt;&lt; (uf_find(1) == uf_find(4) ? "是" : "否") &lt;&lt; endl;
+
+    // 朋友圈总数
+    int circles = 0;
+    for (int i = 1; i &lt;= n; i++) {
+        if (uf_find(i) == i) circles++;
+    }
+    cout &lt;&lt; "朋友圈总数: " &lt;&lt; circles &lt;&lt; endl;
+    cout &lt;&lt; endl;
+}
+
+// ==============================
+// main
+// ==============================
+int main() {
+    ios::sync_with_stdio(false);
+    cin.tie(nullptr);
+
+    cout &lt;&lt; "======================================" &lt;&lt; endl;
+    cout &lt;&lt; "  CSP-J 第44课：树的基础 演示" &lt;&lt; endl;
+    cout &lt;&lt; "======================================" &lt;&lt; endl &lt;&lt; endl;
+
+    demo_tree_traversals();
+    demo_build_tree();
+    demo_union_find();
+    demo_union_find_components();
+
+    return 0;
+}
+</pre>
+    <p class="hint">若曾直接打开 .cpp 出现乱码，是因为浏览器未按 UTF-8 解析纯文本。本页已固定 UTF-8 显示。</p>
+  </div>
+</body>
+</html>

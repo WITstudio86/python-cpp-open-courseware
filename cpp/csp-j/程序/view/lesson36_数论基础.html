@@ -1,0 +1,433 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>lesson36_数论基础</title>
+<style>
+  :root {
+    --bg: #0f1419;
+    --panel: #161d27;
+    --text: #e7ecf3;
+    --muted: #9aa7b8;
+    --gold: #d4a853;
+    --code-bg: #1a1d23;
+    --border: #273244;
+  }
+  * { box-sizing: border-box; }
+  html, body {
+    margin: 0; padding: 0;
+    background: var(--bg);
+    color: var(--text);
+    font-family: -apple-system, BlinkMacSystemFont, "PingFang SC", "Microsoft YaHei", sans-serif;
+    min-height: 100%;
+  }
+  .top {
+    position: sticky; top: 0; z-index: 10;
+    display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between;
+    gap: 10px;
+    padding: 12px 18px;
+    background: linear-gradient(135deg, #0a2540, #1a3a5c);
+    border-bottom: 1px solid rgba(212,168,83,0.35);
+    box-shadow: 0 4px 18px rgba(0,0,0,0.25);
+  }
+  .brand { color: var(--gold); font-weight: 700; font-size: 14px; letter-spacing: 0.04em; }
+  .title { font-size: 15px; font-weight: 600; color: #fff; max-width: 52vw; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .actions { display: flex; gap: 8px; flex-wrap: wrap; }
+  .btn {
+    appearance: none; border: 1px solid rgba(255,255,255,0.18);
+    background: rgba(255,255,255,0.08); color: #fff;
+    border-radius: 999px; padding: 8px 14px; font-size: 13px; font-weight: 600;
+    text-decoration: none; cursor: pointer;
+  }
+  .btn:hover { background: rgba(255,255,255,0.16); }
+  .btn.gold { background: linear-gradient(135deg, #d4a853, #c4922e); color: #0a2540; border-color: transparent; }
+  .meta {
+    padding: 10px 18px; color: var(--muted); font-size: 12px;
+    border-bottom: 1px solid var(--border);
+    background: var(--panel);
+  }
+  .wrap { padding: 16px 18px 40px; }
+  pre {
+    margin: 0;
+    background: var(--code-bg);
+    color: #e1e4e8;
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 18px 20px;
+    overflow: auto;
+    font-family: "SF Mono", "JetBrains Mono", "Fira Code", Consolas, "Courier New", monospace;
+    font-size: 13.5px;
+    line-height: 1.55;
+    white-space: pre;
+    tab-size: 4;
+    box-shadow: 0 8px 28px rgba(0,0,0,0.28);
+  }
+  .hint { margin-top: 12px; color: var(--muted); font-size: 12px; }
+</style>
+</head>
+<body>
+  <div class="top">
+    <div class="brand">CSP-J · 配套代码</div>
+    <div class="title">lesson36_数论基础</div>
+    <div class="actions">
+      <a class="btn" href="../lesson36_数论基础.cpp" download="lesson36_数论基础.cpp">⬇️ 下载 .cpp</a>
+      <a class="btn gold" href="javascript:history.back()">← 返回课件</a>
+    </div>
+  </div>
+  <div class="meta">编码：UTF-8 · 文件：lesson36_数论基础.cpp · 共 349 行</div>
+  <div class="wrap">
+    <pre id="code">/*
+ * CSP-J 备考课程 — 第36课：数论基础
+ *
+ * 本文件包含以下完整实现：
+ *   1. 质数判断 — 试除法（O(√n)）
+ *   2. 埃拉托斯特尼筛法（O(n log log n)）
+ *   3. 线性筛法 / 欧拉筛（O(n)）
+ *   4. 最大公约数 GCD（辗转相除法 + 递归/迭代两种写法）
+ *   5. 最小公倍数 LCM（先除后乘防溢出）
+ *   6. 快速幂（迭代版 + 递归版）
+ *   7. 求一个数的所有约数
+ *
+ * 运行方式：
+ *   g++ -std=c++17 -O2 lesson36_数论基础.cpp -o lesson36 &amp;&amp; ./lesson36
+ *   按照交互提示选择对应功能进行测试
+ */
+
+#include &lt;iostream&gt;
+#include &lt;vector&gt;
+#include &lt;algorithm&gt;
+#include &lt;cmath&gt;
+using namespace std;
+
+// ============================================================
+// 1. 试除法判断质数
+//    时间复杂度：O(√n)
+//    优化：先排除 ≤1 和偶数，然后只检查奇数
+//    注意：i * i 可能溢出，使用 long long 的 i
+// ============================================================
+void demo_is_prime() {
+    cout &lt;&lt; "\n========== 1. 试除法判断质数 ==========\n";
+    cout &lt;&lt; "输入一个正整数 n，判断是否为质数：\n&gt; ";
+
+    long long n;
+    cin &gt;&gt; n;
+
+    bool isPrime;
+    if (n &lt; 2) {
+        isPrime = false;
+    } else if (n == 2) {
+        isPrime = true;
+    } else if (n % 2 == 0) {
+        isPrime = false;
+    } else {
+        isPrime = true;
+        // 使用 long long i 防止 i*i 溢出
+        for (long long i = 3; i * i &lt;= n; i += 2) {
+            if (n % i == 0) {
+                isPrime = false;
+                cout &lt;&lt; "  发现因子: " &lt;&lt; i &lt;&lt; " × " &lt;&lt; n / i &lt;&lt; " = " &lt;&lt; n &lt;&lt; endl;
+                break;
+            }
+        }
+    }
+
+    cout &lt;&lt; n &lt;&lt; (isPrime ? " 是质数" : " 不是质数") &lt;&lt; endl;
+}
+
+// ============================================================
+// 2. 埃拉托斯特尼筛法
+//    时间复杂度：O(n log log n)
+//    空间复杂度：O(n)
+//    核心优化：内层循环从 i*i 开始
+// ============================================================
+void demo_eratosthenes() {
+    cout &lt;&lt; "\n========== 2. 埃氏筛法 ==========\n";
+    cout &lt;&lt; "输入 n，输出 1~n 以内的所有质数：\n&gt; ";
+
+    int n;
+    cin &gt;&gt; n;
+
+    if (n &lt; 2) {
+        cout &lt;&lt; "1~" &lt;&lt; n &lt;&lt; " 范围内没有质数。" &lt;&lt; endl;
+        return;
+    }
+
+    vector&lt;bool&gt; isPrime(n + 1, true);
+    isPrime[0] = isPrime[1] = false;
+
+    // 埃氏筛核心
+    for (int i = 2; (long long)i * i &lt;= n; i++) {
+        if (isPrime[i]) {
+            // 从 i*i 开始标记，因为 2i, 3i, ..., (i-1)*i 已被之前的质数筛过
+            for (int j = i * i; j &lt;= n; j += i) {
+                isPrime[j] = false;
+            }
+        }
+    }
+
+    // 收集质数
+    vector&lt;int&gt; primes;
+    for (int i = 2; i &lt;= n; i++) {
+        if (isPrime[i]) {
+            primes.push_back(i);
+        }
+    }
+
+    cout &lt;&lt; "1~" &lt;&lt; n &lt;&lt; " 内共有 " &lt;&lt; primes.size() &lt;&lt; " 个质数。" &lt;&lt; endl;
+    cout &lt;&lt; "质数列表: ";
+    for (int p : primes) {
+        cout &lt;&lt; p &lt;&lt; " ";
+    }
+    cout &lt;&lt; endl;
+}
+
+// ============================================================
+// 3. 线性筛法（欧拉筛）
+//    时间复杂度：O(n) — 每个合数只被其最小质因子筛一次
+//    核心：if (i % primes[j] == 0) break;
+// ============================================================
+void demo_linear_sieve() {
+    cout &lt;&lt; "\n========== 3. 线性筛法（欧拉筛） ==========\n";
+    cout &lt;&lt; "输入 n，输出 1~n 以内的所有质数：\n&gt; ";
+
+    int n;
+    cin &gt;&gt; n;
+
+    if (n &lt; 2) {
+        cout &lt;&lt; "1~" &lt;&lt; n &lt;&lt; " 范围内没有质数。" &lt;&lt; endl;
+        return;
+    }
+
+    vector&lt;bool&gt; isPrime(n + 1, true);
+    vector&lt;int&gt; primes;
+    isPrime[0] = isPrime[1] = false;
+
+    for (int i = 2; i &lt;= n; i++) {
+        if (isPrime[i]) {
+            primes.push_back(i);
+        }
+        // 用当前质数筛掉一批合数
+        for (int p : primes) {
+            if ((long long)i * p &gt; n) break;
+            isPrime[i * p] = false;
+            // 关键行：p 是 i 的最小质因子时停止
+            // 保证每个合数只被其最小质因子筛一次
+            if (i % p == 0) break;
+        }
+    }
+
+    cout &lt;&lt; "1~" &lt;&lt; n &lt;&lt; " 内共有 " &lt;&lt; primes.size() &lt;&lt; " 个质数。" &lt;&lt; endl;
+    cout &lt;&lt; "质数列表: ";
+    for (int p : primes) {
+        cout &lt;&lt; p &lt;&lt; " ";
+    }
+    cout &lt;&lt; endl;
+}
+
+// ============================================================
+// 4. 最大公约数 GCD
+//    辗转相除法（欧几里得算法）：gcd(a, b) = gcd(b, a % b)
+//    时间复杂度：O(log min(a, b))
+//    提供递归（简洁）和迭代（无递归栈开销）两种写法
+// ============================================================
+
+// 递归版 GCD
+long long gcd_recursive(long long a, long long b) {
+    return b == 0 ? a : gcd_recursive(b, a % b);
+}
+
+// 迭代版 GCD
+long long gcd_iterative(long long a, long long b) {
+    while (b != 0) {
+        long long t = b;
+        b = a % b;
+        a = t;
+    }
+    return a;
+}
+
+void demo_gcd() {
+    cout &lt;&lt; "\n========== 4. 最大公约数 GCD ==========\n";
+    cout &lt;&lt; "输入两个正整数 a 和 b：\n&gt; ";
+
+    long long a, b;
+    cin &gt;&gt; a &gt;&gt; b;
+
+    long long g1 = gcd_recursive(a, b);
+    long long g2 = gcd_iterative(a, b);
+
+    cout &lt;&lt; "递归版 GCD(" &lt;&lt; a &lt;&lt; ", " &lt;&lt; b &lt;&lt; ") = " &lt;&lt; g1 &lt;&lt; endl;
+    cout &lt;&lt; "迭代版 GCD(" &lt;&lt; a &lt;&lt; ", " &lt;&lt; b &lt;&lt; ") = " &lt;&lt; g2 &lt;&lt; endl;
+
+    // 验证一致性
+    if (g1 == g2) {
+        cout &lt;&lt; "（两种实现结果一致）" &lt;&lt; endl;
+    }
+}
+
+// ============================================================
+// 5. 最小公倍数 LCM
+//    lcm(a, b) = a / gcd(a, b) * b
+//    注意：必须“先除后乘”，否则 a*b 可能溢出
+// ============================================================
+void demo_lcm() {
+    cout &lt;&lt; "\n========== 5. 最小公倍数 LCM ==========\n";
+    cout &lt;&lt; "输入两个正整数 a 和 b：\n&gt; ";
+
+    long long a, b;
+    cin &gt;&gt; a &gt;&gt; b;
+
+    long long g = gcd_recursive(a, b);
+    // 先除后乘，防止溢出
+    long long l = a / g * b;
+
+    cout &lt;&lt; "GCD(" &lt;&lt; a &lt;&lt; ", " &lt;&lt; b &lt;&lt; ") = " &lt;&lt; g &lt;&lt; endl;
+    cout &lt;&lt; "LCM(" &lt;&lt; a &lt;&lt; ", " &lt;&lt; b &lt;&lt; ") = " &lt;&lt; l &lt;&lt; endl;
+    cout &lt;&lt; "验证: a × b = " &lt;&lt; a * b &lt;&lt; ", GCD × LCM = " &lt;&lt; g * l &lt;&lt; endl;
+}
+
+// ============================================================
+// 6. 快速幂（二分思想）
+//    计算 a^b mod m，时间复杂度 O(log b)
+//    提供迭代版（最常用）和递归版两种写法
+// ============================================================
+
+// 快速幂 — 迭代版
+long long quick_pow_iter(long long a, long long b, long long mod) {
+    long long res = 1;
+    a %= mod;
+    while (b &gt; 0) {
+        if (b &amp; 1) {          // b 的当前二进制位为 1
+            res = res * a % mod;
+        }
+        a = a * a % mod;      // a = a^2, a^4, a^8, ...
+        b &gt;&gt;= 1;              // b 右移一位
+    }
+    return res;
+}
+
+// 快速幂 — 递归版
+long long quick_pow_rec(long long a, long long b, long long mod) {
+    if (b == 0) return 1;
+    long long half = quick_pow_rec(a, b / 2, mod);
+    half = half * half % mod;
+    if (b % 2 == 1) {
+        half = half * a % mod;
+    }
+    return half;
+}
+
+void demo_quick_pow() {
+    cout &lt;&lt; "\n========== 6. 快速幂 ==========\n";
+    cout &lt;&lt; "计算 a^b mod m\n";
+    cout &lt;&lt; "输入 a b m（空格分隔）：\n&gt; ";
+
+    long long a, b, m;
+    cin &gt;&gt; a &gt;&gt; b &gt;&gt; m;
+
+    long long r1 = quick_pow_iter(a, b, m);
+    long long r2 = quick_pow_rec(a, b, m);
+
+    cout &lt;&lt; "迭代版: " &lt;&lt; a &lt;&lt; "^" &lt;&lt; b &lt;&lt; " mod " &lt;&lt; m &lt;&lt; " = " &lt;&lt; r1 &lt;&lt; endl;
+    cout &lt;&lt; "递归版: " &lt;&lt; a &lt;&lt; "^" &lt;&lt; b &lt;&lt; " mod " &lt;&lt; m &lt;&lt; " = " &lt;&lt; r2 &lt;&lt; endl;
+
+    if (r1 == r2) {
+        cout &lt;&lt; "（两种实现结果一致）" &lt;&lt; endl;
+    }
+
+    // 额外演示：取模 1e9+7 的快速幂
+    cout &lt;&lt; "\n使用 MOD = 1e9+7 的示例：" &lt;&lt; endl;
+    const long long MOD7 = 1000000007;
+    cout &lt;&lt; "2^10 mod 1e9+7 = " &lt;&lt; quick_pow_iter(2, 10, MOD7) &lt;&lt; endl;
+    cout &lt;&lt; "3^20 mod 1e9+7 = " &lt;&lt; quick_pow_iter(3, 20, MOD7) &lt;&lt; endl;
+    cout &lt;&lt; "5^100 mod 1e9+7 = " &lt;&lt; quick_pow_iter(5, 100, MOD7) &lt;&lt; endl;
+}
+
+// ============================================================
+// 7. 求一个数的所有约数
+//    利用"约数成对出现"的性质，只需遍历到 √n
+// ============================================================
+void demo_divisors() {
+    cout &lt;&lt; "\n========== 7. 求一个数的所有约数 ==========\n";
+    cout &lt;&lt; "输入一个正整数 n：\n&gt; ";
+
+    long long n;
+    cin &gt;&gt; n;
+
+    if (n &lt;= 0) {
+        cout &lt;&lt; "请输入正整数。" &lt;&lt; endl;
+        return;
+    }
+
+    vector&lt;long long&gt; divisors;
+    for (long long i = 1; i * i &lt;= n; i++) {
+        if (n % i == 0) {
+            divisors.push_back(i);
+            if (i != n / i) {
+                divisors.push_back(n / i);  // 成对的约数
+            }
+        }
+    }
+    sort(divisors.begin(), divisors.end());
+
+    cout &lt;&lt; n &lt;&lt; " 的所有约数 (" &lt;&lt; divisors.size() &lt;&lt; " 个): ";
+    for (long long d : divisors) {
+        cout &lt;&lt; d &lt;&lt; " ";
+    }
+    cout &lt;&lt; endl;
+
+    // 判断 n 是否为完全数（约数和 = 2n）
+    long long sum = 0;
+    for (long long d : divisors) {
+        sum += d;
+    }
+    if (sum == 2 * n) {
+        cout &lt;&lt; n &lt;&lt; " 是完全数！（约数之和 = " &lt;&lt; sum &lt;&lt; "）" &lt;&lt; endl;
+    } else {
+        cout &lt;&lt; "约数之和 = " &lt;&lt; sum &lt;&lt; endl;
+    }
+}
+
+// ============================================================
+// 主菜单
+// ============================================================
+int main() {
+    ios::sync_with_stdio(false);
+    cin.tie(nullptr);
+
+    cout &lt;&lt; "================================================\n";
+    cout &lt;&lt; "  CSP-J 第36课：数论基础 — 代码演示\n";
+    cout &lt;&lt; "================================================\n";
+    cout &lt;&lt; "  1. 试除法判断质数\n";
+    cout &lt;&lt; "  2. 埃氏筛法求质数\n";
+    cout &lt;&lt; "  3. 线性筛法求质数\n";
+    cout &lt;&lt; "  4. 最大公约数 GCD\n";
+    cout &lt;&lt; "  5. 最小公倍数 LCM\n";
+    cout &lt;&lt; "  6. 快速幂\n";
+    cout &lt;&lt; "  7. 求所有约数\n";
+    cout &lt;&lt; "================================================\n";
+    cout &lt;&lt; "请选择功能 (1-7)：\n&gt; ";
+
+    int choice;
+    cin &gt;&gt; choice;
+
+    switch (choice) {
+        case 1: demo_is_prime(); break;
+        case 2: demo_eratosthenes(); break;
+        case 3: demo_linear_sieve(); break;
+        case 4: demo_gcd(); break;
+        case 5: demo_lcm(); break;
+        case 6: demo_quick_pow(); break;
+        case 7: demo_divisors(); break;
+        default: cout &lt;&lt; "无效选择！" &lt;&lt; endl; break;
+    }
+
+    cout &lt;&lt; "\n演示结束。\n";
+    return 0;
+}
+</pre>
+    <p class="hint">若曾直接打开 .cpp 出现乱码，是因为浏览器未按 UTF-8 解析纯文本。本页已固定 UTF-8 显示。</p>
+  </div>
+</body>
+</html>

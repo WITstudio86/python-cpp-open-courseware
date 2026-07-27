@@ -1,0 +1,348 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>lesson35_递推与数学基础</title>
+<style>
+  :root {
+    --bg: #0f1419;
+    --panel: #161d27;
+    --text: #e7ecf3;
+    --muted: #9aa7b8;
+    --gold: #d4a853;
+    --code-bg: #1a1d23;
+    --border: #273244;
+  }
+  * { box-sizing: border-box; }
+  html, body {
+    margin: 0; padding: 0;
+    background: var(--bg);
+    color: var(--text);
+    font-family: -apple-system, BlinkMacSystemFont, "PingFang SC", "Microsoft YaHei", sans-serif;
+    min-height: 100%;
+  }
+  .top {
+    position: sticky; top: 0; z-index: 10;
+    display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between;
+    gap: 10px;
+    padding: 12px 18px;
+    background: linear-gradient(135deg, #0a2540, #1a3a5c);
+    border-bottom: 1px solid rgba(212,168,83,0.35);
+    box-shadow: 0 4px 18px rgba(0,0,0,0.25);
+  }
+  .brand { color: var(--gold); font-weight: 700; font-size: 14px; letter-spacing: 0.04em; }
+  .title { font-size: 15px; font-weight: 600; color: #fff; max-width: 52vw; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .actions { display: flex; gap: 8px; flex-wrap: wrap; }
+  .btn {
+    appearance: none; border: 1px solid rgba(255,255,255,0.18);
+    background: rgba(255,255,255,0.08); color: #fff;
+    border-radius: 999px; padding: 8px 14px; font-size: 13px; font-weight: 600;
+    text-decoration: none; cursor: pointer;
+  }
+  .btn:hover { background: rgba(255,255,255,0.16); }
+  .btn.gold { background: linear-gradient(135deg, #d4a853, #c4922e); color: #0a2540; border-color: transparent; }
+  .meta {
+    padding: 10px 18px; color: var(--muted); font-size: 12px;
+    border-bottom: 1px solid var(--border);
+    background: var(--panel);
+  }
+  .wrap { padding: 16px 18px 40px; }
+  pre {
+    margin: 0;
+    background: var(--code-bg);
+    color: #e1e4e8;
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 18px 20px;
+    overflow: auto;
+    font-family: "SF Mono", "JetBrains Mono", "Fira Code", Consolas, "Courier New", monospace;
+    font-size: 13.5px;
+    line-height: 1.55;
+    white-space: pre;
+    tab-size: 4;
+    box-shadow: 0 8px 28px rgba(0,0,0,0.28);
+  }
+  .hint { margin-top: 12px; color: var(--muted); font-size: 12px; }
+</style>
+</head>
+<body>
+  <div class="top">
+    <div class="brand">CSP-J · 配套代码</div>
+    <div class="title">lesson35_递推与数学基础</div>
+    <div class="actions">
+      <a class="btn" href="../lesson35_递推与数学基础.cpp" download="lesson35_递推与数学基础.cpp">⬇️ 下载 .cpp</a>
+      <a class="btn gold" href="javascript:history.back()">← 返回课件</a>
+    </div>
+  </div>
+  <div class="meta">编码：UTF-8 · 文件：lesson35_递推与数学基础.cpp · 共 264 行</div>
+  <div class="wrap">
+    <pre id="code">/*
+ * CSP-J 备考课程 — 第35课：递推与数学基础
+ *
+ * 本文件包含以下完整实现：
+ *   1. 斐波那契数列（递推）
+ *   2. 一维前缀和（区间和 O(1) 查询）
+ *   3. 二维前缀和（矩形区域和 O(1) 查询）
+ *   4. 差分数组（区间修改 O(1)，单点查询 O(1)）
+ *
+ * 运行方式：
+ *   g++ -std=c++17 -O2 lesson35_递推与数学基础.cpp -o lesson35 &amp;&amp; ./lesson35
+ *   按照交互提示选择对应功能进行测试
+ */
+
+#include &lt;iostream&gt;
+#include &lt;vector&gt;
+#include &lt;iomanip&gt;
+using namespace std;
+
+const int MOD = 1e9 + 7;
+
+// ============================================================
+// 1. 斐波那契数列 — 递推实现（迭代）
+//    时间复杂度：O(n)
+//    空间复杂度：O(1)
+//    注意：每一步都要取模，防止溢出
+// ============================================================
+void demo_fibonacci() {
+    cout &lt;&lt; "\n========== 1. 斐波那契数列（递推） ==========\n";
+    cout &lt;&lt; "输入 n，计算第 n 个斐波那契数（对 1e9+7 取模）：\n&gt; ";
+
+    int n;
+    cin &gt;&gt; n;
+
+    if (n &lt;= 0) {
+        cout &lt;&lt; "n 必须为正整数" &lt;&lt; endl;
+        return;
+    }
+    if (n &lt;= 2) {
+        cout &lt;&lt; "F(" &lt;&lt; n &lt;&lt; ") = 1" &lt;&lt; endl;
+        return;
+    }
+
+    long long a = 1, b = 1, c;
+    for (int i = 3; i &lt;= n; i++) {
+        c = (a + b) % MOD;
+        a = b;
+        b = c;
+    }
+
+    cout &lt;&lt; "F(" &lt;&lt; n &lt;&lt; ") = " &lt;&lt; b &lt;&lt; " (mod " &lt;&lt; MOD &lt;&lt; ")" &lt;&lt; endl;
+
+    // 额外输出前若干项供参考
+    cout &lt;&lt; "前 " &lt;&lt; min(n, 20) &lt;&lt; " 项斐波那契数: ";
+    a = 1, b = 1;
+    if (min(n, 20) &gt;= 1) cout &lt;&lt; 1;
+    if (min(n, 20) &gt;= 2) cout &lt;&lt; " " &lt;&lt; 1;
+    for (int i = 3; i &lt;= min(n, 20); i++) {
+        c = a + b;
+        a = b;
+        b = c;
+        cout &lt;&lt; " " &lt;&lt; c;
+    }
+    cout &lt;&lt; endl;
+}
+
+// ============================================================
+// 2. 一维前缀和
+//    构建：pre[i] = pre[i-1] + a[i]
+//    查询：[l, r] 的和 = pre[r] - pre[l-1]
+//    时间复杂度：预处理 O(n)，查询 O(1)
+// ============================================================
+void demo_prefix_sum_1d() {
+    cout &lt;&lt; "\n========== 2. 一维前缀和 ==========\n";
+    cout &lt;&lt; "输入数组长度 n 和询问次数 q：\n&gt; ";
+
+    int n, q;
+    cin &gt;&gt; n &gt;&gt; q;
+
+    vector&lt;long long&gt; a(n + 1);
+    vector&lt;long long&gt; pre(n + 1, 0);
+
+    cout &lt;&lt; "输入 " &lt;&lt; n &lt;&lt; " 个整数（空格分隔）：\n&gt; ";
+    for (int i = 1; i &lt;= n; i++) {
+        cin &gt;&gt; a[i];
+        pre[i] = pre[i - 1] + a[i];
+    }
+
+    cout &lt;&lt; "\n前缀和数组已构建。\n";
+    cout &lt;&lt; "前缀和数组: ";
+    for (int i = 1; i &lt;= n; i++) {
+        cout &lt;&lt; pre[i] &lt;&lt; " ";
+    }
+    cout &lt;&lt; endl;
+
+    cout &lt;&lt; "\n请输入 " &lt;&lt; q &lt;&lt; " 个询问，每行 l r（1 &lt;= l &lt;= r &lt;= " &lt;&lt; n &lt;&lt; "）：\n";
+    while (q--) {
+        int l, r;
+        cin &gt;&gt; l &gt;&gt; r;
+        cout &lt;&lt; "区间 [" &lt;&lt; l &lt;&lt; ", " &lt;&lt; r &lt;&lt; "] 的和 = "
+             &lt;&lt; pre[r] - pre[l - 1] &lt;&lt; endl;
+    }
+}
+
+// ============================================================
+// 3. 二维前缀和
+//    构建：pre[i][j] = pre[i-1][j] + pre[i][j-1] - pre[i-1][j-1] + a[i][j]
+//    查询：(x1,y1) 到 (x2,y2) 的和 =
+//          pre[x2][y2] - pre[x1-1][y2] - pre[x2][y1-1] + pre[x1-1][y1-1]
+//    时间复杂度：预处理 O(n*m)，查询 O(1)
+// ============================================================
+void demo_prefix_sum_2d() {
+    cout &lt;&lt; "\n========== 3. 二维前缀和 ==========\n";
+    cout &lt;&lt; "输入矩阵行数 n、列数 m 和询问次数 q：\n&gt; ";
+
+    int n, m, q;
+    cin &gt;&gt; n &gt;&gt; m &gt;&gt; q;
+
+    vector&lt;vector&lt;long long&gt;&gt; a(n + 1, vector&lt;long long&gt;(m + 1));
+    vector&lt;vector&lt;long long&gt;&gt; pre(n + 1, vector&lt;long long&gt;(m + 1, 0));
+
+    cout &lt;&lt; "输入 " &lt;&lt; n &lt;&lt; " 行 " &lt;&lt; m &lt;&lt; " 列的矩阵：\n";
+    for (int i = 1; i &lt;= n; i++) {
+        for (int j = 1; j &lt;= m; j++) {
+            cin &gt;&gt; a[i][j];
+            pre[i][j] = pre[i-1][j] + pre[i][j-1] - pre[i-1][j-1] + a[i][j];
+        }
+    }
+
+    cout &lt;&lt; "\n二维前缀和矩阵：\n";
+    for (int i = 1; i &lt;= n; i++) {
+        for (int j = 1; j &lt;= m; j++) {
+            cout &lt;&lt; setw(4) &lt;&lt; pre[i][j] &lt;&lt; " ";
+        }
+        cout &lt;&lt; endl;
+    }
+
+    cout &lt;&lt; "\n请输入 " &lt;&lt; q &lt;&lt; " 个询问，每行 x1 y1 x2 y2：\n";
+    while (q--) {
+        int x1, y1, x2, y2;
+        cin &gt;&gt; x1 &gt;&gt; y1 &gt;&gt; x2 &gt;&gt; y2;
+        long long sum = pre[x2][y2] - pre[x1-1][y2]
+                      - pre[x2][y1-1] + pre[x1-1][y1-1];
+        cout &lt;&lt; "矩形 (" &lt;&lt; x1 &lt;&lt; "," &lt;&lt; y1 &lt;&lt; ") 到 ("
+             &lt;&lt; x2 &lt;&lt; "," &lt;&lt; y2 &lt;&lt; ") 的和 = " &lt;&lt; sum &lt;&lt; endl;
+    }
+}
+
+// ============================================================
+// 4. 差分数组（一维）
+//    构建：d[i] = a[i] - a[i-1]
+//    区间修改 [l, r] 加 x：d[l] += x, d[r+1] -= x
+//    还原：对 d 求前缀和
+//    时间复杂度：修改 O(1)，还原 O(n)
+// ============================================================
+void demo_difference_array() {
+    cout &lt;&lt; "\n========== 4. 差分数组（一维区间修改） ==========\n";
+    cout &lt;&lt; "输入数组长度 n 和修改操作次数 m：\n&gt; ";
+
+    int n, m;
+    cin &gt;&gt; n &gt;&gt; m;
+
+    vector&lt;long long&gt; a(n + 1);
+    vector&lt;long long&gt; d(n + 2, 0);  // 多开一个位置，防止 r+1 越界
+
+    cout &lt;&lt; "输入 " &lt;&lt; n &lt;&lt; " 个初始元素：\n&gt; ";
+    for (int i = 1; i &lt;= n; i++) {
+        cin &gt;&gt; a[i];
+        d[i] = a[i] - a[i - 1];  // 构建差分数组
+    }
+
+    cout &lt;&lt; "\n初始差分数组: ";
+    for (int i = 1; i &lt;= n; i++) {
+        cout &lt;&lt; d[i] &lt;&lt; " ";
+    }
+    cout &lt;&lt; endl;
+
+    cout &lt;&lt; "\n请输入 " &lt;&lt; m &lt;&lt; " 个区间修改操作，每行 l r x（区间 [l,r] 加上 x）：\n";
+    while (m--) {
+        int l, r;
+        long long x;
+        cin &gt;&gt; l &gt;&gt; r &gt;&gt; x;
+        d[l] += x;
+        d[r + 1] -= x;
+        cout &lt;&lt; "  已标记：d[" &lt;&lt; l &lt;&lt; "] += " &lt;&lt; x
+             &lt;&lt; ", d[" &lt;&lt; r+1 &lt;&lt; "] -= " &lt;&lt; x &lt;&lt; endl;
+    }
+
+    // 对差分数组求前缀和，还原修改后的数组
+    cout &lt;&lt; "\n修改后的数组: ";
+    for (int i = 1; i &lt;= n; i++) {
+        d[i] += d[i - 1];
+        cout &lt;&lt; d[i] &lt;&lt; " ";
+    }
+    cout &lt;&lt; endl;
+}
+
+// ============================================================
+// 额外演示：卡特兰数（递推实现）
+// ============================================================
+void demo_catalan() {
+    cout &lt;&lt; "\n========== 5. 卡特兰数（递推） ==========\n";
+    cout &lt;&lt; "输入 n，计算第 n 个卡特兰数：\n&gt; ";
+
+    int n;
+    cin &gt;&gt; n;
+
+    if (n &lt; 0) {
+        cout &lt;&lt; "n 必须为非负整数" &lt;&lt; endl;
+        return;
+    }
+
+    vector&lt;long long&gt; C(n + 1, 0);
+    C[0] = 1;
+
+    for (int i = 1; i &lt;= n; i++) {
+        for (int j = 0; j &lt; i; j++) {
+            C[i] += C[j] * C[i - 1 - j];
+        }
+    }
+
+    cout &lt;&lt; "卡特兰数 C(" &lt;&lt; n &lt;&lt; ") = " &lt;&lt; C[n] &lt;&lt; endl;
+
+    // 输出前几项卡特兰数
+    cout &lt;&lt; "卡特兰数列前 " &lt;&lt; min(n + 1, 15) &lt;&lt; " 项: ";
+    for (int i = 0; i &lt;= min(n, 14); i++) {
+        cout &lt;&lt; C[i] &lt;&lt; " ";
+    }
+    cout &lt;&lt; endl;
+}
+
+// ============================================================
+// 主菜单
+// ============================================================
+int main() {
+    ios::sync_with_stdio(false);
+    cin.tie(nullptr);
+
+    cout &lt;&lt; "================================================\n";
+    cout &lt;&lt; "  CSP-J 第35课：递推与数学基础 — 代码演示\n";
+    cout &lt;&lt; "================================================\n";
+    cout &lt;&lt; "  1. 斐波那契数列\n";
+    cout &lt;&lt; "  2. 一维前缀和\n";
+    cout &lt;&lt; "  3. 二维前缀和\n";
+    cout &lt;&lt; "  4. 差分数组\n";
+    cout &lt;&lt; "  5. 卡特兰数\n";
+    cout &lt;&lt; "================================================\n";
+    cout &lt;&lt; "请选择功能 (1-5)：\n&gt; ";
+
+    int choice;
+    cin &gt;&gt; choice;
+
+    switch (choice) {
+        case 1: demo_fibonacci(); break;
+        case 2: demo_prefix_sum_1d(); break;
+        case 3: demo_prefix_sum_2d(); break;
+        case 4: demo_difference_array(); break;
+        case 5: demo_catalan(); break;
+        default: cout &lt;&lt; "无效选择！" &lt;&lt; endl; break;
+    }
+
+    cout &lt;&lt; "\n演示结束。\n";
+    return 0;
+}
+</pre>
+    <p class="hint">若曾直接打开 .cpp 出现乱码，是因为浏览器未按 UTF-8 解析纯文本。本页已固定 UTF-8 显示。</p>
+  </div>
+</body>
+</html>

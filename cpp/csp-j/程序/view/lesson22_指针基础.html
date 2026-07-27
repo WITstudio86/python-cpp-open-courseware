@@ -1,0 +1,486 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>lesson22_指针基础</title>
+<style>
+  :root {
+    --bg: #0f1419;
+    --panel: #161d27;
+    --text: #e7ecf3;
+    --muted: #9aa7b8;
+    --gold: #d4a853;
+    --code-bg: #1a1d23;
+    --border: #273244;
+  }
+  * { box-sizing: border-box; }
+  html, body {
+    margin: 0; padding: 0;
+    background: var(--bg);
+    color: var(--text);
+    font-family: -apple-system, BlinkMacSystemFont, "PingFang SC", "Microsoft YaHei", sans-serif;
+    min-height: 100%;
+  }
+  .top {
+    position: sticky; top: 0; z-index: 10;
+    display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between;
+    gap: 10px;
+    padding: 12px 18px;
+    background: linear-gradient(135deg, #0a2540, #1a3a5c);
+    border-bottom: 1px solid rgba(212,168,83,0.35);
+    box-shadow: 0 4px 18px rgba(0,0,0,0.25);
+  }
+  .brand { color: var(--gold); font-weight: 700; font-size: 14px; letter-spacing: 0.04em; }
+  .title { font-size: 15px; font-weight: 600; color: #fff; max-width: 52vw; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .actions { display: flex; gap: 8px; flex-wrap: wrap; }
+  .btn {
+    appearance: none; border: 1px solid rgba(255,255,255,0.18);
+    background: rgba(255,255,255,0.08); color: #fff;
+    border-radius: 999px; padding: 8px 14px; font-size: 13px; font-weight: 600;
+    text-decoration: none; cursor: pointer;
+  }
+  .btn:hover { background: rgba(255,255,255,0.16); }
+  .btn.gold { background: linear-gradient(135deg, #d4a853, #c4922e); color: #0a2540; border-color: transparent; }
+  .meta {
+    padding: 10px 18px; color: var(--muted); font-size: 12px;
+    border-bottom: 1px solid var(--border);
+    background: var(--panel);
+  }
+  .wrap { padding: 16px 18px 40px; }
+  pre {
+    margin: 0;
+    background: var(--code-bg);
+    color: #e1e4e8;
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 18px 20px;
+    overflow: auto;
+    font-family: "SF Mono", "JetBrains Mono", "Fira Code", Consolas, "Courier New", monospace;
+    font-size: 13.5px;
+    line-height: 1.55;
+    white-space: pre;
+    tab-size: 4;
+    box-shadow: 0 8px 28px rgba(0,0,0,0.28);
+  }
+  .hint { margin-top: 12px; color: var(--muted); font-size: 12px; }
+</style>
+</head>
+<body>
+  <div class="top">
+    <div class="brand">CSP-J · 配套代码</div>
+    <div class="title">lesson22_指针基础</div>
+    <div class="actions">
+      <a class="btn" href="../lesson22_指针基础.cpp" download="lesson22_指针基础.cpp">⬇️ 下载 .cpp</a>
+      <a class="btn gold" href="javascript:history.back()">← 返回课件</a>
+    </div>
+  </div>
+  <div class="meta">编码：UTF-8 · 文件：lesson22_指针基础.cpp · 共 402 行</div>
+  <div class="wrap">
+    <pre id="code">#include &lt;iostream&gt;
+#include &lt;cstdio&gt;
+using namespace std;
+
+// ==================== 辅助函数 ====================
+void printSeparator(const string &amp;title) {
+    cout &lt;&lt; "\n========== " &lt;&lt; title &lt;&lt; " ==========" &lt;&lt; endl;
+}
+
+// ==================== 1. 指针基本声明与初始化 ====================
+void demo1_BasicPointer() {
+    printSeparator("1. 指针的基本声明与初始化");
+
+    int a = 42;
+    double b = 3.14;
+    char c = 'A';
+
+    // 声明指针并初始化
+    int *pInt = &amp;a;        // pInt 指向 int 变量 a
+    double *pDouble = &amp;b;  // pDouble 指向 double 变量 b
+    char *pChar = &amp;c;      // pChar 指向 char 变量 c
+
+    cout &lt;&lt; "a 的值: " &lt;&lt; a &lt;&lt; ", a 的地址: " &lt;&lt; &amp;a &lt;&lt; endl;
+    cout &lt;&lt; "pInt 存储的地址: " &lt;&lt; pInt &lt;&lt; ", *pInt = " &lt;&lt; *pInt &lt;&lt; endl;
+    cout &lt;&lt; endl;
+
+    cout &lt;&lt; "b 的值: " &lt;&lt; b &lt;&lt; ", b 的地址: " &lt;&lt; &amp;b &lt;&lt; endl;
+    cout &lt;&lt; "pDouble 存储的地址: " &lt;&lt; pDouble &lt;&lt; ", *pDouble = " &lt;&lt; *pDouble &lt;&lt; endl;
+    cout &lt;&lt; endl;
+
+    cout &lt;&lt; "c 的值: " &lt;&lt; c &lt;&lt; ", c 的地址: " &lt;&lt; (void*)&amp;c &lt;&lt; endl;
+    cout &lt;&lt; "pChar 存储的地址: " &lt;&lt; (void*)pChar &lt;&lt; ", *pChar = " &lt;&lt; *pChar &lt;&lt; endl;
+
+    // 指针本身也是变量，也有自己的地址
+    cout &lt;&lt; "\n指针本身的地址:" &lt;&lt; endl;
+    cout &lt;&lt; "&amp;pInt = " &lt;&lt; &amp;pInt &lt;&lt; endl;
+    cout &lt;&lt; "&amp;pDouble = " &lt;&lt; &amp;pDouble &lt;&lt; endl;
+    cout &lt;&lt; "&amp;pChar = " &lt;&lt; (void*)&amp;pChar &lt;&lt; endl;
+}
+
+// ==================== 2. 取地址 &amp; 与 解引用 * ====================
+void demo2_AddressOfAndDereference() {
+    printSeparator("2. 取地址 &amp; 与 解引用 *");
+
+    int x = 100;
+    int *ptr = &amp;x;  // &amp; 取地址
+
+    cout &lt;&lt; "初始状态: x = " &lt;&lt; x &lt;&lt; endl;
+    cout &lt;&lt; "通过 *ptr 读取值: " &lt;&lt; *ptr &lt;&lt; endl;
+
+    // 通过指针修改原始变量的值
+    *ptr = 200;
+    cout &lt;&lt; "*ptr = 200 后, x = " &lt;&lt; x &lt;&lt; " (原始变量被修改！)" &lt;&lt; endl;
+
+    // 改变指针的指向
+    int y = 999;
+    ptr = &amp;y;
+    cout &lt;&lt; "ptr 指向 y 后, *ptr = " &lt;&lt; *ptr &lt;&lt; endl;
+
+    // 演示指针与普通变量的独立性
+    int m = 50;
+    int *p1 = &amp;m;
+    int *p2 = p1;    // p2 也指向 m
+    *p1 = 60;
+    cout &lt;&lt; "\np1 和 p2 同时指向 m:" &lt;&lt; endl;
+    cout &lt;&lt; "m=" &lt;&lt; m &lt;&lt; ", *p1=" &lt;&lt; *p1 &lt;&lt; ", *p2=" &lt;&lt; *p2 &lt;&lt; " (三者一致)" &lt;&lt; endl;
+}
+
+// ==================== 3. 指针算术运算 ====================
+void demo3_PointerArithmetic() {
+    printSeparator("3. 指针算术运算与数组遍历");
+
+    int arr[8] = {10, 20, 30, 40, 50, 60, 70, 80};
+    int n = 8;
+
+    cout &lt;&lt; "数组元素: ";
+    for (int i = 0; i &lt; n; i++) {
+        cout &lt;&lt; arr[i] &lt;&lt; " ";
+    }
+    cout &lt;&lt; endl;
+
+    int *p = arr;  // p 指向 arr[0]
+
+    // 指针与数组名的关系
+    cout &lt;&lt; "\narr = " &lt;&lt; arr &lt;&lt; " (数组首地址)" &lt;&lt; endl;
+    cout &lt;&lt; "p   = " &lt;&lt; p &lt;&lt; " (ptr 指向 arr[0])" &lt;&lt; endl;
+    cout &lt;&lt; "&amp;arr[0] = " &lt;&lt; &amp;arr[0] &lt;&lt; " (与 arr 相同)" &lt;&lt; endl;
+
+    // 指针算术：p + n
+    cout &lt;&lt; "\n指针算术运算 (int 类型, sizeof(int)=" &lt;&lt; sizeof(int) &lt;&lt; "):" &lt;&lt; endl;
+    cout &lt;&lt; "p     = " &lt;&lt; p &lt;&lt; " -&gt; *p = " &lt;&lt; *p &lt;&lt; endl;
+    cout &lt;&lt; "p + 1 = " &lt;&lt; p + 1 &lt;&lt; " -&gt; *(p+1) = " &lt;&lt; *(p + 1) &lt;&lt; endl;
+    cout &lt;&lt; "p + 3 = " &lt;&lt; p + 3 &lt;&lt; " -&gt; *(p+3) = " &lt;&lt; *(p + 3) &lt;&lt; endl;
+
+    // 用指针遍历数组
+    cout &lt;&lt; "\n用指针遍历数组: ";
+    for (int *q = arr; q &lt; arr + n; q++) {
+        cout &lt;&lt; *q &lt;&lt; " ";
+    }
+    cout &lt;&lt; endl;
+
+    // 验证 arr[i] == *(arr + i) == p[i] == *(p + i)
+    cout &lt;&lt; "\narr[2] 的四种等价访问方式:" &lt;&lt; endl;
+    cout &lt;&lt; "arr[2]   = " &lt;&lt; arr[2] &lt;&lt; endl;
+    cout &lt;&lt; "*(arr+2) = " &lt;&lt; *(arr + 2) &lt;&lt; endl;
+    cout &lt;&lt; "p[2]     = " &lt;&lt; p[2] &lt;&lt; endl;
+    cout &lt;&lt; "*(p+2)   = " &lt;&lt; *(p + 2) &lt;&lt; endl;
+
+    // 指针相减
+    int *pStart = &amp;arr[2];
+    int *pEnd = &amp;arr[6];
+    cout &lt;&lt; "\n&amp;arr[6] - &amp;arr[2] = " &lt;&lt; pEnd - pStart &lt;&lt; " (元素个数)" &lt;&lt; endl;
+
+    // 演示不同类型指针的步长
+    double dArr[3] = {1.1, 2.2, 3.3};
+    double *dp = dArr;
+    cout &lt;&lt; "\n不同类型指针运算的步长差异:" &lt;&lt; endl;
+    cout &lt;&lt; "double *p  : p=" &lt;&lt; dp &lt;&lt; ", p+1=" &lt;&lt; dp + 1
+         &lt;&lt; " (差 " &lt;&lt; sizeof(double) &lt;&lt; " 字节)" &lt;&lt; endl;
+    cout &lt;&lt; "int *p     : p=" &lt;&lt; p &lt;&lt; ", p+1=" &lt;&lt; p + 1
+         &lt;&lt; " (差 " &lt;&lt; sizeof(int) &lt;&lt; " 字节)" &lt;&lt; endl;
+}
+
+// ==================== 4. 数组名作为指针 ====================
+void demo4_ArrayNameAsPointer() {
+    printSeparator("4. 数组名作为指针");
+
+    int arr[6] = {1, 3, 5, 7, 9, 11};
+
+    // 数组名可以像指针一样使用
+    cout &lt;&lt; "*arr = " &lt;&lt; *arr &lt;&lt; " (即 arr[0])" &lt;&lt; endl;
+    cout &lt;&lt; "*(arr+3) = " &lt;&lt; *(arr + 3) &lt;&lt; " (即 arr[3])" &lt;&lt; endl;
+
+    // 但不能修改数组名！
+    // arr = ...;    // 错误！数组名是常量
+    // arr++;        // 错误！数组名是常量
+
+    // sizeof 的区别
+    cout &lt;&lt; "\nsizeof(arr) = " &lt;&lt; sizeof(arr) &lt;&lt; " (整个数组的字节数)" &lt;&lt; endl;
+    int *p = arr;
+    cout &lt;&lt; "sizeof(p) = " &lt;&lt; sizeof(p) &lt;&lt; " (指针变量本身的字节数)" &lt;&lt; endl;
+
+    // arr 和 &amp;arr 的区别
+    cout &lt;&lt; "\narr  = " &lt;&lt; arr &lt;&lt; " (指向第一个元素的指针)" &lt;&lt; endl;
+    cout &lt;&lt; "&amp;arr = " &lt;&lt; &amp;arr &lt;&lt; " (指向整个数组的指针, 类型不同)" &lt;&lt; endl;
+    cout &lt;&lt; "arr+1 = " &lt;&lt; arr + 1 &lt;&lt; " (跳到第二个元素)" &lt;&lt; endl;
+    cout &lt;&lt; "&amp;arr+1 = " &lt;&lt; &amp;arr + 1 &lt;&lt; " (跳过整个数组!)" &lt;&lt; endl;
+}
+
+// ==================== 5. 用指针的 swap 函数 ====================
+void swap(int *a, int *b) {
+    int temp = *a;
+    *a = *b;
+    *b = temp;
+}
+
+void demo5_SwapFunction() {
+    printSeparator("5. 用指针实现 swap 函数");
+
+    int x = 10, y = 20;
+    cout &lt;&lt; "交换前: x = " &lt;&lt; x &lt;&lt; ", y = " &lt;&lt; y &lt;&lt; endl;
+
+    swap(&amp;x, &amp;y);  // 传递 x 和 y 的地址
+
+    cout &lt;&lt; "交换后: x = " &lt;&lt; x &lt;&lt; ", y = " &lt;&lt; y &lt;&lt; endl;
+    cout &lt;&lt; "(原始变量 x 和 y 的值被成功交换!)" &lt;&lt; endl;
+
+    // 演示与不使用指针的对比
+    cout &lt;&lt; "\n不使用指针的函数无法交换实参：" &lt;&lt; endl;
+    int m = 5, n = 8;
+    cout &lt;&lt; "swap_value(5, 8) 调用后: ";
+    // 值传递的 swap（无效）
+    auto swap_value = [](int a, int b) { int t = a; a = b; b = t; };
+    swap_value(m, n);
+    cout &lt;&lt; "m = " &lt;&lt; m &lt;&lt; ", n = " &lt;&lt; n &lt;&lt; " (未改变！)" &lt;&lt; endl;
+}
+
+// ==================== 6. 通过指针修改数组 ====================
+void doubleArray(int *arr, int n) {
+    for (int i = 0; i &lt; n; i++) {
+        arr[i] *= 2;  // 等价于 *(arr + i) *= 2;
+    }
+}
+
+void addToArray(int *arr, int n, int val) {
+    for (int *p = arr; p &lt; arr + n; p++) {
+        *p += val;
+    }
+}
+
+void demo6_ModifyArrayViaPointer() {
+    printSeparator("6. 通过指针参数修改数组");
+
+    int nums[6] = {1, 2, 3, 4, 5, 6};
+    int n = 6;
+
+    cout &lt;&lt; "原始数组: ";
+    for (int i = 0; i &lt; n; i++) cout &lt;&lt; nums[i] &lt;&lt; " ";
+    cout &lt;&lt; endl;
+
+    doubleArray(nums, n);
+    cout &lt;&lt; "翻倍后: ";
+    for (int i = 0; i &lt; n; i++) cout &lt;&lt; nums[i] &lt;&lt; " ";
+    cout &lt;&lt; endl;
+
+    addToArray(nums, n, 10);
+    cout &lt;&lt; "加10后: ";
+    for (int i = 0; i &lt; n; i++) cout &lt;&lt; nums[i] &lt;&lt; " ";
+    cout &lt;&lt; endl;
+}
+
+// ==================== 7. 用指针找最大最小值 ====================
+int* findMax(int *arr, int n) {
+    int *maxPtr = arr;
+    for (int *p = arr + 1; p &lt; arr + n; p++) {
+        if (*p &gt; *maxPtr) maxPtr = p;
+    }
+    return maxPtr;
+}
+
+int* findMin(int *arr, int n) {
+    int *minPtr = arr;
+    for (int *p = arr + 1; p &lt; arr + n; p++) {
+        if (*p &lt; *minPtr) minPtr = p;
+    }
+    return minPtr;
+}
+
+void demo7_FindMaxMin() {
+    printSeparator("7. 用指针找最大值和最小值");
+
+    int arr[8] = {45, 12, 78, 34, 90, 23, 56, 8};
+    int n = 8;
+
+    cout &lt;&lt; "数组: ";
+    for (int i = 0; i &lt; n; i++) cout &lt;&lt; arr[i] &lt;&lt; " ";
+    cout &lt;&lt; endl;
+
+    int *pMax = findMax(arr, n);
+    int *pMin = findMin(arr, n);
+
+    cout &lt;&lt; "最大值: " &lt;&lt; *pMax &lt;&lt; " (位置: " &lt;&lt; pMax - arr &lt;&lt; ")" &lt;&lt; endl;
+    cout &lt;&lt; "最小值: " &lt;&lt; *pMin &lt;&lt; " (位置: " &lt;&lt; pMin - arr &lt;&lt; ")" &lt;&lt; endl;
+
+    // pMax - arr 的含义：两个指针相减，得到元素个数
+    cout &lt;&lt; "\n指针相减说明: pMax - arr = " &lt;&lt; pMax - arr
+         &lt;&lt; " (即从 arr[0] 到最大值的偏移量)" &lt;&lt; endl;
+}
+
+// ==================== 8. 用指针实现数组反转 ====================
+void reverseArray(int *arr, int n) {
+    int *left = arr;
+    int *right = arr + n - 1;
+    while (left &lt; right) {
+        int temp = *left;
+        *left = *right;
+        *right = temp;
+        left++;
+        right--;
+    }
+}
+
+void demo8_ArrayReverse() {
+    printSeparator("8. 用指针实现数组反转");
+
+    int arr[7] = {1, 2, 3, 4, 5, 6, 7};
+    int n = 7;
+
+    cout &lt;&lt; "反转前: ";
+    for (int i = 0; i &lt; n; i++) cout &lt;&lt; arr[i] &lt;&lt; " ";
+    cout &lt;&lt; endl;
+
+    reverseArray(arr, n);
+
+    cout &lt;&lt; "反转后: ";
+    for (int i = 0; i &lt; n; i++) cout &lt;&lt; arr[i] &lt;&lt; " ";
+    cout &lt;&lt; endl;
+
+    // 再次反转，应该恢复原状
+    reverseArray(arr, n);
+    cout &lt;&lt; "再次反转: ";
+    for (int i = 0; i &lt; n; i++) cout &lt;&lt; arr[i] &lt;&lt; " ";
+    cout &lt;&lt; endl;
+}
+
+// ==================== 9. 空指针安全检查 ====================
+void demo9_NullPointerSafety() {
+    printSeparator("9. 空指针安全检查");
+
+    // 初始化指针为 nullptr
+    int *p1 = nullptr;
+    int *p2 = NULL;     // 传统写法（等价于 nullptr）
+    int *p3 = nullptr;
+
+    cout &lt;&lt; "p1 = " &lt;&lt; p1 &lt;&lt; " (nullptr)" &lt;&lt; endl;
+    cout &lt;&lt; "p2 = " &lt;&lt; p2 &lt;&lt; " (NULL)" &lt;&lt; endl;
+
+    // 安全检查：解引用前判断
+    if (p1 != nullptr) {
+        cout &lt;&lt; "*p1 = " &lt;&lt; *p1 &lt;&lt; endl;
+    } else {
+        cout &lt;&lt; "p1 是空指针，跳过解引用！" &lt;&lt; endl;
+    }
+
+    // 让指针指向有效内存
+    int val = 42;
+    p3 = &amp;val;
+
+    if (p3 != nullptr) {
+        cout &lt;&lt; "p3 不为空, *p3 = " &lt;&lt; *p3 &lt;&lt; endl;
+    } else {
+        cout &lt;&lt; "p3 是空指针！" &lt;&lt; endl;
+    }
+
+    // 空指针的常见用途
+    cout &lt;&lt; "\n空指针的常见用途:" &lt;&lt; endl;
+    cout &lt;&lt; "1. 初始化指针为安全状态" &lt;&lt; endl;
+    cout &lt;&lt; "2. 作为函数返回的无效标识" &lt;&lt; endl;
+    cout &lt;&lt; "3. 在解引用前进行安全检查" &lt;&lt; endl;
+}
+
+// ==================== 10. 指针 vs 引用对比 ====================
+void swapByRef(int &amp;a, int &amp;b) {
+    int temp = a;
+    a = b;
+    b = temp;
+}
+
+void demo10_PointerVsReference() {
+    printSeparator("10. 指针 vs 引用对比");
+
+    int x = 100, y = 200;
+
+    // 指针方式
+    cout &lt;&lt; "=== 指针方式 ===" &lt;&lt; endl;
+    cout &lt;&lt; "swap(&amp;x, &amp;y) 调用前: x=" &lt;&lt; x &lt;&lt; ", y=" &lt;&lt; y &lt;&lt; endl;
+    swap(&amp;x, &amp;y);
+    cout &lt;&lt; "swap(&amp;x, &amp;y) 调用后: x=" &lt;&lt; x &lt;&lt; ", y=" &lt;&lt; y &lt;&lt; endl;
+
+    // 引用方式
+    cout &lt;&lt; "\n=== 引用方式 ===" &lt;&lt; endl;
+    cout &lt;&lt; "swapByRef(x, y) 调用前: x=" &lt;&lt; x &lt;&lt; ", y=" &lt;&lt; y &lt;&lt; endl;
+    swapByRef(x, y);
+    cout &lt;&lt; "swapByRef(x, y) 调用后: x=" &lt;&lt; x &lt;&lt; ", y=" &lt;&lt; y &lt;&lt; endl;
+
+    // 对比总结
+    cout &lt;&lt; "\n--- 对比总结 ---" &lt;&lt; endl;
+    cout &lt;&lt; "指针:" &lt;&lt; endl;
+    cout &lt;&lt; "  声明: int *p = &amp;a;" &lt;&lt; endl;
+    cout &lt;&lt; "  取值: *p" &lt;&lt; endl;
+    cout &lt;&lt; "  可重新指向: p = &amp;b;" &lt;&lt; endl;
+    cout &lt;&lt; "  可为空: p = nullptr;" &lt;&lt; endl;
+    cout &lt;&lt; "  可运算: p++" &lt;&lt; endl;
+    cout &lt;&lt; endl;
+    cout &lt;&lt; "引用:" &lt;&lt; endl;
+    cout &lt;&lt; "  声明: int &amp;r = a;" &lt;&lt; endl;
+    cout &lt;&lt; "  使用: r (直接当作变量)" &lt;&lt; endl;
+    cout &lt;&lt; "  不可重新绑定" &lt;&lt; endl;
+    cout &lt;&lt; "  不可为空" &lt;&lt; endl;
+    cout &lt;&lt; "  语法更简洁" &lt;&lt; endl;
+}
+
+// ==================== 11. 指针与字符串 ====================
+void demo11_PointerAndString() {
+    printSeparator("11. 指针与C风格字符串");
+
+    const char *msg = "Hello CSP-J!";
+
+    // 用指针遍历字符串
+    cout &lt;&lt; "逐个字符输出: ";
+    const char *p = msg;
+    while (*p != '\0') {
+        cout &lt;&lt; *p;
+        p++;
+    }
+    cout &lt;&lt; endl;
+
+    cout &lt;&lt; "字符串地址: " &lt;&lt; (void*)msg &lt;&lt; endl;
+    cout &lt;&lt; "字符串长度(指针遍历): ";
+    int len = 0;
+    p = msg;
+    while (*p != '\0') { len++; p++; }
+    cout &lt;&lt; len &lt;&lt; " 个字符" &lt;&lt; endl;
+}
+
+// ==================== 主函数 ====================
+int main() {
+    demo1_BasicPointer();
+    demo2_AddressOfAndDereference();
+    demo3_PointerArithmetic();
+    demo4_ArrayNameAsPointer();
+    demo5_SwapFunction();
+    demo6_ModifyArrayViaPointer();
+    demo7_FindMaxMin();
+    demo8_ArrayReverse();
+    demo9_NullPointerSafety();
+    demo10_PointerVsReference();
+    demo11_PointerAndString();
+
+    cout &lt;&lt; "\n==================== 所有演示完成 ====================" &lt;&lt; endl;
+    return 0;
+}
+</pre>
+    <p class="hint">若曾直接打开 .cpp 出现乱码，是因为浏览器未按 UTF-8 解析纯文本。本页已固定 UTF-8 显示。</p>
+  </div>
+</body>
+</html>

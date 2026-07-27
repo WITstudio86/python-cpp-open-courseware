@@ -1,0 +1,477 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>lesson16_string类与字符处理</title>
+<style>
+  :root {
+    --bg: #0f1419;
+    --panel: #161d27;
+    --text: #e7ecf3;
+    --muted: #9aa7b8;
+    --gold: #d4a853;
+    --code-bg: #1a1d23;
+    --border: #273244;
+  }
+  * { box-sizing: border-box; }
+  html, body {
+    margin: 0; padding: 0;
+    background: var(--bg);
+    color: var(--text);
+    font-family: -apple-system, BlinkMacSystemFont, "PingFang SC", "Microsoft YaHei", sans-serif;
+    min-height: 100%;
+  }
+  .top {
+    position: sticky; top: 0; z-index: 10;
+    display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between;
+    gap: 10px;
+    padding: 12px 18px;
+    background: linear-gradient(135deg, #0a2540, #1a3a5c);
+    border-bottom: 1px solid rgba(212,168,83,0.35);
+    box-shadow: 0 4px 18px rgba(0,0,0,0.25);
+  }
+  .brand { color: var(--gold); font-weight: 700; font-size: 14px; letter-spacing: 0.04em; }
+  .title { font-size: 15px; font-weight: 600; color: #fff; max-width: 52vw; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .actions { display: flex; gap: 8px; flex-wrap: wrap; }
+  .btn {
+    appearance: none; border: 1px solid rgba(255,255,255,0.18);
+    background: rgba(255,255,255,0.08); color: #fff;
+    border-radius: 999px; padding: 8px 14px; font-size: 13px; font-weight: 600;
+    text-decoration: none; cursor: pointer;
+  }
+  .btn:hover { background: rgba(255,255,255,0.16); }
+  .btn.gold { background: linear-gradient(135deg, #d4a853, #c4922e); color: #0a2540; border-color: transparent; }
+  .meta {
+    padding: 10px 18px; color: var(--muted); font-size: 12px;
+    border-bottom: 1px solid var(--border);
+    background: var(--panel);
+  }
+  .wrap { padding: 16px 18px 40px; }
+  pre {
+    margin: 0;
+    background: var(--code-bg);
+    color: #e1e4e8;
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 18px 20px;
+    overflow: auto;
+    font-family: "SF Mono", "JetBrains Mono", "Fira Code", Consolas, "Courier New", monospace;
+    font-size: 13.5px;
+    line-height: 1.55;
+    white-space: pre;
+    tab-size: 4;
+    box-shadow: 0 8px 28px rgba(0,0,0,0.28);
+  }
+  .hint { margin-top: 12px; color: var(--muted); font-size: 12px; }
+</style>
+</head>
+<body>
+  <div class="top">
+    <div class="brand">CSP-J · 配套代码</div>
+    <div class="title">lesson16_string类与字符处理</div>
+    <div class="actions">
+      <a class="btn" href="../lesson16_string类与字符处理.cpp" download="lesson16_string类与字符处理.cpp">⬇️ 下载 .cpp</a>
+      <a class="btn gold" href="javascript:history.back()">← 返回课件</a>
+    </div>
+  </div>
+  <div class="meta">编码：UTF-8 · 文件：lesson16_string类与字符处理.cpp · 共 393 行</div>
+  <div class="wrap">
+    <pre id="code">/*
+ * CSP-J 备考课程
+ * 第16课：string 类与字符处理
+ * 考纲知识点：string类定义/输入/拼接/比较/长度/子串/查找、字符判断函数
+ *
+ * 本文件包含：
+ * 1. string 类的定义与初始化
+ * 2. 输入方式对比（cin vs getline）
+ * 3. 拼接、比较、长度、子串、查找演示
+ * 4. 字符判断函数演示（isdigit/isalpha/islower/isupper/tolower/toupper）
+ * 5. 字符统计综合练习
+ * 6. 真题AC代码
+ *
+ * 编译：g++ -std=c++11 lesson16_string类与字符处理.cpp -o lesson16
+ * 运行：./lesson16
+ */
+
+#include &lt;iostream&gt;
+#include &lt;string&gt;
+#include &lt;cctype&gt;
+using namespace std;
+
+// ============================================
+// 演示1：string 的定义与初始化
+// ============================================
+void demo1_definition() {
+    cout &lt;&lt; "====== 演示1：string 的定义与初始化 ======" &lt;&lt; endl;
+
+    string s1;                     // 空字符串
+    string s2 = "hello";           // 用字面量初始化
+    string s3("world");            // 构造函数方式
+    string s4 = s2;                // 拷贝初始化
+    string s5(5, 'a');             // 重复字符 "aaaaa"
+    string s6 = s2 + " " + s3;     // 拼接初始化
+
+    cout &lt;&lt; "s1 = \"" &lt;&lt; s1 &lt;&lt; "\" (空字符串)" &lt;&lt; endl;
+    cout &lt;&lt; "s2 = \"" &lt;&lt; s2 &lt;&lt; "\"" &lt;&lt; endl;
+    cout &lt;&lt; "s3 = \"" &lt;&lt; s3 &lt;&lt; "\"" &lt;&lt; endl;
+    cout &lt;&lt; "s4 = \"" &lt;&lt; s4 &lt;&lt; "\" (拷贝s2)" &lt;&lt; endl;
+    cout &lt;&lt; "s5 = \"" &lt;&lt; s5 &lt;&lt; "\" (5个'a')" &lt;&lt; endl;
+    cout &lt;&lt; "s6 = \"" &lt;&lt; s6 &lt;&lt; "\" (拼接)" &lt;&lt; endl;
+
+    // string 与 C 风格字符串的转换
+    const char* cstr = s6.c_str();
+    cout &lt;&lt; "s6.c_str() = \"" &lt;&lt; cstr &lt;&lt; "\"" &lt;&lt; endl;
+
+    cout &lt;&lt; endl;
+}
+
+// ============================================
+// 演示2：string 的输入方式
+// ============================================
+void demo2_input() {
+    cout &lt;&lt; "====== 演示2：string 的输入方式 ======" &lt;&lt; endl;
+
+    string s;
+
+    // cin &gt;&gt; s：遇空格停止
+    cout &lt;&lt; "请输入一个单词（不要含空格）：";
+    cin &gt;&gt; s;
+    cout &lt;&lt; "cin &gt;&gt; s 结果：\"" &lt;&lt; s &lt;&lt; "\"" &lt;&lt; endl;
+
+    cin.ignore();  // 清除换行符
+
+    // getline：读取整行
+    cout &lt;&lt; "请输入一句话（可含空格）：";
+    getline(cin, s);
+    cout &lt;&lt; "getline 结果：\"" &lt;&lt; s &lt;&lt; "\"" &lt;&lt; endl;
+
+    // 混用陷阱演示
+    cout &lt;&lt; "\n--- 混用cin和getline的陷阱演示 ---" &lt;&lt; endl;
+    int n;
+    cout &lt;&lt; "请输入一个整数：";
+    cin &gt;&gt; n;
+    cout &lt;&lt; "你输入了：" &lt;&lt; n &lt;&lt; endl;
+
+    // 如果没有 cin.ignore()，下面的 getline 会立即读到空行
+    cout &lt;&lt; "（使用 cin.ignore() 清除换行符后）请输入一行文字：";
+    cin.ignore();
+    getline(cin, s);
+    cout &lt;&lt; "getline 结果：\"" &lt;&lt; s &lt;&lt; "\"" &lt;&lt; endl;
+
+    cout &lt;&lt; endl;
+}
+
+// ============================================
+// 演示3：string 基本操作（拼接/比较/长度）
+// ============================================
+void demo3_basic_operations() {
+    cout &lt;&lt; "====== 演示3：拼接、比较、长度 ======" &lt;&lt; endl;
+
+    // 拼接
+    string s1 = "Hello";
+    string s2 = "World";
+    string s3 = s1 + " " + s2;
+    cout &lt;&lt; "拼接 s1 + \" \" + s2 = \"" &lt;&lt; s3 &lt;&lt; "\"" &lt;&lt; endl;
+
+    s1 += " CSP-J";
+    cout &lt;&lt; "s1 += \" CSP-J\" → \"" &lt;&lt; s1 &lt;&lt; "\"" &lt;&lt; endl;
+
+    // 比较
+    string a = "abc", b = "abd", c = "abc";
+    cout &lt;&lt; "\"abc\" == \"abc\" : " &lt;&lt; (a == c) &lt;&lt; " (1=true)" &lt;&lt; endl;
+    cout &lt;&lt; "\"abc\" != \"abd\" : " &lt;&lt; (a != b) &lt;&lt; " (1=true)" &lt;&lt; endl;
+    cout &lt;&lt; "\"abc\" &lt;  \"abd\" : " &lt;&lt; (a &lt; b)  &lt;&lt; " (1=true, 'c'&lt;'d')" &lt;&lt; endl;
+    cout &lt;&lt; "\"ab\"  &lt;  \"abc\" : " &lt;&lt; (string("ab") &lt; string("abc"))
+         &lt;&lt; " (1=true, 短&lt;长)" &lt;&lt; endl;
+    cout &lt;&lt; "\"Apple\" &lt; \"apple\" : " &lt;&lt; (string("Apple") &lt; string("apple"))
+         &lt;&lt; " (1=true, 'A'(65) &lt; 'a'(97))" &lt;&lt; endl;
+
+    // 长度
+    cout &lt;&lt; "\n\"" &lt;&lt; s3 &lt;&lt; "\" 的长度：" &lt;&lt; s3.length() &lt;&lt; endl;
+    cout &lt;&lt; ".length() 和 .size() 等价：" &lt;&lt; (s3.length() == s3.size()) &lt;&lt; endl;
+
+    // 访问单个字符
+    cout &lt;&lt; "s3[0] = '" &lt;&lt; s3[0] &lt;&lt; "'" &lt;&lt; endl;
+    cout &lt;&lt; "s3[6] = '" &lt;&lt; s3[6] &lt;&lt; "'" &lt;&lt; endl;
+
+    cout &lt;&lt; endl;
+}
+
+// ============================================
+// 演示4：子串 .substr() 和查找 .find()
+// ============================================
+void demo4_substr_find() {
+    cout &lt;&lt; "====== 演示4：子串与查找 ======" &lt;&lt; endl;
+
+    string s = "Hello World, Hello CSP-J!";
+    cout &lt;&lt; "原始字符串：\"" &lt;&lt; s &lt;&lt; "\" (长度: " &lt;&lt; s.length() &lt;&lt; ")" &lt;&lt; endl;
+
+    // substr
+    cout &lt;&lt; "\n--- substr 演示 ---" &lt;&lt; endl;
+    cout &lt;&lt; "s.substr(0, 5)   = \"" &lt;&lt; s.substr(0, 5) &lt;&lt; "\" (从0开始取5个)" &lt;&lt; endl;
+    cout &lt;&lt; "s.substr(6, 5)   = \"" &lt;&lt; s.substr(6, 5) &lt;&lt; "\" (从6开始取5个)" &lt;&lt; endl;
+    cout &lt;&lt; "s.substr(13)     = \"" &lt;&lt; s.substr(13) &lt;&lt; "\" (从13开始到末尾)" &lt;&lt; endl;
+    cout &lt;&lt; "s.substr(0, 100) = \"" &lt;&lt; s.substr(0, 100) &lt;&lt; "\" (len超范围，取到末尾)" &lt;&lt; endl;
+
+    // find
+    cout &lt;&lt; "\n--- find 演示 ---" &lt;&lt; endl;
+    size_t pos1 = s.find("World");
+    cout &lt;&lt; "s.find(\"World\")     = " &lt;&lt; pos1 &lt;&lt; " (第一次出现的位置)" &lt;&lt; endl;
+
+    size_t pos2 = s.find("Hello");
+    cout &lt;&lt; "s.find(\"Hello\")     = " &lt;&lt; pos2 &lt;&lt; " (第一次出现在开头)" &lt;&lt; endl;
+
+    size_t pos3 = s.find("XYZ");
+    cout &lt;&lt; "s.find(\"XYZ\")       = " &lt;&lt; pos3;
+    if (pos3 == string::npos) {
+        cout &lt;&lt; " (string::npos，未找到)" &lt;&lt; endl;
+    }
+
+    // 从指定位置开始查找
+    size_t pos4 = s.find("Hello", 1);  // 从索引1开始查找
+    cout &lt;&lt; "s.find(\"Hello\", 1)  = " &lt;&lt; pos4 &lt;&lt; " (跳过第一个，找第二个Hello)" &lt;&lt; endl;
+
+    // string::npos 的值
+    cout &lt;&lt; "\nstring::npos 的值 = " &lt;&lt; string::npos &lt;&lt; endl;
+
+    cout &lt;&lt; endl;
+}
+
+// ============================================
+// 演示5：字符判断函数
+// ============================================
+void demo5_char_functions() {
+    cout &lt;&lt; "====== 演示5：字符判断函数 ======" &lt;&lt; endl;
+
+    char test_chars[] = {'A', 'z', '5', ' ', '@', 'm', 'Z', '0', '9', '\n'};
+
+    cout &lt;&lt; "字符\tisdigit\tisalpha\tislower\tisupper\tisalnum\tisspace" &lt;&lt; endl;
+    cout &lt;&lt; "----\t-------\t-------\t-------\t-------\t-------\t-------" &lt;&lt; endl;
+
+    for (int i = 0; i &lt; 10; i++) {
+        char c = test_chars[i];
+        cout &lt;&lt; "'" &lt;&lt; (c == '\n' ? "\\n"[0] ? '?' : c : c) &lt;&lt; "'";
+        if (c == '\n') cout &lt;&lt; "(换行)";
+        cout &lt;&lt; "\t" &lt;&lt; (isdigit(c) ? "✓" : " ")
+             &lt;&lt; "\t" &lt;&lt; (isalpha(c) ? "✓" : " ")
+             &lt;&lt; "\t" &lt;&lt; (islower(c) ? "✓" : " ")
+             &lt;&lt; "\t" &lt;&lt; (isupper(c) ? "✓" : " ")
+             &lt;&lt; "\t" &lt;&lt; (isalnum(c) ? "✓" : " ")
+             &lt;&lt; "\t" &lt;&lt; (isspace(c) ? "✓" : " ") &lt;&lt; endl;
+    }
+
+    // 大小写转换
+    cout &lt;&lt; "\n--- 大小写转换 ---" &lt;&lt; endl;
+    cout &lt;&lt; "tolower('A') = '" &lt;&lt; (char)tolower('A') &lt;&lt; "'" &lt;&lt; endl;
+    cout &lt;&lt; "tolower('Z') = '" &lt;&lt; (char)tolower('Z') &lt;&lt; "'" &lt;&lt; endl;
+    cout &lt;&lt; "toupper('a') = '" &lt;&lt; (char)toupper('a') &lt;&lt; "'" &lt;&lt; endl;
+    cout &lt;&lt; "toupper('z') = '" &lt;&lt; (char)toupper('z') &lt;&lt; "'" &lt;&lt; endl;
+    cout &lt;&lt; "tolower('5') = '" &lt;&lt; (char)tolower('5') &lt;&lt; "' (数字不变)" &lt;&lt; endl;
+    cout &lt;&lt; "toupper('@') = '" &lt;&lt; (char)toupper('@') &lt;&lt; "' (符号不变)" &lt;&lt; endl;
+
+    cout &lt;&lt; endl;
+}
+
+// ============================================
+// 演示6：字符统计综合练习
+// ============================================
+void demo6_char_statistics() {
+    cout &lt;&lt; "====== 演示6：字符统计综合练习 ======" &lt;&lt; endl;
+
+    string s;
+    cout &lt;&lt; "请输入任意字符串：";
+    cin.ignore();  // 清除可能残留的换行符
+    getline(cin, s);
+
+    int digit_cnt = 0, upper_cnt = 0, lower_cnt = 0;
+    int space_cnt = 0, other_cnt = 0;
+
+    for (char c : s) {
+        if (isdigit(c))         digit_cnt++;
+        else if (isupper(c))    upper_cnt++;
+        else if (islower(c))    lower_cnt++;
+        else if (isspace(c))    space_cnt++;
+        else                    other_cnt++;
+    }
+
+    cout &lt;&lt; "\n统计结果：" &lt;&lt; endl;
+    cout &lt;&lt; "  数字字符：" &lt;&lt; digit_cnt &lt;&lt; endl;
+    cout &lt;&lt; "  大写字母：" &lt;&lt; upper_cnt &lt;&lt; endl;
+    cout &lt;&lt; "  小写字母：" &lt;&lt; lower_cnt &lt;&lt; endl;
+    cout &lt;&lt; "  空白字符：" &lt;&lt; space_cnt &lt;&lt; endl;
+    cout &lt;&lt; "  其他字符：" &lt;&lt; other_cnt &lt;&lt; endl;
+    cout &lt;&lt; "  总字符数：" &lt;&lt; s.length() &lt;&lt; endl;
+
+    cout &lt;&lt; endl;
+}
+
+// ============================================
+// 演示7：大小写翻转
+// ============================================
+void demo7_case_flip() {
+    cout &lt;&lt; "====== 演示7：大小写翻转 ======" &lt;&lt; endl;
+
+    string s;
+    cout &lt;&lt; "请输入一个字符串：";
+    cin.ignore();
+    getline(cin, s);
+
+    cout &lt;&lt; "原始字符串：\"" &lt;&lt; s &lt;&lt; "\"" &lt;&lt; endl;
+
+    // 使用引用 &amp;c 直接修改原字符串
+    for (char &amp;c : s) {
+        if (isupper(c)) {
+            c = tolower(c);
+        } else if (islower(c)) {
+            c = toupper(c);
+        }
+    }
+
+    cout &lt;&lt; "翻转后：    \"" &lt;&lt; s &lt;&lt; "\"" &lt;&lt; endl;
+
+    cout &lt;&lt; endl;
+}
+
+// ============================================
+// 真题1：string 操作结果判断
+// ============================================
+void exam1_string_operations() {
+    cout &lt;&lt; "====== 真题1：string 操作结果判断 ======" &lt;&lt; endl;
+
+    string s = "I love CSP-J";
+
+    cout &lt;&lt; "原始字符串 s = \"I love CSP-J\"" &lt;&lt; endl;
+    cout &lt;&lt; "\nQ1: s.length() = " &lt;&lt; s.length() &lt;&lt; endl;
+
+    cout &lt;&lt; "Q2: s.substr(7, 5) = \"" &lt;&lt; s.substr(7, 5) &lt;&lt; "\"" &lt;&lt; endl;
+
+    cout &lt;&lt; "Q3: s.find(\"CSP\") = " &lt;&lt; s.find("CSP") &lt;&lt; endl;
+
+    s += "!";
+    cout &lt;&lt; "Q4: s += \"!\" 后，s = \"" &lt;&lt; s &lt;&lt; "\"" &lt;&lt; endl;
+
+    cout &lt;&lt; "Q5: s.find(\"Python\") == string::npos → "
+         &lt;&lt; (s.find("Python") == string::npos)
+         &lt;&lt; " (1=true，表示未找到)" &lt;&lt; endl;
+
+    cout &lt;&lt; endl;
+}
+
+// ============================================
+// 真题2：字符统计与大小写翻转
+// ============================================
+void exam2_case_flip_count() {
+    cout &lt;&lt; "====== 真题2：字符统计与大小写翻转 ======" &lt;&lt; endl;
+
+    string s;
+    cout &lt;&lt; "请输入一个字符串（可含空格）：";
+    cin.ignore();
+    getline(cin, s);
+
+    int upper_cnt = 0, lower_cnt = 0, digit_cnt = 0;
+
+    for (char &amp;c : s) {
+        if (isupper(c)) {
+            upper_cnt++;
+            c = tolower(c);
+        } else if (islower(c)) {
+            lower_cnt++;
+            c = toupper(c);
+        } else if (isdigit(c)) {
+            digit_cnt++;
+        }
+    }
+
+    cout &lt;&lt; "大写字母数: " &lt;&lt; upper_cnt
+         &lt;&lt; ", 小写字母数: " &lt;&lt; lower_cnt
+         &lt;&lt; ", 数字数: " &lt;&lt; digit_cnt &lt;&lt; endl;
+    cout &lt;&lt; "翻转后的字符串：\"" &lt;&lt; s &lt;&lt; "\"" &lt;&lt; endl;
+
+    cout &lt;&lt; endl;
+}
+
+// ============================================
+// 演示8：string 综合应用——单词统计
+// ============================================
+void demo8_word_count() {
+    cout &lt;&lt; "====== 演示8：综合应用——统计单词数量 ======" &lt;&lt; endl;
+
+    string s;
+    cout &lt;&lt; "请输入英文句子：";
+    cin.ignore();
+    getline(cin, s);
+
+    int word_cnt = 0;
+    bool in_word = false;
+
+    for (char c : s) {
+        if (isspace(c)) {
+            in_word = false;
+        } else if (!in_word) {
+            in_word = true;
+            word_cnt++;
+        }
+    }
+
+    cout &lt;&lt; "单词数量：" &lt;&lt; word_cnt &lt;&lt; endl;
+
+    cout &lt;&lt; endl;
+}
+
+// ============================================
+// 主菜单
+// ============================================
+void showMenu() {
+    cout &lt;&lt; "╔══════════════════════════════════╗" &lt;&lt; endl;
+    cout &lt;&lt; "║   第16课：string 类与字符处理  ║" &lt;&lt; endl;
+    cout &lt;&lt; "║   CSP-J 备考课程               ║" &lt;&lt; endl;
+    cout &lt;&lt; "╠══════════════════════════════════╣" &lt;&lt; endl;
+    cout &lt;&lt; "║  1. string 定义与初始化         ║" &lt;&lt; endl;
+    cout &lt;&lt; "║  2. string 输入方式对比         ║" &lt;&lt; endl;
+    cout &lt;&lt; "║  3. 拼接/比较/长度演示          ║" &lt;&lt; endl;
+    cout &lt;&lt; "║  4. substr 与 find 演示         ║" &lt;&lt; endl;
+    cout &lt;&lt; "║  5. 字符判断函数演示            ║" &lt;&lt; endl;
+    cout &lt;&lt; "║  6. 字符统计综合练习            ║" &lt;&lt; endl;
+    cout &lt;&lt; "║  7. 大小写翻转练习              ║" &lt;&lt; endl;
+    cout &lt;&lt; "║  8. 单词统计                    ║" &lt;&lt; endl;
+    cout &lt;&lt; "║  9. 真题1 - string操作结果判断  ║" &lt;&lt; endl;
+    cout &lt;&lt; "║ 10. 真题2 - 字符统计与翻转      ║" &lt;&lt; endl;
+    cout &lt;&lt; "║  0. 退出                        ║" &lt;&lt; endl;
+    cout &lt;&lt; "╚══════════════════════════════════╝" &lt;&lt; endl;
+    cout &lt;&lt; "请选择（0-10）：";
+}
+
+int main() {
+    int choice;
+    while (true) {
+        showMenu();
+        cin &gt;&gt; choice;
+
+        switch (choice) {
+            case 1:  demo1_definition();         break;
+            case 2:  demo2_input();              break;
+            case 3:  demo3_basic_operations();   break;
+            case 4:  demo4_substr_find();        break;
+            case 5:  demo5_char_functions();     break;
+            case 6:  demo6_char_statistics();    break;
+            case 7:  demo7_case_flip();          break;
+            case 8:  demo8_word_count();         break;
+            case 9:  exam1_string_operations();  break;
+            case 10: exam2_case_flip_count();    break;
+            case 0:
+                cout &lt;&lt; "再见！" &lt;&lt; endl;
+                return 0;
+            default:
+                cout &lt;&lt; "无效选项，请重新选择！" &lt;&lt; endl;
+                cin.ignore();
+                break;
+        }
+    }
+    return 0;
+}
+</pre>
+    <p class="hint">若曾直接打开 .cpp 出现乱码，是因为浏览器未按 UTF-8 解析纯文本。本页已固定 UTF-8 显示。</p>
+  </div>
+</body>
+</html>

@@ -1,0 +1,404 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>lesson18_参数传递与作用域</title>
+<style>
+  :root {
+    --bg: #0f1419;
+    --panel: #161d27;
+    --text: #e7ecf3;
+    --muted: #9aa7b8;
+    --gold: #d4a853;
+    --code-bg: #1a1d23;
+    --border: #273244;
+  }
+  * { box-sizing: border-box; }
+  html, body {
+    margin: 0; padding: 0;
+    background: var(--bg);
+    color: var(--text);
+    font-family: -apple-system, BlinkMacSystemFont, "PingFang SC", "Microsoft YaHei", sans-serif;
+    min-height: 100%;
+  }
+  .top {
+    position: sticky; top: 0; z-index: 10;
+    display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between;
+    gap: 10px;
+    padding: 12px 18px;
+    background: linear-gradient(135deg, #0a2540, #1a3a5c);
+    border-bottom: 1px solid rgba(212,168,83,0.35);
+    box-shadow: 0 4px 18px rgba(0,0,0,0.25);
+  }
+  .brand { color: var(--gold); font-weight: 700; font-size: 14px; letter-spacing: 0.04em; }
+  .title { font-size: 15px; font-weight: 600; color: #fff; max-width: 52vw; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .actions { display: flex; gap: 8px; flex-wrap: wrap; }
+  .btn {
+    appearance: none; border: 1px solid rgba(255,255,255,0.18);
+    background: rgba(255,255,255,0.08); color: #fff;
+    border-radius: 999px; padding: 8px 14px; font-size: 13px; font-weight: 600;
+    text-decoration: none; cursor: pointer;
+  }
+  .btn:hover { background: rgba(255,255,255,0.16); }
+  .btn.gold { background: linear-gradient(135deg, #d4a853, #c4922e); color: #0a2540; border-color: transparent; }
+  .meta {
+    padding: 10px 18px; color: var(--muted); font-size: 12px;
+    border-bottom: 1px solid var(--border);
+    background: var(--panel);
+  }
+  .wrap { padding: 16px 18px 40px; }
+  pre {
+    margin: 0;
+    background: var(--code-bg);
+    color: #e1e4e8;
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 18px 20px;
+    overflow: auto;
+    font-family: "SF Mono", "JetBrains Mono", "Fira Code", Consolas, "Courier New", monospace;
+    font-size: 13.5px;
+    line-height: 1.55;
+    white-space: pre;
+    tab-size: 4;
+    box-shadow: 0 8px 28px rgba(0,0,0,0.28);
+  }
+  .hint { margin-top: 12px; color: var(--muted); font-size: 12px; }
+</style>
+</head>
+<body>
+  <div class="top">
+    <div class="brand">CSP-J · 配套代码</div>
+    <div class="title">lesson18_参数传递与作用域</div>
+    <div class="actions">
+      <a class="btn" href="../lesson18_参数传递与作用域.cpp" download="lesson18_参数传递与作用域.cpp">⬇️ 下载 .cpp</a>
+      <a class="btn gold" href="javascript:history.back()">← 返回课件</a>
+    </div>
+  </div>
+  <div class="meta">编码：UTF-8 · 文件：lesson18_参数传递与作用域.cpp · 共 320 行</div>
+  <div class="wrap">
+    <pre id="code">/**
+ * 第18课：参数传递与作用域 —— 完整演示程序
+ *
+ * 本程序演示了 C++ 中参数传递和变量作用域的核心概念：
+ * 1. 值传递（形参获得实参的副本，不改变原始变量）
+ * 2. 引用传递（&amp; 符号，改变原始变量）
+ * 3. 数组作为参数（传递首地址，修改会反映到原始数组）
+ * 4. 全局变量的使用
+ * 5. 静态变量 static（生命周期贯穿整个程序，只初始化一次）
+ * 6. 局部变量的作用域和生命周期
+ */
+
+#include &lt;iostream&gt;
+using namespace std;
+
+// ==================== 全局变量 ====================
+int globalCounter = 0;   // 全局变量，自动初始化为 0
+int globalMax = -10000;  // 用于记录全局最大值
+
+// ==================== 函数声明 ====================
+
+// 值传递演示
+void tryModifyByValue(int num);
+void demonstrateValuePass();
+
+// 引用传递演示
+void swap(int &amp;a, int &amp;b);
+void incrementBoth(int &amp;a, int &amp;b, int amount);
+void getSumAndDiff(int a, int b, int &amp;sum, int &amp;diff);
+void demonstrateReferencePass();
+
+// 数组参数演示
+void doubleElements(int arr[], int n);
+void resetArray(int arr[], int n, int value);
+void printArray(const int arr[], int n);
+void demonstrateArrayParam();
+
+// 全局变量演示
+void updateGlobalCounter();
+void updateGlobalMax(int val);
+void readAndUpdateGlobal();
+void demonstrateGlobalVars();
+
+// 静态变量演示
+int getNextID();
+void countCalls();
+void demonstrateStaticVars();
+
+// 局部变量作用域演示
+void demonstrateLocalScope();
+
+// 综合演示
+void mixedScopeDemo();
+
+// ==================== 主函数 ====================
+
+int main() {
+    cout &lt;&lt; "============================================" &lt;&lt; endl;
+    cout &lt;&lt; "  第18课：参数传递与作用域 —— 演示程序" &lt;&lt; endl;
+    cout &lt;&lt; "============================================" &lt;&lt; endl;
+
+    // ---------- 1. 值传递演示 ----------
+    cout &lt;&lt; "\n【1. 值传递演示 —— 修改形参不影响实参】" &lt;&lt; endl;
+    demonstrateValuePass();
+
+    // ---------- 2. 引用传递演示 ----------
+    cout &lt;&lt; "\n【2. 引用传递演示 —— &amp; 符号让函数修改实参】" &lt;&lt; endl;
+    demonstrateReferencePass();
+
+    // ---------- 3. 数组参数演示 ----------
+    cout &lt;&lt; "\n【3. 数组参数演示 —— 传递地址，修改影响原数组】" &lt;&lt; endl;
+    demonstrateArrayParam();
+
+    // ---------- 4. 全局变量演示 ----------
+    cout &lt;&lt; "\n【4. 全局变量演示 —— 所有函数共享的数据】" &lt;&lt; endl;
+    demonstrateGlobalVars();
+
+    // ---------- 5. 静态变量演示 ----------
+    cout &lt;&lt; "\n【5. 静态变量演示 —— 只初始化一次，跨调用保持值】" &lt;&lt; endl;
+    demonstrateStaticVars();
+
+    // ---------- 6. 局部变量作用域演示 ----------
+    cout &lt;&lt; "\n【6. 局部变量作用域演示 —— 离开作用域即销毁】" &lt;&lt; endl;
+    demonstrateLocalScope();
+
+    // ---------- 7. 综合演示 ----------
+    cout &lt;&lt; "\n【7. 综合演示 —— 全局/静态/局部变量同台】" &lt;&lt; endl;
+    mixedScopeDemo();
+
+    cout &lt;&lt; "\n============================================" &lt;&lt; endl;
+    cout &lt;&lt; "            演示程序运行完毕" &lt;&lt; endl;
+    cout &lt;&lt; "============================================" &lt;&lt; endl;
+
+    return 0;
+}
+
+// ==================== 值传递函数 ====================
+
+void tryModifyByValue(int num) {
+    cout &lt;&lt; "  函数内（修改前）：num = " &lt;&lt; num &lt;&lt; endl;
+    num = 9999;
+    cout &lt;&lt; "  函数内（修改后）：num = " &lt;&lt; num &lt;&lt; endl;
+}
+
+void demonstrateValuePass() {
+    int a = 42;
+    cout &lt;&lt; "  调用前：a = " &lt;&lt; a &lt;&lt; endl;
+    tryModifyByValue(a);
+    cout &lt;&lt; "  调用后：a = " &lt;&lt; a &lt;&lt; "  ← 未改变！因为值传递只传递了副本" &lt;&lt; endl;
+
+    cout &lt;&lt; "\n  再测一个例子：" &lt;&lt; endl;
+    int x = 100, y = 200;
+    cout &lt;&lt; "  交换前：x = " &lt;&lt; x &lt;&lt; ", y = " &lt;&lt; y &lt;&lt; endl;
+
+    // 注意：swap 接受引用参数，这里是为了对比演示
+    // 如果有一个"值传递版 swap"，下面的代码就无法真正交换
+    cout &lt;&lt; "  （提示：值传递版 swap 无法真正交换，因为只交换了副本）" &lt;&lt; endl;
+}
+
+// ==================== 引用传递函数 ====================
+
+void swap(int &amp;a, int &amp;b) {
+    int temp = a;
+    a = b;
+    b = temp;
+}
+
+void incrementBoth(int &amp;a, int &amp;b, int amount) {
+    a += amount;
+    b += amount;
+}
+
+void getSumAndDiff(int a, int b, int &amp;sum, int &amp;diff) {
+    sum = a + b;
+    diff = (a &gt; b) ? (a - b) : (b - a);
+}
+
+void demonstrateReferencePass() {
+    // swap 演示
+    int m = 100, n = 200;
+    cout &lt;&lt; "  [swap 函数]" &lt;&lt; endl;
+    cout &lt;&lt; "  交换前：m = " &lt;&lt; m &lt;&lt; ", n = " &lt;&lt; n &lt;&lt; endl;
+    swap(m, n);
+    cout &lt;&lt; "  交换后：m = " &lt;&lt; m &lt;&lt; ", n = " &lt;&lt; n &lt;&lt; "  ← 真正交换了！" &lt;&lt; endl;
+
+    // incrementBoth 演示
+    int p = 10, q = 20;
+    cout &lt;&lt; "\n  [incrementBoth 函数]" &lt;&lt; endl;
+    cout &lt;&lt; "  增加前：p = " &lt;&lt; p &lt;&lt; ", q = " &lt;&lt; q &lt;&lt; endl;
+    incrementBoth(p, q, 5);
+    cout &lt;&lt; "  各增加 5 后：p = " &lt;&lt; p &lt;&lt; ", q = " &lt;&lt; q &lt;&lt; "  ← 两个都改变了！" &lt;&lt; endl;
+
+    // getSumAndDiff 演示 —— 通过引用"返回"多个值
+    cout &lt;&lt; "\n  [getSumAndDiff 函数 —— 通过引用返回多个结果]" &lt;&lt; endl;
+    int s, d;
+    getSumAndDiff(30, 12, s, d);
+    cout &lt;&lt; "  30 和 12：sum = " &lt;&lt; s &lt;&lt; ", diff = " &lt;&lt; d &lt;&lt; endl;
+}
+
+// ==================== 数组参数函数 ====================
+
+void doubleElements(int arr[], int n) {
+    for (int i = 0; i &lt; n; i++) {
+        arr[i] *= 2;
+    }
+}
+
+void resetArray(int arr[], int n, int value) {
+    for (int i = 0; i &lt; n; i++) {
+        arr[i] = value;
+    }
+}
+
+void printArray(const int arr[], int n) {
+    cout &lt;&lt; "  [";
+    for (int i = 0; i &lt; n; i++) {
+        cout &lt;&lt; arr[i];
+        if (i &lt; n - 1) cout &lt;&lt; ", ";
+    }
+    cout &lt;&lt; "]" &lt;&lt; endl;
+}
+
+void demonstrateArrayParam() {
+    int nums[] = {1, 3, 5, 7, 9};
+
+    cout &lt;&lt; "  原始数组：";
+    printArray(nums, 5);
+
+    doubleElements(nums, 5);
+    cout &lt;&lt; "  doubleElements 后（原数组被修改）：";
+    printArray(nums, 5);
+
+    resetArray(nums, 5, 0);
+    cout &lt;&lt; "  resetArray 重置为 0 后：";
+    printArray(nums, 5);
+
+    cout &lt;&lt; "  → 说明：数组参数传递的是首地址，函数内修改数组元素" &lt;&lt; endl;
+    cout &lt;&lt; "           会直接影响原始数组，类似引用传递的效果。" &lt;&lt; endl;
+}
+
+// ==================== 全局变量函数 ====================
+
+void updateGlobalCounter() {
+    globalCounter++;
+    cout &lt;&lt; "  globalCounter 从 " &lt;&lt; globalCounter - 1
+         &lt;&lt; " 增加到 " &lt;&lt; globalCounter &lt;&lt; endl;
+}
+
+void updateGlobalMax(int val) {
+    if (val &gt; globalMax) {
+        cout &lt;&lt; "  globalMax 更新：从 " &lt;&lt; globalMax &lt;&lt; " 到 " &lt;&lt; val &lt;&lt; endl;
+        globalMax = val;
+    } else {
+        cout &lt;&lt; "  globalMax 保持不变：当前值 " &lt;&lt; globalMax
+             &lt;&lt; "，传入值 " &lt;&lt; val &lt;&lt; endl;
+    }
+}
+
+void readAndUpdateGlobal() {
+    cout &lt;&lt; "  [readAndUpdateGlobal] 读取 globalCounter = " &lt;&lt; globalCounter &lt;&lt; endl;
+    globalCounter += 5;
+    cout &lt;&lt; "  [readAndUpdateGlobal] 修改后 globalCounter = " &lt;&lt; globalCounter &lt;&lt; endl;
+}
+
+void demonstrateGlobalVars() {
+    cout &lt;&lt; "  初始 globalCounter = " &lt;&lt; globalCounter &lt;&lt; endl;
+    updateGlobalCounter();
+    updateGlobalCounter();
+    readAndUpdateGlobal();
+    updateGlobalCounter();
+    cout &lt;&lt; "  最终 globalCounter = " &lt;&lt; globalCounter &lt;&lt; endl;
+
+    cout &lt;&lt; "\n  全局变量 globalMax（初始 = " &lt;&lt; globalMax &lt;&lt; "）：" &lt;&lt; endl;
+    updateGlobalMax(30);
+    updateGlobalMax(10);
+    updateGlobalMax(50);
+    updateGlobalMax(40);
+    cout &lt;&lt; "  最终 globalMax = " &lt;&lt; globalMax &lt;&lt; endl;
+}
+
+// ==================== 静态变量函数 ====================
+
+int getNextID() {
+    static int nextID = 1000;
+    return nextID++;
+}
+
+void countCalls() {
+    static int callCount = 0;
+    callCount++;
+    cout &lt;&lt; "  countCalls 已被调用 " &lt;&lt; callCount &lt;&lt; " 次" &lt;&lt; endl;
+}
+
+void demonstrateStaticVars() {
+    cout &lt;&lt; "  [getNextID —— 每次返回递增的 ID]" &lt;&lt; endl;
+    for (int i = 0; i &lt; 5; i++) {
+        cout &lt;&lt; "  第 " &lt;&lt; (i + 1) &lt;&lt; " 个 ID：" &lt;&lt; getNextID() &lt;&lt; endl;
+    }
+
+    cout &lt;&lt; "\n  [countCalls —— 统计函数调用次数]" &lt;&lt; endl;
+    for (int i = 0; i &lt; 4; i++) {
+        countCalls();
+    }
+
+    cout &lt;&lt; "\n  → 说明：static 变量只初始化一次（第一次执行到时），" &lt;&lt; endl;
+    cout &lt;&lt; "           之后每次调用都保留上一次的值。" &lt;&lt; endl;
+    cout &lt;&lt; "           如果是普通局部变量，每次都会重新初始化为 0。" &lt;&lt; endl;
+}
+
+// ==================== 局部变量作用域演示 ====================
+
+void demonstrateLocalScope() {
+    int outer = 100;
+    cout &lt;&lt; "  外层作用域：outer = " &lt;&lt; outer &lt;&lt; endl;
+
+    {
+        // 新作用域开始
+        int inner = 200;
+        cout &lt;&lt; "  内层作用域：inner = " &lt;&lt; inner &lt;&lt; endl;
+        cout &lt;&lt; "  内层可以访问外层：outer = " &lt;&lt; outer &lt;&lt; endl;
+
+        int outer = 300;  // 遮蔽外层的 outer
+        cout &lt;&lt; "  内层遮蔽后的 outer = " &lt;&lt; outer &lt;&lt; endl;
+        cout &lt;&lt; "  使用 :: 访问全局 globalCounter = " &lt;&lt; ::globalCounter &lt;&lt; endl;
+    }
+    // inner 在这里已经被销毁，无法访问
+
+    cout &lt;&lt; "  离开内层后：outer = " &lt;&lt; outer &lt;&lt; "（恢复为 100）" &lt;&lt; endl;
+
+    // 演示局部变量每次调用都重新初始化
+    cout &lt;&lt; "\n  [局部变量生命周期]" &lt;&lt; endl;
+    for (int i = 0; i &lt; 3; i++) {
+        int localVar = 10;
+        localVar += i;
+        cout &lt;&lt; "  第 " &lt;&lt; (i + 1) &lt;&lt; " 次进入：localVar = " &lt;&lt; localVar &lt;&lt; endl;
+    }
+    cout &lt;&lt; "  → 每次进入作用域，localVar 都重新初始化为 10，然后加 i。" &lt;&lt; endl;
+    cout &lt;&lt; "    如果是 static int localVar = 10; 结果就会不同。" &lt;&lt; endl;
+}
+
+// ==================== 综合演示 ====================
+
+void mixedScopeDemo() {
+    cout &lt;&lt; "  当前全局变量 globalCounter = " &lt;&lt; globalCounter &lt;&lt; endl;
+
+    // 演示 static 和全局变量的区别
+    cout &lt;&lt; "  [静态 vs 全局变量]" &lt;&lt; endl;
+    for (int i = 0; i &lt; 3; i++) {
+        static int staticLocal = 0;
+        staticLocal++;
+        globalCounter++;
+
+        cout &lt;&lt; "  第 " &lt;&lt; (i + 1) &lt;&lt; " 轮：" &lt;&lt; endl;
+        cout &lt;&lt; "    static 局部变量 = " &lt;&lt; staticLocal &lt;&lt; endl;
+        cout &lt;&lt; "    全局变量 = " &lt;&lt; globalCounter &lt;&lt; endl;
+    }
+
+    cout &lt;&lt; "\n  → static 局部变量只在所在函数中可见，但生命周期为整个程序。" &lt;&lt; endl;
+    cout &lt;&lt; "  → 全局变量在所有函数中都可见，生命周期也为整个程序。" &lt;&lt; endl;
+}
+</pre>
+    <p class="hint">若曾直接打开 .cpp 出现乱码，是因为浏览器未按 UTF-8 解析纯文本。本页已固定 UTF-8 显示。</p>
+  </div>
+</body>
+</html>

@@ -14,54 +14,54 @@
   var isPresenter = /[?&]presenter=1/.test(qs);
 
   var CODE_FILES = {
-    1: "lesson01_计算机基础与进制转换.cpp",
-    2: "lesson02_C++编程环境.cpp",
-    3: "lesson03_变量与基本数据类型.cpp",
-    4: "lesson04_输入输出与格式化.cpp",
-    5: "lesson05_运算符与表达式上.cpp",
-    6: "lesson06_运算符与表达式下.cpp",
-    7: "lesson07_顺序结构与程序调试.cpp",
-    8: "lesson08_if_else分支结构.cpp",
-    9: "lesson09_switch_case多分支.cpp",
-    10: "lesson10_for循环结构.cpp",
-    11: "lesson11_while与do_while循环.cpp",
-    12: "lesson12_循环控制与综合应用.cpp",
-    13: "lesson13_一维数组.cpp",
-    14: "lesson14_二维数组.cpp",
-    15: "lesson15_C风格字符串.cpp",
-    16: "lesson16_string类与字符处理.cpp",
-    17: "lesson17_函数的定义与调用.cpp",
-    18: "lesson18_参数传递与作用域.cpp",
-    19: "lesson19_递归函数入门.cpp",
-    20: "lesson20_递归应用与经典问题.cpp",
-    21: "lesson21_结构体定义与使用.cpp",
-    22: "lesson22_指针基础.cpp",
-    23: "lesson23_STL入门vector与string.cpp",
-    24: "lesson24_STL容器stack与queue.cpp",
-    25: "lesson25_枚举算法上.cpp",
-    26: "lesson26_枚举算法下.cpp",
-    27: "lesson27_模拟算法上.cpp",
-    28: "lesson28_模拟算法下.cpp",
-    29: "lesson29_冒泡排序与选择排序.cpp",
-    30: "lesson30_插入排序与计数排序.cpp",
-    31: "lesson31_STLsort与自定义排序.cpp",
-    32: "lesson32_二分查找.cpp",
-    33: "lesson33_贪心算法上.cpp",
-    34: "lesson34_贪心算法下.cpp",
-    35: "lesson35_递推与数学基础.cpp",
-    36: "lesson36_数论基础.cpp",
-    37: "lesson37_动态规划基础.cpp",
-    38: "lesson38_线性DP.cpp",
-    39: "lesson39_背包问题上.cpp",
-    40: "lesson40_背包问题下与区间DP.cpp",
-    41: "lesson41_图论基础.cpp",
-    42: "lesson42_DFS深度优先搜索.cpp",
-    43: "lesson43_BFS广度优先搜索.cpp",
-    44: "lesson44_树的基础.cpp",
-    45: "lesson45_综合模拟一.cpp",
-    46: "lesson46_综合模拟二.cpp",
-    47: "lesson47_综合模拟三.cpp",
-    48: "lesson48_考前冲刺与应试技巧.cpp"
+    1: "lesson01_计算机基础与进制转换.html",
+    2: "lesson02_C++编程环境.html",
+    3: "lesson03_变量与基本数据类型.html",
+    4: "lesson04_输入输出与格式化.html",
+    5: "lesson05_运算符与表达式上.html",
+    6: "lesson06_运算符与表达式下.html",
+    7: "lesson07_顺序结构与程序调试.html",
+    8: "lesson08_if_else分支结构.html",
+    9: "lesson09_switch_case多分支.html",
+    10: "lesson10_for循环结构.html",
+    11: "lesson11_while与do_while循环.html",
+    12: "lesson12_循环控制与综合应用.html",
+    13: "lesson13_一维数组.html",
+    14: "lesson14_二维数组.html",
+    15: "lesson15_C风格字符串.html",
+    16: "lesson16_string类与字符处理.html",
+    17: "lesson17_函数的定义与调用.html",
+    18: "lesson18_参数传递与作用域.html",
+    19: "lesson19_递归函数入门.html",
+    20: "lesson20_递归应用与经典问题.html",
+    21: "lesson21_结构体定义与使用.html",
+    22: "lesson22_指针基础.html",
+    23: "lesson23_STL入门vector与string.html",
+    24: "lesson24_STL容器stack与queue.html",
+    25: "lesson25_枚举算法上.html",
+    26: "lesson26_枚举算法下.html",
+    27: "lesson27_模拟算法上.html",
+    28: "lesson28_模拟算法下.html",
+    29: "lesson29_冒泡排序与选择排序.html",
+    30: "lesson30_插入排序与计数排序.html",
+    31: "lesson31_STLsort与自定义排序.html",
+    32: "lesson32_二分查找.html",
+    33: "lesson33_贪心算法上.html",
+    34: "lesson34_贪心算法下.html",
+    35: "lesson35_递推与数学基础.html",
+    36: "lesson36_数论基础.html",
+    37: "lesson37_动态规划基础.html",
+    38: "lesson38_线性DP.html",
+    39: "lesson39_背包问题上.html",
+    40: "lesson40_背包问题下与区间DP.html",
+    41: "lesson41_图论基础.html",
+    42: "lesson42_DFS深度优先搜索.html",
+    43: "lesson43_BFS广度优先搜索.html",
+    44: "lesson44_树的基础.html",
+    45: "lesson45_综合模拟一.html",
+    46: "lesson46_综合模拟二.html",
+    47: "lesson47_综合模拟三.html",
+    48: "lesson48_考前冲刺与应试技巧.html"
   };
 
   function injectCss() {
@@ -157,7 +157,7 @@
     if (first.querySelector('.cspj-code-btn')) return;
 
     var file = CODE_FILES[lesson];
-    var href = '../程序/' + file;
+    var href = '../程序/view/' + file;
 
     var wrap = document.createElement('div');
     wrap.className = 'cspj-code-btn-wrap';
@@ -168,11 +168,11 @@
     a.target = '_blank';
     a.rel = 'noopener noreferrer';
     a.textContent = '📄 查看配套代码';
-    a.title = '打开本课完整代码：' + file;
+    a.title = '打开本课完整代码（UTF-8 查看页）：' + file;
 
     var meta = document.createElement('div');
     meta.className = 'cspj-code-meta';
-    meta.textContent = '程序/' + file;
+    meta.textContent = '程序/view/' + file;
 
     wrap.appendChild(a);
     wrap.appendChild(meta);

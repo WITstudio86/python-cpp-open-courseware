@@ -1,0 +1,356 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>lesson20_递归应用与经典问题</title>
+<style>
+  :root {
+    --bg: #0f1419;
+    --panel: #161d27;
+    --text: #e7ecf3;
+    --muted: #9aa7b8;
+    --gold: #d4a853;
+    --code-bg: #1a1d23;
+    --border: #273244;
+  }
+  * { box-sizing: border-box; }
+  html, body {
+    margin: 0; padding: 0;
+    background: var(--bg);
+    color: var(--text);
+    font-family: -apple-system, BlinkMacSystemFont, "PingFang SC", "Microsoft YaHei", sans-serif;
+    min-height: 100%;
+  }
+  .top {
+    position: sticky; top: 0; z-index: 10;
+    display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between;
+    gap: 10px;
+    padding: 12px 18px;
+    background: linear-gradient(135deg, #0a2540, #1a3a5c);
+    border-bottom: 1px solid rgba(212,168,83,0.35);
+    box-shadow: 0 4px 18px rgba(0,0,0,0.25);
+  }
+  .brand { color: var(--gold); font-weight: 700; font-size: 14px; letter-spacing: 0.04em; }
+  .title { font-size: 15px; font-weight: 600; color: #fff; max-width: 52vw; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .actions { display: flex; gap: 8px; flex-wrap: wrap; }
+  .btn {
+    appearance: none; border: 1px solid rgba(255,255,255,0.18);
+    background: rgba(255,255,255,0.08); color: #fff;
+    border-radius: 999px; padding: 8px 14px; font-size: 13px; font-weight: 600;
+    text-decoration: none; cursor: pointer;
+  }
+  .btn:hover { background: rgba(255,255,255,0.16); }
+  .btn.gold { background: linear-gradient(135deg, #d4a853, #c4922e); color: #0a2540; border-color: transparent; }
+  .meta {
+    padding: 10px 18px; color: var(--muted); font-size: 12px;
+    border-bottom: 1px solid var(--border);
+    background: var(--panel);
+  }
+  .wrap { padding: 16px 18px 40px; }
+  pre {
+    margin: 0;
+    background: var(--code-bg);
+    color: #e1e4e8;
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 18px 20px;
+    overflow: auto;
+    font-family: "SF Mono", "JetBrains Mono", "Fira Code", Consolas, "Courier New", monospace;
+    font-size: 13.5px;
+    line-height: 1.55;
+    white-space: pre;
+    tab-size: 4;
+    box-shadow: 0 8px 28px rgba(0,0,0,0.28);
+  }
+  .hint { margin-top: 12px; color: var(--muted); font-size: 12px; }
+</style>
+</head>
+<body>
+  <div class="top">
+    <div class="brand">CSP-J · 配套代码</div>
+    <div class="title">lesson20_递归应用与经典问题</div>
+    <div class="actions">
+      <a class="btn" href="../lesson20_递归应用与经典问题.cpp" download="lesson20_递归应用与经典问题.cpp">⬇️ 下载 .cpp</a>
+      <a class="btn gold" href="javascript:history.back()">← 返回课件</a>
+    </div>
+  </div>
+  <div class="meta">编码：UTF-8 · 文件：lesson20_递归应用与经典问题.cpp · 共 272 行</div>
+  <div class="wrap">
+    <pre id="code">#include &lt;iostream&gt;
+#include &lt;cstring&gt;
+using namespace std;
+
+// ==================== 1. 汉诺塔问题 ====================
+// 函数功能：递归求解汉诺塔问题
+// 参数说明：
+//   n     - 当前需要移动的盘子数量
+//   from  - 起始柱子编号
+//   to    - 目标柱子编号
+//   aux   - 辅助柱子编号
+//   moves - 移动步数计数器（引用传递，累加总步数）
+void hanoi(int n, char from, char to, char aux, int &amp;moves) {
+    // 递归边界：只剩一个盘子时直接移动
+    if (n == 1) {
+        moves++;
+        cout &lt;&lt; "步骤 " &lt;&lt; moves &lt;&lt; "：将盘子 1 从 " &lt;&lt; from &lt;&lt; " 移动到 " &lt;&lt; to &lt;&lt; endl;
+        return;
+    }
+    // 第一步：将上面 n-1 个盘子从 from 借助 to 移动到 aux
+    hanoi(n - 1, from, aux, to, moves);
+    // 第二步：将最大的盘子（第 n 个）从 from 移动到 to
+    moves++;
+    cout &lt;&lt; "步骤 " &lt;&lt; moves &lt;&lt; "：将盘子 " &lt;&lt; n &lt;&lt; " 从 " &lt;&lt; from &lt;&lt; " 移动到 " &lt;&lt; to &lt;&lt; endl;
+    // 第三步：将 n-1 个盘子从 aux 借助 from 移动到 to
+    hanoi(n - 1, aux, to, from, moves);
+}
+
+// ==================== 2. 最大公约数 GCD ====================
+// 函数功能：使用辗转相除法（欧几里得算法）递归求解最大公约数
+// 参数说明：
+//   a, b - 两个正整数
+// 返回值：a 和 b 的最大公约数
+int gcdRecursive(int a, int b) {
+    // 递归边界：当 b 为 0 时，a 即为最大公约数
+    if (b == 0) {
+        return a;
+    }
+    // 递归调用：gcd(a, b) = gcd(b, a % b)
+    return gcdRecursive(b, a % b);
+}
+
+// 函数功能：使用辗转相除法迭代求解最大公约数
+// 参数说明：
+//   a, b - 两个正整数
+// 返回值：a 和 b 的最大公约数
+int gcdIterative(int a, int b) {
+    // 当 b 不为 0 时，持续更新 a 和 b
+    while (b != 0) {
+        int temp = b;
+        b = a % b;
+        a = temp;
+    }
+    return a;
+}
+
+// ==================== 3. 二分查找 ====================
+// 函数功能：在有序数组中递归查找目标值
+// 参数说明：
+//   arr    - 有序数组（升序排列）
+//   left   - 当前查找区间的左边界下标
+//   right  - 当前查找区间的右边界下标
+//   target - 需要查找的目标值
+// 返回值：目标值的下标（找到时），或 -1（未找到时）
+int binarySearch(int arr[], int left, int right, int target) {
+    // 打印当前查找区间的信息
+    cout &lt;&lt; "  查找范围：left = " &lt;&lt; left &lt;&lt; "（值=" &lt;&lt; arr[left] &lt;&lt; "）, "
+         &lt;&lt; "right = " &lt;&lt; right &lt;&lt; "（值=" &lt;&lt; arr[right] &lt;&lt; "）";
+
+    // 递归边界：查找区间无效，说明未找到目标值
+    if (left &gt; right) {
+        cout &lt;&lt; " =&gt; 区间无效，未找到！" &lt;&lt; endl;
+        return -1;
+    }
+
+    // 计算中间位置，避免整数溢出
+    int mid = left + (right - left) / 2;
+    cout &lt;&lt; ", mid = " &lt;&lt; mid &lt;&lt; "（值=" &lt;&lt; arr[mid] &lt;&lt; "）";
+
+    // 找到目标值
+    if (arr[mid] == target) {
+        cout &lt;&lt; " =&gt; 找到了！" &lt;&lt; endl;
+        return mid;
+    }
+    // 目标值在右半部分
+    else if (arr[mid] &lt; target) {
+        cout &lt;&lt; " =&gt; 目标值 " &lt;&lt; target &lt;&lt; " &gt; " &lt;&lt; arr[mid] &lt;&lt; "，向右搜索" &lt;&lt; endl;
+        return binarySearch(arr, mid + 1, right, target);
+    }
+    // 目标值在左半部分
+    else {
+        cout &lt;&lt; " =&gt; 目标值 " &lt;&lt; target &lt;&lt; " &lt; " &lt;&lt; arr[mid] &lt;&lt; "，向左搜索" &lt;&lt; endl;
+        return binarySearch(arr, left, mid - 1, target);
+    }
+}
+
+// ==================== 4. 全排列生成 ====================
+// 函数功能：递归生成 1 到 n 的所有排列（全排列）
+// 参数说明：
+//   depth - 当前递归深度（已经确定了几个位置的数字）
+//   n     - 排列的总长度
+//   path  - 存储当前正在生成的排列序列
+//   used  - 标记数组，used[i] 为 true 表示数字 i 已经被使用
+void permute(int depth, int n, int path[], bool used[]) {
+    // 递归边界：所有位置都已填充完毕，输出当前排列
+    if (depth == n) {
+        cout &lt;&lt; "  [";
+        for (int i = 0; i &lt; n; i++) {
+            cout &lt;&lt; path[i];
+            if (i &lt; n - 1) {
+                cout &lt;&lt; ", ";
+            }
+        }
+        cout &lt;&lt; "]" &lt;&lt; endl;
+        return;
+    }
+
+    // 尝试将数字 i 放入当前位置（depth）
+    for (int i = 1; i &lt;= n; i++) {
+        // 如果数字 i 还没有被使用
+        if (!used[i]) {
+            // 做选择：将 i 放入 path[depth]，并标记为已使用
+            path[depth] = i;
+            used[i] = true;
+
+            // 递归处理下一个位置
+            permute(depth + 1, n, path, used);
+
+            // 回溯：撤销选择，将 i 标记为未使用
+            used[i] = false;
+        }
+    }
+}
+
+// ==================== 5. 二进制串生成 ====================
+// 函数功能：递归生成长度为 n 的所有二进制串
+// 参数说明：
+//   depth - 当前递归深度（已经确定了几个位置的字符）
+//   n     - 二进制串的总长度
+//   str   - 字符数组，存储当前正在生成的二进制串
+void generateBinary(int depth, int n, char str[]) {
+    // 递归边界：所有位置都已填充完毕，输出当前二进制串
+    if (depth == n) {
+        // 确保字符串以 '\0' 结尾
+        str[n] = '\0';
+        cout &lt;&lt; "  \"" &lt;&lt; str &lt;&lt; "\"" &lt;&lt; endl;
+        return;
+    }
+
+    // 分支一：当前位置填 '0'
+    str[depth] = '0';
+    generateBinary(depth + 1, n, str);
+
+    // 分支二：当前位置填 '1'
+    str[depth] = '1';
+    generateBinary(depth + 1, n, str);
+}
+
+// ==================== 主函数 ====================
+int main() {
+    // ---------- 汉诺塔问题 ----------
+    cout &lt;&lt; "==================== 汉诺塔问题 ====================" &lt;&lt; endl;
+
+    // 测试 n = 3 的情况
+    cout &lt;&lt; "\n【测试 1】n = 3 时的汉诺塔移动步骤：" &lt;&lt; endl;
+    int moves1 = 0;
+    hanoi(3, 'A', 'C', 'B', moves1);
+    cout &lt;&lt; "总步数：" &lt;&lt; moves1 &lt;&lt; "（理论值：2^3 - 1 = 7）" &lt;&lt; endl;
+
+    // 测试 n = 4 的情况
+    cout &lt;&lt; "\n【测试 2】n = 4 时的汉诺塔移动步骤：" &lt;&lt; endl;
+    int moves2 = 0;
+    hanoi(4, 'A', 'C', 'B', moves2);
+    cout &lt;&lt; "总步数：" &lt;&lt; moves2 &lt;&lt; "（理论值：2^4 - 1 = 15）" &lt;&lt; endl;
+
+    // ---------- 最大公约数 GCD ----------
+    cout &lt;&lt; "\n==================== 最大公约数 GCD ====================" &lt;&lt; endl;
+
+    // 定义测试数据对
+    int testPairs[4][2] = {
+        {12, 18},
+        {48, 36},
+        {1071, 462},
+        {17, 13}
+    };
+
+    // 逐对测试两种 GCD 方法
+    for (int i = 0; i &lt; 4; i++) {
+        int a = testPairs[i][0];
+        int b = testPairs[i][1];
+        cout &lt;&lt; "\n【测试 " &lt;&lt; (i + 1) &lt;&lt; "】gcd(" &lt;&lt; a &lt;&lt; ", " &lt;&lt; b &lt;&lt; ")" &lt;&lt; endl;
+        cout &lt;&lt; "  递归法结果：" &lt;&lt; gcdRecursive(a, b) &lt;&lt; endl;
+        cout &lt;&lt; "  迭代法结果：" &lt;&lt; gcdIterative(a, b) &lt;&lt; endl;
+    }
+
+    // ---------- 二分查找 ----------
+    cout &lt;&lt; "\n==================== 二分查找 ====================" &lt;&lt; endl;
+
+    // 定义有序数组
+    int sortedArr[] = {2, 5, 8, 12, 16, 23, 38, 45, 56, 67, 78};
+    int arrSize = sizeof(sortedArr) / sizeof(sortedArr[0]);
+
+    // 打印数组内容
+    cout &lt;&lt; "\n有序数组：";
+    for (int i = 0; i &lt; arrSize; i++) {
+        cout &lt;&lt; sortedArr[i];
+        if (i &lt; arrSize - 1) {
+            cout &lt;&lt; ", ";
+        }
+    }
+    cout &lt;&lt; endl;
+
+    // 测试查找 23（存在的情况）
+    cout &lt;&lt; "\n【测试 1】查找目标值 23：" &lt;&lt; endl;
+    int result1 = binarySearch(sortedArr, 0, arrSize - 1, 23);
+    if (result1 != -1) {
+        cout &lt;&lt; "查找成功！目标值 23 的下标为：" &lt;&lt; result1 &lt;&lt; endl;
+    } else {
+        cout &lt;&lt; "查找失败！目标值 23 不在数组中。" &lt;&lt; endl;
+    }
+
+    // 测试查找 30（不存在的情况）
+    cout &lt;&lt; "\n【测试 2】查找目标值 30：" &lt;&lt; endl;
+    int result2 = binarySearch(sortedArr, 0, arrSize - 1, 30);
+    if (result2 != -1) {
+        cout &lt;&lt; "查找成功！目标值 30 的下标为：" &lt;&lt; result2 &lt;&lt; endl;
+    } else {
+        cout &lt;&lt; "查找失败！目标值 30 不在数组中。" &lt;&lt; endl;
+    }
+
+    // ---------- 全排列生成 ----------
+    cout &lt;&lt; "\n==================== 全排列生成 ====================" &lt;&lt; endl;
+
+    int n_perm = 3;
+    cout &lt;&lt; "\nn = " &lt;&lt; n_perm &lt;&lt; " 的所有排列（共 " &lt;&lt; n_perm &lt;&lt; "! = 6 种）：" &lt;&lt; endl;
+
+    // 分配存储空间（使用动态分配以满足可变长度数组需求）
+    int *path = new int[n_perm];
+    bool *used = new bool[n_perm + 1];
+
+    // 初始化 used 数组，将所有数字标记为未使用
+    for (int i = 1; i &lt;= n_perm; i++) {
+        used[i] = false;
+    }
+
+    // 从深度 0 开始递归生成全排列
+    permute(0, n_perm, path, used);
+
+    // 释放动态分配的内存
+    delete[] path;
+    delete[] used;
+
+    // ---------- 二进制串生成 ----------
+    cout &lt;&lt; "\n==================== 二进制串生成 ====================" &lt;&lt; endl;
+
+    int n_bin = 3;
+    cout &lt;&lt; "\nn = " &lt;&lt; n_bin &lt;&lt; " 的所有二进制串（共 2^" &lt;&lt; n_bin &lt;&lt; " = " &lt;&lt; (1 &lt;&lt; n_bin) &lt;&lt; " 种）：" &lt;&lt; endl;
+
+    // 分配字符数组空间，多一个位置用于存储字符串结尾符 '\0'
+    char *binStr = new char[n_bin + 1];
+    binStr[n_bin] = '\0';
+
+    // 从深度 0 开始递归生成所有二进制串
+    generateBinary(0, n_bin, binStr);
+
+    // 释放动态分配的内存
+    delete[] binStr;
+
+    cout &lt;&lt; "\n==================== 程序结束 ====================" &lt;&lt; endl;
+
+    return 0;
+}
+</pre>
+    <p class="hint">若曾直接打开 .cpp 出现乱码，是因为浏览器未按 UTF-8 解析纯文本。本页已固定 UTF-8 显示。</p>
+  </div>
+</body>
+</html>

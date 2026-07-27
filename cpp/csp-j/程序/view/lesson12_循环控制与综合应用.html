@@ -1,0 +1,561 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>lesson12_循环控制与综合应用</title>
+<style>
+  :root {
+    --bg: #0f1419;
+    --panel: #161d27;
+    --text: #e7ecf3;
+    --muted: #9aa7b8;
+    --gold: #d4a853;
+    --code-bg: #1a1d23;
+    --border: #273244;
+  }
+  * { box-sizing: border-box; }
+  html, body {
+    margin: 0; padding: 0;
+    background: var(--bg);
+    color: var(--text);
+    font-family: -apple-system, BlinkMacSystemFont, "PingFang SC", "Microsoft YaHei", sans-serif;
+    min-height: 100%;
+  }
+  .top {
+    position: sticky; top: 0; z-index: 10;
+    display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between;
+    gap: 10px;
+    padding: 12px 18px;
+    background: linear-gradient(135deg, #0a2540, #1a3a5c);
+    border-bottom: 1px solid rgba(212,168,83,0.35);
+    box-shadow: 0 4px 18px rgba(0,0,0,0.25);
+  }
+  .brand { color: var(--gold); font-weight: 700; font-size: 14px; letter-spacing: 0.04em; }
+  .title { font-size: 15px; font-weight: 600; color: #fff; max-width: 52vw; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .actions { display: flex; gap: 8px; flex-wrap: wrap; }
+  .btn {
+    appearance: none; border: 1px solid rgba(255,255,255,0.18);
+    background: rgba(255,255,255,0.08); color: #fff;
+    border-radius: 999px; padding: 8px 14px; font-size: 13px; font-weight: 600;
+    text-decoration: none; cursor: pointer;
+  }
+  .btn:hover { background: rgba(255,255,255,0.16); }
+  .btn.gold { background: linear-gradient(135deg, #d4a853, #c4922e); color: #0a2540; border-color: transparent; }
+  .meta {
+    padding: 10px 18px; color: var(--muted); font-size: 12px;
+    border-bottom: 1px solid var(--border);
+    background: var(--panel);
+  }
+  .wrap { padding: 16px 18px 40px; }
+  pre {
+    margin: 0;
+    background: var(--code-bg);
+    color: #e1e4e8;
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 18px 20px;
+    overflow: auto;
+    font-family: "SF Mono", "JetBrains Mono", "Fira Code", Consolas, "Courier New", monospace;
+    font-size: 13.5px;
+    line-height: 1.55;
+    white-space: pre;
+    tab-size: 4;
+    box-shadow: 0 8px 28px rgba(0,0,0,0.28);
+  }
+  .hint { margin-top: 12px; color: var(--muted); font-size: 12px; }
+</style>
+</head>
+<body>
+  <div class="top">
+    <div class="brand">CSP-J · 配套代码</div>
+    <div class="title">lesson12_循环控制与综合应用</div>
+    <div class="actions">
+      <a class="btn" href="../lesson12_循环控制与综合应用.cpp" download="lesson12_循环控制与综合应用.cpp">⬇️ 下载 .cpp</a>
+      <a class="btn gold" href="javascript:history.back()">← 返回课件</a>
+    </div>
+  </div>
+  <div class="meta">编码：UTF-8 · 文件：lesson12_循环控制与综合应用.cpp · 共 477 行</div>
+  <div class="wrap">
+    <pre id="code">/*
+ * CSP-J 备考课程
+ * 第12课：循环控制与综合应用
+ * 考纲知识点：
+ *   - break（跳出当前循环）
+ *   - continue（跳过本次循环剩余语句）
+ *   - 循环嵌套综合（九九乘法表、图形打印）
+ *   - 程序阅读分析方法（追踪变量变化）
+ *
+ * 本文件包含：
+ *   1. break 演示 - 提前退出循环
+ *   2. continue 演示 - 跳过特定迭代
+ *   3. break vs continue 对比
+ *   4. 九九乘法表（嵌套循环）
+ *   5. 图形打印（三角形、矩形、菱形）
+ *   6. 素数判断（break优化）
+ *   7. 程序阅读分析（变量追踪）
+ *   8. 真题AC代码
+ */
+
+#include &lt;iostream&gt;
+#include &lt;cmath&gt;
+using namespace std;
+
+// -------------------------------------------
+// 演示1：break - 提前退出循环
+// -------------------------------------------
+void demo_break() {
+    cout &lt;&lt; "\n========== 演示1：break - 提前退出循环 ==========" &lt;&lt; endl;
+
+    cout &lt;&lt; "【示例1】找到第一个 5 就停止：" &lt;&lt; endl;
+    for (int i = 1; i &lt;= 10; i++) {
+        if (i == 5) {
+            cout &lt;&lt; "遇到 5，break！" &lt;&lt; endl;
+            break;
+        }
+        cout &lt;&lt; i &lt;&lt; " ";
+    }
+    cout &lt;&lt; endl &lt;&lt; "循环已结束。" &lt;&lt; endl;
+
+    cout &lt;&lt; "\n【示例2】break 在多重循环中只跳出当前层：" &lt;&lt; endl;
+    for (int i = 1; i &lt;= 3; i++) {
+        for (int j = 1; j &lt;= 5; j++) {
+            if (j == 3) {
+                cout &lt;&lt; "  [j=" &lt;&lt; j &lt;&lt; " 时 break 内层]";
+                break;
+            }
+            cout &lt;&lt; " (" &lt;&lt; i &lt;&lt; "," &lt;&lt; j &lt;&lt; ")";
+        }
+        cout &lt;&lt; endl;  // 外层 i 循环继续
+    }
+    cout &lt;&lt; "注意：外层 i 循环不受内层 break 影响" &lt;&lt; endl;
+}
+
+// -------------------------------------------
+// 演示2：continue - 跳过本次迭代剩余
+// -------------------------------------------
+void demo_continue() {
+    cout &lt;&lt; "\n========== 演示2：continue - 跳过本次迭代 ==========" &lt;&lt; endl;
+
+    cout &lt;&lt; "【示例1】跳过偶数，只输出奇数：" &lt;&lt; endl;
+    for (int i = 1; i &lt;= 15; i++) {
+        if (i % 2 == 0) {
+            continue;    // 偶数直接跳过
+        }
+        cout &lt;&lt; i &lt;&lt; " ";
+    }
+    cout &lt;&lt; endl;
+
+    cout &lt;&lt; "\n【示例2】输出 1~20 中不能被 3 整除的数：" &lt;&lt; endl;
+    for (int i = 1; i &lt;= 20; i++) {
+        if (i % 3 == 0) continue;
+        cout &lt;&lt; i &lt;&lt; " ";
+    }
+    cout &lt;&lt; endl;
+
+    cout &lt;&lt; "\n【示例3】continue 在 for 循环中 i++ 仍会执行：" &lt;&lt; endl;
+    cout &lt;&lt; "跳过 i=5 后，下一轮 i=6（i++ 照常执行）：" &lt;&lt; endl;
+    for (int i = 1; i &lt;= 8; i++) {
+        if (i == 5) {
+            cout &lt;&lt; " [跳过" &lt;&lt; i &lt;&lt; "] ";
+            continue;
+        }
+        cout &lt;&lt; i &lt;&lt; " ";
+    }
+    cout &lt;&lt; endl;
+}
+
+// -------------------------------------------
+// 演示3：while 中使用 continue 的陷阱
+// -------------------------------------------
+void demo_while_continue_trap() {
+    cout &lt;&lt; "\n========== 演示3：while 中使用 continue 的陷阱 ==========" &lt;&lt; endl;
+
+    cout &lt;&lt; "\n【正确做法】while + continue（先更新变量）：" &lt;&lt; endl;
+    int i = 1;
+    while (i &lt;= 10) {
+        if (i % 2 == 0) {
+            i++;           // 必须先更新，再 continue
+            continue;
+        }
+        cout &lt;&lt; i &lt;&lt; " ";
+        i++;
+    }
+    cout &lt;&lt; endl;
+
+    cout &lt;&lt; "\n【对比】for 循环自动处理 i++，更安全：" &lt;&lt; endl;
+    for (int i = 1; i &lt;= 10; i++) {
+        if (i % 2 == 0) continue;
+        cout &lt;&lt; i &lt;&lt; " ";
+    }
+    cout &lt;&lt; endl;
+    cout &lt;&lt; "结论：while + continue 要手动保证变量更新，否则死循环！" &lt;&lt; endl;
+}
+
+// -------------------------------------------
+// 演示4：break vs continue 一图对比
+// -------------------------------------------
+void demo_break_vs_continue() {
+    cout &lt;&lt; "\n========== 演示4：break vs continue 对比 ==========" &lt;&lt; endl;
+
+    cout &lt;&lt; "\nbreak 版本（遇到 5 就停止）：" &lt;&lt; endl;
+    for (int i = 1; i &lt;= 8; i++) {
+        if (i == 5) break;
+        cout &lt;&lt; i &lt;&lt; " ";
+    }
+    cout &lt;&lt; "→ 循环终止于 i=5" &lt;&lt; endl;
+
+    cout &lt;&lt; "\ncontinue 版本（跳过 5，继续后面）：" &lt;&lt; endl;
+    for (int i = 1; i &lt;= 8; i++) {
+        if (i == 5) continue;
+        cout &lt;&lt; i &lt;&lt; " ";
+    }
+    cout &lt;&lt; "→ 只跳过 5，其他照常输出" &lt;&lt; endl;
+
+    cout &lt;&lt; "\n关键区别：" &lt;&lt; endl;
+    cout &lt;&lt; "  break    → 结束整个循环，后面的迭代都不执行" &lt;&lt; endl;
+    cout &lt;&lt; "  continue → 只跳过这一次，循环还会继续" &lt;&lt; endl;
+}
+
+// -------------------------------------------
+// 演示5：九九乘法表（嵌套循环经典）
+// -------------------------------------------
+void demo_multiplication_table() {
+    cout &lt;&lt; "\n========== 演示5：九九乘法表 ==========" &lt;&lt; endl;
+
+    cout &lt;&lt; "\n【标准九九乘法表】" &lt;&lt; endl;
+    cout &lt;&lt; "     ";
+    for (int col = 1; col &lt;= 9; col++) {
+        cout &lt;&lt; col &lt;&lt; "     ";
+    }
+    cout &lt;&lt; endl;
+    cout &lt;&lt; "     " &lt;&lt; string(45, '-') &lt;&lt; endl;
+
+    for (int i = 1; i &lt;= 9; i++) {
+        // 外层：控制行
+        cout &lt;&lt; " " &lt;&lt; i &lt;&lt; " | ";
+        for (int j = 1; j &lt;= i; j++) {
+            // 内层：控制列
+            printf("%d×%d=%-3d", j, i, i * j);
+        }
+        cout &lt;&lt; endl;
+    }
+
+    cout &lt;&lt; "\n【完整矩形乘法表】" &lt;&lt; endl;
+    for (int i = 1; i &lt;= 9; i++) {
+        for (int j = 1; j &lt;= 9; j++) {
+            printf("%d×%d=%-3d", i, j, i * j);
+        }
+        cout &lt;&lt; endl;
+    }
+}
+
+// -------------------------------------------
+// 演示6：图形打印 - 三角形
+// -------------------------------------------
+void demo_triangle_patterns() {
+    cout &lt;&lt; "\n========== 演示6：图形打印 - 三角形 ==========" &lt;&lt; endl;
+    int n;
+    cout &lt;&lt; "请输入三角形高度 n：";
+    cin &gt;&gt; n;
+
+    cout &lt;&lt; "\n【1】正直角三角形（左下角）：" &lt;&lt; endl;
+    for (int i = 1; i &lt;= n; i++) {
+        for (int j = 1; j &lt;= i; j++) {
+            cout &lt;&lt; "*";
+        }
+        cout &lt;&lt; endl;
+    }
+
+    cout &lt;&lt; "\n【2】正直角三角形（右下角）：" &lt;&lt; endl;
+    for (int i = 1; i &lt;= n; i++) {
+        // 先打空格
+        for (int j = 1; j &lt;= n - i; j++) {
+            cout &lt;&lt; " ";
+        }
+        // 再打星号
+        for (int j = 1; j &lt;= i; j++) {
+            cout &lt;&lt; "*";
+        }
+        cout &lt;&lt; endl;
+    }
+
+    cout &lt;&lt; "\n【3】等腰三角形（金字塔）：" &lt;&lt; endl;
+    for (int i = 1; i &lt;= n; i++) {
+        // 空格：n - i 个
+        for (int j = 1; j &lt;= n - i; j++) {
+            cout &lt;&lt; " ";
+        }
+        // 星号：2i - 1 个
+        for (int j = 1; j &lt;= 2 * i - 1; j++) {
+            cout &lt;&lt; "*";
+        }
+        cout &lt;&lt; endl;
+    }
+
+    cout &lt;&lt; "\n公式总结（第 i 行）：" &lt;&lt; endl;
+    cout &lt;&lt; "  左下直角三角形：星号 = i 个" &lt;&lt; endl;
+    cout &lt;&lt; "  右下直角三角形：空格 = n-i 个，星号 = i 个" &lt;&lt; endl;
+    cout &lt;&lt; "  等腰三角形：空格 = n-i 个，星号 = 2i-1 个" &lt;&lt; endl;
+}
+
+// -------------------------------------------
+// 演示7：图形打印 - 菱形
+// -------------------------------------------
+void demo_diamond_pattern() {
+    cout &lt;&lt; "\n========== 演示7：图形打印 - 菱形 ==========" &lt;&lt; endl;
+    int n;
+    cout &lt;&lt; "请输入菱形半径（上半部分行数）n：";
+    cin &gt;&gt; n;
+
+    cout &lt;&lt; "\n【菱形】（上半 n=" &lt;&lt; n &lt;&lt; "）：" &lt;&lt; endl;
+
+    // 上半部分（包括中间行）
+    for (int i = 1; i &lt;= n; i++) {
+        for (int j = 1; j &lt;= n - i; j++) cout &lt;&lt; " ";
+        for (int j = 1; j &lt;= 2 * i - 1; j++) cout &lt;&lt; "*";
+        cout &lt;&lt; endl;
+    }
+    // 下半部分（n-1 行）
+    for (int i = n - 1; i &gt;= 1; i--) {
+        for (int j = 1; j &lt;= n - i; j++) cout &lt;&lt; " ";
+        for (int j = 1; j &lt;= 2 * i - 1; j++) cout &lt;&lt; "*";
+        cout &lt;&lt; endl;
+    }
+
+    cout &lt;&lt; "\n【矩形】（n×n）：" &lt;&lt; endl;
+    for (int i = 1; i &lt;= n; i++) {
+        for (int j = 1; j &lt;= n; j++) {
+            cout &lt;&lt; "* ";
+        }
+        cout &lt;&lt; endl;
+    }
+}
+
+// -------------------------------------------
+// 演示8：素数判断（break 优化）
+// -------------------------------------------
+void demo_prime_check() {
+    cout &lt;&lt; "\n========== 演示8：素数判断（break 优化） ==========" &lt;&lt; endl;
+    int n;
+    cout &lt;&lt; "请输入一个正整数：";
+    cin &gt;&gt; n;
+
+    if (n &lt;= 1) {
+        cout &lt;&lt; n &lt;&lt; " 不是素数（素数必须大于 1）" &lt;&lt; endl;
+        return;
+    }
+
+    bool isPrime = true;
+    int checks = 0;  // 统计检查次数
+
+    // 只需检查到 sqrt(n)
+    for (int i = 2; i * i &lt;= n; i++) {
+        checks++;
+        if (n % i == 0) {
+            cout &lt;&lt; "找到因子 " &lt;&lt; i &lt;&lt; "，确定 " &lt;&lt; n &lt;&lt; " = " &lt;&lt; i &lt;&lt; " × " &lt;&lt; n / i &lt;&lt; endl;
+            isPrime = false;
+            break;  // 找到因子立即退出，不再继续检查
+        }
+    }
+
+    if (isPrime) {
+        cout &lt;&lt; n &lt;&lt; " 是素数！（检查了 " &lt;&lt; checks &lt;&lt; " 次）" &lt;&lt; endl;
+    } else {
+        cout &lt;&lt; n &lt;&lt; " 不是素数（仅检查了 " &lt;&lt; checks &lt;&lt; " 次就找到因子）" &lt;&lt; endl;
+    }
+
+    cout &lt;&lt; "\n【优化说明】" &lt;&lt; endl;
+    cout &lt;&lt; "  不加 break：需要检查 sqrt(n) 次" &lt;&lt; endl;
+    cout &lt;&lt; "  加了 break：找到第一个因子就停止，大幅减少检查次数" &lt;&lt; endl;
+}
+
+// -------------------------------------------
+// 演示9：程序阅读分析 - 变量追踪表格法
+// -------------------------------------------
+void demo_program_reading_analysis() {
+    cout &lt;&lt; "\n========== 演示9：程序阅读分析（变量追踪表格法） ==========" &lt;&lt; endl;
+
+    cout &lt;&lt; "\n【程序1】分析以下代码输出：" &lt;&lt; endl;
+    cout &lt;&lt; "-----------------------------" &lt;&lt; endl;
+    cout &lt;&lt; "int sum = 0;" &lt;&lt; endl;
+    cout &lt;&lt; "for (int i = 1; i &lt;= 10; i++) {" &lt;&lt; endl;
+    cout &lt;&lt; "    if (i % 3 == 0) continue;" &lt;&lt; endl;
+    cout &lt;&lt; "    if (i == 8) break;" &lt;&lt; endl;
+    cout &lt;&lt; "    sum += i;" &lt;&lt; endl;
+    cout &lt;&lt; "}" &lt;&lt; endl;
+    cout &lt;&lt; "cout &lt;&lt; sum;" &lt;&lt; endl;
+    cout &lt;&lt; "-----------------------------" &lt;&lt; endl;
+
+    // 实际执行以验证
+    int sum = 0;
+    cout &lt;&lt; "\n【变量追踪表格】" &lt;&lt; endl;
+    cout &lt;&lt; " i  | i%3==0? | i==8? | 操作        | sum" &lt;&lt; endl;
+    cout &lt;&lt; "----|---------|-------|-------------|----" &lt;&lt; endl;
+
+    for (int i = 1; i &lt;= 10; i++) {
+        cout &lt;&lt; " " &lt;&lt; i &lt;&lt; "  | ";
+        if (i % 3 == 0) {
+            cout &lt;&lt; "是(跳过) |   -   | continue    | " &lt;&lt; sum &lt;&lt; endl;
+            continue;
+        }
+        cout &lt;&lt; " 否     | ";
+        if (i == 8) {
+            cout &lt;&lt; "是(退出)| break      | " &lt;&lt; sum &lt;&lt; endl;
+            break;
+        }
+        cout &lt;&lt; " 否     | ";
+        sum += i;
+        cout &lt;&lt; "sum+=" &lt;&lt; i &lt;&lt; "      | " &lt;&lt; sum &lt;&lt; endl;
+    }
+    cout &lt;&lt; "\n最终输出：" &lt;&lt; sum &lt;&lt; endl;
+
+    cout &lt;&lt; "\n【程序2】分析嵌套循环中 break 的效果：" &lt;&lt; endl;
+    cout &lt;&lt; "-----------------------------" &lt;&lt; endl;
+    cout &lt;&lt; "for (int i = 1; i &lt;= 3; i++) {" &lt;&lt; endl;
+    cout &lt;&lt; "    for (int j = 1; j &lt;= 5; j++) {" &lt;&lt; endl;
+    cout &lt;&lt; "        if (j == 3) break;" &lt;&lt; endl;
+    cout &lt;&lt; "        cout &lt;&lt; i &lt;&lt; \",\" &lt;&lt; j &lt;&lt; \" \";" &lt;&lt; endl;
+    cout &lt;&lt; "    }" &lt;&lt; endl;
+    cout &lt;&lt; "    cout &lt;&lt; endl;" &lt;&lt; endl;
+    cout &lt;&lt; "}" &lt;&lt; endl;
+    cout &lt;&lt; "-----------------------------" &lt;&lt; endl;
+
+    cout &lt;&lt; "\n【实际输出】" &lt;&lt; endl;
+    for (int i = 1; i &lt;= 3; i++) {
+        for (int j = 1; j &lt;= 5; j++) {
+            if (j == 3) break;
+            cout &lt;&lt; i &lt;&lt; "," &lt;&lt; j &lt;&lt; " ";
+        }
+        cout &lt;&lt; endl;
+    }
+    cout &lt;&lt; "→ 内层 break 只终止 j 循环，外层 i 继续！" &lt;&lt; endl;
+}
+
+// -------------------------------------------
+// 真题1：程序阅读 - break/continue 效果
+// -------------------------------------------
+void zhenti1_program_reading() {
+    cout &lt;&lt; "\n========== 真题1：break/continue 程序阅读 ==========" &lt;&lt; endl;
+
+    cout &lt;&lt; "阅读以下程序，写出输出结果：" &lt;&lt; endl;
+    cout &lt;&lt; "-----------------------------" &lt;&lt; endl;
+    cout &lt;&lt; "int sum = 0;" &lt;&lt; endl;
+    cout &lt;&lt; "for (int i = 1; i &lt;= 10; i++) {" &lt;&lt; endl;
+    cout &lt;&lt; "    if (i % 3 == 0) continue;" &lt;&lt; endl;
+    cout &lt;&lt; "    if (i == 8) break;" &lt;&lt; endl;
+    cout &lt;&lt; "    sum += i;" &lt;&lt; endl;
+    cout &lt;&lt; "}" &lt;&lt; endl;
+    cout &lt;&lt; "cout &lt;&lt; sum &lt;&lt; endl;" &lt;&lt; endl;
+    cout &lt;&lt; "-----------------------------" &lt;&lt; endl;
+
+    cout &lt;&lt; "\n按回车键查看变量追踪分析..." &lt;&lt; endl;
+    cin.get(); // 消耗前一次输入的换行
+    cin.get();
+
+    cout &lt;&lt; "\n【变量追踪表格】" &lt;&lt; endl;
+    cout &lt;&lt; "|  i | i%3==0? | i==8? | 操作     | sum |" &lt;&lt; endl;
+    cout &lt;&lt; "|----|---------|-------|----------|-----|" &lt;&lt; endl;
+
+    int sum = 0;
+    for (int i = 1; i &lt;= 10; i++) {
+        if (i % 3 == 0) {
+            cout &lt;&lt; "|  " &lt;&lt; i &lt;&lt; " |  是(continue) |  —    | 跳过加法 |  " &lt;&lt; sum &lt;&lt; "  |" &lt;&lt; endl;
+            continue;
+        }
+        if (i == 8) {
+            cout &lt;&lt; "|  8 |   否    | 是(break) | 循环终止 |  " &lt;&lt; sum &lt;&lt; "  |" &lt;&lt; endl;
+            break;
+        }
+        sum += i;
+        cout &lt;&lt; "|  " &lt;&lt; i &lt;&lt; " |   否    |  否   | sum+=" &lt;&lt; i &lt;&lt; "   |  " &lt;&lt; sum &lt;&lt; "  |" &lt;&lt; endl;
+    }
+    cout &lt;&lt; "\n最终输出：" &lt;&lt; sum &lt;&lt; endl;
+    cout &lt;&lt; "解释：1+2+4+5+7 = 19，3和6被 continue 跳过，8时 break 终止循环" &lt;&lt; endl;
+}
+
+// -------------------------------------------
+// 真题2：图形输出 - 等腰三角形
+// -------------------------------------------
+void zhenti2_triangle_print() {
+    cout &lt;&lt; "\n========== 真题2：图形输出 - 等腰三角形 ==========" &lt;&lt; endl;
+    int n;
+    cout &lt;&lt; "请输入三角形高度 n：";
+    cin &gt;&gt; n;
+
+    cout &lt;&lt; "\n输出高为 " &lt;&lt; n &lt;&lt; " 的等腰三角形：" &lt;&lt; endl;
+    for (int i = 1; i &lt;= n; i++) {
+        // (1) 打印空格：第 i 行有 n - i 个空格
+        for (int j = 1; j &lt;= n - i; j++) {
+            cout &lt;&lt; " ";
+        }
+        // (2) 打印星号：第 i 行有 2 * i - 1 个星号
+        for (int j = 1; j &lt;= 2 * i - 1; j++) {
+            cout &lt;&lt; "*";
+        }
+        cout &lt;&lt; endl;
+    }
+
+    cout &lt;&lt; "\n规律解析：" &lt;&lt; endl;
+    cout &lt;&lt; "  第 i 行空格数 = n - i = " &lt;&lt; n &lt;&lt; " - i" &lt;&lt; endl;
+    cout &lt;&lt; "  第 i 行星号数 = 2i - 1" &lt;&lt; endl;
+    for (int i = 1; i &lt;= n; i++) {
+        cout &lt;&lt; "  第 " &lt;&lt; i &lt;&lt; " 行：空格=" &lt;&lt; (n - i)
+             &lt;&lt; "，星号=" &lt;&lt; (2 * i - 1) &lt;&lt; endl;
+    }
+}
+
+// -------------------------------------------
+// 主菜单
+// -------------------------------------------
+int main() {
+    int choice;
+    do {
+        cout &lt;&lt; "\n╔══════════════════════════════════════════╗" &lt;&lt; endl;
+        cout &lt;&lt; "║   第12课：循环控制与综合应用             ║" &lt;&lt; endl;
+        cout &lt;&lt; "╠══════════════════════════════════════════╣" &lt;&lt; endl;
+        cout &lt;&lt; "║  1. break 演示 - 提前退出循环           ║" &lt;&lt; endl;
+        cout &lt;&lt; "║  2. continue 演示 - 跳过本次迭代        ║" &lt;&lt; endl;
+        cout &lt;&lt; "║  3. while + continue 陷阱               ║" &lt;&lt; endl;
+        cout &lt;&lt; "║  4. break vs continue 对比               ║" &lt;&lt; endl;
+        cout &lt;&lt; "║  5. 九九乘法表（嵌套循环）               ║" &lt;&lt; endl;
+        cout &lt;&lt; "║  6. 图形打印 - 三角形                   ║" &lt;&lt; endl;
+        cout &lt;&lt; "║  7. 图形打印 - 菱形与矩形               ║" &lt;&lt; endl;
+        cout &lt;&lt; "║  8. 素数判断（break 优化）               ║" &lt;&lt; endl;
+        cout &lt;&lt; "║  9. 程序阅读分析（变量追踪）             ║" &lt;&lt; endl;
+        cout &lt;&lt; "║ 10. 真题1：break/continue 程序阅读      ║" &lt;&lt; endl;
+        cout &lt;&lt; "║ 11. 真题2：等腰三角形图形输出           ║" &lt;&lt; endl;
+        cout &lt;&lt; "║  0. 退出                                ║" &lt;&lt; endl;
+        cout &lt;&lt; "╚══════════════════════════════════════════╝" &lt;&lt; endl;
+        cout &lt;&lt; "请选择演示功能：";
+        cin &gt;&gt; choice;
+        cin.ignore();  // 清除缓冲区中的换行符
+
+        switch (choice) {
+            case 1:  demo_break();                      break;
+            case 2:  demo_continue();                   break;
+            case 3:  demo_while_continue_trap();         break;
+            case 4:  demo_break_vs_continue();           break;
+            case 5:  demo_multiplication_table();         break;
+            case 6:  demo_triangle_patterns();            break;
+            case 7:  demo_diamond_pattern();              break;
+            case 8:  demo_prime_check();                  break;
+            case 9:  demo_program_reading_analysis();     break;
+            case 10: zhenti1_program_reading();           break;
+            case 11: zhenti2_triangle_print();            break;
+            case 0:
+                cout &lt;&lt; "感谢学习第12课，循环部分已全部完成！" &lt;&lt; endl;
+                break;
+            default:
+                cout &lt;&lt; "无效选择，请重新输入！" &lt;&lt; endl;
+                break;
+        }
+    } while (choice != 0);
+
+    return 0;
+}
+</pre>
+    <p class="hint">若曾直接打开 .cpp 出现乱码，是因为浏览器未按 UTF-8 解析纯文本。本页已固定 UTF-8 显示。</p>
+  </div>
+</body>
+</html>

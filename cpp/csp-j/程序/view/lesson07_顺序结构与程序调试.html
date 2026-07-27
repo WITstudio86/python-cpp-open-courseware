@@ -1,0 +1,236 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>lesson07_顺序结构与程序调试</title>
+<style>
+  :root {
+    --bg: #0f1419;
+    --panel: #161d27;
+    --text: #e7ecf3;
+    --muted: #9aa7b8;
+    --gold: #d4a853;
+    --code-bg: #1a1d23;
+    --border: #273244;
+  }
+  * { box-sizing: border-box; }
+  html, body {
+    margin: 0; padding: 0;
+    background: var(--bg);
+    color: var(--text);
+    font-family: -apple-system, BlinkMacSystemFont, "PingFang SC", "Microsoft YaHei", sans-serif;
+    min-height: 100%;
+  }
+  .top {
+    position: sticky; top: 0; z-index: 10;
+    display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between;
+    gap: 10px;
+    padding: 12px 18px;
+    background: linear-gradient(135deg, #0a2540, #1a3a5c);
+    border-bottom: 1px solid rgba(212,168,83,0.35);
+    box-shadow: 0 4px 18px rgba(0,0,0,0.25);
+  }
+  .brand { color: var(--gold); font-weight: 700; font-size: 14px; letter-spacing: 0.04em; }
+  .title { font-size: 15px; font-weight: 600; color: #fff; max-width: 52vw; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .actions { display: flex; gap: 8px; flex-wrap: wrap; }
+  .btn {
+    appearance: none; border: 1px solid rgba(255,255,255,0.18);
+    background: rgba(255,255,255,0.08); color: #fff;
+    border-radius: 999px; padding: 8px 14px; font-size: 13px; font-weight: 600;
+    text-decoration: none; cursor: pointer;
+  }
+  .btn:hover { background: rgba(255,255,255,0.16); }
+  .btn.gold { background: linear-gradient(135deg, #d4a853, #c4922e); color: #0a2540; border-color: transparent; }
+  .meta {
+    padding: 10px 18px; color: var(--muted); font-size: 12px;
+    border-bottom: 1px solid var(--border);
+    background: var(--panel);
+  }
+  .wrap { padding: 16px 18px 40px; }
+  pre {
+    margin: 0;
+    background: var(--code-bg);
+    color: #e1e4e8;
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 18px 20px;
+    overflow: auto;
+    font-family: "SF Mono", "JetBrains Mono", "Fira Code", Consolas, "Courier New", monospace;
+    font-size: 13.5px;
+    line-height: 1.55;
+    white-space: pre;
+    tab-size: 4;
+    box-shadow: 0 8px 28px rgba(0,0,0,0.28);
+  }
+  .hint { margin-top: 12px; color: var(--muted); font-size: 12px; }
+</style>
+</head>
+<body>
+  <div class="top">
+    <div class="brand">CSP-J · 配套代码</div>
+    <div class="title">lesson07_顺序结构与程序调试</div>
+    <div class="actions">
+      <a class="btn" href="../lesson07_顺序结构与程序调试.cpp" download="lesson07_顺序结构与程序调试.cpp">⬇️ 下载 .cpp</a>
+      <a class="btn gold" href="javascript:history.back()">← 返回课件</a>
+    </div>
+  </div>
+  <div class="meta">编码：UTF-8 · 文件：lesson07_顺序结构与程序调试.cpp · 共 152 行</div>
+  <div class="wrap">
+    <pre id="code">/*
+ * CSP-J 备考课程
+ * 第7课：顺序结构与程序调试
+ * 考纲知识点：顺序执行、断点调试、变量监视、常见编译错误、程序阅读方法
+ *
+ * 本文件包含：
+ * 1. 顺序执行演示
+ * 2. 变量追踪练习
+ * 3. 调试输出技巧
+ * 4. 常见错误示例
+ */
+
+#include &lt;iostream&gt;
+#include &lt;iomanip&gt;
+using namespace std;
+
+// 调试开关：注释掉可关闭调试输出
+#define DEBUG_MODE
+
+int main() {
+    cout &lt;&lt; "========== CSP-J 第7课：顺序结构与程序调试 ==========" &lt;&lt; endl;
+    cout &lt;&lt; endl;
+
+    // ===== 一、顺序执行演示 =====
+    cout &lt;&lt; "【一、顺序执行演示】" &lt;&lt; endl;
+
+    int a = 10;
+    cout &lt;&lt; "语句1: a = " &lt;&lt; a &lt;&lt; endl;
+
+    int b = 20;
+    cout &lt;&lt; "语句2: b = " &lt;&lt; b &lt;&lt; endl;
+
+    int c = a + b;
+    cout &lt;&lt; "语句3: c = a + b = " &lt;&lt; c &lt;&lt; endl;
+
+    c = c * 2;
+    cout &lt;&lt; "语句4: c = c * 2 = " &lt;&lt; c &lt;&lt; endl;
+
+    cout &lt;&lt; "每条语句按从上到下的顺序执行" &lt;&lt; endl;
+    cout &lt;&lt; endl;
+
+    // ===== 二、变量追踪练习 =====
+    cout &lt;&lt; "【二、变量追踪练习】" &lt;&lt; endl;
+
+    cout &lt;&lt; "练习1: 变量值交换" &lt;&lt; endl;
+    int x = 5, y = 8;
+    cout &lt;&lt; "初始: x=" &lt;&lt; x &lt;&lt; ", y=" &lt;&lt; y &lt;&lt; endl;
+
+    x = x + y;
+    cout &lt;&lt; "x = x + y → x=" &lt;&lt; x &lt;&lt; ", y=" &lt;&lt; y &lt;&lt; endl;
+
+    y = x - y;
+    cout &lt;&lt; "y = x - y → x=" &lt;&lt; x &lt;&lt; ", y=" &lt;&lt; y &lt;&lt; endl;
+
+    x = x - y;
+    cout &lt;&lt; "x = x - y → x=" &lt;&lt; x &lt;&lt; ", y=" &lt;&lt; y &lt;&lt; endl;
+    cout &lt;&lt; "成功交换！(不使用临时变量)" &lt;&lt; endl;
+    cout &lt;&lt; endl;
+
+    cout &lt;&lt; "练习2: 多变量追踪" &lt;&lt; endl;
+    int p = 3, q = 7, r = 4;
+    cout &lt;&lt; "初始: p=" &lt;&lt; p &lt;&lt; ", q=" &lt;&lt; q &lt;&lt; ", r=" &lt;&lt; r &lt;&lt; endl;
+
+    p = q - p;        cout &lt;&lt; "p=q-p → p=" &lt;&lt; p &lt;&lt; endl;
+    q = r * p;        cout &lt;&lt; "q=r*p → q=" &lt;&lt; q &lt;&lt; endl;
+    r = q + p;        cout &lt;&lt; "r=q+p → r=" &lt;&lt; r &lt;&lt; endl;
+    cout &lt;&lt; "最终: p=" &lt;&lt; p &lt;&lt; ", q=" &lt;&lt; q &lt;&lt; ", r=" &lt;&lt; r &lt;&lt; endl;
+    cout &lt;&lt; endl;
+
+    // ===== 三、调试输出技巧 =====
+    cout &lt;&lt; "【三、调试输出技巧】" &lt;&lt; endl;
+
+#ifdef DEBUG_MODE
+    cout &lt;&lt; "[DEBUG] 调试模式已开启" &lt;&lt; endl;
+#endif
+
+    int total = 0;
+    for (int i = 1; i &lt;= 5; i++) {
+        total += i;
+#ifdef DEBUG_MODE
+        cout &lt;&lt; "[DEBUG] i=" &lt;&lt; i &lt;&lt; ", total=" &lt;&lt; total &lt;&lt; endl;
+#endif
+    }
+    cout &lt;&lt; "最终结果: total = " &lt;&lt; total &lt;&lt; endl;
+    cout &lt;&lt; endl;
+
+    // ===== 四、常见编译错误演示 =====
+    cout &lt;&lt; "【四、常见错误说明】" &lt;&lt; endl;
+    cout &lt;&lt; "以下错误在注释中展示，取消注释会导致编译失败:" &lt;&lt; endl;
+    cout &lt;&lt; endl;
+
+    cout &lt;&lt; "1. 缺少分号: ";
+    // cout &lt;&lt; "error"  ← 少了分号
+    cout &lt;&lt; "应为: cout &lt;&lt; \"text\";" &lt;&lt; endl;
+
+    cout &lt;&lt; "2. 变量未定义: ";
+    // cout &lt;&lt; unknownVar;  ← 变量未声明
+    cout &lt;&lt; "使用前必须先声明变量" &lt;&lt; endl;
+
+    cout &lt;&lt; "3. 类型不匹配: ";
+    // int x = "hello";  ← 类型错误
+    cout &lt;&lt; "类型必须兼容" &lt;&lt; endl;
+    cout &lt;&lt; endl;
+
+    // ===== 五、变量追踪表练习 =====
+    cout &lt;&lt; "【五、程序阅读：变量追踪表】" &lt;&lt; endl;
+    cout &lt;&lt; "阅读以下代码，追踪变量变化:" &lt;&lt; endl;
+
+    int m = 10, n = 3;
+    cout &lt;&lt; "初始: m=" &lt;&lt; setw(3) &lt;&lt; m &lt;&lt; ", n=" &lt;&lt; setw(3) &lt;&lt; n &lt;&lt; endl;
+
+    m = m + n;    // m=13
+    cout &lt;&lt; "m=m+n: m=" &lt;&lt; setw(3) &lt;&lt; m &lt;&lt; ", n=" &lt;&lt; setw(3) &lt;&lt; n &lt;&lt; endl;
+
+    n = m - n;    // n=10
+    cout &lt;&lt; "n=m-n: m=" &lt;&lt; setw(3) &lt;&lt; m &lt;&lt; ", n=" &lt;&lt; setw(3) &lt;&lt; n &lt;&lt; endl;
+
+    m = m - n;    // m=3
+    cout &lt;&lt; "m=m-n: m=" &lt;&lt; setw(3) &lt;&lt; m &lt;&lt; ", n=" &lt;&lt; setw(3) &lt;&lt; n &lt;&lt; endl;
+
+    cout &lt;&lt; "结果: m=" &lt;&lt; m &lt;&lt; ", n=" &lt;&lt; n &lt;&lt; " (值已互换!)" &lt;&lt; endl;
+    cout &lt;&lt; endl;
+
+    // ===== 六、常见陷阱示例 =====
+    cout &lt;&lt; "【六、常见陷阱示例】" &lt;&lt; endl;
+
+    // 陷阱1：整数除法
+    cout &lt;&lt; "陷阱1：整数除法" &lt;&lt; endl;
+    int u = 5, v = 2;
+    cout &lt;&lt; "5 / 2 = " &lt;&lt; (u / v) &lt;&lt; " (不是2.5!)" &lt;&lt; endl;
+    cout &lt;&lt; "正确: 5.0 / 2 = " &lt;&lt; (5.0 / 2) &lt;&lt; endl;
+    cout &lt;&lt; endl;
+
+    // 陷阱2：未初始化变量
+    cout &lt;&lt; "陷阱2：未初始化变量" &lt;&lt; endl;
+    cout &lt;&lt; "局部变量必须初始化，否则值是随机的!" &lt;&lt; endl;
+    int initialized = 0;  // 正确做法
+    cout &lt;&lt; "初始化后的变量: " &lt;&lt; initialized &lt;&lt; endl;
+    cout &lt;&lt; endl;
+
+    // 陷阱3：= 与 == 混淆
+    cout &lt;&lt; "陷阱3: = 与 == 混淆" &lt;&lt; endl;
+    int val1 = 5;
+    if (val1 = 10) {  // 注意：这是赋值，不是比较！
+        cout &lt;&lt; "if(val1=10) 是赋值语句，始终为true!" &lt;&lt; endl;
+        cout &lt;&lt; "val1 被改为: " &lt;&lt; val1 &lt;&lt; endl;
+    }
+    cout &lt;&lt; "正确写法: if(val1 == 10)" &lt;&lt; endl;
+
+    cout &lt;&lt; endl &lt;&lt; "========== 第7课演示结束 ==========" &lt;&lt; endl;
+    return 0;
+}
+</pre>
+    <p class="hint">若曾直接打开 .cpp 出现乱码，是因为浏览器未按 UTF-8 解析纯文本。本页已固定 UTF-8 显示。</p>
+  </div>
+</body>
+</html>

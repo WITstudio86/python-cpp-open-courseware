@@ -1,0 +1,300 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>lesson37_动态规划基础</title>
+<style>
+  :root {
+    --bg: #0f1419;
+    --panel: #161d27;
+    --text: #e7ecf3;
+    --muted: #9aa7b8;
+    --gold: #d4a853;
+    --code-bg: #1a1d23;
+    --border: #273244;
+  }
+  * { box-sizing: border-box; }
+  html, body {
+    margin: 0; padding: 0;
+    background: var(--bg);
+    color: var(--text);
+    font-family: -apple-system, BlinkMacSystemFont, "PingFang SC", "Microsoft YaHei", sans-serif;
+    min-height: 100%;
+  }
+  .top {
+    position: sticky; top: 0; z-index: 10;
+    display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between;
+    gap: 10px;
+    padding: 12px 18px;
+    background: linear-gradient(135deg, #0a2540, #1a3a5c);
+    border-bottom: 1px solid rgba(212,168,83,0.35);
+    box-shadow: 0 4px 18px rgba(0,0,0,0.25);
+  }
+  .brand { color: var(--gold); font-weight: 700; font-size: 14px; letter-spacing: 0.04em; }
+  .title { font-size: 15px; font-weight: 600; color: #fff; max-width: 52vw; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .actions { display: flex; gap: 8px; flex-wrap: wrap; }
+  .btn {
+    appearance: none; border: 1px solid rgba(255,255,255,0.18);
+    background: rgba(255,255,255,0.08); color: #fff;
+    border-radius: 999px; padding: 8px 14px; font-size: 13px; font-weight: 600;
+    text-decoration: none; cursor: pointer;
+  }
+  .btn:hover { background: rgba(255,255,255,0.16); }
+  .btn.gold { background: linear-gradient(135deg, #d4a853, #c4922e); color: #0a2540; border-color: transparent; }
+  .meta {
+    padding: 10px 18px; color: var(--muted); font-size: 12px;
+    border-bottom: 1px solid var(--border);
+    background: var(--panel);
+  }
+  .wrap { padding: 16px 18px 40px; }
+  pre {
+    margin: 0;
+    background: var(--code-bg);
+    color: #e1e4e8;
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 18px 20px;
+    overflow: auto;
+    font-family: "SF Mono", "JetBrains Mono", "Fira Code", Consolas, "Courier New", monospace;
+    font-size: 13.5px;
+    line-height: 1.55;
+    white-space: pre;
+    tab-size: 4;
+    box-shadow: 0 8px 28px rgba(0,0,0,0.28);
+  }
+  .hint { margin-top: 12px; color: var(--muted); font-size: 12px; }
+</style>
+</head>
+<body>
+  <div class="top">
+    <div class="brand">CSP-J · 配套代码</div>
+    <div class="title">lesson37_动态规划基础</div>
+    <div class="actions">
+      <a class="btn" href="../lesson37_动态规划基础.cpp" download="lesson37_动态规划基础.cpp">⬇️ 下载 .cpp</a>
+      <a class="btn gold" href="javascript:history.back()">← 返回课件</a>
+    </div>
+  </div>
+  <div class="meta">编码：UTF-8 · 文件：lesson37_动态规划基础.cpp · 共 216 行</div>
+  <div class="wrap">
+    <pre id="code">/**
+ * lesson37_动态规划基础.cpp
+ * CSP-J 备考课程 第37课
+ *
+ * 包含内容：
+ * 1. 数字三角形 - 从底向上递推DP（自底向上）
+ * 2. 数字三角形 - 记忆化搜索（自顶向下）
+ * 3. 网格路径计数
+ * 4. 带障碍物的路径计数（过河卒）
+ */
+
+#include &lt;bits/stdc++.h&gt;
+using namespace std;
+
+// ============================================================
+// 一、数字三角形（从底向上递推DP - 推荐写法）
+// ============================================================
+// 问题：给定n行数字三角形，从顶部出发，每次向左下或右下走，求到达底部的最大路径和。
+// 状态：dp[i][j] 表示从(i,j)出发到达底部的最大和
+// 转移：dp[i][j] = max(dp[i+1][j], dp[i+1][j+1]) + a[i][j]
+// 时间 O(n^2), 空间 O(n^2)
+// -----------------------------------------------------------
+void digitalTriangleBottomUp() {
+    cout &lt;&lt; "========== 数字三角形（从底向上递推DP）==========" &lt;&lt; endl;
+
+    int n;
+    cout &lt;&lt; "请输入三角形的行数 n：";
+    cin &gt;&gt; n;
+
+    vector&lt;vector&lt;int&gt;&gt; a(n + 2, vector&lt;int&gt;(n + 2, 0));
+    vector&lt;vector&lt;int&gt;&gt; dp(n + 2, vector&lt;int&gt;(n + 2, 0));
+
+    cout &lt;&lt; "请输入数字三角形（每行 " &lt;&lt; "i 个整数）：" &lt;&lt; endl;
+    for (int i = 1; i &lt;= n; i++)
+        for (int j = 1; j &lt;= i; j++)
+            cin &gt;&gt; a[i][j];
+
+    // 初始化最后一行
+    for (int j = 1; j &lt;= n; j++)
+        dp[n][j] = a[n][j];
+
+    // 从底向上递推
+    for (int i = n - 1; i &gt;= 1; i--)
+        for (int j = 1; j &lt;= i; j++)
+            dp[i][j] = max(dp[i+1][j], dp[i+1][j+1]) + a[i][j];
+
+    cout &lt;&lt; "最大路径和 = " &lt;&lt; dp[1][1] &lt;&lt; endl;
+    cout &lt;&lt; endl;
+}
+
+// ============================================================
+// 二、数字三角形（记忆化搜索 - 自顶向下）
+// ============================================================
+// 用递归+缓存实现，适合理解DP思想
+// -----------------------------------------------------------
+const int MAXN = 1005;
+int tri[MAXN][MAXN];
+int memo[MAXN][MAXN];
+bool visited[MAXN][MAXN];
+int g_n;
+
+int dfs(int i, int j) {
+    // 非法位置
+    if (j &lt; 1 || j &gt; i) return -1e9;
+    // 到达底部
+    if (i == g_n) return tri[i][j];
+    // 已经计算过
+    if (visited[i][j]) return memo[i][j];
+
+    visited[i][j] = true;
+    return memo[i][j] = max(dfs(i+1, j), dfs(i+1, j+1)) + tri[i][j];
+}
+
+void digitalTriangleMemo() {
+    cout &lt;&lt; "========== 数字三角形（记忆化搜索）==========" &lt;&lt; endl;
+
+    cout &lt;&lt; "请输入三角形的行数 n：";
+    cin &gt;&gt; g_n;
+
+    cout &lt;&lt; "请输入数字三角形：" &lt;&lt; endl;
+    for (int i = 1; i &lt;= g_n; i++)
+        for (int j = 1; j &lt;= i; j++)
+            cin &gt;&gt; tri[i][j];
+
+    // 重置记忆化数组
+    memset(visited, 0, sizeof(visited));
+
+    int ans = dfs(1, 1);
+    cout &lt;&lt; "最大路径和（记忆化搜索） = " &lt;&lt; ans &lt;&lt; endl;
+    cout &lt;&lt; endl;
+}
+
+// ============================================================
+// 三、网格路径计数（无障碍）
+// ============================================================
+// 问题：m*n网格，从(1,1)到(m,n)，每次只能向右或向下走，求路径数。
+// 状态：dp[i][j] = 从(1,1)到(i,j)的路径数
+// 转移：dp[i][j] = dp[i-1][j] + dp[i][j-1]
+// -----------------------------------------------------------
+const int MOD = 1e9 + 7;
+
+void gridPathCount() {
+    cout &lt;&lt; "========== 网格路径计数（无障碍）==========" &lt;&lt; endl;
+
+    int m, n;
+    cout &lt;&lt; "请输入网格的行数 m 和列数 n：";
+    cin &gt;&gt; m &gt;&gt; n;
+
+    vector&lt;vector&lt;long long&gt;&gt; dp(m + 1, vector&lt;long long&gt;(n + 1, 0));
+
+    // 初始化第一行和第一列
+    for (int j = 1; j &lt;= n; j++) dp[1][j] = 1;
+    for (int i = 1; i &lt;= m; i++) dp[i][1] = 1;
+
+    // 递推
+    for (int i = 2; i &lt;= m; i++)
+        for (int j = 2; j &lt;= n; j++)
+            dp[i][j] = (dp[i-1][j] + dp[i][j-1]) % MOD;
+
+    cout &lt;&lt; "从(1,1)到(" &lt;&lt; m &lt;&lt; "," &lt;&lt; n &lt;&lt; ")的路径数 = " &lt;&lt; dp[m][n] &lt;&lt; endl;
+    cout &lt;&lt; "（结果对 1e9+7 取模）" &lt;&lt; endl;
+    cout &lt;&lt; endl;
+}
+
+// ============================================================
+// 四、过河卒 - 带障碍物的路径计数
+// ============================================================
+// 经典CSP-J题目：棋盘上卒从(0,0)到(n,m)，马在(x,y)及控制点处不可走。
+// 卒只能向右或向下走。
+// -----------------------------------------------------------
+void horseAndPawn() {
+    cout &lt;&lt; "========== 过河卒（带障碍物路径计数）==========" &lt;&lt; endl;
+
+    const int MAX = 25;
+    long long dp[MAX][MAX];
+    bool block[MAX][MAX];
+
+    // 马的控制点偏移（8个方向 + 自身）
+    int dx[] = {-2, -1, 1, 2, 2, 1, -1, -2, 0};
+    int dy[] = {1, 2, 2, 1, -1, -2, -2, -1, 0};
+
+    int n, m, hx, hy;
+    cout &lt;&lt; "请输入B点坐标(n m)和马的位置(x y)：";
+    cin &gt;&gt; n &gt;&gt; m &gt;&gt; hx &gt;&gt; hy;
+
+    memset(dp, 0, sizeof(dp));
+    memset(block, 0, sizeof(block));
+
+    // 标记马的控制点
+    for (int k = 0; k &lt; 9; k++) {
+        int nx = hx + dx[k];
+        int ny = hy + dy[k];
+        if (nx &gt;= 0 &amp;&amp; nx &lt;= n &amp;&amp; ny &gt;= 0 &amp;&amp; ny &lt;= m)
+            block[nx][ny] = true;
+    }
+
+    // DP初始化
+    dp[0][0] = block[0][0] ? 0 : 1;
+
+    for (int i = 0; i &lt;= n; i++) {
+        for (int j = 0; j &lt;= m; j++) {
+            if (block[i][j]) {
+                dp[i][j] = 0;
+                continue;
+            }
+            if (i == 0 &amp;&amp; j == 0) continue;
+            if (i &gt; 0) dp[i][j] += dp[i-1][j];
+            if (j &gt; 0) dp[i][j] += dp[i][j-1];
+        }
+    }
+
+    cout &lt;&lt; "从(0,0)到(" &lt;&lt; n &lt;&lt; "," &lt;&lt; m &lt;&lt; ")的路径数 = " &lt;&lt; dp[n][m] &lt;&lt; endl;
+    cout &lt;&lt; endl;
+}
+
+// ============================================================
+// 主菜单
+// ============================================================
+int main() {
+    ios::sync_with_stdio(false);
+    cin.tie(0);
+
+    cout &lt;&lt; "========================================" &lt;&lt; endl;
+    cout &lt;&lt; "  CSP-J 第37课：动态规划基础" &lt;&lt; endl;
+    cout &lt;&lt; "  程序演示合集" &lt;&lt; endl;
+    cout &lt;&lt; "========================================" &lt;&lt; endl;
+    cout &lt;&lt; endl;
+
+    while (true) {
+        cout &lt;&lt; "请选择要运行的示例：" &lt;&lt; endl;
+        cout &lt;&lt; "  1. 数字三角形（从底向上递推DP）" &lt;&lt; endl;
+        cout &lt;&lt; "  2. 数字三角形（记忆化搜索）" &lt;&lt; endl;
+        cout &lt;&lt; "  3. 网格路径计数（无障碍）" &lt;&lt; endl;
+        cout &lt;&lt; "  4. 过河卒（带障碍物路径计数）" &lt;&lt; endl;
+        cout &lt;&lt; "  0. 退出" &lt;&lt; endl;
+        cout &lt;&lt; "请输入编号：";
+
+        int choice;
+        cin &gt;&gt; choice;
+
+        if (choice == 0) {
+            cout &lt;&lt; "再见！" &lt;&lt; endl;
+            break;
+        }
+
+        switch (choice) {
+            case 1: digitalTriangleBottomUp(); break;
+            case 2: digitalTriangleMemo(); break;
+            case 3: gridPathCount(); break;
+            case 4: horseAndPawn(); break;
+            default: cout &lt;&lt; "无效选择，请重试。" &lt;&lt; endl;
+        }
+    }
+
+    return 0;
+}
+</pre>
+    <p class="hint">若曾直接打开 .cpp 出现乱码，是因为浏览器未按 UTF-8 解析纯文本。本页已固定 UTF-8 显示。</p>
+  </div>
+</body>
+</html>

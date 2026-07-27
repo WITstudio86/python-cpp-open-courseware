@@ -1,0 +1,410 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>lesson09_switch_case多分支</title>
+<style>
+  :root {
+    --bg: #0f1419;
+    --panel: #161d27;
+    --text: #e7ecf3;
+    --muted: #9aa7b8;
+    --gold: #d4a853;
+    --code-bg: #1a1d23;
+    --border: #273244;
+  }
+  * { box-sizing: border-box; }
+  html, body {
+    margin: 0; padding: 0;
+    background: var(--bg);
+    color: var(--text);
+    font-family: -apple-system, BlinkMacSystemFont, "PingFang SC", "Microsoft YaHei", sans-serif;
+    min-height: 100%;
+  }
+  .top {
+    position: sticky; top: 0; z-index: 10;
+    display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between;
+    gap: 10px;
+    padding: 12px 18px;
+    background: linear-gradient(135deg, #0a2540, #1a3a5c);
+    border-bottom: 1px solid rgba(212,168,83,0.35);
+    box-shadow: 0 4px 18px rgba(0,0,0,0.25);
+  }
+  .brand { color: var(--gold); font-weight: 700; font-size: 14px; letter-spacing: 0.04em; }
+  .title { font-size: 15px; font-weight: 600; color: #fff; max-width: 52vw; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .actions { display: flex; gap: 8px; flex-wrap: wrap; }
+  .btn {
+    appearance: none; border: 1px solid rgba(255,255,255,0.18);
+    background: rgba(255,255,255,0.08); color: #fff;
+    border-radius: 999px; padding: 8px 14px; font-size: 13px; font-weight: 600;
+    text-decoration: none; cursor: pointer;
+  }
+  .btn:hover { background: rgba(255,255,255,0.16); }
+  .btn.gold { background: linear-gradient(135deg, #d4a853, #c4922e); color: #0a2540; border-color: transparent; }
+  .meta {
+    padding: 10px 18px; color: var(--muted); font-size: 12px;
+    border-bottom: 1px solid var(--border);
+    background: var(--panel);
+  }
+  .wrap { padding: 16px 18px 40px; }
+  pre {
+    margin: 0;
+    background: var(--code-bg);
+    color: #e1e4e8;
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 18px 20px;
+    overflow: auto;
+    font-family: "SF Mono", "JetBrains Mono", "Fira Code", Consolas, "Courier New", monospace;
+    font-size: 13.5px;
+    line-height: 1.55;
+    white-space: pre;
+    tab-size: 4;
+    box-shadow: 0 8px 28px rgba(0,0,0,0.28);
+  }
+  .hint { margin-top: 12px; color: var(--muted); font-size: 12px; }
+</style>
+</head>
+<body>
+  <div class="top">
+    <div class="brand">CSP-J · 配套代码</div>
+    <div class="title">lesson09_switch_case多分支</div>
+    <div class="actions">
+      <a class="btn" href="../lesson09_switch_case多分支.cpp" download="lesson09_switch_case多分支.cpp">⬇️ 下载 .cpp</a>
+      <a class="btn gold" href="javascript:history.back()">← 返回课件</a>
+    </div>
+  </div>
+  <div class="meta">编码：UTF-8 · 文件：lesson09_switch_case多分支.cpp · 共 326 行</div>
+  <div class="wrap">
+    <pre id="code">/*
+ * CSP-J 备考课程
+ * 第9课：switch-case 多分支结构
+ * 考纲知识点：switch-case语法结构、break的作用（穿透现象）、default分支、
+ *            switch与if-else选择策略、嵌套switch
+ *
+ * 本文件包含：
+ * 1. 基础语法演示（星期几输出）
+ * 2. 穿透现象演示（有意 vs 无意）
+ * 3. 合并case演示（元音字母判断、月份天数）
+ * 4. 嵌套switch演示（两级分类）
+ * 5. 真题1：简单计算器（AC代码）
+ * 6. 真题2：成绩等级转换（AC代码）
+ * 7. 表达式类型对比（switch vs if-else）
+ */
+
+#include &lt;iostream&gt;
+#include &lt;cstdio&gt;
+using namespace std;
+
+// ==================== 演示函数 ====================
+
+// 1. 基础语法演示：根据数字输出星期几
+void demo01_basic_syntax() {
+    cout &lt;&lt; "=== 演示1：基础语法 - 星期几输出 ===" &lt;&lt; endl;
+    cout &lt;&lt; "请输入数字 1-7：";
+    int day;
+    cin &gt;&gt; day;
+
+    switch (day) {
+        case 1: cout &lt;&lt; "星期一" &lt;&lt; endl; break;
+        case 2: cout &lt;&lt; "星期二" &lt;&lt; endl; break;
+        case 3: cout &lt;&lt; "星期三" &lt;&lt; endl; break;
+        case 4: cout &lt;&lt; "星期四" &lt;&lt; endl; break;
+        case 5: cout &lt;&lt; "星期五" &lt;&lt; endl; break;
+        case 6: cout &lt;&lt; "星期六" &lt;&lt; endl; break;
+        case 7: cout &lt;&lt; "星期日" &lt;&lt; endl; break;
+        default: cout &lt;&lt; "输入错误！请输入 1-7。" &lt;&lt; endl; break;
+    }
+    cout &lt;&lt; endl;
+}
+
+// 2. 穿透现象演示：展示忘记 break 的后果
+void demo02_fallthrough() {
+    cout &lt;&lt; "=== 演示2：穿透现象（Fall-through） ===" &lt;&lt; endl;
+    cout &lt;&lt; "代码：" &lt;&lt; endl;
+    cout &lt;&lt; "  switch (x) {" &lt;&lt; endl;
+    cout &lt;&lt; "      case 1: cout &lt;&lt; \"A\";" &lt;&lt; endl;
+    cout &lt;&lt; "      case 2: cout &lt;&lt; \"B\";" &lt;&lt; endl;
+    cout &lt;&lt; "      case 3: cout &lt;&lt; \"C\";" &lt;&lt; endl;
+    cout &lt;&lt; "      default: cout &lt;&lt; \"D\";" &lt;&lt; endl;
+    cout &lt;&lt; "  }" &lt;&lt; endl;
+    cout &lt;&lt; endl;
+
+    for (int x = 1; x &lt;= 4; x++) {
+        cout &lt;&lt; "x = " &lt;&lt; x &lt;&lt; " 时，输出：";
+        switch (x) {
+            case 1: cout &lt;&lt; "A";
+            case 2: cout &lt;&lt; "B";
+            case 3: cout &lt;&lt; "C";
+            default: cout &lt;&lt; "D";
+        }
+        cout &lt;&lt; endl;
+    }
+    cout &lt;&lt; "结论：忘记 break 会导致意外穿透，输出多余的字符！" &lt;&lt; endl;
+    cout &lt;&lt; endl;
+}
+
+// 3. 合并 case 演示1：元音/辅音字母判断
+void demo03_merge_case_vowels() {
+    cout &lt;&lt; "=== 演示3：合并 case - 元音字母判断 ===" &lt;&lt; endl;
+    cout &lt;&lt; "请输入一个英文字母：";
+    char ch;
+    cin &gt;&gt; ch;
+
+    switch (ch) {
+        case 'a': case 'e': case 'i': case 'o': case 'u':
+        case 'A': case 'E': case 'I': case 'O': case 'U':
+            cout &lt;&lt; "\'" &lt;&lt; ch &lt;&lt; "\' 是元音字母" &lt;&lt; endl;
+            break;
+        default:
+            if ((ch &gt;= 'a' &amp;&amp; ch &lt;= 'z') || (ch &gt;= 'A' &amp;&amp; ch &lt;= 'Z')) {
+                cout &lt;&lt; "\'" &lt;&lt; ch &lt;&lt; "\' 是辅音字母" &lt;&lt; endl;
+            } else {
+                cout &lt;&lt; "输入的不是英文字母！" &lt;&lt; endl;
+            }
+            break;
+    }
+    cout &lt;&lt; endl;
+}
+
+// 4. 合并 case 演示2：月份天数
+void demo04_merge_case_months() {
+    cout &lt;&lt; "=== 演示4：合并 case - 月份天数 ===" &lt;&lt; endl;
+    cout &lt;&lt; "请输入月份 1-12：";
+    int month;
+    cin &gt;&gt; month;
+
+    switch (month) {
+        case 1: case 3: case 5: case 7: case 8: case 10: case 12:
+            cout &lt;&lt; month &lt;&lt; "月有 31 天" &lt;&lt; endl;
+            break;
+        case 4: case 6: case 9: case 11:
+            cout &lt;&lt; month &lt;&lt; "月有 30 天" &lt;&lt; endl;
+            break;
+        case 2:
+            cout &lt;&lt; month &lt;&lt; "月有 28 天或 29 天（闰年）" &lt;&lt; endl;
+            break;
+        default:
+            cout &lt;&lt; "无效的月份！请输入 1-12。" &lt;&lt; endl;
+            break;
+    }
+    cout &lt;&lt; endl;
+}
+
+// 5. 嵌套 switch 演示：两级分类
+void demo05_nested_switch() {
+    cout &lt;&lt; "=== 演示5：嵌套 switch - 两级分类 ===" &lt;&lt; endl;
+    cout &lt;&lt; "一级分类：1-电子产品  2-食品  3-服装" &lt;&lt; endl;
+    cout &lt;&lt; "请输入一级分类编号：";
+    int category;
+    cin &gt;&gt; category;
+    cout &lt;&lt; "二级分类编号：";
+    int subType;
+    cin &gt;&gt; subType;
+
+    switch (category) {
+        case 1:  // 电子产品
+            cout &lt;&lt; "分类：电子产品 -&gt; ";
+            switch (subType) {
+                case 1: cout &lt;&lt; "手机" &lt;&lt; endl; break;
+                case 2: cout &lt;&lt; "电脑" &lt;&lt; endl; break;
+                case 3: cout &lt;&lt; "平板" &lt;&lt; endl; break;
+                case 4: cout &lt;&lt; "耳机" &lt;&lt; endl; break;
+                default: cout &lt;&lt; "其他电子产品" &lt;&lt; endl; break;
+            }
+            break;
+        case 2:  // 食品
+            cout &lt;&lt; "分类：食品 -&gt; ";
+            switch (subType) {
+                case 1: cout &lt;&lt; "水果" &lt;&lt; endl; break;
+                case 2: cout &lt;&lt; "蔬菜" &lt;&lt; endl; break;
+                case 3: cout &lt;&lt; "肉类" &lt;&lt; endl; break;
+                case 4: cout &lt;&lt; "饮料" &lt;&lt; endl; break;
+                default: cout &lt;&lt; "其他食品" &lt;&lt; endl; break;
+            }
+            break;
+        case 3:  // 服装
+            cout &lt;&lt; "分类：服装 -&gt; ";
+            switch (subType) {
+                case 1: cout &lt;&lt; "上衣" &lt;&lt; endl; break;
+                case 2: cout &lt;&lt; "裤子" &lt;&lt; endl; break;
+                case 3: cout &lt;&lt; "鞋子" &lt;&lt; endl; break;
+                case 4: cout &lt;&lt; "配饰" &lt;&lt; endl; break;
+                default: cout &lt;&lt; "其他服装" &lt;&lt; endl; break;
+            }
+            break;
+        default:
+            cout &lt;&lt; "无效的一级分类！" &lt;&lt; endl;
+            break;
+    }
+    cout &lt;&lt; endl;
+}
+
+// 6. switch vs if-else 选择策略对比
+void demo06_switch_vs_ifelse() {
+    cout &lt;&lt; "=== 演示6：switch vs if-else 选择策略 ===" &lt;&lt; endl;
+    cout &lt;&lt; "本演示展示两种场景的对比。" &lt;&lt; endl;
+    cout &lt;&lt; endl;
+
+    // 场景A：离散值——适合 switch
+    cout &lt;&lt; "【场景A：离散值判断 - 适合 switch】" &lt;&lt; endl;
+    cout &lt;&lt; "请输入操作符 (+, -, *, /)：";
+    char op;
+    cin &gt;&gt; op;
+
+    cout &lt;&lt; "使用 switch 实现：" &lt;&lt; endl;
+    switch (op) {
+        case '+': cout &lt;&lt; "  加法运算" &lt;&lt; endl; break;
+        case '-': cout &lt;&lt; "  减法运算" &lt;&lt; endl; break;
+        case '*': cout &lt;&lt; "  乘法运算" &lt;&lt; endl; break;
+        case '/': cout &lt;&lt; "  除法运算" &lt;&lt; endl; break;
+        default: cout &lt;&lt; "  无效操作符" &lt;&lt; endl; break;
+    }
+    cout &lt;&lt; endl;
+
+    // 场景B：范围判断——只能用 if-else
+    cout &lt;&lt; "【场景B：范围判断 - 只能用 if-else】" &lt;&lt; endl;
+    cout &lt;&lt; "请输入分数 (0-100)：";
+    int score;
+    cin &gt;&gt; score;
+
+    cout &lt;&lt; "使用 if-else 实现：" &lt;&lt; endl;
+    if (score &gt;= 90 &amp;&amp; score &lt;= 100) {
+        cout &lt;&lt; "  等级：A (优秀)" &lt;&lt; endl;
+    } else if (score &gt;= 80) {
+        cout &lt;&lt; "  等级：B (良好)" &lt;&lt; endl;
+    } else if (score &gt;= 70) {
+        cout &lt;&lt; "  等级：C (中等)" &lt;&lt; endl;
+    } else if (score &gt;= 60) {
+        cout &lt;&lt; "  等级：D (及格)" &lt;&lt; endl;
+    } else if (score &gt;= 0) {
+        cout &lt;&lt; "  等级：F (需要努力)" &lt;&lt; endl;
+    } else {
+        cout &lt;&lt; "  无效分数！" &lt;&lt; endl;
+    }
+    cout &lt;&lt; "注意：范围判断不能使用 switch，因为 case 后必须是常量。" &lt;&lt; endl;
+    cout &lt;&lt; endl;
+}
+
+// ==================== 真题 AC 代码 ====================
+
+// 真题1：简单计算器
+void exam01_calculator() {
+    cout &lt;&lt; "=== 真题1：简单计算器 ===" &lt;&lt; endl;
+    cout &lt;&lt; "输入格式：a op b（如 10 + 5）" &lt;&lt; endl;
+    cout &lt;&lt; "请输入表达式：";
+
+    int a, b;
+    char op;
+    cin &gt;&gt; a &gt;&gt; op &gt;&gt; b;
+
+    switch (op) {
+        case '+':
+            cout &lt;&lt; a &lt;&lt; " + " &lt;&lt; b &lt;&lt; " = " &lt;&lt; a + b &lt;&lt; endl;
+            break;
+        case '-':
+            cout &lt;&lt; a &lt;&lt; " - " &lt;&lt; b &lt;&lt; " = " &lt;&lt; a - b &lt;&lt; endl;
+            break;
+        case '*':
+            cout &lt;&lt; a &lt;&lt; " * " &lt;&lt; b &lt;&lt; " = " &lt;&lt; a * b &lt;&lt; endl;
+            break;
+        case '/':
+            if (b == 0) {
+                cout &lt;&lt; "Error: Division by zero" &lt;&lt; endl;
+            } else {
+                cout &lt;&lt; a &lt;&lt; " / " &lt;&lt; b &lt;&lt; " = " &lt;&lt; a / b &lt;&lt; endl;
+            }
+            break;
+        default:
+            cout &lt;&lt; "Error: Invalid operator" &lt;&lt; endl;
+            break;
+    }
+    cout &lt;&lt; endl;
+}
+
+// 真题2：成绩等级转换
+void exam02_grade_conversion() {
+    cout &lt;&lt; "=== 真题2：成绩等级转换 ===" &lt;&lt; endl;
+    cout &lt;&lt; "请输入成绩等级 (A/B/C/D/F)：";
+
+    char grade;
+    cin &gt;&gt; grade;
+
+    switch (grade) {
+        case 'A': case 'a':
+            cout &lt;&lt; "90-100 优秀" &lt;&lt; endl;
+            break;
+        case 'B': case 'b':
+            cout &lt;&lt; "80-89 良好" &lt;&lt; endl;
+            break;
+        case 'C': case 'c':
+            cout &lt;&lt; "70-79 中等" &lt;&lt; endl;
+            break;
+        case 'D': case 'd':
+            cout &lt;&lt; "60-69 及格" &lt;&lt; endl;
+            break;
+        case 'F': case 'f':
+            cout &lt;&lt; "0-59 需要努力" &lt;&lt; endl;
+            break;
+        default:
+            cout &lt;&lt; "无效等级" &lt;&lt; endl;
+            break;
+    }
+    cout &lt;&lt; endl;
+}
+
+// ==================== 菜单系统 ====================
+
+void show_menu() {
+    cout &lt;&lt; "========================================" &lt;&lt; endl;
+    cout &lt;&lt; "  CSP-J 第9课：switch-case 多分支结构" &lt;&lt; endl;
+    cout &lt;&lt; "========================================" &lt;&lt; endl;
+    cout &lt;&lt; "  [1] 基础语法演示（星期几输出）" &lt;&lt; endl;
+    cout &lt;&lt; "  [2] 穿透现象演示" &lt;&lt; endl;
+    cout &lt;&lt; "  [3] 合并 case - 元音字母判断" &lt;&lt; endl;
+    cout &lt;&lt; "  [4] 合并 case - 月份天数" &lt;&lt; endl;
+    cout &lt;&lt; "  [5] 嵌套 switch 演示" &lt;&lt; endl;
+    cout &lt;&lt; "  [6] switch vs if-else 选择策略" &lt;&lt; endl;
+    cout &lt;&lt; "  [7] 真题1：简单计算器" &lt;&lt; endl;
+    cout &lt;&lt; "  [8] 真题2：成绩等级转换" &lt;&lt; endl;
+    cout &lt;&lt; "  [0] 退出" &lt;&lt; endl;
+    cout &lt;&lt; "========================================" &lt;&lt; endl;
+    cout &lt;&lt; "请选择：";
+}
+
+// ==================== 主函数 ====================
+
+int main() {
+    int choice;
+
+    do {
+        show_menu();
+        cin &gt;&gt; choice;
+        cout &lt;&lt; endl;
+
+        switch (choice) {
+            case 1: demo01_basic_syntax(); break;
+            case 2: demo02_fallthrough(); break;
+            case 3: demo03_merge_case_vowels(); break;
+            case 4: demo04_merge_case_months(); break;
+            case 5: demo05_nested_switch(); break;
+            case 6: demo06_switch_vs_ifelse(); break;
+            case 7: exam01_calculator(); break;
+            case 8: exam02_grade_conversion(); break;
+            case 0:
+                cout &lt;&lt; "感谢学习！祝 CSP-J 备考顺利！" &lt;&lt; endl;
+                break;
+            default:
+                cout &lt;&lt; "无效选项，请重新选择！" &lt;&lt; endl;
+                break;
+        }
+    } while (choice != 0);
+
+    return 0;
+}
+</pre>
+    <p class="hint">若曾直接打开 .cpp 出现乱码，是因为浏览器未按 UTF-8 解析纯文本。本页已固定 UTF-8 显示。</p>
+  </div>
+</body>
+</html>

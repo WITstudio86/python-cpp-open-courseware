@@ -1,0 +1,583 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>lesson31_STLsort与自定义排序</title>
+<style>
+  :root {
+    --bg: #0f1419;
+    --panel: #161d27;
+    --text: #e7ecf3;
+    --muted: #9aa7b8;
+    --gold: #d4a853;
+    --code-bg: #1a1d23;
+    --border: #273244;
+  }
+  * { box-sizing: border-box; }
+  html, body {
+    margin: 0; padding: 0;
+    background: var(--bg);
+    color: var(--text);
+    font-family: -apple-system, BlinkMacSystemFont, "PingFang SC", "Microsoft YaHei", sans-serif;
+    min-height: 100%;
+  }
+  .top {
+    position: sticky; top: 0; z-index: 10;
+    display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between;
+    gap: 10px;
+    padding: 12px 18px;
+    background: linear-gradient(135deg, #0a2540, #1a3a5c);
+    border-bottom: 1px solid rgba(212,168,83,0.35);
+    box-shadow: 0 4px 18px rgba(0,0,0,0.25);
+  }
+  .brand { color: var(--gold); font-weight: 700; font-size: 14px; letter-spacing: 0.04em; }
+  .title { font-size: 15px; font-weight: 600; color: #fff; max-width: 52vw; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .actions { display: flex; gap: 8px; flex-wrap: wrap; }
+  .btn {
+    appearance: none; border: 1px solid rgba(255,255,255,0.18);
+    background: rgba(255,255,255,0.08); color: #fff;
+    border-radius: 999px; padding: 8px 14px; font-size: 13px; font-weight: 600;
+    text-decoration: none; cursor: pointer;
+  }
+  .btn:hover { background: rgba(255,255,255,0.16); }
+  .btn.gold { background: linear-gradient(135deg, #d4a853, #c4922e); color: #0a2540; border-color: transparent; }
+  .meta {
+    padding: 10px 18px; color: var(--muted); font-size: 12px;
+    border-bottom: 1px solid var(--border);
+    background: var(--panel);
+  }
+  .wrap { padding: 16px 18px 40px; }
+  pre {
+    margin: 0;
+    background: var(--code-bg);
+    color: #e1e4e8;
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 18px 20px;
+    overflow: auto;
+    font-family: "SF Mono", "JetBrains Mono", "Fira Code", Consolas, "Courier New", monospace;
+    font-size: 13.5px;
+    line-height: 1.55;
+    white-space: pre;
+    tab-size: 4;
+    box-shadow: 0 8px 28px rgba(0,0,0,0.28);
+  }
+  .hint { margin-top: 12px; color: var(--muted); font-size: 12px; }
+</style>
+</head>
+<body>
+  <div class="top">
+    <div class="brand">CSP-J · 配套代码</div>
+    <div class="title">lesson31_STLsort与自定义排序</div>
+    <div class="actions">
+      <a class="btn" href="../lesson31_STLsort与自定义排序.cpp" download="lesson31_STLsort与自定义排序.cpp">⬇️ 下载 .cpp</a>
+      <a class="btn gold" href="javascript:history.back()">← 返回课件</a>
+    </div>
+  </div>
+  <div class="meta">编码：UTF-8 · 文件：lesson31_STLsort与自定义排序.cpp · 共 499 行</div>
+  <div class="wrap">
+    <pre id="code">/*
+ * Lesson 31: STL sort 与自定义排序
+ *
+ * 本课内容：
+ * 1. sort() 默认升序排序
+ * 2. sort() + greater&lt;int&gt;() 降序排序
+ * 3. sort() + 自定义 cmp 函数（绝对值降序、奇偶分组等复杂排序规则）
+ * 4. 结构体多关键字排序（学生按成绩降序、成绩相同按学号升序、都相同按姓名升序）
+ * 5. stable_sort() 稳定排序的用法与意义
+ *
+ * 头文件：#include &lt;algorithm&gt;
+ *
+ * sort() 语法：
+ *   sort(begin, end)            // 默认升序
+ *   sort(begin, end, greater&lt;T&gt;())  // 降序
+ *   sort(begin, end, cmp)       // 自定义比较函数
+ *
+ * stable_sort() 语法：
+ *   stable_sort(begin, end, cmp) // 稳定排序，保持相等元素的相对顺序
+ *
+ * 时间复杂度：
+ * - sort()：O(n log n)
+ * - stable_sort()：O(n log n) ~ O(n log² n)（视实现而定）
+ *
+ * 重要知识点：
+ * - sort() 是快速排序的变体（内省排序 introsort），不是稳定的
+ * - stable_sort() 通常是归并排序，保证稳定性
+ * - 自定义比较函数必须满足"严格弱序"（strict weak ordering）
+ */
+
+#include &lt;iostream&gt;
+#include &lt;algorithm&gt;
+#include &lt;vector&gt;
+#include &lt;string&gt;
+#include &lt;cstring&gt;
+#include &lt;cmath&gt;
+#include &lt;iomanip&gt;
+
+using namespace std;
+
+// ==================== 数据结构定义 ====================
+
+/**
+ * 学生结构体：用于多关键字排序演示
+ */
+struct Student {
+    string name;   // 姓名
+    int id;        // 学号
+    int score;     // 成绩
+
+    Student() : name(""), id(0), score(0) {}
+    Student(string n, int i, int s) : name(n), id(i), score(s) {}
+};
+
+/**
+ * 用于稳定排序演示的结构体
+ * value 是排序依据，seq 记录原始输入顺序
+ */
+struct StableItem {
+    int value;
+    int seq;       // 原始输入顺序
+    string label;
+
+    StableItem() : value(0), seq(0), label("") {}
+    StableItem(int v, int s, string l) : value(v), seq(s), label(l) {}
+};
+
+// ==================== 自定义比较函数 ====================
+
+/**
+ * 比较函数1：按绝对值降序排列
+ * 规则：绝对值大的排在前面，如果绝对值相同，则数值大的排在前面
+ *
+ * 比较函数的要求（严格弱序）：
+ * 1. 非自反性：cmp(x, x) 必须返回 false
+ * 2. 非对称性：如果 cmp(a, b) 为 true，则 cmp(b, a) 必须为 false
+ * 3. 传递性：如果 cmp(a, b) 和 cmp(b, c) 都为 true，则 cmp(a, c) 也为 true
+ */
+bool cmpAbsDesc(int a, int b) {
+    // 先按绝对值降序比较
+    if (abs(a) != abs(b)) {
+        return abs(a) &gt; abs(b);  // 绝对值大的在前
+    }
+    // 绝对值相同时，按原值升序（数值小的在前）
+    return a &lt; b;
+}
+
+/**
+ * 比较函数2：奇偶分组排序
+ * 规则：所有奇数排在前面，所有偶数排在后面
+ *       奇数之间按升序排列，偶数之间按降序排列
+ */
+bool cmpOddEven(int a, int b) {
+    bool aOdd = (a % 2 != 0);
+    bool bOdd = (b % 2 != 0);
+
+    // 如果奇偶性不同，奇数优先级更高（排在前面）
+    if (aOdd != bOdd) {
+        return aOdd;  // a 是奇数 → a 排在 b 前面
+    }
+
+    // 如果奇偶性相同
+    if (aOdd) {
+        // 都是奇数：按升序排列
+        return a &lt; b;
+    } else {
+        // 都是偶数：按降序排列
+        return a &gt; b;
+    }
+}
+
+/**
+ * 比较函数3：学生多关键字排序
+ *
+ * 需求：
+ * - 第一关键字：成绩（降序）— 成绩高的排在前面
+ * - 第二关键字：学号（升序）— 成绩相同时，学号小的排在前面
+ * - 第三关键字：姓名（升序，按字典序）— 成绩和学号都相同时，姓名按字母顺序排列
+ *
+ * 思考方式：
+ *   cmp(a, b) 返回 true 表示"a 应该排在 b 前面"
+ *   所以当多个判断条件存在时，按重要性从高到低依次判断
+ */
+bool cmpStudent(const Student&amp; a, const Student&amp; b) {
+    // 第一关键字：成绩降序
+    if (a.score != b.score) {
+        return a.score &gt; b.score;  // a 成绩更高 → a 排在前面
+    }
+
+    // 第二关键字：学号升序
+    if (a.id != b.id) {
+        return a.id &lt; b.id;  // a 学号更小 → a 排在前面
+    }
+
+    // 第三关键字：姓名升序（字典序）
+    return a.name &lt; b.name;
+}
+
+// ==================== 打印函数 ====================
+
+/**
+ * 打印整数数组
+ */
+void printArray(int a[], int n, const string&amp; title) {
+    cout &lt;&lt; title &lt;&lt; ": [";
+    for (int i = 0; i &lt; n; i++) {
+        if (i &gt; 0) cout &lt;&lt; ", ";
+        cout &lt;&lt; a[i];
+    }
+    cout &lt;&lt; "]" &lt;&lt; endl;
+}
+
+/**
+ * 打印 vector&lt;int&gt;
+ */
+void printVector(const vector&lt;int&gt;&amp; v, const string&amp; title) {
+    cout &lt;&lt; title &lt;&lt; ": [";
+    for (size_t i = 0; i &lt; v.size(); i++) {
+        if (i &gt; 0) cout &lt;&lt; ", ";
+        cout &lt;&lt; v[i];
+    }
+    cout &lt;&lt; "]" &lt;&lt; endl;
+}
+
+/**
+ * 打印学生数组
+ */
+void printStudents(const Student arr[], int n, const string&amp; title) {
+    cout &lt;&lt; title &lt;&lt; ":" &lt;&lt; endl;
+    cout &lt;&lt; "  " &lt;&lt; setw(6) &lt;&lt; left &lt;&lt; "学号"
+         &lt;&lt; setw(10) &lt;&lt; left &lt;&lt; "姓名"
+         &lt;&lt; setw(6) &lt;&lt; "成绩" &lt;&lt; endl;
+    cout &lt;&lt; "  " &lt;&lt; string(22, '-') &lt;&lt; endl;
+    for (int i = 0; i &lt; n; i++) {
+        cout &lt;&lt; "  " &lt;&lt; setw(6) &lt;&lt; left &lt;&lt; arr[i].id
+             &lt;&lt; setw(10) &lt;&lt; left &lt;&lt; arr[i].name
+             &lt;&lt; setw(6) &lt;&lt; arr[i].score &lt;&lt; endl;
+    }
+}
+
+/**
+ * 打印稳定排序项
+ */
+void printStableItems(const StableItem arr[], int n, const string&amp; title) {
+    cout &lt;&lt; title &lt;&lt; ":" &lt;&lt; endl;
+    cout &lt;&lt; "  " &lt;&lt; setw(6) &lt;&lt; "value" &lt;&lt; setw(6) &lt;&lt; "seq" &lt;&lt; setw(15) &lt;&lt; "label" &lt;&lt; endl;
+    cout &lt;&lt; "  " &lt;&lt; string(27, '-') &lt;&lt; endl;
+    for (int i = 0; i &lt; n; i++) {
+        cout &lt;&lt; "  " &lt;&lt; setw(6) &lt;&lt; arr[i].value
+             &lt;&lt; setw(6) &lt;&lt; arr[i].seq
+             &lt;&lt; setw(15) &lt;&lt; arr[i].label &lt;&lt; endl;
+    }
+}
+
+// ==================== 主函数 ====================
+
+int main() {
+    cout &lt;&lt; "============================================" &lt;&lt; endl;
+    cout &lt;&lt; "  Lesson 31: STL sort 与自定义排序" &lt;&lt; endl;
+    cout &lt;&lt; "============================================" &lt;&lt; endl;
+    cout &lt;&lt; endl;
+
+    // ---------- 1. sort() 默认升序排序 ----------
+    cout &lt;&lt; "---------- 1. sort() 默认升序排序 ----------" &lt;&lt; endl;
+    {
+        int arr[] = {5, 2, 9, 1, 5, 6, 3, 8, 7, 4};
+        int n = sizeof(arr) / sizeof(arr[0]);
+
+        printArray(arr, n, "原始数组");
+
+        // sort(begin, end) 对 [begin, end) 范围内的元素进行升序排序
+        // begin = arr（首元素指针），end = arr + n（尾后指针）
+        sort(arr, arr + n);
+
+        printArray(arr, n, "sort() 升序结果");
+
+        cout &lt;&lt; endl &lt;&lt; "语法说明：" &lt;&lt; endl;
+        cout &lt;&lt; "  sort(arr, arr + n);" &lt;&lt; endl;
+        cout &lt;&lt; "  - arr: 指向第一个元素的指针（迭代器）" &lt;&lt; endl;
+        cout &lt;&lt; "  - arr + n: 指向最后一个元素的下一个位置（尾后迭代器）" &lt;&lt; endl;
+        cout &lt;&lt; "  - 范围是左闭右开 [arr, arr+n)" &lt;&lt; endl;
+    }
+    cout &lt;&lt; endl;
+
+    // ---------- 2. sort() + greater&lt;int&gt;() 降序排序 ----------
+    cout &lt;&lt; "---------- 2. sort() + greater&lt;int&gt;() 降序排序 ----------" &lt;&lt; endl;
+    {
+        int arr[] = {5, 2, 9, 1, 5, 6, 3, 8, 7, 4};
+        int n = sizeof(arr) / sizeof(arr[0]);
+
+        printArray(arr, n, "原始数组");
+
+        // greater&lt;int&gt;() 是一个函数对象，它调用 &gt; 运算符进行比较
+        // sort 根据 greater&lt;int&gt;() 的返回值来判断元素顺序
+        // 如果 greater&lt;int&gt;()(a, b) 返回 true，即 a &gt; b 时，
+        // sort 认为 a 应该排在 b 前面，从而实现降序
+        sort(arr, arr + n, greater&lt;int&gt;());
+
+        printArray(arr, n, "sort() + greater&lt;int&gt;() 降序结果");
+
+        cout &lt;&lt; endl &lt;&lt; "语法说明：" &lt;&lt; endl;
+        cout &lt;&lt; "  sort(arr, arr + n, greater&lt;int&gt;());" &lt;&lt; endl;
+        cout &lt;&lt; "  - greater&lt;int&gt;() 是一个函数对象，实现 a &gt; b 的比较" &lt;&lt; endl;
+        cout &lt;&lt; "  - 等价于自写比较函数: bool cmp(int a, int b) { return a &gt; b; }" &lt;&lt; endl;
+        cout &lt;&lt; "  - 也可使用 less&lt;int&gt;() 显式指定升序（此为默认行为）" &lt;&lt; endl;
+    }
+    cout &lt;&lt; endl;
+
+    // ---------- 3. sort() + 自定义 cmp 函数 ----------
+    cout &lt;&lt; "---------- 3. sort() + 自定义 cmp 函数 ----------" &lt;&lt; endl;
+
+    // 3a. 按绝对值降序排序
+    cout &lt;&lt; "--- 3a. 按绝对值降序排列 ---" &lt;&lt; endl;
+    {
+        int arr[] = {-5, 3, -8, 2, -1, 7, -4, 6, -9, 0};
+        int n = sizeof(arr) / sizeof(arr[0]);
+
+        printArray(arr, n, "原始数组");
+
+        // 传入自定义比较函数 cmpAbsDesc
+        // 注意：传入的是函数名（函数指针），不是函数调用
+        sort(arr, arr + n, cmpAbsDesc);
+
+        printArray(arr, n, "按绝对值降序排列后");
+        cout &lt;&lt; "规则：绝对值大的在前；绝对值相同时，数值小的在前" &lt;&lt; endl;
+    }
+
+    cout &lt;&lt; endl;
+
+    // 3b. 奇偶分组排序
+    cout &lt;&lt; "--- 3b. 奇偶分组排序 ---" &lt;&lt; endl;
+    {
+        int arr[] = {1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12};
+        int n = sizeof(arr) / sizeof(arr[0]);
+
+        printArray(arr, n, "原始数组");
+
+        sort(arr, arr + n, cmpOddEven);
+
+        printArray(arr, n, "奇偶分组排序后");
+        cout &lt;&lt; "规则：奇数全部在前（升序），偶数全部在后（降序）" &lt;&lt; endl;
+
+        // 验证是否满足规则
+        cout &lt;&lt; "验证：";
+        bool valid = true;
+        bool seenEven = false;
+        for (int i = 0; i &lt; n; i++) {
+            if (arr[i] % 2 == 0) seenEven = true;
+            if (seenEven &amp;&amp; arr[i] % 2 != 0) valid = false;  // 偶数后面不应有奇数
+        }
+        cout &lt;&lt; (valid ? "通过" : "失败") &lt;&lt; " — 所有奇数都在偶数前面" &lt;&lt; endl;
+    }
+    cout &lt;&lt; endl;
+
+    // ---------- 4. 结构体多关键字排序 ----------
+    cout &lt;&lt; "---------- 4. 结构体多关键字排序（学生成绩排名） ----------" &lt;&lt; endl;
+    {
+        Student students[] = {
+            Student("张三",    1001, 92),
+            Student("李四",    1002, 87),
+            Student("王五",    1003, 92),
+            Student("赵六",    1004, 76),
+            Student("孙七",    1005, 87),
+            Student("周八",    1006, 92),
+            Student("吴九",    1007, 88),
+            Student("郑十",    1008, 76),
+            Student("钱十一",  1009, 92),
+            Student("陈十二",  1010, 88)
+        };
+        int n = sizeof(students) / sizeof(students[0]);
+
+        cout &lt;&lt; "排序规则：" &lt;&lt; endl;
+        cout &lt;&lt; "  第一关键字：成绩（降序）— 成绩高的排在前面" &lt;&lt; endl;
+        cout &lt;&lt; "  第二关键字：学号（升序）— 成绩相同时，学号小的在前" &lt;&lt; endl;
+        cout &lt;&lt; "  第三关键字：姓名（升序）— 成绩和学号都相同时，姓名按字典序排列" &lt;&lt; endl;
+        cout &lt;&lt; endl;
+
+        printStudents(students, n, "排序前");
+
+        // 使用自定义比较函数进行排序
+        sort(students, students + n, cmpStudent);
+
+        cout &lt;&lt; endl;
+        printStudents(students, n, "排序后");
+
+        cout &lt;&lt; endl &lt;&lt; "观察：" &lt;&lt; endl;
+        cout &lt;&lt; "  - 成绩 92 分的共有 4 人，按学号升序排列（1001, 1003, 1006, 1009）" &lt;&lt; endl;
+        cout &lt;&lt; "  - 成绩 88 分的共 2 人，按学号升序排列（1007, 1010）" &lt;&lt; endl;
+        cout &lt;&lt; "  - 成绩 87 分的共 2 人，按学号升序排列（1002, 1005）" &lt;&lt; endl;
+        cout &lt;&lt; "  - 成绩 76 分的共 2 人，按学号升序排列（1004, 1008）" &lt;&lt; endl;
+    }
+    cout &lt;&lt; endl;
+
+    // ---------- 5. stable_sort() 稳定排序演示 ----------
+    cout &lt;&lt; "---------- 5. stable_sort() 稳定排序演示 ----------" &lt;&lt; endl;
+    cout &lt;&lt; "稳定排序定义：排序后，相等元素的相对顺序与排序前保持一致" &lt;&lt; endl;
+    cout &lt;&lt; endl;
+
+    {
+        // 构造多个相同 value 的元素，通过 seq 和 label 区分
+        StableItem items[] = {
+            StableItem(3, 1, "第1个值3"),
+            StableItem(1, 2, "第1个值1"),
+            StableItem(4, 3, "第1个值4"),
+            StableItem(3, 4, "第2个值3"),
+            StableItem(2, 5, "第1个值2"),
+            StableItem(1, 6, "第2个值1"),
+            StableItem(5, 7, "第1个值5"),
+            StableItem(3, 8, "第3个值3"),
+            StableItem(2, 9, "第2个值2"),
+            StableItem(1, 10, "第3个值1")
+        };
+        int n = 10;
+
+        printStableItems(items, n, "原始数据");
+        cout &lt;&lt; endl;
+
+        // 先用 sort() 排序（不保证稳定性）
+        StableItem sortArr[10];
+        for (int i = 0; i &lt; n; i++) sortArr[i] = items[i];
+
+        sort(sortArr, sortArr + n,
+             [](const StableItem&amp; a, const StableItem&amp; b) {
+                 return a.value &lt; b.value;
+             });
+
+        printStableItems(sortArr, n, "sort() 排序后（不保证稳定）");
+        cout &lt;&lt; endl;
+
+        // 再用 stable_sort() 排序（保证稳定性）
+        StableItem stableArr[10];
+        for (int i = 0; i &lt; n; i++) stableArr[i] = items[i];
+
+        stable_sort(stableArr, stableArr + n,
+                    [](const StableItem&amp; a, const StableItem&amp; b) {
+                        return a.value &lt; b.value;
+                    });
+
+        printStableItems(stableArr, n, "stable_sort() 排序后（保证稳定）");
+
+        cout &lt;&lt; endl &lt;&lt; "对比观察：" &lt;&lt; endl;
+        cout &lt;&lt; "  对于 value=1 的元素：" &lt;&lt; endl;
+        cout &lt;&lt; "    sort()      中 seq 可能为 2, 6, 10 或乱序（不稳定）" &lt;&lt; endl;
+        cout &lt;&lt; "    stable_sort() 中 seq 保持为 2, 6, 10（原始顺序，稳定）" &lt;&lt; endl;
+        cout &lt;&lt; endl;
+        cout &lt;&lt; "使用场景：" &lt;&lt; endl;
+        cout &lt;&lt; "  如果已经按次要关键字排好序，现在想按主要关键字再排序，" &lt;&lt; endl;
+        cout &lt;&lt; "  使用 stable_sort() 可以保持次要关键字的原有顺序。" &lt;&lt; endl;
+        cout &lt;&lt; "  示例：先按姓名排序，再用 stable_sort 按班级排序，" &lt;&lt; endl;
+        cout &lt;&lt; "        则同班同学仍按姓名排列（实现了两关键字排序）。" &lt;&lt; endl;
+    }
+    cout &lt;&lt; endl;
+
+    // ---------- 6. sort() 与 vector 的使用 ----------
+    cout &lt;&lt; "---------- 6. sort() 与 vector 的使用 ----------" &lt;&lt; endl;
+    {
+        vector&lt;int&gt; v = {42, 17, 89, 3, 56, 21, 74, 9};
+
+        printVector(v, "原始 vector");
+
+        // 使用 vector 的迭代器
+        sort(v.begin(), v.end());
+
+        printVector(v, "sort(v.begin(), v.end()) 升序");
+
+        // 对 vector 的一部分排序（如只排前5个）
+        vector&lt;int&gt; v2 = {42, 17, 89, 3, 56, 21, 74, 9};
+        sort(v2.begin(), v2.begin() + 5);
+
+        printVector(v2, "sort(v.begin(), v.begin()+5) 只排前5个");
+
+        // 降序排序
+        vector&lt;int&gt; v3 = {42, 17, 89, 3, 56, 21, 74, 9};
+        sort(v3.begin(), v3.end(), greater&lt;int&gt;());
+
+        printVector(v3, "sort(v.begin(), v.end(), greater&lt;int&gt;()) 降序");
+    }
+    cout &lt;&lt; endl;
+
+    // ---------- 7. lambda 表达式作为比较函数 ----------
+    cout &lt;&lt; "---------- 7. lambda 表达式作为比较函数 ----------" &lt;&lt; endl;
+    {
+        // lambda 表达式语法：
+        // [捕获列表](参数列表) -&gt; 返回类型 { 函数体 }
+        // 可以就地定义比较函数，无需单独写函数
+
+        vector&lt;int&gt; v = {5, -3, 8, -2, 1, -7, 4, -6, 0, -1};
+
+        printVector(v, "原始数组");
+
+        // 使用 lambda：按平方值升序排序
+        sort(v.begin(), v.end(),
+             [](int a, int b) {
+                 return a * a &lt; b * b;  // 平方小的在前
+             });
+
+        printVector(v, "按平方值升序排序");
+        cout &lt;&lt; "（使用了 lambda 表达式：[](int a, int b) { return a * a &lt; b * b; }）" &lt;&lt; endl;
+
+        cout &lt;&lt; endl &lt;&lt; "lambda 表达式写法对比：" &lt;&lt; endl;
+        cout &lt;&lt; "  传统写法：单独定义 bool cmp(int a, int b) { return a*a &lt; b*b; }" &lt;&lt; endl;
+        cout &lt;&lt; "  lambda：   [](int a, int b) { return a * a &lt; b * b; }" &lt;&lt; endl;
+        cout &lt;&lt; "  lambda 的优势：简单规则可以就地定义，不需要额外函数" &lt;&lt; endl;
+    }
+    cout &lt;&lt; endl;
+
+    // ---------- 8. C 风格字符串数组排序 ----------
+    cout &lt;&lt; "---------- 8. C 风格字符串数组的排序 ----------" &lt;&lt; endl;
+    {
+        const char* names[] = {
+            "banana", "apple", "cherry", "date", "elderberry", "fig"
+        };
+        int n = sizeof(names) / sizeof(names[0]);
+
+        cout &lt;&lt; "原始字符串数组: [";
+        for (int i = 0; i &lt; n; i++) {
+            if (i &gt; 0) cout &lt;&lt; ", ";
+            cout &lt;&lt; names[i];
+        }
+        cout &lt;&lt; "]" &lt;&lt; endl;
+
+        // 使用 lambda 进行字典序排序
+        // 注意：比较的是 const char*，需要使用 strcmp
+        sort(names, names + n,
+             [](const char* a, const char* b) {
+                 return strcmp(a, b) &lt; 0;  // strcmp 返回负值表示 a &lt; b
+             });
+
+        cout &lt;&lt; "字典序排序后: [";
+        for (int i = 0; i &lt; n; i++) {
+            if (i &gt; 0) cout &lt;&lt; ", ";
+            cout &lt;&lt; names[i];
+        }
+        cout &lt;&lt; "]" &lt;&lt; endl;
+
+        // 按字符串长度降序排序
+        sort(names, names + n,
+             [](const char* a, const char* b) {
+                 size_t lenA = strlen(a);
+                 size_t lenB = strlen(b);
+                 if (lenA != lenB) return lenA &gt; lenB;  // 长的在前
+                 return strcmp(a, b) &lt; 0;               // 等长按字典序
+             });
+
+        cout &lt;&lt; "按长度降序排序后: [";
+        for (int i = 0; i &lt; n; i++) {
+            if (i &gt; 0) cout &lt;&lt; ", ";
+            cout &lt;&lt; names[i];
+        }
+        cout &lt;&lt; "]" &lt;&lt; endl;
+    }
+    cout &lt;&lt; endl;
+
+    cout &lt;&lt; "============================================" &lt;&lt; endl;
+    cout &lt;&lt; "  程序结束" &lt;&lt; endl;
+    cout &lt;&lt; "============================================" &lt;&lt; endl;
+
+    return 0;
+}
+</pre>
+    <p class="hint">若曾直接打开 .cpp 出现乱码，是因为浏览器未按 UTF-8 解析纯文本。本页已固定 UTF-8 显示。</p>
+  </div>
+</body>
+</html>

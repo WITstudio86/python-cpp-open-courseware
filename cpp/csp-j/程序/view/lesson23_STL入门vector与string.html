@@ -1,0 +1,618 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>lesson23_STL入门vector与string</title>
+<style>
+  :root {
+    --bg: #0f1419;
+    --panel: #161d27;
+    --text: #e7ecf3;
+    --muted: #9aa7b8;
+    --gold: #d4a853;
+    --code-bg: #1a1d23;
+    --border: #273244;
+  }
+  * { box-sizing: border-box; }
+  html, body {
+    margin: 0; padding: 0;
+    background: var(--bg);
+    color: var(--text);
+    font-family: -apple-system, BlinkMacSystemFont, "PingFang SC", "Microsoft YaHei", sans-serif;
+    min-height: 100%;
+  }
+  .top {
+    position: sticky; top: 0; z-index: 10;
+    display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between;
+    gap: 10px;
+    padding: 12px 18px;
+    background: linear-gradient(135deg, #0a2540, #1a3a5c);
+    border-bottom: 1px solid rgba(212,168,83,0.35);
+    box-shadow: 0 4px 18px rgba(0,0,0,0.25);
+  }
+  .brand { color: var(--gold); font-weight: 700; font-size: 14px; letter-spacing: 0.04em; }
+  .title { font-size: 15px; font-weight: 600; color: #fff; max-width: 52vw; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .actions { display: flex; gap: 8px; flex-wrap: wrap; }
+  .btn {
+    appearance: none; border: 1px solid rgba(255,255,255,0.18);
+    background: rgba(255,255,255,0.08); color: #fff;
+    border-radius: 999px; padding: 8px 14px; font-size: 13px; font-weight: 600;
+    text-decoration: none; cursor: pointer;
+  }
+  .btn:hover { background: rgba(255,255,255,0.16); }
+  .btn.gold { background: linear-gradient(135deg, #d4a853, #c4922e); color: #0a2540; border-color: transparent; }
+  .meta {
+    padding: 10px 18px; color: var(--muted); font-size: 12px;
+    border-bottom: 1px solid var(--border);
+    background: var(--panel);
+  }
+  .wrap { padding: 16px 18px 40px; }
+  pre {
+    margin: 0;
+    background: var(--code-bg);
+    color: #e1e4e8;
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 18px 20px;
+    overflow: auto;
+    font-family: "SF Mono", "JetBrains Mono", "Fira Code", Consolas, "Courier New", monospace;
+    font-size: 13.5px;
+    line-height: 1.55;
+    white-space: pre;
+    tab-size: 4;
+    box-shadow: 0 8px 28px rgba(0,0,0,0.28);
+  }
+  .hint { margin-top: 12px; color: var(--muted); font-size: 12px; }
+</style>
+</head>
+<body>
+  <div class="top">
+    <div class="brand">CSP-J · 配套代码</div>
+    <div class="title">lesson23_STL入门vector与string</div>
+    <div class="actions">
+      <a class="btn" href="../lesson23_STL入门vector与string.cpp" download="lesson23_STL入门vector与string.cpp">⬇️ 下载 .cpp</a>
+      <a class="btn gold" href="javascript:history.back()">← 返回课件</a>
+    </div>
+  </div>
+  <div class="meta">编码：UTF-8 · 文件：lesson23_STL入门vector与string.cpp · 共 534 行</div>
+  <div class="wrap">
+    <pre id="code">/**
+ * CSP-J 第23课：STL入门——vector与string
+ * 完整演示程序
+ * 编译：g++ -std=c++14 -o lesson23 lesson23_STL入门vector与string.cpp
+ */
+
+#include &lt;iostream&gt;
+#include &lt;vector&gt;
+#include &lt;string&gt;
+#include &lt;algorithm&gt;
+#include &lt;iterator&gt;
+using namespace std;
+
+// ==================== 辅助函数 ====================
+void printSection(const string&amp; title) {
+    cout &lt;&lt; "\n" &lt;&lt; string(60, '=') &lt;&lt; endl;
+    cout &lt;&lt; "  " &lt;&lt; title &lt;&lt; endl;
+    cout &lt;&lt; string(60, '=') &lt;&lt; endl;
+}
+
+void printSub(const string&amp; title) {
+    cout &lt;&lt; "\n--- " &lt;&lt; title &lt;&lt; " ---" &lt;&lt; endl;
+}
+
+// ==================== 主程序 ====================
+int main() {
+    // ==========================================
+    // 第一部分：vector 的声明与初始化
+    // ==========================================
+    printSection("第一部分：vector 的声明与初始化");
+
+    printSub("1.1 空vector");
+    vector&lt;int&gt; v1;
+    cout &lt;&lt; "v1.size() = " &lt;&lt; v1.size() &lt;&lt; endl;
+    cout &lt;&lt; "v1.empty() = " &lt;&lt; (v1.empty() ? "true" : "false") &lt;&lt; endl;
+
+    printSub("1.2 指定大小的vector");
+    vector&lt;int&gt; v2(5);  // 5个int，默认都是0
+    cout &lt;&lt; "v2.size() = " &lt;&lt; v2.size() &lt;&lt; endl;
+    cout &lt;&lt; "v2内容: ";
+    for (int x : v2) cout &lt;&lt; x &lt;&lt; " ";
+    cout &lt;&lt; endl;
+
+    printSub("1.3 指定大小和初始值");
+    vector&lt;int&gt; v3(5, 42);  // 5个int，都是42
+    cout &lt;&lt; "v3内容: ";
+    for (int x : v3) cout &lt;&lt; x &lt;&lt; " ";
+    cout &lt;&lt; endl;
+
+    printSub("1.4 列表初始化 (C++11)");
+    vector&lt;int&gt; v4 = {10, 20, 30, 40, 50};
+    cout &lt;&lt; "v4内容: ";
+    for (int x : v4) cout &lt;&lt; x &lt;&lt; " ";
+    cout &lt;&lt; endl;
+
+    printSub("1.5 拷贝构造");
+    vector&lt;int&gt; v5(v4);
+    cout &lt;&lt; "v5内容(拷贝自v4): ";
+    for (int x : v5) cout &lt;&lt; x &lt;&lt; " ";
+    cout &lt;&lt; endl;
+
+    // ==========================================
+    // 第二部分：vector 常用操作
+    // ==========================================
+    printSection("第二部分：vector 常用操作");
+
+    printSub("2.1 push_back() 添加元素");
+    vector&lt;int&gt; v;
+    for (int i = 1; i &lt;= 5; i++) {
+        v.push_back(i * 10);
+        cout &lt;&lt; "push_back(" &lt;&lt; i * 10 &lt;&lt; ") -&gt; size = " &lt;&lt; v.size() &lt;&lt; endl;
+    }
+    cout &lt;&lt; "最终内容: ";
+    for (int x : v) cout &lt;&lt; x &lt;&lt; " ";
+    cout &lt;&lt; endl;
+
+    printSub("2.2 pop_back() 删除末尾元素");
+    cout &lt;&lt; "弹出前: ";
+    for (int x : v) cout &lt;&lt; x &lt;&lt; " ";
+    cout &lt;&lt; endl;
+    v.pop_back();
+    cout &lt;&lt; "pop_back() 后: ";
+    for (int x : v) cout &lt;&lt; x &lt;&lt; " ";
+    cout &lt;&lt; endl;
+    cout &lt;&lt; "size = " &lt;&lt; v.size() &lt;&lt; endl;
+
+    printSub("2.3 front() 和 back()");
+    cout &lt;&lt; "当前vector: ";
+    for (int x : v) cout &lt;&lt; x &lt;&lt; " ";
+    cout &lt;&lt; endl;
+    cout &lt;&lt; "front() = " &lt;&lt; v.front() &lt;&lt; endl;
+    cout &lt;&lt; "back()  = " &lt;&lt; v.back() &lt;&lt; endl;
+
+    printSub("2.4 下标访问 v[i]");
+    cout &lt;&lt; "v[0] = " &lt;&lt; v[0] &lt;&lt; endl;
+    cout &lt;&lt; "v[1] = " &lt;&lt; v[1] &lt;&lt; endl;
+    cout &lt;&lt; "修改v[0] = 999" &lt;&lt; endl;
+    v[0] = 999;
+    cout &lt;&lt; "修改后: ";
+    for (int x : v) cout &lt;&lt; x &lt;&lt; " ";
+    cout &lt;&lt; endl;
+
+    printSub("2.5 at() 带边界检查的访问");
+    cout &lt;&lt; "v.at(0) = " &lt;&lt; v.at(0) &lt;&lt; endl;
+    cout &lt;&lt; "v.at(1) = " &lt;&lt; v.at(1) &lt;&lt; endl;
+    // 以下代码会抛出 std::out_of_range 异常，演示时注释掉
+    // cout &lt;&lt; v.at(100) &lt;&lt; endl;
+
+    printSub("2.6 empty() 和 clear()");
+    cout &lt;&lt; "清空前 empty() = " &lt;&lt; (v.empty() ? "true" : "false") &lt;&lt; endl;
+    cout &lt;&lt; "清空前 size() = " &lt;&lt; v.size() &lt;&lt; endl;
+    v.clear();
+    cout &lt;&lt; "clear() 后 empty() = " &lt;&lt; (v.empty() ? "true" : "false") &lt;&lt; endl;
+    cout &lt;&lt; "clear() 后 size() = " &lt;&lt; v.size() &lt;&lt; endl;
+
+    // ==========================================
+    // 第三部分：vector 遍历方式
+    // ==========================================
+    printSection("第三部分：vector 的三种遍历方式");
+
+    vector&lt;int&gt; nums = {100, 200, 300, 400, 500};
+
+    printSub("3.1 下标循环遍历");
+    cout &lt;&lt; "for (int i = 0; i &lt; nums.size(); i++):" &lt;&lt; endl;
+    for (size_t i = 0; i &lt; nums.size(); i++) {
+        cout &lt;&lt; "  nums[" &lt;&lt; i &lt;&lt; "] = " &lt;&lt; nums[i] &lt;&lt; endl;
+    }
+
+    printSub("3.2 迭代器遍历");
+    cout &lt;&lt; "使用 iterator: ";
+    for (vector&lt;int&gt;::iterator it = nums.begin(); it != nums.end(); ++it) {
+        cout &lt;&lt; *it &lt;&lt; " ";
+    }
+    cout &lt;&lt; endl;
+
+    printSub("3.3 范围for循环遍历 (C++11)");
+    cout &lt;&lt; "for (int x : nums): ";
+    for (int x : nums) {
+        cout &lt;&lt; x &lt;&lt; " ";
+    }
+    cout &lt;&lt; endl;
+
+    printSub("3.4 范围for + auto");
+    cout &lt;&lt; "for (auto x : nums): ";
+    for (auto x : nums) {
+        cout &lt;&lt; x &lt;&lt; " ";
+    }
+    cout &lt;&lt; endl;
+
+    // ==========================================
+    // 第四部分：二维 vector
+    // ==========================================
+    printSection("第四部分：二维 vector（九九乘法表）");
+
+    // 创建 9x9 的乘法表
+    vector&lt;vector&lt;int&gt;&gt; table(9, vector&lt;int&gt;(9, 0));
+
+    // 填充乘法表
+    for (int i = 0; i &lt; 9; i++) {
+        for (int j = 0; j &lt; 9; j++) {
+            table[i][j] = (i + 1) * (j + 1);
+        }
+    }
+
+    // 输出乘法表
+    cout &lt;&lt; "  九九乘法表（二维vector）:" &lt;&lt; endl;
+    cout &lt;&lt; "    ";
+    for (int j = 1; j &lt;= 9; j++) {
+        printf("%4d", j);
+    }
+    cout &lt;&lt; endl;
+    cout &lt;&lt; "    " &lt;&lt; string(36, '-') &lt;&lt; endl;
+    for (int i = 0; i &lt; 9; i++) {
+        printf("%2d |", i + 1);
+        for (int j = 0; j &lt; 9; j++) {
+            printf("%4d", table[i][j]);
+        }
+        cout &lt;&lt; endl;
+    }
+
+    // ==========================================
+    // 第五部分：vector 排序与去重
+    // ==========================================
+    printSection("第五部分：vector 排序与去重");
+
+    vector&lt;int&gt; data = {5, 2, 8, 2, 9, 1, 5, 5, 3, 8};
+    cout &lt;&lt; "原始数据: ";
+    for (int x : data) cout &lt;&lt; x &lt;&lt; " ";
+    cout &lt;&lt; endl;
+
+    // 排序
+    sort(data.begin(), data.end());
+    cout &lt;&lt; "sort() 后: ";
+    for (int x : data) cout &lt;&lt; x &lt;&lt; " ";
+    cout &lt;&lt; endl;
+
+    // 去重
+    auto last = unique(data.begin(), data.end());
+    data.erase(last, data.end());
+    cout &lt;&lt; "unique() + erase() 去重后: ";
+    for (int x : data) cout &lt;&lt; x &lt;&lt; " ";
+    cout &lt;&lt; endl;
+    cout &lt;&lt; "去重后元素个数: " &lt;&lt; data.size() &lt;&lt; endl;
+
+    // ==========================================
+    // 第六部分：vector reserve 扩容性能
+    // ==========================================
+    printSection("第六部分：reserve() vs 无reserve()");
+
+    vector&lt;int&gt; vNoReserve;
+    cout &lt;&lt; "无reserve初始: size=" &lt;&lt; vNoReserve.size()
+         &lt;&lt; ", capacity=" &lt;&lt; vNoReserve.capacity() &lt;&lt; endl;
+    for (int i = 0; i &lt; 10; i++) {
+        vNoReserve.push_back(i);
+        cout &lt;&lt; "  push_back(" &lt;&lt; i &lt;&lt; "): size=" &lt;&lt; vNoReserve.size()
+             &lt;&lt; ", capacity=" &lt;&lt; vNoReserve.capacity() &lt;&lt; endl;
+    }
+
+    cout &lt;&lt; endl;
+    vector&lt;int&gt; vWithReserve;
+    vWithReserve.reserve(10);
+    cout &lt;&lt; "reserve(10)后: size=" &lt;&lt; vWithReserve.size()
+         &lt;&lt; ", capacity=" &lt;&lt; vWithReserve.capacity() &lt;&lt; endl;
+    for (int i = 0; i &lt; 10; i++) {
+        vWithReserve.push_back(i);
+        cout &lt;&lt; "  push_back(" &lt;&lt; i &lt;&lt; "): size=" &lt;&lt; vWithReserve.size()
+             &lt;&lt; ", capacity=" &lt;&lt; vWithReserve.capacity() &lt;&lt; endl;
+    }
+
+    // ==========================================
+    // 第七部分：string 基础操作
+    // ==========================================
+    printSection("第七部分：string 基础与高级操作");
+
+    printSub("7.1 getline() 演示");
+    cout &lt;&lt; "请输入一行文字（含空格）进行测试：" &lt;&lt; endl;
+    // 由于是演示程序，这里使用硬编码示例演示 getline 逻辑
+    string sampleInput = "CSP-J 2025 备赛";
+    cout &lt;&lt; "  模拟输入: \"" &lt;&lt; sampleInput &lt;&lt; "\"" &lt;&lt; endl;
+    cout &lt;&lt; "  getline读取结果: " &lt;&lt; sampleInput &lt;&lt; endl;
+
+    printSub("7.2 cin &gt;&gt; 后使用 getline 的正确写法");
+    cout &lt;&lt; "  如果程序中有 cin &gt;&gt; n; 之后要用 getline，必须加 cin.ignore();" &lt;&lt; endl;
+    cout &lt;&lt; "  否则 getline 会读到残留的换行符。" &lt;&lt; endl;
+    cout &lt;&lt; "  示例代码: int n; cin &gt;&gt; n; cin.ignore(); string s; getline(cin, s);" &lt;&lt; endl;
+
+    printSub("7.3 find() 查找子串");
+    string s = "CSP-J 竞赛真好，CSP-J 加油！";
+    cout &lt;&lt; "原始字符串: \"" &lt;&lt; s &lt;&lt; "\"" &lt;&lt; endl;
+
+    size_t pos = s.find("CSP-J");
+    cout &lt;&lt; "find(\"CSP-J\") = " &lt;&lt; pos &lt;&lt; " (第一个出现位置)" &lt;&lt; endl;
+
+    pos = s.find("CSP-J", 10);  // 从下标10开始找
+    cout &lt;&lt; "find(\"CSP-J\", 10) = " &lt;&lt; pos &lt;&lt; " (从下标10开始找)" &lt;&lt; endl;
+
+    pos = s.find("NOIP");
+    if (pos == string::npos) {
+        cout &lt;&lt; "find(\"NOIP\") = string::npos (没找到)" &lt;&lt; endl;
+    }
+
+    printSub("7.4 substr() 截取子串");
+    string text = "0123456789";
+    cout &lt;&lt; "原始字符串: \"" &lt;&lt; text &lt;&lt; "\"" &lt;&lt; endl;
+    cout &lt;&lt; "substr(0, 3)  = \"" &lt;&lt; text.substr(0, 3) &lt;&lt; "\"" &lt;&lt; endl;
+    cout &lt;&lt; "substr(3, 4)  = \"" &lt;&lt; text.substr(3, 4) &lt;&lt; "\"" &lt;&lt; endl;
+    cout &lt;&lt; "substr(5)     = \"" &lt;&lt; text.substr(5) &lt;&lt; "\" (到末尾)" &lt;&lt; endl;
+    cout &lt;&lt; "substr(7, 10) = \"" &lt;&lt; text.substr(7, 10) &lt;&lt; "\" (len超过也不会报错)" &lt;&lt; endl;
+
+    printSub("7.5 insert() 和 erase()");
+    string msg = "Hello World";
+    cout &lt;&lt; "原始: \"" &lt;&lt; msg &lt;&lt; "\"" &lt;&lt; endl;
+    msg.insert(5, " beautiful");
+    cout &lt;&lt; "insert(5, \" beautiful\") -&gt; \"" &lt;&lt; msg &lt;&lt; "\"" &lt;&lt; endl;
+    msg.erase(5, 10);
+    cout &lt;&lt; "erase(5, 10) -&gt; \"" &lt;&lt; msg &lt;&lt; "\"" &lt;&lt; endl;
+
+    string t = "abcdefg";
+    cout &lt;&lt; "t = \"" &lt;&lt; t &lt;&lt; "\"" &lt;&lt; endl;
+    t.erase(2, 3);
+    cout &lt;&lt; "erase(2, 3) -&gt; \"" &lt;&lt; t &lt;&lt; "\" (删掉了cde)" &lt;&lt; endl;
+
+    printSub("7.6 length() 和 size()");
+    string str = "CSP-J";
+    cout &lt;&lt; "\"" &lt;&lt; str &lt;&lt; "\".length() = " &lt;&lt; str.length() &lt;&lt; endl;
+    cout &lt;&lt; "\"" &lt;&lt; str &lt;&lt; "\".size()   = " &lt;&lt; str.size() &lt;&lt; endl;
+    cout &lt;&lt; "(length() 和 size() 完全等价)" &lt;&lt; endl;
+
+    printSub("7.7 字符串比较");
+    string a = "abc", b = "abd", c = "abc";
+    cout &lt;&lt; "\"abc\" == \"abc\": " &lt;&lt; (a == c ? "true" : "false") &lt;&lt; endl;
+    cout &lt;&lt; "\"abc\" &lt;  \"abd\": " &lt;&lt; (a &lt; b ? "true" : "false") &lt;&lt; endl;
+    cout &lt;&lt; "\"abc\" &gt;  \"abd\": " &lt;&lt; (a &gt; b ? "true" : "false") &lt;&lt; endl;
+    cout &lt;&lt; "字符串比较按字典序(lexicographical order)" &lt;&lt; endl;
+
+    printSub("7.8 to_string / stoi 数字与字符串互转");
+    int num = 123;
+    string numStr = to_string(num);
+    cout &lt;&lt; "to_string(123) -&gt; \"" &lt;&lt; numStr &lt;&lt; "\"" &lt;&lt; endl;
+    cout &lt;&lt; "to_string(3.14) -&gt; \"" &lt;&lt; to_string(3.14) &lt;&lt; "\"" &lt;&lt; endl;
+
+    string numStr2 = "456";
+    int parsed = stoi(numStr2);
+    cout &lt;&lt; "stoi(\"456\") -&gt; " &lt;&lt; parsed &lt;&lt; endl;
+    cout &lt;&lt; "stoi(\"456\") + 100 = " &lt;&lt; parsed + 100 &lt;&lt; endl;
+
+    // ==========================================
+    // 第八部分：字符串分割（CSV风格）
+    // ==========================================
+    printSection("第八部分：字符串分割演示");
+
+    string csv = "张三,15,数学,95,A";
+    cout &lt;&lt; "CSV字符串: \"" &lt;&lt; csv &lt;&lt; "\"" &lt;&lt; endl;
+    cout &lt;&lt; "分割结果:" &lt;&lt; endl;
+
+    vector&lt;string&gt; fields;
+    size_t splitPos = 0;
+    while ((splitPos = csv.find(',')) != string::npos) {
+        fields.push_back(csv.substr(0, splitPos));
+        csv.erase(0, splitPos + 1);
+    }
+    fields.push_back(csv);  // 最后一段
+
+    for (size_t i = 0; i &lt; fields.size(); i++) {
+        cout &lt;&lt; "  字段[" &lt;&lt; i &lt;&lt; "]: \"" &lt;&lt; fields[i] &lt;&lt; "\"" &lt;&lt; endl;
+    }
+
+    // 方式二：不用erase的分割
+    printSub("方式二：维护起始位置的分割");
+    string csv2 = "apple,banana,cherry,date";
+    cout &lt;&lt; "CSV字符串: \"" &lt;&lt; csv2 &lt;&lt; "\"" &lt;&lt; endl;
+
+    vector&lt;string&gt; fields2;
+    size_t start = 0, end;
+    while ((end = csv2.find(',', start)) != string::npos) {
+        fields2.push_back(csv2.substr(start, end - start));
+        start = end + 1;
+    }
+    fields2.push_back(csv2.substr(start));
+
+    for (size_t i = 0; i &lt; fields2.size(); i++) {
+        cout &lt;&lt; "  字段[" &lt;&lt; i &lt;&lt; "]: \"" &lt;&lt; fields2[i] &lt;&lt; "\"" &lt;&lt; endl;
+    }
+
+    // ==========================================
+    // 第九部分：auto 关键字演示
+    // ==========================================
+    printSection("第九部分：auto 关键字演示");
+
+    printSub("9.1 基本类型推导");
+    auto i = 42;          // int
+    auto d = 3.14;        // double
+    auto c = 'A';         // char
+    auto str = "hello";   // const char*
+
+    cout &lt;&lt; "auto i = 42;     -&gt; int    (值: " &lt;&lt; i &lt;&lt; ")" &lt;&lt; endl;
+    cout &lt;&lt; "auto d = 3.14;   -&gt; double (值: " &lt;&lt; d &lt;&lt; ")" &lt;&lt; endl;
+    cout &lt;&lt; "auto c = 'A';    -&gt; char   (值: " &lt;&lt; c &lt;&lt; ")" &lt;&lt; endl;
+    cout &lt;&lt; "auto str = \"hello\"; -&gt; const char* (值: " &lt;&lt; str &lt;&lt; ")" &lt;&lt; endl;
+
+    printSub("9.2 迭代器类型推导");
+    vector&lt;int&gt; vv = {10, 20, 30, 40, 50};
+    auto it = vv.begin();  // vector&lt;int&gt;::iterator
+    cout &lt;&lt; "auto it = vv.begin(); -&gt; vector&lt;int&gt;::iterator" &lt;&lt; endl;
+    cout &lt;&lt; "*it = " &lt;&lt; *it &lt;&lt; endl;
+    cout &lt;&lt; "遍历: ";
+    for (auto it = vv.begin(); it != vv.end(); ++it) {
+        cout &lt;&lt; *it &lt;&lt; " ";
+    }
+    cout &lt;&lt; endl;
+
+    printSub("9.3 复杂类型推导");
+    vector&lt;vector&lt;int&gt;&gt; matrix(3, vector&lt;int&gt;(3));
+    auto row = matrix[0];  // vector&lt;int&gt;
+    cout &lt;&lt; "auto row = matrix[0]; -&gt; vector&lt;int&gt; (size=" &lt;&lt; row.size() &lt;&lt; ")" &lt;&lt; endl;
+
+    // ==========================================
+    // 第十部分：范围for循环详细演示
+    // ==========================================
+    printSection("第十部分：范围for循环 (Range-based for)");
+
+    vector&lt;int&gt; scores = {85, 92, 78, 95, 88};
+
+    printSub("10.1 只读遍历 (auto x : v)");
+    cout &lt;&lt; "原始成绩: ";
+    for (auto x : scores) {
+        cout &lt;&lt; x &lt;&lt; " ";
+    }
+    cout &lt;&lt; endl;
+
+    printSub("10.2 修改元素 (auto&amp; x : v)");
+    cout &lt;&lt; "每人加5分..." &lt;&lt; endl;
+    for (auto&amp; x : scores) {
+        x += 5;  // 注意：auto&amp; 才能修改原元素
+    }
+    cout &lt;&lt; "加分后: ";
+    for (const auto&amp; x : scores) {
+        cout &lt;&lt; x &lt;&lt; " ";
+    }
+    cout &lt;&lt; endl;
+
+    printSub("10.3 验证 auto 不会修改原值");
+    vector&lt;int&gt; testV = {1, 2, 3};
+    cout &lt;&lt; "auto x 遍历前: ";
+    for (int x : testV) cout &lt;&lt; x &lt;&lt; " ";
+    cout &lt;&lt; endl;
+    for (auto x : testV) {
+        x = 999;  // 修改的是拷贝，不影响原vector
+    }
+    cout &lt;&lt; "auto x 遍历后: ";
+    for (int x : testV) cout &lt;&lt; x &lt;&lt; " ";
+    cout &lt;&lt; " (不变! 因为是拷贝)" &lt;&lt; endl;
+
+    printSub("10.4 string 范围for遍历");
+    string word = "CSP-J";
+    cout &lt;&lt; "遍历\"" &lt;&lt; word &lt;&lt; "\": ";
+    for (auto ch : word) {
+        cout &lt;&lt; ch &lt;&lt; " ";
+    }
+    cout &lt;&lt; endl;
+
+    printSub("10.5 const auto&amp; 避免拷贝");
+    vector&lt;string&gt; names = {"张三", "李四", "王五", "赵六"};
+    cout &lt;&lt; "学生名单 (const auto&amp;): ";
+    for (const auto&amp; name : names) {
+        cout &lt;&lt; name &lt;&lt; " ";
+    }
+    cout &lt;&lt; endl;
+
+    // ==========================================
+    // 第十一部分：综合应用 - 去重排序完整示例
+    // ==========================================
+    printSection("第十一部分：综合应用 - 去重排序");
+
+    vector&lt;int&gt; raw = {3, 1, 4, 1, 5, 9, 2, 6, 5, 3, 5};
+    cout &lt;&lt; "原始数据: ";
+    for (int x : raw) cout &lt;&lt; x &lt;&lt; " ";
+    cout &lt;&lt; endl;
+
+    sort(raw.begin(), raw.end());
+    cout &lt;&lt; "排序后: ";
+    for (int x : raw) cout &lt;&lt; x &lt;&lt; " ";
+    cout &lt;&lt; endl;
+
+    auto uniqueEnd = unique(raw.begin(), raw.end());
+    cout &lt;&lt; "unique后逻辑大小: " &lt;&lt; (uniqueEnd - raw.begin()) &lt;&lt; endl;
+    cout &lt;&lt; "unique后物理大小: " &lt;&lt; raw.size() &lt;&lt; endl;
+    cout &lt;&lt; "unique后容器内容: ";
+    for (int x : raw) cout &lt;&lt; x &lt;&lt; " ";
+    cout &lt;&lt; " (注意尾部有残留)" &lt;&lt; endl;
+
+    raw.erase(uniqueEnd, raw.end());
+    cout &lt;&lt; "erase后: ";
+    for (int x : raw) cout &lt;&lt; x &lt;&lt; " ";
+    cout &lt;&lt; endl;
+    cout &lt;&lt; "最终大小: " &lt;&lt; raw.size() &lt;&lt; endl;
+
+    // ==========================================
+    // 第十二部分：迭代器高级用法
+    // ==========================================
+    printSection("第十二部分：迭代器高级用法");
+
+    vector&lt;int&gt; iv = {10, 20, 30, 40, 50};
+    cout &lt;&lt; "原始: ";
+    for (int x : iv) cout &lt;&lt; x &lt;&lt; " ";
+    cout &lt;&lt; endl;
+
+    // insert
+    iv.insert(iv.begin() + 2, 25);
+    cout &lt;&lt; "insert(begin()+2, 25): ";
+    for (int x : iv) cout &lt;&lt; x &lt;&lt; " ";
+    cout &lt;&lt; endl;
+
+    // erase by iterator
+    iv.erase(iv.begin() + 1);
+    cout &lt;&lt; "erase(begin()+1): ";
+    for (int x : iv) cout &lt;&lt; x &lt;&lt; " ";
+    cout &lt;&lt; endl;
+
+    // reverse
+    reverse(iv.begin(), iv.end());
+    cout &lt;&lt; "reverse(): ";
+    for (int x : iv) cout &lt;&lt; x &lt;&lt; " ";
+    cout &lt;&lt; endl;
+
+    // find
+    auto found = find(iv.begin(), iv.end(), 30);
+    if (found != iv.end()) {
+        cout &lt;&lt; "find(30): 找到了，位置索引 = " &lt;&lt; (found - iv.begin()) &lt;&lt; endl;
+    } else {
+        cout &lt;&lt; "find(30): 没找到" &lt;&lt; endl;
+    }
+
+    // ==========================================
+    // 第十三部分：cin.ignore 陷阱演示说明
+    // ==========================================
+    printSection("第十三部分：cin &gt;&gt; 与 getline 混用陷阱");
+
+    cout &lt;&lt; "【陷阱演示】" &lt;&lt; endl;
+    cout &lt;&lt; "以下代码模拟 cin &gt;&gt; n 之后直接 getline:" &lt;&lt; endl;
+    cout &lt;&lt; "  int n;" &lt;&lt; endl;
+    cout &lt;&lt; "  cin &gt;&gt; n;           // 用户输入 42&lt;回车&gt;" &lt;&lt; endl;
+    cout &lt;&lt; "  string s;" &lt;&lt; endl;
+    cout &lt;&lt; "  getline(cin, s);    // s = \"\" (读到的是残留的换行符!)" &lt;&lt; endl;
+    cout &lt;&lt; "" &lt;&lt; endl;
+    cout &lt;&lt; "【正确做法】" &lt;&lt; endl;
+    cout &lt;&lt; "  int n;" &lt;&lt; endl;
+    cout &lt;&lt; "  cin &gt;&gt; n;" &lt;&lt; endl;
+    cout &lt;&lt; "  cin.ignore();       // 吃掉残留的换行符" &lt;&lt; endl;
+    cout &lt;&lt; "  string s;" &lt;&lt; endl;
+    cout &lt;&lt; "  getline(cin, s);    // s 现在正确读到下一行内容" &lt;&lt; endl;
+
+    // ==========================================
+    // 总结
+    // ==========================================
+    printSection("演示程序结束");
+
+    cout &lt;&lt; "\n本程序覆盖了CSP-J第23课所有核心知识点：" &lt;&lt; endl;
+    cout &lt;&lt; "  [1] vector声明与初始化（多种方式）" &lt;&lt; endl;
+    cout &lt;&lt; "  [2] vector常用操作（push_back/pop_back/size/clear/empty/front/back）" &lt;&lt; endl;
+    cout &lt;&lt; "  [3] vector三种遍历方式（下标/迭代器/范围for）" &lt;&lt; endl;
+    cout &lt;&lt; "  [4] 二维vector（乘法表示例）" &lt;&lt; endl;
+    cout &lt;&lt; "  [5] sort排序与unique去重" &lt;&lt; endl;
+    cout &lt;&lt; "  [6] reserve容量管理" &lt;&lt; endl;
+    cout &lt;&lt; "  [7] string高级操作（find/substr/insert/erase/length）" &lt;&lt; endl;
+    cout &lt;&lt; "  [8] 字符串分割（CSV解析）" &lt;&lt; endl;
+    cout &lt;&lt; "  [9] auto关键字（类型推导、迭代器简化）" &lt;&lt; endl;
+    cout &lt;&lt; "  [10] 范围for循环（auto/auto&amp;/const auto&amp;）" &lt;&lt; endl;
+    cout &lt;&lt; "  [11] 迭代器高级用法（insert/erase/find/reverse）" &lt;&lt; endl;
+    cout &lt;&lt; "  [12] cin.ignore陷阱说明" &lt;&lt; endl;
+    cout &lt;&lt; endl;
+
+    return 0;
+}
+</pre>
+    <p class="hint">若曾直接打开 .cpp 出现乱码，是因为浏览器未按 UTF-8 解析纯文本。本页已固定 UTF-8 显示。</p>
+  </div>
+</body>
+</html>

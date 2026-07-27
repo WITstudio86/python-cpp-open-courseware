@@ -1,0 +1,411 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>lesson11_while与do_while循环</title>
+<style>
+  :root {
+    --bg: #0f1419;
+    --panel: #161d27;
+    --text: #e7ecf3;
+    --muted: #9aa7b8;
+    --gold: #d4a853;
+    --code-bg: #1a1d23;
+    --border: #273244;
+  }
+  * { box-sizing: border-box; }
+  html, body {
+    margin: 0; padding: 0;
+    background: var(--bg);
+    color: var(--text);
+    font-family: -apple-system, BlinkMacSystemFont, "PingFang SC", "Microsoft YaHei", sans-serif;
+    min-height: 100%;
+  }
+  .top {
+    position: sticky; top: 0; z-index: 10;
+    display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between;
+    gap: 10px;
+    padding: 12px 18px;
+    background: linear-gradient(135deg, #0a2540, #1a3a5c);
+    border-bottom: 1px solid rgba(212,168,83,0.35);
+    box-shadow: 0 4px 18px rgba(0,0,0,0.25);
+  }
+  .brand { color: var(--gold); font-weight: 700; font-size: 14px; letter-spacing: 0.04em; }
+  .title { font-size: 15px; font-weight: 600; color: #fff; max-width: 52vw; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .actions { display: flex; gap: 8px; flex-wrap: wrap; }
+  .btn {
+    appearance: none; border: 1px solid rgba(255,255,255,0.18);
+    background: rgba(255,255,255,0.08); color: #fff;
+    border-radius: 999px; padding: 8px 14px; font-size: 13px; font-weight: 600;
+    text-decoration: none; cursor: pointer;
+  }
+  .btn:hover { background: rgba(255,255,255,0.16); }
+  .btn.gold { background: linear-gradient(135deg, #d4a853, #c4922e); color: #0a2540; border-color: transparent; }
+  .meta {
+    padding: 10px 18px; color: var(--muted); font-size: 12px;
+    border-bottom: 1px solid var(--border);
+    background: var(--panel);
+  }
+  .wrap { padding: 16px 18px 40px; }
+  pre {
+    margin: 0;
+    background: var(--code-bg);
+    color: #e1e4e8;
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 18px 20px;
+    overflow: auto;
+    font-family: "SF Mono", "JetBrains Mono", "Fira Code", Consolas, "Courier New", monospace;
+    font-size: 13.5px;
+    line-height: 1.55;
+    white-space: pre;
+    tab-size: 4;
+    box-shadow: 0 8px 28px rgba(0,0,0,0.28);
+  }
+  .hint { margin-top: 12px; color: var(--muted); font-size: 12px; }
+</style>
+</head>
+<body>
+  <div class="top">
+    <div class="brand">CSP-J · 配套代码</div>
+    <div class="title">lesson11_while与do_while循环</div>
+    <div class="actions">
+      <a class="btn" href="../lesson11_while与do_while循环.cpp" download="lesson11_while与do_while循环.cpp">⬇️ 下载 .cpp</a>
+      <a class="btn gold" href="javascript:history.back()">← 返回课件</a>
+    </div>
+  </div>
+  <div class="meta">编码：UTF-8 · 文件：lesson11_while与do_while循环.cpp · 共 327 行</div>
+  <div class="wrap">
+    <pre id="code">/*
+ * CSP-J 备考课程
+ * 第11课：while 与 do-while 循环
+ * 考纲知识点：
+ *   - while(条件)先判断后执行
+ *   - do-while先执行后判断（至少执行一次）
+ *   - 循环条件设计
+ *   - 死循环避免
+ *   - while与for的适用场景对比
+ *
+ * 本文件包含：
+ *   1. while循环基础演示（数字位数统计）
+ *   2. do-while循环演示（输入校验）
+ *   3. while与do-while对比演示
+ *   4. 真题AC代码
+ */
+
+#include &lt;iostream&gt;
+#include &lt;string&gt;
+#include &lt;cctype&gt;
+using namespace std;
+
+// -------------------------------------------
+// 演示1：while循环 - 统计数字位数
+// -------------------------------------------
+void demo_while_digit_count() {
+    cout &lt;&lt; "\n========== 演示1：while 统计数字位数 ==========" &lt;&lt; endl;
+    int n;
+    cout &lt;&lt; "请输入一个正整数：";
+    cin &gt;&gt; n;
+
+    if (n == 0) {
+        cout &lt;&lt; "0 是 1 位数" &lt;&lt; endl;
+        return;
+    }
+
+    int original = n;   // 保存原数用于显示
+    int cnt = 0;
+    while (n &gt; 0) {
+        cnt++;
+        n /= 10;
+    }
+    cout &lt;&lt; original &lt;&lt; " 是 " &lt;&lt; cnt &lt;&lt; " 位数" &lt;&lt; endl;
+    cout &lt;&lt; "循环执行了 " &lt;&lt; cnt &lt;&lt; " 次" &lt;&lt; endl;
+}
+
+// -------------------------------------------
+// 演示2：while循环 - 数字反转
+// -------------------------------------------
+void demo_while_reverse_number() {
+    cout &lt;&lt; "\n========== 演示2：while 数字反转 ==========" &lt;&lt; endl;
+    int n;
+    cout &lt;&lt; "请输入一个正整数：";
+    cin &gt;&gt; n;
+
+    int original = n;
+    int rev = 0;
+    while (n &gt; 0) {
+        int digit = n % 10;
+        rev = rev * 10 + digit;
+        n /= 10;
+        cout &lt;&lt; "  取出 " &lt;&lt; digit &lt;&lt; "，当前 rev = " &lt;&lt; rev &lt;&lt; endl;
+    }
+    cout &lt;&lt; original &lt;&lt; " 反转后为 " &lt;&lt; rev &lt;&lt; endl;
+}
+
+// -------------------------------------------
+// 演示3：while - 读取直到EOF
+// -------------------------------------------
+void demo_while_read_until_eof() {
+    cout &lt;&lt; "\n========== 演示3：while 读取直到EOF ==========" &lt;&lt; endl;
+    cout &lt;&lt; "请输入若干整数（Ctrl+D 结束）：" &lt;&lt; endl;
+    int x, sum = 0, cnt = 0;
+    while (cin &gt;&gt; x) {
+        sum += x;
+        cnt++;
+        cout &lt;&lt; "  读到第 " &lt;&lt; cnt &lt;&lt; " 个数：" &lt;&lt; x &lt;&lt; "，累加和 = " &lt;&lt; sum &lt;&lt; endl;
+    }
+    // 清除cin的错误状态，以便后续输入正常
+    cin.clear();
+    cout &lt;&lt; "共读取 " &lt;&lt; cnt &lt;&lt; " 个数，总和 = " &lt;&lt; sum &lt;&lt; endl;
+}
+
+// -------------------------------------------
+// 演示4：do-while循环 - 输入校验
+// -------------------------------------------
+void demo_do_while_input_validation() {
+    cout &lt;&lt; "\n========== 演示4：do-while 输入校验 ==========" &lt;&lt; endl;
+    int score;
+    int attempts = 0;
+    do {
+        attempts++;
+        cout &lt;&lt; "第 " &lt;&lt; attempts &lt;&lt; " 次尝试 - 请输入成绩（0-100）：";
+        cin &gt;&gt; score;
+        if (score &lt; 0 || score &gt; 100) {
+            cout &lt;&lt; "  [不合法] 成绩必须在 0 到 100 之间！" &lt;&lt; endl;
+        }
+    } while (score &lt; 0 || score &gt; 100);
+
+    cout &lt;&lt; "成绩有效：" &lt;&lt; score &lt;&lt; " 分（共尝试 " &lt;&lt; attempts &lt;&lt; " 次）" &lt;&lt; endl;
+}
+
+// -------------------------------------------
+// 演示5：do-while - 菜单选择
+// -------------------------------------------
+void demo_do_while_menu() {
+    cout &lt;&lt; "\n========== 演示5：do-while 菜单选择 ==========" &lt;&lt; endl;
+    int choice;
+    do {
+        cout &lt;&lt; "\n--- 简易菜单 ---" &lt;&lt; endl;
+        cout &lt;&lt; "1. 说你好" &lt;&lt; endl;
+        cout &lt;&lt; "2. 显示当前菜单演示次数" &lt;&lt; endl;
+        cout &lt;&lt; "3. 显示一条鼓励语" &lt;&lt; endl;
+        cout &lt;&lt; "0. 退出菜单" &lt;&lt; endl;
+        cout &lt;&lt; "请选择：";
+        cin &gt;&gt; choice;
+
+        switch (choice) {
+            case 1:
+                cout &lt;&lt; "  你好！祝你学习进步！" &lt;&lt; endl;
+                break;
+            case 2:
+                cout &lt;&lt; "  do-while 菜单演示中..." &lt;&lt; endl;
+                break;
+            case 3:
+                cout &lt;&lt; "  每天进步一点点，CSP-J 一定能拿奖！" &lt;&lt; endl;
+                break;
+            case 0:
+                cout &lt;&lt; "  再见！" &lt;&lt; endl;
+                break;
+            default:
+                cout &lt;&lt; "  无效选项，请重新选择！" &lt;&lt; endl;
+                break;
+        }
+    } while (choice != 0);
+}
+
+// -------------------------------------------
+// 演示6：while vs do-while 对比
+// -------------------------------------------
+void demo_while_vs_do_while() {
+    cout &lt;&lt; "\n========== 演示6：while vs do-while 对比 ==========" &lt;&lt; endl;
+
+    // 条件为 false 时的情况
+    cout &lt;&lt; "\n--- 场景：条件一开始就为 false (n = 0) ---" &lt;&lt; endl;
+    int n = 0;
+
+    cout &lt;&lt; "while 版本：";
+    int while_count = 0;
+    while (n &gt; 0) {
+        while_count++;
+    }
+    cout &lt;&lt; "循环体执行了 " &lt;&lt; while_count &lt;&lt; " 次" &lt;&lt; endl;
+
+    cout &lt;&lt; "do-while 版本：";
+    int dowhile_count = 0;
+    do {
+        dowhile_count++;
+    } while (n &gt; 0);
+    cout &lt;&lt; "循环体执行了 " &lt;&lt; dowhile_count &lt;&lt; " 次" &lt;&lt; endl;
+
+    // 条件为 true 时的情况
+    cout &lt;&lt; "\n--- 场景：条件为 true (n = 3) ---" &lt;&lt; endl;
+    n = 3;
+    cout &lt;&lt; "while 版本（倒计时）：";
+    while (n &gt; 0) {
+        cout &lt;&lt; n &lt;&lt; " ";
+        n--;
+    }
+    cout &lt;&lt; endl;
+
+    n = 3;
+    cout &lt;&lt; "do-while 版本（倒计时）：";
+    do {
+        cout &lt;&lt; n &lt;&lt; " ";
+        n--;
+    } while (n &gt; 0);
+    cout &lt;&lt; endl;
+    cout &lt;&lt; "结论：条件为 true 时，两者行为相同" &lt;&lt; endl;
+}
+
+// -------------------------------------------
+// 演示7：死循环演示与避免
+// -------------------------------------------
+void demo_infinite_loop_and_fix() {
+    cout &lt;&lt; "\n========== 演示7：死循环识别与避免 ==========" &lt;&lt; endl;
+
+    // 注意：这里展示死循环的样子，但不实际执行
+    cout &lt;&lt; "\n【错误示例 - 仅供观察，不执行】" &lt;&lt; endl;
+    cout &lt;&lt; "int i = 1;" &lt;&lt; endl;
+    cout &lt;&lt; "while (i &lt;= 10) {" &lt;&lt; endl;
+    cout &lt;&lt; "    cout &lt;&lt; i &lt;&lt; endl;" &lt;&lt; endl;
+    cout &lt;&lt; "    // 忘记 i++，死循环！" &lt;&lt; endl;
+    cout &lt;&lt; "}" &lt;&lt; endl;
+
+    cout &lt;&lt; "\n【正确示例】" &lt;&lt; endl;
+    int i = 1;
+    while (i &lt;= 10) {
+        cout &lt;&lt; i &lt;&lt; " ";
+        i++;  // 关键：更新循环变量
+    }
+    cout &lt;&lt; endl;
+    cout &lt;&lt; "循环正常结束，共执行 10 次" &lt;&lt; endl;
+
+    // 刻意使用 while(true) + break
+    cout &lt;&lt; "\n【while(true) + break 模式】" &lt;&lt; endl;
+    cout &lt;&lt; "演示：不断读取数字，输入 -1 结束" &lt;&lt; endl;
+    cout &lt;&lt; "请输入若干整数（-1 结束）：";
+    while (true) {
+        int x;
+        cin &gt;&gt; x;
+        if (x == -1) {
+            cout &lt;&lt; "检测到 -1，跳出循环！" &lt;&lt; endl;
+            break;
+        }
+        cout &lt;&lt; "  读到：" &lt;&lt; x &lt;&lt; "，其平方为：" &lt;&lt; x * x &lt;&lt; endl;
+    }
+}
+
+// -------------------------------------------
+// 真题1：数字反转（while）
+// -------------------------------------------
+void zhenti1_reverse_number() {
+    cout &lt;&lt; "\n========== 真题1：数字反转 ==========" &lt;&lt; endl;
+    int n;
+    cout &lt;&lt; "请输入一个正整数 N：";
+    cin &gt;&gt; n;
+
+    int rev = 0;
+    while (n &gt; 0) {
+        int digit = n % 10;      // 取出最后一位
+        rev = rev * 10 + digit;  // 拼接到反转结果
+        n /= 10;                 // 去掉最后一位
+    }
+
+    cout &lt;&lt; "反转后：" &lt;&lt; rev &lt;&lt; endl;
+}
+
+// -------------------------------------------
+// 真题2：输入校验（do-while）
+// -------------------------------------------
+bool isAllDigit(const string&amp; s) {
+    if (s.empty()) return false;
+    for (char c : s) {
+        if (!isdigit(c)) return false;
+    }
+    return true;
+}
+
+void zhenti2_password_validation() {
+    cout &lt;&lt; "\n========== 真题2：密码输入校验 ==========" &lt;&lt; endl;
+    cout &lt;&lt; "密码要求：" &lt;&lt; endl;
+    cout &lt;&lt; "  1. 长度在 6 到 16 位之间" &lt;&lt; endl;
+    cout &lt;&lt; "  2. 不能全是数字" &lt;&lt; endl;
+
+    string password;
+    bool valid;
+
+    do {
+        valid = true;
+        cout &lt;&lt; "\n请输入密码：";
+        cin &gt;&gt; password;
+
+        // 检查长度
+        if (password.length() &lt; 6) {
+            cout &lt;&lt; "密码长度不足（当前 " &lt;&lt; password.length() &lt;&lt; " 位），请重新输入！" &lt;&lt; endl;
+            valid = false;
+        }
+        else if (password.length() &gt; 16) {
+            cout &lt;&lt; "密码长度超出（当前 " &lt;&lt; password.length() &lt;&lt; " 位），请重新输入！" &lt;&lt; endl;
+            valid = false;
+        }
+        // 检查是否全数字
+        else if (isAllDigit(password)) {
+            cout &lt;&lt; "密码不能全为数字，请重新输入！" &lt;&lt; endl;
+            valid = false;
+        }
+
+    } while (!valid);
+
+    cout &lt;&lt; "密码设置成功！" &lt;&lt; endl;
+}
+
+// -------------------------------------------
+// 主菜单
+// -------------------------------------------
+int main() {
+    int choice;
+    do {
+        cout &lt;&lt; "\n╔══════════════════════════════════════════╗" &lt;&lt; endl;
+        cout &lt;&lt; "║   第11课：while 与 do-while 循环         ║" &lt;&lt; endl;
+        cout &lt;&lt; "╠══════════════════════════════════════════╣" &lt;&lt; endl;
+        cout &lt;&lt; "║  1. while - 统计数字位数                ║" &lt;&lt; endl;
+        cout &lt;&lt; "║  2. while - 数字反转                    ║" &lt;&lt; endl;
+        cout &lt;&lt; "║  3. while - 读取直到EOF                 ║" &lt;&lt; endl;
+        cout &lt;&lt; "║  4. do-while - 输入校验                 ║" &lt;&lt; endl;
+        cout &lt;&lt; "║  5. do-while - 菜单选择                 ║" &lt;&lt; endl;
+        cout &lt;&lt; "║  6. while vs do-while 对比              ║" &lt;&lt; endl;
+        cout &lt;&lt; "║  7. 死循环演示与避免                    ║" &lt;&lt; endl;
+        cout &lt;&lt; "║  8. 真题1：数字反转（while）            ║" &lt;&lt; endl;
+        cout &lt;&lt; "║  9. 真题2：密码输入校验（do-while）     ║" &lt;&lt; endl;
+        cout &lt;&lt; "║  0. 退出                                ║" &lt;&lt; endl;
+        cout &lt;&lt; "╚══════════════════════════════════════════╝" &lt;&lt; endl;
+        cout &lt;&lt; "请选择演示功能：";
+        cin &gt;&gt; choice;
+
+        switch (choice) {
+            case 1:  demo_while_digit_count();          break;
+            case 2:  demo_while_reverse_number();        break;
+            case 3:  demo_while_read_until_eof();        break;
+            case 4:  demo_do_while_input_validation();   break;
+            case 5:  demo_do_while_menu();               break;
+            case 6:  demo_while_vs_do_while();           break;
+            case 7:  demo_infinite_loop_and_fix();       break;
+            case 8:  zhenti1_reverse_number();           break;
+            case 9:  zhenti2_password_validation();      break;
+            case 0:
+                cout &lt;&lt; "感谢学习第11课，再见！" &lt;&lt; endl;
+                break;
+            default:
+                cout &lt;&lt; "无效选择，请重新输入！" &lt;&lt; endl;
+                break;
+        }
+    } while (choice != 0);
+
+    return 0;
+}
+</pre>
+    <p class="hint">若曾直接打开 .cpp 出现乱码，是因为浏览器未按 UTF-8 解析纯文本。本页已固定 UTF-8 显示。</p>
+  </div>
+</body>
+</html>

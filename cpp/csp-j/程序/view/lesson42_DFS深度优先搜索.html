@@ -1,0 +1,525 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>lesson42_DFS深度优先搜索</title>
+<style>
+  :root {
+    --bg: #0f1419;
+    --panel: #161d27;
+    --text: #e7ecf3;
+    --muted: #9aa7b8;
+    --gold: #d4a853;
+    --code-bg: #1a1d23;
+    --border: #273244;
+  }
+  * { box-sizing: border-box; }
+  html, body {
+    margin: 0; padding: 0;
+    background: var(--bg);
+    color: var(--text);
+    font-family: -apple-system, BlinkMacSystemFont, "PingFang SC", "Microsoft YaHei", sans-serif;
+    min-height: 100%;
+  }
+  .top {
+    position: sticky; top: 0; z-index: 10;
+    display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between;
+    gap: 10px;
+    padding: 12px 18px;
+    background: linear-gradient(135deg, #0a2540, #1a3a5c);
+    border-bottom: 1px solid rgba(212,168,83,0.35);
+    box-shadow: 0 4px 18px rgba(0,0,0,0.25);
+  }
+  .brand { color: var(--gold); font-weight: 700; font-size: 14px; letter-spacing: 0.04em; }
+  .title { font-size: 15px; font-weight: 600; color: #fff; max-width: 52vw; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .actions { display: flex; gap: 8px; flex-wrap: wrap; }
+  .btn {
+    appearance: none; border: 1px solid rgba(255,255,255,0.18);
+    background: rgba(255,255,255,0.08); color: #fff;
+    border-radius: 999px; padding: 8px 14px; font-size: 13px; font-weight: 600;
+    text-decoration: none; cursor: pointer;
+  }
+  .btn:hover { background: rgba(255,255,255,0.16); }
+  .btn.gold { background: linear-gradient(135deg, #d4a853, #c4922e); color: #0a2540; border-color: transparent; }
+  .meta {
+    padding: 10px 18px; color: var(--muted); font-size: 12px;
+    border-bottom: 1px solid var(--border);
+    background: var(--panel);
+  }
+  .wrap { padding: 16px 18px 40px; }
+  pre {
+    margin: 0;
+    background: var(--code-bg);
+    color: #e1e4e8;
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 18px 20px;
+    overflow: auto;
+    font-family: "SF Mono", "JetBrains Mono", "Fira Code", Consolas, "Courier New", monospace;
+    font-size: 13.5px;
+    line-height: 1.55;
+    white-space: pre;
+    tab-size: 4;
+    box-shadow: 0 8px 28px rgba(0,0,0,0.28);
+  }
+  .hint { margin-top: 12px; color: var(--muted); font-size: 12px; }
+</style>
+</head>
+<body>
+  <div class="top">
+    <div class="brand">CSP-J · 配套代码</div>
+    <div class="title">lesson42_DFS深度优先搜索</div>
+    <div class="actions">
+      <a class="btn" href="../lesson42_DFS深度优先搜索.cpp" download="lesson42_DFS深度优先搜索.cpp">⬇️ 下载 .cpp</a>
+      <a class="btn gold" href="javascript:history.back()">← 返回课件</a>
+    </div>
+  </div>
+  <div class="meta">编码：UTF-8 · 文件：lesson42_DFS深度优先搜索.cpp · 共 441 行</div>
+  <div class="wrap">
+    <pre id="code">/**
+ * CSP-J 备考课程 - 第42课：DFS深度优先搜索
+ *
+ * 本文件包含：
+ *   1. DFS递归遍历框架（图的深度优先遍历）
+ *   2. 连通块计数
+ *   3. 连通块大小统计
+ *   4. 迷宫寻路问题
+ *   5. 全排列生成（回溯法）
+ *   6. 组合数生成（回溯法）
+ *   7. N皇后问题（经典回溯）
+ *
+ * 知识点：DFS递归框架、vis标记数组、回溯法（试探→递归→恢复）、
+ *         连通块计数、迷宫寻路、排列组合枚举
+ */
+
+#include &lt;iostream&gt;
+#include &lt;vector&gt;
+#include &lt;cstring&gt;
+#include &lt;algorithm&gt;
+using namespace std;
+
+// ======================== 常量定义 ========================
+const int N = 100005;
+
+// ======================== 1. DFS递归遍历框架 ========================
+
+bool dfs_vis[N];
+vector&lt;int&gt; dfs_g[N];
+
+/**
+ * DFS递归遍历图的核心框架
+ * 从顶点 u 开始，深度优先访问所有可达顶点
+ */
+void dfs_basic(int u) {
+    dfs_vis[u] = true;           // 步骤1：标记当前顶点已访问
+    cout &lt;&lt; u &lt;&lt; " ";            // 步骤2：处理当前顶点（这里是输出）
+
+    for (int v : dfs_g[u]) {     // 步骤3：遍历所有邻接点
+        if (!dfs_vis[v]) {       // 步骤4：如果邻接点未访问
+            dfs_basic(v);        // 步骤5：递归深入
+        }
+    }
+}
+
+void demo_dfs_basic() {
+    cout &lt;&lt; "========== 1. DFS递归遍历框架演示 ==========" &lt;&lt; endl;
+
+    int n = 8, m = 7;
+    // 树状结构：1 -&gt; 2,3; 2 -&gt; 4,5; 3 -&gt; 6,7; 5 -&gt; 8
+    int edges[][2] = {{1,2}, {1,3}, {2,4}, {2,5}, {3,6}, {3,7}, {5,8}};
+
+    cout &lt;&lt; "图结构（树）：" &lt;&lt; endl;
+    cout &lt;&lt; "        1" &lt;&lt; endl;
+    cout &lt;&lt; "       / \\" &lt;&lt; endl;
+    cout &lt;&lt; "      2   3" &lt;&lt; endl;
+    cout &lt;&lt; "     /\\  /\\" &lt;&lt; endl;
+    cout &lt;&lt; "    4 5 6 7" &lt;&lt; endl;
+    cout &lt;&lt; "      |" &lt;&lt; endl;
+    cout &lt;&lt; "      8" &lt;&lt; endl;
+
+    for (int i = 0; i &lt; m; i++) {
+        int u = edges[i][0], v = edges[i][1];
+        dfs_g[u].push_back(v);
+        dfs_g[v].push_back(u);
+    }
+
+    memset(dfs_vis, false, sizeof(dfs_vis));
+    cout &lt;&lt; "\nDFS遍历顺序（从1开始）：";
+    dfs_basic(1);
+    cout &lt;&lt; endl &lt;&lt; endl;
+
+    cout &lt;&lt; "代码框架说明：" &lt;&lt; endl;
+    cout &lt;&lt; "void dfs(int u) {" &lt;&lt; endl;
+    cout &lt;&lt; "    vis[u] = true;      // ①标记已访问" &lt;&lt; endl;
+    cout &lt;&lt; "    for (int v : g[u])   // ②遍历邻接点" &lt;&lt; endl;
+    cout &lt;&lt; "        if (!vis[v])      // ③未访问才递归" &lt;&lt; endl;
+    cout &lt;&lt; "            dfs(v);       // ④深入探索" &lt;&lt; endl;
+    cout &lt;&lt; "}" &lt;&lt; endl &lt;&lt; endl;
+}
+
+// ======================== 2. 连通块计数 ========================
+
+bool cc_vis[N];
+
+void cc_dfs(int u, vector&lt;int&gt; g[]) {
+    cc_vis[u] = true;
+    for (int v : g[u]) {
+        if (!cc_vis[v]) {
+            cc_dfs(v, g);
+        }
+    }
+}
+
+void demo_connected_components() {
+    cout &lt;&lt; "========== 2. 连通块计数演示 ==========" &lt;&lt; endl;
+
+    int n = 9, m = 6;
+    // 三个连通块: {1,2,3}, {4,5,6}, {7,8,9}（独立顶点）
+    int edges[][2] = {{1,2}, {2,3}, {4,5}, {5,6}, {4,6}, {7,8}};
+
+    vector&lt;int&gt; g[N];
+    for (int i = 0; i &lt; m; i++) {
+        int u = edges[i][0], v = edges[i][1];
+        g[u].push_back(v);
+        g[v].push_back(u);
+    }
+
+    cout &lt;&lt; "图结构：三个连通块" &lt;&lt; endl;
+    cout &lt;&lt; "  连通块1：1 - 2 - 3" &lt;&lt; endl;
+    cout &lt;&lt; "  连通块2：4 - 5 - 6  (三角形)" &lt;&lt; endl;
+    cout &lt;&lt; "  连通块3：7 - 8" &lt;&lt; endl;
+    cout &lt;&lt; "  独立顶点：9" &lt;&lt; endl;
+
+    memset(cc_vis, false, sizeof(cc_vis));
+    int cnt = 0;
+
+    cout &lt;&lt; "\n探索过程：" &lt;&lt; endl;
+    for (int i = 1; i &lt;= n; i++) {
+        if (!cc_vis[i]) {
+            cnt++;
+            cout &lt;&lt; "  发现新的连通块" &lt;&lt; cnt &lt;&lt; "，从顶点" &lt;&lt; i &lt;&lt; "开始DFS..." &lt;&lt; endl;
+            cc_dfs(i, g);
+        }
+    }
+
+    cout &lt;&lt; "\n总共 " &lt;&lt; cnt &lt;&lt; " 个连通块" &lt;&lt; endl;
+    cout &lt;&lt; "关键：每调用一次DFS，就访问完一整个连通块" &lt;&lt; endl &lt;&lt; endl;
+}
+
+// ======================== 3. 连通块大小统计 ========================
+
+bool ccs_vis[N];
+
+/**
+ * 返回从顶点 u 出发能访问到的顶点数量
+ */
+int dfs_count_size(int u, vector&lt;int&gt; g[]) {
+    ccs_vis[u] = true;
+    int size = 1;  // 当前顶点算一个
+    for (int v : g[u]) {
+        if (!ccs_vis[v]) {
+            size += dfs_count_size(v, g);
+        }
+    }
+    return size;
+}
+
+void demo_component_size() {
+    cout &lt;&lt; "========== 3. 连通块大小统计演示 ==========" &lt;&lt; endl;
+
+    int n = 9, m = 6;
+    int edges[][2] = {{1,2}, {2,3}, {4,5}, {5,6}, {4,6}, {7,8}};
+
+    vector&lt;int&gt; g[N];
+    for (int i = 0; i &lt; m; i++) {
+        int u = edges[i][0], v = edges[i][1];
+        g[u].push_back(v);
+        g[v].push_back(u);
+    }
+
+    memset(ccs_vis, false, sizeof(ccs_vis));
+
+    cout &lt;&lt; "每个连通块的大小：" &lt;&lt; endl;
+    for (int i = 1; i &lt;= n; i++) {
+        if (!ccs_vis[i]) {
+            int sz = dfs_count_size(i, g);
+            cout &lt;&lt; "  以顶点" &lt;&lt; i &lt;&lt; "为首的连通块大小 = " &lt;&lt; sz &lt;&lt; endl;
+        }
+    }
+    cout &lt;&lt; endl;
+}
+
+// ======================== 4. 迷宫寻路 ========================
+
+const int MAX_N = 15;
+char maze[MAX_N][MAX_N];
+bool maze_vis[MAX_N][MAX_N];
+int N_rows, M_cols;
+int start_x, start_y, target_x, target_y;
+bool found;
+
+// 四个方向：右、左、下、上
+int dx[4] = {0, 0, 1, -1};
+int dy[4] = {1, -1, 0, 0};
+string dir_name[4] = {"右", "左", "下", "上"};
+
+void dfs_maze(int x, int y, string path) {
+    // 到达终点
+    if (x == target_x &amp;&amp; y == target_y) {
+        found = true;
+        cout &lt;&lt; "    找到路径！" &lt;&lt; path &lt;&lt; endl;
+        return;
+    }
+
+    maze_vis[x][y] = true;
+
+    for (int i = 0; i &lt; 4; i++) {
+        int nx = x + dx[i];
+        int ny = y + dy[i];
+        if (nx &gt;= 1 &amp;&amp; nx &lt;= N_rows &amp;&amp; ny &gt;= 1 &amp;&amp; ny &lt;= M_cols
+            &amp;&amp; maze[nx][ny] == '.' &amp;&amp; !maze_vis[nx][ny]) {
+            dfs_maze(nx, ny, path + " → " + dir_name[i]);
+            if (found) return;  // 找到一条路径就停止
+        }
+    }
+
+    maze_vis[x][y] = false;  // 回溯：恢复状态（允许其他路径经过）
+}
+
+void demo_maze_pathfinding() {
+    cout &lt;&lt; "========== 4. 迷宫寻路演示 ==========" &lt;&lt; endl;
+
+    N_rows = 5; M_cols = 5;
+    // 迷宫地图: '.' 可通行, '#' 障碍物
+    // S=起点(1,1), T=终点(4,5)
+    string raw[] = {
+        ".....",
+        ".##..",
+        "..#..",
+        ".....",
+        "....."
+    };
+
+    cout &lt;&lt; "迷宫地图（S=起点，T=终点）：" &lt;&lt; endl;
+    start_x = 1; start_y = 1;
+    target_x = 4; target_y = 5;
+
+    for (int i = 0; i &lt; N_rows; i++) {
+        for (int j = 0; j &lt; M_cols; j++) {
+            maze[i+1][j+1] = raw[i][j];
+        }
+    }
+
+    for (int i = 1; i &lt;= N_rows; i++) {
+        cout &lt;&lt; "  ";
+        for (int j = 1; j &lt;= M_cols; j++) {
+            if (i == start_x &amp;&amp; j == start_y) cout &lt;&lt; "S";
+            else if (i == target_x &amp;&amp; j == target_y) cout &lt;&lt; "T";
+            else cout &lt;&lt; maze[i][j];
+        }
+        cout &lt;&lt; endl;
+    }
+
+    memset(maze_vis, false, sizeof(maze_vis));
+    found = false;
+
+    cout &lt;&lt; "\nDFS探索过程：" &lt;&lt; endl;
+    dfs_maze(start_x, start_y, "起点");
+
+    if (!found) {
+        cout &lt;&lt; "  无法到达终点！" &lt;&lt; endl;
+    }
+
+    cout &lt;&lt; "\n注意事项：" &lt;&lt; endl;
+    cout &lt;&lt; "  1. 边界检查：nx, ny 必须在 [1,N] 和 [1,M] 内" &lt;&lt; endl;
+    cout &lt;&lt; "  2. 障碍物检查：maze[nx][ny] == '.'" &lt;&lt; endl;
+    cout &lt;&lt; "  3. vis 标记：防止在迷宫中来回走" &lt;&lt; endl;
+    cout &lt;&lt; "  4. DFS找到的路径不一定是最短路径" &lt;&lt; endl &lt;&lt; endl;
+}
+
+// ======================== 5. 全排列生成（回溯法） ========================
+
+int perm_n;
+int perm_path[15];
+bool perm_used[15];
+int perm_count = 0;
+
+/**
+ * 回溯法生成 1~n 的全排列
+ * k: 当前已经选了几个数
+ */
+void dfs_permutation(int k) {
+    if (k == perm_n) {
+        // 输出排列
+        cout &lt;&lt; "    ";
+        for (int i = 0; i &lt; perm_n; i++) {
+            cout &lt;&lt; perm_path[i] &lt;&lt; " ";
+        }
+        cout &lt;&lt; endl;
+        perm_count++;
+        return;
+    }
+
+    for (int i = 1; i &lt;= perm_n; i++) {
+        if (!perm_used[i]) {
+            perm_path[k] = i;       // 步骤1：做选择
+            perm_used[i] = true;    // 步骤2：标记已使用
+            dfs_permutation(k + 1); // 步骤3：递归深入
+            perm_used[i] = false;   // 步骤4：回溯！恢复状态
+        }
+    }
+}
+
+void demo_permutation() {
+    cout &lt;&lt; "========== 5. 全排列生成演示（回溯法） ==========" &lt;&lt; endl;
+
+    perm_n = 3;
+    perm_count = 0;
+    memset(perm_used, false, sizeof(perm_used));
+
+    cout &lt;&lt; "生成 1~" &lt;&lt; perm_n &lt;&lt; " 的所有全排列：" &lt;&lt; endl;
+    dfs_permutation(0);
+    cout &lt;&lt; "共 " &lt;&lt; perm_count &lt;&lt; " 种排列（" &lt;&lt; perm_n &lt;&lt; "! = " &lt;&lt; perm_count &lt;&lt; "）" &lt;&lt; endl;
+
+    cout &lt;&lt; "\n回溯法三步曲：" &lt;&lt; endl;
+    cout &lt;&lt; "  ①做选择：path[k] = i; used[i] = true;" &lt;&lt; endl;
+    cout &lt;&lt; "  ②递归：dfs(k + 1);" &lt;&lt; endl;
+    cout &lt;&lt; "  ③恢复：used[i] = false;  // 千万别忘！" &lt;&lt; endl &lt;&lt; endl;
+}
+
+// ======================== 6. 组合数生成（回溯法） ========================
+
+int comb_n, comb_k;
+int comb_path[15];
+int comb_count = 0;
+
+/**
+ * 回溯法生成组合：从 1~n 中选 k 个数的所有组合
+ * start: 从哪个数开始选（保证不重复选择且按顺序）
+ * depth: 当前已经选了几个数
+ */
+void dfs_combination(int start, int depth) {
+    if (depth == comb_k) {
+        cout &lt;&lt; "    ";
+        for (int i = 0; i &lt; comb_k; i++) {
+            cout &lt;&lt; comb_path[i] &lt;&lt; " ";
+        }
+        cout &lt;&lt; endl;
+        comb_count++;
+        return;
+    }
+
+    for (int i = start; i &lt;= comb_n; i++) {
+        comb_path[depth] = i;
+        dfs_combination(i + 1, depth + 1);
+    }
+}
+
+void demo_combination() {
+    cout &lt;&lt; "========== 6. 组合数生成演示（回溯法） ==========" &lt;&lt; endl;
+
+    comb_n = 5;
+    comb_k = 3;
+    comb_count = 0;
+
+    cout &lt;&lt; "从 1~" &lt;&lt; comb_n &lt;&lt; " 中选 " &lt;&lt; comb_k &lt;&lt; " 个数的所有组合：" &lt;&lt; endl;
+    dfs_combination(1, 0);
+    cout &lt;&lt; "共 " &lt;&lt; comb_count &lt;&lt; " 种组合（C(" &lt;&lt; comb_n &lt;&lt; "," &lt;&lt; comb_k
+         &lt;&lt; ") = " &lt;&lt; comb_count &lt;&lt; "）" &lt;&lt; endl;
+
+    cout &lt;&lt; "\n与排列的区别：" &lt;&lt; endl;
+    cout &lt;&lt; "  - 排列考虑顺序：[1,2,3] 和 [1,3,2] 是不同的排列" &lt;&lt; endl;
+    cout &lt;&lt; "  - 组合不考虑顺序：[1,2,3] 和 [1,3,2] 是同一组合" &lt;&lt; endl;
+    cout &lt;&lt; "  - 组合用 start 参数保证按顺序选，避免重复" &lt;&lt; endl &lt;&lt; endl;
+}
+
+// ======================== 7. N皇后问题（经典回溯） ========================
+
+int queen_n;
+int queen_col[15];    // queen_col[row] = 棋子放在第row行的第几列
+int queen_count = 0;
+
+/**
+ * 判断在第 row 行、第 col 列放皇后是否合法
+ */
+bool is_safe(int row, int col) {
+    for (int r = 0; r &lt; row; r++) {
+        // 检查同列 或 同对角线
+        if (queen_col[r] == col ||
+            abs(queen_col[r] - col) == abs(r - row)) {
+            return false;
+        }
+    }
+    return true;
+}
+
+void dfs_queen(int row) {
+    if (row == queen_n) {
+        cout &lt;&lt; "    第" &lt;&lt; ++queen_count &lt;&lt; "个解：";
+        for (int i = 0; i &lt; queen_n; i++) {
+            cout &lt;&lt; "(" &lt;&lt; i+1 &lt;&lt; "," &lt;&lt; queen_col[i]+1 &lt;&lt; ") ";
+        }
+        cout &lt;&lt; endl;
+        return;
+    }
+
+    for (int col = 0; col &lt; queen_n; col++) {
+        if (is_safe(row, col)) {
+            queen_col[row] = col;   // 放皇后
+            dfs_queen(row + 1);     // 递归下一行
+            // queen_col[row] 会被后续循环覆盖，不需要显式撤销
+        }
+    }
+}
+
+void demo_nqueens() {
+    cout &lt;&lt; "========== 7. N皇后问题演示（经典回溯） ==========" &lt;&lt; endl;
+
+    queen_n = 4;
+    queen_count = 0;
+
+    cout &lt;&lt; "求解" &lt;&lt; queen_n &lt;&lt; "皇后问题：" &lt;&lt; endl;
+    cout &lt;&lt; "（在" &lt;&lt; queen_n &lt;&lt; "×" &lt;&lt; queen_n &lt;&lt; "棋盘上放置" &lt;&lt; queen_n
+         &lt;&lt; "个皇后，使它们互不攻击）" &lt;&lt; endl &lt;&lt; endl;
+
+    dfs_queen(0);
+
+    cout &lt;&lt; "\n共 " &lt;&lt; queen_count &lt;&lt; " 个解" &lt;&lt; endl;
+    cout &lt;&lt; "剪枝说明：is_safe 函数提前排除了不合法的列选择，避免无效递归" &lt;&lt; endl &lt;&lt; endl;
+}
+
+// ======================== 主函数 ========================
+
+int main() {
+    ios::sync_with_stdio(false);
+    cin.tie(0);
+
+    cout &lt;&lt; "╔════════════════════════════════════════════════╗" &lt;&lt; endl;
+    cout &lt;&lt; "║   CSP-J 第42课：DFS深度优先搜索 - 代码演示      ║" &lt;&lt; endl;
+    cout &lt;&lt; "╚════════════════════════════════════════════════╝" &lt;&lt; endl &lt;&lt; endl;
+
+    demo_dfs_basic();
+    demo_connected_components();
+    demo_component_size();
+    demo_maze_pathfinding();
+    demo_permutation();
+    demo_combination();
+    demo_nqueens();
+
+    cout &lt;&lt; "========== 演示完毕 ==========" &lt;&lt; endl;
+    cout &lt;&lt; "\n关键要点总结：" &lt;&lt; endl;
+    cout &lt;&lt; "1. DFS递归框架：vis标记 → 遍历邻接点 → 递归深入" &lt;&lt; endl;
+    cout &lt;&lt; "2. 回溯法：试探 → 递归 → 恢复状态（恢复是重点！）" &lt;&lt; endl;
+    cout &lt;&lt; "3. 连通块计数：每调一次DFS就是一个连通块" &lt;&lt; endl;
+    cout &lt;&lt; "4. 迷宫寻路：四个方向，边界+障碍物+vis三重检查" &lt;&lt; endl;
+    cout &lt;&lt; "5. 全排列：n! 种可能，n&lt;=10 安全" &lt;&lt; endl;
+    cout &lt;&lt; "6. DFS不能求最短路径（用BFS），深度过大注意栈溢出" &lt;&lt; endl;
+
+    return 0;
+}
+</pre>
+    <p class="hint">若曾直接打开 .cpp 出现乱码，是因为浏览器未按 UTF-8 解析纯文本。本页已固定 UTF-8 显示。</p>
+  </div>
+</body>
+</html>

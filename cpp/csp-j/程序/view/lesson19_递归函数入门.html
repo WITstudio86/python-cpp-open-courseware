@@ -1,0 +1,297 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>lesson19_递归函数入门</title>
+<style>
+  :root {
+    --bg: #0f1419;
+    --panel: #161d27;
+    --text: #e7ecf3;
+    --muted: #9aa7b8;
+    --gold: #d4a853;
+    --code-bg: #1a1d23;
+    --border: #273244;
+  }
+  * { box-sizing: border-box; }
+  html, body {
+    margin: 0; padding: 0;
+    background: var(--bg);
+    color: var(--text);
+    font-family: -apple-system, BlinkMacSystemFont, "PingFang SC", "Microsoft YaHei", sans-serif;
+    min-height: 100%;
+  }
+  .top {
+    position: sticky; top: 0; z-index: 10;
+    display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between;
+    gap: 10px;
+    padding: 12px 18px;
+    background: linear-gradient(135deg, #0a2540, #1a3a5c);
+    border-bottom: 1px solid rgba(212,168,83,0.35);
+    box-shadow: 0 4px 18px rgba(0,0,0,0.25);
+  }
+  .brand { color: var(--gold); font-weight: 700; font-size: 14px; letter-spacing: 0.04em; }
+  .title { font-size: 15px; font-weight: 600; color: #fff; max-width: 52vw; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .actions { display: flex; gap: 8px; flex-wrap: wrap; }
+  .btn {
+    appearance: none; border: 1px solid rgba(255,255,255,0.18);
+    background: rgba(255,255,255,0.08); color: #fff;
+    border-radius: 999px; padding: 8px 14px; font-size: 13px; font-weight: 600;
+    text-decoration: none; cursor: pointer;
+  }
+  .btn:hover { background: rgba(255,255,255,0.16); }
+  .btn.gold { background: linear-gradient(135deg, #d4a853, #c4922e); color: #0a2540; border-color: transparent; }
+  .meta {
+    padding: 10px 18px; color: var(--muted); font-size: 12px;
+    border-bottom: 1px solid var(--border);
+    background: var(--panel);
+  }
+  .wrap { padding: 16px 18px 40px; }
+  pre {
+    margin: 0;
+    background: var(--code-bg);
+    color: #e1e4e8;
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 18px 20px;
+    overflow: auto;
+    font-family: "SF Mono", "JetBrains Mono", "Fira Code", Consolas, "Courier New", monospace;
+    font-size: 13.5px;
+    line-height: 1.55;
+    white-space: pre;
+    tab-size: 4;
+    box-shadow: 0 8px 28px rgba(0,0,0,0.28);
+  }
+  .hint { margin-top: 12px; color: var(--muted); font-size: 12px; }
+</style>
+</head>
+<body>
+  <div class="top">
+    <div class="brand">CSP-J · 配套代码</div>
+    <div class="title">lesson19_递归函数入门</div>
+    <div class="actions">
+      <a class="btn" href="../lesson19_递归函数入门.cpp" download="lesson19_递归函数入门.cpp">⬇️ 下载 .cpp</a>
+      <a class="btn gold" href="javascript:history.back()">← 返回课件</a>
+    </div>
+  </div>
+  <div class="meta">编码：UTF-8 · 文件：lesson19_递归函数入门.cpp · 共 213 行</div>
+  <div class="wrap">
+    <pre id="code">#include &lt;iostream&gt;
+#include &lt;cstring&gt;
+using namespace std;
+
+// ==================== 1. 阶乘：带缩进跟踪的递归版本 ====================
+// 辅助函数：打印指定深度的缩进
+void printIndent(int depth) {
+    for (int i = 0; i &lt; depth; i++) {
+        cout &lt;&lt; "  ";  // 每层缩进 2 个空格
+    }
+}
+
+// 带跟踪的递归阶乘函数
+int factorialRecursive(int n, int depth) {
+    printIndent(depth);
+    cout &lt;&lt; "开始计算 factorial(" &lt;&lt; n &lt;&lt; ")" &lt;&lt; endl;
+
+    // 递归边界：n 等于 0 或 1 时直接返回 1
+    if (n == 0 || n == 1) {
+        printIndent(depth);
+        cout &lt;&lt; "到达边界 factorial(" &lt;&lt; n &lt;&lt; ") = 1" &lt;&lt; endl;
+        return 1;
+    }
+
+    // 递归调用：n * factorialRecursive(n - 1)
+    int subResult = factorialRecursive(n - 1, depth + 1);
+    int result = n * subResult;
+
+    printIndent(depth);
+    cout &lt;&lt; "factorial(" &lt;&lt; n &lt;&lt; ") = " &lt;&lt; result &lt;&lt; endl;
+
+    return result;
+}
+
+// ==================== 2. 阶乘：迭代版本 ====================
+int factorialIterative(int n) {
+    int result = 1;
+    for (int i = 1; i &lt;= n; i++) {
+        result *= i;
+    }
+    return result;
+}
+
+// ==================== 3. 斐波那契数列 ====================
+// 3a. 普通递归版本（会重复计算，效率较低）
+int fibRecursive(int n) {
+    // 边界条件：fib(1) = 1, fib(2) = 1
+    if (n == 1 || n == 2) {
+        return 1;
+    }
+    return fibRecursive(n - 1) + fibRecursive(n - 2);
+}
+
+// 3b. 记忆化递归版本（用 memo 数组缓存已计算结果，避免重复计算）
+int fibMemoHelper(int n, int memo[]) {
+    // 边界条件
+    if (n == 1 || n == 2) {
+        return 1;
+    }
+
+    // 如果已经计算过，直接返回缓存的结果
+    if (memo[n] != 0) {
+        return memo[n];
+    }
+
+    // 未计算过，递归计算并存入缓存
+    memo[n] = fibMemoHelper(n - 1, memo) + fibMemoHelper(n - 2, memo);
+    return memo[n];
+}
+
+int fibMemoization(int n) {
+    // memo 数组下标从 1 开始，长度设为 n + 1，全部初始化为 0
+    int memo[100] = {0};
+    return fibMemoHelper(n, memo);
+}
+
+// 3c. 迭代版本（用循环递推，效率最高）
+int fibIterative(int n) {
+    if (n == 1 || n == 2) {
+        return 1;
+    }
+
+    int prev2 = 1;  // fib(1)
+    int prev1 = 1;  // fib(2)
+    int current = 0;
+
+    for (int i = 3; i &lt;= n; i++) {
+        current = prev1 + prev2;  // 当前项 = 前两项之和
+        prev2 = prev1;            // 向前移动
+        prev1 = current;
+    }
+
+    return current;
+}
+
+// ==================== 4. 递归求和：1 + 2 + ... + n ====================
+int sumRecursive(int n) {
+    // 边界条件：n 为 1 时和就是 1
+    if (n == 1) {
+        return 1;
+    }
+    // 递归关系：sum(n) = n + sum(n-1)
+    return n + sumRecursive(n - 1);
+}
+
+// ==================== 5. 递归求数字位数 ====================
+int countDigits(int n) {
+    // 确保处理负数
+    if (n &lt; 0) {
+        n = -n;
+    }
+    // 边界条件：个位数只有 1 位
+    if (n &lt; 10) {
+        return 1;
+    }
+    // 递归关系：位数 = 1 + countDigits(n / 10)
+    return 1 + countDigits(n / 10);
+}
+
+// ==================== 6. 递归求幂：base^exp ====================
+int powerRecursive(int base, int exp) {
+    // 边界条件：任何数的 0 次方都是 1
+    if (exp == 0) {
+        return 1;
+    }
+    // 递归关系：base^exp = base * base^(exp-1)
+    return base * powerRecursive(base, exp - 1);
+}
+
+// ==================== 主函数 ====================
+int main() {
+    // ========== 阶乘演示 ==========
+    cout &lt;&lt; "========== 阶乘演示：递归（带跟踪） ==========" &lt;&lt; endl;
+    int n = 5;
+    int factResult = factorialRecursive(n, 0);
+    cout &lt;&lt; endl;
+
+    cout &lt;&lt; "========== 阶乘演示：迭代版本 ==========" &lt;&lt; endl;
+    for (int i = 1; i &lt;= 8; i++) {
+        cout &lt;&lt; i &lt;&lt; "! = " &lt;&lt; factorialIterative(i) &lt;&lt; endl;
+    }
+    cout &lt;&lt; endl;
+
+    // ========== 斐波那契数列演示 ==========
+    cout &lt;&lt; "========== 斐波那契数列演示 ==========" &lt;&lt; endl;
+    int fibN = 10;
+
+    // 普通递归
+    cout &lt;&lt; "普通递归版：前 " &lt;&lt; fibN &lt;&lt; " 项 = ";
+    for (int i = 1; i &lt;= fibN; i++) {
+        cout &lt;&lt; fibRecursive(i);
+        if (i &lt; fibN) cout &lt;&lt; ", ";
+    }
+    cout &lt;&lt; endl;
+
+    // 记忆化递归
+    cout &lt;&lt; "记忆化递归版：前 " &lt;&lt; fibN &lt;&lt; " 项 = ";
+    for (int i = 1; i &lt;= fibN; i++) {
+        cout &lt;&lt; fibMemoization(i);
+        if (i &lt; fibN) cout &lt;&lt; ", ";
+    }
+    cout &lt;&lt; endl;
+
+    // 迭代版本
+    cout &lt;&lt; "迭代版：前 " &lt;&lt; fibN &lt;&lt; " 项 = ";
+    for (int i = 1; i &lt;= fibN; i++) {
+        cout &lt;&lt; fibIterative(i);
+        if (i &lt; fibN) cout &lt;&lt; ", ";
+    }
+    cout &lt;&lt; endl &lt;&lt; endl;
+
+    // ========== 递归求和演示 ==========
+    cout &lt;&lt; "========== 递归求和演示 ==========" &lt;&lt; endl;
+    int sumN = 10;
+    cout &lt;&lt; "1 + 2 + ... + " &lt;&lt; sumN &lt;&lt; " = " &lt;&lt; sumRecursive(sumN) &lt;&lt; endl;
+    sumN = 100;
+    cout &lt;&lt; "1 + 2 + ... + " &lt;&lt; sumN &lt;&lt; " = " &lt;&lt; sumRecursive(sumN) &lt;&lt; endl;
+    cout &lt;&lt; endl;
+
+    // ========== 递归求位数演示 ==========
+    cout &lt;&lt; "========== 递归求位数演示 ==========" &lt;&lt; endl;
+    int testNums[] = {5, 42, 100, 9999, 123456};
+    int testCount = sizeof(testNums) / sizeof(testNums[0]);
+    for (int i = 0; i &lt; testCount; i++) {
+        cout &lt;&lt; testNums[i] &lt;&lt; " 的位数 = " &lt;&lt; countDigits(testNums[i]) &lt;&lt; endl;
+    }
+    cout &lt;&lt; endl;
+
+    // ========== 递归求幂演示 ==========
+    cout &lt;&lt; "========== 递归求幂演示 ==========" &lt;&lt; endl;
+    int bases[] = {2, 3, 5, 10};
+    int exps[]  = {0, 3, 4, 5};
+    int powerCount = sizeof(bases) / sizeof(bases[0]);
+    for (int i = 0; i &lt; powerCount; i++) {
+        cout &lt;&lt; bases[i] &lt;&lt; "^" &lt;&lt; exps[i] &lt;&lt; " = " &lt;&lt; powerRecursive(bases[i], exps[i]) &lt;&lt; endl;
+    }
+    cout &lt;&lt; endl;
+
+    // ========== 综合对比 ==========
+    cout &lt;&lt; "========== 递归 vs 迭代 综合对比 ==========" &lt;&lt; endl;
+    int compareN = 7;
+    cout &lt;&lt; "计算 fib(" &lt;&lt; compareN &lt;&lt; "):" &lt;&lt; endl;
+    cout &lt;&lt; "  普通递归结果 = " &lt;&lt; fibRecursive(compareN) &lt;&lt; endl;
+    cout &lt;&lt; "  记忆化递归结果 = " &lt;&lt; fibMemoization(compareN) &lt;&lt; endl;
+    cout &lt;&lt; "  迭代结果 = " &lt;&lt; fibIterative(compareN) &lt;&lt; endl;
+    cout &lt;&lt; endl;
+
+    cout &lt;&lt; "计算 " &lt;&lt; compareN &lt;&lt; "! :" &lt;&lt; endl;
+    cout &lt;&lt; "  递归结果 = " &lt;&lt; factorialRecursive(compareN, 0) &lt;&lt; endl;
+    cout &lt;&lt; "  迭代结果 = " &lt;&lt; factorialIterative(compareN) &lt;&lt; endl;
+
+    return 0;
+}
+</pre>
+    <p class="hint">若曾直接打开 .cpp 出现乱码，是因为浏览器未按 UTF-8 解析纯文本。本页已固定 UTF-8 显示。</p>
+  </div>
+</body>
+</html>
