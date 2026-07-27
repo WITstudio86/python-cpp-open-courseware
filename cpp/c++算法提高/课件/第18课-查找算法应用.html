@@ -1,10 +1,11 @@
 <!DOCTYPE html>
+
 <html lang="zh-CN">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>第18课：综合练习——查找算法应用</title>
-    <style>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>第18课：综合练习——查找算法应用</title>
+<style>
         :root {
             --bg-gradient: linear-gradient(135deg, #0f0c29, #302b63, #24243e);
             --accent: #e94560;
@@ -404,100 +405,110 @@
     </style>
 </head>
 <body>
-
 <div class="slideshow">
+<!-- ════════════════════════════════════════════ -->
+<!--  Slide 1: Title                           -->
+<!-- ════════════════════════════════════════════ -->
+<div class="slide title-slide active" data-index="0">
+<div class="lesson-badge">第 18 课</div>
+<h1>综合练习——查找算法应用</h1>
+<p class="subtitle">二分答案 + 贪心验证 · 解决"最小化最大值"问题</p>
+<div class="stage-info">
+<div class="stage-tag">阶段：<strong>第4阶段</strong></div>
+<div class="stage-tag">专题：<strong>查找与二分</strong></div>
+<div class="stage-tag">核心：<strong>二分 + 贪心</strong></div>
+</div>
 
-    <!-- ════════════════════════════════════════════ -->
-    <!--  Slide 1: Title                           -->
-    <!-- ════════════════════════════════════════════ -->
-    <div class="slide title-slide active" data-index="0">
-        <div class="lesson-badge">第 18 课</div>
-        <h1>综合练习——查找算法应用</h1>
-        <p class="subtitle">二分答案 + 贪心验证 · 解决"最小化最大值"问题</p>
-        <div class="stage-info">
-            <div class="stage-tag">阶段：<strong>第4阶段</strong></div>
-            <div class="stage-tag">专题：<strong>查找与二分</strong></div>
-            <div class="stage-tag">核心：<strong>二分 + 贪心</strong></div>
-        </div>
-    </div>
+<aside class="notes">【开场】第 1/6 页 · 综合练习——查找算法应用
+用 30 秒说明本课目标与学完能做什么，再进入正题。
+大纲考点：二分+贪心、二分+验证
+配套练习方向：数列分段、月度开销
+封面关键词：
+· 二分答案 + 贪心验证 · 解决"最小化最大值"问题
+· 第4阶段
+· 查找与二分
+· 二分 + 贪心
+互动：问学生「今天最想搞清楚什么？」，收 1–2 个期待。</aside>
+</div>
+<!-- ════════════════════════════════════════════ -->
+<!--  Slide 2: Algorithm Principle             -->
+<!-- ════════════════════════════════════════════ -->
+<div class="slide" data-index="1">
+<h2>🔍 二分答案 + 贪心验证 原理</h2>
+<h3>核心思想</h3>
+<p>在<span class="highlight">可能的答案区间</span>上进行二分搜索，每次用 <span class="highlight">check() 函数</span>判断当前猜测是否可行，从而逐步缩小范围，找到最优解。</p>
+<div class="info-card">
+<p><strong>关键前提：</strong>答案必须具有<strong>单调性</strong>——存在一个分界点，一侧全部可行，另一侧全部不可行。</p>
+</div>
+<h3>流程图解</h3>
+<div class="flowchart">
+<div class="flow-box accent">开始：设定搜索范围 [left, right]</div>
+<div class="flow-arrow">↓</div>
+<div class="flow-box">计算中点 mid = (left + right) / 2</div>
+<div class="flow-arrow">↓</div>
+<div class="flow-box decision">check(mid) 是否可行？</div>
+<div class="flow-row">
+<div style="text-align:center">
+<div class="flow-label">✓ 可行</div>
+<div class="flow-arrow">↓</div>
+<div class="flow-box" style="border-color:#4ec9b0">记录 ans = mid<br/>尝试更小 → right = mid - 1</div>
+</div>
+<div style="text-align:center">
+<div class="flow-label">✗ 不可行</div>
+<div class="flow-arrow">↓</div>
+<div class="flow-box" style="border-color:#f0c060">需要更大 → left = mid + 1</div>
+</div>
+</div>
+<div class="flow-arrow">↓</div>
+<div class="flow-box accent">left &gt; right？→ 输出 ans，结束</div>
+</div>
+<h3>贪心验证策略</h3>
+<p>对于数列分段类问题，<span class="highlight">check(limit)</span> 使用贪心策略：</p>
+<ul>
+<li>从左到右扫描，尽量把元素放入当前段</li>
+<li>当前段和超过 <span class="highlight">limit</span> 时，新起一段</li>
+<li>统计总段数，判断是否 ≤ M</li>
+</ul>
 
-    <!-- ════════════════════════════════════════════ -->
-    <!--  Slide 2: Algorithm Principle             -->
-    <!-- ════════════════════════════════════════════ -->
-    <div class="slide" data-index="1">
-        <h2>🔍 二分答案 + 贪心验证 原理</h2>
-
-        <h3>核心思想</h3>
-        <p>在<span class="highlight">可能的答案区间</span>上进行二分搜索，每次用 <span class="highlight">check() 函数</span>判断当前猜测是否可行，从而逐步缩小范围，找到最优解。</p>
-
-        <div class="info-card">
-            <p><strong>关键前提：</strong>答案必须具有<strong>单调性</strong>——存在一个分界点，一侧全部可行，另一侧全部不可行。</p>
-        </div>
-
-        <h3>流程图解</h3>
-        <div class="flowchart">
-            <div class="flow-box accent">开始：设定搜索范围 [left, right]</div>
-            <div class="flow-arrow">↓</div>
-            <div class="flow-box">计算中点 mid = (left + right) / 2</div>
-            <div class="flow-arrow">↓</div>
-            <div class="flow-box decision">check(mid) 是否可行？</div>
-            <div class="flow-row">
-                <div style="text-align:center">
-                    <div class="flow-label">✓ 可行</div>
-                    <div class="flow-arrow">↓</div>
-                    <div class="flow-box" style="border-color:#4ec9b0">记录 ans = mid<br>尝试更小 → right = mid - 1</div>
-                </div>
-                <div style="text-align:center">
-                    <div class="flow-label">✗ 不可行</div>
-                    <div class="flow-arrow">↓</div>
-                    <div class="flow-box" style="border-color:#f0c060">需要更大 → left = mid + 1</div>
-                </div>
-            </div>
-            <div class="flow-arrow">↓</div>
-            <div class="flow-box accent">left > right？→ 输出 ans，结束</div>
-        </div>
-
-        <h3>贪心验证策略</h3>
-        <p>对于数列分段类问题，<span class="highlight">check(limit)</span> 使用贪心策略：</p>
-        <ul>
-            <li>从左到右扫描，尽量把元素放入当前段</li>
-            <li>当前段和超过 <span class="highlight">limit</span> 时，新起一段</li>
-            <li>统计总段数，判断是否 ≤ M</li>
-        </ul>
-    </div>
-
-    <!-- ════════════════════════════════════════════ -->
-    <!--  Slide 3: Code Implementation             -->
-    <!-- ════════════════════════════════════════════ -->
-    <div class="slide" data-index="2">
-        <h2>💻 check() 函数设计 & 二分框架</h2>
-
-        <h3>check() 函数（贪心验证）</h3>
-        <div class="code-block">
+<aside class="notes">【讲解】🔍 二分答案 + 贪心验证 原理
+本页要点（照着讲即可）：
+· 在 可能的答案区间 上进行二分搜索，每次用 check() 函数 判断当前猜测是否可行，从而逐步缩小范围，找到最优解。
+· 关键前提： 答案必须具有 单调性 ——存在一个分界点，一侧全部可行，另一侧全部不可行。
+· 关键前提：
+· 对于数列分段类问题， check(limit) 使用贪心策略：
+· 从左到右扫描，尽量把元素放入当前段
+· 当前段和超过 limit 时，新起一段
+讲解时放慢关键术语；用 1 个生活类比 + 1 个反例加深印象。
+本课大纲考点（可适时点题）：二分+贪心、二分+验证</aside>
+</div>
+<!-- ════════════════════════════════════════════ -->
+<!--  Slide 3: Code Implementation             -->
+<!-- ════════════════════════════════════════════ -->
+<div class="slide" data-index="2">
+<h2>💻 check() 函数设计 &amp; 二分框架</h2>
+<h3>check() 函数（贪心验证）</h3>
+<div class="code-block">
 <span class="kw">bool</span> <span class="fn">check</span>(<span class="kw">long long</span> limit) {
     <span class="kw">int</span> segments = <span class="num">1</span>;          <span class="cmt">// 当前段数，至少1段</span>
-    <span class="kw">long long</span> sum = <span class="num">0</span>;        <span class="cmt">// 当前段内的元素和</span>
-
-    <span class="kw">for</span> (<span class="kw">int</span> i = <span class="num">0</span>; i < n; i++) {
-        <span class="kw">if</span> (a[i] > limit) <span class="kw">return false</span>;   <span class="cmt">// 单元素超限</span>
-
-        <span class="kw">if</span> (sum + a[i] > limit) {           <span class="cmt">// 当前段装不下</span>
+<span class="kw">long long</span> sum = <span class="num">0</span>;        <span class="cmt">// 当前段内的元素和</span>
+<span class="kw">for</span> (<span class="kw">int</span> i = <span class="num">0</span>; i &lt; n; i++) {
+        <span class="kw">if</span> (a[i] &gt; limit) <span class="kw">return false</span>;   <span class="cmt">// 单元素超限</span>
+<span class="kw">if</span> (sum + a[i] &gt; limit) {           <span class="cmt">// 当前段装不下</span>
             segments++;                      <span class="cmt">// 新起一段</span>
             sum = a[i];                      <span class="cmt">// 重置当前段和</span>
         } <span class="kw">else</span> {
             sum += a[i];                     <span class="cmt">// 加入当前段</span>
         }
     }
-    <span class="kw">return</span> segments <= m;               <span class="cmt">// 段数不超过M则可行</span>
+    <span class="kw">return</span> segments &lt;= m;               <span class="cmt">// 段数不超过M则可行</span>
 }
         </div>
-
-        <h3>二分答案框架</h3>
-        <div class="code-block">
+<h3>二分答案框架</h3>
+<div class="code-block">
 <span class="kw">long long</span> left = max_elem, right = total_sum;  <span class="cmt">// 确定上下界</span>
 <span class="kw">long long</span> ans = right;
 
-<span class="kw">while</span> (left <= right) {
+<span class="kw">while</span> (left &lt;= right) {
     <span class="kw">long long</span> mid = left + (right - left) / <span class="num">2</span>;
     <span class="kw">if</span> (<span class="fn">check</span>(mid)) {
         ans = mid;            <span class="cmt">// mid 可行，记录答案</span>
@@ -506,157 +517,191 @@
         left = mid + <span class="num">1</span>;       <span class="cmt">// mid 不可行，需要更大的</span>
     }
 }
-<span class="kw">cout</span> << ans << <span class="str">endl</span>;
+<span class="kw">cout</span> &lt;&lt; ans &lt;&lt; <span class="str">endl</span>;
         </div>
-
-        <h3>复杂度</h3>
-        <div class="checklist">
-            <div class="item"><strong>时间：</strong>O(n log S) — check() O(n) × 二分 O(log S)</div>
-            <div class="item"><strong>空间：</strong>O(n) — 存储输入数组</div>
-        </div>
-    </div>
-
-    <!-- ════════════════════════════════════════════ -->
-    <!--  Slide 4: Example Walkthrough             -->
-    <!-- ════════════════════════════════════════════ -->
-    <div class="slide" data-index="3">
-        <h2>🏋️ 例题：数列分段 —— 逐步推演</h2>
-
-        <p><strong>输入：</strong>N = 5, M = 3, 数列 = [4, 2, 4, 5, 1]</p>
-
-        <p class="dim">二分范围：left = 5（最大元素）, right = 16（总和）</p>
-
-        <ul class="step-list">
-            <li>
-                <span class="step-num">1</span>
-                <div class="step-content">
-                    <strong>mid = (5 + 16) / 2 = 10</strong><br>
-                    check(10)：贪心扫描 → [4,2,4], [5,1] → 段数 = 2 ≤ 3<br>
-                    <span class="result">✓ 可行 → ans = 10, right = 9</span>
-                </div>
-            </li>
-            <li>
-                <span class="step-num">2</span>
-                <div class="step-content">
-                    <strong>mid = (5 + 9) / 2 = 7</strong><br>
-                    check(7)：贪心扫描 → [4,2], [4], [5], [1] → 段数 = 4 > 3<br>
-                    <span style="color:#f0c060">✗ 不可行 → left = 8</span>
-                </div>
-            </li>
-            <li>
-                <span class="step-num">3</span>
-                <div class="step-content">
-                    <strong>mid = (8 + 9) / 2 = 8</strong><br>
-                    check(8)：贪心扫描 → [4,2], [4], [5,1] → 段数 = 3 ≤ 3<br>
-                    <span class="result">✓ 可行 → ans = 8, right = 7</span>
-                </div>
-            </li>
-            <li>
-                <span class="step-num">4</span>
-                <div class="step-content">
-                    <strong>mid = (8 + 7) / 2 = 7</strong> — left(8) > right(7)，搜索结束<br>
-                    <span class="result">最终答案：ans = 6</span>（回顾：当 mid=6 时可行，之前已记录）
-                </div>
-            </li>
-        </ul>
-
-        <div class="info-card">
-            <p><strong>最优方案：</strong>[4, 2] (6) + [4] (4) + [5, 1] (6) → 最大段和 = <strong>6</strong></p>
-            <p>通过仅 <strong>3 次</strong> check() 调用（log₂ 11 ≈ 3.5）就锁定了答案，而暴力需要尝试 12 种可能的答案值。</p>
-        </div>
-    </div>
-
-    <!-- ════════════════════════════════════════════ -->
-    <!--  Slide 5: Example 2 - Monthly Expense     -->
-    <!-- ════════════════════════════════════════════ -->
-    <div class="slide" data-index="4">
-        <h2>🏋️ 例题2：月度开销</h2>
-
-        <p><strong>输入：</strong>N = 7, M = 5, 开销 = [100, 400, 300, 100, 500, 101, 400]</p>
-        <p class="dim">二分范围：left = 500（单天最大）, right = 1901（总开销）</p>
-
-        <h3>check(mid) 验证过程（以 mid = 500 为例）</h3>
-        <div class="code-block">
-<span class="cmt">// check(500)：逐天扫描，贪心分组</span>
-<span class="cmt">// 第1月: 100+400=500 ✓ (再加300→800>500，换月)</span>
-<span class="cmt">// 第2月: 300+100=400 ✓ (再加500→900>500，换月)</span>
-<span class="cmt">// 第3月: 500 ✓ (再加101→601>500，换月)</span>
-<span class="cmt">// 第4月: 101 ✓ (再加400→501>500，换月)</span>
-<span class="cmt">// 第5月: 400 ✓</span>
-<span class="cmt">// 月份数 = 5 ≤ M=5 → mid=500 可行 ✓</span>
-        </div>
-
-        <p>继续二分，尝试 mid = (500+500)/2 = 500 附近更小的值...<br>
-        发现 mid = 499 时，第3天 500 > 499，直接不可行。<br>
-        <span class="highlight">最优答案：500</span></p>
-
-        <div class="info-card">
-            <p><strong>最优划分：</strong>[100,400] [300,100] [500] [101] [400]</p>
-            <p><strong>各月开销：</strong>500, 400, 500, 101, 400 → 最大 = 500</p>
-        </div>
-    </div>
-
-    <!-- ════════════════════════════════════════════ -->
-    <!--  Slide 6: Summary                         -->
-    <!-- ════════════════════════════════════════════ -->
-    <div class="slide" data-index="5">
-        <h2>📝 本课小结</h2>
-
-        <div class="summary-grid">
-            <div class="summary-card">
-                <div class="icon">🎯</div>
-                <div class="label">核心模式</div>
-                <div class="desc">二分答案 + 贪心验证<br>解决“最小化最大值”</div>
-            </div>
-            <div class="summary-card">
-                <div class="icon">📐</div>
-                <div class="label">单调性</div>
-                <div class="desc">答案存在分界点<br>一侧可行一侧不可行</div>
-            </div>
-            <div class="summary-card">
-                <div class="icon">⚙️</div>
-                <div class="label">check() 函数</div>
-                <div class="desc">贪心扫描 O(n)<br>统计段数判定可行性</div>
-            </div>
-            <div class="summary-card">
-                <div class="icon">⏱️</div>
-                <div class="label">复杂度</div>
-                <div class="desc">O(n log S)<br>比暴力 O(nS) 快百倍</div>
-            </div>
-        </div>
-
-        <h3>解题三步走</h3>
-        <ol>
-            <li><strong>定界：</strong>确定二分上下界（下界 = 单元素最大，上界 = 总和）</li>
-            <li><strong>验证：</strong>写 check(mid) 函数——贪心统计所需段数</li>
-            <li><strong>搜索：</strong>二分框架套用——可行往左缩，不可行往右扩</li>
-        </ol>
-
-        <div class="info-card">
-            <p><strong>拓展思考：</strong>如果问题改成“<em>最大化最小值</em>”（比如：把 N 个物品分给 M 个人，让得到最少物品的人得到尽可能多），check() 的判定逻辑会如何变化？</p>
-        </div>
-
-        <p style="margin-top:16px; text-align:center; color:var(--accent); font-weight:bold;">
-            二分答案的威力，在于用 O(log n) 的代价，将“最优解搜索”转化为“可行性判定”
-        </p>
-    </div>
-
-    <!-- ════════════════════════════════════════════ -->
-    <!--  Navigation Bar                           -->
-    <!-- ════════════════════════════════════════════ -->
-    <div class="nav-bar">
-        <button class="nav-btn" id="prevBtn" onclick="changeSlide(-1)">◀ 上一页</button>
-        <div class="nav-dots" id="navDots"></div>
-        <span class="slide-counter" id="slideCounter">1 / 6</span>
-        <button class="nav-btn" id="nextBtn" onclick="changeSlide(1)">下一页 ▶</button>
-    </div>
-
-    <div class="footer">
-        <p>C++ 算法提高课程 · 第18课 · 综合练习——查找算法应用 &copy; 2026</p>
-    </div>
-
+<h3>复杂度</h3>
+<div class="checklist">
+<div class="item"><strong>时间：</strong>O(n log S) — check() O(n) × 二分 O(log S)</div>
+<div class="item"><strong>空间：</strong>O(n) — 存储输入数组</div>
 </div>
 
+<aside class="notes">【讲解】💻 check() 函数设计 &amp; 二分框架
+结合讲义《六、check() 函数的设计要点》强调：
+· check() 是二分答案的灵魂。一个好的 check() 函数需要满足：
+· 正确性：准确判断给定的上限是否可行
+· 高效性：通常需要 O(n) 的时间复杂度
+· 简洁性：逻辑清晰，不易出错
+· 对于数列分段类问题的 check() 函数，其典型写法如下：
+幻灯片上可见要点：
+· 💻 check() 函数设计 &amp; 二分框架
+· check() 函数（贪心验证）
+· bool
+· check
+讲解时放慢关键术语；用 1 个生活类比 + 1 个反例加深印象。</aside>
+</div>
+<!-- ════════════════════════════════════════════ -->
+<!--  Slide 4: Example Walkthrough             -->
+<!-- ════════════════════════════════════════════ -->
+<div class="slide" data-index="3">
+<h2>🏋️ 例题：数列分段 —— 逐步推演</h2>
+<p><strong>输入：</strong>N = 5, M = 3, 数列 = [4, 2, 4, 5, 1]</p>
+<p class="dim">二分范围：left = 5（最大元素）, right = 16（总和）</p>
+<ul class="step-list">
+<li>
+<span class="step-num">1</span>
+<div class="step-content">
+<strong>mid = (5 + 16) / 2 = 10</strong><br/>
+                    check(10)：贪心扫描 → [4,2,4], [5,1] → 段数 = 2 ≤ 3<br/>
+<span class="result">✓ 可行 → ans = 10, right = 9</span>
+</div>
+</li>
+<li>
+<span class="step-num">2</span>
+<div class="step-content">
+<strong>mid = (5 + 9) / 2 = 7</strong><br/>
+                    check(7)：贪心扫描 → [4,2], [4], [5], [1] → 段数 = 4 &gt; 3<br/>
+<span style="color:#f0c060">✗ 不可行 → left = 8</span>
+</div>
+</li>
+<li>
+<span class="step-num">3</span>
+<div class="step-content">
+<strong>mid = (8 + 9) / 2 = 8</strong><br/>
+                    check(8)：贪心扫描 → [4,2], [4], [5,1] → 段数 = 3 ≤ 3<br/>
+<span class="result">✓ 可行 → ans = 8, right = 7</span>
+</div>
+</li>
+<li>
+<span class="step-num">4</span>
+<div class="step-content">
+<strong>mid = (8 + 7) / 2 = 7</strong> — left(8) &gt; right(7)，搜索结束<br/>
+<span class="result">最终答案：ans = 6</span>（回顾：当 mid=6 时可行，之前已记录）
+                </div>
+</li>
+</ul>
+<div class="info-card">
+<p><strong>最优方案：</strong>[4, 2] (6) + [4] (4) + [5, 1] (6) → 最大段和 = <strong>6</strong></p>
+<p>通过仅 <strong>3 次</strong> check() 调用（log₂ 11 ≈ 3.5）就锁定了答案，而暴力需要尝试 12 种可能的答案值。</p>
+</div>
+
+<aside class="notes">【讲解】🏋️ 例题：数列分段 —— 逐步推演
+结合讲义《例题1：数列分段》强调：
+· 题目描述：
+· 对于给定的一个长度为 N 的正整数数列 A[1..N]，现要将其分成 M（M ≤ N）段，并要求每段连续，且每段和的最大值最小。
+· 请你求出这个最小的最大值是多少。
+· 输入格式：
+· 第一行包含两个正整数 N 和 M，表示数列的长度和要分成的段数
+幻灯片上可见要点：
+· 输入： N = 5, M = 3, 数列 = [4, 2, 4, 5, 1]
+· 二分范围：left = 5（最大元素）, right = 16（总和）
+· 1 mid = (5 + 16) / 2 = 10 check(10)：贪心扫描 → [4,2,4], [5,1] → 段数 = 2 ≤ 3 ✓ 可行 → ans = 10, right = 9
+· mid = (5 + 16) / 2 = 10
+讲解时放慢关键术语；用 1 个生活类比 + 1 个反例加深印象。</aside>
+</div>
+<!-- ════════════════════════════════════════════ -->
+<!--  Slide 5: Example 2 - Monthly Expense     -->
+<!-- ════════════════════════════════════════════ -->
+<div class="slide" data-index="4">
+<h2>🏋️ 例题2：月度开销</h2>
+<p><strong>输入：</strong>N = 7, M = 5, 开销 = [100, 400, 300, 100, 500, 101, 400]</p>
+<p class="dim">二分范围：left = 500（单天最大）, right = 1901（总开销）</p>
+<h3>check(mid) 验证过程（以 mid = 500 为例）</h3>
+<div class="code-block">
+<span class="cmt">// check(500)：逐天扫描，贪心分组</span>
+<span class="cmt">// 第1月: 100+400=500 ✓ (再加300→800&gt;500，换月)</span>
+<span class="cmt">// 第2月: 300+100=400 ✓ (再加500→900&gt;500，换月)</span>
+<span class="cmt">// 第3月: 500 ✓ (再加101→601&gt;500，换月)</span>
+<span class="cmt">// 第4月: 101 ✓ (再加400→501&gt;500，换月)</span>
+<span class="cmt">// 第5月: 400 ✓</span>
+<span class="cmt">// 月份数 = 5 ≤ M=5 → mid=500 可行 ✓</span>
+</div>
+<p>继续二分，尝试 mid = (500+500)/2 = 500 附近更小的值...<br/>
+        发现 mid = 499 时，第3天 500 &gt; 499，直接不可行。<br/>
+<span class="highlight">最优答案：500</span></p>
+<div class="info-card">
+<p><strong>最优划分：</strong>[100,400] [300,100] [500] [101] [400]</p>
+<p><strong>各月开销：</strong>500, 400, 500, 101, 400 → 最大 = 500</p>
+</div>
+
+<aside class="notes">【讲解】🏋️ 例题2：月度开销
+结合讲义《例题2：月度开销》强调：
+· 题目描述：
+· 农夫约翰是一个精明的会计师。他意识到自己可能没有足够的钱来维持农场的运转了。他计算出并记录下了接下来 N（1 ≤ N ≤ 100,000）天里每天需要的开销。
+· 约翰打算为连续的 M（1 ≤ M ≤ N）个财政周期创建预算案，他把一个财政周期命名为“fajo月”。每个 fajo 月包含一天或连续的多天，每天恰好被包含在一个 fajo 月里。
+· 约翰的目标是合理安排每个 fajo 月包含的天数，使得**开销最多的 fajo 月的开销尽可能少**。
+· 请你帮约翰求出这个最小值。
+幻灯片上可见要点：
+· 输入： N = 7, M = 5, 开销 = [100, 400, 300, 100, 500, 101, 400]
+· 二分范围：left = 500（单天最大）, right = 1901（总开销）
+· 继续二分，尝试 mid = (500+500)/2 = 500 附近更小的值... 发现 mid = 499 时，第3天 500 &gt; 499，直接不可行。 最优答案：500
+· 最优划分： [100,400] [300,100] [500] [101] [400]
+讲解时放慢关键术语；用 1 个生活类比 + 1 个反例加深印象。</aside>
+</div>
+<!-- ════════════════════════════════════════════ -->
+<!--  Slide 6: Summary                         -->
+<!-- ════════════════════════════════════════════ -->
+<div class="slide" data-index="5">
+<h2>📝 本课小结</h2>
+<div class="summary-grid">
+<div class="summary-card">
+<div class="icon">🎯</div>
+<div class="label">核心模式</div>
+<div class="desc">二分答案 + 贪心验证<br/>解决“最小化最大值”</div>
+</div>
+<div class="summary-card">
+<div class="icon">📐</div>
+<div class="label">单调性</div>
+<div class="desc">答案存在分界点<br/>一侧可行一侧不可行</div>
+</div>
+<div class="summary-card">
+<div class="icon">⚙️</div>
+<div class="label">check() 函数</div>
+<div class="desc">贪心扫描 O(n)<br/>统计段数判定可行性</div>
+</div>
+<div class="summary-card">
+<div class="icon">⏱️</div>
+<div class="label">复杂度</div>
+<div class="desc">O(n log S)<br/>比暴力 O(nS) 快百倍</div>
+</div>
+</div>
+<h3>解题三步走</h3>
+<ol>
+<li><strong>定界：</strong>确定二分上下界（下界 = 单元素最大，上界 = 总和）</li>
+<li><strong>验证：</strong>写 check(mid) 函数——贪心统计所需段数</li>
+<li><strong>搜索：</strong>二分框架套用——可行往左缩，不可行往右扩</li>
+</ol>
+<div class="info-card">
+<p><strong>拓展思考：</strong>如果问题改成“<em>最大化最小值</em>”（比如：把 N 个物品分给 M 个人，让得到最少物品的人得到尽可能多），check() 的判定逻辑会如何变化？</p>
+</div>
+<p style="margin-top:16px; text-align:center; color:var(--accent); font-weight:bold;">
+            二分答案的威力，在于用 O(log n) 的代价，将“最优解搜索”转化为“可行性判定”
+        </p>
+
+<aside class="notes">【收尾】回顾本课主线：📝 本课小结
+对照大纲再过一遍：二分+贪心、二分+验证
+板书/口述要点：
+· 定界： 确定二分上下界（下界 = 单元素最大，上界 = 总和）
+· 验证： 写 check(mid) 函数——贪心统计所需段数
+· 搜索： 二分框架套用——可行往左缩，不可行往右扩
+· 拓展思考： 如果问题改成“ 最大化最小值 ”（比如：把 N 个物品分给 M 个人，让得到最少物品的人得到尽可能多），check() 的判定逻辑会如何变化？
+· 拓展思考：
+· 二分答案的威力，在于用 O(log n) 的代价，将“最优解搜索”转化为“可行性判定”
+课后任务：数列分段、月度开销
+结束前留 2 分钟答疑；布置 1 道小练习检验是否真正掌握。</aside>
+</div>
+<!-- ════════════════════════════════════════════ -->
+<!--  Navigation Bar                           -->
+<!-- ════════════════════════════════════════════ -->
+<div class="nav-bar">
+<button class="nav-btn" id="prevBtn" onclick="changeSlide(-1)">◀ 上一页</button>
+<div class="nav-dots" id="navDots"></div>
+<span class="slide-counter" id="slideCounter">1 / 6</span>
+<button class="nav-btn" id="nextBtn" onclick="changeSlide(1)">下一页 ▶</button>
+</div>
+<div class="footer">
+<p>C++ 算法提高课程 · 第18课 · 综合练习——查找算法应用 © 2026</p>
+</div>
+</div>
 <script>
     (function() {
         const slides = document.querySelectorAll('.slide');
@@ -736,7 +781,6 @@
         updateUI();
     })();
 </script>
-
 <script src="courseware-ui.js"></script>
 <script src="presenter.js"></script>
 </body>

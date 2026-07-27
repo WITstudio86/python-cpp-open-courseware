@@ -1,8 +1,9 @@
 <!DOCTYPE html>
+
 <html lang="zh-CN">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
 <title>第34节：闯关之旅 —— 卷轴滚动、敌人与关卡地图</title>
 <style>
 * { margin: 0; padding: 0; box-sizing: border-box; }
@@ -190,91 +191,147 @@ body {
 </style>
 </head>
 <body>
-
 <div class="slide-container" id="slideContainer">
-
 <!-- Slide 0: Title -->
 <div class="slide slide-title active">
-    <div class="chapter">第 34 节</div>
-    <h1>闯 关 之 旅</h1>
-    <div class="subtitle">卷轴滚动、敌人与关卡地图</div>
-    <div class="info">Pygame 游戏开发课程 | 适用年龄 10-15 岁</div>
-</div>
+<div class="chapter">第 34 节</div>
+<h1>闯 关 之 旅</h1>
+<div class="subtitle">卷轴滚动、敌人与关卡地图</div>
+<div class="info">Pygame 游戏开发课程 | 适用年龄 10-15 岁</div>
 
+<aside class="notes">【开场】第 1/12 页 · 闯关之旅
+用 30 秒说明本课目标与学完能做什么，再进入正题。
+大纲考点：**内容**：多屏关卡（卷轴跟随）、金币收集、终点旗帜、简单敌人
+
+**知识点**：
+- 相机偏移 `camera_x`, `camera_y` — 屏幕跟随角色
+- 卷轴滚动（角色超过屏幕中线 → 相机移动）
+- 踩踏消灭敌人（脚底碰撞敌人顶部）
+- Tile Map 拼接关卡地图（用二维数组定义）
+
+**课堂练习**：小型的横版平台跳跃关卡
+
+---
+
+## 📦 项目 16：特效专题（第 35-36 节）
+封面关键词：
+· 第 34 节
+· 闯 关 之 旅
+· 卷轴滚动、敌人与关卡地图
+· Pygame 游戏开发课程 | 适用年龄 10-15 岁
+互动：问学生「今天最想搞清楚什么？」，收 1–2 个期待。</aside>
+</div>
 <!-- Slide 1: 学习目标 -->
 <div class="slide slide-content">
-    <h2>学习目标</h2>
-    <ul>
-        <li>理解<span class="em">相机偏移</span>与<span class="em">卷轴滚动</span>的原理</li>
-        <li>学会用<span class="em">Tile Map</span>（二维数组）拼接关卡</li>
-        <li>实现<span class="em2">踩踏消灭</span>敌人</li>
-        <li>完成<span class="em">金币收集</span>和<span class="em">过关判定</span></li>
-    </ul>
-</div>
+<h2>学习目标</h2>
+<ul>
+<li>理解<span class="em">相机偏移</span>与<span class="em">卷轴滚动</span>的原理</li>
+<li>学会用<span class="em">Tile Map</span>（二维数组）拼接关卡</li>
+<li>实现<span class="em2">踩踏消灭</span>敌人</li>
+<li>完成<span class="em">金币收集</span>和<span class="em">过关判定</span></li>
+</ul>
 
+<aside class="notes">【讲解】学习目标
+本页要点（照着讲即可）：
+· 理解 相机偏移 与 卷轴滚动 的原理
+· 学会用 Tile Map （二维数组）拼接关卡
+· 实现 踩踏消灭 敌人
+· 完成 金币收集 和 过关判定
+讲解时放慢关键术语；用 1 个生活类比 + 1 个反例加深印象。
+本课大纲考点（可适时点题）：**内容**：多屏关卡（卷轴跟随）、金币收集、终点旗帜、简单敌人
+
+**知识点**：
+- 相机偏移 `camera_x`, `camera_y` — 屏幕跟随角色
+- 卷轴滚动（角色超过屏幕中线 → 相机移动）
+- 踩踏消灭敌人（脚底碰撞敌人顶部）
+- Tile Map 拼接关卡地图（用二维数组定义）
+
+**课堂练习**：小型的横版平台跳跃关卡
+
+---
+
+## 📦 项目 16：特效专题（第 35-36 节）</aside>
+</div>
 <!-- Slide 2: 导入 - 世界比屏幕大 -->
 <div class="slide slide-concept">
-    <h2>世界比屏幕大，怎么办？</h2>
-    <div class="diagram">
-        <p>关卡地图有 <span class="em">3000 像素宽</span></p>
-        <p>但屏幕只有 <span class="em">800 像素宽</span></p>
-        <p style="margin-top:10px;">❓ 角色走到 1200 像素时，屏幕外的画面去哪了？</p>
-    </div>
-    <div class="concept-box">
-        <h3>答案：相机（Camera）！</h3>
-        <p>相机不是真正的摄像头，而是两个数字：<span class="em">camera_x</span> 和 <span class="em">camera_y</span></p>
-        <p>代表"屏幕左上角在世界中的位置"</p>
-        <div class="formula">screen_x = world_x - camera_x</div>
-    </div>
+<h2>世界比屏幕大，怎么办？</h2>
+<div class="diagram">
+<p>关卡地图有 <span class="em">3000 像素宽</span></p>
+<p>但屏幕只有 <span class="em">800 像素宽</span></p>
+<p style="margin-top:10px;">❓ 角色走到 1200 像素时，屏幕外的画面去哪了？</p>
+</div>
+<div class="concept-box">
+<h3>答案：相机（Camera）！</h3>
+<p>相机不是真正的摄像头，而是两个数字：<span class="em">camera_x</span> 和 <span class="em">camera_y</span></p>
+<p>代表"屏幕左上角在世界中的位置"</p>
+<div class="formula">screen_x = world_x - camera_x</div>
 </div>
 
+<aside class="notes">【讲解】世界比屏幕大，怎么办？
+本页要点（照着讲即可）：
+· 关卡地图有 3000 像素宽
+· 但屏幕只有 800 像素宽
+· ❓ 角色走到 1200 像素时，屏幕外的画面去哪了？
+· 相机不是真正的摄像头，而是两个数字： camera_x 和 camera_y
+· 代表"屏幕左上角在世界中的位置"
+讲解时放慢关键术语；用 1 个生活类比 + 1 个反例加深印象。</aside>
+</div>
 <!-- Slide 3: 相机偏移原理 -->
 <div class="slide slide-concept">
-    <h2>相机偏移 —— "屏幕的眼睛"</h2>
-    <div class="diagram">
-        <p>角色在世界坐标 <span class="em">(1500, 400)</span></p>
-        <p>相机在世界坐标 <span class="em">(800, 200)</span></p>
-        <p style="margin-top:8px;">角色在屏幕上的位置：</p>
-        <p class="formula" style="font-size:28px;">1500 - 800 = <span class="em">700</span> , 400 - 200 = <span class="em">200</span></p>
-    </div>
-    <div class="code-block"><span class="cmt"># 画任何东西之前，都减去相机位置</span>
+<h2>相机偏移 —— "屏幕的眼睛"</h2>
+<div class="diagram">
+<p>角色在世界坐标 <span class="em">(1500, 400)</span></p>
+<p>相机在世界坐标 <span class="em">(800, 200)</span></p>
+<p style="margin-top:8px;">角色在屏幕上的位置：</p>
+<p class="formula" style="font-size:28px;">1500 - 800 = <span class="em">700</span> , 400 - 200 = <span class="em">200</span></p>
+</div>
+<div class="code-block"><span class="cmt"># 画任何东西之前，都减去相机位置</span>
 pygame.draw.rect(screen, color, (
     obj.x - camera_x,    <span class="cmt"># ← 关键！</span>
     obj.y - camera_y,    <span class="cmt"># ← 关键！</span>
     obj.w, obj.h
 ))</div>
-</div>
 
+<aside class="notes">【讲解】相机偏移 —— "屏幕的眼睛"
+本页要点（照着讲即可）：
+· 角色在世界坐标 (1500, 400)
+· 相机在世界坐标 (800, 200)
+· 角色在屏幕上的位置：
+· 1500 - 800 = 700 , 400 - 200 = 200
+讲解时放慢关键术语；用 1 个生活类比 + 1 个反例加深印象。</aside>
+</div>
 <!-- Slide 4: 卷轴滚动 -->
 <div class="slide slide-concept">
-    <h2>卷轴滚动 —— 相机跟随角色</h2>
-    <div class="concept-box">
-        <h3>规则：角色超过屏幕中线 → 相机跟着移动</h3>
-        <div class="code-block"><span class="cmt"># 让角色保持在屏幕 1/3 处</span>
+<h2>卷轴滚动 —— 相机跟随角色</h2>
+<div class="concept-box">
+<h3>规则：角色超过屏幕中线 → 相机跟着移动</h3>
+<div class="code-block"><span class="cmt"># 让角色保持在屏幕 1/3 处</span>
 target = player.x - SCREEN_WIDTH // <span class="num">3</span>
-
 <span class="cmt"># 平滑移动（缓动效果）</span>
 camera_x += (target - camera_x) * <span class="num">0.1</span>
-
 <span class="cmt"># 限制相机不超出世界边界</span>
 camera_x = max(<span class="num">0</span>, min(camera_x, WORLD_W - SCREEN_W))</div>
-    </div>
-    <p style="margin-top:10px;font-size:20px;">
+</div>
+<p style="margin-top:10px;font-size:20px;">
         💡 <span class="em">0.1 的系数</span>让相机平滑滑动，而不是瞬移——这叫"缓动"
     </p>
-</div>
 
+<aside class="notes">【讲解】卷轴滚动 —— 相机跟随角色
+本页要点（照着讲即可）：
+· 💡 0.1 的系数 让相机平滑滑动，而不是瞬移——这叫"缓动"
+讲解时放慢关键术语；用 1 个生活类比 + 1 个反例加深印象。</aside>
+</div>
 <!-- Slide 5: Tile Map -->
 <div class="slide slide-concept">
-    <h2>Tile Map —— 用数字拼出世界</h2>
-    <div class="concept-box">
-        <h3>什么是 Tile？</h3>
-        <p>Tile = "瓷砖"。Tile Map = 用一个个小方块拼出整个关卡</p>
-    </div>
-    <div class="two-col">
-        <div>
-            <p style="font-size:18px;color:#818cf8;margin-bottom:6px;">二维数组定义地图：</p>
-            <div class="code-block" style="font-size:14px;"><span class="num">0</span>=空 <span class="num">1</span>=地面 <span class="num">2</span>=平台
+<h2>Tile Map —— 用数字拼出世界</h2>
+<div class="concept-box">
+<h3>什么是 Tile？</h3>
+<p>Tile = "瓷砖"。Tile Map = 用一个个小方块拼出整个关卡</p>
+</div>
+<div class="two-col">
+<div>
+<p style="font-size:18px;color:#818cf8;margin-bottom:6px;">二维数组定义地图：</p>
+<div class="code-block" style="font-size:14px;"><span class="num">0</span>=空 <span class="num">1</span>=地面 <span class="num">2</span>=平台
 <span class="num">3</span>=金币 <span class="num">4</span>=敌人 <span class="num">5</span>=终点
 
 level_map = [
@@ -284,25 +341,35 @@ level_map = [
   [<span class="num">1</span>,<span class="num">0</span>,<span class="num">0</span>,<span class="num">0</span>,<span class="num">0</span>,<span class="num">2</span>,<span class="num">5</span>,<span class="num">1</span>],
   [<span class="num">1</span>,<span class="num">1</span>,<span class="num">1</span>,<span class="num">1</span>,<span class="num">1</span>,<span class="num">1</span>,<span class="num">1</span>,<span class="num">1</span>],
 ]</div>
-        </div>
-        <div>
-            <p style="font-size:18px;color:#818cf8;margin-bottom:6px;">可视化效果：</p>
-            <div class="tile-grid">
-                <span class="tile-1">1</span><span class="tile-1">1</span><span class="tile-1">1</span><span class="tile-1">1</span><span class="tile-1">1</span><span class="tile-1">1</span><span class="tile-1">1</span><span class="tile-1">1</span>
-                <span class="tile-1">1</span><span class="tile-0">0</span><span class="tile-0">0</span><span class="tile-0">0</span><span class="tile-4">4</span><span class="tile-3">3</span><span class="tile-3">3</span><span class="tile-1">1</span>
-                <span class="tile-1">1</span><span class="tile-0">0</span><span class="tile-2">2</span><span class="tile-0">0</span><span class="tile-0">0</span><span class="tile-0">0</span><span class="tile-0">0</span><span class="tile-1">1</span>
-                <span class="tile-1">1</span><span class="tile-0">0</span><span class="tile-0">0</span><span class="tile-0">0</span><span class="tile-0">0</span><span class="tile-2">2</span><span class="tile-5">5</span><span class="tile-1">1</span>
-                <span class="tile-1">1</span><span class="tile-1">1</span><span class="tile-1">1</span><span class="tile-1">1</span><span class="tile-1">1</span><span class="tile-1">1</span><span class="tile-1">1</span><span class="tile-1">1</span>
-            </div>
-            <p style="font-size:14px;color:#888;margin-top:8px;">🟫=地面  ⬜=平台  🟡=金币  🔴=敌人  🟢=终点</p>
-        </div>
-    </div>
+</div>
+<div>
+<p style="font-size:18px;color:#818cf8;margin-bottom:6px;">可视化效果：</p>
+<div class="tile-grid">
+<span class="tile-1">1</span><span class="tile-1">1</span><span class="tile-1">1</span><span class="tile-1">1</span><span class="tile-1">1</span><span class="tile-1">1</span><span class="tile-1">1</span><span class="tile-1">1</span>
+<span class="tile-1">1</span><span class="tile-0">0</span><span class="tile-0">0</span><span class="tile-0">0</span><span class="tile-4">4</span><span class="tile-3">3</span><span class="tile-3">3</span><span class="tile-1">1</span>
+<span class="tile-1">1</span><span class="tile-0">0</span><span class="tile-2">2</span><span class="tile-0">0</span><span class="tile-0">0</span><span class="tile-0">0</span><span class="tile-0">0</span><span class="tile-1">1</span>
+<span class="tile-1">1</span><span class="tile-0">0</span><span class="tile-0">0</span><span class="tile-0">0</span><span class="tile-0">0</span><span class="tile-2">2</span><span class="tile-5">5</span><span class="tile-1">1</span>
+<span class="tile-1">1</span><span class="tile-1">1</span><span class="tile-1">1</span><span class="tile-1">1</span><span class="tile-1">1</span><span class="tile-1">1</span><span class="tile-1">1</span><span class="tile-1">1</span>
+</div>
+<p style="font-size:14px;color:#888;margin-top:8px;">🟫=地面  ⬜=平台  🟡=金币  🔴=敌人  🟢=终点</p>
+</div>
 </div>
 
+<aside class="notes">【讲解】Tile Map —— 用数字拼出世界
+结合讲义《3.3 讲解（二）：Tile Map关卡拼接（10分钟）》强调：
+· "Tile"就是"瓷砖"的意思。Tile Map就是用一个个小方块（瓷砖）拼出整个游戏关卡的地图。
+· 最简单的方式：二维数组
+幻灯片上可见要点：
+· Tile = "瓷砖"。Tile Map = 用一个个小方块拼出整个关卡
+· 二维数组定义地图：
+· 可视化效果：
+· 🟫=地面 ⬜=平台 🟡=金币 🔴=敌人 🟢=终点
+讲解时放慢关键术语；用 1 个生活类比 + 1 个反例加深印象。</aside>
+</div>
 <!-- Slide 6: Tile Map 转游戏对象 -->
 <div class="slide slide-concept">
-    <h2>从数组到游戏世界</h2>
-    <div class="code-block"><span class="cmt"># 遍历二维数组，创建对应的游戏对象</span>
+<h2>从数组到游戏世界</h2>
+<div class="code-block"><span class="cmt"># 遍历二维数组，创建对应的游戏对象</span>
 TILE_SIZE = <span class="num">40</span>
 <span class="kw">for</span> row <span class="kw">in</span> range(len(level_map)):
     <span class="kw">for</span> col <span class="kw">in</span> range(len(level_map[row])):
@@ -315,63 +382,76 @@ TILE_SIZE = <span class="num">40</span>
         <span class="kw">elif</span> tile == <span class="num">3</span>:  coins.append(Coin(x, y))
         <span class="kw">elif</span> tile == <span class="num">4</span>:  enemies.append(Enemy(x, y))
         <span class="kw">elif</span> tile == <span class="num">5</span>:  flag = Flag(x, y)</div>
-    <p style="margin-top:10px;font-size:20px;">
+<p style="margin-top:10px;font-size:20px;">
         🎯 就像用<span class="em">乐高积木</span>拼世界——你定义每个位置放什么，程序自动拼出来！
     </p>
-</div>
 
+<aside class="notes">【讲解】从数组到游戏世界
+本页要点（照着讲即可）：
+· 🎯 就像用 乐高积木 拼世界——你定义每个位置放什么，程序自动拼出来！
+讲解时放慢关键术语；用 1 个生活类比 + 1 个反例加深印象。</aside>
+</div>
 <!-- Slide 7: 踩踏消灭敌人 -->
 <div class="slide slide-concept">
-    <h2>踩踏消灭敌人</h2>
-    <div class="concept-box" style="border-color:#34d399;">
-        <h3 style="color:#34d399;">跳到敌人头顶 → 消灭！</h3>
-        <div class="code-block"><span class="kw">if</span> player.colliderect(enemy):
+<h2>踩踏消灭敌人</h2>
+<div class="concept-box" style="border-color:#34d399;">
+<h3 style="color:#34d399;">跳到敌人头顶 → 消灭！</h3>
+<div class="code-block"><span class="kw">if</span> player.colliderect(enemy):
     <span class="cmt"># 判断：角色在下落 且 脚接近敌人头顶</span>
-    <span class="kw">if</span> player.vy > <span class="num">0</span> <span class="kw">and</span> player.bottom - enemy.top < <span class="num">15</span>:
+<span class="kw">if</span> player.vy &gt; <span class="num">0</span> <span class="kw">and</span> player.bottom - enemy.top &lt; <span class="num">15</span>:
         enemies.remove(enemy)     <span class="cmt"># 消灭敌人！</span>
-        player.vy = -<span class="num">8</span>             <span class="cmt"># 弹跳一下</span>
-        score += <span class="num">100</span>                <span class="cmt"># 加分！</span>
-    <span class="kw">else</span>:
-        game_over = <span class="kw">True</span>             <span class="cmt"># 碰到侧面/底部 → 死亡</span></div>
-    </div>
-    <p style="margin-top:10px;font-size:20px;">
-        🔑 关键条件：<span class="em">vy > 0</span>（下落中）+ <span class="em">脚接近头顶</span>（容差15像素）
-    </p>
+        player.vy = -<span class="num">8</span> <span class="cmt"># 弹跳一下</span>
+        score += <span class="num">100</span> <span class="cmt"># 加分！</span>
+<span class="kw">else</span>:
+        game_over = <span class="kw">True</span> <span class="cmt"># 碰到侧面/底部 → 死亡</span></div>
 </div>
+<p style="margin-top:10px;font-size:20px;">
+        🔑 关键条件：<span class="em">vy &gt; 0</span>（下落中）+ <span class="em">脚接近头顶</span>（容差15像素）
+    </p>
 
+<aside class="notes">【讲解】踩踏消灭敌人
+本页要点（照着讲即可）：
+· 🔑 关键条件： vy &gt; 0 （下落中）+ 脚接近头顶 （容差15像素）
+讲解时放慢关键术语；用 1 个生活类比 + 1 个反例加深印象。</aside>
+</div>
 <!-- Slide 8: 金币收集与过关 -->
 <div class="slide slide-concept">
-    <h2>金币收集 &amp; 过关判定</h2>
-    <div class="two-col">
-        <div class="concept-box" style="border-color:#fbbf24;">
-            <h3 style="color:#fbbf24;">金币收集</h3>
-            <div class="code-block" style="font-size:15px;"><span class="kw">for</span> coin <span class="kw">in</span> coins:
+<h2>金币收集 &amp; 过关判定</h2>
+<div class="two-col">
+<div class="concept-box" style="border-color:#fbbf24;">
+<h3 style="color:#fbbf24;">金币收集</h3>
+<div class="code-block" style="font-size:15px;"><span class="kw">for</span> coin <span class="kw">in</span> coins:
     <span class="kw">if</span> player.colliderect(coin):
         coins.remove(coin)
         score += <span class="num">50</span></div>
-            <p style="font-size:16px;margin-top:4px;">碰到就收集，简单直接！</p>
-        </div>
-        <div class="concept-box" style="border-color:#34d399;">
-            <h3 style="color:#34d399;">到达终点</h3>
-            <div class="code-block" style="font-size:15px;"><span class="kw">if</span> player.colliderect(flag):
+<p style="font-size:16px;margin-top:4px;">碰到就收集，简单直接！</p>
+</div>
+<div class="concept-box" style="border-color:#34d399;">
+<h3 style="color:#34d399;">到达终点</h3>
+<div class="code-block" style="font-size:15px;"><span class="kw">if</span> player.colliderect(flag):
     level_complete = <span class="kw">True</span>
-    <span class="cmt"># 显示通关文字！</span></div>
-            <p style="font-size:16px;margin-top:4px;">碰到旗帜就过关！</p>
-        </div>
-    </div>
-    <div class="concept-box" style="border-color:#f87171;margin-top:16px;">
-        <h3 style="color:#f87171;">死亡与重生</h3>
-        <p style="font-size:18px;">碰到敌人侧面/底部 → <span class="em3">重新开始</span>（重置位置、敌人、金币）</p>
-    </div>
+<span class="cmt"># 显示通关文字！</span></div>
+<p style="font-size:16px;margin-top:4px;">碰到旗帜就过关！</p>
+</div>
+</div>
+<div class="concept-box" style="border-color:#f87171;margin-top:16px;">
+<h3 style="color:#f87171;">死亡与重生</h3>
+<p style="font-size:18px;">碰到敌人侧面/底部 → <span class="em3">重新开始</span>（重置位置、敌人、金币）</p>
 </div>
 
+<aside class="notes">【讲解】金币收集 &amp; 过关判定
+本页要点（照着讲即可）：
+· 碰到就收集，简单直接！
+· 碰到旗帜就过关！
+· 碰到敌人侧面/底部 → 重新开始 （重置位置、敌人、金币）
+讲解时放慢关键术语；用 1 个生活类比 + 1 个反例加深印象。</aside>
+</div>
 <!-- Slide 9: 代码示例 -->
 <div class="slide slide-content">
-    <h2>完整代码结构</h2>
-    <div class="code-block" style="font-size:15px;"><span class="cmt"># 1. Tile Map 定义关卡</span>
+<h2>完整代码结构</h2>
+<div class="code-block" style="font-size:15px;"><span class="cmt"># 1. Tile Map 定义关卡</span>
 level_map = [ [...] ]  <span class="cmt"># 二维数组</span>
 camera_x, camera_y = <span class="num">0</span>, <span class="num">0</span>
-
 <span class="cmt"># 2. 从数组生成对象</span>
 generate_world_from_map(level_map)
 
@@ -380,8 +460,7 @@ generate_world_from_map(level_map)
     <span class="cmt"># 相机跟随角色</span>
     target_cam = player.x - SCREEN_W // <span class="num">3</span>
     camera_x += (target_cam - camera_x) * <span class="num">0.1</span>
-
-    <span class="cmt"># 角色移动 + 重力 + 跳跃</span>
+<span class="cmt"># 角色移动 + 重力 + 跳跃</span>
     handle_player_input()
     apply_gravity()
 
@@ -393,62 +472,101 @@ generate_world_from_map(level_map)
 
     <span class="cmt"># 绘制（所有坐标减去camera）</span>
     draw_world()</div>
-</div>
 
+<aside class="notes">【讲解】完整代码结构
+本页要点（照着讲即可）：
+· 完整代码结构
+· # 1. Tile Map 定义关卡
+· level_map = [ [...] ]
+· # 二维数组
+· camera_x, camera_y =
+· # 2. 从数组生成对象
+代码页节奏：先读懂输入输出 → 再走主流程 → 最后点出易错点（边界/类型/下标）。
+可让学生预测下一行输出，再运行对照。</aside>
+</div>
 <!-- Slide 10: 练习任务 -->
 <div class="slide slide-content">
-    <h2>练习任务</h2>
-    <h3 style="color:#fbbf24;margin:12px 0 8px;">基础任务（必做）</h3>
-    <ul>
-        <li>运行基础关卡代码，体验完整闯关流程</li>
-        <li>修改 level_map 数组，添加更多平台方块（数字2）</li>
-        <li>调整敌人位置（数字4），观察变化</li>
-    </ul>
-    <h3 style="color:#fbbf24;margin:12px 0 8px;">进阶任务（选做）</h3>
-    <ul>
-        <li>添加更多金币（数字3），设计收集路线</li>
-        <li>修改 camera_x 缓动系数，体验不同滚动感觉</li>
-        <li>给不同 Tile 类型添加不同的颜色</li>
-    </ul>
-    <h3 style="color:#f87171;margin:12px 0 8px;">挑战任务（高阶）</h3>
-    <ul>
-        <li>设计一个全新的关卡（修改整个 level_map）</li>
-        <li>添加"移动的敌人"——让敌人左右巡逻</li>
-        <li>添加新类型方块（如数字6=刺，碰到就死亡）</li>
-    </ul>
-</div>
+<h2>练习任务</h2>
+<h3 style="color:#fbbf24;margin:12px 0 8px;">基础任务（必做）</h3>
+<ul>
+<li>运行基础关卡代码，体验完整闯关流程</li>
+<li>修改 level_map 数组，添加更多平台方块（数字2）</li>
+<li>调整敌人位置（数字4），观察变化</li>
+</ul>
+<h3 style="color:#fbbf24;margin:12px 0 8px;">进阶任务（选做）</h3>
+<ul>
+<li>添加更多金币（数字3），设计收集路线</li>
+<li>修改 camera_x 缓动系数，体验不同滚动感觉</li>
+<li>给不同 Tile 类型添加不同的颜色</li>
+</ul>
+<h3 style="color:#f87171;margin:12px 0 8px;">挑战任务（高阶）</h3>
+<ul>
+<li>设计一个全新的关卡（修改整个 level_map）</li>
+<li>添加"移动的敌人"——让敌人左右巡逻</li>
+<li>添加新类型方块（如数字6=刺，碰到就死亡）</li>
+</ul>
 
+<aside class="notes">【讲解】练习任务
+本页要点（照着讲即可）：
+· 运行基础关卡代码，体验完整闯关流程
+· 修改 level_map 数组，添加更多平台方块（数字2）
+· 调整敌人位置（数字4），观察变化
+· 添加更多金币（数字3），设计收集路线
+· 修改 camera_x 缓动系数，体验不同滚动感觉
+· 给不同 Tile 类型添加不同的颜色
+练习页节奏：先独立想 1 分钟 → 再点拨思路 → 最后对答案讲为什么。</aside>
+</div>
 <!-- Slide 11: 总结 -->
 <div class="slide slide-content">
-    <h2>本课总结</h2>
-    <div style="display:flex;flex-wrap:wrap;gap:12px;margin-bottom:24px;">
-        <span class="tag">相机偏移</span>
-        <span class="tag yellow">卷轴滚动</span>
-        <span class="tag green">Tile Map</span>
-        <span class="tag">踩踏消灭</span>
-        <span class="tag yellow">金币收集</span>
-        <span class="tag red">死亡重生</span>
-    </div>
-    <ul>
-        <li>相机：<span class="em">screen = world - camera</span>，世界大于屏幕时必备</li>
-        <li>Tile Map：<span class="em">二维数组</span> = 乐高积木拼世界</li>
-        <li>踩踏敌人：<span class="em2">vy > 0</span> + 碰到头顶 → 消灭；否则 → 死亡</li>
-        <li>金币：碰到就收集；终点：碰到就过关</li>
-    </ul>
-    <p style="margin-top:30px;font-size:22px;color:#818cf8;text-align:center;">
+<h2>本课总结</h2>
+<div style="display:flex;flex-wrap:wrap;gap:12px;margin-bottom:24px;">
+<span class="tag">相机偏移</span>
+<span class="tag yellow">卷轴滚动</span>
+<span class="tag green">Tile Map</span>
+<span class="tag">踩踏消灭</span>
+<span class="tag yellow">金币收集</span>
+<span class="tag red">死亡重生</span>
+</div>
+<ul>
+<li>相机：<span class="em">screen = world - camera</span>，世界大于屏幕时必备</li>
+<li>Tile Map：<span class="em">二维数组</span> = 乐高积木拼世界</li>
+<li>踩踏敌人：<span class="em2">vy &gt; 0</span> + 碰到头顶 → 消灭；否则 → 死亡</li>
+<li>金币：碰到就收集；终点：碰到就过关</li>
+</ul>
+<p style="margin-top:30px;font-size:22px;color:#818cf8;text-align:center;">
         你做出了一个<span class="em">完整的横版闯关游戏</span>！
     </p>
-    <p style="font-size:18px;color:#888;text-align:center;">
+<p style="font-size:18px;color:#888;text-align:center;">
         下节预告：屏幕震动 + 粒子特效，让画面更炫酷 ✨
     </p>
-</div>
 
+<aside class="notes">【收尾】回顾本课主线：本课总结
+对照大纲再过一遍：**内容**：多屏关卡（卷轴跟随）、金币收集、终点旗帜、简单敌人
+
+**知识点**：
+- 相机偏移 `camera_x`, `camera_y` — 屏幕跟随角色
+- 卷轴滚动（角色超过屏幕中线 → 相机移动）
+- 踩踏消灭敌人（脚底碰撞敌人顶部）
+- Tile Map 拼接关卡地图（用二维数组定义）
+
+**课堂练习**：小型的横版平台跳跃关卡
+
+---
+
+## 📦 项目 16：特效专题（第 35-36 节）
+板书/口述要点：
+· 相机： screen = world - camera ，世界大于屏幕时必备
+· Tile Map： 二维数组 = 乐高积木拼世界
+· 踩踏敌人： vy &gt; 0 + 碰到头顶 → 消灭；否则 → 死亡
+· 金币：碰到就收集；终点：碰到就过关
+· 你做出了一个 完整的横版闯关游戏 ！
+· 下节预告：屏幕震动 + 粒子特效，让画面更炫酷 ✨
+结束前留 2 分钟答疑；布置 1 道小练习检验是否真正掌握。</aside>
+</div>
 <!-- Page indicator and nav hint -->
 <div class="page-indicator" id="pageIndicator">1 / 12</div>
 <div class="nav-hint">← → 方向键翻页 | Home / End 跳转首尾 | 点击左右区域翻页</div>
-
 </div>
-
 <script>
 (function() {
     var slides = document.querySelectorAll('.slide');
@@ -497,7 +615,6 @@ generate_world_from_map(level_map)
     showSlide(0);
 })();
 </script>
-
 <script src="courseware-ui.js"></script>
 <script src="presenter.js"></script>
 </body>

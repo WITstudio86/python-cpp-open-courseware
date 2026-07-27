@@ -1,8 +1,9 @@
 <!DOCTYPE html>
+
 <html lang="zh-CN">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
 <title>第04课：set/map 与 unordered 容器</title>
 <style>
 * { margin: 0; padding: 0; box-sizing: border-box; }
@@ -125,90 +126,116 @@ tr:hover td { background: rgba(96,165,250,0.06); }
 </head>
 <body>
 <div id="app">
-    <div id="slide-container">
-        <!-- Slide 0: Title -->
-        <div class="slide active title-slide">
-            <h1>第04课</h1>
-            <div class="subtitle">set / map 与 unordered 容器</div>
-            <p class="info">CSP-S 考纲 · 红黑树原理 · 哈希表实现 · 自定义比较器与哈希</p>
-            <p class="info" style="margin-top:24px;">📖 知识精讲  |  💻 代码模板  |  📝 真题精练</p>
-            <span class="slide-num">1 / 7</span>
-        </div>
+<div id="slide-container">
+<!-- Slide 0: Title -->
+<div class="slide active title-slide">
+<h1>第04课</h1>
+<div class="subtitle">set / map 与 unordered 容器</div>
+<p class="info">CSP-S 考纲 · 红黑树原理 · 哈希表实现 · 自定义比较器与哈希</p>
+<p class="info" style="margin-top:24px;">📖 知识精讲  |  💻 代码模板  |  📝 真题精练</p>
+<span class="slide-num">1 / 7</span>
 
-        <!-- Slide 1: 知识精讲 -->
-        <div class="slide">
-            <h2>📖 知识精讲：有序 vs 无序容器总览</h2>
-            <div class="cards three">
-                <div class="card">
-                    <h4>有序容器<br>set / map</h4>
-                    <p>底层：<strong>红黑树</strong><br>
-                    操作复杂度：O(log n)<br>
-                    自动排序 + 去重<br>
+<aside class="notes">【开场】第 1/7 页 · set/map 与 unordered 容器
+用 30 秒说明本课目标与学完能做什么，再进入正题。
+大纲考点：红黑树实现原理、哈希表实现、自定义比较器、unordered_map优化
+配套练习方向：去重与统计、自定义排序集合
+封面关键词：
+· CSP-S 考纲 · 红黑树原理 · 哈希表实现 · 自定义比较器与哈希
+· 📖 知识精讲 | 💻 代码模板 | 📝 真题精练
+互动：问学生「今天最想搞清楚什么？」，收 1–2 个期待。</aside>
+</div>
+<!-- Slide 1: 知识精讲 -->
+<div class="slide">
+<h2>📖 知识精讲：有序 vs 无序容器总览</h2>
+<div class="cards three">
+<div class="card">
+<h4>有序容器<br/>set / map</h4>
+<p>底层：<strong>红黑树</strong><br/>
+                    操作复杂度：O(log n)<br/>
+                    自动排序 + 去重<br/>
                     支持范围查询</p>
-                </div>
-                <div class="card">
-                    <h4>无序容器<br>unordered_set / map</h4>
-                    <p>底层：<strong>哈希表 (链地址法)</strong><br>
-                    操作复杂度：均摊 O(1)<br>
-                    不保证顺序<br>
+</div>
+<div class="card">
+<h4>无序容器<br/>unordered_set / map</h4>
+<p>底层：<strong>哈希表 (链地址法)</strong><br/>
+                    操作复杂度：均摊 O(1)<br/>
+                    不保证顺序<br/>
                     不支持范围查询</p>
-                </div>
-                <div class="card">
-                    <h4>可重复容器<br>multiset / multimap</h4>
-                    <p>底层：<strong>红黑树</strong><br>
-                    允许重复 key<br>
-                    count() 可返回 >1<br>
+</div>
+<div class="card">
+<h4>可重复容器<br/>multiset / multimap</h4>
+<p>底层：<strong>红黑树</strong><br/>
+                    允许重复 key<br/>
+                    count() 可返回 &gt;1<br/>
                     equal_range 查询</p>
-                </div>
+</div>
+</div>
+<table style="margin-top:16px;">
+<tr><th>需求</th><th>推荐容器</th><th>原因</th></tr>
+<tr><td>需要有序遍历</td><td>set / map</td><td>红黑树中序即有序</td></tr>
+<tr><td>需要范围查询</td><td>set / map</td><td>lower_bound / upper_bound</td></tr>
+<tr><td>纯增删查改</td><td>unordered_set / map</td><td>均摊 O(1)，更快</td></tr>
+<tr><td>不确定选哪个</td><td>map</td><td>稳定 O(log n)，不退化</td></tr>
+</table>
+<span class="slide-num">2 / 7</span>
+
+<aside class="notes">【讲解】📖 知识精讲：有序 vs 无序容器总览
+本页要点（照着讲即可）：
+· 有序容器 set / map
+· 底层： 红黑树 操作复杂度：O(log n) 自动排序 + 去重 支持范围查询
+· 无序容器 unordered_set / map
+· 底层： 哈希表 (链地址法) 操作复杂度：均摊 O(1) 不保证顺序 不支持范围查询
+· 哈希表 (链地址法)
+· 可重复容器 multiset / multimap
+讲解时放慢关键术语；用 1 个生活类比 + 1 个反例加深印象。
+本课大纲考点（可适时点题）：红黑树实现原理、哈希表实现、自定义比较器、unordered_map优化</aside>
+</div>
+<!-- Slide 2: 红黑树原理 -->
+<div class="slide">
+<h2>🧮 红黑树原理：5 条性质与插入修复</h2>
+<h3>红黑树的 5 条核心性质</h3>
+<ol>
+<li>每个节点要么是红色，要么是黑色</li>
+<li><strong>根节点是黑色</strong></li>
+<li>每个叶子节点（NIL）是黑色</li>
+<li><strong>红色节点的两个子节点必须是黑色</strong>（无连续红色）</li>
+<li>任一节点到所有叶子路径上，<strong>黑色节点数量相同</strong>（黑高相等）</li>
+</ol>
+<div class="highlight-box">
+<strong>推导：</strong>由性质 4 和 5 → 最长路径 ≤ 最短路径 × 2 → 树高 ≤ 2log(n+1) → 保证 O(log n)
             </div>
-            <table style="margin-top:16px;">
-                <tr><th>需求</th><th>推荐容器</th><th>原因</th></tr>
-                <tr><td>需要有序遍历</td><td>set / map</td><td>红黑树中序即有序</td></tr>
-                <tr><td>需要范围查询</td><td>set / map</td><td>lower_bound / upper_bound</td></tr>
-                <tr><td>纯增删查改</td><td>unordered_set / map</td><td>均摊 O(1)，更快</td></tr>
-                <tr><td>不确定选哪个</td><td>map</td><td>稳定 O(log n)，不退化</td></tr>
-            </table>
-            <span class="slide-num">2 / 7</span>
-        </div>
-
-        <!-- Slide 2: 红黑树原理 -->
-        <div class="slide">
-            <h2>🧮 红黑树原理：5 条性质与插入修复</h2>
-
-            <h3>红黑树的 5 条核心性质</h3>
-            <ol>
-                <li>每个节点要么是红色，要么是黑色</li>
-                <li><strong>根节点是黑色</strong></li>
-                <li>每个叶子节点（NIL）是黑色</li>
-                <li><strong>红色节点的两个子节点必须是黑色</strong>（无连续红色）</li>
-                <li>任一节点到所有叶子路径上，<strong>黑色节点数量相同</strong>（黑高相等）</li>
-            </ol>
-
-            <div class="highlight-box">
-                <strong>推导：</strong>由性质 4 和 5 → 最长路径 ≤ 最短路径 × 2 → 树高 ≤ 2log(n+1) → 保证 O(log n)
+<h3>插入修复：Case 1-3（父为祖父左子时）</h3>
+<table>
+<tr><th>Case</th><th>条件</th><th>修复</th></tr>
+<tr><td>1</td><td>叔叔为红色</td><td>颜色翻转：父叔变黑，祖父变红；递归向上</td></tr>
+<tr><td>2</td><td>叔叔黑色，新节点右孩子</td><td>左旋转为 Case 3</td></tr>
+<tr><td>3</td><td>叔叔黑色，新节点左孩子</td><td>右旋 + 颜色翻转；修复完成</td></tr>
+</table>
+<p>每次插入最多 2 次旋转（Case 2 + Case 3）→ 非常高效！</p>
+<div class="highlight-box warn" style="margin-top:8px;">
+<strong>为什么 C++ 选红黑树而非 AVL？</strong>STL 容器频繁 insert/erase，红黑树最多 3 次旋转即可完成删除修复，而 AVL 可能需要 O(log n) 次旋转向上回溯。
             </div>
+<span class="slide-num">3 / 7</span>
 
-            <h3>插入修复：Case 1-3（父为祖父左子时）</h3>
-            <table>
-                <tr><th>Case</th><th>条件</th><th>修复</th></tr>
-                <tr><td>1</td><td>叔叔为红色</td><td>颜色翻转：父叔变黑，祖父变红；递归向上</td></tr>
-                <tr><td>2</td><td>叔叔黑色，新节点右孩子</td><td>左旋转为 Case 3</td></tr>
-                <tr><td>3</td><td>叔叔黑色，新节点左孩子</td><td>右旋 + 颜色翻转；修复完成</td></tr>
-            </table>
-            <p>每次插入最多 2 次旋转（Case 2 + Case 3）→ 非常高效！</p>
-
-            <div class="highlight-box warn" style="margin-top:8px;">
-                <strong>为什么 C++ 选红黑树而非 AVL？</strong>STL 容器频繁 insert/erase，红黑树最多 3 次旋转即可完成删除修复，而 AVL 可能需要 O(log n) 次旋转向上回溯。
-            </div>
-            <span class="slide-num">3 / 7</span>
-        </div>
-
-        <!-- Slide 3: 代码模板 -->
-        <div class="slide">
-            <h2>💻 代码模板：自定义比较器与哈希</h2>
-
-            <h3>方法一：函数对象（Functor）</h3>
-            <pre><code><span class="keyword">struct</span> <span class="type">CmpByLen</span> {
+<aside class="notes">【讲解】🧮 红黑树原理：5 条性质与插入修复
+结合讲义《一、红黑树原理》强调：
+· 红黑树是一种**自平衡二叉搜索树**，它通过以下 5 条性质保证树的高度为 O(log n)：
+· 推导结论：由性质 4 和 5 可以推出，红黑树的最长路径不超过最短路径的 2 倍。因为：
+· 最短路径：全黑节点，长度 = 黑高 h
+· 最长路径：红黑交替，长度 = 2h − 1（红色节点不能连续）
+· 因此红黑树的高度上限为 2 log(n+1)，保证 O(log n) 的操作复杂度。
+幻灯片上可见要点：
+· 每个节点要么是红色，要么是黑色
+· 根节点是黑色
+· 每个叶子节点（NIL）是黑色
+· 红色节点的两个子节点必须是黑色 （无连续红色）
+讲解时放慢关键术语；用 1 个生活类比 + 1 个反例加深印象。</aside>
+</div>
+<!-- Slide 3: 代码模板 -->
+<div class="slide">
+<h2>💻 代码模板：自定义比较器与哈希</h2>
+<h3>方法一：函数对象（Functor）</h3>
+<pre><code><span class="keyword">struct</span> <span class="type">CmpByLen</span> {
     <span class="type">bool</span> <span class="keyword">operator</span>()(<span class="keyword">const</span> <span class="type">string</span>&amp; a, <span class="keyword">const</span> <span class="type">string</span>&amp; b) <span class="keyword">const</span> {
         <span class="keyword">if</span> (a.<span class="func">size</span>() != b.<span class="func">size</span>()) <span class="keyword">return</span> a.<span class="func">size</span>() &lt; b.<span class="func">size</span>();
         <span class="keyword">return</span> a &lt; b;
@@ -216,13 +243,11 @@ tr:hover td { background: rgba(96,165,250,0.06); }
 };
 <span class="type">set</span>&lt;<span class="type">string</span>, CmpByLen&gt; s;
 <span class="type">map</span>&lt;<span class="type">string</span>, <span class="type">int</span>, CmpByLen&gt; mp;</code></pre>
-
-            <h3>方法二：Lambda 表达式（C++11 + decltype）</h3>
-            <pre><code><span class="keyword">auto</span> cmp = [](<span class="type">int</span> a, <span class="type">int</span> b) { <span class="keyword">return</span> a &gt; b; };
+<h3>方法二：Lambda 表达式（C++11 + decltype）</h3>
+<pre><code><span class="keyword">auto</span> cmp = [](<span class="type">int</span> a, <span class="type">int</span> b) { <span class="keyword">return</span> a &gt; b; };
 <span class="type">set</span>&lt;<span class="type">int</span>, <span class="keyword">decltype</span>(cmp)&gt; s(cmp);  <span class="comment">// 必须传 lambda 给构造函数</span></code></pre>
-
-            <h3>自定义哈希（pair&lt;int,int&gt;）</h3>
-            <pre><code><span class="keyword">struct</span> <span class="type">PairHash</span> {
+<h3>自定义哈希（pair&lt;int,int&gt;）</h3>
+<pre><code><span class="keyword">struct</span> <span class="type">PairHash</span> {
     <span class="type">size_t</span> <span class="keyword">operator</span>()(<span class="keyword">const</span> <span class="type">pair</span>&lt;<span class="type">int</span>,<span class="type">int</span>&gt;&amp; p) <span class="keyword">const</span> {
         <span class="keyword">auto</span> h1 = <span class="type">hash</span>&lt;<span class="type">int</span>&gt;{}(p.first);
         <span class="keyword">auto</span> h2 = <span class="type">hash</span>&lt;<span class="type">int</span>&gt;{}(p.second);
@@ -232,57 +257,75 @@ tr:hover td { background: rgba(96,165,250,0.06); }
 };
 <span class="type">unordered_map</span>&lt;<span class="type">pair</span>&lt;<span class="type">int</span>,<span class="type">int</span>&gt;, <span class="type">int</span>, PairHash&gt; ump;
 ump.<span class="func">reserve</span>(<span class="number">100000</span>);  <span class="comment">// 预分配 bucket，终极优化</span></code></pre>
-            <span class="slide-num">4 / 7</span>
-        </div>
+<span class="slide-num">4 / 7</span>
 
-        <!-- Slide 4: 优化技巧与易错点 -->
-        <div class="slide">
-            <h2>⚠️ 易错点与优化技巧</h2>
-
-            <h3>6 大常见错误</h3>
-            <ol>
-                <li><strong>map 的 operator[] 意外插入元素</strong> — 只想检查存在性？用 <code>find()</code> 或 <code>count()</code></li>
-                <li><strong>set 迭代器无法修改元素</strong> — <code>set&lt;T&gt;::iterator</code> 即 <code>const_iterator</code></li>
-                <li><strong>rehash 使 unordered 迭代器全部失效</strong> — 预 <code>reserve</code> 避免 rehash</li>
-                <li><strong>自定义哈希质量差</strong> — 所有 key 映射到同一桶 → 退化为链表 O(n)</li>
-                <li><strong>忘记为自定义类型提供 operator&lt;</strong> — 用于 set/map 的红黑树排序</li>
-                <li><strong>对 unordered 容器调用 lower_bound</strong> — 不存在此方法，编译错误</li>
-            </ol>
-
-            <h3>性能优化速查</h3>
-            <div class="highlight-box green">
-                <strong>🔑 竞赛黄金法则：</strong><br>
-                ✅ <code>ump.reserve(n)</code> — 最廉价的哈希表优化，速度提升 2-5×<br>
-                ✅ <code>mp.emplace(key, val)</code> — 比 insert({key, val}) 少一次临时对象<br>
-                ✅ <code>set(v.begin(), v.end())</code> — 一步完成排序 + 去重<br>
+<aside class="notes">【讲解】💻 代码模板：自定义比较器与哈希
+结合讲义《💻 代码模板》强调：
+· using namespace std;
+· // ========== 1. 自定义比较器：按字符串长度排序的 set ==========
+· struct CmpByLen {
+· bool operator()(const string&amp; a, const string&amp; b) const {
+· if (a.size() != b.size()) return a.size() &lt; b.size();
+幻灯片上可见要点：
+· 💻 代码模板：自定义比较器与哈希
+· 方法一：函数对象（Functor）
+· struct
+· CmpByLen
+代码页节奏：先读懂输入输出 → 再走主流程 → 最后点出易错点（边界/类型/下标）。
+可让学生预测下一行输出，再运行对照。</aside>
+</div>
+<!-- Slide 4: 优化技巧与易错点 -->
+<div class="slide">
+<h2>⚠️ 易错点与优化技巧</h2>
+<h3>6 大常见错误</h3>
+<ol>
+<li><strong>map 的 operator[] 意外插入元素</strong> — 只想检查存在性？用 <code>find()</code> 或 <code>count()</code></li>
+<li><strong>set 迭代器无法修改元素</strong> — <code>set&lt;T&gt;::iterator</code> 即 <code>const_iterator</code></li>
+<li><strong>rehash 使 unordered 迭代器全部失效</strong> — 预 <code>reserve</code> 避免 rehash</li>
+<li><strong>自定义哈希质量差</strong> — 所有 key 映射到同一桶 → 退化为链表 O(n)</li>
+<li><strong>忘记为自定义类型提供 operator&lt;</strong> — 用于 set/map 的红黑树排序</li>
+<li><strong>对 unordered 容器调用 lower_bound</strong> — 不存在此方法，编译错误</li>
+</ol>
+<h3>性能优化速查</h3>
+<div class="highlight-box green">
+<strong>🔑 竞赛黄金法则：</strong><br/>
+                ✅ <code>ump.reserve(n)</code> — 最廉价的哈希表优化，速度提升 2-5×<br/>
+                ✅ <code>mp.emplace(key, val)</code> — 比 insert({key, val}) 少一次临时对象<br/>
+                ✅ <code>set(v.begin(), v.end())</code> — 一步完成排序 + 去重<br/>
                 ✅ <code>mp.lower_bound(x)</code> — 范围查询，哈希表做不到
             </div>
-
-            <div class="highlight-box warn" style="margin-top:14px;">
-                <strong>平衡树 vs 哈希表选择口诀：</strong>有序遍历用 map，范围查询用 map，纯查找用 unordered_map，不确定时用 map（保底 O(log n)）。
+<div class="highlight-box warn" style="margin-top:14px;">
+<strong>平衡树 vs 哈希表选择口诀：</strong>有序遍历用 map，范围查询用 map，纯查找用 unordered_map，不确定时用 map（保底 O(log n)）。
             </div>
-            <span class="slide-num">5 / 7</span>
-        </div>
+<span class="slide-num">5 / 7</span>
 
-        <!-- Slide 5: 真题精练 -->
-        <div class="slide">
-            <h2>📝 真题精练</h2>
-
-            <h3>真题一：区间覆盖查询（map + 差分）</h3>
-            <p>n 个 ADD [l, r] 操作和 QUERY x 操作，查询某点被多少个区间覆盖。坐标范围 10⁹，操作数 ≤ 2×10⁵。</p>
-            <pre><code><span class="comment">// 核心思路：用 map 维护差分数组（处理稀疏大坐标）</span>
+<aside class="notes">【讲解】⚠️ 易错点与优化技巧
+本页要点（照着讲即可）：
+· map 的 operator[] 意外插入元素 — 只想检查存在性？用 find() 或 count()
+· map 的 operator[] 意外插入元素
+· set 迭代器无法修改元素 — set::iterator 即 const_iterator
+· set 迭代器无法修改元素
+· rehash 使 unordered 迭代器全部失效 — 预 reserve 避免 rehash
+· rehash 使 unordered 迭代器全部失效
+讲解时放慢关键术语；用 1 个生活类比 + 1 个反例加深印象。</aside>
+</div>
+<!-- Slide 5: 真题精练 -->
+<div class="slide">
+<h2>📝 真题精练</h2>
+<h3>真题一：区间覆盖查询（map + 差分）</h3>
+<p>n 个 ADD [l, r] 操作和 QUERY x 操作，查询某点被多少个区间覆盖。坐标范围 10⁹，操作数 ≤ 2×10⁵。</p>
+<pre><code><span class="comment">// 核心思路：用 map 维护差分数组（处理稀疏大坐标）</span>
 <span class="type">map</span>&lt;<span class="type">int</span>, <span class="type">int</span>&gt; diff;
 <span class="keyword">for</span> (<span class="keyword">auto</span>&amp; [l, r] : adds) {
     diff[l]++;          <span class="comment">// 差分起点 +1</span>
     diff[r+<span class="number">1</span>]--;       <span class="comment">// 差分终点 -1</span>
 }
 <span class="comment">// 查询：前缀和累加到 ≤ x 即可得到覆盖数</span></code></pre>
-            <p><strong>复杂度：</strong>O(n log n) 时间（每次 map 操作 O(log n)），O(n) 空间。</p>
-            <p><strong>关键技巧：</strong>用 map 而非大数组处理 10⁹ 量级的稀疏坐标，map 自动排序保证前缀和累加的顺序正确。</p>
-
-            <h3>真题二：前 K 高频单词（unordered_map + sort）</h3>
-            <p>给定 n 个单词，找出频率前 k 高的单词。频率相同时按字典序升序。n ≤ 10⁵。</p>
-            <pre><code><span class="type">unordered_map</span>&lt;<span class="type">string</span>, <span class="type">int</span>&gt; freq;
+<p><strong>复杂度：</strong>O(n log n) 时间（每次 map 操作 O(log n)），O(n) 空间。</p>
+<p><strong>关键技巧：</strong>用 map 而非大数组处理 10⁹ 量级的稀疏坐标，map 自动排序保证前缀和累加的顺序正确。</p>
+<h3>真题二：前 K 高频单词（unordered_map + sort）</h3>
+<p>给定 n 个单词，找出频率前 k 高的单词。频率相同时按字典序升序。n ≤ 10⁵。</p>
+<pre><code><span class="type">unordered_map</span>&lt;<span class="type">string</span>, <span class="type">int</span>&gt; freq;
 freq.<span class="func">reserve</span>(n);   <span class="comment">// ① 预分配，避免 rehash</span>
 <span class="keyword">for</span> (<span class="keyword">auto</span>&amp; w : words) freq[w]++;
 
@@ -292,44 +335,58 @@ freq.<span class="func">reserve</span>(n);   <span class="comment">// ① 预分
     <span class="keyword">return</span> a.first &lt; b.first;  <span class="comment">// ③ 字典序升序</span>
 });
 <span class="comment">// 输出前 k 个</span></code></pre>
-            <p><strong>复杂度：</strong>O(n log n) 时间，O(n) 空间。若用 nth_element 可优化到 O(n + k log k)。</p>
-            <span class="slide-num">6 / 7</span>
-        </div>
+<p><strong>复杂度：</strong>O(n log n) 时间，O(n) 空间。若用 nth_element 可优化到 O(n + k log k)。</p>
+<span class="slide-num">6 / 7</span>
 
-        <!-- Slide 6: 总结 -->
-        <div class="slide">
-            <h2>🎯 本课小结</h2>
-            <table>
-                <tr><th style="width:25%">知识模块</th><th>核心要点</th></tr>
-                <tr><td>红黑树原理</td><td>5 条性质 → 树高 ≤ 2log(n+1)；旋转 + 颜色翻转修复</td></tr>
-                <tr><td>set / map</td><td>红黑树实现 O(log n)；自动排序去重；支持 lower_bound</td></tr>
-                <tr><td>自定义比较器</td><td>函数对象 / lambda+decltype / less 特化 三种方式</td></tr>
-                <tr><td>哈希表原理</td><td>链地址法；负载因子触发 rehash；哈希冲突解决</td></tr>
-                <tr><td>unordered 优化</td><td>reserve 预分配 bucket；自定义哈希；max_load_factor</td></tr>
-                <tr><td>选择策略</td><td>有序 → set/map；纯查找 → unordered；不确定 → map</td></tr>
-            </table>
-
-            <div class="highlight-box" style="margin-top:20px;">
-                <strong>🔑 一页纸速记：</strong><br>
-                <code>set/map</code> = 红黑树 → O(log n) → 有序、范围查询<br>
-                <code>unordered_map</code> = 哈希表 → O(1) → 快速查找、需 reserve<br>
-                比较器 3 写法 → 函数对象 / lambda+decltype / less 特化<br>
-                哈希 pair → hash_combine + 0x9e3779b9<br>
-                <code>reserve(n) + emplace()</code> = 最优 insert 模式
-            </div>
-            <span class="slide-num">7 / 7</span>
-        </div>
-    </div>
-
-    <!-- Navigation -->
-    <div id="nav-bar">
-        <button id="prevBtn" onclick="prevSlide()">◀ 上一页</button>
-        <span id="page-indicator">1 / 7</span>
-        <button id="nextBtn" onclick="nextSlide()">下一页 ▶</button>
-        <button id="homeBtn" onclick="goToSlide(0)" style="font-size:0.9em;">🏠</button>
-    </div>
+<aside class="notes">【讲解】📝 真题精练
+本页要点（照着讲即可）：
+· n 个 ADD [l, r] 操作和 QUERY x 操作，查询某点被多少个区间覆盖。坐标范围 10⁹，操作数 ≤ 2×10⁵。
+· 复杂度： O(n log n) 时间（每次 map 操作 O(log n)），O(n) 空间。
+· 复杂度：
+· 关键技巧： 用 map 而非大数组处理 10⁹ 量级的稀疏坐标，map 自动排序保证前缀和累加的顺序正确。
+· 关键技巧：
+· 给定 n 个单词，找出频率前 k 高的单词。频率相同时按字典序升序。n ≤ 10⁵。
+练习页节奏：先独立想 1 分钟 → 再点拨思路 → 最后对答案讲为什么。
+可联系：去重与统计、自定义排序集合</aside>
 </div>
+<!-- Slide 6: 总结 -->
+<div class="slide">
+<h2>🎯 本课小结</h2>
+<table>
+<tr><th style="width:25%">知识模块</th><th>核心要点</th></tr>
+<tr><td>红黑树原理</td><td>5 条性质 → 树高 ≤ 2log(n+1)；旋转 + 颜色翻转修复</td></tr>
+<tr><td>set / map</td><td>红黑树实现 O(log n)；自动排序去重；支持 lower_bound</td></tr>
+<tr><td>自定义比较器</td><td>函数对象 / lambda+decltype / less 特化 三种方式</td></tr>
+<tr><td>哈希表原理</td><td>链地址法；负载因子触发 rehash；哈希冲突解决</td></tr>
+<tr><td>unordered 优化</td><td>reserve 预分配 bucket；自定义哈希；max_load_factor</td></tr>
+<tr><td>选择策略</td><td>有序 → set/map；纯查找 → unordered；不确定 → map</td></tr>
+</table>
+<div class="highlight-box" style="margin-top:20px;">
+<strong>🔑 一页纸速记：</strong><br/>
+<code>set/map</code> = 红黑树 → O(log n) → 有序、范围查询<br/>
+<code>unordered_map</code> = 哈希表 → O(1) → 快速查找、需 reserve<br/>
+                比较器 3 写法 → 函数对象 / lambda+decltype / less 特化<br/>
+                哈希 pair → hash_combine + 0x9e3779b9<br/>
+<code>reserve(n) + emplace()</code> = 最优 insert 模式
+            </div>
+<span class="slide-num">7 / 7</span>
 
+<aside class="notes">【收尾】回顾本课主线：🎯 本课小结
+对照大纲再过一遍：红黑树实现原理、哈希表实现、自定义比较器、unordered_map优化
+板书/口述要点：
+· 🔑 一页纸速记：
+课后任务：去重与统计、自定义排序集合
+结束前留 2 分钟答疑；布置 1 道小练习检验是否真正掌握。</aside>
+</div>
+</div>
+<!-- Navigation -->
+<div id="nav-bar">
+<button id="prevBtn" onclick="prevSlide()">◀ 上一页</button>
+<span id="page-indicator">1 / 7</span>
+<button id="nextBtn" onclick="nextSlide()">下一页 ▶</button>
+<button id="homeBtn" onclick="goToSlide(0)" style="font-size:0.9em;">🏠</button>
+</div>
+</div>
 <script>
 const slides = document.querySelectorAll('.slide');
 const total   = slides.length;

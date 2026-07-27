@@ -1,8 +1,9 @@
 <!DOCTYPE html>
+
 <html lang="zh-CN">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
 <title>第14节：配对消除 —— 记忆翻牌游戏完成</title>
 <style>
 * { margin: 0; padding: 0; box-sizing: border-box; }
@@ -168,105 +169,154 @@ th { background: #e94560; color: white; font-weight: bold; }
 </style>
 </head>
 <body>
-
 <div id="slides">
-
 <!-- 第1页：标题页 -->
 <div class="slide active">
-    <div style="flex:1; display:flex; flex-direction:column; align-items:center; justify-content:center; text-align:center;">
-        <h1 style="font-size:64px; margin-bottom:10px;">第14节</h1>
-        <h1 style="font-size:56px; color:#f5c518;">配对消除</h1>
-        <h2 style="font-size:32px; color:#0fc9e7; border:none; margin-top:20px;">翻两张牌 · 判断匹配 · 延迟翻回 · 胜利判定</h2>
-        <div class="demo-cards" style="margin-top:35px;">
-            <div class="demo-card" style="background:#ff4444;">♥</div>
-            <div class="demo-card" style="background:#4a4a6a; border:3px solid #7a7aaa; color:#aaa;">?</div>
-            <div class="demo-card" style="background:#4a4a6a; border:3px solid #7a7aaa; color:#aaa;">?</div>
-            <div class="demo-card" style="background:#ff4444;">♥</div>
-        </div>
-        <p style="margin-top:20px; font-size:22px; color:#44cc44;">配对成功！</p>
-    </div>
+<div style="flex:1; display:flex; flex-direction:column; align-items:center; justify-content:center; text-align:center;">
+<h1 style="font-size:64px; margin-bottom:10px;">第14节</h1>
+<h1 style="font-size:56px; color:#f5c518;">配对消除</h1>
+<h2 style="font-size:32px; color:#0fc9e7; border:none; margin-top:20px;">翻两张牌 · 判断匹配 · 延迟翻回 · 胜利判定</h2>
+<div class="demo-cards" style="margin-top:35px;">
+<div class="demo-card" style="background:#ff4444;">♥</div>
+<div class="demo-card" style="background:#4a4a6a; border:3px solid #7a7aaa; color:#aaa;">?</div>
+<div class="demo-card" style="background:#4a4a6a; border:3px solid #7a7aaa; color:#aaa;">?</div>
+<div class="demo-card" style="background:#ff4444;">♥</div>
+</div>
+<p style="margin-top:20px; font-size:22px; color:#44cc44;">配对成功！</p>
 </div>
 
+<aside class="notes">【开场】第 1/14 页 · 配对消除
+用 30 秒说明本课目标与学完能做什么，再进入正题。
+大纲考点：**内容**：翻两张牌判断是否匹配、匹配成功消除、全部消除胜利
+
+**知识点**：
+- 游戏逻辑状态机（`等待第一张` → `等待第二张` → `检查匹配` →返回）
+- `pygame.time.delay(毫秒)` — 不匹配时延迟翻回
+- 步数统计 + 配对计数器
+
+**课堂练习**：完整的记忆翻牌游戏
+
+---
+
+## 📦 项目 6：飞机大战（第 15-16 节）
+封面关键词：
+· 配对成功！
+互动：问学生「今天最想搞清楚什么？」，收 1–2 个期待。</aside>
+</div>
 <!-- 第2页：学习目标 -->
 <div class="slide">
-    <h2>学习目标</h2>
-    <ul>
-        <li>理解<strong style="color:#f5c518;">游戏状态机</strong>的概念，用状态变量控制游戏流程</li>
-        <li>实现<strong style="color:#0fc9e7;">翻两张牌→判断匹配</strong>的完整逻辑</li>
-        <li>使用 <code style="color:#d2a8ff;">pygame.time.delay()</code> 实现<strong style="color:#f5c518;">延迟翻回</strong>效果</li>
-        <li>添加<strong style="color:#44cc44;">步数统计</strong>和<strong style="color:#44cc44;">配对计数器</strong></li>
-        <li>实现全部配对成功后的<strong style="color:#e94560;">胜利判定</strong></li>
-    </ul>
-    <div class="success-box" style="margin-top:20px;">
-        <strong>今天的目标：</strong>把上节课的"翻开看看"升级为完整的记忆翻牌游戏！
+<h2>学习目标</h2>
+<ul>
+<li>理解<strong style="color:#f5c518;">游戏状态机</strong>的概念，用状态变量控制游戏流程</li>
+<li>实现<strong style="color:#0fc9e7;">翻两张牌→判断匹配</strong>的完整逻辑</li>
+<li>使用 <code style="color:#d2a8ff;">pygame.time.delay()</code> 实现<strong style="color:#f5c518;">延迟翻回</strong>效果</li>
+<li>添加<strong style="color:#44cc44;">步数统计</strong>和<strong style="color:#44cc44;">配对计数器</strong></li>
+<li>实现全部配对成功后的<strong style="color:#e94560;">胜利判定</strong></li>
+</ul>
+<div class="success-box" style="margin-top:20px;">
+<strong>今天的目标：</strong>把上节课的"翻开看看"升级为完整的记忆翻牌游戏！
     </div>
-</div>
 
+<aside class="notes">【讲解】学习目标
+本页要点（照着讲即可）：
+· 理解 游戏状态机 的概念，用状态变量控制游戏流程
+· 游戏状态机
+· 实现 翻两张牌→判断匹配 的完整逻辑
+· 翻两张牌→判断匹配
+· 使用 pygame.time.delay() 实现 延迟翻回 效果
+· 延迟翻回
+讲解时放慢关键术语；用 1 个生活类比 + 1 个反例加深印象。
+本课大纲考点（可适时点题）：**内容**：翻两张牌判断是否匹配、匹配成功消除、全部消除胜利
+
+**知识点**：
+- 游戏逻辑状态机（`等待第一张` → `等待第二张` → `检查匹配` →返回）
+- `pygame.time.delay(毫秒)` — 不匹配时延迟翻回
+- 步数统计 + 配对计数器
+
+**课堂练习**：完整的记忆翻牌游戏
+
+---
+
+## 📦 项目 6：飞机大战（第 15-16 节）</aside>
+</div>
 <!-- 第3页：回顾上节课 -->
 <div class="slide">
-    <h2>上节课我们做了什么？</h2>
-    <div class="flex-row">
-        <div class="flex-col">
-            <div class="info-box">
-                <strong>已有功能：</strong>
-                <ul style="margin-top:8px;">
-                    <li>4x4 卡牌网格（16张牌）</li>
-                    <li>8种颜色，每种2张</li>
-                    <li>随机洗牌排列</li>
-                    <li>点击翻开卡牌</li>
-                    <li>三种状态：hidden / revealed / matched</li>
-                </ul>
-            </div>
-        </div>
-        <div class="flex-col">
-            <div class="warn-box">
-                <strong>今天要加的：</strong>
-                <ul style="margin-top:8px;">
-                    <li>翻两张后比较颜色</li>
-                    <li>相同 → 消除！</li>
-                    <li>不同 → 翻回去（延迟0.5秒）</li>
-                    <li>记录步数</li>
-                    <li>全部消除 → 胜利！</li>
-                </ul>
-            </div>
-        </div>
-    </div>
+<h2>上节课我们做了什么？</h2>
+<div class="flex-row">
+<div class="flex-col">
+<div class="info-box">
+<strong>已有功能：</strong>
+<ul style="margin-top:8px;">
+<li>4x4 卡牌网格（16张牌）</li>
+<li>8种颜色，每种2张</li>
+<li>随机洗牌排列</li>
+<li>点击翻开卡牌</li>
+<li>三种状态：hidden / revealed / matched</li>
+</ul>
+</div>
+</div>
+<div class="flex-col">
+<div class="warn-box">
+<strong>今天要加的：</strong>
+<ul style="margin-top:8px;">
+<li>翻两张后比较颜色</li>
+<li>相同 → 消除！</li>
+<li>不同 → 翻回去（延迟0.5秒）</li>
+<li>记录步数</li>
+<li>全部消除 → 胜利！</li>
+</ul>
+</div>
+</div>
 </div>
 
+<aside class="notes">【讲解】上节课我们做了什么？
+本页要点（照着讲即可）：
+· 已有功能：
+· 4x4 卡牌网格（16张牌）
+· 8种颜色，每种2张
+· 随机洗牌排列
+· 点击翻开卡牌
+· 三种状态：hidden / revealed / matched
+讲解时放慢关键术语；用 1 个生活类比 + 1 个反例加深印象。</aside>
+</div>
 <!-- 第4页：游戏状态机 -->
 <div class="slide">
-    <h2>核心知识一：游戏状态机</h2>
-    <p>程序在不同<strong style="color:#f5c518;">"阶段"</strong>之间切换，每个阶段做不同的事</p>
-
-    <div class="state-machine">
-        <div class="sm-box active">等待<br>第一张牌</div>
-        <div class="sm-arrow">→</div>
-        <div class="sm-box active">等待<br>第二张牌</div>
-        <div class="sm-arrow">→</div>
-        <div class="sm-box warn">检查<br>是否匹配</div>
-        <div class="sm-arrow-down"><span style="display:inline-block;">↙ 匹配成功 &nbsp;&nbsp;&nbsp;&nbsp; 不匹配 ↘</span></div>
-        <div style="display:flex; gap:10px; width:100%; justify-content:center; flex-wrap:wrap;">
-            <div class="sm-box success">变成 matched<br>（消除）</div>
-            <div class="sm-box warn">延迟 0.5s<br>翻回 hidden</div>
-        </div>
-        <div class="sm-arrow-down" style="margin-top:10px;">↓</div>
-        <div class="sm-box" style="margin-top:5px;">判断：8对全消除？</div>
-        <div class="sm-arrow-down">↙ 是 &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; 否 ↘</div>
-        <div style="display:flex; gap:10px; width:100%; justify-content:center;">
-            <div class="sm-box success" style="font-size:20px;">显示胜利！</div>
-            <div class="sm-box active">回到等待<br>第一张牌</div>
-        </div>
-    </div>
-
-    <div class="info-box">
-        <strong>生活类比：</strong>你做一道菜 —— "准备食材" → "开火炒菜" → "装盘出锅"。每个阶段只做该阶段的事。
-    </div>
+<h2>核心知识一：游戏状态机</h2>
+<p>程序在不同<strong style="color:#f5c518;">"阶段"</strong>之间切换，每个阶段做不同的事</p>
+<div class="state-machine">
+<div class="sm-box active">等待<br/>第一张牌</div>
+<div class="sm-arrow">→</div>
+<div class="sm-box active">等待<br/>第二张牌</div>
+<div class="sm-arrow">→</div>
+<div class="sm-box warn">检查<br/>是否匹配</div>
+<div class="sm-arrow-down"><span style="display:inline-block;">↙ 匹配成功      不匹配 ↘</span></div>
+<div style="display:flex; gap:10px; width:100%; justify-content:center; flex-wrap:wrap;">
+<div class="sm-box success">变成 matched<br/>（消除）</div>
+<div class="sm-box warn">延迟 0.5s<br/>翻回 hidden</div>
 </div>
+<div class="sm-arrow-down" style="margin-top:10px;">↓</div>
+<div class="sm-box" style="margin-top:5px;">判断：8对全消除？</div>
+<div class="sm-arrow-down">↙ 是          否 ↘</div>
+<div style="display:flex; gap:10px; width:100%; justify-content:center;">
+<div class="sm-box success" style="font-size:20px;">显示胜利！</div>
+<div class="sm-box active">回到等待<br/>第一张牌</div>
+</div>
+</div>
+<div class="info-box">
+<strong>生活类比：</strong>你做一道菜 —— "准备食材" → "开火炒菜" → "装盘出锅"。每个阶段只做该阶段的事。
+    </div>
 
+<aside class="notes">【讲解】核心知识一：游戏状态机
+本页要点（照着讲即可）：
+· 程序在不同 "阶段" 之间切换，每个阶段做不同的事
+· "阶段"
+· 生活类比：
+讲解时放慢关键术语；用 1 个生活类比 + 1 个反例加深印象。</aside>
+</div>
 <!-- 第5页：定义状态变量 -->
 <div class="slide">
-    <h2>用变量记录当前状态</h2>
-    <div class="code-block">
+<h2>用变量记录当前状态</h2>
+<div class="code-block">
 <pre>
 <span class="cm"># 定义4个游戏状态（用大写常量，不易打错）</span>
 STATE_WAIT_FIRST  = <span class="str">"wait_first"</span>    <span class="cm"># 等待翻第一张牌</span>
@@ -285,18 +335,22 @@ second_card = <span class="kw">None</span>
 steps = <span class="num">0</span>            <span class="cm"># 翻了几"对"牌（每翻两张算一步）</span>
 pairs_found = <span class="num">0</span>     <span class="cm"># 已经成功配对的牌对数</span>
 </pre>
-    </div>
-    <div class="highlight-box">
-        <strong>为什么需要这些变量？</strong> <br>
+</div>
+<div class="highlight-box">
+<strong>为什么需要这些变量？</strong> <br/>
         程序需要"记住"现在该做什么、刚才翻了哪张牌、还剩多少配对。
     </div>
-</div>
 
+<aside class="notes">【讲解】用变量记录当前状态
+本页要点（照着讲即可）：
+· 为什么需要这些变量？
+讲解时放慢关键术语；用 1 个生活类比 + 1 个反例加深印象。</aside>
+</div>
 <!-- 第6页：修改点击逻辑 -->
 <div class="slide">
-    <h2>知识二：根据状态处理点击</h2>
-    <p>同一个"点击"动作，在不同状态下做不同的事！</p>
-    <div class="code-block">
+<h2>知识二：根据状态处理点击</h2>
+<p>同一个"点击"动作，在不同状态下做不同的事！</p>
+<div class="code-block">
 <pre>
 <span class="kw">elif</span> event.type == pygame.MOUSEBUTTONDOWN:
     row, col = get_card_at_pos(event.pos[<span class="num">0</span>], event.pos[<span class="num">1</span>])
@@ -317,16 +371,20 @@ pairs_found = <span class="num">0</span>     <span class="cm"># 已经成功配�
             steps += <span class="num">1</span>                      <span class="cm"># 步数+1</span>
             game_state = STATE_CHECKING       <span class="cm"># 进入检查！</span>
 </pre>
-    </div>
-    <div class="warn-box">
-        <strong>注意：</strong> 不能点已经翻开的牌！<code>if card["state"] == "hidden"</code> 是关键判断。
-    </div>
 </div>
+<div class="warn-box">
+<strong>注意：</strong> 不能点已经翻开的牌！<code>if card["state"] == "hidden"</code> 是关键判断。
+    </div>
 
+<aside class="notes">【讲解】知识二：根据状态处理点击
+本页要点（照着讲即可）：
+· 同一个"点击"动作，在不同状态下做不同的事！
+讲解时放慢关键术语；用 1 个生活类比 + 1 个反例加深印象。</aside>
+</div>
 <!-- 第7页：判断匹配 -->
 <div class="slide">
-    <h2>知识三：比较两张牌是否相同</h2>
-    <div class="code-block">
+<h2>知识三：比较两张牌是否相同</h2>
+<div class="code-block">
 <pre>
 <span class="cm"># 在主循环中处理"检查匹配"状态</span>
 <span class="kw">if</span> game_state == STATE_CHECKING:
@@ -359,32 +417,39 @@ pairs_found = <span class="num">0</span>     <span class="cm"># 已经成功配�
     first_card = <span class="kw">None</span>
     second_card = <span class="kw">None</span>
 </pre>
-    </div>
 </div>
 
+<aside class="notes">【讲解】知识三：比较两张牌是否相同
+本页要点（照着讲即可）：
+· 知识三：比较两张牌是否相同
+· # 在主循环中处理"检查匹配"状态
+· game_state == STATE_CHECKING:
+· r1, c1 = first_card
+· r2, c2 = second_card
+· card1 = board[r1][c1]
+讲解时放慢关键术语；用 1 个生活类比 + 1 个反例加深印象。</aside>
+</div>
 <!-- 第8页：延迟翻回详解 -->
 <div class="slide">
-    <h2>为什么需要延迟？pygame.time.delay()</h2>
-    <div class="flex-row">
-        <div class="flex-col">
-            <h3 style="color:#e94560;">❌ 如果不加延迟：</h3>
-            <p>翻第二张牌 → 颜色闪过（太快看不见！）→ 立刻翻回</p>
-            <p>玩家根本来不及记住牌的位置！</p>
-        </div>
-        <div class="flex-col">
-            <h3 style="color:#44cc44;">✅ 加上延迟：</h3>
-            <p>翻第二张牌 → 显示两张牌 → 等0.5秒 → 翻回</p>
-            <p>玩家有足够时间看清并记忆！</p>
-        </div>
-    </div>
-
-    <div class="highlight-box" style="margin-top:15px;">
-        <strong>关键顺序（非常重要！）：</strong> <br>
-        <code>pygame.display.flip()</code> <strong style="color:#e94560;">必须在</strong> <code>pygame.time.delay(500)</code> <strong style="color:#e94560;">前面</strong><br>
+<h2>为什么需要延迟？pygame.time.delay()</h2>
+<div class="flex-row">
+<div class="flex-col">
+<h3 style="color:#e94560;">❌ 如果不加延迟：</h3>
+<p>翻第二张牌 → 颜色闪过（太快看不见！）→ 立刻翻回</p>
+<p>玩家根本来不及记住牌的位置！</p>
+</div>
+<div class="flex-col">
+<h3 style="color:#44cc44;">✅ 加上延迟：</h3>
+<p>翻第二张牌 → 显示两张牌 → 等0.5秒 → 翻回</p>
+<p>玩家有足够时间看清并记忆！</p>
+</div>
+</div>
+<div class="highlight-box" style="margin-top:15px;">
+<strong>关键顺序（非常重要！）：</strong> <br/>
+<code>pygame.display.flip()</code> <strong style="color:#e94560;">必须在</strong> <code>pygame.time.delay(500)</code> <strong style="color:#e94560;">前面</strong><br/>
         因为 delay 会暂停整个程序——如果不先 flip（刷新显示），屏幕上就看不到第二张牌！
     </div>
-
-    <div class="code-block">
+<div class="code-block">
 <pre>
 <span class="cm"># ✅ 正确顺序</span>
 pygame.display.flip()    <span class="cm"># 1. 先把画面刷新到屏幕上</span>
@@ -394,13 +459,21 @@ pygame.time.delay(<span class="num">500</span>)   <span class="cm"># 2. 再暂�
 <span class="cm"># pygame.time.delay(500)</span>
 <span class="cm"># pygame.display.flip()</span>
 </pre>
-    </div>
 </div>
 
+<aside class="notes">【讲解】为什么需要延迟？pygame.time.delay()
+本页要点（照着讲即可）：
+· 翻第二张牌 → 颜色闪过（太快看不见！）→ 立刻翻回
+· 玩家根本来不及记住牌的位置！
+· 翻第二张牌 → 显示两张牌 → 等0.5秒 → 翻回
+· 玩家有足够时间看清并记忆！
+· 关键顺序（非常重要！）：
+讲解时放慢关键术语；用 1 个生活类比 + 1 个反例加深印象。</aside>
+</div>
 <!-- 第9页：显示UI信息 -->
 <div class="slide">
-    <h2>知识四：显示步数和配对进度</h2>
-    <div class="code-block">
+<h2>知识四：显示步数和配对进度</h2>
+<div class="code-block">
 <pre>
 <span class="kw">def</span> <span class="fn">draw_ui</span>(screen, steps, pairs_found, game_state):
     font = pygame.font.Font(<span class="kw">None</span>, <span class="num">36</span>)       <span class="cm"># 默认字体，36号</span>
@@ -432,13 +505,22 @@ pygame.time.delay(<span class="num">500</span>)   <span class="cm"># 2. 再暂�
         rect2 = final_text.get_rect(center=(SCREEN_W//<span class="num">2</span>, SCREEN_H//<span class="num">2</span> + <span class="num">30</span>))
         screen.blit(final_text, rect2)
 </pre>
-    </div>
 </div>
 
+<aside class="notes">【讲解】知识四：显示步数和配对进度
+本页要点（照着讲即可）：
+· 知识四：显示步数和配对进度
+· draw_ui
+· (screen, steps, pairs_found, game_state):
+· font = pygame.font.Font(
+· None
+· # 默认字体，36号
+讲解时放慢关键术语；用 1 个生活类比 + 1 个反例加深印象。</aside>
+</div>
 <!-- 第10页：重置游戏 -->
 <div class="slide">
-    <h2>按R键重新开始</h2>
-    <div class="code-block">
+<h2>按R键重新开始</h2>
+<div class="code-block">
 <pre>
 <span class="cm"># 在事件处理中加入按键检测</span>
 <span class="kw">elif</span> event.type == pygame.KEYDOWN:
@@ -452,83 +534,129 @@ pygame.time.delay(<span class="num">500</span>)   <span class="cm"># 2. 再暂�
         pairs_found = <span class="num">0</span>                   <span class="cm"># 配对数归零</span>
         print(<span class="str">"游戏重新开始！"</span>)
 </pre>
-    </div>
-    <div class="info-box">
-        <strong>重置 = 把所有变量恢复到初始值</strong> <br>
+</div>
+<div class="info-box">
+<strong>重置 = 把所有变量恢复到初始值</strong> <br/>
         就像玩桌游时把牌全部翻回去、打乱、重新开始一样。
     </div>
-</div>
 
+<aside class="notes">【讲解】按R键重新开始
+本页要点（照着讲即可）：
+· 重置 = 把所有变量恢复到初始值
+讲解时放慢关键术语；用 1 个生活类比 + 1 个反例加深印象。</aside>
+</div>
 <!-- 第11页：完整游戏架构 -->
 <div class="slide">
-    <h2>完整游戏架构图</h2>
-    <table style="font-size:18px;">
-        <tr><th style="width:20%;">步骤</th><th>做什么</th></tr>
-        <tr><td>初始化</td><td>创建棋盘（洗牌）、设置状态变量、创建窗口</td></tr>
-        <tr><td>事件处理</td><td>QUIT退 / MOUSEBUTTONDOWN点击翻牌 / KEYDOWN按R重开</td></tr>
-        <tr><td>状态机逻辑</td><td>WAIT_FIRST → WAIT_SECOND → CHECKING → WAIT_FIRST (或 GAME_OVER)</td></tr>
-        <tr><td>比较颜色</td><td>card1["color"] == card2["color"] ? 匹配 : 不匹配</td></tr>
-        <tr><td>延迟翻回</td><td>不匹配时 flip() + delay(500) 再翻回去</td></tr>
-        <tr><td>胜利判断</td><td>pairs_found == 8 → GAME_OVER</td></tr>
-        <tr><td>绘制界面</td><td>draw_board() + draw_ui() + flip()</td></tr>
-    </table>
-</div>
+<h2>完整游戏架构图</h2>
+<table style="font-size:18px;">
+<tr><th style="width:20%;">步骤</th><th>做什么</th></tr>
+<tr><td>初始化</td><td>创建棋盘（洗牌）、设置状态变量、创建窗口</td></tr>
+<tr><td>事件处理</td><td>QUIT退 / MOUSEBUTTONDOWN点击翻牌 / KEYDOWN按R重开</td></tr>
+<tr><td>状态机逻辑</td><td>WAIT_FIRST → WAIT_SECOND → CHECKING → WAIT_FIRST (或 GAME_OVER)</td></tr>
+<tr><td>比较颜色</td><td>card1["color"] == card2["color"] ? 匹配 : 不匹配</td></tr>
+<tr><td>延迟翻回</td><td>不匹配时 flip() + delay(500) 再翻回去</td></tr>
+<tr><td>胜利判断</td><td>pairs_found == 8 → GAME_OVER</td></tr>
+<tr><td>绘制界面</td><td>draw_board() + draw_ui() + flip()</td></tr>
+</table>
 
+<aside class="notes">【讲解】完整游戏架构图
+本页要点（照着讲即可）：
+· 完整游戏架构图
+· 创建棋盘（洗牌）、设置状态变量、创建窗口
+· 事件处理
+· QUIT退 / MOUSEBUTTONDOWN点击翻牌 / KEYDOWN按R重开
+· 状态机逻辑
+· WAIT_FIRST → WAIT_SECOND → CHECKING → WAIT_FIRST (或 GAME_OVER)
+讲解时放慢关键术语；用 1 个生活类比 + 1 个反例加深印象。</aside>
+</div>
 <!-- 第12页：常见错误 -->
 <div class="slide">
-    <h2>写代码时注意这些坑！</h2>
-    <ul>
-        <li><strong style="color:#e94560;">flip() 和 delay() 的顺序</strong> —— 必须先 flip 再 delay，否则看不到牌</li>
-        <li><strong style="color:#e94560;">点了同一个位置两次</strong> —— 要判断第二张牌和第一张不是同一张</li>
-        <li><strong style="color:#e94560;">状态没切换回来</strong> —— CHECKING 结束后必须回到 WAIT_FIRST 或 GAME_OVER</li>
-        <li><strong style="color:#e94560;">重复翻已翻的牌</strong> —— 只处理 state == "hidden" 的牌</li>
-        <li><strong style="color:#e94560;">R键重置不完整</strong> —— 忘了重置某个变量，导致游戏状态混乱</li>
-        <li><strong style="color:#f5c518;">行和列搞反</strong> —— first_card = (row, col)，使用时也要 (row, col) 的顺序</li>
-    </ul>
-</div>
+<h2>写代码时注意这些坑！</h2>
+<ul>
+<li><strong style="color:#e94560;">flip() 和 delay() 的顺序</strong> —— 必须先 flip 再 delay，否则看不到牌</li>
+<li><strong style="color:#e94560;">点了同一个位置两次</strong> —— 要判断第二张牌和第一张不是同一张</li>
+<li><strong style="color:#e94560;">状态没切换回来</strong> —— CHECKING 结束后必须回到 WAIT_FIRST 或 GAME_OVER</li>
+<li><strong style="color:#e94560;">重复翻已翻的牌</strong> —— 只处理 state == "hidden" 的牌</li>
+<li><strong style="color:#e94560;">R键重置不完整</strong> —— 忘了重置某个变量，导致游戏状态混乱</li>
+<li><strong style="color:#f5c518;">行和列搞反</strong> —— first_card = (row, col)，使用时也要 (row, col) 的顺序</li>
+</ul>
 
+<aside class="notes">【讲解】写代码时注意这些坑！
+本页要点（照着讲即可）：
+· flip() 和 delay() 的顺序 —— 必须先 flip 再 delay，否则看不到牌
+· flip() 和 delay() 的顺序
+· 点了同一个位置两次 —— 要判断第二张牌和第一张不是同一张
+· 点了同一个位置两次
+· 状态没切换回来 —— CHECKING 结束后必须回到 WAIT_FIRST 或 GAME_OVER
+· 状态没切换回来
+代码页节奏：先读懂输入输出 → 再走主流程 → 最后点出易错点（边界/类型/下标）。
+可让学生预测下一行输出，再运行对照。</aside>
+</div>
 <!-- 第13页：课堂任务 -->
 <div class="slide">
-    <h2>课堂任务</h2>
-    <h3 style="color:#f5c518;">基础任务（都要完成）</h3>
-    <ol>
-        <li><strong>添加状态机</strong> —— 定义4个状态常量，用 game_state 控制流程</li>
-        <li><strong>实现两牌比较</strong> —— 翻第一张→翻第二张→比较颜色→匹配/不匹配处理</li>
-        <li><strong>添加统计和胜利</strong> —— 步数显示、配对进度、8对全配对视胜利</li>
-    </ol>
-    <h3 style="color:#0fc9e7; margin-top:15px;">挑战任务（选做）</h3>
-    <ul>
-        <li><strong>最佳成绩</strong> —— 用最少步数完成，打破记录会有提示</li>
-        <li><strong>评分系统</strong> —— 8步⭐⭐⭐ / 9-12步⭐⭐ / 13-16步⭐</li>
-        <li><strong>倒计时</strong> —— 限时60秒，超时显示"时间到！"</li>
-        <li><strong>难度升级</strong> —— 6x6棋盘（36张牌，18对）</li>
-    </ul>
-</div>
+<h2>课堂任务</h2>
+<h3 style="color:#f5c518;">基础任务（都要完成）</h3>
+<ol>
+<li><strong>添加状态机</strong> —— 定义4个状态常量，用 game_state 控制流程</li>
+<li><strong>实现两牌比较</strong> —— 翻第一张→翻第二张→比较颜色→匹配/不匹配处理</li>
+<li><strong>添加统计和胜利</strong> —— 步数显示、配对进度、8对全配对视胜利</li>
+</ol>
+<h3 style="color:#0fc9e7; margin-top:15px;">挑战任务（选做）</h3>
+<ul>
+<li><strong>最佳成绩</strong> —— 用最少步数完成，打破记录会有提示</li>
+<li><strong>评分系统</strong> —— 8步⭐⭐⭐ / 9-12步⭐⭐ / 13-16步⭐</li>
+<li><strong>倒计时</strong> —— 限时60秒，超时显示"时间到！"</li>
+<li><strong>难度升级</strong> —— 6x6棋盘（36张牌，18对）</li>
+</ul>
 
+<aside class="notes">【讲解】课堂任务
+本页要点（照着讲即可）：
+· 添加状态机 —— 定义4个状态常量，用 game_state 控制流程
+· 添加状态机
+· 实现两牌比较 —— 翻第一张→翻第二张→比较颜色→匹配/不匹配处理
+· 实现两牌比较
+· 添加统计和胜利 —— 步数显示、配对进度、8对全配对视胜利
+· 添加统计和胜利
+讲解时放慢关键术语；用 1 个生活类比 + 1 个反例加深印象。</aside>
+</div>
 <!-- 第14页：总结 -->
 <div class="slide">
-    <h2>本节要点回顾</h2>
-    <table style="width:100%;">
-        <tr><th style="width:30%;">知识点</th><th>核心内容</th></tr>
-        <tr><td>状态机</td><td>等待第一张 → 等待第二张 → 检查匹配 → 返回</td></tr>
-        <tr><td>两张牌比较</td><td><code>card1["color"] == card2["color"]</code> 判断是否匹配</td></tr>
-        <tr><td>延迟翻回</td><td><code>flip()</code> 在 <code>delay(500)</code> 前面，不匹配时翻回 hidden</td></tr>
-        <tr><td>步数统计</td><td>每翻一对牌 steps += 1，显示在左上角</td></tr>
-        <tr><td>配对计数</td><td>匹配成功 pairs_found += 1，显示配对进度</td></tr>
-        <tr><td>胜利判断</td><td>pairs_found == 8 → 显示胜利画面</td></tr>
-        <tr><td>重启游戏</td><td>按R键重新洗牌，所有变量归零</td></tr>
-    </table>
-    <div class="success-box" style="margin-top:20px; text-align:center;">
-        <strong style="font-size:26px;">恭喜！你已经完成了一个完整的记忆翻牌游戏！</strong><br>
-        <span style="font-size:20px;">从二维列表、卡牌绘制，到状态机、配对逻辑——你已经掌握了很多编程技能！</span>
-    </div>
+<h2>本节要点回顾</h2>
+<table style="width:100%;">
+<tr><th style="width:30%;">知识点</th><th>核心内容</th></tr>
+<tr><td>状态机</td><td>等待第一张 → 等待第二张 → 检查匹配 → 返回</td></tr>
+<tr><td>两张牌比较</td><td><code>card1["color"] == card2["color"]</code> 判断是否匹配</td></tr>
+<tr><td>延迟翻回</td><td><code>flip()</code> 在 <code>delay(500)</code> 前面，不匹配时翻回 hidden</td></tr>
+<tr><td>步数统计</td><td>每翻一对牌 steps += 1，显示在左上角</td></tr>
+<tr><td>配对计数</td><td>匹配成功 pairs_found += 1，显示配对进度</td></tr>
+<tr><td>胜利判断</td><td>pairs_found == 8 → 显示胜利画面</td></tr>
+<tr><td>重启游戏</td><td>按R键重新洗牌，所有变量归零</td></tr>
+</table>
+<div class="success-box" style="margin-top:20px; text-align:center;">
+<strong style="font-size:26px;">恭喜！你已经完成了一个完整的记忆翻牌游戏！</strong><br/>
+<span style="font-size:20px;">从二维列表、卡牌绘制，到状态机、配对逻辑——你已经掌握了很多编程技能！</span>
 </div>
 
-</div><!-- /slides -->
+<aside class="notes">【收尾】回顾本课主线：本节要点回顾
+对照大纲再过一遍：**内容**：翻两张牌判断是否匹配、匹配成功消除、全部消除胜利
 
+**知识点**：
+- 游戏逻辑状态机（`等待第一张` → `等待第二张` → `检查匹配` →返回）
+- `pygame.time.delay(毫秒)` — 不匹配时延迟翻回
+- 步数统计 + 配对计数器
+
+**课堂练习**：完整的记忆翻牌游戏
+
+---
+
+## 📦 项目 6：飞机大战（第 15-16 节）
+板书/口述要点：
+· 恭喜！你已经完成了一个完整的记忆翻牌游戏！
+结束前留 2 分钟答疑；布置 1 道小练习检验是否真正掌握。</aside>
+</div>
+</div><!-- /slides -->
 <div class="page-num" id="pageNum">1 / 14</div>
 <div class="arrow-hint">← 键盘左右方向键翻页 →</div>
-
 <script>
 (function() {
     var slides = document.querySelectorAll('.slide');

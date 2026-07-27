@@ -1,8 +1,9 @@
 <!DOCTYPE html>
+
 <html lang="zh-CN">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
 <title>第03课：vector 与 string 高级用法</title>
 <style>
 * { margin: 0; padding: 0; box-sizing: border-box; }
@@ -113,85 +114,102 @@ tr:hover td { background: rgba(96,165,250,0.06); }
 </head>
 <body>
 <div id="app">
-    <div id="slide-container">
-        <!-- Slide 0 -->
-        <div class="slide active title-slide">
-            <h1>第03课</h1>
-            <div class="subtitle">vector 与 string 高级用法</div>
-            <p class="info">CSP-S 考纲 · 均摊复杂度分析 · 迭代器安全 · 性能优化</p>
-            <p class="info" style="margin-top:24px;">📖 知识精讲 &nbsp;|&nbsp; 💻 代码模板 &nbsp;|&nbsp; 📝 真题精练</p>
-            <span class="slide-num">1 / 7</span>
-        </div>
+<div id="slide-container">
+<!-- Slide 0 -->
+<div class="slide active title-slide">
+<h1>第03课</h1>
+<div class="subtitle">vector 与 string 高级用法</div>
+<p class="info">CSP-S 考纲 · 均摊复杂度分析 · 迭代器安全 · 性能优化</p>
+<p class="info" style="margin-top:24px;">📖 知识精讲  |  💻 代码模板  |  📝 真题精练</p>
+<span class="slide-num">1 / 7</span>
 
-        <!-- Slide 1: 知识精讲 -->
-        <div class="slide">
-            <h2>📖 知识精讲：核心知识点总览</h2>
-            <div class="cards">
-                <div class="card">
-                    <h4>1. vector 内存管理</h4>
-                    <p>size vs capacity；reserve / resize / shrink_to_fit；扩容因子 1.5 或 2 的数学原理；均摊 O(1) 证明；swap 技巧强制释放内存</p>
-                </div>
-                <div class="card">
-                    <h4>2. string 高阶操作</h4>
-                    <p>find / rfind / find_first_of / find_last_of / find_first_not_of；substr 安全使用；compare 子串比较；string::npos 正确判断</p>
-                </div>
-                <div class="card">
-                    <h4>3. stringstream 三大用途</h4>
-                    <p>万能类型转换；格式化输入输出（模拟 scanf/printf）；字符串分割（getline + 分隔符）</p>
-                </div>
-                <div class="card">
-                    <h4>4. 迭代器失效</h4>
-                    <p>插入/删除/重新分配导致失效的 6 种场景；erase 返回值更新；erase-remove 惯用法；C++20 erase_if</p>
-                </div>
+<aside class="notes">【开场】第 1/7 页 · vector 与 string 高级用法
+用 30 秒说明本课目标与学完能做什么，再进入正题。
+大纲考点：vector内存管理、string的find/substr、stringstream、迭代器失效
+配套练习方向：字符串处理综合题、动态数组应用
+封面关键词：
+· CSP-S 考纲 · 均摊复杂度分析 · 迭代器安全 · 性能优化
+· 📖 知识精讲 | 💻 代码模板 | 📝 真题精练
+互动：问学生「今天最想搞清楚什么？」，收 1–2 个期待。</aside>
+</div>
+<!-- Slide 1: 知识精讲 -->
+<div class="slide">
+<h2>📖 知识精讲：核心知识点总览</h2>
+<div class="cards">
+<div class="card">
+<h4>1. vector 内存管理</h4>
+<p>size vs capacity；reserve / resize / shrink_to_fit；扩容因子 1.5 或 2 的数学原理；均摊 O(1) 证明；swap 技巧强制释放内存</p>
+</div>
+<div class="card">
+<h4>2. string 高阶操作</h4>
+<p>find / rfind / find_first_of / find_last_of / find_first_not_of；substr 安全使用；compare 子串比较；string::npos 正确判断</p>
+</div>
+<div class="card">
+<h4>3. stringstream 三大用途</h4>
+<p>万能类型转换；格式化输入输出（模拟 scanf/printf）；字符串分割（getline + 分隔符）</p>
+</div>
+<div class="card">
+<h4>4. 迭代器失效</h4>
+<p>插入/删除/重新分配导致失效的 6 种场景；erase 返回值更新；erase-remove 惯用法；C++20 erase_if</p>
+</div>
+</div>
+<div class="highlight-box" style="margin-top:14px;">
+<strong>💡 CSP-S 考试重点：</strong>迭代器失效是选择题和阅读程序题的高频考点；vector 内存管理和 stringstream 的灵活运用是完善程序和编程题得分关键。
             </div>
-            <div class="highlight-box" style="margin-top:14px;">
-                <strong>💡 CSP-S 考试重点：</strong>迭代器失效是选择题和阅读程序题的高频考点；vector 内存管理和 stringstream 的灵活运用是完善程序和编程题得分关键。
-            </div>
-            <span class="slide-num">2 / 7</span>
-        </div>
+<span class="slide-num">2 / 7</span>
 
-        <!-- Slide 2: 原理推导 -->
-        <div class="slide">
-            <h2>🧮 原理推导：vector 扩容与均摊分析</h2>
-            <h3>扩容因子 k 的影响</h3>
-            <table>
-                <tr><th>因子</th><th>实现</th><th>最大内存浪费</th><th>级数收敛</th></tr>
-                <tr><td>k = 2</td><td>GCC libstdc++</td><td>100%</td><td>发散（不能复用内存）</td></tr>
-                <tr><td>k = 1.5</td><td>MSVC / Clang libc++</td><td>50%</td><td>收敛（可复用旧内存）</td></tr>
-            </table>
-
-            <h3>均摊 O(1) 证明（k = 2）</h3>
-            <pre><code><span class="comment">// 插入 n 个元素，容量序列：1, 2, 4, 8, ..., 2^m  (2^m ≥ n)</span>
+<aside class="notes">【讲解】📖 知识精讲：核心知识点总览
+本页要点（照着讲即可）：
+· 1. vector 内存管理
+· size vs capacity；reserve / resize / shrink_to_fit；扩容因子 1.5 或 2 的数学原理；均摊 O(1) 证明；swap 技巧强制释放内存
+· 2. string 高阶操作
+· find / rfind / find_first_of / find_last_of / find_first_not_of；substr 安全使用；compare 子串比较；string::npos 正确判断
+· 3. stringstream 三大用途
+· 万能类型转换；格式化输入输出（模拟 scanf/printf）；字符串分割（getline + 分隔符）
+讲解时放慢关键术语；用 1 个生活类比 + 1 个反例加深印象。
+本课大纲考点（可适时点题）：vector内存管理、string的find/substr、stringstream、迭代器失效</aside>
+</div>
+<!-- Slide 2: 原理推导 -->
+<div class="slide">
+<h2>🧮 原理推导：vector 扩容与均摊分析</h2>
+<h3>扩容因子 k 的影响</h3>
+<table>
+<tr><th>因子</th><th>实现</th><th>最大内存浪费</th><th>级数收敛</th></tr>
+<tr><td>k = 2</td><td>GCC libstdc++</td><td>100%</td><td>发散（不能复用内存）</td></tr>
+<tr><td>k = 1.5</td><td>MSVC / Clang libc++</td><td>50%</td><td>收敛（可复用旧内存）</td></tr>
+</table>
+<h3>均摊 O(1) 证明（k = 2）</h3>
+<pre><code><span class="comment">// 插入 n 个元素，容量序列：1, 2, 4, 8, ..., 2^m  (2^m ≥ n)</span>
 <span class="comment">// 扩容时拷贝总次数：1 + 2 + 4 + ... + 2^(m-1) = 2^m - 1 ≤ 2n - 1</span>
 <span class="comment">// 均摊拷贝：(2n-1) / n ≈ 2 → O(1)</span>
 
 <span class="keyword">vector</span>&lt;<span class="type">int</span>&gt; v;
 v.<span class="func">reserve</span>(<span class="number">100000</span>);  <span class="comment">// 最佳实践：一次分配，永不扩容</span></code></pre>
-
-            <h3>swap 释放内存的原理</h3>
-            <pre><code><span class="comment">// clear() 和 shrink_to_fit() 都不能 100% 保证释放内存</span>
+<h3>swap 释放内存的原理</h3>
+<pre><code><span class="comment">// clear() 和 shrink_to_fit() 都不能 100% 保证释放内存</span>
 <span class="comment">// = 唯一可靠的方法：与临时空 vector 交换 =</span>
 <span class="keyword">vector</span>&lt;<span class="type">int</span>&gt;().<span class="func">swap</span>(v);  <span class="comment">// 临时对象析构时释放 v 原来持有的内存</span></code></pre>
-
-            <div class="highlight-box warn">
-                <strong>⚠️ 关键区别：</strong>reserve 只改变 capacity，resize 改变 size（可能顺带改变 capacity）。
+<div class="highlight-box warn">
+<strong>⚠️ 关键区别：</strong>reserve 只改变 capacity，resize 改变 size（可能顺带改变 capacity）。
                 <code>v[3] = 42</code> 需要 <code>3 &lt; v.size()</code> 而不是 <code>3 &lt; v.capacity()</code>！
             </div>
-            <span class="slide-num">3 / 7</span>
-        </div>
+<span class="slide-num">3 / 7</span>
 
-        <!-- Slide 3: 代码模板 -->
-        <div class="slide">
-            <h2>💻 代码模板：高频操作速查</h2>
-
-            <h3>vector 最优填充模式</h3>
-            <pre><code><span class="keyword">vector</span>&lt;<span class="type">int</span>&gt; v;
+<aside class="notes">【讲解】🧮 原理推导：vector 扩容与均摊分析
+本页要点（照着讲即可）：
+· ⚠️ 关键区别：
+讲解时放慢关键术语；用 1 个生活类比 + 1 个反例加深印象。</aside>
+</div>
+<!-- Slide 3: 代码模板 -->
+<div class="slide">
+<h2>💻 代码模板：高频操作速查</h2>
+<h3>vector 最优填充模式</h3>
+<pre><code><span class="keyword">vector</span>&lt;<span class="type">int</span>&gt; v;
 v.<span class="func">reserve</span>(n);          <span class="comment">// ① 先预分配</span>
 <span class="keyword">for</span> (<span class="type">int</span> i = <span class="number">0</span>; i &lt; n; i++)
     v.<span class="func">emplace_back</span>(i);   <span class="comment">// ② 再原位构造 (比 push_back 快 30-50%)</span></code></pre>
-
-            <h3>字符串分割</h3>
-            <pre><code><span class="keyword">vector</span>&lt;<span class="type">string</span>&gt; <span class="func">split</span>(<span class="keyword">const</span> <span class="type">string</span>&amp; s, <span class="type">char</span> delim) {
+<h3>字符串分割</h3>
+<pre><code><span class="keyword">vector</span>&lt;<span class="type">string</span>&gt; <span class="func">split</span>(<span class="keyword">const</span> <span class="type">string</span>&amp; s, <span class="type">char</span> delim) {
     <span class="keyword">vector</span>&lt;<span class="type">string</span>&gt; tokens;
     <span class="type">stringstream</span> ss(s);
     <span class="type">string</span> token;
@@ -200,14 +218,12 @@ v.<span class="func">reserve</span>(n);          <span class="comment">// ① �
             tokens.<span class="func">push_back</span>(token);
     <span class="keyword">return</span> tokens;
 }</code></pre>
-
-            <h3>迭代器安全删除（erase-remove 惯用法）</h3>
-            <pre><code><span class="comment">// 删除所有偶数</span>
+<h3>迭代器安全删除（erase-remove 惯用法）</h3>
+<pre><code><span class="comment">// 删除所有偶数</span>
 v.<span class="func">erase</span>(<span class="func">remove_if</span>(v.<span class="func">begin</span>(), v.<span class="func">end</span>(),
     [](<span class="type">int</span> x) { <span class="keyword">return</span> x % <span class="number">2</span> == <span class="number">0</span>; }), v.<span class="func">end</span>());</code></pre>
-
-            <h3>stringstream 类型转换</h3>
-            <pre><code><span class="comment">// 任意类型 → string</span>
+<h3>stringstream 类型转换</h3>
+<pre><code><span class="comment">// 任意类型 → string</span>
 <span class="keyword">template</span>&lt;<span class="keyword">typename</span> T&gt; <span class="type">string</span> <span class="func">tos</span>(<span class="keyword">const</span> T&amp; v) {
     <span class="type">ostringstream</span> oss; oss &lt;&lt; v; <span class="keyword">return</span> oss.<span class="func">str</span>();
 }
@@ -215,24 +231,37 @@ v.<span class="func">erase</span>(<span class="func">remove_if</span>(v.<span cl
 <span class="keyword">template</span>&lt;<span class="keyword">typename</span> T&gt; T <span class="func">sto</span>(<span class="keyword">const</span> <span class="type">string</span>&amp; s) {
     T val; <span class="type">istringstream</span>(s) &gt;&gt; val; <span class="keyword">return</span> val;
 }</code></pre>
-            <span class="slide-num">4 / 7</span>
-        </div>
+<span class="slide-num">4 / 7</span>
 
-        <!-- Slide 4: 易错点 -->
-        <div class="slide">
-            <h2>⚠️ 易错点：6 大迭代器失效场景</h2>
-            <table>
-                <tr><th>场景</th><th>操作</th><th>失效范围</th><th>解决办法</th></tr>
-                <tr><td>1</td><td>push_back 触发扩容</td><td>所有迭代器失效</td><td>提前 reserve</td></tr>
-                <tr><td>2</td><td>insert 触发扩容</td><td>所有迭代器失效</td><td>提前 reserve + 使用返回值</td></tr>
-                <tr><td>3</td><td>insert 未扩容</td><td>插入点之后失效</td><td><code>it = v.insert(it, val);</code></td></tr>
-                <tr><td>4</td><td>erase 删除元素</td><td>删除点及之后失效</td><td><code>it = v.erase(it);</code></td></tr>
-                <tr><td>5</td><td>resize 增大</td><td>可能所有失效</td><td>先 reserve 再 resize</td></tr>
-                <tr><td>6</td><td>clear / swap</td><td>所有迭代器失效</td><td>重新获取迭代器</td></tr>
-            </table>
-
-            <h3>常见错误示例</h3>
-            <pre><code><span class="comment">// ❌ 错误：erase 后迭代器失效，++it 是未定义行为</span>
+<aside class="notes">【讲解】💻 代码模板：高频操作速查
+结合讲义《💻 代码模板》强调：
+· using namespace std;
+· // ========== 1. vector 内存管理优化模板 ==========
+· vector build_with_reserve(int n) {
+· vector v;
+· v.reserve(n); // 关键：避免扩容
+幻灯片上可见要点：
+· 💻 代码模板：高频操作速查
+· vector 最优填充模式
+· vector
+· reserve
+代码页节奏：先读懂输入输出 → 再走主流程 → 最后点出易错点（边界/类型/下标）。
+可让学生预测下一行输出，再运行对照。</aside>
+</div>
+<!-- Slide 4: 易错点 -->
+<div class="slide">
+<h2>⚠️ 易错点：6 大迭代器失效场景</h2>
+<table>
+<tr><th>场景</th><th>操作</th><th>失效范围</th><th>解决办法</th></tr>
+<tr><td>1</td><td>push_back 触发扩容</td><td>所有迭代器失效</td><td>提前 reserve</td></tr>
+<tr><td>2</td><td>insert 触发扩容</td><td>所有迭代器失效</td><td>提前 reserve + 使用返回值</td></tr>
+<tr><td>3</td><td>insert 未扩容</td><td>插入点之后失效</td><td><code>it = v.insert(it, val);</code></td></tr>
+<tr><td>4</td><td>erase 删除元素</td><td>删除点及之后失效</td><td><code>it = v.erase(it);</code></td></tr>
+<tr><td>5</td><td>resize 增大</td><td>可能所有失效</td><td>先 reserve 再 resize</td></tr>
+<tr><td>6</td><td>clear / swap</td><td>所有迭代器失效</td><td>重新获取迭代器</td></tr>
+</table>
+<h3>常见错误示例</h3>
+<pre><code><span class="comment">// ❌ 错误：erase 后迭代器失效，++it 是未定义行为</span>
 <span class="keyword">for</span> (<span class="keyword">auto</span> it = v.<span class="func">begin</span>(); it != v.<span class="func">end</span>(); ++it)
     <span class="keyword">if</span> (*it % <span class="number">2</span> == <span class="number">0</span>) v.<span class="func">erase</span>(it);  <span class="comment">// 💥 崩溃！</span>
 
@@ -240,20 +269,22 @@ v.<span class="func">erase</span>(<span class="func">remove_if</span>(v.<span cl
 <span class="keyword">for</span> (<span class="keyword">auto</span> it = v.<span class="func">begin</span>(); it != v.<span class="func">end</span>(); )
     <span class="keyword">if</span> (*it % <span class="number">2</span> == <span class="number">0</span>) it = v.<span class="func">erase</span>(it);
     <span class="keyword">else</span> ++it;</code></pre>
-
-            <div class="highlight-box warn">
-                <strong>⚠️ 额外陷阱：</strong><code>string::find</code> 返回值是 <code>size_t</code>（无符号类型），不要用 <code>&gt;= 0</code> 判断，必须用 <code>!= string::npos</code>。用 int 接收会发生截断！
+<div class="highlight-box warn">
+<strong>⚠️ 额外陷阱：</strong><code>string::find</code> 返回值是 <code>size_t</code>（无符号类型），不要用 <code>&gt;= 0</code> 判断，必须用 <code>!= string::npos</code>。用 int 接收会发生截断！
             </div>
-            <span class="slide-num">5 / 7</span>
-        </div>
+<span class="slide-num">5 / 7</span>
 
-        <!-- Slide 5: 真题精练 -->
-        <div class="slide">
-            <h2>📝 真题精练</h2>
-
-            <h3>真题一：字符串展开</h3>
-            <p>给定压缩字符串如 <code>3(ab)</code> → <code>ababab</code>，<code>2(a3(bc))</code> → <code>abcbcbcabcbcbc</code>，支持嵌套。展开后总长度 ≤ 10⁶。</p>
-            <pre><code><span class="keyword">string</span> <span class="func">decode</span>(<span class="keyword">const</span> <span class="type">string</span>&amp; s, <span class="type">int</span>&amp; pos) {
+<aside class="notes">【讲解】⚠️ 易错点：6 大迭代器失效场景
+本页要点（照着讲即可）：
+· ⚠️ 额外陷阱：
+讲解时放慢关键术语；用 1 个生活类比 + 1 个反例加深印象。</aside>
+</div>
+<!-- Slide 5: 真题精练 -->
+<div class="slide">
+<h2>📝 真题精练</h2>
+<h3>真题一：字符串展开</h3>
+<p>给定压缩字符串如 <code>3(ab)</code> → <code>ababab</code>，<code>2(a3(bc))</code> → <code>abcbcbcabcbcbc</code>，支持嵌套。展开后总长度 ≤ 10⁶。</p>
+<pre><code><span class="keyword">string</span> <span class="func">decode</span>(<span class="keyword">const</span> <span class="type">string</span>&amp; s, <span class="type">int</span>&amp; pos) {
     <span class="keyword">string</span> result;
     <span class="keyword">while</span> (pos &lt; (<span class="type">int</span>)s.<span class="func">size</span>()) {
         <span class="keyword">if</span> (s[pos] == <span class="string">')'</span>) { pos++; <span class="keyword">return</span> result; }
@@ -267,45 +298,56 @@ v.<span class="func">erase</span>(<span class="func">remove_if</span>(v.<span cl
     }
     <span class="keyword">return</span> result;
 }</code></pre>
-            <p><strong>复杂度：</strong>O(输出长度) 时间，O(深度 + 输出长度) 空间。递归 + string 拼接。</p>
+<p><strong>复杂度：</strong>O(输出长度) 时间，O(深度 + 输出长度) 空间。递归 + string 拼接。</p>
+<h3>真题二：日志分析</h3>
+<p>解析 <code>YYYY-MM-DD HH:MM:SS LEVEL Message</code> 格式日志，按加权得分排序。核心技巧：<code>substr(0, 10)</code> 取日期 + stringstream 解析级别。</p>
+<span class="slide-num">6 / 7</span>
 
-            <h3>真题二：日志分析</h3>
-            <p>解析 <code>YYYY-MM-DD HH:MM:SS LEVEL Message</code> 格式日志，按加权得分排序。核心技巧：<code>substr(0, 10)</code> 取日期 + stringstream 解析级别。</p>
-            <span class="slide-num">6 / 7</span>
-        </div>
-
-        <!-- Slide 6: 总结 -->
-        <div class="slide">
-            <h2>🎯 本课小结</h2>
-            <table>
-                <tr><th style="width:25%">知识模块</th><th>核心要点</th></tr>
-                <tr><td>vector 内存管理</td><td>size vs capacity；扩容因子与均摊 O(1)；reserve 优先</td></tr>
-                <tr><td>string 高阶用法</td><td>find / rfind / substr / compare；npos 用 != 判断</td></tr>
-                <tr><td>stringstream</td><td>万能类型转换 + 格式化 IO + 字符串分割 三大用途</td></tr>
-                <tr><td>迭代器失效</td><td>6 种场景；erase 返回值更新；erase-remove 惯用法</td></tr>
-                <tr><td>性能优化</td><td>reserve + emplace_back 组合；移动语义；SSO 小字符串优化</td></tr>
-            </table>
-
-            <div class="highlight-box" style="margin-top:20px;">
-                <strong>🔑 一页纸速记：</strong><br>
-                <code>reserve(n) + emplace_back</code> = 最优填充<br>
-                <code>it = v.erase(it)</code> = 安全删除<br>
-                <code>ss &lt;&lt; &gt;&gt; getline()</code> = 万能转换分割<br>
-                <code>!= string::npos</code> = 查找判断
-            </div>
-            <span class="slide-num">7 / 7</span>
-        </div>
-    </div>
-
-    <!-- Navigation -->
-    <div id="nav-bar">
-        <button id="prevBtn" onclick="prevSlide()">◀ 上一页</button>
-        <span id="page-indicator">1 / 7</span>
-        <button id="nextBtn" onclick="nextSlide()">下一页 ▶</button>
-        <button id="homeBtn" onclick="goToSlide(0)" style="font-size:0.9em;">🏠</button>
-    </div>
+<aside class="notes">【讲解】📝 真题精练
+本页要点（照着讲即可）：
+· 给定压缩字符串如 3(ab) → ababab ， 2(a3(bc)) → abcbcbcabcbcbc ，支持嵌套。展开后总长度 ≤ 10⁶。
+· 复杂度： O(输出长度) 时间，O(深度 + 输出长度) 空间。递归 + string 拼接。
+· 复杂度：
+· 解析 YYYY-MM-DD HH:MM:SS LEVEL Message 格式日志，按加权得分排序。核心技巧： substr(0, 10) 取日期 + stringstream 解析级别。
+练习页节奏：先独立想 1 分钟 → 再点拨思路 → 最后对答案讲为什么。
+可联系：字符串处理综合题、动态数组应用</aside>
 </div>
+<!-- Slide 6: 总结 -->
+<div class="slide">
+<h2>🎯 本课小结</h2>
+<table>
+<tr><th style="width:25%">知识模块</th><th>核心要点</th></tr>
+<tr><td>vector 内存管理</td><td>size vs capacity；扩容因子与均摊 O(1)；reserve 优先</td></tr>
+<tr><td>string 高阶用法</td><td>find / rfind / substr / compare；npos 用 != 判断</td></tr>
+<tr><td>stringstream</td><td>万能类型转换 + 格式化 IO + 字符串分割 三大用途</td></tr>
+<tr><td>迭代器失效</td><td>6 种场景；erase 返回值更新；erase-remove 惯用法</td></tr>
+<tr><td>性能优化</td><td>reserve + emplace_back 组合；移动语义；SSO 小字符串优化</td></tr>
+</table>
+<div class="highlight-box" style="margin-top:20px;">
+<strong>🔑 一页纸速记：</strong><br/>
+<code>reserve(n) + emplace_back</code> = 最优填充<br/>
+<code>it = v.erase(it)</code> = 安全删除<br/>
+<code>ss &lt;&lt; &gt;&gt; getline()</code> = 万能转换分割<br/>
+<code>!= string::npos</code> = 查找判断
+            </div>
+<span class="slide-num">7 / 7</span>
 
+<aside class="notes">【收尾】回顾本课主线：🎯 本课小结
+对照大纲再过一遍：vector内存管理、string的find/substr、stringstream、迭代器失效
+板书/口述要点：
+· 🔑 一页纸速记：
+课后任务：字符串处理综合题、动态数组应用
+结束前留 2 分钟答疑；布置 1 道小练习检验是否真正掌握。</aside>
+</div>
+</div>
+<!-- Navigation -->
+<div id="nav-bar">
+<button id="prevBtn" onclick="prevSlide()">◀ 上一页</button>
+<span id="page-indicator">1 / 7</span>
+<button id="nextBtn" onclick="nextSlide()">下一页 ▶</button>
+<button id="homeBtn" onclick="goToSlide(0)" style="font-size:0.9em;">🏠</button>
+</div>
+</div>
 <script>
 const slides = document.querySelectorAll('.slide');
 const total   = slides.length;

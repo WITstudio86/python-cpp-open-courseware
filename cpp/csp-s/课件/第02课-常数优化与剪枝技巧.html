@@ -1,8 +1,9 @@
 <!DOCTYPE html>
+
 <html lang="zh-CN">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
 <title>第02课：常数优化与剪枝技巧 - CSP-S 高级教练课件</title>
 <style>
   :root {
@@ -238,160 +239,182 @@
 </style>
 </head>
 <body>
-
 <div class="presentation" id="presentation">
-
-  <!-- 幻灯片 1：标题页 -->
-  <div class="slide active" id="slide1">
-    <div style="text-align:center; padding-top:60px;">
-      <div style="font-size:14px; color:var(--accent2); letter-spacing:4px; text-transform:uppercase; margin-bottom:20px;">
+<!-- 幻灯片 1：标题页 -->
+<div class="slide active" id="slide1">
+<div style="text-align:center; padding-top:60px;">
+<div style="font-size:14px; color:var(--accent2); letter-spacing:4px; text-transform:uppercase; margin-bottom:20px;">
         CSP-S 高级教练课程
       </div>
-      <h1 style="font-size:42px;">常数优化与剪枝技巧</h1>
-      <p class="subtitle">第02课：I/O优化 / 位运算 / 搜索剪枝 / 记忆化搜索</p>
-      <div class="meta" style="margin-top:48px;">
-        <p>对应CSP-S考纲：常数优化技巧、搜索剪枝策略、记忆化搜索</p>
-        <p style="margin-top:4px;">核心能力：在正确性基础上通过优化使程序在时限内通过</p>
-      </div>
-      <div style="margin-top:60px; color:var(--text-secondary);">
-        <p>共计 7 页 | 预计学习时间 60 分钟</p>
-      </div>
-    </div>
-  </div>
+<h1 style="font-size:42px;">常数优化与剪枝技巧</h1>
+<p class="subtitle">第02课：I/O优化 / 位运算 / 搜索剪枝 / 记忆化搜索</p>
+<div class="meta" style="margin-top:48px;">
+<p>对应CSP-S考纲：常数优化技巧、搜索剪枝策略、记忆化搜索</p>
+<p style="margin-top:4px;">核心能力：在正确性基础上通过优化使程序在时限内通过</p>
+</div>
+<div style="margin-top:60px; color:var(--text-secondary);">
+<p>共计 7 页 | 预计学习时间 60 分钟</p>
+</div>
+</div>
 
-  <!-- 幻灯片 2：知识精讲 - 输入输出优化 -->
-  <div class="slide" id="slide2">
-    <h2>一、输入输出优化</h2>
-
-    <h3>为什么需要 I/O 优化？</h3>
-    <p>在 CSP-S 中，部分题目输入量巨大（n 可达 10⁶+）。默认 <code>cin/cout</code> 因与 C 标准 I/O 同步及频繁刷新缓冲区，I/O 耗时可能超过算法本身。</p>
-
-    <table style="margin-top:12px;">
-      <tr><th>方法</th><th>读取 10⁷ 个整数耗时（约）</th><th>使用场景</th></tr>
-      <tr><td><code>cin</code>（默认）</td><td style="color:var(--accent);">~2.0s</td><td>小数据量</td></tr>
-      <tr><td><code>cin</code>（解同步）</td><td style="color:var(--accent3);">~0.8s</td><td>一般场景</td></tr>
-      <tr><td><code>scanf</code></td><td>~0.9s</td><td>C 风格</td></tr>
-      <tr><td style="color:var(--accent2);">快速读入</td><td style="color:var(--accent2);">~0.3s</td><td>极限数据量</td></tr>
-    </table>
-
-    <div class="two-col">
-      <div>
-        <h3 style="margin-top:0;">方案一：解同步（推荐首选）</h3>
-        <div class="code-block"><span class="kw">int</span> <span class="fn">main</span>() {
+<aside class="notes">【开场】第 1/7 页 · 常数优化与剪枝技巧
+用 30 秒说明本课目标与学完能做什么，再进入正题。
+大纲考点：循环展开、输入输出优化、位运算优化、搜索剪枝、记忆化
+配套练习方向：搜索剪枝实战、快读快写模板
+封面关键词：
+· 第02课：I/O优化 / 位运算 / 搜索剪枝 / 记忆化搜索
+· 对应CSP-S考纲：常数优化技巧、搜索剪枝策略、记忆化搜索
+· 核心能力：在正确性基础上通过优化使程序在时限内通过
+· 共计 7 页 | 预计学习时间 60 分钟
+互动：问学生「今天最想搞清楚什么？」，收 1–2 个期待。</aside>
+</div>
+<!-- 幻灯片 2：知识精讲 - 输入输出优化 -->
+<div class="slide" id="slide2">
+<h2>一、输入输出优化</h2>
+<h3>为什么需要 I/O 优化？</h3>
+<p>在 CSP-S 中，部分题目输入量巨大（n 可达 10⁶+）。默认 <code>cin/cout</code> 因与 C 标准 I/O 同步及频繁刷新缓冲区，I/O 耗时可能超过算法本身。</p>
+<table style="margin-top:12px;">
+<tr><th>方法</th><th>读取 10⁷ 个整数耗时（约）</th><th>使用场景</th></tr>
+<tr><td><code>cin</code>（默认）</td><td style="color:var(--accent);">~2.0s</td><td>小数据量</td></tr>
+<tr><td><code>cin</code>（解同步）</td><td style="color:var(--accent3);">~0.8s</td><td>一般场景</td></tr>
+<tr><td><code>scanf</code></td><td>~0.9s</td><td>C 风格</td></tr>
+<tr><td style="color:var(--accent2);">快速读入</td><td style="color:var(--accent2);">~0.3s</td><td>极限数据量</td></tr>
+</table>
+<div class="two-col">
+<div>
+<h3 style="margin-top:0;">方案一：解同步（推荐首选）</h3>
+<div class="code-block"><span class="kw">int</span> <span class="fn">main</span>() {
     ios::<span class="fn">sync_with_stdio</span>(<span class="num">false</span>);
     cin.<span class="fn">tie</span>(<span class="kw">nullptr</span>);
     <span class="cm">// 之后使用 cin/cout，不要混用 scanf/printf</span>
 }</div>
-      </div>
-      <div>
-        <h3 style="margin-top:0;">方案二：快速读入（极限优化）</h3>
-        <div class="code-block"><span class="kw">inline int</span> <span class="fn">read</span>() {
+</div>
+<div>
+<h3 style="margin-top:0;">方案二：快速读入（极限优化）</h3>
+<div class="code-block"><span class="kw">inline int</span> <span class="fn">read</span>() {
     <span class="kw">int</span> x = <span class="num">0</span>, f = <span class="num">1</span>;
     <span class="kw">char</span> ch = <span class="fn">getchar</span>();
     <span class="kw">while</span> (ch &lt; <span class="str">'0'</span> || ch &gt; <span class="str">'9'</span>) {
         <span class="kw">if</span> (ch == <span class="str">'-'</span>) f = -<span class="num">1</span>;
         ch = <span class="fn">getchar</span>();
     }
-    <span class="kw">while</span> (ch &gt;= <span class="str">'0'</span> && ch &lt;= <span class="str">'9'</span>) {
+    <span class="kw">while</span> (ch &gt;= <span class="str">'0'</span> &amp;&amp; ch &lt;= <span class="str">'9'</span>) {
         x = x * <span class="num">10</span> + (ch ^ <span class="num">48</span>);
         ch = <span class="fn">getchar</span>();
     }
     <span class="kw">return</span> x * f;
 }</div>
-      </div>
+</div>
+</div>
+<div class="highlight-box">
+<strong>重要提醒：</strong>解同步后不能混用 cin/cout 和 scanf/printf！输出时用 <code>'\n'</code> 替代 <code>endl</code>（endl 会额外调用 flush）。
     </div>
 
-    <div class="highlight-box">
-      <strong>重要提醒：</strong>解同步后不能混用 cin/cout 和 scanf/printf！输出时用 <code>'\n'</code> 替代 <code>endl</code>（endl 会额外调用 flush）。
+<aside class="notes">【讲解】一、输入输出优化
+结合讲义《一、输入输出优化》强调：
+· 在CSP-S考试中，部分题目输入量极大（n 可达 10^6 甚至更多），默认的 cin/cout 由于与 C 标准输入输出同步以及频繁刷新缓冲区，会导致大量时间消耗在 I/O 上而非算法本身。
+· 典型场景：
+· 需要读入 10^6 个整数，使用 cin 可能耗时 0.5~1 秒
+· 使用 scanf 约耗时 0.2~0.3 秒
+· 使用快速读入（getchar 实现）约耗时 0.05~0.1 秒
+幻灯片上可见要点：
+· 在 CSP-S 中，部分题目输入量巨大（n 可达 10⁶+）。默认 cin/cout 因与 C 标准 I/O 同步及频繁刷新缓冲区，I/O 耗时可能超过算法本身。
+· 重要提醒：
+讲解时放慢关键术语；用 1 个生活类比 + 1 个反例加深印象。
+本课大纲考点（可适时点题）：循环展开、输入输出优化、位运算优化、搜索剪枝、记忆化</aside>
+</div>
+<!-- 幻灯片 3：原理推导 - 位运算优化 -->
+<div class="slide" id="slide3">
+<h2>二、位运算优化技巧</h2>
+<div class="two-col">
+<div>
+<h3 style="margin-top:0;">基础位运算速查</h3>
+<table>
+<tr><th>运算</th><th>符号</th><th>效果</th></tr>
+<tr><td>与</td><td><code>&amp;</code></td><td><code>x &amp; 1</code> 判奇偶</td></tr>
+<tr><td>或</td><td><code>|</code></td><td>某位置 1</td></tr>
+<tr><td>异或</td><td><code>^</code></td><td><code>a^=b;b^=a;a^=b;</code> 交换</td></tr>
+<tr><td>左移</td><td><code>&lt;&lt;</code></td><td><code>1 &lt;&lt; k</code> = 2<sup>k</sup></td></tr>
+<tr><td>右移</td><td><code>&gt;&gt;</code></td><td><code>x &gt;&gt; 1</code> = x/2</td></tr>
+</table>
+</div>
+<div>
+<h3 style="margin-top:0;">竞赛高频位运算公式</h3>
+<table>
+<tr><th>功能</th><th>公式</th></tr>
+<tr><td>lowbit</td><td><code>x &amp; -x</code></td></tr>
+<tr><td>消除最低位1</td><td><code>x &amp; (x-1)</code></td></tr>
+<tr><td>判断 2 的幂</td><td><code>x&gt;0 &amp;&amp; !(x&amp;(x-1))</code></td></tr>
+<tr><td>popcount</td><td><code>__builtin_popcount(x)</code></td></tr>
+<tr><td>前导零</td><td><code>__builtin_clz(x)</code></td></tr>
+</table>
+</div>
+</div>
+<h3>lowbit 原理与树状数组</h3>
+<div class="highlight-box green">
+<strong>lowbit(x) = x &amp; (-x)</strong> — 返回 x 最低位的 1 所代表的值。<br/>
+      示例：x=12 (1100₂) → lowbit = 4 (100₂)   |   x=7 (0111₂) → lowbit = 1<br/>
+      树状数组的核心就是 lowbit：<code>idx += idx &amp; -idx</code>（向上更新）和 <code>idx -= idx &amp; -idx</code>（向下查询）
     </div>
-  </div>
-
-  <!-- 幻灯片 3：原理推导 - 位运算优化 -->
-  <div class="slide" id="slide3">
-    <h2>二、位运算优化技巧</h2>
-
-    <div class="two-col">
-      <div>
-        <h3 style="margin-top:0;">基础位运算速查</h3>
-        <table>
-          <tr><th>运算</th><th>符号</th><th>效果</th></tr>
-          <tr><td>与</td><td><code>&</code></td><td><code>x & 1</code> 判奇偶</td></tr>
-          <tr><td>或</td><td><code>|</code></td><td>某位置 1</td></tr>
-          <tr><td>异或</td><td><code>^</code></td><td><code>a^=b;b^=a;a^=b;</code> 交换</td></tr>
-          <tr><td>左移</td><td><code><<</code></td><td><code>1 << k</code> = 2<sup>k</sup></td></tr>
-          <tr><td>右移</td><td><code>>></code></td><td><code>x >> 1</code> = x/2</td></tr>
-        </table>
-      </div>
-      <div>
-        <h3 style="margin-top:0;">竞赛高频位运算公式</h3>
-        <table>
-          <tr><th>功能</th><th>公式</th></tr>
-          <tr><td>lowbit</td><td><code>x & -x</code></td></tr>
-          <tr><td>消除最低位1</td><td><code>x & (x-1)</code></td></tr>
-          <tr><td>判断 2 的幂</td><td><code>x>0 && !(x&(x-1))</code></td></tr>
-          <tr><td>popcount</td><td><code>__builtin_popcount(x)</code></td></tr>
-          <tr><td>前导零</td><td><code>__builtin_clz(x)</code></td></tr>
-        </table>
-      </div>
-    </div>
-
-    <h3>lowbit 原理与树状数组</h3>
-    <div class="highlight-box green">
-      <strong>lowbit(x) = x & (-x)</strong> — 返回 x 最低位的 1 所代表的值。<br>
-      示例：x=12 (1100₂) → lowbit = 4 (100₂) &nbsp; | &nbsp; x=7 (0111₂) → lowbit = 1<br>
-      树状数组的核心就是 lowbit：<code>idx += idx & -idx</code>（向上更新）和 <code>idx -= idx & -idx</code>（向下查询）
-    </div>
-
-    <h3>快速幂：二进制拆分 O(log n)</h3>
-    <div class="code-block"><span class="kw">ll</span> <span class="fn">qpow</span>(<span class="kw">ll</span> a, <span class="kw">ll</span> b, <span class="kw">ll</span> mod) {
+<h3>快速幂：二进制拆分 O(log n)</h3>
+<div class="code-block"><span class="kw">ll</span> <span class="fn">qpow</span>(<span class="kw">ll</span> a, <span class="kw">ll</span> b, <span class="kw">ll</span> mod) {
     <span class="kw">ll</span> res = <span class="num">1</span>; a %= mod;
     <span class="kw">while</span> (b) {
-        <span class="kw">if</span> (b & <span class="num">1</span>) res = res * a % mod;
+        <span class="kw">if</span> (b &amp; <span class="num">1</span>) res = res * a % mod;
         a = a * a % mod;
         b &gt;&gt;= <span class="num">1</span>;
     }
     <span class="kw">return</span> res;
 }</div>
-    <p>原理：a¹³ = a^(1101₂) = a⁸ · a⁴ · a¹ — 指数按二进制位拆分</p>
+<p>原理：a¹³ = a^(1101₂) = a⁸ · a⁴ · a¹ — 指数按二进制位拆分</p>
+<div class="highlight-box yellow">
+<strong>⚠️ 优先级陷阱：</strong><code>&amp;</code>、<code>|</code>、<code>^</code> 优先级低于 <code>==</code>！<br/>
+      错误：<code>if (x &amp; 1 == 0)</code>   |   正确：<code>if ((x &amp; 1) == 0)</code>
+</div>
 
-    <div class="highlight-box yellow">
-      <strong>⚠️ 优先级陷阱：</strong><code>&</code>、<code>|</code>、<code>^</code> 优先级低于 <code>==</code>！<br>
-      错误：<code>if (x & 1 == 0)</code> &nbsp; | &nbsp; 正确：<code>if ((x & 1) == 0)</code>
-    </div>
-  </div>
-
-  <!-- 幻灯片 4：代码模板 - 搜索剪枝 -->
-  <div class="slide" id="slide4">
-    <h2>三、搜索剪枝策略</h2>
-
-    <h3>三大剪枝策略</h3>
-    <table>
-      <tr>
-        <th style="width:20%;">策略</th>
-        <th style="width:35%;">定义</th>
-        <th style="width:45%;">N皇后问题应用示例</th>
-      </tr>
-      <tr>
-        <td style="color:var(--accent2);">可行性剪枝</td>
-        <td>当前状态不可能到达目标 → 回溯</td>
-        <td>列已占用 → 不可放；对角线已占用 → 不可放</td>
-      </tr>
-      <tr>
-        <td style="color:var(--accent3);">最优性剪枝</td>
-        <td>当前代价已超过最优解 → 回溯</td>
-        <td>（N皇后是计数问题，不求最优）</td>
-      </tr>
-      <tr>
-        <td style="color:var(--accent);">顺序性剪枝</td>
-        <td>通过规定搜索顺序减少重复</td>
-        <td>按行搜索（每行必放一个）代替逐格搜索</td>
-      </tr>
-    </table>
-
-    <div class="two-col">
-      <div>
-        <h3 style="margin-top:12px;">数组标记剪枝（方案1）</h3>
-        <div class="code-block"><span class="kw">void</span> <span class="fn">dfs</span>(<span class="kw">int</span> r) {
+<aside class="notes">【讲解】二、位运算优化技巧
+结合讲义《二、位运算优化技巧》强调：
+· 位运算直接操作二进制位，是计算机最底层、最快速的操作。合理使用位运算可以显著减少常数因子。
+· 定义：lowbit(x) 返回 x 在二进制表示下最低位的 1 所代表的值。
+· 公式：lowbit(x) = x &amp; (-x)
+· 原理：在计算机中，负数用补码表示：-x = ~x + 1。
+· x &amp; (-x) = x &amp; (~x + 1)，恰好保留最低位的 1。
+幻灯片上可见要点：
+· lowbit(x) = x &amp; (-x)
+· 原理：a¹³ = a^(1101₂) = a⁸ · a⁴ · a¹ — 指数按二进制位拆分
+· ⚠️ 优先级陷阱：
+讲解时放慢关键术语；用 1 个生活类比 + 1 个反例加深印象。</aside>
+</div>
+<!-- 幻灯片 4：代码模板 - 搜索剪枝 -->
+<div class="slide" id="slide4">
+<h2>三、搜索剪枝策略</h2>
+<h3>三大剪枝策略</h3>
+<table>
+<tr>
+<th style="width:20%;">策略</th>
+<th style="width:35%;">定义</th>
+<th style="width:45%;">N皇后问题应用示例</th>
+</tr>
+<tr>
+<td style="color:var(--accent2);">可行性剪枝</td>
+<td>当前状态不可能到达目标 → 回溯</td>
+<td>列已占用 → 不可放；对角线已占用 → 不可放</td>
+</tr>
+<tr>
+<td style="color:var(--accent3);">最优性剪枝</td>
+<td>当前代价已超过最优解 → 回溯</td>
+<td>（N皇后是计数问题，不求最优）</td>
+</tr>
+<tr>
+<td style="color:var(--accent);">顺序性剪枝</td>
+<td>通过规定搜索顺序减少重复</td>
+<td>按行搜索（每行必放一个）代替逐格搜索</td>
+</tr>
+</table>
+<div class="two-col">
+<div>
+<h3 style="margin-top:12px;">数组标记剪枝（方案1）</h3>
+<div class="code-block"><span class="kw">void</span> <span class="fn">dfs</span>(<span class="kw">int</span> r) {
     <span class="kw">if</span> (r == n) { ans++; <span class="kw">return</span>; }
     <span class="kw">for</span> (<span class="kw">int</span> c = <span class="num">0</span>; c &lt; n; c++) {
         <span class="kw">if</span> (col[c] || diag1[r+c] || diag2[r-c+n])
@@ -401,82 +424,94 @@
         col[c] = diag1[r+c] = diag2[r-c+n] = <span class="num">false</span>;
     }
 }</div>
-      </div>
-      <div>
-        <h3 style="margin-top:12px;">位运算优化剪枝（方案2）</h3>
-        <div class="code-block"><span class="kw">void</span> <span class="fn">dfs</span>(<span class="kw">int</span> r, <span class="kw">int</span> col, <span class="kw">int</span> d1, <span class="kw">int</span> d2) {
+</div>
+<div>
+<h3 style="margin-top:12px;">位运算优化剪枝（方案2）</h3>
+<div class="code-block"><span class="kw">void</span> <span class="fn">dfs</span>(<span class="kw">int</span> r, <span class="kw">int</span> col, <span class="kw">int</span> d1, <span class="kw">int</span> d2) {
     <span class="kw">if</span> (r == n) { ans++; <span class="kw">return</span>; }
-    <span class="kw">int</span> avail = full & ~(col|d1|d2);
+    <span class="kw">int</span> avail = full &amp; ~(col|d1|d2);
     <span class="kw">while</span> (avail) {
-        <span class="kw">int</span> pos = avail & -avail;  <span class="cm">// lowbit</span>
+        <span class="kw">int</span> pos = avail &amp; -avail;  <span class="cm">// lowbit</span>
         avail -= pos;
         <span class="fn">dfs</span>(r+<span class="num">1</span>, col|pos,
             (d1|pos)&lt;&lt;<span class="num">1</span>, (d2|pos)&gt;&gt;<span class="num">1</span>);
     }
 }</div>
-      </div>
+</div>
+</div>
+<div class="highlight-box green" style="margin-top:12px;">
+<strong>剪枝效果（N皇后实测）：</strong> N=14 时，数组剪枝约 0.8s，位运算版约 0.15s — 加速比约 5 倍！<br/>
+      位运算版将所有合法性判断合并为一条 <code>full &amp; ~(col|d1|d2)</code> 指令，CPU 级别并行。
     </div>
 
-    <div class="highlight-box green" style="margin-top:12px;">
-      <strong>剪枝效果（N皇后实测）：</strong> N=14 时，数组剪枝约 0.8s，位运算版约 0.15s — 加速比约 5 倍！<br>
-      位运算版将所有合法性判断合并为一条 <code>full & ~(col|d1|d2)</code> 指令，CPU 级别并行。
-    </div>
-  </div>
-
-  <!-- 幻灯片 5：真题精练 - N皇后 + 0-1背包 -->
-  <div class="slide" id="slide5">
-    <h2>四、真题精练：N皇后问题</h2>
-
-    <p><strong>题目：</strong>在 N×N 棋盘上放置 N 个互不攻击的皇后，求方案数（8 ≤ N ≤ 14）。</p>
-
-    <div class="two-col-uneven">
-      <div>
-        <h3 style="margin-top:0;">经典解法对比</h3>
-        <table>
-          <tr><th>方案</th><th>核心技巧</th><th>复杂度</th><th>N=14 耗时</th></tr>
-          <tr><td>裸DFS</td><td>逐格试放</td><td>O(N<sup>N</sup>)</td><td style="color:var(--accent);">不可行</td></tr>
-          <tr><td>数组剪枝</td><td>可行性剪枝</td><td>O(N!)</td><td style="color:var(--accent3);">~0.8s</td></tr>
-          <tr><td style="color:var(--accent2);">位运算</td><td>位掩码+可行性</td><td>O(N!)常数极小</td><td style="color:var(--accent2);">~0.15s</td></tr>
-        </table>
-        <div class="highlight-box green" style="margin-top:8px;">
-          <strong>关键洞察：</strong>N! 看似很大（14! ≈ 8.7×10¹⁰），但剪枝将实际搜索空间缩减约 300 倍！在位运算的加持下仅需搜索约 2800 万节点。
+<aside class="notes">【讲解】三、搜索剪枝策略
+结合讲义《四、搜索剪枝策略》强调：
+· 搜索剪枝是在搜索过程中通过判断条件提前排除不可能产生答案的分支，从而大幅减少搜索空间。好的剪枝可以将指数级复杂度降低到可接受的范围。
+· 定义：在当前状态下，判断是否有可能到达目标状态。如果不可能，立即回溯。
+· 经典例题——N皇后问题：
+· 在 N×N 的棋盘上放置 N 个皇后，使其互不攻击。
+· 剪枝策略：
+幻灯片上可见要点：
+· 剪枝效果（N皇后实测）：
+讲解时放慢关键术语；用 1 个生活类比 + 1 个反例加深印象。</aside>
+</div>
+<!-- 幻灯片 5：真题精练 - N皇后 + 0-1背包 -->
+<div class="slide" id="slide5">
+<h2>四、真题精练：N皇后问题</h2>
+<p><strong>题目：</strong>在 N×N 棋盘上放置 N 个互不攻击的皇后，求方案数（8 ≤ N ≤ 14）。</p>
+<div class="two-col-uneven">
+<div>
+<h3 style="margin-top:0;">经典解法对比</h3>
+<table>
+<tr><th>方案</th><th>核心技巧</th><th>复杂度</th><th>N=14 耗时</th></tr>
+<tr><td>裸DFS</td><td>逐格试放</td><td>O(N<sup>N</sup>)</td><td style="color:var(--accent);">不可行</td></tr>
+<tr><td>数组剪枝</td><td>可行性剪枝</td><td>O(N!)</td><td style="color:var(--accent3);">~0.8s</td></tr>
+<tr><td style="color:var(--accent2);">位运算</td><td>位掩码+可行性</td><td>O(N!)常数极小</td><td style="color:var(--accent2);">~0.15s</td></tr>
+</table>
+<div class="highlight-box green" style="margin-top:8px;">
+<strong>关键洞察：</strong>N! 看似很大（14! ≈ 8.7×10¹⁰），但剪枝将实际搜索空间缩减约 300 倍！在位运算的加持下仅需搜索约 2800 万节点。
         </div>
-      </div>
-      <div>
-        <h3 style="margin-top:0;">N皇后答案速查</h3>
-        <table>
-          <tr><th>N</th><th>方案数</th></tr>
-          <tr><td>1</td><td>1</td></tr>
-          <tr><td>4</td><td>2</td></tr>
-          <tr><td>8</td><td>92</td></tr>
-          <tr><td>10</td><td>724</td></tr>
-          <tr><td>12</td><td>14,200</td></tr>
-          <tr><td>14</td><td>365,596</td></tr>
-        </table>
-      </div>
-    </div>
-
-    <h3>真题2：采药问题（0-1背包 - 记忆化搜索）</h3>
-    <p>T(≤1000) 时间，M(≤100) 株草药，每株有时间 t[i] 和价值 v[i]，求最大总价值。</p>
-    <div class="highlight-box yellow">
-      <strong>记忆化搜索思路：</strong><br>
-      <code>dfs(idx, remain)</code>：从第 idx 株开始，剩余 remain 时间的最大价值<br>
-      = max( 不选: dfs(idx+1, remain), 选: v[idx] + dfs(idx+1, remain-t[idx]) )<br>
+</div>
+<div>
+<h3 style="margin-top:0;">N皇后答案速查</h3>
+<table>
+<tr><th>N</th><th>方案数</th></tr>
+<tr><td>1</td><td>1</td></tr>
+<tr><td>4</td><td>2</td></tr>
+<tr><td>8</td><td>92</td></tr>
+<tr><td>10</td><td>724</td></tr>
+<tr><td>12</td><td>14,200</td></tr>
+<tr><td>14</td><td>365,596</td></tr>
+</table>
+</div>
+</div>
+<h3>真题2：采药问题（0-1背包 - 记忆化搜索）</h3>
+<p>T(≤1000) 时间，M(≤100) 株草药，每株有时间 t[i] 和价值 v[i]，求最大总价值。</p>
+<div class="highlight-box yellow">
+<strong>记忆化搜索思路：</strong><br/>
+<code>dfs(idx, remain)</code>：从第 idx 株开始，剩余 remain 时间的最大价值<br/>
+      = max( 不选: dfs(idx+1, remain), 选: v[idx] + dfs(idx+1, remain-t[idx]) )<br/>
       状态数 = M × T = 10⁵，O(N×T) 可轻松通过。
     </div>
-  </div>
 
-  <!-- 幻灯片 6：优化技巧 -->
-  <div class="slide" id="slide6">
-    <h2>五、记忆化搜索详解</h2>
-
-    <h3>什么是记忆化搜索？</h3>
-    <p><strong>记忆化 = 搜索 + 缓存</strong> = 自顶向下的动态规划。将已计算的子问题结果存储，遇到相同子问题时直接返回。</p>
-
-    <div class="two-col">
-      <div>
-        <h3 style="margin-top:0;">斐波那契：指数 → 线性</h3>
-        <div class="code-block"><span class="cm">// 记忆化版：O(n)</span>
+<aside class="notes">【讲解】四、真题精练：N皇后问题
+本页要点（照着讲即可）：
+· 题目： 在 N×N 棋盘上放置 N 个互不攻击的皇后，求方案数（8 ≤ N ≤ 14）。
+· 关键洞察：
+· T(≤1000) 时间，M(≤100) 株草药，每株有时间 t[i] 和价值 v[i]，求最大总价值。
+· 记忆化搜索思路：
+练习页节奏：先独立想 1 分钟 → 再点拨思路 → 最后对答案讲为什么。
+可联系：搜索剪枝实战、快读快写模板</aside>
+</div>
+<!-- 幻灯片 6：优化技巧 -->
+<div class="slide" id="slide6">
+<h2>五、记忆化搜索详解</h2>
+<h3>什么是记忆化搜索？</h3>
+<p><strong>记忆化 = 搜索 + 缓存</strong> = 自顶向下的动态规划。将已计算的子问题结果存储，遇到相同子问题时直接返回。</p>
+<div class="two-col">
+<div>
+<h3 style="margin-top:0;">斐波那契：指数 → 线性</h3>
+<div class="code-block"><span class="cm">// 记忆化版：O(n)</span>
 <span class="kw">ll</span> memo[MAXN];
 <span class="kw">bool</span> vis[MAXN];
 
@@ -486,11 +521,11 @@
     vis[n] = <span class="num">true</span>;
     <span class="kw">return</span> memo[n] = fib(n-<span class="num">1</span>) + fib(n-<span class="num">2</span>);
 }</div>
-        <p>从 O(2<sup>n</sup>) 降至 O(n)</p>
-      </div>
-      <div>
-        <h3 style="margin-top:0;">数字三角形：记忆化框架</h3>
-        <div class="code-block"><span class="cm">// dp[i][j]: 从(i,j)到底层的最大和</span>
+<p>从 O(2<sup>n</sup>) 降至 O(n)</p>
+</div>
+<div>
+<h3 style="margin-top:0;">数字三角形：记忆化框架</h3>
+<div class="code-block"><span class="cm">// dp[i][j]: 从(i,j)到底层的最大和</span>
 <span class="kw">ll</span> <span class="fn">dfs</span>(<span class="kw">int</span> i, <span class="kw">int</span> j, <span class="kw">int</span> n) {
     <span class="kw">if</span> (i == n) <span class="kw">return</span> a[i][j];
     <span class="kw">if</span> (vis[i][j]) <span class="kw">return</span> dp[i][j];
@@ -499,80 +534,95 @@
         <span class="fn">max</span>(dfs(i+<span class="num">1</span>,j,n),
             dfs(i+<span class="num">1</span>,j+<span class="num">1</span>,n));
 }</div>
-        <p>O(n²)，每个状态只计算一次</p>
-      </div>
+<p>O(n²)，每个状态只计算一次</p>
+</div>
+</div>
+<h3>记忆化 vs 递推DP：如何选择？</h3>
+<table>
+<tr><th>场景</th><th>推荐方法</th><th>原因</th></tr>
+<tr><td>状态转移有清晰拓扑序</td><td style="color:var(--accent2);">递推 DP</td><td>无递归开销，更快</td></tr>
+<tr><td>状态空间稀疏、不需全算</td><td style="color:var(--accent3);">记忆化搜索</td><td>只计算需要的状态</td></tr>
+<tr><td>状态转移顺序复杂</td><td style="color:var(--accent3);">记忆化搜索</td><td>递归自然处理依赖</td></tr>
+<tr><td>状态压缩 DP</td><td style="color:var(--accent3);">记忆化搜索</td><td>配合位掩码非常自然</td></tr>
+</table>
+<div class="highlight-box">
+<strong>记忆化的时间戳技巧：</strong>多组测试数据时，不用 memset 重置 vis 数组，用 <code>cur_time++</code> 和 <code>vis[state] &lt; cur_time</code> 判"未访问"，O(1) 重置！
     </div>
 
-    <h3>记忆化 vs 递推DP：如何选择？</h3>
-    <table>
-      <tr><th>场景</th><th>推荐方法</th><th>原因</th></tr>
-      <tr><td>状态转移有清晰拓扑序</td><td style="color:var(--accent2);">递推 DP</td><td>无递归开销，更快</td></tr>
-      <tr><td>状态空间稀疏、不需全算</td><td style="color:var(--accent3);">记忆化搜索</td><td>只计算需要的状态</td></tr>
-      <tr><td>状态转移顺序复杂</td><td style="color:var(--accent3);">记忆化搜索</td><td>递归自然处理依赖</td></tr>
-      <tr><td>状态压缩 DP</td><td style="color:var(--accent3);">记忆化搜索</td><td>配合位掩码非常自然</td></tr>
-    </table>
-
-    <div class="highlight-box">
-      <strong>记忆化的时间戳技巧：</strong>多组测试数据时，不用 memset 重置 vis 数组，用 <code>cur_time++</code> 和 <code>vis[state] < cur_time</code> 判"未访问"，O(1) 重置！
-    </div>
-  </div>
-
-  <!-- 幻灯片 7：本课小结 -->
-  <div class="slide" id="slide7">
-    <h2>六、本课小结</h2>
-
-    <div class="highlight-box green">
-      <strong>核心知识回顾</strong>
-    </div>
-
-    <ol style="padding-left:24px; line-height:2.2;">
-      <li><strong style="color:var(--accent2);">I/O 优化</strong> —— 标配 <code>ios::sync_with_stdio(false)</code>；极大数据量用快速读入；输出用 <code>\n</code> 不用 <code>endl</code></li>
-      <li><strong style="color:var(--accent2);">位运算</strong> —— lowbit、快速幂、子集枚举是竞赛高频技巧；注意加括号防优先级陷阱</li>
-      <li><strong style="color:var(--accent2);">搜索剪枝三把刀</strong>：
-        <br>  (1) <strong>可行性剪枝</strong>：不可能到达目标 → 回溯
-        <br>  (2) <strong>最优性剪枝</strong>：不如当前最优 → 回溯
-        <br>  (3) <strong>顺序性剪枝</strong>：优化搜索顺序减少重复
+<aside class="notes">【讲解】五、记忆化搜索详解
+结合讲义《五、记忆化搜索》强调：
+· 记忆化搜索（Memoization）是动态规划的一种实现方式：将已经计算过的子问题结果存储起来，下次遇到相同子问题时直接返回缓存结果，避免重复计算。
+· 核心思想：搜索 + 哈希表（或数组）= 记忆化 = 自顶向下的 DP
+· 斐波那契数列（记忆化版）：
+· const int MAXN = 100005;
+· ll memo[MAXN];
+幻灯片上可见要点：
+· 记忆化 = 搜索 + 缓存 = 自顶向下的动态规划。将已计算的子问题结果存储，遇到相同子问题时直接返回。
+· 记忆化 = 搜索 + 缓存
+· 从 O(2 n ) 降至 O(n)
+· O(n²)，每个状态只计算一次
+讲解时放慢关键术语；用 1 个生活类比 + 1 个反例加深印象。</aside>
+</div>
+<!-- 幻灯片 7：本课小结 -->
+<div class="slide" id="slide7">
+<h2>六、本课小结</h2>
+<div class="highlight-box green">
+<strong>核心知识回顾</strong>
+</div>
+<ol style="padding-left:24px; line-height:2.2;">
+<li><strong style="color:var(--accent2);">I/O 优化</strong> —— 标配 <code>ios::sync_with_stdio(false)</code>；极大数据量用快速读入；输出用 <code>\n</code> 不用 <code>endl</code></li>
+<li><strong style="color:var(--accent2);">位运算</strong> —— lowbit、快速幂、子集枚举是竞赛高频技巧；注意加括号防优先级陷阱</li>
+<li><strong style="color:var(--accent2);">搜索剪枝三把刀</strong>：
+        <br/>  (1) <strong>可行性剪枝</strong>：不可能到达目标 → 回溯
+        <br/>  (2) <strong>最优性剪枝</strong>：不如当前最优 → 回溯
+        <br/>  (3) <strong>顺序性剪枝</strong>：优化搜索顺序减少重复
       </li>
-      <li><strong style="color:var(--accent2);">记忆化搜索</strong> —— 递归 + 缓存，自顶向下 DP。适用于状态稀疏或拓扑序不明确的场景</li>
-      <li><strong style="color:var(--accent2);">编译器内置函数</strong> —— <code>__builtin_popcount/clz/ctz</code> 映射到 CPU 指令，比手写快</li>
-    </ol>
-
-    <div class="highlight-box yellow" style="margin-top:20px;">
-      <strong>应试金句：</strong><br>
-      搜索题为什么 TLE？因为 <strong>你没剪枝</strong>！<br>
-      N皇后不加剪枝 → O(N<sup>N</sup>) → N=10 就爆炸<br>
-      N皇后加三个剪枝 → O(N! × 常数) → N=14 稳过<br>
-      <strong>剪枝，是搜索从"能用"到"能过"的分水岭。</strong>
-    </div>
-
-    <div class="highlight-box green" style="margin-top:12px;">
-      <strong>一页纸速查清单（考前必看）</strong>
-      <table style="margin-top:8px;">
-        <tr><td>✅ I/O</td><td style="text-align:left"><code>ios::sync_with_stdio(false); cin.tie(nullptr);</code></td></tr>
-        <tr><td>✅ 输出</td><td style="text-align:left">用 <code>'\n'</code>，不用 <code>endl</code></td></tr>
-        <tr><td>✅ lowbit</td><td style="text-align:left"><code>x & -x</code></td></tr>
-        <tr><td>✅ 快速幂</td><td style="text-align:left"><code>while(b){if(b&1)res=res*a%M;a=a*a%M;b>>=1;}</code></td></tr>
-        <tr><td>✅ popcount</td><td style="text-align:left"><code>__builtin_popcount(x)</code></td></tr>
-        <tr><td>✅ DFS剪枝</td><td style="text-align:left">可行性 + 最优性 + 顺序性，一个不能少</td></tr>
-        <tr><td>✅ 记忆化</td><td style="text-align:left"><code>if(vis[state]) return memo[state];</code></td></tr>
-      </table>
-    </div>
-
-    <p style="text-align:center; margin-top:20px; color:var(--text-secondary);">
+<li><strong style="color:var(--accent2);">记忆化搜索</strong> —— 递归 + 缓存，自顶向下 DP。适用于状态稀疏或拓扑序不明确的场景</li>
+<li><strong style="color:var(--accent2);">编译器内置函数</strong> —— <code>__builtin_popcount/clz/ctz</code> 映射到 CPU 指令，比手写快</li>
+</ol>
+<div class="highlight-box yellow" style="margin-top:20px;">
+<strong>应试金句：</strong><br/>
+      搜索题为什么 TLE？因为 <strong>你没剪枝</strong>！<br/>
+      N皇后不加剪枝 → O(N<sup>N</sup>) → N=10 就爆炸<br/>
+      N皇后加三个剪枝 → O(N! × 常数) → N=14 稳过<br/>
+<strong>剪枝，是搜索从"能用"到"能过"的分水岭。</strong>
+</div>
+<div class="highlight-box green" style="margin-top:12px;">
+<strong>一页纸速查清单（考前必看）</strong>
+<table style="margin-top:8px;">
+<tr><td>✅ I/O</td><td style="text-align:left"><code>ios::sync_with_stdio(false); cin.tie(nullptr);</code></td></tr>
+<tr><td>✅ 输出</td><td style="text-align:left">用 <code>'\n'</code>，不用 <code>endl</code></td></tr>
+<tr><td>✅ lowbit</td><td style="text-align:left"><code>x &amp; -x</code></td></tr>
+<tr><td>✅ 快速幂</td><td style="text-align:left"><code>while(b){if(b&amp;1)res=res*a%M;a=a*a%M;b&gt;&gt;=1;}</code></td></tr>
+<tr><td>✅ popcount</td><td style="text-align:left"><code>__builtin_popcount(x)</code></td></tr>
+<tr><td>✅ DFS剪枝</td><td style="text-align:left">可行性 + 最优性 + 顺序性，一个不能少</td></tr>
+<tr><td>✅ 记忆化</td><td style="text-align:left"><code>if(vis[state]) return memo[state];</code></td></tr>
+</table>
+</div>
+<p style="text-align:center; margin-top:20px; color:var(--text-secondary);">
       —— 第02课结束 · 先写对，再写快 ——
     </p>
-  </div>
 
+<aside class="notes">【收尾】回顾本课主线：六、本课小结
+对照大纲再过一遍：循环展开、输入输出优化、位运算优化、搜索剪枝、记忆化
+板书/口述要点：
+· 核心知识回顾
+· I/O 优化 —— 标配 ios::sync_with_stdio(false) ；极大数据量用快速读入；输出用 \n 不用 endl
+· I/O 优化
+· 位运算 —— lowbit、快速幂、子集枚举是竞赛高频技巧；注意加括号防优先级陷阱
+· 搜索剪枝三把刀 ： (1) 可行性剪枝 ：不可能到达目标 → 回溯 (2) 最优性剪枝 ：不如当前最优 → 回溯 (3) 顺序性剪枝 ：优化搜索顺序减少重复
+· 搜索剪枝三把刀
+课后任务：搜索剪枝实战、快读快写模板
+结束前留 2 分钟答疑；布置 1 道小练习检验是否真正掌握。</aside>
 </div>
-
+</div>
 <!-- 导航控制 -->
 <div class="progress-bar" id="progressBar"></div>
 <div class="nav-bar">
-  <button class="nav-btn" id="prevBtn" onclick="changeSlide(-1)">上一页</button>
-  <span class="page-indicator" id="pageIndicator">1 / 7</span>
-  <button class="nav-btn" id="nextBtn" onclick="changeSlide(1)">下一页</button>
+<button class="nav-btn" id="prevBtn" onclick="changeSlide(-1)">上一页</button>
+<span class="page-indicator" id="pageIndicator">1 / 7</span>
+<button class="nav-btn" id="nextBtn" onclick="changeSlide(1)">下一页</button>
 </div>
-
 <script>
 (function() {
   const slides = document.querySelectorAll('.slide');
@@ -629,7 +679,6 @@
   updateUI();
 })();
 </script>
-
 <script src="courseware-ui.js"></script>
 <script src="presenter.js"></script>
 </body>

@@ -1,8 +1,9 @@
 <!DOCTYPE html>
+
 <html lang="zh-CN">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
 <title>第12课：树链剖分（HLD）</title>
 <style>
 * { margin: 0; padding: 0; box-sizing: border-box; }
@@ -40,8 +41,16 @@ code { font-family: 'Fira Code', 'Consolas', monospace; }
 </div>
 <p style="margin-top:30px; color:#8b949e">将树上路径操作转化为区间操作的核心技术</p>
 </div>
-</div>
 
+<aside class="notes">【开场】第 1/7 页 · 树链剖分
+用 30 秒说明本课目标与学完能做什么，再进入正题。
+大纲考点：轻重链剖分、DFS序、链上操作转区间操作
+配套练习方向：树上路径查询与修改
+封面关键词：
+· Heavy-Light Decomposition（HLD）
+· 将树上路径操作转化为区间操作的核心技术
+互动：问学生「今天最想搞清楚什么？」，收 1–2 个期待。</aside>
+</div>
 <div class="slide" id="s2">
 <h1>📖 知识精讲 — 核心概念</h1>
 <h2>轻重链剖分定义</h2>
@@ -52,24 +61,28 @@ code { font-family: 'Fira Code', 'Consolas', monospace; }
 <tr style="border-bottom:1px solid #30363d"><td style="padding:6px"><span class="accent">重链</span></td><td style="padding:6px">由连续重边组成的路径</td></tr>
 <tr style="border-bottom:1px solid #30363d"><td style="padding:6px"><span class="highlight">top[u]</span></td><td style="padding:6px">节点 u 所在重链的顶端节点</td></tr>
 </table>
-
 <h3>关键性质</h3>
 <ul>
 <li>根到任意叶子的路径上，轻边不超过 <span class="accent">O(log n)</span> 条</li>
 <li>每条<span class="highlight">重链上的节点 DFS 序连续</span></li>
 <li>DFS 序中，子树区间为 <span class="info">[dfn[u], dfn[u] + siz[u] - 1]</span></li>
 </ul>
-</div>
 
+<aside class="notes">【讲解】📖 知识精讲 — 核心概念
+本页要点（照着讲即可）：
+· 根到任意叶子的路径上，轻边不超过 O(log n) 条
+· 每条 重链上的节点 DFS 序连续
+· DFS 序中，子树区间为 [dfn[u], dfn[u] + siz[u] - 1]
+讲解时放慢关键术语；用 1 个生活类比 + 1 个反例加深印象。
+本课大纲考点（可适时点题）：轻重链剖分、DFS序、链上操作转区间操作</aside>
+</div>
 <div class="slide" id="s3">
 <h1>📖 知识精讲 — 两次 DFS</h1>
 <h3>DFS1：计算子树信息</h3>
 <p>求 father、depth、siz、<span class="highlight">heavy（重儿子）</span></p>
-
 <h3 style="margin-top:16px">DFS2：分配 DFS 序</h3>
 <p><span class="highlight">优先遍历重儿子</span> → 重链上 dfn 连续</p>
 <p>轻儿子作为新重链的顶端</p>
-
 <pre><span class="cmt">// DFS2 核心逻辑</span>
 <span class="type">void</span> <span class="func">dfs2</span>(<span class="type">int</span> u, <span class="type">int</span> tp) {
     dfn[u] = ++timer; rnk[timer] = u; top[u] = tp;
@@ -80,8 +93,14 @@ code { font-family: 'Fira Code', 'Consolas', monospace; }
         <span class="func">dfs2</span>(v, v);              <span class="cmt">// 轻儿子：新链顶</span>
     }
 }</pre>
-</div>
 
+<aside class="notes">【讲解】📖 知识精讲 — 两次 DFS
+本页要点（照着讲即可）：
+· 求 father、depth、siz、 heavy（重儿子）
+· 优先遍历重儿子 → 重链上 dfn 连续
+· 轻儿子作为新重链的顶端
+讲解时放慢关键术语；用 1 个生活类比 + 1 个反例加深印象。</aside>
+</div>
 <div class="slide" id="s4">
 <h1>💻 代码模板 — 路径跳链</h1>
 <h3>核心：路径跳链算法</h3>
@@ -98,12 +117,23 @@ code { font-family: 'Fira Code', 'Consolas', monospace; }
     res += seg.<span class="func">sum</span>(dfn[u], dfn[v]);          <span class="cmt">// 同一条链，查剩余</span>
     <span class="kw">return</span> res;
 }</pre>
-
 <h3>时间复杂度</h3>
 <p>每条路径分解为 <span class="accent">O(log n)</span> 条重链 × 每次区间查询 <span class="accent">O(log n)</span> = <span class="highlight">O(log² n)</span></p>
 <p>子树操作：只需 1 个区间 → <span class="accent">O(log n)</span></p>
-</div>
 
+<aside class="notes">【讲解】💻 代码模板 — 路径跳链
+结合讲义《💻 代码模板》强调：
+· // ========== 树链剖分模板 ==========
+· const int MAXN = 100005;
+· int n;
+· vector adj[MAXN];
+· // 第一次 DFS 所需
+幻灯片上可见要点：
+· 每条路径分解为 O(log n) 条重链 × 每次区间查询 O(log n) = O(log² n)
+· 子树操作：只需 1 个区间 → O(log n)
+代码页节奏：先读懂输入输出 → 再走主流程 → 最后点出易错点（边界/类型/下标）。
+可让学生预测下一行输出，再运行对照。</aside>
+</div>
 <div class="slide" id="s5">
 <h1>⚠️ 易错点与优化技巧</h1>
 <ul>
@@ -116,15 +146,27 @@ code { font-family: 'Fira Code', 'Consolas', monospace; }
 <li><span class="accent">✔ 子树区间</span> — [dfn[u], dfn[u] + siz[u] - 1]</li>
 <li><span class="accent">✔ lca 可用 HLD</span> — 最后在同一链上深度小的即为 LCA</li>
 </ul>
-</div>
 
+<aside class="notes">【讲解】⚠️ 易错点与优化技巧
+结合讲义《⚠️ 易错点与优化技巧》强调：
+· dfs2 中先遍历重儿子 —— 这是保证重链连续的关键，忘记会导致完全错误
+· 跳链时的深度比较 —— 比较的是 depth[top[u]] 而非 depth[u]
+· 跳链后跳到 parent[top[u]] —— 不是 parent[u]
+· 同链后区分 u 和 v 的深度 —— 确保 dfn 区间左端点 ≤ 右端点
+· dfn 从 1 开始 —— 方便配合线段树
+幻灯片上可见要点：
+· ⚠ dfs2 优先遍历重儿子 — 重链连续的关键，忘记会全错
+· ⚠ 跳链比较 depth[top[u]] — 不是 depth[u]！
+· ⚠ 跳链后 u = parent[top[u]] — 不是 parent[u]
+· ⚠ 同链后确保 dfn 有序 — 深度小的 dfn 也小
+讲解时放慢关键术语；用 1 个生活类比 + 1 个反例加深印象。</aside>
+</div>
 <div class="slide" id="s6">
 <h1>📝 真题精练</h1>
 <h3>真题一：树上路径修改 + 查询</h3>
 <p><span class="info">操作：</span>路径加 x、查询路径和、子树加 x、查询子树和</p>
 <p><span class="info">n, m ≤ 10⁵</span></p>
 <p>路径 O(log² n)，子树 O(log n)</p>
-
 <div style="background:#0d1117; padding:14px; border-radius:8px; border:1px solid #30363d; margin-top:20px">
 <h3>真题二：HLD 求 LCA</h3>
 <pre><span class="type">int</span> <span class="func">lca</span>(<span class="type">int</span> u, <span class="type">int</span> v) {
@@ -136,8 +178,16 @@ code { font-family: 'Fira Code', 'Consolas', monospace; }
 }</pre>
 <p><span class="accent">O(log n) 单次查询</span>，常数比倍增法大，但可顺便维护路径信息</p>
 </div>
-</div>
 
+<aside class="notes">【讲解】📝 真题精练
+本页要点（照着讲即可）：
+· 操作： 路径加 x、查询路径和、子树加 x、查询子树和
+· n, m ≤ 10⁵
+· 路径 O(log² n)，子树 O(log n)
+· O(log n) 单次查询 ，常数比倍增法大，但可顺便维护路径信息
+练习页节奏：先独立想 1 分钟 → 再点拨思路 → 最后对答案讲为什么。
+可联系：树上路径查询与修改</aside>
+</div>
 <div class="slide" id="s7">
 <h1>🎯 本课小结</h1>
 <div style="display:grid; grid-template-columns:1fr 1fr; gap:16px; margin-top:20px">
@@ -164,8 +214,19 @@ code { font-family: 'Fira Code', 'Consolas', monospace; }
 <p>树剖 + 线段树 = 树上 DS</p>
 </div>
 </div>
-</div>
 
+<aside class="notes">【收尾】回顾本课主线：🎯 本课小结
+对照大纲再过一遍：轻重链剖分、DFS序、链上操作转区间操作
+板书/口述要点：
+· DFS1：重儿子、子树大小
+· DFS2：DFS序（优先重儿）
+· 跳链：while top不同
+· 每次 O(log n) × O(log n)
+· = O(log² n)
+· 1 个连续区间
+课后任务：树上路径查询与修改
+结束前留 2 分钟答疑；布置 1 道小练习检验是否真正掌握。</aside>
+</div>
 <div class="nav">
 <button onclick="prevSlide()">◀ 上一页</button>
 <span class="page-indicator" id="pageNum">1 / 7</span>

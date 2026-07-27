@@ -1,8 +1,9 @@
 <!DOCTYPE html>
+
 <html lang="zh-CN">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
 <title>第36课：线性DP——一维动态规划</title>
 <style>
 /* ========== Reset & Base ========== */
@@ -262,99 +263,113 @@ body {
 </style>
 </head>
 <body>
-
 <div class="slideshow">
-  <!-- ======== Slide 1: Title ======== -->
-  <div class="slide active title-slide" data-index="0">
-    <span class="lesson-num">Lesson 36</span>
-    <h1>线性DP——一维动态规划</h1>
-    <p class="subtitle">状态定义 · 转移方程 · 递推求解</p>
-    <div class="info-box" style="max-width:600px;">
-      <p><strong>本节课重点</strong></p>
-      <p>最大子段和（O(n)） | 最长上升子序列（O(n²) / O(n log n)）</p>
-      <p>DP 四步框架：状态定义 → 转移方程 → 初始状态 → 计算顺序</p>
-    </div>
-  </div>
+<!-- ======== Slide 1: Title ======== -->
+<div class="slide active title-slide" data-index="0">
+<span class="lesson-num">Lesson 36</span>
+<h1>线性DP——一维动态规划</h1>
+<p class="subtitle">状态定义 · 转移方程 · 递推求解</p>
+<div class="info-box" style="max-width:600px;">
+<p><strong>本节课重点</strong></p>
+<p>最大子段和（O(n)） | 最长上升子序列（O(n²) / O(n log n)）</p>
+<p>DP 四步框架：状态定义 → 转移方程 → 初始状态 → 计算顺序</p>
+</div>
 
-  <!-- ======== Slide 2: DP核心概念 ======== -->
-  <div class="slide" data-index="1">
-    <h1>DP 核心概念</h1>
-    <h2>动态规划解题四步框架</h2>
+<aside class="notes">【开场】第 1/6 页 · 线性DP——一维动态规划
+用 30 秒说明本课目标与学完能做什么，再进入正题。
+大纲考点：状态定义、状态转移方程
+配套练习方向：最大子段和、最长上升子序列
+封面关键词：
+· 状态定义 · 转移方程 · 递推求解
+· 本节课重点
+· 最大子段和（O(n)） | 最长上升子序列（O(n²) / O(n log n)）
+· DP 四步框架：状态定义 → 转移方程 → 初始状态 → 计算顺序
+互动：问学生「今天最想搞清楚什么？」，收 1–2 个期待。</aside>
+</div>
+<!-- ======== Slide 2: DP核心概念 ======== -->
+<div class="slide" data-index="1">
+<h1>DP 核心概念</h1>
+<h2>动态规划解题四步框架</h2>
+<div class="framework">
+<div class="step">
+<span class="step-num">1</span>
+<h4>状态定义</h4>
+<p>明确 <code>dp[i]</code> 表示的含义。</p>
+<p style="color:#e94560;margin-top:8px;">例：dp[i] = 以第 i 个元素结尾的最大子段和</p>
+</div>
+<div class="step">
+<span class="step-num">2</span>
+<h4>状态转移方程</h4>
+<p>找到 dp[i] 与 dp[j] (j &lt; i) 的递推关系。</p>
+<p style="color:#e94560;margin-top:8px;">例：dp[i] = max(a[i], dp[i-1] + a[i])</p>
+</div>
+<div class="step">
+<span class="step-num">3</span>
+<h4>初始状态</h4>
+<p>确定递推的起点，给 dp[0] 赋值。</p>
+<p style="color:#e94560;margin-top:8px;">例：dp[0] = a[0]</p>
+</div>
+<div class="step">
+<span class="step-num">4</span>
+<h4>计算顺序</h4>
+<p>从小到大依次递推，确保依赖已算出。</p>
+<p style="color:#e94560;margin-top:8px;">例：for i = 1 to n-1</p>
+</div>
+</div>
+<div class="info-box">
+<p><strong>核心思想：</strong>动态规划的本质是 <span class="highlight">记住已经解决过的子问题的答案</span>，避免重复计算。每个子问题的解只计算一次并存储起来，后续需要时直接使用。</p>
+</div>
 
-    <div class="framework">
-      <div class="step">
-        <span class="step-num">1</span>
-        <h4>状态定义</h4>
-        <p>明确 <code>dp[i]</code> 表示的含义。</p>
-        <p style="color:#e94560;margin-top:8px;">例：dp[i] = 以第 i 个元素结尾的最大子段和</p>
-      </div>
-      <div class="step">
-        <span class="step-num">2</span>
-        <h4>状态转移方程</h4>
-        <p>找到 dp[i] 与 dp[j] (j &lt; i) 的递推关系。</p>
-        <p style="color:#e94560;margin-top:8px;">例：dp[i] = max(a[i], dp[i-1] + a[i])</p>
-      </div>
-      <div class="step">
-        <span class="step-num">3</span>
-        <h4>初始状态</h4>
-        <p>确定递推的起点，给 dp[0] 赋值。</p>
-        <p style="color:#e94560;margin-top:8px;">例：dp[0] = a[0]</p>
-      </div>
-      <div class="step">
-        <span class="step-num">4</span>
-        <h4>计算顺序</h4>
-        <p>从小到大依次递推，确保依赖已算出。</p>
-        <p style="color:#e94560;margin-top:8px;">例：for i = 1 to n-1</p>
-      </div>
-    </div>
-
-    <div class="info-box">
-      <p><strong>核心思想：</strong>动态规划的本质是 <span class="highlight">记住已经解决过的子问题的答案</span>，避免重复计算。每个子问题的解只计算一次并存储起来，后续需要时直接使用。</p>
-    </div>
-  </div>
-
-  <!-- ======== Slide 3: 最大子段和 ======== -->
-  <div class="slide" data-index="2">
-    <h1>最大子段和（Maximum Subarray Sum）</h1>
-
-    <div class="two-col">
-      <div class="col">
-        <h3>算法思想</h3>
-        <p><strong>状态定义：</strong>dp[i] = 以第 i 个元素结尾的最大子段和</p>
-        <p><strong>转移方程：</strong></p>
-        <pre>dp[i] = max(a[i], dp[i-1] + a[i])</pre>
-        <p><strong>答案：</strong>max(dp[0..n-1])</p>
-        <p><strong>复杂度：</strong>O(n) 时间，O(1) 空间</p>
-      </div>
-      <div class="col">
-        <h3>示例数组</h3>
-        <p class="array-label">a = [−2, 1, −3, 4, −1, 2, 1, −5, 4]</p>
-        <div class="array-row">
-          <div class="array-cell">−2</div><div class="array-cell">1</div>
-          <div class="array-cell">−3</div><div class="array-cell">4</div>
-          <div class="array-cell">−1</div><div class="array-cell">2</div>
-          <div class="array-cell">1</div><div class="array-cell">−5</div>
-          <div class="array-cell">4</div>
-        </div>
-      </div>
-    </div>
-
-    <h3>逐项推导过程</h3>
-    <table class="step-table">
-      <tr><th>i</th><th>a[i]</th><th>决策</th><th>dp[i]</th><th>说明</th></tr>
-      <tr><td>0</td><td>−2</td><td>独自成段</td><td>−2</td><td>只有一个元素</td></tr>
-      <tr><td>1</td><td>1</td><td>max(1, −2+1)=1</td><td>1</td><td>另起炉灶</td></tr>
-      <tr><td>2</td><td>−3</td><td>max(−3, 1−3)=−2</td><td>−2</td><td>接上更大</td></tr>
-      <tr><td>3</td><td>4</td><td>max(4, −2+4)=4</td><td>4</td><td>另起炉灶</td></tr>
-      <tr><td>4</td><td>−1</td><td>max(−1, 4−1)=3</td><td>3</td><td>接上更大</td></tr>
-      <tr><td>5</td><td>2</td><td>max(2, 3+2)=5</td><td>5</td><td>接上更大</td></tr>
-      <tr class="ans-row"><td>6</td><td>1</td><td>max(1, 5+1)=6</td><td style="color:#e94560;">6 ← 最大!</td><td>接上更大</td></tr>
-      <tr><td>7</td><td>−5</td><td>max(−5, 6−5)=1</td><td>1</td><td>接上更大</td></tr>
-      <tr><td>8</td><td>4</td><td>max(4, 1+4)=5</td><td>5</td><td>接上更大</td></tr>
-    </table>
-
-    <h3>代码实现</h3>
-    <pre><span class="code-keyword">int</span> <span class="code-func">maxSubarraySum</span>(vector&lt;<span class="code-keyword">int</span>&gt;& a) {
+<aside class="notes">【讲解】DP 核心概念
+本页要点（照着讲即可）：
+· 状态定义
+· 明确 dp[i] 表示的含义。
+· 例：dp[i] = 以第 i 个元素结尾的最大子段和
+· 状态转移方程
+· 找到 dp[i] 与 dp[j] (j &lt; i) 的递推关系。
+· 例：dp[i] = max(a[i], dp[i-1] + a[i])
+讲解时放慢关键术语；用 1 个生活类比 + 1 个反例加深印象。
+本课大纲考点（可适时点题）：状态定义、状态转移方程</aside>
+</div>
+<!-- ======== Slide 3: 最大子段和 ======== -->
+<div class="slide" data-index="2">
+<h1>最大子段和（Maximum Subarray Sum）</h1>
+<div class="two-col">
+<div class="col">
+<h3>算法思想</h3>
+<p><strong>状态定义：</strong>dp[i] = 以第 i 个元素结尾的最大子段和</p>
+<p><strong>转移方程：</strong></p>
+<pre>dp[i] = max(a[i], dp[i-1] + a[i])</pre>
+<p><strong>答案：</strong>max(dp[0..n-1])</p>
+<p><strong>复杂度：</strong>O(n) 时间，O(1) 空间</p>
+</div>
+<div class="col">
+<h3>示例数组</h3>
+<p class="array-label">a = [−2, 1, −3, 4, −1, 2, 1, −5, 4]</p>
+<div class="array-row">
+<div class="array-cell">−2</div><div class="array-cell">1</div>
+<div class="array-cell">−3</div><div class="array-cell">4</div>
+<div class="array-cell">−1</div><div class="array-cell">2</div>
+<div class="array-cell">1</div><div class="array-cell">−5</div>
+<div class="array-cell">4</div>
+</div>
+</div>
+</div>
+<h3>逐项推导过程</h3>
+<table class="step-table">
+<tr><th>i</th><th>a[i]</th><th>决策</th><th>dp[i]</th><th>说明</th></tr>
+<tr><td>0</td><td>−2</td><td>独自成段</td><td>−2</td><td>只有一个元素</td></tr>
+<tr><td>1</td><td>1</td><td>max(1, −2+1)=1</td><td>1</td><td>另起炉灶</td></tr>
+<tr><td>2</td><td>−3</td><td>max(−3, 1−3)=−2</td><td>−2</td><td>接上更大</td></tr>
+<tr><td>3</td><td>4</td><td>max(4, −2+4)=4</td><td>4</td><td>另起炉灶</td></tr>
+<tr><td>4</td><td>−1</td><td>max(−1, 4−1)=3</td><td>3</td><td>接上更大</td></tr>
+<tr><td>5</td><td>2</td><td>max(2, 3+2)=5</td><td>5</td><td>接上更大</td></tr>
+<tr class="ans-row"><td>6</td><td>1</td><td>max(1, 5+1)=6</td><td style="color:#e94560;">6 ← 最大!</td><td>接上更大</td></tr>
+<tr><td>7</td><td>−5</td><td>max(−5, 6−5)=1</td><td>1</td><td>接上更大</td></tr>
+<tr><td>8</td><td>4</td><td>max(4, 1+4)=5</td><td>5</td><td>接上更大</td></tr>
+</table>
+<h3>代码实现</h3>
+<pre><span class="code-keyword">int</span> <span class="code-func">maxSubarraySum</span>(vector&lt;<span class="code-keyword">int</span>&gt;&amp; a) {
     <span class="code-keyword">int</span> curMax = a[<span class="code-num">0</span>], ans = a[<span class="code-num">0</span>];
     <span class="code-keyword">for</span> (<span class="code-keyword">int</span> i = <span class="code-num">1</span>; i &lt; a.size(); i++) {
         curMax = max(a[i], curMax + a[i]);  <span class="code-comment">// 状态转移</span>
@@ -362,141 +377,177 @@ body {
     }
     <span class="code-keyword">return</span> ans;
 }</pre>
-  </div>
 
-  <!-- ======== Slide 4: 最长上升子序列 ======== -->
-  <div class="slide" data-index="3">
-    <h1>最长上升子序列（LIS）</h1>
-
-    <div class="two-col">
-      <div class="col">
-        <h3>算法思想</h3>
-        <p><strong>状态定义：</strong>dp[i] = 以第 i 个元素结尾的LIS长度</p>
-        <p><strong>转移方程：</strong></p>
-        <pre>dp[i] = max(dp[j] + 1)
+<aside class="notes">【讲解】最大子段和（Maximum Subarray Sum）
+结合讲义《经典问题一：最大子段和（Maximum Subarray Sum）》强调：
+· 问题描述：给定一个长度为 n 的整数序列，找出一个连续子序列，使得该子序列的和最大。
+· 状态定义：
+· 设 dp[i] 表示 **以第 i 个元素结尾** 的最大子段和。注意，这里强调“以第 i 个元素结尾”，强制子段必须包含 a[i]。
+· 状态转移方程：
+· 对于第 i 个元素，我们有两个选择：
+幻灯片上可见要点：
+· 状态定义： dp[i] = 以第 i 个元素结尾的最大子段和
+· 状态定义：
+· 转移方程：
+· 答案： max(dp[0..n-1])
+讲解时放慢关键术语；用 1 个生活类比 + 1 个反例加深印象。</aside>
+</div>
+<!-- ======== Slide 4: 最长上升子序列 ======== -->
+<div class="slide" data-index="3">
+<h1>最长上升子序列（LIS）</h1>
+<div class="two-col">
+<div class="col">
+<h3>算法思想</h3>
+<p><strong>状态定义：</strong>dp[i] = 以第 i 个元素结尾的LIS长度</p>
+<p><strong>转移方程：</strong></p>
+<pre>dp[i] = max(dp[j] + 1)
         (j &lt; i, a[j] &lt; a[i])</pre>
-        <p><strong>复杂度：</strong>O(n²) 时间，O(n) 空间</p>
-      </div>
-      <div class="col">
-        <h3>示例数组</h3>
-        <p class="array-label">a = [3, 1, 4, 1, 5, 9, 2, 6]</p>
-        <div class="array-row">
-          <div class="array-cell">3</div><div class="array-cell">1</div>
-          <div class="array-cell">4</div><div class="array-cell">1</div>
-          <div class="array-cell">5</div><div class="array-cell">9</div>
-          <div class="array-cell">2</div><div class="array-cell">6</div>
-        </div>
-      </div>
-    </div>
-
-    <h3>逐项推导过程</h3>
-    <table class="step-table">
-      <tr><th>i</th><th>a[i]</th><th>检查 j&lt;i, a[j]&lt;a[i]</th><th>候选 dp[j]+1</th><th>dp[i]</th></tr>
-      <tr><td>0</td><td>3</td><td>—</td><td>—</td><td>1</td></tr>
-      <tr><td>1</td><td>1</td><td>无</td><td>—</td><td>1</td></tr>
-      <tr><td>2</td><td>4</td><td>j=0:3&lt;4 ✓; j=1:1&lt;4 ✓</td><td>2,2</td><td>2</td></tr>
-      <tr><td>3</td><td>1</td><td>无</td><td>—</td><td>1</td></tr>
-      <tr><td>4</td><td>5</td><td>j=0,1,2,3 (a[2]=4&lt;5)</td><td>max=dp[2]+1</td><td>3</td></tr>
-      <tr><td>5</td><td>9</td><td>j=0..4 (dp[4]=3)</td><td>3+1=4</td><td>4</td></tr>
-      <tr><td>6</td><td>2</td><td>j=1,3 (a=1&lt;2)</td><td>2,2</td><td>2</td></tr>
-      <tr class="ans-row"><td>7</td><td>6</td><td>j=0,1,2,3,4 (dp[4]=3)</td><td>3+1=4</td><td style="color:#e94560;">4 ← 最大!</td></tr>
-    </table>
-
-    <h3>O(n log n) 优化思路</h3>
-    <div class="info-box">
-      <p><strong>贪心 + 二分：</strong>维护 <code>tails</code> 数组，tails[k] = 长度为 k+1 的上升子序列的<strong>最小末尾</strong>。遍历每个元素 x，在 tails 中二分查找第一个 `>= x` 的位置并替换。tails 最终长度 = LIS 长度。</p>
-    </div>
-
-    <h3>核心代码 (O(n²))</h3>
-    <pre>vector&lt;<span class="code-keyword">int</span>&gt; dp(n, <span class="code-num">1</span>);  <span class="code-comment">// 初始：每个元素自身长为 1</span>
+<p><strong>复杂度：</strong>O(n²) 时间，O(n) 空间</p>
+</div>
+<div class="col">
+<h3>示例数组</h3>
+<p class="array-label">a = [3, 1, 4, 1, 5, 9, 2, 6]</p>
+<div class="array-row">
+<div class="array-cell">3</div><div class="array-cell">1</div>
+<div class="array-cell">4</div><div class="array-cell">1</div>
+<div class="array-cell">5</div><div class="array-cell">9</div>
+<div class="array-cell">2</div><div class="array-cell">6</div>
+</div>
+</div>
+</div>
+<h3>逐项推导过程</h3>
+<table class="step-table">
+<tr><th>i</th><th>a[i]</th><th>检查 j&lt;i, a[j]&lt;a[i]</th><th>候选 dp[j]+1</th><th>dp[i]</th></tr>
+<tr><td>0</td><td>3</td><td>—</td><td>—</td><td>1</td></tr>
+<tr><td>1</td><td>1</td><td>无</td><td>—</td><td>1</td></tr>
+<tr><td>2</td><td>4</td><td>j=0:3&lt;4 ✓; j=1:1&lt;4 ✓</td><td>2,2</td><td>2</td></tr>
+<tr><td>3</td><td>1</td><td>无</td><td>—</td><td>1</td></tr>
+<tr><td>4</td><td>5</td><td>j=0,1,2,3 (a[2]=4&lt;5)</td><td>max=dp[2]+1</td><td>3</td></tr>
+<tr><td>5</td><td>9</td><td>j=0..4 (dp[4]=3)</td><td>3+1=4</td><td>4</td></tr>
+<tr><td>6</td><td>2</td><td>j=1,3 (a=1&lt;2)</td><td>2,2</td><td>2</td></tr>
+<tr class="ans-row"><td>7</td><td>6</td><td>j=0,1,2,3,4 (dp[4]=3)</td><td>3+1=4</td><td style="color:#e94560;">4 ← 最大!</td></tr>
+</table>
+<h3>O(n log n) 优化思路</h3>
+<div class="info-box">
+<p><strong>贪心 + 二分：</strong>维护 <code>tails</code> 数组，tails[k] = 长度为 k+1 的上升子序列的<strong>最小末尾</strong>。遍历每个元素 x，在 tails 中二分查找第一个 `&gt;= x` 的位置并替换。tails 最终长度 = LIS 长度。</p>
+</div>
+<h3>核心代码 (O(n²))</h3>
+<pre>vector&lt;<span class="code-keyword">int</span>&gt; dp(n, <span class="code-num">1</span>);  <span class="code-comment">// 初始：每个元素自身长为 1</span>
 <span class="code-keyword">for</span> (<span class="code-keyword">int</span> i = <span class="code-num">1</span>; i &lt; n; i++)
     <span class="code-keyword">for</span> (<span class="code-keyword">int</span> j = <span class="code-num">0</span>; j &lt; i; j++)
         <span class="code-keyword">if</span> (a[j] &lt; a[i])
             dp[i] = max(dp[i], dp[j] + <span class="code-num">1</span>);</pre>
-  </div>
 
-  <!-- ======== Slide 5: 复杂度分析 ======== -->
-  <div class="slide" data-index="4">
-    <h1>复杂度分析与对比</h1>
+<aside class="notes">【讲解】最长上升子序列（LIS）
+结合讲义《经典问题二：最长上升子序列（Longest Increasing Subsequence, LIS）》强调：
+· 问题描述：给定一个长度为 n 的整数序列，找出最长的严格递增子序列的长度（子序列不要求连续）。
+· 状态定义：
+· 设 dp[i] 表示 **以第 i 个元素结尾** 的最长上升子序列的长度。
+· 状态转移方程：
+· 对于每个 i，我们枚举所有 j &lt; i：
+幻灯片上可见要点：
+· 状态定义： dp[i] = 以第 i 个元素结尾的LIS长度
+· 状态定义：
+· 转移方程：
+· 复杂度： O(n²) 时间，O(n) 空间
+讲解时放慢关键术语；用 1 个生活类比 + 1 个反例加深印象。</aside>
+</div>
+<!-- ======== Slide 5: 复杂度分析 ======== -->
+<div class="slide" data-index="4">
+<h1>复杂度分析与对比</h1>
+<table>
+<tr><th>算法</th><th>时间复杂度</th><th>空间复杂度</th><th>说明</th></tr>
+<tr><td>最大子段和 (DP)</td><td style="color:#c3e88d;">O(n)</td><td style="color:#c3e88d;">O(1)</td><td>一次遍历，滚动变量优化空间</td></tr>
+<tr><td>LIS (DP)</td><td>O(n²)</td><td>O(n)</td><td>双重循环枚举所有 j &lt; i</td></tr>
+<tr><td>LIS (贪心+二分)</td><td style="color:#c3e88d;">O(n log n)</td><td>O(n)</td><td>tails 数组 + lower_bound 二分</td></tr>
+</table>
+<h2>为什么 DP 必须包含当前元素？</h2>
+<div class="info-box">
+<p>如果 <code>dp[i]</code> 不强制包含 <code>a[i]</code>，那么无法从 <code>dp[i-1]</code> 递推出 <code>dp[i]</code>，因为缺少了"连续性"的约束。定义 <code>dp[i]</code> 为 <strong>"以 i 结尾"</strong> 是线性 DP 中最常用的技巧。</p>
+<p style="margin-top:8px;"><strong>答案取 max(dp[0..n-1])</strong> 而非 dp[n-1]，因为最优解不一定以最后一个元素结尾。</p>
+</div>
+<h2>DP 常见优化方向</h2>
+<ul>
+<li><strong>滚动数组：</strong>dp[i] 只依赖 dp[i-1] 时，用变量替代数组（如最大子段和）</li>
+<li><strong>贪心 + 二分：</strong>利用单调性减少状态转移的枚举（如 LIS 的 tails 优化）</li>
+<li><strong>数据结构优化：</strong>用线段树/树状数组加速区间查询（后续课程）</li>
+</ul>
 
-    <table>
-      <tr><th>算法</th><th>时间复杂度</th><th>空间复杂度</th><th>说明</th></tr>
-      <tr><td>最大子段和 (DP)</td><td style="color:#c3e88d;">O(n)</td><td style="color:#c3e88d;">O(1)</td><td>一次遍历，滚动变量优化空间</td></tr>
-      <tr><td>LIS (DP)</td><td>O(n²)</td><td>O(n)</td><td>双重循环枚举所有 j &lt; i</td></tr>
-      <tr><td>LIS (贪心+二分)</td><td style="color:#c3e88d;">O(n log n)</td><td>O(n)</td><td>tails 数组 + lower_bound 二分</td></tr>
-    </table>
-
-    <h2>为什么 DP 必须包含当前元素？</h2>
-    <div class="info-box">
-      <p>如果 <code>dp[i]</code> 不强制包含 <code>a[i]</code>，那么无法从 <code>dp[i-1]</code> 递推出 <code>dp[i]</code>，因为缺少了"连续性"的约束。定义 <code>dp[i]</code> 为 <strong>"以 i 结尾"</strong> 是线性 DP 中最常用的技巧。</p>
-      <p style="margin-top:8px;"><strong>答案取 max(dp[0..n-1])</strong> 而非 dp[n-1]，因为最优解不一定以最后一个元素结尾。</p>
-    </div>
-
-    <h2>DP 常见优化方向</h2>
-    <ul>
-      <li><strong>滚动数组：</strong>dp[i] 只依赖 dp[i-1] 时，用变量替代数组（如最大子段和）</li>
-      <li><strong>贪心 + 二分：</strong>利用单调性减少状态转移的枚举（如 LIS 的 tails 优化）</li>
-      <li><strong>数据结构优化：</strong>用线段树/树状数组加速区间查询（后续课程）</li>
-    </ul>
-  </div>
-
-  <!-- ======== Slide 6: 本课小结 ======== -->
-  <div class="slide" data-index="5">
-    <h1>本课小结</h1>
-
-    <div class="summary-grid">
-      <div class="summary-card">
-        <h3>核心框架</h3>
-        <p>DP 四步法：</p>
-        <ol>
-          <li>状态定义 — dp[i] 的含义</li>
-          <li>转移方程 — 递推关系</li>
-          <li>初始状态 — 递推起点</li>
-          <li>计算顺序 — 从小到大</li>
-        </ol>
-      </div>
-      <div class="summary-card">
-        <h3>经典问题</h3>
-        <p><strong>最大子段和：</strong>O(n)</p>
-        <p><code>dp[i] = max(a[i], dp[i-1] + a[i])</code></p>
-        <p style="margin-top:12px;"><strong>最长上升子序列：</strong>O(n²)</p>
-        <p><code>dp[i] = max(dp[j] + 1), a[j] &lt; a[i]</code></p>
-      </div>
-      <div class="summary-card">
-        <h3>关键技巧</h3>
-        <ul>
-          <li>dp[i] 强制"以 i 结尾"</li>
-          <li>答案取 max(dp[0..n-1])</li>
-          <li>空间优化：滚动变量</li>
-          <li>时间优化：贪心 + 二分</li>
-        </ul>
-      </div>
-      <div class="summary-card">
-        <h3>下节课预告</h3>
-        <p><strong>第37课：二维线性DP</strong></p>
-        <ul>
-          <li>最长公共子序列 (LCS)</li>
-          <li>编辑距离</li>
-          <li>棋盘路径计数</li>
-          <li>dp[i][j] 的状态定义与转移</li>
-        </ul>
-      </div>
-    </div>
-
-    <div class="info-box" style="margin-top:20px; text-align:center;">
-      <p style="font-size:1.2em;">掌握一维DP，是通向多维DP、背包问题、区间DP的基石。</p>
-      <p style="margin-top:6px;">课后请多加练习，熟练运用<strong>四步框架</strong>解决各类DP问题！</p>
-    </div>
-  </div>
-
-  <!-- ======== Control Bar ======== -->
-  <div class="controls">
-    <button id="prevBtn" onclick="changeSlide(-1)">◀ 上一页</button>
-    <span class="counter" id="slideCounter">1 / 6</span>
-    <button id="nextBtn" onclick="changeSlide(1)">下一页 ▶</button>
-  </div>
+<aside class="notes">【讲解】复杂度分析与对比
+本页要点（照着讲即可）：
+· 如果 dp[i] 不强制包含 a[i] ，那么无法从 dp[i-1] 递推出 dp[i] ，因为缺少了"连续性"的约束。定义 dp[i] 为 "以 i 结尾" 是线性 DP 中最常用的技巧。
+· "以 i 结尾"
+· 答案取 max(dp[0..n-1]) 而非 dp[n-1]，因为最优解不一定以最后一个元素结尾。
+· 答案取 max(dp[0..n-1])
+· 滚动数组： dp[i] 只依赖 dp[i-1] 时，用变量替代数组（如最大子段和）
+· 滚动数组：
+讲解时放慢关键术语；用 1 个生活类比 + 1 个反例加深印象。</aside>
+</div>
+<!-- ======== Slide 6: 本课小结 ======== -->
+<div class="slide" data-index="5">
+<h1>本课小结</h1>
+<div class="summary-grid">
+<div class="summary-card">
+<h3>核心框架</h3>
+<p>DP 四步法：</p>
+<ol>
+<li>状态定义 — dp[i] 的含义</li>
+<li>转移方程 — 递推关系</li>
+<li>初始状态 — 递推起点</li>
+<li>计算顺序 — 从小到大</li>
+</ol>
+</div>
+<div class="summary-card">
+<h3>经典问题</h3>
+<p><strong>最大子段和：</strong>O(n)</p>
+<p><code>dp[i] = max(a[i], dp[i-1] + a[i])</code></p>
+<p style="margin-top:12px;"><strong>最长上升子序列：</strong>O(n²)</p>
+<p><code>dp[i] = max(dp[j] + 1), a[j] &lt; a[i]</code></p>
+</div>
+<div class="summary-card">
+<h3>关键技巧</h3>
+<ul>
+<li>dp[i] 强制"以 i 结尾"</li>
+<li>答案取 max(dp[0..n-1])</li>
+<li>空间优化：滚动变量</li>
+<li>时间优化：贪心 + 二分</li>
+</ul>
+</div>
+<div class="summary-card">
+<h3>下节课预告</h3>
+<p><strong>第37课：二维线性DP</strong></p>
+<ul>
+<li>最长公共子序列 (LCS)</li>
+<li>编辑距离</li>
+<li>棋盘路径计数</li>
+<li>dp[i][j] 的状态定义与转移</li>
+</ul>
+</div>
+</div>
+<div class="info-box" style="margin-top:20px; text-align:center;">
+<p style="font-size:1.2em;">掌握一维DP，是通向多维DP、背包问题、区间DP的基石。</p>
+<p style="margin-top:6px;">课后请多加练习，熟练运用<strong>四步框架</strong>解决各类DP问题！</p>
 </div>
 
+<aside class="notes">【收尾】回顾本课主线：本课小结
+对照大纲再过一遍：状态定义、状态转移方程
+板书/口述要点：
+· DP 四步法：
+· 状态定义 — dp[i] 的含义
+· 转移方程 — 递推关系
+· 初始状态 — 递推起点
+· 计算顺序 — 从小到大
+· 最大子段和： O(n)
+课后任务：最大子段和、最长上升子序列
+结束前留 2 分钟答疑；布置 1 道小练习检验是否真正掌握。</aside>
+</div>
+<!-- ======== Control Bar ======== -->
+<div class="controls">
+<button id="prevBtn" onclick="changeSlide(-1)">◀ 上一页</button>
+<span class="counter" id="slideCounter">1 / 6</span>
+<button id="nextBtn" onclick="changeSlide(1)">下一页 ▶</button>
+</div>
+</div>
 <script>
 (function() {
   var slides = document.querySelectorAll('.slide');
@@ -548,7 +599,6 @@ body {
   showSlide(0);
 })();
 </script>
-
 <script src="courseware-ui.js"></script>
 <script src="presenter.js"></script>
 </body>

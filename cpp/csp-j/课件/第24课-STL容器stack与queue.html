@@ -1,8 +1,9 @@
 <!DOCTYPE html>
+
 <html lang="zh-CN">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
 <title>CSP-J 备考课程 - 第24课 STL容器：stack与queue</title>
 <style>
 * { margin: 0; padding: 0; box-sizing: border-box; }
@@ -110,93 +111,116 @@ tr:nth-child(even) td { background: #f5f5f5; }
 </style>
 </head>
 <body>
-
 <div id="title-bar">
-    <span>CSP-J 备考课程</span>
-    <span>第24课：STL容器——stack与queue</span>
+<span>CSP-J 备考课程</span>
+<span>第24课：STL容器——stack与queue</span>
 </div>
-
 <div id="slide-container">
-
-    <!-- ======== 幻灯片 1：标题页 ======== -->
-    <div class="slide active title-slide">
-        <h1>STL容器：stack与queue</h1>
-        <h2>第24课 · CSP-J 备考课程</h2>
-        <p>后进先出 vs 先进先出——两种最基本的受限数据结构</p>
-        <p style="margin-top:40px; font-size:14px; color:#90caf9;">
+<!-- ======== 幻灯片 1：标题页 ======== -->
+<div class="slide active title-slide">
+<h1>STL容器：stack与queue</h1>
+<h2>第24课 · CSP-J 备考课程</h2>
+<p>后进先出 vs 先进先出——两种最基本的受限数据结构</p>
+<p style="margin-top:40px; font-size:14px; color:#90caf9;">
             stack栈(LIFO) | queue队列(FIFO) | 括号匹配 | 约瑟夫问题 | BFS预备
         </p>
-    </div>
 
-    <!-- ======== 幻灯片 2：为什么需要 ======== -->
-    <div class="slide">
-        <h1>为什么需要 Stack 和 Queue？</h1>
-        <p>数组和 vector 解决的是"存数据"的问题，但竞赛中我们经常遇到需要<strong>按特定顺序处理数据</strong>的场景：</p>
-        <div class="flex-row" style="margin-top:20px;">
-            <div class="flex-col">
-                <div class="key-point">
-                    <h3>Stack（栈）适用场景</h3>
-                    <p>括号嵌套匹配：遇到左括号先存着，遇到右括号时应该匹配<strong>最后一个</strong>左括号</p>
-                    <p style="margin-top:8px;">→ <strong>后进先出（LIFO）</strong></p>
-                </div>
-            </div>
-            <div class="flex-col">
-                <div class="key-point">
-                    <h3>Queue（队列）适用场景</h3>
-                    <p>排队叫号：先到的人先服务</p>
-                    <p style="margin-top:8px;">→ <strong>先进先出（FIFO）</strong></p>
-                </div>
-            </div>
-        </div>
-        <div class="exam-tips" style="margin-top:24px;">
-            <h4>为什么不用数组手写？</h4>
-            <p>数组手写这些逻辑代码多、容易错。STL 提供了现成的 <code>stack</code> 和 <code>queue</code>，几行代码就能搞定，帮你把注意力集中在算法本身。</p>
-        </div>
-    </div>
+<aside class="notes">【开场】第 1/11 页 · STL容器：stack与queue
+用 30 秒说明本课目标与学完能做什么，再进入正题。
+大纲考点：stack栈操作、queue队列操作、应用场景
+配套练习方向：栈与队列模拟应用题
+封面关键词：
+· 后进先出 vs 先进先出——两种最基本的受限数据结构
+· stack栈(LIFO) | queue队列(FIFO) | 括号匹配 | 约瑟夫问题 | BFS预备
+互动：问学生「今天最想搞清楚什么？」，收 1–2 个期待。</aside>
+</div>
+<!-- ======== 幻灯片 2：为什么需要 ======== -->
+<div class="slide">
+<h1>为什么需要 Stack 和 Queue？</h1>
+<p>数组和 vector 解决的是"存数据"的问题，但竞赛中我们经常遇到需要<strong>按特定顺序处理数据</strong>的场景：</p>
+<div class="flex-row" style="margin-top:20px;">
+<div class="flex-col">
+<div class="key-point">
+<h3>Stack（栈）适用场景</h3>
+<p>括号嵌套匹配：遇到左括号先存着，遇到右括号时应该匹配<strong>最后一个</strong>左括号</p>
+<p style="margin-top:8px;">→ <strong>后进先出（LIFO）</strong></p>
+</div>
+</div>
+<div class="flex-col">
+<div class="key-point">
+<h3>Queue（队列）适用场景</h3>
+<p>排队叫号：先到的人先服务</p>
+<p style="margin-top:8px;">→ <strong>先进先出（FIFO）</strong></p>
+</div>
+</div>
+</div>
+<div class="exam-tips" style="margin-top:24px;">
+<h4>为什么不用数组手写？</h4>
+<p>数组手写这些逻辑代码多、容易错。STL 提供了现成的 <code>stack</code> 和 <code>queue</code>，几行代码就能搞定，帮你把注意力集中在算法本身。</p>
+</div>
 
-    <!-- ======== 幻灯片 3：Stack 详解 ======== -->
-    <div class="slide">
-        <h1>Stack（栈）——后进先出 LIFO</h1>
-
-        <h2>现实中的栈</h2>
-        <ul>
-            <li><strong>一摞盘子</strong>：最后放上去的盘子，第一个被拿走</li>
-            <li><strong>浏览器后退按钮</strong>：最后访问的页面，后退时最先回去</li>
-            <li><strong>撤销操作 (Ctrl+Z)</strong>：最后做的操作，撤销时最先被还原</li>
-            <li><strong>函数调用栈</strong>：最后一个调用的函数最先返回</li>
-        </ul>
-
-        <h2>头文件与声明</h2>
-        <div class="code-block">
+<aside class="notes">【讲解】为什么需要 Stack 和 Queue？
+结合讲义《九、Stack vs Queue 选择指南》强调：
+· 一句话总结：需要"往回找"用栈，需要"按顺序走"用队列。
+幻灯片上可见要点：
+· 数组和 vector 解决的是"存数据"的问题，但竞赛中我们经常遇到需要 按特定顺序处理数据 的场景：
+· 按特定顺序处理数据
+· 括号嵌套匹配：遇到左括号先存着，遇到右括号时应该匹配 最后一个 左括号
+· 最后一个
+讲解时放慢关键术语；用 1 个生活类比 + 1 个反例加深印象。
+本课大纲考点（可适时点题）：stack栈操作、queue队列操作、应用场景</aside>
+</div>
+<!-- ======== 幻灯片 3：Stack 详解 ======== -->
+<div class="slide">
+<h1>Stack（栈）——后进先出 LIFO</h1>
+<h2>现实中的栈</h2>
+<ul>
+<li><strong>一摞盘子</strong>：最后放上去的盘子，第一个被拿走</li>
+<li><strong>浏览器后退按钮</strong>：最后访问的页面，后退时最先回去</li>
+<li><strong>撤销操作 (Ctrl+Z)</strong>：最后做的操作，撤销时最先被还原</li>
+<li><strong>函数调用栈</strong>：最后一个调用的函数最先返回</li>
+</ul>
+<h2>头文件与声明</h2>
+<div class="code-block">
 <span class="keyword">#include</span> <span class="string">&lt;stack&gt;</span>
 <span class="keyword">using namespace std</span>;
 
 stack&lt;<span class="keyword">int</span>&gt; s;                    <span class="comment">// 存储int的栈</span>
 stack&lt;<span class="keyword">char</span>&gt; charStack;           <span class="comment">// 存储char的栈</span>
 stack&lt;<span class="keyword">string</span>&gt; strStack;          <span class="comment">// 存储string的栈</span>
-        </div>
+</div>
+<h2>核心操作</h2>
+<table>
+<tr><th>操作</th><th>说明</th><th>时间复杂度</th></tr>
+<tr><td><code>s.push(x)</code></td><td>将元素x压入栈顶</td><td>O(1)</td></tr>
+<tr><td><code>s.pop()</code></td><td>弹出栈顶元素（不返回！）</td><td>O(1)</td></tr>
+<tr><td><code>s.top()</code></td><td>返回栈顶元素（不弹出）</td><td>O(1)</td></tr>
+<tr><td><code>s.empty()</code></td><td>判断栈是否为空</td><td>O(1)</td></tr>
+<tr><td><code>s.size()</code></td><td>返回栈中元素个数</td><td>O(1)</td></tr>
+</table>
+<div class="exam-tips">
+<h4>最重要的坑！</h4>
+<p><code>pop()</code> <strong>不返回值</strong>！要获取栈顶元素必须先 <code>top()</code>，再 <code>pop()</code>。这和某些其他语言（如Python的 <code>list.pop()</code>）完全不一样。</p>
+</div>
 
-        <h2>核心操作</h2>
-        <table>
-            <tr><th>操作</th><th>说明</th><th>时间复杂度</th></tr>
-            <tr><td><code>s.push(x)</code></td><td>将元素x压入栈顶</td><td>O(1)</td></tr>
-            <tr><td><code>s.pop()</code></td><td>弹出栈顶元素（不返回！）</td><td>O(1)</td></tr>
-            <tr><td><code>s.top()</code></td><td>返回栈顶元素（不弹出）</td><td>O(1)</td></tr>
-            <tr><td><code>s.empty()</code></td><td>判断栈是否为空</td><td>O(1)</td></tr>
-            <tr><td><code>s.size()</code></td><td>返回栈中元素个数</td><td>O(1)</td></tr>
-        </table>
-
-        <div class="exam-tips">
-            <h4>最重要的坑！</h4>
-            <p><code>pop()</code> <strong>不返回值</strong>！要获取栈顶元素必须先 <code>top()</code>，再 <code>pop()</code>。这和某些其他语言（如Python的 <code>list.pop()</code>）完全不一样。</p>
-        </div>
-    </div>
-
-    <!-- ======== 幻灯片 4：Stack 完整演示 ======== -->
-    <div class="slide">
-        <h1>Stack 完整操作演示</h1>
-
-        <div class="code-block">
+<aside class="notes">【讲解】Stack（栈）——后进先出 LIFO
+结合讲义《二、Stack（栈）——后进先出 (LIFO)》强调：
+· 一摞盘子：最后放上去的盘子，第一个被拿走。
+· 浏览器的后退按钮：最后访问的页面，后退时最先回去。
+· 撤销操作（Ctrl+Z）：最后做的操作，撤销时最先被还原。
+· 程序员常说的"函数调用栈"（call stack）也是这个原理：最后一个调用的函数最先返回。
+· using namespace std;
+幻灯片上可见要点：
+· 一摞盘子 ：最后放上去的盘子，第一个被拿走
+· 一摞盘子
+· 浏览器后退按钮 ：最后访问的页面，后退时最先回去
+· 浏览器后退按钮
+讲解时放慢关键术语；用 1 个生活类比 + 1 个反例加深印象。</aside>
+</div>
+<!-- ======== 幻灯片 4：Stack 完整演示 ======== -->
+<div class="slide">
+<h1>Stack 完整操作演示</h1>
+<div class="code-block">
 <span class="keyword">#include</span> <span class="string">&lt;iostream&gt;</span>
 <span class="keyword">#include</span> <span class="string">&lt;stack&gt;</span>
 <span class="keyword">using namespace std</span>;
@@ -210,9 +234,8 @@ stack&lt;<span class="keyword">string</span>&gt; strStack;          <span class=
     s.push(<span class="number">30</span>);
     cout &lt;&lt; <span class="string">"栈顶: "</span> &lt;&lt; s.top() &lt;&lt; endl;   <span class="comment">// 输出 30</span>
     cout &lt;&lt; <span class="string">"大小: "</span> &lt;&lt; s.size() &lt;&lt; endl;  <span class="comment">// 输出 3</span>
-
-    <span class="comment">// 依次弹出</span>
-    <span class="keyword">while</span> (!s.empty()) {
+<span class="comment">// 依次弹出</span>
+<span class="keyword">while</span> (!s.empty()) {
         cout &lt;&lt; <span class="string">"弹出: "</span> &lt;&lt; s.top() &lt;&lt; endl;  <span class="comment">// 先取值</span>
         s.pop();                               <span class="comment">// 再弹出</span>
     }
@@ -222,57 +245,61 @@ stack&lt;<span class="keyword">string</span>&gt; strStack;          <span class=
     <span class="keyword">return</span> <span class="number">0</span>;
 }
         </div>
-
-        <h2>执行过程追踪</h2>
-        <table>
-            <tr><th>步骤</th><th>操作</th><th>栈内容（栈顶→栈底）</th><th>top()</th><th>size()</th></tr>
-            <tr><td>0</td><td>创建</td><td>[]</td><td>-</td><td>0</td></tr>
-            <tr><td>1</td><td>push(10)</td><td>[10]</td><td>10</td><td>1</td></tr>
-            <tr><td>2</td><td>push(20)</td><td>[20, 10]</td><td>20</td><td>2</td></tr>
-            <tr><td>3</td><td>push(30)</td><td>[30, 20, 10]</td><td>30</td><td>3</td></tr>
-            <tr><td>4</td><td>pop()</td><td>[20, 10]</td><td>20</td><td>2</td></tr>
-            <tr><td>5</td><td>pop()</td><td>[10]</td><td>10</td><td>1</td></tr>
-            <tr><td>6</td><td>pop()</td><td>[]</td><td>-</td><td>0</td></tr>
-        </table>
-
-        <div class="key-point">
-            <strong>底层实现：</strong>STL 中 <code>stack</code> 默认基于 <code>deque</code>（双端队列）实现。竞赛中不需要关心底层，用默认的 <code>stack&lt;int&gt;</code> 就行。
+<h2>执行过程追踪</h2>
+<table>
+<tr><th>步骤</th><th>操作</th><th>栈内容（栈顶→栈底）</th><th>top()</th><th>size()</th></tr>
+<tr><td>0</td><td>创建</td><td>[]</td><td>-</td><td>0</td></tr>
+<tr><td>1</td><td>push(10)</td><td>[10]</td><td>10</td><td>1</td></tr>
+<tr><td>2</td><td>push(20)</td><td>[20, 10]</td><td>20</td><td>2</td></tr>
+<tr><td>3</td><td>push(30)</td><td>[30, 20, 10]</td><td>30</td><td>3</td></tr>
+<tr><td>4</td><td>pop()</td><td>[20, 10]</td><td>20</td><td>2</td></tr>
+<tr><td>5</td><td>pop()</td><td>[10]</td><td>10</td><td>1</td></tr>
+<tr><td>6</td><td>pop()</td><td>[]</td><td>-</td><td>0</td></tr>
+</table>
+<div class="key-point">
+<strong>底层实现：</strong>STL 中 <code>stack</code> 默认基于 <code>deque</code>（双端队列）实现。竞赛中不需要关心底层，用默认的 <code>stack&lt;int&gt;</code> 就行。
         </div>
-    </div>
 
-    <!-- ======== 幻灯片 5：Queue 详解 ======== -->
-    <div class="slide">
-        <h1>Queue（队列）——先进先出 FIFO</h1>
-
-        <h2>现实中的队列</h2>
-        <ul>
-            <li><strong>排队买票</strong>：排在最前面的人最先买到票</li>
-            <li><strong>打印队列</strong>：先提交的文档先被打印</li>
-            <li><strong>消息队列</strong>：先收到的消息先被处理</li>
-        </ul>
-
-        <h2>头文件与声明</h2>
-        <div class="code-block">
+<aside class="notes">【讲解】Stack 完整操作演示
+结合讲义《二、Stack（栈）——后进先出 (LIFO)》强调：
+· 一摞盘子：最后放上去的盘子，第一个被拿走。
+· 浏览器的后退按钮：最后访问的页面，后退时最先回去。
+· 撤销操作（Ctrl+Z）：最后做的操作，撤销时最先被还原。
+· 程序员常说的"函数调用栈"（call stack）也是这个原理：最后一个调用的函数最先返回。
+· using namespace std;
+幻灯片上可见要点：
+· 底层实现：
+讲解时放慢关键术语；用 1 个生活类比 + 1 个反例加深印象。</aside>
+</div>
+<!-- ======== 幻灯片 5：Queue 详解 ======== -->
+<div class="slide">
+<h1>Queue（队列）——先进先出 FIFO</h1>
+<h2>现实中的队列</h2>
+<ul>
+<li><strong>排队买票</strong>：排在最前面的人最先买到票</li>
+<li><strong>打印队列</strong>：先提交的文档先被打印</li>
+<li><strong>消息队列</strong>：先收到的消息先被处理</li>
+</ul>
+<h2>头文件与声明</h2>
+<div class="code-block">
 <span class="keyword">#include</span> <span class="string">&lt;queue&gt;</span>
 <span class="keyword">using namespace std</span>;
 
 queue&lt;<span class="keyword">int</span>&gt; q;                    <span class="comment">// 存储int的队列</span>
 queue&lt;<span class="keyword">string</span>&gt; nameQueue;         <span class="comment">// 存储string的队列</span>
-        </div>
-
-        <h2>核心操作</h2>
-        <table>
-            <tr><th>操作</th><th>说明</th><th>时间复杂度</th></tr>
-            <tr><td><code>q.push(x)</code></td><td>将元素x添加到队尾</td><td>O(1)</td></tr>
-            <tr><td><code>q.pop()</code></td><td>移除队首元素（不返回！）</td><td>O(1)</td></tr>
-            <tr><td><code>q.front()</code></td><td>返回队首元素（不移除）</td><td>O(1)</td></tr>
-            <tr><td><code>q.back()</code></td><td>返回队尾元素（不移除）</td><td>O(1)</td></tr>
-            <tr><td><code>q.empty()</code></td><td>判断队列是否为空</td><td>O(1)</td></tr>
-            <tr><td><code>q.size()</code></td><td>返回队列中元素个数</td><td>O(1)</td></tr>
-        </table>
-
-        <h2>完整操作演示</h2>
-        <div class="code-block">
+</div>
+<h2>核心操作</h2>
+<table>
+<tr><th>操作</th><th>说明</th><th>时间复杂度</th></tr>
+<tr><td><code>q.push(x)</code></td><td>将元素x添加到队尾</td><td>O(1)</td></tr>
+<tr><td><code>q.pop()</code></td><td>移除队首元素（不返回！）</td><td>O(1)</td></tr>
+<tr><td><code>q.front()</code></td><td>返回队首元素（不移除）</td><td>O(1)</td></tr>
+<tr><td><code>q.back()</code></td><td>返回队尾元素（不移除）</td><td>O(1)</td></tr>
+<tr><td><code>q.empty()</code></td><td>判断队列是否为空</td><td>O(1)</td></tr>
+<tr><td><code>q.size()</code></td><td>返回队列中元素个数</td><td>O(1)</td></tr>
+</table>
+<h2>完整操作演示</h2>
+<div class="code-block">
 <span class="keyword">#include</span> <span class="string">&lt;iostream&gt;</span>
 <span class="keyword">#include</span> <span class="string">&lt;queue&gt;</span>
 <span class="keyword">using namespace std</span>;
@@ -286,44 +313,52 @@ queue&lt;<span class="keyword">string</span>&gt; nameQueue;         <span class=
     cout &lt;&lt; <span class="string">"队首: "</span> &lt;&lt; q.front() &lt;&lt; endl;  <span class="comment">// 输出 10</span>
     cout &lt;&lt; <span class="string">"队尾: "</span> &lt;&lt; q.back() &lt;&lt; endl;   <span class="comment">// 输出 30</span>
     cout &lt;&lt; <span class="string">"大小: "</span> &lt;&lt; q.size() &lt;&lt; endl;   <span class="comment">// 输出 3</span>
-
-    <span class="keyword">while</span> (!q.empty()) {
+<span class="keyword">while</span> (!q.empty()) {
         cout &lt;&lt; <span class="string">"出队: "</span> &lt;&lt; q.front() &lt;&lt; endl;
         q.pop();
     }
     <span class="comment">// 输出顺序: 10, 20, 30（先进先出）</span>
-
-    <span class="keyword">return</span> <span class="number">0</span>;
+<span class="keyword">return</span> <span class="number">0</span>;
 }
         </div>
-
-        <div class="key-point">
-            <strong>直观对比：</strong>同样的 <code>push(1) push(2) push(3)</code>：<br>
-            <strong>Stack 弹出</strong>：3 → 2 → 1（后进先出）<br>
-            <strong>Queue 弹出</strong>：1 → 2 → 3（先进先出）
+<div class="key-point">
+<strong>直观对比：</strong>同样的 <code>push(1) push(2) push(3)</code>：<br/>
+<strong>Stack 弹出</strong>：3 → 2 → 1（后进先出）<br/>
+<strong>Queue 弹出</strong>：1 → 2 → 3（先进先出）
         </div>
-    </div>
 
-    <!-- ======== 幻灯片 6：括号匹配 ======== -->
-    <div class="slide">
-        <h1>应用1：括号匹配（Stack 经典题）</h1>
-
-        <h2>算法步骤</h2>
-        <ol>
-            <li>遍历字符串中的每个字符</li>
-            <li>遇到<strong>左括号</strong>（<code>(</code>、<code>[</code>、<code>{</code>）→ 压入栈中</li>
-            <li>遇到<strong>右括号</strong> → 检查栈是否为空：
+<aside class="notes">【讲解】Queue（队列）——先进先出 FIFO
+结合讲义《三、Queue（队列）——先进先出 (FIFO)》强调：
+· 排队买票：排在最前面的人最先买到票。
+· 打印队列：先提交的文档先被打印。
+· 消息队列：先收到的消息先被处理。
+· 队列是BFS（广度优先搜索）的**核心数据结构**。任何"一层一层往外扩展"的算法都需要队列。今天先学队列的操作，为后续的图论和搜索课程打好基础。
+· using namespace std;
+幻灯片上可见要点：
+· 排队买票 ：排在最前面的人最先买到票
+· 排队买票
+· 打印队列 ：先提交的文档先被打印
+· 打印队列
+讲解时放慢关键术语；用 1 个生活类比 + 1 个反例加深印象。</aside>
+</div>
+<!-- ======== 幻灯片 6：括号匹配 ======== -->
+<div class="slide">
+<h1>应用1：括号匹配（Stack 经典题）</h1>
+<h2>算法步骤</h2>
+<ol>
+<li>遍历字符串中的每个字符</li>
+<li>遇到<strong>左括号</strong>（<code>(</code>、<code>[</code>、<code>{</code>）→ 压入栈中</li>
+<li>遇到<strong>右括号</strong> → 检查栈是否为空：
                 <ul>
-                    <li>栈空 → 匹配失败（右括号多了）</li>
-                    <li>栈顶不是对应的左括号 → 匹配失败（类型不匹配）</li>
-                    <li>栈顶是对应的左括号 → 弹出栈顶，继续遍历</li>
-                </ul>
-            </li>
-            <li>遍历结束后：栈空 → 完全匹配！栈非空 → 匹配失败（左括号多了）</li>
-        </ol>
-
-        <h2>AC 代码</h2>
-        <div class="code-block">
+<li>栈空 → 匹配失败（右括号多了）</li>
+<li>栈顶不是对应的左括号 → 匹配失败（类型不匹配）</li>
+<li>栈顶是对应的左括号 → 弹出栈顶，继续遍历</li>
+</ul>
+</li>
+<li>遍历结束后：栈空 → 完全匹配！栈非空 → 匹配失败（左括号多了）</li>
+</ol>
+<h2>AC 代码</h2>
+<div class="code-block">
 <span class="keyword">#include</span> <span class="string">&lt;iostream&gt;</span>
 <span class="keyword">#include</span> <span class="string">&lt;stack&gt;</span>
 <span class="keyword">#include</span> <span class="string">&lt;string&gt;</span>
@@ -337,9 +372,9 @@ queue&lt;<span class="keyword">string</span>&gt; nameQueue;         <span class=
         } <span class="keyword">else</span> {
             <span class="keyword">if</span> (st.empty()) <span class="keyword">return false</span>;
             <span class="keyword">char</span> top = st.top();
-            <span class="keyword">if</span> ((ch == <span class="string">')'</span> && top == <span class="string">'('</span>) ||
-                (ch == <span class="string">']'</span> && top == <span class="string">'['</span>) ||
-                (ch == <span class="string">'}'</span> && top == <span class="string">'{'</span>)) {
+            <span class="keyword">if</span> ((ch == <span class="string">')'</span> &amp;&amp; top == <span class="string">'('</span>) ||
+                (ch == <span class="string">']'</span> &amp;&amp; top == <span class="string">'['</span>) ||
+                (ch == <span class="string">'}'</span> &amp;&amp; top == <span class="string">'{'</span>)) {
                 st.pop();
             } <span class="keyword">else</span> {
                 <span class="keyword">return false</span>;
@@ -351,30 +386,41 @@ queue&lt;<span class="keyword">string</span>&gt; nameQueue;         <span class=
 
 <span class="keyword">int</span> main() {
     cout &lt;&lt; boolalpha;
-    cout &lt;&lt; <span class="string">"()        -> "</span> &lt;&lt; isValid(<span class="string">"()"</span>) &lt;&lt; endl;        <span class="comment">// true</span>
-    cout &lt;&lt; <span class="string">"()[]{}    -> "</span> &lt;&lt; isValid(<span class="string">"()[]{}"</span>) &lt;&lt; endl;    <span class="comment">// true</span>
-    cout &lt;&lt; <span class="string">"(]        -> "</span> &lt;&lt; isValid(<span class="string">"(]"</span>) &lt;&lt; endl;        <span class="comment">// false</span>
-    cout &lt;&lt; <span class="string">"([)]      -> "</span> &lt;&lt; isValid(<span class="string">"([)]"</span>) &lt;&lt; endl;      <span class="comment">// false</span>
-    cout &lt;&lt; <span class="string">"{[]}      -> "</span> &lt;&lt; isValid(<span class="string">"{[]}"</span>) &lt;&lt; endl;      <span class="comment">// true</span>
-    <span class="keyword">return</span> <span class="number">0</span>;
+    cout &lt;&lt; <span class="string">"()        -&gt; "</span> &lt;&lt; isValid(<span class="string">"()"</span>) &lt;&lt; endl;        <span class="comment">// true</span>
+    cout &lt;&lt; <span class="string">"()[]{}    -&gt; "</span> &lt;&lt; isValid(<span class="string">"()[]{}"</span>) &lt;&lt; endl;    <span class="comment">// true</span>
+    cout &lt;&lt; <span class="string">"(]        -&gt; "</span> &lt;&lt; isValid(<span class="string">"(]"</span>) &lt;&lt; endl;        <span class="comment">// false</span>
+    cout &lt;&lt; <span class="string">"([)]      -&gt; "</span> &lt;&lt; isValid(<span class="string">"([)]"</span>) &lt;&lt; endl;      <span class="comment">// false</span>
+    cout &lt;&lt; <span class="string">"{[]}      -&gt; "</span> &lt;&lt; isValid(<span class="string">"{[]}"</span>) &lt;&lt; endl;      <span class="comment">// true</span>
+<span class="keyword">return</span> <span class="number">0</span>;
 }
         </div>
+<div class="exam-tips">
+<h4>复杂度分析</h4>
+<p>时间复杂度 O(n)，空间复杂度 O(n)。每个字符恰好入栈一次、出栈一次。</p>
+</div>
 
-        <div class="exam-tips">
-            <h4>复杂度分析</h4>
-            <p>时间复杂度 O(n)，空间复杂度 O(n)。每个字符恰好入栈一次、出栈一次。</p>
-        </div>
-    </div>
-
-    <!-- ======== 幻灯片 7：约瑟夫问题 + 服务窗口 + BFS预备 ======== -->
-    <div class="slide">
-        <h1>Queue 三大应用场景</h1>
-
-        <div class="flex-row">
-            <div class="flex-col">
-                <h2>约瑟夫问题</h2>
-                <p>n个人围成一圈，数到m的人出列。求出列顺序。</p>
-                <div class="code-block">
+<aside class="notes">【讲解】应用1：括号匹配（Stack 经典题）
+结合讲义《四、应用场景1：括号匹配（Stack经典题）》强调：
+· 问题描述：给定一个包含 ( ) [ ] { } 的字符串，判断括号是否正确匹配。
+· 算法步骤：
+· 遍历字符串中的每个字符
+· 遇到**左括号**（(、[、{）→ 压入栈中
+· 遇到**右括号** → 检查栈是否为空：
+幻灯片上可见要点：
+· 遍历字符串中的每个字符
+· 遇到 左括号 （ ( 、 [ 、 { ）→ 压入栈中
+· 遇到 右括号 → 检查栈是否为空： 栈空 → 匹配失败（右括号多了） 栈顶不是对应的左括号 → 匹配失败（类型不匹配） 栈顶是对应的左括号 → 弹出栈顶，继续遍历
+· 栈空 → 匹配失败（右括号多了）
+讲解时放慢关键术语；用 1 个生活类比 + 1 个反例加深印象。</aside>
+</div>
+<!-- ======== 幻灯片 7：约瑟夫问题 + 服务窗口 + BFS预备 ======== -->
+<div class="slide">
+<h1>Queue 三大应用场景</h1>
+<div class="flex-row">
+<div class="flex-col">
+<h2>约瑟夫问题</h2>
+<p>n个人围成一圈，数到m的人出列。求出列顺序。</p>
+<div class="code-block">
 <span class="keyword">int</span> n = <span class="number">5</span>, m = <span class="number">3</span>;
 queue&lt;<span class="keyword">int</span>&gt; q;
 <span class="keyword">for</span> (<span class="keyword">int</span> i = <span class="number">1</span>; i &lt;= n; i++) q.push(i);
@@ -387,13 +433,13 @@ queue&lt;<span class="keyword">int</span>&gt; q;
     q.pop();
 }
 <span class="comment">// 输出: 3 1 5 2 4</span>
-                </div>
-                <p>核心：前m-1人从队首移到队尾，第m人出队。</p>
-            </div>
-            <div class="flex-col">
-                <h2>服务窗口模拟</h2>
-                <p>n个客户排队，单窗口FIFO服务，统计等待时间。</p>
-                <div class="code-block">
+</div>
+<p>核心：前m-1人从队首移到队尾，第m人出队。</p>
+</div>
+<div class="flex-col">
+<h2>服务窗口模拟</h2>
+<p>n个客户排队，单窗口FIFO服务，统计等待时间。</p>
+<div class="code-block">
 <span class="keyword">int</span> curTime = <span class="number">0</span>;
 <span class="keyword">while</span> (!q.empty()) {
     Customer c = q.front(); q.pop();
@@ -403,12 +449,11 @@ queue&lt;<span class="keyword">int</span>&gt; q;
     curTime += c.serveTime;
 }
                 </div>
-                <p>核心：按到达顺序入队，逐个出队处理。</p>
-            </div>
-        </div>
-
-        <h2 style="margin-top:16px;">BFS 预备知识</h2>
-        <div class="code-block">
+<p>核心：按到达顺序入队，逐个出队处理。</p>
+</div>
+</div>
+<h2 style="margin-top:16px;">BFS 预备知识</h2>
+<div class="code-block">
 <span class="comment">// BFS = 队列逐层扩展</span>
 queue&lt;<span class="keyword">int</span>&gt; q; q.push(start); visited[start] = <span class="keyword">true</span>;
 <span class="keyword">while</span> (!q.empty()) {
@@ -421,21 +466,31 @@ queue&lt;<span class="keyword">int</span>&gt; q; q.push(start); visited[start] =
     }
 }
         </div>
+<div class="exam-tips">
+<h4>一句话理解 BFS</h4>
+<p>队列就是一个<strong>待处理列表</strong>。同一层的节点几乎同时入队，又按顺序被处理，自然实现了"一层一层向外扩展"。</p>
+</div>
 
-        <div class="exam-tips">
-            <h4>一句话理解 BFS</h4>
-            <p>队列就是一个<strong>待处理列表</strong>。同一层的节点几乎同时入队，又按顺序被处理，自然实现了"一层一层向外扩展"。</p>
-        </div>
-    </div>
-
-    <!-- ======== 幻灯片 8：priority_queue + 选择指南 ======== -->
-    <div class="slide">
-        <h1>priority_queue 与选择指南</h1>
-
-        <h2>priority_queue（优先队列）</h2>
-        <p>C++ 还提供了优先队列，默认是<strong>大顶堆</strong>（最大值先出队）：</p>
-
-        <div class="code-block">
+<aside class="notes">【讲解】Queue 三大应用场景
+结合讲义《三、Queue（队列）——先进先出 (FIFO)》强调：
+· 排队买票：排在最前面的人最先买到票。
+· 打印队列：先提交的文档先被打印。
+· 消息队列：先收到的消息先被处理。
+· 队列是BFS（广度优先搜索）的**核心数据结构**。任何"一层一层往外扩展"的算法都需要队列。今天先学队列的操作，为后续的图论和搜索课程打好基础。
+· using namespace std;
+幻灯片上可见要点：
+· n个人围成一圈，数到m的人出列。求出列顺序。
+· 核心：前m-1人从队首移到队尾，第m人出队。
+· n个客户排队，单窗口FIFO服务，统计等待时间。
+· 核心：按到达顺序入队，逐个出队处理。
+讲解时放慢关键术语；用 1 个生活类比 + 1 个反例加深印象。</aside>
+</div>
+<!-- ======== 幻灯片 8：priority_queue + 选择指南 ======== -->
+<div class="slide">
+<h1>priority_queue 与选择指南</h1>
+<h2>priority_queue（优先队列）</h2>
+<p>C++ 还提供了优先队列，默认是<strong>大顶堆</strong>（最大值先出队）：</p>
+<div class="code-block">
 <span class="keyword">#include</span> <span class="string">&lt;queue&gt;</span>
 
 priority_queue&lt;<span class="keyword">int</span>&gt; pq;          <span class="comment">// 大顶堆，最大值在队首</span>
@@ -443,127 +498,155 @@ pq.push(<span class="number">3</span>); pq.push(<span class="number">1</span>); 
 cout &lt;&lt; pq.top();                <span class="comment">// 输出 5（最大值）</span>
 pq.pop();
 cout &lt;&lt; pq.top();                <span class="comment">// 输出 3</span>
-
 <span class="comment">// 小顶堆（最小值在队首）</span>
 priority_queue&lt;<span class="keyword">int</span>, vector&lt;<span class="keyword">int</span>&gt;, greater&lt;<span class="keyword">int</span>&gt;&gt; minHeap;
         </div>
-
-        <h2>Stack vs Queue 选择指南</h2>
-        <table>
-            <tr><th>场景特征</th><th>应该用...</th><th>原因</th></tr>
-            <tr><td>最后进来的先处理</td><td><strong>Stack</strong></td><td>LIFO</td></tr>
-            <tr><td>先进来的先处理</td><td><strong>Queue</strong></td><td>FIFO</td></tr>
-            <tr><td>括号匹配、表达式求值</td><td><strong>Stack</strong></td><td>嵌套结构→后进先出</td></tr>
-            <tr><td>排队模拟、轮流处理</td><td><strong>Queue</strong></td><td>公平顺序→先进先出</td></tr>
-            <tr><td>函数递归的迭代版</td><td><strong>Stack</strong></td><td>模拟调用栈</td></tr>
-            <tr><td>逐层扩展（BFS）</td><td><strong>Queue</strong></td><td>按层次顺序</td></tr>
-            <tr><td>每次取最大/最小值</td><td><strong>priority_queue</strong></td><td>堆结构</td></tr>
-        </table>
-
-        <div class="key-point" style="margin-top:20px;">
-            <strong>一句话总结：</strong>需要"往回找"用栈，需要"按顺序走"用队列。
+<h2>Stack vs Queue 选择指南</h2>
+<table>
+<tr><th>场景特征</th><th>应该用...</th><th>原因</th></tr>
+<tr><td>最后进来的先处理</td><td><strong>Stack</strong></td><td>LIFO</td></tr>
+<tr><td>先进来的先处理</td><td><strong>Queue</strong></td><td>FIFO</td></tr>
+<tr><td>括号匹配、表达式求值</td><td><strong>Stack</strong></td><td>嵌套结构→后进先出</td></tr>
+<tr><td>排队模拟、轮流处理</td><td><strong>Queue</strong></td><td>公平顺序→先进先出</td></tr>
+<tr><td>函数递归的迭代版</td><td><strong>Stack</strong></td><td>模拟调用栈</td></tr>
+<tr><td>逐层扩展（BFS）</td><td><strong>Queue</strong></td><td>按层次顺序</td></tr>
+<tr><td>每次取最大/最小值</td><td><strong>priority_queue</strong></td><td>堆结构</td></tr>
+</table>
+<div class="key-point" style="margin-top:20px;">
+<strong>一句话总结：</strong>需要"往回找"用栈，需要"按顺序走"用队列。
         </div>
-    </div>
 
-    <!-- ======== 幻灯片 9：易错点 ======== -->
-    <div class="slide">
-        <h1>五大易错点</h1>
-
-        <div class="exam-tips">
-            <h4>易错1：pop() 不返回元素值</h4>
-            <p>❌ <code>int x = s.pop();</code>（编译错误！pop() 返回 void）<br>
+<aside class="notes">【讲解】priority_queue 与选择指南
+结合讲义《八、priority_queue 简要介绍》强调：
+· C++还提供了优先队列（priority_queue），默认是**大顶堆**（最大值先出队）：
+· priority_queue pq; // 大顶堆，最大值在队首
+· pq.push(3); pq.push(1); pq.push(5);
+· cout &lt;&lt; pq.top(); // 输出 5（最大值）
+· pq.pop();
+幻灯片上可见要点：
+· C++ 还提供了优先队列，默认是 大顶堆 （最大值先出队）：
+· Stack
+· Queue
+· priority_queue
+讲解时放慢关键术语；用 1 个生活类比 + 1 个反例加深印象。</aside>
+</div>
+<!-- ======== 幻灯片 9：易错点 ======== -->
+<div class="slide">
+<h1>五大易错点</h1>
+<div class="exam-tips">
+<h4>易错1：pop() 不返回元素值</h4>
+<p>❌ <code>int x = s.pop();</code>（编译错误！pop() 返回 void）<br/>
             ✅ <code>int x = s.top(); s.pop();</code>（先取值，再弹出）</p>
-        </div>
-        <div class="exam-tips">
-            <h4>易错2：对空容器操作</h4>
-            <p>对空栈调用 <code>top()</code> 或 <code>pop()</code> → 未定义行为！<br>
+</div>
+<div class="exam-tips">
+<h4>易错2：对空容器操作</h4>
+<p>对空栈调用 <code>top()</code> 或 <code>pop()</code> → 未定义行为！<br/>
             每次操作前必须用 <code>empty()</code> 检查。</p>
-        </div>
-        <div class="exam-tips">
-            <h4>易错3：忘记头文件</h4>
-            <p><code>stack</code> → <code>#include &lt;stack&gt;</code><br>
-            <code>queue</code> 和 <code>priority_queue</code> → <code>#include &lt;queue&gt;</code></p>
-        </div>
-        <div class="exam-tips">
-            <h4>易错4：front() 和 back() 搞混</h4>
-            <p><code>front()</code> = 队首（最先入队，下次 pop 移除的）<br>
-            <code>back()</code> = 队尾（最后入队，最新添加的）</p>
-        </div>
-        <div class="exam-tips">
-            <h4>易错5：stack/queue 不支持遍历</h4>
-            <p>没有 <code>[]</code> 下标、没有迭代器、不能范围 for。<br>
+</div>
+<div class="exam-tips">
+<h4>易错3：忘记头文件</h4>
+<p><code>stack</code> → <code>#include &lt;stack&gt;</code><br/>
+<code>queue</code> 和 <code>priority_queue</code> → <code>#include &lt;queue&gt;</code></p>
+</div>
+<div class="exam-tips">
+<h4>易错4：front() 和 back() 搞混</h4>
+<p><code>front()</code> = 队首（最先入队，下次 pop 移除的）<br/>
+<code>back()</code> = 队尾（最后入队，最新添加的）</p>
+</div>
+<div class="exam-tips">
+<h4>易错5：stack/queue 不支持遍历</h4>
+<p>没有 <code>[]</code> 下标、没有迭代器、不能范围 for。<br/>
             需要遍历请用 vector。</p>
-        </div>
-    </div>
+</div>
 
-    <!-- ======== 幻灯片 10：真题精练 ======== -->
-    <div class="slide">
-        <h1>真题精练</h1>
-
-        <h2>题目1：有效的括号</h2>
-        <div class="sample-io">
-<strong>输入：</strong> ()[]{}<br>
-<strong>输出：</strong> YES<br><br>
-<strong>输入：</strong> ([)]<br>
+<aside class="notes">【讲解】五大易错点
+本页要点（照着讲即可）：
+· 易错1：pop() 不返回元素值
+· ❌ int x = s.pop(); （编译错误！pop() 返回 void） ✅ int x = s.top(); s.pop(); （先取值，再弹出）
+· 易错2：对空容器操作
+· 对空栈调用 top() 或 pop() → 未定义行为！ 每次操作前必须用 empty() 检查。
+· 易错3：忘记头文件
+· stack → #include queue 和 priority_queue → #include
+讲解时放慢关键术语；用 1 个生活类比 + 1 个反例加深印象。</aside>
+</div>
+<!-- ======== 幻灯片 10：真题精练 ======== -->
+<div class="slide">
+<h1>真题精练</h1>
+<h2>题目1：有效的括号</h2>
+<div class="sample-io">
+<strong>输入：</strong> ()[]{}<br/>
+<strong>输出：</strong> YES<br/><br/>
+<strong>输入：</strong> ([)]<br/>
 <strong>输出：</strong> NO
         </div>
-        <p>栈应用题。左括号入栈，右括号弹栈匹配。两个失败条件：栈空时遇到右括号；遍历完栈非空。时间复杂度 O(n)。</p>
-
-        <h2>题目2：纸牌游戏（双队列对战）</h2>
-        <div class="sample-io">
-<strong>输入：</strong><br>
-5<br>
-3 5 1 8 2<br>
-4 6 9 7 10<br>
-<strong>输出：</strong><br>
-B WIN<br>
+<p>栈应用题。左括号入栈，右括号弹栈匹配。两个失败条件：栈空时遇到右括号；遍历完栈非空。时间复杂度 O(n)。</p>
+<h2>题目2：纸牌游戏（双队列对战）</h2>
+<div class="sample-io">
+<strong>输入：</strong><br/>
+5<br/>
+3 5 1 8 2<br/>
+4 6 9 7 10<br/>
+<strong>输出：</strong><br/>
+B WIN<br/>
 9
         </div>
-        <p>双队列对战。每轮双方各出一张牌（front + pop），大牌方将两张牌收入自己牌堆底（push + push）。设轮数上限（如1000轮）防死循环。</p>
-
-        <h2>题目3：十进制转二进制（Stack 反转）</h2>
-        <div class="code-block">
+<p>双队列对战。每轮双方各出一张牌（front + pop），大牌方将两张牌收入自己牌堆底（push + push）。设轮数上限（如1000轮）防死循环。</p>
+<h2>题目3：十进制转二进制（Stack 反转）</h2>
+<div class="code-block">
 stack&lt;<span class="keyword">int</span>&gt; s;
 <span class="keyword">while</span> (n &gt; <span class="number">0</span>) { s.push(n % <span class="number">2</span>); n /= <span class="number">2</span>; }
 <span class="keyword">while</span> (!s.empty()) { cout &lt;&lt; s.top(); s.pop(); }
 <span class="comment">// 余数压栈再弹出 = 自然反转顺序</span>
-        </div>
-        <p>利用 Stack 的 LIFO 特性实现顺序反转，是竞赛中的常见技巧。</p>
-    </div>
+</div>
+<p>利用 Stack 的 LIFO 特性实现顺序反转，是竞赛中的常见技巧。</p>
 
-    <!-- ======== 幻灯片 11：本课小结 ======== -->
-    <div class="slide">
-        <h1>本课小结</h1>
-
-        <table>
-            <tr><th>知识点</th><th>关键内容</th><th>一句记忆</th></tr>
-            <tr><td><strong>Stack</strong></td><td>push进入, top查看, pop移除</td><td>后进先出，像一摞盘子</td></tr>
-            <tr><td><strong>Queue</strong></td><td>push进入, front看队首, back看队尾, pop移除</td><td>先进先出，像排队买票</td></tr>
-            <tr><td><strong>括号匹配</strong></td><td>左括号进栈，右括号匹配栈顶弹出</td><td>栈的经典应用</td></tr>
-            <tr><td><strong>约瑟夫问题</strong></td><td>前m-1人移到队尾，第m人出队</td><td>队列循环模型</td></tr>
-            <tr><td><strong>pop不返回值</strong></td><td>先top/front取值，再pop移除</td><td>最易错的STL设计</td></tr>
-            <tr><td><strong>priority_queue</strong></td><td>默认大顶堆，top返回最大值</td><td>需要"优先"时用它</td></tr>
-        </table>
-
-        <h2>竞赛口诀</h2>
-        <div class="key-point" style="font-size:18px; text-align:center; padding:20px;">
-            需要"往回找"用<strong>栈</strong>，需要"按顺序走"用<strong>队列</strong>；<br>
+<aside class="notes">【讲解】真题精练
+本页要点（照着讲即可）：
+· 栈应用题。左括号入栈，右括号弹栈匹配。两个失败条件：栈空时遇到右括号；遍历完栈非空。时间复杂度 O(n)。
+· 双队列对战。每轮双方各出一张牌（front + pop），大牌方将两张牌收入自己牌堆底（push + push）。设轮数上限（如1000轮）防死循环。
+· 利用 Stack 的 LIFO 特性实现顺序反转，是竞赛中的常见技巧。
+练习页节奏：先独立想 1 分钟 → 再点拨思路 → 最后对答案讲为什么。
+可联系：栈与队列模拟应用题</aside>
+</div>
+<!-- ======== 幻灯片 11：本课小结 ======== -->
+<div class="slide">
+<h1>本课小结</h1>
+<table>
+<tr><th>知识点</th><th>关键内容</th><th>一句记忆</th></tr>
+<tr><td><strong>Stack</strong></td><td>push进入, top查看, pop移除</td><td>后进先出，像一摞盘子</td></tr>
+<tr><td><strong>Queue</strong></td><td>push进入, front看队首, back看队尾, pop移除</td><td>先进先出，像排队买票</td></tr>
+<tr><td><strong>括号匹配</strong></td><td>左括号进栈，右括号匹配栈顶弹出</td><td>栈的经典应用</td></tr>
+<tr><td><strong>约瑟夫问题</strong></td><td>前m-1人移到队尾，第m人出队</td><td>队列循环模型</td></tr>
+<tr><td><strong>pop不返回值</strong></td><td>先top/front取值，再pop移除</td><td>最易错的STL设计</td></tr>
+<tr><td><strong>priority_queue</strong></td><td>默认大顶堆，top返回最大值</td><td>需要"优先"时用它</td></tr>
+</table>
+<h2>竞赛口诀</h2>
+<div class="key-point" style="font-size:18px; text-align:center; padding:20px;">
+            需要"往回找"用<strong>栈</strong>，需要"按顺序走"用<strong>队列</strong>；<br/>
             pop 之前 empty，top/front 再 pop，5 秒习惯省半小时调试。
         </div>
-
-        <p style="margin-top:30px; text-align:center; color:#1a237e; font-size:20px; font-weight:bold;">
+<p style="margin-top:30px; text-align:center; color:#1a237e; font-size:20px; font-weight:bold;">
             Stack 为后进先出，Queue 为先进先出——掌握这两个容器，你就拥有了解决大量算法题的"标准工具"！
         </p>
-    </div>
 
-</div><!-- /slide-container -->
-
-<div id="nav-bar">
-    <button class="nav-btn" id="btn-prev" onclick="prevSlide()">◀ 上一页</button>
-    <span id="page-indicator">1 / 11</span>
-    <button class="nav-btn" id="btn-next" onclick="nextSlide()">下一页 ▶</button>
+<aside class="notes">【收尾】回顾本课主线：本课小结
+对照大纲再过一遍：stack栈操作、queue队列操作、应用场景
+板书/口述要点：
+· Stack
+· Queue
+· 括号匹配
+· 约瑟夫问题
+· pop不返回值
+· priority_queue
+课后任务：栈与队列模拟应用题
+结束前留 2 分钟答疑；布置 1 道小练习检验是否真正掌握。</aside>
 </div>
-
+</div><!-- /slide-container -->
+<div id="nav-bar">
+<button class="nav-btn" id="btn-prev" onclick="prevSlide()">◀ 上一页</button>
+<span id="page-indicator">1 / 11</span>
+<button class="nav-btn" id="btn-next" onclick="nextSlide()">下一页 ▶</button>
+</div>
 <script>
 let currentSlide = 0;
 const slides = document.querySelectorAll('.slide');
@@ -608,7 +691,6 @@ document.addEventListener('keydown', function(e) {
 
 showSlide(0);
 </script>
-
 <script src="courseware-ui.js"></script>
 <script src="presenter.js"></script>
 </body>

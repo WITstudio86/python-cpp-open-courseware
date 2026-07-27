@@ -1,8 +1,9 @@
 <!DOCTYPE html>
+
 <html lang="zh-CN">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
 <title>第17课：图的存储与遍历</title>
 <style>
   * { margin: 0; padding: 0; box-sizing: border-box; }
@@ -114,135 +115,149 @@
 </head>
 <body>
 <div class="slides-container">
-
 <!-- Slide 0: 标题页 -->
 <div class="slide active title-slide" data-index="0">
-  <span class="badge">CSP-S 算法专题</span>
-  <h1>第17课：图的存储与遍历</h1>
-  <p class="subtitle">邻接矩阵 · 邻接表 · 链式前向星 · DFS · BFS · 二分图</p>
-  <div style="margin-top:40px;color:#8b949e;font-size:.9rem;">
-    <p>邻接表 + BFS/DFS 是 CSP-S 的核心考点</p>
-    <p style="margin-top:8px;">熟练掌握遍历模板 = 解决 30% 的图论题</p>
-  </div>
+<span class="badge">CSP-S 算法专题</span>
+<h1>第17课：图的存储与遍历</h1>
+<p class="subtitle">邻接矩阵 · 邻接表 · 链式前向星 · DFS · BFS · 二分图</p>
+<div style="margin-top:40px;color:#8b949e;font-size:.9rem;">
+<p>邻接表 + BFS/DFS 是 CSP-S 的核心考点</p>
+<p style="margin-top:8px;">熟练掌握遍历模板 = 解决 30% 的图论题</p>
 </div>
 
+<aside class="notes">【开场】第 1/8 页 · 图的存储与遍历
+用 30 秒说明本课目标与学完能做什么，再进入正题。
+大纲考点：邻接矩阵、邻接表、链式前向星、DFS/BFS遍历
+配套练习方向：图的连通性判定、BFS最短路
+封面关键词：
+· 邻接矩阵 · 邻接表 · 链式前向星 · DFS · BFS · 二分图
+· 邻接表 + BFS/DFS 是 CSP-S 的核心考点
+· 熟练掌握遍历模板 = 解决 30% 的图论题
+互动：问学生「今天最想搞清楚什么？」，收 1–2 个期待。</aside>
+</div>
 <!-- Slide 1: 知识精讲 - 邻接矩阵 & 邻接表 -->
 <div class="slide" data-index="1">
-  <h1>图的基础存储方式</h1>
-
-  <h2>1. 邻接矩阵</h2>
-  <div class="code-block"><span class="ty">int</span> g[MAXN][MAXN];
+<h1>图的基础存储方式</h1>
+<h2>1. 邻接矩阵</h2>
+<div class="code-block"><span class="ty">int</span> g[MAXN][MAXN];
 <span class="cm">// g[u][v] = 1 有边 / 0 无边（无权图）</span>
 <span class="cm">// g[u][v] = w 边权为 w（带权图）</span></div>
-  <table>
-    <tr><th>操作</th><th>复杂度</th></tr>
-    <tr><td>查询边 (u, v)</td><td class="accent">O(1)</td></tr>
-    <tr><td>遍历 u 的所有邻接点</td><td class="accent">O(V)</td></tr>
-    <tr><td>空间复杂度</td><td class="accent">O(V²)</td></tr>
-  </table>
-  <p style="color:#ff7b72;">❗ 仅适合 n ≤ 1000 的稠密图，稀疏图会内存溢出</p>
-
-  <h2>2. vector 邻接表（最常用）</h2>
-  <div class="code-block">vector&lt;<span class="ty">int</span>&gt; g[MAXN];              <span class="cm">// 无权图</span>
+<table>
+<tr><th>操作</th><th>复杂度</th></tr>
+<tr><td>查询边 (u, v)</td><td class="accent">O(1)</td></tr>
+<tr><td>遍历 u 的所有邻接点</td><td class="accent">O(V)</td></tr>
+<tr><td>空间复杂度</td><td class="accent">O(V²)</td></tr>
+</table>
+<p style="color:#ff7b72;">❗ 仅适合 n ≤ 1000 的稠密图，稀疏图会内存溢出</p>
+<h2>2. vector 邻接表（最常用）</h2>
+<div class="code-block">vector&lt;<span class="ty">int</span>&gt; g[MAXN];              <span class="cm">// 无权图</span>
 vector&lt;pair&lt;<span class="ty">int</span>,<span class="ty">int</span>&gt;&gt; g[MAXN]; <span class="cm">// 带权图</span></div>
-  <table>
-    <tr><th>操作</th><th>复杂度</th></tr>
-    <tr><td>查询边 (u, v)</td><td class="accent">O(deg(u))</td></tr>
-    <tr><td>遍历 u 的所有邻接点</td><td class="accent">O(deg(u))</td></tr>
-    <tr><td>空间复杂度</td><td class="accent">O(V + E)</td></tr>
-  </table>
-</div>
+<table>
+<tr><th>操作</th><th>复杂度</th></tr>
+<tr><td>查询边 (u, v)</td><td class="accent">O(deg(u))</td></tr>
+<tr><td>遍历 u 的所有邻接点</td><td class="accent">O(deg(u))</td></tr>
+<tr><td>空间复杂度</td><td class="accent">O(V + E)</td></tr>
+</table>
 
+<aside class="notes">【讲解】图的基础存储方式
+本页要点（照着讲即可）：
+· ❗ 仅适合 n ≤ 1000 的稠密图，稀疏图会内存溢出
+讲解时放慢关键术语；用 1 个生活类比 + 1 个反例加深印象。
+本课大纲考点（可适时点题）：邻接矩阵、邻接表、链式前向星、DFS/BFS遍历</aside>
+</div>
 <!-- Slide 2: 知识精讲 - 链式前向星 -->
 <div class="slide" data-index="2">
-  <h1>链式前向星（Forward Star）</h1>
-  <p>用数组模拟链表，常数最小，适合大规模稀疏图。</p>
-
-  <h2>核心数据结构</h2>
-  <div class="code-block"><span class="ty">int</span> head[MAXN];  <span class="cm">// head[u]：u 的第一条边的编号</span>
+<h1>链式前向星（Forward Star）</h1>
+<p>用数组模拟链表，常数最小，适合大规模稀疏图。</p>
+<h2>核心数据结构</h2>
+<div class="code-block"><span class="ty">int</span> head[MAXN];  <span class="cm">// head[u]：u 的第一条边的编号</span>
 <span class="ty">int</span> to[MAXM];    <span class="cm">// to[i]：第 i 条边的终点</span>
 <span class="ty">int</span> nxt[MAXM];   <span class="cm">// nxt[i]：下一条同起点的边编号</span>
 <span class="ty">int</span> w[MAXM];     <span class="cm">// w[i]：第 i 条边的权值</span>
 <span class="ty">int</span> cnt = <span class="nu">0</span>;      <span class="cm">// 边计数器</span></div>
-
-  <h2>加边操作（头插法）</h2>
-  <div class="code-block"><span class="kw">void</span> <span class="fn">add_edge</span>(<span class="ty">int</span> u, <span class="ty">int</span> v, <span class="ty">int</span> weight) {
+<h2>加边操作（头插法）</h2>
+<div class="code-block"><span class="kw">void</span> <span class="fn">add_edge</span>(<span class="ty">int</span> u, <span class="ty">int</span> v, <span class="ty">int</span> weight) {
     to[++cnt] = v; w[cnt] = weight;
     nxt[cnt] = head[u]; head[u] = cnt;
 }</div>
-
-  <h2>遍历 u 的所有出边</h2>
-  <div class="code-block"><span class="kw">for</span> (<span class="ty">int</span> i = head[u]; i; i = nxt[i]) {
+<h2>遍历 u 的所有出边</h2>
+<div class="code-block"><span class="kw">for</span> (<span class="ty">int</span> i = head[u]; i; i = nxt[i]) {
     <span class="ty">int</span> v = to[i], weight = w[i];
     <span class="cm">// 处理边 (u → v, weight)</span>
 }</div>
-
-  <table>
-    <tr><th></th><th>vector 邻接表</th><th>链式前向星</th></tr>
-    <tr><td>内存</td><td class="accent">动态分配</td><td class="accent">静态数组</td></tr>
-    <tr><td>缓存友好</td><td>一般</td><td class="accent">更好</td></tr>
-    <tr><td>删除边</td><td class="accent">容易</td><td>困难</td></tr>
-    <tr><td>推荐场景</td><td>日常训练</td><td class="accent">竞赛 + 大数据</td></tr>
-  </table>
-
-  <div class="note-box">
+<table>
+<tr><th></th><th>vector 邻接表</th><th>链式前向星</th></tr>
+<tr><td>内存</td><td class="accent">动态分配</td><td class="accent">静态数组</td></tr>
+<tr><td>缓存友好</td><td>一般</td><td class="accent">更好</td></tr>
+<tr><td>删除边</td><td class="accent">容易</td><td>困难</td></tr>
+<tr><td>推荐场景</td><td>日常训练</td><td class="accent">竞赛 + 大数据</td></tr>
+</table>
+<div class="note-box">
     ⚠️ <b>无向图记得 MAXM 开 2 倍！</b>每条无向边 = 两条有向边。
   </div>
-</div>
 
+<aside class="notes">【讲解】链式前向星（Forward Star）
+本页要点（照着讲即可）：
+· 用数组模拟链表，常数最小，适合大规模稀疏图。
+讲解时放慢关键术语；用 1 个生活类比 + 1 个反例加深印象。</aside>
+</div>
 <!-- Slide 3: 原理推导 - DFS & BFS -->
 <div class="slide" data-index="3">
-  <h1>图的遍历：DFS 与 BFS</h1>
-
-  <h2>DFS — 深度优先搜索</h2>
-  <p>沿路径尽可能<b>深入</b>，无路可走才回溯。使用栈（递归 / 显式栈）。</p>
-  <div class="code-block"><span class="kw">void</span> <span class="fn">dfs</span>(<span class="ty">int</span> u) {
+<h1>图的遍历：DFS 与 BFS</h1>
+<h2>DFS — 深度优先搜索</h2>
+<p>沿路径尽可能<b>深入</b>，无路可走才回溯。使用栈（递归 / 显式栈）。</p>
+<div class="code-block"><span class="kw">void</span> <span class="fn">dfs</span>(<span class="ty">int</span> u) {
     vis[u] = <span class="kw">true</span>;
     <span class="kw">for</span> (<span class="ty">int</span> v : g[u])
         <span class="kw">if</span> (!vis[v]) <span class="fn">dfs</span>(v);
 }</div>
-
-  <h2>BFS — 广度优先搜索</h2>
-  <p>按层<b>逐级</b>向外扩展。使用队列，天然得到无权图最短路径。</p>
-  <div class="code-block">queue&lt;<span class="ty">int</span>&gt; q;
+<h2>BFS — 广度优先搜索</h2>
+<p>按层<b>逐级</b>向外扩展。使用队列，天然得到无权图最短路径。</p>
+<div class="code-block">queue&lt;<span class="ty">int</span>&gt; q;
 q.<span class="fn">push</span>(s); vis[s] = <span class="kw">true</span>;
 <span class="kw">while</span> (!q.<span class="fn">empty</span>()) {
     <span class="ty">int</span> u = q.<span class="fn">front</span>(); q.<span class="fn">pop</span>();
     <span class="kw">for</span> (<span class="ty">int</span> v : g[u])
         <span class="kw">if</span> (!vis[v]) { vis[v] = <span class="kw">true</span>; q.<span class="fn">push</span>(v); }
 }</div>
-
-  <table>
-    <tr><th>维度</th><th>DFS</th><th>BFS</th></tr>
-    <tr><td>数据结构</td><td>栈（递归/显式）</td><td>队列</td></tr>
-    <tr><td>空间</td><td>O(h)，h=深度</td><td>O(w)，w=最大宽度</td></tr>
-    <tr><td>最短路径</td><td class="accent">❌ 不保证</td><td class="accent">✅ 无权图最短</td></tr>
-    <tr><td>连通性</td><td class="accent">✅</td><td class="accent">✅</td></tr>
-    <tr><td>拓扑排序</td><td class="accent">✅ 后序遍历</td><td class="accent">✅ Kahn 算法</td></tr>
-  </table>
-
-  <div class="note-box">
+<table>
+<tr><th>维度</th><th>DFS</th><th>BFS</th></tr>
+<tr><td>数据结构</td><td>栈（递归/显式）</td><td>队列</td></tr>
+<tr><td>空间</td><td>O(h)，h=深度</td><td>O(w)，w=最大宽度</td></tr>
+<tr><td>最短路径</td><td class="accent">❌ 不保证</td><td class="accent">✅ 无权图最短</td></tr>
+<tr><td>连通性</td><td class="accent">✅</td><td class="accent">✅</td></tr>
+<tr><td>拓扑排序</td><td class="accent">✅ 后序遍历</td><td class="accent">✅ Kahn 算法</td></tr>
+</table>
+<div class="note-box">
     🔑 <b>关键记忆</b>：DFS 适合"路径探索"（找环、桥、割点），BFS 适合"最短步数"。
   </div>
-</div>
 
+<aside class="notes">【讲解】图的遍历：DFS 与 BFS
+结合讲义《模板 1：邻接表 + DFS + BFS》强调：
+· using namespace std;
+· const int MAXN = 1e5 + 5;
+· vector g[MAXN];
+· bool vis[MAXN];
+· int n, m;
+幻灯片上可见要点：
+· 沿路径尽可能 深入 ，无路可走才回溯。使用栈（递归 / 显式栈）。
+· 按层 逐级 向外扩展。使用队列，天然得到无权图最短路径。
+讲解时放慢关键术语；用 1 个生活类比 + 1 个反例加深印象。</aside>
+</div>
 <!-- Slide 4: 代码模板 - 连通分量 & 二分图 -->
 <div class="slide" data-index="4">
-  <h1>核心模板：连通分量 &amp; 二分图判定</h1>
-
-  <h2>连通分量计数</h2>
-  <p>对每个未访问顶点执行一次遍历，计数器 +1。</p>
-  <div class="code-block"><span class="ty">int</span> <span class="fn">count_comp</span>() {
+<h1>核心模板：连通分量 &amp; 二分图判定</h1>
+<h2>连通分量计数</h2>
+<p>对每个未访问顶点执行一次遍历，计数器 +1。</p>
+<div class="code-block"><span class="ty">int</span> <span class="fn">count_comp</span>() {
     <span class="ty">int</span> comp = <span class="nu">0</span>;
     <span class="kw">for</span> (<span class="ty">int</span> i = <span class="nu">1</span>; i &lt;= n; i++)
         <span class="kw">if</span> (!vis[i]) { comp++; <span class="fn">dfs</span>(i); }
     <span class="kw">return</span> comp;
 }</div>
-
-  <h2>二分图判定（染色法）</h2>
-  <p>定理：<b>无奇环 ⇔ 二分图</b>。用 0/1 染色，相邻必须异色。</p>
-  <div class="code-block"><span class="ty">int</span> color[MAXN]; <span class="cm">// -1 未染</span>
-
+<h2>二分图判定（染色法）</h2>
+<p>定理：<b>无奇环 ⇔ 二分图</b>。用 0/1 染色，相邻必须异色。</p>
+<div class="code-block"><span class="ty">int</span> color[MAXN]; <span class="cm">// -1 未染</span>
 <span class="ty">bool</span> <span class="fn">dfs</span>(<span class="ty">int</span> u, <span class="ty">int</span> c) {
     color[u] = c;
     <span class="kw">for</span> (<span class="ty">int</span> v : g[u]) {
@@ -254,94 +269,115 @@ q.<span class="fn">push</span>(s); vis[s] = <span class="kw">true</span>;
     }
     <span class="kw">return true</span>;
 }</div>
+<table>
+<tr><th>算法</th><th>时间复杂度</th><th>空间复杂度</th></tr>
+<tr><td>连通分量计数</td><td class="accent">O(V + E)</td><td class="accent">O(V + E)</td></tr>
+<tr><td>染色法二分图判定</td><td class="accent">O(V + E)</td><td class="accent">O(V + E)</td></tr>
+<tr><td>DFS/BFS 遍历</td><td class="accent">O(V + E)</td><td class="accent">O(V)</td></tr>
+</table>
 
-  <table>
-    <tr><th>算法</th><th>时间复杂度</th><th>空间复杂度</th></tr>
-    <tr><td>连通分量计数</td><td class="accent">O(V + E)</td><td class="accent">O(V + E)</td></tr>
-    <tr><td>染色法二分图判定</td><td class="accent">O(V + E)</td><td class="accent">O(V + E)</td></tr>
-    <tr><td>DFS/BFS 遍历</td><td class="accent">O(V + E)</td><td class="accent">O(V)</td></tr>
-  </table>
+<aside class="notes">【讲解】核心模板：连通分量 &amp; 二分图判定
+结合讲义《5. 二分图判定》强调：
+· 定义：一个图是二分图，当且仅当可以将顶点集划分为两个不相交的集合 $A, B$，使得每条边的两个端点分别属于 $A$ 和 $B$。
+· 判定定理：一个图是二分图当且仅当它不包含奇数环。
+· 染色法：
+· 用 0/1 两种颜色给顶点染色。
+· 从任意未染色顶点出发，将其染为 0，DFS/BFS 将其邻接点染为相反颜色 1。
+幻灯片上可见要点：
+· 对每个未访问顶点执行一次遍历，计数器 +1。
+· 定理： 无奇环 ⇔ 二分图 。用 0/1 染色，相邻必须异色。
+代码页节奏：先读懂输入输出 → 再走主流程 → 最后点出易错点（边界/类型/下标）。
+可让学生预测下一行输出，再运行对照。</aside>
 </div>
-
 <!-- Slide 5: 真题精练 -->
 <div class="slide" data-index="5">
-  <h1>真题精练</h1>
-
-  <h2>题1：连通分量大小统计</h2>
-  <p>给定 n 个顶点 m 条边的无向图（n ≤ 10⁵, m ≤ 2×10⁵），输出连通分量数 k，以及每个分量的大小。</p>
-  <div class="note-box">
-    <b>解法</b>：对每个未访问顶点 BFS/DFS，在遍历过程中用计数器统计该分量大小。O(n+m) 可 AC。
+<h1>真题精练</h1>
+<h2>题1：连通分量大小统计</h2>
+<p>给定 n 个顶点 m 条边的无向图（n ≤ 10⁵, m ≤ 2×10⁵），输出连通分量数 k，以及每个分量的大小。</p>
+<div class="note-box">
+<b>解法</b>：对每个未访问顶点 BFS/DFS，在遍历过程中用计数器统计该分量大小。O(n+m) 可 AC。
   </div>
-
-  <h2>题2：二分图判定</h2>
-  <p>给定 n 顶点 m 边的无向图（n ≤ 10⁵, m ≤ 2×10⁵），判断是否为二分图。输出 "Yes" 或 "No"。</p>
-  <div class="note-box">
-    <b>解法</b>：染色法 DFS。color[] 初始化为 -1，从每个未染色顶点出发染 0，邻接点染 1 ^ c。若发现相邻同色则非二分图。
+<h2>题2：二分图判定</h2>
+<p>给定 n 顶点 m 边的无向图（n ≤ 10⁵, m ≤ 2×10⁵），判断是否为二分图。输出 "Yes" 或 "No"。</p>
+<div class="note-box">
+<b>解法</b>：染色法 DFS。color[] 初始化为 -1，从每个未染色顶点出发染 0，邻接点染 1 ^ c。若发现相邻同色则非二分图。
   </div>
+<table>
+<tr><th>考点</th><th>常与什么结合</th></tr>
+<tr><td>连通分量</td><td>并查集、最小生成树 Kruskal</td></tr>
+<tr><td>二分图判定</td><td>匈牙利算法（最大匹配）、Kőnig 定理</td></tr>
+<tr><td>DFS/BFS</td><td>拓扑排序、Tarjan 缩点、双连通分量</td></tr>
+</table>
 
-  <table>
-    <tr><th>考点</th><th>常与什么结合</th></tr>
-    <tr><td>连通分量</td><td>并查集、最小生成树 Kruskal</td></tr>
-    <tr><td>二分图判定</td><td>匈牙利算法（最大匹配）、Kőnig 定理</td></tr>
-    <tr><td>DFS/BFS</td><td>拓扑排序、Tarjan 缩点、双连通分量</td></tr>
-  </table>
+<aside class="notes">【讲解】真题精练
+本页要点（照着讲即可）：
+· 给定 n 个顶点 m 条边的无向图（n ≤ 10⁵, m ≤ 2×10⁵），输出连通分量数 k，以及每个分量的大小。
+· 给定 n 顶点 m 边的无向图（n ≤ 10⁵, m ≤ 2×10⁵），判断是否为二分图。输出 "Yes" 或 "No"。
+练习页节奏：先独立想 1 分钟 → 再点拨思路 → 最后对答案讲为什么。
+可联系：图的连通性判定、BFS最短路</aside>
 </div>
-
 <!-- Slide 6: 易错点与优化技巧 -->
 <div class="slide" data-index="6">
-  <h1>易错点与优化技巧</h1>
+<h1>易错点与优化技巧</h1>
+<table>
+<tr><th>常见错误</th><th>原因</th><th>解决方案</th></tr>
+<tr><td>DFS 爆栈</td><td>递归过深（n≤10⁵ 链图）</td><td>改用迭代栈 / BFS / 增大栈空间</td></tr>
+<tr><td>邻接矩阵 MLE</td><td>n 太大导致 g[n][n] 超内存</td><td>换用邻接表或链式前向星</td></tr>
+<tr><td>BFS 重复入队</td><td>出队时才标 vis</td><td class="highlight">入队时立即标 vis！</td></tr>
+<tr><td>color 初值冲突</td><td>初始化 0 与颜色 0 混淆</td><td>初始化为 <b>-1</b>，颜色用 0/1</td></tr>
+<tr><td>无向图漏反向边</td><td>只加了单向</td><td>add(u,v); add(v,u);</td></tr>
+<tr><td>链式前向星 size 不足</td><td>无向图只开 MAXM</td><td>开 <b>MAXM * 2</b></td></tr>
+</table>
+<h2>优化技巧</h2>
+<ul>
+<li><b>输入加速</b>：<span class="code-block" style="display:inline;padding:2px 6px;">ios::sync_with_stdio(false); cin.tie(0);</span></li>
+<li><b>BFS 距离</b>：用 <span class="code-block" style="display:inline;padding:2px 6px;">memset(dist, -1, sizeof(dist))</span> 一举两得</li>
+<li><b>vector 预分配</b>：已知度时 <span class="code-block" style="display:inline;padding:2px 6px;">g[u].reserve(deg[u])</span> 减少扩容</li>
+<li><b>递归转循环</b>：手动维护栈避免爆栈，尤其在单链图上</li>
+</ul>
 
-  <table>
-    <tr><th>常见错误</th><th>原因</th><th>解决方案</th></tr>
-    <tr><td>DFS 爆栈</td><td>递归过深（n≤10⁵ 链图）</td><td>改用迭代栈 / BFS / 增大栈空间</td></tr>
-    <tr><td>邻接矩阵 MLE</td><td>n 太大导致 g[n][n] 超内存</td><td>换用邻接表或链式前向星</td></tr>
-    <tr><td>BFS 重复入队</td><td>出队时才标 vis</td><td class="highlight">入队时立即标 vis！</td></tr>
-    <tr><td>color 初值冲突</td><td>初始化 0 与颜色 0 混淆</td><td>初始化为 <b>-1</b>，颜色用 0/1</td></tr>
-    <tr><td>无向图漏反向边</td><td>只加了单向</td><td>add(u,v); add(v,u);</td></tr>
-    <tr><td>链式前向星 size 不足</td><td>无向图只开 MAXM</td><td>开 <b>MAXM * 2</b></td></tr>
-  </table>
-
-  <h2>优化技巧</h2>
-  <ul>
-    <li><b>输入加速</b>：<span class="code-block" style="display:inline;padding:2px 6px;">ios::sync_with_stdio(false); cin.tie(0);</span></li>
-    <li><b>BFS 距离</b>：用 <span class="code-block" style="display:inline;padding:2px 6px;">memset(dist, -1, sizeof(dist))</span> 一举两得</li>
-    <li><b>vector 预分配</b>：已知度时 <span class="code-block" style="display:inline;padding:2px 6px;">g[u].reserve(deg[u])</span> 减少扩容</li>
-    <li><b>递归转循环</b>：手动维护栈避免爆栈，尤其在单链图上</li>
-  </ul>
+<aside class="notes">【讲解】易错点与优化技巧
+本页要点（照着讲即可）：
+· 输入加速 ： ios::sync_with_stdio(false); cin.tie(0);
+· BFS 距离 ：用 memset(dist, -1, sizeof(dist)) 一举两得
+· vector 预分配 ：已知度时 g[u].reserve(deg[u]) 减少扩容
+· 递归转循环 ：手动维护栈避免爆栈，尤其在单链图上
+讲解时放慢关键术语；用 1 个生活类比 + 1 个反例加深印象。</aside>
 </div>
-
 <!-- Slide 7: 总结 -->
 <div class="slide" data-index="7">
-  <h1>本课小结</h1>
-  <table>
-    <tr><th>模块</th><th>要点</th></tr>
-    <tr><td>邻接矩阵</td><td>O(1) 查边，O(V²) 空间，仅适合稠密图</td></tr>
-    <tr><td>vector 邻接表</td><td>O(V+E) 空间，最常用，适合稀疏图</td></tr>
-    <tr><td>链式前向星</td><td>静态数组，常数最小，竞赛大规模图首选</td></tr>
-    <tr><td>DFS</td><td>栈 / 递归，适合路径探索、连通性、染色</td></tr>
-    <tr><td>BFS</td><td>队列，天然得到无权图最短路径</td></tr>
-    <tr><td>连通分量</td><td>对每个未访问顶点执行一次遍历</td></tr>
-    <tr><td>二分图判定</td><td>染色法：相邻异色，同色则非二分图</td></tr>
-  </table>
-
-  <div class="note-box" style="margin-top:20px;">
-    <b>🎯 CSP-S 应试核心</b>：邻接表 + BFS/DFS 必须能够<b>手写无误</b>。染色法模板是二分图相关题的基础，务必熟练。连通分量常常与并查集互为替代解法。
+<h1>本课小结</h1>
+<table>
+<tr><th>模块</th><th>要点</th></tr>
+<tr><td>邻接矩阵</td><td>O(1) 查边，O(V²) 空间，仅适合稠密图</td></tr>
+<tr><td>vector 邻接表</td><td>O(V+E) 空间，最常用，适合稀疏图</td></tr>
+<tr><td>链式前向星</td><td>静态数组，常数最小，竞赛大规模图首选</td></tr>
+<tr><td>DFS</td><td>栈 / 递归，适合路径探索、连通性、染色</td></tr>
+<tr><td>BFS</td><td>队列，天然得到无权图最短路径</td></tr>
+<tr><td>连通分量</td><td>对每个未访问顶点执行一次遍历</td></tr>
+<tr><td>二分图判定</td><td>染色法：相邻异色，同色则非二分图</td></tr>
+</table>
+<div class="note-box" style="margin-top:20px;">
+<b>🎯 CSP-S 应试核心</b>：邻接表 + BFS/DFS 必须能够<b>手写无误</b>。染色法模板是二分图相关题的基础，务必熟练。连通分量常常与并查集互为替代解法。
   </div>
-
-  <p style="text-align:center; margin-top:30px; color:#64b5f6; font-size:1.2rem;">
+<p style="text-align:center; margin-top:30px; color:#64b5f6; font-size:1.2rem;">
     下节课预告：Dijkstra 最短路径算法
   </p>
-</div>
 
+<aside class="notes">【收尾】回顾本课主线：本课小结
+对照大纲再过一遍：邻接矩阵、邻接表、链式前向星、DFS/BFS遍历
+板书/口述要点：
+· 下节课预告：Dijkstra 最短路径算法
+课后任务：图的连通性判定、BFS最短路
+结束前留 2 分钟答疑；布置 1 道小练习检验是否真正掌握。</aside>
 </div>
-
+</div>
 <!-- 导航栏 -->
 <div class="nav">
-  <button id="prevBtn" onclick="changeSlide(-1)">◀ 上一页</button>
-  <span class="page-indicator" id="pageIndicator">1 / 8</span>
-  <button id="nextBtn" onclick="changeSlide(1)">下一页 ▶</button>
+<button id="prevBtn" onclick="changeSlide(-1)">◀ 上一页</button>
+<span class="page-indicator" id="pageIndicator">1 / 8</span>
+<button id="nextBtn" onclick="changeSlide(1)">下一页 ▶</button>
 </div>
-
 <script>
 let current = 0;
 const slides = document.querySelectorAll('.slide');

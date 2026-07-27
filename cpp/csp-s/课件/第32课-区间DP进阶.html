@@ -1,8 +1,9 @@
 <!DOCTYPE html>
+
 <html lang="zh-CN">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
 <title>第32课：区间DP进阶</title>
 <style>
   * { margin: 0; padding: 0; box-sizing: border-box; }
@@ -139,49 +140,68 @@
 </head>
 <body>
 <div class="container">
-
 <div class="slide active title-slide" data-index="0">
-  <div class="badge">CSP-S 算法专题 · 进阶篇</div>
-  <h1>第32课：区间DP进阶</h1>
-  <p class="subtitle">环形区间DP（破环成链）· 能量项链 · 合并型与消去型 · 四边形不等式优化<br>从直线问题拓展到环形与更复杂的区间DP模型</p>
-  <div class="topic-grid">
-    <div class="topic-item">破环成链 x2</div>
-    <div class="topic-item">环形石子合并</div>
-    <div class="topic-item">能量项链</div>
-    <div class="topic-item">合并型 vs 消去型</div>
-    <div class="topic-item">四边形不等式</div>
-    <div class="topic-item">真题精练</div>
-  </div>
-  <p style="margin-top: 30px; color: #6b7c8e; font-size: 0.88rem;">前置知识：第31课 区间DP基础 | 复杂度 O(n³) → O(n²)（优化）| 适用 n ≤ 500</p>
+<div class="badge">CSP-S 算法专题 · 进阶篇</div>
+<h1>第32课：区间DP进阶</h1>
+<p class="subtitle">环形区间DP（破环成链）· 能量项链 · 合并型与消去型 · 四边形不等式优化<br/>从直线问题拓展到环形与更复杂的区间DP模型</p>
+<div class="topic-grid">
+<div class="topic-item">破环成链 x2</div>
+<div class="topic-item">环形石子合并</div>
+<div class="topic-item">能量项链</div>
+<div class="topic-item">合并型 vs 消去型</div>
+<div class="topic-item">四边形不等式</div>
+<div class="topic-item">真题精练</div>
 </div>
+<p style="margin-top: 30px; color: #6b7c8e; font-size: 0.88rem;">前置知识：第31课 区间DP基础 | 复杂度 O(n³) → O(n²)（优化）| 适用 n ≤ 500</p>
 
+<aside class="notes">【开场】第 1/8 页 · 区间DP进阶
+用 30 秒说明本课目标与学完能做什么，再进入正题。
+大纲考点：环形区间DP、区间DP的合并型与消去型
+配套练习方向：能量项链、涂色问题
+封面关键词：
+· 环形区间DP（破环成链）· 能量项链 · 合并型与消去型 · 四边形不等式优化 从直线问题拓展到环形与更复杂的区间DP模型
+· 前置知识：第31课 区间DP基础 | 复杂度 O(n³) → O(n²)（优化）| 适用 n ≤ 500
+互动：问学生「今天最想搞清楚什么？」，收 1–2 个期待。</aside>
+</div>
 <div class="slide" data-index="1">
-  <h1>环形区间DP：破环成链 x2</h1>
-  <h2>问题引入</h2>
-  <p>第31课的<b>石子合并</b>是直线排列的。现实中石子可能排成一个<span class="hl">圈</span>，首尾也相邻。环形问题如何转化为线形？答案：<span class="hl">破环成链 x2</span>。</p>
-  <h2>四大步骤</h2>
-  <table>
-    <tr><th>步骤</th><th>操作</th><th>示例（n=4）</th></tr>
-    <tr><td>①</td><td>将原始序列 a[0..n-1] <span class="hl">复制一份</span>接在尾部</td><td>[4,5,9,4] → [4,5,9,4,4,5,9,4]</td></tr>
-    <tr><td>②</td><td>得到长度为 2n 的新序列 b</td><td>b[i] = a[i mod n]</td></tr>
-    <tr><td>③</td><td>在 b 上做<b>标准线性区间DP</b></td><td>五步转移法，len ≤ n</td></tr>
-    <tr><td>④</td><td>答案取所有长度为 n 的区间</td><td class="hl">ans = max/min(dp[i][i+n-1])</td></tr>
-  </table>
-  <h2>图解：环形 → 线性</h2>
-  <div class="ascii-diagram">原始环形:  [4] - [5] - [9] - [4] - (回到4)
+<h1>环形区间DP：破环成链 x2</h1>
+<h2>问题引入</h2>
+<p>第31课的<b>石子合并</b>是直线排列的。现实中石子可能排成一个<span class="hl">圈</span>，首尾也相邻。环形问题如何转化为线形？答案：<span class="hl">破环成链 x2</span>。</p>
+<h2>四大步骤</h2>
+<table>
+<tr><th>步骤</th><th>操作</th><th>示例（n=4）</th></tr>
+<tr><td>①</td><td>将原始序列 a[0..n-1] <span class="hl">复制一份</span>接在尾部</td><td>[4,5,9,4] → [4,5,9,4,4,5,9,4]</td></tr>
+<tr><td>②</td><td>得到长度为 2n 的新序列 b</td><td>b[i] = a[i mod n]</td></tr>
+<tr><td>③</td><td>在 b 上做<b>标准线性区间DP</b></td><td>五步转移法，len ≤ n</td></tr>
+<tr><td>④</td><td>答案取所有长度为 n 的区间</td><td class="hl">ans = max/min(dp[i][i+n-1])</td></tr>
+</table>
+<h2>图解：环形 → 线性</h2>
+<div class="ascii-diagram">原始环形:  [4] - [5] - [9] - [4] - (回到4)
 破环成链:  [4] [5] [9] [4] | [4] [5] [9] [4]   (长度 2n = 8)
                         |------- n=4 -------|
               |------- n=4 -------|
          |------- n=4 -------|          ← 枚举所有断点位置</div>
-  <h2>正确性证明</h2>
-  <p>环形合并的任意方案都存在一个<span class="hl">「断开点」</span>。在 2n 的序列上枚举所有可能的断点（i=0..n-1），取长度为 n 的区间，等价于枚举了环上所有可能的合并方式。</p>
-  <div class="note-box"><b>易错点</b>：答案不是 dp[0][n-1]！必须遍历所有 dp[i][i+n-1]（i = 0..n-1）取最优值。前缀和数组也要扩展至 2n+1。</div>
-</div>
+<h2>正确性证明</h2>
+<p>环形合并的任意方案都存在一个<span class="hl">「断开点」</span>。在 2n 的序列上枚举所有可能的断点（i=0..n-1），取长度为 n 的区间，等价于枚举了环上所有可能的合并方式。</p>
+<div class="note-box"><b>易错点</b>：答案不是 dp[0][n-1]！必须遍历所有 dp[i][i+n-1]（i = 0..n-1）取最优值。前缀和数组也要扩展至 2n+1。</div>
 
+<aside class="notes">【讲解】环形区间DP：破环成链 x2
+结合讲义《1. 环形区间DP的处理技巧 —— 破环成链 ×2》强调：
+· 在第31课中，我们学习了直线版石子合并。但现实中很多问题是**环形**的：石子排成一个**圈**，首尾相邻。
+· 将长度为 $n$ 的环展开为长度为 $2n$ 的链：
+· 将原始序列 $a[0..n-1]$ **复制一份**接在尾部
+· 得到长度为 $2n$ 的新序列 $b[0..2n-1]$，其中 $b[i] = a[i \bmod n]$
+· 在 $b$ 上做普通的线性区间DP
+幻灯片上可见要点：
+· 第31课的 石子合并 是直线排列的。现实中石子可能排成一个 圈 ，首尾也相邻。环形问题如何转化为线形？答案： 破环成链 x2 。
+· 环形合并的任意方案都存在一个 「断开点」 。在 2n 的序列上枚举所有可能的断点（i=0..n-1），取长度为 n 的区间，等价于枚举了环上所有可能的合并方式。
+讲解时放慢关键术语；用 1 个生活类比 + 1 个反例加深印象。
+本课大纲考点（可适时点题）：环形区间DP、区间DP的合并型与消去型</aside>
+</div>
 <div class="slide" data-index="2">
-  <h1>环形石子合并（洛谷 P1880）</h1>
-  <h2>标准代码框架</h2>
-  <div class="code-block"><span class="cm">// 1. 输入并扩展至 2n</span>
+<h1>环形石子合并（洛谷 P1880）</h1>
+<h2>标准代码框架</h2>
+<div class="code-block"><span class="cm">// 1. 输入并扩展至 2n</span>
 <span class="kw">int</span> n; <span class="fn">cin</span> &gt;&gt; n;
 <span class="kw">vector</span>&lt;<span class="kw">int</span>&gt; a(<span class="nu">2</span> * n), pre(<span class="nu">2</span> * n + <span class="nu">1</span>, <span class="nu">0</span>);
 <span class="kw">for</span> (<span class="kw">int</span> i = <span class="nu">0</span>; i &lt; n; ++i) {
@@ -211,85 +231,118 @@
     ans_min = <span class="fn">min</span>(ans_min, dp_min[i][i + n - <span class="nu">1</span>]);
     ans_max = <span class="fn">max</span>(ans_max, dp_max[i][i + n - <span class="nu">1</span>]);
 }</div>
-  <h2>样例验证（[4, 5, 9, 4]）</h2>
-  <table>
-    <tr><th>断点 i</th><th>排列</th><th>最小</th><th>最大</th></tr>
-    <tr><td>0</td><td>[4,5,9,4]</td><td class="hl">43</td><td>54</td></tr>
-    <tr><td>1</td><td>[5,9,4,4]</td><td>43</td><td>54</td></tr>
-    <tr><td>2</td><td>[9,4,4,5]</td><td>44</td><td>54</td></tr>
-    <tr><td>3</td><td>[4,4,5,9]</td><td>43</td><td>54</td></tr>
-  </table>
-  <p style="text-align:center;"><span class="hl">最终输出：43 54</span></p>
-</div>
+<h2>样例验证（[4, 5, 9, 4]）</h2>
+<table>
+<tr><th>断点 i</th><th>排列</th><th>最小</th><th>最大</th></tr>
+<tr><td>0</td><td>[4,5,9,4]</td><td class="hl">43</td><td>54</td></tr>
+<tr><td>1</td><td>[5,9,4,4]</td><td>43</td><td>54</td></tr>
+<tr><td>2</td><td>[9,4,4,5]</td><td>44</td><td>54</td></tr>
+<tr><td>3</td><td>[4,4,5,9]</td><td>43</td><td>54</td></tr>
+</table>
+<p style="text-align:center;"><span class="hl">最终输出：43 54</span></p>
 
+<aside class="notes">【讲解】环形石子合并（洛谷 P1880）
+结合讲义《真题1：环形石子合并【洛谷 P1880】》强调：
+· 题目描述：
+· 在一个圆形操场的四周摆放 $N$ 堆石子，现要将石子有次序地合并成一堆。规定每次只能选相邻的2堆合并成新的一堆，并将新的一堆的石子数记为该次合并的得分。试设计出1个算法，计算出将 $N$ 堆石子合并成1堆的最小得分和最大得分。
+· 输入格式：
+· 第一行一个整数 $N$（$1 \leq N \leq 100$）。
+· 第二行 $N$ 个整数，表示每堆石子的数量。
+幻灯片上可见要点：
+· 最终输出：43 54
+讲解时放慢关键术语；用 1 个生活类比 + 1 个反例加深印象。</aside>
+</div>
 <div class="slide" data-index="3">
-  <h1>能量项链（NOIP2006 提高组）</h1>
-  <h2>问题描述</h2>
-  <p>N 颗能量珠排在环形项链上。每颗珠子有<span class="ac">头标记</span>和<span class="ac">尾标记</span>。相邻珠子：前一颗的尾标记 = 后一颗的头标记。合并 (m,r) 和 (r,n) 释放能量 <b>m x r x n</b>，新珠的头尾标记变为 (m,n)。求<span class="hl">最大总能量</span>。</p>
-  <h2>状态定义与转移</h2>
-  <p><span class="ac">dp[l][r]</span> = 将第 l 到第 r 颗珠子合并的最大能量。</p>
-  <div class="code-block"><span class="cm">// 关键：与石子合并的转移差异</span>
+<h1>能量项链（NOIP2006 提高组）</h1>
+<h2>问题描述</h2>
+<p>N 颗能量珠排在环形项链上。每颗珠子有<span class="ac">头标记</span>和<span class="ac">尾标记</span>。相邻珠子：前一颗的尾标记 = 后一颗的头标记。合并 (m,r) 和 (r,n) 释放能量 <b>m x r x n</b>，新珠的头尾标记变为 (m,n)。求<span class="hl">最大总能量</span>。</p>
+<h2>状态定义与转移</h2>
+<p><span class="ac">dp[l][r]</span> = 将第 l 到第 r 颗珠子合并的最大能量。</p>
+<div class="code-block"><span class="cm">// 关键：与石子合并的转移差异</span>
 dp[l][r] = <span class="fn">max</span>(dp[l][k] + dp[k][r] + head[l] * head[k+<span class="nu">1</span>] * head[r+<span class="nu">1</span>])</div>
-  <h2>与石子合并的核心差异</h2>
-  <table>
-    <tr><th>比较项</th><th>石子合并</th><th class="hl">能量项链</th></tr>
-    <tr><td>子区间划分</td><td>dp[l][k] + dp[k+1][r]</td><td class="hl">dp[l][k] + dp[k][r]</td></tr>
-    <tr><td>附加代价</td><td>sum(l, r)</td><td class="hl">head[l] x head[k+1] x head[r+1]</td></tr>
-    <tr><td>环形处理</td><td>序列 a[i] 复制</td><td>head[i] 复制，1-based 索引</td></tr>
-    <tr><td>答案</td><td>min 和 max</td><td>仅 max</td></tr>
-  </table>
-  <h2>样例分析：head = [2, 3, 5, 10]</h2>
-  <div class="code-block"><span class="cm">珠子：珠1(2,3)、珠2(3,5)、珠3(5,10)、珠4(10,2)</span>
+<h2>与石子合并的核心差异</h2>
+<table>
+<tr><th>比较项</th><th>石子合并</th><th class="hl">能量项链</th></tr>
+<tr><td>子区间划分</td><td>dp[l][k] + dp[k+1][r]</td><td class="hl">dp[l][k] + dp[k][r]</td></tr>
+<tr><td>附加代价</td><td>sum(l, r)</td><td class="hl">head[l] x head[k+1] x head[r+1]</td></tr>
+<tr><td>环形处理</td><td>序列 a[i] 复制</td><td>head[i] 复制，1-based 索引</td></tr>
+<tr><td>答案</td><td>min 和 max</td><td>仅 max</td></tr>
+</table>
+<h2>样例分析：head = [2, 3, 5, 10]</h2>
+<div class="code-block"><span class="cm">珠子：珠1(2,3)、珠2(3,5)、珠3(5,10)、珠4(10,2)</span>
 <span class="cm">最优合并顺序：</span>
 <span class="cm">  ① 合并珠2(3,5) + 珠3(5,10) → 3x5x10 = 150，得新珠(3,10)</span>
 <span class="cm">  ② 合并珠1(2,3) + 新珠(3,10) → 2x3x10 = 60，得新珠(2,10)</span>
 <span class="cm">  ③ 合并新珠(2,10) + 珠4(10,2) → 2x10x2 = 500</span>
 <span class="cm">  总能量 = 150 + 60 + 500 = <b>710</b></span></div>
-  <div class="note-box"><b>易错点</b>：能量项链的子区间划分是 dp[l][k] + dp[k][r]，不是 dp[l][k] + dp[k+1][r]！因为 k 位置的珠子也参与了合并，其标记信息在合并后仍然存在。</div>
-</div>
+<div class="note-box"><b>易错点</b>：能量项链的子区间划分是 dp[l][k] + dp[k][r]，不是 dp[l][k] + dp[k+1][r]！因为 k 位置的珠子也参与了合并，其标记信息在合并后仍然存在。</div>
 
+<aside class="notes">【讲解】能量项链（NOIP2006 提高组）
+结合讲义《真题2：能量项链【NOIP2006 提高组 / 洛谷 P1063】》强调：
+· 题目描述：
+· 在 Mars 星球上，每个 Mars 人都随身佩带着一串能量项链。项链上有 $N$ 颗能量珠。能量珠是一颗有头标记与尾标记的珠子。对于相邻的两颗珠子，前一颗珠子的尾标记等于后一颗珠子的头标记。聚合时释放的能量为 $m \times r \times n$。求最大总能量。
+· 输入格式：
+· 第一行一个正整数 $N$（$4 \leq N \leq 100$）。
+· 第二行 $N$ 个用空格隔开的正整数，表示 $N$ 颗珠子的头标记。
+幻灯片上可见要点：
+· N 颗能量珠排在环形项链上。每颗珠子有 头标记 和 尾标记 。相邻珠子：前一颗的尾标记 = 后一颗的头标记。合并 (m,r) 和 (r,n) 释放能量 m x r x n ，新珠的头尾标记变为 (m,n)。求 最大总能量 。
+· dp[l][r] = 将第 l 到第 r 颗珠子合并的最大能量。
+讲解时放慢关键术语；用 1 个生活类比 + 1 个反例加深印象。</aside>
+</div>
 <div class="slide" data-index="4">
-  <h1>合并型 vs 消去型区间DP</h1>
-  <h2>一、合并型（Merge Type）</h2>
-  <p>将两个相邻的小区间<span class="hl">合并</span>为一个大的区间。所有元素最终都参与合并。</p>
-  <table>
-    <tr><th>问题</th><th>转移特征</th><th>复杂度</th><th>环形否</th></tr>
-    <tr><td>石子合并</td><td class="ac">dp[l][k] + dp[k+1][r] + sum(l,r)</td><td>O(n³)</td><td>直线/环形</td></tr>
-    <tr><td>能量项链</td><td class="ac">dp[l][k] + dp[k][r] + h[l]*h[k+1]*h[r+1]</td><td>O(n³)</td><td>环形</td></tr>
-    <tr><td>矩阵链乘法</td><td class="ac">dp[l][k] + dp[k+1][r] + p[l-1]*p[k]*p[r]</td><td>O(n³)</td><td>直线</td></tr>
-  </table>
-  <h2>二、消去型（Elimination Type）</h2>
-  <p>消去区间中的某一段，<span class="hl">消去后两边的部分变得相邻</span>。某些元素可能被完全消除。</p>
-  <table>
-    <tr><th>问题</th><th>核心特征</th><th>额外维度</th></tr>
-    <tr><td>祖玛</td><td>消去同色连续球</td><td class="hl">颜色信息</td></tr>
-    <tr><td>移除盒子</td><td>消去 k 个同数盒子得 k² 分</td><td class="hl">右侧同色数量 k</td></tr>
-    <tr><td>括号匹配</td><td>删除匹配的括号对</td><td>否</td></tr>
-    <tr><td>回文串DP</td><td>两端字符决定转移</td><td>否 O(n²)</td></tr>
-  </table>
-  <h2>消去型示例：移除盒子</h2>
-  <p>状态定义为 <span class="ac">dp[l][r][k]</span>，k = 区间右侧与 a[r] 同色的盒子数量。</p>
-  <div class="code-block"><span class="cm">// 策略1：直接消去 a[r] 及右侧 k 个同色盒子</span>
+<h1>合并型 vs 消去型区间DP</h1>
+<h2>一、合并型（Merge Type）</h2>
+<p>将两个相邻的小区间<span class="hl">合并</span>为一个大的区间。所有元素最终都参与合并。</p>
+<table>
+<tr><th>问题</th><th>转移特征</th><th>复杂度</th><th>环形否</th></tr>
+<tr><td>石子合并</td><td class="ac">dp[l][k] + dp[k+1][r] + sum(l,r)</td><td>O(n³)</td><td>直线/环形</td></tr>
+<tr><td>能量项链</td><td class="ac">dp[l][k] + dp[k][r] + h[l]*h[k+1]*h[r+1]</td><td>O(n³)</td><td>环形</td></tr>
+<tr><td>矩阵链乘法</td><td class="ac">dp[l][k] + dp[k+1][r] + p[l-1]*p[k]*p[r]</td><td>O(n³)</td><td>直线</td></tr>
+</table>
+<h2>二、消去型（Elimination Type）</h2>
+<p>消去区间中的某一段，<span class="hl">消去后两边的部分变得相邻</span>。某些元素可能被完全消除。</p>
+<table>
+<tr><th>问题</th><th>核心特征</th><th>额外维度</th></tr>
+<tr><td>祖玛</td><td>消去同色连续球</td><td class="hl">颜色信息</td></tr>
+<tr><td>移除盒子</td><td>消去 k 个同数盒子得 k² 分</td><td class="hl">右侧同色数量 k</td></tr>
+<tr><td>括号匹配</td><td>删除匹配的括号对</td><td>否</td></tr>
+<tr><td>回文串DP</td><td>两端字符决定转移</td><td>否 O(n²)</td></tr>
+</table>
+<h2>消去型示例：移除盒子</h2>
+<p>状态定义为 <span class="ac">dp[l][r][k]</span>，k = 区间右侧与 a[r] 同色的盒子数量。</p>
+<div class="code-block"><span class="cm">// 策略1：直接消去 a[r] 及右侧 k 个同色盒子</span>
 dp[l][r][k] = dp[l][r-<span class="nu">1</span>][<span class="nu">0</span>] + (k+<span class="nu">1</span>) * (k+<span class="nu">1</span>);
 <span class="cm">// 策略2：在 [l, r-1] 中找同色位置 i</span>
 <span class="kw">for</span> (<span class="kw">int</span> i = l; i &lt; r; ++i)
     <span class="kw">if</span> (a[i] == a[r])
         dp[l][r][k] = <span class="fn">max</span>(dp[l][r][k],
             dp[l][i][k+<span class="nu">1</span>] + dp[i+<span class="nu">1</span>][r-<span class="nu">1</span>][<span class="nu">0</span>]);</div>
-  <div class="note-box"><b>CSP-S 重点</b>：合并型区间DP是考查重点。消去型通常需要<b>三维或更高维度</b>记录额外状态，难度较高，作为进阶了解。</div>
-</div>
+<div class="note-box"><b>CSP-S 重点</b>：合并型区间DP是考查重点。消去型通常需要<b>三维或更高维度</b>记录额外状态，难度较高，作为进阶了解。</div>
 
+<aside class="notes">【讲解】合并型 vs 消去型区间DP
+结合讲义《4. 消去型区间DP示例：移除盒子问题》强调：
+· 给出一些不同颜色的盒子，盒子的颜色由数字表示。你可以移除具有**相同颜色**的**连续的** $k$ 个盒子，得到 $k \times k$ 分。求最大总得分。
+· $dp[l][r][k]$ 表示区间 $[l, r]$ 加上右侧 $k$ 个与 $a[r]$ 颜色相同的盒子，能获得的最大得分。
+· 直接将右侧的 $(k+1)$ 个同色盒子一起消去：
+· $dp[l][r][k] = dp[l][r-1][0] + (k+1)^2$
+· 在区间内找一个与 $a[r]$ 同色的位置 $i$，先消去 $(i+1, r-1)$：
+幻灯片上可见要点：
+· 将两个相邻的小区间 合并 为一个大的区间。所有元素最终都参与合并。
+· 消去区间中的某一段， 消去后两边的部分变得相邻 。某些元素可能被完全消除。
+· 状态定义为 dp[l][r][k] ，k = 区间右侧与 a[r] 同色的盒子数量。
+讲解时放慢关键术语；用 1 个生活类比 + 1 个反例加深印象。</aside>
+</div>
 <div class="slide" data-index="5">
-  <h1>四边形不等式优化：O(n³) → O(n²)</h1>
-  <h2>动机</h2>
-  <p>石子合并 O(n³) 在 n ≥ 1000 时无法通过。四边形不等式可以将复杂度优化到 O(n²)。</p>
-  <h2>四边形不等式条件</h2>
-  <p>若代价函数 w(l, r) 满足：对于任意 a ≤ b ≤ c ≤ d：</p>
-  <div class="code-block">w(a, c) + w(b, d) ≤ w(a, d) + w(b, c)</div>
-  <p>则DP具有<span class="hl">决策单调性</span>：设 s[l][r] 为 dp[l][r] 的最优分割点 k：</p>
-  <div class="code-block">s[l][r-<span class="nu">1</span>] ≤ s[l][r] ≤ s[l+<span class="nu">1</span>][r]</div>
-  <h2>优化代码对比</h2>
-  <div class="code-block"><span class="cm">// 朴素 O(n³)</span>
+<h1>四边形不等式优化：O(n³) → O(n²)</h1>
+<h2>动机</h2>
+<p>石子合并 O(n³) 在 n ≥ 1000 时无法通过。四边形不等式可以将复杂度优化到 O(n²)。</p>
+<h2>四边形不等式条件</h2>
+<p>若代价函数 w(l, r) 满足：对于任意 a ≤ b ≤ c ≤ d：</p>
+<div class="code-block">w(a, c) + w(b, d) ≤ w(a, d) + w(b, c)</div>
+<p>则DP具有<span class="hl">决策单调性</span>：设 s[l][r] 为 dp[l][r] 的最优分割点 k：</p>
+<div class="code-block">s[l][r-<span class="nu">1</span>] ≤ s[l][r] ≤ s[l+<span class="nu">1</span>][r]</div>
+<h2>优化代码对比</h2>
+<div class="code-block"><span class="cm">// 朴素 O(n³)</span>
 <span class="kw">for</span> (<span class="kw">int</span> k = l; k &lt; r; ++k)
     dp[l][r] = <span class="fn">min</span>(dp[l][r], dp[l][k] + dp[k+<span class="nu">1</span>][r] + sum(l,r));
 
@@ -298,84 +351,106 @@ dp[l][r][k] = dp[l][r-<span class="nu">1</span>][<span class="nu">0</span>] + (k
     <span class="kw">int</span> val = dp[l][k] + dp[k+<span class="nu">1</span>][r] + sum(l, r);
     <span class="kw">if</span> (val &lt; dp[l][r]) { dp[l][r] = val; s[l][r] = k; }
 }</div>
-  <h2>效果对比</h2>
-  <table>
-    <tr><th>数据规模</th><th>朴素 O(n³)</th><th>四边不等式 O(n²)</th></tr>
-    <tr><td>n = 100</td><td class="success">~10⁶ AC</td><td class="success">~10⁴ AC</td></tr>
-    <tr><td>n = 500</td><td class="hl">~1.25x10⁸ 可能TLE</td><td class="success">~2.5x10⁵ AC</td></tr>
-    <tr><td>n = 1000</td><td class="error">~10⁹ TLE</td><td class="success">~10⁶ AC</td></tr>
-    <tr><td>n = 5000</td><td class="error">TLE</td><td class="success">~2.5x10⁷ AC</td></tr>
-  </table>
-  <div class="note-box"><b>CSP-S 建议</b>：n ≤ 500 直接写 O(n³)；n ≥ 1000 才需优化。考前熟练掌握 O(n³) 模板更为重要，优化技巧掌握原理即可。</div>
-</div>
+<h2>效果对比</h2>
+<table>
+<tr><th>数据规模</th><th>朴素 O(n³)</th><th>四边不等式 O(n²)</th></tr>
+<tr><td>n = 100</td><td class="success">~10⁶ AC</td><td class="success">~10⁴ AC</td></tr>
+<tr><td>n = 500</td><td class="hl">~1.25x10⁸ 可能TLE</td><td class="success">~2.5x10⁵ AC</td></tr>
+<tr><td>n = 1000</td><td class="error">~10⁹ TLE</td><td class="success">~10⁶ AC</td></tr>
+<tr><td>n = 5000</td><td class="error">TLE</td><td class="success">~2.5x10⁷ AC</td></tr>
+</table>
+<div class="note-box"><b>CSP-S 建议</b>：n ≤ 500 直接写 O(n³)；n ≥ 1000 才需优化。考前熟练掌握 O(n³) 模板更为重要，优化技巧掌握原理即可。</div>
 
+<aside class="notes">【讲解】四边形不等式优化：O(n³) → O(n²)
+本页要点（照着讲即可）：
+· 石子合并 O(n³) 在 n ≥ 1000 时无法通过。四边形不等式可以将复杂度优化到 O(n²)。
+· 若代价函数 w(l, r) 满足：对于任意 a ≤ b ≤ c ≤ d：
+· 则DP具有 决策单调性 ：设 s[l][r] 为 dp[l][r] 的最优分割点 k：
+讲解时放慢关键术语；用 1 个生活类比 + 1 个反例加深印象。</aside>
+</div>
 <div class="slide" data-index="6">
-  <h1>真题精练</h1>
-  <h2>题1：环形石子合并【洛谷 P1880】</h2>
-  <p>n ≤ 100，环形石子合并，求最小得分和最大得分。</p>
-  <div class="note-box"><b>关键步骤</b>：破环成链 x2 → 前缀和 O(1) → 标准五步区间DP → 遍历 dp[i][i+n-1]。<br>复杂度 O(n³) ≈ 10⁶。样例：[4,5,9,4] 输出 "43 54"。</div>
-  <h2>题2：能量项链【洛谷 P1063 / NOIP2006】</h2>
-  <p>n ≤ 100，环形能量珠合并，求最大总能量。</p>
-  <div class="note-box"><b>关键步骤</b>：head 数组扩展至 2n → dp[l][r] = max(dp[l][k]+dp[k][r]+head[l]*head[k+1]*head[r+1]) → ans = max(dp[i][i+n-1])。<br>复杂度 O(n³) ≈ 10⁶。样例：[2,3,5,10] 输出 710。</div>
-  <h2>题3：环形最大子段和（拓展）</h2>
-  <p>长度为 n 的环形数组，求最大子段和。</p>
-  <div class="note-box"><b>解法一</b>（DP）：不跨越边界 → Kadane；跨越边界 → total - min_subarray_sum；取 max。<br><b>解法二</b>（破环成链）：复制 x2，滑动窗口求长度 ≤ n 的最大子段和。<br><b>注意全负数</b>：若 max_normal &lt; 0，直接返回 max_normal。</div>
-  <h2>区间DP分类总结</h2>
-  <table>
-    <tr><th>类型</th><th>问题</th><th>复杂度</th><th>环形</th><th>转移</th></tr>
-    <tr><td>合并型-直线</td><td>石子合并</td><td>O(n³)</td><td>✗</td><td>dp[l][k] + dp[k+1][r]</td></tr>
-    <tr><td>合并型-环形</td><td>P1880 环形石子</td><td>O(n³)</td><td>✓</td><td>同上+破环成链</td></tr>
-    <tr><td>合并型-环形</td><td>P1063 能量项链</td><td>O(n³)</td><td>✓</td><td>dp[l][k] + dp[k][r]</td></tr>
-    <tr><td>合并型-直线</td><td>矩阵链乘法</td><td>O(n³)</td><td>✗</td><td>dp[l][k] + dp[k+1][r]</td></tr>
-    <tr><td>非合并型</td><td>回文子序列</td><td>O(n²)</td><td>✗</td><td>两端字符比较</td></tr>
-    <tr><td>消去型</td><td>移除盒子</td><td>O(n⁴)</td><td>✗</td><td>三维 dp[l][r][k]</td></tr>
-  </table>
-</div>
+<h1>真题精练</h1>
+<h2>题1：环形石子合并【洛谷 P1880】</h2>
+<p>n ≤ 100，环形石子合并，求最小得分和最大得分。</p>
+<div class="note-box"><b>关键步骤</b>：破环成链 x2 → 前缀和 O(1) → 标准五步区间DP → 遍历 dp[i][i+n-1]。<br/>复杂度 O(n³) ≈ 10⁶。样例：[4,5,9,4] 输出 "43 54"。</div>
+<h2>题2：能量项链【洛谷 P1063 / NOIP2006】</h2>
+<p>n ≤ 100，环形能量珠合并，求最大总能量。</p>
+<div class="note-box"><b>关键步骤</b>：head 数组扩展至 2n → dp[l][r] = max(dp[l][k]+dp[k][r]+head[l]*head[k+1]*head[r+1]) → ans = max(dp[i][i+n-1])。<br/>复杂度 O(n³) ≈ 10⁶。样例：[2,3,5,10] 输出 710。</div>
+<h2>题3：环形最大子段和（拓展）</h2>
+<p>长度为 n 的环形数组，求最大子段和。</p>
+<div class="note-box"><b>解法一</b>（DP）：不跨越边界 → Kadane；跨越边界 → total - min_subarray_sum；取 max。<br/><b>解法二</b>（破环成链）：复制 x2，滑动窗口求长度 ≤ n 的最大子段和。<br/><b>注意全负数</b>：若 max_normal &lt; 0，直接返回 max_normal。</div>
+<h2>区间DP分类总结</h2>
+<table>
+<tr><th>类型</th><th>问题</th><th>复杂度</th><th>环形</th><th>转移</th></tr>
+<tr><td>合并型-直线</td><td>石子合并</td><td>O(n³)</td><td>✗</td><td>dp[l][k] + dp[k+1][r]</td></tr>
+<tr><td>合并型-环形</td><td>P1880 环形石子</td><td>O(n³)</td><td>✓</td><td>同上+破环成链</td></tr>
+<tr><td>合并型-环形</td><td>P1063 能量项链</td><td>O(n³)</td><td>✓</td><td>dp[l][k] + dp[k][r]</td></tr>
+<tr><td>合并型-直线</td><td>矩阵链乘法</td><td>O(n³)</td><td>✗</td><td>dp[l][k] + dp[k+1][r]</td></tr>
+<tr><td>非合并型</td><td>回文子序列</td><td>O(n²)</td><td>✗</td><td>两端字符比较</td></tr>
+<tr><td>消去型</td><td>移除盒子</td><td>O(n⁴)</td><td>✗</td><td>三维 dp[l][r][k]</td></tr>
+</table>
 
+<aside class="notes">【讲解】真题精练
+本页要点（照着讲即可）：
+· n ≤ 100，环形石子合并，求最小得分和最大得分。
+· n ≤ 100，环形能量珠合并，求最大总能量。
+· 长度为 n 的环形数组，求最大子段和。
+练习页节奏：先独立想 1 分钟 → 再点拨思路 → 最后对答案讲为什么。
+可联系：能量项链、涂色问题</aside>
+</div>
 <div class="slide" data-index="7">
-  <h1>优化技巧与总结</h1>
-  <h2>优化技巧大全</h2>
-  <table>
-    <tr><th>技巧</th><th>说明</th><th>效果</th></tr>
-    <tr><td>破环成链 x2</td><td>环形转线性，复制序列到 2n</td><td>适用所有环形DP</td></tr>
-    <tr><td>前缀和</td><td>pre[r+1] - pre[l] O(1)</td><td>必备优化</td></tr>
-    <tr><td>四边形不等式</td><td>s[l][r-1] ≤ s[l][r] ≤ s[l+1][r]</td><td>O(n³)→O(n²)</td></tr>
-    <tr><td>只DP到 len ≤ n</td><td>环形只需长度为 n 的区间</td><td>减常数</td></tr>
-    <tr><td>INF = 0x3f3f3f3f</td><td>两个相加不溢出 int</td><td>安全</td></tr>
-    <tr><td>memset 初始化</td><td>memset(dp, 0x3f, sizeof(dp))</td><td>更快</td></tr>
-  </table>
-  <h2>常见易错点</h2>
-  <ul>
-    <li><span class="hl">环形答案取错</span>：不是 dp[0][n-1]，必须遍历 dp[i][i+n-1]</li>
-    <li><span class="hl">能量项链转移</span>：dp[l][k] + dp[k][r]，不是 dp[l][k] + dp[k+1][r]</li>
-    <li><span class="hl">前缀和下标</span>：环形下 pre 长度 = 2n+1，公式 pre[r+1]-pre[l]</li>
-    <li><span class="hl">len 枚举范围</span>：环形问题只需枚举到 n，不是 2n</li>
-    <li><span class="hl">头标记索引偏移</span>：能量项链 head 数组和珠子的对应关系要厘清</li>
-    <li><span class="hl">初始化区别</span>：求最小值 dp[i][i]=0 其余 INF，求最大值 dp 全 0</li>
-  </ul>
-  <h2>本课核心总结</h2>
-  <ul>
-    <li><span class="ac">破环成链法 x2</span> 是处理环形DP的万能模板</li>
-    <li><span class="ac">能量项链</span> 是 NOIP2006 经典真题，转移有关键差异</li>
-    <li>区间DP分 <span class="ac">合并型</span>（二维dp）和 <span class="ac">消去型</span>（需额外维度）</li>
-    <li><span class="ac">四边形不等式优化</span> 可将 O(n³) 降到 O(n²)</li>
-    <li>考前务必手写环形石子合并和能量项链各 <span class="hl">3-5 遍</span></li>
-  </ul>
-  <div class="note-box" style="margin-top:16px;"><b>CSP-S 应试核心</b>：环形石子合并和能量项链是区间DP的<b>必考题型</b>。破环成链是处理环形DP的<b>万能模板</b>。建议将两类环形问题各练习 3 遍以上。</div>
-  <p style="text-align:center; margin-top:24px; color:var(--accent); font-size:1.1rem;">▶ 下节课预告：第33课 — 树形DP基础（树的直径 · 树上最大独立集 · 树形背包）</p>
-</div>
+<h1>优化技巧与总结</h1>
+<h2>优化技巧大全</h2>
+<table>
+<tr><th>技巧</th><th>说明</th><th>效果</th></tr>
+<tr><td>破环成链 x2</td><td>环形转线性，复制序列到 2n</td><td>适用所有环形DP</td></tr>
+<tr><td>前缀和</td><td>pre[r+1] - pre[l] O(1)</td><td>必备优化</td></tr>
+<tr><td>四边形不等式</td><td>s[l][r-1] ≤ s[l][r] ≤ s[l+1][r]</td><td>O(n³)→O(n²)</td></tr>
+<tr><td>只DP到 len ≤ n</td><td>环形只需长度为 n 的区间</td><td>减常数</td></tr>
+<tr><td>INF = 0x3f3f3f3f</td><td>两个相加不溢出 int</td><td>安全</td></tr>
+<tr><td>memset 初始化</td><td>memset(dp, 0x3f, sizeof(dp))</td><td>更快</td></tr>
+</table>
+<h2>常见易错点</h2>
+<ul>
+<li><span class="hl">环形答案取错</span>：不是 dp[0][n-1]，必须遍历 dp[i][i+n-1]</li>
+<li><span class="hl">能量项链转移</span>：dp[l][k] + dp[k][r]，不是 dp[l][k] + dp[k+1][r]</li>
+<li><span class="hl">前缀和下标</span>：环形下 pre 长度 = 2n+1，公式 pre[r+1]-pre[l]</li>
+<li><span class="hl">len 枚举范围</span>：环形问题只需枚举到 n，不是 2n</li>
+<li><span class="hl">头标记索引偏移</span>：能量项链 head 数组和珠子的对应关系要厘清</li>
+<li><span class="hl">初始化区别</span>：求最小值 dp[i][i]=0 其余 INF，求最大值 dp 全 0</li>
+</ul>
+<h2>本课核心总结</h2>
+<ul>
+<li><span class="ac">破环成链法 x2</span> 是处理环形DP的万能模板</li>
+<li><span class="ac">能量项链</span> 是 NOIP2006 经典真题，转移有关键差异</li>
+<li>区间DP分 <span class="ac">合并型</span>（二维dp）和 <span class="ac">消去型</span>（需额外维度）</li>
+<li><span class="ac">四边形不等式优化</span> 可将 O(n³) 降到 O(n²)</li>
+<li>考前务必手写环形石子合并和能量项链各 <span class="hl">3-5 遍</span></li>
+</ul>
+<div class="note-box" style="margin-top:16px;"><b>CSP-S 应试核心</b>：环形石子合并和能量项链是区间DP的<b>必考题型</b>。破环成链是处理环形DP的<b>万能模板</b>。建议将两类环形问题各练习 3 遍以上。</div>
+<p style="text-align:center; margin-top:24px; color:var(--accent); font-size:1.1rem;">▶ 下节课预告：第33课 — 树形DP基础（树的直径 · 树上最大独立集 · 树形背包）</p>
 
+<aside class="notes">【收尾】回顾本课主线：优化技巧与总结
+对照大纲再过一遍：环形区间DP、区间DP的合并型与消去型
+板书/口述要点：
+· 环形答案取错 ：不是 dp[0][n-1]，必须遍历 dp[i][i+n-1]
+· 能量项链转移 ：dp[l][k] + dp[k][r]，不是 dp[l][k] + dp[k+1][r]
+· 前缀和下标 ：环形下 pre 长度 = 2n+1，公式 pre[r+1]-pre[l]
+· len 枚举范围 ：环形问题只需枚举到 n，不是 2n
+· 头标记索引偏移 ：能量项链 head 数组和珠子的对应关系要厘清
+· 初始化区别 ：求最小值 dp[i][i]=0 其余 INF，求最大值 dp 全 0
+课后任务：能量项链、涂色问题
+结束前留 2 分钟答疑；布置 1 道小练习检验是否真正掌握。</aside>
 </div>
-
+</div>
 <div class="nav-bar" style="max-width:980px; width:100%; margin-top:18px;">
-  <button id="prevBtn" onclick="navigate(-1)">&#9664; 上一页</button>
-  <div style="display:flex; align-items:center; gap:8px;">
-    <div class="dots" id="dotsContainer"></div>
-    <span class="page-text" id="pageText">1 / 8</span>
-  </div>
-  <button id="nextBtn" onclick="navigate(1)">下一页 &#9654;</button>
+<button id="prevBtn" onclick="navigate(-1)">◀ 上一页</button>
+<div style="display:flex; align-items:center; gap:8px;">
+<div class="dots" id="dotsContainer"></div>
+<span class="page-text" id="pageText">1 / 8</span>
 </div>
-
+<button id="nextBtn" onclick="navigate(1)">下一页 ▶</button>
+</div>
 <script>
 (function() {
   var slides = document.querySelectorAll('.slide');

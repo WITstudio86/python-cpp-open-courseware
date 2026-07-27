@@ -1,8 +1,9 @@
 <!DOCTYPE html>
+
 <html lang="zh-CN">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
 <title>第36课：状态压缩DP进阶 — CSP-S 竞赛课件</title>
 <style>
   /* ===== 全局重置与深色主题 ===== */
@@ -330,90 +331,96 @@
 </style>
 </head>
 <body>
-
 <div class="presentation">
-  <div class="slides-wrapper" id="slidesWrapper">
+<div class="slides-wrapper" id="slidesWrapper">
+<!-- ========== 第1页：标题页 ========== -->
+<div class="slide slide-title active" data-index="0">
+<div class="lesson-num">LESSON 36</div>
+<h1>状态压缩DP进阶</h1>
+<div class="subtitle">轮廓线DP · 骨牌覆盖 · 期望DP</div>
+<div class="tags">
+<span class="tag">轮廓线DP</span>
+<span class="tag">插头DP入门</span>
+<span class="tag">骨牌覆盖</span>
+<span class="tag">期望DP</span>
+<span class="tag">CSP-S 提高组</span>
+</div>
+<p style="color: var(--text-secondary); margin-top: 8px;">前置知识：状态压缩DP基础（第35课）、概率论基础</p>
 
-    <!-- ========== 第1页：标题页 ========== -->
-    <div class="slide slide-title active" data-index="0">
-      <div class="lesson-num">LESSON 36</div>
-      <h1>状态压缩DP进阶</h1>
-      <div class="subtitle">轮廓线DP · 骨牌覆盖 · 期望DP</div>
-      <div class="tags">
-        <span class="tag">轮廓线DP</span>
-        <span class="tag">插头DP入门</span>
-        <span class="tag">骨牌覆盖</span>
-        <span class="tag">期望DP</span>
-        <span class="tag">CSP-S 提高组</span>
-      </div>
-      <p style="color: var(--text-secondary); margin-top: 8px;">前置知识：状态压缩DP基础（第35课）、概率论基础</p>
-    </div>
-
-    <!-- ========== 第2页：轮廓线DP知识精讲 ========== -->
-    <div class="slide" data-index="1">
-      <h2>一、轮廓线DP（插头DP入门）</h2>
-
-      <h3>什么是轮廓线DP？</h3>
-      <p>在逐格递推时，<strong>只保存当前「轮廓线」上的状态</strong>，而不是整个棋盘。</p>
-
-      <div class="contour-viz">
+<aside class="notes">【开场】第 1/6 页 · 状态压缩DP进阶
+用 30 秒说明本课目标与学完能做什么，再进入正题。
+大纲考点：轮廓线DP（插头DP入门）、状压+概率DP
+配套练习方向：蒙德里安的梦想、期望DP
+封面关键词：
+· 前置知识：状态压缩DP基础（第35课）、概率论基础
+互动：问学生「今天最想搞清楚什么？」，收 1–2 个期待。</aside>
+</div>
+<!-- ========== 第2页：轮廓线DP知识精讲 ========== -->
+<div class="slide" data-index="1">
+<h2>一、轮廓线DP（插头DP入门）</h2>
+<h3>什么是轮廓线DP？</h3>
+<p>在逐格递推时，<strong>只保存当前「轮廓线」上的状态</strong>，而不是整个棋盘。</p>
+<div class="contour-viz">
 <span class="line">┌─────────────────────┐</span>
 <span class="done">│ ■  ■  ■ </span>│<span class="todo"> □  □  □ </span>│
 <span class="done">│ ■  ■  ■ </span>│<span class="todo"> □  □  □ </span>│
 <span class="done">│ ■  ■ </span><span class="cur">●</span><span class="done"> </span>│<span class="todo"> □  □  □ </span>│   ← 轮廓线（● = 当前格子）
 <span class="line">└─────────────────────┘</span>
 <span class="line">   已处理区域       未处理区域</span>
-      </div>
+</div>
+<div class="highlight-box">
+<strong>核心优势：</strong>
+<ul>
+<li>对于 n×m 网格，轮廓线上最多 m 个格子</li>
+<li>状态数从 2^(n×m) 降至 2^m（当逐列DP）或 2^n（当逐行DP）</li>
+<li>边界条件清晰，适合骨牌覆盖、哈密顿回路等问题</li>
+</ul>
+</div>
+<h3>常见应用</h3>
+<div class="table-wrap">
+<table>
+<thead><tr><th>问题类型</th><th>状态表示</th><th>典型题目</th></tr></thead>
+<tbody>
+<tr><td>骨牌覆盖（1×2）</td><td>每列覆盖状态</td><td>蒙德里安的梦想</td></tr>
+<tr><td>L形覆盖</td><td>轮廓线高度</td><td>插头DP经典题</td></tr>
+<tr><td>哈密顿回路</td><td>插头配对</td><td>插头DP进阶</td></tr>
+</tbody>
+</table>
+</div>
 
-      <div class="highlight-box">
-        <strong>核心优势：</strong>
-        <ul>
-          <li>对于 n×m 网格，轮廓线上最多 m 个格子</li>
-          <li>状态数从 2^(n×m) 降至 2^m（当逐列DP）或 2^n（当逐行DP）</li>
-          <li>边界条件清晰，适合骨牌覆盖、哈密顿回路等问题</li>
-        </ul>
-      </div>
-
-      <h3>常见应用</h3>
-      <div class="table-wrap">
-        <table>
-          <thead><tr><th>问题类型</th><th>状态表示</th><th>典型题目</th></tr></thead>
-          <tbody>
-            <tr><td>骨牌覆盖（1×2）</td><td>每列覆盖状态</td><td>蒙德里安的梦想</td></tr>
-            <tr><td>L形覆盖</td><td>轮廓线高度</td><td>插头DP经典题</td></tr>
-            <tr><td>哈密顿回路</td><td>插头配对</td><td>插头DP进阶</td></tr>
-          </tbody>
-        </table>
-      </div>
-    </div>
-
-    <!-- ========== 第3页：骨牌覆盖原理推导 ========== -->
-    <div class="slide" data-index="2">
-      <h2>二、蒙德里安的梦想 —— 骨牌覆盖</h2>
-
-      <h3>问题</h3>
-      <p>用 1×2 或 2×1 的骨牌铺满 N×M 棋盘，求方案数。</p>
-
-      <h3>按列DP状态设计</h3>
-      <div class="formula">dp[col][state] = 前 col 列铺满，第 col 列的「伸出」状态为 state 的方案数</div>
-      <p>state 的第 i 位为 1 → 第 i 行有横向骨牌伸到 col+1 列。</p>
-
-      <h3>转移合法性判断</h3>
-      <div class="code-block">
+<aside class="notes">【讲解】一、轮廓线DP（插头DP入门）
+本页要点（照着讲即可）：
+· 在逐格递推时， 只保存当前「轮廓线」上的状态 ，而不是整个棋盘。
+· 只保存当前「轮廓线」上的状态
+· 核心优势：
+· 对于 n×m 网格，轮廓线上最多 m 个格子
+· 状态数从 2^(n×m) 降至 2^m（当逐列DP）或 2^n（当逐行DP）
+· 边界条件清晰，适合骨牌覆盖、哈密顿回路等问题
+讲解时放慢关键术语；用 1 个生活类比 + 1 个反例加深印象。
+本课大纲考点（可适时点题）：轮廓线DP（插头DP入门）、状压+概率DP</aside>
+</div>
+<!-- ========== 第3页：骨牌覆盖原理推导 ========== -->
+<div class="slide" data-index="2">
+<h2>二、蒙德里安的梦想 —— 骨牌覆盖</h2>
+<h3>问题</h3>
+<p>用 1×2 或 2×1 的骨牌铺满 N×M 棋盘，求方案数。</p>
+<h3>按列DP状态设计</h3>
+<div class="formula">dp[col][state] = 前 col 列铺满，第 col 列的「伸出」状态为 state 的方案数</div>
+<p>state 的第 i 位为 1 → 第 i 行有横向骨牌伸到 col+1 列。</p>
+<h3>转移合法性判断</h3>
+<div class="code-block">
 <span class="cmt">// 从 prev 状态转移到 cur 状态的条件：</span>
 <span class="num">1</span>. prev &amp; cur == <span class="num">0</span>
-   <span class="cmt">→ 同一行不能同时被两个横骨牌占据</span>
-
+<span class="cmt">→ 同一行不能同时被两个横骨牌占据</span>
 <span class="num">2</span>. st[prev | cur] == <span class="kw">true</span>
-   <span class="cmt">→ 本列的空格必须能被竖骨牌（2×1）填满</span>
-   <span class="cmt">→ 即 prev|cur 中，所有连续的 0 段长度均为偶数</span>
-      </div>
-
-      <h3>预处理 st[state]</h3>
-      <div class="code-block">
+<span class="cmt">→ 本列的空格必须能被竖骨牌（2×1）填满</span>
+<span class="cmt">→ 即 prev|cur 中，所有连续的 0 段长度均为偶数</span>
+</div>
+<h3>预处理 st[state]</h3>
+<div class="code-block">
 <span class="kw">bool</span> <span class="fn">check</span>(<span class="kw">int</span> state, <span class="kw">int</span> N) {
     <span class="kw">int</span> cnt = <span class="num">0</span>;  <span class="cmt">// 连续 0 的个数</span>
-    <span class="kw">for</span> (<span class="kw">int</span> i = <span class="num">0</span>; i &lt; N; i++) {
+<span class="kw">for</span> (<span class="kw">int</span> i = <span class="num">0</span>; i &lt; N; i++) {
         <span class="kw">if</span> (state &gt;&gt; i &amp; <span class="num">1</span>) {
             <span class="kw">if</span> (cnt &amp; <span class="num">1</span>) <span class="kw">return false</span>;
             cnt = <span class="num">0</span>;
@@ -422,18 +429,21 @@
     <span class="kw">return</span> !(cnt &amp; <span class="num">1</span>);
 }
       </div>
+<div class="note">最终答案：<code>dp[M][0]</code> —— 第 M 列没有骨牌伸出（棋盘恰好铺满）。</div>
 
-      <div class="note">最终答案：<code>dp[M][0]</code> —— 第 M 列没有骨牌伸出（棋盘恰好铺满）。</div>
-    </div>
-
-    <!-- ========== 第4页：代码模板页 ========== -->
-    <div class="slide" data-index="3">
-      <h2>三、代码模板</h2>
-
-      <div class="two-col">
-        <div class="highlight-box">
-          <h3>蒙德里安的梦想</h3>
-          <div class="code-block" style="font-size:0.76rem;">
+<aside class="notes">【讲解】二、蒙德里安的梦想 —— 骨牌覆盖
+本页要点（照着讲即可）：
+· 用 1×2 或 2×1 的骨牌铺满 N×M 棋盘，求方案数。
+· state 的第 i 位为 1 → 第 i 行有横向骨牌伸到 col+1 列。
+讲解时放慢关键术语；用 1 个生活类比 + 1 个反例加深印象。</aside>
+</div>
+<!-- ========== 第4页：代码模板页 ========== -->
+<div class="slide" data-index="3">
+<h2>三、代码模板</h2>
+<div class="two-col">
+<div class="highlight-box">
+<h3>蒙德里安的梦想</h3>
+<div class="code-block" style="font-size:0.76rem;">
 <span class="cmt">// DP 核心循环</span>
 dp[<span class="num">0</span>][<span class="num">0</span>] = <span class="num">1</span>;
 <span class="kw">for</span> (<span class="kw">int</span> col = <span class="num">1</span>; col &lt;= M; col++) {
@@ -444,16 +454,15 @@ dp[<span class="num">0</span>][<span class="num">0</span>] = <span class="num">1
   }
 }
 ans = dp[M][<span class="num">0</span>]; <span class="cmt">// 答案</span>
-          </div>
-          <p style="font-size:0.82rem;color:var(--text-secondary);">
-            复杂度：O(M × 4^N)，N≤11 可行<br>
+</div>
+<p style="font-size:0.82rem;color:var(--text-secondary);">
+            复杂度：O(M × 4^N)，N≤11 可行<br/>
             N=11, M=11 约 11×4M 操作
           </p>
-        </div>
-
-        <div class="highlight-box">
-          <h3>奖励关（期望DP）</h3>
-          <div class="code-block" style="font-size:0.76rem;">
+</div>
+<div class="highlight-box">
+<h3>奖励关（期望DP）</h3>
+<div class="code-block" style="font-size:0.76rem;">
 <span class="cmt">// 逆推 DP</span>
 <span class="kw">for</span> (round = K; round &gt;= <span class="num">1</span>; round--)
   <span class="kw">for</span> (mask = <span class="num">0</span>; mask &lt; full; mask++)
@@ -464,41 +473,43 @@ ans = dp[M][<span class="num">0</span>]; <span class="cmt">// 答案</span>
         v = skip;
       dp[round][mask] += v / n;
           </div>
-          <p style="font-size:0.82rem;color:var(--text-secondary);">
-            复杂度：O(K × n × 2^n)<br>
+<p style="font-size:0.82rem;color:var(--text-secondary);">
+            复杂度：O(K × n × 2^n)<br/>
             n≤15, K≤100 约 5×10⁷ 操作
           </p>
-        </div>
+</div>
+</div>
+<div class="note" style="margin-top:16px;">
+<strong>AC 代码位置：</strong><code>/程序/lesson36_state_compression_dp_advanced.cpp</code> — 含完整注释与多组数据支持。
       </div>
 
-      <div class="note" style="margin-top:16px;">
-        <strong>AC 代码位置：</strong><code>/程序/lesson36_state_compression_dp_advanced.cpp</code> — 含完整注释与多组数据支持。
-      </div>
-    </div>
-
-    <!-- ========== 第5页：期望DP精讲 ========== -->
-    <div class="slide" data-index="4">
-      <h2>四、状压 + 期望DP</h2>
-
-      <h3>期望DP基本概念</h3>
-      <p>在随机过程的每个状态，求达到目标状态的<strong>期望步数 / 期望收益</strong>。</p>
-
-      <h3>状态设计范式</h3>
-      <div class="formula">dp[mask] = 从状态 mask 出发，到达目标还需的最优期望值</div>
-
-      <h3>逆推法的优势</h3>
-      <div class="highlight-box">
-        <strong>为什么用逆推（从终态向前推）？</strong>
-        <ul>
-          <li>终态的值是确定的（dp[K+1][*] = 0），可以作为DP的边界</li>
-          <li>当前决策可以直接利用「未来已计算好的最优值」</li>
-          <li>避免了「最优策略是什么」的复杂分析——取 max 即可</li>
-          <li>自然处理了概率平均</li>
-        </ul>
-      </div>
-
-      <h3>奖励关 转移方程详解</h3>
-      <div class="code-block">
+<aside class="notes">【讲解】三、代码模板
+本页要点（照着讲即可）：
+· 复杂度：O(M × 4^N)，N≤11 可行 N=11, M=11 约 11×4M 操作
+· 复杂度：O(K × n × 2^n) n≤15, K≤100 约 5×10⁷ 操作
+· AC 代码位置：
+代码页节奏：先读懂输入输出 → 再走主流程 → 最后点出易错点（边界/类型/下标）。
+可让学生预测下一行输出，再运行对照。</aside>
+</div>
+<!-- ========== 第5页：期望DP精讲 ========== -->
+<div class="slide" data-index="4">
+<h2>四、状压 + 期望DP</h2>
+<h3>期望DP基本概念</h3>
+<p>在随机过程的每个状态，求达到目标状态的<strong>期望步数 / 期望收益</strong>。</p>
+<h3>状态设计范式</h3>
+<div class="formula">dp[mask] = 从状态 mask 出发，到达目标还需的最优期望值</div>
+<h3>逆推法的优势</h3>
+<div class="highlight-box">
+<strong>为什么用逆推（从终态向前推）？</strong>
+<ul>
+<li>终态的值是确定的（dp[K+1][*] = 0），可以作为DP的边界</li>
+<li>当前决策可以直接利用「未来已计算好的最优值」</li>
+<li>避免了「最优策略是什么」的复杂分析——取 max 即可</li>
+<li>自然处理了概率平均</li>
+</ul>
+</div>
+<h3>奖励关 转移方程详解</h3>
+<div class="code-block">
 <span class="cmt">// 第 round 轮，当前已收集 mask，系统随机抛出宝物 i（概率 1/n）</span>
 <span class="kw">for each</span> 宝物 i:
   if (require[i] ⊆ mask):  <span class="cmt">// 前提满足，可以选择</span>
@@ -508,68 +519,80 @@ ans = dp[M][<span class="num">0</span>]; <span class="cmt">// 答案</span>
     best = dp[round+1][mask]
 
 dp[round][mask] = <span class="fn">average</span>(best over all i)  <span class="cmt">// Σ best_i / n</span>
-      </div>
-
-      <h3>如何处理负分宝物？</h3>
-      <p>由于采用 <strong>max(take, skip)</strong>，当宝物分值为负时，最优策略是放弃获取——期望DP自动处理了这种决策。</p>
-    </div>
-
-    <!-- ========== 第6页：总结页 ========== -->
-    <div class="slide" data-index="5">
-      <h2>五、本节总结</h2>
-
-      <div class="table-wrap">
-        <table>
-          <thead>
-            <tr><th>知识点</th><th>核心技巧</th><th>典型复杂度</th></tr>
-          </thead>
-          <tbody>
-            <tr><td>轮廓线DP</td><td>保存分界线状态，逐格/逐列递推</td><td>O(nm·2^min(n,m))</td></tr>
-            <tr><td>骨牌覆盖</td><td>按列DP + 连续0偶数判断</td><td>O(M·4^N)</td></tr>
-            <tr><td>期望DP + 状压</td><td>逆推 + 概率枚举 + max决策</td><td>O(K·n·2^n)</td></tr>
-          </tbody>
-        </table>
-      </div>
-
-      <h3>两课联动：状压DP解题体系</h3>
-      <div class="table-wrap" style="margin-top:8px;">
-        <table>
-          <thead><tr><th>题型</th><th>状态设计</th><th>与哪课相关</th></tr></thead>
-          <tbody>
-            <tr><td>TSP / 哈密顿路径</td><td>dp[mask][last]</td><td>第35课</td></tr>
-            <tr><td>棋盘放置（国王/炮兵）</td><td>dp[row][state][cnt]</td><td>第35课</td></tr>
-            <tr><td>骨牌覆盖</td><td>dp[col][state]</td><td>第36课</td></tr>
-            <tr><td>期望DP + 状压</td><td>dp[round][mask]（逆推）</td><td>第36课</td></tr>
-          </tbody>
-        </table>
-      </div>
-
-      <h3>学习建议</h3>
-      <ul>
-        <li>看到 <strong>n ≤ 20</strong> 立即想到状压DP</li>
-        <li>棋盘类先预处理「合法状态」和「合法转移」</li>
-        <li>期望DP优先考虑<strong>逆推</strong>，让未来的最优值指导当前决策</li>
-        <li>多练洛谷「状态压缩」标签题目，形成条件反射</li>
-      </ul>
-
-      <div class="note" style="margin-top:16px;">
-        <strong>CSP-S 考点全覆盖：</strong>位运算优化 → 状态压缩DP设计 → 子集枚举 O(3^n) → TSP O(n²·2^n) → 轮廓线DP → 期望DP
-      </div>
-    </div>
-
-  </div><!-- /slides-wrapper -->
-
-  <!-- ===== 导航栏 ===== -->
-  <div class="nav-bar">
-    <button class="nav-btn" id="btnPrev" onclick="prevSlide()">◀ 上一页</button>
-    <div class="dot-nav" id="dotNav"></div>
-    <div class="page-indicator" id="pageIndicator">1 / 6</div>
-    <button class="nav-btn" id="btnNext" onclick="nextSlide()">下一页 ▶</button>
-  </div>
 </div>
+<h3>如何处理负分宝物？</h3>
+<p>由于采用 <strong>max(take, skip)</strong>，当宝物分值为负时，最优策略是放弃获取——期望DP自动处理了这种决策。</p>
 
+<aside class="notes">【讲解】四、状压 + 期望DP
+本页要点（照着讲即可）：
+· 在随机过程的每个状态，求达到目标状态的 期望步数 / 期望收益 。
+· 期望步数 / 期望收益
+· 为什么用逆推（从终态向前推）？
+· 终态的值是确定的（dp[K+1][*] = 0），可以作为DP的边界
+· 当前决策可以直接利用「未来已计算好的最优值」
+· 避免了「最优策略是什么」的复杂分析——取 max 即可
+讲解时放慢关键术语；用 1 个生活类比 + 1 个反例加深印象。</aside>
+</div>
+<!-- ========== 第6页：总结页 ========== -->
+<div class="slide" data-index="5">
+<h2>五、本节总结</h2>
+<div class="table-wrap">
+<table>
+<thead>
+<tr><th>知识点</th><th>核心技巧</th><th>典型复杂度</th></tr>
+</thead>
+<tbody>
+<tr><td>轮廓线DP</td><td>保存分界线状态，逐格/逐列递推</td><td>O(nm·2^min(n,m))</td></tr>
+<tr><td>骨牌覆盖</td><td>按列DP + 连续0偶数判断</td><td>O(M·4^N)</td></tr>
+<tr><td>期望DP + 状压</td><td>逆推 + 概率枚举 + max决策</td><td>O(K·n·2^n)</td></tr>
+</tbody>
+</table>
+</div>
+<h3>两课联动：状压DP解题体系</h3>
+<div class="table-wrap" style="margin-top:8px;">
+<table>
+<thead><tr><th>题型</th><th>状态设计</th><th>与哪课相关</th></tr></thead>
+<tbody>
+<tr><td>TSP / 哈密顿路径</td><td>dp[mask][last]</td><td>第35课</td></tr>
+<tr><td>棋盘放置（国王/炮兵）</td><td>dp[row][state][cnt]</td><td>第35课</td></tr>
+<tr><td>骨牌覆盖</td><td>dp[col][state]</td><td>第36课</td></tr>
+<tr><td>期望DP + 状压</td><td>dp[round][mask]（逆推）</td><td>第36课</td></tr>
+</tbody>
+</table>
+</div>
+<h3>学习建议</h3>
+<ul>
+<li>看到 <strong>n ≤ 20</strong> 立即想到状压DP</li>
+<li>棋盘类先预处理「合法状态」和「合法转移」</li>
+<li>期望DP优先考虑<strong>逆推</strong>，让未来的最优值指导当前决策</li>
+<li>多练洛谷「状态压缩」标签题目，形成条件反射</li>
+</ul>
+<div class="note" style="margin-top:16px;">
+<strong>CSP-S 考点全覆盖：</strong>位运算优化 → 状态压缩DP设计 → 子集枚举 O(3^n) → TSP O(n²·2^n) → 轮廓线DP → 期望DP
+      </div>
+
+<aside class="notes">【收尾】回顾本课主线：五、本节总结
+对照大纲再过一遍：轮廓线DP（插头DP入门）、状压+概率DP
+板书/口述要点：
+· 看到 n ≤ 20 立即想到状压DP
+· n ≤ 20
+· 棋盘类先预处理「合法状态」和「合法转移」
+· 期望DP优先考虑 逆推 ，让未来的最优值指导当前决策
+· 多练洛谷「状态压缩」标签题目，形成条件反射
+· CSP-S 考点全覆盖：
+课后任务：蒙德里安的梦想、期望DP
+结束前留 2 分钟答疑；布置 1 道小练习检验是否真正掌握。</aside>
+</div>
+</div><!-- /slides-wrapper -->
+<!-- ===== 导航栏 ===== -->
+<div class="nav-bar">
+<button class="nav-btn" id="btnPrev" onclick="prevSlide()">◀ 上一页</button>
+<div class="dot-nav" id="dotNav"></div>
+<div class="page-indicator" id="pageIndicator">1 / 6</div>
+<button class="nav-btn" id="btnNext" onclick="nextSlide()">下一页 ▶</button>
+</div>
+</div>
 <div class="kbd-hint">← → 方向键翻页</div>
-
 <script>
   // ===== 幻灯片控制器 =====
   const slides = document.querySelectorAll('.slide');
@@ -637,7 +660,6 @@ dp[round][mask] = <span class="fn">average</span>(best over all i)  <span class=
 
   updateUI();
 </script>
-
 <script src="courseware-ui.js"></script>
 <script src="presenter.js"></script>
 </body>

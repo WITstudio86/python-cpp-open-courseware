@@ -1,8 +1,9 @@
 <!DOCTYPE html>
+
 <html lang="zh-CN">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
 <title>第40节 消行与加速 - Pygame俄罗斯方块</title>
 <style>
 /* ==================== 全局样式 ==================== */
@@ -403,422 +404,514 @@ body {
 </style>
 </head>
 <body>
-
 <!-- ==================== 幻灯片容器 ==================== -->
 <div id="slides-container">
-
 <!-- ===== 第1页：标题 ===== -->
 <div class="slide title-slide active" data-index="0">
-    <div class="icon-row">🎮 🧱 ✨</div>
-    <h1>第40节 消行与加速</h1>
-    <div class="subtitle">让俄罗斯方块真正"活"起来！</div>
-    <div class="info" style="margin-top:40px;">Pygame 游戏开发课程 | 适合10-15岁</div>
-    <div class="info">完整俄罗斯方块：从下落到消行到Game Over</div>
-</div>
+<div class="icon-row">🎮 🧱 ✨</div>
+<h1>第40节 消行与加速</h1>
+<div class="subtitle">让俄罗斯方块真正"活"起来！</div>
+<div class="info" style="margin-top:40px;">Pygame 游戏开发课程 | 适合10-15岁</div>
+<div class="info">完整俄罗斯方块：从下落到消行到Game Over</div>
 
+<aside class="notes">【开场】第 1/14 页 · 消行与加速
+用 30 秒说明本课目标与学完能做什么，再进入正题。
+大纲考点：**内容**：满行消除、计分规则、速度递增、下一个方块预览
+
+**知识点**：
+- 满行检测 + 消除 + 上方整体下移
+- Combo 计分规则（1行=100, 2行=300, 3行=500, 4行=800）
+- 难度曲线（每消 10 行速度 +1）
+- 下一个方块预览窗口
+- Game Over 判定（新方块无法放置）
+
+**课堂练习**：完整的俄罗斯方块
+
+---
+
+## 📦 项目 19：推箱子（第 41-42 节）
+封面关键词：
+· 🎮 🧱 ✨
+· 第40节 消行与加速
+· 让俄罗斯方块真正"活"起来！
+· Pygame 游戏开发课程 | 适合10-15岁
+互动：问学生「今天最想搞清楚什么？」，收 1–2 个期待。</aside>
+</div>
 <!-- ===== 第2页：学习目标 ===== -->
 <div class="slide" data-index="1">
-    <h2>🎯 学习目标</h2>
-    <div style="width:100%; display:flex; gap:30px; flex-wrap:wrap;">
-        <div class="step-card" style="flex:1; min-width:280px;">
-            <div class="step-num">📖</div>
-            <div class="step-title">知识目标</div>
-            <div class="step-desc" style="text-align:left; font-size:24px;">
-                <ul style="padding-left:20px;">
-                    <li>满行检测算法原理</li>
-                    <li>消除后上方行下移</li>
-                    <li>Combo计分规则设计</li>
-                    <li>难度递增曲线</li>
-                </ul>
-            </div>
-        </div>
-        <div class="step-card" style="flex:1; min-width:280px;">
-            <div class="step-num">💻</div>
-            <div class="step-title">技能目标</div>
-            <div class="step-desc" style="text-align:left; font-size:24px;">
-                <ul style="padding-left:20px;">
-                    <li>编写消行检测代码</li>
-                    <li>实现计分和难度系统</li>
-                    <li>添加预览、暂停功能</li>
-                    <li>完成完整俄罗斯方块</li>
-                </ul>
-            </div>
-        </div>
-        <div class="step-card" style="flex:1; min-width:280px;">
-            <div class="step-num">🧠</div>
-            <div class="step-title">情感目标</div>
-            <div class="step-desc" style="text-align:left; font-size:24px;">
-                <ul style="padding-left:20px;">
-                    <li>算法设计之美</li>
-                    <li>策略性冒险的乐趣</li>
-                    <li>系统性项目思维</li>
-                </ul>
-            </div>
-        </div>
-    </div>
+<h2>🎯 学习目标</h2>
+<div style="width:100%; display:flex; gap:30px; flex-wrap:wrap;">
+<div class="step-card" style="flex:1; min-width:280px;">
+<div class="step-num">📖</div>
+<div class="step-title">知识目标</div>
+<div class="step-desc" style="text-align:left; font-size:24px;">
+<ul style="padding-left:20px;">
+<li>满行检测算法原理</li>
+<li>消除后上方行下移</li>
+<li>Combo计分规则设计</li>
+<li>难度递增曲线</li>
+</ul>
+</div>
+</div>
+<div class="step-card" style="flex:1; min-width:280px;">
+<div class="step-num">💻</div>
+<div class="step-title">技能目标</div>
+<div class="step-desc" style="text-align:left; font-size:24px;">
+<ul style="padding-left:20px;">
+<li>编写消行检测代码</li>
+<li>实现计分和难度系统</li>
+<li>添加预览、暂停功能</li>
+<li>完成完整俄罗斯方块</li>
+</ul>
+</div>
+</div>
+<div class="step-card" style="flex:1; min-width:280px;">
+<div class="step-num">🧠</div>
+<div class="step-title">情感目标</div>
+<div class="step-desc" style="text-align:left; font-size:24px;">
+<ul style="padding-left:20px;">
+<li>算法设计之美</li>
+<li>策略性冒险的乐趣</li>
+<li>系统性项目思维</li>
+</ul>
+</div>
+</div>
 </div>
 
+<aside class="notes">【讲解】🎯 学习目标
+本页要点（照着讲即可）：
+· 满行检测算法原理
+· 消除后上方行下移
+· Combo计分规则设计
+· 难度递增曲线
+· 编写消行检测代码
+· 实现计分和难度系统
+讲解时放慢关键术语；用 1 个生活类比 + 1 个反例加深印象。
+本课大纲考点（可适时点题）：**内容**：满行消除、计分规则、速度递增、下一个方块预览
+
+**知识点**：
+- 满行检测 + 消除 + 上方整体下移
+- Combo 计分规则（1行=100, 2行=300, 3行=500, 4行=800）
+- 难度曲线（每消 10 行速度 +1）
+- 下一个方块预览窗口
+- Game Over 判定（新方块无法放置）
+
+**课堂练习**：完整的俄罗斯方块
+
+---
+
+## 📦 项目 19：推箱子（第 41-42 节）</aside>
+</div>
 <!-- ===== 第3页：上节回顾 ===== -->
 <div class="slide" data-index="2">
-    <h2>📝 上节回顾：方块下落系统</h2>
-    <div style="width:100%;">
-        <p>第39节，我们已经实现了：</p>
-        <ul>
-            <li>✅ 7种标准方块的定义（I / O / T / S / Z / J / L）</li>
-            <li>✅ 方块的<strong style="color:#58a6ff;">左右移动</strong>（← →方向键）</li>
-            <li>✅ 方块的<strong style="color:#58a6ff;">旋转</strong>（↑方向键，顺时针90°）</li>
-            <li>✅ 方块的<strong style="color:#58a6ff;">自动下落</strong>（计时器控制）</li>
-            <li>✅ 方块到达底部后<strong style="color:#58a6ff;">固定在棋盘</strong></li>
-        </ul>
-        <div class="warning-box" style="margin-top:30px;">
-            <p>⚠️ 但是！填满一整行后 → 它不会消失！</p>
-            <p>⚠️ 没有计分，没有等级，没有Game Over！</p>
-            <p>🎯 今天，我们要让游戏真正"活"起来！</p>
-        </div>
-    </div>
+<h2>📝 上节回顾：方块下落系统</h2>
+<div style="width:100%;">
+<p>第39节，我们已经实现了：</p>
+<ul>
+<li>✅ 7种标准方块的定义（I / O / T / S / Z / J / L）</li>
+<li>✅ 方块的<strong style="color:#58a6ff;">左右移动</strong>（← →方向键）</li>
+<li>✅ 方块的<strong style="color:#58a6ff;">旋转</strong>（↑方向键，顺时针90°）</li>
+<li>✅ 方块的<strong style="color:#58a6ff;">自动下落</strong>（计时器控制）</li>
+<li>✅ 方块到达底部后<strong style="color:#58a6ff;">固定在棋盘</strong></li>
+</ul>
+<div class="warning-box" style="margin-top:30px;">
+<p>⚠️ 但是！填满一整行后 → 它不会消失！</p>
+<p>⚠️ 没有计分，没有等级，没有Game Over！</p>
+<p>🎯 今天，我们要让游戏真正"活"起来！</p>
+</div>
 </div>
 
+<aside class="notes">【收尾】回顾本课主线：📝 上节回顾：方块下落系统
+对照大纲再过一遍：**内容**：满行消除、计分规则、速度递增、下一个方块预览
+
+**知识点**：
+- 满行检测 + 消除 + 上方整体下移
+- Combo 计分规则（1行=100, 2行=300, 3行=500, 4行=800）
+- 难度曲线（每消 10 行速度 +1）
+- 下一个方块预览窗口
+- Game Over 判定（新方块无法放置）
+
+**课堂练习**：完整的俄罗斯方块
+
+---
+
+## 📦 项目 19：推箱子（第 41-42 节）
+板书/口述要点：
+· 第39节，我们已经实现了：
+· ✅ 7种标准方块的定义（I / O / T / S / Z / J / L）
+· ✅ 方块的 左右移动 （← →方向键）
+· 左右移动
+· ✅ 方块的 旋转 （↑方向键，顺时针90°）
+· ✅ 方块的 自动下落 （计时器控制）
+结束前留 2 分钟答疑；布置 1 道小练习检验是否真正掌握。</aside>
+</div>
 <!-- ===== 第4页：满行检测算法 ===== -->
 <div class="slide" data-index="3">
-    <h2>🔍 满行检测算法</h2>
-    <div style="width:100%;">
-        <h3>核心思想：检查每一行是否所有格子都不为空</h3>
-
-        <div style="display:flex; gap:30px; align-items:flex-start;">
-            <!-- 示意网格 -->
-            <div class="grid-demo">
-                <!-- 行0 -->
-                <div class="grid-cell"></div><div class="grid-cell"></div><div class="grid-cell"></div><div class="grid-cell"></div><div class="grid-cell"></div><div class="grid-cell"></div><div class="grid-cell"></div><div class="grid-cell"></div><div class="grid-cell"></div><div class="grid-cell"></div>
-                <!-- 行1 -->
-                <div class="grid-cell"></div><div class="grid-cell"></div><div class="grid-cell"></div><div class="grid-cell"></div><div class="grid-cell"></div><div class="grid-cell"></div><div class="grid-cell"></div><div class="grid-cell"></div><div class="grid-cell"></div><div class="grid-cell"></div>
-                <!-- 行2 -->
-                <div class="grid-cell"></div><div class="grid-cell"></div><div class="grid-cell"></div><div class="grid-cell"></div><div class="grid-cell"></div><div class="grid-cell"></div><div class="grid-cell"></div><div class="grid-cell"></div><div class="grid-cell"></div><div class="grid-cell"></div>
-                <!-- 行3 -->
-                <div class="grid-cell filled"></div><div class="grid-cell"></div><div class="grid-cell filled"></div><div class="grid-cell filled"></div><div class="grid-cell filled"></div><div class="grid-cell filled"></div><div class="grid-cell filled"></div><div class="grid-cell filled"></div><div class="grid-cell"></div><div class="grid-cell filled"></div>
-                <!-- 行4: 满行！ -->
-                <div class="grid-cell full">●</div><div class="grid-cell full">●</div><div class="grid-cell full">●</div><div class="grid-cell full">●</div><div class="grid-cell full">●</div><div class="grid-cell full">●</div><div class="grid-cell full">●</div><div class="grid-cell full">●</div><div class="grid-cell full">●</div><div class="grid-cell full">●</div>
-                <!-- 行5 -->
-                <div class="grid-cell filled"></div><div class="grid-cell filled"></div><div class="grid-cell filled"></div><div class="grid-cell"></div><div class="grid-cell"></div><div class="grid-cell"></div><div class="grid-cell"></div><div class="grid-cell filled"></div><div class="grid-cell filled"></div><div class="grid-cell filled"></div>
-            </div>
-
-            <div style="flex:1;">
-                <div class="code-block" style="font-size:22px;">
+<h2>🔍 满行检测算法</h2>
+<div style="width:100%;">
+<h3>核心思想：检查每一行是否所有格子都不为空</h3>
+<div style="display:flex; gap:30px; align-items:flex-start;">
+<!-- 示意网格 -->
+<div class="grid-demo">
+<!-- 行0 -->
+<div class="grid-cell"></div><div class="grid-cell"></div><div class="grid-cell"></div><div class="grid-cell"></div><div class="grid-cell"></div><div class="grid-cell"></div><div class="grid-cell"></div><div class="grid-cell"></div><div class="grid-cell"></div><div class="grid-cell"></div>
+<!-- 行1 -->
+<div class="grid-cell"></div><div class="grid-cell"></div><div class="grid-cell"></div><div class="grid-cell"></div><div class="grid-cell"></div><div class="grid-cell"></div><div class="grid-cell"></div><div class="grid-cell"></div><div class="grid-cell"></div><div class="grid-cell"></div>
+<!-- 行2 -->
+<div class="grid-cell"></div><div class="grid-cell"></div><div class="grid-cell"></div><div class="grid-cell"></div><div class="grid-cell"></div><div class="grid-cell"></div><div class="grid-cell"></div><div class="grid-cell"></div><div class="grid-cell"></div><div class="grid-cell"></div>
+<!-- 行3 -->
+<div class="grid-cell filled"></div><div class="grid-cell"></div><div class="grid-cell filled"></div><div class="grid-cell filled"></div><div class="grid-cell filled"></div><div class="grid-cell filled"></div><div class="grid-cell filled"></div><div class="grid-cell filled"></div><div class="grid-cell"></div><div class="grid-cell filled"></div>
+<!-- 行4: 满行！ -->
+<div class="grid-cell full">●</div><div class="grid-cell full">●</div><div class="grid-cell full">●</div><div class="grid-cell full">●</div><div class="grid-cell full">●</div><div class="grid-cell full">●</div><div class="grid-cell full">●</div><div class="grid-cell full">●</div><div class="grid-cell full">●</div><div class="grid-cell full">●</div>
+<!-- 行5 -->
+<div class="grid-cell filled"></div><div class="grid-cell filled"></div><div class="grid-cell filled"></div><div class="grid-cell"></div><div class="grid-cell"></div><div class="grid-cell"></div><div class="grid-cell"></div><div class="grid-cell filled"></div><div class="grid-cell filled"></div><div class="grid-cell filled"></div>
+</div>
+<div style="flex:1;">
+<div class="code-block" style="font-size:22px;">
 <span class="keyword">def</span> <span class="func">is_row_full</span>(row):
     <span class="comment"># 检查一行是否全部填满</span>
-    <span class="keyword">for</span> <span class="var">cell</span> <span class="keyword">in</span> row:
+<span class="keyword">for</span> <span class="var">cell</span> <span class="keyword">in</span> row:
         <span class="keyword">if</span> cell == <span class="number">0</span>:
             <span class="keyword">return</span> <span class="builtin">False</span>
-    <span class="keyword">return</span> <span class="builtin">True</span>
-
+<span class="keyword">return</span> <span class="builtin">True</span>
 <span class="comment"># 更简洁的写法：</span>
 <span class="builtin">all</span>(cell != <span class="number">0</span> <span class="keyword">for</span> cell <span class="keyword">in</span> row)
                 </div>
-                <div class="highlight-box">
-                    <p>💡 第4行（黄色闪烁）→ 全部填满</p>
-                    <p>💡 第3行、第5行 → 有空位，不消除</p>
-                </div>
-            </div>
-        </div>
-    </div>
+<div class="highlight-box">
+<p>💡 第4行（黄色闪烁）→ 全部填满</p>
+<p>💡 第3行、第5行 → 有空位，不消除</p>
+</div>
+</div>
+</div>
 </div>
 
+<aside class="notes">【讲解】🔍 满行检测算法
+本页要点（照着讲即可）：
+· 💡 第4行（黄色闪烁）→ 全部填满
+· 💡 第3行、第5行 → 有空位，不消除
+讲解时放慢关键术语；用 1 个生活类比 + 1 个反例加深印象。</aside>
+</div>
 <!-- ===== 第5页：消除与下移算法 ===== -->
 <div class="slide" data-index="4">
-    <h2>⬇️ 消除与下移算法</h2>
-    <div style="width:100%;">
-        <h3>算法：从上往下扫描 → pop删除满行 → insert顶部空行</h3>
-
-        <div class="step-cards" style="margin-top:20px;">
-            <div class="step-card">
-                <div class="step-num">①</div>
-                <div class="step-title">扫描检测</div>
-                <div class="step-desc">
-                    从第0行开始<br>
-                    用 all() 检查每行<br>
+<h2>⬇️ 消除与下移算法</h2>
+<div style="width:100%;">
+<h3>算法：从上往下扫描 → pop删除满行 → insert顶部空行</h3>
+<div class="step-cards" style="margin-top:20px;">
+<div class="step-card">
+<div class="step-num">①</div>
+<div class="step-title">扫描检测</div>
+<div class="step-desc">
+                    从第0行开始<br/>
+                    用 all() 检查每行<br/>
                     判断是否填满
                 </div>
-            </div>
-            <div class="step-card">
-                <div class="step-num">②</div>
-                <div class="step-title">pop 删除</div>
-                <div class="step-desc">
-                    grid.pop(r)<br>
-                    删除满行<br>
+</div>
+<div class="step-card">
+<div class="step-num">②</div>
+<div class="step-title">pop 删除</div>
+<div class="step-desc">
+                    grid.pop(r)<br/>
+                    删除满行<br/>
                     下方所有行自动上移！
                 </div>
-            </div>
-            <div class="step-card">
-                <div class="step-num">③</div>
-                <div class="step-title">insert 补空</div>
-                <div class="step-desc">
-                    grid.insert(0, 空行)<br>
-                    在顶部插入新空行<br>
+</div>
+<div class="step-card">
+<div class="step-num">③</div>
+<div class="step-title">insert 补空</div>
+<div class="step-desc">
+                    grid.insert(0, 空行)<br/>
+                    在顶部插入新空行<br/>
                     保持20行不变
                 </div>
-            </div>
-            <div class="step-card">
-                <div class="step-num">④</div>
-                <div class="step-title">索引不增</div>
-                <div class="step-desc">
-                    r 保持不变！<br>
-                    检查刚移上来的行<br>
+</div>
+<div class="step-card">
+<div class="step-num">④</div>
+<div class="step-title">索引不增</div>
+<div class="step-desc">
+                    r 保持不变！<br/>
+                    检查刚移上来的行<br/>
                     自然处理多行消除
                 </div>
-            </div>
-        </div>
-
-        <div class="highlight-box" style="margin-top:25px;">
-            <p>🔑 关键：pop后不增加r！因为下一行已经自动移到了当前位置</p>
-            <p>🔑 如果用 for 循环，索引不会回退 → 会跳过移上来的行！</p>
-        </div>
-    </div>
+</div>
+</div>
+<div class="highlight-box" style="margin-top:25px;">
+<p>🔑 关键：pop后不增加r！因为下一行已经自动移到了当前位置</p>
+<p>🔑 如果用 for 循环，索引不会回退 → 会跳过移上来的行！</p>
+</div>
 </div>
 
+<aside class="notes">【讲解】⬇️ 消除与下移算法
+本页要点（照着讲即可）：
+· 🔑 关键：pop后不增加r！因为下一行已经自动移到了当前位置
+· 🔑 如果用 for 循环，索引不会回退 → 会跳过移上来的行！
+讲解时放慢关键术语；用 1 个生活类比 + 1 个反例加深印象。</aside>
+</div>
 <!-- ===== 第6页：消除代码详解 ===== -->
 <div class="slide" data-index="5">
-    <h2>💻 消除算法代码详解</h2>
-    <div style="width:100%;">
-        <div class="code-block" style="font-size:22px;">
+<h2>💻 消除算法代码详解</h2>
+<div style="width:100%;">
+<div class="code-block" style="font-size:22px;">
 <span class="keyword">def</span> <span class="func">clear_lines</span>(grid):
     <span class="comment">"""检测并消除满行，上方行整体下移"""</span>
     cleared = <span class="number">0</span>
     r = <span class="number">0</span>
-    <span class="keyword">while</span> r &lt; <span class="builtin">len</span>(grid):
+<span class="keyword">while</span> r &lt; <span class="builtin">len</span>(grid):
         <span class="comment"># 检查第r行是否全部填满</span>
-        <span class="keyword">if</span> <span class="builtin">all</span>(cell != <span class="number">0</span> <span class="keyword">for</span> cell <span class="keyword">in</span> grid[r]):
+<span class="keyword">if</span> <span class="builtin">all</span>(cell != <span class="number">0</span> <span class="keyword">for</span> cell <span class="keyword">in</span> grid[r]):
             grid.pop(r)              <span class="comment"># 删除满行</span>
             grid.insert(<span class="number">0</span>, [<span class="number">0</span>] * <span class="number">10</span>)  <span class="comment"># 顶部插入空行</span>
             cleared += <span class="number">1</span>
-            <span class="comment"># ⚠️ 不增加 r！下一行已自动移到 r 位置</span>
-        <span class="keyword">else</span>:
-            r += <span class="number">1</span>  <span class="comment"># 未满 → 检查下一行</span>
-    <span class="keyword">return</span> grid, cleared
+<span class="comment"># ⚠️ 不增加 r！下一行已自动移到 r 位置</span>
+<span class="keyword">else</span>:
+            r += <span class="number">1</span> <span class="comment"># 未满 → 检查下一行</span>
+<span class="keyword">return</span> grid, cleared
         </div>
-
-        <div class="warning-box" style="margin-top:20px;">
-            <p>⚠️ 常见错误：用了 for r in range(len(grid))</p>
-            <p>⚠️ 问题：pop后索引不会回退，会跳过移上来的行！</p>
-            <p>⚠️ 解决：用 while 循环，满足条件时不增加 r</p>
-        </div>
-    </div>
+<div class="warning-box" style="margin-top:20px;">
+<p>⚠️ 常见错误：用了 for r in range(len(grid))</p>
+<p>⚠️ 问题：pop后索引不会回退，会跳过移上来的行！</p>
+<p>⚠️ 解决：用 while 循环，满足条件时不增加 r</p>
+</div>
 </div>
 
+<aside class="notes">【讲解】💻 消除算法代码详解
+本页要点（照着讲即可）：
+· ⚠️ 常见错误：用了 for r in range(len(grid))
+· ⚠️ 问题：pop后索引不会回退，会跳过移上来的行！
+· ⚠️ 解决：用 while 循环，满足条件时不增加 r
+代码页节奏：先读懂输入输出 → 再走主流程 → 最后点出易错点（边界/类型/下标）。
+可让学生预测下一行输出，再运行对照。</aside>
+</div>
 <!-- ===== 第7页：Combo计分规则 ===== -->
 <div class="slide" data-index="6">
-    <h2>🏆 Combo计分规则</h2>
-    <div style="width:100%;">
-        <table class="data-table">
-            <thead>
-                <tr>
-                    <th>一次消除行数</th>
-                    <th>得分</th>
-                    <th>称呼</th>
-                    <th>每行平均分</th>
-                    <th>奖励比例</th>
-                </tr>
-            </thead>
-            <tbody>
-                <tr>
-                    <td>1 行</td>
-                    <td>100</td>
-                    <td>Single</td>
-                    <td>100</td>
-                    <td>基准</td>
-                </tr>
-                <tr>
-                    <td>2 行</td>
-                    <td>300</td>
-                    <td>Double</td>
-                    <td>150</td>
-                    <td>+50%</td>
-                </tr>
-                <tr>
-                    <td>3 行</td>
-                    <td>500</td>
-                    <td>Triple</td>
-                    <td>167</td>
-                    <td>+67%</td>
-                </tr>
-                <tr>
-                    <td class="highlight">4 行</td>
-                    <td class="highlight">800</td>
-                    <td class="highlight">俄罗斯方块！</td>
-                    <td class="highlight">200</td>
-                    <td class="highlight">+100%</td>
-                </tr>
-            </tbody>
-        </table>
-
-        <div class="highlight-box" style="margin-top:30px;">
-            <p>🤔 为什么越消多行得分越高？</p>
-            <p>🎲 冒险垒高等待长条 → 更高风险 → 更高回报</p>
-            <p>🎯 这就是俄罗斯方块让人上瘾的秘密！</p>
-        </div>
-    </div>
+<h2>🏆 Combo计分规则</h2>
+<div style="width:100%;">
+<table class="data-table">
+<thead>
+<tr>
+<th>一次消除行数</th>
+<th>得分</th>
+<th>称呼</th>
+<th>每行平均分</th>
+<th>奖励比例</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>1 行</td>
+<td>100</td>
+<td>Single</td>
+<td>100</td>
+<td>基准</td>
+</tr>
+<tr>
+<td>2 行</td>
+<td>300</td>
+<td>Double</td>
+<td>150</td>
+<td>+50%</td>
+</tr>
+<tr>
+<td>3 行</td>
+<td>500</td>
+<td>Triple</td>
+<td>167</td>
+<td>+67%</td>
+</tr>
+<tr>
+<td class="highlight">4 行</td>
+<td class="highlight">800</td>
+<td class="highlight">俄罗斯方块！</td>
+<td class="highlight">200</td>
+<td class="highlight">+100%</td>
+</tr>
+</tbody>
+</table>
+<div class="highlight-box" style="margin-top:30px;">
+<p>🤔 为什么越消多行得分越高？</p>
+<p>🎲 冒险垒高等待长条 → 更高风险 → 更高回报</p>
+<p>🎯 这就是俄罗斯方块让人上瘾的秘密！</p>
+</div>
 </div>
 
+<aside class="notes">【讲解】🏆 Combo计分规则
+本页要点（照着讲即可）：
+· 🤔 为什么越消多行得分越高？
+· 🎲 冒险垒高等待长条 → 更高风险 → 更高回报
+· 🎯 这就是俄罗斯方块让人上瘾的秘密！
+讲解时放慢关键术语；用 1 个生活类比 + 1 个反例加深印象。</aside>
+</div>
 <!-- ===== 第8页：难度曲线 ===== -->
 <div class="slide" data-index="7">
-    <h2>📈 难度曲线设计</h2>
-    <div style="width:100%;">
-        <h3>规则：每消除10行，下落速度加快50ms（最低100ms）</h3>
-
-        <div class="chart-area">
-            <p style="font-size:26px; color:#8b949e; margin-bottom:15px;">下落间隔(ms)随等级变化</p>
-            <div class="chart-bar-container">
-                <div class="chart-bar-wrapper">
-                    <div class="chart-value">800</div>
-                    <div class="chart-bar" style="height:200px; background:#3fb950;"></div>
-                    <div class="chart-label">Lv0</div>
-                </div>
-                <div class="chart-bar-wrapper">
-                    <div class="chart-value">700</div>
-                    <div class="chart-bar" style="height:175px; background:#56d364;"></div>
-                    <div class="chart-label">Lv2</div>
-                </div>
-                <div class="chart-bar-wrapper">
-                    <div class="chart-value">600</div>
-                    <div class="chart-bar" style="height:150px; background:#79c0ff;"></div>
-                    <div class="chart-label">Lv4</div>
-                </div>
-                <div class="chart-bar-wrapper">
-                    <div class="chart-value">500</div>
-                    <div class="chart-bar" style="height:125px; background:#a5d6ff;"></div>
-                    <div class="chart-label">Lv6</div>
-                </div>
-                <div class="chart-bar-wrapper">
-                    <div class="chart-value">400</div>
-                    <div class="chart-bar" style="height:100px; background:#d2a8ff;"></div>
-                    <div class="chart-label">Lv8</div>
-                </div>
-                <div class="chart-bar-wrapper">
-                    <div class="chart-value">300</div>
-                    <div class="chart-bar" style="height:75px; background:#ffa198;"></div>
-                    <div class="chart-label">Lv10</div>
-                </div>
-                <div class="chart-bar-wrapper">
-                    <div class="chart-value">100</div>
-                    <div class="chart-bar" style="height:25px; background:#f85149;"></div>
-                    <div class="chart-label">Lv14+</div>
-                </div>
-            </div>
-        </div>
-
-        <div class="code-block" style="font-size:22px; margin-top:15px;">
+<h2>📈 难度曲线设计</h2>
+<div style="width:100%;">
+<h3>规则：每消除10行，下落速度加快50ms（最低100ms）</h3>
+<div class="chart-area">
+<p style="font-size:26px; color:#8b949e; margin-bottom:15px;">下落间隔(ms)随等级变化</p>
+<div class="chart-bar-container">
+<div class="chart-bar-wrapper">
+<div class="chart-value">800</div>
+<div class="chart-bar" style="height:200px; background:#3fb950;"></div>
+<div class="chart-label">Lv0</div>
+</div>
+<div class="chart-bar-wrapper">
+<div class="chart-value">700</div>
+<div class="chart-bar" style="height:175px; background:#56d364;"></div>
+<div class="chart-label">Lv2</div>
+</div>
+<div class="chart-bar-wrapper">
+<div class="chart-value">600</div>
+<div class="chart-bar" style="height:150px; background:#79c0ff;"></div>
+<div class="chart-label">Lv4</div>
+</div>
+<div class="chart-bar-wrapper">
+<div class="chart-value">500</div>
+<div class="chart-bar" style="height:125px; background:#a5d6ff;"></div>
+<div class="chart-label">Lv6</div>
+</div>
+<div class="chart-bar-wrapper">
+<div class="chart-value">400</div>
+<div class="chart-bar" style="height:100px; background:#d2a8ff;"></div>
+<div class="chart-label">Lv8</div>
+</div>
+<div class="chart-bar-wrapper">
+<div class="chart-value">300</div>
+<div class="chart-bar" style="height:75px; background:#ffa198;"></div>
+<div class="chart-label">Lv10</div>
+</div>
+<div class="chart-bar-wrapper">
+<div class="chart-value">100</div>
+<div class="chart-bar" style="height:25px; background:#f85149;"></div>
+<div class="chart-label">Lv14+</div>
+</div>
+</div>
+</div>
+<div class="code-block" style="font-size:22px; margin-top:15px;">
 <span class="keyword">def</span> <span class="func">calc_fall_speed</span>(total_lines):
     level = total_lines // <span class="number">10</span>
     speed = <span class="number">800</span> - level * <span class="number">50</span>
-    <span class="keyword">return</span> <span class="builtin">max</span>(<span class="number">100</span>, speed)  <span class="comment"># 最快100ms</span>
-        </div>
-    </div>
+<span class="keyword">return</span> <span class="builtin">max</span>(<span class="number">100</span>, speed)  <span class="comment"># 最快100ms</span>
+</div>
 </div>
 
+<aside class="notes">【讲解】📈 难度曲线设计
+本页要点（照着讲即可）：
+· 下落间隔(ms)随等级变化
+讲解时放慢关键术语；用 1 个生活类比 + 1 个反例加深印象。</aside>
+</div>
 <!-- ===== 第9页：方块预览窗口 ===== -->
 <div class="slide" data-index="8">
-    <h2>👀 方块预览窗口</h2>
-    <div style="width:100%; display:flex; gap:40px; align-items:flex-start;">
-        <div style="flex:1;">
-            <h3>功能说明</h3>
-            <p>在棋盘右侧显示<strong style="color:#f0883e;">下一个方块</strong>，让玩家提前知道接下来会出现什么。</p>
-
-            <div style="margin-top:25px;">
-                <p style="color:#58a6ff;">📐 右侧布局设计：</p>
-                <ul>
-                    <li>信息面板：分数 / 等级 / 消行数</li>
-                    <li>预览窗口：下一个方块的形状和颜色</li>
-                    <li>操作提示：各按键说明</li>
-                </ul>
-            </div>
-
-            <div class="highlight-box" style="margin-top:20px;">
-                <p>💡 预览让玩家可以<strong>提前规划</strong>放置策略</p>
-                <p>💡 比如看到下一个是长条，就可以提前空出右边一列</p>
-            </div>
-        </div>
-
-        <div style="flex:0 0 360px; background:#161b22; border:2px solid #30363d; border-radius:12px; padding:20px;">
-            <p style="font-size:22px; text-align:center; color:#8b949e;">下一个方块</p>
-            <div style="width:150px; height:150px; margin:15px auto; background:#21262d; border:2px solid #30363d; border-radius:8px; display:flex; align-items:center; justify-content:center;">
-                <div style="display:grid; grid-template-columns: repeat(4, 28px); grid-template-rows: repeat(2, 28px); gap:2px;">
-                    <div style="background:#ffd700; border-radius:3px;"></div>
-                    <div style="background:#ffd700; border-radius:3px;"></div>
-                    <div style="background:transparent;"></div>
-                    <div style="background:transparent;"></div>
-                    <div style="background:transparent;"></div>
-                    <div style="background:#ffd700; border-radius:3px;"></div>
-                    <div style="background:#ffd700; border-radius:3px;"></div>
-                    <div style="background:transparent;"></div>
-                </div>
-            </div>
-            <p style="font-size:18px; text-align:center; color:#8b949e;">示例：Z形方块预览</p>
-        </div>
-    </div>
+<h2>👀 方块预览窗口</h2>
+<div style="width:100%; display:flex; gap:40px; align-items:flex-start;">
+<div style="flex:1;">
+<h3>功能说明</h3>
+<p>在棋盘右侧显示<strong style="color:#f0883e;">下一个方块</strong>，让玩家提前知道接下来会出现什么。</p>
+<div style="margin-top:25px;">
+<p style="color:#58a6ff;">📐 右侧布局设计：</p>
+<ul>
+<li>信息面板：分数 / 等级 / 消行数</li>
+<li>预览窗口：下一个方块的形状和颜色</li>
+<li>操作提示：各按键说明</li>
+</ul>
+</div>
+<div class="highlight-box" style="margin-top:20px;">
+<p>💡 预览让玩家可以<strong>提前规划</strong>放置策略</p>
+<p>💡 比如看到下一个是长条，就可以提前空出右边一列</p>
+</div>
+</div>
+<div style="flex:0 0 360px; background:#161b22; border:2px solid #30363d; border-radius:12px; padding:20px;">
+<p style="font-size:22px; text-align:center; color:#8b949e;">下一个方块</p>
+<div style="width:150px; height:150px; margin:15px auto; background:#21262d; border:2px solid #30363d; border-radius:8px; display:flex; align-items:center; justify-content:center;">
+<div style="display:grid; grid-template-columns: repeat(4, 28px); grid-template-rows: repeat(2, 28px); gap:2px;">
+<div style="background:#ffd700; border-radius:3px;"></div>
+<div style="background:#ffd700; border-radius:3px;"></div>
+<div style="background:transparent;"></div>
+<div style="background:transparent;"></div>
+<div style="background:transparent;"></div>
+<div style="background:#ffd700; border-radius:3px;"></div>
+<div style="background:#ffd700; border-radius:3px;"></div>
+<div style="background:transparent;"></div>
+</div>
+</div>
+<p style="font-size:18px; text-align:center; color:#8b949e;">示例：Z形方块预览</p>
+</div>
 </div>
 
+<aside class="notes">【讲解】👀 方块预览窗口
+本页要点（照着讲即可）：
+· 在棋盘右侧显示 下一个方块 ，让玩家提前知道接下来会出现什么。
+· 下一个方块
+· 📐 右侧布局设计：
+· 信息面板：分数 / 等级 / 消行数
+· 预览窗口：下一个方块的形状和颜色
+· 操作提示：各按键说明
+讲解时放慢关键术语；用 1 个生活类比 + 1 个反例加深印象。</aside>
+</div>
 <!-- ===== 第10页：Game Over判定 ===== -->
 <div class="slide" data-index="9">
-    <h2>💀 Game Over 判定</h2>
-    <div style="width:100%;">
-        <h3>判断时机：新方块出生时，如果出生位置已被占据 → 游戏结束</h3>
-
-        <div style="display:flex; gap:30px; margin-top:30px;">
-            <div class="step-card" style="flex:1;">
-                <div class="step-num">1</div>
-                <div class="step-title">方块固定后</div>
-                <div class="step-desc">
-                    当前方块到达底部<br>
-                    固定到棋盘上<br>
+<h2>💀 Game Over 判定</h2>
+<div style="width:100%;">
+<h3>判断时机：新方块出生时，如果出生位置已被占据 → 游戏结束</h3>
+<div style="display:flex; gap:30px; margin-top:30px;">
+<div class="step-card" style="flex:1;">
+<div class="step-num">1</div>
+<div class="step-title">方块固定后</div>
+<div class="step-desc">
+                    当前方块到达底部<br/>
+                    固定到棋盘上<br/>
                     → place_piece()
                 </div>
-            </div>
-            <div class="step-card" style="flex:1;">
-                <div class="step-num">2</div>
-                <div class="step-title">消行处理</div>
-                <div class="step-desc">
-                    检测并消除满行<br>
-                    上方行整体下移<br>
+</div>
+<div class="step-card" style="flex:1;">
+<div class="step-num">2</div>
+<div class="step-title">消行处理</div>
+<div class="step-desc">
+                    检测并消除满行<br/>
+                    上方行整体下移<br/>
                     → clear_lines()
                 </div>
-            </div>
-            <div class="step-card" style="flex:1;">
-                <div class="step-num">3</div>
-                <div class="step-title">生成新方块</div>
-                <div class="step-desc">
-                    新方块在顶部中央出生<br>
-                    检查位置是否合法<br>
+</div>
+<div class="step-card" style="flex:1;">
+<div class="step-num">3</div>
+<div class="step-title">生成新方块</div>
+<div class="step-desc">
+                    新方块在顶部中央出生<br/>
+                    检查位置是否合法<br/>
                     → valid_position()
                 </div>
-            </div>
-            <div class="step-card" style="flex:1; border-color:#f85149;">
-                <div class="step-num" style="color:#f85149;">4</div>
-                <div class="step-title" style="color:#f85149;">判定结果</div>
-                <div class="step-desc">
-                    ❌ 位置不合法<br>
-                    → <strong>game_over = True</strong><br>
+</div>
+<div class="step-card" style="flex:1; border-color:#f85149;">
+<div class="step-num" style="color:#f85149;">4</div>
+<div class="step-title" style="color:#f85149;">判定结果</div>
+<div class="step-desc">
+                    ❌ 位置不合法<br/>
+                    → <strong>game_over = True</strong><br/>
                     显示"游戏结束" + 最终得分
                 </div>
-            </div>
-        </div>
-
-        <div class="code-block" style="font-size:22px; margin-top:25px;">
+</div>
+</div>
+<div class="code-block" style="font-size:22px; margin-top:25px;">
 <span class="comment"># 新方块生成后立即检查</span>
 current_piece = next_piece
 next_piece = new_piece()
 
 <span class="keyword">if not</span> <span class="func">valid_position</span>(grid, current_piece):
-    game_over = <span class="builtin">True</span>  <span class="comment"># 出生即碰壁 → 游戏结束！</span>
-        </div>
-    </div>
+    game_over = <span class="builtin">True</span> <span class="comment"># 出生即碰壁 → 游戏结束！</span>
+</div>
 </div>
 
+<aside class="notes">【讲解】💀 Game Over 判定
+本页要点（照着讲即可）：
+· game_over = True
+讲解时放慢关键术语；用 1 个生活类比 + 1 个反例加深印象。</aside>
+</div>
 <!-- ===== 第11页：暂停功能与操作汇总 ===== -->
 <div class="slide" data-index="10">
-    <h2>⏸️ 暂停功能与操作汇总</h2>
-    <div style="width:100%;">
-        <div style="display:flex; gap:30px;">
-            <div style="flex:1;">
-                <h3>暂停实现（超简单！）</h3>
-                <div class="code-block" style="font-size:22px;">
+<h2>⏸️ 暂停功能与操作汇总</h2>
+<div style="width:100%;">
+<div style="display:flex; gap:30px;">
+<div style="flex:1;">
+<h3>暂停实现（超简单！）</h3>
+<div class="code-block" style="font-size:22px;">
 <span class="comment"># 按P键切换暂停状态</span>
 <span class="keyword">if</span> event.key == pygame.K_p:
     paused = <span class="keyword">not</span> paused
@@ -826,31 +919,34 @@ next_piece = new_piece()
 <span class="comment"># 游戏逻辑仅在未暂停时更新</span>
 <span class="keyword">if not</span> paused:
     <span class="comment"># 下落、移动、旋转...</span>
-                </div>
-                <p style="font-size:24px; color:#8b949e;">暂停时显示半透明遮罩 + "暂停中"文字</p>
-            </div>
-            <div style="flex:1;">
-                <h3>操作按键汇总</h3>
-                <table class="data-table" style="font-size:24px; width:100%;">
-                    <tr><td style="text-align:left;">← →</td><td>左右移动</td></tr>
-                    <tr><td style="text-align:left;">↑</td><td>旋转方块</td></tr>
-                    <tr><td style="text-align:left;">↓</td><td>加速下落</td></tr>
-                    <tr><td style="text-align:left;">空格</td><td>直接落底</td></tr>
-                    <tr><td style="text-align:left;">P</td><td>暂停/继续</td></tr>
-                    <tr><td style="text-align:left;">R</td><td>重新开始</td></tr>
-                </table>
-            </div>
-        </div>
-    </div>
+</div>
+<p style="font-size:24px; color:#8b949e;">暂停时显示半透明遮罩 + "暂停中"文字</p>
+</div>
+<div style="flex:1;">
+<h3>操作按键汇总</h3>
+<table class="data-table" style="font-size:24px; width:100%;">
+<tr><td style="text-align:left;">← →</td><td>左右移动</td></tr>
+<tr><td style="text-align:left;">↑</td><td>旋转方块</td></tr>
+<tr><td style="text-align:left;">↓</td><td>加速下落</td></tr>
+<tr><td style="text-align:left;">空格</td><td>直接落底</td></tr>
+<tr><td style="text-align:left;">P</td><td>暂停/继续</td></tr>
+<tr><td style="text-align:left;">R</td><td>重新开始</td></tr>
+</table>
+</div>
+</div>
 </div>
 
+<aside class="notes">【讲解】⏸️ 暂停功能与操作汇总
+本页要点（照着讲即可）：
+· 暂停时显示半透明遮罩 + "暂停中"文字
+讲解时放慢关键术语；用 1 个生活类比 + 1 个反例加深印象。</aside>
+</div>
 <!-- ===== 第12页：完整代码结构 ===== -->
 <div class="slide" data-index="11">
-    <h2>🗂️ 完整游戏代码结构</h2>
-    <div style="width:100%;">
-        <div class="code-block" style="font-size:20px; line-height:1.5;">
+<h2>🗂️ 完整游戏代码结构</h2>
+<div style="width:100%;">
+<div class="code-block" style="font-size:20px; line-height:1.5;">
 <span class="comment"># ========== 游戏结构一览 ==========</span>
-
 <span class="comment"># 【常量】窗口、棋盘、颜色、7种方块形状</span>
 <span class="keyword">SCREEN_WIDTH</span> = 600  <span class="keyword">COLS</span> = 10  <span class="keyword">ROWS</span> = 20
 
@@ -863,7 +959,6 @@ next_piece = new_piece()
 <span class="func">clear_lines</span>()       <span class="comment">→ ★ 满行检测与消除</span>
 <span class="func">calc_score</span>()        <span class="comment">→ Combo计分</span>
 <span class="func">calc_fall_speed</span>()   <span class="comment">→ 难度递增计算</span>
-
 <span class="comment"># 【绘制函数】</span>
 <span class="func">draw_grid</span>()         <span class="comment">→ 棋盘和已固定方块</span>
 <span class="func">draw_piece</span>()        <span class="comment">→ 当前下落方块</span>
@@ -871,100 +966,127 @@ next_piece = new_piece()
 <span class="func">draw_info_panel</span>()   <span class="comment">→ 分数/等级/消行</span>
 <span class="func">draw_game_over</span>()    <span class="comment">→ 游戏结束画面</span>
 <span class="func">draw_pause</span>()        <span class="comment">→ 暂停遮罩</span>
-
 <span class="comment"># 【主循环】事件监听 → 逻辑更新 → 画面绘制</span>
 <span class="keyword">while</span> running:
     <span class="keyword">for</span> event <span class="keyword">in</span> pygame.event.get():
         <span class="comment"># 处理键盘输入...</span>
-    <span class="comment"># 更新下落、消行、计分...</span>
-    <span class="comment"># 绘制所有图形...</span>
+<span class="comment"># 更新下落、消行、计分...</span>
+<span class="comment"># 绘制所有图形...</span>
     pygame.display.flip()
         </div>
-        <p style="text-align:center; color:#8b949e; margin-top:15px; font-size:22px;">
+<p style="text-align:center; color:#8b949e; margin-top:15px; font-size:22px;">
             📁 完整可运行代码见：程序/第40节-消行与加速/main.py
         </p>
-    </div>
 </div>
 
+<aside class="notes">【讲解】🗂️ 完整游戏代码结构
+本页要点（照着讲即可）：
+· 📁 完整可运行代码见：程序/第40节-消行与加速/main.py
+代码页节奏：先读懂输入输出 → 再走主流程 → 最后点出易错点（边界/类型/下标）。
+可让学生预测下一行输出，再运行对照。</aside>
+</div>
 <!-- ===== 第13页：练习任务 ===== -->
 <div class="slide" data-index="12">
-    <h2>✏️ 练习任务</h2>
-    <div style="width:100%;">
-        <h3>基础任务（必做，15分钟）</h3>
-        <ol>
-            <li>运行完整代码，体验消行和计分的乐趣 🎮</li>
-            <li>把4行消除的分数从800改成1000试试 📝</li>
-            <li>在 clear_lines 函数中加入 print，打印消除行数 🔍</li>
-            <li>把初始速度改成600ms，感受难度变化 ⚡</li>
-        </ol>
-
-        <h3>进阶任务（选做，10分钟）</h3>
-        <ol>
-            <li>把7种方块的颜色改成你喜欢的配色 🎨</li>
-            <li>实现"幽灵方块"——在底部显示当前方块落点 👻</li>
-            <li>用文件保存最高分，每次游戏结束更新 🏅</li>
-        </ol>
-
-        <div class="highlight-box" style="margin-top:20px;">
-            <p>🚀 挑战任务：添加消除动画（消行前让那一行闪烁）</p>
-            <p>🚀 终极挑战：尝试实现T-Spin旋转判定！</p>
-        </div>
-    </div>
+<h2>✏️ 练习任务</h2>
+<div style="width:100%;">
+<h3>基础任务（必做，15分钟）</h3>
+<ol>
+<li>运行完整代码，体验消行和计分的乐趣 🎮</li>
+<li>把4行消除的分数从800改成1000试试 📝</li>
+<li>在 clear_lines 函数中加入 print，打印消除行数 🔍</li>
+<li>把初始速度改成600ms，感受难度变化 ⚡</li>
+</ol>
+<h3>进阶任务（选做，10分钟）</h3>
+<ol>
+<li>把7种方块的颜色改成你喜欢的配色 🎨</li>
+<li>实现"幽灵方块"——在底部显示当前方块落点 👻</li>
+<li>用文件保存最高分，每次游戏结束更新 🏅</li>
+</ol>
+<div class="highlight-box" style="margin-top:20px;">
+<p>🚀 挑战任务：添加消除动画（消行前让那一行闪烁）</p>
+<p>🚀 终极挑战：尝试实现T-Spin旋转判定！</p>
+</div>
 </div>
 
+<aside class="notes">【讲解】✏️ 练习任务
+本页要点（照着讲即可）：
+· 运行完整代码，体验消行和计分的乐趣 🎮
+· 把4行消除的分数从800改成1000试试 📝
+· 在 clear_lines 函数中加入 print，打印消除行数 🔍
+· 把初始速度改成600ms，感受难度变化 ⚡
+· 把7种方块的颜色改成你喜欢的配色 🎨
+· 实现"幽灵方块"——在底部显示当前方块落点 👻
+练习页节奏：先独立想 1 分钟 → 再点拨思路 → 最后对答案讲为什么。</aside>
+</div>
 <!-- ===== 第14页：总结 ===== -->
 <div class="slide" data-index="13">
-    <h2>📋 本课总结</h2>
-    <div style="width:100%;">
-        <div style="display:flex; gap:20px; flex-wrap:wrap;">
-            <div class="step-card" style="min-width:200px;">
-                <div class="step-num">🔍</div>
-                <div class="step-title">满行检测</div>
-                <div class="step-desc">all() 或循环检查每一行</div>
-            </div>
-            <div class="step-card" style="min-width:200px;">
-                <div class="step-num">⬇️</div>
-                <div class="step-title">消除下移</div>
-                <div class="step-desc">pop(r) + insert(0, 空行)</div>
-            </div>
-            <div class="step-card" style="min-width:200px;">
-                <div class="step-num">🏆</div>
-                <div class="step-title">Combo计分</div>
-                <div class="step-desc">1行100→4行800</div>
-            </div>
-            <div class="step-card" style="min-width:200px;">
-                <div class="step-num">📈</div>
-                <div class="step-title">难度曲线</div>
-                <div class="step-desc">每10行加速50ms</div>
-            </div>
-            <div class="step-card" style="min-width:200px;">
-                <div class="step-num">💀</div>
-                <div class="step-title">Game Over</div>
-                <div class="step-desc">新方块出生即结束</div>
-            </div>
-            <div class="step-card" style="min-width:200px;">
-                <div class="step-num">⏸️</div>
-                <div class="step-title">暂停/重启</div>
-                <div class="step-desc">P暂停 / R重新开始</div>
-            </div>
-        </div>
-
-        <div style="text-align:center; margin-top:50px;">
-            <p style="font-size:36px; color:#ffd700;">🎉 恭喜！你完成了一个完整的俄罗斯方块游戏！</p>
-            <p style="font-size:28px; color:#8b949e; margin-top:15px;">下节预告：第41节 音效与高分排行榜</p>
-        </div>
-    </div>
+<h2>📋 本课总结</h2>
+<div style="width:100%;">
+<div style="display:flex; gap:20px; flex-wrap:wrap;">
+<div class="step-card" style="min-width:200px;">
+<div class="step-num">🔍</div>
+<div class="step-title">满行检测</div>
+<div class="step-desc">all() 或循环检查每一行</div>
+</div>
+<div class="step-card" style="min-width:200px;">
+<div class="step-num">⬇️</div>
+<div class="step-title">消除下移</div>
+<div class="step-desc">pop(r) + insert(0, 空行)</div>
+</div>
+<div class="step-card" style="min-width:200px;">
+<div class="step-num">🏆</div>
+<div class="step-title">Combo计分</div>
+<div class="step-desc">1行100→4行800</div>
+</div>
+<div class="step-card" style="min-width:200px;">
+<div class="step-num">📈</div>
+<div class="step-title">难度曲线</div>
+<div class="step-desc">每10行加速50ms</div>
+</div>
+<div class="step-card" style="min-width:200px;">
+<div class="step-num">💀</div>
+<div class="step-title">Game Over</div>
+<div class="step-desc">新方块出生即结束</div>
+</div>
+<div class="step-card" style="min-width:200px;">
+<div class="step-num">⏸️</div>
+<div class="step-title">暂停/重启</div>
+<div class="step-desc">P暂停 / R重新开始</div>
+</div>
+</div>
+<div style="text-align:center; margin-top:50px;">
+<p style="font-size:36px; color:#ffd700;">🎉 恭喜！你完成了一个完整的俄罗斯方块游戏！</p>
+<p style="font-size:28px; color:#8b949e; margin-top:15px;">下节预告：第41节 音效与高分排行榜</p>
+</div>
 </div>
 
-</div><!-- #slides-container 结束 -->
+<aside class="notes">【收尾】回顾本课主线：📋 本课总结
+对照大纲再过一遍：**内容**：满行消除、计分规则、速度递增、下一个方块预览
 
+**知识点**：
+- 满行检测 + 消除 + 上方整体下移
+- Combo 计分规则（1行=100, 2行=300, 3行=500, 4行=800）
+- 难度曲线（每消 10 行速度 +1）
+- 下一个方块预览窗口
+- Game Over 判定（新方块无法放置）
+
+**课堂练习**：完整的俄罗斯方块
+
+---
+
+## 📦 项目 19：推箱子（第 41-42 节）
+板书/口述要点：
+· 🎉 恭喜！你完成了一个完整的俄罗斯方块游戏！
+· 下节预告：第41节 音效与高分排行榜
+结束前留 2 分钟答疑；布置 1 道小练习检验是否真正掌握。</aside>
+</div>
+</div><!-- #slides-container 结束 -->
 <!-- ==================== 导航控件 ==================== -->
 <div id="page-indicator">1 / 14</div>
 <div id="nav-controls">
-    <button class="nav-btn" id="prev-btn" onclick="prevSlide()">◀ 上一页</button>
-    <button class="nav-btn" id="next-btn" onclick="nextSlide()">下一页 ▶</button>
+<button class="nav-btn" id="prev-btn" onclick="prevSlide()">◀ 上一页</button>
+<button class="nav-btn" id="next-btn" onclick="nextSlide()">下一页 ▶</button>
 </div>
-
 <!-- ==================== 翻页脚本 ==================== -->
 <script>
 (function() {
@@ -1030,7 +1152,6 @@ next_piece = new_piece()
     showSlide(0);
 })();
 </script>
-
 <script src="courseware-ui.js"></script>
 <script src="presenter.js"></script>
 </body>

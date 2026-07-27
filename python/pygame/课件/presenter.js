@@ -1,9 +1,11 @@
 /**
- * CSP-J 课件演讲者模式
+ * 课件演讲者模式
  *
  * 主窗口按 S → 打开 ?presenter=1 演讲者窗
  * 当前页 / 下一页 用 iframe 加载同一课件的 ?preview=N，像素级还原样式
- * 演讲者窗：← → 翻页 · R 重置计时 · Esc 关闭
+ * 演讲者窗：← → 翻页 · Esc 关闭 · 拖动分隔条调整区域尺寸
+ *
+ * 无计时器；当前页默认占更大空间；布局比例写入 localStorage
  */
 (function () {
   'use strict';
@@ -58,7 +60,6 @@
       '  top:0!important;left:0!important;right:0!important;bottom:0!important;',
       '  margin:0!important;padding:0!important;overflow:hidden!important;',
       '}',
-      /* 非当前页彻底隐藏；当前页铺满视口，保留课件自身 display/flex 排版 */
       'html.cspj-preview .slide:not(.active) {',
       '  display:none!important;',
       '  pointer-events:none!important;',
@@ -90,12 +91,10 @@
       var idx = Math.max(0, Math.min(slides.length - 1, idx0 | 0));
       for (var i = 0; i < slides.length; i++) {
         slides[i].classList.toggle('active', i === idx);
-        // 部分课件用 display 控制可见性，再补一层
         if (i === idx) {
           if (slides[i].style.display === 'none') slides[i].style.display = '';
         }
       }
-      // 通知父页（可选）
       try {
         if (window.parent && window.parent !== window) {
           window.parent.postMessage({ type: 'preview-ready', index: idx, total: slides.length }, '*');
@@ -105,7 +104,6 @@
 
     function boot() {
       showIndex(n1based - 1);
-      // 课件自身脚本可能在稍后又把第一页设为 active，延迟再设一次
       setTimeout(function () { showIndex(n1based - 1); }, 50);
       setTimeout(function () { showIndex(n1based - 1); }, 200);
     }
@@ -116,7 +114,6 @@
       boot();
     }
 
-    // 父页无刷新切换预览页
     window.addEventListener('message', function (e) {
       var d = e.data;
       if (!d || typeof d !== 'object') return;
@@ -125,13 +122,10 @@
       }
     });
 
-    // 预览内禁用翻页，避免误操作
     document.addEventListener('keydown', function (e) {
       e.stopPropagation();
       e.preventDefault();
     }, true);
-
-    // 不安装演讲者逻辑
   }
 
   /* ============================================================
@@ -140,15 +134,15 @@
   function initPresenterPage() {
     var deckUrl = location.href.split('?')[0].split('#')[0];
     var channelName = 'cspj-presenter-' + (location.pathname || deckUrl);
+    var storageKey = 'cspj-presenter-layout:' + (location.pathname || deckUrl);
     var state = null;
-    var timerStart = Date.now();
     var curIdx = -1;
     var nextIdx = -1;
     var channel = null;
+    var msgSeq = 0;
 
     try { channel = new BroadcastChannel(channelName); } catch (e) {}
 
-    // 整页替换为演讲者 UI
     document.documentElement.innerHTML = '';
     var html = document.documentElement;
     html.lang = 'zh-CN';
@@ -157,44 +151,69 @@
     var style = document.createElement('style');
     style.textContent = [
       '*{box-sizing:border-box}',
-      'html,body{margin:0;height:100%;font-family:-apple-system,BlinkMacSystemFont,"PingFang SC","Microsoft YaHei",sans-serif;background:#0f1419;color:#e7ecf3}',
-      'body{display:flex;flex-direction:column;padding:12px;gap:10px}',
+      'html,body{margin:0;height:100%;font-family:-apple-system,BlinkMacSystemFont,"PingFang SC","Microsoft YaHei",sans-serif;background:#0f1419;color:#e7ecf3;overflow:hidden}',
+      'body{display:flex;flex-direction:column;padding:10px;gap:8px}',
       '.top{display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap;flex-shrink:0}',
       '.brand{font-weight:700;color:#d4a853;font-size:15px;letter-spacing:.04em}',
-      '.deck-title{font-size:13px;color:#9aa7b8;max-width:46%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}',
+      '.deck-title{font-size:13px;color:#9aa7b8;max-width:42%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}',
       '.keys{font-size:12px;color:#6b7a8d}',
       '.keys kbd{background:#1c2530;border:1px solid #2d3a4a;border-radius:4px;padding:1px 6px;margin:0 2px;color:#c5d0dc}',
-      '.grid{flex:1;min-height:0;display:grid;grid-template-columns:1.35fr 1.35fr 0.9fr;grid-template-rows:1.4fr 1fr;gap:10px}',
+      '.main{',
+      '  flex:1;min-height:0;',
+      '  display:grid;',
+      '  grid-template-columns:minmax(240px,var(--cur-pct,68%)) 6px minmax(160px,1fr);',
+      '  grid-template-rows:minmax(180px,1fr) 6px minmax(100px,var(--script-pct,24%));',
+      '  gap:0;',
+      '}',
       '.card{background:#161d27;border:1px solid #273244;border-radius:12px;display:flex;flex-direction:column;min-height:0;overflow:hidden;box-shadow:0 8px 28px rgba(0,0,0,.28)}',
       '.card-h{display:flex;align-items:center;justify-content:space-between;padding:8px 12px;border-bottom:1px solid #273244;font-size:11px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;flex-shrink:0}',
       '.c-cur{grid-column:1;grid-row:1}',
-      '.c-next{grid-column:2;grid-row:1}',
-      '.c-script{grid-column:1 / span 2;grid-row:2}',
-      '.c-timer{grid-column:3;grid-row:1 / span 2}',
+      '.c-right{grid-column:3;grid-row:1;display:flex;flex-direction:column;gap:8px;min-height:0}',
+      '.c-next{flex:1;min-height:0}',
+      '.c-ctrl{flex:0 0 auto}',
+      '.c-script{grid-column:1 / span 3;grid-row:3}',
       '.c-cur .card-h{color:#5eb1ff;background:linear-gradient(90deg,rgba(94,177,255,.12),transparent)}',
       '.c-next .card-h{color:#b794f6;background:linear-gradient(90deg,rgba(183,148,246,.12),transparent)}',
       '.c-script .card-h{color:#f6ad55;background:linear-gradient(90deg,rgba(246,173,85,.12),transparent)}',
-      '.c-timer .card-h{color:#68d391;background:linear-gradient(90deg,rgba(104,211,145,.12),transparent)}',
+      '.c-ctrl .card-h{color:#9fb0c3;background:linear-gradient(90deg,rgba(159,176,195,.1),transparent)}',
       '.preview-stage{flex:1;min-height:0;position:relative;background:#0a0e14;overflow:hidden}',
       '.preview-stage iframe{position:absolute;top:0;left:0;border:0;background:#fff;transform-origin:top left;pointer-events:none}',
       '.preview-empty{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;color:#5c6b7d;font-size:14px}',
       '.script-body{flex:1;min-height:0;overflow:auto;padding:14px 16px;font-size:15px;line-height:1.7;white-space:pre-wrap;word-break:break-word}',
-      '.timer-wrap{display:flex;flex-direction:column;align-items:center;justify-content:center;height:100%;gap:16px;padding:16px}',
-      '.clock{font-size:52px;font-weight:800;font-variant-numeric:tabular-nums;color:#68d391;letter-spacing:.04em}',
-      '.slide-n{font-size:22px;font-weight:700;color:#e7ecf3}',
-      '.btns{display:flex;flex-direction:column;gap:8px;width:100%;max-width:200px}',
-      'button{appearance:none;border:1px solid #334155;background:#1e293b;color:#e2e8f0;border-radius:8px;padding:10px 14px;font-size:13px;cursor:pointer;font-weight:600;width:100%}',
+      '.ctrl-body{display:flex;flex-direction:column;align-items:stretch;gap:10px;padding:12px}',
+      '.slide-n{font-size:22px;font-weight:700;color:#e7ecf3;text-align:center;font-variant-numeric:tabular-nums}',
+      '.status{font-size:12px;color:#6b7a8d;text-align:center}',
+      '.btns{display:flex;gap:8px}',
+      'button{appearance:none;border:1px solid #334155;background:#1e293b;color:#e2e8f0;border-radius:8px;padding:10px 12px;font-size:13px;cursor:pointer;font-weight:600;flex:1}',
       'button:hover{background:#273449;border-color:#475569}',
       'button.primary{background:#234e3a;border-color:#2f6b4f;color:#9ae6b4}',
-      'button.gold{background:#3d3218;border-color:#6b5420;color:#f0d78c}',
+      'button.ghost{background:transparent;border-color:#334155;color:#9fb0c3;flex:0 0 auto;padding:8px 10px;font-size:12px}',
       '.badge{font-size:11px;padding:2px 8px;border-radius:999px;background:#243044;color:#9fb0c3;font-weight:600;text-transform:none;letter-spacing:0}',
       '.badge.on{background:#3d3218;color:#f0d78c}',
-      '.status{font-size:12px;color:#6b7a8d;text-align:center}',
-      '@media (max-width:1100px){',
-      '  .grid{grid-template-columns:1fr 1fr;grid-template-rows:1.2fr 1fr auto}',
-      '  .c-timer{grid-column:1 / span 2;grid-row:3}',
-      '  .btns{flex-direction:row;max-width:none;justify-content:center}',
-      '  button{width:auto}',
+      '.split-v,.split-h{',
+      '  position:relative;z-index:5;background:transparent;',
+      '}',
+      '.split-v{grid-column:2;grid-row:1;cursor:col-resize}',
+      '.split-h{grid-column:1 / span 3;grid-row:2;cursor:row-resize}',
+      '.split-v::after,.split-h::after{',
+      '  content:"";position:absolute;inset:0;margin:auto;',
+      '  background:#2d3a4a;border-radius:3px;opacity:.85;',
+      '  transition:background .15s,opacity .15s',
+      '}',
+      '.split-v::after{width:3px;height:48px}',
+      '.split-h::after{height:3px;width:64px}',
+      '.split-v:hover::after,.split-h:hover::after,.split-v.active::after,.split-h.active::after{background:#5eb1ff;opacity:1}',
+      'body.resizing-col,body.resizing-col *{cursor:col-resize!important;user-select:none!important}',
+      'body.resizing-row,body.resizing-row *{cursor:row-resize!important;user-select:none!important}',
+      '@media (max-width:900px){',
+      '  .main{grid-template-columns:1fr;grid-template-rows:1.4fr 6px .7fr 6px .9fr;--cur-pct:auto;--script-pct:auto}',
+      '  .c-cur{grid-column:1;grid-row:1}',
+      '  .split-v{display:none}',
+      '  .c-right{grid-column:1;grid-row:3;flex-direction:row}',
+      '  .c-next{flex:1.2}',
+      '  .c-ctrl{flex:0.8;min-width:140px}',
+      '  .split-h{grid-column:1;grid-row:4}',
+      '  .c-script{grid-column:1;grid-row:5}',
       '}'
     ].join('\n');
     head.appendChild(style);
@@ -205,9 +224,9 @@
       '<div class="top">',
       '  <div class="brand">🎤 演讲者模式</div>',
       '  <div class="deck-title" id="deckTitle">连接主窗口中…</div>',
-      '  <div class="keys"><kbd>←</kbd><kbd>→</kbd> 翻页 · <kbd>R</kbd> 重置计时 · <kbd>Esc</kbd> 关闭</div>',
+      '  <div class="keys"><kbd>←</kbd><kbd>→</kbd> 翻页 · 拖动分隔条调尺寸 · <kbd>Esc</kbd> 关闭</div>',
       '</div>',
-      '<div class="grid">',
+      '<div class="main" id="mainGrid">',
       '  <section class="card c-cur">',
       '    <div class="card-h"><span>Current · 当前页</span><span class="badge" id="curBadge">—</span></div>',
       '    <div class="preview-stage" id="curStage">',
@@ -215,57 +234,127 @@
       '      <iframe id="curFrame" title="当前页预览"></iframe>',
       '    </div>',
       '  </section>',
-      '  <section class="card c-next">',
-      '    <div class="card-h"><span>Next · 下一页</span><span class="badge" id="nextBadge">—</span></div>',
-      '    <div class="preview-stage" id="nextStage">',
-      '      <div class="preview-empty" id="nextEmpty">—</div>',
-      '      <iframe id="nextFrame" title="下一页预览"></iframe>',
-      '    </div>',
-      '  </section>',
-      '  <section class="card c-script">',
-      '    <div class="card-h"><span>Script · 讲稿提示</span><span class="badge" id="scriptBadge">自动摘要</span></div>',
-      '    <div class="script-body" id="scriptBody"></div>',
-      '  </section>',
-      '  <section class="card c-timer">',
-      '    <div class="card-h"><span>Timer · 计时</span></div>',
-      '    <div class="timer-wrap">',
-      '      <div class="clock" id="clock">00:00</div>',
-      '      <div class="slide-n" id="slideN">— / —</div>',
-      '      <div class="status" id="syncStatus">等待主窗口…</div>',
-      '      <div class="btns">',
-      '        <button type="button" id="btnPrev">◀ 上一页</button>',
-      '        <button type="button" class="primary" id="btnNext">下一页 ▶</button>',
-      '        <button type="button" class="gold" id="btnReset">重置计时</button>',
+      '  <div class="split-v" id="splitV" title="拖动调整左右比例"></div>',
+      '  <div class="c-right">',
+      '    <section class="card c-next">',
+      '      <div class="card-h"><span>Next · 下一页</span><span class="badge" id="nextBadge">—</span></div>',
+      '      <div class="preview-stage" id="nextStage">',
+      '        <div class="preview-empty" id="nextEmpty">—</div>',
+      '        <iframe id="nextFrame" title="下一页预览"></iframe>',
       '      </div>',
-      '    </div>',
+      '    </section>',
+      '    <section class="card c-ctrl">',
+      '      <div class="card-h"><span>Control · 控制</span><button type="button" class="ghost" id="btnResetLayout" title="恢复默认布局">重置布局</button></div>',
+      '      <div class="ctrl-body">',
+      '        <div class="slide-n" id="slideN">— / —</div>',
+      '        <div class="status" id="syncStatus">等待主窗口…</div>',
+      '        <div class="btns">',
+      '          <button type="button" id="btnPrev">◀ 上一页</button>',
+      '          <button type="button" class="primary" id="btnNext">下一页 ▶</button>',
+      '        </div>',
+      '      </div>',
+      '    </section>',
+      '  </div>',
+      '  <div class="split-h" id="splitH" title="拖动调整讲稿高度"></div>',
+      '  <section class="card c-script">',
+      '    <div class="card-h"><span>Script · 讲稿备注</span><span class="badge" id="scriptBadge">自动摘要</span></div>',
+      '    <div class="script-body" id="scriptBody"></div>',
       '  </section>',
       '</div>'
     ].join('');
     document.documentElement.appendChild(body);
 
+    var mainGrid = document.getElementById('mainGrid');
     var curFrame = document.getElementById('curFrame');
     var nextFrame = document.getElementById('nextFrame');
     var curStage = document.getElementById('curStage');
     var nextStage = document.getElementById('nextStage');
     var curEmpty = document.getElementById('curEmpty');
     var nextEmpty = document.getElementById('nextEmpty');
-    var clockEl = document.getElementById('clock');
 
-    function fmt(ms) {
-      var s = Math.floor(ms / 1000);
-      var m = Math.floor(s / 60);
-      var h = Math.floor(m / 60);
-      s %= 60; m %= 60;
-      if (h > 0) return h + ':' + String(m).padStart(2, '0') + ':' + String(s).padStart(2, '0');
-      return String(m).padStart(2, '0') + ':' + String(s).padStart(2, '0');
+    function defaultLayout() {
+      return { curPct: 68, scriptPct: 24 };
     }
 
-    setInterval(function () {
-      if (clockEl) clockEl.textContent = fmt(Date.now() - timerStart);
-    }, 250);
+    function loadLayout() {
+      try {
+        var raw = localStorage.getItem(storageKey);
+        if (!raw) return defaultLayout();
+        var o = JSON.parse(raw);
+        return {
+          curPct: clamp(o.curPct, 40, 82),
+          scriptPct: clamp(o.scriptPct, 14, 50)
+        };
+      } catch (e) {
+        return defaultLayout();
+      }
+    }
+
+    function saveLayout(layout) {
+      try { localStorage.setItem(storageKey, JSON.stringify(layout)); } catch (e) {}
+    }
+
+    function clamp(n, a, b) {
+      n = Number(n);
+      if (isNaN(n)) return a;
+      return Math.max(a, Math.min(b, n));
+    }
+
+    function applyLayout(layout) {
+      mainGrid.style.setProperty('--cur-pct', layout.curPct + '%');
+      mainGrid.style.setProperty('--script-pct', layout.scriptPct + '%');
+    }
+
+    var layout = loadLayout();
+    applyLayout(layout);
+
+    function bindSplitter(el, axis) {
+      el.addEventListener('mousedown', function (e) {
+        if (e.button !== 0) return;
+        e.preventDefault();
+        el.classList.add('active');
+        document.body.classList.add(axis === 'col' ? 'resizing-col' : 'resizing-row');
+        var rect = mainGrid.getBoundingClientRect();
+
+        function onMove(ev) {
+          if (axis === 'col') {
+            var x = ev.clientX - rect.left;
+            var pct = (x / rect.width) * 100;
+            layout.curPct = clamp(pct, 40, 82);
+            applyLayout(layout);
+            fitAll();
+          } else {
+            var fromBottom = rect.bottom - ev.clientY;
+            var pctH = (fromBottom / rect.height) * 100;
+            layout.scriptPct = clamp(pctH, 14, 50);
+            applyLayout(layout);
+            fitAll();
+          }
+        }
+        function onUp() {
+          el.classList.remove('active');
+          document.body.classList.remove('resizing-col', 'resizing-row');
+          document.removeEventListener('mousemove', onMove);
+          document.removeEventListener('mouseup', onUp);
+          saveLayout(layout);
+          fitAll();
+        }
+        document.addEventListener('mousemove', onMove);
+        document.addEventListener('mouseup', onUp);
+      });
+    }
+
+    bindSplitter(document.getElementById('splitV'), 'col');
+    bindSplitter(document.getElementById('splitH'), 'row');
+
+    document.getElementById('btnResetLayout').onclick = function () {
+      layout = defaultLayout();
+      applyLayout(layout);
+      saveLayout(layout);
+      fitAll();
+    };
 
     function designSize() {
-      // 与常见投影比例接近；预览 iframe 的虚拟分辨率
       return { w: 1280, h: 720 };
     }
 
@@ -313,11 +402,9 @@
       iframe.style.visibility = 'visible';
       var want = previewUrl(index0);
       var curSrc = iframe.getAttribute('src') || '';
-      // 已加载过同一课件预览：只 postMessage 切换页，避免闪烁
       if (curSrc && curSrc.indexOf('preview=') !== -1 && iframe.contentWindow) {
         try {
           iframe.contentWindow.postMessage({ type: 'preview-goto', index: index0 }, '*');
-          // 若跨页首次尚未 ready，仍设 src
           if (!iframe.__previewReady) {
             iframe.src = want;
           }
@@ -339,18 +426,27 @@
     }
 
     function send(msg) {
+      msgSeq += 1;
+      msg._id = msgSeq;
+      msg._ts = Date.now();
+      // 优先 opener.postMessage；BroadcastChannel 作备用。
+      // 接收端会按 _id 去重，避免双通道导致连翻。
+      var sentOpener = false;
       try {
-        if (window.opener && !window.opener.closed) window.opener.postMessage(msg, '*');
+        if (window.opener && !window.opener.closed) {
+          window.opener.postMessage(msg, '*');
+          sentOpener = true;
+        }
       } catch (e) {}
       try {
         if (channel) channel.postMessage(msg);
       } catch (e) {}
+      return sentOpener || !!channel;
     }
 
     function apply(s) {
       if (!s || s.type !== 'presenter-state') return;
       state = s;
-      if (s.timerStart) timerStart = s.timerStart;
 
       document.getElementById('deckTitle').textContent = s.title || '';
       document.getElementById('curBadge').textContent = (s.index + 1) + ' / ' + s.total;
@@ -368,13 +464,12 @@
         badge.textContent = '自动摘要';
         badge.className = 'badge';
       }
-      document.getElementById('scriptBody').textContent = s.autoScript || s.notes || '';
+      document.getElementById('scriptBody').textContent = s.notes || s.autoScript || '';
 
       var total = s.total | 0;
       var idx = s.index | 0;
       var nidx = idx + 1;
 
-      // 当前页
       if (idx !== curIdx || !curFrame.getAttribute('src')) {
         setFrame(curFrame, curEmpty, idx, total, false);
         curIdx = idx;
@@ -382,7 +477,6 @@
         try { curFrame.contentWindow.postMessage({ type: 'preview-goto', index: idx }, '*'); } catch (e) {}
       }
 
-      // 下一页
       if (nidx >= total) {
         setFrame(nextFrame, nextEmpty, -1, total, true);
         nextIdx = -1;
@@ -409,30 +503,23 @@
 
     document.getElementById('btnPrev').onclick = function () { send({ type: 'presenter-nav', delta: -1 }); };
     document.getElementById('btnNext').onclick = function () { send({ type: 'presenter-nav', delta: 1 }); };
-    document.getElementById('btnReset').onclick = function () {
-      send({ type: 'presenter-reset-timer' });
-      timerStart = Date.now();
-    };
 
     document.addEventListener('keydown', function (e) {
-      if (e.key === 'ArrowRight' || e.key === 'ArrowDown' || e.key === ' ') {
+      // 忽略系统按键连发，避免一次长按/重复 keydown 多翻几页
+      if (e.repeat) return;
+      if (e.metaKey || e.ctrlKey || e.altKey) return;
+      if (e.key === 'ArrowRight' || e.key === 'ArrowDown' || e.key === ' ' || e.key === 'PageDown') {
         e.preventDefault();
         send({ type: 'presenter-nav', delta: 1 });
-      } else if (e.key === 'ArrowLeft' || e.key === 'ArrowUp') {
+      } else if (e.key === 'ArrowLeft' || e.key === 'ArrowUp' || e.key === 'PageUp') {
         e.preventDefault();
         send({ type: 'presenter-nav', delta: -1 });
-      } else if (e.key === 'r' || e.key === 'R') {
-        e.preventDefault();
-        send({ type: 'presenter-reset-timer' });
-        timerStart = Date.now();
       } else if (e.key === 'Escape') {
         window.close();
       }
     });
 
-    // 向主窗口报到
     send({ type: 'presenter-ready' });
-    // 若 opener 已关，提示
     setTimeout(function () {
       if (!state) {
         document.getElementById('syncStatus').textContent =
@@ -447,9 +534,10 @@
   function initAudienceMode() {
     var CHANNEL = 'cspj-presenter-' + (location.pathname || location.href);
     var presenterWin = null;
-    var timerStart = Date.now();
     var channel = null;
     var lastBroadcastAt = 0;
+    var lastNavKey = '';
+    var lastNavAt = 0;
 
     try { channel = new BroadcastChannel(CHANNEL); } catch (e) {}
 
@@ -460,7 +548,7 @@
     function getActiveIndex() {
       var slides = getSlides();
       for (var i = 0; i < slides.length; i++) {
-        if (slides[i].classList.contains('active')) return i;
+        if (slides[i].classList.contains('active') || slides[i].classList.contains('is-active')) return i;
       }
       return 0;
     }
@@ -506,51 +594,32 @@
       return out.join('\n') || text.slice(0, 500);
     }
 
-    function navigate(delta) {
-      if (delta > 0) {
-        var nextBtn = document.getElementById('nextBtn');
-        if (nextBtn && !nextBtn.disabled) { nextBtn.click(); return; }
-        if (typeof window.goSlide === 'function') { try { window.goSlide(1); return; } catch (e) {} }
-        if (typeof window.changeSlide === 'function') { try { window.changeSlide(1); return; } catch (e) {} }
-        if (typeof window.nextSlide === 'function') { try { window.nextSlide(); return; } catch (e) {} }
-        document.dispatchEvent(new KeyboardEvent('keydown', {
-          key: 'ArrowRight', code: 'ArrowRight', bubbles: true, cancelable: true
-        }));
-      } else if (delta < 0) {
-        var prevBtn = document.getElementById('prevBtn');
-        if (prevBtn && !prevBtn.disabled) { prevBtn.click(); return; }
-        if (typeof window.goSlide === 'function') { try { window.goSlide(-1); return; } catch (e) {} }
-        if (typeof window.changeSlide === 'function') { try { window.changeSlide(-1); return; } catch (e) {} }
-        if (typeof window.prevSlide === 'function') { try { window.prevSlide(); return; } catch (e) {} }
-        document.dispatchEvent(new KeyboardEvent('keydown', {
-          key: 'ArrowLeft', code: 'ArrowLeft', bubbles: true, cancelable: true
-        }));
-      }
-    }
-
     function goToIndex(idx) {
       var slides = getSlides();
-      if (idx < 0 || idx >= slides.length) return;
+      if (idx < 0 || idx >= slides.length) return false;
 
       if (typeof window.goToSlide === 'function') {
         try {
           window.goToSlide(idx);
-          if (getActiveIndex() === idx) return;
+          if (getActiveIndex() === idx) return true;
+          // 部分课件为 1-based
           window.goToSlide(idx + 1);
-          if (getActiveIndex() === idx) return;
+          if (getActiveIndex() === idx) return true;
         } catch (e) {}
       }
       if (typeof window.showSlide === 'function') {
         try {
           window.showSlide(idx);
-          if (getActiveIndex() === idx) return;
+          if (getActiveIndex() === idx) return true;
           window.showSlide(idx + 1);
-          if (getActiveIndex() === idx) return;
+          if (getActiveIndex() === idx) return true;
         } catch (e) {}
       }
 
+      // 直接切换 class，并尽量同步内部 current 变量相关 UI
       slides.forEach(function (s, i) {
         s.classList.toggle('active', i === idx);
+        s.classList.toggle('is-active', i === idx);
       });
       var ind = document.getElementById('slideIndicator') ||
         document.getElementById('slideCounter') ||
@@ -560,6 +629,54 @@
       var nextBtn = document.getElementById('nextBtn');
       if (prevBtn) prevBtn.disabled = idx === 0;
       if (nextBtn) nextBtn.disabled = idx === slides.length - 1;
+      return getActiveIndex() === idx;
+    }
+
+    /**
+     * 只走一条导航路径，避免 nextBtn + goSlide + 合成键盘 叠加连翻。
+     * 优先调用课件自身 API（会更新内部 current），最后才兜底改 class。
+     */
+    function navigate(delta) {
+      if (!delta) return;
+      var slides = getSlides();
+      if (!slides.length) return;
+      var idx = getActiveIndex();
+      var target = idx + (delta > 0 ? 1 : -1);
+      if (target < 0 || target >= slides.length) return;
+
+      try {
+        // 1) 绝对跳转 API（若存在且生效）
+        if (typeof window.goToSlide === 'function') {
+          window.goToSlide(target);
+          if (getActiveIndex() === target) return;
+          window.goToSlide(target + 1); // 兼容 1-based
+          if (getActiveIndex() === target) return;
+        }
+        if (typeof window.showSlide === 'function') {
+          window.showSlide(target);
+          if (getActiveIndex() === target) return;
+          window.showSlide(target + 1);
+          if (getActiveIndex() === target) return;
+        }
+
+        // 2) 相对 API / 按钮 —— 只调用其中一个
+        if (delta > 0) {
+          if (typeof window.nextSlide === 'function') { window.nextSlide(); return; }
+          if (typeof window.changeSlide === 'function') { window.changeSlide(1); return; }
+          if (typeof window.goSlide === 'function') { window.goSlide(1); return; }
+          var nextBtn = document.getElementById('nextBtn');
+          if (nextBtn && !nextBtn.disabled) { nextBtn.click(); return; }
+        } else {
+          if (typeof window.prevSlide === 'function') { window.prevSlide(); return; }
+          if (typeof window.changeSlide === 'function') { window.changeSlide(-1); return; }
+          if (typeof window.goSlide === 'function') { window.goSlide(-1); return; }
+          var prevBtn = document.getElementById('prevBtn');
+          if (prevBtn && !prevBtn.disabled) { prevBtn.click(); return; }
+        }
+      } catch (e) {}
+
+      // 3) 兜底：直接改 class（部分课件无全局导航函数）
+      goToIndex(target);
     }
 
     function getState() {
@@ -576,14 +693,12 @@
         notes: notes,
         autoScript: notes || buildAutoScript(cur),
         hasNotes: !!notes,
-        timerStart: timerStart,
         deckUrl: location.href.split('?')[0].split('#')[0]
       };
     }
 
     function broadcastState() {
       var now = Date.now();
-      // 轻微节流，避免 MutationObserver 连发
       if (now - lastBroadcastAt < 40) {
         clearTimeout(broadcastState._t);
         broadcastState._t = setTimeout(broadcastState, 50);
@@ -611,7 +726,7 @@
         } catch (e) {}
       }
 
-      var w = 1400;
+      var w = 1440;
       var h = 900;
       var left = Math.max(0, (screen.width - w) / 2);
       var top = Math.max(0, (screen.height - h) / 2);
@@ -630,18 +745,28 @@
       setTimeout(broadcastState, 1000);
     }
 
+    function shouldAcceptNav(data) {
+      var now = Date.now();
+      var key = (data._id != null ? String(data._id) : '') + '|' + (data.delta || 0) + '|' + (data._ts || '');
+      // 同一条消息经 postMessage + BroadcastChannel 双达：去重
+      if (key && key === lastNavKey && now - lastNavAt < 400) return false;
+      // 短时间重复 delta 也挡一下（异常双绑）
+      if (now - lastNavAt < 90 && lastNavKey.indexOf('|' + (data.delta || 0) + '|') !== -1) return false;
+      lastNavKey = key || ('d' + (data.delta || 0) + now);
+      lastNavAt = now;
+      return true;
+    }
+
     function onMessage(e) {
       var data = e.data;
       if (!data || typeof data !== 'object') return;
       if (data.type === 'presenter-nav') {
+        if (!shouldAcceptNav(data)) return;
         navigate(data.delta || 0);
         setTimeout(broadcastState, 30);
       } else if (data.type === 'presenter-goto') {
         goToIndex(data.index | 0);
         setTimeout(broadcastState, 30);
-      } else if (data.type === 'presenter-reset-timer') {
-        timerStart = Date.now();
-        broadcastState();
       } else if (data.type === 'presenter-ready') {
         broadcastState();
       }
@@ -661,9 +786,21 @@
       }
     }
 
+    // 捕获阶段拦截方向键连发：部分课件自身 keydown 未判断 e.repeat，会一次按住连翻多页
+    document.addEventListener('keydown', function (e) {
+      if (!e.repeat) return;
+      var k = e.key;
+      if (k === 'ArrowLeft' || k === 'ArrowRight' || k === 'ArrowUp' || k === 'ArrowDown' ||
+          k === ' ' || k === 'PageUp' || k === 'PageDown' || k === 'Enter' || k === 'Backspace') {
+        e.preventDefault();
+        e.stopImmediatePropagation();
+      }
+    }, true);
+
     document.addEventListener('keydown', function (e) {
       var t = e.target;
       if (t && (t.tagName === 'INPUT' || t.tagName === 'TEXTAREA' || t.isContentEditable)) return;
+      if (e.repeat) return;
       if (e.key === 's' || e.key === 'S') {
         if (e.metaKey || e.ctrlKey || e.altKey) return;
         e.preventDefault();
@@ -676,7 +813,7 @@
       var hint = document.createElement('div');
       hint.id = 'cspj-presenter-hint';
       hint.textContent = 'S 演讲者';
-      hint.title = '按 S 打开演讲者模式（真实样式预览 + 讲稿 + 计时）';
+      hint.title = '按 S 打开演讲者模式（当前页大预览 + 讲稿备注 + 可调布局）';
       hint.style.cssText = [
         'position:fixed', 'right:12px', 'bottom:12px', 'z-index:99999',
         'background:rgba(10,37,64,0.88)', 'color:#f0d78c',

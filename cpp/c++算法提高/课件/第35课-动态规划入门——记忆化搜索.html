@@ -1,8 +1,9 @@
 <!DOCTYPE html>
+
 <html lang="zh-CN">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
 <title>第35课 动态规划入门——记忆化搜索</title>
 <style>
   :root {
@@ -357,68 +358,83 @@
 </style>
 </head>
 <body>
-
 <div class="slideshow" id="slideshow">
+<!-- ==================== Slide 1: Title ==================== -->
+<div class="slide active" id="slide-1">
+<div class="title-slide">
+<h1>第35课<br/>动态规划入门——记忆化搜索</h1>
+<p class="subtitle">Dynamic Programming: Memoization</p>
+<p class="tagline">空间换时间 —— 用"记忆"让递归飞起来</p>
+</div>
 
-  <!-- ==================== Slide 1: Title ==================== -->
-  <div class="slide active" id="slide-1">
-    <div class="title-slide">
-      <h1>第35课<br>动态规划入门——记忆化搜索</h1>
-      <p class="subtitle">Dynamic Programming: Memoization</p>
-      <p class="tagline">空间换时间 —— 用"记忆"让递归飞起来</p>
-    </div>
-  </div>
-
-  <!-- ==================== Slide 2: Overlapping Subproblems ==================== -->
-  <div class="slide" id="slide-2">
-    <h2>重叠子问题 —— 斐波那契的陷阱</h2>
-    <p>计算 F(6) 时，朴素递归会产生大量<strong style="color:#e94560;">重复计算</strong>：</p>
-    <div class="ascii-tree">
+<aside class="notes">【开场】第 1/6 页 · 动态规划入门——记忆化搜索
+用 30 秒说明本课目标与学完能做什么，再进入正题。
+大纲考点：重叠子问题、记忆数组
+配套练习方向：斐波那契优化、爬楼梯
+封面关键词：
+· Dynamic Programming: Memoization
+· 空间换时间 —— 用"记忆"让递归飞起来
+互动：问学生「今天最想搞清楚什么？」，收 1–2 个期待。</aside>
+</div>
+<!-- ==================== Slide 2: Overlapping Subproblems ==================== -->
+<div class="slide" id="slide-2">
+<h2>重叠子问题 —— 斐波那契的陷阱</h2>
+<p>计算 F(6) 时，朴素递归会产生大量<strong style="color:#e94560;">重复计算</strong>：</p>
+<div class="ascii-tree">
                       F(6)
                      /    \
                  F(5)      <span class="dup">F(4)</span>
                 /    \     /    \
-            <span class="dup">F(4)</span>    <span class="dup">F(3)</span>  <span class="dup">F(3)</span>   F(2)
+            <span class="dup">F(4)</span> <span class="dup">F(3)</span> <span class="dup">F(3)</span>   F(2)
            /    \   /  \   /  \
-       <span class="dup">F(3)</span>  <span class="dup">F(2)</span> <span class="dup">F(2)</span> <span class="dup">F(1)</span> <span class="dup">F(2)</span> <span class="dup">F(1)</span>
+       <span class="dup">F(3)</span> <span class="dup">F(2)</span> <span class="dup">F(2)</span> <span class="dup">F(1)</span> <span class="dup">F(2)</span> <span class="dup">F(1)</span>
       /   \
-  <span class="dup">F(2)</span>   <span class="dup">F(1)</span>
-    </div>
-    <p><span style="color:#e94560;">红色节点</span> 表示被重复计算的子问题。F(4) 算 2 次，F(3) 算 3 次，F(2) 算 5 次！</p>
-    <div class="highlight-box">
-      <p>朴素递归时间复杂度：<strong>O(2<sup>n</sup>)</strong> —— n=50 时约需 10<sup>15</sup> 次计算，几乎无法完成。</p>
-    </div>
-  </div>
+  <span class="dup">F(2)</span> <span class="dup">F(1)</span>
+</div>
+<p><span style="color:#e94560;">红色节点</span> 表示被重复计算的子问题。F(4) 算 2 次，F(3) 算 3 次，F(2) 算 5 次！</p>
+<div class="highlight-box">
+<p>朴素递归时间复杂度：<strong>O(2<sup>n</sup>)</strong> —— n=50 时约需 10<sup>15</sup> 次计算，几乎无法完成。</p>
+</div>
 
-  <!-- ==================== Slide 3: Memoization Principle ==================== -->
-  <div class="slide" id="slide-3">
-    <h2>记忆化搜索原理 —— "备忘录"数组</h2>
-    <p>核心思想：<strong style="color:#ffb347;">把算过的结果记下来，下次直接用</strong></p>
-    <ol>
-      <li>创建数组 <code>memo[]</code>，初始化为 <code>-1</code>（表示未计算）</li>
-      <li>每次调用函数时，先查 <code>memo[n]</code>：
+<aside class="notes">【讲解】重叠子问题 —— 斐波那契的陷阱
+结合讲义《重叠子问题（Overlapping Subproblems）》强调：
+· 上面递归树中被标出的重复节点，就是**重叠子问题**。所谓"重叠"，是指在递归求解过程中，同一个子问题会被反复求解多次。
+· 动态规划的第一个核心洞察就是：**如果一个问题具有重叠子问题的性质，我们可以用一个数据结构（通常是数组）把已经求解过的子问题答案"记住"，下次再遇到时直接查表，而不是重新计算。**
+幻灯片上可见要点：
+· 计算 F(6) 时，朴素递归会产生大量 重复计算 ：
+· 重复计算
+· 红色节点 表示被重复计算的子问题。F(4) 算 2 次，F(3) 算 3 次，F(2) 算 5 次！
+· 朴素递归时间复杂度： O(2 n ) —— n=50 时约需 10 15 次计算，几乎无法完成。
+讲解时放慢关键术语；用 1 个生活类比 + 1 个反例加深印象。
+本课大纲考点（可适时点题）：重叠子问题、记忆数组</aside>
+</div>
+<!-- ==================== Slide 3: Memoization Principle ==================== -->
+<div class="slide" id="slide-3">
+<h2>记忆化搜索原理 —— "备忘录"数组</h2>
+<p>核心思想：<strong style="color:#ffb347;">把算过的结果记下来，下次直接用</strong></p>
+<ol>
+<li>创建数组 <code>memo[]</code>，初始化为 <code>-1</code>（表示未计算）</li>
+<li>每次调用函数时，先查 <code>memo[n]</code>：
         <ul>
-          <li>若已算过（≠ -1）→ <strong style="color:#7ec8e3;">直接返回</strong></li>
-          <li>若未算过（= -1）→ 递归计算，<strong style="color:#e94560;">存入</strong> <code>memo[n]</code></li>
-        </ul>
-      </li>
-      <li>每个子问题<strong>只计算一次</strong></li>
-    </ol>
-
-    <div class="info-grid">
-      <div class="info-card">
-        <div class="label">朴素递归 O(2<sup>n</sup>)</div>
-        <div class="value">≈ 10<sup>15</sup> 次</div>
-        <div style="font-size:0.8em;color:#888;">n=50，几乎不可能</div>
-      </div>
-      <div class="info-card">
-        <div class="label">记忆化搜索 O(n)</div>
-        <div class="value">50 次</div>
-        <div style="font-size:0.8em;color:#888;">n=50，瞬间完成</div>
-      </div>
-    </div>
-
-    <pre><span class="code-comment">// 记忆化的关键代码</span>
+<li>若已算过（≠ -1）→ <strong style="color:#7ec8e3;">直接返回</strong></li>
+<li>若未算过（= -1）→ 递归计算，<strong style="color:#e94560;">存入</strong> <code>memo[n]</code></li>
+</ul>
+</li>
+<li>每个子问题<strong>只计算一次</strong></li>
+</ol>
+<div class="info-grid">
+<div class="info-card">
+<div class="label">朴素递归 O(2<sup>n</sup>)</div>
+<div class="value">≈ 10<sup>15</sup> 次</div>
+<div style="font-size:0.8em;color:#888;">n=50，几乎不可能</div>
+</div>
+<div class="info-card">
+<div class="label">记忆化搜索 O(n)</div>
+<div class="value">50 次</div>
+<div style="font-size:0.8em;color:#888;">n=50，瞬间完成</div>
+</div>
+</div>
+<pre><span class="code-comment">// 记忆化的关键代码</span>
 <span class="code-keyword">long long</span> memo[<span class="code-number">100</span>];
 
 <span class="code-keyword">long long</span> <span class="code-func">fib</span>(<span class="code-keyword">int</span> n) {
@@ -426,103 +442,134 @@
     <span class="code-keyword">if</span> (memo[n] != -<span class="code-number">1</span>) <span class="code-keyword">return</span> memo[n];  <span class="code-comment">// 查表</span>
     <span class="code-keyword">return</span> memo[n] = fib(n-<span class="code-number">1</span>) + fib(n-<span class="code-number">2</span>);  <span class="code-comment">// 计算并存</span>
 }</pre>
-  </div>
 
-  <!-- ==================== Slide 4: Climbing Stairs ==================== -->
-  <div class="slide" id="slide-4">
-    <h2>爬楼梯问题 —— 经典 DP 入门题</h2>
-    <p>每次可以爬 <strong>1 级</strong> 或 <strong>2 级</strong> 台阶。从第 0 级开始，爬到第 n 级有多少种方法？</p>
-
-    <div class="highlight-box">
-      <p><strong>递推公式：</strong> f(n) = f(n-1) + f(n-2)</p>
-      <p>边界条件：f(1) = 1，f(2) = 2</p>
-    </div>
-
-    <h3>小规模结果一览</h3>
-    <div class="stairs-visual">
-      <div class="stair-card">
-        <div class="n">1</div><div class="ways">1 种方法</div>
-      </div>
-      <div class="stair-card">
-        <div class="n">2</div><div class="ways">2 种方法</div>
-      </div>
-      <div class="stair-card">
-        <div class="n">3</div><div class="ways">3 种方法</div>
-      </div>
-      <div class="stair-card">
-        <div class="n">4</div><div class="ways">5 种方法</div>
-      </div>
-      <div class="stair-card">
-        <div class="n">5</div><div class="ways">8 种方法</div>
-      </div>
-    </div>
-
-    <pre><span class="code-keyword">long long</span> <span class="code-func">climb</span>(<span class="code-keyword">int</span> n) {
+<aside class="notes">【讲解】记忆化搜索原理 —— "备忘录"数组
+本页要点（照着讲即可）：
+· 核心思想： 把算过的结果记下来，下次直接用
+· 把算过的结果记下来，下次直接用
+· 创建数组 memo[] ，初始化为 -1 （表示未计算）
+· 每次调用函数时，先查 memo[n] ： 若已算过（≠ -1）→ 直接返回 若未算过（= -1）→ 递归计算， 存入 memo[n]
+· 若已算过（≠ -1）→ 直接返回
+· 直接返回
+讲解时放慢关键术语；用 1 个生活类比 + 1 个反例加深印象。</aside>
+</div>
+<!-- ==================== Slide 4: Climbing Stairs ==================== -->
+<div class="slide" id="slide-4">
+<h2>爬楼梯问题 —— 经典 DP 入门题</h2>
+<p>每次可以爬 <strong>1 级</strong> 或 <strong>2 级</strong> 台阶。从第 0 级开始，爬到第 n 级有多少种方法？</p>
+<div class="highlight-box">
+<p><strong>递推公式：</strong> f(n) = f(n-1) + f(n-2)</p>
+<p>边界条件：f(1) = 1，f(2) = 2</p>
+</div>
+<h3>小规模结果一览</h3>
+<div class="stairs-visual">
+<div class="stair-card">
+<div class="n">1</div><div class="ways">1 种方法</div>
+</div>
+<div class="stair-card">
+<div class="n">2</div><div class="ways">2 种方法</div>
+</div>
+<div class="stair-card">
+<div class="n">3</div><div class="ways">3 种方法</div>
+</div>
+<div class="stair-card">
+<div class="n">4</div><div class="ways">5 种方法</div>
+</div>
+<div class="stair-card">
+<div class="n">5</div><div class="ways">8 种方法</div>
+</div>
+</div>
+<pre><span class="code-keyword">long long</span> <span class="code-func">climb</span>(<span class="code-keyword">int</span> n) {
     <span class="code-keyword">if</span> (n == <span class="code-number">1</span>) <span class="code-keyword">return</span> <span class="code-number">1</span>;   <span class="code-comment">// 只有 1 级</span>
     <span class="code-keyword">if</span> (n == <span class="code-number">2</span>) <span class="code-keyword">return</span> <span class="code-number">2</span>;   <span class="code-comment">// 1+1 或 2</span>
     <span class="code-keyword">if</span> (memo[n] != -<span class="code-number">1</span>) <span class="code-keyword">return</span> memo[n];
     <span class="code-keyword">return</span> memo[n] = climb(n-<span class="code-number">1</span>) + climb(n-<span class="code-number">2</span>);
 }</pre>
+<p style="color:#ffb347;">理解要点：到达第 n 级，最后一步要么从 n-1 跨 1 级，要么从 n-2 跨 2 级。</p>
 
-    <p style="color:#ffb347;">理解要点：到达第 n 级，最后一步要么从 n-1 跨 1 级，要么从 n-2 跨 2 级。</p>
-  </div>
-
-  <!-- ==================== Slide 5: Complexity Comparison ==================== -->
-  <div class="slide" id="slide-5">
-    <h2>复杂度对比 —— 一目了然</h2>
-    <table>
-      <thead>
-        <tr><th>实现方式</th><th>时间复杂度</th><th>空间复杂度</th><th>n=50 时</th></tr>
-      </thead>
-      <tbody>
-        <tr><td>朴素递归</td><td>O(2<sup>n</sup>)</td><td>O(n)</td><td style="color:#e94560;">几乎无法完成</td></tr>
-        <tr><td>记忆化搜索</td><td>O(n)</td><td>O(n)</td><td style="color:#4ecf4e;">瞬间得出结果</td></tr>
-        <tr><td>自底向上 DP</td><td>O(n)</td><td>O(1)</td><td style="color:#4ecf4e;">瞬间得出结果</td></tr>
-      </tbody>
-    </table>
-
-    <div class="highlight-box">
-      <p><strong>关键洞察：</strong>从 O(2<sup>n</sup>) → O(n) 是质的飞跃。记忆化搜索用 O(n) 的额外空间，换来了指数级的性能提升 —— 这就是 <strong style="color:#ffb347;">"空间换时间"</strong> 的精髓。</p>
-    </div>
-
-    <h3>两种 DP 实现方式对比</h3>
-    <div style="display:flex; gap:16px; margin-top:12px;">
-      <div style="flex:1; background:rgba(255,255,255,0.04); border-radius:10px; padding:14px;">
-        <div style="color:#ffb347; font-weight:600;">自顶向下（记忆化）</div>
-        <div style="font-size:0.9em; color:#aaa; margin-top:6px;">从大问题出发，递归 + 备忘录</div>
-        <div style="font-size:0.9em; color:#888;">优点：思路自然，易于改写</div>
-      </div>
-      <div style="flex:1; background:rgba(255,255,255,0.04); border-radius:10px; padding:14px;">
-        <div style="color:#7ec8e3; font-weight:600;">自底向上（迭代 DP）</div>
-        <div style="font-size:0.9em; color:#aaa; margin-top:6px;">从小问题开始，迭代推导</div>
-        <div style="font-size:0.9em; color:#888;">优点：无递归栈开销</div>
-      </div>
-    </div>
-  </div>
-
-  <!-- ==================== Slide 6: Summary ==================== -->
-  <div class="slide" id="slide-6">
-    <h2>本课小结 —— 记忆化搜索要点</h2>
-    <ul class="summary-list">
-      <li><strong>动态规划的核心</strong>：重叠子问题 + 最优子结构。当递归出现大量重复计算时，就是使用 DP 的信号。</li>
-      <li><strong>记忆化搜索 = 递归 + 备忘录</strong>：用数组存储已计算的结果，将指数级递归优化为线性。</li>
-      <li><strong>时间复杂度</strong>：O(子问题个数) × O(每个子问题的计算时间)。通常从 O(2<sup>n</sup>) 降到 O(n)。</li>
-      <li><strong>使用 long long</strong>：斐波那契数列增长极快，F(80) 已超 32 位整数范围，务必使用 64 位整数。</li>
-      <li><strong>爬楼梯</strong>：与斐波那契本质相同，是动态规划最经典的入门例题之一。</li>
-      <li><strong>下一课预告</strong>：自底向上的动态规划（迭代法）—— 省掉递归栈，进一步优化空间。</li>
-    </ul>
-  </div>
-
+<aside class="notes">【讲解】爬楼梯问题 —— 经典 DP 入门题
+结合讲义《爬楼梯问题》强调：
+· 爬楼梯问题是斐波那契数列的一个经典变体，也是 LeetCode 上的著名题目（Climbing Stairs）。
+· 问题描述：假设你正在爬楼梯。楼梯有 n 级台阶，每次你可以爬 1 级或 2 级。从第 0 级开始，你有多少种不同的方法可以爬到第 n 级？
+· 分析：想爬到第 n 级，你有两种选择：
+· 从第 n-1 级爬 1 级上来。
+· 从第 n-2 级爬 2 级上来。
+幻灯片上可见要点：
+· 每次可以爬 1 级 或 2 级 台阶。从第 0 级开始，爬到第 n 级有多少种方法？
+· 递推公式： f(n) = f(n-1) + f(n-2)
+· 递推公式：
+· 边界条件：f(1) = 1，f(2) = 2
+讲解时放慢关键术语；用 1 个生活类比 + 1 个反例加深印象。</aside>
+</div>
+<!-- ==================== Slide 5: Complexity Comparison ==================== -->
+<div class="slide" id="slide-5">
+<h2>复杂度对比 —— 一目了然</h2>
+<table>
+<thead>
+<tr><th>实现方式</th><th>时间复杂度</th><th>空间复杂度</th><th>n=50 时</th></tr>
+</thead>
+<tbody>
+<tr><td>朴素递归</td><td>O(2<sup>n</sup>)</td><td>O(n)</td><td style="color:#e94560;">几乎无法完成</td></tr>
+<tr><td>记忆化搜索</td><td>O(n)</td><td>O(n)</td><td style="color:#4ecf4e;">瞬间得出结果</td></tr>
+<tr><td>自底向上 DP</td><td>O(n)</td><td>O(1)</td><td style="color:#4ecf4e;">瞬间得出结果</td></tr>
+</tbody>
+</table>
+<div class="highlight-box">
+<p><strong>关键洞察：</strong>从 O(2<sup>n</sup>) → O(n) 是质的飞跃。记忆化搜索用 O(n) 的额外空间，换来了指数级的性能提升 —— 这就是 <strong style="color:#ffb347;">"空间换时间"</strong> 的精髓。</p>
+</div>
+<h3>两种 DP 实现方式对比</h3>
+<div style="display:flex; gap:16px; margin-top:12px;">
+<div style="flex:1; background:rgba(255,255,255,0.04); border-radius:10px; padding:14px;">
+<div style="color:#ffb347; font-weight:600;">自顶向下（记忆化）</div>
+<div style="font-size:0.9em; color:#aaa; margin-top:6px;">从大问题出发，递归 + 备忘录</div>
+<div style="font-size:0.9em; color:#888;">优点：思路自然，易于改写</div>
+</div>
+<div style="flex:1; background:rgba(255,255,255,0.04); border-radius:10px; padding:14px;">
+<div style="color:#7ec8e3; font-weight:600;">自底向上（迭代 DP）</div>
+<div style="font-size:0.9em; color:#aaa; margin-top:6px;">从小问题开始，迭代推导</div>
+<div style="font-size:0.9em; color:#888;">优点：无递归栈开销</div>
+</div>
 </div>
 
+<aside class="notes">【讲解】复杂度对比 —— 一目了然
+本页要点（照着讲即可）：
+· 关键洞察： 从 O(2 n ) → O(n) 是质的飞跃。记忆化搜索用 O(n) 的额外空间，换来了指数级的性能提升 —— 这就是 "空间换时间" 的精髓。
+· 关键洞察：
+· "空间换时间"
+讲解时放慢关键术语；用 1 个生活类比 + 1 个反例加深印象。</aside>
+</div>
+<!-- ==================== Slide 6: Summary ==================== -->
+<div class="slide" id="slide-6">
+<h2>本课小结 —— 记忆化搜索要点</h2>
+<ul class="summary-list">
+<li><strong>动态规划的核心</strong>：重叠子问题 + 最优子结构。当递归出现大量重复计算时，就是使用 DP 的信号。</li>
+<li><strong>记忆化搜索 = 递归 + 备忘录</strong>：用数组存储已计算的结果，将指数级递归优化为线性。</li>
+<li><strong>时间复杂度</strong>：O(子问题个数) × O(每个子问题的计算时间)。通常从 O(2<sup>n</sup>) 降到 O(n)。</li>
+<li><strong>使用 long long</strong>：斐波那契数列增长极快，F(80) 已超 32 位整数范围，务必使用 64 位整数。</li>
+<li><strong>爬楼梯</strong>：与斐波那契本质相同，是动态规划最经典的入门例题之一。</li>
+<li><strong>下一课预告</strong>：自底向上的动态规划（迭代法）—— 省掉递归栈，进一步优化空间。</li>
+</ul>
+
+<aside class="notes">【收尾】回顾本课主线：本课小结 —— 记忆化搜索要点
+对照大纲再过一遍：重叠子问题、记忆数组
+板书/口述要点：
+· 动态规划的核心 ：重叠子问题 + 最优子结构。当递归出现大量重复计算时，就是使用 DP 的信号。
+· 动态规划的核心
+· 记忆化搜索 = 递归 + 备忘录 ：用数组存储已计算的结果，将指数级递归优化为线性。
+· 记忆化搜索 = 递归 + 备忘录
+· 时间复杂度 ：O(子问题个数) × O(每个子问题的计算时间)。通常从 O(2 n ) 降到 O(n)。
+· 时间复杂度
+课后任务：斐波那契优化、爬楼梯
+结束前留 2 分钟答疑；布置 1 道小练习检验是否真正掌握。</aside>
+</div>
+</div>
 <!-- Navigation -->
 <div class="nav-bar">
-  <button class="nav-btn" id="prevBtn" onclick="changeSlide(-1)">← 上一页</button>
-  <span class="slide-counter" id="slideCounter">1 / 6</span>
-  <button class="nav-btn" id="nextBtn" onclick="changeSlide(1)">下一页 →</button>
+<button class="nav-btn" id="prevBtn" onclick="changeSlide(-1)">← 上一页</button>
+<span class="slide-counter" id="slideCounter">1 / 6</span>
+<button class="nav-btn" id="nextBtn" onclick="changeSlide(1)">下一页 →</button>
 </div>
 <div class="dot-nav" id="dotNav"></div>
-
 <script>
   let currentSlide = 0;
   const slides = document.querySelectorAll('.slide');
@@ -568,7 +615,6 @@
     if (e.key === 'ArrowLeft' || e.key === 'ArrowUp') changeSlide(-1);
   });
 </script>
-
 <script src="courseware-ui.js"></script>
 <script src="presenter.js"></script>
 </body>

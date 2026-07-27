@@ -1,10 +1,11 @@
 <!DOCTYPE html>
+
 <html lang="zh-CN">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>第20课：Floyd 与传递闭包</title>
-    <style>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>第20课：Floyd 与传递闭包</title>
+<style>
         :root {
             --bg: #0a1628;
             --card: #162744;
@@ -277,103 +278,129 @@
     </style>
 </head>
 <body>
-
 <div class="slide-container" id="slideContainer">
+<!-- ===== 幻灯片 0：标题页 ===== -->
+<div class="slide active" data-index="0">
+<div class="cover-title">Floyd 与传递闭包</div>
+<div class="cover-subtitle">第 20 课 · 多源最短路径与动态规划</div>
+<ul class="cover-list">
+<li>Floyd-Warshall：O(V³) 全源最短路</li>
+<li>DP 推导：dp[k][i][j] 状态与滚动数组</li>
+<li>传递闭包：Warshall 算法与 bitset 优化</li>
+<li>最小环：无向图与有向图的检测</li>
+</ul>
 
-    <!-- ===== 幻灯片 0：标题页 ===== -->
-    <div class="slide active" data-index="0">
-        <div class="cover-title">Floyd 与传递闭包</div>
-        <div class="cover-subtitle">第 20 课 · 多源最短路径与动态规划</div>
-        <ul class="cover-list">
-            <li>Floyd-Warshall：O(V³) 全源最短路</li>
-            <li>DP 推导：dp[k][i][j] 状态与滚动数组</li>
-            <li>传递闭包：Warshall 算法与 bitset 优化</li>
-            <li>最小环：无向图与有向图的检测</li>
-        </ul>
-    </div>
-
-    <!-- ===== 幻灯片 1：知识精讲——Floyd 算法 ===== -->
-    <div class="slide" data-index="1">
-        <div class="slide-title">Floyd-Warshall 算法</div>
-        <div class="slide-subtitle">基于动态规划的全源最短路算法</div>
-        <div class="slide-content">
-            <h3>问题定义</h3>
-            <p>给定 n 个节点的有向图，求出 <span class="highlight-text">任意两点之间的最短距离</span>。允许负权边，但不允许负环。</p>
-
-            <h3>DP 状态定义</h3>
-            <p>设 <span class="formula">dp[k][i][j]</span> 表示从节点 i 到节点 j，<span class="highlight-text">仅经过编号为 1~k 的中间节点</span>时的最短距离。</p>
-
-            <h3>状态转移</h3>
-            <div class="formula" style="font-size:1em; padding:8px 20px; margin:12px 0;">
+<aside class="notes">【开场】第 1/8 页 · Floyd 与传递闭包
+用 30 秒说明本课目标与学完能做什么，再进入正题。
+大纲考点：多源最短路、Floyd原理与DP视角、传递闭包、最小环
+配套练习方向：多源最短路径、关系传递
+封面关键词：
+· Floyd-Warshall：O(V³) 全源最短路
+· DP 推导：dp[k][i][j] 状态与滚动数组
+· 传递闭包：Warshall 算法与 bitset 优化
+· 最小环：无向图与有向图的检测
+互动：问学生「今天最想搞清楚什么？」，收 1–2 个期待。</aside>
+</div>
+<!-- ===== 幻灯片 1：知识精讲——Floyd 算法 ===== -->
+<div class="slide" data-index="1">
+<div class="slide-title">Floyd-Warshall 算法</div>
+<div class="slide-subtitle">基于动态规划的全源最短路算法</div>
+<div class="slide-content">
+<h3>问题定义</h3>
+<p>给定 n 个节点的有向图，求出 <span class="highlight-text">任意两点之间的最短距离</span>。允许负权边，但不允许负环。</p>
+<h3>DP 状态定义</h3>
+<p>设 <span class="formula">dp[k][i][j]</span> 表示从节点 i 到节点 j，<span class="highlight-text">仅经过编号为 1~k 的中间节点</span>时的最短距离。</p>
+<h3>状态转移</h3>
+<div class="formula" style="font-size:1em; padding:8px 20px; margin:12px 0;">
                 dp[k][i][j] = min( dp[k-1][i][j] , dp[k-1][i][k] + dp[k-1][k][j] )
             </div>
-            <p>含义：i 到 j 的最短路，要么 <strong>不经过 k</strong>，要么 <strong>经过 k</strong>（拆为两段各自在 1..k-1 范围内的最短路）。</p>
-
-            <div class="info-box">
-                <strong>复杂度：</strong> 时间 O(V³)，空间 O(V²)（滚动数组优化后）。V ≤ 500~800 是实用范围。
+<p>含义：i 到 j 的最短路，要么 <strong>不经过 k</strong>，要么 <strong>经过 k</strong>（拆为两段各自在 1..k-1 范围内的最短路）。</p>
+<div class="info-box">
+<strong>复杂度：</strong> 时间 O(V³)，空间 O(V²)（滚动数组优化后）。V ≤ 500~800 是实用范围。
             </div>
-        </div>
-    </div>
+</div>
 
-    <!-- ===== 幻灯片 2：原理推导——DP 视角 ===== -->
-    <div class="slide" data-index="2">
-        <div class="slide-title">DP 视角深入分析</div>
-        <div class="slide-subtitle">理解 k 循环位置、滚动数组与边界条件</div>
-        <div class="slide-content">
-            <h3>为什么 k 循环必须在最外层？</h3>
-            <p><span class="formula">dp[k][i][j]</span> 依赖的是 <span class="highlight-text">dp[k-1][i][k] 和 dp[k-1][k][j]</span>（上一阶段的值）。如果将 k 放在内层，可能使用了「本阶段已被更新过的 dist[i][k]」，破坏了 DP 的正确性。</p>
-
-            <div class="danger-box">
-                <strong>常见错误：</strong> 把 k 放在 i 或 j 的内层，导致最短路计算错误。在简单样例中可能碰巧正确，但在复杂图中会出错。
+<aside class="notes">【讲解】问题定义
+本页要点（照着讲即可）：
+· 给定 n 个节点的有向图，求出 任意两点之间的最短距离 。允许负权边，但不允许负环。
+· 设 dp[k][i][j] 表示从节点 i 到节点 j， 仅经过编号为 1~k 的中间节点 时的最短距离。
+· 含义：i 到 j 的最短路，要么 不经过 k ，要么 经过 k （拆为两段各自在 1..k-1 范围内的最短路）。
+· 不经过 k
+· 经过 k
+· 复杂度：
+讲解时放慢关键术语；用 1 个生活类比 + 1 个反例加深印象。
+本课大纲考点（可适时点题）：多源最短路、Floyd原理与DP视角、传递闭包、最小环</aside>
+</div>
+<!-- ===== 幻灯片 2：原理推导——DP 视角 ===== -->
+<div class="slide" data-index="2">
+<div class="slide-title">DP 视角深入分析</div>
+<div class="slide-subtitle">理解 k 循环位置、滚动数组与边界条件</div>
+<div class="slide-content">
+<h3>为什么 k 循环必须在最外层？</h3>
+<p><span class="formula">dp[k][i][j]</span> 依赖的是 <span class="highlight-text">dp[k-1][i][k] 和 dp[k-1][k][j]</span>（上一阶段的值）。如果将 k 放在内层，可能使用了「本阶段已被更新过的 dist[i][k]」，破坏了 DP 的正确性。</p>
+<div class="danger-box">
+<strong>常见错误：</strong> 把 k 放在 i 或 j 的内层，导致最短路计算错误。在简单样例中可能碰巧正确，但在复杂图中会出错。
             </div>
+<h3>滚动数组优化原理</h3>
+<p>观察到 <span class="formula">dp[k][i][k] = dp[k-1][i][k]</span>（终点就是 k，不会再用 k 本身作为中间节点），因此第一维可以省略，直接在二维数组上迭代更新。</p>
+<h3>边界条件</h3>
+<ul>
+<li><span class="formula">dist[i][i] = 0</span>（自己到自己的距离必须初始化为 0）</li>
+<li>无直接边 → INF（防止溢出时需用 <span class="formula">1e18</span>）</li>
+<li>重边 → 取最小值</li>
+</ul>
+</div>
 
-            <h3>滚动数组优化原理</h3>
-            <p>观察到 <span class="formula">dp[k][i][k] = dp[k-1][i][k]</span>（终点就是 k，不会再用 k 本身作为中间节点），因此第一维可以省略，直接在二维数组上迭代更新。</p>
-
-            <h3>边界条件</h3>
-            <ul>
-                <li><span class="formula">dist[i][i] = 0</span>（自己到自己的距离必须初始化为 0）</li>
-                <li>无直接边 → INF（防止溢出时需用 <span class="formula">1e18</span>）</li>
-                <li>重边 → 取最小值</li>
-            </ul>
-        </div>
-    </div>
-
-    <!-- ===== 幻灯片 3：知识精讲——传递闭包 ===== -->
-    <div class="slide" data-index="3">
-        <div class="slide-title">传递闭包（Warshall 算法）</div>
-        <div class="slide-subtitle">判断任意两点间可达性</div>
-        <div class="slide-content">
-            <h3>问题定义</h3>
-            <p>在有向图中，判断 <strong>i 是否能到达 j</strong>（存在从 i 到 j 的路径）。输出一个 n×n 的 0/1 矩阵。</p>
-
-            <h3>算法——Floyd 的逻辑变体</h3>
-            <p>将 min 替换为逻辑或，加法替换为逻辑与：</p>
-            <div class="code-block"><span class="kw">for</span> (<span class="kw">int</span> k = <span class="nu">1</span>; k &lt;= n; k++)
+<aside class="notes">【讲解】为什么 k 循环必须在最外层？
+本页要点（照着讲即可）：
+· dp[k][i][j] 依赖的是 dp[k-1][i][k] 和 dp[k-1][k][j] （上一阶段的值）。如果将 k 放在内层，可能使用了「本阶段已被更新过的 dist[i][k]」，破坏了 DP 的正确性。
+· 常见错误：
+· 观察到 dp[k][i][k] = dp[k-1][i][k] （终点就是 k，不会再用 k 本身作为中间节点），因此第一维可以省略，直接在二维数组上迭代更新。
+· dist[i][i] = 0 （自己到自己的距离必须初始化为 0）
+· 无直接边 → INF（防止溢出时需用 1e18 ）
+· 重边 → 取最小值
+讲解时放慢关键术语；用 1 个生活类比 + 1 个反例加深印象。</aside>
+</div>
+<!-- ===== 幻灯片 3：知识精讲——传递闭包 ===== -->
+<div class="slide" data-index="3">
+<div class="slide-title">传递闭包（Warshall 算法）</div>
+<div class="slide-subtitle">判断任意两点间可达性</div>
+<div class="slide-content">
+<h3>问题定义</h3>
+<p>在有向图中，判断 <strong>i 是否能到达 j</strong>（存在从 i 到 j 的路径）。输出一个 n×n 的 0/1 矩阵。</p>
+<h3>算法——Floyd 的逻辑变体</h3>
+<p>将 min 替换为逻辑或，加法替换为逻辑与：</p>
+<div class="code-block"><span class="kw">for</span> (<span class="kw">int</span> k = <span class="nu">1</span>; k &lt;= n; k++)
     <span class="kw">for</span> (<span class="kw">int</span> i = <span class="nu">1</span>; i &lt;= n; i++)
         <span class="kw">for</span> (<span class="kw">int</span> j = <span class="nu">1</span>; j &lt;= n; j++)
             reach[i][j] |= (reach[i][k] &amp; reach[k][j]);</div>
-
-            <h3>bitset 优化</h3>
-            <p>内层 j 循环替换为 bitset 按位或，复杂度从 <span class="formula">O(V³)</span> 降至 <span class="formula">O(V³ / 64)</span>。</p>
-            <div class="code-block"><span class="ty">bitset</span>&lt;MAXN&gt; reach[MAXN];
+<h3>bitset 优化</h3>
+<p>内层 j 循环替换为 bitset 按位或，复杂度从 <span class="formula">O(V³)</span> 降至 <span class="formula">O(V³ / 64)</span>。</p>
+<div class="code-block"><span class="ty">bitset</span>&lt;MAXN&gt; reach[MAXN];
 <span class="kw">for</span> (k = <span class="nu">1</span>..n)
     <span class="kw">for</span> (i = <span class="nu">1</span>..n)
         <span class="kw">if</span> (reach[i][k])
             reach[i] |= reach[k];</div>
-
-            <div class="success-box">
-                <strong>实战效果：</strong> V=2000 时，朴素 O(V³)=8×10⁹（不可过），bitset 优化后 ~1.25×10⁸（1s 内可过）。
+<div class="success-box">
+<strong>实战效果：</strong> V=2000 时，朴素 O(V³)=8×10⁹（不可过），bitset 优化后 ~1.25×10⁸（1s 内可过）。
             </div>
-        </div>
-    </div>
+</div>
 
-    <!-- ===== 幻灯片 4：代码模板 ===== -->
-    <div class="slide" data-index="4">
-        <div class="slide-title">Floyd 代码模板</div>
-        <div class="slide-subtitle">全源最短路 + 路径还原</div>
-        <div class="slide-content">
-            <div class="code-block"><span class="kw">void</span> <span class="fn">floyd</span>() {
+<aside class="notes">【讲解】问题定义
+本页要点（照着讲即可）：
+· 在有向图中，判断 i 是否能到达 j （存在从 i 到 j 的路径）。输出一个 n×n 的 0/1 矩阵。
+· i 是否能到达 j
+· 将 min 替换为逻辑或，加法替换为逻辑与：
+· 内层 j 循环替换为 bitset 按位或，复杂度从 O(V³) 降至 O(V³ / 64) 。
+· 实战效果：
+讲解时放慢关键术语；用 1 个生活类比 + 1 个反例加深印象。</aside>
+</div>
+<!-- ===== 幻灯片 4：代码模板 ===== -->
+<div class="slide" data-index="4">
+<div class="slide-title">Floyd 代码模板</div>
+<div class="slide-subtitle">全源最短路 + 路径还原</div>
+<div class="slide-content">
+<div class="code-block"><span class="kw">void</span> <span class="fn">floyd</span>() {
     <span class="kw">for</span> (<span class="kw">int</span> k = <span class="nu">1</span>; k &lt;= n; k++) {
         <span class="kw">for</span> (<span class="kw">int</span> i = <span class="nu">1</span>; i &lt;= n; i++) {
             <span class="kw">if</span> (dist[i][k] == INF) <span class="kw">continue</span>;
@@ -388,104 +415,130 @@
         }
     }
 }</div>
-            <div class="info-box">
-                <strong>关键细节：</strong><br>
-                1. <span class="formula">k</span> 循环必须在最外层<br>
-                2. <span class="formula">dist[i][k] == INF</span> 时 continue 可剪枝<br>
+<div class="info-box">
+<strong>关键细节：</strong><br/>
+                1. <span class="formula">k</span> 循环必须在最外层<br/>
+                2. <span class="formula">dist[i][k] == INF</span> 时 continue 可剪枝<br/>
                 3. 路径还原：<span class="formula">nxt[i][j]</span> 记录 i 到 j 的下一跳
             </div>
-        </div>
-    </div>
+</div>
 
-    <!-- ===== 幻灯片 5：真题精练 ===== -->
-    <div class="slide" data-index="5">
-        <div class="slide-title">真题精练</div>
-        <div class="slide-subtitle">经典题目与 AC 策略</div>
-        <div class="slide-content">
-            <h3>B3611 【模板】传递闭包</h3>
-            <ul>
-                <li><strong>题意：</strong>给定有向图的 0/1 邻接矩阵，求传递闭包</li>
-                <li><strong>数据范围：</strong>n ≤ 100</li>
-                <li><strong>策略：</strong>Warshall 三重循环 O(n³)，极其轻松</li>
-            </ul>
-
-            <div class="code-block"><span class="kw">for</span> (<span class="kw">int</span> k = <span class="nu">1</span>; k &lt;= n; k++)
+<aside class="notes">【讲解】第 5 页
+本页要点（照着讲即可）：
+· 关键细节：
+讲解时放慢关键术语；用 1 个生活类比 + 1 个反例加深印象。</aside>
+</div>
+<!-- ===== 幻灯片 5：真题精练 ===== -->
+<div class="slide" data-index="5">
+<div class="slide-title">真题精练</div>
+<div class="slide-subtitle">经典题目与 AC 策略</div>
+<div class="slide-content">
+<h3>B3611 【模板】传递闭包</h3>
+<ul>
+<li><strong>题意：</strong>给定有向图的 0/1 邻接矩阵，求传递闭包</li>
+<li><strong>数据范围：</strong>n ≤ 100</li>
+<li><strong>策略：</strong>Warshall 三重循环 O(n³)，极其轻松</li>
+</ul>
+<div class="code-block"><span class="kw">for</span> (<span class="kw">int</span> k = <span class="nu">1</span>; k &lt;= n; k++)
     <span class="kw">for</span> (<span class="kw">int</span> i = <span class="nu">1</span>; i &lt;= n; i++)
         <span class="kw">for</span> (<span class="kw">int</span> j = <span class="nu">1</span>; j &lt;= n; j++)
             reach[i][j] |= (reach[i][k] &amp; reach[k][j]);</div>
-
-            <h3>P6175 【模板】无向图最小环</h3>
-            <ul>
-                <li><strong>题意：</strong>给定 n ≤ 100 的无向有权图，求最小环权值和</li>
-                <li><strong>策略：</strong>Floyd 过程中，在更新前计算 dist[i][j] + g[i][k] + g[k][j]</li>
-                <li><strong>关键：</strong>i, j < k 保证环的中间节点都来自 1..k-1</li>
-            </ul>
-        </div>
-    </div>
-
-    <!-- ===== 幻灯片 6：优化技巧——最小环等 ===== -->
-    <div class="slide" data-index="6">
-        <div class="slide-title">优化技巧与进阶应用</div>
-        <div class="slide-subtitle">最小环、负环检测、INF 防溢出</div>
-        <div class="slide-content">
-
-            <h3>无向图最小环</h3>
-            <p>在 Floyd 的每一轮 k，在 <strong>更新之前</strong> 遍历 i, j &lt; k：</p>
-            <p><span class="formula">环权值 = dist[i][j] + g[i][k] + g[k][j]</span></p>
-            <p>其中 dist[i][j] 是基于 1..k-1 的最短路，保证环的中间节点 < k。</p>
-
-            <h3>有向图最小环</h3>
-            <p>跑完 Floyd 后检查 <span class="formula">min(dist[i][i])</span>（排除值为 0 的平凡情况）。若 dist[i][i] 为负值，说明 i 在负环上。</p>
-
-            <h3>INF 防溢出</h3>
-            <div class="danger-box">
-                计算 <span class="formula">dist[i][k] + dist[k][j]</span> 时，若两者都是 INF，相加会溢出为负数。<br>
-                <strong>推荐做法：</strong> 使用 <span class="formula">1e18</span> 作为 INF（long long），并在加法前用 <span class="formula">if</span> 判断。
-            </div>
-
-            <h3>其他应用</h3>
-            <ul>
-                <li><strong>判负环：</strong> Floyd 结束后检查 dist[i][i] &lt; 0</li>
-                <li><strong>直径：</strong> 全源最短路的最大值即为图的直径</li>
-                <li><strong>传递闭包 + 二分图匹配：</strong> 先求闭包，再跑匈牙利</li>
-            </ul>
-        </div>
-    </div>
-
-    <!-- ===== 幻灯片 7：总结页 ===== -->
-    <div class="slide" data-index="7">
-        <div class="slide-title">本课小结</div>
-        <div class="slide-subtitle">Floyd &amp; 传递闭包要点回顾</div>
-        <div class="slide-content">
-            <table>
-                <tr><th>知识点</th><th>核心要点</th></tr>
-                <tr><td>Floyd-Warshall</td><td>DP: dp[k][i][j] = min(dp[k-1][i][j], dp[k-1][i][k] + dp[k-1][k][j])</td></tr>
-                <tr><td>k 循环位置</td><td>必须最外层，否则 DP 顺序错误</td></tr>
-                <tr><td>传递闭包</td><td>Floyd 变体，bitset 优化至 O(V³/64)</td></tr>
-                <tr><td>无向图最小环</td><td>更新前计算 dist[i][j] + g[i][k] + g[k][j]</td></tr>
-                <tr><td>有向图最小环</td><td>Floyd 后检查 min(dist[i][i])</td></tr>
-                <tr><td>路径还原</td><td>维护 nxt[i][j]，更新时 nxt[i][j] = nxt[i][k]</td></tr>
-            </table>
-
-            <div class="info-box" style="margin-top:24px;">
-                <strong>一句话总结：</strong> Floyd 是解决多源最短路的经典 DP 算法，O(V³) 可处理 n≤800 的图。其 DP 思想可推广到传递闭包（bitset 优化至 V=2000）、最小环检测等问题。k 循环在最外层是正确性的关键保障。
-            </div>
-
-            <p style="text-align:center; margin-top:24px; color:var(--muted); font-size:0.9em;">
-                —— 第 20 课 结束 ——
-            </p>
-        </div>
-    </div>
-
-</div> <!-- .slide-container -->
-
-<!-- 导航 -->
-<div class="nav">
-    <button class="nav-btn" id="prevBtn" onclick="changeSlide(-1)">◀ 上一页</button>
-    <span class="page-indicator" id="pageIndicator">1 / 8</span>
-    <button class="nav-btn" id="nextBtn" onclick="changeSlide(1)">下一页 ▶</button>
+<h3>P6175 【模板】无向图最小环</h3>
+<ul>
+<li><strong>题意：</strong>给定 n ≤ 100 的无向有权图，求最小环权值和</li>
+<li><strong>策略：</strong>Floyd 过程中，在更新前计算 dist[i][j] + g[i][k] + g[k][j]</li>
+<li><strong>关键：</strong>i, j &lt; k 保证环的中间节点都来自 1..k-1</li>
+</ul>
 </div>
 
+<aside class="notes">【讲解】B3611 【模板】传递闭包
+结合讲义《题目1：B3611 【模板】传递闭包》强调：
+· 题意：给定 n 个点的有向图邻接矩阵，输出传递闭包矩阵。n ≤ 100。
+· 思路：直接跑 Warshall 算法，三重循环 O(n³)，n=100 完全可行。
+· AC 代码：
+· using namespace std;
+· const int MAXN = 105;
+幻灯片上可见要点：
+· 题意： 给定有向图的 0/1 邻接矩阵，求传递闭包
+· 数据范围： n ≤ 100
+· 数据范围：
+· 策略： Warshall 三重循环 O(n³)，极其轻松
+代码页节奏：先读懂输入输出 → 再走主流程 → 最后点出易错点（边界/类型/下标）。
+可让学生预测下一行输出，再运行对照。</aside>
+</div>
+<!-- ===== 幻灯片 6：优化技巧——最小环等 ===== -->
+<div class="slide" data-index="6">
+<div class="slide-title">优化技巧与进阶应用</div>
+<div class="slide-subtitle">最小环、负环检测、INF 防溢出</div>
+<div class="slide-content">
+<h3>无向图最小环</h3>
+<p>在 Floyd 的每一轮 k，在 <strong>更新之前</strong> 遍历 i, j &lt; k：</p>
+<p><span class="formula">环权值 = dist[i][j] + g[i][k] + g[k][j]</span></p>
+<p>其中 dist[i][j] 是基于 1..k-1 的最短路，保证环的中间节点 &lt; k。</p>
+<h3>有向图最小环</h3>
+<p>跑完 Floyd 后检查 <span class="formula">min(dist[i][i])</span>（排除值为 0 的平凡情况）。若 dist[i][i] 为负值，说明 i 在负环上。</p>
+<h3>INF 防溢出</h3>
+<div class="danger-box">
+                计算 <span class="formula">dist[i][k] + dist[k][j]</span> 时，若两者都是 INF，相加会溢出为负数。<br/>
+<strong>推荐做法：</strong> 使用 <span class="formula">1e18</span> 作为 INF（long long），并在加法前用 <span class="formula">if</span> 判断。
+            </div>
+<h3>其他应用</h3>
+<ul>
+<li><strong>判负环：</strong> Floyd 结束后检查 dist[i][i] &lt; 0</li>
+<li><strong>直径：</strong> 全源最短路的最大值即为图的直径</li>
+<li><strong>传递闭包 + 二分图匹配：</strong> 先求闭包，再跑匈牙利</li>
+</ul>
+</div>
+
+<aside class="notes">【讲解】无向图最小环
+结合讲义《3. 无向图最小环》强调：
+· long long find_min_cycle_undirected() {
+· long long ans = INF;
+· for (int k = 1; k &lt;= n; k++) {
+· // 先利用 1..k-1 的最短路找经过 k 的环
+· for (int i = 1; i &lt; k; i++)
+幻灯片上可见要点：
+· 在 Floyd 的每一轮 k，在 更新之前 遍历 i, j &lt; k：
+· 更新之前
+· 环权值 = dist[i][j] + g[i][k] + g[k][j]
+· 其中 dist[i][j] 是基于 1..k-1 的最短路，保证环的中间节点 &lt; k。
+讲解时放慢关键术语；用 1 个生活类比 + 1 个反例加深印象。</aside>
+</div>
+<!-- ===== 幻灯片 7：总结页 ===== -->
+<div class="slide" data-index="7">
+<div class="slide-title">本课小结</div>
+<div class="slide-subtitle">Floyd &amp; 传递闭包要点回顾</div>
+<div class="slide-content">
+<table>
+<tr><th>知识点</th><th>核心要点</th></tr>
+<tr><td>Floyd-Warshall</td><td>DP: dp[k][i][j] = min(dp[k-1][i][j], dp[k-1][i][k] + dp[k-1][k][j])</td></tr>
+<tr><td>k 循环位置</td><td>必须最外层，否则 DP 顺序错误</td></tr>
+<tr><td>传递闭包</td><td>Floyd 变体，bitset 优化至 O(V³/64)</td></tr>
+<tr><td>无向图最小环</td><td>更新前计算 dist[i][j] + g[i][k] + g[k][j]</td></tr>
+<tr><td>有向图最小环</td><td>Floyd 后检查 min(dist[i][i])</td></tr>
+<tr><td>路径还原</td><td>维护 nxt[i][j]，更新时 nxt[i][j] = nxt[i][k]</td></tr>
+</table>
+<div class="info-box" style="margin-top:24px;">
+<strong>一句话总结：</strong> Floyd 是解决多源最短路的经典 DP 算法，O(V³) 可处理 n≤800 的图。其 DP 思想可推广到传递闭包（bitset 优化至 V=2000）、最小环检测等问题。k 循环在最外层是正确性的关键保障。
+            </div>
+<p style="text-align:center; margin-top:24px; color:var(--muted); font-size:0.9em;">
+                —— 第 20 课 结束 ——
+            </p>
+</div>
+
+<aside class="notes">【讲解】第 8 页
+本页要点（照着讲即可）：
+· 一句话总结：
+· —— 第 20 课 结束 ——
+讲解时放慢关键术语；用 1 个生活类比 + 1 个反例加深印象。</aside>
+</div>
+</div> <!-- .slide-container -->
+<!-- 导航 -->
+<div class="nav">
+<button class="nav-btn" id="prevBtn" onclick="changeSlide(-1)">◀ 上一页</button>
+<span class="page-indicator" id="pageIndicator">1 / 8</span>
+<button class="nav-btn" id="nextBtn" onclick="changeSlide(1)">下一页 ▶</button>
+</div>
 <script>
     let currentSlide = 0;
     const slides = document.querySelectorAll('.slide');
@@ -521,7 +574,6 @@
     // 初始化
     showSlide(0);
 </script>
-
 <script src="courseware-ui.js"></script>
 <script src="presenter.js"></script>
 </body>

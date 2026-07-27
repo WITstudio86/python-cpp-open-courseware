@@ -1,8 +1,9 @@
 <!DOCTYPE html>
+
 <html lang="zh-CN">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
 <title>第11课：线段树进阶</title>
 <style>
 * { margin: 0; padding: 0; box-sizing: border-box; }
@@ -39,15 +40,22 @@ code { font-family: 'Fira Code', 'Consolas', monospace; }
 </div>
 <p style="margin-top:30px; color:#8b949e">从线性维护到可持久化，线段树的高级战场</p>
 </div>
-</div>
 
+<aside class="notes">【开场】第 1/7 页 · 线段树进阶
+用 30 秒说明本课目标与学完能做什么，再进入正题。
+大纲考点：区间修改、多懒标记、权值线段树、线段树合并
+配套练习方向：区间加法乘法混合、第K小数
+封面关键词：
+· 多懒标记 · 权值线段树 · 线段树合并 · 可持久化
+· 从线性维护到可持久化，线段树的高级战场
+互动：问学生「今天最想搞清楚什么？」，收 1–2 个期待。</aside>
+</div>
 <div class="slide" id="s2">
 <h1>📖 知识精讲 — 多懒标记协同</h1>
 <h2>同时支持加法 + 乘法</h2>
 <p>核心原则：<span class="highlight">先乘后加</span></p>
 <p>对值 x，先乘 a 再加 b → a·x + b</p>
 <p>再乘 c 再加 d → c·(a·x + b) + d = <span class="accent">(a·c)·x + (b·c + d)</span></p>
-
 <h3>apply 函数（统一更新节点）</h3>
 <pre><span class="type">void</span> <span class="func">apply</span>(<span class="type">int</span> p, <span class="type">int</span> len, <span class="type">long long</span> mu, <span class="type">long long</span> ad) {
     sum[p] = (sum[p] * mu + ad * len) % P;
@@ -55,29 +63,41 @@ code { font-family: 'Fira Code', 'Consolas', monospace; }
     add[p] = (add[p] * mu + ad) % P;
     <span class="cmt">// 关键：原有的加法标记也要乘 mu！</span>
 }</pre>
-</div>
 
+<aside class="notes">【讲解】📖 知识精讲 — 多懒标记协同
+本页要点（照着讲即可）：
+· 核心原则： 先乘后加
+· 对值 x，先乘 a 再加 b → a·x + b
+· 再乘 c 再加 d → c·(a·x + b) + d = (a·c)·x + (b·c + d)
+讲解时放慢关键术语；用 1 个生活类比 + 1 个反例加深印象。
+本课大纲考点（可适时点题）：区间修改、多懒标记、权值线段树、线段树合并</aside>
+</div>
 <div class="slide" id="s3">
 <h1>📖 知识精讲 — 权值线段树</h1>
 <h2>值域线段树 vs 下标线段树</h2>
 <p>叶子节点代表<span class="highlight">某个值的出现次数</span>，而非数组元素</p>
-
 <h3>第 K 小查询（线段树上二分）</h3>
 <pre><span class="type">int</span> <span class="func">kth</span>(<span class="type">int</span> p, <span class="type">int</span> l, <span class="type">int</span> r, <span class="type">int</span> k) {
     <span class="kw">if</span> (l == r) <span class="kw">return</span> l;
-    <span class="type">int</span> mid = (l + r) >> <span class="num">1</span>;
-    <span class="kw">if</span> (tree[lc[p]] >= k)
+    <span class="type">int</span> mid = (l + r) &gt;&gt; <span class="num">1</span>;
+    <span class="kw">if</span> (tree[lc[p]] &gt;= k)
         <span class="kw">return</span> <span class="func">kth</span>(lc[p], l, mid, k);
     <span class="kw">else</span>
         <span class="kw">return</span> <span class="func">kth</span>(rc[p], mid+<span class="num">1</span>, r, k - tree[lc[p]]);
 }</pre>
-
 <h3>适用场景</h3>
 <ul><li>全局第K小 / 第K大</li><li>查询排名、前驱、后继</li><li>动态开点处理 10⁹ 值域</li></ul>
-</div>
 
+<aside class="notes">【讲解】📖 知识精讲 — 权值线段树
+本页要点（照着讲即可）：
+· 叶子节点代表 某个值的出现次数 ，而非数组元素
+· 全局第K小 / 第K大
+· 查询排名、前驱、后继
+· 动态开点处理 10⁹ 值域
+讲解时放慢关键术语；用 1 个生活类比 + 1 个反例加深印象。</aside>
+</div>
 <div class="slide" id="s4">
-<h1>💻 代码模板 — 线段树合并 & 可持久化</h1>
+<h1>💻 代码模板 — 线段树合并 &amp; 可持久化</h1>
 <h3>线段树合并（动态开点）</h3>
 <pre><span class="type">int</span> <span class="func">merge</span>(<span class="type">int</span> p, <span class="type">int</span> q, <span class="type">int</span> l, <span class="type">int</span> r) {
     <span class="kw">if</span> (!p || !q) <span class="kw">return</span> p + q;     <span class="cmt">// 一方为空</span>
@@ -86,7 +106,6 @@ code { font-family: 'Fira Code', 'Consolas', monospace; }
     rc[p] = <span class="func">merge</span>(rc[p], rc[q], mid+<span class="num">1</span>, r);
     <span class="func">pushup</span>(p); <span class="kw">return</span> p;
 }</pre>
-
 <h3>可持久化（主席树）— 修改</h3>
 <pre><span class="type">int</span> <span class="func">update</span>(<span class="type">int</span> pre, <span class="type">int</span> l, <span class="type">int</span> r, <span class="type">int</span> x) {
     <span class="type">int</span> p = ++tot; t[p] = t[pre];  <span class="cmt">// 复制节点</span>
@@ -96,8 +115,19 @@ code { font-family: 'Fira Code', 'Consolas', monospace; }
     <span class="func">pushup</span>(p); <span class="kw">return</span> p;
 }</pre>
 <p><span class="accent">每次修改只新建 O(log n) 个节点</span></p>
-</div>
 
+<aside class="notes">【讲解】💻 代码模板 — 线段树合并 &amp; 可持久化
+结合讲义《💻 代码模板》强调：
+· // ========== 多懒标记线段树（加法 + 乘法） ==========
+· struct Node {
+· long long sum, add, mul;
+· } tree[4 * MAXN];
+· void build(int p, int l, int r) {
+幻灯片上可见要点：
+· 每次修改只新建 O(log n) 个节点
+代码页节奏：先读懂输入输出 → 再走主流程 → 最后点出易错点（边界/类型/下标）。
+可让学生预测下一行输出，再运行对照。</aside>
+</div>
 <div class="slide" id="s5">
 <h1>⚠️ 易错点与优化技巧</h1>
 <ul>
@@ -109,24 +139,45 @@ code { font-family: 'Fira Code', 'Consolas', monospace; }
 <li><span class="accent">✔ mid防溢出</span> — l + (r-l)/2 而非 (l+r)/2</li>
 <li><span class="accent">✔ 主席树静态区间K小</span> — 版本前缀和做差</li>
 </ul>
-</div>
 
+<aside class="notes">【讲解】⚠️ 易错点与优化技巧
+结合讲义《⚠️ 易错点与优化技巧》强调：
+· 多懒标记顺序：必须遵循"先乘后加"原则，乘法对加法标记也有影响
+· 顺序一致性：pushdown 和 update 中的乘法/加法顺序必须一致
+· 取模运算：多懒标记配合取模时，所有运算都需要取模
+· 动态开点的空间：通常开到 操作数 × log(值域)，约 20~40 倍
+· 线段树合并不回溯：合并后原树可能被修改，注意是否需要备份
+幻灯片上可见要点：
+· ⚠ 多懒标记顺序 — 必须"先乘后加"，pushdown和update一致
+· ⚠ 加法标记被乘法影响 — add[p] = add[p] * mu + ad
+· ⚠ 动态开点空间 — 开到 操作数×log(值域)，约30~40倍
+· ⚠ 线段树合并不回溯 — 原树可能被破坏，必要时先复制
+讲解时放慢关键术语；用 1 个生活类比 + 1 个反例加深印象。</aside>
+</div>
 <div class="slide" id="s6">
 <h1>📝 真题精练</h1>
 <h3>真题一：区间加法+乘法+求和（模 P）</h3>
 <p><span class="info">n, m ≤ 10⁵ | 三种操作：乘、加、求和</span></p>
 <p>要点：apply 统一处理、pushdown 正确传递、取模</p>
-
 <h3 style="margin-top:20px">真题二：静态区间第 K 小（主席树）</h3>
 <p><span class="info">n, q ≤ 2×10⁵ | 在线询问任意区间第K小</span></p>
 <p>要点：离散化、前缀版本树、两版本做差在线段树上二分</p>
-
 <div style="background:#0d1117; padding:14px; border-radius:8px; border:1px solid #30363d; margin-top:16px">
 <p><span class="accent">复杂度分析：</span></p>
 <p>真题一：O((n+m) log n) | 真题二：O((n+q) log n)，空间 O(n log n)</p>
 </div>
-</div>
 
+<aside class="notes">【讲解】📝 真题精练
+本页要点（照着讲即可）：
+· n, m ≤ 10⁵ | 三种操作：乘、加、求和
+· 要点：apply 统一处理、pushdown 正确传递、取模
+· n, q ≤ 2×10⁵ | 在线询问任意区间第K小
+· 要点：离散化、前缀版本树、两版本做差在线段树上二分
+· 复杂度分析：
+· 真题一：O((n+m) log n) | 真题二：O((n+q) log n)，空间 O(n log n)
+练习页节奏：先独立想 1 分钟 → 再点拨思路 → 最后对答案讲为什么。
+可联系：区间加法乘法混合、第K小数</aside>
+</div>
 <div class="slide" id="s7">
 <h1>🎯 本课小结</h1>
 <div style="display:grid; grid-template-columns:1fr 1fr; gap:16px; margin-top:20px">
@@ -155,8 +206,19 @@ code { font-family: 'Fira Code', 'Consolas', monospace; }
 <p>静态区间第K小</p>
 </div>
 </div>
-</div>
 
+<aside class="notes">【收尾】回顾本课主线：🎯 本课小结
+对照大纲再过一遍：区间修改、多懒标记、权值线段树、线段树合并
+板书/口述要点：
+· 先乘后加原则
+· apply 统一更新
+· 加法标记 × 乘法系数
+· 维护值域 → 第K小
+· 动态开点 → 处理大值域
+· 线段树二分 O(log V)
+课后任务：区间加法乘法混合、第K小数
+结束前留 2 分钟答疑；布置 1 道小练习检验是否真正掌握。</aside>
+</div>
 <div class="nav">
 <button onclick="prevSlide()">◀ 上一页</button>
 <span class="page-indicator" id="pageNum">1 / 7</span>

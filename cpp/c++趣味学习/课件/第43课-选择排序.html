@@ -1,10 +1,11 @@
 <!DOCTYPE html>
+
 <html lang="zh-CN">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>第43课：快刀斩乱麻——选择排序</title>
-    <style>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>第43课：快刀斩乱麻——选择排序</title>
+<style>
         * { margin: 0; padding: 0; box-sizing: border-box; }
         body {
             font-family: 'PingFang SC', 'Microsoft YaHei', sans-serif;
@@ -69,78 +70,109 @@
     </style>
 </head>
 <body>
-    <div class="slides-container">
-        <!-- ===== Slide 1: Title Slide ===== -->
-        <div class="slide active" id="slide1">
-            <span class="emoji-big">🎯</span>
-            <h1>第43课：快刀斩乱麻——选择排序</h1>
-            <p style="text-align:center; color:#666;">进阶阶段 | 课时：45分钟</p>
-            <p style="text-align:center; margin-top:20px; font-size:1.3em;">⚡ 一眼挑出最小的 ⚡</p>
-            <div style="text-align:center; margin-top:30px;">
-                <span class="badge">找最值</span>
-                <span class="badge">交换归位</span>
-                <span class="badge">n-1轮</span>
-                <span class="badge">减少交换</span>
-            </div>
-        </div>
+<div class="slides-container">
+<!-- ===== Slide 1: Title Slide ===== -->
+<div class="slide active" id="slide1">
+<span class="emoji-big">🎯</span>
+<h1>第43课：快刀斩乱麻——选择排序</h1>
+<p style="text-align:center; color:#666;">进阶阶段 | 课时：45分钟</p>
+<p style="text-align:center; margin-top:20px; font-size:1.3em;">⚡ 一眼挑出最小的 ⚡</p>
+<div style="text-align:center; margin-top:30px;">
+<span class="badge">找最值</span>
+<span class="badge">交换归位</span>
+<span class="badge">n-1轮</span>
+<span class="badge">减少交换</span>
+</div>
 
-        <!-- ===== Slide 2: Learning Objectives ===== -->
-        <div class="slide" id="slide2">
-            <h2>🎯 学习目标</h2>
-            <ul>
-                <li>理解<strong>选择排序的基本思想</strong>——"找最值然后交换"，就像从筐里挑最小的苹果</li>
-                <li>掌握选择排序的<strong>代码实现</strong>：外层控制轮次，内层找最值下标</li>
-                <li>理解<strong>"记录最小下标"的技巧</strong>，知道为什么不能直接交换</li>
-                <li>能够<strong>比较选择排序和冒泡排序</strong>的异同，理解为什么选择排序交换更少</li>
-            </ul>
-            <div class="tip-box" style="margin-top:25px;">
-                <strong>💡 想一想：</strong><br>
+<aside class="notes">【开场】第 1/6 页 · 快刀斩乱麻——选择排序
+用 30 秒说明本课目标与学完能做什么，再进入正题。
+大纲考点：选择排序、最值交换
+配套练习方向：🎯 一眼挑出最小的
+封面关键词：
+· 进阶阶段 | 课时：45分钟
+· ⚡ 一眼挑出最小的 ⚡
+互动：问学生「今天最想搞清楚什么？」，收 1–2 个期待。</aside>
+</div>
+<!-- ===== Slide 2: Learning Objectives ===== -->
+<div class="slide" id="slide2">
+<h2>🎯 学习目标</h2>
+<ul>
+<li>理解<strong>选择排序的基本思想</strong>——"找最值然后交换"，就像从筐里挑最小的苹果</li>
+<li>掌握选择排序的<strong>代码实现</strong>：外层控制轮次，内层找最值下标</li>
+<li>理解<strong>"记录最小下标"的技巧</strong>，知道为什么不能直接交换</li>
+<li>能够<strong>比较选择排序和冒泡排序</strong>的异同，理解为什么选择排序交换更少</li>
+</ul>
+<div class="tip-box" style="margin-top:25px;">
+<strong>💡 想一想：</strong><br/>
                 你有一筐大小不一的苹果，要从小到大排列。你会每次挑出最小的那个，还是每次都把相邻的两个苹果比较交换？哪种方法更快？
             </div>
-        </div>
 
-        <!-- ===== Slide 3: Core Knowledge ===== -->
-        <div class="slide" id="slide3">
-            <h2>📖 什么是选择排序？</h2>
-            <p>选择排序的核心：<strong>数组分成"已排序区"和"未排序区"，每轮从未排序区中选出最小的元素，放到已排序区的末尾。</strong></p>
-
-            <h3>算法步骤（从小到大）</h3>
-            <div class="step-box">
-                <strong>第①步：</strong>从 arr[0] 到 arr[n-1] 中，找到最小元素的下标 minIndex
+<aside class="notes">【讲解】🎯 学习目标
+结合讲义《学习目标》强调：
+· 理解选择排序的基本思想——"找最值然后交换"
+· 掌握选择排序的代码实现（从小到大 / 从大到小）
+· 理解"找最值然后交换"的逻辑，掌握记录最小下标而不是直接交换的技巧
+· 能够比较选择排序和冒泡排序的异同，理解它们的适用场景
+幻灯片上可见要点：
+· 理解 选择排序的基本思想 ——"找最值然后交换"，就像从筐里挑最小的苹果
+· 选择排序的基本思想
+· 掌握选择排序的 代码实现 ：外层控制轮次，内层找最值下标
+· 代码实现
+讲解时放慢关键术语；用 1 个生活类比 + 1 个反例加深印象。
+本课大纲考点（可适时点题）：选择排序、最值交换</aside>
+</div>
+<!-- ===== Slide 3: Core Knowledge ===== -->
+<div class="slide" id="slide3">
+<h2>📖 什么是选择排序？</h2>
+<p>选择排序的核心：<strong>数组分成"已排序区"和"未排序区"，每轮从未排序区中选出最小的元素，放到已排序区的末尾。</strong></p>
+<h3>算法步骤（从小到大）</h3>
+<div class="step-box">
+<strong>第①步：</strong>从 arr[0] 到 arr[n-1] 中，找到最小元素的下标 minIndex
             </div>
-            <div class="step-box">
-                <strong>第②步：</strong>将 arr[minIndex] 与 arr[0] 交换 —— 第 1 个位置排好了！
+<div class="step-box">
+<strong>第②步：</strong>将 arr[minIndex] 与 arr[0] 交换 —— 第 1 个位置排好了！
             </div>
-            <div class="step-box">
-                <strong>第③步：</strong>从 arr[1] 到 arr[n-1] 中，再找最小元素的下标
+<div class="step-box">
+<strong>第③步：</strong>从 arr[1] 到 arr[n-1] 中，再找最小元素的下标
             </div>
-            <div class="step-box">
-                <strong>第④步：</strong>将 arr[minIndex] 与 arr[1] 交换 —— 第 2 个位置排好了！
+<div class="step-box">
+<strong>第④步：</strong>将 arr[minIndex] 与 arr[1] 交换 —— 第 2 个位置排好了！
             </div>
-            <div class="step-box">
-                <strong>重复以上……</strong>直到第 n-1 个位置也排好。最后一个元素自动归位！
+<div class="step-box">
+<strong>重复以上……</strong>直到第 n-1 个位置也排好。最后一个元素自动归位！
             </div>
-
-            <h3>与冒泡排序的区别</h3>
-            <table class="compare-table">
-                <tr><th>比较维度</th><th>冒泡排序 🫧</th><th>选择排序 ⚡</th></tr>
-                <tr><td>核心操作</td><td>相邻元素两两比较并交换</td><td>先找最值，再一次性交换</td></tr>
-                <tr><td>每轮交换次数</td><td>可能很多次</td><td>最多 1 次</td></tr>
-                <tr><td>总交换次数</td><td>最多约 n²/2 次</td><td>最多 n-1 次</td></tr>
-                <tr><td>比喻</td><td>像气泡慢慢冒上来</td><td>像快刀一下子切到位</td></tr>
-            </table>
-
-            <div class="highlight-box">
-                <strong>🔑 关键技巧：记录最小值的下标</strong><br>
-                在内层循环中，我们<strong>不直接交换</strong>，而是用一个变量 <code>minIndex</code> 记录当前找到的最小值的下标。等内层循环结束后，再把 arr[i] 和 arr[minIndex] 交换。<br>
+<h3>与冒泡排序的区别</h3>
+<table class="compare-table">
+<tr><th>比较维度</th><th>冒泡排序 🫧</th><th>选择排序 ⚡</th></tr>
+<tr><td>核心操作</td><td>相邻元素两两比较并交换</td><td>先找最值，再一次性交换</td></tr>
+<tr><td>每轮交换次数</td><td>可能很多次</td><td>最多 1 次</td></tr>
+<tr><td>总交换次数</td><td>最多约 n²/2 次</td><td>最多 n-1 次</td></tr>
+<tr><td>比喻</td><td>像气泡慢慢冒上来</td><td>像快刀一下子切到位</td></tr>
+</table>
+<div class="highlight-box">
+<strong>🔑 关键技巧：记录最小值的下标</strong><br/>
+                在内层循环中，我们<strong>不直接交换</strong>，而是用一个变量 <code>minIndex</code> 记录当前找到的最小值的下标。等内层循环结束后，再把 arr[i] 和 arr[minIndex] 交换。<br/>
                 这样做的好处是：每轮只做 1 次交换，效率最高！
             </div>
-        </div>
 
-        <!-- ===== Slide 4: Example Code ===== -->
-        <div class="slide" id="slide4">
-            <h2>💻 选择排序代码（从小到大）</h2>
-            <div class="code-block">// 选择排序：从小到大排列
+<aside class="notes">【讲解】📖 什么是选择排序？
+结合讲义《1. 什么是选择排序？》强调：
+· 选择排序是一种简单直观的排序算法。它的基本思想是：把数组分成"已排序区"和"未排序区"两部分。每一轮从"未排序区"中找到最小（或最大）的元素，把它和"未排序区"的第一个元素交换位置，这样"已排序区"就扩大了一个位置，"未排序区"就缩小了一个位置。
+· 就像挑苹果的比喻：每次从筐里挑出最小的苹果，按顺序放到桌子上排好，直到筐里的苹果全部挑完。
+· 从数组第 1 个位置到最后一个位置，找出最小元素的位置（下标）
+· 将找到的最小元素与第 1 个位置的元素交换
+· 第 1 个位置排好了，接下来从第 2 个位置到最后一个位置，再找最小的
+幻灯片上可见要点：
+· 选择排序的核心： 数组分成"已排序区"和"未排序区"，每轮从未排序区中选出最小的元素，放到已排序区的末尾。
+· 数组分成"已排序区"和"未排序区"，每轮从未排序区中选出最小的元素，放到已排序区的末尾。
+· 第①步：
+· 第②步：
+讲解时放慢关键术语；用 1 个生活类比 + 1 个反例加深印象。</aside>
+</div>
+<!-- ===== Slide 4: Example Code ===== -->
+<div class="slide" id="slide4">
+<h2>💻 选择排序代码（从小到大）</h2>
+<div class="code-block">// 选择排序：从小到大排列
 #include &lt;iostream&gt;
 using namespace std;
 
@@ -174,9 +206,8 @@ int main() {
     }  // 输出：11 12 22 25 64
     return 0;
 }</div>
-
-            <h3>⚡ 从大到小排列——只需改一个符号！</h3>
-            <div class="code-block">// 把内层 if 中的 &lt; 改成 &gt; 即可！
+<h3>⚡ 从大到小排列——只需改一个符号！</h3>
+<div class="code-block">// 把内层 if 中的 &lt; 改成 &gt; 即可！
 for (int i = 0; i &lt; n - 1; i++) {
     int maxIndex = i;
     for (int j = i + 1; j &lt; n; j++) {
@@ -188,31 +219,33 @@ for (int i = 0; i &lt; n - 1; i++) {
         swap(arr[i], arr[maxIndex]);
     }
 }</div>
-
-            <div class="tip-box">
-                <strong>✅ 记忆口诀：</strong><br>
-                外层轮次 i 开路，内层遍历找最小；<br>
+<div class="tip-box">
+<strong>✅ 记忆口诀：</strong><br/>
+                外层轮次 i 开路，内层遍历找最小；<br/>
                 minIndex 记位置，一轮只换一次位！
             </div>
-        </div>
 
-        <!-- ===== Slide 5: Practice ===== -->
-        <div class="slide" id="slide5">
-            <h2>🎮 趣味练习</h2>
-
-            <h3>练习1：手动模拟 🔍</h3>
-            <p>给定数组 <code>[29, 10, 14, 37, 13]</code>，手动模拟选择排序（从小到大）的每一轮过程，写出每轮排序后的数组。</p>
-            <div class="tip-box">
-                <strong>✅ 答案：</strong><br>
-                第1轮：10, 29, 14, 37, 13（最小10，与29交换）<br>
-                第2轮：10, 13, 14, 37, 29（最小13，与29交换）<br>
-                第3轮：10, 13, 14, 37, 29（14已在正确位置）<br>
+<aside class="notes">【讲解】💻 选择排序代码（从小到大）
+本页要点（照着讲即可）：
+· ✅ 记忆口诀：
+代码页节奏：先读懂输入输出 → 再走主流程 → 最后点出易错点（边界/类型/下标）。
+可让学生预测下一行输出，再运行对照。</aside>
+</div>
+<!-- ===== Slide 5: Practice ===== -->
+<div class="slide" id="slide5">
+<h2>🎮 趣味练习</h2>
+<h3>练习1：手动模拟 🔍</h3>
+<p>给定数组 <code>[29, 10, 14, 37, 13]</code>，手动模拟选择排序（从小到大）的每一轮过程，写出每轮排序后的数组。</p>
+<div class="tip-box">
+<strong>✅ 答案：</strong><br/>
+                第1轮：10, 29, 14, 37, 13（最小10，与29交换）<br/>
+                第2轮：10, 13, 14, 37, 29（最小13，与29交换）<br/>
+                第3轮：10, 13, 14, 37, 29（14已在正确位置）<br/>
                 第4轮：10, 13, 14, 29, 37（最小29，与37交换）
             </div>
-
-            <h3>练习2：代码找茬 🐛</h3>
-            <p>下面这段选择排序代码有一个错误，你能找到吗？</p>
-            <div class="code-block">for (int i = 0; i &lt; n; i++) {       // ← 这里有问题！
+<h3>练习2：代码找茬 🐛</h3>
+<p>下面这段选择排序代码有一个错误，你能找到吗？</p>
+<div class="code-block">for (int i = 0; i &lt; n; i++) {       // ← 这里有问题！
     int minIndex = i;
     for (int j = i + 1; j &lt; n; j++) {
         if (arr[j] &lt; arr[minIndex])
@@ -222,48 +255,66 @@ for (int i = 0; i &lt; n - 1; i++) {
     arr[i] = arr[minIndex];
     arr[minIndex] = temp;
 }</div>
-            <div class="highlight-box">
-                <strong>🐛 错误：</strong>外层循环应该写 <code>i &lt; n - 1</code>，而不是 <code>i &lt; n</code>。<br>
+<div class="highlight-box">
+<strong>🐛 错误：</strong>外层循环应该写 <code>i &lt; n - 1</code>，而不是 <code>i &lt; n</code>。<br/>
                 因为当 i = n-1 时，只剩下最后一个元素，它自然已经在正确位置了！写成 i &lt; n 会让程序多做一轮无用的循环。
             </div>
-
-            <h3>挑战任务 🏆</h3>
-            <p><strong>排序算法大比拼：</strong>随机生成10个整数（1~100），分别用<strong>冒泡排序</strong>和<strong>选择排序</strong>排序，统计各自的<strong>比较次数</strong>和<strong>交换次数</strong>。分析为什么选择排序的交换次数更少？</p>
-            <div class="tip-box">
-                <strong>💡 提示：</strong>在程序里加两个计数器变量 <code>compareCount</code> 和 <code>swapCount</code>，每次比较和交换时各+1，最后输出看结果！
+<h3>挑战任务 🏆</h3>
+<p><strong>排序算法大比拼：</strong>随机生成10个整数（1~100），分别用<strong>冒泡排序</strong>和<strong>选择排序</strong>排序，统计各自的<strong>比较次数</strong>和<strong>交换次数</strong>。分析为什么选择排序的交换次数更少？</p>
+<div class="tip-box">
+<strong>💡 提示：</strong>在程序里加两个计数器变量 <code>compareCount</code> 和 <code>swapCount</code>，每次比较和交换时各+1，最后输出看结果！
             </div>
-        </div>
 
-        <!-- ===== Slide 6: Summary ===== -->
-        <div class="slide" id="slide6">
-            <h2>📝 本课小结</h2>
-            <ul>
-                <li><strong>核心思想：</strong>每轮"找最值 → 交换归位"，像挑苹果一样从小到大排列</li>
-                <li><strong>代码结构：</strong>外层循环控制轮次（n-1轮），内层循环找最值下标（从 i+1 开始）</li>
-                <li><strong>关键技巧：</strong>用 <code>minIndex</code> 记录最小值的下标，循环结束后再交换——每轮最多只交换 1 次</li>
-                <li><strong>与冒泡排序的区别：</strong>冒泡排序每轮可能交换多次，选择排序每轮最多只交换 1 次，所以选择排序的<strong>交换次数更少</strong></li>
-                <li><strong>方向切换：</strong>从小到大用 <code>arr[j] &lt; arr[minIndex]</code>，从大到小用 <code>arr[j] &gt; arr[maxIndex]</code></li>
-            </ul>
-
-            <div class="highlight-box" style="margin-top:20px;">
-                <strong>🔑 记住口诀：</strong><br>
-                选择排序快刀斩，每轮挑出最值来；<br>
-                下标先记不着急，一轮一次交换好；<br>
-                冒泡慢慢往上冒，选择一刀切到位；<br>
+<aside class="notes">【讲解】🎮 趣味练习
+本页要点（照着讲即可）：
+· 给定数组 [29, 10, 14, 37, 13] ，手动模拟选择排序（从小到大）的每一轮过程，写出每轮排序后的数组。
+· ✅ 答案：
+· 下面这段选择排序代码有一个错误，你能找到吗？
+· 🐛 错误：
+· 排序算法大比拼： 随机生成10个整数（1~100），分别用 冒泡排序 和 选择排序 排序，统计各自的 比较次数 和 交换次数 。分析为什么选择排序的交换次数更少？
+· 排序算法大比拼：
+练习页节奏：先独立想 1 分钟 → 再点拨思路 → 最后对答案讲为什么。
+可联系：🎯 一眼挑出最小的</aside>
+</div>
+<!-- ===== Slide 6: Summary ===== -->
+<div class="slide" id="slide6">
+<h2>📝 本课小结</h2>
+<ul>
+<li><strong>核心思想：</strong>每轮"找最值 → 交换归位"，像挑苹果一样从小到大排列</li>
+<li><strong>代码结构：</strong>外层循环控制轮次（n-1轮），内层循环找最值下标（从 i+1 开始）</li>
+<li><strong>关键技巧：</strong>用 <code>minIndex</code> 记录最小值的下标，循环结束后再交换——每轮最多只交换 1 次</li>
+<li><strong>与冒泡排序的区别：</strong>冒泡排序每轮可能交换多次，选择排序每轮最多只交换 1 次，所以选择排序的<strong>交换次数更少</strong></li>
+<li><strong>方向切换：</strong>从小到大用 <code>arr[j] &lt; arr[minIndex]</code>，从大到小用 <code>arr[j] &gt; arr[maxIndex]</code></li>
+</ul>
+<div class="highlight-box" style="margin-top:20px;">
+<strong>🔑 记住口诀：</strong><br/>
+                选择排序快刀斩，每轮挑出最值来；<br/>
+                下标先记不着急，一轮一次交换好；<br/>
+                冒泡慢慢往上冒，选择一刀切到位；<br/>
                 n减一轮就排好，从小到大真巧妙！
             </div>
-            <p style="text-align:center; margin-top:20px; font-size:1.3em;">🎉 下一课预告：插入排序——像整理扑克牌一样排序</p>
-        </div>
+<p style="text-align:center; margin-top:20px; font-size:1.3em;">🎉 下一课预告：插入排序——像整理扑克牌一样排序</p>
 
-        <!-- Navigation -->
-        <div class="nav-buttons">
-            <button class="nav-btn" onclick="prevSlide()">◀ 上一页</button>
-            <span class="page-indicator" id="pageIndicator">1 / 6</span>
-            <button class="nav-btn" onclick="nextSlide()">下一页 ▶</button>
-        </div>
-    </div>
-
-    <script>
+<aside class="notes">【收尾】回顾本课主线：📝 本课小结
+对照大纲再过一遍：选择排序、最值交换
+板书/口述要点：
+· 核心思想： 每轮"找最值 → 交换归位"，像挑苹果一样从小到大排列
+· 核心思想：
+· 代码结构： 外层循环控制轮次（n-1轮），内层循环找最值下标（从 i+1 开始）
+· 代码结构：
+· 关键技巧： 用 minIndex 记录最小值的下标，循环结束后再交换——每轮最多只交换 1 次
+· 关键技巧：
+课后任务：🎯 一眼挑出最小的
+结束前留 2 分钟答疑；布置 1 道小练习检验是否真正掌握。</aside>
+</div>
+<!-- Navigation -->
+<div class="nav-buttons">
+<button class="nav-btn" onclick="prevSlide()">◀ 上一页</button>
+<span class="page-indicator" id="pageIndicator">1 / 6</span>
+<button class="nav-btn" onclick="nextSlide()">下一页 ▶</button>
+</div>
+</div>
+<script>
         let currentSlide = 0;
         const slides = document.querySelectorAll('.slide');
         const totalSlides = slides.length;

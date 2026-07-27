@@ -1,8 +1,9 @@
 <!DOCTYPE html>
+
 <html lang="zh-CN">
 <head>
-<meta charset="utf-8">
-<meta name="viewport" content="width=device-width,initial-scale=1">
+<meta charset="utf-8"/>
+<meta content="width=device-width,initial-scale=1" name="viewport"/>
 <title>第33课：树形DP基础 — CSP-S 竞赛培训</title>
 <style>
 /* ===== CSS Reset & Variables ===== */
@@ -152,114 +153,145 @@ h4{font-size:16px;font-weight:600;color:var(--text-1)}
 </head>
 <body>
 <div class="deck">
-
 <!-- ===== Slide 1: Cover ===== -->
 <section class="slide cover is-active" data-index="0">
-  <p class="kicker">CSP-S 竞赛培训 · 第33课</p>
-  <h1 class="mt-s">树形DP<em>基础</em></h1>
-  <p class="lede mt-m" style="max-width:700px">
+<p class="kicker">CSP-S 竞赛培训 · 第33课</p>
+<h1 class="mt-s">树形DP<em>基础</em></h1>
+<p class="lede mt-m" style="max-width:700px">
     将动态规划的思想应用到树结构上，利用树的递归性质与后序遍历，
     掌握<strong>最大独立集</strong>与<strong>最小点覆盖</strong>两大经典模型。
   </p>
-  <div class="row mt-l gap-m">
-    <span class="tag">难度：提高级</span>
-    <span class="tag">前置：线性DP · DFS</span>
-    <span class="tag">语言：C++</span>
-  </div>
-  <p class="dim mt-m" style="font-size:13px">预计时长 60 分钟 · 包含 2 道经典例题</p>
-</section>
+<div class="row mt-l gap-m">
+<span class="tag">难度：提高级</span>
+<span class="tag">前置：线性DP · DFS</span>
+<span class="tag">语言：C++</span>
+</div>
+<p class="dim mt-m" style="font-size:13px">预计时长 60 分钟 · 包含 2 道经典例题</p>
 
+<aside class="notes">【开场】第 1/6 页 · 树形DP基础
+用 30 秒说明本课目标与学完能做什么，再进入正题。
+大纲考点：树上DFS+DP、最大独立集、树的最小点覆盖
+配套练习方向：没有上司的舞会、战略游戏
+封面关键词：
+· CSP-S 竞赛培训 · 第33课
+· 将动态规划的思想应用到树结构上，利用树的递归性质与后序遍历，
+ 掌握 最大独立集 与 最小点覆盖 两大经典模型。
+· 最大独立集
+· 最小点覆盖
+互动：问学生「今天最想搞清楚什么？」，收 1–2 个期待。</aside>
+</section>
 <!-- ===== Slide 2: Knowledge Intro ===== -->
 <section class="slide split" data-index="1">
-  <aside class="sidebar">
-    <div class="brand">CSP-S 树形DP</div>
-    <h5>本课要点</h5>
-    <ul class="progress-list">
-      <li class="current">树形DP核心思想</li>
-      <li>最大独立集</li>
-      <li>最小点覆盖</li>
-      <li>代码模板</li>
-      <li>真题精练</li>
-    </ul>
-    <h5>关键概念</h5>
-    <p class="dim" style="font-size:13px">后序遍历 · 状态设计 · 邻接表 · 最优子结构</p>
-  </aside>
-  <div class="main">
-    <p class="kicker">知识精讲</p>
-    <h2 class="mt-s">树形DP的核心<em>思想</em></h2>
-    <p class="lede mt-m">
+<aside class="sidebar">
+<div class="brand">CSP-S 树形DP</div>
+<h5>本课要点</h5>
+<ul class="progress-list">
+<li class="current">树形DP核心思想</li>
+<li>最大独立集</li>
+<li>最小点覆盖</li>
+<li>代码模板</li>
+<li>真题精练</li>
+</ul>
+<h5>关键概念</h5>
+<p class="dim" style="font-size:13px">后序遍历 · 状态设计 · 邻接表 · 最优子结构</p>
+</aside>
+<div class="main">
+<p class="kicker">知识精讲</p>
+<h2 class="mt-s">树形DP的核心<em>思想</em></h2>
+<p class="lede mt-m">
       树形DP是将动态规划与树的递归结构结合的高级算法。核心在于
       <strong>后序遍历</strong>：子节点的DP值计算完成后，再计算父节点。
     </p>
-    <div class="grid g2 mt-l gap-m">
-      <div class="card"><h4>核心特点</h4><p>利用树的递归结构，DFS后序遍历确保子问题先求解。状态通常分为"选/不选当前节点"两类。</p></div>
-      <div class="card"><h4>时间复杂度</h4><p>O(n) —— 每个节点和每条边各被访问一次。内存使用邻接表存储，空间 O(n)。</p></div>
-    </div>
-    <div class="formula mt-m"><b>DP 计算顺序（伪代码）：</b>
+<div class="grid g2 mt-l gap-m">
+<div class="card"><h4>核心特点</h4><p>利用树的递归结构，DFS后序遍历确保子问题先求解。状态通常分为"选/不选当前节点"两类。</p></div>
+<div class="card"><h4>时间复杂度</h4><p>O(n) —— 每个节点和每条边各被访问一次。内存使用邻接表存储，空间 O(n)。</p></div>
+</div>
+<div class="formula mt-m"><b>DP 计算顺序（伪代码）：</b>
 DFS(u, fa):
     for v in u的儿子:
         if v != fa:
             DFS(v, u)           // 先递归处理子树
             // 后序遍历：利用v的DP值更新u的DP值</div>
-  </div>
-</section>
+</div>
 
+<aside class="notes">【讲解】树形DP的核心 思想
+结合讲义《1. 树形DP的核心思想》强调：
+· 树形DP是将动态规划的思想应用到树结构上。树是一种无环连通图，其递归性质天然适合DP。
+· 核心特点：
+· 利用树的递归结构，通过DFS进行后序遍历
+· 子节点的DP值计算完成后，再计算父节点的DP值
+· 状态通常分为"选/不选当前节点"两类
+幻灯片上可见要点：
+· 树形DP核心思想
+· 最大独立集
+· 最小点覆盖
+· 代码模板
+讲解时放慢关键术语；用 1 个生活类比 + 1 个反例加深印象。
+本课大纲考点（可适时点题）：树上DFS+DP、最大独立集、树的最小点覆盖</aside>
+</section>
 <!-- ===== Slide 3: Principle Deduction ===== -->
 <section class="slide split" data-index="2">
-  <aside class="sidebar">
-    <div class="brand">CSP-S 树形DP</div>
-    <h5>本课要点</h5>
-    <ul class="progress-list">
-      <li class="done">树形DP核心思想</li>
-      <li class="current">最大独立集</li>
-      <li class="current">最小点覆盖</li>
-      <li>代码模板</li>
-      <li>真题精练</li>
-    </ul>
-    <h5>两个模型的联系</h5>
-    <p class="dim" style="font-size:13px">在树上：最大独立集 + 最小点覆盖 = n</p>
-  </aside>
-  <div class="main">
-    <p class="kicker">原理推导</p>
-    <h2 class="mt-s">两大经典<em>模型</em></h2>
-
-    <div class="card accent mt-m">
-      <h4 style="color:var(--accent-2)">模型一：最大独立集（没有上司的舞会）</h4>
-      <p style="margin:8px 0">在树中选择一个最大点集，使得任意两个被选中的点<strong>不相邻</strong>。</p>
-      <div class="formula" style="margin-top:8px"><b>状态转移：</b>
+<aside class="sidebar">
+<div class="brand">CSP-S 树形DP</div>
+<h5>本课要点</h5>
+<ul class="progress-list">
+<li class="done">树形DP核心思想</li>
+<li class="current">最大独立集</li>
+<li class="current">最小点覆盖</li>
+<li>代码模板</li>
+<li>真题精练</li>
+</ul>
+<h5>两个模型的联系</h5>
+<p class="dim" style="font-size:13px">在树上：最大独立集 + 最小点覆盖 = n</p>
+</aside>
+<div class="main">
+<p class="kicker">原理推导</p>
+<h2 class="mt-s">两大经典<em>模型</em></h2>
+<div class="card accent mt-m">
+<h4 style="color:var(--accent-2)">模型一：最大独立集（没有上司的舞会）</h4>
+<p style="margin:8px 0">在树中选择一个最大点集，使得任意两个被选中的点<strong>不相邻</strong>。</p>
+<div class="formula" style="margin-top:8px"><b>状态转移：</b>
 dp[u][0] = Σ max(dp[v][0], dp[v][1])    // 不选u，儿子随意
 dp[u][1] = w[u] + Σ dp[v][0]            // 选u，儿子都不能选</div>
-    </div>
-
-    <div class="card accent mt-m">
-      <h4 style="color:var(--accent-2)">模型二：最小点覆盖（战略游戏）</h4>
-      <p style="margin:8px 0">选择一个最小点集，使得每条边<strong>至少有一个端点</strong>被选中。</p>
-      <div class="formula" style="margin-top:8px"><b>状态转移：</b>
+</div>
+<div class="card accent mt-m">
+<h4 style="color:var(--accent-2)">模型二：最小点覆盖（战略游戏）</h4>
+<p style="margin:8px 0">选择一个最小点集，使得每条边<strong>至少有一个端点</strong>被选中。</p>
+<div class="formula" style="margin-top:8px"><b>状态转移：</b>
 dp[u][0] = Σ dp[v][1]                    // 不选u，儿子必须全选
 dp[u][1] = 1 + Σ min(dp[v][0], dp[v][1]) // 选u，儿子随意</div>
-    </div>
-  </div>
-</section>
+</div>
+</div>
 
+<aside class="notes">【讲解】两大经典 模型
+本页要点（照着讲即可）：
+· 树形DP核心思想
+· 最大独立集
+· 最小点覆盖
+· 代码模板
+· 真题精练
+· 在树上：最大独立集 + 最小点覆盖 = n
+讲解时放慢关键术语；用 1 个生活类比 + 1 个反例加深印象。</aside>
+</section>
 <!-- ===== Slide 4: Code Template ===== -->
 <section class="slide split" data-index="3">
-  <aside class="sidebar">
-    <div class="brand">CSP-S 树形DP</div>
-    <h5>本课要点</h5>
-    <ul class="progress-list">
-      <li class="done">树形DP核心思想</li>
-      <li class="done">最大独立集</li>
-      <li class="done">最小点覆盖</li>
-      <li class="current">代码模板</li>
-      <li>真题精练</li>
-    </ul>
-    <h5>易错提醒</h5>
-    <p class="dim" style="font-size:13px">① 先递归再更新 ② DFS传fa参数 ③ 邻接表存储 ④ 注意负权值</p>
-  </aside>
-  <div class="main">
-    <p class="kicker">代码模板</p>
-    <h2 class="mt-s">标准<em>模板</em> — 最大独立集</h2>
-    <div class="code-block mt-m"><span class="cmt">// 树形DP标准模板 —— 最大独立集</span>
+<aside class="sidebar">
+<div class="brand">CSP-S 树形DP</div>
+<h5>本课要点</h5>
+<ul class="progress-list">
+<li class="done">树形DP核心思想</li>
+<li class="done">最大独立集</li>
+<li class="done">最小点覆盖</li>
+<li class="current">代码模板</li>
+<li>真题精练</li>
+</ul>
+<h5>易错提醒</h5>
+<p class="dim" style="font-size:13px">① 先递归再更新 ② DFS传fa参数 ③ 邻接表存储 ④ 注意负权值</p>
+</aside>
+<div class="main">
+<p class="kicker">代码模板</p>
+<h2 class="mt-s">标准<em>模板</em> — 最大独立集</h2>
+<div class="code-block mt-m"><span class="cmt">// 树形DP标准模板 —— 最大独立集</span>
 <span class="pp">#include</span> <span class="str">&lt;bits/stdc++.h&gt;</span>
 <span class="kw">using</span> <span class="kw">namespace</span> <span class="dt">std</span>;
 
@@ -267,7 +299,6 @@ dp[u][1] = 1 + Σ min(dp[v][0], dp[v][1]) // 选u，儿子随意</div>
 <span class="dt">vector</span>&lt;<span class="dt">int</span>&gt; g[MAXN];
 <span class="dt">int</span> w[MAXN];                <span class="cmt">// 节点权值</span>
 <span class="dt">int</span> dp[MAXN][<span class="num">2</span>];            <span class="cmt">// dp[u][0]: 不选u; dp[u][1]: 选u</span>
-
 <span class="dt">void</span> <span class="fn">dfs</span>(<span class="dt">int</span> u, <span class="dt">int</span> fa) {
     dp[u][<span class="num">0</span>] = <span class="num">0</span>;
     dp[u][<span class="num">1</span>] = w[u];
@@ -290,86 +321,118 @@ dp[u][1] = 1 + Σ min(dp[v][0], dp[v][1]) // 选u，儿子随意</div>
     <span class="fn">dfs</span>(<span class="num">1</span>, <span class="num">0</span>);
     <span class="dt">cout</span> <span class="op">&lt;&lt;</span> <span class="fn">max</span>(dp[<span class="num">1</span>][<span class="num">0</span>], dp[<span class="num">1</span>][<span class="num">1</span>]) <span class="op">&lt;&lt;</span> <span class="str">'\n'</span>;
 }</div>
-  </div>
-</section>
+</div>
 
+<aside class="notes">【讲解】标准 模板 — 最大独立集
+结合讲义《2. 最大独立集（没有上司的舞会）》强调：
+· 问题描述： 在树中选择一个最大点集，使得任意两个被选中的点不相邻。
+· 状态设计：
+· dp[u][0]：不选节点 u 时，以 u 为根的子树中能选的最大点数（或最大权值和）
+· dp[u][1]：选节点 u 时，以 u 为根的子树中能选的最大点数（或最大权值和）
+· 状态转移：
+幻灯片上可见要点：
+· 树形DP核心思想
+· 最大独立集
+· 最小点覆盖
+· 代码模板
+代码页节奏：先读懂输入输出 → 再走主流程 → 最后点出易错点（边界/类型/下标）。
+可让学生预测下一行输出，再运行对照。</aside>
+</section>
 <!-- ===== Slide 5: Practice ===== -->
 <section class="slide split" data-index="4">
-  <aside class="sidebar">
-    <div class="brand">CSP-S 树形DP</div>
-    <h5>本课要点</h5>
-    <ul class="progress-list">
-      <li class="done">树形DP核心思想</li>
-      <li class="done">最大独立集</li>
-      <li class="done">最小点覆盖</li>
-      <li class="done">代码模板</li>
-      <li class="current">真题精练</li>
-    </ul>
-    <h5>对应题目</h5>
-    <p class="dim" style="font-size:13px">洛谷 P1352 · AcWing 285<br>洛谷 P2016 · AcWing 323</p>
-  </aside>
-  <div class="main">
-    <p class="kicker">真题精练</p>
-    <h2 class="mt-s">经典<em>例题</em></h2>
-
-    <div class="card accent mt-m">
-      <h4 style="color:var(--accent-2)">题1：没有上司的舞会</h4>
-      <p style="margin:6px 0;font-size:14px;">
+<aside class="sidebar">
+<div class="brand">CSP-S 树形DP</div>
+<h5>本课要点</h5>
+<ul class="progress-list">
+<li class="done">树形DP核心思想</li>
+<li class="done">最大独立集</li>
+<li class="done">最小点覆盖</li>
+<li class="done">代码模板</li>
+<li class="current">真题精练</li>
+</ul>
+<h5>对应题目</h5>
+<p class="dim" style="font-size:13px">洛谷 P1352 · AcWing 285<br/>洛谷 P2016 · AcWing 323</p>
+</aside>
+<div class="main">
+<p class="kicker">真题精练</p>
+<h2 class="mt-s">经典<em>例题</em></h2>
+<div class="card accent mt-m">
+<h4 style="color:var(--accent-2)">题1：没有上司的舞会</h4>
+<p style="margin:6px 0;font-size:14px;">
         某公司 n 个职员，关系构成一棵树。父节点是子节点的直接上司。
         每个职员有快乐指数 H_i。如果上司来了，直接下属就不来。
         <strong>求最大快乐指数总和。</strong>
-      </p>
-      <p style="font-size:12px;color:var(--text-3)">
+</p>
+<p style="font-size:12px;color:var(--text-3)">
         数据范围：n ≤ 6000, -128 ≤ H_i ≤ 127 · 时间 O(n)
       </p>
-    </div>
-
-    <div class="card accent mt-m">
-      <h4 style="color:var(--accent-2)">题2：战略游戏</h4>
-      <p style="margin:6px 0;font-size:14px;">
+</div>
+<div class="card accent mt-m">
+<h4 style="color:var(--accent-2)">题2：战略游戏</h4>
+<p style="margin:6px 0;font-size:14px;">
         树上有 n 个节点，放置最少的士兵观察所有边。
         每个士兵放在节点上可观察到所有与该节点相连的边。
         <strong>求最少需要多少士兵。</strong>
-      </p>
-      <p style="font-size:12px;color:var(--text-3)">
+</p>
+<p style="font-size:12px;color:var(--text-3)">
         数据范围：n ≤ 1500 · 时间 O(n) · 最小点覆盖模型
       </p>
-    </div>
-
-    <div class="callout mt-m">
-      <b>解题提示：</b> 题1是标准最大权独立集；题2是最小点覆盖。
+</div>
+<div class="callout mt-m">
+<b>解题提示：</b> 题1是标准最大权独立集；题2是最小点覆盖。
       两者在树上满足：最大独立集 + 最小点覆盖 = n。
     </div>
-  </div>
-</section>
-
-<!-- ===== Slide 6: Summary ===== -->
-<section class="slide cover" data-index="5">
-  <p class="kicker">本课小结 · 第33课</p>
-  <h1 class="mt-s">树形DP<em>基础</em>总结</h1>
-  <div class="grid g2 mt-l gap-m" style="max-width:900px;margin-left:auto;margin-right:auto;text-align:left">
-    <div class="card"><h4>✓ 后序遍历是核心</h4><p>先处理子树，再处理根节点。DFS(fa)防止无限递归。</p></div>
-    <div class="card"><h4>✓ 选/不选 维度</h4><p>dp[u][0] 和 dp[u][1] 是最经典的状态设计方案。</p></div>
-    <div class="card"><h4>✓ 两个经典模型</h4><p>最大独立集（不相邻选点）与最小点覆盖（覆盖所有边）。</p></div>
-    <div class="card"><h4>✓ 复杂度 O(n)</h4><p>每个节点访问一次，适合处理 n ≤ 10^5 的大规模数据。</p></div>
-  </div>
-  <div class="callout mt-l" style="max-width:700px;margin-left:auto;margin-right:auto;text-align:left">
-    <b>下节课预告：第34课 树形DP进阶。</b> 树的直径（两种方法）、树上背包（选课问题）、换根DP（二次扫描法）。
-  </div>
-</section>
-
 </div>
 
+<aside class="notes">【讲解】经典 例题
+结合讲义《题目1：没有上司的舞会（经典例题）》强调：
+· 题目描述：
+· 某公司有 n 个职员，编号为 1~n。他们之间的关系就像一棵以 1 号节点为根的树，父节点是子节点的直接上司。每个职员有一个快乐指数 H_i。现在要召开一个舞会，要求：如果某个职员的直接上司来了，这个职员就不来。求最大的快乐指数总和。
+· 数据范围： 1 ≤ n ≤ 6000, -128 ≤ H_i ≤ 127
+· AC代码与复杂度分析：
+· // 见程序文件夹中的 lesson33_tree_dp_basic.cpp
+幻灯片上可见要点：
+· 树形DP核心思想
+· 最大独立集
+· 最小点覆盖
+· 代码模板
+讲解时放慢关键术语；用 1 个生活类比 + 1 个反例加深印象。</aside>
+</section>
+<!-- ===== Slide 6: Summary ===== -->
+<section class="slide cover" data-index="5">
+<p class="kicker">本课小结 · 第33课</p>
+<h1 class="mt-s">树形DP<em>基础</em>总结</h1>
+<div class="grid g2 mt-l gap-m" style="max-width:900px;margin-left:auto;margin-right:auto;text-align:left">
+<div class="card"><h4>✓ 后序遍历是核心</h4><p>先处理子树，再处理根节点。DFS(fa)防止无限递归。</p></div>
+<div class="card"><h4>✓ 选/不选 维度</h4><p>dp[u][0] 和 dp[u][1] 是最经典的状态设计方案。</p></div>
+<div class="card"><h4>✓ 两个经典模型</h4><p>最大独立集（不相邻选点）与最小点覆盖（覆盖所有边）。</p></div>
+<div class="card"><h4>✓ 复杂度 O(n)</h4><p>每个节点访问一次，适合处理 n ≤ 10^5 的大规模数据。</p></div>
+</div>
+<div class="callout mt-l" style="max-width:700px;margin-left:auto;margin-right:auto;text-align:left">
+<b>下节课预告：第34课 树形DP进阶。</b> 树的直径（两种方法）、树上背包（选课问题）、换根DP（二次扫描法）。
+  </div>
+
+<aside class="notes">【开场】第 6/6 页 · 树形DP基础
+用 30 秒说明本课目标与学完能做什么，再进入正题。
+大纲考点：树上DFS+DP、最大独立集、树的最小点覆盖
+配套练习方向：没有上司的舞会、战略游戏
+封面关键词：
+· 本课小结 · 第33课
+· ✓ 后序遍历是核心
+· 先处理子树，再处理根节点。DFS(fa)防止无限递归。
+· ✓ 选/不选 维度
+互动：问学生「今天最想搞清楚什么？」，收 1–2 个期待。</aside>
+</section>
+</div>
 <!-- ===== Navigation Bar ===== -->
 <nav class="nav-bar">
-  <button class="nav-btn" id="prevBtn" onclick="goPrev()">← 上一页</button>
-  <div style="display:flex;align-items:center;gap:12px">
-    <div class="progress-dots" id="dots"></div>
-    <span class="slide-counter" id="counter">1 / 6</span>
-  </div>
-  <button class="nav-btn" id="nextBtn" onclick="goNext()">下一页 →</button>
+<button class="nav-btn" id="prevBtn" onclick="goPrev()">← 上一页</button>
+<div style="display:flex;align-items:center;gap:12px">
+<div class="progress-dots" id="dots"></div>
+<span class="slide-counter" id="counter">1 / 6</span>
+</div>
+<button class="nav-btn" id="nextBtn" onclick="goNext()">下一页 →</button>
 </nav>
-
 <script>
 /* ===== Slide Navigation ===== */
 let current = 0;

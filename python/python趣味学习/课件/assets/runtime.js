@@ -4,7 +4,7 @@
  * Features:
  *   ← → / space / PgUp PgDn / Home End  navigation
  *   F  fullscreen
- *   S  presenter mode (opens a NEW WINDOW with current/next slide preview + notes + timer)
+ *   S  presenter mode (opens a NEW WINDOW with large current slide + next + notes; resizable cards)
  *       The original window stays as audience view, synced via BroadcastChannel.
  *       Slide previews use CSS transform:scale() at design resolution for pixel-perfect layout.
  *   N  quick notes overlay (bottom drawer)
@@ -302,11 +302,11 @@
 
     /* ========== PRESENTER MODE — Magnetic-card popup window ========== */
     /* Opens a new window with 4 draggable, resizable cards:
-     *   CURRENT  — iframe(?preview=N)   pixel-perfect preview of current slide
+     *   CURRENT  — iframe(?preview=N)   large pixel-perfect preview of current slide
      *   NEXT     — iframe(?preview=N+1) pixel-perfect preview of next slide
      *   SCRIPT   — large speaker notes (逐字稿)
-     *   TIMER    — elapsed timer + page counter + controls
-     * Cards remember position/size in localStorage.
+     *   CONTROL  — page counter + prev/next (no timer)
+     * Cards remember position/size in localStorage; regions fully resizable.
      * Two windows sync via BroadcastChannel.
      */
     let presenterWin = null;
@@ -349,7 +349,7 @@
       const deckUrlJSON = JSON.stringify(deckUrl);
       const channelJSON = JSON.stringify(channelName);
       const themeJSON = JSON.stringify(currentTheme || '');
-      const storageKey = 'html-ppt-presenter:' + location.pathname;
+      const storageKey = 'html-ppt-presenter-v2:' + location.pathname;
 
       // Build the document as a single template string for clarity
       return `<!DOCTYPE html>
@@ -440,37 +440,40 @@
   }
   .pcard-notes .empty { color: #484f58; font-style: italic; }
 
-  /* Timer card */
+  /* Control card (page counter + nav; no timer) */
   .pcard-timer .pcard-body {
     display: flex; flex-direction: column; gap: 14px;
     padding: 18px 20px; justify-content: center;
   }
-  .timer-display {
+  .slide-count {
     font-family: "SF Mono", "JetBrains Mono", monospace;
-    font-size: 42px; font-weight: 700;
-    color: #3fb950;
+    font-size: 36px; font-weight: 700;
+    color: #e6edf3;
     letter-spacing: .04em;
     line-height: 1;
+    text-align: center;
   }
   .timer-row {
-    display: flex; align-items: center; gap: 12px;
+    display: flex; align-items: center; justify-content: center; gap: 12px;
     font-size: 14px; color: #8b949e;
   }
   .timer-row .label { font-size: 10px; letter-spacing: .15em; text-transform: uppercase; color: #6e7681; }
   .timer-row .val { color: #e6edf3; font-weight: 600; font-family: "SF Mono", monospace; }
-  .timer-controls { display: flex; gap: 8px; flex-wrap: wrap; }
+  .timer-controls { display: flex; gap: 8px; flex-wrap: wrap; justify-content: center; }
   .timer-btn {
     background: rgba(255,255,255,.06);
     border: 1px solid rgba(255,255,255,.1);
     color: #e6edf3;
-    padding: 6px 12px;
+    padding: 8px 14px;
     border-radius: 6px;
-    font-size: 12px;
+    font-size: 13px;
     cursor: pointer;
     font-family: inherit;
+    font-weight: 600;
   }
   .timer-btn:hover { background: rgba(88,166,255,.15); border-color: #58a6ff; }
   .timer-btn:active { transform: translateY(1px); }
+  .timer-btn.primary { background: rgba(63,185,80,.15); border-color: #3fb950; color: #3fb950; }
 
   /* Resize handle */
   .pcard-resize {
@@ -548,18 +551,17 @@
   <div class="pcard pcard-timer" id="card-timer" style="--dot-color:#3fb950">
     <div class="pcard-head" data-drag>
       <span class="pcard-dot"></span>
-      <span class="pcard-title">TIMER</span>
+      <span class="pcard-title">CONTROL · 控制</span>
     </div>
     <div class="pcard-body">
-      <div class="timer-display" id="timer-display">00:00</div>
+      <div class="slide-count" id="timer-count">1 / ${total}</div>
       <div class="timer-row">
-        <span class="label">Slide</span>
-        <span class="val" id="timer-count">1 / ${total}</span>
+        <span class="label">当前页</span>
+        <span class="val" id="ctrl-title">—</span>
       </div>
       <div class="timer-controls">
-        <button class="timer-btn" id="btn-prev">← Prev</button>
-        <button class="timer-btn" id="btn-next">Next →</button>
-        <button class="timer-btn" id="btn-reset">⏱ Reset</button>
+        <button class="timer-btn" id="btn-prev">← 上一页</button>
+        <button class="timer-btn primary" id="btn-next">下一页 →</button>
       </div>
     </div>
     <div class="pcard-resize" data-resize></div>
@@ -568,9 +570,8 @@
 
 <div class="hint-bar">
   <span><kbd>← →</kbd> 翻页</span>
-  <span><kbd>R</kbd> 重置计时</span>
   <span><kbd>Esc</kbd> 关闭</span>
-  <span style="color:#6e7681">拖动卡片头部移动 · 拖动右下角调整大小</span>
+  <span style="color:#6e7681">拖动卡片头部移动 · 拖动右下角调整大小 · 当前页默认可占更大区域</span>
   <button class="reset-layout" id="reset-layout">重置布局</button>
 </div>
 
@@ -589,18 +590,24 @@
   var notesBody = document.getElementById('notes-body');
   var curMeta = document.getElementById('cur-meta');
   var nxtMeta = document.getElementById('nxt-meta');
-  var timerDisplay = document.getElementById('timer-display');
   var timerCount = document.getElementById('timer-count');
+  var ctrlTitle = document.getElementById('ctrl-title');
 
   /* ===== Default card layout ===== */
   function defaultLayout() {
     var w = window.innerWidth;
     var h = window.innerHeight - 36; /* leave room for hint bar */
+    /* Current page takes ~68% width and ~72% height by default */
+    var curW = Math.round(w * 0.68) - 24;
+    var curH = Math.round(h * 0.72) - 16;
+    var rightX = Math.round(w * 0.68) + 8;
+    var rightW = w - rightX - 16;
+    var nxtH = Math.round(h * 0.48) - 16;
     return {
-      'card-cur':   { x: 16,        y: 16,            w: Math.round(w*0.55) - 24, h: Math.round(h*0.62) - 16 },
-      'card-nxt':   { x: Math.round(w*0.55) + 8, y: 16, w: w - Math.round(w*0.55) - 24, h: Math.round(h*0.42) - 16 },
-      'card-notes': { x: Math.round(w*0.55) + 8, y: Math.round(h*0.42) + 8, w: w - Math.round(w*0.55) - 24, h: h - Math.round(h*0.42) - 16 },
-      'card-timer': { x: 16,        y: Math.round(h*0.62) + 8, w: Math.round(w*0.55) - 24, h: h - Math.round(h*0.62) - 16 }
+      'card-cur':   { x: 16,     y: 16,              w: curW,  h: curH },
+      'card-nxt':   { x: rightX, y: 16,              w: rightW, h: nxtH },
+      'card-notes': { x: 16,     y: curH + 24,       w: curW,  h: h - curH - 32 },
+      'card-timer': { x: rightX, y: nxtH + 24,       w: rightW, h: h - nxtH - 32 }
     };
   }
 
@@ -789,19 +796,13 @@
     var note = slideMeta[n].notes;
     notesBody.innerHTML = note || '<span class="empty">（这一页还没有逐字稿）</span>';
 
-    /* Timer count */
+    /* Page count + title */
     timerCount.textContent = (n + 1) + ' / ' + total;
+    if (ctrlTitle) {
+      var t = (slideMeta[n] && slideMeta[n].title) || '';
+      ctrlTitle.textContent = (t || '—').toString().trim().slice(0, 28);
+    }
   }
-
-  /* ===== Timer ===== */
-  var tStart = Date.now();
-  setInterval(function(){
-    var s = Math.floor((Date.now() - tStart) / 1000);
-    var mm = String(Math.floor(s/60)).padStart(2,'0');
-    var ss = String(s%60).padStart(2,'0');
-    timerDisplay.textContent = mm + ':' + ss;
-  }, 1000);
-  function resetTimer(){ tStart = Date.now(); timerDisplay.textContent = '00:00'; }
 
   /* ===== BroadcastChannel sync ===== */
   if (bc) {
@@ -827,7 +828,6 @@
   /* ===== Buttons ===== */
   document.getElementById('btn-prev').addEventListener('click', function(){ go(idx - 1); });
   document.getElementById('btn-next').addEventListener('click', function(){ go(idx + 1); });
-  document.getElementById('btn-reset').addEventListener('click', resetTimer);
   document.getElementById('reset-layout').addEventListener('click', function(){
     if (confirm('恢复默认卡片布局？')) {
       try { localStorage.removeItem(STORAGE_KEY); } catch(e){}
@@ -837,13 +837,13 @@
 
   /* ===== Keyboard ===== */
   document.addEventListener('keydown', function(e){
+    if (e.repeat) return;
     if (e.metaKey || e.ctrlKey || e.altKey) return;
     switch(e.key) {
       case 'ArrowRight': case ' ': case 'PageDown': go(idx + 1); e.preventDefault(); break;
       case 'ArrowLeft':  case 'PageUp':   go(idx - 1); e.preventDefault(); break;
       case 'Home': go(0); break;
       case 'End':  go(total - 1); break;
-      case 'r': case 'R': resetTimer(); break;
       case 'Escape': window.close(); break;
     }
   });
@@ -865,6 +865,10 @@
   curMeta.textContent = (idx + 1) + '/' + total;
   nxtMeta.textContent = (idx + 2) + '/' + total;
   timerCount.textContent = (idx + 1) + ' / ' + total;
+  if (ctrlTitle) {
+    var t0 = (slideMeta[idx] && slideMeta[idx].title) || '';
+    ctrlTitle.textContent = (t0 || '—').toString().trim().slice(0, 28);
+  }
 })();
 </` + `script>
 </body></html>`;
@@ -931,8 +935,20 @@
       if (ind) ind.textContent = a;
     }
 
+    // 捕获阶段拦截方向键连发，避免一次按住连翻多页
+    document.addEventListener('keydown', function (e) {
+      if (!e.repeat) return;
+      var k = e.key;
+      if (k === 'ArrowLeft' || k === 'ArrowRight' || k === 'ArrowUp' || k === 'ArrowDown' ||
+          k === ' ' || k === 'PageUp' || k === 'PageDown' || k === 'Enter' || k === 'Backspace') {
+        e.preventDefault();
+        e.stopImmediatePropagation();
+      }
+    }, true);
+
     document.addEventListener('keydown', function (e) {
       if (e.metaKey||e.ctrlKey||e.altKey) return;
+      if (e.repeat) return;
       switch (e.key) {
         case 'ArrowRight': case ' ': case 'PageDown': case 'Enter': go(idx+1); e.preventDefault(); break;
         case 'ArrowLeft': case 'PageUp': case 'Backspace': go(idx-1); e.preventDefault(); break;

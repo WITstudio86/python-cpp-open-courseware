@@ -1,8 +1,9 @@
 <!DOCTYPE html>
+
 <html lang="zh-CN">
 <head>
-<meta charset="utf-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
 <title>第8节：水果升级 — Pygame 课件</title>
 <style>
   :root {
@@ -462,110 +463,161 @@
 </style>
 </head>
 <body>
-
 <div class="page-badge" id="pageBadge">1 / 13</div>
-
 <div class="deck">
-  <div class="slides-wrapper">
+<div class="slides-wrapper">
+<!-- ============ SLIDE 1: TITLE ============ -->
+<section class="slide slide-cover is-active" data-index="0">
+<div class="lesson-num">Pygame 第 8 节</div>
+<h1>水果升级</h1>
+<p class="subtitle">让接水果游戏更精彩</p>
+<div class="decorations">
+<span class="deco-fruit">🍎</span>
+<span class="deco-fruit">🍊</span>
+<span class="deco-fruit">🍇</span>
+<span class="deco-fruit">🍌</span>
+<span class="deco-fruit">💣</span>
+</div>
 
-    <!-- ============ SLIDE 1: TITLE ============ -->
-    <section class="slide slide-cover is-active" data-index="0">
-      <div class="lesson-num">Pygame 第 8 节</div>
-      <h1>水果升级</h1>
-      <p class="subtitle">让接水果游戏更精彩</p>
-      <div class="decorations">
-        <span class="deco-fruit">🍎</span>
-        <span class="deco-fruit">🍊</span>
-        <span class="deco-fruit">🍇</span>
-        <span class="deco-fruit">🍌</span>
-        <span class="deco-fruit">💣</span>
-      </div>
-    </section>
+<aside class="notes">【开场】第 1/13 页 · 水果升级
+用 30 秒说明本课目标与学完能做什么，再进入正题。
+大纲考点：**内容**：多种水果（不同分值）、炸弹（碰到扣分/结束）、速度逐渐加快
 
-    <!-- ============ SLIDE 2: LEARNING OBJECTIVES ============ -->
-    <section class="slide slide-content" data-index="1">
-      <span class="section-tag">学习目标</span>
-      <h2><span class="icon">🎯</span> 今天我们要学会</h2>
-      <ul class="bullet-list">
-        <li>
-          <span class="bullet-icon">📦</span>
-          <span class="bullet-text"><strong>字典存储属性</strong> — 用 dict 管理水果类型、分数、速度等多种信息，一个变量搞定所有属性</span>
-        </li>
-        <li>
-          <span class="bullet-icon">🎲</span>
-          <span class="bullet-text"><strong>概率控制</strong> — 使用 random.randint 控制炸弹和特殊道具的出现概率，让游戏充满惊喜</span>
-        </li>
-        <li>
-          <span class="bullet-icon">📈</span>
-          <span class="bullet-text"><strong>难度递增</strong> — 让下落速度随时间逐渐加快，游戏越来越有挑战性</span>
-        </li>
-        <li>
-          <span class="bullet-icon">🔄</span>
-          <span class="bullet-text"><strong>游戏状态机</strong> — 用 PLAYING / GAME_OVER 两种状态管理游戏流程</span>
-        </li>
-      </ul>
-    </section>
+**知识点**：
+- 字典存储物品属性 `{"type": "apple", "score": 10, "speed": 3}`
+- `random.randint` 控制出现概率（炸弹 10% 出现）
+- 难度递增（速度变量随时间递增）
+- 游戏状态机（`playing` / `game_over`）
 
-    <!-- ============ SLIDE 3: REVIEW SECTION 7 ============ -->
-    <section class="slide slide-content" data-index="2">
-      <span class="section-tag">回顾</span>
-      <h2><span class="icon">📖</span> 第7节我们做了什么？</h2>
-      <div class="review-block">
-        <h3>简单版「接苹果」游戏回顾</h3>
-        <ul>
-          <li>用 pygame 创建游戏窗口（800×600）</li>
-          <li>用 Rect 表示玩家篮子和下落的苹果</li>
-          <li>键盘左右键控制篮子移动</li>
-          <li>苹果从顶部随机位置下落</li>
-          <li>用碰撞检测判断是否接到苹果</li>
-          <li>用 score 变量记录得分</li>
-          <li>用一个简单的游戏循环 while running:</li>
-        </ul>
-      </div>
-      <div class="highlight-box">
-        <strong>思考：</strong>如果我们要加入多种水果（苹果、橙子、香蕉……）和炸弹，第7节的代码够用吗？每个物品的属性（类型、分数、速度）要怎么管理？
-      </div>
-    </section>
+**课堂练习**：带道具和难度递增的接水果游戏
 
-    <!-- ============ SLIDE 4: NEW KNOWLEDGE - DICT ============ -->
-    <section class="slide slide-content" data-index="3">
-      <span class="section-tag">新知识</span>
-      <h2><span class="icon">📦</span> 用字典存储物品属性</h2>
-      <div class="highlight-box">
-        <strong>为什么用字典？</strong> 一个水果有多项属性：类型、分数、速度、图片……用一个 dict 全部装在一起，比散落的一堆变量清晰多了！
-      </div>
-      <div class="card-grid">
-        <div class="card">
-          <h3>❌ 旧方法（散装变量）</h3>
-          <p style="font-family:monospace;font-size:1rem;line-height:1.9;color:var(--text);">
-            apple_type = "apple"<br>
-            apple_score = 10<br>
-            apple_speed = 3<br>
-            orange_type = "orange"<br>
-            orange_score = 15<br>
-            orange_speed = 4<br>
-            <span style="color:#94a3b8;">… 越来越多变量 😫</span>
-          </p>
-        </div>
-        <div class="card">
-          <h3>✅ 新方法（字典打包）</h3>
-          <p style="font-family:monospace;font-size:1rem;line-height:1.9;color:var(--text);">
-            item = {<br>
-            &nbsp;&nbsp;"type": "apple",<br>
-            &nbsp;&nbsp;"score": 10,<br>
-            &nbsp;&nbsp;"speed": 3<br>
-            }<br>
-            <span style="color:#16a34a;"># 一个变量，清爽！✨</span>
-          </p>
-        </div>
-      </div>
-    </section>
+---
 
-    <!-- ============ SLIDE 5: CODE - FRUIT DICTS ============ -->
-    <section class="slide slide-content" data-index="4">
-      <span class="section-tag">代码示例</span>
-      <h2><span class="icon">💻</span> 定义多种水果的字典</h2>
-      <div class="code-block"><span class="cmt"># 定义水果类型配置</span>
+## 📦 项目 3：贪吃蛇（第 9-10 节）
+封面关键词：
+· 让接水果游戏更精彩
+互动：问学生「今天最想搞清楚什么？」，收 1–2 个期待。</aside>
+</section>
+<!-- ============ SLIDE 2: LEARNING OBJECTIVES ============ -->
+<section class="slide slide-content" data-index="1">
+<span class="section-tag">学习目标</span>
+<h2><span class="icon">🎯</span> 今天我们要学会</h2>
+<ul class="bullet-list">
+<li>
+<span class="bullet-icon">📦</span>
+<span class="bullet-text"><strong>字典存储属性</strong> — 用 dict 管理水果类型、分数、速度等多种信息，一个变量搞定所有属性</span>
+</li>
+<li>
+<span class="bullet-icon">🎲</span>
+<span class="bullet-text"><strong>概率控制</strong> — 使用 random.randint 控制炸弹和特殊道具的出现概率，让游戏充满惊喜</span>
+</li>
+<li>
+<span class="bullet-icon">📈</span>
+<span class="bullet-text"><strong>难度递增</strong> — 让下落速度随时间逐渐加快，游戏越来越有挑战性</span>
+</li>
+<li>
+<span class="bullet-icon">🔄</span>
+<span class="bullet-text"><strong>游戏状态机</strong> — 用 PLAYING / GAME_OVER 两种状态管理游戏流程</span>
+</li>
+</ul>
+
+<aside class="notes">【讲解】🎯 今天我们要学会
+本页要点（照着讲即可）：
+· 📦 字典存储属性 — 用 dict 管理水果类型、分数、速度等多种信息，一个变量搞定所有属性
+· 字典存储属性
+· 🎲 概率控制 — 使用 random.randint 控制炸弹和特殊道具的出现概率，让游戏充满惊喜
+· 概率控制
+· 📈 难度递增 — 让下落速度随时间逐渐加快，游戏越来越有挑战性
+· 难度递增
+讲解时放慢关键术语；用 1 个生活类比 + 1 个反例加深印象。
+本课大纲考点（可适时点题）：**内容**：多种水果（不同分值）、炸弹（碰到扣分/结束）、速度逐渐加快
+
+**知识点**：
+- 字典存储物品属性 `{"type": "apple", "score": 10, "speed": 3}`
+- `random.randint` 控制出现概率（炸弹 10% 出现）
+- 难度递增（速度变量随时间递增）
+- 游戏状态机（`playing` / `game_over`）
+
+**课堂练习**：带道具和难度递增的接水果游戏
+
+---
+
+## 📦 项目 3：贪吃蛇（第 9-10 节）</aside>
+</section>
+<!-- ============ SLIDE 3: REVIEW SECTION 7 ============ -->
+<section class="slide slide-content" data-index="2">
+<span class="section-tag">回顾</span>
+<h2><span class="icon">📖</span> 第7节我们做了什么？</h2>
+<div class="review-block">
+<h3>简单版「接苹果」游戏回顾</h3>
+<ul>
+<li>用 pygame 创建游戏窗口（800×600）</li>
+<li>用 Rect 表示玩家篮子和下落的苹果</li>
+<li>键盘左右键控制篮子移动</li>
+<li>苹果从顶部随机位置下落</li>
+<li>用碰撞检测判断是否接到苹果</li>
+<li>用 score 变量记录得分</li>
+<li>用一个简单的游戏循环 while running:</li>
+</ul>
+</div>
+<div class="highlight-box">
+<strong>思考：</strong>如果我们要加入多种水果（苹果、橙子、香蕉……）和炸弹，第7节的代码够用吗？每个物品的属性（类型、分数、速度）要怎么管理？
+      </div>
+
+<aside class="notes">【讲解】📖 第7节我们做了什么？
+本页要点（照着讲即可）：
+· 用 pygame 创建游戏窗口（800×600）
+· 用 Rect 表示玩家篮子和下落的苹果
+· 键盘左右键控制篮子移动
+· 苹果从顶部随机位置下落
+· 用碰撞检测判断是否接到苹果
+· 用 score 变量记录得分
+讲解时放慢关键术语；用 1 个生活类比 + 1 个反例加深印象。</aside>
+</section>
+<!-- ============ SLIDE 4: NEW KNOWLEDGE - DICT ============ -->
+<section class="slide slide-content" data-index="3">
+<span class="section-tag">新知识</span>
+<h2><span class="icon">📦</span> 用字典存储物品属性</h2>
+<div class="highlight-box">
+<strong>为什么用字典？</strong> 一个水果有多项属性：类型、分数、速度、图片……用一个 dict 全部装在一起，比散落的一堆变量清晰多了！
+      </div>
+<div class="card-grid">
+<div class="card">
+<h3>❌ 旧方法（散装变量）</h3>
+<p style="font-family:monospace;font-size:1rem;line-height:1.9;color:var(--text);">
+            apple_type = "apple"<br/>
+            apple_score = 10<br/>
+            apple_speed = 3<br/>
+            orange_type = "orange"<br/>
+            orange_score = 15<br/>
+            orange_speed = 4<br/>
+<span style="color:#94a3b8;">… 越来越多变量 😫</span>
+</p>
+</div>
+<div class="card">
+<h3>✅ 新方法（字典打包）</h3>
+<p style="font-family:monospace;font-size:1rem;line-height:1.9;color:var(--text);">
+            item = {<br/>
+              "type": "apple",<br/>
+              "score": 10,<br/>
+              "speed": 3<br/>
+            }<br/>
+<span style="color:#16a34a;"># 一个变量，清爽！✨</span>
+</p>
+</div>
+</div>
+
+<aside class="notes">【讲解】📦 用字典存储物品属性
+本页要点（照着讲即可）：
+· 为什么用字典？
+· item = { "type": "apple", "score": 10, "speed": 3 } # 一个变量，清爽！✨
+讲解时放慢关键术语；用 1 个生活类比 + 1 个反例加深印象。</aside>
+</section>
+<!-- ============ SLIDE 5: CODE - FRUIT DICTS ============ -->
+<section class="slide slide-content" data-index="4">
+<span class="section-tag">代码示例</span>
+<h2><span class="icon">💻</span> 定义多种水果的字典</h2>
+<div class="code-block"><span class="cmt"># 定义水果类型配置</span>
 <span class="var">FRUIT_TYPES</span> = [
     {<span class="str">"type"</span>: <span class="str">"apple"</span>,  <span class="str">"score"</span>: <span class="num">10</span>, <span class="str">"speed"</span>: <span class="num">3</span>, <span class="str">"color"</span>: (<span class="num">255</span>, <span class="num">0</span>, <span class="num">0</span>)},
     {<span class="str">"type"</span>: <span class="str">"orange"</span>, <span class="str">"score"</span>: <span class="num">15</span>, <span class="str">"speed"</span>: <span class="num">4</span>, <span class="str">"color"</span>: (<span class="num">255</span>, <span class="num">165</span>, <span class="num">0</span>)},
@@ -579,254 +631,332 @@
     fruit = random.choice(<span class="var">FRUIT_TYPES</span>).copy()
     fruit[<span class="str">"rect"</span>] = pygame.Rect(random_x, <span class="num">0</span>, <span class="num">40</span>, <span class="num">40</span>)
     <span class="kw">return</span> fruit</div>
-    </section>
 
-    <!-- ============ SLIDE 6: NEW KNOWLEDGE - PROBABILITY ============ -->
-    <section class="slide slide-content" data-index="5">
-      <span class="section-tag">新知识</span>
-      <h2><span class="icon">🎲</span> 概率控制</h2>
-      <div class="highlight-box">
-        <strong>核心思路：</strong>用 <code style="background:#fde68a;padding:2px 8px;border-radius:4px;font-weight:700;">random.randint(1, 100)</code> 生成随机数，根据数值范围决定生成什么物品。
+<aside class="notes">【讲解】💻 定义多种水果的字典
+本页要点（照着讲即可）：
+· 代码示例
+· 定义多种水果的字典
+· # 定义水果类型配置
+· FRUIT_TYPES
+· "type"
+· "apple"
+讲解时放慢关键术语；用 1 个生活类比 + 1 个反例加深印象。</aside>
+</section>
+<!-- ============ SLIDE 6: NEW KNOWLEDGE - PROBABILITY ============ -->
+<section class="slide slide-content" data-index="5">
+<span class="section-tag">新知识</span>
+<h2><span class="icon">🎲</span> 概率控制</h2>
+<div class="highlight-box">
+<strong>核心思路：</strong>用 <code style="background:#fde68a;padding:2px 8px;border-radius:4px;font-weight:700;">random.randint(1, 100)</code> 生成随机数，根据数值范围决定生成什么物品。
       </div>
-      <ul class="bullet-list">
-        <li>
-          <span class="bullet-icon">🍎</span>
-          <span class="bullet-text">生成一个 1~100 的随机整数</span>
-        </li>
-        <li>
-          <span class="bullet-icon">🎯</span>
-          <span class="bullet-text">如果数字 ≤ 10 → 生成<strong>炸弹</strong>（10% 概率）</span>
-        </li>
-        <li>
-          <span class="bullet-icon">⭐</span>
-          <span class="bullet-text">如果数字 ≤ 15 → 生成<strong>特殊道具</strong>（5% 概率）</span>
-        </li>
-        <li>
-          <span class="bullet-icon">🍊</span>
-          <span class="bullet-text">否则 → 随机生成<strong>普通水果</strong>（85% 概率）</span>
-        </li>
-      </ul>
-      <div class="highlight-box">
-        <strong>概率分配原则：</strong>所有概率加起来 = 100%。数字区间小的 = 出现概率低、更稀有！
+<ul class="bullet-list">
+<li>
+<span class="bullet-icon">🍎</span>
+<span class="bullet-text">生成一个 1~100 的随机整数</span>
+</li>
+<li>
+<span class="bullet-icon">🎯</span>
+<span class="bullet-text">如果数字 ≤ 10 → 生成<strong>炸弹</strong>（10% 概率）</span>
+</li>
+<li>
+<span class="bullet-icon">⭐</span>
+<span class="bullet-text">如果数字 ≤ 15 → 生成<strong>特殊道具</strong>（5% 概率）</span>
+</li>
+<li>
+<span class="bullet-icon">🍊</span>
+<span class="bullet-text">否则 → 随机生成<strong>普通水果</strong>（85% 概率）</span>
+</li>
+</ul>
+<div class="highlight-box">
+<strong>概率分配原则：</strong>所有概率加起来 = 100%。数字区间小的 = 出现概率低、更稀有！
       </div>
-    </section>
 
-    <!-- ============ SLIDE 7: CODE - BOMB PROBABILITY ============ -->
-    <section class="slide slide-content" data-index="6">
-      <span class="section-tag">代码示例</span>
-      <h2><span class="icon">💻</span> 10% 概率生成炸弹</h2>
-      <div class="code-block"><span class="kw">import</span> random
+<aside class="notes">【讲解】🎲 概率控制
+本页要点（照着讲即可）：
+· 核心思路：
+· 🍎 生成一个 1~100 的随机整数
+· 🎯 如果数字 ≤ 10 → 生成 炸弹 （10% 概率）
+· ⭐ 如果数字 ≤ 15 → 生成 特殊道具 （5% 概率）
+· 特殊道具
+· 🍊 否则 → 随机生成 普通水果 （85% 概率）
+讲解时放慢关键术语；用 1 个生活类比 + 1 个反例加深印象。</aside>
+</section>
+<!-- ============ SLIDE 7: CODE - BOMB PROBABILITY ============ -->
+<section class="slide slide-content" data-index="6">
+<span class="section-tag">代码示例</span>
+<h2><span class="icon">💻</span> 10% 概率生成炸弹</h2>
+<div class="code-block"><span class="kw">import</span> random
 
 <span class="kw">def</span> <span class="fn">spawn_item_with_probability</span>():
     roll = random.randint(<span class="num">1</span>, <span class="num">100</span>)
 
-    <span class="kw">if</span> roll <= <span class="num">10</span>:          <span class="cmt"># 10% 概率：炸弹 💣</span>
+    <span class="kw">if</span> roll &lt;= <span class="num">10</span>:          <span class="cmt"># 10% 概率：炸弹 💣</span>
         item_type = <span class="str">"bomb"</span>
         score = -<span class="num">50</span>
-    <span class="kw">elif</span> roll <= <span class="num">15</span>:      <span class="cmt"># 5% 概率：金币 ⭐</span>
+<span class="kw">elif</span> roll &lt;= <span class="num">15</span>:      <span class="cmt"># 5% 概率：金币 ⭐</span>
         item_type = <span class="str">"coin"</span>
         score = <span class="num">50</span>
-    <span class="kw">else</span>:                   <span class="cmt"># 85% 概率：普通水果 🍎</span>
+<span class="kw">else</span>:                   <span class="cmt"># 85% 概率：普通水果 🍎</span>
         fruit = random.choice([<span class="str">"apple"</span>, <span class="str">"orange"</span>, <span class="str">"grape"</span>])
         item_type = fruit
         score = <span class="num">10</span>
-
-    <span class="kw">return</span> {
+<span class="kw">return</span> {
         <span class="str">"type"</span>: item_type,
         <span class="str">"score"</span>: score,
         <span class="str">"speed"</span>: random.randint(<span class="num">3</span>, <span class="num">6</span>)
     }</div>
-    </section>
 
-    <!-- ============ SLIDE 8: NEW KNOWLEDGE - DIFFICULTY ============ -->
-    <section class="slide slide-content" data-index="7">
-      <span class="section-tag">新知识</span>
-      <h2><span class="icon">📈</span> 难度递增</h2>
-      <div class="highlight-box">
-        <strong>设计理念：</strong>游戏不能一直一个难度！随着时间的推移，物品下落速度越来越快，考验玩家的反应能力。
+<aside class="notes">【讲解】💻 10% 概率生成炸弹
+本页要点（照着讲即可）：
+· 代码示例
+· 10% 概率生成炸弹
+· import
+· random
+· spawn_item_with_probability
+· roll = random.randint(
+讲解时放慢关键术语；用 1 个生活类比 + 1 个反例加深印象。</aside>
+</section>
+<!-- ============ SLIDE 8: NEW KNOWLEDGE - DIFFICULTY ============ -->
+<section class="slide slide-content" data-index="7">
+<span class="section-tag">新知识</span>
+<h2><span class="icon">📈</span> 难度递增</h2>
+<div class="highlight-box">
+<strong>设计理念：</strong>游戏不能一直一个难度！随着时间的推移，物品下落速度越来越快，考验玩家的反应能力。
       </div>
-      <ul class="bullet-list">
-        <li>
-          <span class="bullet-icon">⏱️</span>
-          <span class="bullet-text">使用 <strong>pygame.time.get_ticks()</strong> 获取游戏运行时间（毫秒）</span>
-        </li>
-        <li>
-          <span class="bullet-icon">📊</span>
-          <span class="bullet-text">设置一个 <strong>base_speed</strong>（基础速度），在此基础上逐渐增加</span>
-        </li>
-        <li>
-          <span class="bullet-icon">➕</span>
-          <span class="bullet-text">每隔一定时间（如 10 秒），全局速度增加 0.5</span>
-        </li>
-        <li>
-          <span class="bullet-icon">🎮</span>
-          <span class="bullet-text">同时可以增加<strong>生成频率</strong>，让水果掉得更密集</span>
-        </li>
-      </ul>
-      <div style="text-align:center;margin-top:1.5vh;">
-        <span style="font-size:1.3rem;">难度曲线：</span>
-        <span style="font-size:1.1rem;">🟢 简单 → 🟡 中等 → 🟠 困难 → 🔴 地狱</span>
-      </div>
-    </section>
+<ul class="bullet-list">
+<li>
+<span class="bullet-icon">⏱️</span>
+<span class="bullet-text">使用 <strong>pygame.time.get_ticks()</strong> 获取游戏运行时间（毫秒）</span>
+</li>
+<li>
+<span class="bullet-icon">📊</span>
+<span class="bullet-text">设置一个 <strong>base_speed</strong>（基础速度），在此基础上逐渐增加</span>
+</li>
+<li>
+<span class="bullet-icon">➕</span>
+<span class="bullet-text">每隔一定时间（如 10 秒），全局速度增加 0.5</span>
+</li>
+<li>
+<span class="bullet-icon">🎮</span>
+<span class="bullet-text">同时可以增加<strong>生成频率</strong>，让水果掉得更密集</span>
+</li>
+</ul>
+<div style="text-align:center;margin-top:1.5vh;">
+<span style="font-size:1.3rem;">难度曲线：</span>
+<span style="font-size:1.1rem;">🟢 简单 → 🟡 中等 → 🟠 困难 → 🔴 地狱</span>
+</div>
 
-    <!-- ============ SLIDE 9: CODE - SPEED INCREASE ============ -->
-    <section class="slide slide-content" data-index="8">
-      <span class="section-tag">代码示例</span>
-      <h2><span class="icon">💻</span> 速度随时间逐渐加快</h2>
-      <div class="code-block"><span class="cmt"># 难度递增系统</span>
+<aside class="notes">【讲解】📈 难度递增
+本页要点（照着讲即可）：
+· 设计理念：
+· ⏱️ 使用 pygame.time.get_ticks() 获取游戏运行时间（毫秒）
+· pygame.time.get_ticks()
+· 📊 设置一个 base_speed （基础速度），在此基础上逐渐增加
+· base_speed
+· ➕ 每隔一定时间（如 10 秒），全局速度增加 0.5
+讲解时放慢关键术语；用 1 个生活类比 + 1 个反例加深印象。</aside>
+</section>
+<!-- ============ SLIDE 9: CODE - SPEED INCREASE ============ -->
+<section class="slide slide-content" data-index="8">
+<span class="section-tag">代码示例</span>
+<h2><span class="icon">💻</span> 速度随时间逐渐加快</h2>
+<div class="code-block"><span class="cmt"># 难度递增系统</span>
 <span class="var">base_speed</span> = <span class="num">3</span>
-<span class="var">speed_increment</span> = <span class="num">0.5</span>        <span class="cmt"># 每次增加 0.5</span>
-<span class="var">difficulty_interval</span> = <span class="num">10000</span>  <span class="cmt"># 每 10 秒（10000 毫秒）升级</span>
+<span class="var">speed_increment</span> = <span class="num">0.5</span> <span class="cmt"># 每次增加 0.5</span>
+<span class="var">difficulty_interval</span> = <span class="num">10000</span> <span class="cmt"># 每 10 秒（10000 毫秒）升级</span>
 <span class="var">last_difficulty_up</span> = <span class="num">0</span>
-
 <span class="cmt"># 在游戏主循环中：</span>
 <span class="var">current_time</span> = pygame.time.get_ticks()
-<span class="kw">if</span> current_time - <span class="var">last_difficulty_up</span> > <span class="var">difficulty_interval</span>:
+<span class="kw">if</span> current_time - <span class="var">last_difficulty_up</span> &gt; <span class="var">difficulty_interval</span>:
     <span class="var">base_speed</span> += <span class="var">speed_increment</span>
-    <span class="var">last_difficulty_up</span> = current_time
+<span class="var">last_difficulty_up</span> = current_time
     print(<span class="str">f"难度升级！当前速度: </span><span class="op">{</span><span class="var">base_speed</span><span class="op">}</span><span class="str">"</span>)
 
 <span class="cmt"># 生成物品时使用当前速度</span>
 <span class="kw">def</span> <span class="fn">spawn_item</span>():
     speed = <span class="var">base_speed</span> + random.uniform(-<span class="num">1</span>, <span class="num">1</span>)
     <span class="cmt"># ... 创建物品，使用 speed 作为下落速度</span></div>
-    </section>
 
-    <!-- ============ SLIDE 10: NEW KNOWLEDGE - STATE MACHINE ============ -->
-    <section class="slide slide-content" data-index="9">
-      <span class="section-tag">新知识</span>
-      <h2><span class="icon">🔄</span> 游戏状态机</h2>
-      <div class="highlight-box">
-        <strong>什么是状态机？</strong>游戏在不同「状态」之间切换，每个状态下执行不同的逻辑。就像红绿灯：红灯停、绿灯行，各有各的规则。
+<aside class="notes">【讲解】💻 速度随时间逐渐加快
+本页要点（照着讲即可）：
+· 代码示例
+· 速度随时间逐渐加快
+· # 难度递增系统
+· base_speed
+· speed_increment
+· # 每次增加 0.5
+讲解时放慢关键术语；用 1 个生活类比 + 1 个反例加深印象。</aside>
+</section>
+<!-- ============ SLIDE 10: NEW KNOWLEDGE - STATE MACHINE ============ -->
+<section class="slide slide-content" data-index="9">
+<span class="section-tag">新知识</span>
+<h2><span class="icon">🔄</span> 游戏状态机</h2>
+<div class="highlight-box">
+<strong>什么是状态机？</strong>游戏在不同「状态」之间切换，每个状态下执行不同的逻辑。就像红绿灯：红灯停、绿灯行，各有各的规则。
       </div>
-      <div class="flow-row">
-        <div class="flow-node">🎮 PLAYING<br><small style="font-weight:400;font-size:0.85rem;">游戏中</small></div>
-        <span class="flow-arrow">→ 生命为 0 →</span>
-        <div class="flow-node accent">💀 GAME_OVER<br><small style="font-weight:400;font-size:0.85rem;">游戏结束</small></div>
-        <span class="flow-arrow">→ 按 R 键 →</span>
-        <div class="flow-node">🎮 PLAYING<br><small style="font-weight:400;font-size:0.85rem;">重新开始</small></div>
-      </div>
-      <ul class="bullet-list" style="margin-top:1.5vh;">
-        <li>
-          <span class="bullet-icon">🎮</span>
-          <span class="bullet-text"><strong>PLAYING 状态：</strong>正常更新位置、检测碰撞、计分、生成新物品</span>
-        </li>
-        <li>
-          <span class="bullet-icon">💀</span>
-          <span class="bullet-text"><strong>GAME_OVER 状态：</strong>停止更新、显示结束画面、等待玩家按 R 重新开始</span>
-        </li>
-      </ul>
-    </section>
+<div class="flow-row">
+<div class="flow-node">🎮 PLAYING<br/><small style="font-weight:400;font-size:0.85rem;">游戏中</small></div>
+<span class="flow-arrow">→ 生命为 0 →</span>
+<div class="flow-node accent">💀 GAME_OVER<br/><small style="font-weight:400;font-size:0.85rem;">游戏结束</small></div>
+<span class="flow-arrow">→ 按 R 键 →</span>
+<div class="flow-node">🎮 PLAYING<br/><small style="font-weight:400;font-size:0.85rem;">重新开始</small></div>
+</div>
+<ul class="bullet-list" style="margin-top:1.5vh;">
+<li>
+<span class="bullet-icon">🎮</span>
+<span class="bullet-text"><strong>PLAYING 状态：</strong>正常更新位置、检测碰撞、计分、生成新物品</span>
+</li>
+<li>
+<span class="bullet-icon">💀</span>
+<span class="bullet-text"><strong>GAME_OVER 状态：</strong>停止更新、显示结束画面、等待玩家按 R 重新开始</span>
+</li>
+</ul>
 
-    <!-- ============ SLIDE 11: CODE - STATE MACHINE ============ -->
-    <section class="slide slide-content" data-index="10">
-      <span class="section-tag">代码示例</span>
-      <h2><span class="icon">💻</span> 状态机的实现</h2>
-      <div class="code-block"><span class="cmt"># 定义游戏状态</span>
+<aside class="notes">【讲解】🔄 游戏状态机
+本页要点（照着讲即可）：
+· 什么是状态机？
+· 🎮 PLAYING 状态： 正常更新位置、检测碰撞、计分、生成新物品
+· PLAYING 状态：
+· 💀 GAME_OVER 状态： 停止更新、显示结束画面、等待玩家按 R 重新开始
+· GAME_OVER 状态：
+讲解时放慢关键术语；用 1 个生活类比 + 1 个反例加深印象。</aside>
+</section>
+<!-- ============ SLIDE 11: CODE - STATE MACHINE ============ -->
+<section class="slide slide-content" data-index="10">
+<span class="section-tag">代码示例</span>
+<h2><span class="icon">💻</span> 状态机的实现</h2>
+<div class="code-block"><span class="cmt"># 定义游戏状态</span>
 <span class="var">PLAYING</span> = <span class="str">"playing"</span>
 <span class="var">GAME_OVER</span> = <span class="str">"game_over"</span>
 <span class="var">game_state</span> = <span class="var">PLAYING</span>
-
 <span class="cmt"># 游戏主循环</span>
 <span class="kw">while</span> <span class="var">running</span>:
     <span class="kw">for</span> event <span class="kw">in</span> pygame.event.get():
         <span class="kw">if</span> event.type == pygame.QUIT:
             <span class="var">running</span> = <span class="kw">False</span>
-        <span class="kw">if</span> event.type == pygame.KEYDOWN:
+<span class="kw">if</span> event.type == pygame.KEYDOWN:
             <span class="kw">if</span> event.key == pygame.K_r <span class="kw">and</span> <span class="var">game_state</span> == <span class="var">GAME_OVER</span>:
                 <span class="fn">reset_game</span>()  <span class="cmt"># 重新开始</span>
-
-    <span class="kw">if</span> <span class="var">game_state</span> == <span class="var">PLAYING</span>:
+<span class="kw">if</span> <span class="var">game_state</span> == <span class="var">PLAYING</span>:
         <span class="fn">update_game</span>()   <span class="cmt"># 更新物品位置、碰撞检测</span>
-        <span class="fn">draw_game</span>()     <span class="cmt"># 绘制所有游戏元素</span>
-    <span class="kw">elif</span> <span class="var">game_state</span> == <span class="var">GAME_OVER</span>:
+<span class="fn">draw_game</span>()     <span class="cmt"># 绘制所有游戏元素</span>
+<span class="kw">elif</span> <span class="var">game_state</span> == <span class="var">GAME_OVER</span>:
         <span class="fn">draw_game_over</span>()  <span class="cmt"># 只绘制结束画面</span></div>
-    </section>
 
-    <!-- ============ SLIDE 12: NEW FEATURE - LIVES ============ -->
-    <section class="slide slide-content" data-index="11">
-      <span class="section-tag">新增功能</span>
-      <h2><span class="icon">❤️</span> 生命值系统 &amp; 结束画面</h2>
-      <div class="card-grid">
-        <div class="card">
-          <h3>❤️ 生命值系统</h3>
-          <p>
-            <strong>初始生命：</strong>3 颗心<br>
-            <strong>接到炸弹：</strong>生命 -1<br>
-            <strong>接到水果：</strong>正常加分<br>
-            <strong>生命归零：</strong>进入 GAME_OVER
+<aside class="notes">【讲解】💻 状态机的实现
+本页要点（照着讲即可）：
+· 代码示例
+· 状态机的实现
+· # 定义游戏状态
+· PLAYING
+· "playing"
+· GAME_OVER
+讲解时放慢关键术语；用 1 个生活类比 + 1 个反例加深印象。</aside>
+</section>
+<!-- ============ SLIDE 12: NEW FEATURE - LIVES ============ -->
+<section class="slide slide-content" data-index="11">
+<span class="section-tag">新增功能</span>
+<h2><span class="icon">❤️</span> 生命值系统 &amp; 结束画面</h2>
+<div class="card-grid">
+<div class="card">
+<h3>❤️ 生命值系统</h3>
+<p>
+<strong>初始生命：</strong>3 颗心<br/>
+<strong>接到炸弹：</strong>生命 -1<br/>
+<strong>接到水果：</strong>正常加分<br/>
+<strong>生命归零：</strong>进入 GAME_OVER
           </p>
-        </div>
-        <div class="card">
-          <h3>💀 游戏结束画面</h3>
-          <p>
-            <strong>显示内容：</strong><br>
-            - 最终得分<br>
-            - 接到水果总数<br>
-            - "按 R 重新开始"<br>
+</div>
+<div class="card">
+<h3>💀 游戏结束画面</h3>
+<p>
+<strong>显示内容：</strong><br/>
+            - 最终得分<br/>
+            - 接到水果总数<br/>
+            - "按 R 重新开始"<br/>
             - 半透明遮罩效果
           </p>
-        </div>
-      </div>
-      <div class="highlight-box" style="margin-top:1.5vh;">
-        <strong>关键代码：</strong><code style="background:#fde68a;padding:2px 8px;border-radius:4px;">if item["type"] == "bomb": lives -= 1</code> &nbsp;&nbsp;|&nbsp;&nbsp;
-        <code style="background:#fde68a;padding:2px 8px;border-radius:4px;">if lives <= 0: game_state = GAME_OVER</code>
-      </div>
-    </section>
+</div>
+</div>
+<div class="highlight-box" style="margin-top:1.5vh;">
+<strong>关键代码：</strong><code style="background:#fde68a;padding:2px 8px;border-radius:4px;">if item["type"] == "bomb": lives -= 1</code>   |  
+        <code style="background:#fde68a;padding:2px 8px;border-radius:4px;">if lives &lt;= 0: game_state = GAME_OVER</code>
+</div>
 
-    <!-- ============ SLIDE 13: EXERCISE ============ -->
-    <section class="slide slide-content" data-index="12">
-      <span class="section-tag">动手实践</span>
-      <h2><span class="icon">✏️</span> 课堂练习 &amp; 挑战任务</h2>
-      <ul class="exercise-list">
-        <li>
-          <span class="ex-icon">📝</span>
-          <span>
-            <strong>基础练习：</strong>在上一节"接苹果"代码的基础上，加入字典存储多种水果（至少3种），每种分数不同。
+<aside class="notes">【讲解】❤️ 生命值系统 &amp; 结束画面
+本页要点（照着讲即可）：
+· 初始生命： 3 颗心 接到炸弹： 生命 -1 接到水果： 正常加分 生命归零： 进入 GAME_OVER
+· 初始生命：
+· 接到炸弹：
+· 接到水果：
+· 生命归零：
+· 显示内容： - 最终得分 - 接到水果总数 - "按 R 重新开始" - 半透明遮罩效果
+讲解时放慢关键术语；用 1 个生活类比 + 1 个反例加深印象。</aside>
+</section>
+<!-- ============ SLIDE 13: EXERCISE ============ -->
+<section class="slide slide-content" data-index="12">
+<span class="section-tag">动手实践</span>
+<h2><span class="icon">✏️</span> 课堂练习 &amp; 挑战任务</h2>
+<ul class="exercise-list">
+<li>
+<span class="ex-icon">📝</span>
+<span>
+<strong>基础练习：</strong>在上一节"接苹果"代码的基础上，加入字典存储多种水果（至少3种），每种分数不同。
           </span>
-        </li>
-        <li>
-          <span class="ex-icon">🎲</span>
-          <span>
-            <strong>概率控制：</strong>修改概率表，让苹果 50%、橙子 30%、葡萄 15%、炸弹 5%。
+</li>
+<li>
+<span class="ex-icon">🎲</span>
+<span>
+<strong>概率控制：</strong>修改概率表，让苹果 50%、橙子 30%、葡萄 15%、炸弹 5%。
           </span>
-        </li>
-        <li>
-          <span class="ex-icon">📈</span>
-          <span>
-            <strong>难度递增：</strong>实现每 15 秒速度增加 1，并测试游戏是否太难或太简单。
+</li>
+<li>
+<span class="ex-icon">📈</span>
+<span>
+<strong>难度递增：</strong>实现每 15 秒速度增加 1，并测试游戏是否太难或太简单。
           </span>
-        </li>
-        <li>
-          <span class="ex-icon">❤️</span>
-          <span>
-            <strong>生命系统：</strong>加入 3 条命，接到炸弹扣 1 命，生命归零显示 GAME_OVER。
+</li>
+<li>
+<span class="ex-icon">❤️</span>
+<span>
+<strong>生命系统：</strong>加入 3 条命，接到炸弹扣 1 命，生命归零显示 GAME_OVER。
             <span class="challenge-tag">挑战</span>
-          </span>
-        </li>
-        <li>
-          <span class="ex-icon">⭐</span>
-          <span>
-            <strong>加分道具：</strong>加入"金币"道具（5%概率），接到后 +50 分，并显示特殊动画。
+</span>
+</li>
+<li>
+<span class="ex-icon">⭐</span>
+<span>
+<strong>加分道具：</strong>加入"金币"道具（5%概率），接到后 +50 分，并显示特殊动画。
             <span class="challenge-tag">挑战</span>
-          </span>
-        </li>
-      </ul>
-      <div class="highlight-box" style="margin-top:1vh;">
-        <strong>💡 提示：</strong>先完成基础练习，再逐个添加新功能。每加一个功能就跑一次，确认没问题再继续！
+</span>
+</li>
+</ul>
+<div class="highlight-box" style="margin-top:1vh;">
+<strong>💡 提示：</strong>先完成基础练习，再逐个添加新功能。每加一个功能就跑一次，确认没问题再继续！
       </div>
-    </section>
 
-  </div><!-- /slides-wrapper -->
-
-  <!-- ===== BOTTOM NAV BAR ===== -->
-  <nav class="nav-bar">
-    <button class="nav-btn" id="prevBtn" title="上一页 (← 键)">← 上一页</button>
-    <span class="page-indicator" id="pageIndicator">1 / 13</span>
-    <button class="nav-btn" id="nextBtn" title="下一页 (→ 键)">下一页 →</button>
-  </nav>
+<aside class="notes">【讲解】✏️ 课堂练习 &amp; 挑战任务
+结合讲义《三、课堂练习（25分钟）》强调：
+· 任务1：字典存储多种水果（5分钟）
+· 在上一节课代码的基础上修改：
+· 定义 FRUIT_TYPES 配置列表，包含至少 3 种水果（不同分数、速度、颜色、大小）
+· 将原来存 Rect 的列表改为存字典的列表 items
+· 用 random.choice() 从配置表中随机选一种来生成物品
+幻灯片上可见要点：
+· 📝 基础练习： 在上一节"接苹果"代码的基础上，加入字典存储多种水果（至少3种），每种分数不同。
+· 基础练习：
+· 🎲 概率控制： 修改概率表，让苹果 50%、橙子 30%、葡萄 15%、炸弹 5%。
+· 概率控制：
+练习页节奏：先独立想 1 分钟 → 再点拨思路 → 最后对答案讲为什么。</aside>
+</section>
+</div><!-- /slides-wrapper -->
+<!-- ===== BOTTOM NAV BAR ===== -->
+<nav class="nav-bar">
+<button class="nav-btn" id="prevBtn" title="上一页 (← 键)">← 上一页</button>
+<span class="page-indicator" id="pageIndicator">1 / 13</span>
+<button class="nav-btn" id="nextBtn" title="下一页 (→ 键)">下一页 →</button>
+</nav>
 </div><!-- /deck -->
-
 <script>
 (function() {
   const slides = document.querySelectorAll('.slide');

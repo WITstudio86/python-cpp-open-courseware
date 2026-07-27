@@ -1,8 +1,9 @@
 <!DOCTYPE html>
+
 <html lang="zh-CN">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
 <title>第29课：01背包与完全背包</title>
 <style>
 /* ============================================================
@@ -429,82 +430,95 @@ body {
 </style>
 </head>
 <body>
-
 <div style="width: 100%; max-width: var(--slide-width);">
-
-  <!-- =============================================================
+<!-- =============================================================
        SLIDE 1 — 标题页
        ============================================================= -->
-  <div class="slide title-slide active" data-index="0">
-    <h1>第29课</h1>
-    <h1 style="margin-top:0;font-size:2.2em;">01背包与完全背包</h1>
-    <p class="subtitle">动态规划核心模型 —— 从二维到一维，从逆序到正序</p>
-    <div>
-      <span class="badge">01背包</span>
-      <span class="badge">完全背包</span>
-      <span class="badge">恰好装满</span>
-      <span class="badge">方案数</span>
-      <span class="badge">字典序最小方案</span>
-    </div>
-    <p style="margin-top:28px; color: var(--text-secondary); font-size: 0.9em;">
-      前置知识：动态规划基础 (DP) &nbsp;|&nbsp; 适用级别：CSP-S / NOIP 提高组
+<div class="slide title-slide active" data-index="0">
+<h1>第29课</h1>
+<h1 style="margin-top:0;font-size:2.2em;">01背包与完全背包</h1>
+<p class="subtitle">动态规划核心模型 —— 从二维到一维，从逆序到正序</p>
+<div>
+<span class="badge">01背包</span>
+<span class="badge">完全背包</span>
+<span class="badge">恰好装满</span>
+<span class="badge">方案数</span>
+<span class="badge">字典序最小方案</span>
+</div>
+<p style="margin-top:28px; color: var(--text-secondary); font-size: 0.9em;">
+      前置知识：动态规划基础 (DP)  |  适用级别：CSP-S / NOIP 提高组
     </p>
-  </div>
 
-  <!-- =============================================================
+<aside class="notes">【开场】第 1/8 页 · 01背包与完全背包
+用 30 秒说明本课目标与学完能做什么，再进入正题。
+大纲考点：二维/一维DP、滚动数组优化、完全背包推导
+配套练习方向：采药问题、货币系统
+封面关键词：
+· 动态规划核心模型 —— 从二维到一维，从逆序到正序
+· 前置知识：动态规划基础 (DP) | 适用级别：CSP-S / NOIP 提高组
+互动：问学生「今天最想搞清楚什么？」，收 1–2 个期待。</aside>
+</div>
+<!-- =============================================================
        SLIDE 2 — 01背包问题定义
        ============================================================= -->
-  <div class="slide" data-index="1">
-    <h2>01背包问题定义</h2>
-
-    <div class="highlight-box">
-      <strong>问题描述：</strong>有 <code>N</code> 件物品和一个容量为 <code>V</code> 的背包。
+<div class="slide" data-index="1">
+<h2>01背包问题定义</h2>
+<div class="highlight-box">
+<strong>问题描述：</strong>有 <code>N</code> 件物品和一个容量为 <code>V</code> 的背包。
       第 <code>i</code> 件物品的重量为 <code>w[i]</code>，价值为 <code>v[i]</code>。
       每件物品<strong>最多只能选择一次</strong>（要么选，要么不选）。
       求解：在总重量不超过 <code>V</code> 的前提下，最大总价值是多少？
     </div>
-
-    <h3>状态定义</h3>
-    <p>
-      <code>dp[i][j]</code>：考虑前 <code>i</code> 件物品，总重量不超过 <code>j</code> 时，所能获得的最大价值。
+<h3>状态定义</h3>
+<p>
+<code>dp[i][j]</code>：考虑前 <code>i</code> 件物品，总重量不超过 <code>j</code> 时，所能获得的最大价值。
     </p>
-
-    <h3>决策分析</h3>
-    <p>对于第 <code>i</code> 件物品，只有两种选择：</p>
-    <ul>
-      <li><strong>不选：</strong><code>dp[i][j] = dp[i-1][j]</code></li>
-      <li><strong>选：</strong>（需 <code>j &ge; w[i]</code>）<code>dp[i][j] = dp[i-1][j-w[i]] + v[i]</code></li>
-    </ul>
-
-    <h3>状态转移方程</h3>
-    <pre class="syntax"><span class="var">dp</span>[<span class="var">i</span>][<span class="var">j</span>] = <span class="fn">max</span>(<span class="var">dp</span>[<span class="var">i</span>-<span class="num">1</span>][<span class="var">j</span>], <span class="var">dp</span>[<span class="var">i</span>-<span class="num">1</span>][<span class="var">j</span>-<span class="var">w</span>[<span class="var">i</span>]] + <span class="var">v</span>[<span class="var">i</span>])</pre>
-
-    <div class="card-row">
-      <div class="card">
-        <div class="card-title">边界条件</div>
-        <code>dp[0][j] = 0</code>（0件物品）<br>
-        <code>dp[i][0] = 0</code>（容量为0）
+<h3>决策分析</h3>
+<p>对于第 <code>i</code> 件物品，只有两种选择：</p>
+<ul>
+<li><strong>不选：</strong><code>dp[i][j] = dp[i-1][j]</code></li>
+<li><strong>选：</strong>（需 <code>j ≥ w[i]</code>）<code>dp[i][j] = dp[i-1][j-w[i]] + v[i]</code></li>
+</ul>
+<h3>状态转移方程</h3>
+<pre class="syntax"><span class="var">dp</span>[<span class="var">i</span>][<span class="var">j</span>] = <span class="fn">max</span>(<span class="var">dp</span>[<span class="var">i</span>-<span class="num">1</span>][<span class="var">j</span>], <span class="var">dp</span>[<span class="var">i</span>-<span class="num">1</span>][<span class="var">j</span>-<span class="var">w</span>[<span class="var">i</span>]] + <span class="var">v</span>[<span class="var">i</span>])</pre>
+<div class="card-row">
+<div class="card">
+<div class="card-title">边界条件</div>
+<code>dp[0][j] = 0</code>（0件物品）<br/>
+<code>dp[i][0] = 0</code>（容量为0）
       </div>
-      <div class="card">
-        <div class="card-title">答案</div>
-        <code>dp[N][V]</code>
-      </div>
-      <div class="card">
-        <div class="card-title">复杂度</div>
-        时间：<code>O(N &times; V)</code><br>
-        空间：<code>O(N &times; V)</code>
-      </div>
-    </div>
-  </div>
+<div class="card">
+<div class="card-title">答案</div>
+<code>dp[N][V]</code>
+</div>
+<div class="card">
+<div class="card-title">复杂度</div>
+        时间：<code>O(N × V)</code><br/>
+        空间：<code>O(N × V)</code>
+</div>
+</div>
 
-  <!-- =============================================================
+<aside class="notes">【讲解】01背包问题定义
+结合讲义《2.1 01背包问题定义》强调：
+· 问题描述：有 N 件物品和一个容量为 V 的背包。第 i 件物品的重量为 w[i]，价值为 v[i]。每件物品**最多只能选择一次**（即要么选，要么不选，0 或 1 次）。求解将哪些物品装入背包可使总重量不超过背包容量，且总价值最大。
+· 第一行：整数 N（物品数量）和 V（背包容量）
+· 接下来 N 行：每行两个整数 w[i] 和 v[i]
+· 输出：一个整数，表示最大总价值。
+幻灯片上可见要点：
+· 问题描述：
+· 最多只能选择一次
+· dp[i][j] ：考虑前 i 件物品，总重量不超过 j 时，所能获得的最大价值。
+· 对于第 i 件物品，只有两种选择：
+讲解时放慢关键术语；用 1 个生活类比 + 1 个反例加深印象。
+本课大纲考点（可适时点题）：二维/一维DP、滚动数组优化、完全背包推导</aside>
+</div>
+<!-- =============================================================
        SLIDE 3 — 01背包二维DP
        ============================================================= -->
-  <div class="slide" data-index="2">
-    <h2>01背包 —— 二维DP实现</h2>
-
-    <h3>核心代码</h3>
-    <pre class="syntax"><span class="cmt">// 物品编号从 1 到 N，w[1..N], v[1..N]</span>
+<div class="slide" data-index="2">
+<h2>01背包 —— 二维DP实现</h2>
+<h3>核心代码</h3>
+<pre class="syntax"><span class="cmt">// 物品编号从 1 到 N，w[1..N], v[1..N]</span>
 <span class="tp">vector</span>&lt;<span class="tp">vector</span>&lt;<span class="kw">int</span>&gt;&gt; <span class="fn">dp</span>(<span class="var">N</span> + <span class="num">1</span>, <span class="tp">vector</span>&lt;<span class="kw">int</span>&gt;(<span class="var">V</span> + <span class="num">1</span>, <span class="num">0</span>));
 
 <span class="kw">for</span> (<span class="kw">int</span> <span class="var">i</span> = <span class="num">1</span>; <span class="var">i</span> &lt;= <span class="var">N</span>; <span class="var">i</span>++) {
@@ -516,27 +530,36 @@ body {
     }
 }
 <span class="cmt">// 答案：dp[N][V]</span></pre>
-
-    <table>
-      <tr><th>维度</th><th>复杂度</th></tr>
-      <tr><td>时间</td><td><code>O(N &times; V)</code></td></tr>
-      <tr><td>空间</td><td><code>O(N &times; V)</code> ⚠ 当 N、V 达 10⁴ 时内存不足</td></tr>
-    </table>
-
-    <div class="highlight-box">
-      <strong>优化动机：</strong>观察递推公式，计算第 <code>i</code> 行时<strong>只依赖第 <code>i-1</code> 行</strong>，
+<table>
+<tr><th>维度</th><th>复杂度</th></tr>
+<tr><td>时间</td><td><code>O(N × V)</code></td></tr>
+<tr><td>空间</td><td><code>O(N × V)</code> ⚠ 当 N、V 达 10⁴ 时内存不足</td></tr>
+</table>
+<div class="highlight-box">
+<strong>优化动机：</strong>观察递推公式，计算第 <code>i</code> 行时<strong>只依赖第 <code>i-1</code> 行</strong>，
       与更早的行无关 → 可以用<strong>滚动数组</strong>将空间优化到 <code>O(V)</code>！
     </div>
-  </div>
 
-  <!-- =============================================================
+<aside class="notes">【讲解】01背包 —— 二维DP实现
+结合讲义《2.2 01背包 —— 二维DP》强调：
+· 状态定义：
+· dp[i][j]：考虑前 i 件物品，总重量不超过 j 时，所能获得的最大价值。
+· 状态转移方程：
+· 对于第 i 件物品（i 从 1 开始编号），有两种决策：
+· 不选第 i 件物品：dp[i][j] = dp[i-1][j]
+幻灯片上可见要点：
+· 优化动机：
+· 只依赖第 i-1 行
+· 滚动数组
+讲解时放慢关键术语；用 1 个生活类比 + 1 个反例加深印象。</aside>
+</div>
+<!-- =============================================================
        SLIDE 4 — 01背包一维优化与逆序原理
        ============================================================= -->
-  <div class="slide" data-index="3">
-    <h2>01背包 —— 一维优化 &amp; 逆序原理</h2>
-
-    <h3>一维状态转移</h3>
-    <pre class="syntax"><span class="cmt">// ===== 01背包：一维滚动数组 =====</span>
+<div class="slide" data-index="3">
+<h2>01背包 —— 一维优化 &amp; 逆序原理</h2>
+<h3>一维状态转移</h3>
+<pre class="syntax"><span class="cmt">// ===== 01背包：一维滚动数组 =====</span>
 <span class="tp">vector</span>&lt;<span class="kw">int</span>&gt; <span class="fn">dp</span>(<span class="var">V</span> + <span class="num">1</span>, <span class="num">0</span>);
 
 <span class="kw">for</span> (<span class="kw">int</span> <span class="var">i</span> = <span class="num">1</span>; <span class="var">i</span> &lt;= <span class="var">N</span>; <span class="var">i</span>++) {
@@ -545,48 +568,55 @@ body {
     }
 }
 <span class="cmt">// 答案：dp[V]   空间复杂度：O(V)</span></pre>
-
-    <div class="highlight-box" style="margin-top:14px;">
-      <strong>为什么必须逆序遍历？</strong>
-      <ul style="margin-top:8px; margin-bottom:0;">
-        <li><code>dp[j] = max(dp[j], dp[j-w[i]] + v[i])</code> 中，右边的 <code>dp[j-w[i]]</code> 必须是<strong>上一轮</strong>（i-1）的旧值</li>
-        <li>逆序时：计算 <code>j</code> 大的先更新，<code>j-w[i]</code>（更小）尚未被本轮覆盖 → 保留了旧值 ✔</li>
-        <li>正序时：<code>j-w[i]</code> 可能已被本轮更新 → 物品被重复使用 → 退化为完全背包 ✘</li>
-      </ul>
-    </div>
-
-    <h3>图解：逆序 vs 正序（w=4, v=5, V=10）</h3>
-    <div class="diagram">
+<div class="highlight-box" style="margin-top:14px;">
+<strong>为什么必须逆序遍历？</strong>
+<ul style="margin-top:8px; margin-bottom:0;">
+<li><code>dp[j] = max(dp[j], dp[j-w[i]] + v[i])</code> 中，右边的 <code>dp[j-w[i]]</code> 必须是<strong>上一轮</strong>（i-1）的旧值</li>
+<li>逆序时：计算 <code>j</code> 大的先更新，<code>j-w[i]</code>（更小）尚未被本轮覆盖 → 保留了旧值 ✔</li>
+<li>正序时：<code>j-w[i]</code> 可能已被本轮更新 → 物品被重复使用 → 退化为完全背包 ✘</li>
+</ul>
+</div>
+<h3>图解：逆序 vs 正序（w=4, v=5, V=10）</h3>
+<div class="diagram">
 <span class="hl2">[逆序 j: 10 → 4]</span>
  j=10: dp[10]=max(dp[10]=0, <span class="hl">dp[6]=0</span> +5) = 5   ← dp[6]还是旧值
  j=9:  dp[9] =max(dp[9]=0,  <span class="hl">dp[5]=0</span> +5) = 5   ← dp[5]还是旧值
  j=8:  dp[8] =max(dp[8]=0,  <span class="hl">dp[4]=0</span> +5) = 5   ← dp[4]还是旧值
  ...
  <span class="hl">物品用了1次，正确！✓</span>
-
 <span class="hl3">[正序 j: 4 → 10]（错误！）</span>
  j=8:  dp[8] =max(dp[8]=0,  <span class="hl">dp[4]=5</span> +5) = 10  ← dp[4]已更新！
  j=10: dp[10]=max(dp[10]=0, <span class="hl">dp[6]=5</span> +5) = 10  ← 物品被用了2次！
  <span class="hl">物品被重复使用了！✘</span></div>
-
-    <p style="font-size:0.85em; color:var(--accent); text-align:center; font-weight:600;">
+<p style="font-size:0.85em; color:var(--accent); text-align:center; font-weight:600;">
       记忆口诀：<strong>零逆完正</strong> —— 01背包用逆序，完全背包用正序
     </p>
-  </div>
 
-  <!-- =============================================================
+<aside class="notes">【讲解】01背包 —— 一维优化 &amp; 逆序原理
+结合讲义《2.2 01背包 —— 二维DP》强调：
+· 状态定义：
+· dp[i][j]：考虑前 i 件物品，总重量不超过 j 时，所能获得的最大价值。
+· 状态转移方程：
+· 对于第 i 件物品（i 从 1 开始编号），有两种决策：
+· 不选第 i 件物品：dp[i][j] = dp[i-1][j]
+幻灯片上可见要点：
+· 为什么必须逆序遍历？
+· dp[j] = max(dp[j], dp[j-w[i]] + v[i]) 中，右边的 dp[j-w[i]] 必须是 上一轮 （i-1）的旧值
+· 逆序时：计算 j 大的先更新， j-w[i] （更小）尚未被本轮覆盖 → 保留了旧值 ✔
+· 正序时： j-w[i] 可能已被本轮更新 → 物品被重复使用 → 退化为完全背包 ✘
+讲解时放慢关键术语；用 1 个生活类比 + 1 个反例加深印象。</aside>
+</div>
+<!-- =============================================================
        SLIDE 5 — 完全背包与正序原理
        ============================================================= -->
-  <div class="slide" data-index="4">
-    <h2>完全背包 —— 正序原理</h2>
-
-    <h3>问题定义</h3>
-    <div class="highlight-box">
+<div class="slide" data-index="4">
+<h2>完全背包 —— 正序原理</h2>
+<h3>问题定义</h3>
+<div class="highlight-box">
       与01背包相同，但每件物品<strong>可以选任意多次</strong>（0次、1次、2次……），只要总重量不超过V。
     </div>
-
-    <h3>一维状态转移（正序）</h3>
-    <pre class="syntax"><span class="cmt">// ===== 完全背包：一维正序遍历 =====</span>
+<h3>一维状态转移（正序）</h3>
+<pre class="syntax"><span class="cmt">// ===== 完全背包：一维正序遍历 =====</span>
 <span class="tp">vector</span>&lt;<span class="kw">int</span>&gt; <span class="fn">dp</span>(<span class="var">V</span> + <span class="num">1</span>, <span class="num">0</span>);
 
 <span class="kw">for</span> (<span class="kw">int</span> <span class="var">i</span> = <span class="num">1</span>; <span class="var">i</span> &lt;= <span class="var">N</span>; <span class="var">i</span>++) {
@@ -595,16 +625,14 @@ body {
     }
 }
 <span class="cmt">// 答案：dp[V]   时间 O(NV)  空间 O(V)</span></pre>
-
-    <div class="highlight-box">
-      <strong>为什么正序遍历就允许重复选？</strong><br>
+<div class="highlight-box">
+<strong>为什么正序遍历就允许重复选？</strong><br/>
       正序时，<code>dp[j-w[i]]</code> 在本轮中可能已经被更新过，已经包含了物品 <code>i</code>。
       在此基础之上再加一件物品 <code>i</code>，相当于物品 <code>i</code> 被使用了多次 ——
       这正是完全背包所允许的。
     </div>
-
-    <h3>图解：正序实现无限次（w=2, v=3, V=6）</h3>
-    <div class="diagram">
+<h3>图解：正序实现无限次（w=2, v=3, V=6）</h3>
+<div class="diagram">
 w=2, v=3, <span class="hl2">正序遍历</span>
  j=2: dp[2] = max(dp[2], <span class="hl">dp[0]=0</span>+3) = <span class="hl3">3</span>   ← 1件
  j=3: dp[3] = max(dp[3], dp[1]=0+3) = 3
@@ -613,49 +641,48 @@ w=2, v=3, <span class="hl2">正序遍历</span>
  j=6: dp[6] = max(dp[6], <span class="hl">dp[4]=6</span>+3) = <span class="hl3">9</span>   ← 3件（dp[4]已含2件）
 
 <span class="hl">最终 dp[6]=9，物品被使用了3次，正确！✓</span></div>
+<table style="margin-top:14px;">
+<tr><th></th><th>01背包</th><th>完全背包</th></tr>
+<tr><td>每件使用次数</td><td>最多1次</td><td>无限次</td></tr>
+<tr><td>遍历顺序</td><td style="color:var(--accent); font-weight:700;">逆序 V→w[i]</td><td style="color:var(--accent); font-weight:700;">正序 w[i]→V</td></tr>
+<tr><td>依赖</td><td>上一轮旧值</td><td>允许本轮新值</td></tr>
+</table>
 
-    <table style="margin-top:14px;">
-      <tr><th></th><th>01背包</th><th>完全背包</th></tr>
-      <tr><td>每件使用次数</td><td>最多1次</td><td>无限次</td></tr>
-      <tr><td>遍历顺序</td><td style="color:var(--accent); font-weight:700;">逆序 V→w[i]</td><td style="color:var(--accent); font-weight:700;">正序 w[i]→V</td></tr>
-      <tr><td>依赖</td><td>上一轮旧值</td><td>允许本轮新值</td></tr>
-    </table>
-  </div>
-
-  <!-- =============================================================
+<aside class="notes">【讲解】完全背包 —— 正序原理
+本页要点（照着讲即可）：
+· 可以选任意多次
+· 为什么正序遍历就允许重复选？
+讲解时放慢关键术语；用 1 个生活类比 + 1 个反例加深印象。</aside>
+</div>
+<!-- =============================================================
        SLIDE 6 — 恰好装满初始化技巧
        ============================================================= -->
-  <div class="slide" data-index="5">
-    <h2>恰好装满 —— 初始化技巧</h2>
-
-    <h3>问题变体</h3>
-    <p>求<strong>恰好装满</strong>容量 V 的最大价值（而非"不超过 V"）。</p>
-
-    <h3>初始化方法</h3>
-    <pre class="syntax"><span class="tp">vector</span>&lt;<span class="kw">int</span>&gt; <span class="fn">dp</span>(<span class="var">V</span> + <span class="num">1</span>, <span class="fn">-INF</span>);  <span class="cmt">// 初始化为负无穷</span>
+<div class="slide" data-index="5">
+<h2>恰好装满 —— 初始化技巧</h2>
+<h3>问题变体</h3>
+<p>求<strong>恰好装满</strong>容量 V 的最大价值（而非"不超过 V"）。</p>
+<h3>初始化方法</h3>
+<pre class="syntax"><span class="tp">vector</span>&lt;<span class="kw">int</span>&gt; <span class="fn">dp</span>(<span class="var">V</span> + <span class="num">1</span>, <span class="fn">-INF</span>);  <span class="cmt">// 初始化为负无穷</span>
 <span class="var">dp</span>[<span class="num">0</span>] = <span class="num">0</span>;  <span class="cmt">// ← 关键：容量0可以恰好装满（一件都不装）</span>
 
 <span class="cmt">// 其余代码不变，仍按 逆序(01背包) 或 正序(完全背包) 遍历</span></pre>
-
-    <div class="info-box">
-      <strong>为什么这样初始化？</strong>
-      <ul>
-        <li><code>dp[0]=0</code>：容量为0时，"恰好装满"所需重量为0，是合法状态</li>
-        <li><code>dp[1..V]=-INF</code>：其他容量暂时无法恰好装满，标记为非法</li>
-        <li>转移时 <code>dp[j-w[i]] + v[i]</code> 若来自非法状态，结果仍为极小的负数</li>
-        <li>只有从 <code>dp[0]=0</code> 出发、通过合法转移到达的状态才会被赋有效值</li>
-      </ul>
-    </div>
-
-    <h3>判断是否存在方案</h3>
-    <pre class="syntax"><span class="kw">if</span> (<span class="var">dp</span>[<span class="var">V</span>] &lt; <span class="num">0</span>) {
+<div class="info-box">
+<strong>为什么这样初始化？</strong>
+<ul>
+<li><code>dp[0]=0</code>：容量为0时，"恰好装满"所需重量为0，是合法状态</li>
+<li><code>dp[1..V]=-INF</code>：其他容量暂时无法恰好装满，标记为非法</li>
+<li>转移时 <code>dp[j-w[i]] + v[i]</code> 若来自非法状态，结果仍为极小的负数</li>
+<li>只有从 <code>dp[0]=0</code> 出发、通过合法转移到达的状态才会被赋有效值</li>
+</ul>
+</div>
+<h3>判断是否存在方案</h3>
+<pre class="syntax"><span class="kw">if</span> (<span class="var">dp</span>[<span class="var">V</span>] &lt; <span class="num">0</span>) {
     <span class="fn">cout</span> &lt;&lt; <span class="str">"无法恰好装满"</span> &lt;&lt; <span class="fn">endl</span>;
 } <span class="kw">else</span> {
     <span class="fn">cout</span> &lt;&lt; <span class="var">dp</span>[<span class="var">V</span>] &lt;&lt; <span class="fn">endl</span>;
 }</pre>
-
-    <h3>求方案数——另一种初始化</h3>
-    <pre class="syntax"><span class="cmt">// 恰好装满的方案数</span>
+<h3>求方案数——另一种初始化</h3>
+<pre class="syntax"><span class="cmt">// 恰好装满的方案数</span>
 <span class="tp">vector</span>&lt;<span class="kw">int</span>&gt; <span class="fn">dp</span>(<span class="var">V</span> + <span class="num">1</span>, <span class="num">0</span>);
 <span class="var">dp</span>[<span class="num">0</span>] = <span class="num">1</span>;  <span class="cmt">// 空背包算1种方案</span>
 
@@ -668,32 +695,38 @@ w=2, v=3, <span class="hl2">正序遍历</span>
 <span class="kw">for</span> (<span class="kw">int</span> <span class="var">i</span> = <span class="num">1</span>; <span class="var">i</span> &lt;= <span class="var">N</span>; <span class="var">i</span>++)
     <span class="kw">for</span> (<span class="kw">int</span> <span class="var">j</span> = <span class="var">w</span>[<span class="var">i</span>]; <span class="var">j</span> &lt;= <span class="var">V</span>; <span class="var">j</span>++)
         <span class="var">dp</span>[<span class="var">j</span>] = (<span class="var">dp</span>[<span class="var">j</span>] + <span class="var">dp</span>[<span class="var">j</span>-<span class="var">w</span>[<span class="var">i</span>]]) % <span class="var">MOD</span>;</pre>
-  </div>
 
-  <!-- =============================================================
+<aside class="notes">【讲解】恰好装满 —— 初始化技巧
+本页要点（照着讲即可）：
+· 求 恰好装满 容量 V 的最大价值（而非"不超过 V"）。
+· 恰好装满
+· 为什么这样初始化？
+· dp[0]=0 ：容量为0时，"恰好装满"所需重量为0，是合法状态
+· dp[1..V]=-INF ：其他容量暂时无法恰好装满，标记为非法
+· 转移时 dp[j-w[i]] + v[i] 若来自非法状态，结果仍为极小的负数
+讲解时放慢关键术语；用 1 个生活类比 + 1 个反例加深印象。</aside>
+</div>
+<!-- =============================================================
        SLIDE 7 — 真题精练
        ============================================================= -->
-  <div class="slide" data-index="6">
-    <h2>真题精练</h2>
-
-    <h3>真题1：采药（NOIP2005 普及组）</h3>
-    <div class="info-box">
-      <strong>题目：</strong>T 时间，M 株草药。每株需要 time[i] 时间，有 value[i] 价值。
-      每株只能采一次，求最大总价值。<br>
-      <strong>本质：</strong>标准01背包 —— 容量 = T，重量 = 时间，价值 = 草药价值。<br>
-      <strong>样例：</strong>T=70, M=3，草药：(71,100)、(69,1)、(1,2) → <strong>输出 3</strong>
-    </div>
-
-    <h3>真题2：装箱问题（最小剩余容量）</h3>
-    <div class="info-box">
-      <strong>题目：</strong>箱子容量 V，n 个物品各有体积。求装入后箱子的最小剩余空间。<br>
-      <strong>本质：</strong>01背包变体 —— w[i] = v[i] = 体积（体积既是重量也是价值）。<br>
-      <strong>答案：</strong><code>V - dp[V]</code><br>
-      <strong>样例：</strong>V=24，物品体积 8,3,12,7,9,7 → 选 8+7+9=24 → <strong>剩余 0</strong>
-    </div>
-
-    <h3>装箱问题 AC 代码</h3>
-    <pre class="syntax"><span class="cmt">// w[i] = 物品体积（重量=价值=体积）</span>
+<div class="slide" data-index="6">
+<h2>真题精练</h2>
+<h3>真题1：采药（NOIP2005 普及组）</h3>
+<div class="info-box">
+<strong>题目：</strong>T 时间，M 株草药。每株需要 time[i] 时间，有 value[i] 价值。
+      每株只能采一次，求最大总价值。<br/>
+<strong>本质：</strong>标准01背包 —— 容量 = T，重量 = 时间，价值 = 草药价值。<br/>
+<strong>样例：</strong>T=70, M=3，草药：(71,100)、(69,1)、(1,2) → <strong>输出 3</strong>
+</div>
+<h3>真题2：装箱问题（最小剩余容量）</h3>
+<div class="info-box">
+<strong>题目：</strong>箱子容量 V，n 个物品各有体积。求装入后箱子的最小剩余空间。<br/>
+<strong>本质：</strong>01背包变体 —— w[i] = v[i] = 体积（体积既是重量也是价值）。<br/>
+<strong>答案：</strong><code>V - dp[V]</code><br/>
+<strong>样例：</strong>V=24，物品体积 8,3,12,7,9,7 → 选 8+7+9=24 → <strong>剩余 0</strong>
+</div>
+<h3>装箱问题 AC 代码</h3>
+<pre class="syntax"><span class="cmt">// w[i] = 物品体积（重量=价值=体积）</span>
 <span class="tp">vector</span>&lt;<span class="kw">int</span>&gt; <span class="fn">dp</span>(<span class="var">V</span> + <span class="num">1</span>, <span class="num">0</span>);
 
 <span class="kw">for</span> (<span class="kw">int</span> <span class="var">i</span> = <span class="num">1</span>; <span class="var">i</span> &lt;= <span class="var">n</span>; <span class="var">i</span>++) {
@@ -703,90 +736,97 @@ w=2, v=3, <span class="hl2">正序遍历</span>
 }
 <span class="kw">int</span> <span class="var">minRemain</span> = <span class="var">V</span> - <span class="var">dp</span>[<span class="var">V</span>];  <span class="cmt">// 最小剩余空间</span>
 <span class="fn">cout</span> &lt;&lt; <span class="var">minRemain</span> &lt;&lt; <span class="fn">endl</span>;</pre>
-
-    <h3>字典序最小方案</h3>
-    <div class="info-box">
+<h3>字典序最小方案</h3>
+<div class="info-box">
       使用二维DP记录 <code>g[i][j]</code>（是否选了物品 i），从 <code>(N, V)</code> 回溯：
       对 i = N → 1，若选了则加入答案，最终 reverse 输出。
     </div>
-  </div>
 
-  <!-- =============================================================
+<aside class="notes">【讲解】真题精练
+本页要点（照着讲即可）：
+· 输出 3
+· 剩余 0
+练习页节奏：先独立想 1 分钟 → 再点拨思路 → 最后对答案讲为什么。
+可联系：采药问题、货币系统</aside>
+</div>
+<!-- =============================================================
        SLIDE 8 — 本课小结
        ============================================================= -->
-  <div class="slide" data-index="7">
-    <h2>本课小结</h2>
-
-    <div class="summary-grid">
-      <div class="summary-item">
-        <strong>01背包</strong>
-        <code>dp[j] = max(dp[j], dp[j-w[i]]+v[i])</code><br>
+<div class="slide" data-index="7">
+<h2>本课小结</h2>
+<div class="summary-grid">
+<div class="summary-item">
+<strong>01背包</strong>
+<code>dp[j] = max(dp[j], dp[j-w[i]]+v[i])</code><br/>
         遍历顺序：<span style="color:var(--accent); font-weight:700;">逆序</span> (V → w[i])
       </div>
-      <div class="summary-item">
-        <strong>完全背包</strong>
-        <code>dp[j] = max(dp[j], dp[j-w[i]]+v[i])</code><br>
+<div class="summary-item">
+<strong>完全背包</strong>
+<code>dp[j] = max(dp[j], dp[j-w[i]]+v[i])</code><br/>
         遍历顺序：<span style="color:var(--accent); font-weight:700;">正序</span> (w[i] → V)
       </div>
-      <div class="summary-item">
-        <strong>逆序原理</strong>
-        确保 dp[j-w[i]] 来自上一轮（旧值）<br>
+<div class="summary-item">
+<strong>逆序原理</strong>
+        确保 dp[j-w[i]] 来自上一轮（旧值）<br/>
         → 每件物品最多用一次
       </div>
-      <div class="summary-item">
-        <strong>正序原理</strong>
-        允许 dp[j-w[i]] 来自本轮（可能已含该物品）<br>
+<div class="summary-item">
+<strong>正序原理</strong>
+        允许 dp[j-w[i]] 来自本轮（可能已含该物品）<br/>
         → 实现物品无限次使用
       </div>
-      <div class="summary-item">
-        <strong>恰好装满</strong>
-        dp[0] = 0, dp[1..V] = -INF<br>
+<div class="summary-item">
+<strong>恰好装满</strong>
+        dp[0] = 0, dp[1..V] = -INF<br/>
         → 未装满状态自动被排除
       </div>
-      <div class="summary-item">
-        <strong>求方案数</strong>
-        dp[0] = 1<br>
+<div class="summary-item">
+<strong>求方案数</strong>
+        dp[0] = 1<br/>
         dp[j] = (dp[j] + dp[j-w[i]]) % MOD
       </div>
-      <div class="summary-item">
-        <strong>装箱问题（变体）</strong>
-        w[i] = v[i] = 体积<br>
+<div class="summary-item">
+<strong>装箱问题（变体）</strong>
+        w[i] = v[i] = 体积<br/>
         答案 = V - dp[V]
       </div>
-      <div class="summary-item">
-        <strong>字典序最小方案</strong>
-        二维DP + 记录表 g[i][j]<br>
+<div class="summary-item">
+<strong>字典序最小方案</strong>
+        二维DP + 记录表 g[i][j]<br/>
         从 (N,V) 回溯 → reverse 输出
       </div>
-    </div>
-
-    <div class="highlight-box" style="margin-top:18px; text-align:center; font-size:1.05em;">
-      <strong>核心口诀：零逆完正</strong><br>
+</div>
+<div class="highlight-box" style="margin-top:18px; text-align:center; font-size:1.05em;">
+<strong>核心口诀：零逆完正</strong><br/>
       01背包（零）用<strong>逆序</strong>，完全背包（完）用<strong>正序</strong>。
     </div>
-
-    <p style="text-align:center; margin-top:14px; color: var(--text-secondary); font-size:0.9em;">
+<p style="text-align:center; margin-top:14px; color: var(--text-secondary); font-size:0.9em;">
       掌握了这两个基础模型，多重背包、分组背包、混合背包等变体都可以迎刃而解。
     </p>
-  </div>
 
+<aside class="notes">【收尾】回顾本课主线：本课小结
+对照大纲再过一遍：二维/一维DP、滚动数组优化、完全背包推导
+板书/口述要点：
+· 01背包
+· 完全背包
+· 逆序原理
+· 正序原理
+· 恰好装满
+· 求方案数
+课后任务：采药问题、货币系统
+结束前留 2 分钟答疑；布置 1 道小练习检验是否真正掌握。</aside>
+</div>
 </div> <!-- end slideshow-container -->
-
 <!-- ============================================================
      导航控制区
      ============================================================ -->
 <div class="nav-container">
-  <button class="nav-btn" id="prevBtn" onclick="changeSlide(-1)">&#9664; 上一页</button>
-
-  <div class="page-dots" id="pageDots"></div>
-
-  <span class="slide-number" id="slideNumber"></span>
-
-  <button class="nav-btn" id="nextBtn" onclick="changeSlide(1)">下一页 &#9654;</button>
+<button class="nav-btn" id="prevBtn" onclick="changeSlide(-1)">◀ 上一页</button>
+<div class="page-dots" id="pageDots"></div>
+<span class="slide-number" id="slideNumber"></span>
+<button class="nav-btn" id="nextBtn" onclick="changeSlide(1)">下一页 ▶</button>
 </div>
-
 <div class="kbd-hint">← → 键盘翻页</div>
-
 <!-- ============================================================
      JavaScript 交互逻辑
      ============================================================ -->
@@ -887,7 +927,6 @@ w=2, v=3, <span class="hl2">正序遍历</span>
   updateDisplay();
 })();
 </script>
-
 <script src="courseware-ui.js"></script>
 <script src="presenter.js"></script>
 </body>

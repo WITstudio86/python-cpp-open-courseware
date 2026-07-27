@@ -1,8 +1,9 @@
 <!DOCTYPE html>
+
 <html lang="zh-CN">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
 <title>第14课：带权并查集与扩展域</title>
 <style>
 * { margin: 0; padding: 0; box-sizing: border-box; }
@@ -39,18 +40,24 @@ code { font-family: 'Fira Code', 'Consolas', monospace; }
 </div>
 <p style="margin-top:30px; color:#8b949e">当"在同一集合"不够用时，用关系和权值建模</p>
 </div>
-</div>
 
+<aside class="notes">【开场】第 1/7 页 · 带权并查集与扩展域
+用 30 秒说明本课目标与学完能做什么，再进入正题。
+大纲考点：种类并查集、边带权并查集、关系传递
+配套练习方向：食物链问题、二分图判定
+封面关键词：
+· 种类并查集 · 边带权并查集 · 食物链
+· 当"在同一集合"不够用时，用关系和权值建模
+互动：问学生「今天最想搞清楚什么？」，收 1–2 个期待。</aside>
+</div>
 <div class="slide" id="s2">
 <h1>📖 知识精讲 — 两种方法</h1>
 <h2>方法一：扩展域（k倍空间）</h2>
 <p>将每个元素拆成 k 个域，每个域代表一种可能的类型</p>
 <p>例（食物链，3类）：x → A类，x+n → B类，x+2n → C类</p>
-
 <h2 style="margin-top:20px">方法二：边带权并查集</h2>
 <p>维护 <span class="highlight">d[x]</span>：x 到父节点的关系权值</p>
 <p>find 时累加：<span class="func">d[x] = (d[x] + d[fa[x]]) % mod</span></p>
-
 <h3 style="margin-top:16px">对比</h3>
 <table style="width:100%; border-collapse:collapse; margin:8px 0">
 <tr style="border-bottom:1px solid #30363d"><td style="padding:6px"></td><td style="padding:6px"><span class="highlight">扩展域</span></td><td style="padding:6px"><span class="accent">边带权</span></td></tr>
@@ -58,13 +65,20 @@ code { font-family: 'Fira Code', 'Consolas', monospace; }
 <tr style="border-bottom:1px solid #30363d"><td style="padding:6px">代码</td><td style="padding:6px">直观</td><td style="padding:6px">需推导</td></tr>
 <tr><td style="padding:6px">适用</td><td style="padding:6px">k≤3</td><td style="padding:6px">任意mod</td></tr>
 </table>
-</div>
 
+<aside class="notes">【讲解】📖 知识精讲 — 两种方法
+本页要点（照着讲即可）：
+· 将每个元素拆成 k 个域，每个域代表一种可能的类型
+· 例（食物链，3类）：x → A类，x+n → B类，x+2n → C类
+· 维护 d[x] ：x 到父节点的关系权值
+· find 时累加： d[x] = (d[x] + d[fa[x]]) % mod
+讲解时放慢关键术语；用 1 个生活类比 + 1 个反例加深印象。
+本课大纲考点（可适时点题）：种类并查集、边带权并查集、关系传递</aside>
+</div>
 <div class="slide" id="s3">
 <h1>📖 知识精讲 — 扩展域详解</h1>
 <h3>食物链（3 类环形关系）</h3>
 <p>A 吃 B，B 吃 C，C 吃 A</p>
-
 <h3 style="margin-top:12px">合并规则</h3>
 <p>设 X 吃 Y：</p>
 <ul>
@@ -72,12 +86,20 @@ code { font-family: 'Fira Code', 'Consolas', monospace; }
 <li>X 是 B → Y 是 C：<code class="func">unite(x+n, y+2n)</code></li>
 <li>X 是 C → Y 是 A：<code class="func">unite(x+2n, y)</code></li>
 </ul>
-
 <h3 style="margin-top:12px">矛盾判定</h3>
 <p>说 X 和 Y 同类时，矛盾条件：<span class="highlight">X 在 A 且 Y 在 B</span> 或 <span class="highlight">X 在 A 且 Y 在 C</span></p>
 <p>说 X 吃 Y 时，矛盾条件：同类 或 Y 吃 X</p>
-</div>
 
+<aside class="notes">【讲解】📖 知识精讲 — 扩展域详解
+本页要点（照着讲即可）：
+· A 吃 B，B 吃 C，C 吃 A
+· 设 X 吃 Y：
+· X 是 A → Y 是 B： unite(x, y+n)
+· X 是 B → Y 是 C： unite(x+n, y+2n)
+· X 是 C → Y 是 A： unite(x+2n, y)
+· 说 X 和 Y 同类时，矛盾条件： X 在 A 且 Y 在 B 或 X 在 A 且 Y 在 C
+讲解时放慢关键术语；用 1 个生活类比 + 1 个反例加深印象。</aside>
+</div>
 <div class="slide" id="s4">
 <h1>💻 代码模板 — 边带权并查集</h1>
 <h3>核心：find 中的路径压缩</h3>
@@ -87,7 +109,6 @@ code { font-family: 'Fira Code', 'Consolas', monospace; }
     d[x] = (d[x] + d[fa[x]]) % mod; <span class="cmt">// 再更新 d</span>
     <span class="kw">return</span> fa[x] = root;
 }</pre>
-
 <h3>合并时的关系推导</h3>
 <pre><span class="type">bool</span> <span class="func">unite</span>(<span class="type">int</span> x, <span class="type">int</span> y, <span class="type">int</span> rel) {
     <span class="type">int</span> fx = <span class="func">find</span>(x), fy = <span class="func">find</span>(y);
@@ -98,8 +119,22 @@ code { font-family: 'Fira Code', 'Consolas', monospace; }
     <span class="cmt">// 推导：x→fx→fy→y = rel</span>
     <span class="kw">return true</span>;
 }</pre>
-</div>
 
+<aside class="notes">【讲解】💻 代码模板 — 边带权并查集
+结合讲义《💻 代码模板》强调：
+· // ========== 边带权并查集模板（食物链，模 3 意义） ==========
+· struct WeightedDSU {
+· vector fa, d; // d[x]: x 与 fa[x] 的关系
+· // 0: 同类, 1: x吃fa[x], 2: fa[x]吃x
+· WeightedDSU(int n) : fa(n + 1), d(n + 1, 0) {
+幻灯片上可见要点：
+· 💻 代码模板 — 边带权并查集
+· 核心：find 中的路径压缩
+· find
+· x) {
+代码页节奏：先读懂输入输出 → 再走主流程 → 最后点出易错点（边界/类型/下标）。
+可让学生预测下一行输出，再运行对照。</aside>
+</div>
 <div class="slide" id="s5">
 <h1>⚠️ 易错点与优化技巧</h1>
 <ul>
@@ -112,24 +147,45 @@ code { font-family: 'Fira Code', 'Consolas', monospace; }
 <li><span class="accent">✔ 种类多/关系复杂用带权</span> — 空间 O(n)</li>
 <li><span class="accent">✔ 关系链式推导</span> — x→fx→fy→y 形成闭环</li>
 </ul>
-</div>
 
+<aside class="notes">【讲解】⚠️ 易错点与优化技巧
+结合讲义《⚠️ 易错点与优化技巧》强调：
+· find 的递归顺序 —— 必须先 find(fa[x]) 再更新 d[x]，否则 d[fa[x]] 可能不是到根的关系
+· 模运算的负数处理 —— 公式写成 (a + b) % mod 和 (a - b + mod) % mod
+· 扩展域的空间 —— 需要开 k*n 的大小，注意数组越界
+· 扩展域中矛盾判断 —— 需要检查所有可能的目标域
+· 关系方向 —— 注意 d[x] 的方向（x→fa[x] 还是 fa[x]→x），保持一致
+幻灯片上可见要点：
+· ⚠ find 递归顺序 — 必须先递归 fa[x]，再更新 d[x]
+· ⚠ 模运算负数 — 公式用 (a - b + mod) % mod
+· ⚠ 扩展域空间 — 需要 k*n，注意数组大小
+· ⚠ 扩展域矛盾检查 — 检查所有可能的目标域
+讲解时放慢关键术语；用 1 个生活类比 + 1 个反例加深印象。</aside>
+</div>
 <div class="slide" id="s6">
 <h1>📝 真题精练</h1>
 <h3>真题一：[NOI 2001] 食物链</h3>
 <p><span class="info">N ≤ 5×10⁴，K ≤ 10⁵ | 3 类环形关系</span></p>
 <p>两种解法：扩展域（3N）或边带权（模 3）</p>
-
 <h3 style="margin-top:20px">真题二：奇偶性判定（XOR 关系）</h3>
 <p><span class="info">N ≤ 10⁵，M ≤ 2×10⁵ | 判断条件是否矛盾</span></p>
 <p>扩展域（2N）：x=0 域和 x=1 域</p>
 <p>XOR=0 → 合并相同域；XOR=1 → 合并不同域</p>
-
 <div style="background:#0d1117; padding:14px; border-radius:8px; border:1px solid #30363d; margin-top:16px">
 <p><span class="accent">复杂度：</span>O((N+K)·α(N))，即近乎 O(N+K)</p>
 </div>
-</div>
 
+<aside class="notes">【讲解】📝 真题精练
+本页要点（照着讲即可）：
+· N ≤ 5×10⁴，K ≤ 10⁵ | 3 类环形关系
+· 两种解法：扩展域（3N）或边带权（模 3）
+· N ≤ 10⁵，M ≤ 2×10⁵ | 判断条件是否矛盾
+· 扩展域（2N）：x=0 域和 x=1 域
+· XOR=0 → 合并相同域；XOR=1 → 合并不同域
+· 复杂度： O((N+K)·α(N))，即近乎 O(N+K)
+练习页节奏：先独立想 1 分钟 → 再点拨思路 → 最后对答案讲为什么。
+可联系：食物链问题、二分图判定</aside>
+</div>
 <div class="slide" id="s7">
 <h1>🎯 本课小结</h1>
 <div style="display:grid; grid-template-columns:1fr 1fr; gap:16px; margin-top:20px">
@@ -158,8 +214,19 @@ code { font-family: 'Fira Code', 'Consolas', monospace; }
 <p>奇偶性判定（XOR）</p>
 </div>
 </div>
-</div>
 
+<aside class="notes">【收尾】回顾本课主线：🎯 本课小结
+对照大纲再过一遍：种类并查集、边带权并查集、关系传递
+板书/口述要点：
+· 拆成 k 份
+· 代码直观
+· 空间 O(kn)
+· d[x] 维护关系
+· 需推导公式
+· 空间 O(n)
+课后任务：食物链问题、二分图判定
+结束前留 2 分钟答疑；布置 1 道小练习检验是否真正掌握。</aside>
+</div>
 <div class="nav">
 <button onclick="prevSlide()">◀ 上一页</button>
 <span class="page-indicator" id="pageNum">1 / 7</span>

@@ -1,8 +1,9 @@
 <!DOCTYPE html>
+
 <html lang="zh-CN">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
 <title>第37节 极速躲避 — 创建你的跑酷游戏</title>
 <style>
 /* ========== 全局样式 ========== */
@@ -453,102 +454,147 @@ html, body {
 </style>
 </head>
 <body>
-
 <div class="slideshow" id="slideshow">
+<!-- ===== 第1页：标题页 ===== -->
+<div class="slide slide-title active" data-index="0">
+<div class="lesson-num">第 37 节</div>
+<div class="main-title">极速躲避</div>
+<div class="subtitle">—— 创建你的跑酷游戏 ——</div>
 
-  <!-- ===== 第1页：标题页 ===== -->
-  <div class="slide slide-title active" data-index="0">
-    <div class="lesson-num">第 37 节</div>
-    <div class="main-title">极速躲避</div>
-    <div class="subtitle">—— 创建你的跑酷游戏 ——</div>
-  </div>
+<aside class="notes">【开场】第 1/12 页 · 极速躲避
+用 30 秒说明本课目标与学完能做什么，再进入正题。
+大纲考点：**内容**：道路滚动效果、左右移动躲避障碍车、速度递增
 
-  <!-- ===== 第2页：学习目标 ===== -->
-  <div class="slide" data-index="1">
-    <div class="slide-content">
-      <div class="slide-header">
-        <span class="dot"></span>
-        <h2>学习目标</h2>
-      </div>
-      <div class="slide-body">
-        <p>通过本节课程，你将掌握以下技能：</p>
-        <ul>
-          <li><strong>滚动背景原理</strong> — 理解图片连续滚动形成无限道路的视觉错觉</li>
-          <li><strong>障碍物列表管理</strong> — 用列表统一管理多个障碍车，动态增删</li>
-          <li><strong>随机生成机制</strong> — 控制障碍物出现的时机和位置</li>
-          <li><strong>难度自动递增</strong> — 随着分数提高，游戏速度越来越快</li>
-          <li><strong>碰撞检测</strong> — 使用 <span style="color:var(--code-builtin);font-family:monospace;">Rect.colliderect()</span> 判断两车是否相撞</li>
-          <li><strong>玩家车道切换</strong> — 左右方向键控制汽车在车道间移动</li>
-          <li><strong>游戏状态管理</strong> — 开始、运行、结束三种状态的切换</li>
-        </ul>
-      </div>
-    </div>
-  </div>
+**知识点**：
+- 滚动背景循环（两条车道线不断下移，到底后回到顶部）
+- 障碍物分组管理（重生在上方，移出下方时移除）
+- 难度自动递增（随时间加速）
+- 碰撞检测（玩家车 vs 障碍车）
 
-  <!-- ===== 第3页：游戏预览 ===== -->
-  <div class="slide" data-index="2">
-    <div class="slide-content">
-      <div class="slide-header">
-        <span class="dot"></span>
-        <h2>游戏预览</h2>
-      </div>
-      <div class="slide-body">
-        <p style="text-align:center; margin-bottom:8px;">玩家驾驶蓝色汽车在公路上疾驰，需要灵活躲避迎面而来的红色车辆</p>
-        <div class="road-demo">
-          <div class="lane">
-            <div class="lane-line"></div>
-            <div class="lane-line"></div>
-            <div class="lane-line"></div>
-            <div class="lane-line"></div>
-            <div class="lane-line"></div>
-            <div class="lane-line"></div>
-            <div class="lane-line"></div>
-          </div>
-          <div class="player"></div>
-          <div class="enemy"></div>
-        </div>
-        <div class="two-column" style="margin-top:10px;">
-          <div class="col">
-            <h3>🎮 操作方式</h3>
-            <p>← 左移 / → 右移</p>
-            <p>躲避红色障碍车</p>
-            <p>坚持时间越久，得分越高</p>
-          </div>
-          <div class="col">
-            <h3>⚙️ 游戏机制</h3>
-            <p>道路标线持续向下滚动</p>
-            <p>障碍车从上方随机出现</p>
-            <p>速度随分数逐步加快</p>
-            <p>撞车 = 游戏结束</p>
-          </div>
-        </div>
-      </div>
-    </div>
-  </div>
+**课堂练习**：无限滚动的躲避游戏
 
-  <!-- ===== 第4页：滚动背景循环原理（上）===== -->
-  <div class="slide" data-index="3">
-    <div class="slide-content">
-      <div class="slide-header">
-        <span class="dot"></span>
-        <h2>滚动背景循环原理（上）</h2>
-      </div>
-      <div class="slide-body">
-        <p style="font-size:1.25em;">核心思想：<strong>用两张完全相同的道路图片首尾相接，循环滚动</strong></p>
-        <div class="two-column">
-          <div class="col">
-            <h3>步骤</h3>
-            <ul>
-              <li>准备两张相同的道路图片</li>
-              <li>图1在上，图2紧接其后</li>
-              <li>每帧将两张图同时向下移动</li>
-              <li>当图1完全移出屏幕，立即将其放到图2下方</li>
-              <li>不断重复，形成无限道路</li>
-            </ul>
-          </div>
-          <div class="col" style="align-items:center; justify-content:center;">
-            <div style="background:var(--code-bg);border-radius:8px;padding:14px 20px;border:1px solid var(--border);text-align:center;">
-              <pre style="font-family:monospace;font-size:1.1em;color:var(--text-main);text-align:left;">
+---
+封面关键词：
+· 第 37 节
+· 极速躲避
+· —— 创建你的跑酷游戏 ——
+互动：问学生「今天最想搞清楚什么？」，收 1–2 个期待。</aside>
+</div>
+<!-- ===== 第2页：学习目标 ===== -->
+<div class="slide" data-index="1">
+<div class="slide-content">
+<div class="slide-header">
+<span class="dot"></span>
+<h2>学习目标</h2>
+</div>
+<div class="slide-body">
+<p>通过本节课程，你将掌握以下技能：</p>
+<ul>
+<li><strong>滚动背景原理</strong> — 理解图片连续滚动形成无限道路的视觉错觉</li>
+<li><strong>障碍物列表管理</strong> — 用列表统一管理多个障碍车，动态增删</li>
+<li><strong>随机生成机制</strong> — 控制障碍物出现的时机和位置</li>
+<li><strong>难度自动递增</strong> — 随着分数提高，游戏速度越来越快</li>
+<li><strong>碰撞检测</strong> — 使用 <span style="color:var(--code-builtin);font-family:monospace;">Rect.colliderect()</span> 判断两车是否相撞</li>
+<li><strong>玩家车道切换</strong> — 左右方向键控制汽车在车道间移动</li>
+<li><strong>游戏状态管理</strong> — 开始、运行、结束三种状态的切换</li>
+</ul>
+</div>
+</div>
+
+<aside class="notes">【讲解】学习目标
+本页要点（照着讲即可）：
+· 通过本节课程，你将掌握以下技能：
+· 滚动背景原理 — 理解图片连续滚动形成无限道路的视觉错觉
+· 滚动背景原理
+· 障碍物列表管理 — 用列表统一管理多个障碍车，动态增删
+· 障碍物列表管理
+· 随机生成机制 — 控制障碍物出现的时机和位置
+讲解时放慢关键术语；用 1 个生活类比 + 1 个反例加深印象。
+本课大纲考点（可适时点题）：**内容**：道路滚动效果、左右移动躲避障碍车、速度递增
+
+**知识点**：
+- 滚动背景循环（两条车道线不断下移，到底后回到顶部）
+- 障碍物分组管理（重生在上方，移出下方时移除）
+- 难度自动递增（随时间加速）
+- 碰撞检测（玩家车 vs 障碍车）
+
+**课堂练习**：无限滚动的躲避游戏
+
+---</aside>
+</div>
+<!-- ===== 第3页：游戏预览 ===== -->
+<div class="slide" data-index="2">
+<div class="slide-content">
+<div class="slide-header">
+<span class="dot"></span>
+<h2>游戏预览</h2>
+</div>
+<div class="slide-body">
+<p style="text-align:center; margin-bottom:8px;">玩家驾驶蓝色汽车在公路上疾驰，需要灵活躲避迎面而来的红色车辆</p>
+<div class="road-demo">
+<div class="lane">
+<div class="lane-line"></div>
+<div class="lane-line"></div>
+<div class="lane-line"></div>
+<div class="lane-line"></div>
+<div class="lane-line"></div>
+<div class="lane-line"></div>
+<div class="lane-line"></div>
+</div>
+<div class="player"></div>
+<div class="enemy"></div>
+</div>
+<div class="two-column" style="margin-top:10px;">
+<div class="col">
+<h3>🎮 操作方式</h3>
+<p>← 左移 / → 右移</p>
+<p>躲避红色障碍车</p>
+<p>坚持时间越久，得分越高</p>
+</div>
+<div class="col">
+<h3>⚙️ 游戏机制</h3>
+<p>道路标线持续向下滚动</p>
+<p>障碍车从上方随机出现</p>
+<p>速度随分数逐步加快</p>
+<p>撞车 = 游戏结束</p>
+</div>
+</div>
+</div>
+</div>
+
+<aside class="notes">【讲解】游戏预览
+本页要点（照着讲即可）：
+· 玩家驾驶蓝色汽车在公路上疾驰，需要灵活躲避迎面而来的红色车辆
+· ← 左移 / → 右移
+· 躲避红色障碍车
+· 坚持时间越久，得分越高
+· 道路标线持续向下滚动
+· 障碍车从上方随机出现
+讲解时放慢关键术语；用 1 个生活类比 + 1 个反例加深印象。</aside>
+</div>
+<!-- ===== 第4页：滚动背景循环原理（上）===== -->
+<div class="slide" data-index="3">
+<div class="slide-content">
+<div class="slide-header">
+<span class="dot"></span>
+<h2>滚动背景循环原理（上）</h2>
+</div>
+<div class="slide-body">
+<p style="font-size:1.25em;">核心思想：<strong>用两张完全相同的道路图片首尾相接，循环滚动</strong></p>
+<div class="two-column">
+<div class="col">
+<h3>步骤</h3>
+<ul>
+<li>准备两张相同的道路图片</li>
+<li>图1在上，图2紧接其后</li>
+<li>每帧将两张图同时向下移动</li>
+<li>当图1完全移出屏幕，立即将其放到图2下方</li>
+<li>不断重复，形成无限道路</li>
+</ul>
+</div>
+<div class="col" style="align-items:center; justify-content:center;">
+<div style="background:var(--code-bg);border-radius:8px;padding:14px 20px;border:1px solid var(--border);text-align:center;">
+<pre style="font-family:monospace;font-size:1.1em;color:var(--text-main);text-align:left;">
 ┌─────────────┐
 │   屏幕可见区  │
 │   (窗口)     │
@@ -562,160 +608,181 @@ html, body {
 │   道路图片 1  │ ← 循环回来
 │             │
 └─────────────┘</pre>
-            </div>
-          </div>
-        </div>
-        <div class="highlight-box">
+</div>
+</div>
+</div>
+<div class="highlight-box">
           关键：road_y 坐标超过屏幕高度时，重置为 road_y - 图片总高度，实现无缝循环。
         </div>
-      </div>
-    </div>
-  </div>
+</div>
+</div>
 
-  <!-- ===== 第5页：滚动背景循环原理（下）===== -->
-  <div class="slide" data-index="4">
-    <div class="slide-content">
-      <div class="slide-header">
-        <span class="dot"></span>
-        <h2>滚动背景循环原理（下）— 代码实现</h2>
-      </div>
-      <div class="slide-body">
-        <div class="code-block">
+<aside class="notes">【讲解】滚动背景循环原理（上）
+本页要点（照着讲即可）：
+· 核心思想： 用两张完全相同的道路图片首尾相接，循环滚动
+· 用两张完全相同的道路图片首尾相接，循环滚动
+· 准备两张相同的道路图片
+· 图1在上，图2紧接其后
+· 每帧将两张图同时向下移动
+· 当图1完全移出屏幕，立即将其放到图2下方
+讲解时放慢关键术语；用 1 个生活类比 + 1 个反例加深印象。</aside>
+</div>
+<!-- ===== 第5页：滚动背景循环原理（下）===== -->
+<div class="slide" data-index="4">
+<div class="slide-content">
+<div class="slide-header">
+<span class="dot"></span>
+<h2>滚动背景循环原理（下）— 代码实现</h2>
+</div>
+<div class="slide-body">
+<div class="code-block">
 <span class="cmt"># 加载道路图片，假设高度为 600</span>
 <span class="vr">road_img</span> = pygame.image.load(<span class="str">"road.png"</span>)
-<span class="vr">road_y1</span> = <span class="num">0</span>           <span class="cmt"># 第一张图片的 Y 坐标</span>
-<span class="vr">road_y2</span> = -<span class="num">600</span>        <span class="cmt"># 第二张图片从屏幕上方开始</span>
+<span class="vr">road_y1</span> = <span class="num">0</span> <span class="cmt"># 第一张图片的 Y 坐标</span>
+<span class="vr">road_y2</span> = -<span class="num">600</span> <span class="cmt"># 第二张图片从屏幕上方开始</span>
 <span class="vr">scroll_speed</span> = <span class="num">5</span>
-
 <span class="cmt"># 在游戏循环中：</span>
-<span class="vr">road_y1</span> += <span class="vr">scroll_speed</span>   <span class="cmt"># 两张图片同时下移</span>
+<span class="vr">road_y1</span> += <span class="vr">scroll_speed</span> <span class="cmt"># 两张图片同时下移</span>
 <span class="vr">road_y2</span> += <span class="vr">scroll_speed</span>
-
-<span class="kw">if</span> <span class="vr">road_y1</span> >= <span class="num">600</span>:       <span class="cmt"># 图1移出屏幕，放到图2上方</span>
-    <span class="vr">road_y1</span> = <span class="vr">road_y2</span> - <span class="num">600</span>
-
-<span class="kw">if</span> <span class="vr">road_y2</span> >= <span class="num">600</span>:       <span class="cmt"># 图2移出屏幕，放到图1上方</span>
-    <span class="vr">road_y2</span> = <span class="vr">road_y1</span> - <span class="num">600</span>
-
+<span class="kw">if</span> <span class="vr">road_y1</span> &gt;= <span class="num">600</span>:       <span class="cmt"># 图1移出屏幕，放到图2上方</span>
+<span class="vr">road_y1</span> = <span class="vr">road_y2</span> - <span class="num">600</span>
+<span class="kw">if</span> <span class="vr">road_y2</span> &gt;= <span class="num">600</span>:       <span class="cmt"># 图2移出屏幕，放到图1上方</span>
+<span class="vr">road_y2</span> = <span class="vr">road_y1</span> - <span class="num">600</span>
 <span class="cmt"># 绘制到屏幕上</span>
 <span class="vr">screen</span>.blit(<span class="vr">road_img</span>, (<span class="num">0</span>, <span class="vr">road_y1</span>))
 <span class="vr">screen</span>.blit(<span class="vr">road_img</span>, (<span class="num">0</span>, <span class="vr">road_y2</span>))
         </div>
-        <p style="font-size:1.1em; margin-top:6px;">
+<p style="font-size:1.1em; margin-top:6px;">
           也可以用 <span style="color:var(--code-builtin);font-family:monospace;">road_y %= 600</span> 简化实现，但两张图的首尾相接方法更直观易懂。
         </p>
-      </div>
-    </div>
-  </div>
+</div>
+</div>
 
-  <!-- ===== 第6页：障碍物管理机制 ===== -->
-  <div class="slide" data-index="5">
-    <div class="slide-content">
-      <div class="slide-header">
-        <span class="dot"></span>
-        <h2>障碍物管理机制</h2>
-      </div>
-      <div class="slide-body">
-        <p style="font-size:1.25em;">使用 <strong>列表 (list)</strong> 管理所有活跃的障碍车：</p>
-        <div class="flow-diagram">
-          <div class="flow-box">随机生成</div>
-          <span class="flow-arrow">→</span>
-          <div class="flow-box">加入列表</div>
-          <span class="flow-arrow">→</span>
-          <div class="flow-box">每帧更新位置</div>
-          <span class="flow-arrow">→</span>
-          <div class="flow-box">移出屏幕则删除</div>
-          <span class="flow-arrow">→</span>
-          <div class="flow-box">碰撞检测</div>
-        </div>
-        <div class="code-block" style="margin-top:10px;">
+<aside class="notes">【讲解】滚动背景循环原理（下）— 代码实现
+本页要点（照着讲即可）：
+· 也可以用 road_y %= 600 简化实现，但两张图的首尾相接方法更直观易懂。
+代码页节奏：先读懂输入输出 → 再走主流程 → 最后点出易错点（边界/类型/下标）。
+可让学生预测下一行输出，再运行对照。</aside>
+</div>
+<!-- ===== 第6页：障碍物管理机制 ===== -->
+<div class="slide" data-index="5">
+<div class="slide-content">
+<div class="slide-header">
+<span class="dot"></span>
+<h2>障碍物管理机制</h2>
+</div>
+<div class="slide-body">
+<p style="font-size:1.25em;">使用 <strong>列表 (list)</strong> 管理所有活跃的障碍车：</p>
+<div class="flow-diagram">
+<div class="flow-box">随机生成</div>
+<span class="flow-arrow">→</span>
+<div class="flow-box">加入列表</div>
+<span class="flow-arrow">→</span>
+<div class="flow-box">每帧更新位置</div>
+<span class="flow-arrow">→</span>
+<div class="flow-box">移出屏幕则删除</div>
+<span class="flow-arrow">→</span>
+<div class="flow-box">碰撞检测</div>
+</div>
+<div class="code-block" style="margin-top:10px;">
 <span class="cmt"># 障碍物列表</span>
 <span class="vr">obstacles</span> = []      <span class="cmt"># 存储所有活跃的障碍车 Rect</span>
-<span class="vr">spawn_timer</span> = <span class="num">0</span>     <span class="cmt"># 生成计时器</span>
-
+<span class="vr">spawn_timer</span> = <span class="num">0</span> <span class="cmt"># 生成计时器</span>
 <span class="cmt"># 每帧更新</span>
 <span class="kw">for</span> <span class="vr">obs</span> <span class="kw">in</span> <span class="vr">obstacles</span>:
-    <span class="vr">obs</span>.y += <span class="vr">speed</span>                     <span class="cmt"># 障碍物向下移动</span>
-
+    <span class="vr">obs</span>.y += <span class="vr">speed</span> <span class="cmt"># 障碍物向下移动</span>
 <span class="cmt"># 移除屏幕外的障碍物（节省内存）</span>
-<span class="vr">obstacles</span> = [<span class="vr">obs</span> <span class="kw">for</span> <span class="vr">obs</span> <span class="kw">in</span> <span class="vr">obstacles</span> <span class="kw">if</span> <span class="vr">obs</span>.y < <span class="num">800</span>]
+<span class="vr">obstacles</span> = [<span class="vr">obs</span> <span class="kw">for</span> <span class="vr">obs</span> <span class="kw">in</span> <span class="vr">obstacles</span> <span class="kw">if</span> <span class="vr">obs</span>.y &lt; <span class="num">800</span>]
 
 <span class="cmt"># 定时生成新障碍物</span>
 <span class="vr">spawn_timer</span> += <span class="num">1</span>
-<span class="kw">if</span> <span class="vr">spawn_timer</span> > <span class="vr">spawn_interval</span>:
+<span class="kw">if</span> <span class="vr">spawn_timer</span> &gt; <span class="vr">spawn_interval</span>:
     <span class="vr">obstacles</span>.append(<span class="fn">create_obstacle</span>())  <span class="cmt"># 创建新障碍车</span>
-    <span class="vr">spawn_timer</span> = <span class="num">0</span>
-        </div>
-        <p style="font-size:1.1em; margin-top:4px;">
-          <span style="color:var(--accent);">关键优化：</span>被移除的障碍物不再绘制/检测，避免列表中对象越来越多导致游戏变卡。
+<span class="vr">spawn_timer</span> = <span class="num">0</span>
+</div>
+<p style="font-size:1.1em; margin-top:4px;">
+<span style="color:var(--accent);">关键优化：</span>被移除的障碍物不再绘制/检测，避免列表中对象越来越多导致游戏变卡。
         </p>
-      </div>
-    </div>
-  </div>
+</div>
+</div>
 
-  <!-- ===== 第7页：难度自动递增 ===== -->
-  <div class="slide" data-index="6">
-    <div class="slide-content">
-      <div class="slide-header">
-        <span class="dot"></span>
-        <h2>难度自动递增</h2>
-      </div>
-      <div class="slide-body">
-        <p style="font-size:1.25em;">游戏难度随<strong>游戏时长（分数）</strong>逐步提高：</p>
-        <div class="two-column">
-          <div class="col">
-            <h3>递增策略</h3>
-            <ul>
-              <li><strong>移动速度递增：</strong>每得 100 分，速度 +0.3</li>
-              <li><strong>生成频率加快：</strong>每得 200 分，生成间隔 -5 帧</li>
-              <li><strong>多车道概率：</strong>后期障碍车出现在更多车道上</li>
-              <li><strong>设置上限：</strong>防止速度过快导致无法反应</li>
-            </ul>
-          </div>
-          <div class="col">
-            <div class="code-block" style="font-size:1.05em;">
+<aside class="notes">【讲解】障碍物管理机制
+本页要点（照着讲即可）：
+· 使用 列表 (list) 管理所有活跃的障碍车：
+· 列表 (list)
+· 关键优化： 被移除的障碍物不再绘制/检测，避免列表中对象越来越多导致游戏变卡。
+讲解时放慢关键术语；用 1 个生活类比 + 1 个反例加深印象。</aside>
+</div>
+<!-- ===== 第7页：难度自动递增 ===== -->
+<div class="slide" data-index="6">
+<div class="slide-content">
+<div class="slide-header">
+<span class="dot"></span>
+<h2>难度自动递增</h2>
+</div>
+<div class="slide-body">
+<p style="font-size:1.25em;">游戏难度随<strong>游戏时长（分数）</strong>逐步提高：</p>
+<div class="two-column">
+<div class="col">
+<h3>递增策略</h3>
+<ul>
+<li><strong>移动速度递增：</strong>每得 100 分，速度 +0.3</li>
+<li><strong>生成频率加快：</strong>每得 200 分，生成间隔 -5 帧</li>
+<li><strong>多车道概率：</strong>后期障碍车出现在更多车道上</li>
+<li><strong>设置上限：</strong>防止速度过快导致无法反应</li>
+</ul>
+</div>
+<div class="col">
+<div class="code-block" style="font-size:1.05em;">
 <span class="cmt"># 难度递增逻辑</span>
 <span class="vr">score</span> += <span class="num">1</span>
 <span class="vr">speed</span> = <span class="num">5</span> + <span class="vr">score</span> // <span class="num">100</span> * <span class="num">0.3</span>
-
 <span class="cmt"># 速度上限</span>
-<span class="kw">if</span> <span class="vr">speed</span> > <span class="num">12</span>:
+<span class="kw">if</span> <span class="vr">speed</span> &gt; <span class="num">12</span>:
     <span class="vr">speed</span> = <span class="num">12</span>
-
 <span class="cmt"># 生成间隔随分数减少</span>
 <span class="vr">spawn_interval</span> = <span class="num">60</span> - <span class="vr">score</span> // <span class="num">200</span> * <span class="num">5</span>
-<span class="kw">if</span> <span class="vr">spawn_interval</span> < <span class="num">25</span>:
-    <span class="vr">spawn_interval</span> = <span class="num">25</span>   <span class="cmt"># 最低间隔</span>
-            </div>
-          </div>
-        </div>
-        <div class="highlight-box">
+<span class="kw">if</span> <span class="vr">spawn_interval</span> &lt; <span class="num">25</span>:
+    <span class="vr">spawn_interval</span> = <span class="num">25</span> <span class="cmt"># 最低间隔</span>
+</div>
+</div>
+</div>
+<div class="highlight-box">
           让玩家感受到逐渐增加的压迫感，但保留可玩性。难度曲线要平滑，避免突然变太难。
         </div>
-      </div>
-    </div>
-  </div>
+</div>
+</div>
 
-  <!-- ===== 第8页：碰撞检测 ===== -->
-  <div class="slide" data-index="7">
-    <div class="slide-content">
-      <div class="slide-header">
-        <span class="dot"></span>
-        <h2>碰撞检测</h2>
-      </div>
-      <div class="slide-body">
-        <p style="font-size:1.25em;">使用 Pygame 内置的 <span style="color:var(--code-builtin);font-family:monospace;">Rect.colliderect()</span> 方法判断两个矩形是否重叠：</p>
-        <div class="two-column">
-          <div class="col">
-            <h3>原理</h3>
-            <p>每个游戏对象都有一个 <span style="font-family:monospace;color:var(--code-var);">pygame.Rect</span>，代表它的位置和大小（x, y, width, height）。</p>
-            <p style="margin-top:8px;">当两个矩形的边界发生重叠时，<span style="font-family:monospace;color:var(--code-builtin);">colliderect()</span> 返回 <span style="font-family:monospace;color:var(--code-keyword);">True</span>。</p>
-            <div class="highlight-box" style="margin-top:10px;font-size:1.05em;">
+<aside class="notes">【讲解】难度自动递增
+本页要点（照着讲即可）：
+· 游戏难度随 游戏时长（分数） 逐步提高：
+· 游戏时长（分数）
+· 移动速度递增： 每得 100 分，速度 +0.3
+· 移动速度递增：
+· 生成频率加快： 每得 200 分，生成间隔 -5 帧
+· 生成频率加快：
+讲解时放慢关键术语；用 1 个生活类比 + 1 个反例加深印象。</aside>
+</div>
+<!-- ===== 第8页：碰撞检测 ===== -->
+<div class="slide" data-index="7">
+<div class="slide-content">
+<div class="slide-header">
+<span class="dot"></span>
+<h2>碰撞检测</h2>
+</div>
+<div class="slide-body">
+<p style="font-size:1.25em;">使用 Pygame 内置的 <span style="color:var(--code-builtin);font-family:monospace;">Rect.colliderect()</span> 方法判断两个矩形是否重叠：</p>
+<div class="two-column">
+<div class="col">
+<h3>原理</h3>
+<p>每个游戏对象都有一个 <span style="font-family:monospace;color:var(--code-var);">pygame.Rect</span>，代表它的位置和大小（x, y, width, height）。</p>
+<p style="margin-top:8px;">当两个矩形的边界发生重叠时，<span style="font-family:monospace;color:var(--code-builtin);">colliderect()</span> 返回 <span style="font-family:monospace;color:var(--code-keyword);">True</span>。</p>
+<div class="highlight-box" style="margin-top:10px;font-size:1.05em;">
               碰撞检测在每一帧都要执行，遍历障碍物列表，逐一检查是否与玩家碰撞。
             </div>
-          </div>
-          <div class="col">
-            <div class="code-block" style="font-size:1.05em;">
+</div>
+<div class="col">
+<div class="code-block" style="font-size:1.05em;">
 <span class="cmt"># 定义玩家和障碍物的碰撞矩形</span>
 <span class="vr">player_rect</span> = pygame.Rect(
     <span class="vr">player_x</span>, <span class="vr">player_y</span>,
@@ -726,200 +793,252 @@ html, body {
 <span class="kw">for</span> <span class="vr">obs</span> <span class="kw">in</span> <span class="vr">obstacles</span>:
     <span class="kw">if</span> <span class="vr">player_rect</span>.colliderect(<span class="vr">obs</span>):
         <span class="vr">game_state</span> = <span class="str">"game_over"</span>
-        <span class="kw">break</span>   <span class="cmt"># 一旦碰撞，立即结束</span>
-            </div>
-          </div>
-        </div>
-      </div>
-    </div>
-  </div>
+<span class="kw">break</span> <span class="cmt"># 一旦碰撞，立即结束</span>
+</div>
+</div>
+</div>
+</div>
+</div>
 
-  <!-- ===== 第9页：核心代码展示 ===== -->
-  <div class="slide" data-index="8">
-    <div class="slide-content">
-      <div class="slide-header">
-        <span class="dot"></span>
-        <h2>核心代码 — 主循环</h2>
-      </div>
-      <div class="slide-body">
-        <div class="code-block" style="font-size:1.02em;line-height:1.65;">
+<aside class="notes">【讲解】碰撞检测
+结合讲义《3.3 讲解（二）：障碍物、难度递增与碰撞检测（15分钟）》强调：
+· 核心原理： 用一个列表 obstacles 管理所有"活着的"障碍车。每隔一段时间（如每 60 帧），在屏幕上方随机一条车道生成一辆新车。每帧让所有障碍车向下移动。当障碍车完全移出屏幕底部时，从列表中移除——释放内存，避免列表无限膨胀。
+· 完整流程：
+· 创建障碍车 → 随机选择车道，y = -车高（在屏幕上方，玩家看不到）
+· 加入 obstacles 列表 → "这辆车正式进入游戏"
+· 每帧更新 → 障碍车 y 坐标 += 当前速度
+幻灯片上可见要点：
+· 使用 Pygame 内置的 Rect.colliderect() 方法判断两个矩形是否重叠：
+· 每个游戏对象都有一个 pygame.Rect ，代表它的位置和大小（x, y, width, height）。
+· 当两个矩形的边界发生重叠时， colliderect() 返回 True 。
+讲解时放慢关键术语；用 1 个生活类比 + 1 个反例加深印象。</aside>
+</div>
+<!-- ===== 第9页：核心代码展示 ===== -->
+<div class="slide" data-index="8">
+<div class="slide-content">
+<div class="slide-header">
+<span class="dot"></span>
+<h2>核心代码 — 主循环</h2>
+</div>
+<div class="slide-body">
+<div class="code-block" style="font-size:1.02em;line-height:1.65;">
 <span class="cmt"># ===== 初始化 =====</span>
 pygame.<span class="fn">init</span>()
 <span class="vr">screen</span> = pygame.display.set_mode((<span class="num">400</span>, <span class="num">700</span>))
 <span class="vr">clock</span> = pygame.time.<span class="fn">Clock</span>()
 <span class="vr">lanes</span> = [<span class="num">60</span>, <span class="num">160</span>, <span class="num">260</span>]    <span class="cmt"># 三条车道的 X 坐标</span>
-<span class="vr">player_lane</span> = <span class="num">1</span>                <span class="cmt"># 玩家初始在中间车道</span>
+<span class="vr">player_lane</span> = <span class="num">1</span> <span class="cmt"># 玩家初始在中间车道</span>
 <span class="vr">running</span> = <span class="kw">True</span>
-
 <span class="kw">while</span> <span class="vr">running</span>:
     <span class="cmt"># ----- 事件处理 -----</span>
-    <span class="kw">for</span> <span class="vr">event</span> <span class="kw">in</span> pygame.event.get():
+<span class="kw">for</span> <span class="vr">event</span> <span class="kw">in</span> pygame.event.get():
         <span class="kw">if</span> <span class="vr">event</span>.type == pygame.QUIT:
             <span class="vr">running</span> = <span class="kw">False</span>
-
-    <span class="cmt"># ----- 键盘输入 -----</span>
-    <span class="vr">keys</span> = pygame.key.get_pressed()
-    <span class="kw">if</span> <span class="vr">keys</span>[pygame.K_LEFT]  <span class="kw">and</span> <span class="vr">player_lane</span> > <span class="num">0</span>:
-        <span class="vr">player_lane</span> -= <span class="num">1</span>      <span class="cmt"># 向左切换车道</span>
-    <span class="kw">if</span> <span class="vr">keys</span>[pygame.K_RIGHT] <span class="kw">and</span> <span class="vr">player_lane</span> < <span class="num">2</span>:
-        <span class="vr">player_lane</span> += <span class="num">1</span>      <span class="cmt"># 向右切换车道</span>
-
-    <span class="cmt"># ----- 更新 -----</span>
-    <span class="fn">update_road</span>()            <span class="cmt"># 滚动道路背景</span>
-    <span class="fn">update_obstacles</span>()      <span class="cmt"># 移动障碍物 & 生成新障碍物</span>
-    <span class="fn">check_collision</span>()       <span class="cmt"># 碰撞检测</span>
-    <span class="fn">update_difficulty</span>()     <span class="cmt"># 难度递增</span>
-
-    <span class="cmt"># ----- 绘制 -----</span>
-    <span class="fn">draw_road</span>()             <span class="cmt"># 绘制道路背景</span>
-    <span class="fn">draw_obstacles</span>()        <span class="cmt"># 绘制所有障碍车</span>
-    <span class="fn">draw_player</span>()           <span class="cmt"># 绘制玩家车</span>
-    <span class="fn">draw_score</span>()            <span class="cmt"># 显示分数</span>
+<span class="cmt"># ----- 键盘输入 -----</span>
+<span class="vr">keys</span> = pygame.key.get_pressed()
+    <span class="kw">if</span> <span class="vr">keys</span>[pygame.K_LEFT]  <span class="kw">and</span> <span class="vr">player_lane</span> &gt; <span class="num">0</span>:
+        <span class="vr">player_lane</span> -= <span class="num">1</span> <span class="cmt"># 向左切换车道</span>
+<span class="kw">if</span> <span class="vr">keys</span>[pygame.K_RIGHT] <span class="kw">and</span> <span class="vr">player_lane</span> &lt; <span class="num">2</span>:
+        <span class="vr">player_lane</span> += <span class="num">1</span> <span class="cmt"># 向右切换车道</span>
+<span class="cmt"># ----- 更新 -----</span>
+<span class="fn">update_road</span>()            <span class="cmt"># 滚动道路背景</span>
+<span class="fn">update_obstacles</span>()      <span class="cmt"># 移动障碍物 &amp; 生成新障碍物</span>
+<span class="fn">check_collision</span>()       <span class="cmt"># 碰撞检测</span>
+<span class="fn">update_difficulty</span>()     <span class="cmt"># 难度递增</span>
+<span class="cmt"># ----- 绘制 -----</span>
+<span class="fn">draw_road</span>()             <span class="cmt"># 绘制道路背景</span>
+<span class="fn">draw_obstacles</span>()        <span class="cmt"># 绘制所有障碍车</span>
+<span class="fn">draw_player</span>()           <span class="cmt"># 绘制玩家车</span>
+<span class="fn">draw_score</span>()            <span class="cmt"># 显示分数</span>
     pygame.display.<span class="fn">flip</span>()
     <span class="vr">clock</span>.<span class="fn">tick</span>(<span class="num">60</span>)
 
 pygame.<span class="fn">quit</span>()
         </div>
-      </div>
-    </div>
-  </div>
+</div>
+</div>
 
-  <!-- ===== 第10页：玩家控制 — 车道切换 ===== -->
-  <div class="slide" data-index="9">
-    <div class="slide-content">
-      <div class="slide-header">
-        <span class="dot"></span>
-        <h2>玩家控制 — 车道切换</h2>
-      </div>
-      <div class="slide-body">
-        <p style="font-size:1.25em;">用方向键控制玩家在三个车道之间移动：</p>
-        <div class="two-column">
-          <div class="col">
-            <h3>设计思路</h3>
-            <ul>
-              <li>用 <strong>车道索引</strong> 而非像素坐标管理位置</li>
-              <li>预设三个车道 X 坐标：[60, 160, 260]</li>
-              <li>按左键 → 索引减 1（不能小于 0）</li>
-              <li>按右键 → 索引加 1（不能大于 2）</li>
-              <li>通过索引从车道列表取对应 X 坐标</li>
-            </ul>
-          </div>
-          <div class="col">
-            <h3>车道切换的两种实现</h3>
-            <div class="code-block" style="font-size:1em;">
+<aside class="notes">【讲解】核心代码 — 主循环
+本页要点（照着讲即可）：
+· 核心代码 — 主循环
+· # ===== 初始化 =====
+· pygame.
+· init
+· screen
+· = pygame.display.set_mode((
+代码页节奏：先读懂输入输出 → 再走主流程 → 最后点出易错点（边界/类型/下标）。
+可让学生预测下一行输出，再运行对照。</aside>
+</div>
+<!-- ===== 第10页：玩家控制 — 车道切换 ===== -->
+<div class="slide" data-index="9">
+<div class="slide-content">
+<div class="slide-header">
+<span class="dot"></span>
+<h2>玩家控制 — 车道切换</h2>
+</div>
+<div class="slide-body">
+<p style="font-size:1.25em;">用方向键控制玩家在三个车道之间移动：</p>
+<div class="two-column">
+<div class="col">
+<h3>设计思路</h3>
+<ul>
+<li>用 <strong>车道索引</strong> 而非像素坐标管理位置</li>
+<li>预设三个车道 X 坐标：[60, 160, 260]</li>
+<li>按左键 → 索引减 1（不能小于 0）</li>
+<li>按右键 → 索引加 1（不能大于 2）</li>
+<li>通过索引从车道列表取对应 X 坐标</li>
+</ul>
+</div>
+<div class="col">
+<h3>车道切换的两种实现</h3>
+<div class="code-block" style="font-size:1em;">
 <span class="cmt"># 方法1：即时切换（推荐）</span>
-<span class="kw">if</span> <span class="vr">keys</span>[pygame.K_LEFT] <span class="kw">and</span> <span class="vr">lane</span> > <span class="num">0</span>:
+<span class="kw">if</span> <span class="vr">keys</span>[pygame.K_LEFT] <span class="kw">and</span> <span class="vr">lane</span> &gt; <span class="num">0</span>:
     <span class="vr">lane</span> -= <span class="num">1</span>
-
 <span class="cmt"># 方法2：平滑过渡（有移动动画）</span>
 <span class="vr">target_x</span> = <span class="vr">lanes</span>[<span class="vr">lane</span>]
-<span class="kw">if</span> <span class="vr">player_x</span> < <span class="vr">target_x</span>:
-    <span class="vr">player_x</span> += <span class="num">10</span>     <span class="cmt"># 向右移动</span>
-<span class="kw">elif</span> <span class="vr">player_x</span> > <span class="vr">target_x</span>:
-    <span class="vr">player_x</span> -= <span class="num">10</span>     <span class="cmt"># 向左移动</span>
-            </div>
-          </div>
+<span class="kw">if</span> <span class="vr">player_x</span> &lt; <span class="vr">target_x</span>:
+    <span class="vr">player_x</span> += <span class="num">10</span> <span class="cmt"># 向右移动</span>
+<span class="kw">elif</span> <span class="vr">player_x</span> &gt; <span class="vr">target_x</span>:
+    <span class="vr">player_x</span> -= <span class="num">10</span> <span class="cmt"># 向左移动</span>
+</div>
+</div>
+</div>
+<div class="highlight-box">
+<strong>注意</strong>：切换车道时要加上边界判断，防止玩家移出道路范围。
         </div>
-        <div class="highlight-box">
-          <strong>注意</strong>：切换车道时要加上边界判断，防止玩家移出道路范围。
-        </div>
-      </div>
-    </div>
-  </div>
+</div>
+</div>
 
-  <!-- ===== 第11页：练习任务 ===== -->
-  <div class="slide" data-index="10">
-    <div class="slide-content">
-      <div class="slide-header">
-        <span class="dot"></span>
-        <h2>练习任务</h2>
-      </div>
-      <div class="slide-body">
-        <div class="two-column">
-          <div class="col">
-            <div class="task-card">
-              <h3>⭐ 基础任务</h3>
-              <h4>任务一：搭建基础框架</h4>
-              <p>创建游戏窗口 (400x700)，实现道路背景滚动和三条车道线绘制。</p>
-              <h4>任务二：实现玩家控制</h4>
-              <p>用左右方向键切换玩家车道，限制不能移出道路。</p>
-              <h4>任务三：添加障碍物</h4>
-              <p>随机生成障碍车，用列表管理，检测与玩家的碰撞。</p>
-            </div>
-          </div>
-          <div class="col">
-            <div class="task-card">
-              <h3>🚀 进阶挑战</h3>
-              <h4>挑战一：添加金币道具</h4>
-              <p>路面上随机出现金币，吃到加分，不碰撞不扣命。</p>
-              <h4>挑战二：加入音效</h4>
-              <p>碰撞声、金币声、背景音乐，让游戏更完整。</p>
-              <h4>挑战三：添加开始菜单和结束画面</h4>
-              <p>游戏开始前显示标题/说明，结束后显示分数和重玩按钮。</p>
-              <h4>挑战四：制作道具系统</h4>
-              <p>护盾（免疫一次碰撞）或加速道具，增加策略性。</p>
-            </div>
-          </div>
-        </div>
-      </div>
-    </div>
-  </div>
+<aside class="notes">【讲解】玩家控制 — 车道切换
+本页要点（照着讲即可）：
+· 用方向键控制玩家在三个车道之间移动：
+· 用 车道索引 而非像素坐标管理位置
+· 车道索引
+· 预设三个车道 X 坐标：[60, 160, 260]
+· 按左键 → 索引减 1（不能小于 0）
+· 按右键 → 索引加 1（不能大于 2）
+讲解时放慢关键术语；用 1 个生活类比 + 1 个反例加深印象。</aside>
+</div>
+<!-- ===== 第11页：练习任务 ===== -->
+<div class="slide" data-index="10">
+<div class="slide-content">
+<div class="slide-header">
+<span class="dot"></span>
+<h2>练习任务</h2>
+</div>
+<div class="slide-body">
+<div class="two-column">
+<div class="col">
+<div class="task-card">
+<h3>⭐ 基础任务</h3>
+<h4>任务一：搭建基础框架</h4>
+<p>创建游戏窗口 (400x700)，实现道路背景滚动和三条车道线绘制。</p>
+<h4>任务二：实现玩家控制</h4>
+<p>用左右方向键切换玩家车道，限制不能移出道路。</p>
+<h4>任务三：添加障碍物</h4>
+<p>随机生成障碍车，用列表管理，检测与玩家的碰撞。</p>
+</div>
+</div>
+<div class="col">
+<div class="task-card">
+<h3>🚀 进阶挑战</h3>
+<h4>挑战一：添加金币道具</h4>
+<p>路面上随机出现金币，吃到加分，不碰撞不扣命。</p>
+<h4>挑战二：加入音效</h4>
+<p>碰撞声、金币声、背景音乐，让游戏更完整。</p>
+<h4>挑战三：添加开始菜单和结束画面</h4>
+<p>游戏开始前显示标题/说明，结束后显示分数和重玩按钮。</p>
+<h4>挑战四：制作道具系统</h4>
+<p>护盾（免疫一次碰撞）或加速道具，增加策略性。</p>
+</div>
+</div>
+</div>
+</div>
+</div>
 
-  <!-- ===== 第12页：总结与回顾 ===== -->
-  <div class="slide" data-index="11">
-    <div class="slide-content">
-      <div class="slide-header">
-        <span class="dot"></span>
-        <h2>总结与回顾</h2>
-      </div>
-      <div class="slide-body">
-        <div class="summary-grid">
-          <div class="summary-item">
-            <h3>滚动背景</h3>
-            <p>两张图片首尾相接循环滚动，road_y 超出屏幕后重置，创造无限道路效果。</p>
-          </div>
-          <div class="summary-item">
-            <h3>列表管理</h3>
-            <p>用 Python 列表存储障碍物，动态增删，每帧更新位置，移出屏幕即删除。</p>
-          </div>
-          <div class="summary-item">
-            <h3>碰撞检测</h3>
-            <p>Rect.colliderect() 判断两个矩形是否重叠，每帧遍历障碍物列表检查。</p>
-          </div>
-          <div class="summary-item">
-            <h3>难度递增</h3>
-            <p>速度随分数线性增长，生成间隔逐渐缩短，设置上限保证可玩性。</p>
-          </div>
-          <div class="summary-item">
-            <h3>车道切换</h3>
-            <p>预设车道坐标列表，按键改变索引，边界判断防止越界。</p>
-          </div>
-          <div class="summary-item">
-            <h3>游戏循环</h3>
-            <p>事件处理 → 更新逻辑 → 绘制画面，60 FPS 稳定运行。</p>
-          </div>
-        </div>
-        <p style="text-align:center;font-size:1.4em;margin-top:14px;color:var(--text-title);">
+<aside class="notes">【讲解】练习任务
+本页要点（照着讲即可）：
+· 任务一：搭建基础框架
+· 创建游戏窗口 (400x700)，实现道路背景滚动和三条车道线绘制。
+· 任务二：实现玩家控制
+· 用左右方向键切换玩家车道，限制不能移出道路。
+· 任务三：添加障碍物
+· 随机生成障碍车，用列表管理，检测与玩家的碰撞。
+练习页节奏：先独立想 1 分钟 → 再点拨思路 → 最后对答案讲为什么。</aside>
+</div>
+<!-- ===== 第12页：总结与回顾 ===== -->
+<div class="slide" data-index="11">
+<div class="slide-content">
+<div class="slide-header">
+<span class="dot"></span>
+<h2>总结与回顾</h2>
+</div>
+<div class="slide-body">
+<div class="summary-grid">
+<div class="summary-item">
+<h3>滚动背景</h3>
+<p>两张图片首尾相接循环滚动，road_y 超出屏幕后重置，创造无限道路效果。</p>
+</div>
+<div class="summary-item">
+<h3>列表管理</h3>
+<p>用 Python 列表存储障碍物，动态增删，每帧更新位置，移出屏幕即删除。</p>
+</div>
+<div class="summary-item">
+<h3>碰撞检测</h3>
+<p>Rect.colliderect() 判断两个矩形是否重叠，每帧遍历障碍物列表检查。</p>
+</div>
+<div class="summary-item">
+<h3>难度递增</h3>
+<p>速度随分数线性增长，生成间隔逐渐缩短，设置上限保证可玩性。</p>
+</div>
+<div class="summary-item">
+<h3>车道切换</h3>
+<p>预设车道坐标列表，按键改变索引，边界判断防止越界。</p>
+</div>
+<div class="summary-item">
+<h3>游戏循环</h3>
+<p>事件处理 → 更新逻辑 → 绘制画面，60 FPS 稳定运行。</p>
+</div>
+</div>
+<p style="text-align:center;font-size:1.4em;margin-top:14px;color:var(--text-title);">
           勇敢的赛车手，现在轮到你来编写自己的跑酷游戏了！
         </p>
-      </div>
-    </div>
-  </div>
+</div>
+</div>
 
+<aside class="notes">【收尾】回顾本课主线：总结与回顾
+对照大纲再过一遍：**内容**：道路滚动效果、左右移动躲避障碍车、速度递增
+
+**知识点**：
+- 滚动背景循环（两条车道线不断下移，到底后回到顶部）
+- 障碍物分组管理（重生在上方，移出下方时移除）
+- 难度自动递增（随时间加速）
+- 碰撞检测（玩家车 vs 障碍车）
+
+**课堂练习**：无限滚动的躲避游戏
+
+---
+板书/口述要点：
+· 两张图片首尾相接循环滚动，road_y 超出屏幕后重置，创造无限道路效果。
+· 用 Python 列表存储障碍物，动态增删，每帧更新位置，移出屏幕即删除。
+· Rect.colliderect() 判断两个矩形是否重叠，每帧遍历障碍物列表检查。
+· 速度随分数线性增长，生成间隔逐渐缩短，设置上限保证可玩性。
+· 预设车道坐标列表，按键改变索引，边界判断防止越界。
+· 事件处理 → 更新逻辑 → 绘制画面，60 FPS 稳定运行。
+结束前留 2 分钟答疑；布置 1 道小练习检验是否真正掌握。</aside>
+</div>
 </div><!-- /slideshow -->
-
 <!-- ========== 点击翻页区域 ========== -->
 <div class="click-zone left" id="clickPrev"></div>
 <div class="click-zone right" id="clickNext"></div>
-
 <!-- ========== 底部导航栏 ========== -->
 <nav class="nav-bar" id="navBar">
-  <button class="arrow-btn" id="btnPrev" title="上一页">←</button>
-  <span class="page-info" id="pageInfo">1 / 12</span>
-  <button class="arrow-btn" id="btnNext" title="下一页">→</button>
-  <span class="nav-hint">← → 翻页</span>
+<button class="arrow-btn" id="btnPrev" title="上一页">←</button>
+<span class="page-info" id="pageInfo">1 / 12</span>
+<button class="arrow-btn" id="btnNext" title="下一页">→</button>
+<span class="nav-hint">← → 翻页</span>
 </nav>
-
 <script>
 (function() {
   var slides = document.querySelectorAll('.slide');
@@ -1004,7 +1123,6 @@ pygame.<span class="fn">quit</span>()
   showSlide(0);
 })();
 </script>
-
 <script src="courseware-ui.js"></script>
 <script src="presenter.js"></script>
 </body>

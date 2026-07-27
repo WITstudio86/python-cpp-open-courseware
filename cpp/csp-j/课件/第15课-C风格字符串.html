@@ -1,10 +1,11 @@
 <!DOCTYPE html>
+
 <html lang="zh-CN">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>CSP-J 备考课程 — 第15课：C 风格字符串</title>
-    <style>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>CSP-J 备考课程 — 第15课：C 风格字符串</title>
+<style>
         * { margin: 0; padding: 0; box-sizing: border-box; }
         body {
             font-family: "Microsoft YaHei", "PingFang SC", "Helvetica Neue", sans-serif;
@@ -186,120 +187,136 @@
 </head>
 <body>
 <div class="container">
-    <div class="header">
-        <span>CSP-J 备考课程</span>
-        <span class="course-name">第15课：C 风格字符串</span>
-    </div>
-
-    <div class="slides-wrapper">
-
-        <!-- 幻灯片1：标题页 -->
-        <div class="slide active title-slide" data-slide="0">
-            <h1>第15课<br>C 风格字符串</h1>
-            <p class="subtitle">char 数组 · <code class="inline">'\0'</code> 结束符 · 字符串函数 · 回文判断</p>
-            <div class="tip-box" style="margin-top:30px; text-align:left;">
-                <strong>🎯 考纲要点：</strong>掌握 C 风格字符串的定义与操作；理解 <code class="inline">'\0'</code> 的核心作用；熟练使用 <code class="inline">strlen / strcpy / strcat / strcmp</code>。
-            </div>
-        </div>
-
-        <!-- 幻灯片2：C风格字符串本质与'\0' -->
-        <div class="slide" data-slide="1">
-            <h1>一、C 风格字符串的本质</h1>
-
-            <h3>🔹 定义：以 <code class="inline">'\0'</code> 结尾的 <code class="inline">char</code> 数组</h3>
-            <p><code class="inline">'\0'</code> 的 ASCII 码值为 0，是字符串的"终点标志"。所有字符串函数都依赖它判断结束。</p>
-
-            <div class="table-wrap">
-                <table>
-                    <tr><th>字符</th><td>h</td><td>e</td><td>l</td><td>l</td><td>o</td><td>\0</td></tr>
-                    <tr><th>索引</th><td>0</td><td>1</td><td>2</td><td>3</td><td>4</td><td>5</td></tr>
-                    <tr><th>ASCII</th><td>104</td><td>101</td><td>108</td><td>108</td><td>111</td><td>0</td></tr>
-                </table>
+<div class="header">
+<span>CSP-J 备考课程</span>
+<span class="course-name">第15课：C 风格字符串</span>
+</div>
+<div class="slides-wrapper">
+<!-- 幻灯片1：标题页 -->
+<div class="slide active title-slide" data-slide="0">
+<h1>第15课<br/>C 风格字符串</h1>
+<p class="subtitle">char 数组 · <code class="inline">'\0'</code> 结束符 · 字符串函数 · 回文判断</p>
+<div class="tip-box" style="margin-top:30px; text-align:left;">
+<strong>🎯 考纲要点：</strong>掌握 C 风格字符串的定义与操作；理解 <code class="inline">'\0'</code> 的核心作用；熟练使用 <code class="inline">strlen / strcpy / strcat / strcmp</code>。
             </div>
 
-            <pre class="code-block">
+<aside class="notes">【开场】第 1/6 页 · C风格字符串
+用 30 秒说明本课目标与学完能做什么，再进入正题。
+大纲考点：char数组/gets/puts、字符串函数(strlen/strcpy/strcat/strcmp)
+配套练习方向：字符串处理与回文判断题
+封面关键词：
+· char 数组 · '\0' 结束符 · 字符串函数 · 回文判断
+· 🎯 考纲要点：
+互动：问学生「今天最想搞清楚什么？」，收 1–2 个期待。</aside>
+</div>
+<!-- 幻灯片2：C风格字符串本质与'\0' -->
+<div class="slide" data-slide="1">
+<h1>一、C 风格字符串的本质</h1>
+<h3>🔹 定义：以 <code class="inline">'\0'</code> 结尾的 <code class="inline">char</code> 数组</h3>
+<p><code class="inline">'\0'</code> 的 ASCII 码值为 0，是字符串的"终点标志"。所有字符串函数都依赖它判断结束。</p>
+<div class="table-wrap">
+<table>
+<tr><th>字符</th><td>h</td><td>e</td><td>l</td><td>l</td><td>o</td><td>\0</td></tr>
+<tr><th>索引</th><td>0</td><td>1</td><td>2</td><td>3</td><td>4</td><td>5</td></tr>
+<tr><th>ASCII</th><td>104</td><td>101</td><td>108</td><td>108</td><td>111</td><td>0</td></tr>
+</table>
+</div>
+<pre class="code-block">
 <span class="comment">// 声明与初始化</span>
 <span class="keyword">char</span> s1[<span class="number">100</span>] = <span class="string">"hello"</span>;   <span class="comment">// ✅ 自动添加 '\0'</span>
 <span class="keyword">char</span> s2[]   = <span class="string">"world"</span>;    <span class="comment">// ✅ 大小自动 = 6</span>
 <span class="keyword">char</span> s3[<span class="number">6</span>]  = {<span class="string">'h'</span>,<span class="string">'e'</span>,<span class="string">'l'</span>,<span class="string">'l'</span>,<span class="string">'o'</span>,<span class="string">'\0'</span>}; <span class="comment">// ✅ 手动加 '\0'</span>
 <span class="keyword">char</span> s4[<span class="number">5</span>]  = {<span class="string">'h'</span>,<span class="string">'e'</span>,<span class="string">'l'</span>,<span class="string">'l'</span>,<span class="string">'o'</span>};    <span class="comment">// ❌ 不是合法字符串！</span></pre>
-
-            <div class="warn-box">
-                <strong>⚠️ 核心警示：</strong>没有 <code class="inline">'\0'</code> 的 char 数组不是字符串！使用 strlen / strcpy / cout 等操作会导致越界访问，输出乱码甚至程序崩溃。
+<div class="warn-box">
+<strong>⚠️ 核心警示：</strong>没有 <code class="inline">'\0'</code> 的 char 数组不是字符串！使用 strlen / strcpy / cout 等操作会导致越界访问，输出乱码甚至程序崩溃。
+            </div>
+<div class="tip-box">
+<strong>💡 经验法则：</strong>声明数组时，大小 = 最大字符数 + 1（为 '\0' 预留）。建议留足余量：<code class="inline">char s[100] = "hello";</code> 比 <code class="inline">char s[6] = "hello";</code> 更安全，后续拼接不愁。
             </div>
 
-            <div class="tip-box">
-                <strong>💡 经验法则：</strong>声明数组时，大小 = 最大字符数 + 1（为 '\0' 预留）。建议留足余量：<code class="inline">char s[100] = "hello";</code> 比 <code class="inline">char s[6] = "hello";</code> 更安全，后续拼接不愁。
-            </div>
-        </div>
-
-        <!-- 幻灯片3：常用字符串函数 -->
-        <div class="slide" data-slide="2">
-            <h1>二、常用字符串函数</h1>
-            <p>头文件：<code class="inline">#include &lt;cstring&gt;</code></p>
-
-            <div class="table-wrap">
-                <table>
-                    <tr>
-                        <th>函数</th><th>作用</th><th>返回值</th><th>注意事项</th>
-                    </tr>
-                    <tr>
-                        <td><code class="inline">strlen(s)</code></td>
-                        <td>求长度</td>
-                        <td>字符个数（不计 \0）</td>
-                        <td>区别于 <code class="inline">sizeof</code></td>
-                    </tr>
-                    <tr>
-                        <td><code class="inline">strcpy(d,s)</code></td>
-                        <td>拷贝</td>
-                        <td>目标指针</td>
-                        <td><strong>目标必须足够大！</strong></td>
-                    </tr>
-                    <tr>
-                        <td><code class="inline">strcat(d,s)</code></td>
-                        <td>拼接（末尾追加）</td>
-                        <td>目标指针</td>
-                        <td><strong>目标容量要够！</strong></td>
-                    </tr>
-                    <tr>
-                        <td><code class="inline">strcmp(a,b)</code></td>
-                        <td>逐字符比较</td>
-                        <td>0=相等，>0=a大，&lt;0=a小</td>
-                        <td><strong>不是 bool！</strong></td>
-                    </tr>
-                </table>
-            </div>
-
-            <h3>🔹 strcmp 比较机制</h3>
-            <pre class="code-block">
+<aside class="notes">【讲解】一、C 风格字符串的本质
+结合讲义《一、C 风格字符串的本质》强调：
+· 在 C++ 中，C 风格字符串本质上是一个**以空字符 '\0' 结尾的 char 数组**。'\0' 的 ASCII 码值为 0，它不属于可见字符，但却是所有 C 字符串函数判断字符串结束位置的唯一依据。例如字符串 "hello" 在内存中实际占用 6 个字节：'h'、'e'、'l'、'l'、'o'、'\0'。
+· char s1[100] = "hello"; // 自动在末尾添加 '\0'
+· // 内存: h e l l o \0 [剩余 94 个未使用单元]
+· char s2[] = "world"; // 编译器自动计算大小：6（5个字符 + '\0'）
+· char s3[6] = {'h', 'e', 'l', 'l', 'o', '\0'}; // 逐个字符初始化，必须手动加 '\0'
+幻灯片上可见要点：
+· '\0' 的 ASCII 码值为 0，是字符串的"终点标志"。所有字符串函数都依赖它判断结束。
+· ⚠️ 核心警示：
+· 💡 经验法则：
+讲解时放慢关键术语；用 1 个生活类比 + 1 个反例加深印象。
+本课大纲考点（可适时点题）：char数组/gets/puts、字符串函数(strlen/strcpy/strcat/strcmp)</aside>
+</div>
+<!-- 幻灯片3：常用字符串函数 -->
+<div class="slide" data-slide="2">
+<h1>二、常用字符串函数</h1>
+<p>头文件：<code class="inline">#include &lt;cstring&gt;</code></p>
+<div class="table-wrap">
+<table>
+<tr>
+<th>函数</th><th>作用</th><th>返回值</th><th>注意事项</th>
+</tr>
+<tr>
+<td><code class="inline">strlen(s)</code></td>
+<td>求长度</td>
+<td>字符个数（不计 \0）</td>
+<td>区别于 <code class="inline">sizeof</code></td>
+</tr>
+<tr>
+<td><code class="inline">strcpy(d,s)</code></td>
+<td>拷贝</td>
+<td>目标指针</td>
+<td><strong>目标必须足够大！</strong></td>
+</tr>
+<tr>
+<td><code class="inline">strcat(d,s)</code></td>
+<td>拼接（末尾追加）</td>
+<td>目标指针</td>
+<td><strong>目标容量要够！</strong></td>
+</tr>
+<tr>
+<td><code class="inline">strcmp(a,b)</code></td>
+<td>逐字符比较</td>
+<td>0=相等，&gt;0=a大，&lt;0=a小</td>
+<td><strong>不是 bool！</strong></td>
+</tr>
+</table>
+</div>
+<h3>🔹 strcmp 比较机制</h3>
+<pre class="code-block">
 <span class="func">strcmp</span>(<span class="string">"abc"</span>, <span class="string">"abc"</span>)  → <span class="number">0</span>   <span class="comment">// 完全相等</span>
 <span class="func">strcmp</span>(<span class="string">"abc"</span>, <span class="string">"abd"</span>)  → 负数 <span class="comment">// 'c'(99) &lt; 'd'(100)</span>
-<span class="func">strcmp</span>(<span class="string">"abd"</span>, <span class="string">"abc"</span>)  → 正数 <span class="comment">// 'd'(100) > 'c'(99)</span>
+<span class="func">strcmp</span>(<span class="string">"abd"</span>, <span class="string">"abc"</span>)  → 正数 <span class="comment">// 'd'(100) &gt; 'c'(99)</span>
 <span class="func">strcmp</span>(<span class="string">"ab"</span>,  <span class="string">"abc"</span>)  → 负数 <span class="comment">// 短字符串 &lt; 长字符串</span></pre>
-
-            <div class="warn-box">
-                <strong>⚠️ 高频易错：</strong><code class="inline">if (strcmp(a, b))</code> 在相等时为 <strong>假</strong>！<br>
+<div class="warn-box">
+<strong>⚠️ 高频易错：</strong><code class="inline">if (strcmp(a, b))</code> 在相等时为 <strong>假</strong>！<br/>
                 正确写法：<code class="inline">if (strcmp(a, b) == 0)</code> 判断相等。
             </div>
-
-            <h3>🔹 输入输出</h3>
-            <pre class="code-block">
+<h3>🔹 输入输出</h3>
+<pre class="code-block">
 <span class="keyword">char</span> s[<span class="number">100</span>];
 cin &gt;&gt; s;                      <span class="comment">// 遇空格/Tab/换行停止</span>
 cin.<span class="func">getline</span>(s, <span class="number">100</span>);          <span class="comment">// 读取整行（含空格）</span>
 <span class="func">puts</span>(s);                       <span class="comment">// 输出 + 自动换行</span>
 <span class="comment">// gets(s) — 已从 C++11 移除！禁止使用！</span></pre>
-        </div>
 
-        <!-- 幻灯片4：回文判断 -->
-        <div class="slide" data-slide="3">
-            <h1>三、回文判断</h1>
-            <p><strong>回文：</strong>正读和反读都一样的字符串，如 <code class="inline">"level"</code>、<code class="inline">"12321"</code>。</p>
-
-            <h3>🔹 双指针算法</h3>
-            <p>指针 <code class="inline">i</code> 从头向后，指针 <code class="inline">j</code> 从尾向前，逐对比较 <code class="inline">s[i]</code> 与 <code class="inline">s[j]</code>。</p>
-
-            <pre class="code-block">
+<aside class="notes">【讲解】二、常用字符串函数
+本页要点（照着讲即可）：
+· 头文件： #include
+· 目标必须足够大！
+· 目标容量要够！
+· 不是 bool！
+· ⚠️ 高频易错：
+讲解时放慢关键术语；用 1 个生活类比 + 1 个反例加深印象。</aside>
+</div>
+<!-- 幻灯片4：回文判断 -->
+<div class="slide" data-slide="3">
+<h1>三、回文判断</h1>
+<p><strong>回文：</strong>正读和反读都一样的字符串，如 <code class="inline">"level"</code>、<code class="inline">"12321"</code>。</p>
+<h3>🔹 双指针算法</h3>
+<p>指针 <code class="inline">i</code> 从头向后，指针 <code class="inline">j</code> 从尾向前，逐对比较 <code class="inline">s[i]</code> 与 <code class="inline">s[j]</code>。</p>
+<pre class="code-block">
 <span class="keyword">bool</span> <span class="func">isPalindrome</span>(<span class="keyword">char</span> s[]) {
     <span class="keyword">int</span> len = <span class="func">strlen</span>(s);
     <span class="keyword">for</span> (<span class="keyword">int</span> i = <span class="number">0</span>, j = len - <span class="number">1</span>; i &lt; j; i++, j--) {
@@ -309,40 +326,48 @@ cin.<span class="func">getline</span>(s, <span class="number">100</span>);      
     }
     <span class="keyword">return</span> <span class="number">true</span>;
 }</pre>
-
-            <div class="table-wrap">
-                <table>
-                    <tr><th>字符串</th><th>过程</th><th>结果</th></tr>
-                    <tr><td>"level"</td><td>l==l ✓, e==e ✓, v 居中</td><td>✅ 回文</td></tr>
-                    <tr><td>"hello"</td><td>h==o ✗ (第一对就不等)</td><td>❌ 不是回文</td></tr>
-                    <tr><td>"a"</td><td>len=1, i&lt;j 为假，直接返回 true</td><td>✅ 回文</td></tr>
-                </table>
+<div class="table-wrap">
+<table>
+<tr><th>字符串</th><th>过程</th><th>结果</th></tr>
+<tr><td>"level"</td><td>l==l ✓, e==e ✓, v 居中</td><td>✅ 回文</td></tr>
+<tr><td>"hello"</td><td>h==o ✗ (第一对就不等)</td><td>❌ 不是回文</td></tr>
+<tr><td>"a"</td><td>len=1, i&lt;j 为假，直接返回 true</td><td>✅ 回文</td></tr>
+</table>
+</div>
+<div class="tip-box">
+<strong>💡 复杂度分析：</strong>时间 O(n)，空间 O(1)。循环条件 <code class="inline">i &lt; j</code> 确保每对字符只比较一次，发现不等立即退出。
             </div>
 
-            <div class="tip-box">
-                <strong>💡 复杂度分析：</strong>时间 O(n)，空间 O(1)。循环条件 <code class="inline">i &lt; j</code> 确保每对字符只比较一次，发现不等立即退出。
-            </div>
-        </div>
-
-        <!-- 幻灯片5：真题精练 -->
-        <div class="slide" data-slide="4">
-            <h1>四、真题精练</h1>
-
-            <h3>📝 真题1：统计数字字符个数</h3>
-            <p>输入一个字符串（可含空格），输出其中数字字符 <code class="inline">'0'~'9'</code> 的数量。</p>
-            <pre class="code-block">
+<aside class="notes">【讲解】三、回文判断
+结合讲义《六、回文判断》强调：
+· 回文是指正读和反读都一样的字符串，如 "level"、"radar"、"12321"。
+· 双指针算法：设置两个指针 i（从头向后）和 j（从尾向前），逐对比较 s[i] 与 s[j]，只要有一对不相等就不是回文。循环终止条件是 i &gt;= j。
+· 时间复杂度 O(n)，空间复杂度 O(1)。
+· bool isPalindrome(char s[]) {
+· int len = strlen(s);
+幻灯片上可见要点：
+· 回文： 正读和反读都一样的字符串，如 "level" 、 "12321" 。
+· 指针 i 从头向后，指针 j 从尾向前，逐对比较 s[i] 与 s[j] 。
+· 💡 复杂度分析：
+讲解时放慢关键术语；用 1 个生活类比 + 1 个反例加深印象。</aside>
+</div>
+<!-- 幻灯片5：真题精练 -->
+<div class="slide" data-slide="4">
+<h1>四、真题精练</h1>
+<h3>📝 真题1：统计数字字符个数</h3>
+<p>输入一个字符串（可含空格），输出其中数字字符 <code class="inline">'0'~'9'</code> 的数量。</p>
+<pre class="code-block">
 <span class="keyword">char</span> s[<span class="number">110</span>];
 cin.<span class="func">getline</span>(s, <span class="number">110</span>);
 <span class="keyword">int</span> cnt = <span class="number">0</span>;
 <span class="keyword">for</span> (<span class="keyword">int</span> i = <span class="number">0</span>; i &lt; <span class="func">strlen</span>(s); i++) {
-    <span class="keyword">if</span> (s[i] &gt;= <span class="string">'0'</span> && s[i] &lt;= <span class="string">'9'</span>) cnt++;
+    <span class="keyword">if</span> (s[i] &gt;= <span class="string">'0'</span> &amp;&amp; s[i] &lt;= <span class="string">'9'</span>) cnt++;
 }
 cout &lt;&lt; cnt &lt;&lt; endl;</pre>
-            <p>样例：<code class="inline">"Hello123"</code> → <code class="inline">3</code></p>
-
-            <h3>📝 真题2：验证回文</h3>
-            <p>输入一个小写字母字符串，判断是否为回文。</p>
-            <pre class="code-block">
+<p>样例：<code class="inline">"Hello123"</code> → <code class="inline">3</code></p>
+<h3>📝 真题2：验证回文</h3>
+<p>输入一个小写字母字符串，判断是否为回文。</p>
+<pre class="code-block">
 <span class="keyword">char</span> s[<span class="number">110</span>]; cin &gt;&gt; s;
 <span class="keyword">int</span> len = <span class="func">strlen</span>(s);
 <span class="keyword">bool</span> flag = <span class="number">true</span>;
@@ -350,43 +375,58 @@ cout &lt;&lt; cnt &lt;&lt; endl;</pre>
     <span class="keyword">if</span> (s[i] != s[j]) { flag = <span class="number">false</span>; <span class="keyword">break</span>; }
 }
 cout &lt;&lt; (flag ? <span class="string">"yes"</span> : <span class="string">"no"</span>) &lt;&lt; endl;</pre>
-            <p>样例：<code class="inline">"level"</code> → <code class="inline">yes</code>；<code class="inline">"hello"</code> → <code class="inline">no</code></p>
-        </div>
+<p>样例：<code class="inline">"level"</code> → <code class="inline">yes</code>；<code class="inline">"hello"</code> → <code class="inline">no</code></p>
 
-        <!-- 幻灯片6：本课小结 -->
-        <div class="slide" data-slide="5">
-            <h1>五、本课小结</h1>
-
-            <ol>
-                <li><strong>C 风格字符串本质：</strong>以 <code class="inline">'\0'</code> 结尾的 char 数组，所有标准函数依赖 <code class="inline">'\0'</code> 判断结束位置。</li>
-                <li><strong>数组大小：</strong>声明时必须预留 <code class="inline">'\0'</code> 的空间（大小 = 字符数 + 1），建议留足余量。</li>
-                <li><strong>输入方式：</strong><code class="inline">cin &gt;&gt; s</code> 遇空格停止；<code class="inline">cin.getline(s, n)</code> 可读整行；<strong>禁止使用 gets。</strong></li>
-                <li><strong>核心函数：</strong>
-                    <ul>
-                        <li><code class="inline">strlen</code> — 长度（不含 \0）</li>
-                        <li><code class="inline">strcpy</code> — 拷贝（目标要够大）</li>
-                        <li><code class="inline">strcat</code> — 拼接（目标要够大）</li>
-                        <li><code class="inline">strcmp</code> — 比较（返回 int，0 表示相等）</li>
-                    </ul>
-                </li>
-                <li><strong>回文判断：</strong>双指针法，O(n) 时间，O(1) 空间，高频考点。</li>
-                <li><strong>安全第一：</strong>strcpy / strcat 前确保目标数组容量足够，防范缓冲区溢出。</li>
-            </ol>
-
-            <div class="tip-box" style="margin-top:20px;">
-                <strong>🎯 下节预告：</strong>第16课将学习 <code class="inline">string</code> 类——C++ 提供的更安全、更方便的字符串类型，告别手动管理 <code class="inline">'\0'</code> 的烦恼！
-            </div>
-        </div>
-
-    </div><!-- /slides-wrapper -->
-
-    <div class="nav-bar">
-        <button id="prevBtn" onclick="prevSlide()">◀ 上一页</button>
-        <span class="page-indicator" id="pageIndicator">1 / 6</span>
-        <button id="nextBtn" onclick="nextSlide()">下一页 ▶</button>
-    </div>
+<aside class="notes">【讲解】四、真题精练
+本页要点（照着讲即可）：
+· 输入一个字符串（可含空格），输出其中数字字符 '0'~'9' 的数量。
+· 样例： "Hello123" → 3
+· 输入一个小写字母字符串，判断是否为回文。
+· 样例： "level" → yes ； "hello" → no
+练习页节奏：先独立想 1 分钟 → 再点拨思路 → 最后对答案讲为什么。
+可联系：字符串处理与回文判断题</aside>
 </div>
+<!-- 幻灯片6：本课小结 -->
+<div class="slide" data-slide="5">
+<h1>五、本课小结</h1>
+<ol>
+<li><strong>C 风格字符串本质：</strong>以 <code class="inline">'\0'</code> 结尾的 char 数组，所有标准函数依赖 <code class="inline">'\0'</code> 判断结束位置。</li>
+<li><strong>数组大小：</strong>声明时必须预留 <code class="inline">'\0'</code> 的空间（大小 = 字符数 + 1），建议留足余量。</li>
+<li><strong>输入方式：</strong><code class="inline">cin &gt;&gt; s</code> 遇空格停止；<code class="inline">cin.getline(s, n)</code> 可读整行；<strong>禁止使用 gets。</strong></li>
+<li><strong>核心函数：</strong>
+<ul>
+<li><code class="inline">strlen</code> — 长度（不含 \0）</li>
+<li><code class="inline">strcpy</code> — 拷贝（目标要够大）</li>
+<li><code class="inline">strcat</code> — 拼接（目标要够大）</li>
+<li><code class="inline">strcmp</code> — 比较（返回 int，0 表示相等）</li>
+</ul>
+</li>
+<li><strong>回文判断：</strong>双指针法，O(n) 时间，O(1) 空间，高频考点。</li>
+<li><strong>安全第一：</strong>strcpy / strcat 前确保目标数组容量足够，防范缓冲区溢出。</li>
+</ol>
+<div class="tip-box" style="margin-top:20px;">
+<strong>🎯 下节预告：</strong>第16课将学习 <code class="inline">string</code> 类——C++ 提供的更安全、更方便的字符串类型，告别手动管理 <code class="inline">'\0'</code> 的烦恼！
+            </div>
 
+<aside class="notes">【收尾】回顾本课主线：五、本课小结
+对照大纲再过一遍：char数组/gets/puts、字符串函数(strlen/strcpy/strcat/strcmp)
+板书/口述要点：
+· C 风格字符串本质： 以 '\0' 结尾的 char 数组，所有标准函数依赖 '\0' 判断结束位置。
+· C 风格字符串本质：
+· 数组大小： 声明时必须预留 '\0' 的空间（大小 = 字符数 + 1），建议留足余量。
+· 数组大小：
+· 输入方式： cin &gt;&gt; s 遇空格停止； cin.getline(s, n) 可读整行； 禁止使用 gets。
+· 输入方式：
+课后任务：字符串处理与回文判断题
+结束前留 2 分钟答疑；布置 1 道小练习检验是否真正掌握。</aside>
+</div>
+</div><!-- /slides-wrapper -->
+<div class="nav-bar">
+<button id="prevBtn" onclick="prevSlide()">◀ 上一页</button>
+<span class="page-indicator" id="pageIndicator">1 / 6</span>
+<button id="nextBtn" onclick="nextSlide()">下一页 ▶</button>
+</div>
+</div>
 <script>
     let currentSlide = 0;
     const slides = document.querySelectorAll('.slide');

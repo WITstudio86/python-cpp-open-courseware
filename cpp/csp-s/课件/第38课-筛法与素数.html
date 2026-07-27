@@ -1,8 +1,9 @@
 <!DOCTYPE html>
+
 <html lang="zh-CN">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
 <title>第38课：筛法与素数 — CSP-S 数论专题</title>
 <style>
   :root {
@@ -181,310 +182,352 @@
 </head>
 <body>
 <div class="container">
-
 <!-- ==================== 幻灯片1：标题页 ==================== -->
 <div class="slide active title-slide" data-index="0">
-  <div class="badges">
-    <span class="tag tag-accent">CSP-S 考纲</span>
-    <span class="tag tag-gold">数论</span>
-    <span class="tag tag-green">第38课</span>
-  </div>
-  <h1>筛法与素数</h1>
-  <p class="subtitle">Sieve Methods &amp; Prime Numbers</p>
-  <p style="color: var(--code-comment); font-size: 1.1em;">
+<div class="badges">
+<span class="tag tag-accent">CSP-S 考纲</span>
+<span class="tag tag-gold">数论</span>
+<span class="tag tag-green">第38课</span>
+</div>
+<h1>筛法与素数</h1>
+<p class="subtitle">Sieve Methods &amp; Prime Numbers</p>
+<p style="color: var(--code-comment); font-size: 1.1em;">
     素数判定 · 埃氏筛 · 欧拉筛（线性筛） · 区间筛 · 欧拉函数
   </p>
-  <p style="margin-top:24px; color: var(--code-comment);">按 → 或点击按钮翻页 | 共 7 页</p>
-</div>
+<p style="margin-top:24px; color: var(--code-comment);">按 → 或点击按钮翻页 | 共 7 页</p>
 
+<aside class="notes">【开场】第 1/7 页 · 筛法与素数
+用 30 秒说明本课目标与学完能做什么，再进入正题。
+大纲考点：埃氏筛、欧拉筛、素数分布、区间筛
+配套练习方向：素数计数、哥德巴赫猜想验证
+封面关键词：
+· Sieve Methods &amp; Prime Numbers
+· 素数判定 · 埃氏筛 · 欧拉筛（线性筛） · 区间筛 · 欧拉函数
+· 按 → 或点击按钮翻页 | 共 7 页
+互动：问学生「今天最想搞清楚什么？」，收 1–2 个期待。</aside>
+</div>
 <!-- ==================== 幻灯片2：素数判定 ==================== -->
 <div class="slide" data-index="1">
-  <h2>一、素数判定：从 O(&#8730;n) 到 6k±1 优化</h2>
-
-  <div class="two-col">
-    <div>
-      <h3>朴素试除法 O(&#8730;n)</h3>
-      <div class="code-block"><span class="kw">bool</span> <span class="fn">isPrime</span>(<span class="kw">int</span> n) {
-    <span class="kw">if</span> (n < <span class="nu">2</span>) <span class="kw">return false</span>;
-    <span class="kw">for</span> (<span class="kw">int</span> i = <span class="nu">2</span>; i*i <= n; i++)
+<h2>一、素数判定：从 O(√n) 到 6k±1 优化</h2>
+<div class="two-col">
+<div>
+<h3>朴素试除法 O(√n)</h3>
+<div class="code-block"><span class="kw">bool</span> <span class="fn">isPrime</span>(<span class="kw">int</span> n) {
+    <span class="kw">if</span> (n &lt; <span class="nu">2</span>) <span class="kw">return false</span>;
+    <span class="kw">for</span> (<span class="kw">int</span> i = <span class="nu">2</span>; i*i &lt;= n; i++)
         <span class="kw">if</span> (n % i == <span class="nu">0</span>) <span class="kw">return false</span>;
     <span class="kw">return true</span>;
 }</div>
-      <p>从 2 到 &radic;n 逐一试除，简单可靠</p>
-    </div>
-    <div>
-      <h3>6k±1 优化</h3>
-      <p><strong>原理：</strong>所有大于 3 的素数都可表示为 <span class="highlight">6k ± 1</span></p>
-      <p>只需试除 2、3 和 6k±1 形式的数，<br>常数优化约 <strong>3 倍</strong></p>
-      <div class="code-block"><span class="kw">bool</span> <span class="fn">isPrimeFast</span>(<span class="kw">int</span> n) {
-    <span class="kw">if</span> (n < <span class="nu">2</span>) <span class="kw">return false</span>;
-    <span class="kw">if</span> (n <= <span class="nu">3</span>) <span class="kw">return true</span>;
+<p>从 2 到 √n 逐一试除，简单可靠</p>
+</div>
+<div>
+<h3>6k±1 优化</h3>
+<p><strong>原理：</strong>所有大于 3 的素数都可表示为 <span class="highlight">6k ± 1</span></p>
+<p>只需试除 2、3 和 6k±1 形式的数，<br/>常数优化约 <strong>3 倍</strong></p>
+<div class="code-block"><span class="kw">bool</span> <span class="fn">isPrimeFast</span>(<span class="kw">int</span> n) {
+    <span class="kw">if</span> (n &lt; <span class="nu">2</span>) <span class="kw">return false</span>;
+    <span class="kw">if</span> (n &lt;= <span class="nu">3</span>) <span class="kw">return true</span>;
     <span class="kw">if</span> (n%<span class="nu">2</span>==<span class="nu">0</span> || n%<span class="nu">3</span>==<span class="nu">0</span>) <span class="kw">return false</span>;
-    <span class="kw">for</span> (<span class="kw">int</span> i=<span class="nu">5</span>; i*i<=n; i+=<span class="nu">6</span>)
+    <span class="kw">for</span> (<span class="kw">int</span> i=<span class="nu">5</span>; i*i&lt;=n; i+=<span class="nu">6</span>)
         <span class="kw">if</span> (n%i==<span class="nu">0</span> || n%(i+<span class="nu">2</span>)==<span class="nu">0</span>)
             <span class="kw">return false</span>;
     <span class="kw">return true</span>;
 }</div>
-    </div>
-  </div>
-
-  <div class="note-box">
-    <strong>注意：</strong>试除法仅适用于单点判定（n &le; 10<sup>12</sup>）。
+</div>
+</div>
+<div class="note-box">
+<strong>注意：</strong>试除法仅适用于单点判定（n ≤ 10<sup>12</sup>）。
     大规模筛素数需使用筛法。
   </div>
-</div>
 
+<aside class="notes">【讲解】一、素数判定：从 O(√n) 到 6k±1 优化
+本页要点（照着讲即可）：
+· 从 2 到 √n 逐一试除，简单可靠
+· 原理： 所有大于 3 的素数都可表示为 6k ± 1
+· 只需试除 2、3 和 6k±1 形式的数， 常数优化约 3 倍
+讲解时放慢关键术语；用 1 个生活类比 + 1 个反例加深印象。
+本课大纲考点（可适时点题）：埃氏筛、欧拉筛、素数分布、区间筛</aside>
+</div>
 <!-- ==================== 幻灯片3：埃氏筛原理 ==================== -->
 <div class="slide" data-index="2">
-  <h2>二、埃拉托色尼筛法（埃氏筛）O(n log log n)</h2>
-
-  <h3>算法思想：从 2 开始，标记每个素数的所有倍数为合数</h3>
-
-  <div class="two-col">
-    <div>
-      <p><strong>步骤演示 (n=30)：</strong></p>
-      <div class="sieve-anim" id="sieveDemo">
-        <!-- 由 JS 动态生成 -->
-      </div>
-      <br>
-      <button onclick="stepSieve()" style="background:var(--accent); color:#fff; border:none; border-radius:8px; padding:8px 20px; cursor:pointer; font-family:inherit;">
+<h2>二、埃拉托色尼筛法（埃氏筛）O(n log log n)</h2>
+<h3>算法思想：从 2 开始，标记每个素数的所有倍数为合数</h3>
+<div class="two-col">
+<div>
+<p><strong>步骤演示 (n=30)：</strong></p>
+<div class="sieve-anim" id="sieveDemo">
+<!-- 由 JS 动态生成 -->
+</div>
+<br/>
+<button onclick="stepSieve()" style="background:var(--accent); color:#fff; border:none; border-radius:8px; padding:8px 20px; cursor:pointer; font-family:inherit;">
         † 逐步筛（点击推进）
       </button>
-      <span id="sieveStepLabel" style="margin-left:12px; color:var(--code-comment); font-size:0.9em;"></span>
-    </div>
-    <div>
-      <h3>代码实现</h3>
-      <div class="code-block" style="font-size:0.82em;"><span class="kw">int</span> <span class="fn">eratosthenes</span>(<span class="kw">int</span> n) {
+<span id="sieveStepLabel" style="margin-left:12px; color:var(--code-comment); font-size:0.9em;"></span>
+</div>
+<div>
+<h3>代码实现</h3>
+<div class="code-block" style="font-size:0.82em;"><span class="kw">int</span> <span class="fn">eratosthenes</span>(<span class="kw">int</span> n) {
     <span class="fn">fill</span>(isPrime, isPrime+n+<span class="nu">1</span>, <span class="kw">true</span>);
     isPrime[<span class="nu">0</span>] = isPrime[<span class="nu">1</span>] = <span class="kw">false</span>;
     <span class="kw">int</span> cnt = <span class="nu">0</span>;
-    <span class="kw">for</span> (<span class="kw">int</span> i=<span class="nu">2</span>; i<=n; i++) {
+    <span class="kw">for</span> (<span class="kw">int</span> i=<span class="nu">2</span>; i&lt;=n; i++) {
         <span class="kw">if</span> (isPrime[i]) {
             cnt++;
             <span class="cm">// 从 i*i 开始标记（优化）</span>
-            <span class="kw">if</span> ((<span class="kw">ll</span>)i*i <= n)
-                <span class="kw">for</span> (<span class="kw">int</span> j=i*i; j<=n; j+=i)
+<span class="kw">if</span> ((<span class="kw">ll</span>)i*i &lt;= n)
+                <span class="kw">for</span> (<span class="kw">int</span> j=i*i; j&lt;=n; j+=i)
                     isPrime[j] = <span class="kw">false</span>;
         }
     }
     <span class="kw">return</span> cnt;
 }</div>
-      <p><strong>关键优化：</strong>内层从 i&sup2; 开始（2i 到 (i-1)i 已被更小的素数筛过）</p>
-      <p><strong>时间复杂度：</strong>调和级数 &Sigma;(n/p) ≈ <span class="highlight">n ln ln n</span></p>
-    </div>
-  </div>
-
-  <p style="margin-top:8px;">n=10<sup>6</sup> 时约 78498 个素数，埃氏筛约 0.1 秒即可完成。</p>
+<p><strong>关键优化：</strong>内层从 i² 开始（2i 到 (i-1)i 已被更小的素数筛过）</p>
+<p><strong>时间复杂度：</strong>调和级数 Σ(n/p) ≈ <span class="highlight">n ln ln n</span></p>
 </div>
+</div>
+<p style="margin-top:8px;">n=10<sup>6</sup> 时约 78498 个素数，埃氏筛约 0.1 秒即可完成。</p>
 
+<aside class="notes">【讲解】二、埃拉托色尼筛法（埃氏筛）O(n log log n)
+本页要点（照着讲即可）：
+· 步骤演示 (n=30)：
+· 关键优化： 内层从 i² 开始（2i 到 (i-1)i 已被更小的素数筛过）
+· 关键优化：
+· 时间复杂度： 调和级数 Σ(n/p) ≈ n ln ln n
+· 时间复杂度：
+· n=10 6 时约 78498 个素数，埃氏筛约 0.1 秒即可完成。
+讲解时放慢关键术语；用 1 个生活类比 + 1 个反例加深印象。</aside>
+</div>
 <!-- ==================== 幻灯片4：欧拉筛（线性筛）精讲 ==================== -->
 <div class="slide" data-index="3">
-  <h2>三、欧拉筛（线性筛）O(n) — 重点算法</h2>
-
-  <h3>核心思想：<span class="highlight">每个合数只被其最小质因子筛掉一次</span></h3>
-
-  <div class="two-col">
-    <div>
-      <p><strong>算法流程：</strong></p>
-      <ol style="padding-left:20px; line-height:1.9;">
-        <li>维护 <code style="color:var(--gold)">primes[]</code> 素数列表</li>
-        <li>遍历 i = 2..n：若为素数则加入列表</li>
-        <li>对每个素数 p = primes[j]：
+<h2>三、欧拉筛（线性筛）O(n) — 重点算法</h2>
+<h3>核心思想：<span class="highlight">每个合数只被其最小质因子筛掉一次</span></h3>
+<div class="two-col">
+<div>
+<p><strong>算法流程：</strong></p>
+<ol style="padding-left:20px; line-height:1.9;">
+<li>维护 <code style="color:var(--gold)">primes[]</code> 素数列表</li>
+<li>遍历 i = 2..n：若为素数则加入列表</li>
+<li>对每个素数 p = primes[j]：
           <ul style="margin:4px 0 4px 16px;">
-            <li>标记 i×p 为合数</li>
-            <li><span class="highlight">若 i % p == 0，立即 break</span></li>
-          </ul>
-        </li>
-      </ol>
-      <div class="note-box" style="margin-top:12px;">
-        <strong>为什么 break？</strong><br>
-        i % p == 0 说明 p 是 i 的最小质因子。<br>
-        对于更大的素数 p'，i&times;p' 的最小质因子仍是 p，<br>
+<li>标记 i×p 为合数</li>
+<li><span class="highlight">若 i % p == 0，立即 break</span></li>
+</ul>
+</li>
+</ol>
+<div class="note-box" style="margin-top:12px;">
+<strong>为什么 break？</strong><br/>
+        i % p == 0 说明 p 是 i 的最小质因子。<br/>
+        对于更大的素数 p'，i×p' 的最小质因子仍是 p，<br/>
         应在后面由 p 筛掉，现在跳过以保证每个合数只被筛一次。
       </div>
-    </div>
-    <div>
-      <div class="code-block" style="font-size:0.8em;"><span class="kw">int</span> primes[MAXN], cnt = <span class="nu">0</span>;
+</div>
+<div>
+<div class="code-block" style="font-size:0.8em;"><span class="kw">int</span> primes[MAXN], cnt = <span class="nu">0</span>;
 
 <span class="kw">int</span> <span class="fn">eulerSieve</span>(<span class="kw">int</span> n) {
     <span class="fn">fill</span>(isPrime, isPrime+n+<span class="nu">1</span>, <span class="kw">true</span>);
     isPrime[<span class="nu">0</span>] = isPrime[<span class="nu">1</span>] = <span class="kw">false</span>;
-    <span class="kw">for</span> (<span class="kw">int</span> i=<span class="nu">2</span>; i<=n; i++) {
+    <span class="kw">for</span> (<span class="kw">int</span> i=<span class="nu">2</span>; i&lt;=n; i++) {
         <span class="kw">if</span> (isPrime[i])
             primes[cnt++] = i;
 
-        <span class="kw">for</span> (<span class="kw">int</span> j=<span class="nu">0</span>; j<cnt; j++) {
-            <span class="kw">int</span> p = primes[j];
-            <span class="kw">if</span> ((<span class="kw">ll</span>)i * p > n) <span class="kw">break</span>;
+        <span class="kw">for</span> (<span class="kw">int</span> j=<span class="nu">0</span>; j<cnt; <span="" class="kw" j++)="" {="">int p = primes[j];
+            <span class="kw">if</span> ((<span class="kw">ll</span>)i * p &gt; n) <span class="kw">break</span>;
             isPrime[i * p] = <span class="kw">false</span>;
 
             <span class="cm">// 关键！p 是 i 的最小质因子</span>
-            <span class="kw">if</span> (i % p == <span class="nu">0</span>) <span class="kw">break</span>;
+<span class="kw">if</span> (i % p == <span class="nu">0</span>) <span class="kw">break</span>;
         }
     }
     <span class="kw">return</span> cnt;
-}</div>
-      <p><strong>复杂度分析：</strong></p>
-      <table style="font-size:0.85em;">
-        <tr><th>项目</th><th>欧拉筛</th><th>埃氏筛</th></tr>
-        <tr><td>时间</td><td style="color:var(--green)">O(n)</td><td>O(n log log n)</td></tr>
-        <tr><td>空间</td><td>O(n)</td><td>O(n)</td></tr>
-        <tr><td>常熟</td><td>略大</td><td>较小</td></tr>
-      </table>
-    </div>
-  </div>
+}</cnt;></div>
+<p><strong>复杂度分析：</strong></p>
+<table style="font-size:0.85em;">
+<tr><th>项目</th><th>欧拉筛</th><th>埃氏筛</th></tr>
+<tr><td>时间</td><td style="color:var(--green)">O(n)</td><td>O(n log log n)</td></tr>
+<tr><td>空间</td><td>O(n)</td><td>O(n)</td></tr>
+<tr><td>常熟</td><td>略大</td><td>较小</td></tr>
+</table>
+</div>
 </div>
 
+<aside class="notes">【讲解】三、欧拉筛（线性筛）O(n) — 重点算法
+本页要点（照着讲即可）：
+· 算法流程：
+· 维护 primes[] 素数列表
+· 遍历 i = 2..n：若为素数则加入列表
+· 对每个素数 p = primes[j]： 标记 i×p 为合数 若 i % p == 0，立即 break
+· 标记 i×p 为合数
+· 若 i % p == 0，立即 break
+讲解时放慢关键术语；用 1 个生活类比 + 1 个反例加深印象。</aside>
+</div>
 <!-- ==================== 幻灯片5：区间筛 ==================== -->
 <div class="slide" data-index="4">
-  <h2>四、区间筛：大范围、小间距</h2>
-
-  <h3>问题场景：b 很大（如 10<sup>12</sup>）但 b-a 较小（如 10<sup>6</sup>）</h3>
-
-  <div class="two-col">
-    <div>
-      <p><strong>策略：</strong></p>
-      <ol style="padding-left:20px; line-height:1.9;">
-        <li>先用欧拉筛求出 <span class="highlight">[2, &radic;b]</span> 的所有素数</li>
-        <li>用这些素数去筛 [a, b] 区间内的合数</li>
-        <li>统计区间内未被标记的数</li>
-      </ol>
-
-      <p style="margin-top:16px;"><strong>技巧：向上取整</strong></p>
-      <div class="formula">
+<h2>四、区间筛：大范围、小间距</h2>
+<h3>问题场景：b 很大（如 10<sup>12</sup>）但 b-a 较小（如 10<sup>6</sup>）</h3>
+<div class="two-col">
+<div>
+<p><strong>策略：</strong></p>
+<ol style="padding-left:20px; line-height:1.9;">
+<li>先用欧拉筛求出 <span class="highlight">[2, √b]</span> 的所有素数</li>
+<li>用这些素数去筛 [a, b] 区间内的合数</li>
+<li>统计区间内未被标记的数</li>
+</ol>
+<p style="margin-top:16px;"><strong>技巧：向上取整</strong></p>
+<div class="formula">
         start = ceil(a / p) * p = (a + p - 1) / p * p
       </div>
-      <p>但不能小于 p&sup2;（更小的倍数已在筛 sqrt(b) 时处理）</p>
-    </div>
-    <div>
-      <div class="code-block" style="font-size:0.75em;"><span class="kw">ll</span> <span class="fn">segmentSieve</span>(<span class="kw">ll</span> a, <span class="kw">ll</span> b) {
+<p>但不能小于 p²（更小的倍数已在筛 sqrt(b) 时处理）</p>
+</div>
+<div>
+<div class="code-block" style="font-size:0.75em;"><span class="kw">ll</span> <span class="fn">segmentSieve</span>(<span class="kw">ll</span> a, <span class="kw">ll</span> b) {
     <span class="kw">ll</span> limit = <span class="fn">sqrt</span>(b);
     <span class="kw">int</span> cnt = <span class="fn">eulerSieve</span>(limit);
-    <span class="fn">vector</span><<span class="kw">bool</span>> isSeg(b-a+<span class="nu">1</span>, <span class="kw">true</span>);
+    <span class="fn">vector</span>&lt;<span class="kw">bool</span>&gt; isSeg(b-a+<span class="nu">1</span>, <span class="kw">true</span>);
     <span class="kw">if</span> (a == <span class="nu">1</span>) isSeg[<span class="nu">0</span>] = <span class="kw">false</span>;
 
-    <span class="kw">for</span> (<span class="kw">int</span> i=<span class="nu">0</span>; i<cnt; i++) {
-        <span class="kw">ll</span> p = primes[i];
-        <span class="kw">if</span> (p * p > b) <span class="kw">break</span>;
+    <span class="kw">for</span> (<span class="kw">int</span> i=<span class="nu">0</span>; i<cnt; <span="" class="kw" i++)="" {="">ll p = primes[i];
+        <span class="kw">if</span> (p * p &gt; b) <span class="kw">break</span>;
         <span class="kw">ll</span> start = max(p*p, (a+p-<span class="nu">1</span>)/p * p);
-        <span class="kw">for</span> (<span class="kw">ll</span> j = start; j <= b; j += p)
+        <span class="kw">for</span> (<span class="kw">ll</span> j = start; j &lt;= b; j += p)
             isSeg[j - a] = <span class="kw">false</span>;
     }
 
     <span class="kw">ll</span> ans = <span class="nu">0</span>;
-    <span class="kw">for</span> (<span class="kw">ll</span> i=a; i<=b; i++)
+    <span class="kw">for</span> (<span class="kw">ll</span> i=a; i&lt;=b; i++)
         <span class="kw">if</span> (isSeg[i-a]) ans++;
     <span class="kw">return</span> ans;
-}</div>
-    </div>
-  </div>
-
-  <div class="note-box">
-    <strong>例题：</strong>求 [10<sup>11</sup>, 10<sup>11</sup>+100] 区间的素数个数。<br>
-    复杂度：O((b-a) log log &radic;b + &radic;b)，可轻松处理。
-  </div>
+}</cnt;></div>
 </div>
+</div>
+<div class="note-box">
+<strong>例题：</strong>求 [10<sup>11</sup>, 10<sup>11</sup>+100] 区间的素数个数。<br/>
+    复杂度：O((b-a) log log √b + √b)，可轻松处理。
+  </div>
 
+<aside class="notes">【讲解】四、区间筛：大范围、小间距
+本页要点（照着讲即可）：
+· 先用欧拉筛求出 [2, √b] 的所有素数
+· 用这些素数去筛 [a, b] 区间内的合数
+· 统计区间内未被标记的数
+· 技巧：向上取整
+· 但不能小于 p²（更小的倍数已在筛 sqrt(b) 时处理）
+讲解时放慢关键术语；用 1 个生活类比 + 1 个反例加深印象。</aside>
+</div>
 <!-- ==================== 幻灯片6：欧拉函数 ==================== -->
 <div class="slide" data-index="5">
-  <h2>五、欧拉函数 &phi;(n) 与线性筛求欧拉函数</h2>
-
-  <div class="two-col">
-    <div>
-      <h3>定义与公式</h3>
-      <p>&phi;(n)：小于 n 且与 n 互质的正整数个数。</p>
-      <div class="formula">
+<h2>五、欧拉函数 φ(n) 与线性筛求欧拉函数</h2>
+<div class="two-col">
+<div>
+<h3>定义与公式</h3>
+<p>φ(n)：小于 n 且与 n 互质的正整数个数。</p>
+<div class="formula">
         φ(n) = n · ∏<sub>p|n</sub> (1 - 1/p)
       </div>
-      <p><strong>性质：</strong></p>
-      <ul style="font-size:0.92em;">
-        <li>质数：&phi;(p) = p - 1</li>
-        <li>积性：gcd(a,b)=1 → &phi;(ab) = &phi;(a)&phi;(b)</li>
-        <li>质数幂：&phi;(p<sup>k</sup>) = p<sup>k</sup> - p<sup>k-1</sup></li>
-        <li>求和：&Sigma;<sub>d|n</sub> &phi;(d) = n</li>
-      </ul>
-    </div>
-    <div>
-      <h3>线性筛同时求 &phi;(1..n)</h3>
-      <p>在欧拉筛的过程中，利用积性递推：</p>
-      <div class="code-block" style="font-size:0.78em;"><span class="kw">void</span> <span class="fn">eulerSieveWithPhi</span>(<span class="kw">int</span> n) {
+<p><strong>性质：</strong></p>
+<ul style="font-size:0.92em;">
+<li>质数：φ(p) = p - 1</li>
+<li>积性：gcd(a,b)=1 → φ(ab) = φ(a)φ(b)</li>
+<li>质数幂：φ(p<sup>k</sup>) = p<sup>k</sup> - p<sup>k-1</sup></li>
+<li>求和：Σ<sub>d|n</sub> φ(d) = n</li>
+</ul>
+</div>
+<div>
+<h3>线性筛同时求 φ(1..n)</h3>
+<p>在欧拉筛的过程中，利用积性递推：</p>
+<div class="code-block" style="font-size:0.78em;"><span class="kw">void</span> <span class="fn">eulerSieveWithPhi</span>(<span class="kw">int</span> n) {
     <span class="fn">fill</span>(isPrime, isPrime+n+<span class="nu">1</span>, <span class="kw">true</span>);
     phi[<span class="nu">1</span>] = <span class="nu">1</span>;
     <span class="kw">int</span> cnt = <span class="nu">0</span>;
-    <span class="kw">for</span> (<span class="kw">int</span> i=<span class="nu">2</span>; i<=n; i++) {
+    <span class="kw">for</span> (<span class="kw">int</span> i=<span class="nu">2</span>; i&lt;=n; i++) {
         <span class="kw">if</span> (isPrime[i]) {
             primes[cnt++] = i;
             phi[i] = i - <span class="nu">1</span>;  <span class="cm">// 质数</span>
         }
-        <span class="kw">for</span> (<span class="kw">int</span> j=<span class="nu">0</span>; j<cnt; j++) {
-            <span class="kw">int</span> p = primes[j];
-            <span class="kw">if</span> (i*p > n) <span class="kw">break</span>;
+        <span class="kw">for</span> (<span class="kw">int</span> j=<span class="nu">0</span>; j<cnt; <span="" class="kw" j++)="" {="">int p = primes[j];
+            <span class="kw">if</span> (i*p &gt; n) <span class="kw">break</span>;
             isPrime[i*p] = <span class="kw">false</span>;
             <span class="kw">if</span> (i % p == <span class="nu">0</span>) {
                 phi[i*p] = phi[i] * p;  <span class="cm">// p|i</span>
-                <span class="kw">break</span>;
+<span class="kw">break</span>;
             }
             <span class="kw">else</span> phi[i*p] = phi[i] * (p-<span class="nu">1</span>); <span class="cm">// p⊥i</span>
         }
     }
-}</div>
-      <p style="margin-top:8px;"><strong>关键区分：</strong></p>
-      <ul style="font-size:0.9em;">
-        <li>p | i → &phi;(i·p) = &phi;(i) · p</li>
-        <li>p ⟂ i → &phi;(i·p) = &phi;(i) · (p-1)</li>
-      </ul>
-    </div>
-  </div>
+}</cnt;></div>
+<p style="margin-top:8px;"><strong>关键区分：</strong></p>
+<ul style="font-size:0.9em;">
+<li>p | i → φ(i·p) = φ(i) · p</li>
+<li>p ⟂ i → φ(i·p) = φ(i) · (p-1)</li>
+</ul>
+</div>
 </div>
 
+<aside class="notes">【讲解】五、欧拉函数 φ(n) 与线性筛求欧拉函数
+本页要点（照着讲即可）：
+· φ(n)：小于 n 且与 n 互质的正整数个数。
+· 质数：φ(p) = p - 1
+· 积性：gcd(a,b)=1 → φ(ab) = φ(a)φ(b)
+· 质数幂：φ(p k ) = p k - p k-1
+· 求和：Σ d|n φ(d) = n
+· 在欧拉筛的过程中，利用积性递推：
+讲解时放慢关键术语；用 1 个生活类比 + 1 个反例加深印象。</aside>
+</div>
 <!-- ==================== 幻灯片7：总结页 ==================== -->
 <div class="slide" data-index="6">
-  <h2>六、CSP-S 考点总结 &amp; 真题方向</h2>
-
-  <div class="two-col">
-    <div>
-      <h3>筛法对比</h3>
-      <table style="font-size:0.88em;">
-        <tr><th>算法</th><th>时间复杂度</th><th>n 上限</th><th>额外能力</th></tr>
-        <tr><td>试除法 6k±1</td><td>O(&#8730;n)</td><td>10<sup>12</sup></td><td>单点判定</td></tr>
-        <tr><td>埃氏筛</td><td>O(n log log n)</td><td>10<sup>7</sup></td><td>筛素数表</td></tr>
-        <tr><td>欧拉筛</td><td style="color:var(--green)">O(n)</td><td>10<sup>7</sup>~10<sup>8</sup></td><td>筛素数+积性函数</td></tr>
-        <tr><td>区间筛</td><td>O((b-a)log log&#8730;b)</td><td>b &#8804; 10<sup>12</sup></td><td>大范围小间距</td></tr>
-        <tr><td>线筛+&phi;</td><td>O(n)</td><td>10<sup>7</sup></td><td>批量求欧拉函数</td></tr>
-      </table>
-    </div>
-    <div>
-      <h3>真题方向</h3>
-      <ul>
-        <li><span class="highlight">素数密度</span> — 区间筛典型应用</li>
-        <li><span class="highlight">欧拉函数求和</span> — &Sigma;&phi;(i) 前缀和</li>
-        <li>质因数分解 / 最小质因子</li>
-        <li>莫比乌斯函数 &mu;(n) 筛法</li>
-        <li>积性函数批量计算</li>
-      </ul>
-      <div class="note-box" style="margin-top:16px;">
-        <strong>真题示例：</strong><br>
-        1. 求 [a, b] 内素数个数（b &le; 10<sup>12</sup>, b-a &le; 10<sup>6</sup>）<br>
-        2. 求 &Sigma;&phi;(i) (i=1..n, n &le; 10<sup>7</sup>)
+<h2>六、CSP-S 考点总结 &amp; 真题方向</h2>
+<div class="two-col">
+<div>
+<h3>筛法对比</h3>
+<table style="font-size:0.88em;">
+<tr><th>算法</th><th>时间复杂度</th><th>n 上限</th><th>额外能力</th></tr>
+<tr><td>试除法 6k±1</td><td>O(√n)</td><td>10<sup>12</sup></td><td>单点判定</td></tr>
+<tr><td>埃氏筛</td><td>O(n log log n)</td><td>10<sup>7</sup></td><td>筛素数表</td></tr>
+<tr><td>欧拉筛</td><td style="color:var(--green)">O(n)</td><td>10<sup>7</sup>~10<sup>8</sup></td><td>筛素数+积性函数</td></tr>
+<tr><td>区间筛</td><td>O((b-a)log log√b)</td><td>b ≤ 10<sup>12</sup></td><td>大范围小间距</td></tr>
+<tr><td>线筛+φ</td><td>O(n)</td><td>10<sup>7</sup></td><td>批量求欧拉函数</td></tr>
+</table>
+</div>
+<div>
+<h3>真题方向</h3>
+<ul>
+<li><span class="highlight">素数密度</span> — 区间筛典型应用</li>
+<li><span class="highlight">欧拉函数求和</span> — Σφ(i) 前缀和</li>
+<li>质因数分解 / 最小质因子</li>
+<li>莫比乌斯函数 μ(n) 筛法</li>
+<li>积性函数批量计算</li>
+</ul>
+<div class="note-box" style="margin-top:16px;">
+<strong>真题示例：</strong><br/>
+        1. 求 [a, b] 内素数个数（b ≤ 10<sup>12</sup>, b-a ≤ 10<sup>6</sup>）<br/>
+        2. 求 Σφ(i) (i=1..n, n ≤ 10<sup>7</sup>)
       </div>
-    </div>
-  </div>
-
-  <div style="margin-top:30px; text-align:center;">
-    <p style="font-size:1.3em; color:var(--accent);">线性筛 = 数论积性函数的基石</p>
-    <p style="color:var(--code-comment);">对应程序文件：<code>程序/lesson38_sieve_prime.cpp</code></p>
-  </div>
+</div>
+</div>
+<div style="margin-top:30px; text-align:center;">
+<p style="font-size:1.3em; color:var(--accent);">线性筛 = 数论积性函数的基石</p>
+<p style="color:var(--code-comment);">对应程序文件：<code>程序/lesson38_sieve_prime.cpp</code></p>
 </div>
 
+<aside class="notes">【收尾】回顾本课主线：六、CSP-S 考点总结 &amp; 真题方向
+对照大纲再过一遍：埃氏筛、欧拉筛、素数分布、区间筛
+板书/口述要点：
+· 素数密度 — 区间筛典型应用
+· 欧拉函数求和 — Σφ(i) 前缀和
+· 质因数分解 / 最小质因子
+· 莫比乌斯函数 μ(n) 筛法
+· 积性函数批量计算
+· 真题示例：
+课后任务：素数计数、哥德巴赫猜想验证
+结束前留 2 分钟答疑；布置 1 道小练习检验是否真正掌握。</aside>
+</div>
 <!-- ==================== 导航 ==================== -->
 <div class="nav">
-  <button id="prevBtn" onclick="changeSlide(-1)">← 上一页</button>
-  <span class="page-indicator" id="pageInd">1 / 7</span>
-  <button id="nextBtn" onclick="changeSlide(1)">下一页 →</button>
+<button id="prevBtn" onclick="changeSlide(-1)">← 上一页</button>
+<span class="page-indicator" id="pageInd">1 / 7</span>
+<button id="nextBtn" onclick="changeSlide(1)">下一页 →</button>
 </div>
-
 </div>
-
 <script>
 // ========== 幻灯片导航 ==========
 let currentSlide = 0;

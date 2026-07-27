@@ -1,8 +1,9 @@
 <!DOCTYPE html>
+
 <html lang="zh-CN">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
 <title>第35节：屏幕在抖 —— 爆炸震动与粒子系统</title>
 <style>
   * { margin: 0; padding: 0; box-sizing: border-box; }
@@ -89,72 +90,126 @@
 </style>
 </head>
 <body>
-
 <div class="slide-container">
-  <!-- 幻灯片1：标题页 -->
-  <div class="slide active"><div class="center" style="flex:1;display:flex;flex-direction:column;justify-content:center;align-items:center;">
-    <div class="emoji">💥</div>
-    <h1 style="font-size:64px;">第35节：屏幕在抖</h1>
-    <p style="font-size:32px;color:#aaa;margin-top:10px;">爆炸震动 &amp; 粒子系统</p>
-    <div style="margin-top:40px;">
-      <span class="tag">pygame</span>
-      <span class="tag green">粒子特效</span>
-      <span class="tag blue">屏幕震动</span>
-      <span class="tag orange">游戏开发</span>
-    </div>
-  </div><span class="page-num">1 / 11</span></div>
+<!-- 幻灯片1：标题页 -->
+<div class="slide active"><div class="center" style="flex:1;display:flex;flex-direction:column;justify-content:center;align-items:center;">
+<div class="emoji">💥</div>
+<h1 style="font-size:64px;">第35节：屏幕在抖</h1>
+<p style="font-size:32px;color:#aaa;margin-top:10px;">爆炸震动 &amp; 粒子系统</p>
+<div style="margin-top:40px;">
+<span class="tag">pygame</span>
+<span class="tag green">粒子特效</span>
+<span class="tag blue">屏幕震动</span>
+<span class="tag orange">游戏开发</span>
+</div>
+</div><span class="page-num">1 / 11</span>
+<aside class="notes">【开场】第 1/11 页 · 屏幕在抖
+用 30 秒说明本课目标与学完能做什么，再进入正题。
+大纲考点：**内容**：屏幕震动效果、粒子系统入门、爆炸火花四溅
 
-  <!-- 幻灯片2：学习目标 -->
-  <div class="slide"><h2>🎯 学习目标</h2>
-    <div class="two-col" style="margin-top:20px;">
-      <div>
-        <h3>📖 知识目标</h3>
-        <ul>
-          <li>理解 <code>sin衰减震动</code> 的数学原理</li>
-          <li>理解粒子的"出生→运动→死亡"生命周期</li>
-          <li>掌握粒子池管理方法</li>
-        </ul>
-      </div>
-      <div>
-        <h3>🛠 技能目标</h3>
-        <ul>
-          <li>能创建<code>Particle</code>类并管理粒子池</li>
-          <li>能实现屏幕震动效果</li>
-          <li>能将粒子系统应用到游戏场景中</li>
-        </ul>
-      </div>
-    </div>
-    <div class="highlight-box" style="margin-top:30px;">
-      <p>🔑 <strong>核心问题</strong>：如何让游戏画面"抖"起来？如何让爆炸看起来真实？</p>
-    </div>
-  <span class="page-num">2 / 11</span></div>
+**知识点**：
+- 屏幕偏移量（sin 衰减震动：`shake_offset = sin(time) * strength * decay`）
+- 粒子类设计：
+ - 位置 `(x, y)`
+ - 速度 `(vx, vy)`
+ - 生命值 `life`
+ - 颜色渐变（随着生命值变淡）
+- 粒子池管理（列表存储，生命归零移除）
 
-  <!-- 幻灯片3：屏幕震动原理 -->
-  <div class="slide"><h2>📐 屏幕震动原理</h2>
-    <p>屏幕震动的本质：<strong>把画面临时偏移，偏移量越来越小直到消失</strong></p>
-    <div class="formula-box">
-      <p style="font-size:22px;color:#ccc;margin-bottom:10px;">核心公式</p>
-      <p class="big">shake = sin(time &times; freq) &times; strength &times; e<sup>-time &times; decay</sup></p>
-      <p class="note">sin产生周期振动 &times; 初始振幅 &times; 指数衰减 = 逐渐减弱的震动</p>
-    </div>
-    <div class="two-col">
-      <div>
-        <h3>直观类比</h3>
-        <p>就像一根弹簧：用力拉一下松手 → 来回振荡 → 幅度越来越小 → 最终停下</p>
-      </div>
-      <div>
-        <h3>三个参数</h3>
-        <ul>
-          <li><code>freq=30</code>：震动快慢</li>
-          <li><code>strength=15</code>：初始强度（像素）</li>
-          <li><code>decay=3</code>：衰减速度</li>
-        </ul>
-      </div>
-    </div>
-  <span class="page-num">3 / 11</span></div>
+**课堂练习**：实现爆炸粒子与屏幕震动
 
-  <!-- 幻灯片4：震动代码实现 -->
-  <div class="slide"><h2>💻 震动代码实现</h2>
+---
+封面关键词：
+· 爆炸震动 &amp; 粒子系统
+互动：问学生「今天最想搞清楚什么？」，收 1–2 个期待。</aside>
+</div>
+<!-- 幻灯片2：学习目标 -->
+<div class="slide"><h2>🎯 学习目标</h2>
+<div class="two-col" style="margin-top:20px;">
+<div>
+<h3>📖 知识目标</h3>
+<ul>
+<li>理解 <code>sin衰减震动</code> 的数学原理</li>
+<li>理解粒子的"出生→运动→死亡"生命周期</li>
+<li>掌握粒子池管理方法</li>
+</ul>
+</div>
+<div>
+<h3>🛠 技能目标</h3>
+<ul>
+<li>能创建<code>Particle</code>类并管理粒子池</li>
+<li>能实现屏幕震动效果</li>
+<li>能将粒子系统应用到游戏场景中</li>
+</ul>
+</div>
+</div>
+<div class="highlight-box" style="margin-top:30px;">
+<p>🔑 <strong>核心问题</strong>：如何让游戏画面"抖"起来？如何让爆炸看起来真实？</p>
+</div>
+<span class="page-num">2 / 11</span>
+<aside class="notes">【讲解】🎯 学习目标
+本页要点（照着讲即可）：
+· 理解 sin衰减震动 的数学原理
+· 理解粒子的"出生→运动→死亡"生命周期
+· 掌握粒子池管理方法
+· 能创建 Particle 类并管理粒子池
+· 能实现屏幕震动效果
+· 能将粒子系统应用到游戏场景中
+讲解时放慢关键术语；用 1 个生活类比 + 1 个反例加深印象。
+本课大纲考点（可适时点题）：**内容**：屏幕震动效果、粒子系统入门、爆炸火花四溅
+
+**知识点**：
+- 屏幕偏移量（sin 衰减震动：`shake_offset = sin(time) * strength * decay`）
+- 粒子类设计：
+ - 位置 `(x, y)`
+ - 速度 `(vx, vy)`
+ - 生命值 `life`
+ - 颜色渐变（随着生命值变淡）
+- 粒子池管理（列表存储，生命归零移除）
+
+**课堂练习**：实现爆炸粒子与屏幕震动
+
+---</aside>
+</div>
+<!-- 幻灯片3：屏幕震动原理 -->
+<div class="slide"><h2>📐 屏幕震动原理</h2>
+<p>屏幕震动的本质：<strong>把画面临时偏移，偏移量越来越小直到消失</strong></p>
+<div class="formula-box">
+<p style="font-size:22px;color:#ccc;margin-bottom:10px;">核心公式</p>
+<p class="big">shake = sin(time × freq) × strength × e<sup>-time × decay</sup></p>
+<p class="note">sin产生周期振动 × 初始振幅 × 指数衰减 = 逐渐减弱的震动</p>
+</div>
+<div class="two-col">
+<div>
+<h3>直观类比</h3>
+<p>就像一根弹簧：用力拉一下松手 → 来回振荡 → 幅度越来越小 → 最终停下</p>
+</div>
+<div>
+<h3>三个参数</h3>
+<ul>
+<li><code>freq=30</code>：震动快慢</li>
+<li><code>strength=15</code>：初始强度（像素）</li>
+<li><code>decay=3</code>：衰减速度</li>
+</ul>
+</div>
+</div>
+<span class="page-num">3 / 11</span>
+<aside class="notes">【讲解】📐 屏幕震动原理
+结合讲义《4.1 屏幕震动原理（Sin衰减震动）》强调：
+· 屏幕震动的本质是什么？就是把整个画面**临时偏移**一个小距离，而且这个偏移会**越来越小**直到消失。
+· 我们用一个带衰减的正弦函数来描述这个偏移量：
+· shake_offset = sin(时间 × 频率) × 振幅 × 衰减系数
+· sin(time × frequency)：产生正负交替的周期振动
+· 振幅(strength)：控制震动有多剧烈（比如初始偏移10像素）
+幻灯片上可见要点：
+· 屏幕震动的本质： 把画面临时偏移，偏移量越来越小直到消失
+· 把画面临时偏移，偏移量越来越小直到消失
+· 核心公式
+· shake = sin(time × freq) × strength × e -time × decay
+讲解时放慢关键术语；用 1 个生活类比 + 1 个反例加深印象。</aside>
+</div>
+<!-- 幻灯片4：震动代码实现 -->
+<div class="slide"><h2>💻 震动代码实现</h2>
 <pre><span class="kw">import</span> math
 
 shake_start_time = -999  <span class="co"># 震动开始时间</span>
@@ -163,7 +218,7 @@ shake_duration = 0.5     <span class="co"># 持续0.5秒</span>
 <span class="kw">def</span> <span class="fn">get_shake_offset</span>():
     now = pygame.time.get_ticks() / 1000.0
     elapsed = now - shake_start_time
-    <span class="kw">if</span> elapsed > shake_duration:
+    <span class="kw">if</span> elapsed &gt; shake_duration:
         <span class="kw">return</span> 0, 0  <span class="co"># 震动结束</span>
 
     decay = math.exp(-elapsed * 8.0)  <span class="co"># 指数衰减</span>
@@ -176,53 +231,77 @@ shake_duration = 0.5     <span class="co"># 持续0.5秒</span>
 <span class="co"># 绘制时应用偏移</span>
 shake_x, shake_y = get_shake_offset()
 <span class="co"># 所有绘制坐标都要 +shake_x, +shake_y</span></pre>
-    <div class="highlight-box">
-      <p>💡 <strong>关键技巧</strong>：偏移量同时加到所有物体的绘制坐标上，让整个画面一起震动！</p>
-    </div>
-  <span class="page-num">4 / 11</span></div>
-
-  <!-- 幻灯片5：不同衰减效果 -->
-  <div class="slide"><h2>📊 不同衰减速度的效果</h2>
-    <div class="table-wrap">
-      <table>
-        <tr><th>衰减速度</th><th>效果描述</th><th>持续时间</th><th>应用场景</th></tr>
-        <tr><td>低 (1~2)</td><td>震动缓慢衰减</td><td>~1.5秒</td><td>大地震、大型爆炸</td></tr>
-        <tr><td>中 (3~5)</td><td>适中震感 ⭐</td><td>~0.5秒</td><td>击中反馈、普通爆炸</td></tr>
-        <tr><td>高 (6~10)</td><td>短促有力</td><td>~0.2秒</td><td>枪械后坐力、轻微碰撞</td></tr>
-      </table>
-    </div>
-    <div class="highlight-box" style="margin-top:20px;">
-      <p>🎮 <strong>游戏开发实战</strong>：大型Boss死亡 → 低衰减长震动；普通攻击命中 → 中衰减短震动；走路碰撞 → 高衰减微震。</p>
-    </div>
-  <span class="page-num">5 / 11</span></div>
-
-  <!-- 幻灯片6：粒子系统概念 -->
-  <div class="slide"><h2>✨ 粒子系统概念</h2>
-    <div class="highlight-box">
-      <p style="font-size:28px;text-align:center;">粒子系统 = 大量微小的、有生命周期的对象组成的动态效果系统</p>
-    </div>
-    <h3>粒子的"一生"</h3>
-    <div style="display:flex;gap:20px;text-align:center;margin:15px 0;">
-      <div style="flex:1;background:#252540;border-radius:12px;padding:20px;">
-        <div style="font-size:40px;">🐣</div>
-        <p style="font-size:22px;"><strong>出生</strong></p>
-        <p style="font-size:18px;color:#aaa;">在爆炸中心产生<br>获得随机速度和方向</p>
-      </div>
-      <div style="flex:1;background:#252540;border-radius:12px;padding:20px;">
-        <div style="font-size:40px;">🦋</div>
-        <p style="font-size:22px;"><strong>运动</strong></p>
-        <p style="font-size:18px;color:#aaa;">飞向四周<br>受重力和摩擦力影响</p>
-      </div>
-      <div style="flex:1;background:#252540;border-radius:12px;padding:20px;">
-        <div style="font-size:40px;">💀</div>
-        <p style="font-size:22px;"><strong>衰老 &amp; 死亡</strong></p>
-        <p style="font-size:18px;color:#aaa;">颜色变暗、大小缩小<br>生命归零，被移除</p>
-      </div>
-    </div>
-  <span class="page-num">6 / 11</span></div>
-
-  <!-- 幻灯片7：粒子类设计 -->
-  <div class="slide"><h2>🏗 粒子类设计</h2>
+<div class="highlight-box">
+<p>💡 <strong>关键技巧</strong>：偏移量同时加到所有物体的绘制坐标上，让整个画面一起震动！</p>
+</div>
+<span class="page-num">4 / 11</span>
+<aside class="notes">【讲解】💻 震动代码实现
+本页要点（照着讲即可）：
+· 💡 关键技巧 ：偏移量同时加到所有物体的绘制坐标上，让整个画面一起震动！
+· 关键技巧
+代码页节奏：先读懂输入输出 → 再走主流程 → 最后点出易错点（边界/类型/下标）。
+可让学生预测下一行输出，再运行对照。</aside>
+</div>
+<!-- 幻灯片5：不同衰减效果 -->
+<div class="slide"><h2>📊 不同衰减速度的效果</h2>
+<div class="table-wrap">
+<table>
+<tr><th>衰减速度</th><th>效果描述</th><th>持续时间</th><th>应用场景</th></tr>
+<tr><td>低 (1~2)</td><td>震动缓慢衰减</td><td>~1.5秒</td><td>大地震、大型爆炸</td></tr>
+<tr><td>中 (3~5)</td><td>适中震感 ⭐</td><td>~0.5秒</td><td>击中反馈、普通爆炸</td></tr>
+<tr><td>高 (6~10)</td><td>短促有力</td><td>~0.2秒</td><td>枪械后坐力、轻微碰撞</td></tr>
+</table>
+</div>
+<div class="highlight-box" style="margin-top:20px;">
+<p>🎮 <strong>游戏开发实战</strong>：大型Boss死亡 → 低衰减长震动；普通攻击命中 → 中衰减短震动；走路碰撞 → 高衰减微震。</p>
+</div>
+<span class="page-num">5 / 11</span>
+<aside class="notes">【讲解】📊 不同衰减速度的效果
+本页要点（照着讲即可）：
+· 🎮 游戏开发实战 ：大型Boss死亡 → 低衰减长震动；普通攻击命中 → 中衰减短震动；走路碰撞 → 高衰减微震。
+· 游戏开发实战
+讲解时放慢关键术语；用 1 个生活类比 + 1 个反例加深印象。</aside>
+</div>
+<!-- 幻灯片6：粒子系统概念 -->
+<div class="slide"><h2>✨ 粒子系统概念</h2>
+<div class="highlight-box">
+<p style="font-size:28px;text-align:center;">粒子系统 = 大量微小的、有生命周期的对象组成的动态效果系统</p>
+</div>
+<h3>粒子的"一生"</h3>
+<div style="display:flex;gap:20px;text-align:center;margin:15px 0;">
+<div style="flex:1;background:#252540;border-radius:12px;padding:20px;">
+<div style="font-size:40px;">🐣</div>
+<p style="font-size:22px;"><strong>出生</strong></p>
+<p style="font-size:18px;color:#aaa;">在爆炸中心产生<br/>获得随机速度和方向</p>
+</div>
+<div style="flex:1;background:#252540;border-radius:12px;padding:20px;">
+<div style="font-size:40px;">🦋</div>
+<p style="font-size:22px;"><strong>运动</strong></p>
+<p style="font-size:18px;color:#aaa;">飞向四周<br/>受重力和摩擦力影响</p>
+</div>
+<div style="flex:1;background:#252540;border-radius:12px;padding:20px;">
+<div style="font-size:40px;">💀</div>
+<p style="font-size:22px;"><strong>衰老 &amp; 死亡</strong></p>
+<p style="font-size:18px;color:#aaa;">颜色变暗、大小缩小<br/>生命归零，被移除</p>
+</div>
+</div>
+<span class="page-num">6 / 11</span>
+<aside class="notes">【讲解】✨ 粒子系统概念
+结合讲义《4.2 粒子系统概念》强调：
+· 粒子系统是游戏开发中最重要的特效技术之一。简单来说：
+· &gt; **粒子系统 = 大量微小的、有生命周期的对象组成的动态效果系统**
+· 每个粒子都是一个独立的小"生命体"：
+· 它**出生**在某个位置（比如爆炸中心）
+· 它**运动**（飞向四周，受到速度、重力影响）
+幻灯片上可见要点：
+· 粒子系统 = 大量微小的、有生命周期的对象组成的动态效果系统
+· 在爆炸中心产生 获得随机速度和方向
+· 飞向四周 受重力和摩擦力影响
+· 衰老 &amp; 死亡
+讲解时放慢关键术语；用 1 个生活类比 + 1 个反例加深印象。</aside>
+</div>
+<!-- 幻灯片7：粒子类设计 -->
+<div class="slide"><h2>🏗 粒子类设计</h2>
 <pre><span class="kw">class</span> <span class="cl">Particle</span>:
     <span class="kw">def</span> <span class="fn">__init__</span>(<span class="nb">self</span>, x, y):
         <span class="nb">self</span>.x = x                    <span class="co"># 位置</span>
@@ -235,27 +314,40 @@ shake_x, shake_y = get_shake_offset()
         <span class="nb">self</span>.max_radius = random.randint(3, 8)
         <span class="nb">self</span>.color_start = (255,255,100) <span class="co"># 亮黄</span>
         <span class="nb">self</span>.color_end = (180,30,0)      <span class="co"># 暗红</span></pre>
-    <div class="two-col">
-      <div>
-        <h3>关键属性</h3>
-        <ul style="font-size:20px;">
-          <li><code>x, y</code> — 当前位置</li>
-          <li><code>vx, vy</code> — 运动速度</li>
-          <li><code>life</code> — 剩余寿命</li>
-          <li><code>color_start/end</code> — 颜色渐变</li>
-        </ul>
-      </div>
-      <div>
-        <h3>为什么用角度+速度？</h3>
-        <p style="font-size:20px;">用 <code>cos/sin</code> 把角度转为速度分量，保证粒子<strong>均匀向四周飞散</strong>，而不是只飞向四个角落。</p>
-      </div>
-    </div>
-  <span class="page-num">7 / 11</span></div>
-
-  <!-- 幻灯片8：粒子池管理 -->
-  <div class="slide"><h2>🗂 粒子池管理</h2>
-    <h3>为什么需要"池"？</h3>
-    <p>想象一个爆炸产生60个粒子，如果不及时清理死掉的粒子，运行几分钟后可能有几千个粒子占据内存！</p>
+<div class="two-col">
+<div>
+<h3>关键属性</h3>
+<ul style="font-size:20px;">
+<li><code>x, y</code> — 当前位置</li>
+<li><code>vx, vy</code> — 运动速度</li>
+<li><code>life</code> — 剩余寿命</li>
+<li><code>color_start/end</code> — 颜色渐变</li>
+</ul>
+</div>
+<div>
+<h3>为什么用角度+速度？</h3>
+<p style="font-size:20px;">用 <code>cos/sin</code> 把角度转为速度分量，保证粒子<strong>均匀向四周飞散</strong>，而不是只飞向四个角落。</p>
+</div>
+</div>
+<span class="page-num">7 / 11</span>
+<aside class="notes">【讲解】🏗 粒子类设计
+结合讲义《4.3 粒子类设计》强调：
+· 我们用Python类来定义粒子：
+· class Particle:
+· def __init__(self, x, y):
+· self.x = x # X坐标
+· self.y = y # Y坐标
+幻灯片上可见要点：
+· x, y — 当前位置
+· vx, vy — 运动速度
+· life — 剩余寿命
+· color_start/end — 颜色渐变
+讲解时放慢关键术语；用 1 个生活类比 + 1 个反例加深印象。</aside>
+</div>
+<!-- 幻灯片8：粒子池管理 -->
+<div class="slide"><h2>🗂 粒子池管理</h2>
+<h3>为什么需要"池"？</h3>
+<p>想象一个爆炸产生60个粒子，如果不及时清理死掉的粒子，运行几分钟后可能有几千个粒子占据内存！</p>
 <pre><span class="co"># 粒子池 — 用列表管理所有活跃粒子</span>
 particles = []
 
@@ -267,89 +359,137 @@ particles = []
 <span class="co"># 每帧更新 — 死亡粒子立即移除</span>
 <span class="kw">for</span> p <span class="kw">in</span> particles[:]:  <span class="co"># ← 遍历副本！</span>
     p.update(dt)
-    <span class="kw">if</span> p.life <= 0:
+    <span class="kw">if</span> p.life &lt;= 0:
         particles.remove(p)</pre>
-    <div class="highlight-box">
-      <p>⚠️ <strong>注意</strong>：遍历 <code>particles[:]</code>（副本）而不是 <code>particles</code>（原列表），否则边遍历边删除会出错！</p>
-    </div>
-  <span class="page-num">8 / 11</span></div>
-
-  <!-- 幻灯片9：完整效果展示 -->
-  <div class="slide"><h2>🎬 完整效果演示</h2>
-    <p>运行程序你将看到：</p>
-    <div style="display:flex;gap:20px;flex-wrap:wrap;margin:15px 0;">
-      <div style="flex:1;min-width:200px;background:#252540;border-radius:12px;padding:20px;text-align:center;">
-        <div style="font-size:40px;">🧱</div>
-        <p style="font-size:20px;color:#ffd700;">砖块排列</p>
-        <p style="font-size:16px;color:#aaa;">多块彩色砖块等待点击</p>
-      </div>
-      <div style="flex:1;min-width:200px;background:#252540;border-radius:12px;padding:20px;text-align:center;">
-        <div style="font-size:40px;">💥</div>
-        <p style="font-size:20px;color:#ffd700;">点击爆炸</p>
-        <p style="font-size:16px;color:#aaa;">60个粒子从点击处飞散</p>
-      </div>
-      <div style="flex:1;min-width:200px;background:#252540;border-radius:12px;padding:20px;text-align:center;">
-        <div style="font-size:40px;">📳</div>
-        <p style="font-size:20px;color:#ffd700;">屏幕震动</p>
-        <p style="font-size:16px;color:#aaa;">画面随爆炸抖动0.5秒</p>
-      </div>
-      <div style="flex:1;min-width:200px;background:#252540;border-radius:12px;padding:20px;text-align:center;">
-        <div style="font-size:40px;">🎨</div>
-        <p style="font-size:20px;color:#ffd700;">颜色渐变</p>
-        <p style="font-size:16px;color:#aaa;">粒子从亮黄渐变为暗红</p>
-      </div>
-    </div>
-  <span class="page-num">9 / 11</span></div>
-
-  <!-- 幻灯片10：练习任务 -->
-  <div class="slide"><h2>✏️ 练习任务</h2>
-    <h3>基础任务 ✅</h3>
-    <ul>
-      <li>复现课堂代码，让爆炸+震动效果跑起来</li>
-      <li>修改爆炸粒子数量（50→100→200），观察性能变化</li>
-    </ul>
-    <h3>进阶挑战 🚀</h3>
-    <ul>
-      <li>把重力方向改成<strong>向上</strong>——做出烟花效果！</li>
-      <li>改变粒子颜色渐变（蓝→白 = 水花，绿→黄 = 魔法）</li>
-      <li>给不同砖块设置不同颜色，炸出不同颜色的火花</li>
-      <li>让粒子碰到屏幕边缘时<strong>反弹</strong></li>
-    </ul>
-    <div class="highlight-box">
-      <p>🏆 <strong>终极挑战</strong>：把粒子改成向上飞的烟花，加上重力，做出一个烟花秀！</p>
-    </div>
-  <span class="page-num">10 / 11</span></div>
-
-  <!-- 幻灯片11：总结 -->
-  <div class="slide"><h2>📝 本节总结</h2>
-    <div class="two-col">
-      <div>
-        <h3>屏幕震动</h3>
-        <ul>
-          <li>核心公式：<code>sin &times; 振幅 &times; 衰减</code></li>
-          <li>衰减用 <code>exp(-time &times; decay)</code></li>
-          <li>偏移量加到所有物体坐标上</li>
-        </ul>
-      </div>
-      <div>
-        <h3>粒子系统</h3>
-        <ul>
-          <li>粒子有"生老病死"四个阶段</li>
-          <li>用列表管理粒子池</li>
-          <li>死亡粒子及时移除</li>
-          <li>颜色和大小随生命渐变</li>
-        </ul>
-      </div>
-    </div>
-    <div class="highlight-box" style="margin-top:30px;">
-      <p style="font-size:28px;text-align:center;">🔮 <strong>下节预告</strong>：拖尾残影、淡入淡出、弹出文字动画——特效大赏！</p>
-    </div>
-    <p style="text-align:center;margin-top:20px;font-size:20px;color:#888;">粒子系统是游戏特效之魂，几乎所有视觉特效的底层都是它！</p>
-  <span class="page-num">11 / 11</span></div>
+<div class="highlight-box">
+<p>⚠️ <strong>注意</strong>：遍历 <code>particles[:]</code>（副本）而不是 <code>particles</code>（原列表），否则边遍历边删除会出错！</p>
 </div>
+<span class="page-num">8 / 11</span>
+<aside class="notes">【讲解】🗂 粒子池管理
+结合讲义《4.4 粒子池管理》强调：
+· 不要为每个粒子创建新对象然后丢弃——这会造成性能问题。最佳实践是使用**粒子池**：
+· particles = [] # 粒子池（列表）
+幻灯片上可见要点：
+· 想象一个爆炸产生60个粒子，如果不及时清理死掉的粒子，运行几分钟后可能有几千个粒子占据内存！
+· ⚠️ 注意 ：遍历 particles[:] （副本）而不是 particles （原列表），否则边遍历边删除会出错！
+讲解时放慢关键术语；用 1 个生活类比 + 1 个反例加深印象。</aside>
+</div>
+<!-- 幻灯片9：完整效果展示 -->
+<div class="slide"><h2>🎬 完整效果演示</h2>
+<p>运行程序你将看到：</p>
+<div style="display:flex;gap:20px;flex-wrap:wrap;margin:15px 0;">
+<div style="flex:1;min-width:200px;background:#252540;border-radius:12px;padding:20px;text-align:center;">
+<div style="font-size:40px;">🧱</div>
+<p style="font-size:20px;color:#ffd700;">砖块排列</p>
+<p style="font-size:16px;color:#aaa;">多块彩色砖块等待点击</p>
+</div>
+<div style="flex:1;min-width:200px;background:#252540;border-radius:12px;padding:20px;text-align:center;">
+<div style="font-size:40px;">💥</div>
+<p style="font-size:20px;color:#ffd700;">点击爆炸</p>
+<p style="font-size:16px;color:#aaa;">60个粒子从点击处飞散</p>
+</div>
+<div style="flex:1;min-width:200px;background:#252540;border-radius:12px;padding:20px;text-align:center;">
+<div style="font-size:40px;">📳</div>
+<p style="font-size:20px;color:#ffd700;">屏幕震动</p>
+<p style="font-size:16px;color:#aaa;">画面随爆炸抖动0.5秒</p>
+</div>
+<div style="flex:1;min-width:200px;background:#252540;border-radius:12px;padding:20px;text-align:center;">
+<div style="font-size:40px;">🎨</div>
+<p style="font-size:20px;color:#ffd700;">颜色渐变</p>
+<p style="font-size:16px;color:#aaa;">粒子从亮黄渐变为暗红</p>
+</div>
+</div>
+<span class="page-num">9 / 11</span>
+<aside class="notes">【讲解】🎬 完整效果演示
+本页要点（照着讲即可）：
+· 运行程序你将看到：
+· 砖块排列
+· 多块彩色砖块等待点击
+· 点击爆炸
+· 60个粒子从点击处飞散
+· 屏幕震动
+讲解时放慢关键术语；用 1 个生活类比 + 1 个反例加深印象。</aside>
+</div>
+<!-- 幻灯片10：练习任务 -->
+<div class="slide"><h2>✏️ 练习任务</h2>
+<h3>基础任务 ✅</h3>
+<ul>
+<li>复现课堂代码，让爆炸+震动效果跑起来</li>
+<li>修改爆炸粒子数量（50→100→200），观察性能变化</li>
+</ul>
+<h3>进阶挑战 🚀</h3>
+<ul>
+<li>把重力方向改成<strong>向上</strong>——做出烟花效果！</li>
+<li>改变粒子颜色渐变（蓝→白 = 水花，绿→黄 = 魔法）</li>
+<li>给不同砖块设置不同颜色，炸出不同颜色的火花</li>
+<li>让粒子碰到屏幕边缘时<strong>反弹</strong></li>
+</ul>
+<div class="highlight-box">
+<p>🏆 <strong>终极挑战</strong>：把粒子改成向上飞的烟花，加上重力，做出一个烟花秀！</p>
+</div>
+<span class="page-num">10 / 11</span>
+<aside class="notes">【讲解】✏️ 练习任务
+本页要点（照着讲即可）：
+· 复现课堂代码，让爆炸+震动效果跑起来
+· 修改爆炸粒子数量（50→100→200），观察性能变化
+· 把重力方向改成 向上 ——做出烟花效果！
+· 改变粒子颜色渐变（蓝→白 = 水花，绿→黄 = 魔法）
+· 给不同砖块设置不同颜色，炸出不同颜色的火花
+· 让粒子碰到屏幕边缘时 反弹
+练习页节奏：先独立想 1 分钟 → 再点拨思路 → 最后对答案讲为什么。</aside>
+</div>
+<!-- 幻灯片11：总结 -->
+<div class="slide"><h2>📝 本节总结</h2>
+<div class="two-col">
+<div>
+<h3>屏幕震动</h3>
+<ul>
+<li>核心公式：<code>sin × 振幅 × 衰减</code></li>
+<li>衰减用 <code>exp(-time × decay)</code></li>
+<li>偏移量加到所有物体坐标上</li>
+</ul>
+</div>
+<div>
+<h3>粒子系统</h3>
+<ul>
+<li>粒子有"生老病死"四个阶段</li>
+<li>用列表管理粒子池</li>
+<li>死亡粒子及时移除</li>
+<li>颜色和大小随生命渐变</li>
+</ul>
+</div>
+</div>
+<div class="highlight-box" style="margin-top:30px;">
+<p style="font-size:28px;text-align:center;">🔮 <strong>下节预告</strong>：拖尾残影、淡入淡出、弹出文字动画——特效大赏！</p>
+</div>
+<p style="text-align:center;margin-top:20px;font-size:20px;color:#888;">粒子系统是游戏特效之魂，几乎所有视觉特效的底层都是它！</p>
+<span class="page-num">11 / 11</span>
+<aside class="notes">【收尾】回顾本课主线：📝 本节总结
+对照大纲再过一遍：**内容**：屏幕震动效果、粒子系统入门、爆炸火花四溅
 
-<div class="nav-hint">← → 方向键翻页 &nbsp;|&nbsp; 第 <span id="cur-page">1</span> / 11 页</div>
+**知识点**：
+- 屏幕偏移量（sin 衰减震动：`shake_offset = sin(time) * strength * decay`）
+- 粒子类设计：
+ - 位置 `(x, y)`
+ - 速度 `(vx, vy)`
+ - 生命值 `life`
+ - 颜色渐变（随着生命值变淡）
+- 粒子池管理（列表存储，生命归零移除）
 
+**课堂练习**：实现爆炸粒子与屏幕震动
+
+---
+板书/口述要点：
+· 核心公式： sin × 振幅 × 衰减
+· 衰减用 exp(-time × decay)
+· 偏移量加到所有物体坐标上
+· 粒子有"生老病死"四个阶段
+· 用列表管理粒子池
+· 死亡粒子及时移除
+结束前留 2 分钟答疑；布置 1 道小练习检验是否真正掌握。</aside>
+</div>
+</div>
+<div class="nav-hint">← → 方向键翻页  |  第 <span id="cur-page">1</span> / 11 页</div>
 <script>
   let slides = document.querySelectorAll('.slide');
   let cur = 0;

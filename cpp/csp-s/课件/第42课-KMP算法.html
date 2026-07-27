@@ -1,8 +1,9 @@
 <!DOCTYPE html>
+
 <html lang="zh-CN">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
 <title>第42课：KMP算法 — CSP-S 算法精讲</title>
 <style>
   :root {
@@ -216,207 +217,249 @@
 </style>
 </head>
 <body>
-
 <div class="progress-bar" id="progressBar"></div>
-
 <div class="slides-container" id="slidesContainer">
-
-  <!-- ====== 幻灯片 1：标题页 ====== -->
-  <div class="slide active title-slide">
-    <h1>第 42 课</h1>
-    <h1 style="font-size:2.2em; margin-top:0;">KMP 算法</h1>
-    <p class="subtitle">Knuth-Morris-Pratt — 线性时间的字符串匹配</p>
-    <div style="margin-top:24px;">
-      <span class="badge">CSP-S 核心算法</span>
-      <span class="badge">next 数组</span>
-      <span class="badge">最小循环节</span>
-    </div>
-    <p style="margin-top:30px; color:var(--text-dim); font-size:0.9em;">
+<!-- ====== 幻灯片 1：标题页 ====== -->
+<div class="slide active title-slide">
+<h1>第 42 课</h1>
+<h1 style="font-size:2.2em; margin-top:0;">KMP 算法</h1>
+<p class="subtitle">Knuth-Morris-Pratt — 线性时间的字符串匹配</p>
+<div style="margin-top:24px;">
+<span class="badge">CSP-S 核心算法</span>
+<span class="badge">next 数组</span>
+<span class="badge">最小循环节</span>
+</div>
+<p style="margin-top:30px; color:var(--text-dim); font-size:0.9em;">
       双指针递推 · O(n+m) 线性匹配 · border 与周期 · 字符串结构分析
     </p>
-  </div>
 
-  <!-- ====== 幻灯片 2：知识精讲 — 从暴力到 KMP ====== -->
-  <div class="slide">
-    <h2>📖 知识精讲：为什么需要 KMP？</h2>
-
-    <h3>暴力匹配的问题</h3>
-    <div class="code-block"><span class="kw">for</span> (<span class="ty">int</span> i = <span class="num">0</span>; i &lt;= n - m; i++) {
+<aside class="notes">【开场】第 1/10 页 · KMP算法
+用 30 秒说明本课目标与学完能做什么，再进入正题。
+大纲考点：next数组推导、KMP匹配过程、时间复杂度分析
+配套练习方向：字符串匹配、最小循环节
+封面关键词：
+· Knuth-Morris-Pratt — 线性时间的字符串匹配
+· 双指针递推 · O(n+m) 线性匹配 · border 与周期 · 字符串结构分析
+互动：问学生「今天最想搞清楚什么？」，收 1–2 个期待。</aside>
+</div>
+<!-- ====== 幻灯片 2：知识精讲 — 从暴力到 KMP ====== -->
+<div class="slide">
+<h2>📖 知识精讲：为什么需要 KMP？</h2>
+<h3>暴力匹配的问题</h3>
+<div class="code-block"><span class="kw">for</span> (<span class="ty">int</span> i = <span class="num">0</span>; i &lt;= n - m; i++) {
     <span class="kw">for</span> (<span class="ty">int</span> j = <span class="num">0</span>; j &lt; m; j++) {
         <span class="kw">if</span> (T[i+j] != P[j]) <span class="kw">break</span>;
     }
     <span class="kw">if</span> (j == m) cout &lt;&lt; i;   <span class="cm">// 匹配成功</span>
 }</div>
-    <p>⏱ 最坏时间复杂度：<strong>O(n×m)</strong>。当 T = "aaaa...a", P = "aaa...b" 时，每次都要比较接近 m 次。</p>
+<p>⏱ 最坏时间复杂度：<strong>O(n×m)</strong>。当 T = "aaaa...a", P = "aaa...b" 时，每次都要比较接近 m 次。</p>
+<h3>KMP 的核心洞察</h3>
+<div class="two-col">
+<div>
+<p>失配时，<strong>文本串指针 i 不回退</strong>！</p>
+<p>因为已经知道 P[0..j-1] == T[i-j..i-1]，利用 <em>模式串自身的结构信息</em> 跳过不可能的位置。</p>
+</div>
+<div>
+<div class="step-block">
+          T: ... a b a b c ...<br/>
+          P:   a b a b d<br/>
+<span class="arrow">失配！已知前4个字符匹配</span><br/>
+<br/>
+<span class="cm">// 因为 "ab" 是 "abab" 的 border</span><br/>
+<span class="cm">// 可以直接跳到 j=2 继续比</span><br/>
+          P:       a b a b d<br/>
+</div>
+</div>
+</div>
 
-    <h3>KMP 的核心洞察</h3>
-    <div class="two-col">
-      <div>
-        <p>失配时，<strong>文本串指针 i 不回退</strong>！</p>
-        <p>因为已经知道 P[0..j-1] == T[i-j..i-1]，利用 <em>模式串自身的结构信息</em> 跳过不可能的位置。</p>
-      </div>
-      <div>
-        <div class="step-block">
-          T: ... a b a b c ...<br>
-          P:   a b a b d<br>
-          <span class="arrow">失配！已知前4个字符匹配</span><br>
-          <br>
-          <span class="cm">// 因为 "ab" 是 "abab" 的 border</span><br>
-          <span class="cm">// 可以直接跳到 j=2 继续比</span><br>
-          P:       a b a b d<br>
-        </div>
-      </div>
-    </div>
-  </div>
-
-  <!-- ====== 幻灯片 3：next 数组推导 ====== -->
-  <div class="slide">
-    <h2>🔑 next 数组的定义与推导</h2>
-
-    <h3>定义</h3>
-    <div class="formula">next[i] = 前缀 P[0..i] 的 <strong>最长公共前后缀</strong> 长度
+<aside class="notes">【讲解】📖 知识精讲：为什么需要 KMP？
+本页要点（照着讲即可）：
+· ⏱ 最坏时间复杂度： O(n×m) 。当 T = "aaaa...a", P = "aaa...b" 时，每次都要比较接近 m 次。
+· O(n×m)
+· 失配时， 文本串指针 i 不回退 ！
+· 文本串指针 i 不回退
+· 因为已经知道 P[0..j-1] == T[i-j..i-1]，利用 模式串自身的结构信息 跳过不可能的位置。
+讲解时放慢关键术语；用 1 个生活类比 + 1 个反例加深印象。
+本课大纲考点（可适时点题）：next数组推导、KMP匹配过程、时间复杂度分析</aside>
+</div>
+<!-- ====== 幻灯片 3：next 数组推导 ====== -->
+<div class="slide">
+<h2>🔑 next 数组的定义与推导</h2>
+<h3>定义</h3>
+<div class="formula">next[i] = 前缀 P[0..i] 的 <strong>最长公共前后缀</strong> 长度
 （"真前缀"与"真后缀"，不包含自身）</div>
+<h3>以 P = "ababc" 为例</h3>
+<div class="next-viz">
+<div class="cell header">下标 i</div>
+<div class="cell">0</div>
+<div class="cell">1</div>
+<div class="cell">2</div>
+<div class="cell">3</div>
+<div class="cell">4</div>
+</div>
+<div class="next-viz">
+<div class="cell header">P[i]</div>
+<div class="cell">a</div>
+<div class="cell">b</div>
+<div class="cell">a</div>
+<div class="cell">b</div>
+<div class="cell">c</div>
+</div>
+<div class="next-viz">
+<div class="cell header">next[i]</div>
+<div class="cell hl">0</div>
+<div class="cell hl">0</div>
+<div class="cell hl">1</div>
+<div class="cell hl">2</div>
+<div class="cell hl">0</div>
+</div>
+<table>
+<tr><th>前缀 P[0..i]</th><th>最长公共前后缀</th><th>next[i]</th></tr>
+<tr><td>P[0..0] = "a"</td><td>(空)</td><td>0</td></tr>
+<tr><td>P[0..1] = "ab"</td><td>(空)</td><td>0</td></tr>
+<tr><td>P[0..2] = "aba"</td><td>"a"（前缀 "a" == 后缀 "a"）</td><td>1</td></tr>
+<tr><td>P[0..3] = "abab"</td><td>"ab"（前缀 "ab" == 后缀 "ab"）</td><td>2</td></tr>
+<tr><td>P[0..4] = "ababc"</td><td>(空)</td><td>0</td></tr>
+</table>
+<div class="tip-box">next[3] = 2 的含义：在位置 3 失配时，已知前 4 个字符 "abab" 中后缀 "ab" 等于前缀 "ab"，可以直接跳到位置 2 继续匹配，而不需要回到位置 1 从零开始。</div>
 
-    <h3>以 P = "ababc" 为例</h3>
-    <div class="next-viz">
-      <div class="cell header">下标 i</div>
-      <div class="cell">0</div>
-      <div class="cell">1</div>
-      <div class="cell">2</div>
-      <div class="cell">3</div>
-      <div class="cell">4</div>
-    </div>
-    <div class="next-viz">
-      <div class="cell header">P[i]</div>
-      <div class="cell">a</div>
-      <div class="cell">b</div>
-      <div class="cell">a</div>
-      <div class="cell">b</div>
-      <div class="cell">c</div>
-    </div>
-    <div class="next-viz">
-      <div class="cell header">next[i]</div>
-      <div class="cell hl">0</div>
-      <div class="cell hl">0</div>
-      <div class="cell hl">1</div>
-      <div class="cell hl">2</div>
-      <div class="cell hl">0</div>
-    </div>
-
-    <table>
-      <tr><th>前缀 P[0..i]</th><th>最长公共前后缀</th><th>next[i]</th></tr>
-      <tr><td>P[0..0] = "a"</td><td>(空)</td><td>0</td></tr>
-      <tr><td>P[0..1] = "ab"</td><td>(空)</td><td>0</td></tr>
-      <tr><td>P[0..2] = "aba"</td><td>"a"（前缀 "a" == 后缀 "a"）</td><td>1</td></tr>
-      <tr><td>P[0..3] = "abab"</td><td>"ab"（前缀 "ab" == 后缀 "ab"）</td><td>2</td></tr>
-      <tr><td>P[0..4] = "ababc"</td><td>(空)</td><td>0</td></tr>
-    </table>
-
-    <div class="tip-box">next[3] = 2 的含义：在位置 3 失配时，已知前 4 个字符 "abab" 中后缀 "ab" 等于前缀 "ab"，可以直接跳到位置 2 继续匹配，而不需要回到位置 1 从零开始。</div>
-  </div>
-
-  <!-- ====== 幻灯片 4：next 数组的递推构建 ====== -->
-  <div class="slide">
-    <h2>⚙️ next 数组的递推构建过程</h2>
-
-    <h3>递推算法（双指针 i 和 j）</h3>
-    <div class="code-block"><span class="ty">vector</span>&lt;<span class="ty">int</span>&gt; <span class="fn">get_next</span>(<span class="kw">const</span> string&amp; P) {
+<aside class="notes">【讲解】🔑 next 数组的定义与推导
+结合讲义《二、next 数组的定义和推导》强调：
+· next[i] 表示：**模式串 P 的前缀 P[0..i] 中，最长的相等的真前缀与真后缀的长度**（即最长公共前后缀长度）。
+· &gt; "真前缀"指不包括整个字符串本身的前缀；"真后缀"同理。
+· 示例：P = "ababc"
+· 理解 next 数组的含义：next[i] = k 意味着 P[0..k-1] == P[i-k+1..i]，即前缀 P[0..k-1] 等于以 i 结尾的长度为 k 的后缀。
+· 当匹配到 P[j] 与 T[i] 失配时，根据 next 数组的定义：
+幻灯片上可见要点：
+· 最长公共前后缀
+讲解时放慢关键术语；用 1 个生活类比 + 1 个反例加深印象。</aside>
+</div>
+<!-- ====== 幻灯片 4：next 数组的递推构建 ====== -->
+<div class="slide">
+<h2>⚙️ next 数组的递推构建过程</h2>
+<h3>递推算法（双指针 i 和 j）</h3>
+<div class="code-block"><span class="ty">vector</span>&lt;<span class="ty">int</span>&gt; <span class="fn">get_next</span>(<span class="kw">const</span> string&amp; P) {
     <span class="ty">int</span> m = P.<span class="fn">size</span>();
     <span class="ty">vector</span>&lt;<span class="ty">int</span>&gt; <span class="fn">next</span>(m, <span class="num">0</span>);
     <span class="kw">int</span> j = <span class="num">0</span>;  <span class="cm">// j = 已匹配的前缀长度</span>
-    <span class="kw">for</span> (<span class="kw">int</span> i = <span class="num">1</span>; i &lt; m; i++) {
+<span class="kw">for</span> (<span class="kw">int</span> i = <span class="num">1</span>; i &lt; m; i++) {
         <span class="kw">while</span> (j &gt; <span class="num">0</span> &amp;&amp; P[i] != P[j])
             j = next[j - <span class="num">1</span>];   <span class="cm">// 失配 → 回退</span>
-        <span class="kw">if</span> (P[i] == P[j])
+<span class="kw">if</span> (P[i] == P[j])
             j++;                    <span class="cm">// 匹配 → 前进</span>
         next[i] = j;
     }
     <span class="kw">return</span> next;
 }</div>
+<h3>以 P = "ababac" 演示递推</h3>
+<div class="step-block">
+      i=<span class="num">1</span>: P[<span class="num">1</span>]=<span class="str">'b'</span>, j=<span class="num">0</span> → P[<span class="num">1</span>]!=P[<span class="num">0</span>] → next[<span class="num">1</span>]=<span class="num">0</span><br/>
+      i=<span class="num">2</span>: P[<span class="num">2</span>]=<span class="str">'a'</span>, j=<span class="num">0</span> → P[<span class="num">2</span>]==P[<span class="num">0</span>] → j=<span class="num">1</span>, next[<span class="num">2</span>]=<span class="num">1</span><br/>
+      i=<span class="num">3</span>: P[<span class="num">3</span>]=<span class="str">'b'</span>, j=<span class="num">1</span> → P[<span class="num">3</span>]==P[<span class="num">1</span>] → j=<span class="num">2</span>, next[<span class="num">3</span>]=<span class="num">2</span><br/>
+      i=<span class="num">4</span>: P[<span class="num">4</span>]=<span class="str">'a'</span>, j=<span class="num">2</span> → P[<span class="num">4</span>]==P[<span class="num">2</span>] → j=<span class="num">3</span>, next[<span class="num">4</span>]=<span class="num">3</span><br/>
+      i=<span class="num">5</span>: P[<span class="num">5</span>]=<span class="str">'c'</span>, j=<span class="num">3</span> → P[<span class="num">5</span>]!=P[<span class="num">3</span>] → j=next[<span class="num">2</span>]=<span class="num">1</span><br/>
+               P[<span class="num">5</span>]!=P[<span class="num">1</span>] → j=next[<span class="num">0</span>]=<span class="num">0</span> → next[<span class="num">5</span>]=<span class="num">0</span><br/>
+<span class="arrow">结果: next = [0, 0, 1, 2, 3, 0]</span>
+</div>
+<p><strong>复杂度分析</strong>：j 每次最多 +1，总增加 ≤ m 次，故回退总次数 ≤ m。构建 next 数组为 <strong>O(m)</strong>。</p>
 
-    <h3>以 P = "ababac" 演示递推</h3>
-    <div class="step-block">
-      i=<span class="num">1</span>: P[<span class="num">1</span>]=<span class="str">'b'</span>, j=<span class="num">0</span> → P[<span class="num">1</span>]!=P[<span class="num">0</span>] → next[<span class="num">1</span>]=<span class="num">0</span><br>
-      i=<span class="num">2</span>: P[<span class="num">2</span>]=<span class="str">'a'</span>, j=<span class="num">0</span> → P[<span class="num">2</span>]==P[<span class="num">0</span>] → j=<span class="num">1</span>, next[<span class="num">2</span>]=<span class="num">1</span><br>
-      i=<span class="num">3</span>: P[<span class="num">3</span>]=<span class="str">'b'</span>, j=<span class="num">1</span> → P[<span class="num">3</span>]==P[<span class="num">1</span>] → j=<span class="num">2</span>, next[<span class="num">3</span>]=<span class="num">2</span><br>
-      i=<span class="num">4</span>: P[<span class="num">4</span>]=<span class="str">'a'</span>, j=<span class="num">2</span> → P[<span class="num">4</span>]==P[<span class="num">2</span>] → j=<span class="num">3</span>, next[<span class="num">4</span>]=<span class="num">3</span><br>
-      i=<span class="num">5</span>: P[<span class="num">5</span>]=<span class="str">'c'</span>, j=<span class="num">3</span> → P[<span class="num">5</span>]!=P[<span class="num">3</span>] → j=next[<span class="num">2</span>]=<span class="num">1</span><br>
-           &nbsp;&nbsp;&nbsp;&nbsp;P[<span class="num">5</span>]!=P[<span class="num">1</span>] → j=next[<span class="num">0</span>]=<span class="num">0</span> → next[<span class="num">5</span>]=<span class="num">0</span><br>
-      <span class="arrow">结果: next = [0, 0, 1, 2, 3, 0]</span>
-    </div>
-
-    <p><strong>复杂度分析</strong>：j 每次最多 +1，总增加 ≤ m 次，故回退总次数 ≤ m。构建 next 数组为 <strong>O(m)</strong>。</p>
-  </div>
-
-  <!-- ====== 幻灯片 5：KMP 匹配过程 ====== -->
-  <div class="slide">
-    <h2>🔍 KMP 匹配过程</h2>
-
-    <h3>匹配算法</h3>
-    <div class="code-block"><span class="kw">int</span> j = <span class="num">0</span>;                             <span class="cm">// 已匹配的模式串长度</span>
+<aside class="notes">【讲解】⚙️ next 数组的递推构建过程
+结合讲义《二、next 数组的定义和推导》强调：
+· next[i] 表示：**模式串 P 的前缀 P[0..i] 中，最长的相等的真前缀与真后缀的长度**（即最长公共前后缀长度）。
+· &gt; "真前缀"指不包括整个字符串本身的前缀；"真后缀"同理。
+· 示例：P = "ababc"
+· 理解 next 数组的含义：next[i] = k 意味着 P[0..k-1] == P[i-k+1..i]，即前缀 P[0..k-1] 等于以 i 结尾的长度为 k 的后缀。
+· 当匹配到 P[j] 与 T[i] 失配时，根据 next 数组的定义：
+幻灯片上可见要点：
+· 复杂度分析 ：j 每次最多 +1，总增加 ≤ m 次，故回退总次数 ≤ m。构建 next 数组为 O(m) 。
+· 复杂度分析
+· O(m)
+讲解时放慢关键术语；用 1 个生活类比 + 1 个反例加深印象。</aside>
+</div>
+<!-- ====== 幻灯片 5：KMP 匹配过程 ====== -->
+<div class="slide">
+<h2>🔍 KMP 匹配过程</h2>
+<h3>匹配算法</h3>
+<div class="code-block"><span class="kw">int</span> j = <span class="num">0</span>;                             <span class="cm">// 已匹配的模式串长度</span>
 <span class="kw">for</span> (<span class="kw">int</span> i = <span class="num">0</span>; i &lt; n; i++) {             <span class="cm">// i 从不回退！</span>
-    <span class="kw">while</span> (j &gt; <span class="num">0</span> &amp;&amp; T[i] != P[j])
+<span class="kw">while</span> (j &gt; <span class="num">0</span> &amp;&amp; T[i] != P[j])
         j = next[j - <span class="num">1</span>];                <span class="cm">// 智能跳转</span>
-    <span class="kw">if</span> (T[i] == P[j])
+<span class="kw">if</span> (T[i] == P[j])
         j++;                              <span class="cm">// 匹配成功，继续</span>
-    <span class="kw">if</span> (j == m) {
+<span class="kw">if</span> (j == m) {
         cout &lt;&lt; (i - m + <span class="num">1</span>);             <span class="cm">// 找到一个匹配</span>
         j = next[j - <span class="num">1</span>];                  <span class="cm">// 继续搜索（允许重叠）</span>
     }
 }</div>
-
-    <h3>完整匹配过程示例</h3>
-    <p>T = "abababc", P = "ababc"</p>
-    <div class="step-block">
-      i=<span class="num">0</span>.<span class="num">.3</span>: T[<span class="num">0..3</span>]=<span class="str">"abab"</span> == P[<span class="num">0..3</span>], j=<span class="num">4</span><br>
-      i=<span class="num">4</span>:   T[<span class="num">4</span>]=<span class="str">'a'</span>, P[<span class="num">4</span>]=<span class="str">'c'</span> → <span class="arrow">失配！</span> j=next[<span class="num">3</span>]=<span class="num">2</span><br>
-      &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;T[<span class="num">4</span>]=<span class="str">'a'</span>, P[<span class="num">2</span>]=<span class="str">'a'</span> → 匹配！j=<span class="num">3</span><br>
-      i=<span class="num">5</span>:   T[<span class="num">5</span>]=<span class="str">'b'</span>, P[<span class="num">3</span>]=<span class="str">'b'</span> → 匹配！j=<span class="num">4</span><br>
+<h3>完整匹配过程示例</h3>
+<p>T = "abababc", P = "ababc"</p>
+<div class="step-block">
+      i=<span class="num">0</span>.<span class="num">.3</span>: T[<span class="num">0..3</span>]=<span class="str">"abab"</span> == P[<span class="num">0..3</span>], j=<span class="num">4</span><br/>
+      i=<span class="num">4</span>:   T[<span class="num">4</span>]=<span class="str">'a'</span>, P[<span class="num">4</span>]=<span class="str">'c'</span> → <span class="arrow">失配！</span> j=next[<span class="num">3</span>]=<span class="num">2</span><br/>
+             T[<span class="num">4</span>]=<span class="str">'a'</span>, P[<span class="num">2</span>]=<span class="str">'a'</span> → 匹配！j=<span class="num">3</span><br/>
+      i=<span class="num">5</span>:   T[<span class="num">5</span>]=<span class="str">'b'</span>, P[<span class="num">3</span>]=<span class="str">'b'</span> → 匹配！j=<span class="num">4</span><br/>
       i=<span class="num">6</span>:   T[<span class="num">6</span>]=<span class="str">'c'</span>, P[<span class="num">4</span>]=<span class="str">'c'</span> → 匹配！j=<span class="num">5</span> → <span class="arrow">找到！位置 2</span>
-    </div>
+</div>
+<div class="tip-box">关键：i 从不回退，next 数组就像「备忘录」——告诉匹配算法在失配时从哪里继续比较最合理。这就是 KMP 达到 O(n+m) 线性复杂度的核心。</div>
 
-    <div class="tip-box">关键：i 从不回退，next 数组就像「备忘录」——告诉匹配算法在失配时从哪里继续比较最合理。这就是 KMP 达到 O(n+m) 线性复杂度的核心。</div>
-  </div>
-
-  <!-- ====== 幻灯片 6：最小循环节 ====== -->
-  <div class="slide">
-    <h2>🔄 最小循环节定理</h2>
-
-    <h3>定理</h3>
-    <div class="formula">对长度为 len 的字符串 s，
+<aside class="notes">【讲解】🔍 KMP 匹配过程
+结合讲义《四、KMP 匹配过程》强调：
+· 有了 next 数组后，匹配过程如下：
+· i：文本串 T 的当前匹配位置（不回退）
+· j：模式串 P 的当前匹配位置
+· int kmp_search(const string&amp; T, const string&amp; P) {
+· int n = T.size(), m = P.size();
+幻灯片上可见要点：
+· T = "abababc", P = "ababc"
+讲解时放慢关键术语；用 1 个生活类比 + 1 个反例加深印象。</aside>
+</div>
+<!-- ====== 幻灯片 6：最小循环节 ====== -->
+<div class="slide">
+<h2>🔄 最小循环节定理</h2>
+<h3>定理</h3>
+<div class="formula">对长度为 len 的字符串 s，
 设 cycle = len - next[len-1]
 
 若 <strong>len % cycle == 0</strong>，则：
   → s 由长度为 cycle 的循环节重复 k = len/cycle 次构成
   → cycle 是 <strong>最小循环节</strong> 长度</div>
-
-    <h3>直观理解</h3>
-    <p>next[len-1] 是 <em>最长公共前后缀</em> 的长度，那么：</p>
-    <div class="code-block">s = [ 公共前缀部分 ][ 独有后缀部分 ]
+<h3>直观理解</h3>
+<p>next[len-1] 是 <em>最长公共前后缀</em> 的长度，那么：</p>
+<div class="code-block">s = [ 公共前缀部分 ][ 独有后缀部分 ]
     ← next[len-1] →←   cycle    →</div>
-    <p>如果 len 能被 cycle 整除，说明「独有后缀」可以完整地反复拼接出整个字符串。</p>
+<p>如果 len 能被 cycle 整除，说明「独有后缀」可以完整地反复拼接出整个字符串。</p>
+<h3>示例</h3>
+<table>
+<tr><th>字符串</th><th>len</th><th>next[len-1]</th><th>cycle</th><th>可循环？</th><th>说明</th></tr>
+<tr><td>"abcabcabc"</td><td>9</td><td>6</td><td>3</td><td>✅ k=3</td><td>循环节 "abc"</td></tr>
+<tr><td>"ababab"</td><td>6</td><td>4</td><td>2</td><td>✅ k=3</td><td>循环节 "ab"</td></tr>
+<tr><td>"abcab"</td><td>5</td><td>2</td><td>3</td><td>❌</td><td>5%3≠0，需补1个字符</td></tr>
+<tr><td>"aaaa"</td><td>4</td><td>3</td><td>1</td><td>✅ k=4</td><td>循环节 "a"</td></tr>
+</table>
+<h3>补充成循环串</h3>
+<p>当 len % cycle != 0 时，需要添加 <strong>cycle - len % cycle</strong> 个字符（从串首开始按 cycle 循环取）才能使其成为完整的循环串。</p>
 
-    <h3>示例</h3>
-    <table>
-      <tr><th>字符串</th><th>len</th><th>next[len-1]</th><th>cycle</th><th>可循环？</th><th>说明</th></tr>
-      <tr><td>"abcabcabc"</td><td>9</td><td>6</td><td>3</td><td>✅ k=3</td><td>循环节 "abc"</td></tr>
-      <tr><td>"ababab"</td><td>6</td><td>4</td><td>2</td><td>✅ k=3</td><td>循环节 "ab"</td></tr>
-      <tr><td>"abcab"</td><td>5</td><td>2</td><td>3</td><td>❌</td><td>5%3≠0，需补1个字符</td></tr>
-      <tr><td>"aaaa"</td><td>4</td><td>3</td><td>1</td><td>✅ k=4</td><td>循环节 "a"</td></tr>
-    </table>
-
-    <h3>补充成循环串</h3>
-    <p>当 len % cycle != 0 时，需要添加 <strong>cycle - len % cycle</strong> 个字符（从串首开始按 cycle 循环取）才能使其成为完整的循环串。</p>
-  </div>
-
-  <!-- ====== 幻灯片 7：代码模板 ====== -->
-  <div class="slide">
-    <h2>💻 代码模板</h2>
-
-    <div class="two-col">
-      <div>
-        <h3>get_next + kmp_search</h3>
-        <div class="code-block" style="font-size:0.8em;"><span class="ty">vector</span>&lt;<span class="ty">int</span>&gt; <span class="fn">get_next</span>(<span class="kw">const</span> string&amp; P) {
+<aside class="notes">【讲解】🔄 最小循环节定理
+结合讲义《六、最小循环节定理》强调：
+· 定理：对于长度为 len 的字符串 s，若 len % (len - next[len-1]) == 0，则 s 可以由长度为 len - next[len-1] 的循环节重复构成，且该长度为**最小循环节**。
+· next[len-1] 是 s 的最长公共前后缀长度
+· len - next[len-1] 是「不在公共前后缀中」的那段长度
+· 如果 len 能被这个长度整除，说明整个字符串由这个循环节重复构成
+· s = "abcabcabc"，len = 9，next[8] = 6
+幻灯片上可见要点：
+· len % cycle == 0
+· 最小循环节
+· next[len-1] 是 最长公共前后缀 的长度，那么：
+· 如果 len 能被 cycle 整除，说明「独有后缀」可以完整地反复拼接出整个字符串。
+讲解时放慢关键术语；用 1 个生活类比 + 1 个反例加深印象。</aside>
+</div>
+<!-- ====== 幻灯片 7：代码模板 ====== -->
+<div class="slide">
+<h2>💻 代码模板</h2>
+<div class="two-col">
+<div>
+<h3>get_next + kmp_search</h3>
+<div class="code-block" style="font-size:0.8em;"><span class="ty">vector</span>&lt;<span class="ty">int</span>&gt; <span class="fn">get_next</span>(<span class="kw">const</span> string&amp; P) {
     <span class="ty">int</span> m = P.<span class="fn">size</span>();
     <span class="ty">vector</span>&lt;<span class="ty">int</span>&gt; <span class="fn">next</span>(m, <span class="num">0</span>);
     <span class="kw">int</span> j = <span class="num">0</span>;
@@ -445,10 +488,10 @@
     }
     <span class="kw">return</span> res;
 }</div>
-      </div>
-      <div>
-        <h3>最小循环节</h3>
-        <div class="code-block" style="font-size:0.84em;"><span class="ty">int</span> <span class="fn">min_cycle_len</span>(<span class="kw">const</span> string&amp; s) {
+</div>
+<div>
+<h3>最小循环节</h3>
+<div class="code-block" style="font-size:0.84em;"><span class="ty">int</span> <span class="fn">min_cycle_len</span>(<span class="kw">const</span> string&amp; s) {
     <span class="ty">int</span> n = s.<span class="fn">size</span>();
     <span class="kw">auto</span> next = <span class="fn">get_next</span>(s);
     <span class="kw">int</span> cycle = n - next[n - <span class="num">1</span>];
@@ -463,8 +506,8 @@
     <span class="kw">int</span> cycle = n - next[n - <span class="num">1</span>];
     <span class="kw">return</span> (cycle - n % cycle) % cycle;
 }</div>
-        <h3>扩展：前缀出现次数</h3>
-        <div class="code-block" style="font-size:0.8em;"><span class="ty">vector</span>&lt;<span class="ty">int</span>&gt; <span class="fn">prefix_cnt</span>(<span class="kw">const</span> string&amp; s) {
+<h3>扩展：前缀出现次数</h3>
+<div class="code-block" style="font-size:0.8em;"><span class="ty">vector</span>&lt;<span class="ty">int</span>&gt; <span class="fn">prefix_cnt</span>(<span class="kw">const</span> string&amp; s) {
     <span class="kw">auto</span> next = <span class="fn">get_next</span>(s);
     <span class="kw">int</span> n = s.<span class="fn">size</span>();
     <span class="ty">vector</span>&lt;<span class="ty">int</span>&gt; cnt(n, <span class="num">1</span>);
@@ -473,17 +516,30 @@
             cnt[next[i]-<span class="num">1</span>] += cnt[i];
     <span class="kw">return</span> cnt;
 }</div>
-      </div>
-    </div>
-  </div>
+</div>
+</div>
 
-  <!-- ====== 幻灯片 8：真题精练1 ====== -->
-  <div class="slide">
-    <h2>📝 真题精练 1：KMP 匹配统计</h2>
-    <p><strong>题目</strong>：给定文本串 T 和模式串 P，统计 P 在 T 中出现的次数（允许重叠）。|T| ≤ 10⁶，|P| ≤ 10⁵。</p>
-
-    <h3>AC 代码</h3>
-    <div class="code-block"><span class="pp">#include</span> <span class="str">&lt;bits/stdc++.h&gt;</span>
+<aside class="notes">【讲解】💻 代码模板
+结合讲义《💻 代码模板》强调：
+· // ============ getNext（下标从 0 开始） ============
+· vector get_next(const string&amp; P) {
+· int m = P.size();
+· vector next(m, 0);
+· int j = 0; // j 表示当前匹配的前缀长度
+幻灯片上可见要点：
+· 💻 代码模板
+· get_next + kmp_search
+· vector
+· get_next
+代码页节奏：先读懂输入输出 → 再走主流程 → 最后点出易错点（边界/类型/下标）。
+可让学生预测下一行输出，再运行对照。</aside>
+</div>
+<!-- ====== 幻灯片 8：真题精练1 ====== -->
+<div class="slide">
+<h2>📝 真题精练 1：KMP 匹配统计</h2>
+<p><strong>题目</strong>：给定文本串 T 和模式串 P，统计 P 在 T 中出现的次数（允许重叠）。|T| ≤ 10⁶，|P| ≤ 10⁵。</p>
+<h3>AC 代码</h3>
+<div class="code-block"><span class="pp">#include</span> <span class="str">&lt;bits/stdc++.h&gt;</span>
 <span class="kw">using</span> <span class="kw">namespace</span> std;
 
 <span class="ty">vector</span>&lt;<span class="ty">int</span>&gt; <span class="fn">get_next</span>(<span class="kw">const</span> string&amp; P) {
@@ -516,20 +572,25 @@
     string T, P; cin &gt;&gt; T &gt;&gt; P;
     cout &lt;&lt; <span class="fn">kmp_count</span>(T, P) &lt;&lt; <span class="str">'\n'</span>;
 }</div>
-    <p>⏱ 时间复杂度：<strong>O(|T| + |P|)</strong>，空间 O(|P|)</p>
-  </div>
+<p>⏱ 时间复杂度：<strong>O(|T| + |P|)</strong>，空间 O(|P|)</p>
 
-  <!-- ====== 幻灯片 9：真题精练2 ====== -->
-  <div class="slide">
-    <h2>📝 真题精练 2：最小循环节</h2>
-    <p><strong>题目</strong>：给定字符串 s，若 s 由某个子串重复构成，输出循环节及 k；否则输出最少需添加多少字符。|s| ≤ 10⁶。</p>
-
-    <h3>AC 代码</h3>
-    <div class="code-block"><span class="pp">#include</span> <span class="str">&lt;bits/stdc++.h&gt;</span>
+<aside class="notes">【讲解】📝 真题精练 1：KMP 匹配统计
+本页要点（照着讲即可）：
+· 题目 ：给定文本串 T 和模式串 P，统计 P 在 T 中出现的次数（允许重叠）。|T| ≤ 10⁶，|P| ≤ 10⁵。
+· ⏱ 时间复杂度： O(|T| + |P|) ，空间 O(|P|)
+· O(|T| + |P|)
+练习页节奏：先独立想 1 分钟 → 再点拨思路 → 最后对答案讲为什么。
+可联系：字符串匹配、最小循环节</aside>
+</div>
+<!-- ====== 幻灯片 9：真题精练2 ====== -->
+<div class="slide">
+<h2>📝 真题精练 2：最小循环节</h2>
+<p><strong>题目</strong>：给定字符串 s，若 s 由某个子串重复构成，输出循环节及 k；否则输出最少需添加多少字符。|s| ≤ 10⁶。</p>
+<h3>AC 代码</h3>
+<div class="code-block"><span class="pp">#include</span> <span class="str">&lt;bits/stdc++.h&gt;</span>
 <span class="kw">using</span> <span class="kw">namespace</span> std;
 
 <span class="cm">// get_next 同上（省略）</span>
-
 <span class="ty">int</span> <span class="fn">main</span>() {
     ios::<span class="fn">sync_with_stdio</span>(<span class="num">false</span>); cin.<span class="fn">tie</span>(<span class="num">nullptr</span>);
     string s; cin &gt;&gt; s;
@@ -545,86 +606,98 @@
         cout &lt;&lt; <span class="str">"需要添加 "</span> &lt;&lt; need &lt;&lt; <span class="str">" 个字符"</span>;
     }
 }</div>
+<h3>测试用例</h3>
+<table>
+<tr><th>输入 s</th><th>输出</th></tr>
+<tr><td>"abcabcabc"</td><td>循环节: abc, k = 3</td></tr>
+<tr><td>"abcd"</td><td>需要添加 4 个字符</td></tr>
+<tr><td>"aaaa"</td><td>循环节: a, k = 4</td></tr>
+<tr><td>"ababa"</td><td>需要添加 1 个字符 → "ababab"</td></tr>
+</table>
+<p>⏱ 时间复杂度：<strong>O(|s|)</strong>，空间 O(|s|)</p>
 
-    <h3>测试用例</h3>
-    <table>
-      <tr><th>输入 s</th><th>输出</th></tr>
-      <tr><td>"abcabcabc"</td><td>循环节: abc, k = 3</td></tr>
-      <tr><td>"abcd"</td><td>需要添加 4 个字符</td></tr>
-      <tr><td>"aaaa"</td><td>循环节: a, k = 4</td></tr>
-      <tr><td>"ababa"</td><td>需要添加 1 个字符 → "ababab"</td></tr>
-    </table>
-    <p>⏱ 时间复杂度：<strong>O(|s|)</strong>，空间 O(|s|)</p>
-  </div>
-
-  <!-- ====== 幻灯片 10：总结 ====== -->
-  <div class="slide">
-    <h2>🎯 本课小结</h2>
-
-    <table>
-      <tr><th>核心知识点</th><th>要点</th><th>复杂度</th></tr>
-      <tr>
-        <td>暴力匹配问题</td>
-        <td>最坏 O(n×m)，i 和 j 双重回溯</td>
-        <td>O(n×m)</td>
-      </tr>
-      <tr>
-        <td>next 数组</td>
-        <td>next[i] = P[0..i] 的最长公共前后缀长度</td>
-        <td>O(m) 构建</td>
-      </tr>
-      <tr>
-        <td>KMP 匹配</td>
-        <td>i 不回退，失配时 j = next[j-1]</td>
-        <td>O(n+m)</td>
-      </tr>
-      <tr>
-        <td>最小循环节</td>
-        <td>cycle = len - next[len-1]，需 len % cycle == 0</td>
-        <td>O(n)</td>
-      </tr>
-      <tr>
-        <td>前缀出现次数</td>
-        <td>从后向前累加 cnt[next[i]-1] += cnt[i]</td>
-        <td>O(n)</td>
-      </tr>
-    </table>
-
-    <div style="margin-top:24px; display:flex; gap:20px;">
-      <div style="flex:1; padding:16px; background:rgba(233,69,96,0.06); border-radius:10px; border:1px solid var(--border);">
-        <h3 style="margin:0 0 8px; color:var(--accent);">⚠️ 易错点</h3>
-        <ul style="font-size:0.9em;">
-          <li>失配时是 j = next[j-1]，不是 next[j]</li>
-          <li>while 条件必须写 j > 0 防越界</li>
-          <li>最小循环节判别需 len % cycle == 0</li>
-          <li>完全匹配后 continue 还是 j = next[j-1] 取决于是否允许重叠</li>
-        </ul>
-      </div>
-      <div style="flex:1; padding:16px; background:rgba(76,175,80,0.06); border-radius:10px; border:1px solid var(--border);">
-        <h3 style="margin:0 0 8px; color:var(--green);">🏆 实战建议</h3>
-        <ul style="font-size:0.9em;">
-          <li>next 数组从 0 开始定义最简洁</li>
-          <li>get_next 和 kmp_search 结构几乎相同，可一起记忆</li>
-          <li>循环节问题是 CSP-S 高频考点</li>
-          <li>KMP 的扩展（AC 自动机）是省选难度内容</li>
-        </ul>
-      </div>
-    </div>
-
-    <p style="text-align:center; margin-top:28px; color:var(--highlight); font-size:1.1em;">
+<aside class="notes">【讲解】📝 真题精练 2：最小循环节
+本页要点（照着讲即可）：
+· 题目 ：给定字符串 s，若 s 由某个子串重复构成，输出循环节及 k；否则输出最少需添加多少字符。|s| ≤ 10⁶。
+· ⏱ 时间复杂度： O(|s|) ，空间 O(|s|)
+· O(|s|)
+练习页节奏：先独立想 1 分钟 → 再点拨思路 → 最后对答案讲为什么。
+可联系：字符串匹配、最小循环节</aside>
+</div>
+<!-- ====== 幻灯片 10：总结 ====== -->
+<div class="slide">
+<h2>🎯 本课小结</h2>
+<table>
+<tr><th>核心知识点</th><th>要点</th><th>复杂度</th></tr>
+<tr>
+<td>暴力匹配问题</td>
+<td>最坏 O(n×m)，i 和 j 双重回溯</td>
+<td>O(n×m)</td>
+</tr>
+<tr>
+<td>next 数组</td>
+<td>next[i] = P[0..i] 的最长公共前后缀长度</td>
+<td>O(m) 构建</td>
+</tr>
+<tr>
+<td>KMP 匹配</td>
+<td>i 不回退，失配时 j = next[j-1]</td>
+<td>O(n+m)</td>
+</tr>
+<tr>
+<td>最小循环节</td>
+<td>cycle = len - next[len-1]，需 len % cycle == 0</td>
+<td>O(n)</td>
+</tr>
+<tr>
+<td>前缀出现次数</td>
+<td>从后向前累加 cnt[next[i]-1] += cnt[i]</td>
+<td>O(n)</td>
+</tr>
+</table>
+<div style="margin-top:24px; display:flex; gap:20px;">
+<div style="flex:1; padding:16px; background:rgba(233,69,96,0.06); border-radius:10px; border:1px solid var(--border);">
+<h3 style="margin:0 0 8px; color:var(--accent);">⚠️ 易错点</h3>
+<ul style="font-size:0.9em;">
+<li>失配时是 j = next[j-1]，不是 next[j]</li>
+<li>while 条件必须写 j &gt; 0 防越界</li>
+<li>最小循环节判别需 len % cycle == 0</li>
+<li>完全匹配后 continue 还是 j = next[j-1] 取决于是否允许重叠</li>
+</ul>
+</div>
+<div style="flex:1; padding:16px; background:rgba(76,175,80,0.06); border-radius:10px; border:1px solid var(--border);">
+<h3 style="margin:0 0 8px; color:var(--green);">🏆 实战建议</h3>
+<ul style="font-size:0.9em;">
+<li>next 数组从 0 开始定义最简洁</li>
+<li>get_next 和 kmp_search 结构几乎相同，可一起记忆</li>
+<li>循环节问题是 CSP-S 高频考点</li>
+<li>KMP 的扩展（AC 自动机）是省选难度内容</li>
+</ul>
+</div>
+</div>
+<p style="text-align:center; margin-top:28px; color:var(--highlight); font-size:1.1em;">
       🏆 课程总结：字符串哈希 + KMP = 字符串问题的两大基石算法
     </p>
-  </div>
 
+<aside class="notes">【收尾】回顾本课主线：🎯 本课小结
+对照大纲再过一遍：next数组推导、KMP匹配过程、时间复杂度分析
+板书/口述要点：
+· 失配时是 j = next[j-1]，不是 next[j]
+· while 条件必须写 j &gt; 0 防越界
+· 最小循环节判别需 len % cycle == 0
+· 完全匹配后 continue 还是 j = next[j-1] 取决于是否允许重叠
+· next 数组从 0 开始定义最简洁
+· get_next 和 kmp_search 结构几乎相同，可一起记忆
+课后任务：字符串匹配、最小循环节
+结束前留 2 分钟答疑；布置 1 道小练习检验是否真正掌握。</aside>
 </div>
-
+</div>
 <!-- 导航栏 -->
 <div class="nav-bar">
-  <button class="nav-btn" id="prevBtn" onclick="changeSlide(-1)">← 上一页</button>
-  <span class="page-indicator" id="pageIndicator">1 / 10</span>
-  <button class="nav-btn" id="nextBtn" onclick="changeSlide(1)">下一页 →</button>
+<button class="nav-btn" id="prevBtn" onclick="changeSlide(-1)">← 上一页</button>
+<span class="page-indicator" id="pageIndicator">1 / 10</span>
+<button class="nav-btn" id="nextBtn" onclick="changeSlide(1)">下一页 →</button>
 </div>
-
 <script>
   const slides = document.querySelectorAll('.slide');
   const totalSlides = slides.length;
@@ -659,7 +732,6 @@
   // 初始状态
   showSlide(0);
 </script>
-
 <script src="courseware-ui.js"></script>
 <script src="presenter.js"></script>
 </body>

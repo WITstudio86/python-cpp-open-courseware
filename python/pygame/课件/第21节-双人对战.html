@@ -1,8 +1,9 @@
 <!DOCTYPE html>
+
 <html lang="zh-CN">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
 <title>第21节：双人对战 —— Pong项目（一）</title>
 <style>
 *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
@@ -194,86 +195,144 @@ tr:nth-child(even) td { background: #1a3a6e; }
 </style>
 </head>
 <body>
-
 <div class="slide-container">
-  <!-- ====== 第1页：封面 ====== -->
-  <div class="slide active" id="slide1">
-    <div style="flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;">
-      <h1 class="slide-title" style="font-size:3.6rem;">第21节：双人对战</h1>
-      <p class="slide-subtitle" style="font-size:2rem;margin-top:20px;">Pong项目（一）</p>
-      <div style="margin-top:40px;font-size:1.4rem;line-height:2.4;color:#aab;text-align:center;">
-        <p>Pygame游戏开发系列课程</p>
-        <p>面向10-15岁中小学生 | 60分钟面授课</p>
-      </div>
-    </div>
-  </div>
+<!-- ====== 第1页：封面 ====== -->
+<div class="slide active" id="slide1">
+<div style="flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;">
+<h1 class="slide-title" style="font-size:3.6rem;">第21节：双人对战</h1>
+<p class="slide-subtitle" style="font-size:2rem;margin-top:20px;">Pong项目（一）</p>
+<div style="margin-top:40px;font-size:1.4rem;line-height:2.4;color:#aab;text-align:center;">
+<p>Pygame游戏开发系列课程</p>
+<p>面向10-15岁中小学生 | 60分钟面授课</p>
+</div>
+</div>
 
-  <!-- ====== 第2页：Pong游戏简介 ====== -->
-  <div class="slide" id="slide2">
-    <h1 class="slide-title">Pong —— 电子游戏的鼻祖</h1>
-    <div class="box-grid">
-      <div class="box" style="flex:2;">
-        <h4>历史背景</h4>
-        <p>1972年，雅达利（Atari）公司推出了Pong，这是历史上第一款取得商业成功的街机电子游戏。</p>
-        <p>灵感来源于乒乓球运动。两个玩家各控制一个"球拍"，将球击打过网。</p>
-        <p>Pong 的成功开启了整个电子游戏产业！</p>
-      </div>
-      <div class="box" style="flex:1;">
-        <h4>核心规则</h4>
-        <p>玩家1：控制左球拍</p>
-        <p>玩家2：控制右球拍</p>
-        <p>球出界 → 对方得分</p>
-        <p>先得11分者获胜</p>
-      </div>
-    </div>
-    <div style="margin-top:20px;background:#0f3460;padding:20px;border-radius:12px;text-align:center;">
-      <p style="font-size:1.5rem;color:#f5c842;">今天的任务：用Pygame实现你自己的Pong游戏！</p>
-    </div>
-  </div>
+<aside class="notes">【开场】第 1/15 页 · 双人对战
+用 30 秒说明本课目标与学完能做什么，再进入正题。
+大纲考点：**内容**：两个球拍分别用上下键和 W/S 键控制、球在球拍间反弹
 
-  <!-- ====== 第3页：教学目标 ====== -->
-  <div class="slide" id="slide3">
-    <h1 class="slide-title">教学目标</h1>
-    <div class="box-grid">
-      <div class="box">
-        <h4>知识目标</h4>
-        <p>理解双玩家键盘输入的处理方式</p>
-        <p>掌握碰撞检测的基本原理</p>
-        <p>了解出界判定与得分机制</p>
-      </div>
-      <div class="box">
-        <h4>技能目标</h4>
-        <p>使用 <code>pygame.key.get_pressed()</code> 同时处理两个玩家的按键</p>
-        <p>用 <code>Rect.colliderect()</code> 实现碰撞检测</p>
-        <p>根据击球位置改变反弹角度</p>
-      </div>
-      <div class="box">
-        <h4>素养目标</h4>
-        <p>培养逻辑思维能力</p>
-        <p>体验编程创造游戏的成就感</p>
-        <p>激发对物理模拟的兴趣</p>
-      </div>
-    </div>
-  </div>
+**知识点**：
+- 双玩家输入处理（玩家1: W/S，玩家2: ↑↓）
+- 球拍与球碰撞 → 根据击球位置改变反弹角度
+- 出界判定（球越过左/右边界 → 对方得分）
 
-  <!-- ====== 第4页：双玩家输入设计 ====== -->
-  <div class="slide" id="slide4">
-    <h1 class="slide-title">双玩家输入设计</h1>
-    <h2>键盘布局</h2>
-    <table>
-      <tr><th>玩家</th><th>控制的球拍</th><th>向上</th><th>向下</th></tr>
-      <tr><td>玩家1</td><td>左球拍</td><td style="color:#79c0ff;font-weight:bold;">W</td><td style="color:#79c0ff;font-weight:bold;">S</td></tr>
-      <tr><td>玩家2</td><td>右球拍</td><td style="color:#79c0ff;font-weight:bold;">↑</td><td style="color:#79c0ff;font-weight:bold;">↓</td></tr>
-    </table>
-    <h2>核心函数：<code>pygame.key.get_pressed()</code></h2>
-    <p>返回一个元组，包含所有按键的当前状态。按住的键为 <code>True</code>，没按的为 <code>False</code>。</p>
-    <p style="color:#ffa657;">与 KEYDOWN 事件的区别：get_pressed() 适合持续移动，KEYDOWN 适合单次触发。</p>
-  </div>
+**课堂练习**：双人对战 Pong
 
-  <!-- ====== 第5页：输入处理代码 ====== -->
-  <div class="slide" id="slide5">
-    <h1 class="slide-title">输入处理 —— 代码实现</h1>
-    <pre><span class="comment"># 获取所有按键状态</span>
+---
+封面关键词：
+· Pong项目（一）
+· Pygame游戏开发系列课程
+· 面向10-15岁中小学生 | 60分钟面授课
+互动：问学生「今天最想搞清楚什么？」，收 1–2 个期待。</aside>
+</div>
+<!-- ====== 第2页：Pong游戏简介 ====== -->
+<div class="slide" id="slide2">
+<h1 class="slide-title">Pong —— 电子游戏的鼻祖</h1>
+<div class="box-grid">
+<div class="box" style="flex:2;">
+<h4>历史背景</h4>
+<p>1972年，雅达利（Atari）公司推出了Pong，这是历史上第一款取得商业成功的街机电子游戏。</p>
+<p>灵感来源于乒乓球运动。两个玩家各控制一个"球拍"，将球击打过网。</p>
+<p>Pong 的成功开启了整个电子游戏产业！</p>
+</div>
+<div class="box" style="flex:1;">
+<h4>核心规则</h4>
+<p>玩家1：控制左球拍</p>
+<p>玩家2：控制右球拍</p>
+<p>球出界 → 对方得分</p>
+<p>先得11分者获胜</p>
+</div>
+</div>
+<div style="margin-top:20px;background:#0f3460;padding:20px;border-radius:12px;text-align:center;">
+<p style="font-size:1.5rem;color:#f5c842;">今天的任务：用Pygame实现你自己的Pong游戏！</p>
+</div>
+
+<aside class="notes">【讲解】Pong —— 电子游戏的鼻祖
+结合讲义《一、导入（5分钟）——经典Pong游戏演示，双人对战概念》强调：
+· 1. 引入话题（2分钟）
+· &gt; 问："同学们喜欢玩什么游戏？有没有人和朋友一起在同一台电脑上玩过游戏？"
+· 过渡语："今天我们来做电子游戏史上最早的投币街机游戏之一——Pong！1972年由雅达利公司推出，它让电子游戏第一次走进大众视野。"
+· 2. 游戏演示（3分钟）
+· 运行Pong示例程序，展示双人对战效果
+幻灯片上可见要点：
+· 历史背景
+· 1972年，雅达利（Atari）公司推出了Pong，这是历史上第一款取得商业成功的街机电子游戏。
+· 灵感来源于乒乓球运动。两个玩家各控制一个"球拍"，将球击打过网。
+· Pong 的成功开启了整个电子游戏产业！
+讲解时放慢关键术语；用 1 个生活类比 + 1 个反例加深印象。
+本课大纲考点（可适时点题）：**内容**：两个球拍分别用上下键和 W/S 键控制、球在球拍间反弹
+
+**知识点**：
+- 双玩家输入处理（玩家1: W/S，玩家2: ↑↓）
+- 球拍与球碰撞 → 根据击球位置改变反弹角度
+- 出界判定（球越过左/右边界 → 对方得分）
+
+**课堂练习**：双人对战 Pong
+
+---</aside>
+</div>
+<!-- ====== 第3页：教学目标 ====== -->
+<div class="slide" id="slide3">
+<h1 class="slide-title">教学目标</h1>
+<div class="box-grid">
+<div class="box">
+<h4>知识目标</h4>
+<p>理解双玩家键盘输入的处理方式</p>
+<p>掌握碰撞检测的基本原理</p>
+<p>了解出界判定与得分机制</p>
+</div>
+<div class="box">
+<h4>技能目标</h4>
+<p>使用 <code>pygame.key.get_pressed()</code> 同时处理两个玩家的按键</p>
+<p>用 <code>Rect.colliderect()</code> 实现碰撞检测</p>
+<p>根据击球位置改变反弹角度</p>
+</div>
+<div class="box">
+<h4>素养目标</h4>
+<p>培养逻辑思维能力</p>
+<p>体验编程创造游戏的成就感</p>
+<p>激发对物理模拟的兴趣</p>
+</div>
+</div>
+
+<aside class="notes">【讲解】教学目标
+讲义提要：| 目标类型 | 具体目标 |
+|---------|---------|
+| **知识目标** | 理解双玩家键盘输入的处理方式；掌握碰撞检测的基本原理；了解出界判定与得分机制 |
+| **技能目标** | 能使用 `pygame.key.get_pressed()` 同时处理两个玩家的按键；能用 `Rect.colliderect()` 实现球拍与球的碰撞检测；能根据击球位置改变反弹角度 |
+| **素养目标** | 培养逻辑思维能
+本页要点（照着讲即可）：
+· 知识目标
+· 理解双玩家键盘输入的处理方式
+· 掌握碰撞检测的基本原理
+· 了解出界判定与得分机制
+· 技能目标
+· 使用 pygame.key.get_pressed() 同时处理两个玩家的按键
+讲解时放慢关键术语；用 1 个生活类比 + 1 个反例加深印象。</aside>
+</div>
+<!-- ====== 第4页：双玩家输入设计 ====== -->
+<div class="slide" id="slide4">
+<h1 class="slide-title">双玩家输入设计</h1>
+<h2>键盘布局</h2>
+<table>
+<tr><th>玩家</th><th>控制的球拍</th><th>向上</th><th>向下</th></tr>
+<tr><td>玩家1</td><td>左球拍</td><td style="color:#79c0ff;font-weight:bold;">W</td><td style="color:#79c0ff;font-weight:bold;">S</td></tr>
+<tr><td>玩家2</td><td>右球拍</td><td style="color:#79c0ff;font-weight:bold;">↑</td><td style="color:#79c0ff;font-weight:bold;">↓</td></tr>
+</table>
+<h2>核心函数：<code>pygame.key.get_pressed()</code></h2>
+<p>返回一个元组，包含所有按键的当前状态。按住的键为 <code>True</code>，没按的为 <code>False</code>。</p>
+<p style="color:#ffa657;">与 KEYDOWN 事件的区别：get_pressed() 适合持续移动，KEYDOWN 适合单次触发。</p>
+
+<aside class="notes">【讲解】双玩家输入设计
+本页要点（照着讲即可）：
+· 返回一个元组，包含所有按键的当前状态。按住的键为 True ，没按的为 False 。
+· 与 KEYDOWN 事件的区别：get_pressed() 适合持续移动，KEYDOWN 适合单次触发。
+讲解时放慢关键术语；用 1 个生活类比 + 1 个反例加深印象。</aside>
+</div>
+<!-- ====== 第5页：输入处理代码 ====== -->
+<div class="slide" id="slide5">
+<h1 class="slide-title">输入处理 —— 代码实现</h1>
+<pre><span class="comment"># 获取所有按键状态</span>
 <span class="kw">keys</span> = pygame.key.get_pressed()
 
 <span class="comment"># 玩家1：左球拍 (W/S)</span>
@@ -294,15 +353,20 @@ tr:nth-child(even) td { background: #1a3a6e; }
 <span class="kw">if</span> left_paddle.bottom &gt; <span class="num">500</span>:
     left_paddle.bottom = <span class="num">500</span>
 <span class="comment"># 右球拍同理...</span></pre>
-    <p style="margin-top:12px;color:#f5c842;">注意：使用独立的 <code>if</code> 语句，不要用 <code>elif</code>！否则两个玩家不能同时按键。</p>
-  </div>
+<p style="margin-top:12px;color:#f5c842;">注意：使用独立的 <code>if</code> 语句，不要用 <code>elif</code>！否则两个玩家不能同时按键。</p>
 
-  <!-- ====== 第6页：球拍与球的Rect ====== -->
-  <div class="slide" id="slide6">
-    <h1 class="slide-title">球拍与球的 Rect 对象</h1>
-    <div class="box-grid">
-      <div class="box">
-        <h4>创建球拍 Rect</h4>
+<aside class="notes">【讲解】输入处理 —— 代码实现
+本页要点（照着讲即可）：
+· 注意：使用独立的 if 语句，不要用 elif ！否则两个玩家不能同时按键。
+代码页节奏：先读懂输入输出 → 再走主流程 → 最后点出易错点（边界/类型/下标）。
+可让学生预测下一行输出，再运行对照。</aside>
+</div>
+<!-- ====== 第6页：球拍与球的Rect ====== -->
+<div class="slide" id="slide6">
+<h1 class="slide-title">球拍与球的 Rect 对象</h1>
+<div class="box-grid">
+<div class="box">
+<h4>创建球拍 Rect</h4>
 <pre><span class="comment"># x, y, 宽度, 高度</span>
 left_paddle = pygame.Rect(
     <span class="num">30</span>, <span class="num">200</span>, <span class="num">15</span>, <span class="num">100</span>
@@ -310,83 +374,109 @@ left_paddle = pygame.Rect(
 right_paddle = pygame.Rect(
     <span class="num">755</span>, <span class="num">200</span>, <span class="num">15</span>, <span class="num">100</span>
 )</pre>
-      </div>
-      <div class="box">
-        <h4>创建球 Rect</h4>
+</div>
+<div class="box">
+<h4>创建球 Rect</h4>
 <pre><span class="comment"># 球用正方形表示</span>
 ball = pygame.Rect(
     <span class="num">390</span>, <span class="num">240</span>, <span class="num">20</span>, <span class="num">20</span>
 )</pre>
-      </div>
-    </div>
-    <p style="margin-top:16px;"><strong>为什么用 Rect？</strong> Pygame 的 Rect 自带碰撞检测方法，管理位置非常方便。</p>
-    <p><strong>常用属性：</strong> <code>x, y, centerx, centery, top, bottom, left, right</code></p>
-  </div>
+</div>
+</div>
+<p style="margin-top:16px;"><strong>为什么用 Rect？</strong> Pygame 的 Rect 自带碰撞检测方法，管理位置非常方便。</p>
+<p><strong>常用属性：</strong> <code>x, y, centerx, centery, top, bottom, left, right</code></p>
 
-  <!-- ====== 第7页：反弹物理 ====== -->
-  <div class="slide" id="slide7">
-    <h1 class="slide-title">反弹物理</h1>
-    <h2>上下边界的简单反弹</h2>
-    <pre><span class="kw">if</span> ball.top &lt;= <span class="num">0</span> <span class="kw">or</span> ball.bottom &gt;= HEIGHT:
+<aside class="notes">【讲解】球拍与球的 Rect 对象
+本页要点（照着讲即可）：
+· 创建球拍 Rect
+· 创建球 Rect
+· 为什么用 Rect？ Pygame 的 Rect 自带碰撞检测方法，管理位置非常方便。
+· 为什么用 Rect？
+· 常用属性： x, y, centerx, centery, top, bottom, left, right
+· 常用属性：
+讲解时放慢关键术语；用 1 个生活类比 + 1 个反例加深印象。</aside>
+</div>
+<!-- ====== 第7页：反弹物理 ====== -->
+<div class="slide" id="slide7">
+<h1 class="slide-title">反弹物理</h1>
+<h2>上下边界的简单反弹</h2>
+<pre><span class="kw">if</span> ball.top &lt;= <span class="num">0</span> <span class="kw">or</span> ball.bottom &gt;= HEIGHT:
     speed_y = -speed_y  <span class="comment"># 垂直方向反转</span></pre>
-    <h2>球拍碰撞 —— 水平方向反转</h2>
-    <pre><span class="kw">if</span> ball.colliderect(paddle):
+<h2>球拍碰撞 —— 水平方向反转</h2>
+<pre><span class="kw">if</span> ball.colliderect(paddle):
     speed_x = -speed_x  <span class="comment"># 水平方向反转</span></pre>
-    <p style="font-size:1.5rem;color:#f5c842;text-align:center;margin:16px 0;">
+<p style="font-size:1.5rem;color:#f5c842;text-align:center;margin:16px 0;">
       colliderect() 返回 True 表示两个矩形有重叠区域
     </p>
-  </div>
 
-  <!-- ====== 第8页：碰撞角度变化 ====== -->
-  <div class="slide" id="slide8">
-    <h1 class="slide-title">碰撞角度变化 —— 核心知识点</h1>
-    <h2>问题：每次都45度反弹，太单调了！</h2>
-    <p style="color:#aab;">解决方案：根据球击中球拍的位置，调整反弹的垂直速度。</p>
-    <h2>原理：计算球心与球拍中心的偏移</h2>
-    <pre><span class="comment"># 计算球心与球拍中心的相对偏移（归一化到 -1 到 1）</span>
+<aside class="notes">【讲解】反弹物理
+本页要点（照着讲即可）：
+· colliderect() 返回 True 表示两个矩形有重叠区域
+讲解时放慢关键术语；用 1 个生活类比 + 1 个反例加深印象。</aside>
+</div>
+<!-- ====== 第8页：碰撞角度变化 ====== -->
+<div class="slide" id="slide8">
+<h1 class="slide-title">碰撞角度变化 —— 核心知识点</h1>
+<h2>问题：每次都45度反弹，太单调了！</h2>
+<p style="color:#aab;">解决方案：根据球击中球拍的位置，调整反弹的垂直速度。</p>
+<h2>原理：计算球心与球拍中心的偏移</h2>
+<pre><span class="comment"># 计算球心与球拍中心的相对偏移（归一化到 -1 到 1）</span>
 offset_y = (ball.centery - paddle.centery) / (paddle.height / <span class="num">2</span>)
 
 <span class="comment"># offset_y: -1 = 球拍顶部, 0 = 中心, 1 = 球拍底部</span>
 speed_y = <span class="builtin">int</span>(offset_y * <span class="num">6</span>)  <span class="comment"># 6 = 最大垂直速度</span>
 speed_x = -speed_x               <span class="comment"># 水平方向始终反转</span></pre>
-  </div>
 
-  <!-- ====== 第9页：击球位置角度图解 ====== -->
-  <div class="slide" id="slide9">
-    <h1 class="slide-title">击球位置与反弹角度</h1>
-    <table>
-      <tr><th>击中位置</th><th>offset_y 范围</th><th>效果</th><th>图示方向</th></tr>
-      <tr><td>球拍顶部</td><td>-1.0 ~ -0.5</td><td>大角度向上弹</td><td>↖</td></tr>
-      <tr><td>球拍中上部</td><td>-0.5 ~ 0</td><td>小角度向上弹</td><td>↗</td></tr>
-      <tr><td>球拍正中</td><td>≈ 0</td><td>接近水平反弹</td><td>→</td></tr>
-      <tr><td>球拍中下部</td><td>0 ~ 0.5</td><td>小角度向下弹</td><td>↘</td></tr>
-      <tr><td>球拍底部</td><td>0.5 ~ 1.0</td><td>大角度向下弹</td><td>↙</td></tr>
-    </table>
-    <p style="margin-top:16px;font-size:1.5rem;color:#ffa657;">类比：就像打乒乓球——球拍角度不同，回球方向就不同！</p>
-  </div>
+<aside class="notes">【讲解】碰撞角度变化 —— 核心知识点
+本页要点（照着讲即可）：
+· 解决方案：根据球击中球拍的位置，调整反弹的垂直速度。
+讲解时放慢关键术语；用 1 个生活类比 + 1 个反例加深印象。</aside>
+</div>
+<!-- ====== 第9页：击球位置角度图解 ====== -->
+<div class="slide" id="slide9">
+<h1 class="slide-title">击球位置与反弹角度</h1>
+<table>
+<tr><th>击中位置</th><th>offset_y 范围</th><th>效果</th><th>图示方向</th></tr>
+<tr><td>球拍顶部</td><td>-1.0 ~ -0.5</td><td>大角度向上弹</td><td>↖</td></tr>
+<tr><td>球拍中上部</td><td>-0.5 ~ 0</td><td>小角度向上弹</td><td>↗</td></tr>
+<tr><td>球拍正中</td><td>≈ 0</td><td>接近水平反弹</td><td>→</td></tr>
+<tr><td>球拍中下部</td><td>0 ~ 0.5</td><td>小角度向下弹</td><td>↘</td></tr>
+<tr><td>球拍底部</td><td>0.5 ~ 1.0</td><td>大角度向下弹</td><td>↙</td></tr>
+</table>
+<p style="margin-top:16px;font-size:1.5rem;color:#ffa657;">类比：就像打乒乓球——球拍角度不同，回球方向就不同！</p>
 
-  <!-- ====== 第10页：出界判定与得分 ====== -->
-  <div class="slide" id="slide10">
-    <h1 class="slide-title">出界判定与得分机制</h1>
-    <h2>判定逻辑</h2>
-    <pre><span class="kw">if</span> ball.left &lt;= <span class="num">0</span>:          <span class="comment"># 球越过左边界</span>
+<aside class="notes">【讲解】击球位置与反弹角度
+本页要点（照着讲即可）：
+· 类比：就像打乒乓球——球拍角度不同，回球方向就不同！
+讲解时放慢关键术语；用 1 个生活类比 + 1 个反例加深印象。</aside>
+</div>
+<!-- ====== 第10页：出界判定与得分 ====== -->
+<div class="slide" id="slide10">
+<h1 class="slide-title">出界判定与得分机制</h1>
+<h2>判定逻辑</h2>
+<pre><span class="kw">if</span> ball.left &lt;= <span class="num">0</span>:          <span class="comment"># 球越过左边界</span>
     right_score += <span class="num">1</span>         <span class="comment"># 右方得分！</span>
     reset_ball()            <span class="comment"># 重新发球</span>
 
 <span class="kw">if</span> ball.right &gt;= WIDTH:    <span class="comment"># 球越过右边界</span>
     left_score += <span class="num">1</span>          <span class="comment"># 左方得分！</span>
     reset_ball()</pre>
-    <p style="color:#f5c842;font-size:1.3rem;margin-top:12px;">
+<p style="color:#f5c842;font-size:1.3rem;margin-top:12px;">
       注意：球出<strong>左</strong>界 → <strong>右</strong>方得分；球出<strong>右</strong>界 → <strong>左</strong>方得分。不要搞反！
     </p>
-    <h2>重新发球</h2>
-    <p>球回到屏幕中央，随机选择一个方向发出。</p>
-  </div>
+<h2>重新发球</h2>
+<p>球回到屏幕中央，随机选择一个方向发出。</p>
 
-  <!-- ====== 第11页：完整代码（上） ====== -->
-  <div class="slide" id="slide11">
-    <h1 class="slide-title">完整代码（一）—— 初始化与主循环</h1>
-    <pre><span class="kw">import</span> pygame, sys, random
+<aside class="notes">【讲解】出界判定与得分机制
+本页要点（照着讲即可）：
+· 注意：球出 左 界 → 右 方得分；球出 右 界 → 左 方得分。不要搞反！
+· 球回到屏幕中央，随机选择一个方向发出。
+讲解时放慢关键术语；用 1 个生活类比 + 1 个反例加深印象。</aside>
+</div>
+<!-- ====== 第11页：完整代码（上） ====== -->
+<div class="slide" id="slide11">
+<h1 class="slide-title">完整代码（一）—— 初始化与主循环</h1>
+<pre><span class="kw">import</span> pygame, sys, random
 
 <span class="comment"># 初始化</span>
 pygame.init()
@@ -417,12 +507,22 @@ ball_speed_y = <span class="num">4</span> * random.choice([-<span class="num">1<
         <span class="kw">if</span> event.type == pygame.QUIT:
             <span class="builtin">running</span> = <span class="kw">False</span>
     <span class="comment"># ... 按键、移动、碰撞、绘制 ...</span></pre>
-  </div>
 
-  <!-- ====== 第12页：完整代码（下） ====== -->
-  <div class="slide" id="slide12">
-    <h1 class="slide-title">完整代码（二）—— 核心逻辑</h1>
-    <pre><span class="comment"># === 按键处理 ===</span>
+<aside class="notes">【讲解】完整代码（一）—— 初始化与主循环
+本页要点（照着讲即可）：
+· 完整代码（一）—— 初始化与主循环
+· import
+· pygame, sys, random
+· # 初始化
+· pygame.init()
+· WIDTH, HEIGHT =
+代码页节奏：先读懂输入输出 → 再走主流程 → 最后点出易错点（边界/类型/下标）。
+可让学生预测下一行输出，再运行对照。</aside>
+</div>
+<!-- ====== 第12页：完整代码（下） ====== -->
+<div class="slide" id="slide12">
+<h1 class="slide-title">完整代码（二）—— 核心逻辑</h1>
+<pre><span class="comment"># === 按键处理 ===</span>
 keys = pygame.key.get_pressed()
 <span class="kw">if</span> keys[pygame.K_w] <span class="kw">and</span> left_paddle.top &gt; <span class="num">0</span>:
     left_paddle.y -= <span class="num">5</span>
@@ -453,73 +553,116 @@ ball.y += ball_speed_y
     right_score += <span class="num">1</span>; reset_ball()
 <span class="kw">if</span> ball.right &gt;= WIDTH: <span class="comment"># 出右界 → 左方得分</span>
     left_score += <span class="num">1</span>; reset_ball()</pre>
-  </div>
 
-  <!-- ====== 第13页：绘制与文字 ====== -->
-  <div class="slide" id="slide13">
-    <h1 class="slide-title">绘制与文字显示</h1>
-    <h2>绘制所有元素</h2>
-    <pre>screen.fill(BLACK)
+<aside class="notes">【讲解】完整代码（二）—— 核心逻辑
+本页要点（照着讲即可）：
+· 完整代码（二）—— 核心逻辑
+· # === 按键处理 ===
+· keys = pygame.key.get_pressed()
+· keys[pygame.K_w]
+· left_paddle.top &gt;
+· left_paddle.y -=
+代码页节奏：先读懂输入输出 → 再走主流程 → 最后点出易错点（边界/类型/下标）。
+可让学生预测下一行输出，再运行对照。</aside>
+</div>
+<!-- ====== 第13页：绘制与文字 ====== -->
+<div class="slide" id="slide13">
+<h1 class="slide-title">绘制与文字显示</h1>
+<h2>绘制所有元素</h2>
+<pre>screen.fill(BLACK)
 pygame.draw.rect(screen, WHITE, left_paddle)   <span class="comment"># 左球拍</span>
 pygame.draw.rect(screen, WHITE, right_paddle)  <span class="comment"># 右球拍</span>
 pygame.draw.ellipse(screen, WHITE, ball)       <span class="comment"># 球（圆形）</span>
 pygame.draw.aaline(screen, GRAY, (WIDTH//<span class="num">2</span>,<span class="num">0</span>), (WIDTH//<span class="num">2</span>,HEIGHT))  <span class="comment"># 中线</span></pre>
-    <h2>文字渲染（比分）</h2>
-    <pre>font = pygame.font.Font(<span class="kw">None</span>, <span class="num">48</span>)
+<h2>文字渲染（比分）</h2>
+<pre>font = pygame.font.Font(<span class="kw">None</span>, <span class="num">48</span>)
 left_text = font.render(<span class="builtin">str</span>(left_score), <span class="kw">True</span>, WHITE)
 right_text = font.render(<span class="builtin">str</span>(right_score), <span class="kw">True</span>, WHITE)
 screen.blit(left_text, (WIDTH//<span class="num">4</span>, <span class="num">20</span>))
 screen.blit(right_text, (WIDTH*<span class="num">3</span>//<span class="num">4</span>, <span class="num">20</span>))</pre>
-    <p style="color:#ffa657;margin-top:8px;">不使用外部图片，全部用 Surface 绘制！</p>
-  </div>
+<p style="color:#ffa657;margin-top:8px;">不使用外部图片，全部用 Surface 绘制！</p>
 
-  <!-- ====== 第14页：课堂练习 ====== -->
-  <div class="slide" id="slide14">
-    <h1 class="slide-title">课堂练习</h1>
-    <h2>基础任务（15分钟）—— 代码填空</h2>
-    <p>在教师提供的代码框架上，完成以下内容：</p>
-    <ol>
-      <li>左右球拍的按键绑定（W/S 和 ↑↓）</li>
-      <li>球的碰撞检测与反弹（包含角度变化）</li>
-      <li>出界判定与得分逻辑</li>
-    </ol>
-    <h2>进阶任务（10分钟）—— 自由发挥</h2>
-    <ul>
-      <li>调整球的速度，让游戏更难/更简单</li>
-      <li>修改球拍大小，改变游戏难度</li>
-      <li>给球拍添加颜色变化（得分后闪烁）</li>
-      <li>添加胜利条件（先得5分获胜）</li>
-    </ul>
-  </div>
-
-  <!-- ====== 第15页：总结 ====== -->
-  <div class="slide" id="slide15">
-    <h1 class="slide-title">知识总结</h1>
-    <table>
-      <tr><th>知识点</th><th>核心代码</th></tr>
-      <tr><td>双玩家输入</td><td><code>pygame.key.get_pressed()</code> + 不同按键</td></tr>
-      <tr><td>碰撞检测</td><td><code>rect.colliderect()</code></td></tr>
-      <tr><td>角度变化</td><td><code>offset_y * 系数</code> 根据击球位置</td></tr>
-      <tr><td>出界得分</td><td>判断 <code>ball.left</code> / <code>ball.right</code></td></tr>
-      <tr><td>文字渲染</td><td><code>font.render()</code> + <code>screen.blit()</code></td></tr>
-    </table>
-    <h2>课后作业</h2>
-    <ol>
-      <li><strong>必做：</strong>添加胜利条件——先得5分者获胜，显示"玩家X获胜！"</li>
-      <li><strong>选做：</strong>将W/S控制改为A/Z，观察需要修改哪些代码</li>
-      <li><strong>挑战：</strong>让球速随回合数逐渐加快</li>
-    </ol>
-    <p style="text-align:center;margin-top:20px;font-size:1.6rem;color:#f5c842;">下节预告：AI对战 —— 人机Pong！</p>
-  </div>
+<aside class="notes">【讲解】绘制与文字显示
+本页要点（照着讲即可）：
+· 不使用外部图片，全部用 Surface 绘制！
+讲解时放慢关键术语；用 1 个生活类比 + 1 个反例加深印象。</aside>
 </div>
+<!-- ====== 第14页：课堂练习 ====== -->
+<div class="slide" id="slide14">
+<h1 class="slide-title">课堂练习</h1>
+<h2>基础任务（15分钟）—— 代码填空</h2>
+<p>在教师提供的代码框架上，完成以下内容：</p>
+<ol>
+<li>左右球拍的按键绑定（W/S 和 ↑↓）</li>
+<li>球的碰撞检测与反弹（包含角度变化）</li>
+<li>出界判定与得分逻辑</li>
+</ol>
+<h2>进阶任务（10分钟）—— 自由发挥</h2>
+<ul>
+<li>调整球的速度，让游戏更难/更简单</li>
+<li>修改球拍大小，改变游戏难度</li>
+<li>给球拍添加颜色变化（得分后闪烁）</li>
+<li>添加胜利条件（先得5分获胜）</li>
+</ul>
 
+<aside class="notes">【讲解】课堂练习
+结合讲义《三、课堂练习（25分钟）——完成双人Pong》强调：
+· 【基础任务】完成代码填空（15分钟）
+· 教师提供代码框架（核心结构已写好，关键逻辑留空），学生填空完成：
+· 左右球拍的按键绑定
+· 球的碰撞检测与反弹
+· 出界判定与得分
+幻灯片上可见要点：
+· 在教师提供的代码框架上，完成以下内容：
+· 左右球拍的按键绑定（W/S 和 ↑↓）
+· 球的碰撞检测与反弹（包含角度变化）
+· 出界判定与得分逻辑
+练习页节奏：先独立想 1 分钟 → 再点拨思路 → 最后对答案讲为什么。</aside>
+</div>
+<!-- ====== 第15页：总结 ====== -->
+<div class="slide" id="slide15">
+<h1 class="slide-title">知识总结</h1>
+<table>
+<tr><th>知识点</th><th>核心代码</th></tr>
+<tr><td>双玩家输入</td><td><code>pygame.key.get_pressed()</code> + 不同按键</td></tr>
+<tr><td>碰撞检测</td><td><code>rect.colliderect()</code></td></tr>
+<tr><td>角度变化</td><td><code>offset_y * 系数</code> 根据击球位置</td></tr>
+<tr><td>出界得分</td><td>判断 <code>ball.left</code> / <code>ball.right</code></td></tr>
+<tr><td>文字渲染</td><td><code>font.render()</code> + <code>screen.blit()</code></td></tr>
+</table>
+<h2>课后作业</h2>
+<ol>
+<li><strong>必做：</strong>添加胜利条件——先得5分者获胜，显示"玩家X获胜！"</li>
+<li><strong>选做：</strong>将W/S控制改为A/Z，观察需要修改哪些代码</li>
+<li><strong>挑战：</strong>让球速随回合数逐渐加快</li>
+</ol>
+<p style="text-align:center;margin-top:20px;font-size:1.6rem;color:#f5c842;">下节预告：AI对战 —— 人机Pong！</p>
+
+<aside class="notes">【收尾】回顾本课主线：知识总结
+对照大纲再过一遍：**内容**：两个球拍分别用上下键和 W/S 键控制、球在球拍间反弹
+
+**知识点**：
+- 双玩家输入处理（玩家1: W/S，玩家2: ↑↓）
+- 球拍与球碰撞 → 根据击球位置改变反弹角度
+- 出界判定（球越过左/右边界 → 对方得分）
+
+**课堂练习**：双人对战 Pong
+
+---
+板书/口述要点：
+· 必做： 添加胜利条件——先得5分者获胜，显示"玩家X获胜！"
+· 选做： 将W/S控制改为A/Z，观察需要修改哪些代码
+· 挑战： 让球速随回合数逐渐加快
+· 下节预告：AI对战 —— 人机Pong！
+结束前留 2 分钟答疑；布置 1 道小练习检验是否真正掌握。</aside>
+</div>
+</div>
 <!-- 导航栏 -->
 <div class="nav">
-  <button onclick="prevSlide()">← 上一页</button>
-  <span class="page-num" id="pageNum">1 / 15</span>
-  <button onclick="nextSlide()">下一页 →</button>
+<button onclick="prevSlide()">← 上一页</button>
+<span class="page-num" id="pageNum">1 / 15</span>
+<button onclick="nextSlide()">下一页 →</button>
 </div>
-
 <script>
 let current = 0;
 const slides = document.querySelectorAll('.slide');
@@ -540,7 +683,6 @@ document.addEventListener('keydown', function(e) {
   if (e.key === 'ArrowLeft') { e.preventDefault(); prevSlide(); }
 });
 </script>
-
 <script src="courseware-ui.js"></script>
 <script src="presenter.js"></script>
 </body>

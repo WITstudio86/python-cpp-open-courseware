@@ -1,8 +1,9 @@
 <!DOCTYPE html>
+
 <html lang="zh-CN">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
 <title>第31课：区间DP基础</title>
 <style>
   * { margin: 0; padding: 0; box-sizing: border-box; }
@@ -373,168 +374,180 @@
 </head>
 <body>
 <div class="container">
-
 <!-- ===== Slide 1: Title ===== -->
 <div class="slide active title-slide" data-index="0">
-  <div class="badge">CSP-S 算法专题</div>
-  <h1>第31课：区间DP基础</h1>
-  <p class="subtitle">
-    石子合并 · 最优三角剖分 · 矩阵链乘法 · 回文串 · 五步转移法<br>
+<div class="badge">CSP-S 算法专题</div>
+<h1>第31课：区间DP基础</h1>
+<p class="subtitle">
+    石子合并 · 最优三角剖分 · 矩阵链乘法 · 回文串 · 五步转移法<br/>
     区间DP模型是CSP-S提高组最核心的动态规划模型之一
   </p>
-  <div class="topic-grid">
-    <div class="topic-item">石子合并</div>
-    <div class="topic-item">最优三角剖分</div>
-    <div class="topic-item">矩阵链乘法</div>
-    <div class="topic-item">回文串问题</div>
-    <div class="topic-item">五步转移法</div>
-    <div class="topic-item">真题精练</div>
-  </div>
-  <p style="margin-top: 30px; color: #6b7c8e; font-size: 0.88rem;">
+<div class="topic-grid">
+<div class="topic-item">石子合并</div>
+<div class="topic-item">最优三角剖分</div>
+<div class="topic-item">矩阵链乘法</div>
+<div class="topic-item">回文串问题</div>
+<div class="topic-item">五步转移法</div>
+<div class="topic-item">真题精练</div>
+</div>
+<p style="margin-top: 30px; color: #6b7c8e; font-size: 0.88rem;">
     时间复杂度：O(n³) | 可优化至 O(n²)（四边形不等式）| 本课适用 n ≤ 500
   </p>
-</div>
 
+<aside class="notes">【开场】第 1/8 页 · 区间DP基础
+用 30 秒说明本课目标与学完能做什么，再进入正题。
+大纲考点：区间DP模型、链长递增枚举、最优三角剖分
+配套练习方向：石子合并、矩阵链乘
+封面关键词：
+· 石子合并 · 最优三角剖分 · 矩阵链乘法 · 回文串 · 五步转移法 区间DP模型是CSP-S提高组最核心的动态规划模型之一
+· 时间复杂度：O(n³) | 可优化至 O(n²)（四边形不等式）| 本课适用 n ≤ 500
+互动：问学生「今天最想搞清楚什么？」，收 1–2 个期待。</aside>
+</div>
 <!-- ===== Slide 2: 区间DP概念 ===== -->
 <div class="slide" data-index="1">
-  <h1>区间DP概念</h1>
-
-  <h2>定义</h2>
-  <p>
+<h1>区间DP概念</h1>
+<h2>定义</h2>
+<p>
     区间动态规划（Interval DP）是一类在<span class="ac">区间</span>上进行动态规划的方法。
     它将原问题分解为若干个<span class="hl">小区间</span>上的子问题，先求解小区间的最优解，
     再通过某种<span class="hl">合并方式</span>得到大区间的最优解。
   </p>
-
-  <h2>核心特征</h2>
-  <ul>
-    <li>状态定义为<span class="ac">dp[l][r]</span>，表示区间 [l, r] 上的最优解</li>
-    <li>按<span class="hl">区间长度从小到大</span>递推（长度=1 为边界）</li>
-    <li>大区间的解由<span class="hl">两个更小的子区间合并</span>得到</li>
-    <li>最终答案通常是 <span class="ac">dp[0][n-1]</span> 或 <span class="ac">dp[1][n]</span></li>
-  </ul>
-
-  <h2>与线性DP的对比</h2>
-  <table>
-    <tr><th>维度</th><th>线性DP</th><th>区间DP</th></tr>
-    <tr><td>状态定义</td><td class="ac">dp[i]</td><td class="ac">dp[l][r]</td></tr>
-    <tr><td>递推方向</td><td>按位置 i 递推</td><td class="hl">按区间长度 len 递推</td></tr>
-    <tr><td>典型问题</td><td>LIS、LCS、背包</td><td>石子合并、矩阵链乘法</td></tr>
-    <tr><td>时间复杂度</td><td>O(n) ~ O(n²)</td><td>O(n³)，可优化至 O(n²)</td></tr>
-  </table>
-
-  <div class="note-box">
-    <b>判断依据</b>：如果问题要求将一个序列「合并」成一整个结果，且合并操作只能发生在<b>相邻元素</b>之间 → 大概率是区间DP。
+<h2>核心特征</h2>
+<ul>
+<li>状态定义为<span class="ac">dp[l][r]</span>，表示区间 [l, r] 上的最优解</li>
+<li>按<span class="hl">区间长度从小到大</span>递推（长度=1 为边界）</li>
+<li>大区间的解由<span class="hl">两个更小的子区间合并</span>得到</li>
+<li>最终答案通常是 <span class="ac">dp[0][n-1]</span> 或 <span class="ac">dp[1][n]</span></li>
+</ul>
+<h2>与线性DP的对比</h2>
+<table>
+<tr><th>维度</th><th>线性DP</th><th>区间DP</th></tr>
+<tr><td>状态定义</td><td class="ac">dp[i]</td><td class="ac">dp[l][r]</td></tr>
+<tr><td>递推方向</td><td>按位置 i 递推</td><td class="hl">按区间长度 len 递推</td></tr>
+<tr><td>典型问题</td><td>LIS、LCS、背包</td><td>石子合并、矩阵链乘法</td></tr>
+<tr><td>时间复杂度</td><td>O(n) ~ O(n²)</td><td>O(n³)，可优化至 O(n²)</td></tr>
+</table>
+<div class="note-box">
+<b>判断依据</b>：如果问题要求将一个序列「合并」成一整个结果，且合并操作只能发生在<b>相邻元素</b>之间 → 大概率是区间DP。
   </div>
-</div>
 
+<aside class="notes">【讲解】区间DP概念
+本页要点（照着讲即可）：
+· 区间动态规划（Interval DP）是一类在 区间 上进行动态规划的方法。
+ 它将原问题分解为若干个 小区间 上的子问题，先求解小区间的最优解，
+ 再通过某种 合并方式 得到大区间的最优解。
+· 状态定义为 dp[l][r] ，表示区间 [l, r] 上的最优解
+· 按 区间长度从小到大 递推（长度=1 为边界）
+· 大区间的解由 两个更小的子区间合并 得到
+· 最终答案通常是 dp[0][n-1] 或 dp[1][n]
+讲解时放慢关键术语；用 1 个生活类比 + 1 个反例加深印象。
+本课大纲考点（可适时点题）：区间DP模型、链长递增枚举、最优三角剖分</aside>
+</div>
 <!-- ===== Slide 3: 五步转移法 ===== -->
 <div class="slide" data-index="2">
-  <h1>五步转移法（通用框架）</h1>
-  <p>区间DP有一个标准的代码框架，掌握它即可解决 80% 的区间DP问题。</p>
-
-  <table>
-    <tr><th>步骤</th><th>内容</th><th>代码</th></tr>
-    <tr><td>第一步</td><td>枚举区间长度 len</td><td class="ac">for (int len = 2; len ≤ n; ++len)</td></tr>
-    <tr><td>第二步</td><td>枚举左端点 l</td><td class="ac">for (int l = 0; l+len-1 &lt; n; ++l)</td></tr>
-    <tr><td>第三步</td><td>计算右端点 r</td><td class="ac">int r = l + len - 1;</td></tr>
-    <tr><td>第四步</td><td>枚举分割点 k</td><td class="ac">for (int k = l; k &lt; r; ++k)</td></tr>
-    <tr><td>第五步</td><td>状态合并转移</td><td class="ac">dp[l][r] = merge(dp[l][k], dp[k+1][r])</td></tr>
-  </table>
-
-  <h2>为什么必须按长度枚举？</h2>
-  <p>
+<h1>五步转移法（通用框架）</h1>
+<p>区间DP有一个标准的代码框架，掌握它即可解决 80% 的区间DP问题。</p>
+<table>
+<tr><th>步骤</th><th>内容</th><th>代码</th></tr>
+<tr><td>第一步</td><td>枚举区间长度 len</td><td class="ac">for (int len = 2; len ≤ n; ++len)</td></tr>
+<tr><td>第二步</td><td>枚举左端点 l</td><td class="ac">for (int l = 0; l+len-1 &lt; n; ++l)</td></tr>
+<tr><td>第三步</td><td>计算右端点 r</td><td class="ac">int r = l + len - 1;</td></tr>
+<tr><td>第四步</td><td>枚举分割点 k</td><td class="ac">for (int k = l; k &lt; r; ++k)</td></tr>
+<tr><td>第五步</td><td>状态合并转移</td><td class="ac">dp[l][r] = merge(dp[l][k], dp[k+1][r])</td></tr>
+</table>
+<h2>为什么必须按长度枚举？</h2>
+<p>
     计算 <span class="ac">dp[l][r]</span> 时，需要用到 <span class="ac">dp[l][k]</span> 和
     <span class="ac">dp[k+1][r]</span> —— 这些都是<span class="hl">更短的区间</span>。
     因此必须先计算出所有长度较小的区间，才能递推出大区间。这就是按区间长度从小到大的原因。
   </p>
-
-  <div class="code-block"><span class="kw">for</span> (<span class="kw">int</span> len = <span class="nu">2</span>; len &lt;= n; ++len)          <span class="cm">// ① 枚举区间长度（len=1是边界）</span>
-    <span class="kw">for</span> (<span class="kw">int</span> l = <span class="nu">0</span>; l + len - <span class="nu">1</span> &lt; n; ++l)   <span class="cm">// ② 枚举左端点</span>
+<div class="code-block"><span class="kw">for</span> (<span class="kw">int</span> len = <span class="nu">2</span>; len &lt;= n; ++len)          <span class="cm">// ① 枚举区间长度（len=1是边界）</span>
+<span class="kw">for</span> (<span class="kw">int</span> l = <span class="nu">0</span>; l + len - <span class="nu">1</span> &lt; n; ++l)   <span class="cm">// ② 枚举左端点</span>
     {
         <span class="kw">int</span> r = l + len - <span class="nu">1</span>;                   <span class="cm">// ③ 计算右端点</span>
-        <span class="kw">for</span> (<span class="kw">int</span> k = l; k &lt; r; ++k)            <span class="cm">// ④ 枚举分割点 k ∈ [l, r-1]</span>
+<span class="kw">for</span> (<span class="kw">int</span> k = l; k &lt; r; ++k)            <span class="cm">// ④ 枚举分割点 k ∈ [l, r-1]</span>
             dp[l][r] = <span class="fn">min</span>(dp[l][r],          <span class="cm">// ⑤ 状态转移</span>
                 dp[l][k] + dp[k+<span class="nu">1</span>][r] + cost(l, r));
     }</div>
-
-  <div class="note-box">
-    <b>关键细节</b>：分割点 k 的范围因问题而异 → 石子合并: k∈[l, r-1]，最优三角剖分: k∈[l+1, r-1]。
+<div class="note-box">
+<b>关键细节</b>：分割点 k 的范围因问题而异 → 石子合并: k∈[l, r-1]，最优三角剖分: k∈[l+1, r-1]。
   </div>
-</div>
 
+<aside class="notes">【讲解】五步转移法（通用框架）
+本页要点（照着讲即可）：
+· 区间DP有一个标准的代码框架，掌握它即可解决 80% 的区间DP问题。
+· 计算 dp[l][r] 时，需要用到 dp[l][k] 和 dp[k+1][r] —— 这些都是 更短的区间 。
+ 因此必须先计算出所有长度较小的区间，才能递推出大区间。这就是按区间长度从小到大的原因。
+讲解时放慢关键术语；用 1 个生活类比 + 1 个反例加深印象。</aside>
+</div>
 <!-- ===== Slide 4: 石子合并详解 ===== -->
 <div class="slide" data-index="3">
-  <h1>石子合并问题详解</h1>
-
-  <h2>问题描述</h2>
-  <p>
+<h1>石子合并问题详解</h1>
+<h2>问题描述</h2>
+<p>
     n 堆石子排成一行，每堆重量为 aᵢ。每次只能<span class="hl">合并相邻两堆</span>，
     合并代价 = 两堆重量之和。经过 n-1 次合并后所有石子合成一堆。求<span class="hl">最小总代价</span>。
   </p>
-
-  <h2>状态定义与转移方程</h2>
-  <p><span class="ac">dp[l][r]</span> = 将区间 [l, r] 的全部石子合并成一堆的最小代价</p>
-  <div class="code-block">dp[l][r] = <span class="fn">min</span>(dp[l][k] + dp[k+<span class="nu">1</span>][r]) + sum(l, r)
+<h2>状态定义与转移方程</h2>
+<p><span class="ac">dp[l][r]</span> = 将区间 [l, r] 的全部石子合并成一堆的最小代价</p>
+<div class="code-block">dp[l][r] = <span class="fn">min</span>(dp[l][k] + dp[k+<span class="nu">1</span>][r]) + sum(l, r)
 k ∈ [l, r-<span class="nu">1</span>]</div>
-
-  <h2>前缀和优化 — 区间求和 O(1)</h2>
-  <div class="code-block">pre[i] = pre[i-<span class="nu">1</span>] + a[i-<span class="nu">1</span>]            <span class="cm">// 前缀和数组</span>
+<h2>前缀和优化 — 区间求和 O(1)</h2>
+<div class="code-block">pre[i] = pre[i-<span class="nu">1</span>] + a[i-<span class="nu">1</span>]            <span class="cm">// 前缀和数组</span>
 sum(l, r) = pre[r+<span class="nu">1</span>] - pre[l]           <span class="cm">// O(1) 查询区间和</span></div>
-
-  <h2>DP表演示（样例: 4, 5, 9, 4）</h2>
-  <div style="overflow-x:auto;">
-    <table>
-      <tr><th>len</th><th>l</th><th>r</th><th>k</th><th>dp[l][k]</th><th>dp[k+1][r]</th><th>sum</th><th>dp[l][r]</th></tr>
-      <tr><td>2</td><td>0</td><td>1</td><td>0</td><td>0</td><td>0</td><td>9</td><td class="hl">9</td></tr>
-      <tr><td>2</td><td>1</td><td>2</td><td>1</td><td>0</td><td>0</td><td>14</td><td class="hl">14</td></tr>
-      <tr><td>2</td><td>2</td><td>3</td><td>2</td><td>0</td><td>0</td><td>13</td><td class="hl">13</td></tr>
-      <tr><td>3</td><td>0</td><td>2</td><td>0(最优)</td><td>0</td><td>14</td><td>18</td><td class="hl">32</td></tr>
-      <tr><td>3</td><td>1</td><td>3</td><td>1</td><td>0</td><td>13</td><td>18</td><td class="hl">31</td></tr>
-      <tr><td>4</td><td>0</td><td>3</td><td>1(最优)</td><td>9</td><td>13</td><td>22</td><td class="hl">43</td></tr>
-    </table>
-  </div>
-  <p style="margin-top:4px;"><span class="hl">最终答案: dp[0][3] = 43</span></p>
-
-  <div class="note-box">
-    <b>石子合并（最大代价）</b>：只需将 <b>min</b> 改为 <b>max</b>，dp 初始化为 0 即可。样例 [4,5,9,4] 的最大代价为 54。
-  </div>
+<h2>DP表演示（样例: 4, 5, 9, 4）</h2>
+<div style="overflow-x:auto;">
+<table>
+<tr><th>len</th><th>l</th><th>r</th><th>k</th><th>dp[l][k]</th><th>dp[k+1][r]</th><th>sum</th><th>dp[l][r]</th></tr>
+<tr><td>2</td><td>0</td><td>1</td><td>0</td><td>0</td><td>0</td><td>9</td><td class="hl">9</td></tr>
+<tr><td>2</td><td>1</td><td>2</td><td>1</td><td>0</td><td>0</td><td>14</td><td class="hl">14</td></tr>
+<tr><td>2</td><td>2</td><td>3</td><td>2</td><td>0</td><td>0</td><td>13</td><td class="hl">13</td></tr>
+<tr><td>3</td><td>0</td><td>2</td><td>0(最优)</td><td>0</td><td>14</td><td>18</td><td class="hl">32</td></tr>
+<tr><td>3</td><td>1</td><td>3</td><td>1</td><td>0</td><td>13</td><td>18</td><td class="hl">31</td></tr>
+<tr><td>4</td><td>0</td><td>3</td><td>1(最优)</td><td>9</td><td>13</td><td>22</td><td class="hl">43</td></tr>
+</table>
 </div>
+<p style="margin-top:4px;"><span class="hl">最终答案: dp[0][3] = 43</span></p>
+<div class="note-box">
+<b>石子合并（最大代价）</b>：只需将 <b>min</b> 改为 <b>max</b>，dp 初始化为 0 即可。样例 [4,5,9,4] 的最大代价为 54。
+  </div>
 
+<aside class="notes">【讲解】石子合并问题详解
+本页要点（照着讲即可）：
+· n 堆石子排成一行，每堆重量为 aᵢ。每次只能 合并相邻两堆 ，
+ 合并代价 = 两堆重量之和。经过 n-1 次合并后所有石子合成一堆。求 最小总代价 。
+· dp[l][r] = 将区间 [l, r] 的全部石子合并成一堆的最小代价
+· 最终答案: dp[0][3] = 43
+讲解时放慢关键术语；用 1 个生活类比 + 1 个反例加深印象。</aside>
+</div>
 <!-- ===== Slide 5: 最优三角剖分 ===== -->
 <div class="slide" data-index="4">
-  <h1>最优三角剖分</h1>
-
-  <h2>问题描述</h2>
-  <p>
+<h1>最优三角剖分</h1>
+<h2>问题描述</h2>
+<p>
     给定一个 n 边形（顶点编号 1..n），用 n-3 条不相交的弦将它剖分成 n-2 个三角形。
     每条弦 (i, j) 有权值 w[i][j]。求一种剖分方式，使得<span class="hl">所有弦的权值之和最小</span>。
   </p>
-
-  <h2>状态定义</h2>
-  <p>
-    <span class="ac">dp[l][r]</span> = 将顶点 l 到顶点 r 组成的多边形进行三角剖分的最小权值和<br>
+<h2>状态定义</h2>
+<p>
+<span class="ac">dp[l][r]</span> = 将顶点 l 到顶点 r 组成的多边形进行三角剖分的最小权值和<br/>
     （默认多边形边 (l, r) 已经存在，不需要计算其权值）
   </p>
-
-  <h2>转移方程</h2>
-  <div class="code-block">dp[l][r] = <span class="fn">min</span>( dp[l][k] + dp[k][r] + w[l][k] + w[k][r] )
+<h2>转移方程</h2>
+<div class="code-block">dp[l][r] = <span class="fn">min</span>( dp[l][k] + dp[k][r] + w[l][k] + w[k][r] )
 k ∈ (l+<span class="nu">1</span>, r-<span class="nu">1</span>)</div>
-
-  <p>
-    <span class="hl">核心思想</span>：选择顶点 k 将多边形分成三部分 —— 子多边形 [l..k]、
+<p>
+<span class="hl">核心思想</span>：选择顶点 k 将多边形分成三部分 —— 子多边形 [l..k]、
     子多边形 [k..r]、以及三角形 △(l, k, r)。
     注意与石子合并不同，这里的 k 同时属于左右两个子问题。
   </p>
-
-  <h2>与矩阵链乘法的关系</h2>
-  <p>
+<h2>与矩阵链乘法的关系</h2>
+<p>
     最优三角剖分与矩阵链乘法本质上是<span class="hl">同一个问题</span>：
     矩阵链乘法的代价函数 <b>p[l-1] * p[k] * p[r]</b> 对应三角剖分中三角形 (l, k, r) 的权值。
     两者使用完全相同的区间DP框架，只是代价函数不同。
   </p>
-
-  <div class="code-block"><span class="cm">// 最优三角剖分核心代码</span>
+<div class="code-block"><span class="cm">// 最优三角剖分核心代码</span>
 <span class="kw">for</span> (<span class="kw">int</span> len = <span class="nu">3</span>; len &lt;= n; ++len)
     <span class="kw">for</span> (<span class="kw">int</span> l = <span class="nu">1</span>; l + len - <span class="nu">1</span> &lt;= n; ++l)
     {
@@ -543,140 +556,166 @@ k ∈ (l+<span class="nu">1</span>, r-<span class="nu">1</span>)</div>
             dp[l][r] = <span class="fn">min</span>(dp[l][r],
                 dp[l][k] + dp[k][r] + w[l][k] + w[k][r]);
     }</div>
-</div>
 
+<aside class="notes">【讲解】最优三角剖分
+结合讲义《5. 最优三角剖分问题》强调：
+· 给定一个 $n$ 边形的顶点，每个三角形有一个权值（例如顶点权值之和），求一种三角剖分方式，使得所有三角形的权值之和最小。
+· 最优三角剖分和矩阵链乘法本质上是**同一个问题**的不同表述：
+· 矩阵链乘法：选择括号化方式
+· 最优三角剖分：选择弦的划分方式
+· 两者的DP结构完全相同：
+幻灯片上可见要点：
+· 给定一个 n 边形（顶点编号 1..n），用 n-3 条不相交的弦将它剖分成 n-2 个三角形。
+ 每条弦 (i, j) 有权值 w[i][j]。求一种剖分方式，使得 所有弦的权值之和最小 。
+· dp[l][r] = 将顶点 l 到顶点 r 组成的多边形进行三角剖分的最小权值和 （默认多边形边 (l, r) 已经存在，不需要计算其权值）
+· 核心思想 ：选择顶点 k 将多边形分成三部分 —— 子多边形 [l..k]、
+ 子多边形 [k..r]、以及三角形 △(l, k, r)。
+ 注意与石子合并不同，这里的 k 同时属于左右两个子问题。
+· 最优三角剖分与矩阵链乘法本质上是 同一个问题 ：
+ 矩阵链乘法的代价函数 p[l-1] * p[k] * p[r] 对应三角剖分中三角形 (l, k, r) 的权值。
+ 两者使用完全相同的区间DP框架，只是代价函数不同。
+讲解时放慢关键术语；用 1 个生活类比 + 1 个反例加深印象。</aside>
+</div>
 <!-- ===== Slide 6: 矩阵链乘法与回文串 ===== -->
 <div class="slide" data-index="5">
-  <h1>矩阵链乘法与回文串</h1>
-
-  <h2>矩阵链乘法</h2>
-  <p>
+<h1>矩阵链乘法与回文串</h1>
+<h2>矩阵链乘法</h2>
+<p>
     给定 n 个矩阵的维度序列 p[0..n]（第 i 个矩阵为 p[i-1] × p[i]），
     求完全括号化后<span class="hl">最少标量乘法次数</span>。
   </p>
-  <div class="code-block"><span class="cm">// 代价函数</span>
+<div class="code-block"><span class="cm">// 代价函数</span>
 cost = p[l-<span class="nu">1</span>] * p[k] * p[r]</div>
-  <p>
-    <b>示例</b>：维度 [10, 100, 5, 50]（3个矩阵: 10×100, 100×5, 5×50）<br>
-    最优括号化：<span class="hl">(A1×(A2×A3))</span> → 7500 次乘法<br>
+<p>
+<b>示例</b>：维度 [10, 100, 5, 50]（3个矩阵: 10×100, 100×5, 5×50）<br/>
+    最优括号化：<span class="hl">(A1×(A2×A3))</span> → 7500 次乘法<br/>
     若按 ((A1×A2)×A3) 则需要 75000 次 —— 相差 10 倍！
   </p>
-
-  <h2>回文串：最少插入次数</h2>
-  <p>
+<h2>回文串：最少插入次数</h2>
+<p>
     给定字符串 s，求最少插入多少个字符使之成为<span class="hl">回文串</span>。
   </p>
-  <div class="code-block"><span class="kw">if</span> (s[l] == s[r])
+<div class="code-block"><span class="kw">if</span> (s[l] == s[r])
     dp[l][r] = dp[l+<span class="nu">1</span>][r-<span class="nu">1</span>];          <span class="cm">// 两端相同，无需插入</span>
 <span class="kw">else</span>
     dp[l][r] = <span class="fn">min</span>(dp[l+<span class="nu">1</span>][r], dp[l][r-<span class="nu">1</span>]) + <span class="nu">1</span>;</div>
-
-  <table>
-    <tr><th>输入 s</th><th>最少插入次数</th><th>结果示例</th></tr>
-    <tr><td>"abca"</td><td class="hl">1</td><td>"acbca" 或 "abcba"</td></tr>
-    <tr><td>"aba"</td><td class="hl">0</td><td>已经是回文</td></tr>
-    <tr><td>"abcde"</td><td class="hl">4</td><td>"abcdedcba"</td></tr>
-    <tr><td>"mbadm"</td><td class="hl">2</td><td>"mbdadbm"</td></tr>
-  </table>
-
-  <div class="note-box">
-    <b>注意</b>：回文串问题<b>不需要枚举 k</b> —— 两端字符直接决定转移方向，因此复杂度为 O(n²) 而非 O(n³)。
+<table>
+<tr><th>输入 s</th><th>最少插入次数</th><th>结果示例</th></tr>
+<tr><td>"abca"</td><td class="hl">1</td><td>"acbca" 或 "abcba"</td></tr>
+<tr><td>"aba"</td><td class="hl">0</td><td>已经是回文</td></tr>
+<tr><td>"abcde"</td><td class="hl">4</td><td>"abcdedcba"</td></tr>
+<tr><td>"mbadm"</td><td class="hl">2</td><td>"mbdadbm"</td></tr>
+</table>
+<div class="note-box">
+<b>注意</b>：回文串问题<b>不需要枚举 k</b> —— 两端字符直接决定转移方向，因此复杂度为 O(n²) 而非 O(n³)。
     这是区间DP中少见的「无需分割点」模型。
   </div>
-</div>
 
+<aside class="notes">【讲解】矩阵链乘法与回文串
+本页要点（照着讲即可）：
+· 给定 n 个矩阵的维度序列 p[0..n]（第 i 个矩阵为 p[i-1] × p[i]），
+ 求完全括号化后 最少标量乘法次数 。
+· 给定字符串 s，求最少插入多少个字符使之成为 回文串 。
+讲解时放慢关键术语；用 1 个生活类比 + 1 个反例加深印象。</aside>
+</div>
 <!-- ===== Slide 7: 真题精练 ===== -->
 <div class="slide" data-index="6">
-  <h1>真题精练</h1>
-
-  <h2>题1：石子合并（洛谷 P1775）</h2>
-  <p>n ≤ 300，n 堆石子排成一行，求合并成一堆的最小代价。</p>
-  <div class="note-box">
-    <b>解法</b>：标准区间DP模板。O(n³) 约 27×10⁶ 次运算，完全可过。<br>
+<h1>真题精练</h1>
+<h2>题1：石子合并（洛谷 P1775）</h2>
+<p>n ≤ 300，n 堆石子排成一行，求合并成一堆的最小代价。</p>
+<div class="note-box">
+<b>解法</b>：标准区间DP模板。O(n³) 约 27×10⁶ 次运算，完全可过。<br/>
     关键：前缀和 O(1) 求区间和，注意 INF 初始化为 <code style="color:#b5cea8;">0x3f3f3f3f</code>。
   </div>
-
-  <h2>题2：矩阵链乘法</h2>
-  <p>给定 n 个矩阵的维度，求最少乘法次数并输出最优括号化方案。</p>
-  <div class="note-box">
-    <b>解法</b>：区间DP框架不变，代价函数为 p[l-1] * p[k] * p[r]。<br>
+<h2>题2：矩阵链乘法</h2>
+<p>给定 n 个矩阵的维度，求最少乘法次数并输出最优括号化方案。</p>
+<div class="note-box">
+<b>解法</b>：区间DP框架不变，代价函数为 p[l-1] * p[k] * p[r]。<br/>
     输出括号化：额外记录 s[l][r] = k，递归打印 ( A[l..k] * A[k+1..r] )。
   </div>
-
-  <h2>题3：最优三角剖分</h2>
-  <p>给定 n 边形的顶点，每条弦有权值，求最小剖分代价。</p>
-  <div class="note-box">
-    <b>解法</b>：k ∈ [l+1, r-1]，转移为 dp[l][k] + dp[k][r] + w[l][k] + w[k][r]。<br>
+<h2>题3：最优三角剖分</h2>
+<p>给定 n 边形的顶点，每条弦有权值，求最小剖分代价。</p>
+<div class="note-box">
+<b>解法</b>：k ∈ [l+1, r-1]，转移为 dp[l][k] + dp[k][r] + w[l][k] + w[k][r]。<br/>
     注意 len 从 3 开始，因为三角形是最小的完整剖分单元。
   </div>
-
-  <h2>题4：最少插入使之成为回文</h2>
-  <p>给定字符串 s，求最少插入字符数使之成为回文。</p>
-  <div class="note-box">
-    <b>解法</b>：无需枚举 k，s[l]==s[r] 时 dp[l][r]=dp[l+1][r-1]，否则 dp[l][r]=min(dp[l+1][r],dp[l][r-1])+1。
+<h2>题4：最少插入使之成为回文</h2>
+<p>给定字符串 s，求最少插入字符数使之成为回文。</p>
+<div class="note-box">
+<b>解法</b>：无需枚举 k，s[l]==s[r] 时 dp[l][r]=dp[l+1][r-1]，否则 dp[l][r]=min(dp[l+1][r],dp[l][r-1])+1。
   </div>
+<h2>问题类型总结</h2>
+<table>
+<tr><th>问题类型</th><th>分割点范围</th><th>len 起始</th><th>复杂度</th></tr>
+<tr><td>石子合并</td><td>k ∈ [l, r-1]</td><td>2</td><td>O(n³)</td></tr>
+<tr><td>矩阵链乘法</td><td>k ∈ [l, r-1]</td><td>2</td><td>O(n³)</td></tr>
+<tr><td>最优三角剖分</td><td>k ∈ [l+1, r-1]</td><td>3</td><td>O(n³)</td></tr>
+<tr><td>回文串</td><td class="ac">无需枚举 k</td><td>2</td><td class="ac">O(n²)</td></tr>
+</table>
 
-  <h2>问题类型总结</h2>
-  <table>
-    <tr><th>问题类型</th><th>分割点范围</th><th>len 起始</th><th>复杂度</th></tr>
-    <tr><td>石子合并</td><td>k ∈ [l, r-1]</td><td>2</td><td>O(n³)</td></tr>
-    <tr><td>矩阵链乘法</td><td>k ∈ [l, r-1]</td><td>2</td><td>O(n³)</td></tr>
-    <tr><td>最优三角剖分</td><td>k ∈ [l+1, r-1]</td><td>3</td><td>O(n³)</td></tr>
-    <tr><td>回文串</td><td class="ac">无需枚举 k</td><td>2</td><td class="ac">O(n²)</td></tr>
-  </table>
+<aside class="notes">【讲解】真题精练
+本页要点（照着讲即可）：
+· n ≤ 300，n 堆石子排成一行，求合并成一堆的最小代价。
+· 给定 n 个矩阵的维度，求最少乘法次数并输出最优括号化方案。
+· 给定 n 边形的顶点，每条弦有权值，求最小剖分代价。
+· 给定字符串 s，求最少插入字符数使之成为回文。
+练习页节奏：先独立想 1 分钟 → 再点拨思路 → 最后对答案讲为什么。
+可联系：石子合并、矩阵链乘</aside>
 </div>
-
 <!-- ===== Slide 8: 本课小结 ===== -->
 <div class="slide" data-index="7">
-  <h1>本课小结</h1>
-
-  <table>
-    <tr><th>模块</th><th>要点</th></tr>
-    <tr><td>区间DP核心</td><td>将问题分解为小区间，再合并为大区间</td></tr>
-    <tr><td>状态定义</td><td><span class="ac">dp[l][r]</span> = 区间 [l, r] 的最优解</td></tr>
-    <tr><td>五步转移法</td><td>长度 → 左端点 → 右端点 → 分割点 → 状态转移</td></tr>
-    <tr><td>石子合并</td><td>最经典入门问题，掌握 O(n³) 标准写法</td></tr>
-    <tr><td>前缀和优化</td><td>区间求和从 O(n) 优化到 O(1)</td></tr>
-    <tr><td>最优三角剖分</td><td>k ∈ [l+1, r-1]，与矩阵链乘法本质相同</td></tr>
-    <tr><td>矩阵链乘法</td><td>与石子合并框架相同，代价函数为 p[l-1]*p[k]*p[r]</td></tr>
-    <tr><td>回文串DP</td><td>无需分裂点，O(n²)，两端字符决定转移</td></tr>
-    <tr><td>四边形不等式</td><td>记录 s[l][r] 缩小 k 的范围，O(n³) → O(n²)</td></tr>
-    <tr><td>破环成链</td><td>环形问题将数组复制一份，详见第32课</td></tr>
-  </table>
-
-  <h2>常见易错点</h2>
-  <ul>
-    <li><span class="hl">len 从 1 开始</span> — 单个元素不需要合并，必须从 2 开始</li>
-    <li><span class="hl">k 枚举到 r</span> — 分割点应在 [l, r-1] 范围（左闭右开）</li>
-    <li><span class="hl">前缀和写错</span> — 正确写法为 pre[r+1] - pre[l]，不是 pre[r] - pre[l]</li>
-    <li><span class="hl">忘记初始化 dp[i][i]=0</span> — 边界条件缺失，结果是 INF</li>
-    <li><span class="hl">循环顺序错误</span> — 必须先枚举 len，再枚举 l（不能反过来）</li>
-  </ul>
-
-  <div class="note-box" style="margin-top:16px;">
-    <b>CSP-S 应试核心</b>：石子合并模板必须能够<b>手写无误</b>。五步转移法是所有区间DP的通用框架，
+<h1>本课小结</h1>
+<table>
+<tr><th>模块</th><th>要点</th></tr>
+<tr><td>区间DP核心</td><td>将问题分解为小区间，再合并为大区间</td></tr>
+<tr><td>状态定义</td><td><span class="ac">dp[l][r]</span> = 区间 [l, r] 的最优解</td></tr>
+<tr><td>五步转移法</td><td>长度 → 左端点 → 右端点 → 分割点 → 状态转移</td></tr>
+<tr><td>石子合并</td><td>最经典入门问题，掌握 O(n³) 标准写法</td></tr>
+<tr><td>前缀和优化</td><td>区间求和从 O(n) 优化到 O(1)</td></tr>
+<tr><td>最优三角剖分</td><td>k ∈ [l+1, r-1]，与矩阵链乘法本质相同</td></tr>
+<tr><td>矩阵链乘法</td><td>与石子合并框架相同，代价函数为 p[l-1]*p[k]*p[r]</td></tr>
+<tr><td>回文串DP</td><td>无需分裂点，O(n²)，两端字符决定转移</td></tr>
+<tr><td>四边形不等式</td><td>记录 s[l][r] 缩小 k 的范围，O(n³) → O(n²)</td></tr>
+<tr><td>破环成链</td><td>环形问题将数组复制一份，详见第32课</td></tr>
+</table>
+<h2>常见易错点</h2>
+<ul>
+<li><span class="hl">len 从 1 开始</span> — 单个元素不需要合并，必须从 2 开始</li>
+<li><span class="hl">k 枚举到 r</span> — 分割点应在 [l, r-1] 范围（左闭右开）</li>
+<li><span class="hl">前缀和写错</span> — 正确写法为 pre[r+1] - pre[l]，不是 pre[r] - pre[l]</li>
+<li><span class="hl">忘记初始化 dp[i][i]=0</span> — 边界条件缺失，结果是 INF</li>
+<li><span class="hl">循环顺序错误</span> — 必须先枚举 len，再枚举 l（不能反过来）</li>
+</ul>
+<div class="note-box" style="margin-top:16px;">
+<b>CSP-S 应试核心</b>：石子合并模板必须能够<b>手写无误</b>。五步转移法是所有区间DP的通用框架，
     熟练掌握后可解决 80% 的区间DP问题。建议将标准模板反复练习 3-5 遍。
   </div>
-
-  <p style="text-align:center; margin-top:24px; color:var(--accent); font-size:1.1rem;">
+<p style="text-align:center; margin-top:24px; color:var(--accent); font-size:1.1rem;">
     ▶ 下节课预告：第32课 — 环形区间DP（破环成链）· 消去型区间DP · 能量项链问题
   </p>
+
+<aside class="notes">【收尾】回顾本课主线：本课小结
+对照大纲再过一遍：区间DP模型、链长递增枚举、最优三角剖分
+板书/口述要点：
+· len 从 1 开始 — 单个元素不需要合并，必须从 2 开始
+· k 枚举到 r — 分割点应在 [l, r-1] 范围（左闭右开）
+· 前缀和写错 — 正确写法为 pre[r+1] - pre[l]，不是 pre[r] - pre[l]
+· 忘记初始化 dp[i][i]=0 — 边界条件缺失，结果是 INF
+· 循环顺序错误 — 必须先枚举 len，再枚举 l（不能反过来）
+· ▶ 下节课预告：第32课 — 环形区间DP（破环成链）· 消去型区间DP · 能量项链问题
+课后任务：石子合并、矩阵链乘
+结束前留 2 分钟答疑；布置 1 道小练习检验是否真正掌握。</aside>
 </div>
-
 </div><!-- .container -->
-
 <!-- ===== Navigation ===== -->
 <div class="nav-bar" style="max-width:980px; width:100%; margin-top:18px;">
-  <button id="prevBtn" onclick="navigate(-1)">&#9664; 上一页</button>
-
-  <div style="display:flex; align-items:center; gap:8px;">
-    <div class="dots" id="dotsContainer"></div>
-    <span class="page-text" id="pageText">1 / 8</span>
-  </div>
-
-  <button id="nextBtn" onclick="navigate(1)">下一页 &#9654;</button>
+<button id="prevBtn" onclick="navigate(-1)">◀ 上一页</button>
+<div style="display:flex; align-items:center; gap:8px;">
+<div class="dots" id="dotsContainer"></div>
+<span class="page-text" id="pageText">1 / 8</span>
 </div>
-
+<button id="nextBtn" onclick="navigate(1)">下一页 ▶</button>
+</div>
 <script>
 (function() {
   var slides = document.querySelectorAll('.slide');
@@ -766,7 +805,6 @@ cost = p[l-<span class="nu">1</span>] * p[k] * p[r]</div>
   window.navigate = navigate;
 })();
 </script>
-
 <script src="courseware-ui.js"></script>
 <script src="presenter.js"></script>
 </body>

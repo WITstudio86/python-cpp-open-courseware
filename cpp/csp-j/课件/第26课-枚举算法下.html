@@ -1,8 +1,9 @@
 <!DOCTYPE html>
+
 <html lang="zh-CN">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
 <title>CSP-J 备考课程 - 第26课：枚举算法（下）</title>
 <style>
 * { margin: 0; padding: 0; box-sizing: border-box; }
@@ -52,69 +53,84 @@ tr:nth-child(even) td { background: #f5f5f5; }
 </head>
 <body>
 <div class="container">
-  <div class="header">
-    <span style="font-weight:bold;font-size:18px;">第26课：枚举算法（下）</span>
-    <span class="course-tag">CSP-J 备考课程</span>
-  </div>
-  <div class="slide-container">
+<div class="header">
+<span style="font-weight:bold;font-size:18px;">第26课：枚举算法（下）</span>
+<span class="course-tag">CSP-J 备考课程</span>
+</div>
+<div class="slide-container">
+<!-- SLIDE 1: Title -->
+<div class="slide active" id="slide1">
+<div class="title-slide">
+<h1>枚举算法（下）</h1>
+<p class="subtitle">排列、子集与回溯 — 枚举的进阶艺术</p>
+<div class="badge">🔍 CSP-J 基础组</div>
+<p style="margin-top: 40px; color: #666; font-size: 16px;">掌握 STL 全排列、子集枚举位运算与回溯搜索</p>
+</div>
 
-    <!-- SLIDE 1: Title -->
-    <div class="slide active" id="slide1">
-      <div class="title-slide">
-        <h1>枚举算法（下）</h1>
-        <p class="subtitle">排列、子集与回溯 — 枚举的进阶艺术</p>
-        <div class="badge">🔍 CSP-J 基础组</div>
-        <p style="margin-top: 40px; color: #666; font-size: 16px;">掌握 STL 全排列、子集枚举位运算与回溯搜索</p>
-      </div>
-    </div>
-
-    <!-- SLIDE 2: next_permutation -->
-    <div class="slide" id="slide2">
-      <h2>一、全排列生成 — next_permutation</h2>
-      <h3>1.1 什么是全排列？</h3>
-      <p>将 n 个不同的元素按照<strong>所有可能的顺序</strong>进行排列。n 个元素的全排列共有 <strong>n! 种</strong>。</p>
-      <ul>
-        <li>例如 {1, 2, 3} 的全排列：123, 132, 213, 231, 312, 321（共 3! = 6 种）</li>
-      </ul>
-
-      <h3>1.2 C++ STL — next_permutation</h3>
-      <p>C++ 标准库提供了 <strong>next_permutation</strong> 函数，可以按<strong>字典序</strong>生成下一个排列。</p>
-      <ul>
-        <li>头文件：<code>&lt;algorithm&gt;</code></li>
-        <li>语法：<code>next_permutation(begin, end)</code>，返回 <code>true</code> 表示生成了新排列，<code>false</code> 表示已经是最后一个排列</li>
-        <li>使用前必须<strong>先排序</strong>，确保从最小的字典序开始</li>
-      </ul>
-
-      <div class="code-block"><code><span style="color:#6a9955;">// 全排列示例</span>
+<aside class="notes">【开场】第 1/7 页 · 枚举算法（下）
+用 30 秒说明本课目标与学完能做什么，再进入正题。
+大纲考点：排列枚举、子集枚举、回溯思想入门
+配套练习方向：全排列与子集生成题
+封面关键词：
+· 排列、子集与回溯 — 枚举的进阶艺术
+· 掌握 STL 全排列、子集枚举位运算与回溯搜索
+互动：问学生「今天最想搞清楚什么？」，收 1–2 个期待。</aside>
+</div>
+<!-- SLIDE 2: next_permutation -->
+<div class="slide" id="slide2">
+<h2>一、全排列生成 — next_permutation</h2>
+<h3>1.1 什么是全排列？</h3>
+<p>将 n 个不同的元素按照<strong>所有可能的顺序</strong>进行排列。n 个元素的全排列共有 <strong>n! 种</strong>。</p>
+<ul>
+<li>例如 {1, 2, 3} 的全排列：123, 132, 213, 231, 312, 321（共 3! = 6 种）</li>
+</ul>
+<h3>1.2 C++ STL — next_permutation</h3>
+<p>C++ 标准库提供了 <strong>next_permutation</strong> 函数，可以按<strong>字典序</strong>生成下一个排列。</p>
+<ul>
+<li>头文件：<code>&lt;algorithm&gt;</code></li>
+<li>语法：<code>next_permutation(begin, end)</code>，返回 <code>true</code> 表示生成了新排列，<code>false</code> 表示已经是最后一个排列</li>
+<li>使用前必须<strong>先排序</strong>，确保从最小的字典序开始</li>
+</ul>
+<div class="code-block"><code><span style="color:#6a9955;">// 全排列示例</span>
 <span style="color:#569cd6;">int</span> a[] = {<span style="color:#b5cea8;">1</span>, <span style="color:#b5cea8;">2</span>, <span style="color:#b5cea8;">3</span>};
 <span style="color:#dcdcaa;">sort</span>(a, a + <span style="color:#b5cea8;">3</span>);  <span style="color:#6a9955;">// 必须先排序</span>
 <span style="color:#569cd6;">do</span> {
     <span style="color:#dcdcaa;">cout</span> &lt;&lt; a[<span style="color:#b5cea8;">0</span>] &lt;&lt; <span style="color:#ce9178;">" "</span> &lt;&lt; a[<span style="color:#b5cea8;">1</span>] &lt;&lt; <span style="color:#ce9178;">" "</span> &lt;&lt; a[<span style="color:#b5cea8;">2</span>] &lt;&lt; <span style="color:#dcdcaa;">endl</span>;
 } <span style="color:#569cd6;">while</span> (<span style="color:#dcdcaa;">next_permutation</span>(a, a + <span style="color:#b5cea8;">3</span>));</code></div>
-
-      <h3>1.3 prev_permutation</h3>
-      <p><code>prev_permutation</code> 生成<strong>前一个</strong>字典序排列。使用时需要先降序排列。</p>
-
-      <div class="exam-tip">
-        <strong>💡 考试技巧：</strong>next_permutation 的时间复杂度为 <strong>O(n)</strong> 每次调用，全排列枚举总复杂度为 <strong>O(n!)</strong>。当 n &le; 10 时可行，n &le; 8 时非常安全。千万不要忘记先 sort！
+<h3>1.3 prev_permutation</h3>
+<p><code>prev_permutation</code> 生成<strong>前一个</strong>字典序排列。使用时需要先降序排列。</p>
+<div class="exam-tip">
+<strong>💡 考试技巧：</strong>next_permutation 的时间复杂度为 <strong>O(n)</strong> 每次调用，全排列枚举总复杂度为 <strong>O(n!)</strong>。当 n ≤ 10 时可行，n ≤ 8 时非常安全。千万不要忘记先 sort！
       </div>
-    </div>
 
-    <!-- SLIDE 3: 子集枚举 -->
-    <div class="slide" id="slide3">
-      <h2>二、子集枚举 — 位运算的威力</h2>
-      <h3>2.1 什么是子集枚举？</h3>
-      <p>给定 n 个元素的集合，枚举其<strong>所有子集</strong>（共 2<sup>n</sup> 个）。比如 {A, B, C} 的子集有 2³ = 8 个：{}, {A}, {B}, {C}, {A,B}, {A,C}, {B,C}, {A,B,C}。</p>
-
-      <h3>2.2 位运算方法</h3>
-      <p>用一个 n 位的<strong>二进制数 mask</strong> 表示子集，第 i 位为 1 表示包含第 i 个元素。</p>
-      <ul>
-        <li>mask 从 0 到 2<sup>n</sup>-1 循环（共 2<sup>n</sup> 种状态）</li>
-        <li>判断第 i 位是否为 1：<code>(mask &gt;&gt; i) &amp; 1</code> 或 <code>mask &amp; (1 &lt;&lt; i)</code></li>
-        <li>时间复杂度：O(n × 2<sup>n</sup>)，n &le; 20 时可行</li>
-      </ul>
-
-      <div class="code-block"><code><span style="color:#6a9955;">// 枚举 {A, B, C} 的所有子集</span>
+<aside class="notes">【讲解】一、全排列生成 — next_permutation
+结合讲义《一、全排列枚举与next_permutation》强调：
+· 全排列（Permutation）是指将一组元素按照所有可能的顺序进行排列。例如集合{1, 2, 3}的全排列有6种：123、132、213、231、312、321。对于n个不同元素，全排列总数为n!。
+· 在CSP-J考试中，next_permutation是处理全排列问题的"大杀器"，它定义在头文件中，可以将一个序列重新排列为字典序的下一个排列。
+· next_permutation函数的参数是两个迭代器（或指针），表示排列的起止范围。它返回bool值：如果存在下一个排列则返回true（并将序列变为下一个排列），如果当前序列已经是最后一个排列（降序排列）则返回false（并将序列重置为升序的第一个排列）。
+· using namespace std;
+· int main() {
+幻灯片上可见要点：
+· 将 n 个不同的元素按照 所有可能的顺序 进行排列。n 个元素的全排列共有 n! 种 。
+· 所有可能的顺序
+· n! 种
+· 例如 {1, 2, 3} 的全排列：123, 132, 213, 231, 312, 321（共 3! = 6 种）
+讲解时放慢关键术语；用 1 个生活类比 + 1 个反例加深印象。
+本课大纲考点（可适时点题）：排列枚举、子集枚举、回溯思想入门</aside>
+</div>
+<!-- SLIDE 3: 子集枚举 -->
+<div class="slide" id="slide3">
+<h2>二、子集枚举 — 位运算的威力</h2>
+<h3>2.1 什么是子集枚举？</h3>
+<p>给定 n 个元素的集合，枚举其<strong>所有子集</strong>（共 2<sup>n</sup> 个）。比如 {A, B, C} 的子集有 2³ = 8 个：{}, {A}, {B}, {C}, {A,B}, {A,C}, {B,C}, {A,B,C}。</p>
+<h3>2.2 位运算方法</h3>
+<p>用一个 n 位的<strong>二进制数 mask</strong> 表示子集，第 i 位为 1 表示包含第 i 个元素。</p>
+<ul>
+<li>mask 从 0 到 2<sup>n</sup>-1 循环（共 2<sup>n</sup> 种状态）</li>
+<li>判断第 i 位是否为 1：<code>(mask &gt;&gt; i) &amp; 1</code> 或 <code>mask &amp; (1 &lt;&lt; i)</code></li>
+<li>时间复杂度：O(n × 2<sup>n</sup>)，n ≤ 20 时可行</li>
+</ul>
+<div class="code-block"><code><span style="color:#6a9955;">// 枚举 {A, B, C} 的所有子集</span>
 <span style="color:#569cd6;">char</span> elems[] = {<span style="color:#ce9178;">'A'</span>, <span style="color:#ce9178;">'B'</span>, <span style="color:#ce9178;">'C'</span>};
 <span style="color:#569cd6;">int</span> n = <span style="color:#b5cea8;">3</span>;
 <span style="color:#569cd6;">for</span> (<span style="color:#569cd6;">int</span> mask = <span style="color:#b5cea8;">0</span>; mask &lt; (<span style="color:#b5cea8;">1</span> &lt;&lt; n); mask++) {
@@ -124,100 +140,114 @@ tr:nth-child(even) td { background: #f5f5f5; }
     }
     <span style="color:#dcdcaa;">cout</span> &lt;&lt; <span style="color:#ce9178;">"}"</span> &lt;&lt; <span style="color:#dcdcaa;">endl</span>;
 }</code></div>
-
-      <h3>2.3 递归方法</h3>
-      <p>递归地"选/不选"每个元素，调用的递归树天然对应所有子集。代码更直观，但常数略大。</p>
-
-      <div class="code-block"><code><span style="color:#569cd6;">void</span> <span style="color:#dcdcaa;">dfs</span>(<span style="color:#569cd6;">int</span> pos) {
+<h3>2.3 递归方法</h3>
+<p>递归地"选/不选"每个元素，调用的递归树天然对应所有子集。代码更直观，但常数略大。</p>
+<div class="code-block"><code><span style="color:#569cd6;">void</span> <span style="color:#dcdcaa;">dfs</span>(<span style="color:#569cd6;">int</span> pos) {
     <span style="color:#569cd6;">if</span> (pos == n) {
         <span style="color:#6a9955;">// 到达叶子节点，输出当前选中的元素</span>
-        <span style="color:#569cd6;">return</span>;
+<span style="color:#569cd6;">return</span>;
     }
     selected[pos] = <span style="color:#569cd6;">true</span>;  <span style="color:#6a9955;">// 选择第 pos 个元素</span>
-    <span style="color:#dcdcaa;">dfs</span>(pos + <span style="color:#b5cea8;">1</span>);
+<span style="color:#dcdcaa;">dfs</span>(pos + <span style="color:#b5cea8;">1</span>);
     selected[pos] = <span style="color:#569cd6;">false</span>; <span style="color:#6a9955;">// 不选第 pos 个元素</span>
-    <span style="color:#dcdcaa;">dfs</span>(pos + <span style="color:#b5cea8;">1</span>);
+<span style="color:#dcdcaa;">dfs</span>(pos + <span style="color:#b5cea8;">1</span>);
 }</code></div>
-
-      <div class="exam-tip">
-        <strong>💡 考试技巧：</strong>位运算子集枚举在 CSP-J 中非常高频。注意 <code>1 &lt;&lt; n</code> 表示 2<sup>n</sup>，当 n=20 时约 10⁶，刚好够用。n 再大就需要剪枝或动态规划。
+<div class="exam-tip">
+<strong>💡 考试技巧：</strong>位运算子集枚举在 CSP-J 中非常高频。注意 <code>1 &lt;&lt; n</code> 表示 2<sup>n</sup>，当 n=20 时约 10⁶，刚好够用。n 再大就需要剪枝或动态规划。
       </div>
-    </div>
 
-    <!-- SLIDE 4: 回溯思想入门 -->
-    <div class="slide" id="slide4">
-      <h2>三、回溯思想入门</h2>
-      <h3>3.1 什么是回溯？</h3>
-      <p>回溯（Backtracking）是一种<strong>深度优先的试探搜索</strong>算法，核心框架是：</p>
-      <ol>
-        <li><strong>尝试</strong>：选择一个可行的选项</li>
-        <li><strong>判断</strong>：检查当前状态是否合法</li>
-        <li><strong>回退</strong>：如果不合法或搜索完毕，撤销当前选择</li>
-      </ol>
-
-      <h3>3.2 回溯通用框架</h3>
-      <div class="code-block"><code><span style="color:#569cd6;">void</span> <span style="color:#dcdcaa;">backtrack</span>(<span style="color:#569cd6;">int</span> step) {
+<aside class="notes">【讲解】二、子集枚举 — 位运算的威力
+结合讲义《二、子集枚举》强调：
+· 子集枚举是另一种重要的枚举形式。对于n个元素的集合，共有2^n个子集（包括空集）。我们需要枚举出所有可能的子集。
+· 这是最经典也最优雅的子集枚举方法。核心思想：用一个n位的二进制数mask表示一个子集，第i位为1表示选择第i个元素，为0表示不选。mask从0到(1&lt;&lt;n)-1遍历，每个mask对应一个子集。
+· using namespace std;
+· int main() {
+· int n;
+幻灯片上可见要点：
+· 给定 n 个元素的集合，枚举其 所有子集 （共 2 n 个）。比如 {A, B, C} 的子集有 2³ = 8 个：{}, {A}, {B}, {C}, {A,B}, {A,C}, {B,C}, {A,B,C}。
+· 所有子集
+· 用一个 n 位的 二进制数 mask 表示子集，第 i 位为 1 表示包含第 i 个元素。
+· 二进制数 mask
+讲解时放慢关键术语；用 1 个生活类比 + 1 个反例加深印象。</aside>
+</div>
+<!-- SLIDE 4: 回溯思想入门 -->
+<div class="slide" id="slide4">
+<h2>三、回溯思想入门</h2>
+<h3>3.1 什么是回溯？</h3>
+<p>回溯（Backtracking）是一种<strong>深度优先的试探搜索</strong>算法，核心框架是：</p>
+<ol>
+<li><strong>尝试</strong>：选择一个可行的选项</li>
+<li><strong>判断</strong>：检查当前状态是否合法</li>
+<li><strong>回退</strong>：如果不合法或搜索完毕，撤销当前选择</li>
+</ol>
+<h3>3.2 回溯通用框架</h3>
+<div class="code-block"><code><span style="color:#569cd6;">void</span> <span style="color:#dcdcaa;">backtrack</span>(<span style="color:#569cd6;">int</span> step) {
     <span style="color:#569cd6;">if</span> (step == n) {  <span style="color:#6a9955;">// 找到一组解</span>
-        <span style="color:#dcdcaa;">record_answer</span>();
+<span style="color:#dcdcaa;">record_answer</span>();
         <span style="color:#569cd6;">return</span>;
     }
     <span style="color:#569cd6;">for</span> (<span style="color:#569cd6;">int</span> i = <span style="color:#b5cea8;">0</span>; i &lt; choices; i++) {
         <span style="color:#569cd6;">if</span> (valid(i)) {     <span style="color:#6a9955;">// 剪枝：判断是否合法</span>
             apply(i);         <span style="color:#6a9955;">// 尝试</span>
-            <span style="color:#dcdcaa;">backtrack</span>(step + <span style="color:#b5cea8;">1</span>);
+<span style="color:#dcdcaa;">backtrack</span>(step + <span style="color:#b5cea8;">1</span>);
             undo(i);          <span style="color:#6a9955;">// 回退（回溯）</span>
         }
     }
 }</code></div>
-
-      <h3>3.3 经典例题：N 皇后（4 皇后演示）</h3>
-      <p>在 <strong>4×4 的棋盘</strong>上放置 4 个皇后，使它们互不攻击（任意两个皇后不在同一行、同一列、同一对角线）。</p>
-      <table>
-        <tr><th>列 (col)</th><th>主对角线 (d1)</th><th>副对角线 (d2)</th></tr>
-        <tr><td>一维数组 col[n]</td><td>row + col</td><td>row - col + n - 1</td></tr>
-      </table>
-      <p>关键约束：<strong>每行必须放一个皇后</strong>，逐行放置，对每一列试探。4 皇后共有 <strong>2 种</strong>本质不同的解：</p>
-      <p>解 1：第 1 行第 3 列，第 2 行第 1 列，第 3 行第 4 列，第 4 行第 2 列</p>
-      <p>解 2：第 1 行第 2 列，第 2 行第 4 列，第 3 行第 1 列，第 4 行第 3 列</p>
-
-      <div class="exam-tip">
-        <strong>💡 考试技巧：</strong>回溯 = DFS + 剪枝 + 状态恢复。写回溯代码最忌讳忘了"回退"——恢复状态，否则后面的搜索会受影响。对角线判断用 <code>row + col</code> 和 <code>row - col + n - 1</code> 的技巧是高频考点。
+<h3>3.3 经典例题：N 皇后（4 皇后演示）</h3>
+<p>在 <strong>4×4 的棋盘</strong>上放置 4 个皇后，使它们互不攻击（任意两个皇后不在同一行、同一列、同一对角线）。</p>
+<table>
+<tr><th>列 (col)</th><th>主对角线 (d1)</th><th>副对角线 (d2)</th></tr>
+<tr><td>一维数组 col[n]</td><td>row + col</td><td>row - col + n - 1</td></tr>
+</table>
+<p>关键约束：<strong>每行必须放一个皇后</strong>，逐行放置，对每一列试探。4 皇后共有 <strong>2 种</strong>本质不同的解：</p>
+<p>解 1：第 1 行第 3 列，第 2 行第 1 列，第 3 行第 4 列，第 4 行第 2 列</p>
+<p>解 2：第 1 行第 2 列，第 2 行第 4 列，第 3 行第 1 列，第 4 行第 3 列</p>
+<div class="exam-tip">
+<strong>💡 考试技巧：</strong>回溯 = DFS + 剪枝 + 状态恢复。写回溯代码最忌讳忘了"回退"——恢复状态，否则后面的搜索会受影响。对角线判断用 <code>row + col</code> 和 <code>row - col + n - 1</code> 的技巧是高频考点。
       </div>
-    </div>
 
-    <!-- SLIDE 5: 代码模板 -->
-    <div class="slide" id="slide5">
-      <h2>四、代码模板汇总</h2>
-      <h3>4.1 全排列模板</h3>
-      <div class="code-block"><code><span style="color:#6a9955;">// STL 全排列模板</span>
+<aside class="notes">【讲解】三、回溯思想入门
+本页要点（照着讲即可）：
+· 回溯（Backtracking）是一种 深度优先的试探搜索 算法，核心框架是：
+· 深度优先的试探搜索
+· 尝试 ：选择一个可行的选项
+· 判断 ：检查当前状态是否合法
+· 回退 ：如果不合法或搜索完毕，撤销当前选择
+· 在 4×4 的棋盘 上放置 4 个皇后，使它们互不攻击（任意两个皇后不在同一行、同一列、同一对角线）。
+讲解时放慢关键术语；用 1 个生活类比 + 1 个反例加深印象。</aside>
+</div>
+<!-- SLIDE 5: 代码模板 -->
+<div class="slide" id="slide5">
+<h2>四、代码模板汇总</h2>
+<h3>4.1 全排列模板</h3>
+<div class="code-block"><code><span style="color:#6a9955;">// STL 全排列模板</span>
 <span style="color:#569cd6;">#include</span> <span style="color:#ce9178;">&lt;algorithm&gt;</span>
 <span style="color:#569cd6;">int</span> a[MAXN];
 <span style="color:#dcdcaa;">sort</span>(a, a + n);           <span style="color:#6a9955;">// 必须排序！</span>
 <span style="color:#569cd6;">do</span> {
     <span style="color:#6a9955;">// 处理当前排列 a[0..n-1]</span>
 } <span style="color:#569cd6;">while</span> (<span style="color:#dcdcaa;">next_permutation</span>(a, a + n));</code></div>
-
-      <h3>4.2 子集枚举位运算模板</h3>
-      <div class="code-block"><code><span style="color:#6a9955;">// 子集枚举位运算模板</span>
+<h3>4.2 子集枚举位运算模板</h3>
+<div class="code-block"><code><span style="color:#6a9955;">// 子集枚举位运算模板</span>
 <span style="color:#569cd6;">int</span> n;  <span style="color:#6a9955;">// 元素个数</span>
 <span style="color:#569cd6;">for</span> (<span style="color:#569cd6;">int</span> mask = <span style="color:#b5cea8;">0</span>; mask &lt; (<span style="color:#b5cea8;">1</span> &lt;&lt; n); mask++) {
     <span style="color:#6a9955;">// mask 的二进制位表示子集中包含哪些元素</span>
-    <span style="color:#569cd6;">for</span> (<span style="color:#569cd6;">int</span> i = <span style="color:#b5cea8;">0</span>; i &lt; n; i++) {
+<span style="color:#569cd6;">for</span> (<span style="color:#569cd6;">int</span> i = <span style="color:#b5cea8;">0</span>; i &lt; n; i++) {
         <span style="color:#569cd6;">if</span> (mask &amp; (<span style="color:#b5cea8;">1</span> &lt;&lt; i)) {
             <span style="color:#6a9955;">// 第 i 个元素在子集中</span>
         }
     }
 }</code></div>
-
-      <h3>4.3 回溯框架模板</h3>
-      <div class="code-block"><code><span style="color:#6a9955;">// 回溯通用框架</span>
+<h3>4.3 回溯框架模板</h3>
+<div class="code-block"><code><span style="color:#6a9955;">// 回溯通用框架</span>
 <span style="color:#569cd6;">bool</span> used[MAXN];
 <span style="color:#569cd6;">int</span> ans[MAXN];
 
 <span style="color:#569cd6;">void</span> <span style="color:#dcdcaa;">backtrack</span>(<span style="color:#569cd6;">int</span> step) {
     <span style="color:#569cd6;">if</span> (step == n) {
         <span style="color:#6a9955;">// 找到一组解，输出或统计</span>
-        <span style="color:#569cd6;">return</span>;
+<span style="color:#569cd6;">return</span>;
     }
     <span style="color:#569cd6;">for</span> (<span style="color:#569cd6;">int</span> i = <span style="color:#b5cea8;">0</span>; i &lt; n; i++) {
         <span style="color:#569cd6;">if</span> (!used[i]) {      <span style="color:#6a9955;">// 剪枝判断</span>
@@ -228,33 +258,37 @@ tr:nth-child(even) td { background: #f5f5f5; }
         }
     }
 }</code></div>
-    </div>
 
-    <!-- SLIDE 6: 真题精练 -->
-    <div class="slide" id="slide6">
-      <h2>五、真题精练 — 子集和问题</h2>
-      <h3>题目描述</h3>
-      <p>给定 <strong>n 个正整数</strong>和一个目标值 <strong>S</strong>，判断是否存在一个子集，其元素之和恰好等于 S。如果存在，输出 "YES"；否则输出 "NO"。（n &le; 20，元素值 &le; 10⁶，S &le; 2 × 10⁷）</p>
-
-      <h3>输入格式</h3>
-      <p>第一行：两个整数 n 和 S。第二行：n 个正整数 a₁, a₂, ..., aₙ。</p>
-
-      <h3>输出格式</h3>
-      <p>一行："YES" 或 "NO"。</p>
-
-      <h3>输入样例</h3>
-      <div class="code-block"><code>5 10
+<aside class="notes">【讲解】四、代码模板汇总
+本页要点（照着讲即可）：
+· 四、代码模板汇总
+· 4.1 全排列模板
+· // STL 全排列模板
+· #include
+· a[MAXN];
+· sort
+代码页节奏：先读懂输入输出 → 再走主流程 → 最后点出易错点（边界/类型/下标）。
+可让学生预测下一行输出，再运行对照。</aside>
+</div>
+<!-- SLIDE 6: 真题精练 -->
+<div class="slide" id="slide6">
+<h2>五、真题精练 — 子集和问题</h2>
+<h3>题目描述</h3>
+<p>给定 <strong>n 个正整数</strong>和一个目标值 <strong>S</strong>，判断是否存在一个子集，其元素之和恰好等于 S。如果存在，输出 "YES"；否则输出 "NO"。（n ≤ 20，元素值 ≤ 10⁶，S ≤ 2 × 10⁷）</p>
+<h3>输入格式</h3>
+<p>第一行：两个整数 n 和 S。第二行：n 个正整数 a₁, a₂, ..., aₙ。</p>
+<h3>输出格式</h3>
+<p>一行："YES" 或 "NO"。</p>
+<h3>输入样例</h3>
+<div class="code-block"><code>5 10
 1 3 5 7 9</code></div>
-
-      <h3>输出样例</h3>
-      <div class="code-block"><code>YES
+<h3>输出样例</h3>
+<div class="code-block"><code>YES
 <span style="color:#6a9955;">// 解释：可以选择 {1, 9} 或 {3, 7}</span></code></div>
-
-      <h3>解题思路</h3>
-      <p>使用<strong>子集枚举位运算</strong>，枚举 2<sup>n</sup> 种选法，对每种选法求和并与 S 比较。n &le; 20 时 2²⁰ ≈ 10⁶，完全可行。</p>
-
-      <h3>参考代码</h3>
-      <div class="code-block"><code><span style="color:#569cd6;">#include</span> <span style="color:#ce9178;">&lt;iostream&gt;</span>
+<h3>解题思路</h3>
+<p>使用<strong>子集枚举位运算</strong>，枚举 2<sup>n</sup> 种选法，对每种选法求和并与 S 比较。n ≤ 20 时 2²⁰ ≈ 10⁶，完全可行。</p>
+<h3>参考代码</h3>
+<div class="code-block"><code><span style="color:#569cd6;">#include</span> <span style="color:#ce9178;">&lt;iostream&gt;</span>
 <span style="color:#569cd6;">using</span> <span style="color:#569cd6;">namespace</span> std;
 
 <span style="color:#569cd6;">int</span> <span style="color:#dcdcaa;">main</span>() {
@@ -275,34 +309,54 @@ tr:nth-child(even) td { background: #f5f5f5; }
     cout &lt;&lt; <span style="color:#ce9178;">"NO"</span> &lt;&lt; endl;
     <span style="color:#569cd6;">return</span> <span style="color:#b5cea8;">0</span>;
 }</code></div>
-
-      <div class="exam-tip">
-        <strong>💡 考试技巧：</strong>子集和问题是 CSP-J 常客。n 较大时（n &gt; 20），可用「折半搜索」（Meet in the Middle）将复杂度降为 O(2<sup>n/2</sup>)，这是进阶考点。
+<div class="exam-tip">
+<strong>💡 考试技巧：</strong>子集和问题是 CSP-J 常客。n 较大时（n &gt; 20），可用「折半搜索」（Meet in the Middle）将复杂度降为 O(2<sup>n/2</sup>)，这是进阶考点。
       </div>
-    </div>
 
-    <!-- SLIDE 7: Summary -->
-    <div class="slide" id="slide7">
-      <h2>六、本课小结</h2>
-      <div class="summary-box">
-        <ol>
-          <li><strong>next_permutation</strong> 是 C++ STL 提供的全排列利器，使用前必须 <strong>sort</strong>，n &le; 10 时 O(n!) 可行</li>
-          <li><strong>子集枚举位运算法</strong>：mask 从 0 到 2<sup>n</sup>-1，用 &amp; 运算判断元素是否在子集中，n &le; 20 可行</li>
-          <li><strong>子集枚举递归法</strong>：每个元素"选/不选"的递归树天然对应所有子集</li>
-          <li><strong>回溯 = DFS + 剪枝 + 状态恢复</strong>：尝试 → 判断 → 回退，千万不要忘记恢复状态！</li>
-          <li>N 皇后问题的对角线技巧：<code>row + col</code>（主对角线）和 <code>row - col + n - 1</code>（副对角线）</li>
-          <li><strong>子集和问题</strong>是典型应用，位运算枚举 2<sup>n</sup> 种选法即可解决 n &le; 20 的情况</li>
-        </ol>
-      </div>
-      <p style="text-align:center; margin-top:30px; color:#5c6bc0; font-size:18px;">枚举进阶的核心是：<strong>用正确的方式穷举，用智慧的方式剪枝</strong>。</p>
-    </div>
+<aside class="notes">【讲解】五、真题精练 — 子集和问题
+本页要点（照着讲即可）：
+· 给定 n 个正整数 和一个目标值 S ，判断是否存在一个子集，其元素之和恰好等于 S。如果存在，输出 "YES"；否则输出 "NO"。（n ≤ 20，元素值 ≤ 10⁶，S ≤ 2 × 10⁷）
+· n 个正整数
+· 第一行：两个整数 n 和 S。第二行：n 个正整数 a₁, a₂, ..., aₙ。
+· 一行："YES" 或 "NO"。
+· 使用 子集枚举位运算 ，枚举 2 n 种选法，对每种选法求和并与 S 比较。n ≤ 20 时 2²⁰ ≈ 10⁶，完全可行。
+· 子集枚举位运算
+练习页节奏：先独立想 1 分钟 → 再点拨思路 → 最后对答案讲为什么。
+可联系：全排列与子集生成题</aside>
+</div>
+<!-- SLIDE 7: Summary -->
+<div class="slide" id="slide7">
+<h2>六、本课小结</h2>
+<div class="summary-box">
+<ol>
+<li><strong>next_permutation</strong> 是 C++ STL 提供的全排列利器，使用前必须 <strong>sort</strong>，n ≤ 10 时 O(n!) 可行</li>
+<li><strong>子集枚举位运算法</strong>：mask 从 0 到 2<sup>n</sup>-1，用 &amp; 运算判断元素是否在子集中，n ≤ 20 可行</li>
+<li><strong>子集枚举递归法</strong>：每个元素"选/不选"的递归树天然对应所有子集</li>
+<li><strong>回溯 = DFS + 剪枝 + 状态恢复</strong>：尝试 → 判断 → 回退，千万不要忘记恢复状态！</li>
+<li>N 皇后问题的对角线技巧：<code>row + col</code>（主对角线）和 <code>row - col + n - 1</code>（副对角线）</li>
+<li><strong>子集和问题</strong>是典型应用，位运算枚举 2<sup>n</sup> 种选法即可解决 n ≤ 20 的情况</li>
+</ol>
+</div>
+<p style="text-align:center; margin-top:30px; color:#5c6bc0; font-size:18px;">枚举进阶的核心是：<strong>用正确的方式穷举，用智慧的方式剪枝</strong>。</p>
 
-  </div>
-  <div class="navigation">
-    <button class="nav-btn" id="prevBtn" onclick="changeSlide(-1)">◀ 上一页</button>
-    <span class="slide-indicator" id="slideIndicator">1 / 7</span>
-    <button class="nav-btn" id="nextBtn" onclick="changeSlide(1)">下一页 ▶</button>
-  </div>
+<aside class="notes">【收尾】回顾本课主线：六、本课小结
+对照大纲再过一遍：排列枚举、子集枚举、回溯思想入门
+板书/口述要点：
+· next_permutation 是 C++ STL 提供的全排列利器，使用前必须 sort ，n ≤ 10 时 O(n!) 可行
+· next_permutation
+· sort
+· 子集枚举位运算法 ：mask 从 0 到 2 n -1，用 &amp; 运算判断元素是否在子集中，n ≤ 20 可行
+· 子集枚举位运算法
+· 子集枚举递归法 ：每个元素"选/不选"的递归树天然对应所有子集
+课后任务：全排列与子集生成题
+结束前留 2 分钟答疑；布置 1 道小练习检验是否真正掌握。</aside>
+</div>
+</div>
+<div class="navigation">
+<button class="nav-btn" id="prevBtn" onclick="changeSlide(-1)">◀ 上一页</button>
+<span class="slide-indicator" id="slideIndicator">1 / 7</span>
+<button class="nav-btn" id="nextBtn" onclick="changeSlide(1)">下一页 ▶</button>
+</div>
 </div>
 <script>
 let currentSlide = 1;

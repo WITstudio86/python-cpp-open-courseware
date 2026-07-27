@@ -1,8 +1,9 @@
 <!DOCTYPE html>
+
 <html lang="zh-CN">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
 <title>第18课：Dijkstra 算法</title>
 <style>
   * { margin: 0; padding: 0; box-sizing: border-box; }
@@ -115,68 +116,84 @@
 </head>
 <body>
 <div class="slides-container">
-
 <!-- Slide 0: 标题页 -->
 <div class="slide active title-slide" data-index="0">
-  <span class="badge">CSP-S 算法专题</span>
-  <h1>第18课：Dijkstra 算法</h1>
-  <p class="subtitle">单源最短路径 · 贪心策略 · 堆优化 · 路径还原</p>
-  <div style="margin-top:40px;color:#8b949e;font-size:.9rem;">
-    <p>由荷兰计算机科学家 Edsger W. Dijkstra 于 1956 年提出</p>
-    <p style="margin-top:8px;">CSP-S 图论核心考点，最短路径问题第一选择</p>
-  </div>
+<span class="badge">CSP-S 算法专题</span>
+<h1>第18课：Dijkstra 算法</h1>
+<p class="subtitle">单源最短路径 · 贪心策略 · 堆优化 · 路径还原</p>
+<div style="margin-top:40px;color:#8b949e;font-size:.9rem;">
+<p>由荷兰计算机科学家 Edsger W. Dijkstra 于 1956 年提出</p>
+<p style="margin-top:8px;">CSP-S 图论核心考点，最短路径问题第一选择</p>
 </div>
 
+<aside class="notes">【开场】第 1/8 页 · Dijkstra 算法
+用 30 秒说明本课目标与学完能做什么，再进入正题。
+大纲考点：朴素Dijkstra、堆优化Dijkstra、正确性证明
+配套练习方向：单源最短路标准题
+封面关键词：
+· 单源最短路径 · 贪心策略 · 堆优化 · 路径还原
+· 由荷兰计算机科学家 Edsger W. Dijkstra 于 1956 年提出
+· CSP-S 图论核心考点，最短路径问题第一选择
+互动：问学生「今天最想搞清楚什么？」，收 1–2 个期待。</aside>
+</div>
 <!-- Slide 1: 朴素 Dijkstra O(V²) -->
 <div class="slide" data-index="1">
-  <h1>朴素 Dijkstra — O(V²)</h1>
-  <p>适合<b>稠密图</b>（V ≤ 1000, E ≈ V²），配合邻接矩阵使用。</p>
-
-  <h2>算法流程</h2>
-  <ol>
-    <li>初始化：<span class="highlight">dist[s]=0</span>，其余 dist = INF，vis 全 false</li>
-    <li>重复 V 轮：从未确定顶点中选出 <span class="highlight">dist 最小</span>的 u</li>
-    <li>将 u 标记为「已确定」：<span class="highlight">vis[u] = true</span></li>
-    <li>用 u 松弛所有邻接点 v：<span class="highlight">dist[v] = min(dist[v], dist[u] + w(u,v))</span></li>
-  </ol>
-
-  <h2>代码框架</h2>
-  <div class="code-block"><span class="kw">for</span> (<span class="ty">int</span> i = <span class="nu">1</span>; i &lt;= n; i++) {
+<h1>朴素 Dijkstra — O(V²)</h1>
+<p>适合<b>稠密图</b>（V ≤ 1000, E ≈ V²），配合邻接矩阵使用。</p>
+<h2>算法流程</h2>
+<ol>
+<li>初始化：<span class="highlight">dist[s]=0</span>，其余 dist = INF，vis 全 false</li>
+<li>重复 V 轮：从未确定顶点中选出 <span class="highlight">dist 最小</span>的 u</li>
+<li>将 u 标记为「已确定」：<span class="highlight">vis[u] = true</span></li>
+<li>用 u 松弛所有邻接点 v：<span class="highlight">dist[v] = min(dist[v], dist[u] + w(u,v))</span></li>
+</ol>
+<h2>代码框架</h2>
+<div class="code-block"><span class="kw">for</span> (<span class="ty">int</span> i = <span class="nu">1</span>; i &lt;= n; i++) {
     <span class="cm">// 1. 找最小 dist 的未确定顶点</span>
-    <span class="ty">int</span> u = -<span class="nu">1</span>;
+<span class="ty">int</span> u = -<span class="nu">1</span>;
     <span class="kw">for</span> (<span class="ty">int</span> j = <span class="nu">1</span>; j &lt;= n; j++)
-        <span class="kw">if</span> (!vis[j] && (u == -<span class="nu">1</span> || dist[j] &lt; dist[u]))
+        <span class="kw">if</span> (!vis[j] &amp;&amp; (u == -<span class="nu">1</span> || dist[j] &lt; dist[u]))
             u = j;
     <span class="kw">if</span> (u == -<span class="nu">1</span>) <span class="kw">break</span>;
     vis[u] = <span class="kw">true</span>;
     <span class="cm">// 2. 松弛邻接点</span>
-    <span class="kw">for</span> (<span class="ty">int</span> v = <span class="nu">1</span>; v &lt;= n; v++)
-        <span class="kw">if</span> (!vis[v] && g[u][v] != INF)
+<span class="kw">for</span> (<span class="ty">int</span> v = <span class="nu">1</span>; v &lt;= n; v++)
+        <span class="kw">if</span> (!vis[v] &amp;&amp; g[u][v] != INF)
             dist[v] = <span class="fn">min</span>(dist[v], dist[u] + g[u][v]);
 }</div>
-
-  <table>
-    <tr><th>操作</th><th>复杂度</th></tr>
-    <tr><td>找最小 dist</td><td class="accent">O(V) 暴力扫描</td></tr>
-    <tr><td>松弛邻接点</td><td class="accent">O(V) 全扫描</td></tr>
-    <tr><td>总复杂度</td><td class="highlight">O(V²)</td></tr>
-  </table>
-
-  <div class="note-box">
+<table>
+<tr><th>操作</th><th>复杂度</th></tr>
+<tr><td>找最小 dist</td><td class="accent">O(V) 暴力扫描</td></tr>
+<tr><td>松弛邻接点</td><td class="accent">O(V) 全扫描</td></tr>
+<tr><td>总复杂度</td><td class="highlight">O(V²)</td></tr>
+</table>
+<div class="note-box">
     💡 当 V=500, E≈124750 时，O(V²)=250K 优于 O(E log V)≈2.2M，朴素版反而更快。
   </div>
-</div>
 
+<aside class="notes">【讲解】朴素 Dijkstra — O(V²)
+结合讲义《模板 1：朴素 Dijkstra $O(V^2)$》强调：
+· const int MAXN = 1005;
+· const int INF = 0x3f3f3f3f;
+· int g[MAXN][MAXN]; // 邻接矩阵
+· int dist[MAXN];
+· bool vis[MAXN];
+幻灯片上可见要点：
+· 适合 稠密图 （V ≤ 1000, E ≈ V²），配合邻接矩阵使用。
+· 初始化： dist[s]=0 ，其余 dist = INF，vis 全 false
+· 重复 V 轮：从未确定顶点中选出 dist 最小 的 u
+· 将 u 标记为「已确定」： vis[u] = true
+讲解时放慢关键术语；用 1 个生活类比 + 1 个反例加深印象。
+本课大纲考点（可适时点题）：朴素Dijkstra、堆优化Dijkstra、正确性证明</aside>
+</div>
 <!-- Slide 2: 堆优化 Dijkstra O(E log V) -->
 <div class="slide" data-index="2">
-  <h1>堆优化 Dijkstra — O(E log V)</h1>
-  <p>适合<b>稀疏图</b>（V ≤ 10⁵），配合邻接表使用。这是 <span class="highlight">CSP-S 最常用版本</span>。</p>
-
-  <h2>核心改进</h2>
-  <p>朴素版的瓶颈是「找最小 dist」。用<b>优先队列</b>（小根堆）代替暴力扫描。</p>
-
-  <h2>完整代码</h2>
-  <div class="code-block">priority_queue&lt;pair&lt;<span class="ty">int</span>,<span class="ty">int</span>&gt;, vector&lt;...&gt;, <span class="fn">greater</span>&lt;&gt;&gt; pq;
+<h1>堆优化 Dijkstra — O(E log V)</h1>
+<p>适合<b>稀疏图</b>（V ≤ 10⁵），配合邻接表使用。这是 <span class="highlight">CSP-S 最常用版本</span>。</p>
+<h2>核心改进</h2>
+<p>朴素版的瓶颈是「找最小 dist」。用<b>优先队列</b>（小根堆）代替暴力扫描。</p>
+<h2>完整代码</h2>
+<div class="code-block">priority_queue&lt;pair&lt;<span class="ty">int</span>,<span class="ty">int</span>&gt;, vector&lt;...&gt;, <span class="fn">greater</span>&lt;&gt;&gt; pq;
 pq.<span class="fn">push</span>({<span class="nu">0</span>, s});
 <span class="kw">while</span> (!pq.<span class="fn">empty</span>()) {
     <span class="kw">auto</span> [d, u] = pq.<span class="fn">top</span>(); pq.<span class="fn">pop</span>();
@@ -189,60 +206,76 @@ pq.<span class="fn">push</span>({<span class="nu">0</span>, s});
         }
     }
 }</div>
-
-  <h2>时间复杂度分析</h2>
-  <table>
-    <tr><th>操作</th><th>复杂度</th><th>说明</th></tr>
-    <tr><td>每个顶点出队</td><td class="accent">O(log V)</td><td>最多 V 次</td></tr>
-    <tr><td>每次松弛入堆</td><td class="accent">O(log V)</td><td>最多 E 次</td></tr>
-    <tr><td>总复杂度</td><td class="highlight">O((V+E) log V)</td><td>简记 O(E log V)</td></tr>
-  </table>
-
-  <div class="note-box">
+<h2>时间复杂度分析</h2>
+<table>
+<tr><th>操作</th><th>复杂度</th><th>说明</th></tr>
+<tr><td>每个顶点出队</td><td class="accent">O(log V)</td><td>最多 V 次</td></tr>
+<tr><td>每次松弛入堆</td><td class="accent">O(log V)</td><td>最多 E 次</td></tr>
+<tr><td>总复杂度</td><td class="highlight">O((V+E) log V)</td><td>简记 O(E log V)</td></tr>
+</table>
+<div class="note-box">
     🔑 <b>懒删除</b>：同一顶点可能多次入堆（每次 dist 更新），但只处理第一次出队。旧记录通过 <code>if (vis[u]) continue</code> 跳过。
   </div>
-</div>
 
+<aside class="notes">【讲解】堆优化 Dijkstra — O(E log V)
+结合讲义《模板 2：堆优化 Dijkstra $O(E \log V)$》强调：
+· const int MAXN = 1e5 + 5;
+· const int INF = 0x3f3f3f3f;
+· vector&gt; g[MAXN]; // g[u] = {v, w}
+· int dist[MAXN];
+· bool vis[MAXN];
+幻灯片上可见要点：
+· 适合 稀疏图 （V ≤ 10⁵），配合邻接表使用。这是 CSP-S 最常用版本 。
+· 朴素版的瓶颈是「找最小 dist」。用 优先队列 （小根堆）代替暴力扫描。
+讲解时放慢关键术语；用 1 个生活类比 + 1 个反例加深印象。</aside>
+</div>
 <!-- Slide 3: 正确性证明 -->
 <div class="slide" data-index="3">
-  <h1>贪心正确性证明</h1>
-
-  <h2>定理（Dijkstra 正确性）</h2>
-  <p>在边权非负的图中，每次选中 <b>dist 最小的未确定顶点</b>时，其 dist 值等于该顶点的真正最短距离。</p>
-
-  <h2>反证法证明</h2>
-  <p>设当前选中 u，假设存在比 dist[u] 更短的真实路径 P。</p>
-  <p>P 必然在某个点首次离开「已确定集合 S」：设该点为 x ∈ S，下一个点为 y ∉ S。</p>
-
-  <div class="code-block" style="font-size:.9rem">
+<h1>贪心正确性证明</h1>
+<h2>定理（Dijkstra 正确性）</h2>
+<p>在边权非负的图中，每次选中 <b>dist 最小的未确定顶点</b>时，其 dist 值等于该顶点的真正最短距离。</p>
+<h2>反证法证明</h2>
+<p>设当前选中 u，假设存在比 dist[u] 更短的真实路径 P。</p>
+<p>P 必然在某个点首次离开「已确定集合 S」：设该点为 x ∈ S，下一个点为 y ∉ S。</p>
+<div class="code-block" style="font-size:.9rem">
  len(P) ≥ dist[x] + w(x,y)   <span class="cm">// P 经 x→y 到达 y</span>
         ≥ dist[y]              <span class="cm">// dist[y] 可能已被 x 更新过，即 dist[y] ≤ dist[x]+w(x,y)</span>
         ≥ dist[u]              <span class="cm">// 因为算法选了 dist 最小的 u，而非 y</span>
 
  因此 len(P) ≥ dist[u]，矛盾 ∎</div>
-
-  <h2>为什么负权边不可用？</h2>
-  <div class="warn-box">
-    <b>❌ 关键矛盾</b>：若有负权边，经过更多边的路径可能<b>反而更短</b>！<br>
+<h2>为什么负权边不可用？</h2>
+<div class="warn-box">
+<b>❌ 关键矛盾</b>：若有负权边，经过更多边的路径可能<b>反而更短</b>！<br/>
     dist[u] 最小时，其他未确定顶点可能通过负权边让路径缩短，<b>贪心性质被破坏</b>。
   </div>
-  <p><b>反例</b>：三角形 A→B(2), B→C(-3), A→C(1)。Dijkstra 先确定 dist[C]=1（错），实际 A→B→C = -1。</p>
+<p><b>反例</b>：三角形 A→B(2), B→C(-3), A→C(1)。Dijkstra 先确定 dist[C]=1（错），实际 A→B→C = -1。</p>
+<table>
+<tr><th>图类型</th><th>可用算法</th></tr>
+<tr><td>非负权</td><td class="accent">Dijkstra O(E log V)</td></tr>
+<tr><td>含负权边</td><td>Bellman-Ford O(VE) / SPFA</td></tr>
+<tr><td>含负环</td><td>Bellman-Ford 检测负环</td></tr>
+<tr><td>全源最短（含负）</td><td>Floyd O(V³) 或 Johnson O(VE log V)</td></tr>
+</table>
 
-  <table>
-    <tr><th>图类型</th><th>可用算法</th></tr>
-    <tr><td>非负权</td><td class="accent">Dijkstra O(E log V)</td></tr>
-    <tr><td>含负权边</td><td>Bellman-Ford O(VE) / SPFA</td></tr>
-    <tr><td>含负环</td><td>Bellman-Ford 检测负环</td></tr>
-    <tr><td>全源最短（含负）</td><td>Floyd O(V³) 或 Johnson O(VE log V)</td></tr>
-  </table>
+<aside class="notes">【讲解】贪心正确性证明
+结合讲义《6. 贪心正确性证明》强调：
+· 定理：在边权非负的图中，Dijkstra 算法能正确求出单源最短路径。
+· 证明（数学归纳法）：
+· 设 $S$ 为已确定最短路径的顶点集合。归纳假设：对任意 $u \in S$，$dist[u]$ 等于 $s$ 到 $u$ 的最短距离。
+· 初始时 $S = \{s\}$，$dist[s] = 0$，成立。
+· 归纳步骤：设当前选中的最小 dist 顶点为 $u \notin S$。下面证明 $dist[u]$ 就是 $s$ 到 $u$ 的最短距离。
+幻灯片上可见要点：
+· 在边权非负的图中，每次选中 dist 最小的未确定顶点 时，其 dist 值等于该顶点的真正最短距离。
+· 设当前选中 u，假设存在比 dist[u] 更短的真实路径 P。
+· P 必然在某个点首次离开「已确定集合 S」：设该点为 x ∈ S，下一个点为 y ∉ S。
+· 反例 ：三角形 A→B(2), B→C(-3), A→C(1)。Dijkstra 先确定 dist[C]=1（错），实际 A→B→C = -1。
+讲解时放慢关键术语；用 1 个生活类比 + 1 个反例加深印象。</aside>
 </div>
-
 <!-- Slide 4: 代码模板 -->
 <div class="slide" data-index="4">
-  <h1>代码模板 &amp; 路径还原</h1>
-
-  <h2>模板：堆优化 Dijkstra</h2>
-  <div class="code-block"><span class="ty">int</span> dist[MAXN], pre[MAXN];
+<h1>代码模板 &amp; 路径还原</h1>
+<h2>模板：堆优化 Dijkstra</h2>
+<div class="code-block"><span class="ty">int</span> dist[MAXN], pre[MAXN];
 <span class="ty">bool</span> vis[MAXN];
 
 <span class="kw">void</span> <span class="fn">dijkstra</span>(<span class="ty">int</span> s) {
@@ -261,125 +294,154 @@ pq.<span class="fn">push</span>({<span class="nu">0</span>, s});
         }
     }
 }</div>
-
-  <h2>路径还原</h2>
-  <div class="code-block"><span class="cm">// 还原 s → t 的最短路径</span>
+<h2>路径还原</h2>
+<div class="code-block"><span class="cm">// 还原 s → t 的最短路径</span>
 vector&lt;<span class="ty">int</span>&gt; <span class="fn">get_path</span>(<span class="ty">int</span> s, <span class="ty">int</span> t) {
     vector&lt;<span class="ty">int</span>&gt; path;
     <span class="kw">if</span> (dist[t] == INF) <span class="kw">return</span> path; <span class="cm">// 不可达</span>
-    <span class="kw">for</span> (<span class="ty">int</span> v = t; v != -<span class="nu">1</span>; v = pre[v])
+<span class="kw">for</span> (<span class="ty">int</span> v = t; v != -<span class="nu">1</span>; v = pre[v])
         path.<span class="fn">push_back</span>(v);
     <span class="fn">reverse</span>(path.<span class="fn">begin</span>(), path.<span class="fn">end</span>());
     <span class="kw">return</span> path;
 }</div>
+<h2>两种实现选择策略</h2>
+<table>
+<tr><th>条件</th><th>选择</th></tr>
+<tr><td>V ≤ 1000, 图较稠密</td><td class="accent">朴素 O(V²) + 邻接矩阵</td></tr>
+<tr><td>V ≤ 10⁵, 稀疏图</td><td class="highlight">堆优化 O(E log V) + 邻接表</td></tr>
+<tr><td>边权只有 0 和 1</td><td>双端队列 0-1 BFS O(V+E)</td></tr>
+</table>
 
-  <h2>两种实现选择策略</h2>
-  <table>
-    <tr><th>条件</th><th>选择</th></tr>
-    <tr><td>V ≤ 1000, 图较稠密</td><td class="accent">朴素 O(V²) + 邻接矩阵</td></tr>
-    <tr><td>V ≤ 10⁵, 稀疏图</td><td class="highlight">堆优化 O(E log V) + 邻接表</td></tr>
-    <tr><td>边权只有 0 和 1</td><td>双端队列 0-1 BFS O(V+E)</td></tr>
-  </table>
+<aside class="notes">【讲解】代码模板 &amp; 路径还原
+结合讲义《8. 路径还原》强调：
+· 在更新 $dist[v]$ 时记录前驱顶点，最后从终点回溯即可还原完整路径。
+· int pre[MAXN]; // pre[v] = 在最短路径上 v 的前一个顶点
+· // 在松弛时：
+· if (dist[v] &gt; dist[u] + w) {
+· dist[v] = dist[u] + w;
+幻灯片上可见要点：
+· 代码模板 &amp; 路径还原
+· 模板：堆优化 Dijkstra
+· dist[MAXN], pre[MAXN];
+· bool
+代码页节奏：先读懂输入输出 → 再走主流程 → 最后点出易错点（边界/类型/下标）。
+可让学生预测下一行输出，再运行对照。</aside>
 </div>
-
 <!-- Slide 5: 真题精练 -->
 <div class="slide" data-index="5">
-  <h1>真题精练</h1>
-
-  <h2>题1：单源最短路径（标准模板）</h2>
-  <p>n ≤ 10⁵, m ≤ 2×10⁵，w ≤ 10⁹，有向图，求 s 到所有顶点的最短距离。不可达输出 -1。</p>
-  <div class="note-box">
-    <b>注意</b>：边权可达 10⁹，dist 用 <code>long long</code>，INF 用 <code>1e18</code>。
+<h1>真题精练</h1>
+<h2>题1：单源最短路径（标准模板）</h2>
+<p>n ≤ 10⁵, m ≤ 2×10⁵，w ≤ 10⁹，有向图，求 s 到所有顶点的最短距离。不可达输出 -1。</p>
+<div class="note-box">
+<b>注意</b>：边权可达 10⁹，dist 用 <code>long long</code>，INF 用 <code>1e18</code>。
   </div>
-
-  <h2>题2：最短路径 + 路径还原</h2>
-  <p>给定 s 和 t，输出 s 到 t 的最短距离，以及完整的路径序列。若不可达输出 -1。</p>
-  <div style="margin-top:12px;">
-    <p><b>常考变式</b>：</p>
-    <ul>
-      <li>输出路径上的顶点序列（需 pre[] 回溯）</li>
-      <li>统计最短路径的<b>条数</b>（需 cnt[] 累加）</li>
-      <li>次短路径（维护两个 dist 数组）</li>
-      <li>K 短路（A* 算法）</li>
-    </ul>
-  </div>
-
-  <h2>复杂度对照</h2>
-  <table>
-    <tr><th>算法</th><th>复杂度</th><th>n=10⁵, m=2×10⁵</th></tr>
-    <tr><td>朴素 Dijkstra</td><td>O(n²)</td><td class="warn-box" style="display:table-cell;padding:8px;border-radius:0;">10¹⁰ → <b>TLE</b></td></tr>
-    <tr><td>堆优化 Dijkstra</td><td>O(m log n)</td><td class="accent">2×10⁵ × 17 ≈ 3.4×10⁶ → <b>AC</b></td></tr>
-    <tr><td>SPFA (平均)</td><td>O(km)</td><td>可能被卡退化为 O(nm)</td></tr>
-  </table>
+<h2>题2：最短路径 + 路径还原</h2>
+<p>给定 s 和 t，输出 s 到 t 的最短距离，以及完整的路径序列。若不可达输出 -1。</p>
+<div style="margin-top:12px;">
+<p><b>常考变式</b>：</p>
+<ul>
+<li>输出路径上的顶点序列（需 pre[] 回溯）</li>
+<li>统计最短路径的<b>条数</b>（需 cnt[] 累加）</li>
+<li>次短路径（维护两个 dist 数组）</li>
+<li>K 短路（A* 算法）</li>
+</ul>
 </div>
+<h2>复杂度对照</h2>
+<table>
+<tr><th>算法</th><th>复杂度</th><th>n=10⁵, m=2×10⁵</th></tr>
+<tr><td>朴素 Dijkstra</td><td>O(n²)</td><td class="warn-box" style="display:table-cell;padding:8px;border-radius:0;">10¹⁰ → <b>TLE</b></td></tr>
+<tr><td>堆优化 Dijkstra</td><td>O(m log n)</td><td class="accent">2×10⁵ × 17 ≈ 3.4×10⁶ → <b>AC</b></td></tr>
+<tr><td>SPFA (平均)</td><td>O(km)</td><td>可能被卡退化为 O(nm)</td></tr>
+</table>
 
+<aside class="notes">【讲解】真题精练
+本页要点（照着讲即可）：
+· n ≤ 10⁵, m ≤ 2×10⁵，w ≤ 10⁹，有向图，求 s 到所有顶点的最短距离。不可达输出 -1。
+· 给定 s 和 t，输出 s 到 t 的最短距离，以及完整的路径序列。若不可达输出 -1。
+· 常考变式 ：
+· 输出路径上的顶点序列（需 pre[] 回溯）
+· 统计最短路径的 条数 （需 cnt[] 累加）
+· 次短路径（维护两个 dist 数组）
+练习页节奏：先独立想 1 分钟 → 再点拨思路 → 最后对答案讲为什么。
+可联系：单源最短路标准题</aside>
+</div>
 <!-- Slide 6: 易错点 -->
 <div class="slide" data-index="6">
-  <h1>易错点与技巧总结</h1>
-
-  <table>
-    <tr><th>常见错误</th><th>原因</th><th>解决方案</th></tr>
-    <tr><td>priority_queue 是大根堆</td><td>默认 less&lt;&gt; 是最大堆</td><td class="highlight">用 greater&lt;pair&gt;</td></tr>
-    <tr><td>vis 标记时机错</td><td>在 push 时就标 vis</td><td class="highlight">在 pop 后才标 vis（懒删除）</td></tr>
-    <tr><td>INF 溢出</td><td>INT_MAX + 正数 溢出</td><td class="highlight">用 0x3f3f3f3f 或 1e18</td></tr>
-    <tr><td>重边导致错误</td><td>多条 (u,v) 取错权值</td><td>根据题意取 min 或保留</td></tr>
-    <tr><td>无向图漏反向边</td><td>只加了单向边</td><td>g[u].push({v,w}); g[v].push({u,w})</td></tr>
-    <tr><td>负权边用 Dijkstra</td><td>Dijkstra 不适用负权图</td><td>换用 SPFA / Bellman-Ford</td></tr>
-    <tr><td>memset 给 long long</td><td>memset 按字节填充</td><td>用 fill / for 循环 / 手动赋值</td></tr>
-  </table>
-
-  <h2>核心技巧清单</h2>
-  <ul>
-    <li><b>0x3f3f3f3f 技巧</b>：memset 按字节填充，int 值为 10⁶⁷，两倍相加不溢出，常用于 dist 初始化</li>
-    <li><b>懒删除</b>：不做 decrease-key，旧记录在 pop 时跳过，代码量减半</li>
-    <li><b>稠密图用朴素</b>：V ≤ 1000 时 O(n²) 往往比堆优化快</li>
-    <li><b>多源最短路径</b>：建超级源点，向各个起点连 0 权边，一次 Dijkstra</li>
-    <li><b>路径记录</b>：松弛时 pre[v] = u，终点回溯即可</li>
-    <li><b>边权很大时</b>：dist 换 long long，INF 换 1e18</li>
-  </ul>
-
-  <div class="warn-box">
-    ⚠️ <b>死记硬背点</b>：小根堆声明——<br>
-    <code>priority_queue&lt;pair&lt;int,int&gt;, vector&lt;pair&lt;int,int&gt;&gt;, greater&lt;pair&lt;int,int&gt;&gt;&gt;</code><br>
+<h1>易错点与技巧总结</h1>
+<table>
+<tr><th>常见错误</th><th>原因</th><th>解决方案</th></tr>
+<tr><td>priority_queue 是大根堆</td><td>默认 less&lt;&gt; 是最大堆</td><td class="highlight">用 greater&lt;pair&gt;</td></tr>
+<tr><td>vis 标记时机错</td><td>在 push 时就标 vis</td><td class="highlight">在 pop 后才标 vis（懒删除）</td></tr>
+<tr><td>INF 溢出</td><td>INT_MAX + 正数 溢出</td><td class="highlight">用 0x3f3f3f3f 或 1e18</td></tr>
+<tr><td>重边导致错误</td><td>多条 (u,v) 取错权值</td><td>根据题意取 min 或保留</td></tr>
+<tr><td>无向图漏反向边</td><td>只加了单向边</td><td>g[u].push({v,w}); g[v].push({u,w})</td></tr>
+<tr><td>负权边用 Dijkstra</td><td>Dijkstra 不适用负权图</td><td>换用 SPFA / Bellman-Ford</td></tr>
+<tr><td>memset 给 long long</td><td>memset 按字节填充</td><td>用 fill / for 循环 / 手动赋值</td></tr>
+</table>
+<h2>核心技巧清单</h2>
+<ul>
+<li><b>0x3f3f3f3f 技巧</b>：memset 按字节填充，int 值为 10⁶⁷，两倍相加不溢出，常用于 dist 初始化</li>
+<li><b>懒删除</b>：不做 decrease-key，旧记录在 pop 时跳过，代码量减半</li>
+<li><b>稠密图用朴素</b>：V ≤ 1000 时 O(n²) 往往比堆优化快</li>
+<li><b>多源最短路径</b>：建超级源点，向各个起点连 0 权边，一次 Dijkstra</li>
+<li><b>路径记录</b>：松弛时 pre[v] = u，终点回溯即可</li>
+<li><b>边权很大时</b>：dist 换 long long，INF 换 1e18</li>
+</ul>
+<div class="warn-box">
+    ⚠️ <b>死记硬背点</b>：小根堆声明——<br/>
+<code>priority_queue&lt;pair&lt;int,int&gt;, vector&lt;pair&lt;int,int&gt;&gt;, greater&lt;pair&lt;int,int&gt;&gt;&gt;</code><br/>
     C++17 起可简写为 <code>priority_queue&lt;pair&lt;int,int&gt;, vector&lt;pair&lt;int,int&gt;&gt;, greater&lt;&gt;&gt;</code>
-  </div>
 </div>
 
+<aside class="notes">【收尾】回顾本课主线：易错点与技巧总结
+对照大纲再过一遍：朴素Dijkstra、堆优化Dijkstra、正确性证明
+板书/口述要点：
+· 0x3f3f3f3f 技巧 ：memset 按字节填充，int 值为 10⁶⁷，两倍相加不溢出，常用于 dist 初始化
+· 懒删除 ：不做 decrease-key，旧记录在 pop 时跳过，代码量减半
+· 稠密图用朴素 ：V ≤ 1000 时 O(n²) 往往比堆优化快
+· 多源最短路径 ：建超级源点，向各个起点连 0 权边，一次 Dijkstra
+· 路径记录 ：松弛时 pre[v] = u，终点回溯即可
+· 边权很大时 ：dist 换 long long，INF 换 1e18
+课后任务：单源最短路标准题
+结束前留 2 分钟答疑；布置 1 道小练习检验是否真正掌握。</aside>
+</div>
 <!-- Slide 7: 总结 -->
 <div class="slide" data-index="7">
-  <h1>本课小结</h1>
-  <table>
-    <tr><th>模块</th><th>要点</th></tr>
-    <tr><td>问题定义</td><td>非负权图上，求 s 到所有顶点的单源最短路径</td></tr>
-    <tr><td>算法思想</td><td>贪心：每次选 dist 最小的未确定顶点并确定之</td></tr>
-    <tr><td>朴素实现</td><td>O(V²)，邻接矩阵，适合 V≤1000 稠密图</td></tr>
-    <tr><td>堆优化</td><td>O(E log V)，邻接表 + priority_queue，CSP-S 首选</td></tr>
-    <tr><td>正确性条件</td><td>边权必须非负；负权图请用 Bellman-Ford/SPFA</td></tr>
-    <tr><td>vis 时机</td><td>pop 后检查 vis（懒删除），代码简洁无误</td></tr>
-    <tr><td>路径还原</td><td>pre[v] = u 记录前驱，终点向前回溯再反转</td></tr>
-    <tr><td>INF 技巧</td><td>0x3f3f3f3f = memset 填充，2× 不溢出</td></tr>
-  </table>
-
-  <div class="note-box" style="margin-top:20px;">
-    <b>🎯 CSP-S 应试核心</b>：堆优化 Dijkstra 是必须<b>手写无误</b>的模板。理解 vis 的「懒删除」位置、
-    小根堆的三种模板参数、以及朴素/堆优的适用场景选择。<br><br>
-    <b>记忆口诀</b>：「邻接表 + 小根堆 + 懒删除 = Dijkstra」
+<h1>本课小结</h1>
+<table>
+<tr><th>模块</th><th>要点</th></tr>
+<tr><td>问题定义</td><td>非负权图上，求 s 到所有顶点的单源最短路径</td></tr>
+<tr><td>算法思想</td><td>贪心：每次选 dist 最小的未确定顶点并确定之</td></tr>
+<tr><td>朴素实现</td><td>O(V²)，邻接矩阵，适合 V≤1000 稠密图</td></tr>
+<tr><td>堆优化</td><td>O(E log V)，邻接表 + priority_queue，CSP-S 首选</td></tr>
+<tr><td>正确性条件</td><td>边权必须非负；负权图请用 Bellman-Ford/SPFA</td></tr>
+<tr><td>vis 时机</td><td>pop 后检查 vis（懒删除），代码简洁无误</td></tr>
+<tr><td>路径还原</td><td>pre[v] = u 记录前驱，终点向前回溯再反转</td></tr>
+<tr><td>INF 技巧</td><td>0x3f3f3f3f = memset 填充，2× 不溢出</td></tr>
+</table>
+<div class="note-box" style="margin-top:20px;">
+<b>🎯 CSP-S 应试核心</b>：堆优化 Dijkstra 是必须<b>手写无误</b>的模板。理解 vis 的「懒删除」位置、
+    小根堆的三种模板参数、以及朴素/堆优的适用场景选择。<br/><br/>
+<b>记忆口诀</b>：「邻接表 + 小根堆 + 懒删除 = Dijkstra」
   </div>
-
-  <p style="text-align:center; margin-top:30px; color:#64b5f6; font-size:1.2rem;">
+<p style="text-align:center; margin-top:30px; color:#64b5f6; font-size:1.2rem;">
     第17-18课完成。后续课程：最小生成树 &amp; Floyd 算法
   </p>
-</div>
 
+<aside class="notes">【收尾】回顾本课主线：本课小结
+对照大纲再过一遍：朴素Dijkstra、堆优化Dijkstra、正确性证明
+板书/口述要点：
+· 第17-18课完成。后续课程：最小生成树 &amp; Floyd 算法
+课后任务：单源最短路标准题
+结束前留 2 分钟答疑；布置 1 道小练习检验是否真正掌握。</aside>
 </div>
-
+</div>
 <!-- 导航栏 -->
 <div class="nav">
-  <button id="prevBtn" onclick="changeSlide(-1)">◀ 上一页</button>
-  <span class="page-indicator" id="pageIndicator">1 / 8</span>
-  <button id="nextBtn" onclick="changeSlide(1)">下一页 ▶</button>
+<button id="prevBtn" onclick="changeSlide(-1)">◀ 上一页</button>
+<span class="page-indicator" id="pageIndicator">1 / 8</span>
+<button id="nextBtn" onclick="changeSlide(1)">下一页 ▶</button>
 </div>
-
 <script>
 let current = 0;
 const slides = document.querySelectorAll('.slide');

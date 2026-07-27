@@ -1,8 +1,9 @@
 <!DOCTYPE html>
+
 <html lang="zh-CN">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
 <title>第25节：外星人军团</title>
 <style>
 /* ==================== 全局样式 ==================== */
@@ -352,414 +353,507 @@ td {
 </style>
 </head>
 <body>
-
 <div class="slides-container">
-
 <!-- ==================== 第1页：封面 ==================== -->
 <div class="slide slide-title active" data-index="0">
-    <div class="emoji-row">🛸👾🛸👾🛸</div>
-    <h1>第25节：外星人军团</h1>
-    <div class="subtitle">太空侵略者 · 编队移动算法 · 精灵与精灵组</div>
-    <p style="font-size:1.2em;color:#6666aa;margin-top:30px;">
+<div class="emoji-row">🛸👾🛸👾🛸</div>
+<h1>第25节：外星人军团</h1>
+<div class="subtitle">太空侵略者 · 编队移动算法 · 精灵与精灵组</div>
+<p style="font-size:1.2em;color:#6666aa;margin-top:30px;">
         pygame.sprite.Sprite | pygame.sprite.Group | 碰撞检测
     </p>
-</div>
 
+<aside class="notes">【开场】第 1/14 页 · 外星人军团
+用 30 秒说明本课目标与学完能做什么，再进入正题。
+大纲考点：**内容**：敌机编队移动、敌机发射子弹、掩体绘制
+
+**知识点**：
+- 编队移动算法（整排统一移动+触边换向+下移一行）
+- `pygame.sprite.Sprite` 类初步接触（继承 `Sprite`，实现 `update()`）
+- `pygame.sprite.Group()` — 精灵组管理
+
+**课堂练习**：外星人军团在屏幕上来回移动
+
+---
+封面关键词：
+· pygame.sprite.Sprite | pygame.sprite.Group | 碰撞检测
+互动：问学生「今天最想搞清楚什么？」，收 1–2 个期待。</aside>
+</div>
 <!-- ==================== 第2页：教学目标 ==================== -->
 <div class="slide slide-content" data-index="1">
-    <h2>🎯 教学目标</h2>
-    <div style="font-size:1.5em;line-height:2.5;">
-        <p>💡 理解<strong style="color:#00ff88;">编队移动算法</strong>：整排统一移动 + 触边换向 + 下移一行</p>
-        <p>🧩 学会创建继承自 <strong style="color:#ffcc00;">pygame.sprite.Sprite</strong> 的精灵子类</p>
-        <p>📦 学会使用 <strong style="color:#ffcc00;">pygame.sprite.Group()</strong> 批量管理精灵</p>
-        <p>🎯 实现玩家射击与<strong style="color:#ff7b72;">碰撞检测</strong>的基本逻辑</p>
-        <p>💻 能够读懂并<strong style="color:#00d4ff;">修改</strong>本节课的示例代码</p>
-    </div>
+<h2>🎯 教学目标</h2>
+<div style="font-size:1.5em;line-height:2.5;">
+<p>💡 理解<strong style="color:#00ff88;">编队移动算法</strong>：整排统一移动 + 触边换向 + 下移一行</p>
+<p>🧩 学会创建继承自 <strong style="color:#ffcc00;">pygame.sprite.Sprite</strong> 的精灵子类</p>
+<p>📦 学会使用 <strong style="color:#ffcc00;">pygame.sprite.Group()</strong> 批量管理精灵</p>
+<p>🎯 实现玩家射击与<strong style="color:#ff7b72;">碰撞检测</strong>的基本逻辑</p>
+<p>💻 能够读懂并<strong style="color:#00d4ff;">修改</strong>本节课的示例代码</p>
 </div>
 
+<aside class="notes">【讲解】🎯 教学目标
+结合讲义《🎯 教学目标》强调：
+· 学生能够理解编队移动算法：整排统一移动 + 触边换向 + 下移一行
+· 学生能够创建继承自 pygame.sprite.Sprite 的精灵子类
+· 学生能够使用 pygame.sprite.Group() 管理一组精灵
+· 学生能够实现玩家射击与碰撞检测的基本逻辑
+· 学生能够读懂并修改本节课的示例代码
+幻灯片上可见要点：
+· 💡 理解 编队移动算法 ：整排统一移动 + 触边换向 + 下移一行
+· 编队移动算法
+· 🧩 学会创建继承自 pygame.sprite.Sprite 的精灵子类
+· pygame.sprite.Sprite
+讲解时放慢关键术语；用 1 个生活类比 + 1 个反例加深印象。
+本课大纲考点（可适时点题）：**内容**：敌机编队移动、敌机发射子弹、掩体绘制
+
+**知识点**：
+- 编队移动算法（整排统一移动+触边换向+下移一行）
+- `pygame.sprite.Sprite` 类初步接触（继承 `Sprite`，实现 `update()`）
+- `pygame.sprite.Group()` — 精灵组管理
+
+**课堂练习**：外星人军团在屏幕上来回移动
+
+---</aside>
+</div>
 <!-- ==================== 第3页：回顾 ==================== -->
 <div class="slide slide-content" data-index="2">
-    <h2>📚 回忆一下：我们已经会什么？</h2>
-
-    <div class="highlight-box info" style="margin-top:10px;">
-        <h4>这些知识是我们已经学过的：</h4>
-        <ul style="font-size:1.2em;line-height:2.2;">
-            <li>用 <code style="background:#1a2a3a;padding:2px 8px;border-radius:4px;">pygame.Rect</code> 表示物体的位置和大小</li>
-            <li>用 <code style="background:#1a2a3a;padding:2px 8px;border-radius:4px;">screen.blit()</code> 把图片画到屏幕上</li>
-            <li>用 <code style="background:#1a2a3a;padding:2px 8px;border-radius:4px;">pygame.key.get_pressed()</code> 处理键盘输入</li>
-            <li>理解游戏主循环：<strong>事件 → 更新 → 绘制</strong></li>
-            <li>面向对象基础：<strong>类、对象、`__init__`、`self`</strong></li>
-        </ul>
-    </div>
-
-    <p style="font-size:1.2em;margin-top:30px;color:#aaaacc;">
+<h2>📚 回忆一下：我们已经会什么？</h2>
+<div class="highlight-box info" style="margin-top:10px;">
+<h4>这些知识是我们已经学过的：</h4>
+<ul style="font-size:1.2em;line-height:2.2;">
+<li>用 <code style="background:#1a2a3a;padding:2px 8px;border-radius:4px;">pygame.Rect</code> 表示物体的位置和大小</li>
+<li>用 <code style="background:#1a2a3a;padding:2px 8px;border-radius:4px;">screen.blit()</code> 把图片画到屏幕上</li>
+<li>用 <code style="background:#1a2a3a;padding:2px 8px;border-radius:4px;">pygame.key.get_pressed()</code> 处理键盘输入</li>
+<li>理解游戏主循环：<strong>事件 → 更新 → 绘制</strong></li>
+<li>面向对象基础：<strong>类、对象、`__init__`、`self`</strong></li>
+</ul>
+</div>
+<p style="font-size:1.2em;margin-top:30px;color:#aaaacc;">
         今天我们要把这些知识<strong style="color:#00ff88;">升级</strong>——
         用更专业的方式来管理大量的游戏物体！
     </p>
-</div>
 
+<aside class="notes">【讲解】📚 回忆一下：我们已经会什么？
+本页要点（照着讲即可）：
+· 这些知识是我们已经学过的：
+· 用 pygame.Rect 表示物体的位置和大小
+· 用 screen.blit() 把图片画到屏幕上
+· 用 pygame.key.get_pressed() 处理键盘输入
+· 理解游戏主循环： 事件 → 更新 → 绘制
+· 事件 → 更新 → 绘制
+讲解时放慢关键术语；用 1 个生活类比 + 1 个反例加深印象。</aside>
+</div>
 <!-- ==================== 第4页：精灵概念 ==================== -->
 <div class="slide slide-content" data-index="3">
-    <h2><span class="badge">新概念</span> 精灵 Sprite —— 会动的小贴纸</h2>
-
-    <p>在之前的课程中，我们用<strong>字典</strong>或<strong>列表</strong>来管理游戏物体，代码很乱。</p>
-    <p style="color:#ffcc00;">Pygame 提供了一个更好的解决方案 —— <strong style="color:#00ff88;font-size:1.2em;">精灵（Sprite）</strong></p>
-
-    <div class="highlight-box">
-        <h4>精灵是一种把"数据"和"行为"打包在一起的类</h4>
-        <p style="font-size:1.2em;line-height:2;">
-            一个精灵自己知道：<br>
-            🖼️ 自己<strong>长什么样子</strong> → <code style="background:#1a3a2a;padding:2px 8px;border-radius:4px;color:#a5d6ff;">self.image</code><br>
-            📍 自己<strong>在屏幕的什么位置</strong> → <code style="background:#1a3a2a;padding:2px 8px;border-radius:4px;color:#a5d6ff;">self.rect</code><br>
+<h2><span class="badge">新概念</span> 精灵 Sprite —— 会动的小贴纸</h2>
+<p>在之前的课程中，我们用<strong>字典</strong>或<strong>列表</strong>来管理游戏物体，代码很乱。</p>
+<p style="color:#ffcc00;">Pygame 提供了一个更好的解决方案 —— <strong style="color:#00ff88;font-size:1.2em;">精灵（Sprite）</strong></p>
+<div class="highlight-box">
+<h4>精灵是一种把"数据"和"行为"打包在一起的类</h4>
+<p style="font-size:1.2em;line-height:2;">
+            一个精灵自己知道：<br/>
+            🖼️ 自己<strong>长什么样子</strong> → <code style="background:#1a3a2a;padding:2px 8px;border-radius:4px;color:#a5d6ff;">self.image</code><br/>
+            📍 自己<strong>在屏幕的什么位置</strong> → <code style="background:#1a3a2a;padding:2px 8px;border-radius:4px;color:#a5d6ff;">self.rect</code><br/>
             🏃 自己<strong>每帧要做什么</strong> → <code style="background:#1a3a2a;padding:2px 8px;border-radius:4px;color:#a5d6ff;">self.update()</code>
-        </p>
-    </div>
-
-    <p style="color:#8888cc;font-size:1.1em;margin-top:15px;">
+</p>
+</div>
+<p style="color:#8888cc;font-size:1.1em;margin-top:15px;">
         📌 比喻：精灵就像一个智能贴纸——它知道自己的图案（image）、
         贴在哪里（rect）、以及怎么移动（update）。
     </p>
-</div>
 
+<aside class="notes">【讲解】新概念 精灵 Sprite —— 会动的小贴纸
+本页要点（照着讲即可）：
+· 在之前的课程中，我们用 字典 或 列表 来管理游戏物体，代码很乱。
+· Pygame 提供了一个更好的解决方案 —— 精灵（Sprite）
+· 精灵（Sprite）
+· 精灵是一种把"数据"和"行为"打包在一起的类
+· 一个精灵自己知道： 🖼️ 自己 长什么样子 → self.image 📍 自己 在屏幕的什么位置 → self.rect 🏃 自己 每帧要做什么 → self.update()
+· 长什么样子
+讲解时放慢关键术语；用 1 个生活类比 + 1 个反例加深印象。</aside>
+</div>
 <!-- ==================== 第5页：Sprite 代码示例 ==================== -->
 <div class="slide slide-content" data-index="4">
-    <h2><span class="badge">代码</span> 创建外星人精灵</h2>
-
-    <div class="code-block"><span class="kw">import</span> <span class="builtin">pygame</span>
-
+<h2><span class="badge">代码</span> 创建外星人精灵</h2>
+<div class="code-block"><span class="kw">import</span> <span class="builtin">pygame</span>
 <span class="kw">class</span> <span class="cls">Alien</span>(<span class="builtin">pygame</span>.<span class="builtin">sprite</span>.<span class="cls">Sprite</span>):       <span class="cmt"># ① 继承 Sprite 类</span>
-    <span class="str">"""外星人精灵"""</span>
-
-    <span class="kw">def</span> <span class="fn">__init__</span>(<span class="kw">self</span>, x, y, color):
+<span class="str">"""外星人精灵"""</span>
+<span class="kw">def</span> <span class="fn">__init__</span>(<span class="kw">self</span>, x, y, color):
         <span class="builtin">super</span>().<span class="fn">__init__</span>()                  <span class="cmt"># 必须调用父类初始化</span>
-
-        <span class="kw">self</span>.<span class="var">image</span> = <span class="builtin">pygame</span>.<span class="fn">Surface</span>((<span class="num">40</span>, <span class="num">30</span>))   <span class="cmt"># ② image：外观</span>
-        <span class="kw">self</span>.<span class="var">image</span>.<span class="fn">fill</span>(color)
+<span class="kw">self</span>.<span class="var">image</span> = <span class="builtin">pygame</span>.<span class="fn">Surface</span>((<span class="num">40</span>, <span class="num">30</span>))   <span class="cmt"># ② image：外观</span>
+<span class="kw">self</span>.<span class="var">image</span>.<span class="fn">fill</span>(color)
 
         <span class="kw">self</span>.<span class="var">rect</span> = <span class="kw">self</span>.<span class="var">image</span>.<span class="fn">get_rect</span>()   <span class="cmt"># ② rect：位置+大小</span>
-        <span class="kw">self</span>.<span class="var">rect</span>.<span class="var">x</span> = x
+<span class="kw">self</span>.<span class="var">rect</span>.<span class="var">x</span> = x
         <span class="kw">self</span>.<span class="var">rect</span>.<span class="var">y</span> = y
 
     <span class="kw">def</span> <span class="fn">update</span>(<span class="kw">self</span>):                  <span class="cmt"># ③ 每帧的行为</span>
-        <span class="kw">pass</span>  <span class="cmt"># 这里写移动逻辑</span></div>
-
-    <div class="highlight-box warn" style="margin-top:15px;">
-        <h4>⚠️ 三个必须记住的要点</h4>
-        <p style="font-size:1.2em;">
+<span class="kw">pass</span> <span class="cmt"># 这里写移动逻辑</span></div>
+<div class="highlight-box warn" style="margin-top:15px;">
+<h4>⚠️ 三个必须记住的要点</h4>
+<p style="font-size:1.2em;">
             ① 继承 <code style="background:#3a2a1a;padding:2px 8px;border-radius:4px;">Sprite</code>
-            &nbsp; ② 定义 <code style="background:#3a2a1a;padding:2px 8px;border-radius:4px;">image</code> 和 <code style="background:#3a2a1a;padding:2px 8px;border-radius:4px;">rect</code>
-            &nbsp; ③ 实现 <code style="background:#3a2a1a;padding:2px 8px;border-radius:4px;">update()</code>
-        </p>
-    </div>
+              ② 定义 <code style="background:#3a2a1a;padding:2px 8px;border-radius:4px;">image</code> 和 <code style="background:#3a2a1a;padding:2px 8px;border-radius:4px;">rect</code>
+              ③ 实现 <code style="background:#3a2a1a;padding:2px 8px;border-radius:4px;">update()</code>
+</p>
 </div>
 
+<aside class="notes">【讲解】代码 创建外星人精灵
+本页要点（照着讲即可）：
+· ⚠️ 三个必须记住的要点
+· ① 继承 Sprite ② 定义 image 和 rect ③ 实现 update()
+代码页节奏：先读懂输入输出 → 再走主流程 → 最后点出易错点（边界/类型/下标）。
+可让学生预测下一行输出，再运行对照。</aside>
+</div>
 <!-- ==================== 第6页：精灵组概念 ==================== -->
 <div class="slide slide-content" data-index="5">
-    <h2><span class="badge">新概念</span> 精灵组 Group —— 班级花名册</h2>
-
-    <p>如果我们有 <strong style="color:#ff7b72;">30个</strong> 外星人，不能写30行代码分别去 update 和 draw。</p>
-    <p style="color:#ffcc00;font-size:1.4em;">精灵组可以帮我们<strong style="color:#00ff88;">批量管理</strong>一组精灵！</p>
-
-    <table>
-        <tr><th>操作</th><th>代码</th><th>说明</th></tr>
-        <tr><td>创建组</td><td><code>group = pygame.sprite.Group()</code></td><td>新建一个空精灵组</td></tr>
-        <tr><td>添加精灵</td><td><code>group.add(sprite)</code></td><td>把精灵加入组</td></tr>
-        <tr><td>批量更新</td><td><code>group.update()</code></td><td>调用组内所有精灵的 update()</td></tr>
-        <tr><td>批量绘制</td><td><code>group.draw(screen)</code></td><td>把组内所有精灵画到屏幕</td></tr>
-        <tr><td>删除精灵</td><td><code>sprite.kill()</code></td><td>从所有组中移除自己</td></tr>
-        <tr><td>查看数量</td><td><code>len(group)</code></td><td>组内有多少精灵</td></tr>
-    </table>
-
-    <p style="color:#8888cc;font-size:1.1em;margin-top:15px;">
+<h2><span class="badge">新概念</span> 精灵组 Group —— 班级花名册</h2>
+<p>如果我们有 <strong style="color:#ff7b72;">30个</strong> 外星人，不能写30行代码分别去 update 和 draw。</p>
+<p style="color:#ffcc00;font-size:1.4em;">精灵组可以帮我们<strong style="color:#00ff88;">批量管理</strong>一组精灵！</p>
+<table>
+<tr><th>操作</th><th>代码</th><th>说明</th></tr>
+<tr><td>创建组</td><td><code>group = pygame.sprite.Group()</code></td><td>新建一个空精灵组</td></tr>
+<tr><td>添加精灵</td><td><code>group.add(sprite)</code></td><td>把精灵加入组</td></tr>
+<tr><td>批量更新</td><td><code>group.update()</code></td><td>调用组内所有精灵的 update()</td></tr>
+<tr><td>批量绘制</td><td><code>group.draw(screen)</code></td><td>把组内所有精灵画到屏幕</td></tr>
+<tr><td>删除精灵</td><td><code>sprite.kill()</code></td><td>从所有组中移除自己</td></tr>
+<tr><td>查看数量</td><td><code>len(group)</code></td><td>组内有多少精灵</td></tr>
+</table>
+<p style="color:#8888cc;font-size:1.1em;margin-top:15px;">
         📌 比喻：精灵组就像班级花名册——update() 就是喊"全班起立"，
         所有同学一起站，不用一个一个点名！
     </p>
-</div>
 
+<aside class="notes">【讲解】新概念 精灵组 Group —— 班级花名册
+本页要点（照着讲即可）：
+· 如果我们有 30个 外星人，不能写30行代码分别去 update 和 draw。
+· 精灵组可以帮我们 批量管理 一组精灵！
+· 批量管理
+· 📌 比喻：精灵组就像班级花名册——update() 就是喊"全班起立"，
+ 所有同学一起站，不用一个一个点名！
+讲解时放慢关键术语；用 1 个生活类比 + 1 个反例加深印象。</aside>
+</div>
 <!-- ==================== 第7页：Group 代码示例 ==================== -->
 <div class="slide slide-content" data-index="6">
-    <h2><span class="badge">代码</span> 精灵组的使用</h2>
-
-    <div class="code-block"><span class="cmt"># 创建三个精灵组</span>
+<h2><span class="badge">代码</span> 精灵组的使用</h2>
+<div class="code-block"><span class="cmt"># 创建三个精灵组</span>
 <span class="var">aliens</span> = <span class="builtin">pygame</span>.<span class="builtin">sprite</span>.<span class="fn">Group</span>()       <span class="cmt"># 外星人专用组</span>
 <span class="var">bullets</span> = <span class="builtin">pygame</span>.<span class="builtin">sprite</span>.<span class="fn">Group</span>()      <span class="cmt"># 子弹专用组</span>
 <span class="var">all_sprites</span> = <span class="builtin">pygame</span>.<span class="builtin">sprite</span>.<span class="fn">Group</span>()  <span class="cmt"># 总组（所有可见物体）</span>
-
 <span class="cmt"># 批量创建外星人并加入组</span>
 <span class="kw">for</span> row <span class="kw">in</span> <span class="fn">range</span>(<span class="num">3</span>):               <span class="cmt"># 3 行</span>
-    <span class="kw">for</span> col <span class="kw">in</span> <span class="fn">range</span>(<span class="num">8</span>):           <span class="cmt"># 8 列</span>
-        <span class="var">alien</span> = <span class="fn">Alien</span>(col * <span class="num">60</span> + <span class="num">80</span>,
+<span class="kw">for</span> col <span class="kw">in</span> <span class="fn">range</span>(<span class="num">8</span>):           <span class="cmt"># 8 列</span>
+<span class="var">alien</span> = <span class="fn">Alien</span>(col * <span class="num">60</span> + <span class="num">80</span>,
                      row * <span class="num">50</span> + <span class="num">50</span>,
                      <span class="var">GREEN</span>)
         <span class="var">aliens</span>.<span class="fn">add</span>(<span class="var">alien</span>)            <span class="cmt"># 加入外星人组</span>
-        <span class="var">all_sprites</span>.<span class="fn">add</span>(<span class="var">alien</span>)       <span class="cmt"># 也加入总组</span>
-
+<span class="var">all_sprites</span>.<span class="fn">add</span>(<span class="var">alien</span>)       <span class="cmt"># 也加入总组</span>
 <span class="cmt"># 在主循环中，一行搞定所有精灵！</span>
 <span class="var">aliens</span>.<span class="fn">update</span>()                    <span class="cmt"># 全体外星人自行更新</span>
 <span class="var">all_sprites</span>.<span class="fn">draw</span>(<span class="var">screen</span>)           <span class="cmt"># 所有精灵一起画到屏幕</span></div>
-
-    <p style="font-size:1.2em;margin-top:15px;color:#00ff88;">
+<p style="font-size:1.2em;margin-top:15px;color:#00ff88;">
         看！不管有多少外星人，主循环里只需要两行代码！
     </p>
-</div>
 
+<aside class="notes">【讲解】代码 精灵组的使用
+本页要点（照着讲即可）：
+· 看！不管有多少外星人，主循环里只需要两行代码！
+代码页节奏：先读懂输入输出 → 再走主流程 → 最后点出易错点（边界/类型/下标）。
+可让学生预测下一行输出，再运行对照。</aside>
+</div>
 <!-- ==================== 第8页：编队移动概念 ==================== -->
 <div class="slide slide-content" data-index="7">
-    <h2><span class="badge">核心</span> 编队移动算法 —— 今天最难的部分！</h2>
-
-    <div class="highlight-box" style="margin-top:20px;">
-        <h4>算法规则（用眼睛看，用脑子想）</h4>
-        <p style="font-size:1.3em;line-height:2.2;">
-            1️⃣ 所有外星人一起<strong style="color:#00ff88;">往同一个方向</strong>水平移动<br>
-            2️⃣ 当<strong style="color:#ff7b72;">最边上的外星人</strong>碰到屏幕边缘：<br>
-            &nbsp;&nbsp;&nbsp;&nbsp;🔄 <strong style="color:#ffcc00;">全体换方向</strong>（左→右 / 右→左）<br>
-            &nbsp;&nbsp;&nbsp;&nbsp;⬇️ <strong style="color:#ffcc00;">全体向下移动一行</strong><br>
+<h2><span class="badge">核心</span> 编队移动算法 —— 今天最难的部分！</h2>
+<div class="highlight-box" style="margin-top:20px;">
+<h4>算法规则（用眼睛看，用脑子想）</h4>
+<p style="font-size:1.3em;line-height:2.2;">
+            1️⃣ 所有外星人一起<strong style="color:#00ff88;">往同一个方向</strong>水平移动<br/>
+            2️⃣ 当<strong style="color:#ff7b72;">最边上的外星人</strong>碰到屏幕边缘：<br/>
+                🔄 <strong style="color:#ffcc00;">全体换方向</strong>（左→右 / 右→左）<br/>
+                ⬇️ <strong style="color:#ffcc00;">全体向下移动一行</strong><br/>
             3️⃣ 继续按新方向移动，重复上述过程
         </p>
-    </div>
-
-    <div class="highlight-box warn" style="margin-top:15px;">
-        <h4>⚠️ 关键理解</h4>
-        <p>触边检测要在<strong style="color:#ff7b72;">移动之前</strong>做！</p>
-        <p>判断的是<strong style="color:#ffcc00;">"即将"</strong>超出，而不是"已经"超出。</p>
-        <p style="font-size:1em;color:#aaa;">否则外星人会在屏幕边缘来回抖动（bug！）</p>
-    </div>
+</div>
+<div class="highlight-box warn" style="margin-top:15px;">
+<h4>⚠️ 关键理解</h4>
+<p>触边检测要在<strong style="color:#ff7b72;">移动之前</strong>做！</p>
+<p>判断的是<strong style="color:#ffcc00;">"即将"</strong>超出，而不是"已经"超出。</p>
+<p style="font-size:1em;color:#aaa;">否则外星人会在屏幕边缘来回抖动（bug！）</p>
 </div>
 
+<aside class="notes">【讲解】核心 编队移动算法 —— 今天最难的部分！
+本页要点（照着讲即可）：
+· 算法规则（用眼睛看，用脑子想）
+· 1️⃣ 所有外星人一起 往同一个方向 水平移动 2️⃣ 当 最边上的外星人 碰到屏幕边缘： 🔄 全体换方向 （左→右 / 右→左） ⬇️ 全体向下移动一行 3️⃣ 继续按新方向移动，重复上述过程
+· 往同一个方向
+· 最边上的外星人
+· 全体换方向
+· 全体向下移动一行
+讲解时放慢关键术语；用 1 个生活类比 + 1 个反例加深印象。</aside>
+</div>
 <!-- ==================== 第9页：算法图解 ==================== -->
 <div class="slide slide-content" data-index="8">
-    <h2>📐 编队移动算法 —— 三步走</h2>
-
-    <div class="algo-demo">
-        <div class="algo-step">
-            <div class="step-num">①</div>
-            <div class="step-text">
-                <strong>检测边界</strong><br>
-                遍历所有外星人<br>
-                看最边的那个<br>
+<h2>📐 编队移动算法 —— 三步走</h2>
+<div class="algo-demo">
+<div class="algo-step">
+<div class="step-num">①</div>
+<div class="step-text">
+<strong>检测边界</strong><br/>
+                遍历所有外星人<br/>
+                看最边的那个<br/>
                 是否"即将"出界
             </div>
-        </div>
-        <div class="algo-arrow">→</div>
-        <div class="algo-step">
-            <div class="step-num">②</div>
-            <div class="step-text">
-                <strong>触边响应</strong><br>
-                如果即将出界：<br>
-                ↕ 全体下移<br>
+</div>
+<div class="algo-arrow">→</div>
+<div class="algo-step">
+<div class="step-num">②</div>
+<div class="step-text">
+<strong>触边响应</strong><br/>
+                如果即将出界：<br/>
+                ↕ 全体下移<br/>
                 ↔ 方向反转
             </div>
-        </div>
-        <div class="algo-arrow">→</div>
-        <div class="algo-step">
-            <div class="step-num">③</div>
-            <div class="step-text">
-                <strong>水平移动</strong><br>
-                不管是否换向<br>
-                全体按当前方向<br>
+</div>
+<div class="algo-arrow">→</div>
+<div class="algo-step">
+<div class="step-num">③</div>
+<div class="step-text">
+<strong>水平移动</strong><br/>
+                不管是否换向<br/>
+                全体按当前方向<br/>
                 移动一步
             </div>
-        </div>
-    </div>
-
-    <div class="code-block" style="margin-top:25px;font-size:0.95em;"><span class="kw">class</span> <span class="cls">AlienFleet</span>:
+</div>
+</div>
+<div class="code-block" style="margin-top:25px;font-size:0.95em;"><span class="kw">class</span> <span class="cls">AlienFleet</span>:
     <span class="kw">def</span> <span class="fn">update</span>(<span class="kw">self</span>):
         <span class="cmt"># ① 检查是否有人触边</span>
-        <span class="kw">for</span> alien <span class="kw">in</span> <span class="kw">self</span>.<span class="var">aliens</span>:
-            <span class="kw">if</span> alien.<span class="var">rect</span>.<span class="var">right</span> >= <span class="num">800</span> <span class="kw">or</span> alien.<span class="var">rect</span>.<span class="var">left</span> <= <span class="num">0</span>:
-                <span class="kw">self</span>.<span class="var">direction</span> *= <span class="num">-1</span>            <span class="cmt"># ② 反转方向</span>
-                <span class="kw">for</span> a <span class="kw">in</span> <span class="kw">self</span>.<span class="var">aliens</span>:
-                    a.<span class="var">rect</span>.<span class="var">y</span> += <span class="num">20</span>         <span class="cmt"># ② 集体下移</span>
-                <span class="kw">break</span>                            <span class="cmt"># 检测到一次就够了</span>
-        <span class="cmt"># ③ 按方向集体移动</span>
-        <span class="kw">for</span> alien <span class="kw">in</span> <span class="kw">self</span>.<span class="var">aliens</span>:
+<span class="kw">for</span> alien <span class="kw">in</span> <span class="kw">self</span>.<span class="var">aliens</span>:
+            <span class="kw">if</span> alien.<span class="var">rect</span>.<span class="var">right</span> &gt;= <span class="num">800</span> <span class="kw">or</span> alien.<span class="var">rect</span>.<span class="var">left</span> &lt;= <span class="num">0</span>:
+                <span class="kw">self</span>.<span class="var">direction</span> *= <span class="num">-1</span> <span class="cmt"># ② 反转方向</span>
+<span class="kw">for</span> a <span class="kw">in</span> <span class="kw">self</span>.<span class="var">aliens</span>:
+                    a.<span class="var">rect</span>.<span class="var">y</span> += <span class="num">20</span> <span class="cmt"># ② 集体下移</span>
+<span class="kw">break</span> <span class="cmt"># 检测到一次就够了</span>
+<span class="cmt"># ③ 按方向集体移动</span>
+<span class="kw">for</span> alien <span class="kw">in</span> <span class="kw">self</span>.<span class="var">aliens</span>:
             alien.<span class="var">rect</span>.<span class="var">x</span> += <span class="kw">self</span>.<span class="var">direction</span> * <span class="kw">self</span>.<span class="var">speed</span></div>
-</div>
 
+<aside class="notes">【讲解】📐 编队移动算法 —— 三步走
+本页要点（照着讲即可）：
+· 检测边界
+· 触边响应
+· 水平移动
+讲解时放慢关键术语；用 1 个生活类比 + 1 个反例加深印象。</aside>
+</div>
 <!-- ==================== 第10页：编队移动代码 ==================== -->
 <div class="slide slide-content" data-index="9">
-    <h2><span class="badge">代码</span> 编队移动管理器 —— 完整版</h2>
-
-    <div class="code-block" style="font-size:0.88em;"><span class="kw">class</span> <span class="cls">AlienFleet</span>:
+<h2><span class="badge">代码</span> 编队移动管理器 —— 完整版</h2>
+<div class="code-block" style="font-size:0.88em;"><span class="kw">class</span> <span class="cls">AlienFleet</span>:
     <span class="str">"""外星人舰队管理器 —— 负责编队移动"""</span>
-
-    <span class="kw">def</span> <span class="fn">__init__</span>(<span class="kw">self</span>):
+<span class="kw">def</span> <span class="fn">__init__</span>(<span class="kw">self</span>):
         <span class="kw">self</span>.<span class="var">aliens</span> = <span class="builtin">pygame</span>.<span class="builtin">sprite</span>.<span class="fn">Group</span>()
-        <span class="kw">self</span>.<span class="var">direction</span> = <span class="num">1</span>     <span class="cmt"># 方向：1=右，-1=左</span>
-        <span class="kw">self</span>.<span class="var">speed</span> = <span class="num">2</span>         <span class="cmt"># 水平速度</span>
-        <span class="kw">self</span>.<span class="var">drop</span> = <span class="num">20</span>         <span class="cmt"># 每次下移距离</span>
-
-        <span class="cmt"># 创建 3行×8列 的外星人编队</span>
-        <span class="kw">for</span> row <span class="kw">in</span> <span class="fn">range</span>(<span class="num">3</span>):
+        <span class="kw">self</span>.<span class="var">direction</span> = <span class="num">1</span> <span class="cmt"># 方向：1=右，-1=左</span>
+<span class="kw">self</span>.<span class="var">speed</span> = <span class="num">2</span> <span class="cmt"># 水平速度</span>
+<span class="kw">self</span>.<span class="var">drop</span> = <span class="num">20</span> <span class="cmt"># 每次下移距离</span>
+<span class="cmt"># 创建 3行×8列 的外星人编队</span>
+<span class="kw">for</span> row <span class="kw">in</span> <span class="fn">range</span>(<span class="num">3</span>):
             <span class="kw">for</span> col <span class="kw">in</span> <span class="fn">range</span>(<span class="num">8</span>):
                 <span class="kw">self</span>.<span class="var">aliens</span>.<span class="fn">add</span>(
                     <span class="fn">Alien</span>(col*<span class="num">65</span>+<span class="num">60</span>, row*<span class="num">55</span>+<span class="num">40</span>))
 
     <span class="kw">def</span> <span class="fn">update</span>(<span class="kw">self</span>):
         <span class="str">"""编队移动算法"""</span>
-        <span class="cmt"># 第一步：检测边界</span>
-        <span class="var">need_reverse</span> = <span class="kw">False</span>
-        <span class="kw">for</span> <span class="var">alien</span> <span class="kw">in</span> <span class="kw">self</span>.<span class="var">aliens</span>:
-            <span class="kw">if</span> <span class="kw">self</span>.<span class="var">direction</span> > <span class="num">0</span> <span class="kw">and</span> <span class="var">alien</span>.<span class="var">rect</span>.<span class="var">right</span> >= <span class="num">790</span>:
+<span class="cmt"># 第一步：检测边界</span>
+<span class="var">need_reverse</span> = <span class="kw">False</span>
+<span class="kw">for</span> <span class="var">alien</span> <span class="kw">in</span> <span class="kw">self</span>.<span class="var">aliens</span>:
+            <span class="kw">if</span> <span class="kw">self</span>.<span class="var">direction</span> &gt; <span class="num">0</span> <span class="kw">and</span> <span class="var">alien</span>.<span class="var">rect</span>.<span class="var">right</span> &gt;= <span class="num">790</span>:
                 <span class="var">need_reverse</span> = <span class="kw">True</span>; <span class="kw">break</span>
-            <span class="kw">if</span> <span class="kw">self</span>.<span class="var">direction</span> &lt; <span class="num">0</span> <span class="kw">and</span> <span class="var">alien</span>.<span class="var">rect</span>.<span class="var">left</span> <= <span class="num">10</span>:
+<span class="kw">if</span> <span class="kw">self</span>.<span class="var">direction</span> &lt; <span class="num">0</span> <span class="kw">and</span> <span class="var">alien</span>.<span class="var">rect</span>.<span class="var">left</span> &lt;= <span class="num">10</span>:
                 <span class="var">need_reverse</span> = <span class="kw">True</span>; <span class="kw">break</span>
-
-        <span class="cmt"># 第二步：触边则下移 + 换向</span>
-        <span class="kw">if</span> <span class="var">need_reverse</span>:
-            <span class="kw">self</span>.<span class="var">direction</span> *= <span class="num">-1</span>           <span class="cmt"># 换向</span>
-            <span class="kw">for</span> <span class="var">a</span> <span class="kw">in</span> <span class="kw">self</span>.<span class="var">aliens</span>:
-                <span class="var">a</span>.<span class="var">rect</span>.<span class="var">y</span> += <span class="kw">self</span>.<span class="var">drop</span>    <span class="cmt"># 下移</span>
-
-        <span class="cmt"># 第三步：按方向移动</span>
-        <span class="kw">for</span> <span class="var">a</span> <span class="kw">in</span> <span class="kw">self</span>.<span class="var">aliens</span>:
+<span class="cmt"># 第二步：触边则下移 + 换向</span>
+<span class="kw">if</span> <span class="var">need_reverse</span>:
+            <span class="kw">self</span>.<span class="var">direction</span> *= <span class="num">-1</span> <span class="cmt"># 换向</span>
+<span class="kw">for</span> <span class="var">a</span> <span class="kw">in</span> <span class="kw">self</span>.<span class="var">aliens</span>:
+                <span class="var">a</span>.<span class="var">rect</span>.<span class="var">y</span> += <span class="kw">self</span>.<span class="var">drop</span> <span class="cmt"># 下移</span>
+<span class="cmt"># 第三步：按方向移动</span>
+<span class="kw">for</span> <span class="var">a</span> <span class="kw">in</span> <span class="kw">self</span>.<span class="var">aliens</span>:
             <span class="var">a</span>.<span class="var">rect</span>.<span class="var">x</span> += <span class="kw">self</span>.<span class="var">direction</span> * <span class="kw">self</span>.<span class="var">speed</span></div>
-
-    <p style="font-size:1em;color:#8888cc;margin-top:10px;">
+<p style="font-size:1em;color:#8888cc;margin-top:10px;">
         📌 三步缺一不可，顺序不能乱：先检测 → 再响应 → 最后移动
     </p>
-</div>
 
+<aside class="notes">【讲解】代码 编队移动管理器 —— 完整版
+本页要点（照着讲即可）：
+· 📌 三步缺一不可，顺序不能乱：先检测 → 再响应 → 最后移动
+代码页节奏：先读懂输入输出 → 再走主流程 → 最后点出易错点（边界/类型/下标）。
+可让学生预测下一行输出，再运行对照。</aside>
+</div>
 <!-- ==================== 第11页：玩家射击 ==================== -->
 <div class="slide slide-content" data-index="10">
-    <h2>🎯 玩家射击与碰撞检测</h2>
-
-    <div class="two-col">
-        <div>
-            <h3>发射子弹</h3>
-            <div class="code-block" style="font-size:0.85em;"><span class="cmt"># 按空格键射击（带冷却）</span>
-<span class="kw">if</span> <span class="var">keys</span>[<span class="var">K_SPACE</span>] <span class="kw">and</span> <span class="var">cooldown</span> <= <span class="num">0</span>:
+<h2>🎯 玩家射击与碰撞检测</h2>
+<div class="two-col">
+<div>
+<h3>发射子弹</h3>
+<div class="code-block" style="font-size:0.85em;"><span class="cmt"># 按空格键射击（带冷却）</span>
+<span class="kw">if</span> <span class="var">keys</span>[<span class="var">K_SPACE</span>] <span class="kw">and</span> <span class="var">cooldown</span> &lt;= <span class="num">0</span>:
     <span class="var">bullet</span> = <span class="fn">Bullet</span>(
         <span class="var">player</span>.<span class="var">rect</span>.<span class="var">centerx</span>,
         <span class="var">player</span>.<span class="var">rect</span>.<span class="var">top</span>)
     <span class="var">bullets</span>.<span class="fn">add</span>(<span class="var">bullet</span>)
     <span class="var">cooldown</span> = <span class="num">20</span></div>
-        </div>
-        <div>
-            <h3>碰撞检测</h3>
-            <div class="code-block" style="font-size:0.85em;"><span class="cmt"># 检测子弹是否打中外星人</span>
+</div>
+<div>
+<h3>碰撞检测</h3>
+<div class="code-block" style="font-size:0.85em;"><span class="cmt"># 检测子弹是否打中外星人</span>
 <span class="var">hits</span> = <span class="builtin">pygame</span>.<span class="builtin">sprite</span>.<span class="fn">groupcollide</span>(
     <span class="var">fleet</span>.<span class="var">aliens</span>,  <span class="cmt"># 组 A：外星人</span>
-    <span class="var">bullets</span>,       <span class="cmt"># 组 B：子弹</span>
-    <span class="kw">True</span>,           <span class="cmt"># 外星人 → 销毁 ✅</span>
-    <span class="kw">True</span>            <span class="cmt"># 子弹   → 销毁 ✅</span>
+<span class="var">bullets</span>,       <span class="cmt"># 组 B：子弹</span>
+<span class="kw">True</span>,           <span class="cmt"># 外星人 → 销毁 ✅</span>
+<span class="kw">True</span> <span class="cmt"># 子弹   → 销毁 ✅</span>
 )
 
 <span class="kw">for</span> <span class="var">alien</span> <span class="kw">in</span> <span class="var">hits</span>:
     <span class="var">score</span> += <span class="num">10</span></div>
-        </div>
-    </div>
-
-    <div class="highlight-box" style="margin-top:20px;">
-        <h4>groupcollide 参数说明</h4>
-        <p style="font-size:1.15em;">
-            <code>groupcollide(组A, 组B, 销毁A?, 销毁B?)</code><br>
+</div>
+</div>
+<div class="highlight-box" style="margin-top:20px;">
+<h4>groupcollide 参数说明</h4>
+<p style="font-size:1.15em;">
+<code>groupcollide(组A, 组B, 销毁A?, 销毁B?)</code><br/>
             返回值是一个字典：<code>{被撞的精灵A: [撞它的精灵B列表]}</code>
-        </p>
-    </div>
+</p>
 </div>
 
+<aside class="notes">【讲解】🎯 玩家射击与碰撞检测
+本页要点（照着讲即可）：
+· groupcollide 参数说明
+· groupcollide(组A, 组B, 销毁A?, 销毁B?) 返回值是一个字典： {被撞的精灵A: [撞它的精灵B列表]}
+讲解时放慢关键术语；用 1 个生活类比 + 1 个反例加深印象。</aside>
+</div>
 <!-- ==================== 第12页：胜负判定 ==================== -->
 <div class="slide slide-content" data-index="11">
-    <h2>🏆 胜负判定</h2>
-
-    <div class="two-col">
-        <div class="highlight-box">
-            <h4>🎉 胜利条件</h4>
-            <p style="font-size:1.2em;">所有外星人都被消灭</p>
-            <div class="code-block" style="font-size:0.9em;margin-top:10px;"><span class="kw">if</span> <span class="fn">len</span>(<span class="var">fleet</span>.<span class="var">aliens</span>) == <span class="num">0</span>:
+<h2>🏆 胜负判定</h2>
+<div class="two-col">
+<div class="highlight-box">
+<h4>🎉 胜利条件</h4>
+<p style="font-size:1.2em;">所有外星人都被消灭</p>
+<div class="code-block" style="font-size:0.9em;margin-top:10px;"><span class="kw">if</span> <span class="fn">len</span>(<span class="var">fleet</span>.<span class="var">aliens</span>) == <span class="num">0</span>:
     <span class="fn">show_message</span>(<span class="str">"YOU WIN!"</span>)</div>
-        </div>
-
-        <div class="highlight-box warn">
-            <h4>💀 失败条件</h4>
-            <p style="font-size:1.2em;">外星人下降到玩家高度</p>
-            <div class="code-block" style="font-size:0.9em;margin-top:10px;"><span class="kw">for</span> <span class="var">alien</span> <span class="kw">in</span> <span class="var">fleet</span>.<span class="var">aliens</span>:
-    <span class="kw">if</span> <span class="var">alien</span>.<span class="var">rect</span>.<span class="var">bottom</span> >= <span class="num">550</span>:
+</div>
+<div class="highlight-box warn">
+<h4>💀 失败条件</h4>
+<p style="font-size:1.2em;">外星人下降到玩家高度</p>
+<div class="code-block" style="font-size:0.9em;margin-top:10px;"><span class="kw">for</span> <span class="var">alien</span> <span class="kw">in</span> <span class="var">fleet</span>.<span class="var">aliens</span>:
+    <span class="kw">if</span> <span class="var">alien</span>.<span class="var">rect</span>.<span class="var">bottom</span> &gt;= <span class="num">550</span>:
         <span class="fn">show_message</span>(<span class="str">"GAME OVER"</span>)</div>
-        </div>
-    </div>
-
-    <p style="font-size:1.3em;margin-top:30px;color:#00d4ff;text-align:center;">
+</div>
+</div>
+<p style="font-size:1.3em;margin-top:30px;color:#00d4ff;text-align:center;">
         更多细节详见 <strong>main.py</strong> 完整代码！
     </p>
-</div>
 
+<aside class="notes">【讲解】🏆 胜负判定
+本页要点（照着讲即可）：
+· 🎉 胜利条件
+· 所有外星人都被消灭
+· 💀 失败条件
+· 外星人下降到玩家高度
+· 更多细节详见 main.py 完整代码！
+· main.py
+讲解时放慢关键术语；用 1 个生活类比 + 1 个反例加深印象。</aside>
+</div>
 <!-- ==================== 第13页：练习 ==================== -->
 <div class="slide slide-content" data-index="12">
-    <h2>✏️ 动手练一练</h2>
-
-    <h3>📌 基础任务（必做）</h3>
-    <div class="highlight-box">
-        <ul>
-            <li>跑通示例程序，观察外星人的移动行为</li>
-            <li>修改外星人的<strong style="color:#00ff88;">行数</strong>（3行 → 5行）和<strong style="color:#00ff88;">列数</strong>（8列 → 10列）</li>
-            <li>把移动速度改为3，下移距离改为30，观察变化</li>
-            <li>给不同排的外星人设置<strong style="color:#ffcc00;">不同的颜色</strong></li>
-        </ul>
-    </div>
-
-    <h3>🚀 挑战任务（选做）</h3>
-    <div class="highlight-box info">
-        <ul>
-            <li>添加<strong style="color:#00d4ff;">计分系统</strong>：屏幕右上角显示分数</li>
-            <li>实现<strong style="color:#ff7b72;">加速机制</strong>：每消灭一个外星人，剩余外星人变快</li>
-            <li>让外星人也<strong style="color:#ff7b72;">发射子弹</strong>攻击玩家（新增 enemy_bullets 组）</li>
-        </ul>
-    </div>
+<h2>✏️ 动手练一练</h2>
+<h3>📌 基础任务（必做）</h3>
+<div class="highlight-box">
+<ul>
+<li>跑通示例程序，观察外星人的移动行为</li>
+<li>修改外星人的<strong style="color:#00ff88;">行数</strong>（3行 → 5行）和<strong style="color:#00ff88;">列数</strong>（8列 → 10列）</li>
+<li>把移动速度改为3，下移距离改为30，观察变化</li>
+<li>给不同排的外星人设置<strong style="color:#ffcc00;">不同的颜色</strong></li>
+</ul>
+</div>
+<h3>🚀 挑战任务（选做）</h3>
+<div class="highlight-box info">
+<ul>
+<li>添加<strong style="color:#00d4ff;">计分系统</strong>：屏幕右上角显示分数</li>
+<li>实现<strong style="color:#ff7b72;">加速机制</strong>：每消灭一个外星人，剩余外星人变快</li>
+<li>让外星人也<strong style="color:#ff7b72;">发射子弹</strong>攻击玩家（新增 enemy_bullets 组）</li>
+</ul>
 </div>
 
+<aside class="notes">【讲解】✏️ 动手练一练
+本页要点（照着讲即可）：
+· 跑通示例程序，观察外星人的移动行为
+· 修改外星人的 行数 （3行 → 5行）和 列数 （8列 → 10列）
+· 把移动速度改为3，下移距离改为30，观察变化
+· 给不同排的外星人设置 不同的颜色
+· 不同的颜色
+· 添加 计分系统 ：屏幕右上角显示分数
+练习页节奏：先独立想 1 分钟 → 再点拨思路 → 最后对答案讲为什么。</aside>
+</div>
 <!-- ==================== 第14页：小结 ==================== -->
 <div class="slide slide-content" data-index="13">
-    <h2>📋 课堂小结</h2>
-
-    <table style="font-size:1.15em;">
-        <tr>
-            <th style="width:20%;">知识点</th>
-            <th>一句话总结</th>
-        </tr>
-        <tr>
-            <td style="color:#00ff88;font-weight:700;">Sprite 精灵</td>
-            <td>把 image(外观) + rect(位置) + update(行为) 打包在一个类里</td>
-        </tr>
-        <tr>
-            <td style="color:#ffcc00;font-weight:700;">Group 精灵组</td>
-            <td>批量管理精灵的"花名册"，一行代码搞定全体更新和绘制</td>
-        </tr>
-        <tr>
-            <td style="color:#ff7b72;font-weight:700;">编队移动</td>
-            <td>先检测边界 → 触边响应(下移+换向) → 统一水平移动</td>
-        </tr>
-        <tr>
-            <td style="color:#00d4ff;font-weight:700;">碰撞检测</td>
-            <td><code>groupcollide()</code> 自动检测并销毁碰撞的两个精灵</td>
-        </tr>
-    </table>
-
-    <div class="highlight-box" style="margin-top:25px;">
-        <h4>📝 课后作业</h4>
-        <p style="font-size:1.15em;">
-            <strong>必做：</strong>修改外星人编队形状——把整齐的长方形改成<strong style="color:#00ff88;">菱形</strong>或<strong style="color:#ffcc00;">倒三角</strong>。<br>
-            <strong>选做：</strong>让外星人在不触边时也能<strong style="color:#ff7b72;">左右微摆</strong>，像跳舞一样！
+<h2>📋 课堂小结</h2>
+<table style="font-size:1.15em;">
+<tr>
+<th style="width:20%;">知识点</th>
+<th>一句话总结</th>
+</tr>
+<tr>
+<td style="color:#00ff88;font-weight:700;">Sprite 精灵</td>
+<td>把 image(外观) + rect(位置) + update(行为) 打包在一个类里</td>
+</tr>
+<tr>
+<td style="color:#ffcc00;font-weight:700;">Group 精灵组</td>
+<td>批量管理精灵的"花名册"，一行代码搞定全体更新和绘制</td>
+</tr>
+<tr>
+<td style="color:#ff7b72;font-weight:700;">编队移动</td>
+<td>先检测边界 → 触边响应(下移+换向) → 统一水平移动</td>
+</tr>
+<tr>
+<td style="color:#00d4ff;font-weight:700;">碰撞检测</td>
+<td><code>groupcollide()</code> 自动检测并销毁碰撞的两个精灵</td>
+</tr>
+</table>
+<div class="highlight-box" style="margin-top:25px;">
+<h4>📝 课后作业</h4>
+<p style="font-size:1.15em;">
+<strong>必做：</strong>修改外星人编队形状——把整齐的长方形改成<strong style="color:#00ff88;">菱形</strong>或<strong style="color:#ffcc00;">倒三角</strong>。<br/>
+<strong>选做：</strong>让外星人在不触边时也能<strong style="color:#ff7b72;">左右微摆</strong>，像跳舞一样！
         </p>
-    </div>
-
-    <p style="text-align:center;font-size:1.5em;color:#00ff88;margin-top:20px;">
+</div>
+<p style="text-align:center;font-size:1.5em;color:#00ff88;margin-top:20px;">
         🛸 下节课见！👾
     </p>
+
+<aside class="notes">【收尾】回顾本课主线：📋 课堂小结
+对照大纲再过一遍：**内容**：敌机编队移动、敌机发射子弹、掩体绘制
+
+**知识点**：
+- 编队移动算法（整排统一移动+触边换向+下移一行）
+- `pygame.sprite.Sprite` 类初步接触（继承 `Sprite`，实现 `update()`）
+- `pygame.sprite.Group()` — 精灵组管理
+
+**课堂练习**：外星人军团在屏幕上来回移动
+
+---
+板书/口述要点：
+· 📝 课后作业
+· 必做： 修改外星人编队形状——把整齐的长方形改成 菱形 或 倒三角 。 选做： 让外星人在不触边时也能 左右微摆 ，像跳舞一样！
+· 左右微摆
+· 🛸 下节课见！👾
+结束前留 2 分钟答疑；布置 1 道小练习检验是否真正掌握。</aside>
 </div>
-
 </div><!-- /slides-container -->
-
 <!-- ==================== 底部导航栏 ==================== -->
 <div class="nav-bar">
-    <div class="page-info" id="pageInfo">1 / 14</div>
-    <div class="dots" id="dotsContainer"></div>
-    <div class="nav-hint">← → 键翻页</div>
+<div class="page-info" id="pageInfo">1 / 14</div>
+<div class="dots" id="dotsContainer"></div>
+<div class="nav-hint">← → 键翻页</div>
 </div>
-
 <div class="arrow-hint" id="arrowHint">使用键盘 ← → 方向键翻页</div>
-
 <script>
 // ==================== 幻灯片导航 JS ====================
 (function() {
@@ -880,7 +974,6 @@ td {
     updateUI();
 })();
 </script>
-
 <script src="courseware-ui.js"></script>
 <script src="presenter.js"></script>
 </body>

@@ -1,8 +1,9 @@
 <!DOCTYPE html>
+
 <html lang="zh-CN">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
 <title>第09课：树状数组（Fenwick Tree）</title>
 <style>
 * { margin: 0; padding: 0; box-sizing: border-box; }
@@ -66,14 +67,21 @@ code { font-family: 'Fira Code', 'Cascadia Code', 'Consolas', 'Monaco', monospac
 </div>
 <p style="margin-top:30px; color:#8b949e">利用二进制拆分，实现高效的前缀和信息维护</p>
 </div>
-</div>
 
+<aside class="notes">【开场】第 1/7 页 · 树状数组（Fenwick Tree）
+用 30 秒说明本课目标与学完能做什么，再进入正题。
+大纲考点：单点修改区间查询、区间修改单点查询、二维树状数组
+配套练习方向：逆序对计数、区间修改查询
+封面关键词：
+· Fenwick Tree / Binary Indexed Tree
+· 利用二进制拆分，实现高效的前缀和信息维护
+互动：问学生「今天最想搞清楚什么？」，收 1–2 个期待。</aside>
+</div>
 <div class="slide" id="s2">
 <h1>📖 知识精讲 — 核心概念</h1>
 <h2>什么是 lowbit？</h2>
-<p><code class="func">lowbit(x) = x & (-x)</code> — 取出 x 二进制最低位的 1</p>
+<p><code class="func">lowbit(x) = x &amp; (-x)</code> — 取出 x 二进制最低位的 1</p>
 <p>例如：<span class="num">lowbit(6) = 2</span>（6 = 110₂，最低位 1 在 2¹ 位置）</p>
-
 <h2>BIT 的存储结构</h2>
 <p><span class="highlight">c[i]</span> 维护区间 <span class="info">[i - lowbit(i) + 1, i]</span> 上的元素和</p>
 <div class="tree">
@@ -87,28 +95,42 @@ c[7] → a[7]
 c[8] → a[1] + a[2] + a[3] + a[4] + a[5] + a[6] + a[7] + a[8]
 </div>
 <p style="margin-top:12px">每个区间的长度 = <span class="accent">lowbit(i)</span>，c[i] 恰好覆盖了长度为 lowbit(i) 的一段</p>
-</div>
 
+<aside class="notes">【讲解】📖 知识精讲 — 核心概念
+本页要点（照着讲即可）：
+· lowbit(x) = x &amp; (-x) — 取出 x 二进制最低位的 1
+· 例如： lowbit(6) = 2 （6 = 110₂，最低位 1 在 2¹ 位置）
+· c[i] 维护区间 [i - lowbit(i) + 1, i] 上的元素和
+· 每个区间的长度 = lowbit(i) ，c[i] 恰好覆盖了长度为 lowbit(i) 的一段
+讲解时放慢关键术语；用 1 个生活类比 + 1 个反例加深印象。
+本课大纲考点（可适时点题）：单点修改区间查询、区间修改单点查询、二维树状数组</aside>
+</div>
 <div class="slide" id="s3">
 <h1>📖 知识精讲 — 核心操作</h1>
 <h2>单点修改 <span class="accent">add(x, v)</span></h2>
 <p>修改 a[x] 后，需要更新所有<span class="highlight">覆盖 x</span> 的 c 节点：</p>
 <p>x → x + lowbit(x) → x + lowbit(x) + lowbit(...) 持续向上跳</p>
-
 <h2>前缀查询 <span class="accent">sum(x)</span></h2>
 <p>求 a[1..x] 的和，从 x 出发持续去掉最低位：</p>
 <p>x → x - lowbit(x) → x - lowbit(x) - lowbit(...) 持续向下跳</p>
-
 <h2>区间查询</h2>
 <p><span class="info">sum[l, r] = sum(r) - sum(l - 1)</span></p>
-
 <h3>示例：查询 sum(7)</h3>
 <p style="font-family:monospace">
-sum(7) = c[7] + c[6] + c[4]<br>
+sum(7) = c[7] + c[6] + c[4]<br/>
 7 (111₂) → 6 (110₂) → 4 (100₂) → 0
 </p>
-</div>
 
+<aside class="notes">【讲解】📖 知识精讲 — 核心操作
+本页要点（照着讲即可）：
+· 修改 a[x] 后，需要更新所有 覆盖 x 的 c 节点：
+· x → x + lowbit(x) → x + lowbit(x) + lowbit(...) 持续向上跳
+· 求 a[1..x] 的和，从 x 出发持续去掉最低位：
+· x → x - lowbit(x) → x - lowbit(x) - lowbit(...) 持续向下跳
+· sum[l, r] = sum(r) - sum(l - 1)
+· sum(7) = c[7] + c[6] + c[4] 7 (111₂) → 6 (110₂) → 4 (100₂) → 0
+讲解时放慢关键术语；用 1 个生活类比 + 1 个反例加深印象。</aside>
+</div>
 <div class="slide" id="s4">
 <h1>💻 代码模板 — 差分 BIT 与逆序对</h1>
 <h3>差分 BIT（区间修改 + 单点查询）</h3>
@@ -122,16 +144,29 @@ sum(7) = c[7] + c[6] + c[4]<br>
 <span class="type">int</span> <span class="func">point_query</span>(<span class="type">int</span> x) {
     <span class="kw">return</span> <span class="func">sum</span>(x);
 }</pre>
-
 <h3>逆序对计数</h3>
 <pre><span class="cmt">// 从右向左遍历，BIT 维护已访问元素的出现次数</span>
 <span class="type">long long</span> ans = <span class="num">0</span>;
-<span class="kw">for</span> (<span class="type">int</span> i = n - <span class="num">1</span>; i >= <span class="num">0</span>; i--) {
+<span class="kw">for</span> (<span class="type">int</span> i = n - <span class="num">1</span>; i &gt;= <span class="num">0</span>; i--) {
     ans += <span class="func">sum</span>(a[i] - <span class="num">1</span>);  <span class="cmt">// 比 a[i] 小的、已在右边的元素</span>
     <span class="func">add</span>(a[i], <span class="num">1</span>);
 }</pre>
-</div>
 
+<aside class="notes">【讲解】💻 代码模板 — 差分 BIT 与逆序对
+结合讲义《💻 代码模板》强调：
+· // ========== 一维树状数组模板 ==========
+· const int MAXN = 500005;
+· int n;
+· long long c[MAXN];
+· int lowbit(int x) { return x &amp; (-x); }
+幻灯片上可见要点：
+· 💻 代码模板 — 差分 BIT 与逆序对
+· 差分 BIT（区间修改 + 单点查询）
+· // 区间 [l, r] 全部加 v
+· void
+代码页节奏：先读懂输入输出 → 再走主流程 → 最后点出易错点（边界/类型/下标）。
+可让学生预测下一行输出，再运行对照。</aside>
+</div>
 <div class="slide" id="s5">
 <h1>⚠️ 易错点与优化技巧</h1>
 <ul>
@@ -143,29 +178,51 @@ sum(7) = c[7] + c[6] + c[4]<br>
 <li><span class="accent">✔ 二维 BIT 谨慎</span> — n,m ≤ 2000 才安全，否则 MLE</li>
 <li><span class="accent">✔ 倍增求第K小</span> — O(log n) 替代二分+前缀和的 O(log² n)</li>
 </ul>
-</div>
 
+<aside class="notes">【讲解】⚠️ 易错点与优化技巧
+结合讲义《⚠️ 易错点与优化技巧》强调：
+· 下标从 1 开始：树状数组要求下标从 1 开始（因为 lowbit(0) = 0 会死循环），务必注意
+· 数据范围：CSP-S 题目中 n 通常 ≤ 5×10⁵，使用 long long 防止溢出
+· 离散化：值域很大时必须离散化，逆序对问题时注意重复元素处理
+· 二维树状数组的空间：O(n×m)，谨慎开数组。n,m ≤ 2000 时才安全
+· 单点查询 vs 区间修改：区间修改单点查询使用差分思想，注意差分边界处理
+幻灯片上可见要点：
+· ⚠ 下标从 1 开始 — lowbit(0) = 0 会导致死循环！
+· ⚠ 数据溢出 — n ≤ 5×10⁵ 时使用 long long
+· ⚠ 离散化 — 值域很大时必须先离散化再使用 BIT
+· ✔ 树状数组 vs 线段树 — BIT 常数仅为线段树的 1/5~1/3
+讲解时放慢关键术语；用 1 个生活类比 + 1 个反例加深印象。</aside>
+</div>
 <div class="slide" id="s6">
 <h1>📝 真题精练</h1>
 <h3>真题一：逆序对计数（排列版）</h3>
 <p><span class="info">数据范围：</span>n ≤ 5×10⁵，a 为 1..n 的排列</p>
-<p>从右向左遍历，BIT 维护已访问元素的出现次数，<br>
+<p>从右向左遍历，BIT 维护已访问元素的出现次数，<br/>
 对每个 a[i]，查询 <code class="func">sum(a[i]-1)</code> 即为逆序对贡献</p>
 <p><span class="accent">时间复杂度：O(n log n)，空间：O(n)</span></p>
-
 <h3 style="margin-top:20px">真题二：二维矩阵操作</h3>
 <p><span class="info">数据范围：</span>n, m ≤ 1000，操作数 q ≤ 10⁵</p>
-<p>支持单点修改和子矩阵求和，<br>
+<p>支持单点修改和子矩阵求和，<br/>
 利用二维 BIT 的前缀和思想与容斥原理</p>
 <p><span class="accent">时间复杂度：O(q · log n · log m)</span></p>
-</div>
 
+<aside class="notes">【讲解】📝 真题精练
+本页要点（照着讲即可）：
+· 数据范围： n ≤ 5×10⁵，a 为 1..n 的排列
+· 从右向左遍历，BIT 维护已访问元素的出现次数， 对每个 a[i]，查询 sum(a[i]-1) 即为逆序对贡献
+· 时间复杂度：O(n log n)，空间：O(n)
+· 数据范围： n, m ≤ 1000，操作数 q ≤ 10⁵
+· 支持单点修改和子矩阵求和， 利用二维 BIT 的前缀和思想与容斥原理
+· 时间复杂度：O(q · log n · log m)
+练习页节奏：先独立想 1 分钟 → 再点拨思路 → 最后对答案讲为什么。
+可联系：逆序对计数、区间修改查询</aside>
+</div>
 <div class="slide" id="s7">
 <h1>🎯 本课小结</h1>
 <div style="display:grid; grid-template-columns:1fr 1fr; gap:16px; margin-top:20px">
 <div style="background:#0d1117; padding:18px; border-radius:8px; border:1px solid #30363d">
 <h3>核心函数</h3>
-<p><code class="func">lowbit(x)</code> — x & (-x)</p>
+<p><code class="func">lowbit(x)</code> — x &amp; (-x)</p>
 <p><code class="func">add(x, v)</code> — 向上跳，修改</p>
 <p><code class="func">sum(x)</code> — 向下跳，查询</p>
 </div>
@@ -189,15 +246,25 @@ sum(7) = c[7] + c[6] + c[4]<br>
 <p>lowbit 写成宏忘记加括号</p>
 </div>
 </div>
-</div>
 
+<aside class="notes">【收尾】回顾本课主线：🎯 本课小结
+对照大纲再过一遍：单点修改区间查询、区间修改单点查询、二维树状数组
+板书/口述要点：
+· lowbit(x) — x &amp; (-x)
+· add(x, v) — 向上跳，修改
+· sum(x) — 向下跳，查询
+· 差分 BIT — 区间修改
+· 二维 BIT — 矩阵操作
+· 逆序对 — 离散化 + BIT
+课后任务：逆序对计数、区间修改查询
+结束前留 2 分钟答疑；布置 1 道小练习检验是否真正掌握。</aside>
+</div>
 <div class="nav">
 <button onclick="prevSlide()">◀ 上一页</button>
 <span class="page-indicator" id="pageNum">1 / 7</span>
 <button onclick="nextSlide()">下一页 ▶</button>
 </div>
 </div>
-
 <script>
 let current = 0;
 const slides = document.querySelectorAll('.slide');

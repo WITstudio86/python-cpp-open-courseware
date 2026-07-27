@@ -1,8 +1,9 @@
 <!DOCTYPE html>
+
 <html lang="zh-CN">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
 <title>第3节：键盘是我的遥控器 - Pygame 课件</title>
 <style>
   /* ===== Reset & Base ===== */
@@ -424,157 +425,226 @@
 </style>
 </head>
 <body>
-
 <div class="slides-container">
+<!-- ==================== SLIDE 0: Title ==================== -->
+<div class="slide slide-title active" data-index="0">
+<div class="lesson-number">LESSON 3</div>
+<h1>键盘是我的遥控器</h1>
+<div class="subtitle">用键盘控制游戏角色</div>
+<div class="key-icons">
+<div class="key-icon">↑</div>
+<div class="key-icon">↓</div>
+<div class="key-icon">←</div>
+<div class="key-icon">→</div>
+</div>
+<div class="course-name">Pygame 游戏编程入门</div>
 
-  <!-- ==================== SLIDE 0: Title ==================== -->
-  <div class="slide slide-title active" data-index="0">
-    <div class="lesson-number">LESSON 3</div>
-    <h1>键盘是我的遥控器</h1>
-    <div class="subtitle">用键盘控制游戏角色</div>
-    <div class="key-icons">
-      <div class="key-icon">&#8593;</div>
-      <div class="key-icon">&#8595;</div>
-      <div class="key-icon">&#8592;</div>
-      <div class="key-icon">&#8594;</div>
-    </div>
-    <div class="course-name">Pygame 游戏编程入门</div>
-  </div>
+<aside class="notes">【开场】第 1/12 页 · 键盘是我的遥控器
+用 30 秒说明本课目标与学完能做什么，再进入正题。
+大纲考点：**内容**：事件机制入门、键盘按键检测、用方向键控制角色移动、边界限制
 
-  <!-- ==================== SLIDE 1: What are events? ==================== -->
-  <div class="slide slide-content" data-index="1">
-    <div class="slide-header">
-      <div class="icon-circle" style="background:linear-gradient(135deg,#f97316,#ea580c);">&#9889;</div>
-      <h2>事件是什么？</h2>
-    </div>
-    <div class="content-body">
-      <p>在 Pygame 中，<strong>事件（Event）</strong> 就是游戏中发生的各种"事情"。</p>
-      <div class="highlight-box orange">
-        <strong>打个比方：</strong> 你在玩游戏时 ——<br>
-        鼠标点击 = 一个事件&nbsp;&nbsp;&nbsp;键盘按键 = 一个事件&nbsp;&nbsp;&nbsp;关闭窗口 = 一个事件
-      </div>
-      <p>Pygame 会把这些事件 <strong>放进一个队列</strong> 里，我们的程序需要<strong>逐个取出来处理</strong>。</p>
-      <div class="highlight-box">
-        <strong>核心思路：</strong> "发生什么 → 产生事件 → 程序获取事件 → 做出反应"
-      </div>
-    </div>
-  </div>
+**知识点**：
+- `pygame.event.get()` — 获取事件列表
+- `pygame.QUIT` — 退出事件
+- `pygame.KEYDOWN` — 按键按下事件
+- `pygame.K_LEFT` / `K_RIGHT` / `K_UP` / `K_DOWN` — 方向键常量
+- `pygame.key.get_pressed()` — 持续按键检测（平滑移动）
+- 边界限制（`if x &lt; 0: x = 0`）
 
-  <!-- ==================== SLIDE 2: Event Loop ==================== -->
-  <div class="slide slide-content" data-index="2">
-    <div class="slide-header">
-      <div class="icon-circle" style="background:linear-gradient(135deg,#2563eb,#3b82f6);">&#8635;</div>
-      <h2>Pygame 的事件循环</h2>
-    </div>
-    <div class="content-body">
-      <p>游戏在每一帧都会执行<strong>事件循环</strong>：</p>
-      <div class="highlight-box">
-        <strong>关键函数：</strong><br>
-        <code>pygame.event.get()</code> — 获取当前发生的所有事件列表
+**课堂练习**：用方向键控制矩形移动，不能跑出窗口
+
+---
+封面关键词：
+· LESSON 3
+· 键盘是我的遥控器
+· 用键盘控制游戏角色
+· Pygame 游戏编程入门
+互动：问学生「今天最想搞清楚什么？」，收 1–2 个期待。</aside>
+</div>
+<!-- ==================== SLIDE 1: What are events? ==================== -->
+<div class="slide slide-content" data-index="1">
+<div class="slide-header">
+<div class="icon-circle" style="background:linear-gradient(135deg,#f97316,#ea580c);">⚡</div>
+<h2>事件是什么？</h2>
+</div>
+<div class="content-body">
+<p>在 Pygame 中，<strong>事件（Event）</strong> 就是游戏中发生的各种"事情"。</p>
+<div class="highlight-box orange">
+<strong>打个比方：</strong> 你在玩游戏时 ——<br/>
+        鼠标点击 = 一个事件   键盘按键 = 一个事件   关闭窗口 = 一个事件
       </div>
-      <p>通常的写法：</p>
-      <div class="code-block"><span class="keyword">for</span> event <span class="keyword">in</span> pygame.event.get():
+<p>Pygame 会把这些事件 <strong>放进一个队列</strong> 里，我们的程序需要<strong>逐个取出来处理</strong>。</p>
+<div class="highlight-box">
+<strong>核心思路：</strong> "发生什么 → 产生事件 → 程序获取事件 → 做出反应"
+      </div>
+</div>
+
+<aside class="notes">【讲解】事件是什么？
+本页要点（照着讲即可）：
+· 在 Pygame 中， 事件（Event） 就是游戏中发生的各种"事情"。
+· 事件（Event）
+· 打个比方：
+· Pygame 会把这些事件 放进一个队列 里，我们的程序需要 逐个取出来处理 。
+· 放进一个队列
+· 逐个取出来处理
+讲解时放慢关键术语；用 1 个生活类比 + 1 个反例加深印象。
+本课大纲考点（可适时点题）：**内容**：事件机制入门、键盘按键检测、用方向键控制角色移动、边界限制
+
+**知识点**：
+- `pygame.event.get()` — 获取事件列表
+- `pygame.QUIT` — 退出事件
+- `pygame.KEYDOWN` — 按键按下事件
+- `pygame.K_LEFT` / `K_RIGHT` / `K_UP` / `K_DOWN` — 方向键常量
+- `pygame.key.get_pressed()` — 持续按键检测（平滑移动）
+- 边界限制（`if x &lt; 0: x = 0`）
+
+**课堂练习**：用方向键控制矩形移动，不能跑出窗口
+
+---</aside>
+</div>
+<!-- ==================== SLIDE 2: Event Loop ==================== -->
+<div class="slide slide-content" data-index="2">
+<div class="slide-header">
+<div class="icon-circle" style="background:linear-gradient(135deg,#2563eb,#3b82f6);">↻</div>
+<h2>Pygame 的事件循环</h2>
+</div>
+<div class="content-body">
+<p>游戏在每一帧都会执行<strong>事件循环</strong>：</p>
+<div class="highlight-box">
+<strong>关键函数：</strong><br/>
+<code>pygame.event.get()</code> — 获取当前发生的所有事件列表
+      </div>
+<p>通常的写法：</p>
+<div class="code-block"><span class="keyword">for</span> event <span class="keyword">in</span> pygame.event.get():
     <span class="comment"># 处理每一个事件</span>
-    <span class="keyword">if</span> event.type == pygame.QUIT:
+<span class="keyword">if</span> event.type == pygame.QUIT:
         running = <span class="keyword">False</span></div>
-      <p>代码含义：用 <code>for</code> 循环遍历每一个事件，根据事件类型做不同处理。</p>
-    </div>
-  </div>
+<p>代码含义：用 <code>for</code> 循环遍历每一个事件，根据事件类型做不同处理。</p>
+</div>
 
-  <!-- ==================== SLIDE 3: QUIT Event ==================== -->
-  <div class="slide slide-content" data-index="3">
-    <div class="slide-header">
-      <div class="icon-circle" style="background:linear-gradient(135deg,#dc2626,#ef4444);">&#10005;</div>
-      <h2>QUIT 事件 — 如何关闭窗口</h2>
-    </div>
-    <div class="content-body">
-      <p>当你点击游戏窗口右上角的 <strong>&#10005; 关闭按钮</strong> 时，Pygame 会产生一个 <code>pygame.QUIT</code> 事件。</p>
-      <div class="highlight-box orange">
-        <strong>如果不处理 QUIT 事件会怎样？</strong><br>
-        你就无法正常关闭窗口！上面的 &#10005; 按钮会失效，只能用任务管理器强制结束程序。
+<aside class="notes">【讲解】Pygame 的事件循环
+本页要点（照着讲即可）：
+· 游戏在每一帧都会执行 事件循环 ：
+· 事件循环
+· 关键函数：
+· 通常的写法：
+· 代码含义：用 for 循环遍历每一个事件，根据事件类型做不同处理。
+讲解时放慢关键术语；用 1 个生活类比 + 1 个反例加深印象。</aside>
+</div>
+<!-- ==================== SLIDE 3: QUIT Event ==================== -->
+<div class="slide slide-content" data-index="3">
+<div class="slide-header">
+<div class="icon-circle" style="background:linear-gradient(135deg,#dc2626,#ef4444);">✕</div>
+<h2>QUIT 事件 — 如何关闭窗口</h2>
+</div>
+<div class="content-body">
+<p>当你点击游戏窗口右上角的 <strong>✕ 关闭按钮</strong> 时，Pygame 会产生一个 <code>pygame.QUIT</code> 事件。</p>
+<div class="highlight-box orange">
+<strong>如果不处理 QUIT 事件会怎样？</strong><br/>
+        你就无法正常关闭窗口！上面的 ✕ 按钮会失效，只能用任务管理器强制结束程序。
       </div>
-      <p>所以 <strong>每个 Pygame 程序</strong> 都要处理 QUIT 事件：</p>
-      <div class="code-block"><span class="keyword">if</span> event.type == pygame.QUIT:
+<p>所以 <strong>每个 Pygame 程序</strong> 都要处理 QUIT 事件：</p>
+<div class="code-block"><span class="keyword">if</span> event.type == pygame.QUIT:
     <span class="comment"># 退出游戏循环</span>
     running = <span class="keyword">False</span></div>
-    </div>
-  </div>
+</div>
 
-  <!-- ==================== SLIDE 4: KEYDOWN Event ==================== -->
-  <div class="slide slide-content" data-index="4">
-    <div class="slide-header">
-      <div class="icon-circle" style="background:linear-gradient(135deg,#7c3aed,#8b5cf6);">&#9000;</div>
-      <h2>KEYDOWN 事件 — 检测按键</h2>
-    </div>
-    <div class="content-body">
-      <p>当你按下键盘上的任意一个键时，Pygame 会产生一个 <code>pygame.KEYDOWN</code> 事件。</p>
-      <div class="highlight-box purple">
-        <strong>每一个按键都有一个"身份证"——</strong><br>
-        <code>event.key</code> 属性表示你按下的是哪个键。
+<aside class="notes">【讲解】QUIT 事件 — 如何关闭窗口
+本页要点（照着讲即可）：
+· 当你点击游戏窗口右上角的 ✕ 关闭按钮 时，Pygame 会产生一个 pygame.QUIT 事件。
+· ✕ 关闭按钮
+· 如果不处理 QUIT 事件会怎样？
+· 所以 每个 Pygame 程序 都要处理 QUIT 事件：
+· 每个 Pygame 程序
+讲解时放慢关键术语；用 1 个生活类比 + 1 个反例加深印象。</aside>
+</div>
+<!-- ==================== SLIDE 4: KEYDOWN Event ==================== -->
+<div class="slide slide-content" data-index="4">
+<div class="slide-header">
+<div class="icon-circle" style="background:linear-gradient(135deg,#7c3aed,#8b5cf6);">⌨</div>
+<h2>KEYDOWN 事件 — 检测按键</h2>
+</div>
+<div class="content-body">
+<p>当你按下键盘上的任意一个键时，Pygame 会产生一个 <code>pygame.KEYDOWN</code> 事件。</p>
+<div class="highlight-box purple">
+<strong>每一个按键都有一个"身份证"——</strong><br/>
+<code>event.key</code> 属性表示你按下的是哪个键。
       </div>
-      <p>基本写法：</p>
-      <div class="code-block"><span class="keyword">if</span> event.type == pygame.KEYDOWN:
+<p>基本写法：</p>
+<div class="code-block"><span class="keyword">if</span> event.type == pygame.KEYDOWN:
     <span class="keyword">if</span> event.key == pygame.K_RIGHT:
         <span class="comment"># 按下了右箭头键</span>
         x += <span class="number">5</span></div>
-    </div>
-  </div>
+</div>
 
-  <!-- ==================== SLIDE 5: Direction Key Constants ==================== -->
-  <div class="slide slide-content" data-index="5">
-    <div class="slide-header">
-      <div class="icon-circle" style="background:linear-gradient(135deg,#0d9488,#14b8a6);">&#127760;</div>
-      <h2>方向键常量</h2>
-    </div>
-    <div class="content-body">
-      <p>Pygame 为方向键定义了对应的常量：</p>
-      <div class="two-col">
-        <div>
-          <table class="compare-table">
-            <tr><th>方向</th><th>Pygame 常量</th></tr>
-            <tr><td>&#8593; 上</td><td><code>pygame.K_UP</code></td></tr>
-            <tr><td>&#8595; 下</td><td><code>pygame.K_DOWN</code></td></tr>
-            <tr><td>&#8592; 左</td><td><code>pygame.K_LEFT</code></td></tr>
-            <tr><td>&#8594; 右</td><td><code>pygame.K_RIGHT</code></td></tr>
-          </table>
-          <p style="margin-top:16px;font-size:24px;color:#666;">还有这些常用键：</p>
-          <table class="compare-table">
-            <tr><th>按键</th><th>Pygame 常量</th></tr>
-            <tr><td>空格</td><td><code>pygame.K_SPACE</code></td></tr>
-            <tr><td>回车</td><td><code>pygame.K_RETURN</code></td></tr>
-            <tr><td>ESC</td><td><code>pygame.K_ESCAPE</code></td></tr>
-          </table>
-        </div>
-        <div class="col-center">
-          <div class="highlight-box green">
-            <strong>记忆口诀：</strong><br><br>
-            <code>K_UP</code> = Key Up<br>
-            <code>K_DOWN</code> = Key Down<br>
-            <code>K_LEFT</code> = Key Left<br>
-            <code>K_RIGHT</code> = Key Right<br><br>
+<aside class="notes">【讲解】KEYDOWN 事件 — 检测按键
+本页要点（照着讲即可）：
+· 当你按下键盘上的任意一个键时，Pygame 会产生一个 pygame.KEYDOWN 事件。
+· 每一个按键都有一个"身份证"——
+· 基本写法：
+讲解时放慢关键术语；用 1 个生活类比 + 1 个反例加深印象。</aside>
+</div>
+<!-- ==================== SLIDE 5: Direction Key Constants ==================== -->
+<div class="slide slide-content" data-index="5">
+<div class="slide-header">
+<div class="icon-circle" style="background:linear-gradient(135deg,#0d9488,#14b8a6);">🌐</div>
+<h2>方向键常量</h2>
+</div>
+<div class="content-body">
+<p>Pygame 为方向键定义了对应的常量：</p>
+<div class="two-col">
+<div>
+<table class="compare-table">
+<tr><th>方向</th><th>Pygame 常量</th></tr>
+<tr><td>↑ 上</td><td><code>pygame.K_UP</code></td></tr>
+<tr><td>↓ 下</td><td><code>pygame.K_DOWN</code></td></tr>
+<tr><td>← 左</td><td><code>pygame.K_LEFT</code></td></tr>
+<tr><td>→ 右</td><td><code>pygame.K_RIGHT</code></td></tr>
+</table>
+<p style="margin-top:16px;font-size:24px;color:#666;">还有这些常用键：</p>
+<table class="compare-table">
+<tr><th>按键</th><th>Pygame 常量</th></tr>
+<tr><td>空格</td><td><code>pygame.K_SPACE</code></td></tr>
+<tr><td>回车</td><td><code>pygame.K_RETURN</code></td></tr>
+<tr><td>ESC</td><td><code>pygame.K_ESCAPE</code></td></tr>
+</table>
+</div>
+<div class="col-center">
+<div class="highlight-box green">
+<strong>记忆口诀：</strong><br/><br/>
+<code>K_UP</code> = Key Up<br/>
+<code>K_DOWN</code> = Key Down<br/>
+<code>K_LEFT</code> = Key Left<br/>
+<code>K_RIGHT</code> = Key Right<br/><br/>
             都是 <code>pygame.K_</code> + 英文方向单词！
           </div>
-        </div>
-      </div>
-    </div>
-  </div>
+</div>
+</div>
+</div>
 
-  <!-- ==================== SLIDE 6: Method 1 — event.get() ==================== -->
-  <div class="slide slide-content" data-index="6">
-    <div class="slide-header">
-      <div class="icon-circle" style="background:linear-gradient(135deg,#2563eb,#3b82f6);">&#9312;</div>
-      <h2>方式一：event.get() 检测按键</h2>
-    </div>
-    <div class="content-body">
-      <p>使用 <code>pygame.event.get()</code> 获取事件列表，检查 <code>KEYDOWN</code> 事件：</p>
-      <div class="highlight-box blue">
-        <strong>特点：</strong> 按键每<strong>按下一次</strong>，只触发<strong>一次</strong>事件。
+<aside class="notes">【讲解】方向键常量
+本页要点（照着讲即可）：
+· Pygame 为方向键定义了对应的常量：
+· 还有这些常用键：
+· 记忆口诀：
+讲解时放慢关键术语；用 1 个生活类比 + 1 个反例加深印象。</aside>
+</div>
+<!-- ==================== SLIDE 6: Method 1 — event.get() ==================== -->
+<div class="slide slide-content" data-index="6">
+<div class="slide-header">
+<div class="icon-circle" style="background:linear-gradient(135deg,#2563eb,#3b82f6);">①</div>
+<h2>方式一：event.get() 检测按键</h2>
+</div>
+<div class="content-body">
+<p>使用 <code>pygame.event.get()</code> 获取事件列表，检查 <code>KEYDOWN</code> 事件：</p>
+<div class="highlight-box blue">
+<strong>特点：</strong> 按键每<strong>按下一次</strong>，只触发<strong>一次</strong>事件。
       </div>
-      <div class="code-block"><span class="comment"># 在游戏循环中</span>
+<div class="code-block"><span class="comment"># 在游戏循环中</span>
 <span class="keyword">for</span> event <span class="keyword">in</span> pygame.event.get():
     <span class="keyword">if</span> event.type == pygame.QUIT:
         running = <span class="keyword">False</span>
-    <span class="keyword">if</span> event.type == pygame.KEYDOWN:
+<span class="keyword">if</span> event.type == pygame.KEYDOWN:
         <span class="keyword">if</span> event.key == pygame.K_LEFT:
             player_x -= speed
         <span class="keyword">elif</span> event.key == pygame.K_RIGHT:
@@ -583,22 +653,33 @@
             player_y -= speed
         <span class="keyword">elif</span> event.key == pygame.K_DOWN:
             player_y += speed</div>
-      <p style="font-size:24px;color:#666;">适合场景：菜单选择、技能释放（按一次触发一次）</p>
-    </div>
-  </div>
+<p style="font-size:24px;color:#666;">适合场景：菜单选择、技能释放（按一次触发一次）</p>
+</div>
 
-  <!-- ==================== SLIDE 7: Method 2 — key.get_pressed() ==================== -->
-  <div class="slide slide-content" data-index="7">
-    <div class="slide-header">
-      <div class="icon-circle" style="background:linear-gradient(135deg,#16a34a,#22c55e);">&#9313;</div>
-      <h2>方式二：key.get_pressed() 持续检测</h2>
-    </div>
-    <div class="content-body">
-      <p>使用 <code>pygame.key.get_pressed()</code> 获取<strong>所有按键的实时状态</strong>：</p>
-      <div class="highlight-box green">
-        <strong>特点：</strong> 只要键<strong>按住不放</strong>，每一帧都能检测到。角色会<strong>持续移动</strong>！
+<aside class="notes">【讲解】方式一：event.get() 检测按键
+结合讲义《Q4：event.get() 和 key.get_pressed() 到底有什么区别？我还是搞不懂。》强调：
+· 记住两个场景：
+· 玩超级玛丽：按一下空格键，马里奥跳一次。你按住空格不放，马里奥也只跳一次，不会一直飞在天上。这是用 event.get() 处理的。
+· 玩赛车游戏：按住方向键不放，赛车一直拐弯。你按多久，它就拐多久。这是用 key.get_pressed() 处理的。
+· 什么时候用哪个，取决于你想要"按一下就做一次"还是"按住就一直做"。
+幻灯片上可见要点：
+· 使用 pygame.event.get() 获取事件列表，检查 KEYDOWN 事件：
+· 按下一次
+· 适合场景：菜单选择、技能释放（按一次触发一次）
+讲解时放慢关键术语；用 1 个生活类比 + 1 个反例加深印象。</aside>
+</div>
+<!-- ==================== SLIDE 7: Method 2 — key.get_pressed() ==================== -->
+<div class="slide slide-content" data-index="7">
+<div class="slide-header">
+<div class="icon-circle" style="background:linear-gradient(135deg,#16a34a,#22c55e);">②</div>
+<h2>方式二：key.get_pressed() 持续检测</h2>
+</div>
+<div class="content-body">
+<p>使用 <code>pygame.key.get_pressed()</code> 获取<strong>所有按键的实时状态</strong>：</p>
+<div class="highlight-box green">
+<strong>特点：</strong> 只要键<strong>按住不放</strong>，每一帧都能检测到。角色会<strong>持续移动</strong>！
       </div>
-      <div class="code-block"><span class="comment"># 在游戏循环中（放在 for event 循环外面）</span>
+<div class="code-block"><span class="comment"># 在游戏循环中（放在 for event 循环外面）</span>
 keys = pygame.key.get_pressed()
 
 <span class="keyword">if</span> keys[pygame.K_LEFT]:
@@ -609,68 +690,86 @@ keys = pygame.key.get_pressed()
     player_y -= speed
 <span class="keyword">if</span> keys[pygame.K_DOWN]:
     player_y += speed</div>
-      <p style="font-size:24px;color:#666;">适合场景：角色移动（按住方向键持续走动）</p>
-    </div>
-  </div>
+<p style="font-size:24px;color:#666;">适合场景：角色移动（按住方向键持续走动）</p>
+</div>
 
-  <!-- ==================== SLIDE 8: Comparison ==================== -->
-  <div class="slide slide-content" data-index="8">
-    <div class="slide-header">
-      <div class="icon-circle" style="background:linear-gradient(135deg,#db2777,#ec4899);">&#9878;</div>
-      <h2>对比两种方式</h2>
-    </div>
-    <div class="content-body">
-      <table class="compare-table">
-        <tr>
-          <th></th>
-          <th><code>pygame.event.get()</code></th>
-          <th><code>pygame.key.get_pressed()</code></th>
-        </tr>
-        <tr>
-          <td>触发方式</td>
-          <td>按键按下时触发<strong>一次</strong></td>
-          <td>按住时<strong>每帧连续</strong>触发</td>
-        </tr>
-        <tr>
-          <td>返回数据</td>
-          <td>事件对象列表</td>
-          <td>布尔值元组（True/False 数组）</td>
-        </tr>
-        <tr>
-          <td>代码位置</td>
-          <td>在 <code>for event</code> 循环内</td>
-          <td>在循环外（或循环后）</td>
-        </tr>
-        <tr>
-          <td>典型用法</td>
-          <td>菜单选择、跳跃、技能</td>
-          <td>角色移动、赛车加速</td>
-        </tr>
-        <tr>
-          <td>同时按多键</td>
-          <td>每次只处理一个事件</td>
-          <td><strong>同时检测多个键</strong></td>
-        </tr>
-      </table>
-      <div class="highlight-box" style="margin-top:16px;">
-        <strong>实际游戏开发中，两种方式经常搭配使用：</strong><br>
+<aside class="notes">【讲解】方式二：key.get_pressed() 持续检测
+结合讲义《Q4：event.get() 和 key.get_pressed() 到底有什么区别？我还是搞不懂。》强调：
+· 记住两个场景：
+· 玩超级玛丽：按一下空格键，马里奥跳一次。你按住空格不放，马里奥也只跳一次，不会一直飞在天上。这是用 event.get() 处理的。
+· 玩赛车游戏：按住方向键不放，赛车一直拐弯。你按多久，它就拐多久。这是用 key.get_pressed() 处理的。
+· 什么时候用哪个，取决于你想要"按一下就做一次"还是"按住就一直做"。
+幻灯片上可见要点：
+· 使用 pygame.key.get_pressed() 获取 所有按键的实时状态 ：
+· 所有按键的实时状态
+· 按住不放
+· 持续移动
+讲解时放慢关键术语；用 1 个生活类比 + 1 个反例加深印象。</aside>
+</div>
+<!-- ==================== SLIDE 8: Comparison ==================== -->
+<div class="slide slide-content" data-index="8">
+<div class="slide-header">
+<div class="icon-circle" style="background:linear-gradient(135deg,#db2777,#ec4899);">⚖</div>
+<h2>对比两种方式</h2>
+</div>
+<div class="content-body">
+<table class="compare-table">
+<tr>
+<th></th>
+<th><code>pygame.event.get()</code></th>
+<th><code>pygame.key.get_pressed()</code></th>
+</tr>
+<tr>
+<td>触发方式</td>
+<td>按键按下时触发<strong>一次</strong></td>
+<td>按住时<strong>每帧连续</strong>触发</td>
+</tr>
+<tr>
+<td>返回数据</td>
+<td>事件对象列表</td>
+<td>布尔值元组（True/False 数组）</td>
+</tr>
+<tr>
+<td>代码位置</td>
+<td>在 <code>for event</code> 循环内</td>
+<td>在循环外（或循环后）</td>
+</tr>
+<tr>
+<td>典型用法</td>
+<td>菜单选择、跳跃、技能</td>
+<td>角色移动、赛车加速</td>
+</tr>
+<tr>
+<td>同时按多键</td>
+<td>每次只处理一个事件</td>
+<td><strong>同时检测多个键</strong></td>
+</tr>
+</table>
+<div class="highlight-box" style="margin-top:16px;">
+<strong>实际游戏开发中，两种方式经常搭配使用：</strong><br/>
         用 <code>get_pressed()</code> 做持续移动 + 用 <code>event.get()</code> 做按键触发
       </div>
-    </div>
-  </div>
+</div>
 
-  <!-- ==================== SLIDE 9: Boundary Limiting ==================== -->
-  <div class="slide slide-content" data-index="9">
-    <div class="slide-header">
-      <div class="icon-circle" style="background:linear-gradient(135deg,#f97316,#ea580c);">&#128274;</div>
-      <h2>边界限制 — 别让角色跑出屏幕！</h2>
-    </div>
-    <div class="content-body">
-      <p>如果角色一直移动，就会跑到窗口外面去。我们需要用 <code>if</code> 语句限制它的范围。</p>
-      <div class="highlight-box orange">
-        <strong>核心思路：</strong> 移动后检查坐标，如果超出边界就把它拉回来。
+<aside class="notes">【讲解】对比两种方式
+本页要点（照着讲即可）：
+· 每帧连续
+· 同时检测多个键
+· 实际游戏开发中，两种方式经常搭配使用：
+讲解时放慢关键术语；用 1 个生活类比 + 1 个反例加深印象。</aside>
+</div>
+<!-- ==================== SLIDE 9: Boundary Limiting ==================== -->
+<div class="slide slide-content" data-index="9">
+<div class="slide-header">
+<div class="icon-circle" style="background:linear-gradient(135deg,#f97316,#ea580c);">🔒</div>
+<h2>边界限制 — 别让角色跑出屏幕！</h2>
+</div>
+<div class="content-body">
+<p>如果角色一直移动，就会跑到窗口外面去。我们需要用 <code>if</code> 语句限制它的范围。</p>
+<div class="highlight-box orange">
+<strong>核心思路：</strong> 移动后检查坐标，如果超出边界就把它拉回来。
       </div>
-      <div class="code-block"><span class="comment"># 角色移动后，限制在窗口范围内</span>
+<div class="code-block"><span class="comment"># 角色移动后，限制在窗口范围内</span>
 <span class="keyword">if</span> player_x &lt; <span class="number">0</span>:                    <span class="comment"># 不能超出左边界</span>
     player_x = <span class="number">0</span>
 <span class="keyword">if</span> player_x &gt; WIDTH - player_size:   <span class="comment"># 不能超出右边界</span>
@@ -679,19 +778,31 @@ keys = pygame.key.get_pressed()
     player_y = <span class="number">0</span>
 <span class="keyword">if</span> player_y &gt; HEIGHT - player_size:  <span class="comment"># 不能超出下边界</span>
     player_y = HEIGHT - player_size</div>
-      <p style="font-size:24px;color:#666;">另一种写法：<code>player_x = max(0, min(player_x, WIDTH - player_size))</code> 一行搞定！</p>
-    </div>
-  </div>
+<p style="font-size:24px;color:#666;">另一种写法：<code>player_x = max(0, min(player_x, WIDTH - player_size))</code> 一行搞定！</p>
+</div>
 
-  <!-- ==================== SLIDE 10: Complete Example Code ==================== -->
-  <div class="slide slide-content" data-index="10">
-    <div class="slide-header">
-      <div class="icon-circle" style="background:linear-gradient(135deg,#2563eb,#6366f1);">&#128187;</div>
-      <h2>完整代码展示</h2>
-    </div>
-    <div class="content-body">
-      <p>把今天学的所有内容整合到一起：</p>
-      <div class="code-block"><span class="keyword">import</span> pygame
+<aside class="notes">【讲解】边界限制 — 别让角色跑出屏幕！
+结合讲义《边界限制》强调：
+· if x &lt; 0:
+· x = 0
+· if x &gt; WINDOW_WIDTH - RECT_SIZE:
+· x = WINDOW_WIDTH - RECT_SIZE
+· if y &lt; 0:
+幻灯片上可见要点：
+· 如果角色一直移动，就会跑到窗口外面去。我们需要用 if 语句限制它的范围。
+· 核心思路：
+· 另一种写法： player_x = max(0, min(player_x, WIDTH - player_size)) 一行搞定！
+讲解时放慢关键术语；用 1 个生活类比 + 1 个反例加深印象。</aside>
+</div>
+<!-- ==================== SLIDE 10: Complete Example Code ==================== -->
+<div class="slide slide-content" data-index="10">
+<div class="slide-header">
+<div class="icon-circle" style="background:linear-gradient(135deg,#2563eb,#6366f1);">💻</div>
+<h2>完整代码展示</h2>
+</div>
+<div class="content-body">
+<p>把今天学的所有内容整合到一起：</p>
+<div class="code-block"><span class="keyword">import</span> pygame
 pygame.init()
 
 WIDTH, HEIGHT = <span class="number">800</span>, <span class="number">600</span>
@@ -705,14 +816,12 @@ speed = <span class="number">5</span>
 
 clock = pygame.time.Clock()
 running = <span class="keyword">True</span>
-
 <span class="keyword">while</span> running:
     <span class="comment"># 1. 事件处理</span>
-    <span class="keyword">for</span> event <span class="keyword">in</span> pygame.event.get():
+<span class="keyword">for</span> event <span class="keyword">in</span> pygame.event.get():
         <span class="keyword">if</span> event.type == pygame.QUIT:
             running = <span class="keyword">False</span>
-
-    <span class="comment"># 2. 持续按键检测</span>
+<span class="comment"># 2. 持续按键检测</span>
     keys = pygame.key.get_pressed()
     <span class="keyword">if</span> keys[pygame.K_LEFT]:  player_x -= speed
     <span class="keyword">if</span> keys[pygame.K_RIGHT]: player_x += speed
@@ -731,62 +840,87 @@ running = <span class="keyword">True</span>
     clock.tick(<span class="number">60</span>)
 
 pygame.quit()</div>
-    </div>
-  </div>
+</div>
 
-  <!-- ==================== SLIDE 11: Summary & Practice ==================== -->
-  <div class="slide slide-content" data-index="11">
-    <div class="slide-header">
-      <div class="icon-circle" style="background:linear-gradient(135deg,#16a34a,#22c55e);">&#10004;</div>
-      <h2>总结与练习</h2>
-    </div>
-    <div class="content-body">
-      <div class="summary-cards">
-        <div class="summary-card">
-          <h3>今天学的知识</h3>
-          <ul>
-            <li>事件（Event）的概念</li>
-            <li><code>pygame.event.get()</code> 事件循环</li>
-            <li><code>QUIT</code> 事件关闭窗口</li>
-            <li><code>KEYDOWN</code> 检测按键</li>
-            <li>方向键常量 K_UP / K_DOWN / K_LEFT / K_RIGHT</li>
-            <li><code>key.get_pressed()</code> 持续检测</li>
-            <li>两种方式的区别和适用场景</li>
-            <li>边界限制防止出屏</li>
-          </ul>
-        </div>
-        <div class="summary-card green">
-          <h3>两种方式记住咯</h3>
-          <ul>
-            <li><code>event.get()</code> — 按一次，触发一次（菜单、技能）</li>
-            <li><code>key.get_pressed()</code> — 按住不放，持续触发（角色移动）</li>
-          </ul>
-        </div>
-      </div>
-      <div style="margin-top:20px;">
-        <div class="practice-box">
-          <h3>课后挑战</h3>
-          <p>
-            <strong>1.</strong> 修改代码，让角色按 <span class="key-badge">W</span><span class="key-badge">A</span><span class="key-badge">S</span><span class="key-badge">D</span> 也能移动（W=上, A=左, S=下, D=右）<br>
-            <strong>2.</strong> 把角色改成圆形，颜色改成红色<br>
-            <strong>3.</strong> 按下空格键时角色"跳跃"（向上移动 30 像素再掉下来）<br>
-            <strong>4.</strong> 试试让角色速度越来越快（按住 Shift 加速）
+<aside class="notes">【讲解】完整代码展示
+本页要点（照着讲即可）：
+· 把今天学的所有内容整合到一起：
+代码页节奏：先读懂输入输出 → 再走主流程 → 最后点出易错点（边界/类型/下标）。
+可让学生预测下一行输出，再运行对照。</aside>
+</div>
+<!-- ==================== SLIDE 11: Summary & Practice ==================== -->
+<div class="slide slide-content" data-index="11">
+<div class="slide-header">
+<div class="icon-circle" style="background:linear-gradient(135deg,#16a34a,#22c55e);">✔</div>
+<h2>总结与练习</h2>
+</div>
+<div class="content-body">
+<div class="summary-cards">
+<div class="summary-card">
+<h3>今天学的知识</h3>
+<ul>
+<li>事件（Event）的概念</li>
+<li><code>pygame.event.get()</code> 事件循环</li>
+<li><code>QUIT</code> 事件关闭窗口</li>
+<li><code>KEYDOWN</code> 检测按键</li>
+<li>方向键常量 K_UP / K_DOWN / K_LEFT / K_RIGHT</li>
+<li><code>key.get_pressed()</code> 持续检测</li>
+<li>两种方式的区别和适用场景</li>
+<li>边界限制防止出屏</li>
+</ul>
+</div>
+<div class="summary-card green">
+<h3>两种方式记住咯</h3>
+<ul>
+<li><code>event.get()</code> — 按一次，触发一次（菜单、技能）</li>
+<li><code>key.get_pressed()</code> — 按住不放，持续触发（角色移动）</li>
+</ul>
+</div>
+</div>
+<div style="margin-top:20px;">
+<div class="practice-box">
+<h3>课后挑战</h3>
+<p>
+<strong>1.</strong> 修改代码，让角色按 <span class="key-badge">W</span><span class="key-badge">A</span><span class="key-badge">S</span><span class="key-badge">D</span> 也能移动（W=上, A=左, S=下, D=右）<br/>
+<strong>2.</strong> 把角色改成圆形，颜色改成红色<br/>
+<strong>3.</strong> 按下空格键时角色"跳跃"（向上移动 30 像素再掉下来）<br/>
+<strong>4.</strong> 试试让角色速度越来越快（按住 Shift 加速）
           </p>
-        </div>
-      </div>
-    </div>
-  </div>
+</div>
+</div>
+</div>
 
+<aside class="notes">【收尾】回顾本课主线：总结与练习
+对照大纲再过一遍：**内容**：事件机制入门、键盘按键检测、用方向键控制角色移动、边界限制
+
+**知识点**：
+- `pygame.event.get()` — 获取事件列表
+- `pygame.QUIT` — 退出事件
+- `pygame.KEYDOWN` — 按键按下事件
+- `pygame.K_LEFT` / `K_RIGHT` / `K_UP` / `K_DOWN` — 方向键常量
+- `pygame.key.get_pressed()` — 持续按键检测（平滑移动）
+- 边界限制（`if x &lt; 0: x = 0`）
+
+**课堂练习**：用方向键控制矩形移动，不能跑出窗口
+
+---
+板书/口述要点：
+· 事件（Event）的概念
+· pygame.event.get() 事件循环
+· QUIT 事件关闭窗口
+· KEYDOWN 检测按键
+· 方向键常量 K_UP / K_DOWN / K_LEFT / K_RIGHT
+· key.get_pressed() 持续检测
+结束前留 2 分钟答疑；布置 1 道小练习检验是否真正掌握。</aside>
+</div>
 </div><!-- /.slides-container -->
-
 <!-- ===== Navigation Bar ===== -->
 <div class="nav-bar">
-  <button class="nav-btn" id="btn-prev" title="上一页 (左箭头键)">&#8592;</button>
-  <div class="slide-counter" id="slide-counter">1 / 12</div>
-  <button class="nav-btn" id="btn-next" title="下一页 (右箭头键)">&#8594;</button>
+<button class="nav-btn" id="btn-prev" title="上一页 (左箭头键)">←</button>
+<div class="slide-counter" id="slide-counter">1 / 12</div>
+<button class="nav-btn" id="btn-next" title="下一页 (右箭头键)">→</button>
 </div>
 <div class="nav-hint" id="nav-hint">按 ← → 方向键翻页</div>
-
 <script>
 (function() {
   var slides = document.querySelectorAll('.slide');
@@ -894,7 +1028,6 @@ pygame.quit()</div>
   slides[0].classList.add('active');
 })();
 </script>
-
 <script src="courseware-ui.js"></script>
 <script src="presenter.js"></script>
 </body>

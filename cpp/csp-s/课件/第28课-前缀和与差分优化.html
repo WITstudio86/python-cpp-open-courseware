@@ -1,8 +1,9 @@
 <!DOCTYPE html>
+
 <html lang="zh-CN">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
 <title>第28课：前缀和与差分优化</title>
 <style>
   :root {
@@ -318,44 +319,49 @@
 </head>
 <body>
 <div class="container">
-  <div class="slide-area">
+<div class="slide-area">
+<!-- ============== Slide 0：标题页 ============== -->
+<div class="slide active" data-index="0">
+<h1>第28课：前缀和与差分优化</h1>
+<p class="subtitle">CSP-S 提高组 · 基础优化技巧</p>
+<br/>
+<div>
+<span class="badge">一维前缀和</span>
+<span class="badge">二维前缀和</span>
+<span class="badge">差分数组</span>
+<span class="badge">二维差分</span>
+<span class="badge2">DP优化</span>
+<span class="badge2">差分约束</span>
+</div>
+<br/><br/>
+<p>前缀和与差分是竞赛中最<strong>基础</strong>也是最<strong>实用</strong>的优化技巧。它们能将区间查询和修改从 O(n) 降到 O(1)，是处理大规模数据时的重要武器。</p>
+<br/>
+<p style="color:var(--text-secondary); font-size:0.9em;">使用键盘 ← → 或点击下方按钮翻页 | 共 <strong>8</strong> 页</p>
 
-    <!-- ============== Slide 0：标题页 ============== -->
-    <div class="slide active" data-index="0">
-      <h1>第28课：前缀和与差分优化</h1>
-      <p class="subtitle">CSP-S 提高组 · 基础优化技巧</p>
-      <br>
-      <div>
-        <span class="badge">一维前缀和</span>
-        <span class="badge">二维前缀和</span>
-        <span class="badge">差分数组</span>
-        <span class="badge">二维差分</span>
-        <span class="badge2">DP优化</span>
-        <span class="badge2">差分约束</span>
+<aside class="notes">【开场】第 1/8 页 · 前缀和与差分优化
+用 30 秒说明本课目标与学完能做什么，再进入正题。
+大纲考点：一维/二维前缀和、差分数组、差分与前缀和的DP应用
+配套练习方向：区间求和优化、二维差分
+封面关键词：
+· CSP-S 提高组 · 基础优化技巧
+· 前缀和与差分是竞赛中最 基础 也是最 实用 的优化技巧。它们能将区间查询和修改从 O(n) 降到 O(1)，是处理大规模数据时的重要武器。
+· 使用键盘 ← → 或点击下方按钮翻页 | 共 8 页
+互动：问学生「今天最想搞清楚什么？」，收 1–2 个期待。</aside>
+</div>
+<!-- ============== Slide 1：一维前缀和 ============== -->
+<div class="slide" data-index="1">
+<h2>1. 一维前缀和</h2>
+<h3>定义</h3>
+<div class="math-block">
+        pre[0] = 0<br/>
+        pre[i] = pre[i-1] + a[i]   (1 ≤ i ≤ n)
       </div>
-      <br><br>
-      <p>前缀和与差分是竞赛中最<strong>基础</strong>也是最<strong>实用</strong>的优化技巧。它们能将区间查询和修改从 O(n) 降到 O(1)，是处理大规模数据时的重要武器。</p>
-      <br>
-      <p style="color:var(--text-secondary); font-size:0.9em;">使用键盘 ← → 或点击下方按钮翻页 | 共 <strong>8</strong> 页</p>
-    </div>
-
-    <!-- ============== Slide 1：一维前缀和 ============== -->
-    <div class="slide" data-index="1">
-      <h2>1. 一维前缀和</h2>
-
-      <h3>定义</h3>
-      <div class="math-block">
-        pre[0] = 0<br>
-        pre[i] = pre[i-1] + a[i] &nbsp;&nbsp;(1 ≤ i ≤ n)
-      </div>
-
-      <h3>区间和查询 — O(1)</h3>
-      <div class="math-block">
+<h3>区间和查询 — O(1)</h3>
+<div class="math-block">
         sum(l, r) = pre[r] - pre[l-1]
       </div>
-
-      <h3>核心代码</h3>
-      <pre><span class="cm">// 构建前缀和（输入 a 为 0-indexed，pre 为 1-indexed）</span>
+<h3>核心代码</h3>
+<pre><span class="cm">// 构建前缀和（输入 a 为 0-indexed，pre 为 1-indexed）</span>
 <span class="fn">vector</span>&lt;<span class="fn">ll</span>&gt; <span class="fn">build_prefix</span>(<span class="kw">const</span> <span class="fn">vector</span>&lt;<span class="fn">ll</span>&gt;&amp; a) {
     <span class="kw">int</span> n = a.<span class="fn">size</span>();
     <span class="fn">vector</span>&lt;<span class="fn">ll</span>&gt; pre(n + <span class="num">1</span>, <span class="num">0</span>);
@@ -368,42 +374,47 @@
 <span class="fn">ll</span> <span class="fn">range_sum</span>(<span class="kw">const</span> <span class="fn">vector</span>&lt;<span class="fn">ll</span>&gt;&amp; pre, <span class="kw">int</span> l, <span class="kw">int</span> r) {
     <span class="kw">return</span> pre[r] - pre[l - <span class="num">1</span>];
 }</pre>
-
-      <table>
-        <tr><th>构建时间</th><td>O(n)</td></tr>
-        <tr><th>每次查询</th><td>O(1)</td></tr>
-        <tr><th>空间</th><td>O(n)</td></tr>
-      </table>
-
-      <div class="tip-box">
-        <strong>核心思想：</strong>「预处理换时间」— 一次性 O(n) 构建，后续每次区间查询只需 O(1)。
+<table>
+<tr><th>构建时间</th><td>O(n)</td></tr>
+<tr><th>每次查询</th><td>O(1)</td></tr>
+<tr><th>空间</th><td>O(n)</td></tr>
+</table>
+<div class="tip-box">
+<strong>核心思想：</strong>「预处理换时间」— 一次性 O(n) 构建，后续每次区间查询只需 O(1)。
       </div>
-    </div>
 
-    <!-- ============== Slide 2：二维前缀和 ============== -->
-    <div class="slide" data-index="2">
-      <h2>2. 二维前缀和</h2>
-
-      <h3>递推公式（容斥原理）</h3>
-      <div class="math-block">
+<aside class="notes">【讲解】1. 一维前缀和
+结合讲义《1. 一维前缀和》强调：
+· 定义：对于数组 $a[1\dots n]$，前缀和 $pre[i] = \sum_{k=1}^{i} a[k]$
+· 递推公式：
+· $$pre[0] = 0$$
+· $$pre[i] = pre[i-1] + a[i]$$
+· 区间和查询：求 $[l, r]$ 的区间和（闭区间，$1 \le l \le r \le n$）
+幻灯片上可见要点：
+· 核心思想：
+讲解时放慢关键术语；用 1 个生活类比 + 1 个反例加深印象。
+本课大纲考点（可适时点题）：一维/二维前缀和、差分数组、差分与前缀和的DP应用</aside>
+</div>
+<!-- ============== Slide 2：二维前缀和 ============== -->
+<div class="slide" data-index="2">
+<h2>2. 二维前缀和</h2>
+<h3>递推公式（容斥原理）</h3>
+<div class="math-block">
         pre[i][j] = pre[i-1][j] + pre[i][j-1] - pre[i-1][j-1] + a[i][j]
       </div>
-
-      <h3>子矩阵和查询</h3>
-      <p>以 (x1,y1) 为左上角、(x2,y2) 为右下角：</p>
-      <div class="math-block">
+<h3>子矩阵和查询</h3>
+<p>以 (x1,y1) 为左上角、(x2,y2) 为右下角：</p>
+<div class="math-block">
         sum = pre[x2][y2] - pre[x1-1][y2] - pre[x2][y1-1] + pre[x1-1][y1-1]
       </div>
-
-      <div class="visual-diagram">┌──────────────────────────────┐
+<div class="visual-diagram">┌──────────────────────────────┐
 │ pre[x2][y2]                  │  ← 整个大矩形
 │   ┌──────────┐               │
 │   │ 目标区域  │               │  = 大矩形 - 上 - 左 + 左上
 │   └──────────┘               │    （容斥：多减的补回来）
 └──────────────────────────────┘</div>
-
-      <h3>核心代码</h3>
-      <pre><span class="cm">// 构建二维前缀和</span>
+<h3>核心代码</h3>
+<pre><span class="cm">// 构建二维前缀和</span>
 <span class="fn">vector</span>&lt;<span class="fn">vector</span>&lt;<span class="fn">ll</span>&gt;&gt; <span class="fn">build_prefix2d</span>(<span class="kw">const</span> <span class="fn">vector</span>&lt;<span class="fn">vector</span>&lt;<span class="fn">ll</span>&gt;&gt;&amp; a) {
     <span class="kw">int</span> n = a.<span class="fn">size</span>(), m = a[<span class="num">0</span>].<span class="fn">size</span>();
     <span class="fn">vector</span>&lt;<span class="fn">vector</span>&lt;<span class="fn">ll</span>&gt;&gt; <span class="fn">pre</span>(n+<span class="num">1</span>, <span class="fn">vector</span>&lt;<span class="fn">ll</span>&gt;(m+<span class="num">1</span>, <span class="num">0</span>));
@@ -416,30 +427,36 @@
 <span class="fn">ll</span> <span class="fn">rect_sum</span>(..., <span class="kw">int</span> x1, <span class="kw">int</span> y1, <span class="kw">int</span> x2, <span class="kw">int</span> y2) {
     <span class="kw">return</span> pre[x2][y2] - pre[x1-<span class="num">1</span>][y2] - pre[x2][y1-<span class="num">1</span>] + pre[x1-<span class="num">1</span>][y1-<span class="num">1</span>];
 }</pre>
+<table>
+<tr><th>构建时间</th><td>O(n×m)</td></tr>
+<tr><th>每次查询</th><td>O(1)</td></tr>
+<tr><th>空间</th><td>O(n×m)</td></tr>
+</table>
 
-      <table>
-        <tr><th>构建时间</th><td>O(n×m)</td></tr>
-        <tr><th>每次查询</th><td>O(1)</td></tr>
-        <tr><th>空间</th><td>O(n×m)</td></tr>
-      </table>
-    </div>
-
-    <!-- ============== Slide 3：一维差分数组 ============== -->
-    <div class="slide" data-index="3">
-      <h2>3. 一维差分数组</h2>
-
-      <h3>核心思想</h3>
-      <p>对区间进行 <strong>O(1) 修改</strong>，最后 <strong>O(n) 还原</strong>。差分数组 <em>d</em> 满足：原数组 <em>a</em> 是 <em>d</em> 的前缀和。</p>
-
-      <h3>区间修改操作</h3>
-      <p>对 [l, r] 每个元素加 val：</p>
-      <div class="math-block">
-        d[l] += val<br>
+<aside class="notes">【讲解】2. 二维前缀和
+结合讲义《2. 二维前缀和》强调：
+· 定义：对于矩阵 $a[1\dots n][1\dots m]$，前缀和 $pre[i][j] = \sum_{x=1}^{i}\sum_{y=1}^{j} a[x][y]$，即 $(1,1)$ 到 $(i,j)$ 的矩形和。
+· 递推公式（容斥原理）：
+· $$pre[i][j] = pre[i-1][j] + pre[i][j-1] - pre[i-1][j-1] + a[i][j]$$
+· 子矩阵和查询：求以 $(x_1, y_1)$ 为左上角、$(x_2, y_2)$ 为右下角的子矩阵和：
+· $$sum(x_1, y_1, x_2, y_2) = pre[x_2][y_2] - pre[x_1-1][y_2] - pre[x_2][y_1-1] + pre[x_1-1][y_1-1]$$
+幻灯片上可见要点：
+· 以 (x1,y1) 为左上角、(x2,y2) 为右下角：
+讲解时放慢关键术语；用 1 个生活类比 + 1 个反例加深印象。</aside>
+</div>
+<!-- ============== Slide 3：一维差分数组 ============== -->
+<div class="slide" data-index="3">
+<h2>3. 一维差分数组</h2>
+<h3>核心思想</h3>
+<p>对区间进行 <strong>O(1) 修改</strong>，最后 <strong>O(n) 还原</strong>。差分数组 <em>d</em> 满足：原数组 <em>a</em> 是 <em>d</em> 的前缀和。</p>
+<h3>区间修改操作</h3>
+<p>对 [l, r] 每个元素加 val：</p>
+<div class="math-block">
+        d[l] += val<br/>
         d[r+1] -= val
       </div>
-
-      <h3>完整代码</h3>
-      <pre><span class="cm">// 区间加（l, r 为 1-indexed）</span>
+<h3>完整代码</h3>
+<pre><span class="cm">// 区间加（l, r 为 1-indexed）</span>
 <span class="kw">void</span> <span class="fn">range_add</span>(<span class="fn">vector</span>&lt;<span class="fn">ll</span>&gt;&amp; d, <span class="kw">int</span> l, <span class="kw">int</span> r, <span class="fn">ll</span> val) {
     d[l] += val;
     d[r + <span class="num">1</span>] -= val;
@@ -455,35 +472,43 @@
     }
     <span class="kw">return</span> a;
 }</pre>
-
-      <div class="visual-diagram">示例：初始全 0 → [2,4]+3 → [3,5]+2 → 还原
+<div class="visual-diagram">示例：初始全 0 → [2,4]+3 → [3,5]+2 → 还原
 
 差分: [0, 0, 0, 0, 0]  → [0, +3, 0, 0, -3] → [0, +3, +2, 0, -3]
 还原:  [0, 0, 0, 0, 0]  → [0, 3, 3, 3,  0] → [0, 3, 5, 5, 2] ✓</div>
+<table>
+<tr><th>每次区间修改</th><td>O(1)</td></tr>
+<tr><th>最终还原</th><td>O(n)</td></tr>
+<tr><th>适用场景</th><td>离线批量修改</td></tr>
+</table>
 
-      <table>
-        <tr><th>每次区间修改</th><td>O(1)</td></tr>
-        <tr><th>最终还原</th><td>O(n)</td></tr>
-        <tr><th>适用场景</th><td>离线批量修改</td></tr>
-      </table>
-    </div>
-
-    <!-- ============== Slide 4：二维差分 ============== -->
-    <div class="slide" data-index="4">
-      <h2>4. 二维差分数组</h2>
-
-      <h3>子矩阵加 O(1)</h3>
-      <p>对以 (x1,y1) 为左上角、(x2,y2) 为右下角的子矩阵所有元素加 val：</p>
-
-      <div class="math-block">
-        d[x1][y1]         += val<br>
-        d[x2+1][y1]       -= val<br>
-        d[x1][y2+1]       -= val<br>
+<aside class="notes">【讲解】3. 一维差分数组
+结合讲义《3. 一维差分数组》强调：
+· 核心思想：对区间进行 $O(1)$ 修改，最后 $O(n)$ 还原。
+· 定义：差分数组 $d$ 满足 $a[i] = \sum_{k=1}^{i} d[k]$，即 $a$ 是 $d$ 的前缀和。
+· 构造：$d[i] = a[i] - a[i-1]$（令 $a[0] = 0$）
+· 区间修改：对 $[l, r]$ 区间每个元素加 $val$
+· $$d[l] \mathrel{+}= val$$
+幻灯片上可见要点：
+· 对区间进行 O(1) 修改 ，最后 O(n) 还原 。差分数组 d 满足：原数组 a 是 d 的前缀和。
+· O(1) 修改
+· O(n) 还原
+· 对 [l, r] 每个元素加 val：
+讲解时放慢关键术语；用 1 个生活类比 + 1 个反例加深印象。</aside>
+</div>
+<!-- ============== Slide 4：二维差分 ============== -->
+<div class="slide" data-index="4">
+<h2>4. 二维差分数组</h2>
+<h3>子矩阵加 O(1)</h3>
+<p>对以 (x1,y1) 为左上角、(x2,y2) 为右下角的子矩阵所有元素加 val：</p>
+<div class="math-block">
+        d[x1][y1]         += val<br/>
+        d[x2+1][y1]       -= val<br/>
+        d[x1][y2+1]       -= val<br/>
         d[x2+1][y2+1]     += val
       </div>
-
-      <h3>代码实现</h3>
-      <pre><span class="cm">// 子矩阵加（坐标均为 1-indexed）</span>
+<h3>代码实现</h3>
+<pre><span class="cm">// 子矩阵加（坐标均为 1-indexed）</span>
 <span class="kw">void</span> <span class="fn">rect_add</span>(<span class="fn">vector</span>&lt;<span class="fn">vector</span>&lt;<span class="fn">ll</span>&gt;&gt;&amp; d,
               <span class="kw">int</span> x1, <span class="kw">int</span> y1, <span class="kw">int</span> x2, <span class="kw">int</span> y2, <span class="fn">ll</span> val) {
     d[x1][y1]         += val;
@@ -498,24 +523,32 @@
         <span class="kw">for</span> (<span class="kw">int</span> j = <span class="num">1</span>; j &lt;= m; ++j)
             d[i][j] += d[i-<span class="num">1</span>][j] + d[i][j-<span class="num">1</span>] - d[i-<span class="num">1</span>][j-<span class="num">1</span>];
 }</pre>
-
-      <div class="warn-box">
-        <strong>记忆技巧：</strong>二维差分就是二维前缀和的<strong>逆运算</strong>。修改时四个角的操作符号按「左上 +、右上 -、左下 -、右下 +」记忆（与二维前缀和查询的符号一致）。
+<div class="warn-box">
+<strong>记忆技巧：</strong>二维差分就是二维前缀和的<strong>逆运算</strong>。修改时四个角的操作符号按「左上 +、右上 -、左下 -、右下 +」记忆（与二维前缀和查询的符号一致）。
       </div>
-    </div>
 
-    <!-- ============== Slide 5：前缀和与DP结合 ============== -->
-    <div class="slide" data-index="5">
-      <h2>5. 前缀最值优化DP</h2>
-
-      <h3>前缀和视角的最大子段和</h3>
-      <p>子段 [l, r] 的和 = pre[r] - pre[l-1]</p>
-      <div class="math-block">
+<aside class="notes">【讲解】4. 二维差分数组
+结合讲义《4. 二维差分数组》强调：
+· 对子矩阵进行 $O(1)$ 修改。
+· 子矩阵加 $val$：对以 $(x_1, y_1)$ 为左上角、$(x_2, y_2)$ 为右下角的子矩阵所有元素加 $val$
+· $$d[x_1][y_1] \mathrel{+}= val$$
+· $$d[x_2+1][y_1] \mathrel{-}= val$$
+· $$d[x_1][y_2+1] \mathrel{-}= val$$
+幻灯片上可见要点：
+· 对以 (x1,y1) 为左上角、(x2,y2) 为右下角的子矩阵所有元素加 val：
+· 记忆技巧：
+讲解时放慢关键术语；用 1 个生活类比 + 1 个反例加深印象。</aside>
+</div>
+<!-- ============== Slide 5：前缀和与DP结合 ============== -->
+<div class="slide" data-index="5">
+<h2>5. 前缀最值优化DP</h2>
+<h3>前缀和视角的最大子段和</h3>
+<p>子段 [l, r] 的和 = pre[r] - pre[l-1]</p>
+<div class="math-block">
         最大子段和 = max<sub>r</sub>( pre[r] - min<sub>l≤r</sub> pre[l-1] )
       </div>
-      <p>维护一个「前缀最小值」，在线性时间内求出答案。</p>
-
-      <pre><span class="fn">ll</span> <span class="fn">max_subarray_prefix</span>(<span class="kw">const</span> <span class="fn">vector</span>&lt;<span class="fn">ll</span>&gt;&amp; a) {
+<p>维护一个「前缀最小值」，在线性时间内求出答案。</p>
+<pre><span class="fn">ll</span> <span class="fn">max_subarray_prefix</span>(<span class="kw">const</span> <span class="fn">vector</span>&lt;<span class="fn">ll</span>&gt;&amp; a) {
     <span class="fn">ll</span> pre = <span class="num">0</span>;          <span class="cm">// 当前前缀和</span>
     <span class="fn">ll</span> min_pre = <span class="num">0</span>;      <span class="cm">// 当前遇到的最小前缀和</span>
     <span class="fn">ll</span> ans = <span class="fn">LLONG_MIN</span>;
@@ -526,27 +559,32 @@
     }
     <span class="kw">return</span> ans;
 }</pre>
-
-      <h3>推广：前缀最值消除内层循环</h3>
-      <p>很多DP转移形如：<code>dp[i] = max_{j &lt; i} { dp[j] + w(i, j) }</code></p>
-      <p>当 <em>w</em> 可拆分为仅与 i 和仅与 j 相关的部分时，维护 <code>dp[j] + f(j)</code> 的前缀最值，将内层循环从 O(n) 优化到 O(1)。</p>
-
-      <div class="tip-box">
-        <strong>常见套路：</strong><br>
-        • 前缀最小值：用于"最小前缀和"类问题<br>
-        • 前缀最大值：用于"最大递推"类问题<br>
+<h3>推广：前缀最值消除内层循环</h3>
+<p>很多DP转移形如：<code>dp[i] = max_{j &lt; i} { dp[j] + w(i, j) }</code></p>
+<p>当 <em>w</em> 可拆分为仅与 i 和仅与 j 相关的部分时，维护 <code>dp[j] + f(j)</code> 的前缀最值，将内层循环从 O(n) 优化到 O(1)。</p>
+<div class="tip-box">
+<strong>常见套路：</strong><br/>
+        • 前缀最小值：用于"最小前缀和"类问题<br/>
+        • 前缀最大值：用于"最大递推"类问题<br/>
         • 区间DP配合前缀和：O(1) 查询区间和来加速转移
       </div>
-    </div>
 
-    <!-- ============== Slide 6：真题精练 ============== -->
-    <div class="slide" data-index="6">
-      <h2>6. 真题精练</h2>
-
-      <h3>真题1：区间修改与查询</h3>
-      <p>长度为 n 的全 0 数组，m 次区间 +1。求最终数组的最大值。</p>
-      <p><span class="badge2">n,m ≤ 1e5</span></p>
-      <pre><span class="cm">// 差分 O(1) 修改 + O(n) 还原</span>
+<aside class="notes">【讲解】5. 前缀最值优化DP
+本页要点（照着讲即可）：
+· 子段 [l, r] 的和 = pre[r] - pre[l-1]
+· 维护一个「前缀最小值」，在线性时间内求出答案。
+· 很多DP转移形如： dp[i] = max_{j &lt; i} { dp[j] + w(i, j) }
+· 当 w 可拆分为仅与 i 和仅与 j 相关的部分时，维护 dp[j] + f(j) 的前缀最值，将内层循环从 O(n) 优化到 O(1)。
+· 常见套路：
+讲解时放慢关键术语；用 1 个生活类比 + 1 个反例加深印象。</aside>
+</div>
+<!-- ============== Slide 6：真题精练 ============== -->
+<div class="slide" data-index="6">
+<h2>6. 真题精练</h2>
+<h3>真题1：区间修改与查询</h3>
+<p>长度为 n 的全 0 数组，m 次区间 +1。求最终数组的最大值。</p>
+<p><span class="badge2">n,m ≤ 1e5</span></p>
+<pre><span class="cm">// 差分 O(1) 修改 + O(n) 还原</span>
 <span class="fn">vector</span>&lt;<span class="kw">int</span>&gt; d(n + <span class="num">2</span>, <span class="num">0</span>);
 <span class="kw">while</span> (m--) {
     <span class="kw">int</span> l, r; cin &gt;&gt; l &gt;&gt; r;
@@ -558,91 +596,106 @@
     ans = <span class="fn">max</span>(ans, cur);
 }
 cout &lt;&lt; ans &lt;&lt; <span class="str">"\n"</span>;</pre>
-      <p><strong>复杂度：</strong>O(n+m) 时间，O(n) 空间。</p>
-      <br>
+<p><strong>复杂度：</strong>O(n+m) 时间，O(n) 空间。</p>
+<br/>
+<h3>真题2：二维前缀和查询</h3>
+<p>n×n 矩阵（n ≤ 1000），q 次查询子矩阵和（q ≤ 1e5）。</p>
+<p><span class="badge2">预处理 O(n²) + 查询 O(1)</span></p>
+<p>先 O(n²) 构建二维前缀和，后续每次查询 O(1) 回答。</p>
+<p><strong>总复杂度：</strong>O(n² + q)。若每次暴力求和则为 O(q×n²)，差距巨大。</p>
 
-      <h3>真题2：二维前缀和查询</h3>
-      <p>n×n 矩阵（n ≤ 1000），q 次查询子矩阵和（q ≤ 1e5）。</p>
-      <p><span class="badge2">预处理 O(n²) + 查询 O(1)</span></p>
-      <p>先 O(n²) 构建二维前缀和，后续每次查询 O(1) 回答。</p>
-      <p><strong>总复杂度：</strong>O(n² + q)。若每次暴力求和则为 O(q×n²)，差距巨大。</p>
-    </div>
-
-    <!-- ============== Slide 7：本课小结 ============== -->
-    <div class="slide" data-index="7">
-      <h2>7. 本课小结</h2>
-
-      <div class="summary-grid">
-        <div class="summary-card">
-          <h3>一维前缀和</h3>
-          <p>pre[i]=pre[i-1]+a[i]</p>
-          <p>sum(l,r)=pre[r]-pre[l-1]</p>
-          <p>构建 O(n)，查询 O(1)</p>
-        </div>
-        <div class="summary-card">
-          <h3>二维前缀和</h3>
-          <p>容斥公式（4项）</p>
-          <p>子矩阵和 O(1) 查询</p>
-          <p>构建 O(nm)，空间 O(nm)</p>
-        </div>
-        <div class="summary-card">
-          <h3>一维差分</h3>
-          <p>d[l]+=v, d[r+1]-=v</p>
-          <p>区间修改 O(1)</p>
-          <p>离线批量处理</p>
-        </div>
-        <div class="summary-card">
-          <h3>二维差分</h3>
-          <p>4点修改 + 2D前缀和还原</p>
-          <p>子矩阵修改 O(1)</p>
-          <p>容斥原理的逆运算</p>
-        </div>
-        <div class="summary-card">
-          <h3>前缀最值优化DP</h3>
-          <p>维护 pre_min / pre_max</p>
-          <p>消除DP内层循环</p>
-          <p>从 O(n²) 到 O(n)</p>
-        </div>
-        <div class="summary-card">
-          <h3>差分约束</h3>
-          <p>x_j - x_i ≤ c</p>
-          <p>建图 + 最短路径</p>
-          <p>SPFA / Bellman-Ford</p>
-        </div>
-      </div>
-
-      <br>
-      <div class="tip-box">
-        <strong>核心思想总结：</strong><br>
-        1. <strong>前缀和</strong> = 预处理换时间：区间查询从 O(n) 降到 O(1)<br>
-        2. <strong>差分数组</strong> = 离线批量处理：区间修改从 O(n) 降到 O(1)<br>
-        3. <strong>容斥原理</strong>是二维前缀和/差分的核心，画图辅助理解<br>
-        4. <strong>前缀最值</strong>可以消除DP内层循环，是常见的 O(n²)→O(n) 优化手段<br>
+<aside class="notes">【讲解】6. 真题精练
+本页要点（照着讲即可）：
+· 长度为 n 的全 0 数组，m 次区间 +1。求最终数组的最大值。
+· n,m ≤ 1e5
+· 复杂度： O(n+m) 时间，O(n) 空间。
+· 复杂度：
+· n×n 矩阵（n ≤ 1000），q 次查询子矩阵和（q ≤ 1e5）。
+· 预处理 O(n²) + 查询 O(1)
+练习页节奏：先独立想 1 分钟 → 再点拨思路 → 最后对答案讲为什么。
+可联系：区间求和优化、二维差分</aside>
+</div>
+<!-- ============== Slide 7：本课小结 ============== -->
+<div class="slide" data-index="7">
+<h2>7. 本课小结</h2>
+<div class="summary-grid">
+<div class="summary-card">
+<h3>一维前缀和</h3>
+<p>pre[i]=pre[i-1]+a[i]</p>
+<p>sum(l,r)=pre[r]-pre[l-1]</p>
+<p>构建 O(n)，查询 O(1)</p>
+</div>
+<div class="summary-card">
+<h3>二维前缀和</h3>
+<p>容斥公式（4项）</p>
+<p>子矩阵和 O(1) 查询</p>
+<p>构建 O(nm)，空间 O(nm)</p>
+</div>
+<div class="summary-card">
+<h3>一维差分</h3>
+<p>d[l]+=v, d[r+1]-=v</p>
+<p>区间修改 O(1)</p>
+<p>离线批量处理</p>
+</div>
+<div class="summary-card">
+<h3>二维差分</h3>
+<p>4点修改 + 2D前缀和还原</p>
+<p>子矩阵修改 O(1)</p>
+<p>容斥原理的逆运算</p>
+</div>
+<div class="summary-card">
+<h3>前缀最值优化DP</h3>
+<p>维护 pre_min / pre_max</p>
+<p>消除DP内层循环</p>
+<p>从 O(n²) 到 O(n)</p>
+</div>
+<div class="summary-card">
+<h3>差分约束</h3>
+<p>x_j - x_i ≤ c</p>
+<p>建图 + 最短路径</p>
+<p>SPFA / Bellman-Ford</p>
+</div>
+</div>
+<br/>
+<div class="tip-box">
+<strong>核心思想总结：</strong><br/>
+        1. <strong>前缀和</strong> = 预处理换时间：区间查询从 O(n) 降到 O(1)<br/>
+        2. <strong>差分数组</strong> = 离线批量处理：区间修改从 O(n) 降到 O(1)<br/>
+        3. <strong>容斥原理</strong>是二维前缀和/差分的核心，画图辅助理解<br/>
+        4. <strong>前缀最值</strong>可以消除DP内层循环，是常见的 O(n²)→O(n) 优化手段<br/>
         5. 下标<strong>从 1 开始</strong>是竞赛中的常用约定，可以简化边界处理
       </div>
-
-      <div class="warn-box">
-        <strong>常见错误提醒：</strong>
-        <ul>
-          <li>前缀和下标混乱（0-indexed 输入 vs 1-indexed pre）</li>
-          <li>二维容斥公式符号写反</li>
-          <li>差分数组 r+1 越界（多开 1~2 位）</li>
-          <li>累加时 int 溢出（使用 long long）</li>
-        </ul>
-      </div>
-    </div>
-
-  </div><!-- /.slide-area -->
-
-  <!-- Navigation bar -->
-  <div class="nav-bar">
-    <button class="nav-btn" id="prevBtn" onclick="changeSlide(-1)">← 上一页</button>
-    <div class="page-indicator" id="dotsContainer"></div>
-    <div class="slide-num" id="slideNum">1 / 8</div>
-    <button class="nav-btn" id="nextBtn" onclick="changeSlide(1)">下一页 →</button>
-  </div>
+<div class="warn-box">
+<strong>常见错误提醒：</strong>
+<ul>
+<li>前缀和下标混乱（0-indexed 输入 vs 1-indexed pre）</li>
+<li>二维容斥公式符号写反</li>
+<li>差分数组 r+1 越界（多开 1~2 位）</li>
+<li>累加时 int 溢出（使用 long long）</li>
+</ul>
 </div>
 
+<aside class="notes">【收尾】回顾本课主线：7. 本课小结
+对照大纲再过一遍：一维/二维前缀和、差分数组、差分与前缀和的DP应用
+板书/口述要点：
+· pre[i]=pre[i-1]+a[i]
+· sum(l,r)=pre[r]-pre[l-1]
+· 构建 O(n)，查询 O(1)
+· 容斥公式（4项）
+· 子矩阵和 O(1) 查询
+· 构建 O(nm)，空间 O(nm)
+课后任务：区间求和优化、二维差分
+结束前留 2 分钟答疑；布置 1 道小练习检验是否真正掌握。</aside>
+</div>
+</div><!-- /.slide-area -->
+<!-- Navigation bar -->
+<div class="nav-bar">
+<button class="nav-btn" id="prevBtn" onclick="changeSlide(-1)">← 上一页</button>
+<div class="page-indicator" id="dotsContainer"></div>
+<div class="slide-num" id="slideNum">1 / 8</div>
+<button class="nav-btn" id="nextBtn" onclick="changeSlide(1)">下一页 →</button>
+</div>
+</div>
 <script>
 (function() {
   const slides = document.querySelectorAll('.slide');

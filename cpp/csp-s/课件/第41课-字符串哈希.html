@@ -1,8 +1,9 @@
 <!DOCTYPE html>
+
 <html lang="zh-CN">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
 <title>第41课：字符串哈希 — CSP-S 算法精讲</title>
 <style>
   :root {
@@ -189,75 +190,86 @@
 </style>
 </head>
 <body>
-
 <div class="progress-bar" id="progressBar"></div>
-
 <div class="slides-container" id="slidesContainer">
-
-  <!-- ====== 幻灯片 1：标题页 ====== -->
-  <div class="slide active title-slide">
-    <h1>第 41 课</h1>
-    <h1 style="font-size:2.2em; margin-top:0;">字符串哈希</h1>
-    <p class="subtitle">String Hashing — 从 O(n) 到 O(1) 的子串判等</p>
-    <div style="margin-top:24px;">
-      <span class="badge">CSP-S 核心算法</span>
-      <span class="badge">BKDR Hash</span>
-      <span class="badge">双哈希防冲突</span>
-    </div>
-    <p style="margin-top:30px; color:var(--text-dim); font-size:0.9em;">
+<!-- ====== 幻灯片 1：标题页 ====== -->
+<div class="slide active title-slide">
+<h1>第 41 课</h1>
+<h1 style="font-size:2.2em; margin-top:0;">字符串哈希</h1>
+<p class="subtitle">String Hashing — 从 O(n) 到 O(1) 的子串判等</p>
+<div style="margin-top:24px;">
+<span class="badge">CSP-S 核心算法</span>
+<span class="badge">BKDR Hash</span>
+<span class="badge">双哈希防冲突</span>
+</div>
+<p style="margin-top:30px; color:var(--text-dim); font-size:0.9em;">
       二分 + 哈希求 LCP · O(1) 子串查询 · 回文判断 · 字符串去重
     </p>
-  </div>
 
-  <!-- ====== 幻灯片 2：知识精讲 ====== -->
-  <div class="slide">
-    <h2>📖 知识精讲：什么是字符串哈希？</h2>
-    <p>字符串哈希的<strong>核心思想</strong>：将字符串映射为一个整数，使得<strong>相同的字符串映射到相同的整数</strong>，不同的字符串以<strong>极大概率</strong>映射到不同的整数。</p>
+<aside class="notes">【开场】第 1/9 页 · 字符串哈希
+用 30 秒说明本课目标与学完能做什么，再进入正题。
+大纲考点：哈希函数设计、自然溢出、双哈希防冲突、子串哈希O(1)查询
+配套练习方向：字符串匹配、最长回文子串
+封面关键词：
+· String Hashing — 从 O(n) 到 O(1) 的子串判等
+· 二分 + 哈希求 LCP · O(1) 子串查询 · 回文判断 · 字符串去重
+互动：问学生「今天最想搞清楚什么？」，收 1–2 个期待。</aside>
+</div>
+<!-- ====== 幻灯片 2：知识精讲 ====== -->
+<div class="slide">
+<h2>📖 知识精讲：什么是字符串哈希？</h2>
+<p>字符串哈希的<strong>核心思想</strong>：将字符串映射为一个整数，使得<strong>相同的字符串映射到相同的整数</strong>，不同的字符串以<strong>极大概率</strong>映射到不同的整数。</p>
+<h3>BKDR Hash 函数</h3>
+<p>将字符串视为一个 <em>base 进制数</em>，逐字符计算：</p>
+<div class="formula">hash(s) = (s[0]×baseⁿ⁻¹ + s[1]×baseⁿ⁻² + ... + s[n-1]) mod M</div>
+<div class="two-col">
+<div>
+<h3>seed（base）选择</h3>
+<ul>
+<li>常用质数：<strong>131</strong> 或 <strong>13331</strong></li>
+<li>必须大于字符集大小（ASCII ≤ 127）</li>
+<li>经大量实践验证，冲突概率极低</li>
+</ul>
+</div>
+<div>
+<h3>模数选择</h3>
+<table>
+<tr><th>方案</th><th>模数</th><th>特点</th></tr>
+<tr><td>自然溢出</td><td>2⁶⁴</td><td>代码极简，速度最快</td></tr>
+<tr><td>单大质数</td><td>1e9+7</td><td>速度快，冲突小</td></tr>
+<tr><td>双哈希</td><td>1e9+7+1e9+9</td><td>最安全，推荐</td></tr>
+</table>
+</div>
+</div>
 
-    <h3>BKDR Hash 函数</h3>
-    <p>将字符串视为一个 <em>base 进制数</em>，逐字符计算：</p>
-    <div class="formula">hash(s) = (s[0]×baseⁿ⁻¹ + s[1]×baseⁿ⁻² + ... + s[n-1]) mod M</div>
-
-    <div class="two-col">
-      <div>
-        <h3>seed（base）选择</h3>
-        <ul>
-          <li>常用质数：<strong>131</strong> 或 <strong>13331</strong></li>
-          <li>必须大于字符集大小（ASCII ≤ 127）</li>
-          <li>经大量实践验证，冲突概率极低</li>
-        </ul>
-      </div>
-      <div>
-        <h3>模数选择</h3>
-        <table>
-          <tr><th>方案</th><th>模数</th><th>特点</th></tr>
-          <tr><td>自然溢出</td><td>2⁶⁴</td><td>代码极简，速度最快</td></tr>
-          <tr><td>单大质数</td><td>1e9+7</td><td>速度快，冲突小</td></tr>
-          <tr><td>双哈希</td><td>1e9+7+1e9+9</td><td>最安全，推荐</td></tr>
-        </table>
-      </div>
-    </div>
-  </div>
-
-  <!-- ====== 幻灯片 3：哈希函数设计 ====== -->
-  <div class="slide">
-    <h2>🔧 哈希函数设计：自然溢出 vs 双哈希</h2>
-
-    <h3>方案一：自然溢出（unsigned long long）</h3>
-    <div class="code-block"><span class="ty">typedef</span> <span class="ty">unsigned</span> <span class="ty">long</span> <span class="ty">long</span> <span class="ty">ull</span>;
+<aside class="notes">【讲解】📖 知识精讲：什么是字符串哈希？
+本页要点（照着讲即可）：
+· 字符串哈希的 核心思想 ：将字符串映射为一个整数，使得 相同的字符串映射到相同的整数 ，不同的字符串以 极大概率 映射到不同的整数。
+· 核心思想
+· 相同的字符串映射到相同的整数
+· 极大概率
+· 将字符串视为一个 base 进制数 ，逐字符计算：
+· 常用质数： 131 或 13331
+讲解时放慢关键术语；用 1 个生活类比 + 1 个反例加深印象。
+本课大纲考点（可适时点题）：哈希函数设计、自然溢出、双哈希防冲突、子串哈希O(1)查询</aside>
+</div>
+<!-- ====== 幻灯片 3：哈希函数设计 ====== -->
+<div class="slide">
+<h2>🔧 哈希函数设计：自然溢出 vs 双哈希</h2>
+<h3>方案一：自然溢出（unsigned long long）</h3>
+<div class="code-block"><span class="ty">typedef</span> <span class="ty">unsigned</span> <span class="ty">long</span> <span class="ty">long</span> <span class="ty">ull</span>;
 <span class="kw">const</span> <span class="ty">ull</span> BASE = <span class="num">131</span>;
 
 <span class="ty">ull</span> <span class="fn">hash_str</span>(<span class="kw">const</span> string&amp; s) {
     <span class="ty">ull</span> h = <span class="num">0</span>;
     <span class="kw">for</span> (<span class="ty">char</span> c : s)
         h = h * BASE + c;   <span class="cm">// 自动对 2^64 取模</span>
-    <span class="kw">return</span> h;
+<span class="kw">return</span> h;
 }</div>
-    <p>✅ <em>代码最简洁</em> ，无需 % 运算<br>
+<p>✅ <em>代码最简洁</em> ，无需 % 运算<br/>
     ⚠️ <em>2^64 不是质数</em>，可被特殊构造数据卡掉（anti-hash test）</p>
-
-    <h3>方案二：双哈希（两个大质数）</h3>
-    <div class="code-block"><span class="kw">const</span> <span class="ty">int</span> MOD1 = <span class="num">1e9+7</span>, MOD2 = <span class="num">1e9+9</span>;
+<h3>方案二：双哈希（两个大质数）</h3>
+<div class="code-block"><span class="kw">const</span> <span class="ty">int</span> MOD1 = <span class="num">1e9+7</span>, MOD2 = <span class="num">1e9+9</span>;
 <span class="kw">const</span> <span class="ty">int</span> BASE = <span class="num">131</span>;
 
 <span class="pp">#define</span> PLL pair&lt;long long, long long&gt;
@@ -270,43 +282,61 @@ PLL <span class="fn">hash_str</span>(<span class="kw">const</span> string&amp; s
     }
     <span class="kw">return</span> {h1, h2};
 }</div>
-    <div class="tip-box">冲突概率 ≈ 1/(M1×M2) ≈ 10⁻¹⁸，在竞赛中几乎不可能发生冲突！CSP-S 推荐使用双哈希。</div>
-  </div>
+<div class="tip-box">冲突概率 ≈ 1/(M1×M2) ≈ 10⁻¹⁸，在竞赛中几乎不可能发生冲突！CSP-S 推荐使用双哈希。</div>
 
-  <!-- ====== 幻灯片 4：子串哈希推导 ====== -->
-  <div class="slide">
-    <h2>🧮 子串哈希 O(1) 公式推导</h2>
-
-    <h3>预处理前缀哈希与幂次</h3>
-    <div class="formula">h[0] = 0
+<aside class="notes">【讲解】🔧 哈希函数设计：自然溢出 vs 双哈希
+结合讲义《二、自然溢出（unsigned long long）的优缺点》强调：
+· 自然溢出原理：C++ 中 unsigned long long 为 64 位无符号整数，运算溢出时自动对 2^64 取模，等价于模数为 2^64。
+· 代码最简洁，无需取模操作
+· 速度最快（无 % 运算）
+· 2^64 到 unsigned long long 的溢出是标准行为
+· 2^64 不是质数（有因子 2），可用特殊构造的字符串制造冲突（卡哈希）
+幻灯片上可见要点：
+· ✅ 代码最简洁 ，无需 % 运算 ⚠️ 2^64 不是质数 ，可被特殊构造数据卡掉（anti-hash test）
+讲解时放慢关键术语；用 1 个生活类比 + 1 个反例加深印象。</aside>
+</div>
+<!-- ====== 幻灯片 4：子串哈希推导 ====== -->
+<div class="slide">
+<h2>🧮 子串哈希 O(1) 公式推导</h2>
+<h3>预处理前缀哈希与幂次</h3>
+<div class="formula">h[0] = 0
 h[i] = (h[i−1] × base + s[i−1])   // i 从 1 到 n
 p[0] = 1,  p[i] = p[i−1] × base</div>
-
-    <h3>推导过程（以字符串 s = "abcde" 为例）</h3>
-    <p>假设要查询子串 <strong>s[2..4] = "cde"</strong> 的哈希值：</p>
-    <div class="formula">h[5] = a×base⁴ + b×base³ + c×base² + d×base + e
+<h3>推导过程（以字符串 s = "abcde" 为例）</h3>
+<p>假设要查询子串 <strong>s[2..4] = "cde"</strong> 的哈希值：</p>
+<div class="formula">h[5] = a×base⁴ + b×base³ + c×base² + d×base + e
 h[2] = a×base + b
 
 h[2] × base³ = a×base⁴ + b×base³
 
 h[5] − h[2]×base³ = c×base² + d×base + e
                    = hash("cde") ✓</div>
-
-    <h3>通用公式</h3>
-    <div class="formula">hash(l, r) = h[r+1] − h[l] × base^{r−l+1}</div>
-    <p><strong>核心优势</strong>：预处理 O(n) 后，任意子串哈希可在 <strong>O(1)</strong> 时间内完成。</p>
-
-    <h3>代码实现</h3>
-    <div class="code-block"><span class="ty">ull</span> <span class="fn">get_hash</span>(<span class="ty">int</span> l, <span class="ty">int</span> r) {        <span class="cm">// l, r 为 0-based 闭区间</span>
-    <span class="kw">return</span> h[r+<span class="num">1</span>] - h[l] * p[r-l+<span class="num">1</span>];
+<h3>通用公式</h3>
+<div class="formula">hash(l, r) = h[r+1] − h[l] × base^{r−l+1}</div>
+<p><strong>核心优势</strong>：预处理 O(n) 后，任意子串哈希可在 <strong>O(1)</strong> 时间内完成。</p>
+<h3>代码实现</h3>
+<div class="code-block"><span class="ty">ull</span> <span class="fn">get_hash</span>(<span class="ty">int</span> l, <span class="ty">int</span> r) {        <span class="cm">// l, r 为 0-based 闭区间</span>
+<span class="kw">return</span> h[r+<span class="num">1</span>] - h[l] * p[r-l+<span class="num">1</span>];
 }</div>
-  </div>
 
-  <!-- ====== 幻灯片 5：代码模板 ====== -->
-  <div class="slide">
-    <h2>💻 代码模板：StringHash 结构体</h2>
-
-    <div class="code-block"><span class="cm">// ============ 自然溢出单哈希 ============</span>
+<aside class="notes">【讲解】🧮 子串哈希 O(1) 公式推导
+结合讲义《四、子串哈希 O(1) 公式推导》强调：
+· 预处理出前缀哈希数组 h[0..n] 和 base 的幂次数组 p[0..n]：
+· h[0] = 0
+· h[i] = (h[i-1] × base + s[i-1]) % M // i 从 1 到 n
+· p[0] = 1
+· p[i] = (p[i-1] × base) % M
+幻灯片上可见要点：
+· 假设要查询子串 s[2..4] = "cde" 的哈希值：
+· s[2..4] = "cde"
+· 核心优势 ：预处理 O(n) 后，任意子串哈希可在 O(1) 时间内完成。
+· 核心优势
+讲解时放慢关键术语；用 1 个生活类比 + 1 个反例加深印象。</aside>
+</div>
+<!-- ====== 幻灯片 5：代码模板 ====== -->
+<div class="slide">
+<h2>💻 代码模板：StringHash 结构体</h2>
+<div class="code-block"><span class="cm">// ============ 自然溢出单哈希 ============</span>
 <span class="kw">struct</span> <span class="ty">StringHash</span> {
     <span class="ty">int</span> n;
     vector&lt;<span class="ty">ull</span>&gt; h, p;
@@ -323,12 +353,11 @@ h[5] − h[2]×base³ = c×base² + d×base + e
     }
 
     <span class="ty">ull</span> <span class="fn">get</span>(<span class="ty">int</span> l, <span class="ty">int</span> r) {           <span class="cm">// 子串 [l, r]</span>
-        <span class="kw">return</span> h[r+<span class="num">1</span>] - h[l] * p[r-l+<span class="num">1</span>];
+<span class="kw">return</span> h[r+<span class="num">1</span>] - h[l] * p[r-l+<span class="num">1</span>];
     }
 };</div>
-
-    <h3>双哈希版本核心差异</h3>
-    <div class="code-block"><span class="kw">struct</span> <span class="ty">DoubleHash</span> {
+<h3>双哈希版本核心差异</h3>
+<div class="code-block"><span class="kw">struct</span> <span class="ty">DoubleHash</span> {
     vector&lt;<span class="ty">long long</span>&gt; h1, h2, p1, p2;
     <span class="kw">static</span> <span class="kw">const</span> <span class="ty">int</span> MOD1 = <span class="num">1e9+7</span>, MOD2 = <span class="num">1e9+9</span>;
 
@@ -338,22 +367,34 @@ h[5] − h[2]×base³ = c×base² + d×base + e
         <span class="kw">return</span> {v1, v2};
     }
 };</div>
-  </div>
 
-  <!-- ====== 幻灯片 6：真题精练1 — 字符串去重 ====== -->
-  <div class="slide">
-    <h2>📝 真题精练 1：字符串去重</h2>
-    <p><strong>题目</strong>：给定 N 个字符串，问有多少个不同的字符串。N ≤ 10⁴，总长度 ≤ 10⁶。</p>
-
-    <h3>解题思路</h3>
-    <ol>
-      <li>对每个字符串计算 <strong>双哈希值</strong></li>
-      <li>将哈希值对 <em>(hash1, hash2)</em> 存入 <strong>set</strong></li>
-      <li>set 的大小即为不同字符串的个数</li>
-    </ol>
-
-    <h3>AC 代码</h3>
-    <div class="code-block"><span class="pp">#include</span> <span class="str">&lt;bits/stdc++.h&gt;</span>
+<aside class="notes">【讲解】💻 代码模板：StringHash 结构体
+结合讲义《💻 代码模板》强调：
+· // ==================== 单哈希（自然溢出） ====================
+· typedef unsigned long long ull;
+· const ull BASE = 131;
+· struct StringHash {
+· int n;
+幻灯片上可见要点：
+· 💻 代码模板：StringHash 结构体
+· // ============ 自然溢出单哈希 ============
+· struct
+· StringHash
+代码页节奏：先读懂输入输出 → 再走主流程 → 最后点出易错点（边界/类型/下标）。
+可让学生预测下一行输出，再运行对照。</aside>
+</div>
+<!-- ====== 幻灯片 6：真题精练1 — 字符串去重 ====== -->
+<div class="slide">
+<h2>📝 真题精练 1：字符串去重</h2>
+<p><strong>题目</strong>：给定 N 个字符串，问有多少个不同的字符串。N ≤ 10⁴，总长度 ≤ 10⁶。</p>
+<h3>解题思路</h3>
+<ol>
+<li>对每个字符串计算 <strong>双哈希值</strong></li>
+<li>将哈希值对 <em>(hash1, hash2)</em> 存入 <strong>set</strong></li>
+<li>set 的大小即为不同字符串的个数</li>
+</ol>
+<h3>AC 代码</h3>
+<div class="code-block"><span class="pp">#include</span> <span class="str">&lt;bits/stdc++.h&gt;</span>
 <span class="kw">using</span> <span class="kw">namespace</span> std;
 
 <span class="kw">const</span> <span class="ty">int</span> MOD1 = <span class="num">1e9+7</span>, MOD2 = <span class="num">1e9+9</span>, BASE = <span class="num">131</span>;
@@ -374,129 +415,157 @@ h[5] − h[2]×base³ = c×base² + d×base + e
     }
     cout &lt;&lt; st.<span class="fn">size</span>() &lt;&lt; <span class="str">'\n'</span>;
 }</div>
-    <p>⏱ 时间复杂度：<strong>O(Σ|s| + N log N)</strong>，空间 O(N)</p>
-  </div>
+<p>⏱ 时间复杂度：<strong>O(Σ|s| + N log N)</strong>，空间 O(N)</p>
 
-  <!-- ====== 幻灯片 7：真题精练2 — 最长回文子串 ====== -->
-  <div class="slide">
-    <h2>📝 真题精练 2：最长回文子串</h2>
-    <p><strong>题目</strong>：给定字符串 s，求其最长回文子串的长度。|s| ≤ 10⁵。</p>
-
-    <h3>算法：二分 + 正反哈希</h3>
-    <ol>
-      <li><strong>预处理</strong>：正串哈希 <em>H_forward</em> 和反串哈希 <em>H_reverse</em></li>
-      <li><strong>枚举回文中心</strong> i（奇数回文和偶数回文分开处理）</li>
-      <li><strong>二分半径</strong>：若 H_forward[i−mid..i+mid] == H_reverse 对应区间，则回文成立</li>
-    </ol>
-
-    <h3>核心判断逻辑</h3>
-    <div class="code-block"><span class="cm">// 奇数回文：中心 i，二分半径 mid</span>
+<aside class="notes">【讲解】📝 真题精练 1：字符串去重
+本页要点（照着讲即可）：
+· 题目 ：给定 N 个字符串，问有多少个不同的字符串。N ≤ 10⁴，总长度 ≤ 10⁶。
+· 对每个字符串计算 双哈希值
+· 双哈希值
+· 将哈希值对 (hash1, hash2) 存入 set
+· set 的大小即为不同字符串的个数
+· ⏱ 时间复杂度： O(Σ|s| + N log N) ，空间 O(N)
+练习页节奏：先独立想 1 分钟 → 再点拨思路 → 最后对答案讲为什么。
+可联系：字符串匹配、最长回文子串</aside>
+</div>
+<!-- ====== 幻灯片 7：真题精练2 — 最长回文子串 ====== -->
+<div class="slide">
+<h2>📝 真题精练 2：最长回文子串</h2>
+<p><strong>题目</strong>：给定字符串 s，求其最长回文子串的长度。|s| ≤ 10⁵。</p>
+<h3>算法：二分 + 正反哈希</h3>
+<ol>
+<li><strong>预处理</strong>：正串哈希 <em>H_forward</em> 和反串哈希 <em>H_reverse</em></li>
+<li><strong>枚举回文中心</strong> i（奇数回文和偶数回文分开处理）</li>
+<li><strong>二分半径</strong>：若 H_forward[i−mid..i+mid] == H_reverse 对应区间，则回文成立</li>
+</ol>
+<h3>核心判断逻辑</h3>
+<div class="code-block"><span class="cm">// 奇数回文：中心 i，二分半径 mid</span>
 <span class="kw">if</span> (fwd.<span class="fn">get</span>(i-mid, i+mid) == rev.<span class="fn">get</span>(n-<span class="num">1</span>-(i+mid), n-<span class="num">1</span>-(i-mid)))
     lo = mid;   <span class="cm">// 回文成立，尝试更大的半径</span>
 <span class="kw">else</span>
     hi = mid - <span class="num">1</span>;  <span class="cm">// 回文不成立，缩小半径</span>
-
 <span class="cm">// 偶数回文：中心在 i 与 i+1 之间</span>
 <span class="kw">if</span> (fwd.<span class="fn">get</span>(i-mid+<span class="num">1</span>, i+mid) == rev.<span class="fn">get</span>(n-<span class="num">1</span>-(i+mid), n-<span class="num">1</span>-(i-mid+<span class="num">1</span>)))
     lo = mid;</div>
-
-    <p>⏱ 时间复杂度：<strong>O(n log n)</strong><br>
+<p>⏱ 时间复杂度：<strong>O(n log n)</strong><br/>
     预处理 O(n) + 每个中心二分 O(log n)，共 n 个中心</p>
+<h3>扩展：更优的 O(n) 算法 — Manacher</h3>
+<p>Manacher 算法可以在 O(n) 时间内解决最长回文子串问题，但哈希 + 二分的思路更通用且容易实现，在 CSP-S 中已经足够。</p>
 
-    <h3>扩展：更优的 O(n) 算法 — Manacher</h3>
-    <p>Manacher 算法可以在 O(n) 时间内解决最长回文子串问题，但哈希 + 二分的思路更通用且容易实现，在 CSP-S 中已经足够。</p>
-  </div>
-
-  <!-- ====== 幻灯片 8：优化技巧 ====== -->
-  <div class="slide">
-    <h2>⚠️ 易错点与优化技巧</h2>
-
-    <div class="two-col">
-      <div>
-        <h3>常见错误</h3>
-        <ul>
-          <li><strong>模数选择不当</strong>：单用 1e9+7 仍可能被卡</li>
-          <li><strong>前缀下标混乱</strong>：h 数组从 1 开始，子串右端点需 +1</li>
-          <li><strong>负数取模</strong>：忘记 <em>+ MOD</em> 再取模</li>
-          <li><strong>二分死循环</strong>：取上取整用 <em>(lo+hi+1)/2</em></li>
-          <li><strong>自然溢出自信</strong>：CF 等平台广泛使用 anti-hash test</li>
-        </ul>
-      </div>
-      <div>
-        <h3>优化建议</h3>
-        <ul>
-          <li><strong>双哈希最安全</strong>：MOD1=1e9+7, MOD2=1e9+9</li>
-          <li><strong>随机 base</strong>：用 mt19937 随机生成，防止被针对</li>
-          <li><strong>大质数模数</strong>：998244353 也是好选择</li>
-          <li><strong>pair 做 key</strong>：set 可直接用 pair，无需自定义哈希</li>
-          <li><strong>二分上界</strong>：hi 初始化为实际可能的最大值</li>
-        </ul>
-      </div>
-    </div>
-
-    <h3>随机化 base 示例</h3>
-    <div class="code-block">mt19937 <span class="fn">rng</span>(<span class="fn">chrono::steady_clock::now</span>().<span class="fn">time_since_epoch</span>().<span class="fn">count</span>());
+<aside class="notes">【讲解】📝 真题精练 2：最长回文子串
+本页要点（照着讲即可）：
+· 题目 ：给定字符串 s，求其最长回文子串的长度。|s| ≤ 10⁵。
+· 预处理 ：正串哈希 H_forward 和反串哈希 H_reverse
+· 枚举回文中心 i（奇数回文和偶数回文分开处理）
+· 枚举回文中心
+· 二分半径 ：若 H_forward[i−mid..i+mid] == H_reverse 对应区间，则回文成立
+· 二分半径
+练习页节奏：先独立想 1 分钟 → 再点拨思路 → 最后对答案讲为什么。
+可联系：字符串匹配、最长回文子串</aside>
+</div>
+<!-- ====== 幻灯片 8：优化技巧 ====== -->
+<div class="slide">
+<h2>⚠️ 易错点与优化技巧</h2>
+<div class="two-col">
+<div>
+<h3>常见错误</h3>
+<ul>
+<li><strong>模数选择不当</strong>：单用 1e9+7 仍可能被卡</li>
+<li><strong>前缀下标混乱</strong>：h 数组从 1 开始，子串右端点需 +1</li>
+<li><strong>负数取模</strong>：忘记 <em>+ MOD</em> 再取模</li>
+<li><strong>二分死循环</strong>：取上取整用 <em>(lo+hi+1)/2</em></li>
+<li><strong>自然溢出自信</strong>：CF 等平台广泛使用 anti-hash test</li>
+</ul>
+</div>
+<div>
+<h3>优化建议</h3>
+<ul>
+<li><strong>双哈希最安全</strong>：MOD1=1e9+7, MOD2=1e9+9</li>
+<li><strong>随机 base</strong>：用 mt19937 随机生成，防止被针对</li>
+<li><strong>大质数模数</strong>：998244353 也是好选择</li>
+<li><strong>pair 做 key</strong>：set 可直接用 pair，无需自定义哈希</li>
+<li><strong>二分上界</strong>：hi 初始化为实际可能的最大值</li>
+</ul>
+</div>
+</div>
+<h3>随机化 base 示例</h3>
+<div class="code-block">mt19937 <span class="fn">rng</span>(<span class="fn">chrono::steady_clock::now</span>().<span class="fn">time_since_epoch</span>().<span class="fn">count</span>());
 <span class="kw">const</span> <span class="ty">ull</span> BASE = <span class="fn">uniform_int_distribution</span>&lt;<span class="ty">ull</span>&gt;(<span class="num">257</span>, <span class="num">1e9</span>)(rng);</div>
+<div class="tip-box">当取模为负数时，子串哈希公式必须写成：(h[r+1] - h[l]*p[r-l+1] % MOD + MOD) % MOD，否则可能得到错误结果！</div>
 
-    <div class="tip-box">当取模为负数时，子串哈希公式必须写成：(h[r+1] - h[l]*p[r-l+1] % MOD + MOD) % MOD，否则可能得到错误结果！</div>
-  </div>
-
-  <!-- ====== 幻灯片 9：总结 ====== -->
-  <div class="slide">
-    <h2>🎯 本课小结</h2>
-
-    <table>
-      <tr><th>核心知识点</th><th>要点</th><th>复杂度</th></tr>
-      <tr>
-        <td>BKDR 哈希</td>
-        <td>base=131，将字符串视为 base 进制数</td>
-        <td>O(n) 预处理</td>
-      </tr>
-      <tr>
-        <td>自然溢出</td>
-        <td>ull 自动模 2⁶⁴，简洁但可能被卡</td>
-        <td>O(1) 查询</td>
-      </tr>
-      <tr>
-        <td>双哈希</td>
-        <td>MOD1+MOD2 同时计算，冲突概率 ≈ 0</td>
-        <td>O(1) 查询</td>
-      </tr>
-      <tr>
-        <td>子串哈希公式</td>
-        <td>hash[l,r] = h[r+1] − h[l]×base^{r−l+1}</td>
-        <td>O(1)</td>
-      </tr>
-      <tr>
-        <td>二分 + 哈希</td>
-        <td>LCP、回文判断、字典序比较</td>
-        <td>O(log n)</td>
-      </tr>
-      <tr>
-        <td>哈希去重</td>
-        <td>双哈希 + set 统计不同字符串</td>
-        <td>O(N log N)</td>
-      </tr>
-    </table>
-
-    <div style="margin-top:24px; padding:16px; background:var(--accent2); border-radius:10px; border-left:4px solid var(--accent);">
-      <p style="margin:0; color:var(--text);"><strong>实践建议</strong>：CSP-S 中优先使用双哈希（1e9+7 + 1e9+9），确保万无一失。若时间紧迫可用自然溢出，但建议随机化 base。子串哈希的 O(1) 查询能力使其成为字符串问题的「瑞士军刀」。</p>
-    </div>
-
-    <p style="text-align:center; margin-top:28px; color:var(--highlight); font-size:1.1em;">
+<aside class="notes">【讲解】⚠️ 易错点与优化技巧
+结合讲义《⚠️ 易错点与优化技巧》强调：
+· 模数选择不当导致冲突：
+· 不要用 1e9+7 同时只做单哈希——虽然冲突少，但在 CF 等平台上已被广泛卡
+· 自然溢出（2^64）不是质数，容易被构造数据卡掉
+· 最稳妥方案：双哈希，MOD1 = 1e9+7，MOD2 = 1e9+9；或者MOD1 = 1e9+7，MOD2 = 998244353
+· 前缀 hash 数组下标从 1 开始：
+幻灯片上可见要点：
+· 模数选择不当 ：单用 1e9+7 仍可能被卡
+· 模数选择不当
+· 前缀下标混乱 ：h 数组从 1 开始，子串右端点需 +1
+· 前缀下标混乱
+讲解时放慢关键术语；用 1 个生活类比 + 1 个反例加深印象。</aside>
+</div>
+<!-- ====== 幻灯片 9：总结 ====== -->
+<div class="slide">
+<h2>🎯 本课小结</h2>
+<table>
+<tr><th>核心知识点</th><th>要点</th><th>复杂度</th></tr>
+<tr>
+<td>BKDR 哈希</td>
+<td>base=131，将字符串视为 base 进制数</td>
+<td>O(n) 预处理</td>
+</tr>
+<tr>
+<td>自然溢出</td>
+<td>ull 自动模 2⁶⁴，简洁但可能被卡</td>
+<td>O(1) 查询</td>
+</tr>
+<tr>
+<td>双哈希</td>
+<td>MOD1+MOD2 同时计算，冲突概率 ≈ 0</td>
+<td>O(1) 查询</td>
+</tr>
+<tr>
+<td>子串哈希公式</td>
+<td>hash[l,r] = h[r+1] − h[l]×base^{r−l+1}</td>
+<td>O(1)</td>
+</tr>
+<tr>
+<td>二分 + 哈希</td>
+<td>LCP、回文判断、字典序比较</td>
+<td>O(log n)</td>
+</tr>
+<tr>
+<td>哈希去重</td>
+<td>双哈希 + set 统计不同字符串</td>
+<td>O(N log N)</td>
+</tr>
+</table>
+<div style="margin-top:24px; padding:16px; background:var(--accent2); border-radius:10px; border-left:4px solid var(--accent);">
+<p style="margin:0; color:var(--text);"><strong>实践建议</strong>：CSP-S 中优先使用双哈希（1e9+7 + 1e9+9），确保万无一失。若时间紧迫可用自然溢出，但建议随机化 base。子串哈希的 O(1) 查询能力使其成为字符串问题的「瑞士军刀」。</p>
+</div>
+<p style="text-align:center; margin-top:28px; color:var(--highlight); font-size:1.1em;">
       🏆 下一课预告：第42课 — KMP 算法与最小循环节
     </p>
-  </div>
 
+<aside class="notes">【收尾】回顾本课主线：🎯 本课小结
+对照大纲再过一遍：哈希函数设计、自然溢出、双哈希防冲突、子串哈希O(1)查询
+板书/口述要点：
+· 实践建议 ：CSP-S 中优先使用双哈希（1e9+7 + 1e9+9），确保万无一失。若时间紧迫可用自然溢出，但建议随机化 base。子串哈希的 O(1) 查询能力使其成为字符串问题的「瑞士军刀」。
+· 实践建议
+· 🏆 下一课预告：第42课 — KMP 算法与最小循环节
+课后任务：字符串匹配、最长回文子串
+结束前留 2 分钟答疑；布置 1 道小练习检验是否真正掌握。</aside>
 </div>
-
+</div>
 <!-- 导航栏 -->
 <div class="nav-bar">
-  <button class="nav-btn" id="prevBtn" onclick="changeSlide(-1)">← 上一页</button>
-  <span class="page-indicator" id="pageIndicator">1 / 9</span>
-  <button class="nav-btn" id="nextBtn" onclick="changeSlide(1)">下一页 →</button>
+<button class="nav-btn" id="prevBtn" onclick="changeSlide(-1)">← 上一页</button>
+<span class="page-indicator" id="pageIndicator">1 / 9</span>
+<button class="nav-btn" id="nextBtn" onclick="changeSlide(1)">下一页 →</button>
 </div>
-
 <script>
   const slides = document.querySelectorAll('.slide');
   const totalSlides = slides.length;
@@ -531,7 +600,6 @@ h[5] − h[2]×base³ = c×base² + d×base + e
   // 初始状态
   showSlide(0);
 </script>
-
 <script src="courseware-ui.js"></script>
 <script src="presenter.js"></script>
 </body>

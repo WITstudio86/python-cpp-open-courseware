@@ -1,8 +1,9 @@
 <!DOCTYPE html>
+
 <html lang="zh-CN">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
 <title>第23课：拓扑排序 — CSP-S 竞赛课件</title>
 <style>
   /* ===== 全局样式 ===== */
@@ -193,86 +194,116 @@
 </style>
 </head>
 <body>
-
 <div class="slides-container">
+<!-- ==================== 幻灯片0：标题页 ==================== -->
+<div class="slide active title-slide">
+<div class="lesson-num">CSP-S · 第 23 课</div>
+<h1>拓扑排序</h1>
+<p class="subtitle">有向无环图（DAG）的线性排序 · 依赖关系建模 · 判环技术</p>
+<div class="tags">
+<span class="tag">Kahn 算法</span>
+<span class="tag">DFS 后序</span>
+<span class="tag">字典序最小</span>
+<span class="tag">课程表问题</span>
+<span class="tag">O(V+E)</span>
+</div>
 
-  <!-- ==================== 幻灯片0：标题页 ==================== -->
-  <div class="slide active title-slide">
-    <div class="lesson-num">CSP-S · 第 23 课</div>
-    <h1>拓扑排序</h1>
-    <p class="subtitle">有向无环图（DAG）的线性排序 · 依赖关系建模 · 判环技术</p>
-    <div class="tags">
-      <span class="tag">Kahn 算法</span>
-      <span class="tag">DFS 后序</span>
-      <span class="tag">字典序最小</span>
-      <span class="tag">课程表问题</span>
-      <span class="tag">O(V+E)</span>
-    </div>
-  </div>
+<aside class="notes">【开场】第 1/8 页 · 拓扑排序
+用 30 秒说明本课目标与学完能做什么，再进入正题。
+大纲考点：Kahn算法、DFS拓扑排序、判环应用
+配套练习方向：课程表问题、工程依赖排序
+封面关键词：
+· 有向无环图（DAG）的线性排序 · 依赖关系建模 · 判环技术
+互动：问学生「今天最想搞清楚什么？」，收 1–2 个期待。</aside>
+</div>
+<!-- ==================== 幻灯片1：Kahn BFS 算法 ==================== -->
+<div class="slide">
+<h2><span class="icon">📘</span> Kahn 算法（BFS + 入度表）</h2>
+<div class="info-card">
+<p><strong>核心思想：</strong>每次「删除」一个入度为 0 的节点及其所有出边，不断重复。</p>
+</div>
+<h3>算法步骤</h3>
+<ol class="steps">
+<li><strong>建图 + 统计入度：</strong>遍历所有边，建立邻接表，同时计算每个节点的入度。</li>
+<li><strong>初始化队列：</strong>将所有入度为 0 的节点入队（多源 BFS 起点）。</li>
+<li><strong>BFS 迭代：</strong>取出队首节点 u → 加入拓扑序列 → u 的所有邻接点 v 入度减 1 → 若 v 入度变为 0，入队。</li>
+<li><strong>判环：</strong>若最终拓扑序列长度 &lt; n，说明图中存在环。</li>
+</ol>
+<div class="info-card">
+<p><span class="highlight">复杂度：</span>O(V+E) 时间 | O(V+E) 空间 | 适用于 n ≤ 10⁵ 规模</p>
+</div>
 
-  <!-- ==================== 幻灯片1：Kahn BFS 算法 ==================== -->
-  <div class="slide">
-    <h2><span class="icon">📘</span> Kahn 算法（BFS + 入度表）</h2>
-    <div class="info-card">
-      <p><strong>核心思想：</strong>每次「删除」一个入度为 0 的节点及其所有出边，不断重复。</p>
-    </div>
-    <h3>算法步骤</h3>
-    <ol class="steps">
-      <li><strong>建图 + 统计入度：</strong>遍历所有边，建立邻接表，同时计算每个节点的入度。</li>
-      <li><strong>初始化队列：</strong>将所有入度为 0 的节点入队（多源 BFS 起点）。</li>
-      <li><strong>BFS 迭代：</strong>取出队首节点 u → 加入拓扑序列 → u 的所有邻接点 v 入度减 1 → 若 v 入度变为 0，入队。</li>
-      <li><strong>判环：</strong>若最终拓扑序列长度 &lt; n，说明图中存在环。</li>
-    </ol>
-    <div class="info-card">
-      <p><span class="highlight">复杂度：</span>O(V+E) 时间 | O(V+E) 空间 | 适用于 n ≤ 10⁵ 规模</p>
-    </div>
-  </div>
-
-  <!-- ==================== 幻灯片2：DFS 拓扑排序 ==================== -->
-  <div class="slide">
-    <h2><span class="icon">📗</span> DFS 拓扑排序（后序遍历逆序）</h2>
-    <div class="info-card">
-      <p><strong>核心原理：</strong>在 DAG 的 DFS 中，子节点先于父节点被"后序加入"。将加入顺序<strong>反转</strong>后，父节点排在子节点前面——正是拓扑排序。</p>
-    </div>
-    <h3>三色标记法判环</h3>
-    <table class="compare-table">
-      <tr><th>状态</th><th>值</th><th>含义</th><th>遇到时的操作</th></tr>
-      <tr><td>白色</td><td>0</td><td>未访问</td><td>递归进入</td></tr>
-      <tr><td>灰色</td><td>1</td><td>正在访问中（在递归栈）</td><td><span class="warn">发现环！</span></td></tr>
-      <tr><td>黑色</td><td>2</td><td>已完成</td><td>跳过</td></tr>
-    </table>
-    <h3>关键代码逻辑</h3>
-    <div class="code-block"><span class="com">// DFS 后序遍历</span>
+<aside class="notes">【讲解】📘 Kahn 算法（BFS + 入度表）
+结合讲义《二、Kahn 算法（BFS + 入度表）》强调：
+· Kahn 算法是求解拓扑排序最直观的方法，时间复杂度 O(V+E)，空间复杂度 O(V)。
+· 算法步骤：
+· 建图并统计入度：遍历所有边，建立邻接表，同时统计每个节点的入度（即有多少条边指向该节点）。
+· 初始化队列：将所有入度为 0 的节点加入队列。这些节点没有任何前置依赖，可以作为起始节点。
+· BFS 处理：循环执行以下操作直到队列为空：
+幻灯片上可见要点：
+· 核心思想： 每次「删除」一个入度为 0 的节点及其所有出边，不断重复。
+· 核心思想：
+· 建图 + 统计入度： 遍历所有边，建立邻接表，同时计算每个节点的入度。
+· 建图 + 统计入度：
+讲解时放慢关键术语；用 1 个生活类比 + 1 个反例加深印象。
+本课大纲考点（可适时点题）：Kahn算法、DFS拓扑排序、判环应用</aside>
+</div>
+<!-- ==================== 幻灯片2：DFS 拓扑排序 ==================== -->
+<div class="slide">
+<h2><span class="icon">📗</span> DFS 拓扑排序（后序遍历逆序）</h2>
+<div class="info-card">
+<p><strong>核心原理：</strong>在 DAG 的 DFS 中，子节点先于父节点被"后序加入"。将加入顺序<strong>反转</strong>后，父节点排在子节点前面——正是拓扑排序。</p>
+</div>
+<h3>三色标记法判环</h3>
+<table class="compare-table">
+<tr><th>状态</th><th>值</th><th>含义</th><th>遇到时的操作</th></tr>
+<tr><td>白色</td><td>0</td><td>未访问</td><td>递归进入</td></tr>
+<tr><td>灰色</td><td>1</td><td>正在访问中（在递归栈）</td><td><span class="warn">发现环！</span></td></tr>
+<tr><td>黑色</td><td>2</td><td>已完成</td><td>跳过</td></tr>
+</table>
+<h3>关键代码逻辑</h3>
+<div class="code-block"><span class="com">// DFS 后序遍历</span>
 <span class="kw">void</span> <span class="fn">dfs</span>(<span class="kw">int</span> u) {
     state[u] = <span class="num">1</span>;           <span class="com">// 标记「访问中」</span>
-    <span class="kw">for</span> (<span class="kw">int</span> v : adj[u]) {
+<span class="kw">for</span> (<span class="kw">int</span> v : adj[u]) {
         <span class="kw">if</span> (state[v] == <span class="num">1</span>) <span class="kw">return</span>; <span class="com">// 发现环</span>
-        <span class="kw">if</span> (state[v] == <span class="num">0</span>) dfs(v);
+<span class="kw">if</span> (state[v] == <span class="num">0</span>) dfs(v);
     }
     state[u] = <span class="num">2</span>;             <span class="com">// 标记「已完成」</span>
     result.push_back(u);      <span class="com">// ★ 后序位置加入</span>
 }
 <span class="com">// 最后 reverse(result) 即得拓扑序</span></div>
-  </div>
 
-  <!-- ==================== 幻灯片3：判环 + 字典序最小 ==================== -->
-  <div class="slide">
-    <h2><span class="icon">📙</span> 判环方法对比 &amp; 字典序最小拓扑序</h2>
-    <div class="two-col">
-      <div>
-        <h3>判环方法对比</h3>
-        <table class="compare-table">
-          <tr><th>方法</th><th>核心</th><th>特点</th></tr>
-          <tr><td>Kahn 入度法</td><td>比较序列长度</td><td>直观，同步得拓扑序</td></tr>
-          <tr><td>DFS 三色标记</td><td>检测递归栈中节点</td><td>可找到环上节点</td></tr>
-        </table>
-      </div>
-      <div>
-        <h3>字典序最小拓扑序</h3>
-        <div class="info-card">
-          <p>将 Kahn 算法中的普通队列替换为<strong>小根堆</strong> <span class="highlight">priority_queue</span> 即可。</p>
-        </div>
-        <div class="code-block"><span class="com">// 关键代码</span>
+<aside class="notes">【讲解】📗 DFS 拓扑排序（后序遍历逆序）
+结合讲义《三、DFS 拓扑排序（后序遍历逆序）》强调：
+· DFS 方法利用深度优先搜索的后序遍历特性来获得拓扑序列。
+· 算法步骤：
+· 对每个未访问节点进行 DFS。
+· 在 DFS 中，先递归访问所有邻接点（即所有后继节点）。
+· 递归返回后（即后序遍历位置），将当前节点加入结果序列。
+幻灯片上可见要点：
+· 核心原理： 在 DAG 的 DFS 中，子节点先于父节点被"后序加入"。将加入顺序 反转 后，父节点排在子节点前面——正是拓扑排序。
+· 核心原理：
+讲解时放慢关键术语；用 1 个生活类比 + 1 个反例加深印象。</aside>
+</div>
+<!-- ==================== 幻灯片3：判环 + 字典序最小 ==================== -->
+<div class="slide">
+<h2><span class="icon">📙</span> 判环方法对比 &amp; 字典序最小拓扑序</h2>
+<div class="two-col">
+<div>
+<h3>判环方法对比</h3>
+<table class="compare-table">
+<tr><th>方法</th><th>核心</th><th>特点</th></tr>
+<tr><td>Kahn 入度法</td><td>比较序列长度</td><td>直观，同步得拓扑序</td></tr>
+<tr><td>DFS 三色标记</td><td>检测递归栈中节点</td><td>可找到环上节点</td></tr>
+</table>
+</div>
+<div>
+<h3>字典序最小拓扑序</h3>
+<div class="info-card">
+<p>将 Kahn 算法中的普通队列替换为<strong>小根堆</strong> <span class="highlight">priority_queue</span> 即可。</p>
+</div>
+<div class="code-block"><span class="com">// 关键代码</span>
 <span class="pp">priority_queue</span>&lt;<span class="kw">int</span>, <span class="tp">vector</span>&lt;<span class="kw">int</span>&gt;, <span class="fn">greater</span>&lt;<span class="kw">int</span>&gt;&gt; pq;
 <span class="kw">for</span> (<span class="kw">int</span> i=<span class="num">0</span>; i&lt;n; i++)
     <span class="kw">if</span> (indeg[i]==<span class="num">0</span>) pq.push(i);
@@ -280,20 +311,28 @@
     <span class="kw">int</span> u = pq.top(); pq.pop();
     <span class="com">// ... 处理邻接点</span>
 }</div>
-        <p style="margin-top:8px"><span class="highlight">时间复杂度：</span>O(V log V + E)</p>
-      </div>
-    </div>
-  </div>
+<p style="margin-top:8px"><span class="highlight">时间复杂度：</span>O(V log V + E)</p>
+</div>
+</div>
 
-  <!-- ==================== 幻灯片4：代码模板 ==================== -->
-  <div class="slide">
-    <h2><span class="icon">💻</span> 代码模板 — Kahn 算法（完整版）</h2>
-    <div class="code-block"><span class="com">/** Kahn 拓扑排序：返回拓扑序列，有环则返回空 vector */</span>
+<aside class="notes">【讲解】📙 判环方法对比 &amp; 字典序最小拓扑序
+结合讲义《四、字典序最小拓扑序》强调：
+· 在拓扑排序的基础上，如果需要输出字典序（编号顺序）最小的拓扑序列，只需将 Kahn 算法中的普通队列替换为**优先队列（小根堆）** 即可。
+· 优先队列始终弹出编号最小的入度为 0 的节点，从而保证字典序最小。
+幻灯片上可见要点：
+· 将 Kahn 算法中的普通队列替换为 小根堆 priority_queue 即可。
+· 时间复杂度： O(V log V + E)
+讲解时放慢关键术语；用 1 个生活类比 + 1 个反例加深印象。</aside>
+</div>
+<!-- ==================== 幻灯片4：代码模板 ==================== -->
+<div class="slide">
+<h2><span class="icon">💻</span> 代码模板 — Kahn 算法（完整版）</h2>
+<div class="code-block"><span class="com">/** Kahn 拓扑排序：返回拓扑序列，有环则返回空 vector */</span>
 <span class="tp">vector</span>&lt;<span class="kw">int</span>&gt; <span class="fn">topoSort</span>(<span class="kw">int</span> n, <span class="tp">vector</span>&lt;<span class="tp">vector</span>&lt;<span class="kw">int</span>&gt;&gt;&amp; edges) {
     <span class="tp">vector</span>&lt;<span class="tp">vector</span>&lt;<span class="kw">int</span>&gt;&gt; adj(n);
     <span class="tp">vector</span>&lt;<span class="kw">int</span>&gt; indeg(n, <span class="num">0</span>);
     <span class="kw">for</span> (<span class="kw">auto</span>&amp; e : edges) {       <span class="com">// 建图 + 统计入度</span>
-        <span class="kw">int</span> u = e[<span class="num">0</span>], v = e[<span class="num">1</span>];
+<span class="kw">int</span> u = e[<span class="num">0</span>], v = e[<span class="num">1</span>];
         adj[u].push_back(v); indeg[v]++;
     }
     <span class="tp">queue</span>&lt;<span class="kw">int</span>&gt; q;
@@ -308,87 +347,124 @@
             <span class="kw">if</span> (--indeg[v] == <span class="num">0</span>) q.push(v);
     }
     <span class="kw">if</span> ((<span class="kw">int</span>)res.size() &lt; n) <span class="kw">return</span> {}; <span class="com">// 有环</span>
-    <span class="kw">return</span> res;
+<span class="kw">return</span> res;
 }</div>
-    <h3>课程表问题（LeetCode 207 / 210）</h3>
-    <div class="info-card">
-      <p><strong>207 — 课程表 I：</strong>判断有向图是否为 DAG（判环）。</p>
-      <p><strong>210 — 课程表 II：</strong>返回任意一个拓扑序列（即合法的学习顺序）。</p>
-    </div>
-  </div>
-
-  <!-- ==================== 幻灯片5：真题精练 ==================== -->
-  <div class="slide">
-    <h2><span class="icon">📝</span> 真题精练</h2>
-    <h3>题目1：课程表 I（判环）</h3>
-    <div class="info-card">
-      <p>给定 n 门课程和先修关系 prerequisites[i] = [a,b]（学 a 前必须先学 b），判断能否完成所有课程。本质：<strong>判断有向图是否为 DAG</strong>。使用 Kahn 算法，比较拓扑序列长度与 n。</p>
-      <p><span class="highlight">复杂度：</span>O(V+E)</p>
-    </div>
-    <h3>题目2：课程表 II（输出拓扑序）</h3>
-    <div class="info-card">
-      <p>在题目1的基础上，返回一个可行的课程学习顺序。本质：<strong>求任意一个拓扑序列</strong>。直接使用 Kahn 算法，若序列长度 == n 则返回结果，否则返回空数组。</p>
-      <p>建图时注意边的方向：学完 b 才能学 a，即 <strong>b → a</strong>。</p>
-    </div>
-    <h3>易错提醒</h3>
-    <ul>
-      <li>📌 DFS 拓扑排序必须在<span class="warn">后序位置</span>将节点加入结果，而非前序。</li>
-      <li>📌 多源 BFS 初始化时，<span class="highlight">不要遗漏任何入度为 0 的节点</span>。</li>
-      <li>📌 字典序最小需使用 <span class="highlight">greater&lt;int&gt;</span>（小根堆）。</li>
-    </ul>
-  </div>
-
-  <!-- ==================== 幻灯片6：优化技巧 ==================== -->
-  <div class="slide">
-    <h2><span class="icon">⚡</span> 优化技巧与常见错误</h2>
-    <div class="two-col">
-      <div>
-        <h3>常见错误</h3>
-        <table class="compare-table">
-          <tr><th>错误</th><th>正确做法</th></tr>
-          <tr><td>DFS 前序加入节点</td><td>必须在后序位置加入</td></tr>
-          <tr><td>遗漏入度为0节点</td><td>遍历所有节点检查入度</td></tr>
-          <tr><td>重边导致入度多算</td><td>根据需要去重或特殊处理</td></tr>
-          <tr><td>大根堆求字典序最小</td><td>应使用 greater&lt;int&gt;</td></tr>
-        </table>
-      </div>
-      <div>
-        <h3>优化技巧</h3>
-        <ul>
-          <li><strong>邻接表优于邻接矩阵</strong>：稀疏图 O(V+E) vs O(V²)</li>
-          <li><strong>保存原始入度</strong>：多次拓扑排序时避免重建</li>
-          <li><strong>拓扑序唯一性判定</strong>：Kahn 算法中若队列始终只有 1 个元素，则序列唯一</li>
-          <li><strong>静态数组替代 vector</strong>：在极限性能要求下使用数组池</li>
-        </ul>
-      </div>
-    </div>
-  </div>
-
-  <!-- ==================== 幻灯片7：总结 ==================== -->
-  <div class="slide">
-    <h2><span class="icon">🎯</span> 本课小结</h2>
-    <table class="compare-table">
-      <tr><th>知识点</th><th>核心</th><th>复杂度</th></tr>
-      <tr><td>Kahn 算法</td><td>BFS + 入度表，入度为 0 即入队</td><td>O(V+E)</td></tr>
-      <tr><td>DFS 拓扑排序</td><td>后序遍历逆序 + 三色标记判环</td><td>O(V+E)</td></tr>
-      <tr><td>字典序最小</td><td>优先队列（小根堆）替代普通队列</td><td>O(V log V + E)</td></tr>
-      <tr><td>DAG 判环</td><td>比较序列长度 || 三色标记检测递归栈</td><td>O(V+E)</td></tr>
-      <tr><td>课程表问题</td><td>拓扑排序的直接应用（判环 + 输出序）</td><td>O(V+E)</td></tr>
-    </table>
-    <div class="info-card" style="margin-top:16px;">
-      <p><span class="highlight">一句话总结：</span>拓扑排序是对 DAG 的线性排序，Kahn BFS 算法是最实用的实现，优先队列可实现字典序最小，判环是核心考点。</p>
-    </div>
-  </div>
-
-</div><!-- /slides-container -->
-
-<!-- ===== 导航栏 ===== -->
-<div class="nav-bar">
-  <button class="nav-btn" id="prevBtn" onclick="navigate(-1)">← 上一页</button>
-  <span class="page-indicator" id="pageIndicator">1 / 8</span>
-  <button class="nav-btn" id="nextBtn" onclick="navigate(1)">下一页 →</button>
+<h3>课程表问题（LeetCode 207 / 210）</h3>
+<div class="info-card">
+<p><strong>207 — 课程表 I：</strong>判断有向图是否为 DAG（判环）。</p>
+<p><strong>210 — 课程表 II：</strong>返回任意一个拓扑序列（即合法的学习顺序）。</p>
 </div>
 
+<aside class="notes">【讲解】💻 代码模板 — Kahn 算法（完整版）
+本页要点（照着讲即可）：
+· 207 — 课程表 I： 判断有向图是否为 DAG（判环）。
+· 207 — 课程表 I：
+· 210 — 课程表 II： 返回任意一个拓扑序列（即合法的学习顺序）。
+· 210 — 课程表 II：
+代码页节奏：先读懂输入输出 → 再走主流程 → 最后点出易错点（边界/类型/下标）。
+可让学生预测下一行输出，再运行对照。</aside>
+</div>
+<!-- ==================== 幻灯片5：真题精练 ==================== -->
+<div class="slide">
+<h2><span class="icon">📝</span> 真题精练</h2>
+<h3>题目1：课程表 I（判环）</h3>
+<div class="info-card">
+<p>给定 n 门课程和先修关系 prerequisites[i] = [a,b]（学 a 前必须先学 b），判断能否完成所有课程。本质：<strong>判断有向图是否为 DAG</strong>。使用 Kahn 算法，比较拓扑序列长度与 n。</p>
+<p><span class="highlight">复杂度：</span>O(V+E)</p>
+</div>
+<h3>题目2：课程表 II（输出拓扑序）</h3>
+<div class="info-card">
+<p>在题目1的基础上，返回一个可行的课程学习顺序。本质：<strong>求任意一个拓扑序列</strong>。直接使用 Kahn 算法，若序列长度 == n 则返回结果，否则返回空数组。</p>
+<p>建图时注意边的方向：学完 b 才能学 a，即 <strong>b → a</strong>。</p>
+</div>
+<h3>易错提醒</h3>
+<ul>
+<li>📌 DFS 拓扑排序必须在<span class="warn">后序位置</span>将节点加入结果，而非前序。</li>
+<li>📌 多源 BFS 初始化时，<span class="highlight">不要遗漏任何入度为 0 的节点</span>。</li>
+<li>📌 字典序最小需使用 <span class="highlight">greater&lt;int&gt;</span>（小根堆）。</li>
+</ul>
+
+<aside class="notes">【讲解】📝 真题精练
+本页要点（照着讲即可）：
+· 给定 n 门课程和先修关系 prerequisites[i] = [a,b]（学 a 前必须先学 b），判断能否完成所有课程。本质： 判断有向图是否为 DAG 。使用 Kahn 算法，比较拓扑序列长度与 n。
+· 判断有向图是否为 DAG
+· 复杂度： O(V+E)
+· 在题目1的基础上，返回一个可行的课程学习顺序。本质： 求任意一个拓扑序列 。直接使用 Kahn 算法，若序列长度 == n 则返回结果，否则返回空数组。
+· 求任意一个拓扑序列
+· 建图时注意边的方向：学完 b 才能学 a，即 b → a 。
+练习页节奏：先独立想 1 分钟 → 再点拨思路 → 最后对答案讲为什么。
+可联系：课程表问题、工程依赖排序</aside>
+</div>
+<!-- ==================== 幻灯片6：优化技巧 ==================== -->
+<div class="slide">
+<h2><span class="icon">⚡</span> 优化技巧与常见错误</h2>
+<div class="two-col">
+<div>
+<h3>常见错误</h3>
+<table class="compare-table">
+<tr><th>错误</th><th>正确做法</th></tr>
+<tr><td>DFS 前序加入节点</td><td>必须在后序位置加入</td></tr>
+<tr><td>遗漏入度为0节点</td><td>遍历所有节点检查入度</td></tr>
+<tr><td>重边导致入度多算</td><td>根据需要去重或特殊处理</td></tr>
+<tr><td>大根堆求字典序最小</td><td>应使用 greater&lt;int&gt;</td></tr>
+</table>
+</div>
+<div>
+<h3>优化技巧</h3>
+<ul>
+<li><strong>邻接表优于邻接矩阵</strong>：稀疏图 O(V+E) vs O(V²)</li>
+<li><strong>保存原始入度</strong>：多次拓扑排序时避免重建</li>
+<li><strong>拓扑序唯一性判定</strong>：Kahn 算法中若队列始终只有 1 个元素，则序列唯一</li>
+<li><strong>静态数组替代 vector</strong>：在极限性能要求下使用数组池</li>
+</ul>
+</div>
+</div>
+
+<aside class="notes">【讲解】⚡ 优化技巧与常见错误
+讲义提要：| 错误类型 | 错误表现 | 正确做法 |
+|---------|---------|---------|
+| DFS后序理解错误 | 在前序位置将节点加入结果 | 必须在递归子节点**之后**加入 |
+| 入度为0节点遗漏 | 结果序列不完整 | 遍历所有节点，将所有deg=0入队 |
+| 忽略重边 | 入度被重复计算 | 如果题目有重边需特殊处理 |
+| pq类型错误 | 使用大根堆 | 字典序最小需使用greater\ |
+本页要点（照着讲即可）：
+· 邻接表优于邻接矩阵 ：稀疏图 O(V+E) vs O(V²)
+· 邻接表优于邻接矩阵
+· 保存原始入度 ：多次拓扑排序时避免重建
+· 保存原始入度
+· 拓扑序唯一性判定 ：Kahn 算法中若队列始终只有 1 个元素，则序列唯一
+· 拓扑序唯一性判定
+讲解时放慢关键术语；用 1 个生活类比 + 1 个反例加深印象。</aside>
+</div>
+<!-- ==================== 幻灯片7：总结 ==================== -->
+<div class="slide">
+<h2><span class="icon">🎯</span> 本课小结</h2>
+<table class="compare-table">
+<tr><th>知识点</th><th>核心</th><th>复杂度</th></tr>
+<tr><td>Kahn 算法</td><td>BFS + 入度表，入度为 0 即入队</td><td>O(V+E)</td></tr>
+<tr><td>DFS 拓扑排序</td><td>后序遍历逆序 + 三色标记判环</td><td>O(V+E)</td></tr>
+<tr><td>字典序最小</td><td>优先队列（小根堆）替代普通队列</td><td>O(V log V + E)</td></tr>
+<tr><td>DAG 判环</td><td>比较序列长度 || 三色标记检测递归栈</td><td>O(V+E)</td></tr>
+<tr><td>课程表问题</td><td>拓扑排序的直接应用（判环 + 输出序）</td><td>O(V+E)</td></tr>
+</table>
+<div class="info-card" style="margin-top:16px;">
+<p><span class="highlight">一句话总结：</span>拓扑排序是对 DAG 的线性排序，Kahn BFS 算法是最实用的实现，优先队列可实现字典序最小，判环是核心考点。</p>
+</div>
+
+<aside class="notes">【收尾】回顾本课主线：🎯 本课小结
+对照大纲再过一遍：Kahn算法、DFS拓扑排序、判环应用
+板书/口述要点：
+· 一句话总结： 拓扑排序是对 DAG 的线性排序，Kahn BFS 算法是最实用的实现，优先队列可实现字典序最小，判环是核心考点。
+课后任务：课程表问题、工程依赖排序
+结束前留 2 分钟答疑；布置 1 道小练习检验是否真正掌握。</aside>
+</div>
+</div><!-- /slides-container -->
+<!-- ===== 导航栏 ===== -->
+<div class="nav-bar">
+<button class="nav-btn" id="prevBtn" onclick="navigate(-1)">← 上一页</button>
+<span class="page-indicator" id="pageIndicator">1 / 8</span>
+<button class="nav-btn" id="nextBtn" onclick="navigate(1)">下一页 →</button>
+</div>
 <script>
   const slides = document.querySelectorAll('.slide');
   const totalSlides = slides.length;
@@ -417,7 +493,6 @@
   // 初始化
   showSlide(0);
 </script>
-
 <script src="courseware-ui.js"></script>
 <script src="presenter.js"></script>
 </body>

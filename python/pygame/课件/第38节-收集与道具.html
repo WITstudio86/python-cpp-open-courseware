@@ -1,8 +1,9 @@
 <!DOCTYPE html>
+
 <html lang="zh-CN">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
 <title>第38节 收集与道具 — Pygame 游戏开发</title>
 <style>
   *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
@@ -230,84 +231,125 @@
 </style>
 </head>
 <body>
-
 <div class="slideshow" id="slideshow">
+<!-- ==================== 第 1 页：标题页 ==================== -->
+<div class="slide active" data-index="0">
+<div style="text-align:center;">
+<div style="font-size:3vmin;color:var(--accent2);letter-spacing:0.15em;margin-bottom:1.5vh;">PYGAME 游戏开发 · 第 38 节</div>
+<h1 style="font-size:9vmin;">收集与道具</h1>
+<div class="subtitle" style="font-size:4vmin;">让游戏更有趣的道具系统</div>
+<div style="margin-top:4vh;display:flex;gap:3vmin;justify-content:center;flex-wrap:wrap;">
+<span class="badge" style="font-size:2.4vmin;padding:1vmin 2.2vmin;">磁铁效果</span>
+<span class="badge" style="font-size:2.4vmin;padding:1vmin 2.2vmin;background:var(--accent2);color:#fff;">护盾效果</span>
+<span class="badge" style="font-size:2.4vmin;padding:1vmin 2.2vmin;background:#42A5F5;color:#fff;">状态管理</span>
+<span class="badge" style="font-size:2.4vmin;padding:1vmin 2.2vmin;background:#AB47BC;color:#fff;">计时系统</span>
+</div>
+</div>
 
-  <!-- ==================== 第 1 页：标题页 ==================== -->
-  <div class="slide active" data-index="0">
-    <div style="text-align:center;">
-      <div style="font-size:3vmin;color:var(--accent2);letter-spacing:0.15em;margin-bottom:1.5vh;">PYGAME 游戏开发 · 第 38 节</div>
-      <h1 style="font-size:9vmin;">收集与道具</h1>
-      <div class="subtitle" style="font-size:4vmin;">让游戏更有趣的道具系统</div>
-      <div style="margin-top:4vh;display:flex;gap:3vmin;justify-content:center;flex-wrap:wrap;">
-        <span class="badge" style="font-size:2.4vmin;padding:1vmin 2.2vmin;">磁铁效果</span>
-        <span class="badge" style="font-size:2.4vmin;padding:1vmin 2.2vmin;background:var(--accent2);color:#fff;">护盾效果</span>
-        <span class="badge" style="font-size:2.4vmin;padding:1vmin 2.2vmin;background:#42A5F5;color:#fff;">状态管理</span>
-        <span class="badge" style="font-size:2.4vmin;padding:1vmin 2.2vmin;background:#AB47BC;color:#fff;">计时系统</span>
-      </div>
-    </div>
-  </div>
+<aside class="notes">【开场】第 1/12 页 · 收集与道具
+用 30 秒说明本课目标与学完能做什么，再进入正题。
+大纲考点：**内容**：金币收集、磁铁道具、护盾道具
 
-  <!-- ==================== 第 2 页：学习目标 ==================== -->
-  <div class="slide" data-index="1">
-    <h2>本节学习目标</h2>
-    <div class="content">
-      <div class="grid-2">
-        <div class="card">
-          <h3><span class="step">1</span>道具计时机制</h3>
-          <p>理解 <span class="hl">pygame.time.get_ticks()</span> 的用法，学会计算道具的生效时间与到期判断。</p>
-        </div>
-        <div class="card">
-          <h3><span class="step">2</span>磁铁效果</h3>
-          <p>掌握方向向量计算，实现金币自动吸附移动——玩家靠近时自动飞向玩家。</p>
-        </div>
-        <div class="card">
-          <h3><span class="step">3</span>护盾效果</h3>
-          <p>学习碰撞检测的跳过逻辑，绘制护盾光圈，让玩家短暂无敌。</p>
-        </div>
-        <div class="card">
-          <h3><span class="step">4</span>状态标记管理</h3>
-          <p>使用布尔变量控制多个道具的开关状态，处理互斥与叠加逻辑。</p>
-        </div>
-      </div>
-      <div class="grid-2">
-        <div class="card">
-          <h3><span class="step">5</span>道具掉落机制</h3>
-          <p>概率掉落、类型随机——让道具系统充满惊喜和策略性。</p>
-        </div>
-        <div class="card">
-          <h3><span class="step">6</span>金币收集系统</h3>
-          <p>随机生成金币位置，碰撞收集判定，分数累加与显示。</p>
-        </div>
-      </div>
-    </div>
-  </div>
+**知识点**：
+- 道具效果计时（`start_time = pygame.time.get_ticks()`，检查是否超过持续时间）
+- 状态标记管理（`magnet_active`, `shield_active`）
+- 磁铁效果（金币自动吸向玩家）
+- 护盾效果（碰撞不死亡、护盾消失动画）
 
-  <!-- ==================== 第 3 页：道具计时机制（上） ==================== -->
-  <div class="slide" data-index="2">
-    <h2>道具计时机制</h2>
-    <div class="content">
-      <div class="two-col" style="align-items:stretch;">
-        <div style="display:flex;flex-direction:column;justify-content:center;">
-          <div class="card">
-            <h3>核心函数：pygame.time.get_ticks()</h3>
-            <p>返回 Pygame <span class="hl">初始化以来经过的毫秒数</span>（整数）。</p>
-            <p>这不是系统时间，而是游戏内部计时器，精度足够用于道具计时。</p>
+**课堂练习**：带道具系统的完整跑酷
+
+---
+
+## 📦 项目 18：俄罗斯方块（第 39-40 节）
+封面关键词：
+· PYGAME 游戏开发 · 第 38 节
+· 收集与道具
+· 让游戏更有趣的道具系统
+· 磁铁效果
+互动：问学生「今天最想搞清楚什么？」，收 1–2 个期待。</aside>
+</div>
+<!-- ==================== 第 2 页：学习目标 ==================== -->
+<div class="slide" data-index="1">
+<h2>本节学习目标</h2>
+<div class="content">
+<div class="grid-2">
+<div class="card">
+<h3><span class="step">1</span>道具计时机制</h3>
+<p>理解 <span class="hl">pygame.time.get_ticks()</span> 的用法，学会计算道具的生效时间与到期判断。</p>
+</div>
+<div class="card">
+<h3><span class="step">2</span>磁铁效果</h3>
+<p>掌握方向向量计算，实现金币自动吸附移动——玩家靠近时自动飞向玩家。</p>
+</div>
+<div class="card">
+<h3><span class="step">3</span>护盾效果</h3>
+<p>学习碰撞检测的跳过逻辑，绘制护盾光圈，让玩家短暂无敌。</p>
+</div>
+<div class="card">
+<h3><span class="step">4</span>状态标记管理</h3>
+<p>使用布尔变量控制多个道具的开关状态，处理互斥与叠加逻辑。</p>
+</div>
+</div>
+<div class="grid-2">
+<div class="card">
+<h3><span class="step">5</span>道具掉落机制</h3>
+<p>概率掉落、类型随机——让道具系统充满惊喜和策略性。</p>
+</div>
+<div class="card">
+<h3><span class="step">6</span>金币收集系统</h3>
+<p>随机生成金币位置，碰撞收集判定，分数累加与显示。</p>
+</div>
+</div>
+</div>
+
+<aside class="notes">【讲解】本节学习目标
+本页要点（照着讲即可）：
+· 理解 pygame.time.get_ticks() 的用法，学会计算道具的生效时间与到期判断。
+· 掌握方向向量计算，实现金币自动吸附移动——玩家靠近时自动飞向玩家。
+· 学习碰撞检测的跳过逻辑，绘制护盾光圈，让玩家短暂无敌。
+· 使用布尔变量控制多个道具的开关状态，处理互斥与叠加逻辑。
+· 概率掉落、类型随机——让道具系统充满惊喜和策略性。
+· 随机生成金币位置，碰撞收集判定，分数累加与显示。
+讲解时放慢关键术语；用 1 个生活类比 + 1 个反例加深印象。
+本课大纲考点（可适时点题）：**内容**：金币收集、磁铁道具、护盾道具
+
+**知识点**：
+- 道具效果计时（`start_time = pygame.time.get_ticks()`，检查是否超过持续时间）
+- 状态标记管理（`magnet_active`, `shield_active`）
+- 磁铁效果（金币自动吸向玩家）
+- 护盾效果（碰撞不死亡、护盾消失动画）
+
+**课堂练习**：带道具系统的完整跑酷
+
+---
+
+## 📦 项目 18：俄罗斯方块（第 39-40 节）</aside>
+</div>
+<!-- ==================== 第 3 页：道具计时机制（上） ==================== -->
+<div class="slide" data-index="2">
+<h2>道具计时机制</h2>
+<div class="content">
+<div class="two-col" style="align-items:stretch;">
+<div style="display:flex;flex-direction:column;justify-content:center;">
+<div class="card">
+<h3>核心函数：pygame.time.get_ticks()</h3>
+<p>返回 Pygame <span class="hl">初始化以来经过的毫秒数</span>（整数）。</p>
+<p>这不是系统时间，而是游戏内部计时器，精度足够用于道具计时。</p>
+</div>
+<div class="card">
+<h3>计时原理</h3>
+<ul>
+<li>拾取道具时，记录当前时刻：<span class="hl">pickup_time = pygame.time.get_ticks()</span></li>
+<li>每帧检查：<span class="hl">elapsed = now - pickup_time</span></li>
+<li>若 <span class="hl">elapsed &gt;= duration</span>（如5000ms），道具到期</li>
+</ul>
+</div>
+<div class="info-box">
+<strong>关键点：</strong>道具持续时间通常设为 <span class="hl">5000~10000 毫秒</span>（5~10秒），太短没感觉，太长破坏平衡。
           </div>
-          <div class="card">
-            <h3>计时原理</h3>
-            <ul>
-              <li>拾取道具时，记录当前时刻：<span class="hl">pickup_time = pygame.time.get_ticks()</span></li>
-              <li>每帧检查：<span class="hl">elapsed = now - pickup_time</span></li>
-              <li>若 <span class="hl">elapsed >= duration</span>（如5000ms），道具到期</li>
-            </ul>
-          </div>
-          <div class="info-box">
-            <strong>关键点：</strong>道具持续时间通常设为 <span class="hl">5000~10000 毫秒</span>（5~10秒），太短没感觉，太长破坏平衡。
-          </div>
-        </div>
-        <div>
-          <div class="code-block"><span class="cm"># 道具计时示意</span>
+</div>
+<div>
+<div class="code-block"><span class="cm"># 道具计时示意</span>
 <span class="kw">import</span> pygame
 pygame.init()
 
@@ -318,149 +360,172 @@ pygame.init()
 <span class="cm"># 道具持续时间（毫秒）</span>
 <span class="vr">MAGNET_DURATION</span> = <span class="nu">6000</span>
 <span class="vr">SHIELD_DURATION</span> = <span class="nu">5000</span>
-
 <span class="cm"># 每帧判断是否到期</span>
 <span class="vr">now</span> = pygame.time.get_ticks()
-<span class="kw">if</span> <span class="vr">now</span> - <span class="vr">magnet_start</span> > <span class="vr">MAGNET_DURATION</span>:
+<span class="kw">if</span> <span class="vr">now</span> - <span class="vr">magnet_start</span> &gt; <span class="vr">MAGNET_DURATION</span>:
     <span class="vr">has_magnet</span> = <span class="kw">False</span>
-<span class="kw">if</span> <span class="vr">now</span> - <span class="vr">shield_start</span> > <span class="vr">SHIELD_DURATION</span>:
+<span class="kw">if</span> <span class="vr">now</span> - <span class="vr">shield_start</span> &gt; <span class="vr">SHIELD_DURATION</span>:
     <span class="vr">has_shield</span> = <span class="kw">False</span></div>
-        </div>
-      </div>
-    </div>
-  </div>
+</div>
+</div>
+</div>
 
-  <!-- ==================== 第 4 页：道具计时机制（下） ==================== -->
-  <div class="slide" data-index="3">
-    <h2>计时进阶：倒计时显示 &amp; 冷却</h2>
-    <div class="content">
-      <div class="two-col">
-        <div>
-          <div class="card">
-            <h3>剩余时间计算</h3>
-            <p>让玩家直观看到道具还剩多久：</p>
-            <div class="code-block"><span class="cm"># 剩余时间（秒），保留 1 位小数</span>
+<aside class="notes">【讲解】道具计时机制
+结合讲义《3.2 讲解（一）：道具计时机制（10分钟）》强调：
+· 游戏需要一个精确的计时器来记录"道具还剩多久"。Pygame提供了一个非常方便的函数：pygame.time.get_ticks()。
+· 它是什么？
+· pygame.time.get_ticks() 返回从游戏开始到现在经过的**毫秒数**（1秒 = 1000毫秒）。
+· import pygame
+· pygame.init()
+幻灯片上可见要点：
+· 返回 Pygame 初始化以来经过的毫秒数 （整数）。
+· 这不是系统时间，而是游戏内部计时器，精度足够用于道具计时。
+· 拾取道具时，记录当前时刻： pickup_time = pygame.time.get_ticks()
+· 每帧检查： elapsed = now - pickup_time
+讲解时放慢关键术语；用 1 个生活类比 + 1 个反例加深印象。</aside>
+</div>
+<!-- ==================== 第 4 页：道具计时机制（下） ==================== -->
+<div class="slide" data-index="3">
+<h2>计时进阶：倒计时显示 &amp; 冷却</h2>
+<div class="content">
+<div class="two-col">
+<div>
+<div class="card">
+<h3>剩余时间计算</h3>
+<p>让玩家直观看到道具还剩多久：</p>
+<div class="code-block"><span class="cm"># 剩余时间（秒），保留 1 位小数</span>
 <span class="vr">remaining</span> = (<span class="vr">duration</span> - (<span class="vr">now</span> - <span class="vr">start</span>)) / <span class="nu">1000</span>
-<span class="kw">if</span> <span class="vr">remaining</span> > <span class="nu">0</span>:
+<span class="kw">if</span> <span class="vr">remaining</span> &gt; <span class="nu">0</span>:
     <span class="vr">text</span> = <span class="fn">f</span><span class="st">"磁铁：</span><span class="op">{</span><span class="vr">remaining</span><span class="op">:.1f}</span><span class="st">秒"</span>
-    <span class="vr">screen</span>.<span class="fn">blit</span>(<span class="vr">font</span>.<span class="fn">render</span>(<span class="vr">text</span>, ...), (<span class="nu">10</span>, <span class="nu">50</span>))</div>
-          </div>
-          <div class="card">
-            <h3>冷却机制（CD）</h3>
-            <p>防止玩家连续刷道具，引入冷却时间：</p>
-            <div class="code-block"><span class="cm"># 拾取后进入冷却，期间无法再捡</span>
-<span class="kw">if</span> <span class="vr">now</span> - <span class="vr">last_pickup_time</span> > <span class="vr">PICKUP_CD</span>:
+<span class="vr">screen</span>.<span class="fn">blit</span>(<span class="vr">font</span>.<span class="fn">render</span>(<span class="vr">text</span>, ...), (<span class="nu">10</span>, <span class="nu">50</span>))</div>
+</div>
+<div class="card">
+<h3>冷却机制（CD）</h3>
+<p>防止玩家连续刷道具，引入冷却时间：</p>
+<div class="code-block"><span class="cm"># 拾取后进入冷却，期间无法再捡</span>
+<span class="kw">if</span> <span class="vr">now</span> - <span class="vr">last_pickup_time</span> &gt; <span class="vr">PICKUP_CD</span>:
     <span class="vr">can_pickup</span> = <span class="kw">True</span></div>
-          </div>
-        </div>
-        <div>
-          <div class="card">
-            <h3>计时器封装为类</h3>
-            <div class="code-block"><span class="kw">class</span> <span class="cl">Timer</span>:
+</div>
+</div>
+<div>
+<div class="card">
+<h3>计时器封装为类</h3>
+<div class="code-block"><span class="kw">class</span> <span class="cl">Timer</span>:
     <span class="kw">def</span> <span class="fn">__init__</span>(<span class="kw">self</span>, <span class="vr">duration</span>):
         <span class="kw">self</span>.<span class="vr">duration</span> = <span class="vr">duration</span>
-        <span class="kw">self</span>.<span class="vr">start_time</span> = <span class="nu">0</span>
-        <span class="kw">self</span>.<span class="vr">active</span> = <span class="kw">False</span>
-
-    <span class="kw">def</span> <span class="fn">start</span>(<span class="kw">self</span>):
+<span class="kw">self</span>.<span class="vr">start_time</span> = <span class="nu">0</span>
+<span class="kw">self</span>.<span class="vr">active</span> = <span class="kw">False</span>
+<span class="kw">def</span> <span class="fn">start</span>(<span class="kw">self</span>):
         <span class="kw">self</span>.<span class="vr">start_time</span> = pygame.time.get_ticks()
         <span class="kw">self</span>.<span class="vr">active</span> = <span class="kw">True</span>
-
-    <span class="kw">def</span> <span class="fn">is_done</span>(<span class="kw">self</span>):
+<span class="kw">def</span> <span class="fn">is_done</span>(<span class="kw">self</span>):
         <span class="kw">if</span> <span class="kw">not</span> <span class="kw">self</span>.<span class="vr">active</span>: <span class="kw">return</span> <span class="kw">True</span>
-        <span class="kw">if</span> pygame.time.get_ticks() - \
-           <span class="kw">self</span>.<span class="vr">start_time</span> > <span class="kw">self</span>.<span class="vr">duration</span>:
+<span class="kw">if</span> pygame.time.get_ticks() - \
+           <span class="kw">self</span>.<span class="vr">start_time</span> &gt; <span class="kw">self</span>.<span class="vr">duration</span>:
             <span class="kw">self</span>.<span class="vr">active</span> = <span class="kw">False</span>
-            <span class="kw">return</span> <span class="kw">True</span>
-        <span class="kw">return</span> <span class="kw">False</span></div>
-          </div>
-          <div class="info-box">封装成 <span class="hl">Timer 类</span> 后，管理多个道具计时变得非常简洁，每个道具只需一个 Timer 实例。</div>
-        </div>
-      </div>
-    </div>
-  </div>
+<span class="kw">return</span> <span class="kw">True</span>
+<span class="kw">return</span> <span class="kw">False</span></div>
+</div>
+<div class="info-box">封装成 <span class="hl">Timer 类</span> 后，管理多个道具计时变得非常简洁，每个道具只需一个 Timer 实例。</div>
+</div>
+</div>
+</div>
 
-  <!-- ==================== 第 5 页：磁铁效果原理 ==================== -->
-  <div class="slide" data-index="4">
-    <h2>磁铁效果原理</h2>
-    <div class="content">
-      <div class="two-col">
-        <div>
-          <div class="card">
-            <h3>核心思路</h3>
-            <p>磁铁激活后，金币不再静止，而是<span class="hl">每帧向玩家位置移动</span>。</p>
-            <p>关键：计算 <span class="hl2">方向向量</span>，让金币沿正确方向飞行。</p>
+<aside class="notes">【讲解】计时进阶：倒计时显示 &amp; 冷却
+本页要点（照着讲即可）：
+· 让玩家直观看到道具还剩多久：
+· 防止玩家连续刷道具，引入冷却时间：
+讲解时放慢关键术语；用 1 个生活类比 + 1 个反例加深印象。</aside>
+</div>
+<!-- ==================== 第 5 页：磁铁效果原理 ==================== -->
+<div class="slide" data-index="4">
+<h2>磁铁效果原理</h2>
+<div class="content">
+<div class="two-col">
+<div>
+<div class="card">
+<h3>核心思路</h3>
+<p>磁铁激活后，金币不再静止，而是<span class="hl">每帧向玩家位置移动</span>。</p>
+<p>关键：计算 <span class="hl2">方向向量</span>，让金币沿正确方向飞行。</p>
+</div>
+<div class="card">
+<h3>方向向量计算步骤</h3>
+<ol>
+<li><span class="hl">dx = player.x - coin.x</span>（水平差）</li>
+<li><span class="hl">dy = player.y - coin.y</span>（垂直差）</li>
+<li><span class="hl">dist = sqrt(dx*dx + dy*dy)</span>（距离）</li>
+<li>归一化：<span class="hl">dx /= dist; dy /= dist</span></li>
+<li>移动：<span class="hl">coin.x += dx * speed</span></li>
+</ol>
+</div>
+<div class="warn-box">
+<strong>注意：</strong>需要判断距离——如果金币已经到达玩家位置附近（dist &lt; 阈值），就直接收集，避免除零错误。
           </div>
-          <div class="card">
-            <h3>方向向量计算步骤</h3>
-            <ol>
-              <li><span class="hl">dx = player.x - coin.x</span>（水平差）</li>
-              <li><span class="hl">dy = player.y - coin.y</span>（垂直差）</li>
-              <li><span class="hl">dist = sqrt(dx*dx + dy*dy)</span>（距离）</li>
-              <li>归一化：<span class="hl">dx /= dist; dy /= dist</span></li>
-              <li>移动：<span class="hl">coin.x += dx * speed</span></li>
-            </ol>
-          </div>
-          <div class="warn-box">
-            <strong>注意：</strong>需要判断距离——如果金币已经到达玩家位置附近（dist &lt; 阈值），就直接收集，避免除零错误。
-          </div>
-        </div>
-        <div>
-          <div class="code-block"><span class="kw">import</span> math
+</div>
+<div>
+<div class="code-block"><span class="kw">import</span> math
 
 <span class="kw">def</span> <span class="fn">magnet_update</span>(<span class="vr">coins</span>, <span class="vr">player</span>, <span class="vr">speed</span>=<span class="nu">5</span>):
     <span class="st">"""磁铁效果：让所有金币向玩家移动"""</span>
-    <span class="kw">for</span> <span class="vr">coin</span> <span class="kw">in</span> <span class="vr">coins</span>:
+<span class="kw">for</span> <span class="vr">coin</span> <span class="kw">in</span> <span class="vr">coins</span>:
         <span class="vr">dx</span> = <span class="vr">player</span>.<span class="vr">x</span> - <span class="vr">coin</span>.<span class="vr">x</span>
-        <span class="vr">dy</span> = <span class="vr">player</span>.<span class="vr">y</span> - <span class="vr">coin</span>.<span class="vr">y</span>
-        <span class="vr">dist</span> = math.<span class="fn">hypot</span>(<span class="vr">dx</span>, <span class="vr">dy</span>)
-        <span class="kw">if</span> <span class="vr">dist</span> < <span class="nu">10</span>:  <span class="cm"># 到了，直接收集</span>
-            <span class="vr">coins</span>.<span class="fn">remove</span>(<span class="vr">coin</span>)
+<span class="vr">dy</span> = <span class="vr">player</span>.<span class="vr">y</span> - <span class="vr">coin</span>.<span class="vr">y</span>
+<span class="vr">dist</span> = math.<span class="fn">hypot</span>(<span class="vr">dx</span>, <span class="vr">dy</span>)
+        <span class="kw">if</span> <span class="vr">dist</span> &lt; <span class="nu">10</span>:  <span class="cm"># 到了，直接收集</span>
+<span class="vr">coins</span>.<span class="fn">remove</span>(<span class="vr">coin</span>)
             <span class="kw">return</span> <span class="nu">1</span>
-        <span class="cm"># 归一化方向向量</span>
-        <span class="vr">dx</span> /= <span class="vr">dist</span>
-        <span class="vr">dy</span> /= <span class="vr">dist</span>
-        <span class="cm"># 按速度移动</span>
-        <span class="vr">coin</span>.<span class="vr">x</span> += <span class="vr">dx</span> * <span class="vr">speed</span>
-        <span class="vr">coin</span>.<span class="vr">y</span> += <span class="vr">dy</span> * <span class="vr">speed</span>
-    <span class="kw">return</span> <span class="nu">0</span></div>
-          <div class="info-box">
-            <span class="hl">math.hypot(dx, dy)</span> 等价于 <span class="hl">(dx*dx + dy*dy) ** 0.5</span>，但更精确且高效。
+<span class="cm"># 归一化方向向量</span>
+<span class="vr">dx</span> /= <span class="vr">dist</span>
+<span class="vr">dy</span> /= <span class="vr">dist</span>
+<span class="cm"># 按速度移动</span>
+<span class="vr">coin</span>.<span class="vr">x</span> += <span class="vr">dx</span> * <span class="vr">speed</span>
+<span class="vr">coin</span>.<span class="vr">y</span> += <span class="vr">dy</span> * <span class="vr">speed</span>
+<span class="kw">return</span> <span class="nu">0</span></div>
+<div class="info-box">
+<span class="hl">math.hypot(dx, dy)</span> 等价于 <span class="hl">(dx*dx + dy*dy) ** 0.5</span>，但更精确且高效。
           </div>
-        </div>
-      </div>
-    </div>
-  </div>
+</div>
+</div>
+</div>
 
-  <!-- ==================== 第 6 页：护盾效果原理 ==================== -->
-  <div class="slide" data-index="5">
-    <h2>护盾效果原理</h2>
-    <div class="content">
-      <div class="two-col">
-        <div>
-          <div class="card">
-            <h3>实现思路</h3>
-            <p>护盾激活时，<span class="hl">跳过敌人碰撞检测</span>，玩家暂时无敌。</p>
-            <p>视觉效果：在玩家周围画一个 <span class="hl2">半透明光圈</span>。</p>
-          </div>
-          <div class="card">
-            <h3>关键代码逻辑</h3>
-            <ul>
-              <li>碰撞检测前先检查 <span class="hl">has_shield</span></li>
-              <li>若有护盾，直接 <span class="hl">continue</span> 跳过伤害判定</li>
-              <li>每帧绘制护盾光环——跟随玩家移动</li>
-            </ul>
-          </div>
-        </div>
-        <div>
-          <div class="code-block"><span class="cm"># 碰撞检测中跳过护盾保护</span>
+<aside class="notes">【讲解】磁铁效果原理
+本页要点（照着讲即可）：
+· 磁铁激活后，金币不再静止，而是 每帧向玩家位置移动 。
+· 关键：计算 方向向量 ，让金币沿正确方向飞行。
+· dx = player.x - coin.x （水平差）
+· dy = player.y - coin.y （垂直差）
+· dist = sqrt(dx*dx + dy*dy) （距离）
+· 归一化： dx /= dist; dy /= dist
+讲解时放慢关键术语；用 1 个生活类比 + 1 个反例加深印象。</aside>
+</div>
+<!-- ==================== 第 6 页：护盾效果原理 ==================== -->
+<div class="slide" data-index="5">
+<h2>护盾效果原理</h2>
+<div class="content">
+<div class="two-col">
+<div>
+<div class="card">
+<h3>实现思路</h3>
+<p>护盾激活时，<span class="hl">跳过敌人碰撞检测</span>，玩家暂时无敌。</p>
+<p>视觉效果：在玩家周围画一个 <span class="hl2">半透明光圈</span>。</p>
+</div>
+<div class="card">
+<h3>关键代码逻辑</h3>
+<ul>
+<li>碰撞检测前先检查 <span class="hl">has_shield</span></li>
+<li>若有护盾，直接 <span class="hl">continue</span> 跳过伤害判定</li>
+<li>每帧绘制护盾光环——跟随玩家移动</li>
+</ul>
+</div>
+</div>
+<div>
+<div class="code-block"><span class="cm"># 碰撞检测中跳过护盾保护</span>
 <span class="kw">for</span> <span class="vr">enemy</span> <span class="kw">in</span> <span class="vr">enemies</span>:
     <span class="kw">if</span> <span class="vr">player</span>.<span class="fn">colliderect</span>(<span class="vr">enemy</span>):
         <span class="kw">if</span> <span class="vr">has_shield</span>:
-            <span class="kw">continue</span>  <span class="cm"># 护盾：不受伤害！</span>
-        <span class="cm"># 否则正常扣血</span>
-        <span class="vr">player_hp</span> -= <span class="nu">1</span>
-
+            <span class="kw">continue</span> <span class="cm"># 护盾：不受伤害！</span>
+<span class="cm"># 否则正常扣血</span>
+<span class="vr">player_hp</span> -= <span class="nu">1</span>
 <span class="cm"># 绘制护盾光圈</span>
 <span class="kw">if</span> <span class="vr">has_shield</span>:
     <span class="vr">shield_surf</span> = pygame.<span class="fn">Surface</span>((
@@ -470,83 +535,92 @@ pygame.init()
         (<span class="vr">radius</span>, <span class="vr">radius</span>), <span class="vr">radius</span>, <span class="nu">4</span>)
     <span class="vr">screen</span>.<span class="fn">blit</span>(<span class="vr">shield_surf</span>,
         (<span class="vr">player</span>.<span class="vr">x</span>-<span class="vr">radius</span>, <span class="vr">player</span>.<span class="vr">y</span>-<span class="vr">radius</span>))</div>
-        </div>
-      </div>
-    </div>
-  </div>
+</div>
+</div>
+</div>
 
-  <!-- ==================== 第 7 页：状态标记管理 ==================== -->
-  <div class="slide" data-index="6">
-    <h2>状态标记管理</h2>
-    <div class="content">
-      <div class="grid-3">
-        <div class="card" style="text-align:center;">
-          <div style="font-size:5vmin;margin-bottom:1vh;">🔵</div>
-          <h3>磁铁状态</h3>
-          <div class="code-block"><span class="vr">has_magnet</span> = <span class="kw">False</span>
+<aside class="notes">【讲解】护盾效果原理
+本页要点（照着讲即可）：
+· 护盾激活时， 跳过敌人碰撞检测 ，玩家暂时无敌。
+· 视觉效果：在玩家周围画一个 半透明光圈 。
+· 碰撞检测前先检查 has_shield
+· 若有护盾，直接 continue 跳过伤害判定
+· 每帧绘制护盾光环——跟随玩家移动
+讲解时放慢关键术语；用 1 个生活类比 + 1 个反例加深印象。</aside>
+</div>
+<!-- ==================== 第 7 页：状态标记管理 ==================== -->
+<div class="slide" data-index="6">
+<h2>状态标记管理</h2>
+<div class="content">
+<div class="grid-3">
+<div class="card" style="text-align:center;">
+<div style="font-size:5vmin;margin-bottom:1vh;">🔵</div>
+<h3>磁铁状态</h3>
+<div class="code-block"><span class="vr">has_magnet</span> = <span class="kw">False</span>
 <span class="vr">magnet_timer</span> = <span class="fn">Timer</span>(<span class="nu">6000</span>)
 
 <span class="kw">def</span> <span class="fn">activate_magnet</span>():
     <span class="kw">global</span> <span class="vr">has_magnet</span>
-    <span class="vr">has_magnet</span> = <span class="kw">True</span>
-    <span class="vr">magnet_timer</span>.<span class="fn">start</span>()</div>
-        </div>
-        <div class="card" style="text-align:center;">
-          <div style="font-size:5vmin;margin-bottom:1vh;">🛡️</div>
-          <h3>护盾状态</h3>
-          <div class="code-block"><span class="vr">has_shield</span> = <span class="kw">False</span>
+<span class="vr">has_magnet</span> = <span class="kw">True</span>
+<span class="vr">magnet_timer</span>.<span class="fn">start</span>()</div>
+</div>
+<div class="card" style="text-align:center;">
+<div style="font-size:5vmin;margin-bottom:1vh;">🛡️</div>
+<h3>护盾状态</h3>
+<div class="code-block"><span class="vr">has_shield</span> = <span class="kw">False</span>
 <span class="vr">shield_timer</span> = <span class="fn">Timer</span>(<span class="nu">5000</span>)
 
 <span class="kw">def</span> <span class="fn">activate_shield</span>():
     <span class="kw">global</span> <span class="vr">has_shield</span>
-    <span class="vr">has_shield</span> = <span class="kw">True</span>
-    <span class="vr">shield_timer</span>.<span class="fn">start</span>()</div>
-        </div>
-        <div class="card" style="text-align:center;">
-          <div style="font-size:5vmin;margin-bottom:1vh;">⚡</div>
-          <h3>速度提升状态</h3>
-          <div class="code-block"><span class="vr">has_speed_boost</span> = <span class="kw">False</span>
+<span class="vr">has_shield</span> = <span class="kw">True</span>
+<span class="vr">shield_timer</span>.<span class="fn">start</span>()</div>
+</div>
+<div class="card" style="text-align:center;">
+<div style="font-size:5vmin;margin-bottom:1vh;">⚡</div>
+<h3>速度提升状态</h3>
+<div class="code-block"><span class="vr">has_speed_boost</span> = <span class="kw">False</span>
 <span class="vr">speed_timer</span> = <span class="fn">Timer</span>(<span class="nu">4000</span>)
 
 <span class="kw">def</span> <span class="fn">activate_speed</span>():
     <span class="kw">global</span> <span class="vr">has_speed_boost</span>
-    <span class="vr">has_speed_boost</span> = <span class="kw">True</span>
-    <span class="vr">speed_timer</span>.<span class="fn">start</span>()</div>
-        </div>
-      </div>
-
-      <div class="card" style="margin-top:2vh;">
-        <h3>主循环中的状态检查</h3>
-        <div class="code-block"><span class="cm"># 每帧更新所有道具状态</span>
+<span class="vr">has_speed_boost</span> = <span class="kw">True</span>
+<span class="vr">speed_timer</span>.<span class="fn">start</span>()</div>
+</div>
+</div>
+<div class="card" style="margin-top:2vh;">
+<h3>主循环中的状态检查</h3>
+<div class="code-block"><span class="cm"># 每帧更新所有道具状态</span>
 <span class="kw">def</span> <span class="fn">update_powerups</span>():
     <span class="kw">global</span> <span class="vr">has_magnet</span>, <span class="vr">has_shield</span>, <span class="vr">has_speed_boost</span>
-
-    <span class="kw">if</span> <span class="vr">has_magnet</span> <span class="kw">and</span> <span class="vr">magnet_timer</span>.<span class="fn">is_done</span>():
+<span class="kw">if</span> <span class="vr">has_magnet</span> <span class="kw">and</span> <span class="vr">magnet_timer</span>.<span class="fn">is_done</span>():
         <span class="vr">has_magnet</span> = <span class="kw">False</span>
-    <span class="kw">if</span> <span class="vr">has_shield</span> <span class="kw">and</span> <span class="vr">shield_timer</span>.<span class="fn">is_done</span>():
+<span class="kw">if</span> <span class="vr">has_shield</span> <span class="kw">and</span> <span class="vr">shield_timer</span>.<span class="fn">is_done</span>():
         <span class="vr">has_shield</span> = <span class="kw">False</span>
-    <span class="kw">if</span> <span class="vr">has_speed_boost</span> <span class="kw">and</span> <span class="vr">speed_timer</span>.<span class="fn">is_done</span>():
+<span class="kw">if</span> <span class="vr">has_speed_boost</span> <span class="kw">and</span> <span class="vr">speed_timer</span>.<span class="fn">is_done</span>():
         <span class="vr">has_speed_boost</span> = <span class="kw">False</span></div>
+</div>
+<div class="warn-box" style="margin-top:1vh;">
+<strong>互斥处理：</strong>某些道具可能需要互斥——比如拾取新护盾时，旧护盾的计时器应该重置。可以在 <span class="hl">activate_xxx()</span> 中先检查其他状态。
       </div>
+</div>
 
-      <div class="warn-box" style="margin-top:1vh;">
-        <strong>互斥处理：</strong>某些道具可能需要互斥——比如拾取新护盾时，旧护盾的计时器应该重置。可以在 <span class="hl">activate_xxx()</span> 中先检查其他状态。
-      </div>
-    </div>
-  </div>
-
-  <!-- ==================== 第 8 页：核心代码展示 ==================== -->
-  <div class="slide" data-index="7">
-    <h2>道具系统核心代码</h2>
-    <div class="content">
-      <div class="card" style="padding:1.5vmin 2.5vmin;">
-        <div class="code-block" style="font-size:2.0vmin;line-height:1.55;"><span class="cm"># ===== 道具类定义 =====</span>
+<aside class="notes">【讲解】状态标记管理
+本页要点（照着讲即可）：
+· 互斥处理：
+讲解时放慢关键术语；用 1 个生活类比 + 1 个反例加深印象。</aside>
+</div>
+<!-- ==================== 第 8 页：核心代码展示 ==================== -->
+<div class="slide" data-index="7">
+<h2>道具系统核心代码</h2>
+<div class="content">
+<div class="card" style="padding:1.5vmin 2.5vmin;">
+<div class="code-block" style="font-size:2.0vmin;line-height:1.55;"><span class="cm"># ===== 道具类定义 =====</span>
 <span class="kw">class</span> <span class="cl">PowerUp</span>:
     <span class="st">"""通用道具类：类型 + 位置 + 碰撞检测"""</span>
-    <span class="kw">def</span> <span class="fn">__init__</span>(<span class="kw">self</span>, <span class="vr">x</span>, <span class="vr">y</span>, <span class="vr">power_type</span>):
+<span class="kw">def</span> <span class="fn">__init__</span>(<span class="kw">self</span>, <span class="vr">x</span>, <span class="vr">y</span>, <span class="vr">power_type</span>):
         <span class="kw">self</span>.<span class="vr">rect</span> = pygame.<span class="fn">Rect</span>(<span class="vr">x</span>, <span class="vr">y</span>, <span class="nu">30</span>, <span class="nu">30</span>)
-        <span class="kw">self</span>.<span class="vr">type</span> = <span class="vr">power_type</span>  <span class="cm"># "magnet" / "shield" / "speed"</span>
-        <span class="kw">self</span>.<span class="vr">colors</span> = {<span class="st">"magnet"</span>: (<span class="nu">255</span>,<span class="nu">0</span>,<span class="nu">0</span>), <span class="st">"shield"</span>: (<span class="nu">0</span>,<span class="nu">200</span>,<span class="nu">255</span>),
+        <span class="kw">self</span>.<span class="vr">type</span> = <span class="vr">power_type</span> <span class="cm"># "magnet" / "shield" / "speed"</span>
+<span class="kw">self</span>.<span class="vr">colors</span> = {<span class="st">"magnet"</span>: (<span class="nu">255</span>,<span class="nu">0</span>,<span class="nu">0</span>), <span class="st">"shield"</span>: (<span class="nu">0</span>,<span class="nu">200</span>,<span class="nu">255</span>),
                         <span class="st">"speed"</span>: (<span class="nu">255</span>,<span class="nu">255</span>,<span class="nu">0</span>)}
 
     <span class="kw">def</span> <span class="fn">draw</span>(<span class="kw">self</span>, <span class="vr">screen</span>):
@@ -555,13 +629,12 @@ pygame.init()
 
 <span class="kw">class</span> <span class="cl">PowerUpManager</span>:
     <span class="st">"""管理所有道具：生成、碰撞、激活"""</span>
-    <span class="kw">def</span> <span class="fn">__init__</span>(<span class="kw">self</span>):
+<span class="kw">def</span> <span class="fn">__init__</span>(<span class="kw">self</span>):
         <span class="kw">self</span>.<span class="vr">powerups</span> = []  <span class="cm"># 场景中的道具列表</span>
-        <span class="kw">self</span>.<span class="vr">spawn_timer</span> = <span class="nu">0</span>  <span class="cm"># 掉落计时器</span>
-
-    <span class="kw">def</span> <span class="fn">spawn</span>(<span class="kw">self</span>):
+<span class="kw">self</span>.<span class="vr">spawn_timer</span> = <span class="nu">0</span> <span class="cm"># 掉落计时器</span>
+<span class="kw">def</span> <span class="fn">spawn</span>(<span class="kw">self</span>):
         <span class="cm"># 随机位置 + 随机类型 掉落</span>
-        <span class="vr">x</span> = random.<span class="fn">randint</span>(<span class="nu">50</span>, <span class="vr">WIDTH</span>-<span class="nu">50</span>)
+<span class="vr">x</span> = random.<span class="fn">randint</span>(<span class="nu">50</span>, <span class="vr">WIDTH</span>-<span class="nu">50</span>)
         <span class="vr">y</span> = random.<span class="fn">randint</span>(<span class="nu">50</span>, <span class="vr">HEIGHT</span>-<span class="nu">50</span>)
         <span class="vr">kind</span> = random.<span class="fn">choice</span>([<span class="st">"magnet"</span>, <span class="st">"shield"</span>, <span class="st">"speed"</span>])
         <span class="kw">self</span>.<span class="vr">powerups</span>.<span class="fn">append</span>(<span class="fn">PowerUp</span>(<span class="vr">x</span>, <span class="vr">y</span>, <span class="vr">kind</span>))
@@ -573,207 +646,251 @@ pygame.init()
         <span class="kw">for</span> <span class="vr">i</span>, <span class="vr">p</span> <span class="kw">in</span> collections:
             <span class="fn">activate</span>(<span class="vr">p</span>.<span class="vr">type</span>)
             <span class="kw">self</span>.<span class="vr">powerups</span>.<span class="fn">pop</span>(<span class="vr">i</span>)</div>
-      </div>
-    </div>
-  </div>
+</div>
+</div>
 
-  <!-- ==================== 第 9 页：道具掉落机制 ==================== -->
-  <div class="slide" data-index="8">
-    <h2>道具掉落机制</h2>
-    <div class="content">
-      <div class="two-col">
-        <div>
-          <div class="card">
-            <h3>概率掉落设计</h3>
-            <p>每消灭一个敌人，有一定概率掉落道具：</p>
-            <div class="code-block"><span class="cm"># 敌人被消灭时调用</span>
+<aside class="notes">【讲解】道具系统核心代码
+本页要点（照着讲即可）：
+· 道具系统核心代码
+· # ===== 道具类定义 =====
+· class
+· PowerUp
+· """通用道具类：类型 + 位置 + 碰撞检测"""
+· __init__
+代码页节奏：先读懂输入输出 → 再走主流程 → 最后点出易错点（边界/类型/下标）。
+可让学生预测下一行输出，再运行对照。</aside>
+</div>
+<!-- ==================== 第 9 页：道具掉落机制 ==================== -->
+<div class="slide" data-index="8">
+<h2>道具掉落机制</h2>
+<div class="content">
+<div class="two-col">
+<div>
+<div class="card">
+<h3>概率掉落设计</h3>
+<p>每消灭一个敌人，有一定概率掉落道具：</p>
+<div class="code-block"><span class="cm"># 敌人被消灭时调用</span>
 <span class="kw">def</span> <span class="fn">on_enemy_killed</span>(<span class="vr">x</span>, <span class="vr">y</span>):
     <span class="vr">roll</span> = random.<span class="fn">random</span>()  <span class="cm"># 0.0 ~ 1.0</span>
-    <span class="kw">if</span> <span class="vr">roll</span> < <span class="nu">0.3</span>:  <span class="cm"># 30% 概率</span>
-        <span class="vr">kind</span> = random.<span class="fn">choice</span>([<span class="st">"magnet"</span>,<span class="st">"shield"</span>,<span class="st">"speed"</span>])
+<span class="kw">if</span> <span class="vr">roll</span> &lt; <span class="nu">0.3</span>:  <span class="cm"># 30% 概率</span>
+<span class="vr">kind</span> = random.<span class="fn">choice</span>([<span class="st">"magnet"</span>,<span class="st">"shield"</span>,<span class="st">"speed"</span>])
         <span class="vr">powerups</span>.<span class="fn">append</span>(<span class="fn">PowerUp</span>(<span class="vr">x</span>, <span class="vr">y</span>, <span class="vr">kind</span>))</div>
-          </div>
-          <div class="card">
-            <h3>加权随机（稀有度）</h3>
-            <p>某些高级道具掉落概率更低：</p>
-            <div class="code-block"><span class="cm"># 加权掉落的简洁写法</span>
+</div>
+<div class="card">
+<h3>加权随机（稀有度）</h3>
+<p>某些高级道具掉落概率更低：</p>
+<div class="code-block"><span class="cm"># 加权掉落的简洁写法</span>
 <span class="vr">kind</span> = random.<span class="fn">choices</span>(
     [<span class="st">"magnet"</span>, <span class="st">"shield"</span>, <span class="st">"speed"</span>],
     <span class="vr">weights</span>=[<span class="nu">40</span>, <span class="nu">40</span>, <span class="nu">20</span>]  <span class="cm"># speed 稀有</span>
 )[<span class="nu">0</span>]</div>
-          </div>
-        </div>
-        <div>
-          <div class="card">
-            <h3>定时掉落</h3>
-            <p>每隔一段时间自动在场景中生成道具，保持游戏节奏：</p>
-            <div class="code-block"><span class="cm"># 每 10 秒自动掉一个道具</span>
-<span class="kw">if</span> <span class="vr">now</span> - <span class="vr">last_spawn_time</span> > <span class="nu">10000</span>:
+</div>
+</div>
+<div>
+<div class="card">
+<h3>定时掉落</h3>
+<p>每隔一段时间自动在场景中生成道具，保持游戏节奏：</p>
+<div class="code-block"><span class="cm"># 每 10 秒自动掉一个道具</span>
+<span class="kw">if</span> <span class="vr">now</span> - <span class="vr">last_spawn_time</span> &gt; <span class="nu">10000</span>:
     <span class="vr">x</span> = random.<span class="fn">randint</span>(<span class="nu">50</span>, <span class="vr">WIDTH</span>-<span class="nu">50</span>)
     <span class="vr">y</span> = random.<span class="fn">randint</span>(<span class="nu">50</span>, <span class="vr">HEIGHT</span>-<span class="nu">50</span>)
     <span class="vr">kind</span> = random.<span class="fn">choice</span>([<span class="st">"magnet"</span>, <span class="st">"shield"</span>])
     <span class="vr">powerups</span>.<span class="fn">append</span>(<span class="fn">PowerUp</span>(<span class="vr">x</span>, <span class="vr">y</span>, <span class="vr">kind</span>))
     <span class="vr">last_spawn_time</span> = <span class="vr">now</span></div>
+</div>
+<div class="info-box">
+<strong>设计建议：</strong>道具数量控制上限（如最多 3 个），避免屏幕太乱。还可以让旧道具闪烁提示即将消失。
           </div>
-          <div class="info-box">
-            <strong>设计建议：</strong>道具数量控制上限（如最多 3 个），避免屏幕太乱。还可以让旧道具闪烁提示即将消失。
-          </div>
-        </div>
-      </div>
-    </div>
-  </div>
+</div>
+</div>
+</div>
 
-  <!-- ==================== 第 10 页：金币收集系统 ==================== -->
-  <div class="slide" data-index="9">
-    <h2>金币收集系统</h2>
-    <div class="content">
-      <div class="two-col">
-        <div>
-          <div class="card">
-            <h3>随机生成</h3>
-            <div class="code-block"><span class="kw">class</span> <span class="cl">Coin</span>:
+<aside class="notes">【讲解】道具掉落机制
+本页要点（照着讲即可）：
+· 每消灭一个敌人，有一定概率掉落道具：
+· 某些高级道具掉落概率更低：
+· 每隔一段时间自动在场景中生成道具，保持游戏节奏：
+· 设计建议：
+讲解时放慢关键术语；用 1 个生活类比 + 1 个反例加深印象。</aside>
+</div>
+<!-- ==================== 第 10 页：金币收集系统 ==================== -->
+<div class="slide" data-index="9">
+<h2>金币收集系统</h2>
+<div class="content">
+<div class="two-col">
+<div>
+<div class="card">
+<h3>随机生成</h3>
+<div class="code-block"><span class="kw">class</span> <span class="cl">Coin</span>:
     <span class="kw">def</span> <span class="fn">__init__</span>(<span class="kw">self</span>):
         <span class="kw">self</span>.<span class="vr">x</span> = random.<span class="fn">randint</span>(<span class="nu">20</span>, <span class="vr">WIDTH</span>-<span class="nu">20</span>)
         <span class="kw">self</span>.<span class="vr">y</span> = random.<span class="fn">randint</span>(<span class="nu">20</span>, <span class="vr">HEIGHT</span>-<span class="nu">20</span>)
         <span class="kw">self</span>.<span class="vr">radius</span> = <span class="nu">10</span>
-        <span class="kw">self</span>.<span class="vr">value</span> = random.<span class="fn">choice</span>(
+<span class="kw">self</span>.<span class="vr">value</span> = random.<span class="fn">choice</span>(
             [<span class="nu">1</span>, <span class="nu">1</span>, <span class="nu">1</span>, <span class="nu">5</span>, <span class="nu">10</span>])  <span class="cm"># 不同面值</span>
-
-    <span class="kw">def</span> <span class="fn">draw</span>(<span class="kw">self</span>, <span class="vr">screen</span>):
+<span class="kw">def</span> <span class="fn">draw</span>(<span class="kw">self</span>, <span class="vr">screen</span>):
         pygame.draw.<span class="fn">circle</span>(<span class="vr">screen</span>,
             (<span class="nu">255</span>, <span class="nu">215</span>, <span class="nu">0</span>),   <span class="cm"># 金色</span>
             (<span class="kw">self</span>.<span class="vr">x</span>, <span class="kw">self</span>.<span class="vr">y</span>), <span class="kw">self</span>.<span class="vr">radius</span>)</div>
-          </div>
-        </div>
-        <div>
-          <div class="card">
-            <h3>碰撞收集 &amp; 分数</h3>
-            <div class="code-block"><span class="cm"># 检测玩家是否碰到金币</span>
+</div>
+</div>
+<div>
+<div class="card">
+<h3>碰撞收集 &amp; 分数</h3>
+<div class="code-block"><span class="cm"># 检测玩家是否碰到金币</span>
 <span class="kw">def</span> <span class="fn">check_coin_collision</span>(<span class="vr">player_rect</span>, <span class="vr">coins</span>):
     <span class="kw">global</span> <span class="vr">score</span>
-    <span class="vr">collected</span> = []
+<span class="vr">collected</span> = []
     <span class="kw">for</span> <span class="vr">i</span>, <span class="vr">coin</span> <span class="kw">in</span> <span class="fn">enumerate</span>(<span class="vr">coins</span>):
         <span class="vr">cx</span>, <span class="vr">cy</span> = <span class="vr">coin</span>.<span class="vr">x</span>, <span class="vr">coin</span>.<span class="vr">y</span>
-        <span class="kw">if</span> <span class="vr">player_rect</span>.<span class="fn">collidepoint</span>(<span class="vr">cx</span>, <span class="vr">cy</span>):
+<span class="kw">if</span> <span class="vr">player_rect</span>.<span class="fn">collidepoint</span>(<span class="vr">cx</span>, <span class="vr">cy</span>):
             <span class="vr">score</span> += <span class="vr">coin</span>.<span class="vr">value</span>
-            <span class="vr">collected</span>.<span class="fn">append</span>(<span class="vr">i</span>)
+<span class="vr">collected</span>.<span class="fn">append</span>(<span class="vr">i</span>)
 
     <span class="cm"># 倒序删除避免索引错乱</span>
-    <span class="kw">for</span> <span class="vr">i</span> <span class="kw">in</span> <span class="fn">reversed</span>(<span class="vr">collected</span>):
+<span class="kw">for</span> <span class="vr">i</span> <span class="kw">in</span> <span class="fn">reversed</span>(<span class="vr">collected</span>):
         <span class="vr">coins</span>.<span class="fn">pop</span>(<span class="vr">i</span>)</div>
-          </div>
-          <div class="card">
-            <h3>金币数量控制</h3>
-            <div class="code-block"><span class="cm"># 保持场景中始终有 5~8 个金币</span>
-<span class="kw">if</span> <span class="fn">len</span>(<span class="vr">coins</span>) < <span class="nu">5</span>:
+</div>
+<div class="card">
+<h3>金币数量控制</h3>
+<div class="code-block"><span class="cm"># 保持场景中始终有 5~8 个金币</span>
+<span class="kw">if</span> <span class="fn">len</span>(<span class="vr">coins</span>) &lt; <span class="nu">5</span>:
     <span class="kw">for</span> <span class="vr">_</span> <span class="kw">in</span> <span class="fn">range</span>(<span class="nu">5</span> - <span class="fn">len</span>(<span class="vr">coins</span>)):
         <span class="vr">coins</span>.<span class="fn">append</span>(<span class="fn">Coin</span>())</div>
-          </div>
-        </div>
+</div>
+</div>
+</div>
+<div class="info-box" style="margin-top:1vh;">
+<strong>小技巧：</strong>使用 <span class="hl">collidepoint()</span> 对圆形金币比 colliderect() 更精确。删除列表元素时 <span class="hl">倒序遍历</span> 可以避免索引错乱问题。
       </div>
-      <div class="info-box" style="margin-top:1vh;">
-        <strong>小技巧：</strong>使用 <span class="hl">collidepoint()</span> 对圆形金币比 colliderect() 更精确。删除列表元素时 <span class="hl">倒序遍历</span> 可以避免索引错乱问题。
-      </div>
-    </div>
-  </div>
+</div>
 
-  <!-- ==================== 第 11 页：练习任务 ==================== -->
-  <div class="slide" data-index="10">
-    <h2>练习任务</h2>
-    <div class="content">
-      <h3 style="text-align:center;font-size:3.5vmin;">基础任务（1~3 选做 2 个）</h3>
-      <div class="grid-2" style="margin-bottom:2vh;">
-        <div class="card">
-          <h3><span class="badge">基础 1</span>磁铁效果实现</h3>
-          <p>在现有游戏中添加磁铁道具——拾取后 5 秒内金币自动飞向玩家。注意方向向量归一化。</p>
-        </div>
-        <div class="card">
-          <h3><span class="badge">基础 2</span>护盾效果实现</h3>
-          <p>添加护盾道具——拾取后 5 秒内碰撞不扣血。绘制半透明蓝色护盾光圈。</p>
-        </div>
-        <div class="card">
-          <h3><span class="badge">基础 3</span>计时显示</h3>
-          <p>在屏幕角落显示当前激活道具的剩余时间（如"磁铁: 3.2秒"），到期自动消失。</p>
-        </div>
-        <div class="card">
-          <h3><span class="badge">基础 4</span>金币收集</h3>
-          <p>实现完整金币系统：随机生成、碰撞收集、分数累加、场景金币数保持 5~8 个。</p>
-        </div>
-      </div>
+<aside class="notes">【讲解】金币收集系统
+本页要点（照着讲即可）：
+· 小技巧：
+讲解时放慢关键术语；用 1 个生活类比 + 1 个反例加深印象。</aside>
+</div>
+<!-- ==================== 第 11 页：练习任务 ==================== -->
+<div class="slide" data-index="10">
+<h2>练习任务</h2>
+<div class="content">
+<h3 style="text-align:center;font-size:3.5vmin;">基础任务（1~3 选做 2 个）</h3>
+<div class="grid-2" style="margin-bottom:2vh;">
+<div class="card">
+<h3><span class="badge">基础 1</span>磁铁效果实现</h3>
+<p>在现有游戏中添加磁铁道具——拾取后 5 秒内金币自动飞向玩家。注意方向向量归一化。</p>
+</div>
+<div class="card">
+<h3><span class="badge">基础 2</span>护盾效果实现</h3>
+<p>添加护盾道具——拾取后 5 秒内碰撞不扣血。绘制半透明蓝色护盾光圈。</p>
+</div>
+<div class="card">
+<h3><span class="badge">基础 3</span>计时显示</h3>
+<p>在屏幕角落显示当前激活道具的剩余时间（如"磁铁: 3.2秒"），到期自动消失。</p>
+</div>
+<div class="card">
+<h3><span class="badge">基础 4</span>金币收集</h3>
+<p>实现完整金币系统：随机生成、碰撞收集、分数累加、场景金币数保持 5~8 个。</p>
+</div>
+</div>
+<h3 style="text-align:center;font-size:3.5vmin;margin-top:2vh;">进阶挑战（选做）</h3>
+<div class="grid-2">
+<div class="card" style="border:2px solid var(--accent);">
+<h3>⭐ 新道具：冰冻</h3>
+<p>设计一个冰冻道具：拾取后 4 秒内所有敌人移动速度减半。需要修改敌人速度变量，并在道具到期后恢复。</p>
+</div>
+<div class="card" style="border:2px solid var(--accent);">
+<h3>⭐ 道具叠加规则</h3>
+<p>设计道具之间的叠加规则：同类型道具刷新时间？不同类型能否共存？写清楚逻辑并在代码中实现。</p>
+</div>
+</div>
+</div>
 
-      <h3 style="text-align:center;font-size:3.5vmin;margin-top:2vh;">进阶挑战（选做）</h3>
-      <div class="grid-2">
-        <div class="card" style="border:2px solid var(--accent);">
-          <h3>⭐ 新道具：冰冻</h3>
-          <p>设计一个冰冻道具：拾取后 4 秒内所有敌人移动速度减半。需要修改敌人速度变量，并在道具到期后恢复。</p>
-        </div>
-        <div class="card" style="border:2px solid var(--accent);">
-          <h3>⭐ 道具叠加规则</h3>
-          <p>设计道具之间的叠加规则：同类型道具刷新时间？不同类型能否共存？写清楚逻辑并在代码中实现。</p>
-        </div>
-      </div>
-    </div>
-  </div>
-
-  <!-- ==================== 第 12 页：总结与回顾 ==================== -->
-  <div class="slide" data-index="11">
-    <h2>总结与回顾</h2>
-    <div class="content">
-      <p style="text-align:center;font-size:3.2vmin;margin-bottom:3vh;color:var(--accent2);">
+<aside class="notes">【讲解】练习任务
+本页要点（照着讲即可）：
+· 在现有游戏中添加磁铁道具——拾取后 5 秒内金币自动飞向玩家。注意方向向量归一化。
+· 添加护盾道具——拾取后 5 秒内碰撞不扣血。绘制半透明蓝色护盾光圈。
+· 在屏幕角落显示当前激活道具的剩余时间（如"磁铁: 3.2秒"），到期自动消失。
+· 实现完整金币系统：随机生成、碰撞收集、分数累加、场景金币数保持 5~8 个。
+· 设计一个冰冻道具：拾取后 4 秒内所有敌人移动速度减半。需要修改敌人速度变量，并在道具到期后恢复。
+· 设计道具之间的叠加规则：同类型道具刷新时间？不同类型能否共存？写清楚逻辑并在代码中实现。
+练习页节奏：先独立想 1 分钟 → 再点拨思路 → 最后对答案讲为什么。</aside>
+</div>
+<!-- ==================== 第 12 页：总结与回顾 ==================== -->
+<div class="slide" data-index="11">
+<h2>总结与回顾</h2>
+<div class="content">
+<p style="text-align:center;font-size:3.2vmin;margin-bottom:3vh;color:var(--accent2);">
         道具系统的<span class="hl">三大核心概念</span>串联
       </p>
-
-      <div class="flow-row" style="margin-bottom:3vh;">
-        <div class="flow-node">计时机制</div>
-        <div class="flow-arrow">→</div>
-        <div class="flow-node">状态管理</div>
-        <div class="flow-arrow">→</div>
-        <div class="flow-node">效果实现</div>
-      </div>
-
-      <div class="three-col">
-        <div class="card" style="text-align:center;">
-          <div style="font-size:4vmin;color:var(--accent);margin-bottom:1vh;">1. 计时</div>
-          <p style="font-size:2.2vmin;line-height:1.6;">
-            <span class="hl">pygame.time.get_ticks()</span><br>
-            记录拾取时刻<br>
-            对比当前时刻<br>
+<div class="flow-row" style="margin-bottom:3vh;">
+<div class="flow-node">计时机制</div>
+<div class="flow-arrow">→</div>
+<div class="flow-node">状态管理</div>
+<div class="flow-arrow">→</div>
+<div class="flow-node">效果实现</div>
+</div>
+<div class="three-col">
+<div class="card" style="text-align:center;">
+<div style="font-size:4vmin;color:var(--accent);margin-bottom:1vh;">1. 计时</div>
+<p style="font-size:2.2vmin;line-height:1.6;">
+<span class="hl">pygame.time.get_ticks()</span><br/>
+            记录拾取时刻<br/>
+            对比当前时刻<br/>
             判断是否到期
           </p>
-        </div>
-        <div class="card" style="text-align:center;">
-          <div style="font-size:4vmin;color:var(--accent);margin-bottom:1vh;">2. 状态</div>
-          <p style="font-size:2.2vmin;line-height:1.6;">
-            布尔变量标记<br>
-            Timer 类封装<br>
-            互斥 & 叠加规则<br>
+</div>
+<div class="card" style="text-align:center;">
+<div style="font-size:4vmin;color:var(--accent);margin-bottom:1vh;">2. 状态</div>
+<p style="font-size:2.2vmin;line-height:1.6;">
+            布尔变量标记<br/>
+            Timer 类封装<br/>
+            互斥 &amp; 叠加规则<br/>
             主循环统一更新
           </p>
-        </div>
-        <div class="card" style="text-align:center;">
-          <div style="font-size:4vmin;color:var(--accent);margin-bottom:1vh;">3. 效果</div>
-          <p style="font-size:2.2vmin;line-height:1.6;">
-            磁铁：方向向量<br>
-            护盾：跳过碰撞<br>
-            可视化反馈<br>
+</div>
+<div class="card" style="text-align:center;">
+<div style="font-size:4vmin;color:var(--accent);margin-bottom:1vh;">3. 效果</div>
+<p style="font-size:2.2vmin;line-height:1.6;">
+            磁铁：方向向量<br/>
+            护盾：跳过碰撞<br/>
+            可视化反馈<br/>
             道具掉落机制
           </p>
-        </div>
-      </div>
-
-      <div class="info-box" style="margin-top:3vh;text-align:center;font-size:2.8vmin;">
-        <strong>学完本节，你应该能：</strong><br>
+</div>
+</div>
+<div class="info-box" style="margin-top:3vh;text-align:center;font-size:2.8vmin;">
+<strong>学完本节，你应该能：</strong><br/>
         独立设计游戏道具系统 —— 从计时、状态到效果实现的完整流程。
       </div>
-    </div>
-  </div>
+</div>
 
+<aside class="notes">【收尾】回顾本课主线：总结与回顾
+对照大纲再过一遍：**内容**：金币收集、磁铁道具、护盾道具
+
+**知识点**：
+- 道具效果计时（`start_time = pygame.time.get_ticks()`，检查是否超过持续时间）
+- 状态标记管理（`magnet_active`, `shield_active`）
+- 磁铁效果（金币自动吸向玩家）
+- 护盾效果（碰撞不死亡、护盾消失动画）
+
+**课堂练习**：带道具系统的完整跑酷
+
+---
+
+## 📦 项目 18：俄罗斯方块（第 39-40 节）
+板书/口述要点：
+· 道具系统的 三大核心概念 串联
+· pygame.time.get_ticks() 记录拾取时刻 对比当前时刻 判断是否到期
+· 布尔变量标记 Timer 类封装 互斥 &amp; 叠加规则 主循环统一更新
+· 磁铁：方向向量 护盾：跳过碰撞 可视化反馈 道具掉落机制
+· 学完本节，你应该能：
+结束前留 2 分钟答疑；布置 1 道小练习检验是否真正掌握。</aside>
+</div>
 </div><!-- 结束 slideshow -->
-
 <!-- ===== 页码指示器 ===== -->
 <div class="page-indicator" id="pageIndicator">1 / 12</div>
 <div class="nav-hint">← 键盘/点击左侧  |  键盘/点击右侧 →</div>
-
 <script>
 (function() {
   var slides = document.querySelectorAll('.slide');
@@ -851,7 +968,6 @@ pygame.init()
   updateIndicator();
 })();
 </script>
-
 <script src="courseware-ui.js"></script>
 <script src="presenter.js"></script>
 </body>

@@ -1,10 +1,11 @@
 <!DOCTYPE html>
+
 <html lang="zh-CN">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>CSP-J 备考课程 - 第42课：DFS深度优先搜索</title>
-    <style>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>CSP-J 备考课程 - 第42课：DFS深度优先搜索</title>
+<style>
         :root {
             --primary: #1a237e;
             --primary-light: #283593;
@@ -368,37 +369,40 @@
     </style>
 </head>
 <body>
+<!-- Title Bar -->
+<div class="title-bar">
+<span class="course-name">CSP-J 备考课程</span>
+<span class="lesson-info">第42课：DFS深度优先搜索</span>
+<span class="progress" id="progressText">1 / 8</span>
+</div>
+<div class="container">
+<!-- Slide 1: Title -->
+<div class="slide slide-title active" id="slide1">
+<div class="lesson-number">42</div>
+<div class="lesson-title">DFS 深度优先搜索</div>
+<div class="accent-bar"></div>
+<p class="subtitle">Depth First Search</p>
+<p class="subtitle">递归 | 回溯 | 连通块 | 迷宫 | 排列</p>
 
-    <!-- Title Bar -->
-    <div class="title-bar">
-        <span class="course-name">CSP-J 备考课程</span>
-        <span class="lesson-info">第42课：DFS深度优先搜索</span>
-        <span class="progress" id="progressText">1 / 8</span>
-    </div>
-
-    <div class="container">
-
-        <!-- Slide 1: Title -->
-        <div class="slide slide-title active" id="slide1">
-            <div class="lesson-number">42</div>
-            <div class="lesson-title">DFS 深度优先搜索</div>
-            <div class="accent-bar"></div>
-            <p class="subtitle">Depth First Search</p>
-            <p class="subtitle">递归 | 回溯 | 连通块 | 迷宫 | 排列</p>
-        </div>
-
-        <!-- Slide 2: What is DFS -->
-        <div class="slide" id="slide2">
-            <h2>一、什么是 DFS？</h2>
-            <p>深度优先搜索的核心思想：<strong>沿着一条路径尽可能深地探索，直到无法继续才回溯到上一个分支点，尝试其他路径。</strong></p>
-
-            <div class="tip-box">
-                <div class="tip-title">形象理解</div>
-                <p>好比走迷宫：一直往前走，遇到岔路就选一条继续走，走到死胡同就退回到上一个岔路口，换另一条路。<span class="highlight">"一条路走到黑、不撞南墙不回头"</span>。</p>
-            </div>
-
-            <h3>DFS 递归框架（必须背熟！）</h3>
-            <pre><code><span class="kw">bool</span> vis[<span class="nu">N</span>];           <span class="cm">// 标记数组</span>
+<aside class="notes">【开场】第 1/8 页 · DFS 深度优先搜索
+用 30 秒说明本课目标与学完能做什么，再进入正题。
+大纲考点：DFS递归实现、回溯框架、连通块计数
+配套练习方向：迷宫与连通块问题
+封面关键词：
+· Depth First Search
+· 递归 | 回溯 | 连通块 | 迷宫 | 排列
+互动：问学生「今天最想搞清楚什么？」，收 1–2 个期待。</aside>
+</div>
+<!-- Slide 2: What is DFS -->
+<div class="slide" id="slide2">
+<h2>一、什么是 DFS？</h2>
+<p>深度优先搜索的核心思想：<strong>沿着一条路径尽可能深地探索，直到无法继续才回溯到上一个分支点，尝试其他路径。</strong></p>
+<div class="tip-box">
+<div class="tip-title">形象理解</div>
+<p>好比走迷宫：一直往前走，遇到岔路就选一条继续走，走到死胡同就退回到上一个岔路口，换另一条路。<span class="highlight">"一条路走到黑、不撞南墙不回头"</span>。</p>
+</div>
+<h3>DFS 递归框架（必须背熟！）</h3>
+<pre><code><span class="kw">bool</span> vis[<span class="nu">N</span>];           <span class="cm">// 标记数组</span>
 <span class="kw">vector</span>&lt;<span class="kw">int</span>&gt; g[<span class="nu">N</span>];      <span class="cm">// 邻接表</span>
 
 <span class="kw">void</span> <span class="fn">dfs</span>(<span class="kw">int</span> u) {
@@ -409,73 +413,86 @@
             <span class="fn">dfs</span>(v);          <span class="cm">// ④ 深入探索</span>
     }
 }</code></pre>
+<div class="tip-box warning">
+<div class="tip-title">致命错误</div>
+<p>如果忘记写 <span class="code-inline">vis[u] = true</span>，DFS 会在无向图中无限循环：A → B → A → B... 最后栈溢出！</p>
+</div>
 
-            <div class="tip-box warning">
-                <div class="tip-title">致命错误</div>
-                <p>如果忘记写 <span class="code-inline">vis[u] = true</span>，DFS 会在无向图中无限循环：A → B → A → B... 最后栈溢出！</p>
-            </div>
-        </div>
-
-        <!-- Slide 3: DFS vs BFS -->
-        <div class="slide" id="slide3">
-            <h2>二、DFS vs BFS 对比</h2>
-
-            <table>
-                <tr><th>特性</th><th>DFS</th><th>BFS</th></tr>
-                <tr><td>实现方式</td><td>递归（或栈）</td><td>队列</td></tr>
-                <tr><td>遍历顺序</td><td>深度优先</td><td>广度（层次）优先</td></tr>
-                <tr><td>空间复杂度</td><td>O(h)，h 为递归深度</td><td>O(w)，w 为最大宽度</td></tr>
-                <tr><td>求最短路径</td><td>不适合</td><td>✅ 首次到达即最短</td></tr>
-                <tr><td>适用场景</td><td>连通块、回溯、排列</td><td>最短路、层次遍历</td></tr>
-            </table>
-
-            <div class="grid-2">
-                <div class="card">
-                    <h3>DFS 遍历顺序</h3>
-                    <p>以树为例：先序遍历</p>
-                    <pre><code>    1
+<aside class="notes">【讲解】一、什么是 DFS？
+结合讲义《一、什么是DFS？》强调：
+· 深度优先搜索（Depth First Search，简称DFS）是一种用于遍历或搜索树/图的算法。它的核心思想是：**沿着一条路径尽可能深地探索，直到无法继续才回溯到上一个分支点，尝试其他路径**。
+· 可以形象地理解为走迷宫：你一直往前走，遇到岔路就选一条继续走，走到死胡同就退回到上一个岔路口，换另一条路。这种"一条路走到黑、不撞南墙不回头"的策略就是DFS。
+幻灯片上可见要点：
+· 深度优先搜索的核心思想： 沿着一条路径尽可能深地探索，直到无法继续才回溯到上一个分支点，尝试其他路径。
+· 沿着一条路径尽可能深地探索，直到无法继续才回溯到上一个分支点，尝试其他路径。
+· 好比走迷宫：一直往前走，遇到岔路就选一条继续走，走到死胡同就退回到上一个岔路口，换另一条路。 "一条路走到黑、不撞南墙不回头" 。
+· 如果忘记写 vis[u] = true ，DFS 会在无向图中无限循环：A → B → A → B... 最后栈溢出！
+讲解时放慢关键术语；用 1 个生活类比 + 1 个反例加深印象。
+本课大纲考点（可适时点题）：DFS递归实现、回溯框架、连通块计数</aside>
+</div>
+<!-- Slide 3: DFS vs BFS -->
+<div class="slide" id="slide3">
+<h2>二、DFS vs BFS 对比</h2>
+<table>
+<tr><th>特性</th><th>DFS</th><th>BFS</th></tr>
+<tr><td>实现方式</td><td>递归（或栈）</td><td>队列</td></tr>
+<tr><td>遍历顺序</td><td>深度优先</td><td>广度（层次）优先</td></tr>
+<tr><td>空间复杂度</td><td>O(h)，h 为递归深度</td><td>O(w)，w 为最大宽度</td></tr>
+<tr><td>求最短路径</td><td>不适合</td><td>✅ 首次到达即最短</td></tr>
+<tr><td>适用场景</td><td>连通块、回溯、排列</td><td>最短路、层次遍历</td></tr>
+</table>
+<div class="grid-2">
+<div class="card">
+<h3>DFS 遍历顺序</h3>
+<p>以树为例：先序遍历</p>
+<pre><code>    1
    / \
   2   3
  / \ / \
 4  5 6  7
 
 DFS: 1 → 2 → 4 → 5 → 3 → 6 → 7</code></pre>
-                </div>
-                <div class="card">
-                    <h3>BFS 遍历顺序</h3>
-                    <p>层序遍历</p>
-                    <pre><code>    1
+</div>
+<div class="card">
+<h3>BFS 遍历顺序</h3>
+<p>层序遍历</p>
+<pre><code>    1
    / \
   2   3
  / \ / \
 4  5 6  7
 
 BFS: 1 → 2 → 3 → 4 → 5 → 6 → 7</code></pre>
-                </div>
-            </div>
-
-            <div class="tip-box success">
-                <div class="tip-title">记忆口诀</div>
-                <p>DFS 一条路走到黑（适合找所有解）<br>
+</div>
+</div>
+<div class="tip-box success">
+<div class="tip-title">记忆口诀</div>
+<p>DFS 一条路走到黑（适合找所有解）<br/>
                 BFS 层层往外推（适合找最短路径）</p>
-            </div>
-        </div>
+</div>
 
-        <!-- Slide 4: Backtracking -->
-        <div class="slide" id="slide4">
-            <h2>三、回溯法（Backtracking）</h2>
-            <p>回溯法是 DFS 思想的延伸，核心三步曲：</p>
-
-            <div class="backtrack-flow">
-                <div class="backtrack-step">1. 做选择</div>
-                <span class="backtrack-arrow">→</span>
-                <div class="backtrack-step">2. 递归深入</div>
-                <span class="backtrack-arrow">→</span>
-                <div class="backtrack-step">3. 撤销选择</div>
-            </div>
-
-            <h3>全排列生成（经典示例）</h3>
-            <pre><code><span class="kw">int</span> path[<span class="nu">N</span>];      <span class="cm">// 当前排列</span>
+<aside class="notes">【讲解】二、DFS vs BFS 对比
+结合讲义《三、DFS与BFS的区别》强调：
+· 注意：DFS本身不保证找到最短路径，因为它是"深度优先"的，可能绕远路才到达目标。求无权图最短路径请用BFS。
+幻灯片上可见要点：
+· 以树为例：先序遍历
+· 层序遍历
+· DFS 一条路走到黑（适合找所有解） BFS 层层往外推（适合找最短路径）
+讲解时放慢关键术语；用 1 个生活类比 + 1 个反例加深印象。</aside>
+</div>
+<!-- Slide 4: Backtracking -->
+<div class="slide" id="slide4">
+<h2>三、回溯法（Backtracking）</h2>
+<p>回溯法是 DFS 思想的延伸，核心三步曲：</p>
+<div class="backtrack-flow">
+<div class="backtrack-step">1. 做选择</div>
+<span class="backtrack-arrow">→</span>
+<div class="backtrack-step">2. 递归深入</div>
+<span class="backtrack-arrow">→</span>
+<div class="backtrack-step">3. 撤销选择</div>
+</div>
+<h3>全排列生成（经典示例）</h3>
+<pre><code><span class="kw">int</span> path[<span class="nu">N</span>];      <span class="cm">// 当前排列</span>
 <span class="kw">bool</span> used[<span class="nu">N</span>];    <span class="cm">// 数字是否已被使用</span>
 
 <span class="kw">void</span> <span class="fn">dfs</span>(<span class="kw">int</span> k) {         <span class="cm">// k = 已选了几个数</span>
@@ -493,21 +510,29 @@ BFS: 1 → 2 → 3 → 4 → 5 → 6 → 7</code></pre>
         }
     }
 }</code></pre>
+<div class="tip-box warning">
+<div class="tip-title">最易忘的一行代码</div>
+<p><span class="code-inline">used[i] = false;</span> — 初学者 90% 的错误来源于忘记写这行回溯代码。忘记恢复状态会导致后续分支无法使用该数字，结果严重不全！</p>
+</div>
 
-            <div class="tip-box warning">
-                <div class="tip-title">最易忘的一行代码</div>
-                <p><span class="code-inline">used[i] = false;</span> — 初学者 90% 的错误来源于忘记写这行回溯代码。忘记恢复状态会导致后续分支无法使用该数字，结果严重不全！</p>
-            </div>
-        </div>
-
-        <!-- Slide 5: Connected Components -->
-        <div class="slide" id="slide5">
-            <h2>四、应用1：连通块计数</h2>
-            <p><strong>问题：</strong>给定一个无向图，求图中有多少个连通块（连通分量）。</p>
-
-            <p><strong>核心思想：</strong>对每个未访问的顶点调用一次 DFS，每调用一次就访问完一整个连通块。因此 <span class="highlight">调用 DFS 的次数 = 连通块数</span>。</p>
-
-            <pre><code><span class="kw">int</span> cnt = <span class="nu">0</span>;
+<aside class="notes">【讲解】三、回溯法（Backtracking）
+结合讲义《四、回溯法》强调：
+· 回溯法是DFS思想的延伸，是CSP-J考试的重难点。它的核心流程是：
+· 试探 → 递归 → 恢复状态
+· 具体步骤：
+· 做选择：尝试当前这一步（比如将某个数放入排列中）
+· 递归：基于当前选择，继续向下探索
+幻灯片上可见要点：
+· 回溯法是 DFS 思想的延伸，核心三步曲：
+· used[i] = false; — 初学者 90% 的错误来源于忘记写这行回溯代码。忘记恢复状态会导致后续分支无法使用该数字，结果严重不全！
+讲解时放慢关键术语；用 1 个生活类比 + 1 个反例加深印象。</aside>
+</div>
+<!-- Slide 5: Connected Components -->
+<div class="slide" id="slide5">
+<h2>四、应用1：连通块计数</h2>
+<p><strong>问题：</strong>给定一个无向图，求图中有多少个连通块（连通分量）。</p>
+<p><strong>核心思想：</strong>对每个未访问的顶点调用一次 DFS，每调用一次就访问完一整个连通块。因此 <span class="highlight">调用 DFS 的次数 = 连通块数</span>。</p>
+<pre><code><span class="kw">int</span> cnt = <span class="nu">0</span>;
 <span class="kw">for</span> (<span class="kw">int</span> i = <span class="nu">1</span>; i &lt;= n; i++) {
     <span class="kw">if</span> (!vis[i]) {
         cnt++;          <span class="cm">// 发现新连通块</span>
@@ -515,15 +540,13 @@ BFS: 1 → 2 → 3 → 4 → 5 → 6 → 7</code></pre>
     }
 }
 cout &lt;&lt; cnt &lt;&lt; endl;   <span class="cm">// 输出连通块数量</span></code></pre>
-
-            <div class="tip-box">
-                <div class="tip-title">扩展示例</div>
-                <p>输入：n=5, 边 {1-2, 2-3, 4-5}</p>
-                <p>连通块1：{1,2,3}；连通块2：{4,5} → 输出 2</p>
-            </div>
-
-            <h3>进阶：统计每个连通块的大小</h3>
-            <pre><code><span class="kw">int</span> <span class="fn">dfs</span>(<span class="kw">int</span> u) {
+<div class="tip-box">
+<div class="tip-title">扩展示例</div>
+<p>输入：n=5, 边 {1-2, 2-3, 4-5}</p>
+<p>连通块1：{1,2,3}；连通块2：{4,5} → 输出 2</p>
+</div>
+<h3>进阶：统计每个连通块的大小</h3>
+<pre><code><span class="kw">int</span> <span class="fn">dfs</span>(<span class="kw">int</span> u) {
     vis[u] = <span class="kw">true</span>;
     <span class="kw">int</span> size = <span class="nu">1</span>;         <span class="cm">// 当前顶点算1个</span>
     <span class="kw">for</span> (<span class="kw">int</span> v : g[u])
@@ -531,68 +554,83 @@ cout &lt;&lt; cnt &lt;&lt; endl;   <span class="cm">// 输出连通块数量</sp
             size += <span class="fn">dfs</span>(v);  <span class="cm">// 累加子树大小</span>
     <span class="kw">return</span> size;
 }</code></pre>
-        </div>
 
-        <!-- Slide 6: Maze -->
-        <div class="slide" id="slide6">
-            <h2>五、应用2：迷宫寻路</h2>
-            <p>给定 N×M 网格迷宫，<span class="code-inline">'.'</span> 可行走，<span class="code-inline">'#'</span> 是墙壁，判断能否从起点走到终点。</p>
-
-            <pre><code><span class="kw">int</span> dx[<span class="nu">4</span>] = {<span class="nu">0</span>, <span class="nu">0</span>, <span class="nu">1</span>, -<span class="nu">1</span>};   <span class="cm">// 四方向偏移</span>
+<aside class="notes">【讲解】四、应用1：连通块计数
+结合讲义《五、连通块计数》强调：
+· 在无向图中，如果一个连通块内的任意两个顶点都有路径相连，而不同连通块的顶点之间没有路径，那么图的连通块就是最大的连通子图。
+· 问题：给定一个无向图，求图中连通块的数量。
+· 思路：对每个未访问的顶点调用一次DFS，每调用一次DFS就会访问完该顶点所在连通块的所有顶点。因此调用DFS的次数就是连通块的数量。
+· int cnt = 0; // 连通块计数器
+· for (int i = 1; i &lt;= n; i++) {
+幻灯片上可见要点：
+· 问题： 给定一个无向图，求图中有多少个连通块（连通分量）。
+· 核心思想： 对每个未访问的顶点调用一次 DFS，每调用一次就访问完一整个连通块。因此 调用 DFS 的次数 = 连通块数 。
+· 核心思想：
+· 输入：n=5, 边 {1-2, 2-3, 4-5}
+讲解时放慢关键术语；用 1 个生活类比 + 1 个反例加深印象。</aside>
+</div>
+<!-- Slide 6: Maze -->
+<div class="slide" id="slide6">
+<h2>五、应用2：迷宫寻路</h2>
+<p>给定 N×M 网格迷宫，<span class="code-inline">'.'</span> 可行走，<span class="code-inline">'#'</span> 是墙壁，判断能否从起点走到终点。</p>
+<pre><code><span class="kw">int</span> dx[<span class="nu">4</span>] = {<span class="nu">0</span>, <span class="nu">0</span>, <span class="nu">1</span>, -<span class="nu">1</span>};   <span class="cm">// 四方向偏移</span>
 <span class="kw">int</span> dy[<span class="nu">4</span>] = {<span class="nu">1</span>, -<span class="nu">1</span>, <span class="nu">0</span>, <span class="nu">0</span>};
 
 <span class="kw">bool</span> <span class="fn">dfs</span>(<span class="kw">int</span> x, <span class="kw">int</span> y) {
-    <span class="kw">if</span> (x == tx && y == ty)
+    <span class="kw">if</span> (x == tx &amp;&amp; y == ty)
         <span class="kw">return</span> <span class="kw">true</span>;        <span class="cm">// 到达终点</span>
     vis[x][y] = <span class="kw">true</span>;
 
     <span class="kw">for</span> (<span class="kw">int</span> i = <span class="nu">0</span>; i &lt; <span class="nu">4</span>; i++) {
         <span class="kw">int</span> nx = x + dx[i];
         <span class="kw">int</span> ny = y + dy[i];
-        <span class="kw">if</span> (nx &gt;= <span class="nu">1</span> && nx &lt;= N &&
-            ny &gt;= <span class="nu">1</span> && ny &lt;= M &&
-            maze[nx][ny] == <span class="st">'.'</span> && !vis[nx][ny]) {
+        <span class="kw">if</span> (nx &gt;= <span class="nu">1</span> &amp;&amp; nx &lt;= N &amp;&amp;
+            ny &gt;= <span class="nu">1</span> &amp;&amp; ny &lt;= M &amp;&amp;
+            maze[nx][ny] == <span class="st">'.'</span> &amp;&amp; !vis[nx][ny]) {
             <span class="kw">if</span> (<span class="fn">dfs</span>(nx, ny))
                 <span class="kw">return</span> <span class="kw">true</span>;  <span class="cm">// 找到通路</span>
         }
     }
     <span class="kw">return</span> <span class="kw">false</span>;  <span class="cm">// 四个方向都不通</span>
 }</code></pre>
-
-            <div class="grid-2">
-                <div class="tip-box success" style="margin:0">
-                    <div class="tip-title">三重检查</div>
-                    <p>1. 边界：不越界<br>
-                    2. 障碍物：是 '.'<br>
+<div class="grid-2">
+<div class="tip-box success" style="margin:0">
+<div class="tip-title">三重检查</div>
+<p>1. 边界：不越界<br/>
+                    2. 障碍物：是 '.'<br/>
                     3. 已访问：!vis</p>
-                </div>
-                <div class="tip-box warning" style="margin:0">
-                    <div class="tip-title">注意</div>
-                    <p>DFS 找到的路径不一定是最短路径！如果要最短路径，请使用 BFS。</p>
-                </div>
-            </div>
-        </div>
+</div>
+<div class="tip-box warning" style="margin:0">
+<div class="tip-title">注意</div>
+<p>DFS 找到的路径不一定是最短路径！如果要最短路径，请使用 BFS。</p>
+</div>
+</div>
 
-        <!-- Slide 7: Real Exam -->
-        <div class="slide" id="slide7">
-            <h2>六、真题精练</h2>
-
-            <h3>题目1：连通块计数</h3>
-            <p>输入 n 个顶点 m 条边的无向图，输出连通块的数量。</p>
-            <div class="tip-box">
-                <pre style="margin:0"><code><span class="cm">样例输入：</span>
+<aside class="notes">【讲解】五、应用2：迷宫寻路
+本页要点（照着讲即可）：
+· 给定 N×M 网格迷宫， '.' 可行走， '#' 是墙壁，判断能否从起点走到终点。
+· 1. 边界：不越界 2. 障碍物：是 '.' 3. 已访问：!vis
+· DFS 找到的路径不一定是最短路径！如果要最短路径，请使用 BFS。
+讲解时放慢关键术语；用 1 个生活类比 + 1 个反例加深印象。</aside>
+</div>
+<!-- Slide 7: Real Exam -->
+<div class="slide" id="slide7">
+<h2>六、真题精练</h2>
+<h3>题目1：连通块计数</h3>
+<p>输入 n 个顶点 m 条边的无向图，输出连通块的数量。</p>
+<div class="tip-box">
+<pre style="margin:0"><code><span class="cm">样例输入：</span>
 5 3
 1 2
 2 3
 4 5
 <span class="cm">样例输出：2</span>
 <span class="cm">说明：{1,2,3} 和 {4,5} 两个连通块</span></code></pre>
-            </div>
-
-            <h3>题目2：全排列</h3>
-            <p>输入 n（1 ≤ n ≤ 8），输出 1~n 的所有全排列（字典序）。</p>
-            <div class="tip-box">
-                <pre style="margin:0"><code><span class="cm">样例输入：3</span>
+</div>
+<h3>题目2：全排列</h3>
+<p>输入 n（1 ≤ n ≤ 8），输出 1~n 的所有全排列（字典序）。</p>
+<div class="tip-box">
+<pre style="margin:0"><code><span class="cm">样例输入：3</span>
 <span class="cm">样例输出：</span>
 1 2 3
 1 3 2
@@ -600,43 +638,57 @@ cout &lt;&lt; cnt &lt;&lt; endl;   <span class="cm">// 输出连通块数量</sp
 2 3 1
 3 1 2
 3 2 1</code></pre>
-            </div>
+</div>
+<div class="tip-box warning">
+<div class="tip-title">考试注意</div>
+<p>全排列的时间复杂度是 O(n!)，n 通常不会超过 10。如果题目 n 较大（如 n=20），就不能用全排列枚举，要考虑其他算法如状态压缩 DP。</p>
+</div>
 
-            <div class="tip-box warning">
-                <div class="tip-title">考试注意</div>
-                <p>全排列的时间复杂度是 O(n!)，n 通常不会超过 10。如果题目 n 较大（如 n=20），就不能用全排列枚举，要考虑其他算法如状态压缩 DP。</p>
-            </div>
-        </div>
-
-        <!-- Slide 8: Summary -->
-        <div class="slide" id="slide8">
-            <h2>七、本课小结</h2>
-            <ul class="summary-list">
-                <li><strong>DFS 递归框架</strong>：vis 标记 → 遍历邻接点 → 递归深入。四个步骤缺一不可。</li>
-                <li><strong>回溯法三步曲</strong>：①做选择 → ②递归深入 → ③撤销选择（恢复状态）。<span class="highlight">恢复状态是重中之重！</span></li>
-                <li><strong>连通块计数</strong>：对每个未访问顶点调用 DFS，调用次数 = 连通块数。</li>
-                <li><strong>迷宫寻路</strong>：四个方向 + 三重检查（边界、障碍物、vis）。</li>
-                <li><strong>排列组合</strong>：回溯法经典应用，排列 O(n!)，组合 O(C(n,k))。</li>
-                <li><strong>DFS vs BFS</strong>：DFS 找所有解（回溯），BFS 找最短路径。</li>
-                <li><strong>递归深度</strong>：太深可能栈溢出，极端情况考虑手动栈或改用 BFS。</li>
-            </ul>
-
-            <div class="accent-bar" style="margin: 32px auto 0;"></div>
-            <p style="text-align:center; color: var(--text-light); margin-top: 16px;">
+<aside class="notes">【讲解】六、真题精练
+本页要点（照着讲即可）：
+· 输入 n 个顶点 m 条边的无向图，输出连通块的数量。
+· 输入 n（1 ≤ n ≤ 8），输出 1~n 的所有全排列（字典序）。
+· 全排列的时间复杂度是 O(n!)，n 通常不会超过 10。如果题目 n 较大（如 n=20），就不能用全排列枚举，要考虑其他算法如状态压缩 DP。
+练习页节奏：先独立想 1 分钟 → 再点拨思路 → 最后对答案讲为什么。
+可联系：迷宫与连通块问题</aside>
+</div>
+<!-- Slide 8: Summary -->
+<div class="slide" id="slide8">
+<h2>七、本课小结</h2>
+<ul class="summary-list">
+<li><strong>DFS 递归框架</strong>：vis 标记 → 遍历邻接点 → 递归深入。四个步骤缺一不可。</li>
+<li><strong>回溯法三步曲</strong>：①做选择 → ②递归深入 → ③撤销选择（恢复状态）。<span class="highlight">恢复状态是重中之重！</span></li>
+<li><strong>连通块计数</strong>：对每个未访问顶点调用 DFS，调用次数 = 连通块数。</li>
+<li><strong>迷宫寻路</strong>：四个方向 + 三重检查（边界、障碍物、vis）。</li>
+<li><strong>排列组合</strong>：回溯法经典应用，排列 O(n!)，组合 O(C(n,k))。</li>
+<li><strong>DFS vs BFS</strong>：DFS 找所有解（回溯），BFS 找最短路径。</li>
+<li><strong>递归深度</strong>：太深可能栈溢出，极端情况考虑手动栈或改用 BFS。</li>
+</ul>
+<div class="accent-bar" style="margin: 32px auto 0;"></div>
+<p style="text-align:center; color: var(--text-light); margin-top: 16px;">
                 CSP-J 复赛必考算法，建议将代码模板背到滚瓜烂熟！
             </p>
-        </div>
 
-    </div>
-
-    <!-- Navigation Bar -->
-    <div class="nav-bar">
-        <button class="nav-btn" id="prevBtn" disabled onclick="prevSlide()">← 上一页</button>
-        <div class="slide-dots" id="slideDots"></div>
-        <button class="nav-btn" id="nextBtn" onclick="nextSlide()">下一页 →</button>
-    </div>
-
-    <script>
+<aside class="notes">【收尾】回顾本课主线：七、本课小结
+对照大纲再过一遍：DFS递归实现、回溯框架、连通块计数
+板书/口述要点：
+· DFS 递归框架 ：vis 标记 → 遍历邻接点 → 递归深入。四个步骤缺一不可。
+· DFS 递归框架
+· 回溯法三步曲 ：①做选择 → ②递归深入 → ③撤销选择（恢复状态）。 恢复状态是重中之重！
+· 回溯法三步曲
+· 连通块计数 ：对每个未访问顶点调用 DFS，调用次数 = 连通块数。
+· 连通块计数
+课后任务：迷宫与连通块问题
+结束前留 2 分钟答疑；布置 1 道小练习检验是否真正掌握。</aside>
+</div>
+</div>
+<!-- Navigation Bar -->
+<div class="nav-bar">
+<button class="nav-btn" disabled="" id="prevBtn" onclick="prevSlide()">← 上一页</button>
+<div class="slide-dots" id="slideDots"></div>
+<button class="nav-btn" id="nextBtn" onclick="nextSlide()">下一页 →</button>
+</div>
+<script>
         const totalSlides = 8;
         let currentSlide = 1;
 
@@ -701,7 +753,6 @@ cout &lt;&lt; cnt &lt;&lt; endl;   <span class="cm">// 输出连通块数量</sp
             }
         });
     </script>
-
 <script src="courseware-ui.js"></script>
 <script src="presenter.js"></script>
 </body>

@@ -1,8 +1,9 @@
 <!DOCTYPE html>
+
 <html lang="zh-CN">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
 <title>第24课：关键路径与差分约束 — CSP-S 竞赛课件</title>
 <style>
   /* ===== 全局样式 ===== */
@@ -206,95 +207,139 @@
 </style>
 </head>
 <body>
-
 <div class="slides-container">
+<!-- ==================== 幻灯片0：标题页 ==================== -->
+<div class="slide active title-slide">
+<div class="lesson-num">CSP-S · 第 24 课</div>
+<h1>关键路径与差分约束</h1>
+<p class="subtitle">AOE 网 · ve/vl 计算 · 差分约束系统 · SPFA 求解 · 超级源点</p>
+<div class="tags">
+<span class="tag">AOE 网</span>
+<span class="tag">关键活动</span>
+<span class="tag">拓扑 DP</span>
+<span class="tag">SPFA</span>
+<span class="tag">负环检测</span>
+<span class="tag">O(V+E)</span>
+</div>
 
-  <!-- ==================== 幻灯片0：标题页 ==================== -->
-  <div class="slide active title-slide">
-    <div class="lesson-num">CSP-S · 第 24 课</div>
-    <h1>关键路径与差分约束</h1>
-    <p class="subtitle">AOE 网 · ve/vl 计算 · 差分约束系统 · SPFA 求解 · 超级源点</p>
-    <div class="tags">
-      <span class="tag">AOE 网</span>
-      <span class="tag">关键活动</span>
-      <span class="tag">拓扑 DP</span>
-      <span class="tag">SPFA</span>
-      <span class="tag">负环检测</span>
-      <span class="tag">O(V+E)</span>
-    </div>
-  </div>
+<aside class="notes">【开场】第 1/8 页 · 关键路径与差分约束
+用 30 秒说明本课目标与学完能做什么，再进入正题。
+大纲考点：AOE网、最早最晚时间、差分约束系统、SPFA求解
+配套练习方向：工程最短时间、不等式组求解
+封面关键词：
+· AOE 网 · ve/vl 计算 · 差分约束系统 · SPFA 求解 · 超级源点
+互动：问学生「今天最想搞清楚什么？」，收 1–2 个期待。</aside>
+</div>
+<!-- ==================== 幻灯片1：AOE 网与关键路径 ==================== -->
+<div class="slide">
+<h2><span class="icon">📘</span> AOE 网与关键路径</h2>
+<div class="info-card">
+<p><strong>AOE 网（Activity On Edge）：</strong>一种带权有向无环图。顶点 = 事件（时间点），有向边 = 活动（任务），边的权值 = 活动持续时间。</p>
+</div>
+<h3>核心概念</h3>
+<table class="compare-table">
+<tr><th>概念</th><th>定义</th><th>计算方法</th></tr>
+<tr><td>源点</td><td>入度为 0 的顶点，工程起点</td><td>—</td></tr>
+<tr><td>汇点</td><td>出度为 0 的顶点，工程终点</td><td>—</td></tr>
+<tr><td><span class="highlight">ve[v]</span></td><td>事件 v 最早发生时间</td><td><span class="formula">ve[v] = max{ve[u] + w}</span>（正向拓扑 DP）</td></tr>
+<tr><td><span class="highlight">vl[u]</span></td><td>事件 u 最晚发生时间</td><td><span class="formula">vl[u] = min{vl[v] - w}</span>（逆向拓扑 DP）</td></tr>
+<tr><td>关键活动</td><td>没有任何时间余量的活动</td><td><span class="formula">ve[u] + w == vl[v]</span></td></tr>
+</table>
+<div class="info-card" style="margin-top:12px;">
+<p><span class="highlight">工程最短完成时间 = 关键路径的长度</span>（汇点的 ve 值）</p>
+</div>
 
-  <!-- ==================== 幻灯片1：AOE 网与关键路径 ==================== -->
-  <div class="slide">
-    <h2><span class="icon">📘</span> AOE 网与关键路径</h2>
-    <div class="info-card">
-      <p><strong>AOE 网（Activity On Edge）：</strong>一种带权有向无环图。顶点 = 事件（时间点），有向边 = 活动（任务），边的权值 = 活动持续时间。</p>
-    </div>
-    <h3>核心概念</h3>
-    <table class="compare-table">
-      <tr><th>概念</th><th>定义</th><th>计算方法</th></tr>
-      <tr><td>源点</td><td>入度为 0 的顶点，工程起点</td><td>—</td></tr>
-      <tr><td>汇点</td><td>出度为 0 的顶点，工程终点</td><td>—</td></tr>
-      <tr><td><span class="highlight">ve[v]</span></td><td>事件 v 最早发生时间</td><td><span class="formula">ve[v] = max{ve[u] + w}</span>（正向拓扑 DP）</td></tr>
-      <tr><td><span class="highlight">vl[u]</span></td><td>事件 u 最晚发生时间</td><td><span class="formula">vl[u] = min{vl[v] - w}</span>（逆向拓扑 DP）</td></tr>
-      <tr><td>关键活动</td><td>没有任何时间余量的活动</td><td><span class="formula">ve[u] + w == vl[v]</span></td></tr>
-    </table>
-    <div class="info-card" style="margin-top:12px;">
-      <p><span class="highlight">工程最短完成时间 = 关键路径的长度</span>（汇点的 ve 值）</p>
-    </div>
-  </div>
+<aside class="notes">【讲解】📘 AOE 网与关键路径
+结合讲义《一、AOE 网与关键路径》强调：
+· AOE 网（Activity On Edge network） 是一种带权有向无环图，用于描述工程项目中各活动之间的依赖关系和持续时间：
+· 顶点（事件）：表示某个时刻——前面所有活动都已完成，后面活动可以开始的瞬间。
+· 有向边（活动）：表示一个任务/活动，边的权值表示该活动的持续时间。
+· 源点：入度为 0 的顶点，表示工程的起始事件。
+· 汇点：出度为 0 的顶点，表示工程的结束事件。
+幻灯片上可见要点：
+· AOE 网（Activity On Edge）： 一种带权有向无环图。顶点 = 事件（时间点），有向边 = 活动（任务），边的权值 = 活动持续时间。
+· AOE 网（Activity On Edge）：
+· 工程最短完成时间 = 关键路径的长度 （汇点的 ve 值）
+讲解时放慢关键术语；用 1 个生活类比 + 1 个反例加深印象。
+本课大纲考点（可适时点题）：AOE网、最早最晚时间、差分约束系统、SPFA求解</aside>
+</div>
+<!-- ==================== 幻灯片2：差分约束系统 ==================== -->
+<div class="slide">
+<h2><span class="icon">📗</span> 差分约束系统</h2>
+<div class="info-card">
+<p><strong>定义：</strong>一组形如 <span class="formula">x_i - x_j ≤ c_k</span> 的不等式组。通过图论的方法求解。</p>
+</div>
+<h3>核心转化：不等式 → 图中的边</h3>
+<p>利用最短路三角不等式 <span class="highlight">dist[i] ≤ dist[j] + w</span>（对于边 j→i 权 w）：</p>
+<table class="compare-table">
+<tr><th>不等式</th><th>转化</th><th>建边</th></tr>
+<tr><td>x_i - x_j ≤ c</td><td>x_i ≤ x_j + c</td><td>j → i，权 c</td></tr>
+<tr><td>x_i - x_j ≥ c</td><td>x_j ≤ x_i - c</td><td>i → j，权 -c</td></tr>
+<tr><td>x_i - x_j = c</td><td>两条不等式</td><td>j→i 权c，i→j 权-c</td></tr>
+<tr><td>x_i ≤ c</td><td>x_i - x₀ ≤ c</td><td>超级源点 → i，权 c</td></tr>
+</table>
+<div class="info-card">
+<p><strong>超级源点：</strong>创建一个虚拟节点，向所有变量节点连一条权值为 0 的边，保证图的连通性并为解提供统一基准。</p>
+<p><strong>无解判定：</strong>若图中存在<strong>负环</strong>，则不等式组无解（因为负环导致 <span class="formula">x_i ≤ x_i + (负数)</span> 矛盾）。</p>
+</div>
 
-  <!-- ==================== 幻灯片2：差分约束系统 ==================== -->
-  <div class="slide">
-    <h2><span class="icon">📗</span> 差分约束系统</h2>
-    <div class="info-card">
-      <p><strong>定义：</strong>一组形如 <span class="formula">x_i - x_j ≤ c_k</span> 的不等式组。通过图论的方法求解。</p>
-    </div>
-    <h3>核心转化：不等式 → 图中的边</h3>
-    <p>利用最短路三角不等式 <span class="highlight">dist[i] ≤ dist[j] + w</span>（对于边 j→i 权 w）：</p>
-    <table class="compare-table">
-      <tr><th>不等式</th><th>转化</th><th>建边</th></tr>
-      <tr><td>x_i - x_j ≤ c</td><td>x_i ≤ x_j + c</td><td>j → i，权 c</td></tr>
-      <tr><td>x_i - x_j ≥ c</td><td>x_j ≤ x_i - c</td><td>i → j，权 -c</td></tr>
-      <tr><td>x_i - x_j = c</td><td>两条不等式</td><td>j→i 权c，i→j 权-c</td></tr>
-      <tr><td>x_i ≤ c</td><td>x_i - x₀ ≤ c</td><td>超级源点 → i，权 c</td></tr>
-    </table>
-    <div class="info-card">
-      <p><strong>超级源点：</strong>创建一个虚拟节点，向所有变量节点连一条权值为 0 的边，保证图的连通性并为解提供统一基准。</p>
-      <p><strong>无解判定：</strong>若图中存在<strong>负环</strong>，则不等式组无解（因为负环导致 <span class="formula">x_i ≤ x_i + (负数)</span> 矛盾）。</p>
-    </div>
-  </div>
+<aside class="notes">【讲解】📗 差分约束系统
+结合讲义《四、差分约束系统》强调：
+· 差分约束系统 是一组形如 x_i - x_j ≤ c_k 的不等式，其中 c_k 是常数。
+· 核心转化：将不等式 x_i - x_j ≤ c 转化为图中的边 j → i，权值为 c。这是因为**最短路径的三角不等式**：
+· 如果 dist[i] 是源点到 i 的最短距离，那么对于每条边 j → i (权c)，有 dist[i] ≤ dist[j] + c
+· 令 x_i = dist[i]，则 x_i ≤ x_j + c，即 x_i - x_j ≤ c
+· 所以，求解差分约束系统 = 在转化后的图中求**单源最短路径**！
+幻灯片上可见要点：
+· 定义： 一组形如 x_i - x_j ≤ c_k 的不等式组。通过图论的方法求解。
+· 利用最短路三角不等式 dist[i] ≤ dist[j] + w （对于边 j→i 权 w）：
+· 超级源点： 创建一个虚拟节点，向所有变量节点连一条权值为 0 的边，保证图的连通性并为解提供统一基准。
+· 超级源点：
+讲解时放慢关键术语；用 1 个生活类比 + 1 个反例加深印象。</aside>
+</div>
+<!-- ==================== 幻灯片3：建模与 SPFA 求解 ==================== -->
+<div class="slide">
+<h2><span class="icon">📙</span> SPFA 求解差分约束（原理推导）</h2>
+<h3>算法流程</h3>
+<ol class="steps">
+<li><strong>建图：</strong>对每个约束 x_i - x_j ≤ c，添加有向边 j → i，权值为 c。</li>
+<li><strong>超级源点：</strong>创建节点 S = n，对所有 i ∈ [0, n-1] 添加边 S → i，权 0。</li>
+<li><strong>SPFA 求最短路：</strong>以 S 为起点运行 SPFA，得到 dist[0..n-1]。</li>
+<li><strong>检测负环：</strong>若某节点入队次数 ≥ n+1，说明存在负环 → 不等式组无解。</li>
+<li><strong>输出解：</strong>x_i = dist[i] 即为一组可行解。</li>
+</ol>
+<h3>为什么最短路径就是解？</h3>
+<div class="info-card">
+<p>SPFA 求出的最短距离满足：对每条边 j→i（权 c），有 <span class="highlight">dist[i] ≤ dist[j] + c</span>。</p>
+<p>令 x_i = dist[i]，则 <span class="highlight">x_i ≤ x_j + c</span>，即 <span class="highlight">x_i - x_j ≤ c</span> —— 正好满足差分约束！</p>
+</div>
+<h3>解的平移性质</h3>
+<div class="info-card">
+<p>若 (x₁, x₂, ..., xₙ) 是一组可行解，则 (x₁+d, x₂+d, ..., xₙ+d) 也是可行解。</p>
+<p>因为 (x_i+d) - (x_j+d) = x_i - x_j，差值不变。</p>
+</div>
 
-  <!-- ==================== 幻灯片3：建模与 SPFA 求解 ==================== -->
-  <div class="slide">
-    <h2><span class="icon">📙</span> SPFA 求解差分约束（原理推导）</h2>
-    <h3>算法流程</h3>
-    <ol class="steps">
-      <li><strong>建图：</strong>对每个约束 x_i - x_j ≤ c，添加有向边 j → i，权值为 c。</li>
-      <li><strong>超级源点：</strong>创建节点 S = n，对所有 i ∈ [0, n-1] 添加边 S → i，权 0。</li>
-      <li><strong>SPFA 求最短路：</strong>以 S 为起点运行 SPFA，得到 dist[0..n-1]。</li>
-      <li><strong>检测负环：</strong>若某节点入队次数 ≥ n+1，说明存在负环 → 不等式组无解。</li>
-      <li><strong>输出解：</strong>x_i = dist[i] 即为一组可行解。</li>
-    </ol>
-    <h3>为什么最短路径就是解？</h3>
-    <div class="info-card">
-      <p>SPFA 求出的最短距离满足：对每条边 j→i（权 c），有 <span class="highlight">dist[i] ≤ dist[j] + c</span>。</p>
-      <p>令 x_i = dist[i]，则 <span class="highlight">x_i ≤ x_j + c</span>，即 <span class="highlight">x_i - x_j ≤ c</span> —— 正好满足差分约束！</p>
-    </div>
-    <h3>解的平移性质</h3>
-    <div class="info-card">
-      <p>若 (x₁, x₂, ..., xₙ) 是一组可行解，则 (x₁+d, x₂+d, ..., xₙ+d) 也是可行解。</p>
-      <p>因为 (x_i+d) - (x_j+d) = x_i - x_j，差值不变。</p>
-    </div>
-  </div>
-
-  <!-- ==================== 幻灯片4：代码模板 ==================== -->
-  <div class="slide">
-    <h2><span class="icon">💻</span> 代码模板</h2>
-    <div class="two-col">
-      <div>
-        <h3>关键路径（核心片段）</h3>
-        <div class="code-block"><span class="com">// 正向拓扑 + 计算 ve</span>
+<aside class="notes">【讲解】📙 SPFA 求解差分约束（原理推导）
+结合讲义《五、SPFA 求解差分约束》强调：
+· 算法步骤：
+· 建图：对每个不等式 x_i - x_j ≤ c，添加边 j → i，权值为 c。
+· 超级源点：创建一个虚拟节点 n（编号从 0 开始则为 n），向所有节点连一条权值为 0 的边（n → i, w=0）。这保证了从超级源点出发可以到达所有节点，同时也为变量提供了一个统一的参考基准。
+· SPFA 求最短路：以超级源点为起点运行 SPFA。
+· 判无解：如果 SPFA 检测到**负环**，说明不等式组无解。因为负环意味着 x_i ≤ x_i + (负数和)，即 0 ≤ 负数，矛盾。
+幻灯片上可见要点：
+· 建图： 对每个约束 x_i - x_j ≤ c，添加有向边 j → i，权值为 c。
+· 超级源点： 创建节点 S = n，对所有 i ∈ [0, n-1] 添加边 S → i，权 0。
+· 超级源点：
+· SPFA 求最短路： 以 S 为起点运行 SPFA，得到 dist[0..n-1]。
+讲解时放慢关键术语；用 1 个生活类比 + 1 个反例加深印象。</aside>
+</div>
+<!-- ==================== 幻灯片4：代码模板 ==================== -->
+<div class="slide">
+<h2><span class="icon">💻</span> 代码模板</h2>
+<div class="two-col">
+<div>
+<h3>关键路径（核心片段）</h3>
+<div class="code-block"><span class="com">// 正向拓扑 + 计算 ve</span>
 <span class="kw">while</span> (!q.empty()) {
     <span class="kw">int</span> u = q.front(); q.pop();
     topo.push_back(u);
@@ -311,10 +356,10 @@
         vl[u] = min(vl[u], vl[e.to] - e.w);
 }
 <span class="com">// 关键活动：ve[u]+w == vl[v]</span></div>
-      </div>
-      <div>
-        <h3>差分约束 SPFA（核心片段）</h3>
-        <div class="code-block"><span class="com">// 超级源点 super = n</span>
+</div>
+<div>
+<h3>差分约束 SPFA（核心片段）</h3>
+<div class="code-block"><span class="com">// 超级源点 super = n</span>
 <span class="kw">for</span> (<span class="kw">int</span> i=<span class="num">0</span>; i&lt;n; i++)
     adj[super].push_back({i, <span class="num">0</span>});
 
@@ -329,99 +374,135 @@ dist[super] = <span class="num">0</span>; q.push(super);
             cnt[v] = cnt[u] + <span class="num">1</span>;
             <span class="kw">if</span> (cnt[v] &gt;= N)
                 <span class="kw">return</span> <span class="kw">false</span>; <span class="com">// 负环</span>
-            <span class="kw">if</span> (!inq[v]) q.push(v);
+<span class="kw">if</span> (!inq[v]) q.push(v);
         }
     }
 }
 <span class="com">// x_i = dist[i]</span></div>
-      </div>
-    </div>
-  </div>
-
-  <!-- ==================== 幻灯片5：真题精练 ==================== -->
-  <div class="slide">
-    <h2><span class="icon">📝</span> 真题精练</h2>
-    <h3>题目1：关键路径（CSP 经典题型）</h3>
-    <div class="info-card">
-      <p>给定 AOE 网（n 个事件，m 个活动），求：工程最短完成时间 和 关键路径上的活动。</p>
-      <p><strong>解题步骤：</strong></p>
-      <p>① 正向拓扑排序，计算 ve[v] = max{ve[u] + w}（DP 转移）</p>
-      <p>② 逆向计算 vl[u] = min{vl[v] - w}</p>
-      <p>③ 遍历所有边，ve[u] + w == vl[v] 即为关键活动</p>
-      <p><span class="highlight">复杂度：</span>O(V+E)</p>
-    </div>
-    <h3>题目2：差分约束（POJ 1201 风格）</h3>
-    <div class="info-card">
-      <p>给定 m 个约束条件，形如 x_b - x_a ≥ c，求满足所有约束的最小解空间。</p>
-      <p><strong>转化：</strong>x_b - x_a ≥ c → x_a - x_b ≤ -c → 建边 b → a，权 -c。添加超级源点后 SPFA 求解。</p>
-      <p><strong>注意：</strong>求最短路得到的是使变量尽可能小的解（最大下界）。</p>
-    </div>
-  </div>
-
-  <!-- ==================== 幻灯片6：优化技巧与易错点 ==================== -->
-  <div class="slide">
-    <h2><span class="icon">⚡</span> 优化技巧与易错点</h2>
-    <div class="two-col">
-      <div>
-        <h3>常见错误</h3>
-        <table class="compare-table">
-          <tr><th>错误</th><th>正确做法</th></tr>
-          <tr><td>ve 初始化为 INF</td><td>ve 应初始化为 0</td></tr>
-          <tr><td>vl 各节点初始值不一致</td><td>统一初始化为汇点 ve</td></tr>
-          <tr><td>差分约束建边方向反</td><td>x_i - x_j ≤ c → j→i</td></tr>
-          <tr><td>遗忘超级源点</td><td>必须加！否则不连通</td></tr>
-          <tr><td>负环检测阈值用 n</td><td>应用总节点数 N = n+1</td></tr>
-        </table>
-      </div>
-      <div>
-        <h3>优化技巧</h3>
-        <ul>
-          <li><strong>边权取负求最长路：</strong>DAG 上关键路径即最长路，可对边权取负后求最短路。</li>
-          <li><strong>SPFA 优化：</strong>使用 SLF（Small Label First）优化入队策略。</li>
-          <li><strong>DAG 用拓扑 DP：</strong>如果差分约束图是 DAG，直接用 DP 可按 O(V+E) 求解，无需 SPFA。</li>
-          <li><strong>Bellman-Ford 备选：</strong>当数据规模较小时，用 Bellman-Ford 更稳定（负环检测无遗漏）。</li>
-          <li><strong>不等式转化模板：</strong>建立 Builder 辅助类，统一处理 LEQ/GEQ/EQ 约束。</li>
-        </ul>
-      </div>
-    </div>
-    <h3 style="margin-top:12px;">关键路径 vs 差分约束 解题思路对比</h3>
-    <table class="compare-table">
-      <tr><th>维度</th><th>关键路径</th><th>差分约束</th></tr>
-      <tr><td>图类型</td><td>DAG（必须无环）</td><td>任意有向图</td></tr>
-      <tr><td>求解目标</td><td>最长路径</td><td>最短路径</td></tr>
-      <tr><td>判无解</td><td>拓扑序列长度 &lt; n</td><td>存在负环</td></tr>
-      <tr><td>算法</td><td>拓扑排序 + DP</td><td>SPFA / Bellman-Ford</td></tr>
-      <tr><td>复杂度</td><td>O(V+E)</td><td>O(VE) ~ O(kE)</td></tr>
-    </table>
-  </div>
-
-  <!-- ==================== 幻灯片7：总结 ==================== -->
-  <div class="slide">
-    <h2><span class="icon">🎯</span> 本课小结</h2>
-    <table class="compare-table">
-      <tr><th>知识点</th><th>核心</th><th>复杂度</th></tr>
-      <tr><td>AOE 网</td><td>顶点=事件，边=活动，带权 DAG</td><td>—</td></tr>
-      <tr><td>ve（最早时间）</td><td>正向拓扑 DP：ve[v] = max(ve[u] + w)</td><td>O(V+E)</td></tr>
-      <tr><td>vl（最晚时间）</td><td>逆向拓扑 DP：vl[u] = min(vl[v] - w)</td><td>O(V+E)</td></tr>
-      <tr><td>关键活动判定</td><td>ve[u] + w == vl[v]</td><td>O(E)</td></tr>
-      <tr><td>差分约束建模</td><td>x_i - x_j ≤ c → 边 j→i 权 c</td><td>—</td></tr>
-      <tr><td>SPFA 求解</td><td>最短路 + 负环检测（cnt ≥ N）</td><td>O(kE)</td></tr>
-      <tr><td>超级源点</td><td>向所有节点连权 0 边，保证连通</td><td>O(V)</td></tr>
-    </table>
-    <div class="info-card" style="margin-top:16px;">
-      <p><span class="highlight">一句话总结：</span>关键路径在 DAG 上通过拓扑 DP 求最长路；差分约束将不等式组转化为图中最短路问题，由 SPFA 求解，负环即无解。两者都是「约束 → 图」的建模思维。</p>
-    </div>
-  </div>
-
-</div><!-- /slides-container -->
-
-<!-- ===== 导航栏 ===== -->
-<div class="nav-bar">
-  <button class="nav-btn" id="prevBtn" onclick="navigate(-1)">← 上一页</button>
-  <span class="page-indicator" id="pageIndicator">1 / 8</span>
-  <button class="nav-btn" id="nextBtn" onclick="navigate(1)">下一页 →</button>
+</div>
 </div>
 
+<aside class="notes">【讲解】💻 代码模板
+本页要点（照着讲即可）：
+· 代码模板
+· 关键路径（核心片段）
+· // 正向拓扑 + 计算 ve
+· while
+· (!q.empty()) {
+· u = q.front(); q.pop();
+代码页节奏：先读懂输入输出 → 再走主流程 → 最后点出易错点（边界/类型/下标）。
+可让学生预测下一行输出，再运行对照。</aside>
+</div>
+<!-- ==================== 幻灯片5：真题精练 ==================== -->
+<div class="slide">
+<h2><span class="icon">📝</span> 真题精练</h2>
+<h3>题目1：关键路径（CSP 经典题型）</h3>
+<div class="info-card">
+<p>给定 AOE 网（n 个事件，m 个活动），求：工程最短完成时间 和 关键路径上的活动。</p>
+<p><strong>解题步骤：</strong></p>
+<p>① 正向拓扑排序，计算 ve[v] = max{ve[u] + w}（DP 转移）</p>
+<p>② 逆向计算 vl[u] = min{vl[v] - w}</p>
+<p>③ 遍历所有边，ve[u] + w == vl[v] 即为关键活动</p>
+<p><span class="highlight">复杂度：</span>O(V+E)</p>
+</div>
+<h3>题目2：差分约束（POJ 1201 风格）</h3>
+<div class="info-card">
+<p>给定 m 个约束条件，形如 x_b - x_a ≥ c，求满足所有约束的最小解空间。</p>
+<p><strong>转化：</strong>x_b - x_a ≥ c → x_a - x_b ≤ -c → 建边 b → a，权 -c。添加超级源点后 SPFA 求解。</p>
+<p><strong>注意：</strong>求最短路得到的是使变量尽可能小的解（最大下界）。</p>
+</div>
+
+<aside class="notes">【讲解】📝 真题精练
+本页要点（照着讲即可）：
+· 给定 AOE 网（n 个事件，m 个活动），求：工程最短完成时间 和 关键路径上的活动。
+· 解题步骤：
+· ① 正向拓扑排序，计算 ve[v] = max{ve[u] + w}（DP 转移）
+· ② 逆向计算 vl[u] = min{vl[v] - w}
+· ③ 遍历所有边，ve[u] + w == vl[v] 即为关键活动
+· 复杂度： O(V+E)
+练习页节奏：先独立想 1 分钟 → 再点拨思路 → 最后对答案讲为什么。
+可联系：工程最短时间、不等式组求解</aside>
+</div>
+<!-- ==================== 幻灯片6：优化技巧与易错点 ==================== -->
+<div class="slide">
+<h2><span class="icon">⚡</span> 优化技巧与易错点</h2>
+<div class="two-col">
+<div>
+<h3>常见错误</h3>
+<table class="compare-table">
+<tr><th>错误</th><th>正确做法</th></tr>
+<tr><td>ve 初始化为 INF</td><td>ve 应初始化为 0</td></tr>
+<tr><td>vl 各节点初始值不一致</td><td>统一初始化为汇点 ve</td></tr>
+<tr><td>差分约束建边方向反</td><td>x_i - x_j ≤ c → j→i</td></tr>
+<tr><td>遗忘超级源点</td><td>必须加！否则不连通</td></tr>
+<tr><td>负环检测阈值用 n</td><td>应用总节点数 N = n+1</td></tr>
+</table>
+</div>
+<div>
+<h3>优化技巧</h3>
+<ul>
+<li><strong>边权取负求最长路：</strong>DAG 上关键路径即最长路，可对边权取负后求最短路。</li>
+<li><strong>SPFA 优化：</strong>使用 SLF（Small Label First）优化入队策略。</li>
+<li><strong>DAG 用拓扑 DP：</strong>如果差分约束图是 DAG，直接用 DP 可按 O(V+E) 求解，无需 SPFA。</li>
+<li><strong>Bellman-Ford 备选：</strong>当数据规模较小时，用 Bellman-Ford 更稳定（负环检测无遗漏）。</li>
+<li><strong>不等式转化模板：</strong>建立 Builder 辅助类，统一处理 LEQ/GEQ/EQ 约束。</li>
+</ul>
+</div>
+</div>
+<h3 style="margin-top:12px;">关键路径 vs 差分约束 解题思路对比</h3>
+<table class="compare-table">
+<tr><th>维度</th><th>关键路径</th><th>差分约束</th></tr>
+<tr><td>图类型</td><td>DAG（必须无环）</td><td>任意有向图</td></tr>
+<tr><td>求解目标</td><td>最长路径</td><td>最短路径</td></tr>
+<tr><td>判无解</td><td>拓扑序列长度 &lt; n</td><td>存在负环</td></tr>
+<tr><td>算法</td><td>拓扑排序 + DP</td><td>SPFA / Bellman-Ford</td></tr>
+<tr><td>复杂度</td><td>O(V+E)</td><td>O(VE) ~ O(kE)</td></tr>
+</table>
+
+<aside class="notes">【讲解】⚡ 优化技巧与易错点
+结合讲义《优化技巧》强调：
+· 关键路径替代实现：可将边权取负，在 DAG 上用 DP 求最短路，再将结果取负得到最长路。
+· 差分约束的 SPFA 优化：使用 SLF（Small Label First）或 LLL 优化；对于稀疏图可用优先队列优化版 SPFA（接近 Dijkstra）。
+· 预先拓扑序优化：如果差分约束图是 DAG（无不含超级源点的环），可以直接按拓扑序 DP，O(V+E) 即可求解。
+· 最长路求法：将不等式方向反转（x_i - x_j ≥ c）或用 Bellman-Ford 求最长路（初始化 -INF，松弛方向反转）。
+幻灯片上可见要点：
+· 边权取负求最长路： DAG 上关键路径即最长路，可对边权取负后求最短路。
+· 边权取负求最长路：
+· SPFA 优化： 使用 SLF（Small Label First）优化入队策略。
+· SPFA 优化：
+讲解时放慢关键术语；用 1 个生活类比 + 1 个反例加深印象。</aside>
+</div>
+<!-- ==================== 幻灯片7：总结 ==================== -->
+<div class="slide">
+<h2><span class="icon">🎯</span> 本课小结</h2>
+<table class="compare-table">
+<tr><th>知识点</th><th>核心</th><th>复杂度</th></tr>
+<tr><td>AOE 网</td><td>顶点=事件，边=活动，带权 DAG</td><td>—</td></tr>
+<tr><td>ve（最早时间）</td><td>正向拓扑 DP：ve[v] = max(ve[u] + w)</td><td>O(V+E)</td></tr>
+<tr><td>vl（最晚时间）</td><td>逆向拓扑 DP：vl[u] = min(vl[v] - w)</td><td>O(V+E)</td></tr>
+<tr><td>关键活动判定</td><td>ve[u] + w == vl[v]</td><td>O(E)</td></tr>
+<tr><td>差分约束建模</td><td>x_i - x_j ≤ c → 边 j→i 权 c</td><td>—</td></tr>
+<tr><td>SPFA 求解</td><td>最短路 + 负环检测（cnt ≥ N）</td><td>O(kE)</td></tr>
+<tr><td>超级源点</td><td>向所有节点连权 0 边，保证连通</td><td>O(V)</td></tr>
+</table>
+<div class="info-card" style="margin-top:16px;">
+<p><span class="highlight">一句话总结：</span>关键路径在 DAG 上通过拓扑 DP 求最长路；差分约束将不等式组转化为图中最短路问题，由 SPFA 求解，负环即无解。两者都是「约束 → 图」的建模思维。</p>
+</div>
+
+<aside class="notes">【收尾】回顾本课主线：🎯 本课小结
+对照大纲再过一遍：AOE网、最早最晚时间、差分约束系统、SPFA求解
+板书/口述要点：
+· 一句话总结： 关键路径在 DAG 上通过拓扑 DP 求最长路；差分约束将不等式组转化为图中最短路问题，由 SPFA 求解，负环即无解。两者都是「约束 → 图」的建模思维。
+课后任务：工程最短时间、不等式组求解
+结束前留 2 分钟答疑；布置 1 道小练习检验是否真正掌握。</aside>
+</div>
+</div><!-- /slides-container -->
+<!-- ===== 导航栏 ===== -->
+<div class="nav-bar">
+<button class="nav-btn" id="prevBtn" onclick="navigate(-1)">← 上一页</button>
+<span class="page-indicator" id="pageIndicator">1 / 8</span>
+<button class="nav-btn" id="nextBtn" onclick="navigate(1)">下一页 →</button>
+</div>
 <script>
   const slides = document.querySelectorAll('.slide');
   const totalSlides = slides.length;
@@ -450,7 +531,6 @@ dist[super] = <span class="num">0</span>; q.push(super);
   // 初始化
   showSlide(0);
 </script>
-
 <script src="courseware-ui.js"></script>
 <script src="presenter.js"></script>
 </body>

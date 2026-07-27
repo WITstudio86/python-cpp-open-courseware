@@ -1,8 +1,9 @@
 <!DOCTYPE html>
+
 <html lang="zh-CN">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
 <title>第30课：多重背包与分组背包</title>
 <style>
 /* ========== 基础样式与深色主题 ========== */
@@ -404,189 +405,223 @@ tr:nth-child(even) td {
 </style>
 </head>
 <body>
-
 <!-- ==================== 幻灯片容器 ==================== -->
 <div class="slides-container" id="slidesContainer">
-
 <!-- ====== 幻灯片 1：标题页 ====== -->
 <div class="slide slide-title active" data-index="0">
-    <h1>第30课<br>多重背包与分组背包</h1>
-    <p class="subtitle">多重背包的二进制拆分优化 · 单调队列优化 · 分组背包</p>
-    <div class="tags">
-        <span class="badge">CSP-S 提高级</span>
-        <span class="badge">动态规划</span>
-        <span class="badge">背包问题</span>
-    </div>
-    <p style="margin-top:28px; color:var(--text-secondary);">
+<h1>第30课<br/>多重背包与分组背包</h1>
+<p class="subtitle">多重背包的二进制拆分优化 · 单调队列优化 · 分组背包</p>
+<div class="tags">
+<span class="badge">CSP-S 提高级</span>
+<span class="badge">动态规划</span>
+<span class="badge">背包问题</span>
+</div>
+<p style="margin-top:28px; color:var(--text-secondary);">
         四种背包对比总结 · 经典真题精练 · 易错点剖析
     </p>
-</div>
 
+<aside class="notes">【开场】第 1/8 页 · 多重背包与分组背包
+用 30 秒说明本课目标与学完能做什么，再进入正题。
+大纲考点：多重背包二进制拆分、单调队列优化、分组背包
+配套练习方向：宝物筛选、分组背包变种
+封面关键词：
+· 多重背包的二进制拆分优化 · 单调队列优化 · 分组背包
+· 四种背包对比总结 · 经典真题精练 · 易错点剖析
+互动：问学生「今天最想搞清楚什么？」，收 1–2 个期待。</aside>
+</div>
 <!-- ====== 幻灯片 2：多重背包问题定义 ====== -->
 <div class="slide" data-index="1">
-    <h1>多重背包问题定义</h1>
-
-    <h2>问题描述</h2>
-    <p>有 <span class="highlight">n</span> 种物品和一个容量为 <span class="highlight">V</span> 的背包。</p>
-    <p>第 i 种物品最多有 <span class="highlight">c[i]</span> 件可用，每件重量 <span class="highlight">w[i]</span>，价值 <span class="highlight">v[i]</span>。</p>
-    <p>求在不超过容量的前提下，能获得的最大总价值。</p>
-
-    <h2>朴素做法 O(V · Σc[i])</h2>
-    <p>将每种物品拆成 c[i] 个单独物品，转化为 01 背包：</p>
-<pre><span class="kw">for</span> (<span class="kw">int</span> i = <span class="nu">1</span>; i <= n; i++)
-    <span class="kw">for</span> (<span class="kw">int</span> j = V; j >= w[i]; j--)
-        <span class="kw">for</span> (<span class="kw">int</span> k = <span class="nu">0</span>; k <= c[i] && k*w[i] <= j; k++)
+<h1>多重背包问题定义</h1>
+<h2>问题描述</h2>
+<p>有 <span class="highlight">n</span> 种物品和一个容量为 <span class="highlight">V</span> 的背包。</p>
+<p>第 i 种物品最多有 <span class="highlight">c[i]</span> 件可用，每件重量 <span class="highlight">w[i]</span>，价值 <span class="highlight">v[i]</span>。</p>
+<p>求在不超过容量的前提下，能获得的最大总价值。</p>
+<h2>朴素做法 O(V · Σc[i])</h2>
+<p>将每种物品拆成 c[i] 个单独物品，转化为 01 背包：</p>
+<pre><span class="kw">for</span> (<span class="kw">int</span> i = <span class="nu">1</span>; i &lt;= n; i++)
+    <span class="kw">for</span> (<span class="kw">int</span> j = V; j &gt;= w[i]; j--)
+        <span class="kw">for</span> (<span class="kw">int</span> k = <span class="nu">0</span>; k &lt;= c[i] &amp;&amp; k*w[i] &lt;= j; k++)
             dp[j] = max(dp[j], dp[j - k*w[i]] + k*v[i]);</pre>
-
-    <div class="note">
-        <strong>问题：</strong>当 Σc[i] 很大（如 c[i] 可达 10<sup>5</sup>）时，
+<div class="note">
+<strong>问题：</strong>当 Σc[i] 很大（如 c[i] 可达 10<sup>5</sup>）时，
         时间复杂度 O(V · Σc[i]) 会严重超时，必须优化。
     </div>
+<h2>优化方向</h2>
+<ul>
+<li><span class="highlight">二进制拆分优化</span>：O(V · Σ log c[i])，实现简单</li>
+<li><span class="highlight">单调队列优化</span>：O(V · n)，理论最优</li>
+</ul>
 
-    <h2>优化方向</h2>
-    <ul>
-        <li><span class="highlight">二进制拆分优化</span>：O(V · Σ log c[i])，实现简单</li>
-        <li><span class="highlight">单调队列优化</span>：O(V · n)，理论最优</li>
-    </ul>
+<aside class="notes">【讲解】多重背包问题定义
+结合讲义《2.1 多重背包问题定义》强调：
+· 问题描述：有 n 种物品和一个容量为 V 的背包。第 i 种物品最多有 c[i] 件可用，每件重量为 w[i]，价值为 v[i]。求解将哪些物品装入背包可使物品重量总和不超过背包容量，且价值总和最大。
+· 朴素做法（O(V · Σc[i])）：
+· 将每种物品拆成 c[i] 个单独的物品，转化为 01 背包问题：
+· for (int i = 1; i &lt;= n; i++) {
+· for (int j = V; j &gt;= w[i]; j--) {
+幻灯片上可见要点：
+· 有 n 种物品和一个容量为 V 的背包。
+· 第 i 种物品最多有 c[i] 件可用，每件重量 w[i] ，价值 v[i] 。
+· 求在不超过容量的前提下，能获得的最大总价值。
+· 将每种物品拆成 c[i] 个单独物品，转化为 01 背包：
+讲解时放慢关键术语；用 1 个生活类比 + 1 个反例加深印象。
+本课大纲考点（可适时点题）：多重背包二进制拆分、单调队列优化、分组背包</aside>
 </div>
-
 <!-- ====== 幻灯片 3：二进制拆分优化 ====== -->
 <div class="slide" data-index="2">
-    <h1>二进制拆分优化</h1>
+<h1>二进制拆分优化</h1>
+<h2>核心思想</h2>
+<p>将 c[i] 拆为若干"打包物品"，使它们能组合出 <span class="highlight">0 ~ c[i]</span> 之间的任意整数。</p>
+<h3>拆分方法</h3>
+<p class="formula">c[i] = 2⁰ + 2¹ + 2² + ... + 2ᵏ + r</p>
+<p>其中 <span class="formula">2<sup>k+1</sup> - 1 ≤ c[i]</span>，余数 <span class="formula">r = c[i] - (2<sup>k+1</sup> - 1)</span></p>
+<h3>示例：c[i] = 13</h3>
+<table>
+<tr><th>步</th><th>k</th><th>打包重量</th><th>打包价值</th><th>剩余</th></tr>
+<tr><td>1</td><td>1</td><td>w</td><td>v</td><td>12</td></tr>
+<tr><td>2</td><td>2</td><td>2w</td><td>2v</td><td>10</td></tr>
+<tr><td>3</td><td>4</td><td>4w</td><td>4v</td><td>6</td></tr>
+<tr><td>4</td><td>余数</td><td>6w</td><td>6v</td><td>0</td></tr>
+</table>
+<p>拆分结果：1件、2件、4件、6件打包 → 共 <span class="highlight">4 个 01 背包物品</span></p>
+<p>验证：选 11 件 = 1+4+6 ✓ | 选 7 件 = 1+2+4 ✓</p>
+<h3>复杂度</h3>
+<p class="highlight">O(V · Σ log c[i])</p>
+<p>拆分后物品数 ≈ Σ ⌈log₂(c[i]+1)⌉，远小于 Σc[i]</p>
 
-    <h2>核心思想</h2>
-    <p>将 c[i] 拆为若干"打包物品"，使它们能组合出 <span class="highlight">0 ~ c[i]</span> 之间的任意整数。</p>
-
-    <h3>拆分方法</h3>
-    <p class="formula">c[i] = 2⁰ + 2¹ + 2² + ... + 2ᵏ + r</p>
-    <p>其中 <span class="formula">2<sup>k+1</sup> - 1 ≤ c[i]</span>，余数 <span class="formula">r = c[i] - (2<sup>k+1</sup> - 1)</span></p>
-
-    <h3>示例：c[i] = 13</h3>
-    <table>
-        <tr><th>步</th><th>k</th><th>打包重量</th><th>打包价值</th><th>剩余</th></tr>
-        <tr><td>1</td><td>1</td><td>w</td><td>v</td><td>12</td></tr>
-        <tr><td>2</td><td>2</td><td>2w</td><td>2v</td><td>10</td></tr>
-        <tr><td>3</td><td>4</td><td>4w</td><td>4v</td><td>6</td></tr>
-        <tr><td>4</td><td>余数</td><td>6w</td><td>6v</td><td>0</td></tr>
-    </table>
-    <p>拆分结果：1件、2件、4件、6件打包 → 共 <span class="highlight">4 个 01 背包物品</span></p>
-    <p>验证：选 11 件 = 1+4+6 ✓ | 选 7 件 = 1+2+4 ✓</p>
-
-    <h3>复杂度</h3>
-    <p class="highlight">O(V · Σ log c[i])</p>
-    <p>拆分后物品数 ≈ Σ ⌈log₂(c[i]+1)⌉，远小于 Σc[i]</p>
+<aside class="notes">【讲解】二进制拆分优化
+结合讲义《2.2 二进制拆分优化 O(V · Σ log c[i])》强调：
+· 将 c[i] 件物品拆成若干件「打包物品」，使得这些打包物品能组合出 0 到 c[i] 之间的任意件数。
+· 拆分方法：将 c[i] 拆分为：
+· c[i] = 2^0 + 2^1 + 2^2 + \dots + 2^k + r
+· 其中 $k$ 是满足 $2^0 + 2^1 + \dots + 2^k = 2^{k+1} - 1 \le c[i]$ 的最大整数，剩余 $r = c[i] - (2^{k+1} - 1)$，且满足 $0 \le r &lt; 2^{k+1}$。
+· 拆分后生成的新物品：
+幻灯片上可见要点：
+· 将 c[i] 拆为若干"打包物品"，使它们能组合出 0 ~ c[i] 之间的任意整数。
+· c[i] = 2⁰ + 2¹ + 2² + ... + 2ᵏ + r
+· 其中 2 k+1 - 1 ≤ c[i] ，余数 r = c[i] - (2 k+1 - 1)
+· 拆分结果：1件、2件、4件、6件打包 → 共 4 个 01 背包物品
+讲解时放慢关键术语；用 1 个生活类比 + 1 个反例加深印象。</aside>
 </div>
-
 <!-- ====== 幻灯片 4：单调队列优化 ====== -->
 <div class="slide" data-index="3">
-    <h1>单调队列优化原理</h1>
-
-    <h2>状态转移分析</h2>
-    <p class="formula">dp[j] = max{ dp[j - k·w] + k·v } &nbsp; (0 ≤ k ≤ c, k·w ≤ j)</p>
-
-    <h3>同余分组</h3>
-    <p>令 r = j mod w，则同组容量为：<span class="formula">r, r+w, r+2w, r+3w, ...</span></p>
-    <p>组内状态转移只依赖同组前面的状态，各组独立计算。</p>
-
-    <h3>滑动窗口 + 单调队列</h3>
-    <p>设 <span class="formula">j = r + x·w</span>，候选值：</p>
-    <p class="formula">candidate[t] = g[r + t·w] − t·v</p>
-    <p>则：</p>
-    <p class="formula">dp[r + x·w] = max{ candidate[t] } + x·v</p>
-    <p style="font-size:0.9em; color:var(--text-secondary);">其中 t ∈ [x−c, x]，g[] 为上一轮 dp 状态</p>
-
-    <h3>队列操作</h3>
-    <ul>
-        <li><span class="highlight">入队：</span>将新 candidate[x] 入队前，弹出队尾所有 ≤ 它的元素（维护递减）</li>
-        <li><span class="highlight">出队：</span>队首下标 < x−c 时弹出（窗口滑动，超出范围）</li>
-        <li><span class="highlight">取值：</span>队首即窗口内最大值，dp[j] = candidate[队首] + x·v</li>
-    </ul>
-
-    <div class="note">
-        <strong>复杂度 O(V·n)：</strong>每个容量被每个物品处理常数次（入队/出队各至多一次）
+<h1>单调队列优化原理</h1>
+<h2>状态转移分析</h2>
+<p class="formula">dp[j] = max{ dp[j - k·w] + k·v }   (0 ≤ k ≤ c, k·w ≤ j)</p>
+<h3>同余分组</h3>
+<p>令 r = j mod w，则同组容量为：<span class="formula">r, r+w, r+2w, r+3w, ...</span></p>
+<p>组内状态转移只依赖同组前面的状态，各组独立计算。</p>
+<h3>滑动窗口 + 单调队列</h3>
+<p>设 <span class="formula">j = r + x·w</span>，候选值：</p>
+<p class="formula">candidate[t] = g[r + t·w] − t·v</p>
+<p>则：</p>
+<p class="formula">dp[r + x·w] = max{ candidate[t] } + x·v</p>
+<p style="font-size:0.9em; color:var(--text-secondary);">其中 t ∈ [x−c, x]，g[] 为上一轮 dp 状态</p>
+<h3>队列操作</h3>
+<ul>
+<li><span class="highlight">入队：</span>将新 candidate[x] 入队前，弹出队尾所有 ≤ 它的元素（维护递减）</li>
+<li><span class="highlight">出队：</span>队首下标 &lt; x−c 时弹出（窗口滑动，超出范围）</li>
+<li><span class="highlight">取值：</span>队首即窗口内最大值，dp[j] = candidate[队首] + x·v</li>
+</ul>
+<div class="note">
+<strong>复杂度 O(V·n)：</strong>每个容量被每个物品处理常数次（入队/出队各至多一次）
     </div>
-</div>
 
+<aside class="notes">【讲解】单调队列优化原理
+本页要点（照着讲即可）：
+· dp[j] = max{ dp[j - k·w] + k·v } (0 ≤ k ≤ c, k·w ≤ j)
+· 令 r = j mod w，则同组容量为： r, r+w, r+2w, r+3w, ...
+· 组内状态转移只依赖同组前面的状态，各组独立计算。
+· 设 j = r + x·w ，候选值：
+· candidate[t] = g[r + t·w] − t·v
+· dp[r + x·w] = max{ candidate[t] } + x·v
+讲解时放慢关键术语；用 1 个生活类比 + 1 个反例加深印象。</aside>
+</div>
 <!-- ====== 幻灯片 5：分组背包 ====== -->
 <div class="slide" data-index="4">
-    <h1>分组背包</h1>
-
-    <h2>问题定义</h2>
-    <p>有 n <span class="highlight">组</span>物品，<span class="highlight">每组最多选一件</span>（也可不选）。求最大价值。</p>
-
-    <h2>标准代码（三层循环）</h2>
+<h1>分组背包</h1>
+<h2>问题定义</h2>
+<p>有 n <span class="highlight">组</span>物品，<span class="highlight">每组最多选一件</span>（也可不选）。求最大价值。</p>
+<h2>标准代码（三层循环）</h2>
 <pre><span class="kw">for</span> (<span class="kw">int</span> i = <span class="nu">0</span>; i &lt; n; i++)              <span class="cm">// 外层：枚举组</span>
     <span class="kw">for</span> (<span class="kw">int</span> j = V; j &gt;= <span class="nu">0</span>; j--)          <span class="cm">// 中层：容量逆序 V→0</span>
         <span class="kw">for</span> (<span class="kw">auto</span>&amp; item : group[i])      <span class="cm">// 内层：组内物品</span>
             <span class="kw">if</span> (j &gt;= item.w)
                 dp[j] = max(dp[j], dp[j - item.w] + item.v);</pre>
-
-    <h2>为什么中层必须逆序？</h2>
-    <div class="note">
-        <p>如果 <span class="highlight">正序</span>（j=0→V）：物品 k 更新 dp[j] 后，
+<h2>为什么中层必须逆序？</h2>
+<div class="note">
+<p>如果 <span class="highlight">正序</span>（j=0→V）：物品 k 更新 dp[j] 后，
         更大的 j' 可能再次使用同组物品（dp[j' - w[k']] 已含物品 k），
         导致<span class="highlight">同组选多件</span>，违反约束。</p>
-        <p style="margin-top:6px;"><span class="highlight">逆序</span>（j=V→0）：dp[j - w[k]] 尚未被当前组更新，
+<p style="margin-top:6px;"><span class="highlight">逆序</span>（j=V→0）：dp[j - w[k]] 尚未被当前组更新，
         保证每组最多选一件。</p>
-    </div>
-
-    <h2>类比理解</h2>
-    <p>内层循环本质是 <span class="highlight">同组物品间的"竞争"</span>——在同一个容量 j 上，
-    多个物品各自尝试更新 dp[j]，最终只有一个能"占领"该状态。</p>
 </div>
+<h2>类比理解</h2>
+<p>内层循环本质是 <span class="highlight">同组物品间的"竞争"</span>——在同一个容量 j 上，
+    多个物品各自尝试更新 dp[j]，最终只有一个能"占领"该状态。</p>
 
+<aside class="notes">【讲解】分组背包
+讲义提要：---
+本页要点（照着讲即可）：
+· 有 n 组 物品， 每组最多选一件 （也可不选）。求最大价值。
+· 如果 正序 （j=0→V）：物品 k 更新 dp[j] 后，
+ 更大的 j' 可能再次使用同组物品（dp[j' - w[k']] 已含物品 k），
+ 导致 同组选多件 ，违反约束。
+· 逆序 （j=V→0）：dp[j - w[k]] 尚未被当前组更新，
+ 保证每组最多选一件。
+· 内层循环本质是 同组物品间的"竞争" ——在同一个容量 j 上，
+ 多个物品各自尝试更新 dp[j]，最终只有一个能"占领"该状态。
+讲解时放慢关键术语；用 1 个生活类比 + 1 个反例加深印象。</aside>
+</div>
 <!-- ====== 幻灯片 6：四种背包对比总结表 ====== -->
 <div class="slide" data-index="5">
-    <h1>四种背包对比总结</h1>
-
-    <table>
-        <tr>
-            <th>背包类型</th>
-            <th>物品限制</th>
-            <th>容量循环方向</th>
-            <th>时间复杂度</th>
-            <th>空间</th>
-        </tr>
-        <tr>
-            <td><strong>01背包</strong></td>
-            <td>每种最多选1次</td>
-            <td><span class="highlight">逆序 V→0</span></td>
-            <td>O(V·n)</td>
-            <td>O(V)</td>
-        </tr>
-        <tr>
-            <td><strong>完全背包</strong></td>
-            <td>每种可选无限次</td>
-            <td><span style="color:#2ecc71;">正序 0→V</span></td>
-            <td>O(V·n)</td>
-            <td>O(V)</td>
-        </tr>
-        <tr>
-            <td><strong>多重背包</strong></td>
-            <td>第 i 种最多 c[i] 件</td>
-            <td>逆序（拆分后）</td>
-            <td>O(V·Σlog c[i]) 二进制<br>O(V·n) 单调队列</td>
-            <td>O(V)</td>
-        </tr>
-        <tr>
-            <td><strong>分组背包</strong></td>
-            <td>每组最多选1件</td>
-            <td><span class="highlight">逆序 V→0</span></td>
-            <td>O(V·Σsize[i])</td>
-            <td>O(V)</td>
-        </tr>
-    </table>
-
-    <h2>记忆口诀</h2>
-    <div class="note">
-        <p><strong>「01 逆，完全正，分组外层组中层逆，多重拆了再 01」</strong></p>
-        <ul style="margin-top:8px; margin-bottom:0;">
-            <li>逆序 → 保证每个物品只用一次（依赖上一轮状态）</li>
-            <li>正序 → 允许物品多次使用（依赖本轮已更新状态）</li>
-        </ul>
-    </div>
-
-    <h2>循环顺序对比</h2>
+<h1>四种背包对比总结</h1>
+<table>
+<tr>
+<th>背包类型</th>
+<th>物品限制</th>
+<th>容量循环方向</th>
+<th>时间复杂度</th>
+<th>空间</th>
+</tr>
+<tr>
+<td><strong>01背包</strong></td>
+<td>每种最多选1次</td>
+<td><span class="highlight">逆序 V→0</span></td>
+<td>O(V·n)</td>
+<td>O(V)</td>
+</tr>
+<tr>
+<td><strong>完全背包</strong></td>
+<td>每种可选无限次</td>
+<td><span style="color:#2ecc71;">正序 0→V</span></td>
+<td>O(V·n)</td>
+<td>O(V)</td>
+</tr>
+<tr>
+<td><strong>多重背包</strong></td>
+<td>第 i 种最多 c[i] 件</td>
+<td>逆序（拆分后）</td>
+<td>O(V·Σlog c[i]) 二进制<br/>O(V·n) 单调队列</td>
+<td>O(V)</td>
+</tr>
+<tr>
+<td><strong>分组背包</strong></td>
+<td>每组最多选1件</td>
+<td><span class="highlight">逆序 V→0</span></td>
+<td>O(V·Σsize[i])</td>
+<td>O(V)</td>
+</tr>
+</table>
+<h2>记忆口诀</h2>
+<div class="note">
+<p><strong>「01 逆，完全正，分组外层组中层逆，多重拆了再 01」</strong></p>
+<ul style="margin-top:8px; margin-bottom:0;">
+<li>逆序 → 保证每个物品只用一次（依赖上一轮状态）</li>
+<li>正序 → 允许物品多次使用（依赖本轮已更新状态）</li>
+</ul>
+</div>
+<h2>循环顺序对比</h2>
 <pre><span class="cm">// 01背包：外层物品，内层逆序容量</span>
 <span class="kw">for</span>(i) <span class="kw">for</span>(j=V..w) dp[j]=max(dp[j], dp[j-w]+v);
 
@@ -595,93 +630,115 @@ tr:nth-child(even) td {
 
 <span class="cm">// 分组背包：外层组，中层逆序容量，内层组内物品</span>
 <span class="kw">for</span>(组) <span class="kw">for</span>(j=V..0) <span class="kw">for</span>(k in 组) dp[j]=max(dp[j], dp[j-w[k]]+v[k]);</pre>
-</div>
 
+<aside class="notes">【收尾】回顾本课主线：四种背包对比总结
+对照大纲再过一遍：多重背包二进制拆分、单调队列优化、分组背包
+板书/口述要点：
+· 01背包
+· 完全背包
+· 多重背包
+· 分组背包
+· 「01 逆，完全正，分组外层组中层逆，多重拆了再 01」
+· 逆序 → 保证每个物品只用一次（依赖上一轮状态）
+课后任务：宝物筛选、分组背包变种
+结束前留 2 分钟答疑；布置 1 道小练习检验是否真正掌握。</aside>
+</div>
 <!-- ====== 幻灯片 7：真题精练 ====== -->
 <div class="slide" data-index="6">
-    <h1>真题精练</h1>
-
-    <h2>题1：宝物筛选（多重背包）</h2>
-    <p><strong>来源：</strong>Luogu P1776 | N ≤ 100, V ≤ 40000, c[i] ≤ 100</p>
-    <p>N 种宝物，容量 V，每种有重量 w、价值 v、数量 c，求最大价值。</p>
-    <p><strong>解法：</strong>二进制拆分 → 01背包。<span class="highlight">O(V · N · log c) ≈ 2.8×10⁷</span></p>
-    <p><strong>核心技巧：</strong>拆分时不漏余数 r，c·w ≥ V 时转完全背包剪枝。</p>
-
+<h1>真题精练</h1>
+<h2>题1：宝物筛选（多重背包）</h2>
+<p><strong>来源：</strong>Luogu P1776 | N ≤ 100, V ≤ 40000, c[i] ≤ 100</p>
+<p>N 种宝物，容量 V，每种有重量 w、价值 v、数量 c，求最大价值。</p>
+<p><strong>解法：</strong>二进制拆分 → 01背包。<span class="highlight">O(V · N · log c) ≈ 2.8×10⁷</span></p>
+<p><strong>核心技巧：</strong>拆分时不漏余数 r，c·w ≥ V 时转完全背包剪枝。</p>
 <pre><span class="cm">// 二进制拆分核心</span>
-<span class="kw">for</span> (<span class="kw">int</span> k = <span class="nu">1</span>; k <= cnt; k &lt;&lt;= <span class="nu">1</span>) {
+<span class="kw">for</span> (<span class="kw">int</span> k = <span class="nu">1</span>; k &lt;= cnt; k &lt;&lt;= <span class="nu">1</span>) {
     goods.push_back({w * k, v * k});
     cnt -= k;
 }
 <span class="kw">if</span> (cnt &gt; <span class="nu">0</span>) goods.push_back({w * cnt, v * cnt});</pre>
-
-    <h2>题2：选拔队员（分组背包）</h2>
-    <p>N 个班级，预算 V，每班若干候选人（费用 w, 能力 v），每班最多选1人。</p>
-    <p><strong>解法：</strong>标准分组背包。<span class="highlight">O(N · V · m) ≈ 10⁷</span></p>
-    <p style="color:var(--accent-light);"><strong>关键：</strong>中层容量必须逆序，保证同组最多选一件。</p>
-
+<h2>题2：选拔队员（分组背包）</h2>
+<p>N 个班级，预算 V，每班若干候选人（费用 w, 能力 v），每班最多选1人。</p>
+<p><strong>解法：</strong>标准分组背包。<span class="highlight">O(N · V · m) ≈ 10⁷</span></p>
+<p style="color:var(--accent-light);"><strong>关键：</strong>中层容量必须逆序，保证同组最多选一件。</p>
 <pre><span class="kw">for</span> (<span class="kw">int</span> i = <span class="nu">0</span>; i &lt; n; i++)           <span class="cm">// 每组</span>
     <span class="kw">for</span> (<span class="kw">int</span> j = V; j &gt;= <span class="nu">0</span>; j--)       <span class="cm">// 逆序容量</span>
         <span class="kw">for</span> (<span class="kw">auto</span>&amp; [w, v] : group[i])  <span class="cm">// 组内竞争</span>
             <span class="kw">if</span> (j &gt;= w) dp[j] = max(dp[j], dp[j - w] + v);</pre>
-</div>
 
+<aside class="notes">【讲解】真题精练
+本页要点（照着讲即可）：
+· 来源： Luogu P1776 | N ≤ 100, V ≤ 40000, c[i] ≤ 100
+· N 种宝物，容量 V，每种有重量 w、价值 v、数量 c，求最大价值。
+· 解法： 二进制拆分 → 01背包。 O(V · N · log c) ≈ 2.8×10⁷
+· 核心技巧： 拆分时不漏余数 r，c·w ≥ V 时转完全背包剪枝。
+· 核心技巧：
+· N 个班级，预算 V，每班若干候选人（费用 w, 能力 v），每班最多选1人。
+练习页节奏：先独立想 1 分钟 → 再点拨思路 → 最后对答案讲为什么。
+可联系：宝物筛选、分组背包变种</aside>
+</div>
 <!-- ====== 幻灯片 8：本课小结 ====== -->
 <div class="slide" data-index="7">
-    <h1>本课小结</h1>
-
-    <h2>核心要点回顾</h2>
-    <ol>
-        <li><span class="highlight">多重背包</span>是 01 背包的推广，每种物品有数量限制 c[i]</li>
-        <li><span class="highlight">二进制拆分优化：</span>将 c[i] 拆为 1, 2, 4, …, 2ᵏ, r，
+<h1>本课小结</h1>
+<h2>核心要点回顾</h2>
+<ol>
+<li><span class="highlight">多重背包</span>是 01 背包的推广，每种物品有数量限制 c[i]</li>
+<li><span class="highlight">二进制拆分优化：</span>将 c[i] 拆为 1, 2, 4, …, 2ᵏ, r，
             转化为 O(log c[i]) 个 01 背包物品，复杂度 O(V · Σ log c[i])</li>
-        <li><span class="highlight">单调队列优化：</span>同余分组 + 滑动窗口，
+<li><span class="highlight">单调队列优化：</span>同余分组 + 滑动窗口，
             复杂度 O(V·n)，理论最优但实现较复杂，
             注意 <span class="formula">−t·v</span> 和 <span class="formula">+x·v</span> 偏移量</li>
-        <li><span class="highlight">分组背包：</span>每组最多选一件，
+<li><span class="highlight">分组背包：</span>每组最多选一件，
             <span style="color:#e94560;">关键特征：容量必须逆序！</span></li>
-    </ol>
-
-    <h2>循环方向规律</h2>
-    <table style="margin-top:12px;">
-        <tr><th>背包类型</th><th>循环方向</th><th>原因</th></tr>
-        <tr><td>01背包</td><td class="highlight">逆序 V→0</td><td>保证每件只用一次</td></tr>
-        <tr><td>完全背包</td><td style="color:#2ecc71;">正序 0→V</td><td>允许无限次使用</td></tr>
-        <tr><td>分组背包</td><td class="highlight">逆序 V→0</td><td>保证每组最多一件</td></tr>
-        <tr><td>多重背包</td><td>逆序（拆分后做01）</td><td>拆后等价于01背包</td></tr>
-    </table>
-
-    <h2>易错提醒</h2>
-    <div class="note">
-        <ul style="margin:0;">
-            <li>二进制拆分：<strong>不能漏掉余数 r</strong>（cnt > 0 时的处理）</li>
-            <li>分组背包：<strong>中层容量必须逆序</strong>，防止同组多选</li>
-            <li>单调队列：注意 candidate 的 <strong>−t·v 偏移</strong>和最后 <strong>+x·v 回补</strong></li>
-            <li>可行剪枝：c·w ≥ V 时可转为完全背包处理</li>
-        </ul>
-    </div>
-
-    <p style="text-align:center; margin-top:30px; color:var(--accent-light); font-size:1.15em;">
+</ol>
+<h2>循环方向规律</h2>
+<table style="margin-top:12px;">
+<tr><th>背包类型</th><th>循环方向</th><th>原因</th></tr>
+<tr><td>01背包</td><td class="highlight">逆序 V→0</td><td>保证每件只用一次</td></tr>
+<tr><td>完全背包</td><td style="color:#2ecc71;">正序 0→V</td><td>允许无限次使用</td></tr>
+<tr><td>分组背包</td><td class="highlight">逆序 V→0</td><td>保证每组最多一件</td></tr>
+<tr><td>多重背包</td><td>逆序（拆分后做01）</td><td>拆后等价于01背包</td></tr>
+</table>
+<h2>易错提醒</h2>
+<div class="note">
+<ul style="margin:0;">
+<li>二进制拆分：<strong>不能漏掉余数 r</strong>（cnt &gt; 0 时的处理）</li>
+<li>分组背包：<strong>中层容量必须逆序</strong>，防止同组多选</li>
+<li>单调队列：注意 candidate 的 <strong>−t·v 偏移</strong>和最后 <strong>+x·v 回补</strong></li>
+<li>可行剪枝：c·w ≥ V 时可转为完全背包处理</li>
+</ul>
+</div>
+<p style="text-align:center; margin-top:30px; color:var(--accent-light); font-size:1.15em;">
         掌握循环方向规律，灵活运用优化策略，轻松应对背包变种问题！
     </p>
+
+<aside class="notes">【收尾】回顾本课主线：本课小结
+对照大纲再过一遍：多重背包二进制拆分、单调队列优化、分组背包
+板书/口述要点：
+· 多重背包 是 01 背包的推广，每种物品有数量限制 c[i]
+· 二进制拆分优化： 将 c[i] 拆为 1, 2, 4, …, 2ᵏ, r，
+ 转化为 O(log c[i]) 个 01 背包物品，复杂度 O(V · Σ log c[i])
+· 单调队列优化： 同余分组 + 滑动窗口，
+ 复杂度 O(V·n)，理论最优但实现较复杂，
+ 注意 −t·v 和 +x·v 偏移量
+· 分组背包： 每组最多选一件， 关键特征：容量必须逆序！
+· 二进制拆分： 不能漏掉余数 r （cnt &gt; 0 时的处理）
+· 不能漏掉余数 r
+课后任务：宝物筛选、分组背包变种
+结束前留 2 分钟答疑；布置 1 道小练习检验是否真正掌握。</aside>
 </div>
-
 </div><!-- /slides-container -->
-
 <!-- ==================== 导航栏 ==================== -->
 <div class="nav-bar">
-    <button class="nav-btn" id="prevBtn" onclick="changeSlide(-1)">
+<button class="nav-btn" id="prevBtn" onclick="changeSlide(-1)">
         ← 上一页
     </button>
-
-    <div class="page-indicator" id="pageIndicator"></div>
-
-    <span class="page-num" id="pageNum">1 / 8</span>
-
-    <button class="nav-btn" id="nextBtn" onclick="changeSlide(1)">
+<div class="page-indicator" id="pageIndicator"></div>
+<span class="page-num" id="pageNum">1 / 8</span>
+<button class="nav-btn" id="nextBtn" onclick="changeSlide(1)">
         下一页 →
     </button>
 </div>
-
 <!-- ==================== 脚本 ==================== -->
 <script>
 (function() {
@@ -795,7 +852,6 @@ tr:nth-child(even) td {
     updateSlide(0);
 })();
 </script>
-
 <script src="courseware-ui.js"></script>
 <script src="presenter.js"></script>
 </body>

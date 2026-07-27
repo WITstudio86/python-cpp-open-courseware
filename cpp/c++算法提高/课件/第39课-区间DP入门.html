@@ -1,8 +1,9 @@
 <!DOCTYPE html>
+
 <html lang="zh-CN">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
 <title>第39课：区间DP入门</title>
 <style>
   :root {
@@ -270,178 +271,213 @@
 </style>
 </head>
 <body>
-
 <div class="container">
-  <!-- ===== Slide 1: Title ===== -->
-  <div class="slide active" data-slide="0">
-    <h1>第39课：区间DP入门</h1>
-    <div style="text-align:center; margin: 2rem 0;">
-      <p style="font-size:1.2rem;">动态规划专题 · 区间模型</p>
-      <p style="color:var(--text-dim); margin-top:0.5rem;">
+<!-- ===== Slide 1: Title ===== -->
+<div class="slide active" data-slide="0">
+<h1>第39课：区间DP入门</h1>
+<div style="text-align:center; margin: 2rem 0;">
+<p style="font-size:1.2rem;">动态规划专题 · 区间模型</p>
+<p style="color:var(--text-dim); margin-top:0.5rem;">
         从区间合并的角度理解动态规划
       </p>
-    </div>
-    <div style="text-align:center; margin-top:2.5rem;">
-      <div style="display:inline-block; background:rgba(233,69,96,0.08); border-radius:12px; padding:1.5rem 2rem;">
-        <p style="font-size:1.05rem; margin-bottom:0.8rem;">本课重点</p>
-        <ul style="list-style:none; padding:0; text-align:left;">
-          <li>✦ 区间DP的核心思想</li>
-          <li>✦ 状态定义与枚举顺序</li>
-          <li>✦ 石子合并 &amp; 矩阵链乘</li>
-        </ul>
-      </div>
-    </div>
-  </div>
+</div>
+<div style="text-align:center; margin-top:2.5rem;">
+<div style="display:inline-block; background:rgba(233,69,96,0.08); border-radius:12px; padding:1.5rem 2rem;">
+<p style="font-size:1.05rem; margin-bottom:0.8rem;">本课重点</p>
+<ul style="list-style:none; padding:0; text-align:left;">
+<li>✦ 区间DP的核心思想</li>
+<li>✦ 状态定义与枚举顺序</li>
+<li>✦ 石子合并 &amp; 矩阵链乘</li>
+</ul>
+</div>
+</div>
 
-  <!-- ===== Slide 2: Core Concept ===== -->
-  <div class="slide" data-slide="1">
-    <h2>区间DP核心思想</h2>
-
-    <div class="card">
-      <div class="card-title">核心思路</div>
-      <p>
-        大区间的最优解由<strong>小区间的最优解</strong>合并而来。<br>
+<aside class="notes">【开场】第 1/5 页 · 区间DP入门
+用 30 秒说明本课目标与学完能做什么，再进入正题。
+大纲考点：区间DP、区间合并
+配套练习方向：石子合并、矩阵链乘
+封面关键词：
+· 动态规划专题 · 区间模型
+· 从区间合并的角度理解动态规划
+· 本课重点
+· ✦ 区间DP的核心思想
+互动：问学生「今天最想搞清楚什么？」，收 1–2 个期待。</aside>
+</div>
+<!-- ===== Slide 2: Core Concept ===== -->
+<div class="slide" data-slide="1">
+<h2>区间DP核心思想</h2>
+<div class="card">
+<div class="card-title">核心思路</div>
+<p>
+        大区间的最优解由<strong>小区间的最优解</strong>合并而来。<br/>
         枚举区间内的<strong>分割点 k</strong>，将 <span class="icode">[i, j]</span> 分成
         <span class="icode">[i, k]</span> 和 <span class="icode">[k+1, j]</span> 两部分求解。
       </p>
-    </div>
-
-    <h3>状态定义 &amp; 转移</h3>
-    <pre><span class="comment">// dp[i][j] = 区间 [i, j] 上的最优值</span>
+</div>
+<h3>状态定义 &amp; 转移</h3>
+<pre><span class="comment">// dp[i][j] = 区间 [i, j] 上的最优值</span>
 <span class="keyword">for</span> (<span class="type">int</span> k = i; k &lt; j; k++)
     dp[i][j] = <span class="func">min</span>(dp[i][j], dp[i][k] + dp[k+<span class="number">1</span>][j] + cost);</pre>
-
-    <h3>枚举顺序（关键！）</h3>
-    <div class="diagram">
-      第1层：len = 2 → [1,2] [2,3] [3,4] [4,5]<br>
-      第2层：len = 3 → [1,3] [2,4] [3,5]<br>
-      第3层：len = 4 → [1,4] [2,5]<br>
+<h3>枚举顺序（关键！）</h3>
+<div class="diagram">
+      第1层：len = 2 → [1,2] [2,3] [3,4] [4,5]<br/>
+      第2层：len = 3 → [1,3] [2,4] [3,5]<br/>
+      第3层：len = 4 → [1,4] [2,5]<br/>
       第4层：len = 5 → [1,5]
     </div>
-
-    <div class="highlight-box">
-      <strong>保证：</strong>计算 <span class="icode">dp[i][j]</span> 时，所有更短的子区间都已计算完毕。
+<div class="highlight-box">
+<strong>保证：</strong>计算 <span class="icode">dp[i][j]</span> 时，所有更短的子区间都已计算完毕。
     </div>
-  </div>
 
-  <!-- ===== Slide 3: Stone Merge ===== -->
-  <div class="slide" data-slide="2">
-    <h2>石子合并</h2>
-
-    <p><strong>问题：</strong>n 堆石子排成一行，每次合并相邻两堆，代价为两堆石子数之和。求最小总代价。</p>
-
-    <h3>状态转移</h3>
-    <pre><span class="comment">// dp[i][j] = 合并区间 [i,j] 的最小代价</span>
+<aside class="notes">【讲解】区间DP核心思想
+本页要点（照着讲即可）：
+· 大区间的最优解由 小区间的最优解 合并而来。 枚举区间内的 分割点 k ，将 [i, j] 分成 [i, k] 和 [k+1, j] 两部分求解。
+· 小区间的最优解
+· 分割点 k
+讲解时放慢关键术语；用 1 个生活类比 + 1 个反例加深印象。
+本课大纲考点（可适时点题）：区间DP、区间合并</aside>
+</div>
+<!-- ===== Slide 3: Stone Merge ===== -->
+<div class="slide" data-slide="2">
+<h2>石子合并</h2>
+<p><strong>问题：</strong>n 堆石子排成一行，每次合并相邻两堆，代价为两堆石子数之和。求最小总代价。</p>
+<h3>状态转移</h3>
+<pre><span class="comment">// dp[i][j] = 合并区间 [i,j] 的最小代价</span>
 dp[i][j] = <span class="func">min</span>(dp[i][k] + dp[k+<span class="number">1</span>][j]) + <span class="func">sum</span>(i, j);</pre>
-
-    <h3>样例演示：石子 [1, 3, 5, 2] 最优合并 = 22</h3>
-    <div class="process-step">
-      <span class="step-num">1</span>
-      <span class="stone">5</span> + <span class="stone">2</span>
-      <span class="arrow">→</span>
-      <span class="stone" style="border-color:var(--accent);">7</span>
-      <span style="color:var(--text-dim);">代价 = 7，石子变为 [1, 3, 7]</span>
+<h3>样例演示：石子 [1, 3, 5, 2] 最优合并 = 22</h3>
+<div class="process-step">
+<span class="step-num">1</span>
+<span class="stone">5</span> + <span class="stone">2</span>
+<span class="arrow">→</span>
+<span class="stone" style="border-color:var(--accent);">7</span>
+<span style="color:var(--text-dim);">代价 = 7，石子变为 [1, 3, 7]</span>
+</div>
+<div class="process-step">
+<span class="step-num">2</span>
+<span class="stone">1</span> + <span class="stone">3</span>
+<span class="arrow">→</span>
+<span class="stone" style="border-color:var(--accent);">4</span>
+<span style="color:var(--text-dim);">代价 = 4，石子变为 [4, 7]</span>
+</div>
+<div class="process-step">
+<span class="step-num">3</span>
+<span class="stone">4</span> + <span class="stone">7</span>
+<span class="arrow">→</span>
+<span class="stone" style="border-color:var(--accent);">11</span>
+<span style="color:var(--text-dim);">代价 = 11，累计 = 7+4+11 = <strong>22</strong></span>
+</div>
+<div class="highlight-box" style="margin-top:1rem;">
+<strong>前缀和优化：</strong>使用 <span class="icode">sum[j] - sum[i-1]</span> 在 O(1) 时间内求区间和。
     </div>
-    <div class="process-step">
-      <span class="step-num">2</span>
-      <span class="stone">1</span> + <span class="stone">3</span>
-      <span class="arrow">→</span>
-      <span class="stone" style="border-color:var(--accent);">4</span>
-      <span style="color:var(--text-dim);">代价 = 4，石子变为 [4, 7]</span>
-    </div>
-    <div class="process-step">
-      <span class="step-num">3</span>
-      <span class="stone">4</span> + <span class="stone">7</span>
-      <span class="arrow">→</span>
-      <span class="stone" style="border-color:var(--accent);">11</span>
-      <span style="color:var(--text-dim);">代价 = 11，累计 = 7+4+11 = <strong>22</strong></span>
-    </div>
 
-    <div class="highlight-box" style="margin-top:1rem;">
-      <strong>前缀和优化：</strong>使用 <span class="icode">sum[j] - sum[i-1]</span> 在 O(1) 时间内求区间和。
-    </div>
-  </div>
-
-  <!-- ===== Slide 4: Matrix Chain ===== -->
-  <div class="slide" data-slide="3">
-    <h2>矩阵链乘</h2>
-
-    <p><strong>问题：</strong>给定 n 个矩阵的维度，通过加括号改变计算顺序，求最少标量乘法次数。</p>
-
-    <h3>状态转移</h3>
-    <pre><span class="comment">// dp[i][j] = 矩阵i到矩阵j相乘的最少乘法次数</span>
+<aside class="notes">【讲解】石子合并
+结合讲义《经典问题一：石子合并（直线版）》强调：
+· 问题描述：有 n 堆石子排成一行，第 i 堆石子有 a[i] 个。每次可以合并**相邻**的两堆石子，合并的代价为这两堆石子的数量之和。经过 n-1 次合并后，所有石子合并成一堆。求最小的总合并代价。
+· 状态定义：dp[i][j] 表示将第 i 堆到第 j 堆石子合并成一堆的最小代价。
+· 状态转移：
+· dp[i][j] = min( dp[i][k] + dp[k+1][j] ) + sum(i, j) 其中 i ≤ k &lt; j
+· 其中 sum(i, j) 是区间 [i, j] 内石子总数。无论以什么顺序合并，最终一次合并的代价一定是整个区间的石子总数。使用**前缀和**可以在 O(1) 时间内求出任意区间的和。
+幻灯片上可见要点：
+· 问题： n 堆石子排成一行，每次合并相邻两堆，代价为两堆石子数之和。求最小总代价。
+· 前缀和优化：
+讲解时放慢关键术语；用 1 个生活类比 + 1 个反例加深印象。</aside>
+</div>
+<!-- ===== Slide 4: Matrix Chain ===== -->
+<div class="slide" data-slide="3">
+<h2>矩阵链乘</h2>
+<p><strong>问题：</strong>给定 n 个矩阵的维度，通过加括号改变计算顺序，求最少标量乘法次数。</p>
+<h3>状态转移</h3>
+<pre><span class="comment">// dp[i][j] = 矩阵i到矩阵j相乘的最少乘法次数</span>
 dp[i][j] = <span class="func">min</span>(dp[i][k] + dp[k+<span class="number">1</span>][j]
           + r[i-<span class="number">1</span>] * r[k] * r[j]);</pre>
-
-    <h3>样例：维度 [10, 100, 5, 50] → 3 个矩阵</h3>
-    <div class="two-col">
-      <div class="card">
-        <div class="card-title" style="color:#98c379;">(A₁×A₂) × A₃ ✓</div>
-        <p>
-          A₁×A₂ = 10×100×5 = 5,000<br>
-          结果(10×5) × A₃ = 10×5×50 = 2,500<br>
-          <strong>总计 = 7,500</strong>
-        </p>
-      </div>
-      <div class="card">
-        <div class="card-title" style="color:var(--accent);">A₁ × (A₂×A₃) ✗</div>
-        <p>
-          A₂×A₃ = 100×5×50 = 25,000<br>
-          A₁ × 结果(100×50) = 10×100×50 = 50,000<br>
-          <strong>总计 = 75,000</strong>
-        </p>
-      </div>
-    </div>
-
-    <div class="highlight-box">
-      <strong>关键：</strong>分割点 k 决定了哪两个子问题相乘，合并代价为
+<h3>样例：维度 [10, 100, 5, 50] → 3 个矩阵</h3>
+<div class="two-col">
+<div class="card">
+<div class="card-title" style="color:#98c379;">(A₁×A₂) × A₃ ✓</div>
+<p>
+          A₁×A₂ = 10×100×5 = 5,000<br/>
+          结果(10×5) × A₃ = 10×5×50 = 2,500<br/>
+<strong>总计 = 7,500</strong>
+</p>
+</div>
+<div class="card">
+<div class="card-title" style="color:var(--accent);">A₁ × (A₂×A₃) ✗</div>
+<p>
+          A₂×A₃ = 100×5×50 = 25,000<br/>
+          A₁ × 结果(100×50) = 10×100×50 = 50,000<br/>
+<strong>总计 = 75,000</strong>
+</p>
+</div>
+</div>
+<div class="highlight-box">
+<strong>关键：</strong>分割点 k 决定了哪两个子问题相乘，合并代价为
       <span class="icode">r[i-1] × r[k] × r[j]</span>。
     </div>
-  </div>
 
-  <!-- ===== Slide 5: Summary ===== -->
-  <div class="slide" data-slide="4">
-    <h2>本课小结</h2>
-
-    <div style="display:grid; gap:1rem; margin:1.5rem 0;">
-      <div class="card">
-        <div class="card-title">核心思想</div>
-        <p>大区间最优解 = 小区间最优解的合并，枚举分割点分解问题。</p>
-      </div>
-
-      <div class="card">
-        <div class="card-title">状态 &amp; 转移</div>
-        <p><span class="icode">dp[i][j]</span> 表示区间 <span class="icode">[i, j]</span> 的最优值，
+<aside class="notes">【讲解】矩阵链乘
+结合讲义《矩阵链乘》强调：
+· int matrixChain(vector&amp; r) {
+· int n = r.size() - 1; // n 个矩阵，r[0..n] 共 n+1 个维度
+· vector&gt; dp(n + 1, vector(n + 1, 0));
+· for (int len = 2; len &lt;= n; len++) {
+· for (int i = 1; i + len - 1 &lt;= n; i++) {
+幻灯片上可见要点：
+· 问题： 给定 n 个矩阵的维度，通过加括号改变计算顺序，求最少标量乘法次数。
+· A₁×A₂ = 10×100×5 = 5,000 结果(10×5) × A₃ = 10×5×50 = 2,500 总计 = 7,500
+· 总计 = 7,500
+· A₂×A₃ = 100×5×50 = 25,000 A₁ × 结果(100×50) = 10×100×50 = 50,000 总计 = 75,000
+讲解时放慢关键术语；用 1 个生活类比 + 1 个反例加深印象。</aside>
+</div>
+<!-- ===== Slide 5: Summary ===== -->
+<div class="slide" data-slide="4">
+<h2>本课小结</h2>
+<div style="display:grid; gap:1rem; margin:1.5rem 0;">
+<div class="card">
+<div class="card-title">核心思想</div>
+<p>大区间最优解 = 小区间最优解的合并，枚举分割点分解问题。</p>
+</div>
+<div class="card">
+<div class="card-title">状态 &amp; 转移</div>
+<p><span class="icode">dp[i][j]</span> 表示区间 <span class="icode">[i, j]</span> 的最优值，
           转移时枚举 <span class="icode">k ∈ [i, j-1]</span>。</p>
-      </div>
-
-      <div class="card">
-        <div class="card-title">枚举顺序</div>
-        <p>按<strong>区间长度</strong>从小到大：<span class="icode">len=2→n</span>，保证子问题先求解。</p>
-      </div>
-
-      <div class="card">
-        <div class="card-title">复杂度</div>
-        <p>石子合并 &amp; 矩阵链乘均为 <strong>O(n³)</strong> 时间、<strong>O(n²)</strong> 空间。
+</div>
+<div class="card">
+<div class="card-title">枚举顺序</div>
+<p>按<strong>区间长度</strong>从小到大：<span class="icode">len=2→n</span>，保证子问题先求解。</p>
+</div>
+<div class="card">
+<div class="card-title">复杂度</div>
+<p>石子合并 &amp; 矩阵链乘均为 <strong>O(n³)</strong> 时间、<strong>O(n²)</strong> 空间。
           四边形不等式优化可降至 O(n²)（进阶）。</p>
-      </div>
-    </div>
-
-    <div class="highlight-box" style="text-align:center;">
-      <strong>课后练习：</strong>尝试解决环形石子合并、石子合并（四边形不等式优化）、
+</div>
+</div>
+<div class="highlight-box" style="text-align:center;">
+<strong>课后练习：</strong>尝试解决环形石子合并、石子合并（四边形不等式优化）、
       能量项链等问题，巩固区间DP思维。
     </div>
-  </div>
 
-  <!-- Navigation -->
-  <div class="nav">
-    <button id="prevBtn" onclick="prevSlide()">← 上一页</button>
-    <span class="slide-counter" id="counter">1 / 5</span>
-    <button id="nextBtn" onclick="nextSlide()">下一页 →</button>
-  </div>
-  <div class="dots" id="dots"></div>
+<aside class="notes">【收尾】回顾本课主线：本课小结
+对照大纲再过一遍：区间DP、区间合并
+板书/口述要点：
+· 大区间最优解 = 小区间最优解的合并，枚举分割点分解问题。
+· dp[i][j] 表示区间 [i, j] 的最优值，
+ 转移时枚举 k ∈ [i, j-1] 。
+· 按 区间长度 从小到大： len=2→n ，保证子问题先求解。
+· 区间长度
+· 石子合并 &amp; 矩阵链乘均为 O(n³) 时间、 O(n²) 空间。
+ 四边形不等式优化可降至 O(n²)（进阶）。
+· O(n³)
+课后任务：石子合并、矩阵链乘
+结束前留 2 分钟答疑；布置 1 道小练习检验是否真正掌握。</aside>
 </div>
-
+<!-- Navigation -->
+<div class="nav">
+<button id="prevBtn" onclick="prevSlide()">← 上一页</button>
+<span class="slide-counter" id="counter">1 / 5</span>
+<button id="nextBtn" onclick="nextSlide()">下一页 →</button>
+</div>
+<div class="dots" id="dots"></div>
+</div>
 <script>
   const slides = document.querySelectorAll('.slide');
   const totalSlides = slides.length;

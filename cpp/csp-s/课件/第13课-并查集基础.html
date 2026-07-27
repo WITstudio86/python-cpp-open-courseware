@@ -1,8 +1,9 @@
 <!DOCTYPE html>
+
 <html lang="zh-CN">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
 <title>第13课：并查集基础（DSU）</title>
 <style>
 * { margin: 0; padding: 0; box-sizing: border-box; }
@@ -39,33 +40,48 @@ code { font-family: 'Fira Code', 'Consolas', monospace; }
 </div>
 <p style="margin-top:30px; color:#8b949e">近乎 O(1) 的合并与查询，竞赛中最常用的数据结构之一</p>
 </div>
-</div>
 
+<aside class="notes">【开场】第 1/7 页 · 并查集基础
+用 30 秒说明本课目标与学完能做什么，再进入正题。
+大纲考点：路径压缩、按秩合并、时间复杂度分析
+配套练习方向：连通块问题、朋友圈问题
+封面关键词：
+· Union-Find / Disjoint Set Union（DSU）
+· 近乎 O(1) 的合并与查询，竞赛中最常用的数据结构之一
+互动：问学生「今天最想搞清楚什么？」，收 1–2 个期待。</aside>
+</div>
 <div class="slide" id="s2">
 <h1>📖 知识精讲 — 基本概念</h1>
 <h2>并查集维护什么？</h2>
 <p>维护<span class="highlight">不相交集合</span>的森林结构</p>
 <ul><li>每个集合用一棵<span class="accent">有根树</span>表示</li><li>根节点是该集合的代表元素</li></ul>
-
 <h2>两种核心操作</h2>
 <table style="width:100%; border-collapse:collapse; margin:12px 0">
 <tr style="border-bottom:1px solid #30363d"><td style="padding:6px;width:100px"><span class="highlight">Find(x)</span></td><td style="padding:6px">查找 x 所属集合的代表元素（根）</td></tr>
 <tr style="border-bottom:1px solid #30363d"><td style="padding:6px"><span class="accent">Union(x,y)</span></td><td style="padding:6px">合并 x 和 y 所在的两个集合</td></tr>
 </table>
-
 <h3 style="margin-top:16px">两个关键优化</h3>
 <p><span class="highlight">路径压缩</span>：find 时将沿路节点直接连到根</p>
 <p><span class="accent">按大小/秩合并</span>：将小树合并到大树，保持平衡</p>
 <p>同时使用两者 → 复杂度 <span class="highlight">O(α(n)) ≈ O(1)</span></p>
-</div>
 
+<aside class="notes">【讲解】📖 知识精讲 — 基本概念
+本页要点（照着讲即可）：
+· 维护 不相交集合 的森林结构
+· 每个集合用一棵 有根树 表示
+· 根节点是该集合的代表元素
+· 路径压缩 ：find 时将沿路节点直接连到根
+· 按大小/秩合并 ：将小树合并到大树，保持平衡
+· 同时使用两者 → 复杂度 O(α(n)) ≈ O(1)
+讲解时放慢关键术语；用 1 个生活类比 + 1 个反例加深印象。
+本课大纲考点（可适时点题）：路径压缩、按秩合并、时间复杂度分析</aside>
+</div>
 <div class="slide" id="s3">
 <h1>📖 知识精讲 — 实现细节</h1>
 <h3>路径压缩（递归版）</h3>
 <pre><span class="type">int</span> <span class="func">find</span>(<span class="type">int</span> x) {
     <span class="kw">return</span> fa[x] == x ? x : fa[x] = <span class="func">find</span>(fa[x]);
 }  <span class="cmt">// 顺便把路径上所有节点直接指向根！</span></pre>
-
 <h3>按大小合并</h3>
 <pre><span class="type">bool</span> <span class="func">unite</span>(<span class="type">int</span> x, <span class="type">int</span> y) {
     x = <span class="func">find</span>(x); y = <span class="func">find</span>(y);
@@ -75,11 +91,14 @@ code { font-family: 'Fira Code', 'Consolas', monospace; }
     sz[x] += sz[y];
     <span class="kw">return true</span>;
 }</pre>
-
 <h3>反阿克曼函数 α(n)</h3>
 <p>α(10⁶) ≈ 4，α(10¹⁰⁰) ≈ 5 → 竞赛中视为 <span class="accent">常数</span></p>
-</div>
 
+<aside class="notes">【讲解】📖 知识精讲 — 实现细节
+本页要点（照着讲即可）：
+· α(10⁶) ≈ 4，α(10¹⁰⁰) ≈ 5 → 竞赛中视为 常数
+讲解时放慢关键术语；用 1 个生活类比 + 1 个反例加深印象。</aside>
+</div>
 <div class="slide" id="s4">
 <h1>💻 代码模板 — 完整 DSU 结构体</h1>
 <pre><span class="kw">struct</span> <span class="type">DSU</span> {
@@ -105,8 +124,22 @@ code { font-family: 'Fira Code', 'Consolas', monospace; }
     <span class="type">bool</span> <span class="func">same</span>(<span class="type">int</span> x, <span class="type">int</span> y) { <span class="kw">return</span> <span class="func">find</span>(x) == <span class="func">find</span>(y); }
     <span class="type">int</span>  <span class="func">size</span>(<span class="type">int</span> x) { <span class="kw">return</span> sz[<span class="func">find</span>(x)]; }
 };</pre>
-</div>
 
+<aside class="notes">【讲解】💻 代码模板 — 完整 DSU 结构体
+结合讲义《💻 代码模板》强调：
+· // ========== 并查集标准模板（路径压缩 + 按大小合并） ==========
+· struct DSU {
+· vector fa, sz;
+· int components;
+· DSU(int n) : fa(n + 1), sz(n + 1, 1), components(n) {
+幻灯片上可见要点：
+· 💻 代码模板 — 完整 DSU 结构体
+· struct
+· vector fa, sz;
+· comp;
+代码页节奏：先读懂输入输出 → 再走主流程 → 最后点出易错点（边界/类型/下标）。
+可让学生预测下一行输出，再运行对照。</aside>
+</div>
 <div class="slide" id="s5">
 <h1>⚠️ 易错点与经典应用</h1>
 <h3>常见错误</h3>
@@ -116,7 +149,6 @@ code { font-family: 'Fira Code', 'Consolas', monospace; }
 <li><span class="highlight">⚠ unite 中未 find 就去比较</span></li>
 <li><span class="highlight">⚠ 按大小合并写反</span> — 小树挂大树</li>
 </ul>
-
 <h3 style="margin-top:16px">经典应用场景</h3>
 <ul>
 <li><span class="accent">✔ 连通块计数</span> — 初始 n，每次 unite 减 1</li>
@@ -124,25 +156,42 @@ code { font-family: 'Fira Code', 'Consolas', monospace; }
 <li><span class="accent">✔ 离线删边转加边</span> — 反向处理</li>
 <li><span class="accent">✔ 动态连通性</span> — 在线查询两点是否连通</li>
 </ul>
-</div>
 
+<aside class="notes">【讲解】⚠️ 易错点与经典应用
+本页要点（照着讲即可）：
+· ⚠ 忘记初始化 fa[i] = i
+· ⚠ 递归 find 可能爆栈 — n 很大时使用迭代版
+· ⚠ unite 中未 find 就去比较
+· ⚠ 按大小合并写反 — 小树挂大树
+· ✔ 连通块计数 — 初始 n，每次 unite 减 1
+· ✔ Kruskal 最小生成树 — 判断边是否形成环
+讲解时放慢关键术语；用 1 个生活类比 + 1 个反例加深印象。</aside>
+</div>
 <div class="slide" id="s6">
 <h1>📝 真题精练</h1>
 <h3>真题一：连通块维护</h3>
 <p><span class="info">操作：</span>M x y（加边）、Q x y（查询连通 + 连通块总数）</p>
 <p><span class="info">n, m ≤ 2×10⁵</span> | <span class="accent">O(m·α(n))</span></p>
-
 <h3 style="margin-top:20px">真题二：离线删边求连通块</h3>
 <p><span class="info">场景：</span>动态删边，每次删边后求连通块数</p>
 <p><span class="info">技巧：</span><span class="highlight">离线 + 反向 = 加边</span></p>
 <p>先建出所有未删除的边 → 逆序加回被删边 → 记录连通块数</p>
 <p><span class="accent">O((m+k)·α(n))</span></p>
-
 <div style="background:#0d1117; padding:14px; border-radius:8px; border:1px solid #30363d; margin-top:16px">
 <p><span class="accent">思想：</span>删边难，加边易。将问题逆序转化为加边问题。</p>
 </div>
-</div>
 
+<aside class="notes">【讲解】📝 真题精练
+本页要点（照着讲即可）：
+· 操作： M x y（加边）、Q x y（查询连通 + 连通块总数）
+· n, m ≤ 2×10⁵ | O(m·α(n))
+· 场景： 动态删边，每次删边后求连通块数
+· 技巧： 离线 + 反向 = 加边
+· 先建出所有未删除的边 → 逆序加回被删边 → 记录连通块数
+· O((m+k)·α(n))
+练习页节奏：先独立想 1 分钟 → 再点拨思路 → 最后对答案讲为什么。
+可联系：连通块问题、朋友圈问题</aside>
+</div>
 <div class="slide" id="s7">
 <h1>🎯 本课小结</h1>
 <div style="display:grid; grid-template-columns:1fr 1fr; gap:16px; margin-top:20px">
@@ -169,8 +218,19 @@ code { font-family: 'Fira Code', 'Consolas', monospace; }
 <p>食物链问题</p>
 </div>
 </div>
-</div>
 
+<aside class="notes">【收尾】回顾本课主线：🎯 本课小结
+对照大纲再过一遍：路径压缩、按秩合并、时间复杂度分析
+板书/口述要点：
+· 路径压缩：fa[x] = find(fa[x])
+· 按大小合并：小树挂大树
+· 单次操作： O(α(n)) ≈ O(1)
+· 竞赛范围：α(n) ≤ 4
+· 连通性 · 连通块
+· Kruskal MST
+课后任务：连通块问题、朋友圈问题
+结束前留 2 分钟答疑；布置 1 道小练习检验是否真正掌握。</aside>
+</div>
 <div class="nav">
 <button onclick="prevSlide()">◀ 上一页</button>
 <span class="page-indicator" id="pageNum">1 / 7</span>

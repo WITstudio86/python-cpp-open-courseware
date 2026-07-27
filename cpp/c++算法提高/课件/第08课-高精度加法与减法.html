@@ -1,8 +1,9 @@
 <!DOCTYPE html>
+
 <html lang="zh-CN">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
 <title>第08课：高精度加法与减法</title>
 <style>
 * { margin: 0; padding: 0; box-sizing: border-box; }
@@ -250,73 +251,73 @@ code {
 </style>
 </head>
 <body>
-
 <div class="progress-bar">
-    <div class="progress-fill" id="progressFill" style="width: 14.3%;"></div>
+<div class="progress-fill" id="progressFill" style="width: 14.3%;"></div>
 </div>
-
 <div class="slideshow" id="slideshow">
-
 <!-- ===== 幻灯片1：标题页 ===== -->
 <div class="slide active" id="slide1">
-    <h1>第08课：高精度加法与减法</h1>
-    <h2>大数存储 &middot; 逐位运算 &middot; 进位借位</h2>
-
-    <div style="margin: 28px 0;">
-        <p style="font-size: 1.1em; line-height: 2.1;">
-            <span class="highlight">问题背景：</span>int 只能存到 21 亿，long long 只能存到 9.22×10¹⁸<br>
-            <span class="highlight">解决方案：</span>用数组模拟手工竖式计算<br>
-            <span class="highlight">核心技巧：</span>字符串读入 → 倒序存储 → 逐位运算<br>
-            <span class="highlight">经典问题：</span>A+B Problem（高精度）、大数减法
+<h1>第08课：高精度加法与减法</h1>
+<h2>大数存储 · 逐位运算 · 进位借位</h2>
+<div style="margin: 28px 0;">
+<p style="font-size: 1.1em; line-height: 2.1;">
+<span class="highlight">问题背景：</span>int 只能存到 21 亿，long long 只能存到 9.22×10¹⁸<br/>
+<span class="highlight">解决方案：</span>用数组模拟手工竖式计算<br/>
+<span class="highlight">核心技巧：</span>字符串读入 → 倒序存储 → 逐位运算<br/>
+<span class="highlight">经典问题：</span>A+B Problem（高精度）、大数减法
         </p>
-    </div>
-
-    <div class="step-box">
-        <strong>想一想：</strong>100!（100 的阶乘）有 <span class="accent">158 位</span>，远超任何 C++ 内置整数类型。
+</div>
+<div class="step-box">
+<strong>想一想：</strong>100!（100 的阶乘）有 <span class="accent">158 位</span>，远超任何 C++ 内置整数类型。
         只有用高精度计算，才能算出完整的 100!。
     </div>
-
-    <div class="grid-2" style="margin-top: 20px;">
-        <div class="step-box">
-            <strong class="teal">加法口诀</strong><br>
-            <code style="color:#7ec8e3;">t % 10</code> 写当前位<br>
-            <code style="color:#7ec8e3;">t / 10</code> 是进位
+<div class="grid-2" style="margin-top: 20px;">
+<div class="step-box">
+<strong class="teal">加法口诀</strong><br/>
+<code style="color:#7ec8e3;">t % 10</code> 写当前位<br/>
+<code style="color:#7ec8e3;">t / 10</code> 是进位
         </div>
-        <div class="step-box">
-            <strong class="teal">减法口诀</strong><br>
-            <code style="color:#7ec8e3;">(t + 10) % 10</code> 得结果<br>
-            <code style="color:#7ec8e3;">t &lt; 0</code> 则借位
+<div class="step-box">
+<strong class="teal">减法口诀</strong><br/>
+<code style="color:#7ec8e3;">(t + 10) % 10</code> 得结果<br/>
+<code style="color:#7ec8e3;">t &lt; 0</code> 则借位
         </div>
-    </div>
 </div>
 
+<aside class="notes">【开场】第 1/7 页 · 高精度加法与减法
+用 30 秒说明本课目标与学完能做什么，再进入正题。
+大纲考点：大数存储、逐位运算、进位借位
+配套练习方向：A+B Problem（高精）、大数减法
+封面关键词：
+· 问题背景： int 只能存到 21 亿，long long 只能存到 9.22×10¹⁸ 解决方案： 用数组模拟手工竖式计算 核心技巧： 字符串读入 → 倒序存储 → 逐位运算 经典问题： A+B Problem（高精度）、大数减法
+· 想一想：
+· 加法口诀
+· 减法口诀
+互动：问学生「今天最想搞清楚什么？」，收 1–2 个期待。</aside>
+</div>
 <!-- ===== 幻灯片2：为什么需要高精度 ===== -->
 <div class="slide" id="slide2">
-    <h2>为什么需要高精度？</h2>
-
-    <h3>C++ 内置类型的局限</h3>
-    <table>
-        <tr><th>数据类型</th><th>占用</th><th>表示范围</th></tr>
-        <tr><td><code style="color:#7ec8e3;">int</code></td><td>4 字节</td><td>-21 亿 ~ 21 亿（约 10 位）</td></tr>
-        <tr><td><code style="color:#7ec8e3;">long long</code></td><td>8 字节</td><td>-9.22×10¹⁸ ~ 9.22×10¹⁸（约 19 位）</td></tr>
-        <tr><td><code style="color:#7ec8e3;">unsigned long long</code></td><td>8 字节</td><td>0 ~ 1.84×10¹⁹（约 20 位）</td></tr>
-    </table>
-
-    <h3>真实世界中的大数</h3>
-    <table>
-        <tr><th>场景</th><th>数字</th><th>位数</th></tr>
-        <tr><td>阶乘问题</td><td>100!</td><td class="accent">158 位</td></tr>
-        <tr><td>指数幂</td><td>2<sup>1000</sup></td><td class="accent">302 位</td></tr>
-        <tr><td>RSA 加密</td><td>2048-bit 密钥</td><td class="accent">617 位</td></tr>
-        <tr><td>天文数据</td><td>可观测宇宙原子数</td><td class="accent">~80 位</td></tr>
-    </table>
-
-    <div class="step-box" style="margin-top: 14px;">
-        <strong class="highlight">核心结论：</strong>超过 20 位的整数，C++ 内置类型无能为力。<br>
-        <strong>解决方案：</strong>自己写算法！用 <code style="color:#7ec8e3;">string</code> 读入，用 <code style="color:#7ec8e3;">vector&lt;int&gt;</code> 逐位存储和计算。
+<h2>为什么需要高精度？</h2>
+<h3>C++ 内置类型的局限</h3>
+<table>
+<tr><th>数据类型</th><th>占用</th><th>表示范围</th></tr>
+<tr><td><code style="color:#7ec8e3;">int</code></td><td>4 字节</td><td>-21 亿 ~ 21 亿（约 10 位）</td></tr>
+<tr><td><code style="color:#7ec8e3;">long long</code></td><td>8 字节</td><td>-9.22×10¹⁸ ~ 9.22×10¹⁸（约 19 位）</td></tr>
+<tr><td><code style="color:#7ec8e3;">unsigned long long</code></td><td>8 字节</td><td>0 ~ 1.84×10¹⁹（约 20 位）</td></tr>
+</table>
+<h3>真实世界中的大数</h3>
+<table>
+<tr><th>场景</th><th>数字</th><th>位数</th></tr>
+<tr><td>阶乘问题</td><td>100!</td><td class="accent">158 位</td></tr>
+<tr><td>指数幂</td><td>2<sup>1000</sup></td><td class="accent">302 位</td></tr>
+<tr><td>RSA 加密</td><td>2048-bit 密钥</td><td class="accent">617 位</td></tr>
+<tr><td>天文数据</td><td>可观测宇宙原子数</td><td class="accent">~80 位</td></tr>
+</table>
+<div class="step-box" style="margin-top: 14px;">
+<strong class="highlight">核心结论：</strong>超过 20 位的整数，C++ 内置类型无能为力。<br/>
+<strong>解决方案：</strong>自己写算法！用 <code style="color:#7ec8e3;">string</code> 读入，用 <code style="color:#7ec8e3;">vector&lt;int&gt;</code> 逐位存储和计算。
     </div>
-
-    <div class="ascii-box" style="margin-top: 10px;">
+<div class="ascii-box" style="margin-top: 10px;">
   手工竖式加法（小时候就会！）：
         1 2 3 4
   +     7 8 9
@@ -325,14 +326,19 @@ code {
 
   把「手工竖式」翻译成代码 → 高精度计算！
     </div>
-</div>
 
+<aside class="notes">【讲解】为什么需要高精度？
+本页要点（照着讲即可）：
+· 核心结论：
+· 解决方案：
+讲解时放慢关键术语；用 1 个生活类比 + 1 个反例加深印象。
+本课大纲考点（可适时点题）：大数存储、逐位运算、进位借位</aside>
+</div>
 <!-- ===== 幻灯片3：倒序存储原理 ===== -->
 <div class="slide" id="slide3">
-    <h2>核心存储：倒序存储</h2>
-
-    <h3>为什么要倒序？</h3>
-    <div class="ascii-box">
+<h2>核心存储：倒序存储</h2>
+<h3>为什么要倒序？</h3>
+<div class="ascii-box">
   正序存储的问题：
   数字 "1234567890" → arr[0]=1, arr[1]=2, ..., arr[9]=0
   计算从 arr[9]（个位）开始，进位要在 arr[0] 前插入 → O(n)！
@@ -341,9 +347,8 @@ code {
   数字 "1234567890" → arr[0]=0(个位), arr[1]=9, ..., arr[9]=1
   进位只需 push_back 到末尾 → O(1)！
     </div>
-
-    <h3>倒序存储图示</h3>
-    <div class="ascii-box">
+<h3>倒序存储图示</h3>
+<div class="ascii-box">
   原数字：1  2  3  4  5  6  7  8  9  0  1  2  3  4  5  6  7  8  9  0
          ↑ 最高位（千亿亿位）                                ↑ 个位
 
@@ -352,21 +357,31 @@ code {
   数值:  0   9   8   7   6   5   4   3   2   1  ...  2    1
          ↑ 个位（10⁰）                              ↑ 最高位（10¹⁹）
     </div>
-
-    <div class="step-box" style="margin-top: 14px;">
-        <strong class="highlight">三大优势：</strong><br>
-        1. 进位/借位向<strong>数组末尾</strong>延伸（push_back，O(1)）<br>
-        2. 索引 <strong>i</strong> 直接对应 <strong>10<sup>i</sup></strong> 的权值<br>
+<div class="step-box" style="margin-top: 14px;">
+<strong class="highlight">三大优势：</strong><br/>
+        1. 进位/借位向<strong>数组末尾</strong>延伸（push_back，O(1)）<br/>
+        2. 索引 <strong>i</strong> 直接对应 <strong>10<sup>i</sup></strong> 的权值<br/>
         3. 统一从 0 开始遍历，代码简洁一致
     </div>
-</div>
 
+<aside class="notes">【讲解】核心存储：倒序存储
+结合讲义《三、大数的存储方式：倒序存储》强调：
+· 我们可以使用 **string** 或 **vector** 来存储大数的每一位。但"正着存"有个严重问题：
+· 设想数字 "12345678901234567890" 正序存入：arr[0]=1, arr[1]=2, ..., arr[19]=0。运算从个位（arr[19]）开始，如果最高位产生进位，需要在数组**开头**插入元素——这在 vector 中是 O(n) 的昂贵操作！
+· 解决方案：倒序存储（Reverse Storage）
+· 数字： 1 2 3 4 5 6 7 8 9 0 1 2 3 4 5 6 7 8 9 0
+· ↑ 最高位（千亿亿位） ↑ 个位
+幻灯片上可见要点：
+· 三大优势：
+· 数组末尾
+· 10 i
+讲解时放慢关键术语；用 1 个生活类比 + 1 个反例加深印象。</aside>
+</div>
 <!-- ===== 幻灯片4：高精度加法 ===== -->
 <div class="slide" id="slide4">
-    <h2>高精度加法：逐位相加，逢十进一</h2>
-
-    <h3>示例：1234 + 789 = 2023</h3>
-    <div class="ascii-box">
+<h2>高精度加法：逐位相加，逢十进一</h2>
+<h3>示例：1234 + 789 = 2023</h3>
+<div class="ascii-box">
   倒序存储：
     A(1234): [0]=4  [1]=3  [2]=2  [3]=1
     B(789):  [0]=9  [1]=8  [2]=7
@@ -379,18 +394,16 @@ code {
 
   C(倒序): [3, 2, 0, 2] → 反转输出 → "2023" ✓
     </div>
-
-    <h3>手工竖式对照</h3>
-    <div class="ascii-box">
+<h3>手工竖式对照</h3>
+<div class="ascii-box">
       1  1  1        ← 进位
          1  2  3  4
    +      7  8  9
    ─────────────────
          2  0  2  3
     </div>
-
-    <h3>核心代码</h3>
-    <pre><code><span class="hl-type">vector</span>&lt;<span class="hl-type">int</span>&gt; <span class="hl-fn">add</span>(<span class="hl-type">const</span> <span class="hl-type">vector</span>&lt;<span class="hl-type">int</span>&gt;&amp; A, <span class="hl-type">const</span> <span class="hl-type">vector</span>&lt;<span class="hl-type">int</span>&gt;&amp; B) {
+<h3>核心代码</h3>
+<pre><code><span class="hl-type">vector</span>&lt;<span class="hl-type">int</span>&gt; <span class="hl-fn">add</span>(<span class="hl-type">const</span> <span class="hl-type">vector</span>&lt;<span class="hl-type">int</span>&gt;&amp; A, <span class="hl-type">const</span> <span class="hl-type">vector</span>&lt;<span class="hl-type">int</span>&gt;&amp; B) {
     <span class="hl-type">vector</span>&lt;<span class="hl-type">int</span>&gt; C;
     <span class="hl-type">int</span> t <span class="hl-op">=</span> <span class="hl-num">0</span>;  <span class="hl-cmt">// t = 进位 + 累加值（一变量三用）</span>
     <span class="hl-kw">for</span> (<span class="hl-type">int</span> i <span class="hl-op">=</span> <span class="hl-num">0</span>; i <span class="hl-op">&lt;</span> <span class="hl-fn">max</span>(A.<span class="hl-fn">size</span>(), B.<span class="hl-fn">size</span>()); <span class="hl-op">++</span>i) {
@@ -402,19 +415,30 @@ code {
     <span class="hl-kw">if</span> (t) C.<span class="hl-fn">push_back</span>(t);  <span class="hl-cmt">// 最高位进位</span>
     <span class="hl-kw">return</span> C;
 }</code></pre>
-
-    <div class="step-box">
-        <strong class="highlight">口诀：</strong><code style="color:#7ec8e3;">t % 10</code> 写当前，<code style="color:#7ec8e3;">t / 10</code> 是进位！
+<div class="step-box">
+<strong class="highlight">口诀：</strong><code style="color:#7ec8e3;">t % 10</code> 写当前，<code style="color:#7ec8e3;">t / 10</code> 是进位！
         <code style="color:#7ec8e3;">t</code> 变量一箭三雕：进位载体 + 累加器 + 当前位来源。
     </div>
-</div>
 
+<aside class="notes">【讲解】高精度加法：逐位相加，逢十进一
+结合讲义《四、高精度加法：逐位相加，逢十进一》强调：
+· 算法步骤：
+· 将两个大数字符串转为倒序的 vector A 和 B
+· 初始化结果数组 C，进位标记 t = 0
+· 从 i = 0 开始遍历：t += A[i] + B[i]（跳过已遍历完的数组）
+· 当前位结果：C[i] = t % 10；新进位：t = t / 10
+幻灯片上可见要点：
+· 高精度加法：逐位相加，逢十进一
+· 示例：1234 + 789 = 2023
+· 倒序存储：
+· A(1234): [0]=4 [1]=3 [2]=2 [3]=1
+讲解时放慢关键术语；用 1 个生活类比 + 1 个反例加深印象。</aside>
+</div>
 <!-- ===== 幻灯片5：高精度减法 ===== -->
 <div class="slide" id="slide5">
-    <h2>高精度减法：逐位相减，不够则借</h2>
-
-    <h3>示例：10000 - 1234 = 8766</h3>
-    <div class="ascii-box">
+<h2>高精度减法：逐位相减，不够则借</h2>
+<h3>示例：10000 - 1234 = 8766</h3>
+<div class="ascii-box">
   倒序存储：
     A(10000): [0]=0  [1]=0  [2]=0  [3]=0  [4]=1
     B(1234):  [0]=4  [1]=3  [2]=2  [3]=1
@@ -429,18 +453,16 @@ code {
   C(倒序): [6,6,7,8,0] → pop_back去前导零 → [6,6,7,8]
   → 反转 → "8766" ✓
     </div>
-
-    <h3>手工竖式对照（连续借位）</h3>
-    <div class="ascii-box">
+<h3>手工竖式对照（连续借位）</h3>
+<div class="ascii-box">
      ⁰ ⁹ ⁹ ⁹ ¹⁰       ← 借位链
       1  0  0  0  0
   -      1  2  3  4
   ─────────────────
       0  8  7  6  6   → 去前导零 → 8766
     </div>
-
-    <h3>核心代码</h3>
-    <pre><code><span class="hl-type">vector</span>&lt;<span class="hl-type">int</span>&gt; <span class="hl-fn">sub</span>(<span class="hl-type">const</span> <span class="hl-type">vector</span>&lt;<span class="hl-type">int</span>&gt;&amp; A, <span class="hl-type">const</span> <span class="hl-type">vector</span>&lt;<span class="hl-type">int</span>&gt;&amp; B) {
+<h3>核心代码</h3>
+<pre><code><span class="hl-type">vector</span>&lt;<span class="hl-type">int</span>&gt; <span class="hl-fn">sub</span>(<span class="hl-type">const</span> <span class="hl-type">vector</span>&lt;<span class="hl-type">int</span>&gt;&amp; A, <span class="hl-type">const</span> <span class="hl-type">vector</span>&lt;<span class="hl-type">int</span>&gt;&amp; B) {
     <span class="hl-type">vector</span>&lt;<span class="hl-type">int</span>&gt; C;
     <span class="hl-type">int</span> t <span class="hl-op">=</span> <span class="hl-num">0</span>;  <span class="hl-cmt">// 借位标记</span>
     <span class="hl-kw">for</span> (<span class="hl-type">int</span> i <span class="hl-op">=</span> <span class="hl-num">0</span>; i <span class="hl-op">&lt;</span> A.<span class="hl-fn">size</span>(); <span class="hl-op">++</span>i) {
@@ -453,21 +475,29 @@ code {
         C.<span class="hl-fn">pop_back</span>();
     <span class="hl-kw">return</span> C;
 }</code></pre>
-
-    <div class="step-box">
-        <strong class="highlight">关键技巧：</strong><code style="color:#7ec8e3;">(t+10)%10</code> 统一处理正负 ——
+<div class="step-box">
+<strong class="highlight">关键技巧：</strong><code style="color:#7ec8e3;">(t+10)%10</code> 统一处理正负 ——
         t≥0 时得 t 本身，t&lt;0 时得 t+10（借位后的正确值），一句代码无需判断。
     </div>
-</div>
 
+<aside class="notes">【讲解】高精度减法：逐位相减，不够则借
+结合讲义《五、高精度减法：逐位相减，不够则借》强调：
+· 减法与加法类似，不同之处在于：**当被减数当前位 &lt; 减数当前位时，需向高位借 1**（借 1 当 10）。
+· 核心前提：被减数 A ≥ 减数 B（若 A &lt; B，交换两数并在结果加负号）
+· 算法步骤：
+· 比较 A 和 B 的大小（先比位数，同长则从高位向低位逐位比）
+· 确保较大的数在 A 中
+幻灯片上可见要点：
+· 关键技巧：
+讲解时放慢关键术语；用 1 个生活类比 + 1 个反例加深印象。</aside>
+</div>
 <!-- ===== 幻灯片6：大数比较与负数处理 ===== -->
 <div class="slide" id="slide6">
-    <h2>大数比较 &amp; 负数处理</h2>
-
-    <h3>大数比较：A 和 B 谁更大？</h3>
-    <div class="ascii-box">
+<h2>大数比较 &amp; 负数处理</h2>
+<h3>大数比较：A 和 B 谁更大？</h3>
+<div class="ascii-box">
   规则一：位数多的更大
-    12345 (5位)  >  999 (3位)
+    12345 (5位)  &gt;  999 (3位)
 
   规则二：位数相同，从高位 → 低位逐位比
     比较 12345 和 12354：
@@ -477,35 +507,43 @@ code {
   倒序存储比较代码：
   bool cmp(A, B) {
       if (A.size() != B.size())
-          return A.size() > B.size();    // 比位数
-      for (i = A.size()-1; i >= 0; i--)  // 高位→低位
-          if (A[i] != B[i]) return A[i] > B[i];
+          return A.size() &gt; B.size();    // 比位数
+      for (i = A.size()-1; i &gt;= 0; i--)  // 高位→低位
+          if (A[i] != B[i]) return A[i] &gt; B[i];
       return true;  // 相等
   }
     </div>
-
-    <h3>减法中的负数处理</h3>
-    <div class="step-box">
-        <strong>场景：</strong>A = 100, B = 999 → A &lt; B<br>
-        <strong>处理步骤：</strong><br>
-        1. 交换 A 和 B → A=999, B=100<br>
-        2. 计算 999 - 100 = 899<br>
+<h3>减法中的负数处理</h3>
+<div class="step-box">
+<strong>场景：</strong>A = 100, B = 999 → A &lt; B<br/>
+<strong>处理步骤：</strong><br/>
+        1. 交换 A 和 B → A=999, B=100<br/>
+        2. 计算 999 - 100 = 899<br/>
         3. 在结果前加 <code style="color:#e94560;">"-"</code> → 输出 <code style="color:#e94560;">-899</code>
-    </div>
-
-    <div class="step-box" style="margin-top: 10px;">
-        <strong class="accent">常见坑点：前导零！</strong><br>
-        1000 - 999 = 1，但程序可能输出 <code style="color:#7ec8e3;">0001</code><br>
-        → 必须用 <code style="color:#7ec8e3;">while (C.size() > 1 && C.back() == 0) C.pop_back();</code> 去除
-    </div>
 </div>
+<div class="step-box" style="margin-top: 10px;">
+<strong class="accent">常见坑点：前导零！</strong><br/>
+        1000 - 999 = 1，但程序可能输出 <code style="color:#7ec8e3;">0001</code><br/>
+        → 必须用 <code style="color:#7ec8e3;">while (C.size() &gt; 1 &amp;&amp; C.back() == 0) C.pop_back();</code> 去除
+    </div>
 
+<aside class="notes">【讲解】大数比较 &amp; 负数处理
+结合讲义《六、大数比较》强调：
+· 减法前必须判断 A 和 B 的大小关系，方法与手工完全一致：
+· 先比位数：位数多的更大（如 12345 有 5 位 &gt; 999 有 3 位）
+· 位数相同则从高位向低位逐位比较：找到第一个不同的位，数字大的那个更大
+· 比较 12345 和 12354：
+· 从高位比: [4]=1=[4], [3]=2=[3], [2]=3=[2], [1]=4&lt;5 → 12345 &lt; 12354
+幻灯片上可见要点：
+· 处理步骤：
+· 常见坑点：前导零！
+讲解时放慢关键术语；用 1 个生活类比 + 1 个反例加深印象。</aside>
+</div>
 <!-- ===== 幻灯片7：大数加法完整示例 + 小结 ===== -->
 <div class="slide" id="slide7">
-    <h2>完整演练 &amp; 本课小结</h2>
-
-    <h3>超大数加法：12345678901234567890 + 98765432109876543210</h3>
-    <div class="ascii-box">
+<h2>完整演练 &amp; 本课小结</h2>
+<h3>超大数加法：12345678901234567890 + 98765432109876543210</h3>
+<div class="ascii-box">
          1 2 3 4 5 6 7 8 9 0 1 2 3 4 5 6 7 8 9 0
    +     9 8 7 6 5 4 3 2 1 0 9 8 7 6 5 4 3 2 1 0
    ─────────────────────────────────────────────────
@@ -516,37 +554,38 @@ code {
    · 中间 0+0 处进位链断裂
    · 最终 21 位结果（比原数多 1 位）
     </div>
-
-    <h3>本课核心回顾</h3>
-    <table>
-        <tr><th>知识点</th><th>要点</th></tr>
-        <tr><td>为何高精度</td><td>int ~10位, long long ~19位, 100! 有158位</td></tr>
-        <tr><td>倒序存储</td><td>索引 0 = 个位, 进位/借位 push_back 到末尾</td></tr>
-        <tr><td class="accent">加法核心</td><td>t += A[i]+B[i]; C[i]=t%10; t/=10</td></tr>
-        <tr><td class="accent">减法核心</td><td>t=A[i]-t-B[i]; C[i]=(t+10)%10; t=(t&lt;0)?1:0</td></tr>
-        <tr><td>大数比较</td><td>先比位数，再逐位比（从高到低）</td></tr>
-        <tr><td>负数处理</td><td>A&lt;B → 交换 + 结果前加 "-"</td></tr>
-        <tr><td>复杂度</td><td>时间 O(n), 空间 O(n), 万位运算毫秒级</td></tr>
-    </table>
-
-    <div class="step-box" style="margin-top: 14px;">
-        <strong class="teal">恭喜！</strong><br>
-        「枚举、模拟、高精度」三大算法基础模块全部学习完毕。<br>
+<h3>本课核心回顾</h3>
+<table>
+<tr><th>知识点</th><th>要点</th></tr>
+<tr><td>为何高精度</td><td>int ~10位, long long ~19位, 100! 有158位</td></tr>
+<tr><td>倒序存储</td><td>索引 0 = 个位, 进位/借位 push_back 到末尾</td></tr>
+<tr><td class="accent">加法核心</td><td>t += A[i]+B[i]; C[i]=t%10; t/=10</td></tr>
+<tr><td class="accent">减法核心</td><td>t=A[i]-t-B[i]; C[i]=(t+10)%10; t=(t&lt;0)?1:0</td></tr>
+<tr><td>大数比较</td><td>先比位数，再逐位比（从高到低）</td></tr>
+<tr><td>负数处理</td><td>A&lt;B → 交换 + 结果前加 "-"</td></tr>
+<tr><td>复杂度</td><td>时间 O(n), 空间 O(n), 万位运算毫秒级</td></tr>
+</table>
+<div class="step-box" style="margin-top: 14px;">
+<strong class="teal">恭喜！</strong><br/>
+        「枚举、模拟、高精度」三大算法基础模块全部学习完毕。<br/>
         下个阶段 → <strong class="highlight">搜索算法（DFS / BFS）</strong>
-    </div>
 </div>
 
+<aside class="notes">【收尾】回顾本课主线：完整演练 &amp; 本课小结
+对照大纲再过一遍：大数存储、逐位运算、进位借位
+板书/口述要点：
+· 搜索算法（DFS / BFS）
+课后任务：A+B Problem（高精）、大数减法
+结束前留 2 分钟答疑；布置 1 道小练习检验是否真正掌握。</aside>
+</div>
 </div><!-- slideshow end -->
-
 <!-- ===== 导航栏 ===== -->
 <div class="navigation">
-    <button class="nav-btn" id="prevBtn" onclick="changeSlide(-1)">&#9664; 上一页</button>
-    <span class="page-indicator" id="pageIndicator">1 / 7</span>
-    <button class="nav-btn" id="nextBtn" onclick="changeSlide(1)">下一页 &#9654;</button>
+<button class="nav-btn" id="prevBtn" onclick="changeSlide(-1)">◀ 上一页</button>
+<span class="page-indicator" id="pageIndicator">1 / 7</span>
+<button class="nav-btn" id="nextBtn" onclick="changeSlide(1)">下一页 ▶</button>
 </div>
-
-<div class="kbd-hint">← → 方向键翻页 &middot; 支持触屏滑动</div>
-
+<div class="kbd-hint">← → 方向键翻页 · 支持触屏滑动</div>
 <script>
 (function() {
     var slides = document.querySelectorAll('.slide');
@@ -621,7 +660,6 @@ code {
     showSlide(0);
 })();
 </script>
-
 <script src="courseware-ui.js"></script>
 <script src="presenter.js"></script>
 </body>

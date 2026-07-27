@@ -1,8 +1,9 @@
 <!DOCTYPE html>
+
 <html lang="zh-CN">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
 <title>第35课：状态压缩DP基础 — CSP-S 竞赛课件</title>
 <style>
   /* ===== 全局重置与深色主题 ===== */
@@ -312,49 +313,51 @@
 </style>
 </head>
 <body>
-
 <div class="presentation">
-  <div class="slides-wrapper" id="slidesWrapper">
+<div class="slides-wrapper" id="slidesWrapper">
+<!-- ========== 第1页：标题页 ========== -->
+<div class="slide slide-title active" data-index="0">
+<div class="lesson-num">LESSON 35</div>
+<h1>状态压缩DP基础</h1>
+<div class="subtitle">用二进制表示集合，用动态规划求最优解</div>
+<div class="tags">
+<span class="tag">位运算</span>
+<span class="tag">子集枚举</span>
+<span class="tag">TSP问题</span>
+<span class="tag">NP-hard精确算法</span>
+<span class="tag">CSP-S 提高组</span>
+</div>
+<p style="color: var(--text-secondary); margin-top: 8px;">前置知识：动态规划基础、位运算（&amp; | ^ ~ &lt;&lt; &gt;&gt;）</p>
 
-    <!-- ========== 第1页：标题页 ========== -->
-    <div class="slide slide-title active" data-index="0">
-      <div class="lesson-num">LESSON 35</div>
-      <h1>状态压缩DP基础</h1>
-      <div class="subtitle">用二进制表示集合，用动态规划求最优解</div>
-      <div class="tags">
-        <span class="tag">位运算</span>
-        <span class="tag">子集枚举</span>
-        <span class="tag">TSP问题</span>
-        <span class="tag">NP-hard精确算法</span>
-        <span class="tag">CSP-S 提高组</span>
-      </div>
-      <p style="color: var(--text-secondary); margin-top: 8px;">前置知识：动态规划基础、位运算（& | ^ ~ &lt;&lt; &gt;&gt;）</p>
-    </div>
-
-    <!-- ========== 第2页：二进制表示与位运算 ========== -->
-    <div class="slide" data-index="1">
-      <h2>一、二进制状态表示法</h2>
-
-      <h3>核心思想</h3>
-      <p>用<strong>一个整数的二进制位</strong>来表示集合中每个元素的「选 / 不选」状态。</p>
-
-      <div class="table-wrap">
-        <table>
-          <thead>
-            <tr><th>十进制</th><th>二进制</th><th>含义（选中元素）</th></tr>
-          </thead>
-          <tbody>
-            <tr><td>0</td><td>000</td><td>空集 {}</td></tr>
-            <tr><td>1</td><td>001</td><td>{0}</td></tr>
-            <tr><td>3</td><td>011</td><td>{0, 1}</td></tr>
-            <tr><td>5</td><td>101</td><td>{0, 2}</td></tr>
-            <tr><td>7</td><td>111</td><td>{0, 1, 2}</td></tr>
-          </tbody>
-        </table>
-      </div>
-
-      <h3>常用位运算操作</h3>
-      <div class="code-block">
+<aside class="notes">【开场】第 1/6 页 · 状态压缩DP基础
+用 30 秒说明本课目标与学完能做什么，再进入正题。
+大纲考点：二进制状态表示、子集枚举、TSP问题
+配套练习方向：最短Hamilton路径、铺砖问题
+封面关键词：
+· 前置知识：动态规划基础、位运算（&amp; | ^ ~ &gt;）
+互动：问学生「今天最想搞清楚什么？」，收 1–2 个期待。</aside>
+</div>
+<!-- ========== 第2页：二进制表示与位运算 ========== -->
+<div class="slide" data-index="1">
+<h2>一、二进制状态表示法</h2>
+<h3>核心思想</h3>
+<p>用<strong>一个整数的二进制位</strong>来表示集合中每个元素的「选 / 不选」状态。</p>
+<div class="table-wrap">
+<table>
+<thead>
+<tr><th>十进制</th><th>二进制</th><th>含义（选中元素）</th></tr>
+</thead>
+<tbody>
+<tr><td>0</td><td>000</td><td>空集 {}</td></tr>
+<tr><td>1</td><td>001</td><td>{0}</td></tr>
+<tr><td>3</td><td>011</td><td>{0, 1}</td></tr>
+<tr><td>5</td><td>101</td><td>{0, 2}</td></tr>
+<tr><td>7</td><td>111</td><td>{0, 1, 2}</td></tr>
+</tbody>
+</table>
+</div>
+<h3>常用位运算操作</h3>
+<div class="code-block">
 <span class="cmt">// 检查第 i 位是否为 1</span>
 <span class="kw">if</span> (mask &amp; (<span class="num">1</span> &lt;&lt; i))
 
@@ -369,101 +372,108 @@ mask ^= (<span class="num">1</span> &lt;&lt; i);
 <span class="cmt">// 最低位 1 的位置</span>
 <span class="kw">int</span> pos = <span class="fn">__builtin_ctz</span>(mask);
       </div>
-      <div class="note">适用条件：元素数 n ≤ 20（状态空间 O(2^n)，n=20 时约 100 万状态）</div>
-    </div>
+<div class="note">适用条件：元素数 n ≤ 20（状态空间 O(2^n)，n=20 时约 100 万状态）</div>
 
-    <!-- ========== 第3页：子集枚举 ========== -->
-    <div class="slide" data-index="2">
-      <h2>二、子集枚举技巧</h2>
-
-      <h3>枚举 mask 的所有子集</h3>
-      <div class="code-block">
+<aside class="notes">【讲解】一、二进制状态表示法
+本页要点（照着讲即可）：
+· 用 一个整数的二进制位 来表示集合中每个元素的「选 / 不选」状态。
+· 一个整数的二进制位
+讲解时放慢关键术语；用 1 个生活类比 + 1 个反例加深印象。
+本课大纲考点（可适时点题）：二进制状态表示、子集枚举、TSP问题</aside>
+</div>
+<!-- ========== 第3页：子集枚举 ========== -->
+<div class="slide" data-index="2">
+<h2>二、子集枚举技巧</h2>
+<h3>枚举 mask 的所有子集</h3>
+<div class="code-block">
 <span class="cmt">// 经典 O(3^n) 子集枚举模板</span>
 <span class="kw">for</span> (<span class="kw">int</span> sub = mask; sub; sub = (sub - <span class="num">1</span>) &amp; mask) {
     <span class="cmt">// sub 是 mask 的一个非空子集</span>
-    <span class="cmt">// 在此处理 sub...</span>
+<span class="cmt">// 在此处理 sub...</span>
 }
-<span class="cmt">// 如果需要包含空集：for (int sub = mask; ; sub = (sub-1) & mask)</span>
-      </div>
-
-      <h3>原理</h3>
-      <p><code>(sub - 1) &amp; mask</code> 得到「比 sub 小的、且是 mask 子集的最大整数」。</p>
-
-      <div class="highlight-box">
-        <strong>时间复杂度：O(3^n)</strong><br>
-        每个元素有三种状态：① 不在 mask 中 / ② 在 mask 中但不在 sub 中 / ③ 在 mask 中且在 sub 中<br>
+<span class="cmt">// 如果需要包含空集：for (int sub = mask; ; sub = (sub-1) &amp; mask)</span>
+</div>
+<h3>原理</h3>
+<p><code>(sub - 1) &amp; mask</code> 得到「比 sub 小的、且是 mask 子集的最大整数」。</p>
+<div class="highlight-box">
+<strong>时间复杂度：O(3^n)</strong><br/>
+        每个元素有三种状态：① 不在 mask 中 / ② 在 mask 中但不在 sub 中 / ③ 在 mask 中且在 sub 中<br/>
         总状态数 = 3^n，是一次枚举所有子集的子集的复杂度。
       </div>
-
-      <div class="note">
-        <strong>CSP-S 应用场景：</strong>需要枚举上一行的状态来转移时（如「互不侵犯」问题中枚举上一行的所有合法状态）。
+<div class="note">
+<strong>CSP-S 应用场景：</strong>需要枚举上一行的状态来转移时（如「互不侵犯」问题中枚举上一行的所有合法状态）。
       </div>
-    </div>
 
-    <!-- ========== 第4页：TSP问题 —— 代码模板 ========== -->
-    <div class="slide" data-index="3">
-      <h2>三、TSP 问题（最短Hamilton路径）</h2>
-
-      <h3>状态设计</h3>
-      <div class="formula">dp[mask][i] = 已访问 mask 中的点，当前在点 i 的最短路径</div>
-
-      <h3>核心代码</h3>
-      <div class="code-block">
+<aside class="notes">【讲解】二、子集枚举技巧
+本页要点（照着讲即可）：
+· (sub - 1) &amp; mask 得到「比 sub 小的、且是 mask 子集的最大整数」。
+· 时间复杂度：O(3^n)
+· CSP-S 应用场景：
+讲解时放慢关键术语；用 1 个生活类比 + 1 个反例加深印象。</aside>
+</div>
+<!-- ========== 第4页：TSP问题 —— 代码模板 ========== -->
+<div class="slide" data-index="3">
+<h2>三、TSP 问题（最短Hamilton路径）</h2>
+<h3>状态设计</h3>
+<div class="formula">dp[mask][i] = 已访问 mask 中的点，当前在点 i 的最短路径</div>
+<h3>核心代码</h3>
+<div class="code-block">
 <span class="cmt">// 初始化</span>
 <span class="fn">memset</span>(dp, <span class="num">0x3f</span>, <span class="kw">sizeof</span>(dp));
 dp[<span class="num">1</span> &lt;&lt; <span class="num">0</span>][<span class="num">0</span>] = <span class="num">0</span>;  <span class="cmt">// 从城市 0 出发</span>
-
 <span class="cmt">// DP：从小到大枚举 mask</span>
 <span class="kw">for</span> (<span class="kw">int</span> mask = <span class="num">1</span>; mask &lt; (<span class="num">1</span> &lt;&lt; n); mask++) {
   <span class="kw">for</span> (<span class="kw">int</span> i = <span class="num">0</span>; i &lt; n; i++) {
     <span class="kw">if</span> (!(mask &amp; (<span class="num">1</span> &lt;&lt; i))) <span class="kw">continue</span>;
     <span class="kw">int</span> prev = mask ^ (<span class="num">1</span> &lt;&lt; i);  <span class="cmt">// 去掉 i 后的集合</span>
-    <span class="kw">for</span> (<span class="kw">int</span> j = <span class="num">0</span>; j &lt; n; j++) {
+<span class="kw">for</span> (<span class="kw">int</span> j = <span class="num">0</span>; j &lt; n; j++) {
       <span class="kw">if</span> (!(prev &amp; (<span class="num">1</span> &lt;&lt; j))) <span class="kw">continue</span>;
       dp[mask][i] = <span class="fn">min</span>(dp[mask][i], dp[prev][j] + dist[j][i]);
     }
   }
 }
 <span class="cmt">// 答案：dp[(1&lt;&lt;n)-1][n-1]</span>
-      </div>
+</div>
+<div class="two-col">
+<div>
+<h3>转移方程</h3>
+<div class="formula">dp[mask][i] = min(dp[mask⊕{i}][j] + dist[j][i])</div>
+</div>
+<div>
+<h3>复杂度</h3>
+<div class="formula">O(n² · 2ⁿ)</div>
+<p style="font-size:0.85rem;color:var(--text-secondary);">n=20：约 4×10⁸ 次操作</p>
+</div>
+</div>
 
-      <div class="two-col">
-        <div>
-          <h3>转移方程</h3>
-          <div class="formula">dp[mask][i] = min(dp[mask⊕{i}][j] + dist[j][i])</div>
-        </div>
-        <div>
-          <h3>复杂度</h3>
-          <div class="formula">O(n² · 2ⁿ)</div>
-          <p style="font-size:0.85rem;color:var(--text-secondary);">n=20：约 4×10⁸ 次操作</p>
-        </div>
-      </div>
-    </div>
-
-    <!-- ========== 第5页：真题精练 ========== -->
-    <div class="slide" data-index="4">
-      <h2>四、真题精练</h2>
-
-      <div class="two-col">
-        <div class="highlight-box">
-          <h3>真题1：最短Hamilton路径</h3>
-          <p style="color:var(--text-secondary);">AcWing 91 / 洛谷 P1171</p>
-          <p>给定 n 个点的完全图，求从 0 到 n-1 恰好访问每个点一次的最短路径。</p>
-          <p><strong>输入：</strong>n (≤20)，以及 n×n 距离矩阵。</p>
-          <p><strong>输出：</strong>最短路径长度。</p>
-          <div class="code-block" style="font-size:0.78rem;">
+<aside class="notes">【讲解】三、TSP 问题（最短Hamilton路径）
+本页要点（照着讲即可）：
+· n=20：约 4×10⁸ 次操作
+讲解时放慢关键术语；用 1 个生活类比 + 1 个反例加深印象。</aside>
+</div>
+<!-- ========== 第5页：真题精练 ========== -->
+<div class="slide" data-index="4">
+<h2>四、真题精练</h2>
+<div class="two-col">
+<div class="highlight-box">
+<h3>真题1：最短Hamilton路径</h3>
+<p style="color:var(--text-secondary);">AcWing 91 / 洛谷 P1171</p>
+<p>给定 n 个点的完全图，求从 0 到 n-1 恰好访问每个点一次的最短路径。</p>
+<p><strong>输入：</strong>n (≤20)，以及 n×n 距离矩阵。</p>
+<p><strong>输出：</strong>最短路径长度。</p>
+<div class="code-block" style="font-size:0.78rem;">
 <span class="cmt">// 状态转移核心</span>
 dp[mask][i] = min(dp[mask][i],
     dp[mask ^ (<span class="num">1</span>&lt;&lt;i)][j] + dist[j][i]);
           </div>
-        </div>
-        <div class="highlight-box">
-          <h3>真题2：互不侵犯</h3>
-          <p style="color:var(--text-secondary);">洛谷 P1896 [SCOI2005]</p>
-          <p>在 N×N 棋盘放 K 个国王（攻击相邻 8 格），求方案数。</p>
-          <p><strong>输入：</strong>N (≤9), K (≤N²)</p>
-          <p><strong>输出：</strong>方案总数。</p>
-          <div class="code-block" style="font-size:0.78rem;">
+</div>
+<div class="highlight-box">
+<h3>真题2：互不侵犯</h3>
+<p style="color:var(--text-secondary);">洛谷 P1896 [SCOI2005]</p>
+<p>在 N×N 棋盘放 K 个国王（攻击相邻 8 格），求方案数。</p>
+<p><strong>输入：</strong>N (≤9), K (≤N²)</p>
+<p><strong>输出：</strong>方案总数。</p>
+<div class="code-block" style="font-size:0.78rem;">
 <span class="cmt">// 状态设计</span>
 dp[row][state][cnt] <span class="cmt">// 按行DP</span>
 <span class="cmt">// 判断兼容：</span>
@@ -471,37 +481,43 @@ ok = !(prev &amp; cur)
   &amp;&amp; !(prev &amp; (cur&lt;&lt;<span class="num">1</span>))
   &amp;&amp; !(prev &amp; (cur&gt;&gt;<span class="num">1</span>));
           </div>
-        </div>
+</div>
+</div>
+<div class="note" style="margin-top:16px;">
+<strong>AC 代码位置：</strong><code>/程序/lesson35_state_compression_dp_basic.cpp</code> — 含完整注释与输入输出处理。
       </div>
 
-      <div class="note" style="margin-top:16px;">
-        <strong>AC 代码位置：</strong><code>/程序/lesson35_state_compression_dp_basic.cpp</code> — 含完整注释与输入输出处理。
-      </div>
-    </div>
-
-    <!-- ========== 第6页：总结页 ========== -->
-    <div class="slide" data-index="5">
-      <h2>五、本节总结</h2>
-
-      <div class="table-wrap">
-        <table>
-          <thead>
-            <tr><th>知识点</th><th>核心技巧</th><th>典型复杂度</th></tr>
-          </thead>
-          <tbody>
-            <tr><td>二进制表示集合</td><td>位运算（& | ^ ~ &lt;&lt; &gt;&gt;）</td><td>—</td></tr>
-            <tr><td>子集枚举</td><td><code>sub = (sub-1) &amp; mask</code></td><td>O(3ⁿ)</td></tr>
-            <tr><td>TSP / 哈密顿路径</td><td><code>dp[mask][i]</code> 状态设计</td><td>O(n²·2ⁿ)</td></tr>
-            <tr><td>棋盘类状压</td><td>按行DP + 状态预处理</td><td>O(N·合法状态²)</td></tr>
-          </tbody>
-        </table>
-      </div>
-
-      <h3>常见错误提醒</h3>
-      <div class="code-block">
+<aside class="notes">【讲解】四、真题精练
+本页要点（照着讲即可）：
+· AcWing 91 / 洛谷 P1171
+· 给定 n 个点的完全图，求从 0 到 n-1 恰好访问每个点一次的最短路径。
+· 输入： n (≤20)，以及 n×n 距离矩阵。
+· 输出： 最短路径长度。
+· 洛谷 P1896 [SCOI2005]
+· 在 N×N 棋盘放 K 个国王（攻击相邻 8 格），求方案数。
+练习页节奏：先独立想 1 分钟 → 再点拨思路 → 最后对答案讲为什么。
+可联系：最短Hamilton路径、铺砖问题</aside>
+</div>
+<!-- ========== 第6页：总结页 ========== -->
+<div class="slide" data-index="5">
+<h2>五、本节总结</h2>
+<div class="table-wrap">
+<table>
+<thead>
+<tr><th>知识点</th><th>核心技巧</th><th>典型复杂度</th></tr>
+</thead>
+<tbody>
+<tr><td>二进制表示集合</td><td>位运算（&amp; | ^ ~ &lt;&lt; &gt;&gt;）</td><td>—</td></tr>
+<tr><td>子集枚举</td><td><code>sub = (sub-1) &amp; mask</code></td><td>O(3ⁿ)</td></tr>
+<tr><td>TSP / 哈密顿路径</td><td><code>dp[mask][i]</code> 状态设计</td><td>O(n²·2ⁿ)</td></tr>
+<tr><td>棋盘类状压</td><td>按行DP + 状态预处理</td><td>O(N·合法状态²)</td></tr>
+</tbody>
+</table>
+</div>
+<h3>常见错误提醒</h3>
+<div class="code-block">
 <span class="cmt">// ❌ 错误：位运算优先级低于 ==</span>
-<span class="kw">if</span> (mask &amp; <span class="num">1</span> &lt;&lt; i == <span class="num">0</span>)  <span class="cmt">// 实际是 mask & (1&lt;&lt;i == 0)</span>
-
+<span class="kw">if</span> (mask &amp; <span class="num">1</span> &lt;&lt; i == <span class="num">0</span>)  <span class="cmt">// 实际是 mask &amp; (1&lt;&lt;i == 0)</span>
 <span class="cmt">// ✅ 正确：加括号</span>
 <span class="kw">if</span> ((mask &amp; (<span class="num">1</span> &lt;&lt; i)) == <span class="num">0</span>)
 <span class="kw">if</span> (!(mask &amp; (<span class="num">1</span> &lt;&lt; i)))
@@ -509,25 +525,27 @@ ok = !(prev &amp; cur)
 <span class="cmt">// ✅ 无穷大使用 0x3f3f3f3f（约 1e9，memset 安全）</span>
 <span class="kw">const int</span> INF = <span class="num">0x3f3f3f3f</span>;
       </div>
-
-      <div class="note" style="margin-top:16px;">
-        <strong>下一课预告：</strong>第36课 — 状态压缩DP进阶：轮廓线DP（插头DP）、骨牌覆盖（蒙德里安的梦想）、状压 + 期望DP。
+<div class="note" style="margin-top:16px;">
+<strong>下一课预告：</strong>第36课 — 状态压缩DP进阶：轮廓线DP（插头DP）、骨牌覆盖（蒙德里安的梦想）、状压 + 期望DP。
       </div>
-    </div>
 
-  </div><!-- /slides-wrapper -->
-
-  <!-- ===== 导航栏 ===== -->
-  <div class="nav-bar">
-    <button class="nav-btn" id="btnPrev" onclick="prevSlide()">◀ 上一页</button>
-    <div class="dot-nav" id="dotNav"></div>
-    <div class="page-indicator" id="pageIndicator">1 / 6</div>
-    <button class="nav-btn" id="btnNext" onclick="nextSlide()">下一页 ▶</button>
-  </div>
+<aside class="notes">【收尾】回顾本课主线：五、本节总结
+对照大纲再过一遍：二进制状态表示、子集枚举、TSP问题
+板书/口述要点：
+· 下一课预告：
+课后任务：最短Hamilton路径、铺砖问题
+结束前留 2 分钟答疑；布置 1 道小练习检验是否真正掌握。</aside>
 </div>
-
+</div><!-- /slides-wrapper -->
+<!-- ===== 导航栏 ===== -->
+<div class="nav-bar">
+<button class="nav-btn" id="btnPrev" onclick="prevSlide()">◀ 上一页</button>
+<div class="dot-nav" id="dotNav"></div>
+<div class="page-indicator" id="pageIndicator">1 / 6</div>
+<button class="nav-btn" id="btnNext" onclick="nextSlide()">下一页 ▶</button>
+</div>
+</div>
 <div class="kbd-hint">← → 方向键翻页</div>
-
 <script>
   // ===== 幻灯片控制器 =====
   const slides = document.querySelectorAll('.slide');
@@ -595,7 +613,6 @@ ok = !(prev &amp; cur)
 
   updateUI();
 </script>
-
 <script src="courseware-ui.js"></script>
 <script src="presenter.js"></script>
 </body>

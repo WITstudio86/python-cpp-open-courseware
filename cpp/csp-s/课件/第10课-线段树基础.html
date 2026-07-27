@@ -1,8 +1,9 @@
 <!DOCTYPE html>
+
 <html lang="zh-CN">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
 <title>第10课：线段树基础（Segment Tree）</title>
 <style>
 * { margin: 0; padding: 0; box-sizing: border-box; }
@@ -55,15 +56,22 @@ code { font-family: 'Fira Code', 'Cascadia Code', 'Consolas', monospace; }
 </div>
 <p style="margin-top:30px; color:#8b949e">从建树到懒标记，全面掌握线段树基础操作</p>
 </div>
-</div>
 
+<aside class="notes">【开场】第 1/7 页 · 线段树基础
+用 30 秒说明本课目标与学完能做什么，再进入正题。
+大纲考点：建树、单点修改、区间查询、懒标记
+配套练习方向：区间和/最大值线段树
+封面关键词：
+· Segment Tree — 区间操作利器
+· 从建树到懒标记，全面掌握线段树基础操作
+互动：问学生「今天最想搞清楚什么？」，收 1–2 个期待。</aside>
+</div>
 <div class="slide" id="s2">
 <h1>📖 知识精讲 — 线段树结构</h1>
 <h2>堆式存储（完全二叉树）</h2>
 <p>根节点编号 <span class="num">1</span>，节点 p 的左子 <span class="num">2p</span>，右子 <span class="num">2p+1</span></p>
 <p>节点 p 管理的区间：[<span class="info">l, r</span>]，mid = (l+r)/2</p>
 <p>空间大小：<span class="highlight">4 × n</span>（最稳妥）</p>
-
 <div class="tree">
                     [1, 8] (1)
                    /         \
@@ -74,33 +82,45 @@ code { font-family: 'Fira Code', 'Cascadia Code', 'Consolas', monospace; }
    [1,1] [2,2] [3,3] [4,4] [5,5] [6,6] [7,7] [8,8]
 </div>
 <p style="margin-top:12px">每个叶子节点代表数组中的<span class="accent">一个元素</span>，内部节点代表<span class="accent">一段区间</span></p>
-</div>
 
+<aside class="notes">【讲解】📖 知识精讲 — 线段树结构
+本页要点（照着讲即可）：
+· 根节点编号 1 ，节点 p 的左子 2p ，右子 2p+1
+· 节点 p 管理的区间：[ l, r ]，mid = (l+r)/2
+· 空间大小： 4 × n （最稳妥）
+· 每个叶子节点代表数组中的 一个元素 ，内部节点代表 一段区间
+讲解时放慢关键术语；用 1 个生活类比 + 1 个反例加深印象。
+本课大纲考点（可适时点题）：建树、单点修改、区间查询、懒标记</aside>
+</div>
 <div class="slide" id="s3">
 <h1>📖 知识精讲 — 三大核心操作</h1>
 <h3>1. 建树 <span class="accent">build(p, l, r)</span></h3>
 <p>递归构建：叶子 = a[l]，父节点 = <span class="func">pushup</span>(左子 + 右子)</p>
-
 <h3>2. 单点修改 <span class="accent">update(p, l, r, x, v)</span></h3>
 <p>递归找到叶子 x → 修改 → 回溯时 pushup 更新祖先</p>
-
 <h3>3. 区间查询 <span class="accent">query(p, l, r, ql, qr)</span></h3>
 <p>若节点区间被 <span class="highlight">完全覆盖</span> → 直接返回</p>
 <p>否则分裂查询左右子树 → 合并结果</p>
-
 <h3 style="margin-top:18px">关键性质</h3>
-<p>任意区间 [ql, qr] 可被分解为 <span class="accent">O(log n)</span> 个线段树节点，<br>每个节点代表一个连续的不相交子区间</p>
-</div>
+<p>任意区间 [ql, qr] 可被分解为 <span class="accent">O(log n)</span> 个线段树节点，<br/>每个节点代表一个连续的不相交子区间</p>
 
+<aside class="notes">【讲解】📖 知识精讲 — 三大核心操作
+本页要点（照着讲即可）：
+· 递归构建：叶子 = a[l]，父节点 = pushup (左子 + 右子)
+· 递归找到叶子 x → 修改 → 回溯时 pushup 更新祖先
+· 若节点区间被 完全覆盖 → 直接返回
+· 否则分裂查询左右子树 → 合并结果
+· 任意区间 [ql, qr] 可被分解为 O(log n) 个线段树节点， 每个节点代表一个连续的不相交子区间
+讲解时放慢关键术语；用 1 个生活类比 + 1 个反例加深印象。</aside>
+</div>
 <div class="slide" id="s4">
 <h1>💻 代码模板 — 懒标记与区间修改</h1>
 <h3>懒标记 <span class="accent">Lazy Tag</span> 机制</h3>
 <p>遇到完全覆盖 → 打标记，<span class="highlight">不下传</span>，实现延迟更新</p>
-
 <pre><span class="cmt">// pushdown：访问子节点前必须下传标记</span>
 <span class="type">void</span> <span class="func">pushdown</span>(<span class="type">int</span> p, <span class="type">int</span> l, <span class="type">int</span> r) {
     <span class="kw">if</span> (lazy[p]) {
-        <span class="type">int</span> mid = (l + r) >> <span class="num">1</span>;
+        <span class="type">int</span> mid = (l + r) &gt;&gt; <span class="num">1</span>;
         tree[p&lt;&lt;<span class="num">1</span>] += lazy[p] * (mid - l + <span class="num">1</span>);
         tree[p&lt;&lt;<span class="num">1</span>|<span class="num">1</span>] += lazy[p] * (r - mid);
         lazy[p&lt;&lt;<span class="num">1</span>] += lazy[p];
@@ -111,19 +131,30 @@ code { font-family: 'Fira Code', 'Cascadia Code', 'Consolas', monospace; }
 
 <span class="cmt">// 区间加法修改</span>
 <span class="type">void</span> <span class="func">update</span>(<span class="type">int</span> p, <span class="type">int</span> l, <span class="type">int</span> r, <span class="type">int</span> ql, <span class="type">int</span> qr, <span class="type">int</span> v) {
-    <span class="kw">if</span> (ql &lt;= l && r &lt;= qr) {
+    <span class="kw">if</span> (ql &lt;= l &amp;&amp; r &lt;= qr) {
         tree[p] += v * (r - l + <span class="num">1</span>);
         lazy[p] += v;
         <span class="kw">return</span>;
     }
     <span class="func">pushdown</span>(p, l, r);
-    <span class="type">int</span> mid = (l + r) >> <span class="num">1</span>;
+    <span class="type">int</span> mid = (l + r) &gt;&gt; <span class="num">1</span>;
     <span class="kw">if</span> (ql &lt;= mid) <span class="func">update</span>(p&lt;&lt;<span class="num">1</span>, l, mid, ql, qr, v);
     <span class="kw">if</span> (qr &gt; mid) <span class="func">update</span>(p&lt;&lt;<span class="num">1</span>|<span class="num">1</span>, mid+<span class="num">1</span>, r, ql, qr, v);
     <span class="func">pushup</span>(p);
 }</pre>
-</div>
 
+<aside class="notes">【讲解】💻 代码模板 — 懒标记与区间修改
+结合讲义《💻 代码模板》强调：
+· // ========== 线段树模板（区间和 + 懒标记） ==========
+· const int MAXN = 100005;
+· long long tree[4 * MAXN], lazy[4 * MAXN];
+· int a[MAXN];
+· void pushup(int p) {
+幻灯片上可见要点：
+· 遇到完全覆盖 → 打标记， 不下传 ，实现延迟更新
+代码页节奏：先读懂输入输出 → 再走主流程 → 最后点出易错点（边界/类型/下标）。
+可让学生预测下一行输出，再运行对照。</aside>
+</div>
 <div class="slide" id="s5">
 <h1>⚠️ 易错点与优化技巧</h1>
 <ul>
@@ -131,30 +162,47 @@ code { font-family: 'Fira Code', 'Cascadia Code', 'Consolas', monospace; }
 <li><span class="highlight">⚠️ pushdown 时机</span> — 访问子节点前必须 pushdown！</li>
 <li><span class="highlight">⚠️ 懒标记叠加</span> — lazy[p] += v，不是 = v</li>
 <li><span class="highlight">⚠️ 区间长度乘法</span> — tree += v × 区间长度</li>
-<li><span class="accent">✔ mid 使用位运算</span> — (l+r)>>1 比 (l+r)/2 更快</li>
-<li><span class="accent">✔ 子节点位运算</span> — p<<1 和 p<<1|1</li>
+<li><span class="accent">✔ mid 使用位运算</span> — (l+r)&gt;&gt;1 比 (l+r)/2 更快</li>
+<li><span class="accent">✔ 子节点位运算</span> — p&lt;&lt;1 和 p&lt;&lt;1|1</li>
 <li><span class="accent">✔ 动态开点</span> — 值域 10⁹ 但操作少时使用</li>
 <li><span class="accent">✔ 递归 vs 迭代</span> — zkw 线段树（非递归）常数更小</li>
 <li><span class="accent">✔ 使用 struct/class 封装</span> — 易于复用和调试</li>
 </ul>
-</div>
 
+<aside class="notes">【讲解】⚠️ 易错点与优化技巧
+本页要点（照着讲即可）：
+· ⚠️ 空间开 4 倍 — tree[4*MAXN]，开 2 倍可能 RE
+· ⚠️ pushdown 时机 — 访问子节点前必须 pushdown！
+· ⚠️ 懒标记叠加 — lazy[p] += v，不是 = v
+· ⚠️ 区间长度乘法 — tree += v × 区间长度
+· ✔ mid 使用位运算 — (l+r)&gt;&gt;1 比 (l+r)/2 更快
+· ✔ 子节点位运算 — p&lt;&lt;1 和 p&lt;&lt;1|1
+讲解时放慢关键术语；用 1 个生活类比 + 1 个反例加深印象。</aside>
+</div>
 <div class="slide" id="s6">
 <h1>📝 真题精练</h1>
 <h3>真题一：区间修改 + 区间查询</h3>
 <p><span class="info">题目：</span>区间加法 + 区间求和 | n, m ≤ 10⁵</p>
 <p>使用懒标记线段树，每次操作 O(log n)</p>
-
 <h3 style="margin-top:20px">真题二：区间最大值（RMQ）</h3>
 <p><span class="info">题目：</span>单点修改 + 区间最大值查询 | n, m ≤ 2×10⁵</p>
 <p>无需懒标记，仅需 pushup 维护 max</p>
-
 <div style="background:#0d1117; padding:14px; border-radius:8px; border:1px solid #30363d; margin-top:16px">
 <p><span class="accent">复杂度分析：</span></p>
 <p>建树 O(n) | 单次修改/查询 O(log n) | 总复杂度 O((n+m) log n)</p>
 </div>
-</div>
 
+<aside class="notes">【讲解】📝 真题精练
+本页要点（照着讲即可）：
+· 题目： 区间加法 + 区间求和 | n, m ≤ 10⁵
+· 使用懒标记线段树，每次操作 O(log n)
+· 题目： 单点修改 + 区间最大值查询 | n, m ≤ 2×10⁵
+· 无需懒标记，仅需 pushup 维护 max
+· 复杂度分析：
+· 建树 O(n) | 单次修改/查询 O(log n) | 总复杂度 O((n+m) log n)
+练习页节奏：先独立想 1 分钟 → 再点拨思路 → 最后对答案讲为什么。
+可联系：区间和/最大值线段树</aside>
+</div>
 <div class="slide" id="s7">
 <h1>🎯 本课小结</h1>
 <div style="display:grid; grid-template-columns:1fr 1fr; gap:16px; margin-top:20px">
@@ -188,15 +236,25 @@ code { font-family: 'Fira Code', 'Cascadia Code', 'Consolas', monospace; }
 <p>第K小数查询</p>
 </div>
 </div>
-</div>
 
+<aside class="notes">【收尾】回顾本课主线：🎯 本课小结
+对照大纲再过一遍：建树、单点修改、区间查询、懒标记
+板书/口述要点：
+· build — 递归建树
+· pushup — 子→父合并
+· pushdown — 父→子传递
+· update — 区间修改
+· query — 区间查询
+· 开 4N 空间
+课后任务：区间和/最大值线段树
+结束前留 2 分钟答疑；布置 1 道小练习检验是否真正掌握。</aside>
+</div>
 <div class="nav">
 <button onclick="prevSlide()">◀ 上一页</button>
 <span class="page-indicator" id="pageNum">1 / 7</span>
 <button onclick="nextSlide()">下一页 ▶</button>
 </div>
 </div>
-
 <script>
 let current = 0;
 const slides = document.querySelectorAll('.slide');

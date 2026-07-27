@@ -1,10 +1,11 @@
 <!DOCTYPE html>
+
 <html lang="zh-CN">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>第34课：高精度应用与优化</title>
-    <style>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>第34课：高精度应用与优化</title>
+<style>
         * { margin: 0; padding: 0; box-sizing: border-box; }
 
         body {
@@ -367,96 +368,106 @@
     </style>
 </head>
 <body>
-    <div class="slideshow-container">
+<div class="slideshow-container">
+<!-- ==================== SLIDE 1: Title ==================== -->
+<div class="slide active title-slide" id="slide1">
+<div class="tag-list" style="margin-bottom: 20px;">
+<span class="tag" style="margin: 0 4px;">高精度计算</span>
+<span class="tag" style="margin: 0 4px;">压位优化</span>
+<span class="tag" style="margin: 0 4px;">万进制</span>
+</div>
+<h1>第34课<br/>高精度应用与优化</h1>
+<p class="subtitle">压位存储（万进制）—— 让高精度计算更快更强</p>
+<p style="color: #777; font-size: 0.95em;">C++ 算法提高课程 | 第7阶段：高精度计算</p>
+<div class="arrow-down">↓</div>
 
-        <!-- ==================== SLIDE 1: Title ==================== -->
-        <div class="slide active title-slide" id="slide1">
-            <div class="tag-list" style="margin-bottom: 20px;">
-                <span class="tag" style="margin: 0 4px;">高精度计算</span>
-                <span class="tag" style="margin: 0 4px;">压位优化</span>
-                <span class="tag" style="margin: 0 4px;">万进制</span>
-            </div>
-            <h1>第34课<br>高精度应用与优化</h1>
-            <p class="subtitle">压位存储（万进制）—— 让高精度计算更快更强</p>
-            <p style="color: #777; font-size: 0.95em;">C++ 算法提高课程 | 第7阶段：高精度计算</p>
-            <div class="arrow-down">&#8595;</div>
-        </div>
+<aside class="notes">【开场】第 1/5 页 · 高精度应用与优化
+用 30 秒说明本课目标与学完能做什么，再进入正题。
+大纲考点：压位存储、万进制
+配套练习方向：2的N次方、Hanoi双塔问题
+封面关键词：
+· 压位存储（万进制）—— 让高精度计算更快更强
+· C++ 算法提高课程 | 第7阶段：高精度计算
+互动：问学生「今天最想搞清楚什么？」，收 1–2 个期待。</aside>
+</div>
+<!-- ==================== SLIDE 2: 压位存储原理 ==================== -->
+<div class="slide" id="slide2">
+<h2>压位存储原理</h2>
+<p>普通高精度：每个 <code>int</code> 只存 <strong>1位</strong> 十进制数字——浪费了 int 的存储能力！</p>
+<h3>核心思想：让每个 <code>int</code> 存储多位十进制数字</h3>
+<div class="viz-row">
+<div class="viz-box warn">
+<div class="label" style="color: #ff8533;">普通存储（十进制）</div>
+<p style="font-size: 2em; font-family: monospace; letter-spacing: 3px; color: #ff8533; margin: 10px 0;">1 2 3 4 5 6 7 8</p>
+<p style="color: #999; font-size: 0.85em;">[0] [1] [2] [3] [4] [5] [6] [7]</p>
+<p class="label">需要 <strong>8个</strong> 数组元素</p>
+</div>
+<div class="viz-box best">
+<div class="label" style="color: #00c864;">压位存储（万进制）</div>
+<p style="font-size: 1.5em; font-family: monospace; color: #00c864; margin: 10px 0;">[5678]   [1234]</p>
+<p style="color: #999; font-size: 0.85em;">digits[0]   digits[1]</p>
+<p class="label">只需要 <strong>2个</strong> 数组元素！</p>
+</div>
+</div>
+<h3>效果对比</h3>
+<table class="compare-table">
+<tr>
+<th>对比项</th>
+<th>普通存储（BASE=10）</th>
+<th>压位存储（BASE=10000）</th>
+</tr>
+<tr>
+<td>数组长度</td>
+<td>N 个元素</td>
+<td>约 N/4 个元素</td>
+</tr>
+<tr>
+<td>每次乘法循环次数</td>
+<td>N 次</td>
+<td>约 N/4 次</td>
+</tr>
+<tr>
+<td>效率提升</td>
+<td>基准</td>
+<td><strong style="color:#00c864;">约 4 倍</strong></td>
+</tr>
+<tr>
+<td>进位计算</td>
+<td><code>digit / 10, digit % 10</code></td>
+<td><code>digit / 10000, digit % 10000</code></td>
+</tr>
+<tr>
+<td>输出难度</td>
+<td>简单，直接输出</td>
+<td>需处理前导零</td>
+</tr>
+<tr>
+<td>溢出风险</td>
+<td>无（乘数 ≤ 10）</td>
+<td>需注意乘数 × BASE 不超过 int 范围</td>
+</tr>
+</table>
 
-        <!-- ==================== SLIDE 2: 压位存储原理 ==================== -->
-        <div class="slide" id="slide2">
-            <h2>压位存储原理</h2>
-
-            <p>普通高精度：每个 <code>int</code> 只存 <strong>1位</strong> 十进制数字——浪费了 int 的存储能力！</p>
-
-            <h3>核心思想：让每个 <code>int</code> 存储多位十进制数字</h3>
-
-            <div class="viz-row">
-                <div class="viz-box warn">
-                    <div class="label" style="color: #ff8533;">普通存储（十进制）</div>
-                    <p style="font-size: 2em; font-family: monospace; letter-spacing: 3px; color: #ff8533; margin: 10px 0;">1 2 3 4 5 6 7 8</p>
-                    <p style="color: #999; font-size: 0.85em;">[0] [1] [2] [3] [4] [5] [6] [7]</p>
-                    <p class="label">需要 <strong>8个</strong> 数组元素</p>
-                </div>
-
-                <div class="viz-box best">
-                    <div class="label" style="color: #00c864;">压位存储（万进制）</div>
-                    <p style="font-size: 1.5em; font-family: monospace; color: #00c864; margin: 10px 0;">[5678] &nbsp; [1234]</p>
-                    <p style="color: #999; font-size: 0.85em;">digits[0] &nbsp; digits[1]</p>
-                    <p class="label">只需要 <strong>2个</strong> 数组元素！</p>
-                </div>
-            </div>
-
-            <h3>效果对比</h3>
-            <table class="compare-table">
-                <tr>
-                    <th>对比项</th>
-                    <th>普通存储（BASE=10）</th>
-                    <th>压位存储（BASE=10000）</th>
-                </tr>
-                <tr>
-                    <td>数组长度</td>
-                    <td>N 个元素</td>
-                    <td>约 N/4 个元素</td>
-                </tr>
-                <tr>
-                    <td>每次乘法循环次数</td>
-                    <td>N 次</td>
-                    <td>约 N/4 次</td>
-                </tr>
-                <tr>
-                    <td>效率提升</td>
-                    <td>基准</td>
-                    <td><strong style="color:#00c864;">约 4 倍</strong></td>
-                </tr>
-                <tr>
-                    <td>进位计算</td>
-                    <td><code>digit / 10, digit % 10</code></td>
-                    <td><code>digit / 10000, digit % 10000</code></td>
-                </tr>
-                <tr>
-                    <td>输出难度</td>
-                    <td>简单，直接输出</td>
-                    <td>需处理前导零</td>
-                </tr>
-                <tr>
-                    <td>溢出风险</td>
-                    <td>无（乘数 ≤ 10）</td>
-                    <td>需注意乘数 × BASE 不超过 int 范围</td>
-                </tr>
-            </table>
-        </div>
-
-        <!-- ==================== SLIDE 3: 万进制实现 ==================== -->
-        <div class="slide" id="slide3">
-            <h2>万进制实现细节</h2>
-
-            <h3>1. 常量定义</h3>
-            <pre><code><span class="kw">const int</span> <span class="dt">BASE</span> = <span class="nu">10000</span>;   <span class="cm">// 万进制基数</span>
+<aside class="notes">【讲解】压位存储原理
+本页要点（照着讲即可）：
+· 普通高精度：每个 int 只存 1位 十进制数字——浪费了 int 的存储能力！
+· 1 2 3 4 5 6 7 8
+· [0] [1] [2] [3] [4] [5] [6] [7]
+· 需要 8个 数组元素
+· [5678] [1234]
+· digits[0] digits[1]
+讲解时放慢关键术语；用 1 个生活类比 + 1 个反例加深印象。
+本课大纲考点（可适时点题）：压位存储、万进制</aside>
+</div>
+<!-- ==================== SLIDE 3: 万进制实现 ==================== -->
+<div class="slide" id="slide3">
+<h2>万进制实现细节</h2>
+<h3>1. 常量定义</h3>
+<pre><code><span class="kw">const int</span> <span class="dt">BASE</span> = <span class="nu">10000</span>;   <span class="cm">// 万进制基数</span>
 <span class="kw">const int</span> <span class="dt">WIDTH</span> = <span class="nu">4</span>;       <span class="cm">// 每段对应4位十进制数</span>
 <span class="dt">vector</span>&lt;<span class="kw">int</span>&gt; digits;         <span class="cm">// 低位在前，高位在后</span></code></pre>
-
-            <h3>2. 乘法：高精度 &times; 低精度</h3>
-            <pre><code><span class="kw">void</span> <span class="fn">multiply</span>(<span class="kw">int</span> x) {
+<h3>2. 乘法：高精度 × 低精度</h3>
+<pre><code><span class="kw">void</span> <span class="fn">multiply</span>(<span class="kw">int</span> x) {
     <span class="kw">int</span> carry = <span class="nu">0</span>;
     <span class="kw">for</span> (<span class="kw">int</span> i = <span class="nu">0</span>; i &lt; digits.size(); i++) {
         <span class="kw">long long</span> cur = (<span class="kw">long long</span>)digits[i] * x + carry;
@@ -468,111 +479,136 @@
         carry /= <span class="dt">BASE</span>;
     }
 }</code></pre>
-
-            <h3>3. 输出：前导零处理（最容易出错！）</h3>
-            <pre><code><span class="kw">void</span> <span class="fn">print</span>() {
+<h3>3. 输出：前导零处理（最容易出错！）</h3>
+<pre><code><span class="kw">void</span> <span class="fn">print</span>() {
     cout &lt;&lt; digits.back();              <span class="cm">// 最高段：不补零</span>
     <span class="kw">for</span> (<span class="kw">int</span> i = digits.size() - <span class="nu">2</span>; i &gt;= <span class="nu">0</span>; i--) {
         cout &lt;&lt; setw(<span class="dt">WIDTH</span>) &lt;&lt; setfill(<span class="st">'0'</span>) &lt;&lt; digits[i];
     }
 }</code></pre>
+<div class="viz-row">
+<div class="viz-box" style="border-color: rgba(255, 100, 100, 0.4);">
+<div class="label" style="color: #ff6464;">错误示范（忘记补零）</div>
+<p style="color: #ff6464; font-family: monospace;">digits = [2, 1]</p>
+<p style="color: #ff6464; font-family: monospace;">输出 → "12"</p>
+<p style="color: #999; font-size: 0.8em;">（10002 变成了 12！）</p>
+</div>
+<div class="viz-box" style="border-color: rgba(0, 200, 100, 0.4);">
+<div class="label" style="color: #00c864;">正确做法</div>
+<p style="color: #00c864; font-family: monospace;">digits = [2, 1]</p>
+<p style="color: #00c864; font-family: monospace;">输出 → "10002"</p>
+<p style="color: #999; font-size: 0.8em;">（2 补零为 0002，正确！）</p>
+</div>
+</div>
 
-            <div class="viz-row">
-                <div class="viz-box" style="border-color: rgba(255, 100, 100, 0.4);">
-                    <div class="label" style="color: #ff6464;">错误示范（忘记补零）</div>
-                    <p style="color: #ff6464; font-family: monospace;">digits = [2, 1]</p>
-                    <p style="color: #ff6464; font-family: monospace;">输出 → "12"</p>
-                    <p style="color: #999; font-size: 0.8em;">（10002 变成了 12！）</p>
-                </div>
-                <div class="viz-box" style="border-color: rgba(0, 200, 100, 0.4);">
-                    <div class="label" style="color: #00c864;">正确做法</div>
-                    <p style="color: #00c864; font-family: monospace;">digits = [2, 1]</p>
-                    <p style="color: #00c864; font-family: monospace;">输出 → "10002"</p>
-                    <p style="color: #999; font-size: 0.8em;">（2 补零为 0002，正确！）</p>
-                </div>
+<aside class="notes">【讲解】万进制实现细节
+本页要点（照着讲即可）：
+· digits = [2, 1]
+· 输出 → "12"
+· （10002 变成了 12！）
+· 输出 → "10002"
+· （2 补零为 0002，正确！）
+讲解时放慢关键术语；用 1 个生活类比 + 1 个反例加深印象。</aside>
+</div>
+<!-- ==================== SLIDE 4: 2的N次方与Hanoi双塔 ==================== -->
+<div class="slide" id="slide4">
+<h2>2的N次方与Hanoi双塔</h2>
+<h3>例题1：2的N次方</h3>
+<p>输入 n（1 ≤ n ≤ 500），计算 <strong>2<sup>n</sup></strong> 的精确值。</p>
+<p><strong>算法：</strong>从 1 开始，循环 n 次，每次乘以 2（使用压位高精度）</p>
+<table class="compare-table">
+<tr><th>n</th><th>2<sup>n</sup></th><th>十进制位数</th></tr>
+<tr><td>10</td><td style="font-family: monospace;">1024</td><td>4</td></tr>
+<tr><td>32</td><td style="font-family: monospace;">4294967296</td><td>10</td></tr>
+<tr><td>64</td><td style="font-family: monospace; font-size: 0.8em;">18446744073709551616</td><td>20</td></tr>
+<tr><td>500</td><td style="color: #888; font-size: 0.85em;">(151位数字，远超 long long 范围)</td><td>151</td></tr>
+</table>
+<h3>例题2：Hanoi双塔问题</h3>
+<p>A 柱上有 <strong>2n</strong> 个圆盘（n 种大小，每种 2 个），按汉诺塔规则全部移到 C 柱。</p>
+<div class="formula-box">
+                最少移动次数   H(n) = 2<sup> n+1 </sup> − 2
             </div>
-        </div>
-
-        <!-- ==================== SLIDE 4: 2的N次方与Hanoi双塔 ==================== -->
-        <div class="slide" id="slide4">
-            <h2>2的N次方与Hanoi双塔</h2>
-
-            <h3>例题1：2的N次方</h3>
-            <p>输入 n（1 &le; n &le; 500），计算 <strong>2<sup>n</sup></strong> 的精确值。</p>
-            <p><strong>算法：</strong>从 1 开始，循环 n 次，每次乘以 2（使用压位高精度）</p>
-            <table class="compare-table">
-                <tr><th>n</th><th>2<sup>n</sup></th><th>十进制位数</th></tr>
-                <tr><td>10</td><td style="font-family: monospace;">1024</td><td>4</td></tr>
-                <tr><td>32</td><td style="font-family: monospace;">4294967296</td><td>10</td></tr>
-                <tr><td>64</td><td style="font-family: monospace; font-size: 0.8em;">18446744073709551616</td><td>20</td></tr>
-                <tr><td>500</td><td style="color: #888; font-size: 0.85em;">(151位数字，远超 long long 范围)</td><td>151</td></tr>
-            </table>
-
-            <h3>例题2：Hanoi双塔问题</h3>
-            <p>A 柱上有 <strong>2n</strong> 个圆盘（n 种大小，每种 2 个），按汉诺塔规则全部移到 C 柱。</p>
-            <div class="formula-box">
-                最少移动次数 &nbsp; H(n) = 2<sup> n+1 </sup> &minus; 2
+<p><strong>递推推导：</strong></p>
+<ol>
+<li>将上面 2(n-1) 个圆盘从 A 移到 B：<strong>H(n-1)</strong> 步</li>
+<li>将最大的 2 个圆盘从 A 移到 C：<strong>2</strong> 步</li>
+<li>将 B 上 2(n-1) 个圆盘移到 C：<strong>H(n-1)</strong> 步</li>
+</ol>
+<div class="formula-box">
+                H(n) = 2 × H(n-1) + 2  →  H(n) = 2<sup> n+1 </sup> − 2
             </div>
-            <p><strong>递推推导：</strong></p>
-            <ol>
-                <li>将上面 2(n-1) 个圆盘从 A 移到 B：<strong>H(n-1)</strong> 步</li>
-                <li>将最大的 2 个圆盘从 A 移到 C：<strong>2</strong> 步</li>
-                <li>将 B 上 2(n-1) 个圆盘移到 C：<strong>H(n-1)</strong> 步</li>
-            </ol>
-            <div class="formula-box">
-                H(n) = 2 &times; H(n-1) + 2 &nbsp;&rarr;&nbsp; H(n) = 2<sup> n+1 </sup> &minus; 2
-            </div>
-            <p>验证：n=1 &rarr; 2<sup>2</sup>-2=2；n=2 &rarr; 2<sup>3</sup>-2=6 ✓</p>
-        </div>
+<p>验证：n=1 → 2<sup>2</sup>-2=2；n=2 → 2<sup>3</sup>-2=6 ✓</p>
 
-        <!-- ==================== SLIDE 5: 本课小结 ==================== -->
-        <div class="slide" id="slide5">
-            <h2>本课小结</h2>
-
-            <div class="summary-grid">
-                <div class="summary-item">
-                    <div class="s-num">01</div>
-                    <div class="s-text"><strong>压位存储</strong>让每个数组元素存储 4 位十进制数，数组长度缩减为原来的约 1/4，运算效率提升约 4 倍。</div>
-                </div>
-                <div class="summary-item">
-                    <div class="s-num">02</div>
-                    <div class="s-text"><strong>万进制实现</strong>：进位/借位基数变为 10000，使用 <code>long long</code> 防止中间结果溢出。</div>
-                </div>
-                <div class="summary-item">
-                    <div class="s-num">03</div>
-                    <div class="s-text"><strong>前导零处理</strong>：非最高段输出时必须用 <code>setw(4) &lt;&lt; setfill('0')</code> 补齐到 4 位，这是最容易出错的地方！</div>
-                </div>
-                <div class="summary-item">
-                    <div class="s-num">04</div>
-                    <div class="s-text"><strong>2的N次方</strong>：循环 n 次每次乘 2，n=500 时结果有 151 位数字，万进制下仅需 38 个段。</div>
-                </div>
-                <div class="summary-item">
-                    <div class="s-num">05</div>
-                    <div class="s-text"><strong>Hanoi双塔</strong>：最少移动次数 H(n) = 2<sup>n+1</sup> - 2，先计算 2<sup>n+1</sup> 再减去 2 即可。</div>
-                </div>
-                <div class="summary-item">
-                    <div class="s-num">06</div>
-                    <div class="s-text"><strong>扩展思路</strong>：压位思想可推广到亿进制（BASE=100000000），进一步压缩，但需注意 int 溢出问题。</div>
-                </div>
-            </div>
-
-            <p style="text-align: center; color: #e94560; margin-top: 20px; font-size: 1.1em;">
+<aside class="notes">【讲解】2的N次方与Hanoi双塔
+结合讲义《五、Hanoi双塔问题的数学推导》强调：
+· Hanoi双塔问题是经典汉诺塔的变体：有 A、B、C 三根柱子，A 柱上有 2n 个圆盘，每种大小的圆盘有 2 个（完全相同）。移动规则不变，求最少移动次数。
+· 推导过程：
+· 普通汉诺塔（n 个不同大小的圆盘）的最少移动次数为：
+· H(n) = 2^n - 1
+· 对于双塔问题，有 2n 个圆盘，但由 n 种不同的"大小级别"组成，每种大小有 2 个相同圆盘。可以这样思考：
+幻灯片上可见要点：
+· 输入 n（1 ≤ n ≤ 500），计算 2 n 的精确值。
+· 算法： 从 1 开始，循环 n 次，每次乘以 2（使用压位高精度）
+· A 柱上有 2n 个圆盘（n 种大小，每种 2 个），按汉诺塔规则全部移到 C 柱。
+· 递推推导：
+讲解时放慢关键术语；用 1 个生活类比 + 1 个反例加深印象。</aside>
+</div>
+<!-- ==================== SLIDE 5: 本课小结 ==================== -->
+<div class="slide" id="slide5">
+<h2>本课小结</h2>
+<div class="summary-grid">
+<div class="summary-item">
+<div class="s-num">01</div>
+<div class="s-text"><strong>压位存储</strong>让每个数组元素存储 4 位十进制数，数组长度缩减为原来的约 1/4，运算效率提升约 4 倍。</div>
+</div>
+<div class="summary-item">
+<div class="s-num">02</div>
+<div class="s-text"><strong>万进制实现</strong>：进位/借位基数变为 10000，使用 <code>long long</code> 防止中间结果溢出。</div>
+</div>
+<div class="summary-item">
+<div class="s-num">03</div>
+<div class="s-text"><strong>前导零处理</strong>：非最高段输出时必须用 <code>setw(4) &lt;&lt; setfill('0')</code> 补齐到 4 位，这是最容易出错的地方！</div>
+</div>
+<div class="summary-item">
+<div class="s-num">04</div>
+<div class="s-text"><strong>2的N次方</strong>：循环 n 次每次乘 2，n=500 时结果有 151 位数字，万进制下仅需 38 个段。</div>
+</div>
+<div class="summary-item">
+<div class="s-num">05</div>
+<div class="s-text"><strong>Hanoi双塔</strong>：最少移动次数 H(n) = 2<sup>n+1</sup> - 2，先计算 2<sup>n+1</sup> 再减去 2 即可。</div>
+</div>
+<div class="summary-item">
+<div class="s-num">06</div>
+<div class="s-text"><strong>扩展思路</strong>：压位思想可推广到亿进制（BASE=100000000），进一步压缩，但需注意 int 溢出问题。</div>
+</div>
+</div>
+<p style="text-align: center; color: #e94560; margin-top: 20px; font-size: 1.1em;">
                 核心收获：用更少的容器，装同样多的信息，让高精度计算飞起来！
             </p>
-        </div>
 
-        <!-- ==================== NAVIGATION BAR ==================== -->
-        <div class="nav-bar">
-            <button class="nav-btn" id="prevBtn" onclick="changeSlide(-1)">&#8592; 上一页</button>
-            <div style="display: flex; align-items: center; gap: 16px;">
-                <div class="slide-progress" id="dots"></div>
-                <span class="slide-counter" id="slideCounter">1 / 5</span>
-            </div>
-            <button class="nav-btn" id="nextBtn" onclick="changeSlide(1)">下一页 &#8594;</button>
-        </div>
-    </div>
-
-    <script>
+<aside class="notes">【收尾】回顾本课主线：本课小结
+对照大纲再过一遍：压位存储、万进制
+板书/口述要点：
+· 压位存储
+· 万进制实现
+· 前导零处理
+· 2的N次方
+· Hanoi双塔
+· 扩展思路
+课后任务：2的N次方、Hanoi双塔问题
+结束前留 2 分钟答疑；布置 1 道小练习检验是否真正掌握。</aside>
+</div>
+<!-- ==================== NAVIGATION BAR ==================== -->
+<div class="nav-bar">
+<button class="nav-btn" id="prevBtn" onclick="changeSlide(-1)">← 上一页</button>
+<div style="display: flex; align-items: center; gap: 16px;">
+<div class="slide-progress" id="dots"></div>
+<span class="slide-counter" id="slideCounter">1 / 5</span>
+</div>
+<button class="nav-btn" id="nextBtn" onclick="changeSlide(1)">下一页 →</button>
+</div>
+</div>
+<script>
         let currentSlide = 0;
         const slides = document.querySelectorAll('.slide');
         const totalSlides = slides.length;

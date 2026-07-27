@@ -1,8 +1,9 @@
 <!DOCTYPE html>
+
 <html lang="zh-CN">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
 <title>第17节：走不出的迷宫 — Pygame课堂</title>
 <style>
 /* ========== Reset & Base ========== */
@@ -361,35 +362,52 @@ html, body {
 </style>
 </head>
 <body>
-
 <div class="deck">
-
 <!-- ==================== SLIDE 1: Title ==================== -->
 <section class="slide title-slide is-active">
-  <div class="main-title">第17节</div>
-  <div class="main-title" style="font-size:64px; margin-top:0;">走不出的迷宫</div>
-  <div class="sub-info" style="margin-top:24px;">Pygame 游戏开发系列课程</div>
-  <div class="sub-info" style="font-size:22px; margin-top:8px;">适用对象：10-15岁 · 课时：60分钟</div>
-  <div class="decor">🏰 🧭 🗺️</div>
-</section>
+<div class="main-title">第17节</div>
+<div class="main-title" style="font-size:64px; margin-top:0;">走不出的迷宫</div>
+<div class="sub-info" style="margin-top:24px;">Pygame 游戏开发系列课程</div>
+<div class="sub-info" style="font-size:22px; margin-top:8px;">适用对象：10-15岁 · 课时：60分钟</div>
+<div class="decor">🏰 🧭 🗺️</div>
 
+<aside class="notes">【开场】第 1/11 页 · 走不出的迷宫
+用 30 秒说明本课目标与学完能做什么，再进入正题。
+大纲考点：**内容**：用二维列表设计迷宫地图、角色在迷宫中移动、撞墙检测
+
+**知识点**：
+- 二维列表做地图数据 `maze = [[1,1,0,...], ...]`（0=路 1=墙）
+- 坐标 → 像素换算 `px = col * TILE, py = row * TILE`
+- 逐格移动（按一下走一格，非平滑移动）
+- 下一步位置预检测（移动前先判断目标格是不是墙）
+
+**课堂练习**：设计自己的迷宫，操控角色走通
+
+---
+封面关键词：
+· 第17节
+· 走不出的迷宫
+· Pygame 游戏开发系列课程
+· 适用对象：10-15岁 · 课时：60分钟
+互动：问学生「今天最想搞清楚什么？」，收 1–2 个期待。</aside>
+</section>
 <!-- ==================== SLIDE 2: 迷宫是什么？ ==================== -->
 <section class="slide">
-  <h1 class="slide-title">迷宫是什么？</h1>
-  <div class="section-line"></div>
-  <div class="slide-body">
-    <div class="flex-row">
-      <div class="card" style="flex:1.2;">
-        <h3>你玩过迷宫游戏吗？</h3>
-        <ul class="bullet-list">
-          <li>迷宫是一张由 <span class="em">墙壁</span> 和 <span class="em-green">通道</span> 组成的地图</li>
-          <li class="green">目标：从起点走到终点</li>
-          <li class="orange">挑战：找到正确的路线，避开死胡同</li>
-          <li>今天我们要用代码实现在迷宫中移动的小人！</li>
-        </ul>
-      </div>
-      <div style="flex:1; text-align:center;">
-        <div class="ascii-maze">
+<h1 class="slide-title">迷宫是什么？</h1>
+<div class="section-line"></div>
+<div class="slide-body">
+<div class="flex-row">
+<div class="card" style="flex:1.2;">
+<h3>你玩过迷宫游戏吗？</h3>
+<ul class="bullet-list">
+<li>迷宫是一张由 <span class="em">墙壁</span> 和 <span class="em-green">通道</span> 组成的地图</li>
+<li class="green">目标：从起点走到终点</li>
+<li class="orange">挑战：找到正确的路线，避开死胡同</li>
+<li>今天我们要用代码实现在迷宫中移动的小人！</li>
+</ul>
+</div>
+<div style="flex:1; text-align:center;">
+<div class="ascii-maze">
  ╔══════════╗
  ║ ██  ██ ██║
  ║     ██   ║
@@ -399,23 +417,42 @@ html, body {
  ║     🚩   ║
  ╚══════════╝
         </div>
-        <p style="margin-top:12px;color:var(--text-m);font-size:20px;">
-          🧑 = 玩家 &nbsp;&nbsp; 🚩 = 终点 &nbsp;&nbsp; ██ = 墙壁
+<p style="margin-top:12px;color:var(--text-m);font-size:20px;">
+          🧑 = 玩家    🚩 = 终点    ██ = 墙壁
         </p>
-      </div>
-    </div>
-  </div>
-</section>
+</div>
+</div>
+</div>
 
+<aside class="notes">【讲解】迷宫是什么？
+本页要点（照着讲即可）：
+· 迷宫是一张由 墙壁 和 通道 组成的地图
+· 目标：从起点走到终点
+· 挑战：找到正确的路线，避开死胡同
+· 今天我们要用代码实现在迷宫中移动的小人！
+· 🧑 = 玩家 🚩 = 终点 ██ = 墙壁
+讲解时放慢关键术语；用 1 个生活类比 + 1 个反例加深印象。
+本课大纲考点（可适时点题）：**内容**：用二维列表设计迷宫地图、角色在迷宫中移动、撞墙检测
+
+**知识点**：
+- 二维列表做地图数据 `maze = [[1,1,0,...], ...]`（0=路 1=墙）
+- 坐标 → 像素换算 `px = col * TILE, py = row * TILE`
+- 逐格移动（按一下走一格，非平滑移动）
+- 下一步位置预检测（移动前先判断目标格是不是墙）
+
+**课堂练习**：设计自己的迷宫，操控角色走通
+
+---</aside>
+</section>
 <!-- ==================== SLIDE 3: 用数据表示地图 ==================== -->
 <section class="slide">
-  <h1 class="slide-title">用数据表示地图</h1>
-  <div class="section-line blue"></div>
-  <div class="slide-body center">
-    <p style="margin-bottom:16px;">在程序中，我们用 <span class="em">二维列表</span> 来存储迷宫地图</p>
-    <div class="code-block">
+<h1 class="slide-title">用数据表示地图</h1>
+<div class="section-line blue"></div>
+<div class="slide-body center">
+<p style="margin-bottom:16px;">在程序中，我们用 <span class="em">二维列表</span> 来存储迷宫地图</p>
+<div class="code-block">
 <span class="cm"># 二维列表：每一行是一个子列表</span>
-<span class="cm"># 0 = 路（可以走） &nbsp; 1 = 墙（不能走）</span>
+<span class="cm"># 0 = 路（可以走）   1 = 墙（不能走）</span>
 maze = [
     [<span class="num">1</span>, <span class="num">1</span>, <span class="num">1</span>, <span class="num">1</span>, <span class="num">1</span>],
     [<span class="num">1</span>, <span class="num">0</span>, <span class="num">0</span>, <span class="num">0</span>, <span class="num">1</span>],
@@ -423,21 +460,26 @@ maze = [
     [<span class="num">1</span>, <span class="num">0</span>, <span class="num">0</span>, <span class="num">0</span>, <span class="num">1</span>],
     [<span class="num">1</span>, <span class="num">1</span>, <span class="num">1</span>, <span class="num">1</span>, <span class="num">1</span>],
 ]</div>
-    <div class="hl-box blue" style="text-align:left; margin-top:20px;">
-      <strong>理解二维列表：</strong><br>
-      <code style="font-size:22px;">maze[row][col]</code> — 第一个索引是 <span class="em">行号</span>（第几排），第二个索引是 <span class="em">列号</span>（第几个格子）
+<div class="hl-box blue" style="text-align:left; margin-top:20px;">
+<strong>理解二维列表：</strong><br/>
+<code style="font-size:22px;">maze[row][col]</code> — 第一个索引是 <span class="em">行号</span>（第几排），第二个索引是 <span class="em">列号</span>（第几个格子）
     </div>
-  </div>
-</section>
+</div>
 
+<aside class="notes">【讲解】用数据表示地图
+本页要点（照着讲即可）：
+· 在程序中，我们用 二维列表 来存储迷宫地图
+· 理解二维列表：
+讲解时放慢关键术语；用 1 个生活类比 + 1 个反例加深印象。</aside>
+</section>
 <!-- ==================== SLIDE 4: 设计迷宫地图 ==================== -->
 <section class="slide">
-  <h1 class="slide-title">设计迷宫地图</h1>
-  <div class="section-line green"></div>
-  <div class="slide-body" style="text-align:center;">
-    <p style="margin-bottom:12px;">这是本节课使用的 <span class="em">16列 x 12行</span> 迷宫，来看看完整数据：</p>
-    <div style="display:flex; gap:30px; flex-wrap:wrap; justify-content:center; align-items:flex-start;">
-      <div class="code-block" style="font-size:13px; line-height:1.5; max-height:480px; overflow-y:auto;">
+<h1 class="slide-title">设计迷宫地图</h1>
+<div class="section-line green"></div>
+<div class="slide-body" style="text-align:center;">
+<p style="margin-bottom:12px;">这是本节课使用的 <span class="em">16列 x 12行</span> 迷宫，来看看完整数据：</p>
+<div style="display:flex; gap:30px; flex-wrap:wrap; justify-content:center; align-items:flex-start;">
+<div class="code-block" style="font-size:13px; line-height:1.5; max-height:480px; overflow-y:auto;">
 maze = [
   [<span class="num">1</span>,<span class="num">1</span>,<span class="num">1</span>,<span class="num">1</span>,<span class="num">1</span>,<span class="num">1</span>,<span class="num">1</span>,<span class="num">1</span>,<span class="num">1</span>,<span class="num">1</span>,<span class="num">1</span>,<span class="num">1</span>,<span class="num">1</span>,<span class="num">1</span>,<span class="num">1</span>,<span class="num">1</span>],
   [<span class="num">1</span>,<span class="hl">0</span>,<span class="num">0</span>,<span class="num">0</span>,<span class="num">0</span>,<span class="num">0</span>,<span class="num">0</span>,<span class="num">0</span>,<span class="num">1</span>,<span class="num">0</span>,<span class="num">0</span>,<span class="num">0</span>,<span class="num">0</span>,<span class="num">0</span>,<span class="num">0</span>,<span class="num">1</span>],
@@ -452,131 +494,137 @@ maze = [
   [<span class="num">1</span>,<span class="num">0</span>,<span class="num">1</span>,<span class="num">0</span>,<span class="num">1</span>,<span class="num">0</span>,<span class="num">1</span>,<span class="num">1</span>,<span class="num">0</span>,<span class="num">1</span>,<span class="num">1</span>,<span class="num">1</span>,<span class="num">0</span>,<span class="num">1</span>,<span class="num">0</span>,<span class="num">0</span>],
   [<span class="num">1</span>,<span class="num">1</span>,<span class="num">1</span>,<span class="num">1</span>,<span class="num">1</span>,<span class="num">1</span>,<span class="num">1</span>,<span class="num">1</span>,<span class="num">1</span>,<span class="num">1</span>,<span class="num">1</span>,<span class="num">1</span>,<span class="num">1</span>,<span class="num">1</span>,<span class="num">1</span>,<span class="num">1</span>],
 ]</div>
-      <div style="text-align:left;">
-        <div class="maze-visual" id="maze-grid"></div>
-        <p style="margin-top:12px;font-size:20px;color:var(--text-m);">
-          <span style="display:inline-block;width:20px;height:20px;background:var(--orange-l);border-radius:3px;vertical-align:middle;"></span> 起点 (1,1) &nbsp;
+<div style="text-align:left;">
+<div class="maze-visual" id="maze-grid"></div>
+<p style="margin-top:12px;font-size:20px;color:var(--text-m);">
+<span style="display:inline-block;width:20px;height:20px;background:var(--orange-l);border-radius:3px;vertical-align:middle;"></span> 起点 (1,1)  
           <span style="display:inline-block;width:20px;height:20px;background:var(--green-l);border-radius:3px;vertical-align:middle;"></span> 终点 (14,10)
         </p>
-      </div>
-    </div>
-  </div>
-</section>
+</div>
+</div>
+</div>
 
+<aside class="notes">【讲解】设计迷宫地图
+本页要点（照着讲即可）：
+· 这是本节课使用的 16列 x 12行 迷宫，来看看完整数据：
+· 起点 (1,1) 终点 (14,10)
+讲解时放慢关键术语；用 1 个生活类比 + 1 个反例加深印象。</aside>
+</section>
 <!-- ==================== SLIDE 5: 从坐标到像素 ==================== -->
 <section class="slide">
-  <h1 class="slide-title">从坐标到像素</h1>
-  <div class="section-line orange"></div>
-  <div class="slide-body center">
-    <p style="margin-bottom:20px;">程序里管理的是 <span class="em">格子坐标 (col, row)</span>，画到屏幕上需要换算成 <span class="em">像素坐标 (px, py)</span></p>
-
-    <div class="coord-demo" style="margin-bottom:24px;">
-      <div class="coord-box">
-        <div style="font-size:22px;color:var(--text-m);">格子坐标</div>
-        <div class="big">col, row</div>
-        <div style="margin-top:8px;">第 col 列，第 row 行</div>
-      </div>
-      <div class="step-arrow">x</div>
-      <div class="coord-box">
-        <div style="font-size:22px;color:var(--text-m);">格子大小</div>
-        <div class="big" style="color:var(--green);">TILE</div>
-        <div style="margin-top:8px;">例如 40 像素</div>
-      </div>
-      <div class="step-arrow">=</div>
-      <div class="coord-box">
-        <div style="font-size:22px;color:var(--text-m);">像素坐标</div>
-        <div class="big" style="color:var(--orange);">px, py</div>
-        <div style="margin-top:8px;">屏幕上的实际位置</div>
-      </div>
-    </div>
-
-    <div class="code-block">
+<h1 class="slide-title">从坐标到像素</h1>
+<div class="section-line orange"></div>
+<div class="slide-body center">
+<p style="margin-bottom:20px;">程序里管理的是 <span class="em">格子坐标 (col, row)</span>，画到屏幕上需要换算成 <span class="em">像素坐标 (px, py)</span></p>
+<div class="coord-demo" style="margin-bottom:24px;">
+<div class="coord-box">
+<div style="font-size:22px;color:var(--text-m);">格子坐标</div>
+<div class="big">col, row</div>
+<div style="margin-top:8px;">第 col 列，第 row 行</div>
+</div>
+<div class="step-arrow">x</div>
+<div class="coord-box">
+<div style="font-size:22px;color:var(--text-m);">格子大小</div>
+<div class="big" style="color:var(--green);">TILE</div>
+<div style="margin-top:8px;">例如 40 像素</div>
+</div>
+<div class="step-arrow">=</div>
+<div class="coord-box">
+<div style="font-size:22px;color:var(--text-m);">像素坐标</div>
+<div class="big" style="color:var(--orange);">px, py</div>
+<div style="margin-top:8px;">屏幕上的实际位置</div>
+</div>
+</div>
+<div class="code-block">
 <span class="cm"># 关键换算公式</span>
-<span class="hl">TILE</span> = <span class="num">40</span>  <span class="cm"># 每个格子的像素大小</span>
-
+<span class="hl">TILE</span> = <span class="num">40</span> <span class="cm"># 每个格子的像素大小</span>
 <span class="kw">def</span> <span class="fn">grid_to_pixel</span>(col, row):
     <span class="kw">return</span> col * <span class="hl">TILE</span>, row * <span class="hl">TILE</span>
-
 <span class="cm"># 示例：格子 (3, 2) → 像素 (120, 80)</span>
 px, py = col * <span class="hl">TILE</span>, row * <span class="hl">TILE</span></div>
-
-    <div class="hl-box blue" style="margin-top:20px;">
-      <strong>一句话总结：</strong>像素坐标 = 格子坐标 x 每个格子的边长
+<div class="hl-box blue" style="margin-top:20px;">
+<strong>一句话总结：</strong>像素坐标 = 格子坐标 x 每个格子的边长
     </div>
-  </div>
-</section>
+</div>
 
+<aside class="notes">【讲解】从坐标到像素
+本页要点（照着讲即可）：
+· 程序里管理的是 格子坐标 (col, row) ，画到屏幕上需要换算成 像素坐标 (px, py)
+· 一句话总结：
+讲解时放慢关键术语；用 1 个生活类比 + 1 个反例加深印象。</aside>
+</section>
 <!-- ==================== SLIDE 6: 逐格移动 ==================== -->
 <section class="slide">
-  <h1 class="slide-title">逐格移动</h1>
-  <div class="section-line"></div>
-  <div class="slide-body">
-    <div class="card">
-      <h3>新玩法：一格一格移动！</h3>
-      <p>前几节课我们用 <span class="em">平滑移动</span>（按着不放连续走），今天换一种方式：</p>
-      <p style="margin-top:8px;"><span class="em">按下一次方向键 → 正好移动一格</span></p>
-    </div>
-
-    <div class="code-block">
+<h1 class="slide-title">逐格移动</h1>
+<div class="section-line"></div>
+<div class="slide-body">
+<div class="card">
+<h3>新玩法：一格一格移动！</h3>
+<p>前几节课我们用 <span class="em">平滑移动</span>（按着不放连续走），今天换一种方式：</p>
+<p style="margin-top:8px;"><span class="em">按下一次方向键 → 正好移动一格</span></p>
+</div>
+<div class="code-block">
 <span class="cm"># 事件处理：按一次键，移动一个格子</span>
 <span class="kw">for</span> event <span class="kw">in</span> pygame.event.get():
     <span class="kw">if</span> event.type == pygame.<span class="hl">KEYDOWN</span>:  <span class="cm"># 检测按键按下事件</span>
-        <span class="kw">if</span> event.key == pygame.<span class="hl">K_LEFT</span>:
-            player_col -= <span class="num">1</span>   <span class="cm"># 向左移动一格</span>
-        <span class="kw">elif</span> event.key == pygame.<span class="hl">K_RIGHT</span>:
-            player_col += <span class="num">1</span>   <span class="cm"># 向右移动一格</span>
-        <span class="kw">elif</span> event.key == pygame.<span class="hl">K_UP</span>:
-            player_row -= <span class="num">1</span>   <span class="cm"># 向上移动一格</span>
-        <span class="kw">elif</span> event.key == pygame.<span class="hl">K_DOWN</span>:
-            player_row += <span class="num">1</span>   <span class="cm"># 向下移动一格</span></div>
+<span class="kw">if</span> event.key == pygame.<span class="hl">K_LEFT</span>:
+            player_col -= <span class="num">1</span> <span class="cm"># 向左移动一格</span>
+<span class="kw">elif</span> event.key == pygame.<span class="hl">K_RIGHT</span>:
+            player_col += <span class="num">1</span> <span class="cm"># 向右移动一格</span>
+<span class="kw">elif</span> event.key == pygame.<span class="hl">K_UP</span>:
+            player_row -= <span class="num">1</span> <span class="cm"># 向上移动一格</span>
+<span class="kw">elif</span> event.key == pygame.<span class="hl">K_DOWN</span>:
+            player_row += <span class="num">1</span> <span class="cm"># 向下移动一格</span></div>
+<div class="card orange" style="margin-top:16px;">
+<h3>对比：平滑移动 vs 逐格移动</h3>
+<table style="width:100%; border-collapse:collapse; font-size:24px;">
+<tr style="border-bottom:2px solid #EEE;">
+<th style="padding:8px; text-align:left;"> </th>
+<th style="padding:8px;">平滑移动</th>
+<th style="padding:8px;">逐格移动</th>
+</tr>
+<tr>
+<td style="padding:8px;">事件类型</td>
+<td style="padding:8px;"><code>get_pressed()</code></td>
+<td style="padding:8px;font-weight:700;color:var(--orange-d);"><code>KEYDOWN</code></td>
+</tr>
+<tr>
+<td style="padding:8px;">移动方式</td>
+<td style="padding:8px;">按住连续移动</td>
+<td style="padding:8px;font-weight:700;color:var(--orange-d);">按一次走一格</td>
+</tr>
+<tr>
+<td style="padding:8px;">坐标变化</td>
+<td style="padding:8px;">改像素坐标</td>
+<td style="padding:8px;font-weight:700;color:var(--orange-d);">改格子坐标</td>
+</tr>
+</table>
+</div>
+</div>
 
-    <div class="card orange" style="margin-top:16px;">
-      <h3>对比：平滑移动 vs 逐格移动</h3>
-      <table style="width:100%; border-collapse:collapse; font-size:24px;">
-        <tr style="border-bottom:2px solid #EEE;">
-          <th style="padding:8px; text-align:left;">&nbsp;</th>
-          <th style="padding:8px;">平滑移动</th>
-          <th style="padding:8px;">逐格移动</th>
-        </tr>
-        <tr>
-          <td style="padding:8px;">事件类型</td>
-          <td style="padding:8px;"><code>get_pressed()</code></td>
-          <td style="padding:8px;font-weight:700;color:var(--orange-d);"><code>KEYDOWN</code></td>
-        </tr>
-        <tr>
-          <td style="padding:8px;">移动方式</td>
-          <td style="padding:8px;">按住连续移动</td>
-          <td style="padding:8px;font-weight:700;color:var(--orange-d);">按一次走一格</td>
-        </tr>
-        <tr>
-          <td style="padding:8px;">坐标变化</td>
-          <td style="padding:8px;">改像素坐标</td>
-          <td style="padding:8px;font-weight:700;color:var(--orange-d);">改格子坐标</td>
-        </tr>
-      </table>
-    </div>
-  </div>
+<aside class="notes">【讲解】逐格移动
+本页要点（照着讲即可）：
+· 前几节课我们用 平滑移动 （按着不放连续走），今天换一种方式：
+· 按下一次方向键 → 正好移动一格
+讲解时放慢关键术语；用 1 个生活类比 + 1 个反例加深印象。</aside>
 </section>
-
 <!-- ==================== SLIDE 7: 撞墙检测 ==================== -->
 <section class="slide">
-  <h1 class="slide-title">撞墙检测——先看后走</h1>
-  <div class="section-line blue"></div>
-  <div class="slide-body">
-    <div class="card blue">
-      <h3>核心思想：先看后走（Look before you leap）</h3>
-      <p>每次移动前，先检查 <span class="em">目标格子是不是墙</span>。如果是墙，就不允许移动。</p>
-    </div>
-
-    <div class="step-row">
-      <div class="step-badge">1. 计算新位置</div>
-      <div class="step-arrow">→</div>
-      <div class="step-badge" style="background:var(--green);">2. 检查地图数据</div>
-      <div class="step-arrow">→</div>
-      <div class="step-badge" style="background:var(--orange);">3. 是路就更新，是墙就不动</div>
-    </div>
-
-    <div class="code-block">
+<h1 class="slide-title">撞墙检测——先看后走</h1>
+<div class="section-line blue"></div>
+<div class="slide-body">
+<div class="card blue">
+<h3>核心思想：先看后走（Look before you leap）</h3>
+<p>每次移动前，先检查 <span class="em">目标格子是不是墙</span>。如果是墙，就不允许移动。</p>
+</div>
+<div class="step-row">
+<div class="step-badge">1. 计算新位置</div>
+<div class="step-arrow">→</div>
+<div class="step-badge" style="background:var(--green);">2. 检查地图数据</div>
+<div class="step-arrow">→</div>
+<div class="step-badge" style="background:var(--orange);">3. 是路就更新，是墙就不动</div>
+</div>
+<div class="code-block">
 <span class="cm"># 撞墙检测：移动前检查目标格子</span>
 new_col = player_col
 new_row = player_row
@@ -589,24 +637,26 @@ new_row = player_row
     new_row = player_row - <span class="num">1</span>
 <span class="kw">elif</span> event.key == pygame.<span class="hl">K_DOWN</span>:
     new_row = player_row + <span class="num">1</span>
-
 <span class="cm"># 关键检查：目标位置是路(0)才能走</span>
 <span class="kw">if</span> maze[new_row][new_col] == <span class="num">0</span>:
     player_col, player_row = new_col, new_row  <span class="cm"># 更新位置</span></div>
-
-    <div class="hl-box" style="margin-top:16px;">
-      <strong>注意：</strong><code style="font-size:22px;">maze[<span class="em">row</span>][<span class="em">col</span>]</code> 中 row 在前、col 在后，顺序别搞反了！
+<div class="hl-box" style="margin-top:16px;">
+<strong>注意：</strong><code style="font-size:22px;">maze[<span class="em">row</span>][<span class="em">col</span>]</code> 中 row 在前、col 在后，顺序别搞反了！
     </div>
-  </div>
-</section>
+</div>
 
+<aside class="notes">【讲解】撞墙检测——先看后走
+本页要点（照着讲即可）：
+· 每次移动前，先检查 目标格子是不是墙 。如果是墙，就不允许移动。
+讲解时放慢关键术语；用 1 个生活类比 + 1 个反例加深印象。</aside>
+</section>
 <!-- ==================== SLIDE 8: 完整代码示范（上） ==================== -->
 <section class="slide">
-  <h1 class="slide-title">完整代码示范（上）</h1>
-  <div class="section-line green"></div>
-  <div class="slide-body">
-    <p style="margin-bottom:8px;">第一部分：导入、初始化、地图数据、颜色定义</p>
-    <div class="code-block" style="font-size:15px; line-height:1.55; max-height:500px; overflow-y:auto;">
+<h1 class="slide-title">完整代码示范（上）</h1>
+<div class="section-line green"></div>
+<div class="slide-body">
+<p style="margin-bottom:8px;">第一部分：导入、初始化、地图数据、颜色定义</p>
+<div class="code-block" style="font-size:15px; line-height:1.55; max-height:500px; overflow-y:auto;">
 <span class="kw">import</span> pygame
 <span class="kw">import</span> sys
 
@@ -649,16 +699,21 @@ maze = [
 <span class="cm"># ── 玩家初始位置 ──</span>
 player_row, player_col = <span class="num">1</span>, <span class="num">1</span>
 goal_row, goal_col = <span class="num">10</span>, <span class="num">14</span></div>
-  </div>
-</section>
+</div>
 
+<aside class="notes">【讲解】完整代码示范（上）
+本页要点（照着讲即可）：
+· 第一部分：导入、初始化、地图数据、颜色定义
+代码页节奏：先读懂输入输出 → 再走主流程 → 最后点出易错点（边界/类型/下标）。
+可让学生预测下一行输出，再运行对照。</aside>
+</section>
 <!-- ==================== SLIDE 9: 完整代码示范（下） ==================== -->
 <section class="slide">
-  <h1 class="slide-title">完整代码示范（下）</h1>
-  <div class="section-line"></div>
-  <div class="slide-body">
-    <p style="margin-bottom:8px;">第二部分：游戏循环、事件处理、绘制函数</p>
-    <div class="code-block" style="font-size:15px; line-height:1.55; max-height:500px; overflow-y:auto;">
+<h1 class="slide-title">完整代码示范（下）</h1>
+<div class="section-line"></div>
+<div class="slide-body">
+<p style="margin-bottom:8px;">第二部分：游戏循环、事件处理、绘制函数</p>
+<div class="code-block" style="font-size:15px; line-height:1.55; max-height:500px; overflow-y:auto;">
 <span class="cm"># ── 绘制函数 ──</span>
 <span class="kw">def</span> <span class="fn">draw_maze</span>():
     <span class="kw">for</span> row <span class="kw">in</span> range(ROWS):
@@ -686,14 +741,14 @@ running = <span class="hl">True</span>
     <span class="kw">for</span> event <span class="kw">in</span> pygame.event.get():
         <span class="kw">if</span> event.type == pygame.<span class="hl">QUIT</span>:
             running = <span class="hl">False</span>
-        <span class="kw">if</span> event.type == pygame.<span class="hl">KEYDOWN</span>:
+<span class="kw">if</span> event.type == pygame.<span class="hl">KEYDOWN</span>:
             new_row, new_col = player_row, player_col
             <span class="kw">if</span> event.key == pygame.<span class="hl">K_UP</span>:    new_row -= <span class="num">1</span>
-            <span class="kw">if</span> event.key == pygame.<span class="hl">K_DOWN</span>:  new_row += <span class="num">1</span>
-            <span class="kw">if</span> event.key == pygame.<span class="hl">K_LEFT</span>:  new_col -= <span class="num">1</span>
-            <span class="kw">if</span> event.key == pygame.<span class="hl">K_RIGHT</span>: new_col += <span class="num">1</span>
-            <span class="cm"># 撞墙检测</span>
-            <span class="kw">if</span> maze[new_row][new_col] == <span class="num">0</span>:
+<span class="kw">if</span> event.key == pygame.<span class="hl">K_DOWN</span>:  new_row += <span class="num">1</span>
+<span class="kw">if</span> event.key == pygame.<span class="hl">K_LEFT</span>:  new_col -= <span class="num">1</span>
+<span class="kw">if</span> event.key == pygame.<span class="hl">K_RIGHT</span>: new_col += <span class="num">1</span>
+<span class="cm"># 撞墙检测</span>
+<span class="kw">if</span> maze[new_row][new_col] == <span class="num">0</span>:
                 player_row, player_col = new_row, new_col
 
     screen.fill(BLACK)
@@ -701,7 +756,7 @@ running = <span class="hl">True</span>
     draw_goal()
     draw_player()
     <span class="cm"># 到达终点检测</span>
-    <span class="kw">if</span> player_row == goal_row <span class="kw">and</span> player_col == goal_col:
+<span class="kw">if</span> player_row == goal_row <span class="kw">and</span> player_col == goal_col:
         font = pygame.font.Font(<span class="hl">None</span>, <span class="num">72</span>)
         text = font.render(<span class="str">"🎉 你赢了！"</span>, <span class="hl">True</span>, GREEN)
         screen.blit(text, (W // <span class="num">2</span> - text.get_width() // <span class="num">2</span>,
@@ -711,84 +766,117 @@ running = <span class="hl">True</span>
 
 pygame.quit()
 sys.exit()</div>
-  </div>
-</section>
+</div>
 
+<aside class="notes">【讲解】完整代码示范（下）
+本页要点（照着讲即可）：
+· 第二部分：游戏循环、事件处理、绘制函数
+代码页节奏：先读懂输入输出 → 再走主流程 → 最后点出易错点（边界/类型/下标）。
+可让学生预测下一行输出，再运行对照。</aside>
+</section>
 <!-- ==================== SLIDE 10: 课堂练习 ==================== -->
 <section class="slide">
-  <h1 class="slide-title">课堂练习</h1>
-  <div class="section-line green"></div>
-  <div class="slide-body">
-    <div class="card green" style="margin-bottom:24px;">
-      <h3>基础任务（必做）</h3>
-      <ul class="bullet-list">
-        <li class="green">把示例代码敲一遍，运行起来，在迷宫中走一走</li>
-        <li class="green">修改玩家颜色，换成你喜欢的颜色</li>
-        <li class="green">修改 TILE 大小（如改成 30 或 50），观察界面变化</li>
-        <li class="green">试着把起点换到另一个可用格子</li>
-      </ul>
-    </div>
+<h1 class="slide-title">课堂练习</h1>
+<div class="section-line green"></div>
+<div class="slide-body">
+<div class="card green" style="margin-bottom:24px;">
+<h3>基础任务（必做）</h3>
+<ul class="bullet-list">
+<li class="green">把示例代码敲一遍，运行起来，在迷宫中走一走</li>
+<li class="green">修改玩家颜色，换成你喜欢的颜色</li>
+<li class="green">修改 TILE 大小（如改成 30 或 50），观察界面变化</li>
+<li class="green">试着把起点换到另一个可用格子</li>
+</ul>
+</div>
+<div class="card orange">
+<h3>挑战任务（选做）</h3>
+<ul class="bullet-list">
+<li class="orange">在地图上添加金币（随机放置几个0值的格子变成金币），吃到金币记分</li>
+<li class="orange">添加步数计数器，在窗口标题显示"已走N步"</li>
+<li class="orange">修改迷宫地图，自己设计一个全新的迷宫</li>
+<li class="orange">走到终点后，用pygame播放一个音效</li>
+<li class="orange">添加计时功能，看看谁最快走出迷宫！</li>
+</ul>
+</div>
+</div>
 
-    <div class="card orange">
-      <h3>挑战任务（选做）</h3>
-      <ul class="bullet-list">
-        <li class="orange">在地图上添加金币（随机放置几个0值的格子变成金币），吃到金币记分</li>
-        <li class="orange">添加步数计数器，在窗口标题显示"已走N步"</li>
-        <li class="orange">修改迷宫地图，自己设计一个全新的迷宫</li>
-        <li class="orange">走到终点后，用pygame播放一个音效</li>
-        <li class="orange">添加计时功能，看看谁最快走出迷宫！</li>
-      </ul>
-    </div>
-  </div>
+<aside class="notes">【讲解】课堂练习
+结合讲义《三、课堂练习（25分钟）》强调：
+· 任务1：还原完整游戏（15分钟）
+· 将老师讲解的五个步骤的代码整合起来，得到一个完整的迷宫游戏。要求：
+· 12行×16列的迷宫地图正确绘制
+· 玩家红色圆形在(1, 1)位置起始
+· 按方向键可以逐格移动
+幻灯片上可见要点：
+· 把示例代码敲一遍，运行起来，在迷宫中走一走
+· 修改玩家颜色，换成你喜欢的颜色
+· 修改 TILE 大小（如改成 30 或 50），观察界面变化
+· 试着把起点换到另一个可用格子
+练习页节奏：先独立想 1 分钟 → 再点拨思路 → 最后对答案讲为什么。</aside>
 </section>
-
 <!-- ==================== SLIDE 11: 总结 ==================== -->
 <section class="slide">
-  <h1 class="slide-title">本节总结</h1>
-  <div class="section-line"></div>
-  <div class="slide-body">
-    <div class="flex-row">
-      <div class="card" style="flex:1;">
-        <h3>今天学了什么？</h3>
-        <ul class="bullet-list">
-          <li>用 <span class="em">二维列表</span> 表示地图数据</li>
-          <li class="green"><span class="em-green">坐标换算</span>：格子坐标 → 像素坐标</li>
-          <li class="orange"><span class="em">逐格移动</span>：按下按键走一格</li>
-          <li><span class="em-blue">撞墙检测</span>：先检查、后移动</li>
-          <li class="green">完整游戏的代码结构</li>
-        </ul>
-      </div>
-      <div class="card green" style="flex:1;">
-        <h3>下节预告：第18节</h3>
-        <p style="font-size:28px; margin:8px 0;">我们将学习：</p>
-        <ul class="bullet-list">
-          <li class="green">让敌人动起来——巡逻AI</li>
-          <li class="green">角色之间的碰撞检测</li>
-          <li class="orange">添加生命值和游戏结束</li>
-        </ul>
-      </div>
-    </div>
-
-    <div class="hl-box blue" style="margin-top:24px;">
-      <strong style="font-size:30px;">核心公式回顾</strong><br>
-      <span style="font-size:26px;">
-        像素坐标 = 格子坐标 x TILE<br>
-        <code style="font-size:24px;">maze[row][col] == 0</code> 表示可以通行
+<h1 class="slide-title">本节总结</h1>
+<div class="section-line"></div>
+<div class="slide-body">
+<div class="flex-row">
+<div class="card" style="flex:1;">
+<h3>今天学了什么？</h3>
+<ul class="bullet-list">
+<li>用 <span class="em">二维列表</span> 表示地图数据</li>
+<li class="green"><span class="em-green">坐标换算</span>：格子坐标 → 像素坐标</li>
+<li class="orange"><span class="em">逐格移动</span>：按下按键走一格</li>
+<li><span class="em-blue">撞墙检测</span>：先检查、后移动</li>
+<li class="green">完整游戏的代码结构</li>
+</ul>
+</div>
+<div class="card green" style="flex:1;">
+<h3>下节预告：第18节</h3>
+<p style="font-size:28px; margin:8px 0;">我们将学习：</p>
+<ul class="bullet-list">
+<li class="green">让敌人动起来——巡逻AI</li>
+<li class="green">角色之间的碰撞检测</li>
+<li class="orange">添加生命值和游戏结束</li>
+</ul>
+</div>
+</div>
+<div class="hl-box blue" style="margin-top:24px;">
+<strong style="font-size:30px;">核心公式回顾</strong><br/>
+<span style="font-size:26px;">
+        像素坐标 = 格子坐标 x TILE<br/>
+<code style="font-size:24px;">maze[row][col] == 0</code> 表示可以通行
       </span>
-    </div>
-
-    <p style="text-align:center; margin-top:28px; color:var(--text-m); font-size:22px;">
+</div>
+<p style="text-align:center; margin-top:28px; color:var(--text-m); font-size:22px;">
       多练多试，编程的乐趣来自探索！下次课见~ 👋
     </p>
-  </div>
+</div>
+
+<aside class="notes">【收尾】回顾本课主线：本节总结
+对照大纲再过一遍：**内容**：用二维列表设计迷宫地图、角色在迷宫中移动、撞墙检测
+
+**知识点**：
+- 二维列表做地图数据 `maze = [[1,1,0,...], ...]`（0=路 1=墙）
+- 坐标 → 像素换算 `px = col * TILE, py = row * TILE`
+- 逐格移动（按一下走一格，非平滑移动）
+- 下一步位置预检测（移动前先判断目标格是不是墙）
+
+**课堂练习**：设计自己的迷宫，操控角色走通
+
+---
+板书/口述要点：
+· 用 二维列表 表示地图数据
+· 坐标换算 ：格子坐标 → 像素坐标
+· 逐格移动 ：按下按键走一格
+· 撞墙检测 ：先检查、后移动
+· 完整游戏的代码结构
+· 我们将学习：
+结束前留 2 分钟答疑；布置 1 道小练习检验是否真正掌握。</aside>
 </section>
-
 </div><!-- /.deck -->
-
 <!-- Slide Counter -->
 <div class="slide-counter" id="slide-counter">1 / 11</div>
 <div class="nav-hint">← → 方向键翻页</div>
-
 <script>
 (function() {
   var slides = document.querySelectorAll('.slide');
@@ -909,7 +997,6 @@ sys.exit()</div>
   buildMazeGrid();
 })();
 </script>
-
 <script src="courseware-ui.js"></script>
 <script src="presenter.js"></script>
 </body>

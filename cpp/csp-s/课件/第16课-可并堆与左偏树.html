@@ -1,8 +1,9 @@
 <!DOCTYPE html>
+
 <html lang="zh-CN">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
 <title>第16课：可并堆与左偏树（Leftist Heap）</title>
 <style>
 * { margin: 0; padding: 0; box-sizing: border-box; }
@@ -39,8 +40,16 @@ code { font-family: 'Fira Code', 'Consolas', monospace; }
 </div>
 <p style="margin-top:30px; color:#8b949e">当二叉堆不够用时——O(log n) 合并两个堆</p>
 </div>
-</div>
 
+<aside class="notes">【开场】第 1/7 页 · 可并堆与左偏树
+用 30 秒说明本课目标与学完能做什么，再进入正题。
+大纲考点：左偏树原理、合并操作、可并堆板子
+配套练习方向：可并堆模板题、猴子打架
+封面关键词：
+· Leftist Heap（Meldable Heap）
+· 当二叉堆不够用时——O(log n) 合并两个堆
+互动：问学生「今天最想搞清楚什么？」，收 1–2 个期待。</aside>
+</div>
 <div class="slide" id="s2">
 <h1>📖 知识精讲 — 左偏树原理</h1>
 <h2>左偏树的核心概念：npl（Null Path Length）</h2>
@@ -50,16 +59,24 @@ code { font-family: 'Fira Code', 'Consolas', monospace; }
 <li>叶子节点 npl = 0</li>
 <li>npl(x) = min(npl(lc), npl(rc)) + 1</li>
 </ul>
-
 <h3 style="margin-top:16px">左偏性质</h3>
 <p>对于任意节点：<span class="highlight">npl(lc) ≥ npl(rc)</span></p>
 <p>即：左儿子的 npl 不小于右儿子的 npl</p>
-
 <h3 style="margin-top:12px">推论：右脊长度 ≤ O(log n)</h3>
 <p>每次走右儿子的路径长度不超过 O(log n)</p>
 <p>因此沿右脊递归合并，复杂度为 <span class="accent">O(log n)</span></p>
-</div>
 
+<aside class="notes">【讲解】📖 知识精讲 — 左偏树原理
+本页要点（照着讲即可）：
+· npl(x) = 从 x 到最近空节点的距离（边数）
+· 空节点 npl = 0
+· 叶子节点 npl = 0
+· npl(x) = min(npl(lc), npl(rc)) + 1
+· 对于任意节点： npl(lc) ≥ npl(rc)
+· 即：左儿子的 npl 不小于右儿子的 npl
+讲解时放慢关键术语；用 1 个生活类比 + 1 个反例加深印象。
+本课大纲考点（可适时点题）：左偏树原理、合并操作、可并堆板子</aside>
+</div>
 <div class="slide" id="s3">
 <h1>📖 知识精讲 — 合并算法</h1>
 <h3>merge(x, y) — 左偏树的灵魂</h3>
@@ -67,18 +84,25 @@ code { font-family: 'Fira Code', 'Consolas', monospace; }
 <li>若一方为空，返回另一方</li>
 <li>确保 <span class="accent">val[x] ≤ val[y]</span>（小根堆，x 的新根）</li>
 <li>递归合并 <span class="highlight">rc[x] 与 y</span>（沿右脊走）</li>
-<li>回溯时检查：若 <span class="highlight">dist[lc] < dist[rc]</span> → 交换左右子</li>
+<li>回溯时检查：若 <span class="highlight">dist[lc] &lt; dist[rc]</span> → 交换左右子</li>
 <li>更新 <span class="info">dist[x] = dist[rc] + 1</span></li>
 </ol>
-
 <h3 style="margin-top:16px">其他操作都基于 merge</h3>
 <table style="width:100%; border-collapse:collapse; margin:8px 0; font-size:0.95em">
 <tr style="border-bottom:1px solid #30363d"><td style="padding:4px"><span class="highlight">push(root,v)</span></td><td style="padding:4px">merge(root, new_node(v))</td></tr>
 <tr style="border-bottom:1px solid #30363d"><td style="padding:4px"><span class="accent">pop(root)</span></td><td style="padding:4px">merge(lc[root], rc[root])</td></tr>
 <tr><td style="padding:4px"><span class="info">top(root)</span></td><td style="padding:4px">val[root]</td></tr>
 </table>
-</div>
 
+<aside class="notes">【讲解】📖 知识精讲 — 合并算法
+本页要点（照着讲即可）：
+· 若一方为空，返回另一方
+· 确保 val[x] ≤ val[y] （小根堆，x 的新根）
+· 递归合并 rc[x] 与 y （沿右脊走）
+· 回溯时检查：若 dist[lc] &lt; dist[rc] → 交换左右子
+· 更新 dist[x] = dist[rc] + 1
+讲解时放慢关键术语；用 1 个生活类比 + 1 个反例加深印象。</aside>
+</div>
 <div class="slide" id="s4">
 <h1>💻 代码模板 — 左偏树完整实现</h1>
 <pre><span class="type">int</span> <span class="func">merge</span>(<span class="type">int</span> x, <span class="type">int</span> y) {
@@ -96,18 +120,28 @@ code { font-family: 'Fira Code', 'Consolas', monospace; }
 <span class="type">int</span> <span class="func">pop</span>(<span class="type">int</span> root)  { <span class="kw">return</span> <span class="func">merge</span>(lc[root], rc[root]); }
 <span class="type">int</span> <span class="func">top</span>(<span class="type">int</span> root)  { <span class="kw">return</span> val[root]; }</pre>
 <p style="margin-top:10px">仅 <span class="accent">~10 行核心代码</span>，即可实现 O(log n) 的可并堆！</p>
-</div>
 
+<aside class="notes">【讲解】💻 代码模板 — 左偏树完整实现
+结合讲义《💻 代码模板》强调：
+· // ========== 左偏树模板（小根堆） ==========
+· const int MAXN = 100005;
+· int val[MAXN], lc[MAXN], rc[MAXN], dist[MAXN];
+· int tot; // 节点总数
+· // 创建新节点
+幻灯片上可见要点：
+· 仅 ~10 行核心代码 ，即可实现 O(log n) 的可并堆！
+代码页节奏：先读懂输入输出 → 再走主流程 → 最后点出易错点（边界/类型/下标）。
+可让学生预测下一行输出，再运行对照。</aside>
+</div>
 <div class="slide" id="s5">
 <h1>⚠️ 易错点与经典应用</h1>
 <h3>常见错误</h3>
 <ul>
 <li><span class="highlight">⚠ dist 初始值</span> — 新节点 dist=0，空节点 dist=0</li>
-<li><span class="highlight">⚠ 交换子节点时机</span> — 仅在 dist[lc] < dist[rc] 时</li>
+<li><span class="highlight">⚠ 交换子节点时机</span> — 仅在 dist[lc] &lt; dist[rc] 时</li>
 <li><span class="highlight">⚠ 大根堆 vs 小根堆</span> — 只改 merge 中比较符号</li>
 <li><span class="highlight">⚠ 并查集配合</span> — pop 后根可能变化，及时更新</li>
 </ul>
-
 <h3 style="margin-top:16px">猴子打架问题</h3>
 <p>左偏树 + 并查集的经典组合：</p>
 <ul>
@@ -116,25 +150,42 @@ code { font-family: 'Fira Code', 'Consolas', monospace; }
 <li>打架：取最强 → 减半 → 放回 → 合并两棵树</li>
 </ul>
 <p><span class="accent">O(m log n) 解决猴子打架</span></p>
-</div>
 
+<aside class="notes">【讲解】⚠️ 易错点与经典应用
+本页要点（照着讲即可）：
+· ⚠ dist 初始值 — 新节点 dist=0，空节点 dist=0
+· ⚠ 交换子节点时机 — 仅在 dist[lc] &lt; dist[rc] 时
+· ⚠ 大根堆 vs 小根堆 — 只改 merge 中比较符号
+· ⚠ 并查集配合 — pop 后根可能变化，及时更新
+· 左偏树 + 并查集的经典组合：
+· 并查集维护朋友圈
+讲解时放慢关键术语；用 1 个生活类比 + 1 个反例加深印象。</aside>
+</div>
 <div class="slide" id="s6">
 <h1>📝 真题精练</h1>
 <h3>真题一：猴子打架（HDU 1512）</h3>
 <p><span class="info">n ≤ 10⁵，m ≤ 10⁵ | 大根左偏树 + 并查集</span></p>
 <p>核心流程：find 代表 → pop 最强 → 减半后 push → merge 两棵树</p>
-
 <h3 style="margin-top:20px">真题二：动态组最小值</h3>
 <p><span class="info">n, q ≤ 10⁵ | 合并组、查最小并删除、插入</span></p>
 <p>小根左偏树 + 并查集，每个组维护一个左偏树</p>
-
 <div style="background:#0d1117; padding:14px; border-radius:8px; border:1px solid #30363d; margin-top:16px">
 <p><span class="accent">复杂度分析：</span></p>
 <p>插入/删除/合并：O(log n) | 总 O((n+m) log n)</p>
 <p>左偏树 vs 二叉堆：唯一区别就是支持 O(log n) 合并</p>
 </div>
-</div>
 
+<aside class="notes">【讲解】📝 真题精练
+本页要点（照着讲即可）：
+· n ≤ 10⁵，m ≤ 10⁵ | 大根左偏树 + 并查集
+· 核心流程：find 代表 → pop 最强 → 减半后 push → merge 两棵树
+· n, q ≤ 10⁵ | 合并组、查最小并删除、插入
+· 小根左偏树 + 并查集，每个组维护一个左偏树
+· 复杂度分析：
+· 插入/删除/合并：O(log n) | 总 O((n+m) log n)
+练习页节奏：先独立想 1 分钟 → 再点拨思路 → 最后对答案讲为什么。
+可联系：可并堆模板题、猴子打架</aside>
+</div>
 <div class="slide" id="s7">
 <h1>🎯 本课小结</h1>
 <div style="display:grid; grid-template-columns:1fr 1fr; gap:16px; margin-top:20px">
@@ -163,8 +214,19 @@ code { font-family: 'Fira Code', 'Consolas', monospace; }
 <p>CSP-S 必备技能</p>
 </div>
 </div>
-</div>
 
+<aside class="notes">【收尾】回顾本课主线：🎯 本课小结
+对照大纲再过一遍：左偏树原理、合并操作、可并堆板子
+板书/口述要点：
+· npl + 左偏性质
+· 右脊 O(log n)
+· merge 沿右脊递归
+· merge: O(log n)
+· push/pop: O(log n)
+· top: O(1)
+课后任务：可并堆模板题、猴子打架
+结束前留 2 分钟答疑；布置 1 道小练习检验是否真正掌握。</aside>
+</div>
 <div class="nav">
 <button onclick="prevSlide()">◀ 上一页</button>
 <span class="page-indicator" id="pageNum">1 / 7</span>

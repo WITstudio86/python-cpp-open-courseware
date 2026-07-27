@@ -1,12 +1,13 @@
 <!DOCTYPE html>
+
 <html lang="zh-CN">
 <head>
-<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<meta charset="utf-8"/><meta content="width=device-width,initial-scale=1" name="viewport"/>
 <title>第45节 · 随机密码生成器</title>
-<link rel="stylesheet" href="assets/fonts.css">
-<link rel="stylesheet" href="assets/base.css">
-<link rel="stylesheet" href="assets/animations/animations.css">
-<link rel="stylesheet" href="style.css">
+<link href="assets/fonts.css" rel="stylesheet"/>
+<link href="assets/base.css" rel="stylesheet"/>
+<link href="assets/animations/animations.css" rel="stylesheet"/>
+<link href="style.css" rel="stylesheet"/>
 <style>
 .tpl-course-module .slide{overflow-y:auto}
 .tpl-course-module .slide .main{overflow-y:auto;max-height:calc(100vh - 128px)}
@@ -22,56 +23,81 @@
 </head>
 <body class="tpl-course-module">
 <div class="deck">
-
 <!-- Slide 1: 封面 -->
 <section class="slide full" data-title="封面">
-  <p class="kicker">第8单元 · 第45节</p>
-  <h1 class="h1 mt-s">项目七：随机密码生成器</h1>
-  <p class="lede mt-l" style="max-width:60ch">random + string模块 · 字符集组合 · random.shuffle()洗牌 · 用 Python 打造一个能生成「十二年都破解不了」的超强密码工具！</p>
-  <div class="deck-footer"><span>Python 趣味学习</span><span class="slide-number" data-current="1" data-total="6"></span></div>
-</section>
+<p class="kicker">第8单元 · 第45节</p>
+<h1 class="h1 mt-s">项目七：随机密码生成器</h1>
+<p class="lede mt-l" style="max-width:60ch">random + string模块 · 字符集组合 · random.shuffle()洗牌 · 用 Python 打造一个能生成「十二年都破解不了」的超强密码工具！</p>
+<div class="deck-footer"><span>Python 趣味学习</span><span class="slide-number" data-current="1" data-total="6"></span></div>
 
+<aside class="notes">【开场】第 1/6 页 · **项目七：随机密码生成器**
+用 30 秒说明本课目标与学完能做什么，再进入正题。
+大纲考点：random 和 string 模块；字符集（字母+数字+符号）；列表拼接和 random.shuffle()；输入密码长度
+配套练习方向：做一个密码生成器：用户指定长度，生成随机强密码
+封面关键词：
+· 第8单元 · 第45节
+· random + string模块 · 字符集组合 · random.shuffle()洗牌 · 用 Python 打造一个能生成「十二年都破解不了」的超强密码工具！
+互动：问学生「今天最想搞清楚什么？」，收 1–2 个期待。</aside>
+</section>
 <!-- Slide 2: 教学目标 -->
 <section class="slide" data-title="目标">
-  <aside class="sidebar"><div class="brand">第45节</div><h5>教学目标</h5></aside>
-  <div class="main">
-    <p class="kicker">LEARNING OBJECTIVES</p>
-    <h2 class="h2 mt-s">本节目标</h2>
-    <div class="stack mt-l">
-      <div class="concept-box"><h4>理解随机数和计算机如何生成随机数</h4><p class="dim">计算机的"随机"其实是伪随机——用复杂的数学公式算出来的，但足够我们在密码中用。random.seed() 设置了种子，同样的种子产生同样的"随机"序列</p></div>
-      <div class="concept-box"><h4>使用 random 模块常用函数</h4><p class="dim">掌握 choice()（从序列中随机选一个）、shuffle()（打乱列表顺序）、randint(a, b)（在 a 到 b 之间取随机整数），以及 choices() 带权重抽取</p></div>
-      <div class="concept-box"><h4>使用 string 模块快速获取字符集</h4><p class="dim">不需要手打 A-Z、a-z、0-9！string.ascii_uppercase、ascii_lowercase、digits、punctuation 一行代码全搞定，让你的程序简洁又优雅</p></div>
-      <div class="concept-box"><h4>独立编写根据指定长度生成强密码的程序</h4><p class="dim">从需求分析到代码实现：字符集选择 → 每类至少一个 → 随机填充到目标长度 → 洗牌打乱 → 拼接输出，完整走通一个实用项目的开发流程</p></div>
-    </div>
-  </div>
-</section>
+<aside class="sidebar"><div class="brand">第45节</div><h5>教学目标</h5></aside>
+<div class="main">
+<p class="kicker">LEARNING OBJECTIVES</p>
+<h2 class="h2 mt-s">本节目标</h2>
+<div class="stack mt-l">
+<div class="concept-box"><h4>理解随机数和计算机如何生成随机数</h4><p class="dim">计算机的"随机"其实是伪随机——用复杂的数学公式算出来的，但足够我们在密码中用。random.seed() 设置了种子，同样的种子产生同样的"随机"序列</p></div>
+<div class="concept-box"><h4>使用 random 模块常用函数</h4><p class="dim">掌握 choice()（从序列中随机选一个）、shuffle()（打乱列表顺序）、randint(a, b)（在 a 到 b 之间取随机整数），以及 choices() 带权重抽取</p></div>
+<div class="concept-box"><h4>使用 string 模块快速获取字符集</h4><p class="dim">不需要手打 A-Z、a-z、0-9！string.ascii_uppercase、ascii_lowercase、digits、punctuation 一行代码全搞定，让你的程序简洁又优雅</p></div>
+<div class="concept-box"><h4>独立编写根据指定长度生成强密码的程序</h4><p class="dim">从需求分析到代码实现：字符集选择 → 每类至少一个 → 随机填充到目标长度 → 洗牌打乱 → 拼接输出，完整走通一个实用项目的开发流程</p></div>
+</div>
+</div>
 
+<aside class="notes">【讲解】本节目标
+本页要点（照着讲即可）：
+· LEARNING OBJECTIVES
+· 理解随机数和计算机如何生成随机数
+· 计算机的"随机"其实是伪随机——用复杂的数学公式算出来的，但足够我们在密码中用。random.seed() 设置了种子，同样的种子产生同样的"随机"序列
+· 使用 random 模块常用函数
+· 掌握 choice()（从序列中随机选一个）、shuffle()（打乱列表顺序）、randint(a, b)（在 a 到 b 之间取随机整数），以及 choices() 带权重抽取
+· 使用 string 模块快速获取字符集
+讲解时放慢关键术语；用 1 个生活类比 + 1 个反例加深印象。
+本课大纲考点（可适时点题）：random 和 string 模块；字符集（字母+数字+符号）；列表拼接和 random.shuffle()；输入密码长度</aside>
+</section>
 <!-- Slide 3: 重点概念 -->
 <section class="slide" data-title="概念">
-  <aside class="sidebar"><div class="brand">第45节</div><h5>重点概念</h5></aside>
-  <div class="main">
-    <p class="kicker">KEY CONCEPTS</p>
-    <h2 class="h2 mt-s">重点概念</h2>
-    <div class="grid g2 mt-l">
-      <div class="concept-box"><h4>随机数</h4><p class="dim">计算机生成的"看起来没规律"的数字。Python 使用梅森旋转算法（Mersenne Twister）生成高质量伪随机数。random.seed() 可固定种子，让随机结果"可复现"，方便调试。</p></div>
-      <div class="concept-box"><h4>字符集四大家族</h4><p class="dim">大写字母（26个）、小写字母（26个）、数字（10个）、特殊符号（32个）。四者组合共有 <b>26+26+10+32 = 94</b> 个字符。12位密码的可能组合数 = 94^12，约 4.7×10^23 种！</p></div>
-      <div class="concept-box"><h4>random.choice()</h4><p class="dim"><code>random.choice(序列)</code> 从列表、字符串等序列中随机选取一个元素返回。比如 random.choice("ABC") 可能返回 "A"、"B" 或 "C"。密码生成的核心工具！</p></div>
-      <div class="concept-box"><h4>random.shuffle()</h4><p class="dim"><code>random.shuffle(列表)</code> 将列表中元素的顺序原地随机打乱（像洗扑克牌一样），<b>直接修改原列表，返回 None</b>。打乱后先选的大写字母就不会总是排在前面了。</p></div>
-      <div class="concept-box"><h4>强密码三要素</h4><p class="dim"><b>① 长度 >= 12</b>（越长越难暴力破解）；<b>② 包含多种字符类型</b>（大写+小写+数字+符号全都要）；<b>③ 没有规律</b>（不用生日、姓名、键盘序列如 qwerty、123456 等常见弱密码）</p></div>
-      <div class="concept-box"><h4>string 模块速查</h4><p class="dim"><code>string.ascii_uppercase</code> = "ABCDEF...Z"<br><code>string.ascii_lowercase</code> = "abcdef...z"<br><code>string.digits</code> = "0123456789"<br><code>string.punctuation</code> = "!\"#$%&...~"<br>一行 import，免去手打之苦！</p></div>
-    </div>
-  </div>
-</section>
+<aside class="sidebar"><div class="brand">第45节</div><h5>重点概念</h5></aside>
+<div class="main">
+<p class="kicker">KEY CONCEPTS</p>
+<h2 class="h2 mt-s">重点概念</h2>
+<div class="grid g2 mt-l">
+<div class="concept-box"><h4>随机数</h4><p class="dim">计算机生成的"看起来没规律"的数字。Python 使用梅森旋转算法（Mersenne Twister）生成高质量伪随机数。random.seed() 可固定种子，让随机结果"可复现"，方便调试。</p></div>
+<div class="concept-box"><h4>字符集四大家族</h4><p class="dim">大写字母（26个）、小写字母（26个）、数字（10个）、特殊符号（32个）。四者组合共有 <b>26+26+10+32 = 94</b> 个字符。12位密码的可能组合数 = 94^12，约 4.7×10^23 种！</p></div>
+<div class="concept-box"><h4>random.choice()</h4><p class="dim"><code>random.choice(序列)</code> 从列表、字符串等序列中随机选取一个元素返回。比如 random.choice("ABC") 可能返回 "A"、"B" 或 "C"。密码生成的核心工具！</p></div>
+<div class="concept-box"><h4>random.shuffle()</h4><p class="dim"><code>random.shuffle(列表)</code> 将列表中元素的顺序原地随机打乱（像洗扑克牌一样），<b>直接修改原列表，返回 None</b>。打乱后先选的大写字母就不会总是排在前面了。</p></div>
+<div class="concept-box"><h4>强密码三要素</h4><p class="dim"><b>① 长度 &gt;= 12</b>（越长越难暴力破解）；<b>② 包含多种字符类型</b>（大写+小写+数字+符号全都要）；<b>③ 没有规律</b>（不用生日、姓名、键盘序列如 qwerty、123456 等常见弱密码）</p></div>
+<div class="concept-box"><h4>string 模块速查</h4><p class="dim"><code>string.ascii_uppercase</code> = "ABCDEF...Z"<br/><code>string.ascii_lowercase</code> = "abcdef...z"<br/><code>string.digits</code> = "0123456789"<br/><code>string.punctuation</code> = "!\"#$%&amp;...~"<br/>一行 import，免去手打之苦！</p></div>
+</div>
+</div>
 
+<aside class="notes">【讲解】重点概念
+本页要点（照着讲即可）：
+· KEY CONCEPTS
+· 计算机生成的"看起来没规律"的数字。Python 使用梅森旋转算法（Mersenne Twister）生成高质量伪随机数。random.seed() 可固定种子，让随机结果"可复现"，方便调试。
+· 字符集四大家族
+· 大写字母（26个）、小写字母（26个）、数字（10个）、特殊符号（32个）。四者组合共有 26+26+10+32 = 94 个字符。12位密码的可能组合数 = 94^12，约 4.7×10^23 种！
+· random.choice()
+· random.choice(序列) 从列表、字符串等序列中随机选取一个元素返回。比如 random.choice("ABC") 可能返回 "A"、"B" 或 "C"。密码生成的核心工具！
+讲解时放慢关键术语；用 1 个生活类比 + 1 个反例加深印象。</aside>
+</section>
 <!-- Slide 4: 核心讲解 + 代码 -->
 <section class="slide" data-title="讲解">
-  <aside class="sidebar"><div class="brand">第45节</div><h5>核心讲解</h5></aside>
-  <div class="main">
-    <p class="kicker">EXPLANATION</p>
-    <h2 class="h2 mt-s">核心讲解：随机密码生成器完整实现</h2>
-    <p style="margin:6px 0 0;color:var(--text-2)">从一行代码到完整项目 —— 先看最小版本，再看健壮版本，循序渐进。</p>
-
-    <div class="code-mini mt-l"><pre style="margin:0"><span class="cmt"># ============================================================</span>
+<aside class="sidebar"><div class="brand">第45节</div><h5>核心讲解</h5></aside>
+<div class="main">
+<p class="kicker">EXPLANATION</p>
+<h2 class="h2 mt-s">核心讲解：随机密码生成器完整实现</h2>
+<p style="margin:6px 0 0;color:var(--text-2)">从一行代码到完整项目 —— 先看最小版本，再看健壮版本，循序渐进。</p>
+<div class="code-mini mt-l"><pre style="margin:0"><span class="cmt"># ============================================================</span>
 <span class="cmt"># 第一步：导入模块</span>
 <span class="cmt"># ============================================================</span>
 <span class="kw">import</span> random
@@ -83,7 +109,7 @@
 uppers = string.ascii_uppercase   <span class="cmt"># 'ABCDEFGHIJKLMNOPQRSTUVWXYZ'</span>
 lowers = string.ascii_lowercase   <span class="cmt"># 'abcdefghijklmnopqrstuvwxyz'</span>
 digits = string.digits            <span class="cmt"># '0123456789'</span>
-symbols = string.punctuation      <span class="cmt"># '!"#$%&\'()*+,-./:;<=>?@[\\]^_`{|}~'</span>
+symbols = string.punctuation      <span class="cmt"># '!"#$%&amp;\'()*+,-./:;&lt;=&gt;?@[\\]^_`{|}~'</span>
 
 <span class="cmt"># ============================================================</span>
 <span class="cmt"># 第三步：生成密码的核心函数</span>
@@ -123,47 +149,52 @@ symbols = string.punctuation      <span class="cmt"># '!"#$%&\'()*+,-./:;<=>?@[\
 <span class="cmt"># 密码2: }f3Jc9@hUoGb4(Dx</span>
 <span class="cmt"># 密码3: yR!8pV_m2*Ns6ZqH</span>
 </pre></div>
+<div class="callout mt-l"><b>进阶版：让用户自定义</b> —— 在实际项目里，可以增加参数让用户选择要包含哪些字符类型、排除易混淆字符（l/1/O/0），以及指定最短长度（<b>强密码底线：至少12位！</b>）。下面的练习里就让大家自己动手实现这些功能。</div>
+<div style="display:flex;gap:24px;margin-top:28px;flex-wrap:wrap">
+<div style="flex:1;min-width:260px;background:var(--surface-2);border-radius:14px;padding:20px;">
+<h4 style="margin:0 0 8px;color:var(--red)">弱密码 vs 强密码</h4>
+<table style="width:100%;border-collapse:collapse;font-size:14px;color:var(--text-2)">
+<tr style="border-bottom:1px solid var(--border-2)"><td style="padding:6px 0"><b>6位纯数字</b></td><td style="padding:6px 0;color:var(--red)">0.01秒 秒破</td></tr>
+<tr style="border-bottom:1px solid var(--border-2)"><td style="padding:6px 0"><b>8位小写字母</b></td><td style="padding:6px 0;color:var(--orange)">2秒 可破</td></tr>
+<tr style="border-bottom:1px solid var(--border-2)"><td style="padding:6px 0"><b>8位混合字符</b></td><td style="padding:6px 0;color:var(--yellow)">8小时 可破</td></tr>
+<tr style="border-bottom:1px solid var(--border-2)"><td style="padding:6px 0"><b>10位混合字符</b></td><td style="padding:6px 0;color:var(--green)">5年</td></tr>
+<tr><td style="padding:6px 0"><b>12位混合字符</b></td><td style="padding:6px 0;color:var(--green)">约34000年</td></tr>
+</table>
+<p style="margin:10px 0 0;font-size:12px;color:var(--text-2)"><i>*假设每秒尝试10亿次（高性能GPU集群）</i></p>
+</div>
+<div style="flex:1;min-width:260px;background:var(--surface-2);border-radius:14px;padding:20px;">
+<h4 style="margin:0 0 8px">random 函数速查卡</h4>
+<table style="width:100%;border-collapse:collapse;font-size:14px;color:var(--text-2)">
+<tr style="border-bottom:1px solid var(--border-2)"><td style="padding:4px 0"><code>random.choice(seq)</code></td><td style="padding:4px 0">随机选1个元素</td></tr>
+<tr style="border-bottom:1px solid var(--border-2)"><td style="padding:4px 0"><code>random.choices(seq, k=n)</code></td><td style="padding:4px 0">随机选n个（可重复）</td></tr>
+<tr style="border-bottom:1px solid var(--border-2)"><td style="padding:4px 0"><code>random.sample(seq, k=n)</code></td><td style="padding:4px 0">随机选n个（不重复）</td></tr>
+<tr style="border-bottom:1px solid var(--border-2)"><td style="padding:4px 0"><code>random.shuffle(lst)</code></td><td style="padding:4px 0">原地打乱列表</td></tr>
+<tr style="border-bottom:1px solid var(--border-2)"><td style="padding:4px 0"><code>random.randint(a, b)</code></td><td style="padding:4px 0">[a,b]间随机整数</td></tr>
+<tr><td style="padding:4px 0"><code>random.seed(n)</code></td><td style="padding:4px 0">设置随机种子</td></tr>
+</table>
+</div>
+</div>
+</div>
 
-    <div class="callout mt-l"><b>进阶版：让用户自定义</b> —— 在实际项目里，可以增加参数让用户选择要包含哪些字符类型、排除易混淆字符（l/1/O/0），以及指定最短长度（<b>强密码底线：至少12位！</b>）。下面的练习里就让大家自己动手实现这些功能。</div>
-
-    <div style="display:flex;gap:24px;margin-top:28px;flex-wrap:wrap">
-      <div style="flex:1;min-width:260px;background:var(--surface-2);border-radius:14px;padding:20px;">
-        <h4 style="margin:0 0 8px;color:var(--red)">弱密码 vs 强密码</h4>
-        <table style="width:100%;border-collapse:collapse;font-size:14px;color:var(--text-2)">
-          <tr style="border-bottom:1px solid var(--border-2)"><td style="padding:6px 0"><b>6位纯数字</b></td><td style="padding:6px 0;color:var(--red)">0.01秒 秒破</td></tr>
-          <tr style="border-bottom:1px solid var(--border-2)"><td style="padding:6px 0"><b>8位小写字母</b></td><td style="padding:6px 0;color:var(--orange)">2秒 可破</td></tr>
-          <tr style="border-bottom:1px solid var(--border-2)"><td style="padding:6px 0"><b>8位混合字符</b></td><td style="padding:6px 0;color:var(--yellow)">8小时 可破</td></tr>
-          <tr style="border-bottom:1px solid var(--border-2)"><td style="padding:6px 0"><b>10位混合字符</b></td><td style="padding:6px 0;color:var(--green)">5年</td></tr>
-          <tr><td style="padding:6px 0"><b>12位混合字符</b></td><td style="padding:6px 0;color:var(--green)">约34000年</td></tr>
-        </table>
-        <p style="margin:10px 0 0;font-size:12px;color:var(--text-2)"><i>*假设每秒尝试10亿次（高性能GPU集群）</i></p>
-      </div>
-      <div style="flex:1;min-width:260px;background:var(--surface-2);border-radius:14px;padding:20px;">
-        <h4 style="margin:0 0 8px">random 函数速查卡</h4>
-        <table style="width:100%;border-collapse:collapse;font-size:14px;color:var(--text-2)">
-          <tr style="border-bottom:1px solid var(--border-2)"><td style="padding:4px 0"><code>random.choice(seq)</code></td><td style="padding:4px 0">随机选1个元素</td></tr>
-          <tr style="border-bottom:1px solid var(--border-2)"><td style="padding:4px 0"><code>random.choices(seq, k=n)</code></td><td style="padding:4px 0">随机选n个（可重复）</td></tr>
-          <tr style="border-bottom:1px solid var(--border-2)"><td style="padding:4px 0"><code>random.sample(seq, k=n)</code></td><td style="padding:4px 0">随机选n个（不重复）</td></tr>
-          <tr style="border-bottom:1px solid var(--border-2)"><td style="padding:4px 0"><code>random.shuffle(lst)</code></td><td style="padding:4px 0">原地打乱列表</td></tr>
-          <tr style="border-bottom:1px solid var(--border-2)"><td style="padding:4px 0"><code>random.randint(a, b)</code></td><td style="padding:4px 0">[a,b]间随机整数</td></tr>
-          <tr><td style="padding:4px 0"><code>random.seed(n)</code></td><td style="padding:4px 0">设置随机种子</td></tr>
-        </table>
-      </div>
-    </div>
-  </div>
+<aside class="notes">【讲解】核心讲解：随机密码生成器完整实现
+本页要点（照着讲即可）：
+· EXPLANATION
+· 从一行代码到完整项目 —— 先看最小版本，再看健壮版本，循序渐进。
+· 弱密码 vs 强密码
+· *假设每秒尝试10亿次（高性能GPU集群）
+· random 函数速查卡
+讲解时放慢关键术语；用 1 个生活类比 + 1 个反例加深印象。</aside>
 </section>
-
 <!-- Slide 5: 课堂练习 -->
 <section class="slide" data-title="练习">
-  <aside class="sidebar"><div class="brand">第45节</div><h5>课堂练习</h5></aside>
-  <div class="main">
-    <p class="kicker">PRACTICE</p>
-    <h2 class="h2 mt-s">课堂练习</h2>
-
-    <div class="exercise mt-l">
-      <p style="margin:0;font-size:16px;color:var(--text-1)"><b>基础练习 1 —— 填空补全代码</b></p>
-      <p style="color:var(--text-2);margin:8px 0">下面是一个最简密码生成器，请补全缺失的代码：</p>
-      <div class="code-mini"><pre style="margin:0"><span class="kw">import</span> _______    <span class="cmt"># 填空1: 导入随机模块</span>
+<aside class="sidebar"><div class="brand">第45节</div><h5>课堂练习</h5></aside>
+<div class="main">
+<p class="kicker">PRACTICE</p>
+<h2 class="h2 mt-s">课堂练习</h2>
+<div class="exercise mt-l">
+<p style="margin:0;font-size:16px;color:var(--text-1)"><b>基础练习 1 —— 填空补全代码</b></p>
+<p style="color:var(--text-2);margin:8px 0">下面是一个最简密码生成器，请补全缺失的代码：</p>
+<div class="code-mini"><pre style="margin:0"><span class="kw">import</span> _______    <span class="cmt"># 填空1: 导入随机模块</span>
 <span class="kw">import</span> string
 
 chars = string.ascii_letters + string.digits
@@ -171,51 +202,62 @@ pwd = _______    <span class="cmt"># 填空2: 用列表推导式+random.______�
 pwd_str = <span class="str">""</span>.join(pwd)
 <span class="kw">print</span>(<span class="str">f"生成的密码: {pwd_str}"</span>)
 </pre></div>
-    </div>
+</div>
+<div class="exercise mt-l">
+<p style="margin:0;font-size:16px;color:var(--text-1)"><b>基础练习 2 —— 功能改写</b></p>
+<p style="color:var(--text-2);margin:8px 0">修改 generate_password 函数，新增参数 <code>use_symbols=True</code>。当 use_symbols=False 时，生成<b>不包含特殊符号</b>的密码（但仍要确保包含大写、小写、数字三类）。</p>
+</div>
+<div class="exercise mt-l">
+<p style="margin:0;font-size:16px;color:var(--text-1)"><b>挑战练习 1 —— 密码强度评估器</b></p>
+<p style="color:var(--text-2);margin:8px 0">编写函数 <code>check_strength(password)</code>，检查密码的：① 长度（&gt;=8得1星，&gt;=12得2星）；② 字符类型数量（包含大写/小写/数字/符号，每种得1星）。返回1-5星评分，并给出文字建议。例如 "P@ssword123" → 5星 "非常安全！"</p>
+</div>
+<div class="exercise mt-l">
+<p style="margin:0;font-size:16px;color:var(--text-1)"><b>挑战练习 2 —— 排除混淆字符</b></p>
+<p style="color:var(--text-2);margin:8px 0">有些字符长得太像，容易看错：小写 l 和数字 1、大写 O 和数字 0。请手动定义一个"安全字符集"，排除 <code>l、1、O、0、I</code>（大写I也容易混淆），然后从安全字符集中生成密码。提示：用字符串的 replace() 或列表推导式过滤。</p>
+</div>
+<div class="exercise mt-l">
+<p style="margin:0;font-size:16px;color:var(--text-1)"><b>挑战练习 3 —— 批量生成 + 智能推荐</b></p>
+<p style="color:var(--text-2);margin:8px 0">编写函数 <code>batch_generate(n=5, length=16)</code>，一次生成 n 个密码。然后用挑战1的强度评估器给每个密码打分，最终<b>只推荐得分最高的那个</b>。如果最高分并列，选择一个"看起来最随机"的（比如符号种类最多的）。</p>
+</div>
+<div class="callout mt-l"><b>作业：</b> 把自己写的密码生成器打包成一个 .py 脚本，运行时提示用户输入想要的密码长度和是否包含符号，输出生成的密码。别忘了加上 if __name__ == "__main__" 入口保护！</div>
+</div>
 
-    <div class="exercise mt-l">
-      <p style="margin:0;font-size:16px;color:var(--text-1)"><b>基础练习 2 —— 功能改写</b></p>
-      <p style="color:var(--text-2);margin:8px 0">修改 generate_password 函数，新增参数 <code>use_symbols=True</code>。当 use_symbols=False 时，生成<b>不包含特殊符号</b>的密码（但仍要确保包含大写、小写、数字三类）。</p>
-    </div>
-
-    <div class="exercise mt-l">
-      <p style="margin:0;font-size:16px;color:var(--text-1)"><b>挑战练习 1 —— 密码强度评估器</b></p>
-      <p style="color:var(--text-2);margin:8px 0">编写函数 <code>check_strength(password)</code>，检查密码的：① 长度（>=8得1星，>=12得2星）；② 字符类型数量（包含大写/小写/数字/符号，每种得1星）。返回1-5星评分，并给出文字建议。例如 "P@ssword123" → 5星 "非常安全！"</p>
-    </div>
-
-    <div class="exercise mt-l">
-      <p style="margin:0;font-size:16px;color:var(--text-1)"><b>挑战练习 2 —— 排除混淆字符</b></p>
-      <p style="color:var(--text-2);margin:8px 0">有些字符长得太像，容易看错：小写 l 和数字 1、大写 O 和数字 0。请手动定义一个"安全字符集"，排除 <code>l、1、O、0、I</code>（大写I也容易混淆），然后从安全字符集中生成密码。提示：用字符串的 replace() 或列表推导式过滤。</p>
-    </div>
-
-    <div class="exercise mt-l">
-      <p style="margin:0;font-size:16px;color:var(--text-1)"><b>挑战练习 3 —— 批量生成 + 智能推荐</b></p>
-      <p style="color:var(--text-2);margin:8px 0">编写函数 <code>batch_generate(n=5, length=16)</code>，一次生成 n 个密码。然后用挑战1的强度评估器给每个密码打分，最终<b>只推荐得分最高的那个</b>。如果最高分并列，选择一个"看起来最随机"的（比如符号种类最多的）。</p>
-    </div>
-
-    <div class="callout mt-l"><b>作业：</b> 把自己写的密码生成器打包成一个 .py 脚本，运行时提示用户输入想要的密码长度和是否包含符号，输出生成的密码。别忘了加上 if __name__ == "__main__" 入口保护！</div>
-  </div>
+<aside class="notes">【讲解】课堂练习
+本页要点（照着讲即可）：
+· PRACTICE
+· 基础练习 1 —— 填空补全代码
+· 下面是一个最简密码生成器，请补全缺失的代码：
+· 基础练习 2 —— 功能改写
+· 修改 generate_password 函数，新增参数 use_symbols=True 。当 use_symbols=False 时，生成 不包含特殊符号 的密码（但仍要确保包含大写、小写、数字三类）。
+· 挑战练习 1 —— 密码强度评估器
+练习页节奏：先独立想 1 分钟 → 再点拨思路 → 最后对答案讲为什么。
+可联系：做一个密码生成器：用户指定长度，生成随机强密码</aside>
 </section>
-
 <!-- Slide 6: 小结 -->
 <section class="slide full" data-title="小结">
-  <p class="kicker">SUMMARY</p>
-  <h1 class="h1 mt-s">本节小结</h1>
+<p class="kicker">SUMMARY</p>
+<h1 class="h1 mt-s">本节小结</h1>
+<div class="grid g2 mt-l">
+<div class="concept-box"><h4>学会了</h4><p class="dim"><b>random 模块三大函数：</b>randint(a, b) 取随机整数、choice(seq) 从序列随机选一个、shuffle(lst) 原地打乱列表。理解了"伪随机"的概念——计算机的随机其实是算法算出来的。</p></div>
+<div class="concept-box"><h4>学会了</h4><p class="dim"><b>string 模块四大字符集：</b>ascii_uppercase（26大写）、ascii_lowercase（26小写）、digits（10数字）、punctuation（32符号），一行 import 免去手打之苦。</p></div>
+<div class="concept-box"><h4>学会了</h4><p class="dim"><b>强密码的核心原理：</b>长度决定破解难度（12位的94^12种组合 ≈ 34000年暴力破解），多种字符类型防止字典攻击，无规律防止社会工程学猜测。</p></div>
+<div class="concept-box"><h4>学会了</h4><p class="dim"><b>列表操作 + join 拼接：</b>先用列表收集字符（方便增删改），用 shuffle 打乱顺序，最后用 "".join(list) 拼成字符串——这是 Python 中处理字符串拼接的标准模式。</p></div>
+</div>
+<div class="callout mt-l"><b>下节预告：</b> 第46节 · Turtle烟花动画 —— 用代码在屏幕上放烟花！我们要用 turtle 模块画出五彩斑斓的烟花爆炸效果，结合 random 让每一次绽放都独一无二。你将在屏幕上看到代码"点燃"的美丽瞬间！</div>
+<div class="callout mt-l" style="border-left-color:var(--orange)"><b>温馨提示：</b> 不要把今天的密码生成器生成的强密码直接用在所有网站上！不同网站要用不同密码（可以用"基础密码+网站缩写"的方式），推荐使用密码管理器（如 1Password / Bitwarden）。另外，密码生成器代码不要上传到公开的代码托管平台——万一里面嵌入了种子，别人就能预测你生成的密码了。</div>
+<div class="deck-footer"><span>Python 趣味学习</span><span class="slide-number" data-current="6" data-total="6"></span></div>
 
-  <div class="grid g2 mt-l">
-    <div class="concept-box"><h4>学会了</h4><p class="dim"><b>random 模块三大函数：</b>randint(a, b) 取随机整数、choice(seq) 从序列随机选一个、shuffle(lst) 原地打乱列表。理解了"伪随机"的概念——计算机的随机其实是算法算出来的。</p></div>
-    <div class="concept-box"><h4>学会了</h4><p class="dim"><b>string 模块四大字符集：</b>ascii_uppercase（26大写）、ascii_lowercase（26小写）、digits（10数字）、punctuation（32符号），一行 import 免去手打之苦。</p></div>
-    <div class="concept-box"><h4>学会了</h4><p class="dim"><b>强密码的核心原理：</b>长度决定破解难度（12位的94^12种组合 ≈ 34000年暴力破解），多种字符类型防止字典攻击，无规律防止社会工程学猜测。</p></div>
-    <div class="concept-box"><h4>学会了</h4><p class="dim"><b>列表操作 + join 拼接：</b>先用列表收集字符（方便增删改），用 shuffle 打乱顺序，最后用 "".join(list) 拼成字符串——这是 Python 中处理字符串拼接的标准模式。</p></div>
-  </div>
-
-  <div class="callout mt-l"><b>下节预告：</b> 第46节 · Turtle烟花动画 —— 用代码在屏幕上放烟花！我们要用 turtle 模块画出五彩斑斓的烟花爆炸效果，结合 random 让每一次绽放都独一无二。你将在屏幕上看到代码"点燃"的美丽瞬间！</div>
-
-  <div class="callout mt-l" style="border-left-color:var(--orange)"><b>温馨提示：</b> 不要把今天的密码生成器生成的强密码直接用在所有网站上！不同网站要用不同密码（可以用"基础密码+网站缩写"的方式），推荐使用密码管理器（如 1Password / Bitwarden）。另外，密码生成器代码不要上传到公开的代码托管平台——万一里面嵌入了种子，别人就能预测你生成的密码了。</div>
-
-  <div class="deck-footer"><span>Python 趣味学习</span><span class="slide-number" data-current="6" data-total="6"></span></div>
+<aside class="notes">【收尾】回顾本课主线：本节小结
+对照大纲再过一遍：random 和 string 模块；字符集（字母+数字+符号）；列表拼接和 random.shuffle()；输入密码长度
+板书/口述要点：
+· SUMMARY
+· random 模块三大函数： randint(a, b) 取随机整数、choice(seq) 从序列随机选一个、shuffle(lst) 原地打乱列表。理解了"伪随机"的概念——计算机的随机其实是算法算出来的。
+· string 模块四大字符集： ascii_uppercase（26大写）、ascii_lowercase（26小写）、digits（10数字）、punctuation（32符号），一行 import 免去手打之苦。
+· 强密码的核心原理： 长度决定破解难度（12位的94^12种组合 ≈ 34000年暴力破解），多种字符类型防止字典攻击，无规律防止社会工程学猜测。
+· 列表操作 + join 拼接： 先用列表收集字符（方便增删改），用 shuffle 打乱顺序，最后用 "".join(list) 拼成字符串——这是 Python 中处理字符串拼接的标准模式。
+课后任务：做一个密码生成器：用户指定长度，生成随机强密码
+结束前留 2 分钟答疑；布置 1 道小练习检验是否真正掌握。</aside>
 </section>
-
 </div>
 <script src="assets/runtime.js"></script>
 <script src="courseware-ui.js"></script>

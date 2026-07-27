@@ -1,8 +1,9 @@
 <!DOCTYPE html>
+
 <html lang="zh-CN">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
 <title>第05课：priority_queue 与单调结构</title>
 <style>
   * { margin: 0; padding: 0; box-sizing: border-box; }
@@ -240,293 +241,334 @@
 </style>
 </head>
 <body>
-
 <div id="container">
-  <div id="slides-wrapper">
-
-    <!-- ==================== 幻灯片 1：标题页 ==================== -->
-    <div class="slide active" data-index="0">
-      <h1>第05课：priority_queue 与单调结构</h1>
-      <p style="font-size:1.1em;margin-top:10px;">
-        <span class="badge">CSP-S 高级</span>
-        <span class="badge" style="background:#f0a060;color:#1a1a2e;">堆 / 单调栈 / 单调队列</span>
-      </p>
-      <div style="margin-top:28px; display:flex; gap:32px; flex-wrap:wrap;">
-        <div style="flex:1;min-width:200px;">
-          <h3>本课内容</h3>
-          <ul>
-            <li>堆的完全二叉树性质与数组存储</li>
-            <li>shiftUp / shiftDown 原理推导</li>
-            <li>priority_queue 3种自定义比较器写法</li>
-            <li>单调栈：下一个更大元素 &amp; 最大矩形</li>
-            <li>单调队列：滑动窗口最大值 &amp; DP 优化</li>
-          </ul>
-        </div>
-        <div style="flex:1;min-width:200px;">
-          <h3>重点算法</h3>
-          <ul>
-            <li>建堆 O(n) —— <span class="badge">必考证明</span></li>
-            <li>合并K个有序链表 —— 优先队列</li>
-            <li>滑动窗口最大值 —— 单调队列</li>
-            <li>最大矩形面积 —— 单调栈</li>
-          </ul>
-        </div>
-      </div>
-      <p style="margin-top:24px;color:#888;font-size:0.85em;">
+<div id="slides-wrapper">
+<!-- ==================== 幻灯片 1：标题页 ==================== -->
+<div class="slide active" data-index="0">
+<h1>第05课：priority_queue 与单调结构</h1>
+<p style="font-size:1.1em;margin-top:10px;">
+<span class="badge">CSP-S 高级</span>
+<span class="badge" style="background:#f0a060;color:#1a1a2e;">堆 / 单调栈 / 单调队列</span>
+</p>
+<div style="margin-top:28px; display:flex; gap:32px; flex-wrap:wrap;">
+<div style="flex:1;min-width:200px;">
+<h3>本课内容</h3>
+<ul>
+<li>堆的完全二叉树性质与数组存储</li>
+<li>shiftUp / shiftDown 原理推导</li>
+<li>priority_queue 3种自定义比较器写法</li>
+<li>单调栈：下一个更大元素 &amp; 最大矩形</li>
+<li>单调队列：滑动窗口最大值 &amp; DP 优化</li>
+</ul>
+</div>
+<div style="flex:1;min-width:200px;">
+<h3>重点算法</h3>
+<ul>
+<li>建堆 O(n) —— <span class="badge">必考证明</span></li>
+<li>合并K个有序链表 —— 优先队列</li>
+<li>滑动窗口最大值 —— 单调队列</li>
+<li>最大矩形面积 —— 单调栈</li>
+</ul>
+</div>
+</div>
+<p style="margin-top:24px;color:#888;font-size:0.85em;">
         CSP-S 考纲对应：堆的实现原理 · 自定义比较函数 · 单调栈 · 单调队列
       </p>
-    </div>
 
-    <!-- ==================== 幻灯片 2：堆的原理 ==================== -->
-    <div class="slide" data-index="1">
-      <h2>堆（Heap）的核心原理</h2>
-
-      <h3>1. 完全二叉树 + 数组存储（1-based 索引）</h3>
-      <div style="display:flex;gap:24px;flex-wrap:wrap;align-items:flex-start;">
-        <div style="flex:1;min-width:200px;">
-          <p><strong>索引公式：</strong></p>
-          <p><span class="formula">parent(i) = i / 2</span></p>
-          <p><span class="formula">left(i) &nbsp;= 2 * i</span></p>
-          <p><span class="formula">right(i) = 2 * i + 1</span></p>
-          <p style="margin-top:8px;font-size:0.85em;color:#aaa;">索引从 <strong>1</strong> 开始，heap[0] 为哨兵</p>
-        </div>
-        <div style="flex:1;min-width:260px;">
-          <div class="code-block">索引:   1   2   3   4   5   6   7
+<aside class="notes">【开场】第 1/7 页 · priority_queue 与单调结构
+用 30 秒说明本课目标与学完能做什么，再进入正题。
+大纲考点：堆的实现原理、自定义比较函数、单调栈、单调队列
+配套练习方向：滑动窗口最大值、接雨水问题
+封面关键词：
+· CSP-S 高级 堆 / 单调栈 / 单调队列
+· 堆的完全二叉树性质与数组存储
+· shiftUp / shiftDown 原理推导
+· priority_queue 3种自定义比较器写法
+互动：问学生「今天最想搞清楚什么？」，收 1–2 个期待。</aside>
+</div>
+<!-- ==================== 幻灯片 2：堆的原理 ==================== -->
+<div class="slide" data-index="1">
+<h2>堆（Heap）的核心原理</h2>
+<h3>1. 完全二叉树 + 数组存储（1-based 索引）</h3>
+<div style="display:flex;gap:24px;flex-wrap:wrap;align-items:flex-start;">
+<div style="flex:1;min-width:200px;">
+<p><strong>索引公式：</strong></p>
+<p><span class="formula">parent(i) = i / 2</span></p>
+<p><span class="formula">left(i)  = 2 * i</span></p>
+<p><span class="formula">right(i) = 2 * i + 1</span></p>
+<p style="margin-top:8px;font-size:0.85em;color:#aaa;">索引从 <strong>1</strong> 开始，heap[0] 为哨兵</p>
+</div>
+<div style="flex:1;min-width:260px;">
+<div class="code-block">索引:   1   2   3   4   5   6   7
 数组:  [1,  3,  5,  7,  9,  8, 10]
 
 对应完全二叉树（最小堆）：
       <span class="num">1</span>
      /   \
-   <span class="num">3</span>     <span class="num">5</span>
+   <span class="num">3</span> <span class="num">5</span>
    / \   / \
-  <span class="num">7</span>  <span class="num">9</span> <span class="num">8</span>  <span class="num">10</span></div>
-        </div>
-      </div>
-
-      <h3>2. shiftUp（上浮）—— 插入后恢复堆性质</h3>
-      <div class="code-block"><span class="cm">// 时间复杂度 O(log n)</span>
+  <span class="num">7</span> <span class="num">9</span> <span class="num">8</span> <span class="num">10</span></div>
+</div>
+</div>
+<h3>2. shiftUp（上浮）—— 插入后恢复堆性质</h3>
+<div class="code-block"><span class="cm">// 时间复杂度 O(log n)</span>
 <span class="kw">void</span> <span class="fn">shiftUp</span>(<span class="type">int</span> idx) {
-    <span class="kw">while</span> (idx > <span class="num">1</span> && heap[idx] < heap[idx / <span class="num">2</span>]) {
+    <span class="kw">while</span> (idx &gt; <span class="num">1</span> &amp;&amp; heap[idx] &lt; heap[idx / <span class="num">2</span>]) {
         swap(heap[idx], heap[idx / <span class="num">2</span>]);
         idx /= <span class="num">2</span>;  <span class="cm">// 继续向上</span>
     }
 }</div>
-
-      <h3>3. shiftDown（下沉）—— 删除堆顶后恢复堆性质</h3>
-      <div class="code-block"><span class="cm">// 时间复杂度 O(log n)</span>
+<h3>3. shiftDown（下沉）—— 删除堆顶后恢复堆性质</h3>
+<div class="code-block"><span class="cm">// 时间复杂度 O(log n)</span>
 <span class="kw">void</span> <span class="fn">shiftDown</span>(<span class="type">int</span> idx) {
     <span class="type">int</span> n = heap.size() - <span class="num">1</span>;
-    <span class="kw">while</span> (<span class="num">2</span> * idx <= n) {
+    <span class="kw">while</span> (<span class="num">2</span> * idx &lt;= n) {
         <span class="type">int</span> child = <span class="num">2</span> * idx;
-        <span class="kw">if</span> (child + <span class="num">1</span> <= n && heap[child + <span class="num">1</span>] < heap[child])
+        <span class="kw">if</span> (child + <span class="num">1</span> &lt;= n &amp;&amp; heap[child + <span class="num">1</span>] &lt; heap[child])
             child++;  <span class="cm">// 选较小的子节点</span>
-        <span class="kw">if</span> (heap[child] < heap[idx]) {
+<span class="kw">if</span> (heap[child] &lt; heap[idx]) {
             swap(heap[idx], heap[child]);
             idx = child;
         } <span class="kw">else break</span>;
     }
 }</div>
-      <div class="note"><strong>建堆 push：</strong>heap.push_back(val); shiftUp(size); &nbsp;&nbsp;
+<div class="note"><strong>建堆 push：</strong>heap.push_back(val); shiftUp(size);   
       <strong>建堆 pop：</strong>heap[1] = heap.back(); heap.pop_back(); shiftDown(1);</div>
-    </div>
 
-    <!-- ==================== 幻灯片 3：建堆证明 + 3种比较器 ==================== -->
-    <div class="slide" data-index="2">
-      <h2>建堆 O(n) 证明 + priority_queue 比较器</h2>
-
-      <h3>建堆 O(n) 严格证明（sum of heights）</h3>
-      <p>自底向上 heapify：从 <span class="formula">i = n/2</span> 到 <span class="formula">1</span> 执行 shiftDown。</p>
-      <div class="code-block">总操作次数 S = <span class="num">0</span>·(n/<span class="num">2</span>) + <span class="num">1</span>·(n/<span class="num">4</span>) + <span class="num">2</span>·(n/<span class="num">8</span>) + ... + h·<span class="num">1</span>
+<aside class="notes">【讲解】堆（Heap）的核心原理
+结合讲义《一、堆（Heap）的完全二叉树性质与数组存储》强调：
+· 堆是一种特殊的完全二叉树，满足**堆性质**：
+· 最小堆（Min-Heap）：每个节点的值都不大于其子节点的值，即 heap[parent] &lt;= heap[child]
+· 最大堆（Max-Heap）：每个节点的值都不小于其子节点的值，即 heap[parent] &gt;= heap[child]
+· 堆通常用于实现**优先队列（Priority Queue）**——一种每次取出优先级最高（最大或最小）元素的数据结构。
+· 由于堆是一棵完全二叉树，我们可以用数组来紧凑存储，无需指针。
+幻灯片上可见要点：
+· 索引公式：
+· parent(i) = i / 2
+· left(i) = 2 * i
+· right(i) = 2 * i + 1
+讲解时放慢关键术语；用 1 个生活类比 + 1 个反例加深印象。
+本课大纲考点（可适时点题）：堆的实现原理、自定义比较函数、单调栈、单调队列</aside>
+</div>
+<!-- ==================== 幻灯片 3：建堆证明 + 3种比较器 ==================== -->
+<div class="slide" data-index="2">
+<h2>建堆 O(n) 证明 + priority_queue 比较器</h2>
+<h3>建堆 O(n) 严格证明（sum of heights）</h3>
+<p>自底向上 heapify：从 <span class="formula">i = n/2</span> 到 <span class="formula">1</span> 执行 shiftDown。</p>
+<div class="code-block">总操作次数 S = <span class="num">0</span>·(n/<span class="num">2</span>) + <span class="num">1</span>·(n/<span class="num">4</span>) + <span class="num">2</span>·(n/<span class="num">8</span>) + ... + h·<span class="num">1</span>
               ≤ n · Σ(i/<span class="num">2</span>^(i+<span class="num">1</span>))   (i=<span class="num">0</span> to ∞)
               = n · <span class="num">1</span> = <span class="kw">O(n)</span>
 
 恒等式证明：Σ i/<span class="num">2</span>^i = <span class="num">2</span>  ⇒  Σ i/<span class="num">2</span>^(i+<span class="num">1</span>) = <span class="num">1</span></div>
-
-      <h3>priority_queue 的 3 种自定义比较器</h3>
-      <table>
-        <tr><th>方法</th><th>写法</th><th>适用场景</th></tr>
-        <tr>
-          <td><strong>1. 仿函数</strong></td>
-          <td><code style="color:#66d9ef;">struct Cmp { bool operator()(int a,int b){return a>b;} };</code></td>
-          <td>复杂逻辑、需复用</td>
-        </tr>
-        <tr>
-          <td><strong>2. lambda</strong></td>
-          <td><code style="color:#66d9ef;">auto cmp=[](int a,int b){return a>b;};<br>priority_queue&lt;int,vector&lt;int&gt;,decltype(cmp)&gt; pq(cmp);</code></td>
-          <td>简单逻辑、一次性使用</td>
-        </tr>
-        <tr>
-          <td><strong>3. greater</strong></td>
-          <td><code style="color:#66d9ef;">priority_queue&lt;int,vector&lt;int&gt;,greater&lt;int&gt;&gt; pq;</code></td>
-          <td>基本类型反转方向</td>
-        </tr>
-      </table>
-
-      <div class="note">
-        <strong>记忆口诀：</strong>
-        <span class="formula">greater</span> → 小的优先级高 → <strong>最小堆</strong>；
-        默认 <span class="formula">less</span> → <span style="color:#e94560;">最大堆（反直觉！注意！）</span><br>
-        <strong>lambda 陷阱：</strong>C++20 之前 lambda 不可默认构造，必须传对象给构造函数！
+<h3>priority_queue 的 3 种自定义比较器</h3>
+<table>
+<tr><th>方法</th><th>写法</th><th>适用场景</th></tr>
+<tr>
+<td><strong>1. 仿函数</strong></td>
+<td><code style="color:#66d9ef;">struct Cmp { bool operator()(int a,int b){return a&gt;b;} };</code></td>
+<td>复杂逻辑、需复用</td>
+</tr>
+<tr>
+<td><strong>2. lambda</strong></td>
+<td><code style="color:#66d9ef;">auto cmp=[](int a,int b){return a&gt;b;};<br/>priority_queue&lt;int,vector&lt;int&gt;,decltype(cmp)&gt; pq(cmp);</code></td>
+<td>简单逻辑、一次性使用</td>
+</tr>
+<tr>
+<td><strong>3. greater</strong></td>
+<td><code style="color:#66d9ef;">priority_queue&lt;int,vector&lt;int&gt;,greater&lt;int&gt;&gt; pq;</code></td>
+<td>基本类型反转方向</td>
+</tr>
+</table>
+<div class="note">
+<strong>记忆口诀：</strong>
+<span class="formula">greater</span> → 小的优先级高 → <strong>最小堆</strong>；
+        默认 <span class="formula">less</span> → <span style="color:#e94560;">最大堆（反直觉！注意！）</span><br/>
+<strong>lambda 陷阱：</strong>C++20 之前 lambda 不可默认构造，必须传对象给构造函数！
       </div>
-    </div>
 
-    <!-- ==================== 幻灯片 4：代码模板 ==================== -->
-    <div class="slide" data-index="3">
-      <h2>代码模板：手写堆 + 单调栈 + 单调队列</h2>
-
-      <h3>手写最小堆（核心骨架）</h3>
-      <div class="code-block"><span class="kw">class</span> <span class="type">MinHeap</span> {
+<aside class="notes">【讲解】建堆 O(n) 证明 + priority_queue 比较器
+本页要点（照着讲即可）：
+· 自底向上 heapify：从 i = n/2 到 1 执行 shiftDown。
+· 1. 仿函数
+· 2. lambda
+· 3. greater
+· 记忆口诀：
+· lambda 陷阱：
+讲解时放慢关键术语；用 1 个生活类比 + 1 个反例加深印象。</aside>
+</div>
+<!-- ==================== 幻灯片 4：代码模板 ==================== -->
+<div class="slide" data-index="3">
+<h2>代码模板：手写堆 + 单调栈 + 单调队列</h2>
+<h3>手写最小堆（核心骨架）</h3>
+<div class="code-block"><span class="kw">class</span> <span class="type">MinHeap</span> {
     vector&lt;<span class="type">int</span>&gt; heap;
-    <span class="kw">void</span> <span class="fn">shiftUp</span>(<span class="type">int</span> idx) { <span class="cm">/* while idx>1 && heap[idx] < heap[idx/2] swap */</span> }
+    <span class="kw">void</span> <span class="fn">shiftUp</span>(<span class="type">int</span> idx) { <span class="cm">/* while idx&gt;1 &amp;&amp; heap[idx] &lt; heap[idx/2] swap */</span> }
     <span class="kw">void</span> <span class="fn">shiftDown</span>(<span class="type">int</span> idx) { <span class="cm">/* 找最小子节点，下沉 */</span> }
 <span class="kw">public</span>:
     <span class="fn">MinHeap</span>() { heap.push_back(<span class="num">0</span>); }  <span class="cm">// 哨兵</span>
-    <span class="kw">void</span> <span class="fn">push</span>(<span class="type">int</span> x) { heap.push_back(x); shiftUp(size()); }
+<span class="kw">void</span> <span class="fn">push</span>(<span class="type">int</span> x) { heap.push_back(x); shiftUp(size()); }
     <span class="kw">void</span> <span class="fn">pop</span>() { heap[<span class="num">1</span>]=heap.back(); heap.pop_back(); shiftDown(<span class="num">1</span>); }
-    <span class="type">int</span>  <span class="fn">top</span>() { <span class="kw">return</span> heap[<span class="num">1</span>]; }
+    <span class="type">int</span> <span class="fn">top</span>() { <span class="kw">return</span> heap[<span class="num">1</span>]; }
 };</div>
-
-      <h3>单调栈：下一个更大元素</h3>
-      <div class="code-block"><span class="kw">for</span> (<span class="type">int</span> i = <span class="num">0</span>; i < n; ++i) {
-    <span class="kw">while</span> (!st.empty() && nums[i] > nums[st.top()]) {
+<h3>单调栈：下一个更大元素</h3>
+<div class="code-block"><span class="kw">for</span> (<span class="type">int</span> i = <span class="num">0</span>; i &lt; n; ++i) {
+    <span class="kw">while</span> (!st.empty() &amp;&amp; nums[i] &gt; nums[st.top()]) {
         ans[st.top()] = nums[i]; st.pop();  <span class="cm">// 找到答案</span>
     }
     st.push(i);
 }  <span class="cm">// 剩余元素无答案，ans 保持 -1</span></div>
-
-      <h3>单调队列：滑动窗口最大值</h3>
-      <div class="code-block"><span class="kw">for</span> (<span class="type">int</span> i = <span class="num">0</span>; i < n; ++i) {
-    <span class="kw">while</span> (!dq.empty() && dq.front() < i - k + <span class="num">1</span>) dq.pop_front();  <span class="cm">// 过期</span>
-    <span class="kw">while</span> (!dq.empty() && nums[dq.back()] <= nums[i]) dq.pop_back(); <span class="cm">// 维护递减</span>
+<h3>单调队列：滑动窗口最大值</h3>
+<div class="code-block"><span class="kw">for</span> (<span class="type">int</span> i = <span class="num">0</span>; i &lt; n; ++i) {
+    <span class="kw">while</span> (!dq.empty() &amp;&amp; dq.front() &lt; i - k + <span class="num">1</span>) dq.pop_front();  <span class="cm">// 过期</span>
+<span class="kw">while</span> (!dq.empty() &amp;&amp; nums[dq.back()] &lt;= nums[i]) dq.pop_back(); <span class="cm">// 维护递减</span>
     dq.push_back(i);
-    <span class="kw">if</span> (i >= k - <span class="num">1</span>) ans.push_back(nums[dq.front()]);
+    <span class="kw">if</span> (i &gt;= k - <span class="num">1</span>) ans.push_back(nums[dq.front()]);
 }</div>
+<div class="note"><strong>核心技巧：</strong>单调栈/队列都存储<strong>索引</strong>而非值——这是保留位置信息的关键！每个元素最多入一次、出一次，保证 O(n)。</div>
 
-      <div class="note"><strong>核心技巧：</strong>单调栈/队列都存储<strong>索引</strong>而非值——这是保留位置信息的关键！每个元素最多入一次、出一次，保证 O(n)。</div>
-    </div>
-
-    <!-- ==================== 幻灯片 5：真题精练 ==================== -->
-    <div class="slide" data-index="4">
-      <h2>真题精练</h2>
-
-      <h3>真题1：合并K个有序链表 <span class="badge">优先队列</span></h3>
-      <p style="font-size:0.85em;">K <= 10<sup>5</sup>，总节点数 N <= 10<sup>5</sup>，每个链表已升序排列。合并成一个升序链表。</p>
-      <div class="code-block"><span class="kw">struct</span> <span class="type">Cmp</span> { <span class="kw">bool</span> <span class="kw">operator</span>()(ListNode* a,ListNode* b){ <span class="kw">return</span> a->val > b->val; } };
+<aside class="notes">【讲解】代码模板：手写堆 + 单调栈 + 单调队列
+本页要点（照着讲即可）：
+· 核心技巧：
+代码页节奏：先读懂输入输出 → 再走主流程 → 最后点出易错点（边界/类型/下标）。
+可让学生预测下一行输出，再运行对照。</aside>
+</div>
+<!-- ==================== 幻灯片 5：真题精练 ==================== -->
+<div class="slide" data-index="4">
+<h2>真题精练</h2>
+<h3>真题1：合并K个有序链表 <span class="badge">优先队列</span></h3>
+<p style="font-size:0.85em;">K &lt;= 10<sup>5</sup>，总节点数 N &lt;= 10<sup>5</sup>，每个链表已升序排列。合并成一个升序链表。</p>
+<div class="code-block"><span class="kw">struct</span> <span class="type">Cmp</span> { <span class="kw">bool</span> <span class="kw">operator</span>()(ListNode* a,ListNode* b){ <span class="kw">return</span> a-&gt;val &gt; b-&gt;val; } };
 priority_queue&lt;ListNode*, vector&lt;ListNode*&gt;, Cmp&gt; pq;
 <span class="kw">for</span> (auto head : lists) <span class="kw">if</span>(head) pq.push(head);
-ListNode dummy(<span class="num">0</span>), *tail = &dummy;
+ListNode dummy(<span class="num">0</span>), *tail = &amp;dummy
 <span class="kw">while</span> (!pq.empty()) {
-    tail->next = pq.top(); pq.pop();
-    tail = tail->next;
-    <span class="kw">if</span> (tail->next) pq.push(tail->next);
+    tail-&gt;next = pq.top(); pq.pop();
+    tail = tail-&gt;next;
+    <span class="kw">if</span> (tail-&gt;next) pq.push(tail-&gt;next);
 }
 <span class="kw">return</span> dummy.next;  <span class="cm">// 复杂度 O(N log K)</span></div>
-      <div class="note">每步从堆中取最小节点 O(log K)，共 N 步 → <strong>O(N log K)</strong></div>
-
-      <h3>真题2：滑动窗口最大值 <span class="badge" style="background:#f0a060;color:#1a1a2e;">单调队列</span></h3>
-      <p style="font-size:0.85em;">n <= 10<sup>6</sup>, k <= n。找出每个长度为 k 的滑动窗口中的最大值。</p>
-      <div class="code-block">deque&lt;<span class="type">int</span>&gt; dq;  <span class="cm">// 存储索引，维护 nums 值单调递减</span>
-<span class="kw">for</span> (<span class="type">int</span> i = <span class="num">0</span>; i < n; ++i) {
-    <span class="kw">while</span> (!dq.empty() && dq.front() < i - k + <span class="num">1</span>) dq.pop_front();
-    <span class="kw">while</span> (!dq.empty() && nums[dq.back()] <= nums[i]) dq.pop_back();
+<div class="note">每步从堆中取最小节点 O(log K)，共 N 步 → <strong>O(N log K)</strong></div>
+<h3>真题2：滑动窗口最大值 <span class="badge" style="background:#f0a060;color:#1a1a2e;">单调队列</span></h3>
+<p style="font-size:0.85em;">n &lt;= 10<sup>6</sup>, k &lt;= n。找出每个长度为 k 的滑动窗口中的最大值。</p>
+<div class="code-block">deque&lt;<span class="type">int</span>&gt; dq;  <span class="cm">// 存储索引，维护 nums 值单调递减</span>
+<span class="kw">for</span> (<span class="type">int</span> i = <span class="num">0</span>; i &lt; n; ++i) {
+    <span class="kw">while</span> (!dq.empty() &amp;&amp; dq.front() &lt; i - k + <span class="num">1</span>) dq.pop_front();
+    <span class="kw">while</span> (!dq.empty() &amp;&amp; nums[dq.back()] &lt;= nums[i]) dq.pop_back();
     dq.push_back(i);
-    <span class="kw">if</span> (i >= k - <span class="num">1</span>) ans.push_back(nums[dq.front()]);
+    <span class="kw">if</span> (i &gt;= k - <span class="num">1</span>) ans.push_back(nums[dq.front()]);
 }  <span class="cm">// 复杂度 O(n)，n=10^6 时优势明显</span></div>
+<table style="margin-top:8px;">
+<tr><th>题目</th><th>数据结构</th><th>时间复杂度</th><th>空间复杂度</th></tr>
+<tr><td>合并K个有序链表</td><td>priority_queue</td><td>O(N log K)</td><td>O(K)</td></tr>
+<tr><td>滑动窗口最大值</td><td>deque（单调队列）</td><td>O(n)</td><td>O(k)</td></tr>
+</table>
 
-      <table style="margin-top:8px;">
-        <tr><th>题目</th><th>数据结构</th><th>时间复杂度</th><th>空间复杂度</th></tr>
-        <tr><td>合并K个有序链表</td><td>priority_queue</td><td>O(N log K)</td><td>O(K)</td></tr>
-        <tr><td>滑动窗口最大值</td><td>deque（单调队列）</td><td>O(n)</td><td>O(k)</td></tr>
-      </table>
-    </div>
-
-    <!-- ==================== 幻灯片 6：易错点与优化技巧 ==================== -->
-    <div class="slide" data-index="5">
-      <h2>易错点与优化技巧</h2>
-
-      <h3>常见易错点</h3>
-      <ol>
-        <li><strong style="color:#e94560;">索引错误：</strong>手写堆 1-based vs 0-based 必须统一。建议 1-based（公式简洁），构造时 push 哨兵 <code class="formula">heap.push_back(0)</code></li>
-        <li><strong style="color:#e94560;">比较器语义：</strong><code style="color:#66d9ef;">priority_queue&lt;int&gt;</code> 默认是<strong>最大堆</strong>（反直觉！）；<code style="color:#66d9ef;">greater&lt;int&gt;</code> 才是<strong>最小堆</strong></li>
-        <li><strong style="color:#e94560;">lambda 忘记传参：</strong>C++20 前 lambda 不可默认构造，必须传对象给构造函数</li>
-        <li><strong style="color:#e94560;">存索引 vs 存值：</strong>单调栈/队列强烈建议<strong>存储索引</strong>，保留位置信息用于判断过期</li>
-        <li><strong style="color:#e94560;">过期条件：</strong>使用 <code class="formula">dq.front() < i - k + 1</code> 而非 <code class="formula">> k</code></li>
-      </ol>
-
-      <h3>优化技巧</h3>
-      <table>
-        <tr><th>场景</th><th>技巧</th></tr>
-        <tr><td>结果数组预分配</td><td><code style="color:#66d9ef;">ans.reserve(n - k + 1);</code> 避免扩容</td></tr>
-        <tr><td>第K大/第K小</td><td>维护大小为 K 的堆（第K大用小根堆，第K小用大根堆）</td></tr>
-        <tr><td>优先队列插入</td><td>用 <code style="color:#66d9ef;">emplace</code> 代替 <code style="color:#66d9ef;">push</code>，原地构造减少拷贝</td></tr>
-        <tr><td>单调栈收尾</td><td>在数组末尾补虚拟极小值，统一处理逻辑，避免残留</td></tr>
-        <tr><td>大量数据输入</td><td><code style="color:#66d9ef;">ios::sync_with_stdio(false); cin.tie(nullptr);</code> 加速 IO</td></tr>
-        <tr><td>需要删除任意元素</td><td>手写堆 或 用 set（STL priority_queue 不支持删除中间元素）</td></tr>
-      </table>
-
-      <div class="note">
-        <strong>识别题型信号词：</strong>"下一个更大" → 单调栈 · "滑动窗口最值" → 单调队列 ·
+<aside class="notes">【讲解】真题精练
+本页要点（照着讲即可）：
+· K &lt;= 10 5 ，总节点数 N &lt;= 10 5 ，每个链表已升序排列。合并成一个升序链表。
+· O(N log K)
+· n &lt;= 10 6 , k &lt;= n。找出每个长度为 k 的滑动窗口中的最大值。
+练习页节奏：先独立想 1 分钟 → 再点拨思路 → 最后对答案讲为什么。
+可联系：滑动窗口最大值、接雨水问题</aside>
+</div>
+<!-- ==================== 幻灯片 6：易错点与优化技巧 ==================== -->
+<div class="slide" data-index="5">
+<h2>易错点与优化技巧</h2>
+<h3>常见易错点</h3>
+<ol>
+<li><strong style="color:#e94560;">索引错误：</strong>手写堆 1-based vs 0-based 必须统一。建议 1-based（公式简洁），构造时 push 哨兵 <code class="formula">heap.push_back(0)</code></li>
+<li><strong style="color:#e94560;">比较器语义：</strong><code style="color:#66d9ef;">priority_queue&lt;int&gt;</code> 默认是<strong>最大堆</strong>（反直觉！）；<code style="color:#66d9ef;">greater&lt;int&gt;</code> 才是<strong>最小堆</strong></li>
+<li><strong style="color:#e94560;">lambda 忘记传参：</strong>C++20 前 lambda 不可默认构造，必须传对象给构造函数</li>
+<li><strong style="color:#e94560;">存索引 vs 存值：</strong>单调栈/队列强烈建议<strong>存储索引</strong>，保留位置信息用于判断过期</li>
+<li><strong style="color:#e94560;">过期条件：</strong>使用 <code class="formula">dq.front() &lt; i - k + 1</code> 而非 <code class="formula">&gt; k</code></li>
+</ol>
+<h3>优化技巧</h3>
+<table>
+<tr><th>场景</th><th>技巧</th></tr>
+<tr><td>结果数组预分配</td><td><code style="color:#66d9ef;">ans.reserve(n - k + 1);</code> 避免扩容</td></tr>
+<tr><td>第K大/第K小</td><td>维护大小为 K 的堆（第K大用小根堆，第K小用大根堆）</td></tr>
+<tr><td>优先队列插入</td><td>用 <code style="color:#66d9ef;">emplace</code> 代替 <code style="color:#66d9ef;">push</code>，原地构造减少拷贝</td></tr>
+<tr><td>单调栈收尾</td><td>在数组末尾补虚拟极小值，统一处理逻辑，避免残留</td></tr>
+<tr><td>大量数据输入</td><td><code style="color:#66d9ef;">ios::sync_with_stdio(false); cin.tie(nullptr);</code> 加速 IO</td></tr>
+<tr><td>需要删除任意元素</td><td>手写堆 或 用 set（STL priority_queue 不支持删除中间元素）</td></tr>
+</table>
+<div class="note">
+<strong>识别题型信号词：</strong>"下一个更大" → 单调栈 · "滑动窗口最值" → 单调队列 ·
         "合并K个有序序列" → 优先队列 · "带区间限制的DP" → 单调队列优化
       </div>
-    </div>
 
-    <!-- ==================== 幻灯片 7：总结页 ==================== -->
-    <div class="slide" data-index="6">
-      <h2>本课核心知识点回顾</h2>
-
-      <table>
-        <tr><th>知识点</th><th>掌握要求</th><th>复杂度</th></tr>
-        <tr><td>堆的数组存储（1-based）</td><td>熟练写出 parent/left/right 索引公式</td><td>O(1)</td></tr>
-        <tr><td>shiftUp / shiftDown</td><td>能手写完整实现，理解终止条件</td><td>O(log n)</td></tr>
-        <tr><td>建堆 heapify</td><td>理解 O(n) 证明（sum of heights），能手写</td><td>O(n)</td></tr>
-        <tr><td>priority_queue 自定义比较器</td><td>掌握 3 种写法，理解比较器语义</td><td>O(log n)/op</td></tr>
-        <tr><td>单调栈（递增/递减）</td><td>能手写模板，理解入栈出栈条件</td><td>O(n)</td></tr>
-        <tr><td>单调队列（双端）</td><td>能手写模板，过期删除 + 单调维护</td><td>O(n)</td></tr>
-        <tr><td>合并K个有序链表</td><td>优先队列多路归并，O(N log K)</td><td>经典题</td></tr>
-        <tr><td>滑动窗口最大值</td><td>单调队列 O(n)，理解 why 不是优先队列</td><td>经典题</td></tr>
-      </table>
-
-      <h3>解题思维框架</h3>
-      <div style="display:flex;gap:16px;flex-wrap:wrap;margin-top:8px;">
-        <div style="flex:1;min-width:180px;background:rgba(233,69,96,0.08);border-radius:10px;padding:14px;">
-          <p style="color:#e94560;font-weight:700;">看到 → 想到</p>
-          <ul style="font-size:0.85em;">
-            <li>"第K大/小" → 堆（大小K）</li>
-            <li>"合并有序序列" → 优先队列</li>
-            <li>"下一个更大/小" → 单调栈</li>
-          </ul>
-        </div>
-        <div style="flex:1;min-width:180px;background:rgba(240,160,96,0.08);border-radius:10px;padding:14px;">
-          <p style="color:#f0a060;font-weight:700;">看到 → 想到</p>
-          <ul style="font-size:0.85em;">
-            <li>"滑动窗口最值" → 单调队列</li>
-            <li>"最大矩形面积" → 单调栈</li>
-            <li>"区间限制DP" → 单调队列优化</li>
-          </ul>
-        </div>
-      </div>
-
-      <div class="note" style="margin-top:14px;">
-        <strong>本课核心心法：</strong>所有单调结构的本质都是"<span style="color:#e94560;">每个元素最多进出一次</span>"，
+<aside class="notes">【讲解】易错点与优化技巧
+本页要点（照着讲即可）：
+· 索引错误： 手写堆 1-based vs 0-based 必须统一。建议 1-based（公式简洁），构造时 push 哨兵 heap.push_back(0)
+· 索引错误：
+· 比较器语义： priority_queue 默认是 最大堆 （反直觉！）； greater 才是 最小堆
+· 比较器语义：
+· lambda 忘记传参： C++20 前 lambda 不可默认构造，必须传对象给构造函数
+· lambda 忘记传参：
+讲解时放慢关键术语；用 1 个生活类比 + 1 个反例加深印象。</aside>
+</div>
+<!-- ==================== 幻灯片 7：总结页 ==================== -->
+<div class="slide" data-index="6">
+<h2>本课核心知识点回顾</h2>
+<table>
+<tr><th>知识点</th><th>掌握要求</th><th>复杂度</th></tr>
+<tr><td>堆的数组存储（1-based）</td><td>熟练写出 parent/left/right 索引公式</td><td>O(1)</td></tr>
+<tr><td>shiftUp / shiftDown</td><td>能手写完整实现，理解终止条件</td><td>O(log n)</td></tr>
+<tr><td>建堆 heapify</td><td>理解 O(n) 证明（sum of heights），能手写</td><td>O(n)</td></tr>
+<tr><td>priority_queue 自定义比较器</td><td>掌握 3 种写法，理解比较器语义</td><td>O(log n)/op</td></tr>
+<tr><td>单调栈（递增/递减）</td><td>能手写模板，理解入栈出栈条件</td><td>O(n)</td></tr>
+<tr><td>单调队列（双端）</td><td>能手写模板，过期删除 + 单调维护</td><td>O(n)</td></tr>
+<tr><td>合并K个有序链表</td><td>优先队列多路归并，O(N log K)</td><td>经典题</td></tr>
+<tr><td>滑动窗口最大值</td><td>单调队列 O(n)，理解 why 不是优先队列</td><td>经典题</td></tr>
+</table>
+<h3>解题思维框架</h3>
+<div style="display:flex;gap:16px;flex-wrap:wrap;margin-top:8px;">
+<div style="flex:1;min-width:180px;background:rgba(233,69,96,0.08);border-radius:10px;padding:14px;">
+<p style="color:#e94560;font-weight:700;">看到 → 想到</p>
+<ul style="font-size:0.85em;">
+<li>"第K大/小" → 堆（大小K）</li>
+<li>"合并有序序列" → 优先队列</li>
+<li>"下一个更大/小" → 单调栈</li>
+</ul>
+</div>
+<div style="flex:1;min-width:180px;background:rgba(240,160,96,0.08);border-radius:10px;padding:14px;">
+<p style="color:#f0a060;font-weight:700;">看到 → 想到</p>
+<ul style="font-size:0.85em;">
+<li>"滑动窗口最值" → 单调队列</li>
+<li>"最大矩形面积" → 单调栈</li>
+<li>"区间限制DP" → 单调队列优化</li>
+</ul>
+</div>
+</div>
+<div class="note" style="margin-top:14px;">
+<strong>本课核心心法：</strong>所有单调结构的本质都是"<span style="color:#e94560;">每个元素最多进出一次</span>"，
         这是 O(n) 复杂度的根本保证。掌握这一点，就能理解为什么单调栈/队列比暴力枚举高效得多。
       </div>
-
-      <p style="text-align:center;margin-top:16px;color:#888;font-size:0.85em;">
+<p style="text-align:center;margin-top:16px;color:#888;font-size:0.85em;">
         —— 第05课结束 · CSP-S 高级数据结构与算法 ——
       </p>
-    </div>
 
-  </div>
-
-  <!-- 导航栏 -->
-  <div id="nav">
-    <button id="prev-btn">&#9664; 上一页</button>
-    <div id="page-indicator"></div>
-    <span id="page-number"></span>
-    <button id="next-btn">下一页 &#9654;</button>
-  </div>
+<aside class="notes">【收尾】回顾本课主线：本课核心知识点回顾
+对照大纲再过一遍：堆的实现原理、自定义比较函数、单调栈、单调队列
+板书/口述要点：
+· 看到 → 想到
+· "第K大/小" → 堆（大小K）
+· "合并有序序列" → 优先队列
+· "下一个更大/小" → 单调栈
+· "滑动窗口最值" → 单调队列
+· "最大矩形面积" → 单调栈
+课后任务：滑动窗口最大值、接雨水问题
+结束前留 2 分钟答疑；布置 1 道小练习检验是否真正掌握。</aside>
 </div>
-
+</div>
+<!-- 导航栏 -->
+<div id="nav">
+<button id="prev-btn">◀ 上一页</button>
+<div id="page-indicator"></div>
+<span id="page-number"></span>
+<button id="next-btn">下一页 ▶</button>
+</div>
+</div>
 <script>
 (function() {
   const slides = document.querySelectorAll('.slide');
@@ -651,7 +693,6 @@ ListNode dummy(<span class="num">0</span>), *tail = &dummy;
   });
 })();
 </script>
-
 <script src="courseware-ui.js"></script>
 <script src="presenter.js"></script>
 </body>

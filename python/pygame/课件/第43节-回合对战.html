@@ -1,8 +1,9 @@
 <!DOCTYPE html>
+
 <html lang="zh-CN">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
 <title>第43节：回合对战 — 回合制战斗系统</title>
 <style>
   *, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
@@ -241,221 +242,289 @@
 </style>
 </head>
 <body>
-
 <div class="slide-container">
-
 <!-- ====== SLIDE 1: Title ====== -->
 <div class="slide slide-title active" data-slide="0">
-  <div class="badge">第 43 节</div>
-  <h1>⚔️ 回合对战</h1>
-  <div class="subtitle">回合制战斗系统</div>
-  <div class="stars">★★★★★</div>
-  <p style="font-size:1.1rem;color:var(--text-dim);margin-top:10px;">
+<div class="badge">第 43 节</div>
+<h1>⚔️ 回合对战</h1>
+<div class="subtitle">回合制战斗系统</div>
+<div class="stars">★★★★★</div>
+<p style="font-size:1.1rem;color:var(--text-dim);margin-top:10px;">
     状态机 · 伤害公式 · Lerp血条动画 · UI菜单
   </p>
-</div>
 
+<aside class="notes">【开场】第 1/12 页 · 回合对战
+用 30 秒说明本课目标与学完能做什么，再进入正题。
+大纲考点：**内容**：玩家 vs 怪物回合制战斗、攻击/防御/技能选择、血条动画
+
+**知识点**：
+- 回合制状态机：
+ - `选择阶段` → `玩家执行` → `敌人回合` → `下一轮`
+- 伤害计算公式 `damage = atk * 技能倍率 - def * 0.5`
+- 血条平滑减少动画（`current_hp` 逐帧逼近 `target_hp`，lerp 插值）
+
+**课堂练习**：和怪物来一场回合对战
+
+---
+封面关键词：
+· 状态机 · 伤害公式 · Lerp血条动画 · UI菜单
+互动：问学生「今天最想搞清楚什么？」，收 1–2 个期待。</aside>
+</div>
 <!-- ====== SLIDE 2: Objectives ====== -->
 <div class="slide" data-slide="1">
-  <h2>🎯 教学目标</h2>
-  <div class="content-body">
-    <div>
-      <h3>知识目标</h3>
-      <ul>
-        <li>理解<b>有限状态机</b>的设计思想</li>
-        <li>掌握<b>伤害计算公式</b>的推导与实现</li>
-        <li>学会<b>Lerp线性插值</b>实现平滑动画</li>
-      </ul>
-    </div>
-    <div>
-      <h3>能力目标</h3>
-      <ul>
-        <li>用<strong>字典</strong>管理技能数据</li>
-        <li>实现<strong>按钮UI</strong>与鼠标交互</li>
-        <li>综合运用列表、函数构建完整游戏</li>
-      </ul>
-    </div>
-  </div>
-  <p style="margin-top:24px;color:var(--text-dim);font-size:1.1rem;">
+<h2>🎯 教学目标</h2>
+<div class="content-body">
+<div>
+<h3>知识目标</h3>
+<ul>
+<li>理解<b>有限状态机</b>的设计思想</li>
+<li>掌握<b>伤害计算公式</b>的推导与实现</li>
+<li>学会<b>Lerp线性插值</b>实现平滑动画</li>
+</ul>
+</div>
+<div>
+<h3>能力目标</h3>
+<ul>
+<li>用<strong>字典</strong>管理技能数据</li>
+<li>实现<strong>按钮UI</strong>与鼠标交互</li>
+<li>综合运用列表、函数构建完整游戏</li>
+</ul>
+</div>
+</div>
+<p style="margin-top:24px;color:var(--text-dim);font-size:1.1rem;">
     📌 这是RPG战斗系统的<strong>第一部分</strong>，后续课程将加入特效与装备系统
   </p>
-</div>
 
+<aside class="notes">【讲解】🎯 教学目标
+结合讲义《🎯 教学目标》强调：
+· 学生能够理解回合制状态机的设计模式
+· 学生能够实现伤害计算公式（atk × 技能倍率 − def × 0.5）
+· 学生能够实现血条平滑动画（lerp线性插值）
+· 学生能够实现基本的攻击/防御/技能选择系统
+· 学生能够综合运用字典、列表、函数等知识点构建完整的回合制战斗逻辑
+幻灯片上可见要点：
+· 理解 有限状态机 的设计思想
+· 掌握 伤害计算公式 的推导与实现
+· 学会 Lerp线性插值 实现平滑动画
+· 用 字典 管理技能数据
+讲解时放慢关键术语；用 1 个生活类比 + 1 个反例加深印象。
+本课大纲考点（可适时点题）：**内容**：玩家 vs 怪物回合制战斗、攻击/防御/技能选择、血条动画
+
+**知识点**：
+- 回合制状态机：
+ - `选择阶段` → `玩家执行` → `敌人回合` → `下一轮`
+- 伤害计算公式 `damage = atk * 技能倍率 - def * 0.5`
+- 血条平滑减少动画（`current_hp` 逐帧逼近 `target_hp`，lerp 插值）
+
+**课堂练习**：和怪物来一场回合对战
+
+---</aside>
+</div>
 <!-- ====== SLIDE 3: Classic RPG Intro ====== -->
 <div class="slide" data-slide="2">
-  <h2>🎮 回合制游戏知多少？</h2>
-  <div style="display:flex;gap:30px;align-items:center;flex:1;">
-    <div style="flex:1;text-align:center;">
-      <div class="sword-icon">🐉</div>
-      <p style="font-size:1.4rem;color:var(--text-bright);">宝可梦</p>
-      <p style="color:var(--text-dim);">属性克制 · 技能PP</p>
-    </div>
-    <div style="flex:1;text-align:center;">
-      <div class="sword-icon">⚔️</div>
-      <p style="font-size:1.4rem;color:var(--text-bright);">勇者斗恶龙</p>
-      <p style="color:var(--text-dim);">经典JRPG · 指令战斗</p>
-    </div>
-    <div style="flex:1;text-align:center;">
-      <div class="sword-icon">🚂</div>
-      <p style="font-size:1.4rem;color:var(--text-bright);">星穹铁道</p>
-      <p style="color:var(--text-dim);">速度条 · 大招插入</p>
-    </div>
-  </div>
-  <p style="margin-top:20px;font-size:1.2rem;text-align:center;">
-    <strong>共同点：</strong>你一下，我一下 → <span style="color:var(--gold);">回合制 = 策略的博弈！</span>
-  </p>
+<h2>🎮 回合制游戏知多少？</h2>
+<div style="display:flex;gap:30px;align-items:center;flex:1;">
+<div style="flex:1;text-align:center;">
+<div class="sword-icon">🐉</div>
+<p style="font-size:1.4rem;color:var(--text-bright);">宝可梦</p>
+<p style="color:var(--text-dim);">属性克制 · 技能PP</p>
 </div>
+<div style="flex:1;text-align:center;">
+<div class="sword-icon">⚔️</div>
+<p style="font-size:1.4rem;color:var(--text-bright);">勇者斗恶龙</p>
+<p style="color:var(--text-dim);">经典JRPG · 指令战斗</p>
+</div>
+<div style="flex:1;text-align:center;">
+<div class="sword-icon">🚂</div>
+<p style="font-size:1.4rem;color:var(--text-bright);">星穹铁道</p>
+<p style="color:var(--text-dim);">速度条 · 大招插入</p>
+</div>
+</div>
+<p style="margin-top:20px;font-size:1.2rem;text-align:center;">
+<strong>共同点：</strong>你一下，我一下 → <span style="color:var(--gold);">回合制 = 策略的博弈！</span>
+</p>
 
+<aside class="notes">【讲解】🎮 回合制游戏知多少？
+本页要点（照着讲即可）：
+· 属性克制 · 技能PP
+· 勇者斗恶龙
+· 经典JRPG · 指令战斗
+· 星穹铁道
+· 速度条 · 大招插入
+· 共同点： 你一下，我一下 → 回合制 = 策略的博弈！
+讲解时放慢关键术语；用 1 个生活类比 + 1 个反例加深印象。</aside>
+</div>
 <!-- ====== SLIDE 4: State Machine ====== -->
 <div class="slide" data-slide="3">
-  <h2>🔄 回合制 = 有限状态机</h2>
-
-  <div class="state-diagram" style="font-size:0.9rem;">
-    <div class="state-box active-state">
-      PLAYER<br>TURN
+<h2>🔄 回合制 = 有限状态机</h2>
+<div class="state-diagram" style="font-size:0.9rem;">
+<div class="state-box active-state">
+      PLAYER<br/>TURN
       <div class="state-label">等待玩家输入</div>
-    </div>
-    <div class="state-arrow">→</div>
-    <div class="state-box">
-      PLAYER<br>ACTION
+</div>
+<div class="state-arrow">→</div>
+<div class="state-box">
+      PLAYER<br/>ACTION
       <div class="state-label">执行玩家动作</div>
-    </div>
-    <div class="state-arrow">→</div>
-    <div class="state-box">
-      ENEMY<br>TURN
+</div>
+<div class="state-arrow">→</div>
+<div class="state-box">
+      ENEMY<br/>TURN
       <div class="state-label">敌人回合</div>
-    </div>
-    <div class="state-arrow">→</div>
-    <div class="state-box">
-      CHECK<br>RESULT
+</div>
+<div class="state-arrow">→</div>
+<div class="state-box">
+      CHECK<br/>RESULT
       <div class="state-label">判定胜负</div>
-    </div>
-  </div>
-  <div style="text-align:center;margin-top:4px;">
-    <span class="state-arrow">⟲</span>
-    <span style="color:var(--text-dim);font-size:0.9rem;"> 循环（如果都还活着）</span>
-  </div>
-
-  <div class="code-block" style="margin-top:16px;">
+</div>
+</div>
+<div style="text-align:center;margin-top:4px;">
+<span class="state-arrow">⟲</span>
+<span style="color:var(--text-dim);font-size:0.9rem;"> 循环（如果都还活着）</span>
+</div>
+<div class="code-block" style="margin-top:16px;">
 <span class="keyword">state</span> = <span class="string">"PLAYER_TURN"</span>
-
 <span class="keyword">def</span> <span class="func">update</span>():
     <span class="keyword">if</span> state == <span class="string">"PLAYER_TURN"</span>:
         show_menu()          <span class="comment"># 显示攻击/防御/技能按钮</span>
-    <span class="keyword">elif</span> state == <span class="string">"PLAYER_ACTION"</span>:
+<span class="keyword">elif</span> state == <span class="string">"PLAYER_ACTION"</span>:
         execute_player_action()
     <span class="keyword">elif</span> state == <span class="string">"ENEMY_TURN"</span>:
         enemy_ai()
     <span class="keyword">elif</span> state == <span class="string">"CHECK_RESULT"</span>:
         check_win_lose()
   </div>
-</div>
 
+<aside class="notes">【讲解】🔄 回合制 = 有限状态机
+本页要点（照着讲即可）：
+· 🔄 回合制 = 有限状态机
+· PLAYER
+· TURN
+· 等待玩家输入
+· PLAYER
+· ACTION
+讲解时放慢关键术语；用 1 个生活类比 + 1 个反例加深印象。</aside>
+</div>
 <!-- ====== SLIDE 5: Skill Data Structure ====== -->
 <div class="slide" data-slide="4">
-  <h2>📦 技能数据：用字典管数据</h2>
-  <div class="code-block" style="font-size:0.85rem;">
+<h2>📦 技能数据：用字典管数据</h2>
+<div class="code-block" style="font-size:0.85rem;">
 skills = {
     <span class="string">"attack"</span>: {
         <span class="string">"name"</span>: <span class="string">"普通攻击"</span>,
         <span class="string">"multiplier"</span>: <span class="number">1.0</span>,   <span class="comment"># 伤害倍率</span>
-        <span class="string">"mp_cost"</span>: <span class="number">0</span>,
+<span class="string">"mp_cost"</span>: <span class="number">0</span>,
     },
     <span class="string">"defend"</span>: {
         <span class="string">"name"</span>: <span class="string">"防御"</span>,
         <span class="string">"multiplier"</span>: <span class="number">0</span>,     <span class="comment"># 不造成伤害</span>
-        <span class="string">"mp_cost"</span>: <span class="number">0</span>,
+<span class="string">"mp_cost"</span>: <span class="number">0</span>,
     },
     <span class="string">"fireball"</span>: {
         <span class="string">"name"</span>: <span class="string">"火球术"</span>,
         <span class="string">"multiplier"</span>: <span class="number">2.0</span>,   <span class="comment"># 双倍伤害！</span>
-        <span class="string">"mp_cost"</span>: <span class="number">15</span>,
+<span class="string">"mp_cost"</span>: <span class="number">15</span>,
     },
 }
   </div>
-  <table style="margin-top:12px;">
-    <tr><th>优势</th><th>说明</th></tr>
-    <tr><td>查找快</td><td><code>skills["fireball"]["multiplier"]</code></td></tr>
-    <tr><td>易扩展</td><td>新增技能 = 新增字典条目，不改逻辑</td></tr>
-    <tr><td>便遍历</td><td><code>for name, info in skills.items():</code></td></tr>
-  </table>
-</div>
+<table style="margin-top:12px;">
+<tr><th>优势</th><th>说明</th></tr>
+<tr><td>查找快</td><td><code>skills["fireball"]["multiplier"]</code></td></tr>
+<tr><td>易扩展</td><td>新增技能 = 新增字典条目，不改逻辑</td></tr>
+<tr><td>便遍历</td><td><code>for name, info in skills.items():</code></td></tr>
+</table>
 
+<aside class="notes">【讲解】📦 技能数据：用字典管数据
+本页要点（照着讲即可）：
+· 📦 技能数据：用字典管数据
+· skills = {
+· "attack"
+· "name"
+· "普通攻击"
+· "multiplier"
+讲解时放慢关键术语；用 1 个生活类比 + 1 个反例加深印象。</aside>
+</div>
 <!-- ====== SLIDE 6: Damage Formula ====== -->
 <div class="slide" data-slide="5">
-  <h2>💥 伤害计算公式</h2>
-
-  <div class="formula">
+<h2>💥 伤害计算公式</h2>
+<div class="formula">
     damage = <span style="color:#ff6a00;">max(1, atk × 倍率 − def × 0.5)</span>
-  </div>
-
-  <div style="display:flex;gap:24px;">
-    <div style="flex:1;">
-      <h3>为什么这样设计？</h3>
-      <ul>
-        <li><code>atk × 倍率</code>：基础伤害</li>
-        <li><code>− def × 0.5</code>：防御减伤</li>
-        <li><code>max(1, ...)</code>：保底1点</li>
-      </ul>
-    </div>
-    <div style="flex:1;">
-      <h3>计算示例</h3>
-      <table style="font-size:0.9rem;">
-        <tr><th>场景</th><th>atk</th><th>def</th><th>倍率</th><th>伤害</th></tr>
-        <tr><td>普通攻击</td><td>30</td><td>20</td><td>1.0</td><td style="color:#f0c040;">20</td></tr>
-        <tr><td>火球术</td><td>30</td><td>20</td><td>2.0</td><td style="color:#ff6a00;">50 💥</td></tr>
-        <tr><td>防御状态</td><td>30</td><td>60</td><td>1.0</td><td style="color:#80c080;">1 （减半=0→保底1）</td></tr>
-      </table>
-    </div>
-  </div>
+</div>
+<div style="display:flex;gap:24px;">
+<div style="flex:1;">
+<h3>为什么这样设计？</h3>
+<ul>
+<li><code>atk × 倍率</code>：基础伤害</li>
+<li><code>− def × 0.5</code>：防御减伤</li>
+<li><code>max(1, ...)</code>：保底1点</li>
+</ul>
+</div>
+<div style="flex:1;">
+<h3>计算示例</h3>
+<table style="font-size:0.9rem;">
+<tr><th>场景</th><th>atk</th><th>def</th><th>倍率</th><th>伤害</th></tr>
+<tr><td>普通攻击</td><td>30</td><td>20</td><td>1.0</td><td style="color:#f0c040;">20</td></tr>
+<tr><td>火球术</td><td>30</td><td>20</td><td>2.0</td><td style="color:#ff6a00;">50 💥</td></tr>
+<tr><td>防御状态</td><td>30</td><td>60</td><td>1.0</td><td style="color:#80c080;">1 （减半=0→保底1）</td></tr>
+</table>
+</div>
 </div>
 
+<aside class="notes">【讲解】💥 伤害计算公式
+本页要点（照着讲即可）：
+· atk × 倍率 ：基础伤害
+· − def × 0.5 ：防御减伤
+· max(1, ...) ：保底1点
+讲解时放慢关键术语；用 1 个生活类比 + 1 个反例加深印象。</aside>
+</div>
 <!-- ====== SLIDE 7: Lerp HP Animation ====== -->
 <div class="slide" data-slide="6">
-  <h2>📉 血条平滑动画 — Lerp插值</h2>
-
-  <h3>核心公式</h3>
-  <div class="formula" style="font-size:1.3rem;">
+<h2>📉 血条平滑动画 — Lerp插值</h2>
+<h3>核心公式</h3>
+<div class="formula" style="font-size:1.3rem;">
     current<span style="color:#888;">_hp</span> += (target<span style="color:#888;">_hp</span> − current<span style="color:#888;">_hp</span>) × <span style="color:#ff6a00;">0.1</span>
-  </div>
-
-  <div style="display:flex;gap:30px;">
-    <div style="flex:1;">
-      <h3>原理</h3>
-      <p>每帧向<strong>目标值</strong>靠近一小步</p>
-      <p><code>speed=0.1</code> 表示每帧拉近10%的距离</p>
-
-      <div class="hp-demo" style="margin-top:16px;">
-        <div class="label">💚 玩家 HP</div>
-        <div class="hp-bar-outer">
-          <div class="hp-bar-inner demo"></div>
-        </div>
-        <p style="font-size:0.9rem;color:var(--text-dim);text-align:right;">80 / 120</p>
-      </div>
-    </div>
-    <div style="flex:1;">
-      <h3>帧变化演示</h3>
-      <table style="font-size:0.9rem;">
-        <tr><th>帧</th><th>current</th><th>target</th></tr>
-        <tr><td>1</td><td>100.0</td><td rowspan="5" style="vertical-align:middle;background:var(--bg-panel);">60</td></tr>
-        <tr><td>2</td><td>96.0</td></tr>
-        <tr><td>3</td><td>92.4</td></tr>
-        <tr><td>4</td><td>89.2</td></tr>
-        <tr><td>...</td><td style="color:var(--text-dim);">→ 60</td></tr>
-      </table>
-    </div>
-  </div>
+</div>
+<div style="display:flex;gap:30px;">
+<div style="flex:1;">
+<h3>原理</h3>
+<p>每帧向<strong>目标值</strong>靠近一小步</p>
+<p><code>speed=0.1</code> 表示每帧拉近10%的距离</p>
+<div class="hp-demo" style="margin-top:16px;">
+<div class="label">💚 玩家 HP</div>
+<div class="hp-bar-outer">
+<div class="hp-bar-inner demo"></div>
+</div>
+<p style="font-size:0.9rem;color:var(--text-dim);text-align:right;">80 / 120</p>
+</div>
+</div>
+<div style="flex:1;">
+<h3>帧变化演示</h3>
+<table style="font-size:0.9rem;">
+<tr><th>帧</th><th>current</th><th>target</th></tr>
+<tr><td>1</td><td>100.0</td><td rowspan="5" style="vertical-align:middle;background:var(--bg-panel);">60</td></tr>
+<tr><td>2</td><td>96.0</td></tr>
+<tr><td>3</td><td>92.4</td></tr>
+<tr><td>4</td><td>89.2</td></tr>
+<tr><td>...</td><td style="color:var(--text-dim);">→ 60</td></tr>
+</table>
+</div>
 </div>
 
+<aside class="notes">【讲解】📉 血条平滑动画 — Lerp插值
+本页要点（照着讲即可）：
+· 每帧向 目标值 靠近一小步
+· speed=0.1 表示每帧拉近10%的距离
+· 80 / 120
+讲解时放慢关键术语；用 1 个生活类比 + 1 个反例加深印象。</aside>
+</div>
 <!-- ====== SLIDE 8: Lerp Code ====== -->
 <div class="slide" data-slide="7">
-  <h2>💻 Lerp 血条代码实现</h2>
-  <div class="code-block" style="font-size:0.85rem;">
+<h2>💻 Lerp 血条代码实现</h2>
+<div class="code-block" style="font-size:0.85rem;">
 <span class="comment"># 每帧调用：让 current_hp 平滑追向 target_hp</span>
 <span class="keyword">def</span> <span class="func">update_hp_bar</span>():
     <span class="keyword">global</span> current_hp
     current_hp += (target_hp - current_hp) * <span class="number">0.1</span>
-
 <span class="comment"># 受到伤害时：只改 target，current 自动追赶</span>
 <span class="keyword">def</span> <span class="func">take_damage</span>(<span class="var">damage</span>):
     <span class="keyword">global</span> target_hp
@@ -464,8 +533,8 @@ skills = {
 <span class="comment"># 绘制血条（根据比例变色）</span>
 <span class="keyword">def</span> <span class="func">draw_hp_bar</span>(<span class="var">surf</span>, <span class="var">x</span>, <span class="var">y</span>, <span class="var">w</span>, <span class="var">current</span>, <span class="var">max_hp</span>):
     ratio = current / max_hp
-    color = GREEN <span class="keyword">if</span> ratio > <span class="number">0.5</span> \
-       <span class="keyword">else</span> YELLOW <span class="keyword">if</span> ratio > <span class="number">0.25</span> \
+    color = GREEN <span class="keyword">if</span> ratio &gt; <span class="number">0.5</span> \
+       <span class="keyword">else</span> YELLOW <span class="keyword">if</span> ratio &gt; <span class="number">0.25</span> \
        <span class="keyword">else</span> RED
     <span class="comment"># 灰色背景</span>
     pygame.draw.rect(surf, GRAY, (x, y, w, <span class="number">20</span>))
@@ -474,30 +543,38 @@ skills = {
     <span class="comment"># 白色边框</span>
     pygame.draw.rect(surf, WHITE, (x, y, w, <span class="number">20</span>), <span class="number">2</span>)
   </div>
-</div>
 
+<aside class="notes">【讲解】💻 Lerp 血条代码实现
+本页要点（照着讲即可）：
+· 💻 Lerp 血条代码实现
+· # 每帧调用：让 current_hp 平滑追向 target_hp
+· update_hp_bar
+· global
+· current_hp
+· current_hp += (target_hp - current_hp) *
+代码页节奏：先读懂输入输出 → 再走主流程 → 最后点出易错点（边界/类型/下标）。
+可让学生预测下一行输出，再运行对照。</aside>
+</div>
 <!-- ====== SLIDE 9: UI Layout ====== -->
 <div class="slide" data-slide="8">
-  <h2>🖥️ 战斗UI布局设计</h2>
-
-  <div style="text-align:center;">
-    <div style="display:inline-block;background:var(--bg-panel);padding:20px 30px;border-radius:16px;border:2px solid var(--gold-dark);">
-      <p style="color:var(--text-bright);font-size:1.1rem;">🧙 勇者  Lv.5
+<h2>🖥️ 战斗UI布局设计</h2>
+<div style="text-align:center;">
+<div style="display:inline-block;background:var(--bg-panel);padding:20px 30px;border-radius:16px;border:2px solid var(--gold-dark);">
+<p style="color:var(--text-bright);font-size:1.1rem;">🧙 勇者  Lv.5
       <span style="margin:0 40px;">HP ████████░░ 80/120</span>
       🐉 恶龙 HP 60/80</p>
-      <p style="color:var(--text-dim);font-size:0.9rem;">MP ████░░░░ 25/40</p>
-      <hr style="border-color:#402020;margin:10px 0;">
-      <p style="color:var(--gold);">⚔️ 勇者使用「火球术」！造成 50 点伤害！💥</p>
-      <div style="display:flex;gap:16px;justify-content:center;margin-top:16px;flex-wrap:wrap;">
-        <span style="display:inline-block;border:2px solid var(--red);padding:10px 24px;border-radius:10px;background:var(--bg-dark);color:#fff;">⚔️ 攻击</span>
-        <span style="display:inline-block;border:2px solid #4488cc;padding:10px 24px;border-radius:10px;background:var(--bg-dark);color:#fff;">🛡️ 防御</span>
-        <span style="display:inline-block;border:2px solid var(--accent);padding:10px 24px;border-radius:10px;background:var(--bg-dark);color:#fff;">🔥 技能</span>
-      </div>
-    </div>
-  </div>
-
-  <h3 style="margin-top:20px;">按钮实现</h3>
-  <div class="code-block" style="font-size:0.85rem;">
+<p style="color:var(--text-dim);font-size:0.9rem;">MP ████░░░░ 25/40</p>
+<hr style="border-color:#402020;margin:10px 0;"/>
+<p style="color:var(--gold);">⚔️ 勇者使用「火球术」！造成 50 点伤害！💥</p>
+<div style="display:flex;gap:16px;justify-content:center;margin-top:16px;flex-wrap:wrap;">
+<span style="display:inline-block;border:2px solid var(--red);padding:10px 24px;border-radius:10px;background:var(--bg-dark);color:#fff;">⚔️ 攻击</span>
+<span style="display:inline-block;border:2px solid #4488cc;padding:10px 24px;border-radius:10px;background:var(--bg-dark);color:#fff;">🛡️ 防御</span>
+<span style="display:inline-block;border:2px solid var(--accent);padding:10px 24px;border-radius:10px;background:var(--bg-dark);color:#fff;">🔥 技能</span>
+</div>
+</div>
+</div>
+<h3 style="margin-top:20px;">按钮实现</h3>
+<div class="code-block" style="font-size:0.85rem;">
 buttons = [
     {<span class="string">"rect"</span>: Rect(<span class="number">100</span>, <span class="number">480</span>, <span class="number">150</span>, <span class="number">60</span>), <span class="string">"text"</span>: <span class="string">"⚔️ 攻击"</span>, <span class="string">"action"</span>: <span class="string">"attack"</span>},
     {<span class="string">"rect"</span>: Rect(<span class="number">325</span>, <span class="number">480</span>, <span class="number">150</span>, <span class="number">60</span>), <span class="string">"text"</span>: <span class="string">"🛡️ 防御"</span>, <span class="string">"action"</span>: <span class="string">"defend"</span>},
@@ -510,114 +587,160 @@ buttons = [
         <span class="keyword">if</span> btn[<span class="string">"rect"</span>].collidepoint(event.pos):
             do_action(btn[<span class="string">"action"</span>])
   </div>
-</div>
 
+<aside class="notes">【讲解】🖥️ 战斗UI布局设计
+本页要点（照着讲即可）：
+· 🧙 勇者 Lv.5 HP ████████░░ 80/120 🐉 恶龙 HP 60/80
+· MP ████░░░░ 25/40
+· ⚔️ 勇者使用「火球术」！造成 50 点伤害！💥
+讲解时放慢关键术语；用 1 个生活类比 + 1 个反例加深印象。</aside>
+</div>
 <!-- ====== SLIDE 10: Classroom Exercises ====== -->
 <div class="slide" data-slide="9">
-  <h2>🏋️ 课堂练习</h2>
-  <div class="exercise-cards">
-    <div class="exercise-card star1">
-      <h3>⭐ 基础（15分钟）</h3>
-      <ul>
-        <li>补全 <code>calc_damage()</code> 函数</li>
-        <li>实现状态切换逻辑</li>
-        <li>让玩家和敌人互相攻击</li>
-      </ul>
-    </div>
-    <div class="exercise-card star2">
-      <h3>⭐⭐ 进阶（10分钟）</h3>
-      <ul>
-        <li>添加MP系统，MP不足禁用技能</li>
-        <li>实现防御状态伤害减半</li>
-        <li>添加战斗日志显示</li>
-      </ul>
-    </div>
-    <div class="exercise-card star3">
-      <h3>⭐⭐⭐ 挑战（选做）</h3>
-      <ul>
-        <li>添加"治疗术"技能</li>
-        <li>血条颜色渐变（绿→黄→红）</li>
-        <li>攻击时角色闪烁动画</li>
-      </ul>
-    </div>
-  </div>
+<h2>🏋️ 课堂练习</h2>
+<div class="exercise-cards">
+<div class="exercise-card star1">
+<h3>⭐ 基础（15分钟）</h3>
+<ul>
+<li>补全 <code>calc_damage()</code> 函数</li>
+<li>实现状态切换逻辑</li>
+<li>让玩家和敌人互相攻击</li>
+</ul>
+</div>
+<div class="exercise-card star2">
+<h3>⭐⭐ 进阶（10分钟）</h3>
+<ul>
+<li>添加MP系统，MP不足禁用技能</li>
+<li>实现防御状态伤害减半</li>
+<li>添加战斗日志显示</li>
+</ul>
+</div>
+<div class="exercise-card star3">
+<h3>⭐⭐⭐ 挑战（选做）</h3>
+<ul>
+<li>添加"治疗术"技能</li>
+<li>血条颜色渐变（绿→黄→红）</li>
+<li>攻击时角色闪烁动画</li>
+</ul>
+</div>
 </div>
 
+<aside class="notes">【讲解】🏋️ 课堂练习
+结合讲义《三、课堂练习（25分钟）》强调：
+· 补全 calc_damage() 函数
+· 实现状态切换逻辑
+· 让玩家和敌人能够互相攻击
+· 添加MP系统，技能需要消耗MP，MP不足时不能使用
+· 实现防御状态的伤害减半
+幻灯片上可见要点：
+· 补全 calc_damage() 函数
+· 实现状态切换逻辑
+· 让玩家和敌人互相攻击
+· 添加MP系统，MP不足禁用技能
+练习页节奏：先独立想 1 分钟 → 再点拨思路 → 最后对答案讲为什么。</aside>
+</div>
 <!-- ====== SLIDE 11: Summary ====== -->
 <div class="slide" data-slide="10">
-  <h2>📝 本节课知识点总结</h2>
-  <div class="summary-grid">
-    <div class="summary-item">
-      <div class="num">1</div>
-      <strong>状态机模式</strong>
-      <p style="font-size:1rem;">用 state 变量控制流程，每帧根据状态执行不同逻辑</p>
-    </div>
-    <div class="summary-item">
-      <div class="num">2</div>
-      <strong>字典驱动设计</strong>
-      <p style="font-size:1rem;">技能数据存字典，增删技能不影响代码结构</p>
-    </div>
-    <div class="summary-item">
-      <div class="num">3</div>
-      <strong>伤害公式</strong>
-      <p style="font-size:1rem;"><code>max(1, atk×mult − def×0.5)</code></p>
-    </div>
-    <div class="summary-item">
-      <div class="num">4</div>
-      <strong>Lerp动画</strong>
-      <p style="font-size:1rem;"><code>current += (target − current) × speed</code></p>
-    </div>
-    <div class="summary-item">
-      <div class="num">5</div>
-      <strong>UI交互</strong>
-      <p style="font-size:1rem;">Rect + collidepoint 实现按钮点击</p>
-    </div>
-  </div>
-  <p style="margin-top:18px;color:var(--text-dim);">
+<h2>📝 本节课知识点总结</h2>
+<div class="summary-grid">
+<div class="summary-item">
+<div class="num">1</div>
+<strong>状态机模式</strong>
+<p style="font-size:1rem;">用 state 变量控制流程，每帧根据状态执行不同逻辑</p>
+</div>
+<div class="summary-item">
+<div class="num">2</div>
+<strong>字典驱动设计</strong>
+<p style="font-size:1rem;">技能数据存字典，增删技能不影响代码结构</p>
+</div>
+<div class="summary-item">
+<div class="num">3</div>
+<strong>伤害公式</strong>
+<p style="font-size:1rem;"><code>max(1, atk×mult − def×0.5)</code></p>
+</div>
+<div class="summary-item">
+<div class="num">4</div>
+<strong>Lerp动画</strong>
+<p style="font-size:1rem;"><code>current += (target − current) × speed</code></p>
+</div>
+<div class="summary-item">
+<div class="num">5</div>
+<strong>UI交互</strong>
+<p style="font-size:1rem;">Rect + collidepoint 实现按钮点击</p>
+</div>
+</div>
+<p style="margin-top:18px;color:var(--text-dim);">
     📌 下节预告：<strong>战斗动画与特效</strong> —— 让攻击更有冲击力！
   </p>
-</div>
 
+<aside class="notes">【收尾】回顾本课主线：📝 本节课知识点总结
+对照大纲再过一遍：**内容**：玩家 vs 怪物回合制战斗、攻击/防御/技能选择、血条动画
+
+**知识点**：
+- 回合制状态机：
+ - `选择阶段` → `玩家执行` → `敌人回合` → `下一轮`
+- 伤害计算公式 `damage = atk * 技能倍率 - def * 0.5`
+- 血条平滑减少动画（`current_hp` 逐帧逼近 `target_hp`，lerp 插值）
+
+**课堂练习**：和怪物来一场回合对战
+
+---
+板书/口述要点：
+· 状态机模式
+· 用 state 变量控制流程，每帧根据状态执行不同逻辑
+· 字典驱动设计
+· 技能数据存字典，增删技能不影响代码结构
+· 伤害公式
+· max(1, atk×mult − def×0.5)
+结束前留 2 分钟答疑；布置 1 道小练习检验是否真正掌握。</aside>
+</div>
 <!-- ====== SLIDE 12: Homework ====== -->
 <div class="slide" data-slide="11">
-  <h2>📚 课后作业</h2>
-  <div style="display:flex;gap:24px;flex:1;">
-    <div style="flex:1;background:var(--bg-panel);border-radius:14px;padding:20px;border-left:4px solid var(--gold);">
-      <h3>必做</h3>
-      <ul>
-        <li>完善回合制游戏，添加<strong>至少3种</strong>不同技能</li>
-        <li>给敌人也添加MP和技能</li>
-      </ul>
-    </div>
-    <div style="flex:1;background:var(--bg-panel);border-radius:14px;padding:20px;border-left:4px solid var(--accent);">
-      <h3>思考题</h3>
-      <p style="font-size:1.1rem;line-height:2;">
+<h2>📚 课后作业</h2>
+<div style="display:flex;gap:24px;flex:1;">
+<div style="flex:1;background:var(--bg-panel);border-radius:14px;padding:20px;border-left:4px solid var(--gold);">
+<h3>必做</h3>
+<ul>
+<li>完善回合制游戏，添加<strong>至少3种</strong>不同技能</li>
+<li>给敌人也添加MP和技能</li>
+</ul>
+</div>
+<div style="flex:1;background:var(--bg-panel);border-radius:14px;padding:20px;border-left:4px solid var(--accent);">
+<h3>思考题</h3>
+<p style="font-size:1.1rem;line-height:2;">
         🤔 如果要实现 <strong>"暴击"</strong>（20%概率触发，1.5倍伤害），代码该如何修改？
       </p>
-      <div class="code-block" style="margin-top:12px;font-size:0.8rem;">
+<div class="code-block" style="margin-top:12px;font-size:0.8rem;">
 <span class="comment"># 提示</span>
 <span class="keyword">import</span> random
 <span class="keyword">if</span> random.random() &lt; <span class="number">0.2</span>:
     damage = <span class="builtin">int</span>(damage * <span class="number">1.5</span>)
     log(<span class="string">"💥 暴击！"</span>)
       </div>
-    </div>
-  </div>
-  <p style="margin-top:20px;text-align:center;font-size:1.2rem;color:var(--gold);">
+</div>
+</div>
+<p style="margin-top:20px;text-align:center;font-size:1.2rem;color:var(--gold);">
     ⚔️ 下节课见，带上你的战斗系统来 PK！
   </p>
+
+<aside class="notes">【讲解】📚 课后作业
+本页要点（照着讲即可）：
+· 完善回合制游戏，添加 至少3种 不同技能
+· 至少3种
+· 给敌人也添加MP和技能
+· 🤔 如果要实现 "暴击" （20%概率触发，1.5倍伤害），代码该如何修改？
+· "暴击"
+· ⚔️ 下节课见，带上你的战斗系统来 PK！
+练习页节奏：先独立想 1 分钟 → 再点拨思路 → 最后对答案讲为什么。</aside>
 </div>
-
 </div><!-- /slide-container -->
-
 <!-- Navigation -->
 <div class="nav">
-  <button class="nav-btn" onclick="prevSlide()">◀ 上一页</button>
-  <span class="page-num" id="pageNum">1 / 12</span>
-  <button class="nav-btn" onclick="nextSlide()">下一页 ▶</button>
+<button class="nav-btn" onclick="prevSlide()">◀ 上一页</button>
+<span class="page-num" id="pageNum">1 / 12</span>
+<button class="nav-btn" onclick="nextSlide()">下一页 ▶</button>
 </div>
 <div class="hint">⌨️ 也可以用键盘 ← → 翻页</div>
-
 <script>
 let current = 0;
 const slides = document.querySelectorAll('.slide');
@@ -641,7 +764,6 @@ document.addEventListener('keydown', e => {
   }
 });
 </script>
-
 <script src="courseware-ui.js"></script>
 <script src="presenter.js"></script>
 </body>

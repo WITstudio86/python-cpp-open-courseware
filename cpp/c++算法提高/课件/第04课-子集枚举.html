@@ -1,8 +1,9 @@
 <!DOCTYPE html>
+
 <html lang="zh-CN">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
 <title>第04课：子集枚举——组合问题</title>
 <style>
 * { margin:0;padding:0;box-sizing:border-box; }
@@ -37,30 +38,35 @@ code { font-family:'Cascadia Code','Fira Code','Consolas',monospace; color:#7ec8
 </style>
 </head>
 <body>
-
 <div class="slideshow" id="slideshow">
-
 <!-- 幻灯片1：标题页 -->
 <div class="slide active" id="slide1">
 <h1>📦 第04课：子集枚举</h1>
 <h2>组合问题 —— 二进制枚举 + 位运算</h2>
 <div style="margin:30px 0;">
 <p style="font-size:1.15em;line-height:2;">
-📌 <span class="highlight">子集总数：</span>n个元素的子集共 2ⁿ 个<br>
-📌 <span class="highlight">核心思想：</span>二进制位表示选取（1=选，0=不选）<br>
-📌 <span class="highlight">关键位运算：</span><<（左移） &（按位与） |（按位或）<br>
+📌 <span class="highlight">子集总数：</span>n个元素的子集共 2ⁿ 个<br/>
+📌 <span class="highlight">核心思想：</span>二进制位表示选取（1=选，0=不选）<br/>
+📌 <span class="highlight">关键位运算：</span>&lt;&lt;（左移） &amp;（按位与） |（按位或）<br/>
 📌 <span class="highlight">经典问题：</span>集合选数、砝码称重、部分和问题
 </p>
 </div>
 <div class="step-box">
 <strong>💡 比喻：</strong>每个元素就像一盏灯，可以开（1）或关（0）。n盏灯共有 2ⁿ 种开关组合，恰好对应 2ⁿ 个子集！
 </div>
-</div>
 
+<aside class="notes">【开场】第 1/5 页 · 子集枚举——组合问题
+用 30 秒说明本课目标与学完能做什么，再进入正题。
+大纲考点：二进制枚举子集、位运算入门
+配套练习方向：集合选数、砝码称重
+封面关键词：
+· 📌 子集总数： n个元素的子集共 2ⁿ 个 📌 核心思想： 二进制位表示选取（1=选，0=不选） 📌 关键位运算： &lt;&lt;（左移） &amp;（按位与） |（按位或） 📌 经典问题： 集合选数、砝码称重、部分和问题
+· 💡 比喻：
+互动：问学生「今天最想搞清楚什么？」，收 1–2 个期待。</aside>
+</div>
 <!-- 幻灯片2：原理页 -->
 <div class="slide" id="slide2">
 <h2>📖 二进制枚举原理</h2>
-
 <h3>二进制与子集的一一对应（以 {1,2,3} 为例）</h3>
 <table class="bit-table">
 <tr class="bit-hd"><td>十进制 mask</td><td>二进制</td><td>子集</td></tr>
@@ -73,64 +79,54 @@ code { font-family:'Cascadia Code','Fira Code','Consolas',monospace; color:#7ec8
 <tr><td>6</td><td><span class="bit-on">11</span>0</td><td>{2, 3}</td></tr>
 <tr><td>7</td><td><span class="bit-on">111</span></td><td>{1, 2, 3}</td></tr>
 </table>
-
 <h3>核心位运算</h3>
 <div class="ascii-box">
-  1 << n      → 计算 2^n（左移）
-  mask >> i   → 右移 i 位
-  mask & (1<<i) → 检查第 i 位是否为 1  ← 最常用！
-</div>
-
+  1 &lt;&lt; n      → 计算 2^n（左移）
+  mask &gt;&gt; i   → 右移 i 位
+  mask &amp; (1&lt;<i) 1="" <="" div="" i="" ←="" →="" 位是否为="" 最常用！="" 检查第="">
 <pre><code>// 二进制枚举子集的标准框架
-int total = 1 << n;           // 2^n
-for (int mask = 0; mask < total; mask++) {
-    for (int i = 0; i < n; i++) {
-        if (mask & (1 << i)) {  // ← 检查第i位
+int total = 1 &lt;&lt; n;           // 2^n
+for (int mask = 0; mask &lt; total; mask++) {
+    for (int i = 0; i &lt; n; i++) {
+        if (mask &amp; (1 &lt;&lt; i)) {  // ← 检查第i位
             // 第i个元素被选中！处理它...
         }
     }
 }</code></pre>
-</div>
-
+</i)></div>
 <!-- 幻灯片3：代码演示页 -->
 <div class="slide" id="slide3">
 <h2>💻 位运算图解</h2>
-
-<h3>mask & (1<<i) 如何工作？</h3>
+<h3>mask &amp; (1&lt;<i) h3="" 如何工作？<="">
 <div class="ascii-box">
   例：mask=13(1101)，检查第2位（从0开始数）
 
     mask:   1 1 0 1   (13)
-  & 1<<2:   0 1 0 0   (4)
+  &amp; 1&lt;&lt;2:   0 1 0 0   (4)
   ────────────────
     结果:    0 1 0 0   (4) ≠ 0 → 第2位是1 ✓
 
   例：检查第1位
     mask:   1 1 0 1   (13)
-  & 1<<1:   0 0 1 0   (2)
+  &amp; 1&lt;&lt;1:   0 0 1 0   (2)
   ────────────────
     结果:    0 0 0 0   (0) = 0 → 第1位是0 ✗
 </div>
-
 <h3>三个关键位运算速记</h3>
 <div class="step-box">
-<pre><code>1 << n    左移n位 → 等于 2^n
-6 & 3     按位与   → 0110 & 0011 = 0010 = 2
+<pre><code>1 &lt;&lt; n    左移n位 → 等于 2^n
+6 &amp; 3     按位与   → 0110 &amp; 0011 = 0010 = 2
            (对应位都为1才为1)
 5 | 3     按位或   → 0101 | 0011 = 0111 = 7
            (对应位有一个为1就为1)</code></pre>
 </div>
-
 <div class="step-box">
-<strong>🎯 记忆口诀：</strong>mask & (1<<i) — "我是mask，第i位亮不亮？亮就是选中！"
-</div>
-</div>
-
+<strong>🎯 记忆口诀：</strong>mask &amp; (1&lt;<i) "我是mask，第i位亮不亮？亮就是选中！"="" <="" div="" —="">
+</i)></div>
 <!-- 幻灯片4：例题页 -->
 <div class="slide" id="slide4">
 <h2>🏋️ 例题：砝码称重</h2>
 <h3>砝码 1g,2g,3g,5g,10g,20g 各一个，放同一边，能称多少种重量？</h3>
-
 <div class="ascii-box">
   砝码: [1g] [2g] [3g] [5g] [10g] [20g]
   位号:   0    1    2    3    4     5
@@ -145,32 +141,42 @@ for (int mask = 0; mask < total; mask++) {
   ─────────────────────────────────────
   共 64 种选取方案，去重后得到所有可能重量
 </div>
-
 <pre><code>// 砝码称重核心代码
 int weights[] = {1, 2, 3, 5, 10, 20};
 set&lt;int&gt; result;
-for (int mask = 0; mask < 64; mask++) {
+for (int mask = 0; mask &lt; 64; mask++) {
     int sum = 0;
-    for (int i = 0; i < 6; i++)
-        if (mask & (1 << i)) sum += weights[i];
+    for (int i = 0; i &lt; 6; i++)
+        if (mask &amp; (1 &lt;&lt; i)) sum += weights[i];
     result.insert(sum);
 }
-cout << result.size(); // 输出不同重量数</code></pre>
-
+cout &lt;&lt; result.size(); // 输出不同重量数</code></pre>
 <div class="step-box">所有砝码之和 = 1+2+3+5+10+20 = <span class="highlight">41g</span></div>
-</div>
 
+<aside class="notes">【讲解】🏋️ 例题：砝码称重
+结合讲义《例题2：砝码称重》强调：
+· 题目描述：现有1g、2g、3g、5g、10g、20g的砝码各一个，砝码只能放在天平的同一边。问用这些砝码可以称出多少种不同的重量？（包括0g，即不放任何砝码）
+· 输入格式：无输入
+· 输出格式：第一行输出可以称出的不同重量数量，第二行输出所有重量（升序排列）
+· 样例输出：
+· 可以称出 64 种不同的重量
+幻灯片上可见要点：
+· 🏋️ 例题：砝码称重
+· 砝码 1g,2g,3g,5g,10g,20g 各一个，放同一边，能称多少种重量？
+· 砝码: [1g] [2g] [3g] [5g] [10g] [20g]
+· 位号: 0 1 2 3 4 5
+讲解时放慢关键术语；用 1 个生活类比 + 1 个反例加深印象。</aside>
+</div>
 <!-- 幻灯片5：小结页 -->
 <div class="slide" id="slide5">
 <h2>📝 本课小结</h2>
-
 <div style="display:grid; grid-template-columns:1fr; gap:14px; margin:20px 0;">
 <div class="step-box">
 <h3 style="color:#4ecdc4;">📌 子集枚举核心三步骤</h3>
 <ol>
 <li><span class="highlight">确定元素个数 n</span> → 共有 2ⁿ 个子集</li>
 <li><span class="highlight">遍历 mask: 0 到 (1&lt;&lt;n)-1</span> → 每个mask代表一种选法</li>
-<li><span class="highlight">检查 mask & (1&lt;&lt;i)</span> → 判断第i个元素是否被选中</li>
+<li><span class="highlight">检查 mask &amp; (1&lt;&lt;i)</span> → 判断第i个元素是否被选中</li>
 </ol>
 </div>
 <div class="step-box">
@@ -185,25 +191,30 @@ cout << result.size(); // 输出不同重量数</code></pre>
 </table>
 </div>
 </div>
-
 <div class="ascii-box" style="text-align:center;font-size:1.05em;">
   二进制位 = 灯的开关
   1 = 选，0 = 不选
-  mask & (1<<i) — 问我第i位亮不亮？
-</div>
+  mask &amp; (1&lt;<i) <="" div="" —="" 问我第i位亮不亮？="">
 <div class="step-box" style="margin-top:16px;">
 <strong>📌 下节预告：</strong>第05课——模拟算法：照章办事，学习过程模拟与状态追踪！
 </div>
-</div>
+</i)></div>
 
+<aside class="notes">【收尾】回顾本课主线：📝 本课小结
+对照大纲再过一遍：二进制枚举子集、位运算入门
+板书/口述要点：
+· 确定元素个数 n → 共有 2ⁿ 个子集
+· 遍历 mask: 0 到 (1&lt;&lt;n)-1 → 每个mask代表一种选法
+· 检查 mask &amp; (1&lt;&lt;i) → 判断第i个元素是否被选中
+· 📌 下节预告：
+课后任务：集合选数、砝码称重
+结束前留 2 分钟答疑；布置 1 道小练习检验是否真正掌握。</aside>
 </div><!-- slideshow end -->
-
 <div class="navigation">
-<button class="nav-btn" id="prevBtn" onclick="changeSlide(-1)">&#9664; 上一页</button>
+<button class="nav-btn" id="prevBtn" onclick="changeSlide(-1)">◀ 上一页</button>
 <span class="page-indicator" id="pageIndicator">1 / 5</span>
-<button class="nav-btn" id="nextBtn" onclick="changeSlide(1)">下一页 &#9654;</button>
+<button class="nav-btn" id="nextBtn" onclick="changeSlide(1)">下一页 ▶</button>
 </div>
-
 <script>
 let currentSlide = 0;
 const slides = document.querySelectorAll('.slide');
@@ -233,5 +244,29 @@ showSlide(0);
 </script>
 <script src="courseware-ui.js"></script>
 <script src="presenter.js"></script>
-</body>
+</i)></h3>
+<aside class="notes">【讲解】💻 位运算图解
+结合讲义《六、位运算图解》强调：
+· 如何检查 mask 的第 i 位是否为 1？
+· 假设 mask = 13（二进制 1101），检查第2位（从0开始数）
+· mask: 1 1 0 1 (13)
+· &amp; 1&lt;&lt;2: 0 1 0 0 (4)
+· ────────────────
+幻灯片上可见要点：
+· 🎯 记忆口诀：
+· 确定元素个数 n → 共有 2ⁿ 个子集
+· 遍历 mask: 0 到 (1&lt;&lt;n)-1 → 每个mask代表一种选法
+· 检查 mask &amp; (1&lt;&lt;i) → 判断第i个元素是否被选中
+讲解时放慢关键术语；用 1 个生活类比 + 1 个反例加深印象。</aside>
+</div>
+<aside class="notes">【讲解】📖 二进制枚举原理
+本页要点（照着讲即可）：
+· 🎯 记忆口诀：
+· 确定元素个数 n → 共有 2ⁿ 个子集
+· 遍历 mask: 0 到 (1&lt;&lt;n)-1 → 每个mask代表一种选法
+· 检查 mask &amp; (1&lt;&lt;i) → 判断第i个元素是否被选中
+· 📌 下节预告：
+讲解时放慢关键术语；用 1 个生活类比 + 1 个反例加深印象。
+本课大纲考点（可适时点题）：二进制枚举子集、位运算入门</aside>
+</div></div></body>
 </html>

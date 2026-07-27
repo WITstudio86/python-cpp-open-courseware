@@ -1,8 +1,9 @@
 <!DOCTYPE html>
+
 <html lang="zh-CN">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
 <title>第19节：数字会合并 - 2048核心机制</title>
 <style>
 * { margin: 0; padding: 0; box-sizing: border-box; }
@@ -191,89 +192,131 @@ td { background: #161b22; }
 </style>
 </head>
 <body>
-
 <div id="slides-container">
-
 <!-- 第1页：封面 -->
 <div class="slide cover active" data-index="0">
-    <div class="icon-big">🔢</div>
-    <h1>第19节：数字会合并</h1>
-    <p class="subtitle">2048 项目 · 第一课</p>
-    <p style="margin-top: 36px; color: #ddd; font-size: 24px;">
+<div class="icon-big">🔢</div>
+<h1>第19节：数字会合并</h1>
+<p class="subtitle">2048 项目 · 第一课</p>
+<p style="margin-top: 36px; color: #ddd; font-size: 24px;">
         用 Python + Pygame 打造经典益智游戏
     </p>
-</div>
 
+<aside class="notes">【开场】第 1/13 页 · 数字会合并
+用 30 秒说明本课目标与学完能做什么，再进入正题。
+大纲考点：**内容**：4×4 网格、方向键移动数字、相同数字合并、随机生成新数字
+
+**知识点**：
+- 二维列表表示棋盘
+- 移动 + 合并算法（逐行/列扫描，相同相邻合并）
+- `random.choice(空位列表)` 随机空位生成 2 或 4（90% 概率 2）
+
+**课堂练习**：实现数字的移动和合并
+
+---
+封面关键词：
+· 2048 项目 · 第一课
+· 用 Python + Pygame 打造经典益智游戏
+互动：问学生「今天最想搞清楚什么？」，收 1–2 个期待。</aside>
+</div>
 <!-- 第2页：2048 游戏介绍 -->
 <div class="slide info" data-index="1">
-    <h2>🎮 认识 2048 游戏</h2>
-    <div class="two-col">
-        <div>
-            <h3>游戏规则</h3>
-            <ul>
-                <li>4 x 4 的方格棋盘</li>
-                <li>方向键控制数字移动</li>
-                <li>相同数字碰到一起 → 合并！</li>
-                <li>每次移动后出现新数字（2 或 4）</li>
-                <li>目标：合成 2048</li>
-            </ul>
-        </div>
-        <div>
-            <h3>示例棋盘</h3>
-            <div class="grid-demo">
-                <div class="cell">2</div><div class="cell"></div><div class="cell v4">4</div><div class="cell"></div>
-                <div class="cell v4">4</div><div class="cell"></div><div class="cell v2">2</div><div class="cell v8">8</div>
-                <div class="cell v8">8</div><div class="cell v4">4</div><div class="cell v2">2</div><div class="cell v16">16</div>
-                <div class="cell v16">16</div><div class="cell v2">2</div><div class="cell v4">4</div><div class="cell">2</div>
-            </div>
-        </div>
-    </div>
-    <div class="card" style="margin-top: 24px;">
-        <p style="color: #ffd166; font-size: 26px;">💡 核心问题：如果用代码实现，你需要解决什么？</p>
-    </div>
+<h2>🎮 认识 2048 游戏</h2>
+<div class="two-col">
+<div>
+<h3>游戏规则</h3>
+<ul>
+<li>4 x 4 的方格棋盘</li>
+<li>方向键控制数字移动</li>
+<li>相同数字碰到一起 → 合并！</li>
+<li>每次移动后出现新数字（2 或 4）</li>
+<li>目标：合成 2048</li>
+</ul>
+</div>
+<div>
+<h3>示例棋盘</h3>
+<div class="grid-demo">
+<div class="cell">2</div><div class="cell"></div><div class="cell v4">4</div><div class="cell"></div>
+<div class="cell v4">4</div><div class="cell"></div><div class="cell v2">2</div><div class="cell v8">8</div>
+<div class="cell v8">8</div><div class="cell v4">4</div><div class="cell v2">2</div><div class="cell v16">16</div>
+<div class="cell v16">16</div><div class="cell v2">2</div><div class="cell v4">4</div><div class="cell">2</div>
+</div>
+</div>
+</div>
+<div class="card" style="margin-top: 24px;">
+<p style="color: #ffd166; font-size: 26px;">💡 核心问题：如果用代码实现，你需要解决什么？</p>
 </div>
 
+<aside class="notes">【讲解】🎮 认识 2048 游戏
+本页要点（照着讲即可）：
+· 4 x 4 的方格棋盘
+· 方向键控制数字移动
+· 相同数字碰到一起 → 合并！
+· 每次移动后出现新数字（2 或 4）
+· 目标：合成 2048
+· 💡 核心问题：如果用代码实现，你需要解决什么？
+讲解时放慢关键术语；用 1 个生活类比 + 1 个反例加深印象。
+本课大纲考点（可适时点题）：**内容**：4×4 网格、方向键移动数字、相同数字合并、随机生成新数字
+
+**知识点**：
+- 二维列表表示棋盘
+- 移动 + 合并算法（逐行/列扫描，相同相邻合并）
+- `random.choice(空位列表)` 随机空位生成 2 或 4（90% 概率 2）
+
+**课堂练习**：实现数字的移动和合并
+
+---</aside>
+</div>
 <!-- 第3页：三大核心挑战 -->
 <div class="slide info" data-index="2">
-    <h2>🧩 今天的三大挑战</h2>
-    <div class="two-col">
-        <div>
-            <div class="card" style="text-align: center;">
-                <h3>1️⃣ 棋盘表示</h3>
-                <p>4x4 棋盘用<strong>二维列表</strong>存储</p>
-                <p style="color: #06d6a0;">board[row][col]</p>
-            </div>
-        </div>
-        <div>
-            <div class="card" style="text-align: center;">
-                <h3>2️⃣ 移动合并</h3>
-                <p>数字滑向一边，相同相邻数字<strong>合并翻倍</strong></p>
-                <p style="color: #06d6a0;">压缩 → 合并 → 再压缩</p>
-            </div>
-        </div>
-    </div>
-    <div class="two-col" style="margin-top: 0;">
-        <div>
-            <div class="card" style="text-align: center;">
-                <h3>3️⃣ 随机生成</h3>
-                <p>移动后从<strong>空位</strong>中随机生成</p>
-                <p style="color: #06d6a0;">90% 概率出 2，10% 出 4</p>
-            </div>
-        </div>
-        <div>
-            <div class="card" style="text-align: center;">
-                <h3>4️⃣ 界面绘制</h3>
-                <p>用 Pygame Surface <strong>纯代码</strong>绘制</p>
-                <p style="color: #06d6a0;">draw.rect + font.render</p>
-            </div>
-        </div>
-    </div>
+<h2>🧩 今天的三大挑战</h2>
+<div class="two-col">
+<div>
+<div class="card" style="text-align: center;">
+<h3>1️⃣ 棋盘表示</h3>
+<p>4x4 棋盘用<strong>二维列表</strong>存储</p>
+<p style="color: #06d6a0;">board[row][col]</p>
+</div>
+</div>
+<div>
+<div class="card" style="text-align: center;">
+<h3>2️⃣ 移动合并</h3>
+<p>数字滑向一边，相同相邻数字<strong>合并翻倍</strong></p>
+<p style="color: #06d6a0;">压缩 → 合并 → 再压缩</p>
+</div>
+</div>
+</div>
+<div class="two-col" style="margin-top: 0;">
+<div>
+<div class="card" style="text-align: center;">
+<h3>3️⃣ 随机生成</h3>
+<p>移动后从<strong>空位</strong>中随机生成</p>
+<p style="color: #06d6a0;">90% 概率出 2，10% 出 4</p>
+</div>
+</div>
+<div>
+<div class="card" style="text-align: center;">
+<h3>4️⃣ 界面绘制</h3>
+<p>用 Pygame Surface <strong>纯代码</strong>绘制</p>
+<p style="color: #06d6a0;">draw.rect + font.render</p>
+</div>
+</div>
 </div>
 
+<aside class="notes">【讲解】🧩 今天的三大挑战
+本页要点（照着讲即可）：
+· 4x4 棋盘用 二维列表 存储
+· 二维列表
+· board[row][col]
+· 数字滑向一边，相同相邻数字 合并翻倍
+· 合并翻倍
+· 压缩 → 合并 → 再压缩
+练习页节奏：先独立想 1 分钟 → 再点拨思路 → 最后对答案讲为什么。</aside>
+</div>
 <!-- 第4页：二维列表表示棋盘 -->
 <div class="slide code-bg" data-index="3">
-    <h2>📊 用二维列表表示 4x4 棋盘</h2>
-    <div class="code-block">
+<h2>📊 用二维列表表示 4x4 棋盘</h2>
+<div class="code-block">
 <span class="com"># 初始化一个 4x4 的棋盘，0 表示空格</span>
 <span class="kw">board</span> = [
     [<span class="num">0</span>, <span class="num">0</span>, <span class="num">0</span>, <span class="num">0</span>],
@@ -283,122 +326,156 @@ td { background: #161b22; }
 ]
 
 <span class="com"># 访问棋盘位置：board[行][列]</span>
-<span class="kw">board</span>[<span class="num">0</span>][<span class="num">0</span>] = <span class="num">2</span>   <span class="com"># 第1行第1列放个2</span>
-<span class="kw">board</span>[<span class="num">1</span>][<span class="num">2</span>] = <span class="num">4</span>   <span class="com"># 第2行第3列放个4</span>
-    </div>
-    <div class="card" style="text-align: center;">
-        <p>📌 <strong>记住：</strong>board[<span style="color:#ff7b72">行</span>][<span style="color:#79c0ff">列</span>]</p>
-        <p style="font-size: 22px; color: #8b949e;">行号 row 从上到下（0~3），列号 col 从左到右（0~3）</p>
-    </div>
+<span class="kw">board</span>[<span class="num">0</span>][<span class="num">0</span>] = <span class="num">2</span> <span class="com"># 第1行第1列放个2</span>
+<span class="kw">board</span>[<span class="num">1</span>][<span class="num">2</span>] = <span class="num">4</span> <span class="com"># 第2行第3列放个4</span>
+</div>
+<div class="card" style="text-align: center;">
+<p>📌 <strong>记住：</strong>board[<span style="color:#ff7b72">行</span>][<span style="color:#79c0ff">列</span>]</p>
+<p style="font-size: 22px; color: #8b949e;">行号 row 从上到下（0~3），列号 col 从左到右（0~3）</p>
 </div>
 
+<aside class="notes">【讲解】📊 用二维列表表示 4x4 棋盘
+结合讲义《初始化4×4棋盘，0表示空格》强调：
+· board = [
+· [0, 0, 0, 0],
+· [0, 0, 0, 0],
+· [0, 0, 0, 0],
+· [0, 0, 0, 0]
+幻灯片上可见要点：
+· 📌 记住： board[ 行 ][ 列 ]
+· 行号 row 从上到下（0~3），列号 col 从左到右（0~3）
+讲解时放慢关键术语；用 1 个生活类比 + 1 个反例加深印象。</aside>
+</div>
 <!-- 第5页：移动合并算法（左移） -->
 <div class="slide code-bg" data-index="4">
-    <h2>🔍 核心算法：左移合并（三步法）</h2>
-    <table>
-        <tr><th>步骤</th><th>操作</th><th>示例：[2, 0, 2, 4]</th></tr>
-        <tr><td>① 压缩</td><td>数字挤到左边，0甩右边</td><td>[2, 2, 4, 0]</td></tr>
-        <tr><td>② 合并</td><td>相邻相同数字翻倍</td><td>[4, 0, 4, 0]</td></tr>
-        <tr><td>③ 压缩</td><td>再次挤到左边</td><td>[4, 4, 0, 0]</td></tr>
-    </table>
-    <div class="code-block small" style="margin-top: 20px;">
+<h2>🔍 核心算法：左移合并（三步法）</h2>
+<table>
+<tr><th>步骤</th><th>操作</th><th>示例：[2, 0, 2, 4]</th></tr>
+<tr><td>① 压缩</td><td>数字挤到左边，0甩右边</td><td>[2, 2, 4, 0]</td></tr>
+<tr><td>② 合并</td><td>相邻相同数字翻倍</td><td>[4, 0, 4, 0]</td></tr>
+<tr><td>③ 压缩</td><td>再次挤到左边</td><td>[4, 4, 0, 0]</td></tr>
+</table>
+<div class="code-block small" style="margin-top: 20px;">
 <span class="com"># 第一步：压缩 - 把非零数字挤到左边</span>
 <span class="kw">def</span> <span class="fn">compress</span>(row):
     new_row = []
     <span class="kw">for</span> num <span class="kw">in</span> row:
         <span class="kw">if</span> num != <span class="num">0</span>:
             new_row.append(num)
-    <span class="kw">while</span> len(new_row) < <span class="num">4</span>:
+    <span class="kw">while</span> len(new_row) &lt; <span class="num">4</span>:
         new_row.append(<span class="num">0</span>)
     <span class="kw">return</span> new_row
     </div>
-</div>
 
+<aside class="notes">【讲解】🔍 核心算法：左移合并（三步法）
+本页要点（照着讲即可）：
+· 🔍 核心算法：左移合并（三步法）
+· 示例：[2, 0, 2, 4]
+· ① 压缩
+· 数字挤到左边，0甩右边
+· [2, 2, 4, 0]
+· ② 合并
+讲解时放慢关键术语；用 1 个生活类比 + 1 个反例加深印象。</aside>
+</div>
 <!-- 第6页：合并逻辑 -->
 <div class="slide code-bg" data-index="5">
-    <h2>🔍 核心算法：合并相邻相同数字</h2>
-    <div class="code-block">
+<h2>🔍 核心算法：合并相邻相同数字</h2>
+<div class="code-block">
 <span class="com"># 第二步：合并 - 相邻相同数字翻倍</span>
 <span class="kw">def</span> <span class="fn">merge</span>(row):
     <span class="kw">for</span> i <span class="kw">in</span> range(<span class="num">3</span>):      <span class="com"># 注意：只检查前3个位置</span>
-        <span class="kw">if</span> row[i] != <span class="num">0</span> <span class="kw">and</span> row[i] == row[i + <span class="num">1</span>]:
-            row[i] = row[i] * <span class="num">2</span>   <span class="com"># 合并：翻倍！</span>
-            row[i + <span class="num">1</span>] = <span class="num">0</span>        <span class="com"># 被合并位置清空</span>
-    <span class="kw">return</span> row
+<span class="kw">if</span> row[i] != <span class="num">0</span> <span class="kw">and</span> row[i] == row[i + <span class="num">1</span>]:
+            row[i] = row[i] * <span class="num">2</span> <span class="com"># 合并：翻倍！</span>
+            row[i + <span class="num">1</span>] = <span class="num">0</span> <span class="com"># 被合并位置清空</span>
+<span class="kw">return</span> row
     </div>
-
-    <div class="card" style="margin-top: 20px;">
-        <h3>⚠️ 关键细节</h3>
-        <ul>
-            <li>循环用 <code style="color:#ff7b72; font-size:22px;">range(3)</code>，不是 range(4)！</li>
-            <li>合并后 row[i+1] 置 0，自动防止"连续合并"</li>
-            <li>例如 [4,4,4,0] → [8,0,4,0]（正确：只合并一次）</li>
-        </ul>
-    </div>
+<div class="card" style="margin-top: 20px;">
+<h3>⚠️ 关键细节</h3>
+<ul>
+<li>循环用 <code style="color:#ff7b72; font-size:22px;">range(3)</code>，不是 range(4)！</li>
+<li>合并后 row[i+1] 置 0，自动防止"连续合并"</li>
+<li>例如 [4,4,4,0] → [8,0,4,0]（正确：只合并一次）</li>
+</ul>
 </div>
 
+<aside class="notes">【讲解】🔍 核心算法：合并相邻相同数字
+本页要点（照着讲即可）：
+· 循环用 range(3) ，不是 range(4)！
+· 合并后 row[i+1] 置 0，自动防止"连续合并"
+· 例如 [4,4,4,0] → [8,0,4,0]（正确：只合并一次）
+讲解时放慢关键术语；用 1 个生活类比 + 1 个反例加深印象。</aside>
+</div>
 <!-- 第7页：完整左移函数 -->
 <div class="slide code-bg" data-index="6">
-    <h2>📦 完整的左移函数</h2>
-    <div class="code-block">
+<h2>📦 完整的左移函数</h2>
+<div class="code-block">
 <span class="kw">def</span> <span class="fn">move_left</span>(board):
     <span class="com">"""对整个棋盘执行左移"""</span>
-    <span class="kw">for</span> i <span class="kw">in</span> range(<span class="num">4</span>):           <span class="com"># 逐行处理</span>
+<span class="kw">for</span> i <span class="kw">in</span> range(<span class="num">4</span>):           <span class="com"># 逐行处理</span>
         board[i] = compress(board[i])    <span class="com"># ① 挤到左边</span>
         board[i] = merge(board[i])       <span class="com"># ② 合并相同</span>
         board[i] = compress(board[i])    <span class="com"># ③ 再次挤到左边</span>
-
-    <span class="com"># 移动完成后，在空位随机生成新数字</span>
+<span class="com"># 移动完成后，在空位随机生成新数字</span>
     add_new_number(board)
     </div>
-    <p style="margin-top: 16px; color: #06d6a0; font-size: 26px;">
+<p style="margin-top: 16px; color: #06d6a0; font-size: 26px;">
         ✅ 三步搞定一行，四行搞定整个棋盘！
     </p>
-</div>
 
+<aside class="notes">【讲解】📦 完整的左移函数
+本页要点（照着讲即可）：
+· ✅ 三步搞定一行，四行搞定整个棋盘！
+讲解时放慢关键术语；用 1 个生活类比 + 1 个反例加深印象。</aside>
+</div>
 <!-- 第8页：方向转换技巧 -->
 <div class="slide info" data-index="7">
-    <h2>🔄 化归技巧：其他方向复用于左移</h2>
-    <p style="margin-bottom: 20px; font-size: 24px; color: #8b949e;">
+<h2>🔄 化归技巧：其他方向复用于左移</h2>
+<p style="margin-bottom: 20px; font-size: 24px; color: #8b949e;">
         核心思想：写一次左移逻辑，通过"旋转"棋盘实现所有方向
     </p>
-    <table>
-        <tr><th>方向</th><th>转换方法</th><th>操作流程</th></tr>
-        <tr>
-            <td>⬅️ 左移</td>
-            <td>直接操作</td>
-            <td style="font-family: monospace;">move_left(每行)</td>
-        </tr>
-        <tr>
-            <td>➡️ 右移</td>
-            <td>每行反转</td>
-            <td style="font-family: monospace;">反转 → 左移 → 反转回来</td>
-        </tr>
-        <tr>
-            <td>⬆️ 上移</td>
-            <td>矩阵转置</td>
-            <td style="font-family: monospace;">转置 → 左移 → 转置回来</td>
-        </tr>
-        <tr>
-            <td>⬇️ 下移</td>
-            <td>转置 + 反转</td>
-            <td style="font-family: monospace;">转置 → 反转 → 左移 → 反转 → 转置</td>
-        </tr>
-    </table>
-    <p style="margin-top: 20px; font-size: 24px; color: #ffd166;">
+<table>
+<tr><th>方向</th><th>转换方法</th><th>操作流程</th></tr>
+<tr>
+<td>⬅️ 左移</td>
+<td>直接操作</td>
+<td style="font-family: monospace;">move_left(每行)</td>
+</tr>
+<tr>
+<td>➡️ 右移</td>
+<td>每行反转</td>
+<td style="font-family: monospace;">反转 → 左移 → 反转回来</td>
+</tr>
+<tr>
+<td>⬆️ 上移</td>
+<td>矩阵转置</td>
+<td style="font-family: monospace;">转置 → 左移 → 转置回来</td>
+</tr>
+<tr>
+<td>⬇️ 下移</td>
+<td>转置 + 反转</td>
+<td style="font-family: monospace;">转置 → 反转 → 左移 → 反转 → 转置</td>
+</tr>
+</table>
+<p style="margin-top: 20px; font-size: 24px; color: #ffd166;">
         💡 这就是编程中的 <strong>"化归思想"</strong>——把新问题转化为已解决的问题！
     </p>
-</div>
 
+<aside class="notes">【讲解】🔄 化归技巧：其他方向复用于左移
+本页要点（照着讲即可）：
+· 核心思想：写一次左移逻辑，通过"旋转"棋盘实现所有方向
+· 💡 这就是编程中的 "化归思想" ——把新问题转化为已解决的问题！
+· "化归思想"
+讲解时放慢关键术语；用 1 个生活类比 + 1 个反例加深印象。</aside>
+</div>
 <!-- 第9页：随机生成新数字 -->
 <div class="slide code-bg" data-index="8">
-    <h2>🎲 随机生成新数字</h2>
-    <div class="code-block">
+<h2>🎲 随机生成新数字</h2>
+<div class="code-block">
 <span class="kw">import</span> random
 
 <span class="kw">def</span> <span class="fn">add_new_number</span>(board):
     <span class="com">"""在空位中随机生成 2 或 4"""</span>
-    <span class="com"># 第1步：收集所有空位</span>
+<span class="com"># 第1步：收集所有空位</span>
     empty_cells = []
     <span class="kw">for</span> r <span class="kw">in</span> range(<span class="num">4</span>):
         <span class="kw">for</span> c <span class="kw">in</span> range(<span class="num">4</span>):
@@ -406,29 +483,33 @@ td { background: #161b22; }
                 empty_cells.append((r, c))
 
     <span class="com"># 第2步：如果没有空位，直接返回</span>
-    <span class="kw">if</span> len(empty_cells) == <span class="num">0</span>:
+<span class="kw">if</span> len(empty_cells) == <span class="num">0</span>:
         <span class="kw">return</span>
-
-    <span class="com"># 第3步：随机选一个空位</span>
+<span class="com"># 第3步：随机选一个空位</span>
     r, c = random.choice(empty_cells)
 
     <span class="com"># 第4步：90%概率是2，10%概率是4</span>
     board[r][c] = random.choice([<span class="num">2</span>] * <span class="num">9</span> + [<span class="num">4</span>])
     </div>
-    <div class="card">
-        <p style="font-size: 24px;">
+<div class="card">
+<p style="font-size: 24px;">
         🎯 <code style="color:#ff7b72;">random.choice([2]*9 + [4])</code> = 列表中有9个2和1个4
         </p>
-        <p style="font-size: 24px; color: #8b949e;">
-        等价写法：<code style="color:#79c0ff;">2 if random.random() < 0.9 else 4</code>
-        </p>
-    </div>
+<p style="font-size: 24px; color: #8b949e;">
+        等价写法：<code style="color:#79c0ff;">2 if random.random() &lt; 0.9 else 4</code>
+</p>
 </div>
 
+<aside class="notes">【讲解】🎲 随机生成新数字
+本页要点（照着讲即可）：
+· 🎯 random.choice([2]*9 + [4]) = 列表中有9个2和1个4
+· 等价写法： 2 if random.random() &lt; 0.9 else 4
+讲解时放慢关键术语；用 1 个生活类比 + 1 个反例加深印象。</aside>
+</div>
 <!-- 第10页：Pygame 绘制界面 -->
 <div class="slide code-bg" data-index="9">
-    <h2>🎨 Pygame 绘制数字棋盘</h2>
-    <div class="code-block small">
+<h2>🎨 Pygame 绘制数字棋盘</h2>
+<div class="code-block small">
 <span class="com"># 不同数字的颜色方案（不用外部图片！）</span>
 COLORS = {
     <span class="num">0</span>:   (<span class="num">205</span>, <span class="num">193</span>, <span class="num">180</span>),
@@ -456,46 +537,67 @@ COLORS = {
         text_rect = text.get_rect(center=rect.center)
         surface.blit(text, text_rect)
     </div>
-</div>
 
+<aside class="notes">【讲解】🎨 Pygame 绘制数字棋盘
+结合讲义《Q5：Pygame 窗口打开后一闪就关了？》强调：
+· 原因：缺少游戏主循环（while True）。
+· 解决：确保程序末尾有完整的事件循环，并正确处理 pygame.QUIT 事件。
+幻灯片上可见要点：
+· 🎨 Pygame 绘制数字棋盘
+· # 不同数字的颜色方案（不用外部图片！）
+· COLORS = {
+· 1024
+讲解时放慢关键术语；用 1 个生活类比 + 1 个反例加深印象。</aside>
+</div>
 <!-- 第11页：练习任务 -->
 <div class="slide practice" data-index="10">
-    <h2>✏️ 课堂练习（25分钟）</h2>
-
-    <div class="two-col">
-        <div>
-            <div class="card" style="background: #2d6a4f;">
-                <h3>⭐ 基础任务（15分钟）</h3>
-                <ol>
-                    <li>创建 4x4 二维列表棋盘</li>
-                    <li>实现 <code style="color:#ffd166;">compress</code> 函数</li>
-                    <li>实现 <code style="color:#ffd166;">merge</code> 函数</li>
-                    <li>实现左移 + 随机生成</li>
-                </ol>
-            </div>
-        </div>
-        <div>
-            <div class="card" style="background: #3d6b4f;">
-                <h3>🌟 进阶任务（10分钟）</h3>
-                <ol>
-                    <li>实现上下右三个方向</li>
-                    <li>用 Pygame 绘制棋盘界面</li>
-                    <li>不同数字配不同颜色</li>
-                    <li>添加键盘事件响应</li>
-                </ol>
-            </div>
-        </div>
-    </div>
-
-    <p style="margin-top: 24px; font-size: 24px; color: #ffd166;">
-        📁 完整代码参考：打开 <code>程序/第19节-数字会合并/main.py</code>
-    </p>
+<h2>✏️ 课堂练习（25分钟）</h2>
+<div class="two-col">
+<div>
+<div class="card" style="background: #2d6a4f;">
+<h3>⭐ 基础任务（15分钟）</h3>
+<ol>
+<li>创建 4x4 二维列表棋盘</li>
+<li>实现 <code style="color:#ffd166;">compress</code> 函数</li>
+<li>实现 <code style="color:#ffd166;">merge</code> 函数</li>
+<li>实现左移 + 随机生成</li>
+</ol>
 </div>
+</div>
+<div>
+<div class="card" style="background: #3d6b4f;">
+<h3>🌟 进阶任务（10分钟）</h3>
+<ol>
+<li>实现上下右三个方向</li>
+<li>用 Pygame 绘制棋盘界面</li>
+<li>不同数字配不同颜色</li>
+<li>添加键盘事件响应</li>
+</ol>
+</div>
+</div>
+</div>
+<p style="margin-top: 24px; font-size: 24px; color: #ffd166;">
+        📁 完整代码参考：打开 <code>程序/第19节-数字会合并/main.py</code>
+</p>
 
+<aside class="notes">【讲解】✏️ 课堂练习（25分钟）
+结合讲义《三、课堂练习（25分钟）》强调：
+· 基础任务（必须完成，15分钟）：
+· 创建4×4二维列表棋盘，初始时在两个随机位置生成数字2
+· 实现 compress 和 merge 函数
+· 实现左移方向的移动功能（只处理左方向键）
+· 实现随机生成新数字功能
+幻灯片上可见要点：
+· 创建 4x4 二维列表棋盘
+· 实现 compress 函数
+· 实现 merge 函数
+· 实现左移 + 随机生成
+练习页节奏：先独立想 1 分钟 → 再点拨思路 → 最后对答案讲为什么。</aside>
+</div>
 <!-- 第12页：完整代码概览 -->
 <div class="slide code-bg" data-index="11">
-    <h2>📝 完整程序结构</h2>
-    <div class="code-block small">
+<h2>📝 完整程序结构</h2>
+<div class="code-block small">
 <span class="com"># 1. 初始化棋盘</span>
 board = [[<span class="num">0</span>]*<span class="num">4</span> <span class="kw">for</span> _ <span class="kw">in</span> range(<span class="num">4</span>)]
 add_new_number(board)   <span class="com"># 开始时随机生成两个数字</span>
@@ -506,7 +608,7 @@ add_new_number(board)
     <span class="kw">for</span> event <span class="kw">in</span> pygame.event.get():
         <span class="kw">if</span> event.type == pygame.QUIT:
             running = <span class="str">False</span>
-        <span class="kw">elif</span> event.type == pygame.KEYDOWN:
+<span class="kw">elif</span> event.type == pygame.KEYDOWN:
             <span class="kw">if</span> event.key == pygame.K_LEFT:
                 move_left(board)
             <span class="kw">elif</span> event.key == pygame.K_RIGHT:
@@ -518,44 +620,69 @@ add_new_number(board)
 
     <span class="com"># 3. 绘制棋盘</span>
     screen.fill((<span class="num">187</span>, <span class="num">173</span>, <span class="num">160</span>))  <span class="com"># 背景色</span>
-    <span class="kw">for</span> r <span class="kw">in</span> range(<span class="num">4</span>):
+<span class="kw">for</span> r <span class="kw">in</span> range(<span class="num">4</span>):
         <span class="kw">for</span> c <span class="kw">in</span> range(<span class="num">4</span>):
             draw_tile(screen, board[r][c], ...)
     pygame.display.flip()
 
 pygame.quit()
     </div>
-</div>
 
+<aside class="notes">【讲解】📝 完整程序结构
+本页要点（照着讲即可）：
+· 📝 完整程序结构
+· # 1. 初始化棋盘
+· board = [[
+· range(
+· add_new_number(board)
+· # 开始时随机生成两个数字
+代码页节奏：先读懂输入输出 → 再走主流程 → 最后点出易错点（边界/类型/下标）。
+可让学生预测下一行输出，再运行对照。</aside>
+</div>
 <!-- 第13页：总结 -->
 <div class="slide summary" data-index="12">
-    <h2>📋 本节知识点回顾</h2>
-
-    <div class="card" style="background: #4a2670;">
-        <ol style="font-size: 28px; line-height: 2.2;">
-            <li><strong>二维列表</strong> → board[row][col] 表示棋盘</li>
-            <li><strong>移动算法</strong> → 压缩 → 合并 → 再压缩</li>
-            <li><strong>方向转换</strong> → 反转 / 转置，复用于左移逻辑</li>
-            <li><strong>随机生成</strong> → random.choice(空位)，90%概率得2</li>
-            <li><strong>Pygame 绘制</strong> → draw.rect + font.render 纯代码绘制</li>
-        </ol>
-    </div>
-
-    <div class="card" style="background: #5a3d80; margin-top: 20px;">
-        <p style="font-size: 30px; text-align: center; color: #ffd166;">
+<h2>📋 本节知识点回顾</h2>
+<div class="card" style="background: #4a2670;">
+<ol style="font-size: 28px; line-height: 2.2;">
+<li><strong>二维列表</strong> → board[row][col] 表示棋盘</li>
+<li><strong>移动算法</strong> → 压缩 → 合并 → 再压缩</li>
+<li><strong>方向转换</strong> → 反转 / 转置，复用于左移逻辑</li>
+<li><strong>随机生成</strong> → random.choice(空位)，90%概率得2</li>
+<li><strong>Pygame 绘制</strong> → draw.rect + font.render 纯代码绘制</li>
+</ol>
+</div>
+<div class="card" style="background: #5a3d80; margin-top: 20px;">
+<p style="font-size: 30px; text-align: center; color: #ffd166;">
             🚀 下节预告：<strong>第20节·完整2048</strong>
-        </p>
-        <p style="font-size: 24px; text-align: center; margin-top: 8px;">
+</p>
+<p style="font-size: 24px; text-align: center; margin-top: 8px;">
             游戏结束判定 + 分数统计 + 重新开始 + 胜利动画
         </p>
-    </div>
 </div>
 
-</div><!-- end slides-container -->
+<aside class="notes">【收尾】回顾本课主线：📋 本节知识点回顾
+对照大纲再过一遍：**内容**：4×4 网格、方向键移动数字、相同数字合并、随机生成新数字
 
+**知识点**：
+- 二维列表表示棋盘
+- 移动 + 合并算法（逐行/列扫描，相同相邻合并）
+- `random.choice(空位列表)` 随机空位生成 2 或 4（90% 概率 2）
+
+**课堂练习**：实现数字的移动和合并
+
+---
+板书/口述要点：
+· 二维列表 → board[row][col] 表示棋盘
+· 二维列表
+· 移动算法 → 压缩 → 合并 → 再压缩
+· 移动算法
+· 方向转换 → 反转 / 转置，复用于左移逻辑
+· 方向转换
+结束前留 2 分钟答疑；布置 1 道小练习检验是否真正掌握。</aside>
+</div>
+</div><!-- end slides-container -->
 <div id="page-indicator">1 / 13</div>
 <div id="nav-hint">⬅️ ➡️ 方向键翻页</div>
-
 <script>
 (function() {
     var slides = document.querySelectorAll('.slide');
@@ -613,7 +740,6 @@ pygame.quit()
     showSlide(0);
 })();
 </script>
-
 <script src="courseware-ui.js"></script>
 <script src="presenter.js"></script>
 </body>

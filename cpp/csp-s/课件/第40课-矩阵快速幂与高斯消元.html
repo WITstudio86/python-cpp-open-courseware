@@ -1,8 +1,9 @@
 <!DOCTYPE html>
+
 <html lang="zh-CN">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
 <title>第40课：矩阵快速幂与高斯消元</title>
 <style>
 * { margin: 0; padding: 0; box-sizing: border-box; }
@@ -60,7 +61,6 @@ td { background: #0d1117; }
 </head>
 <body>
 <div id="app">
-
 <!-- ==================== 第1页：标题页 ==================== -->
 <div class="slide active" id="s1">
 <div class="title-slide">
@@ -74,16 +74,22 @@ td { background: #0d1117; }
 </div>
 <p style="margin-top:30px; color:#8b949e">掌握矩阵运算与高斯消元，解决高维递推与方程组问题</p>
 </div>
-</div>
 
+<aside class="notes">【开场】第 1/7 页 · 矩阵快速幂与高斯消元
+用 30 秒说明本课目标与学完能做什么，再进入正题。
+大纲考点：矩阵乘法、矩阵快速幂、高斯消元（解线性方程组）
+配套练习方向：Fibonacci加速、线性方程组求解
+封面关键词：
+· 矩阵乘法 · 快速幂加速递推 · 高斯消元解方程组 · 行列式与逆矩阵
+· 掌握矩阵运算与高斯消元，解决高维递推与方程组问题
+互动：问学生「今天最想搞清楚什么？」，收 1–2 个期待。</aside>
+</div>
 <!-- ==================== 第2页：矩阵乘法基础 ==================== -->
 <div class="slide" id="s2">
 <h1>📖 矩阵乘法基础</h1>
-
 <h2>定义</h2>
 <p>若 A 是 n×m 矩阵，B 是 m×p 矩阵，则 C = A×B 是 n×p 矩阵：</p>
-<p class="formula">C[i][j] = Σ A[i][k] · B[k][j] &nbsp;&nbsp;（k = 1..m）</p>
-
+<p class="formula">C[i][j] = Σ A[i][k] · B[k][j]   （k = 1..m）</p>
 <h3>关键性质</h3>
 <table>
 <tr><th>性质</th><th>说明</th><th>重要性</th></tr>
@@ -91,64 +97,72 @@ td { background: #0d1117; }
 <tr><td>不满足交换律</td><td>一般 A×B ≠ B×A</td><td><span class="highlight">容易出错</span></td></tr>
 <tr><td>单位矩阵</td><td>I[i][i]=1, 其余为0; A×I = I×A = A</td><td>快速幂的初始化</td></tr>
 </table>
-
 <h3>缓存优化技巧</h3>
 <p>循环顺序应为 <span class="accent">i → k → j</span>（而非 i → j → k），利用 B 的第 k 行被重复使用的特性：</p>
-
 <pre><span class="cmt">// 正确的循环顺序（缓存友好）</span>
 <span class="kw">for</span> (<span class="type">int</span> i = <span class="num">0</span>; i &lt; n; i++)
     <span class="kw">for</span> (<span class="type">int</span> k = <span class="num">0</span>; k &lt; m; k++)        <span class="cmt">// k 在中间!</span>
         <span class="kw">if</span> (A[i][k])                     <span class="cmt">// 稀疏优化</span>
             <span class="kw">for</span> (<span class="type">int</span> j = <span class="num">0</span>; j &lt; p; j++)
                 C[i][j] = (C[i][j] + A[i][k] * B[k][j]) % MOD;</pre>
-
 <p>时间复杂度：朴素 <span class="accent">O(n³)</span>，竞赛中 n ≤ 300 安全</p>
-</div>
 
+<aside class="notes">【讲解】📖 矩阵乘法基础
+本页要点（照着讲即可）：
+· 若 A 是 n×m 矩阵，B 是 m×p 矩阵，则 C = A×B 是 n×p 矩阵：
+· C[i][j] = Σ A[i][k] · B[k][j] （k = 1..m）
+· 循环顺序应为 i → k → j （而非 i → j → k），利用 B 的第 k 行被重复使用的特性：
+· 时间复杂度：朴素 O(n³) ，竞赛中 n ≤ 300 安全
+讲解时放慢关键术语；用 1 个生活类比 + 1 个反例加深印象。
+本课大纲考点（可适时点题）：矩阵乘法、矩阵快速幂、高斯消元（解线性方程组）</aside>
+</div>
 <!-- ==================== 第3页：矩阵快速幂原理推导 ==================== -->
 <div class="slide" id="s3">
 <h1>📖 矩阵快速幂 — 原理推导</h1>
-
 <h2>核心思想</h2>
 <p>矩阵乘法满足<span class="accent">结合律</span>，因此整数快速幂的二分思想可直接推广：</p>
-<p class="formula">Aⁿ = (A²)^(n/2) &nbsp;（n 为偶数）</p>
-<p class="formula">Aⁿ = A · (A²)^((n-1)/2) &nbsp;（n 为奇数）</p>
-
+<p class="formula">Aⁿ = (A²)^(n/2)  （n 为偶数）</p>
+<p class="formula">Aⁿ = A · (A²)^((n-1)/2)  （n 为奇数）</p>
 <pre><span class="cmt">// 矩阵快速幂模板</span>
 Matrix <span class="func">mat_pow</span>(Matrix A, <span class="type">ll</span> n) {
     Matrix res = <span class="func">identity</span>(A.size());  <span class="cmt">// 单位矩阵</span>
     <span class="kw">while</span> (n) {
-        <span class="kw">if</span> (n & <span class="num">1</span>) res = <span class="func">mat_mul</span>(res, A);
+        <span class="kw">if</span> (n &amp; <span class="num">1</span>) res = <span class="func">mat_mul</span>(res, A);
         A = <span class="func">mat_mul</span>(A, A);
         n &gt;&gt;= <span class="num">1</span>;
     }
     <span class="kw">return</span> res;
 }</pre>
-
 <h3>最重要的应用：加速线性递推</h3>
 <p>任何 <span class="accent">k 阶线性递推</span> 都可以用 k×k 矩阵在 O(k³·log n) 内求解：</p>
-
 <p style="margin-top:8px"><span class="highlight">核心思想：</span>将递推状态列向量 × 转移矩阵 = 下一状态列向量</p>
-
 <h3>递推 → 矩阵转换规则</h3>
 <p>递推 aₙ = c₁·aₙ₋₁ + c₂·aₙ₋₂ + ... + cₖ·aₙ₋ₖ</p>
 <p>→ 构造 k×k 矩阵：第一行 = [c₁, c₂, ..., cₖ]；其余行为偏移单位矩阵</p>
-</div>
 
+<aside class="notes">【讲解】📖 矩阵快速幂 — 原理推导
+结合讲义《2. 矩阵快速幂》强调：
+· 核心思想： 将整数的快速幂推广到矩阵。因为矩阵乘法满足结合律，所以：
+· $$A^{n} = \begin{cases} I &amp; n = 0 \\ (A^2)^{n/2} &amp; n \text{ 为偶数} \\ A \cdot (A^2)^{(n-1)/2} &amp; n \text{ 为奇数} \end{cases}$$
+· 代码模板：
+· // 矩阵快速幂 A^n（A 为方阵）
+· vector&gt; mat_pow(
+幻灯片上可见要点：
+· 矩阵乘法满足 结合律 ，因此整数快速幂的二分思想可直接推广：
+· Aⁿ = (A²)^(n/2) （n 为偶数）
+· Aⁿ = A · (A²)^((n-1)/2) （n 为奇数）
+· 任何 k 阶线性递推 都可以用 k×k 矩阵在 O(k³·log n) 内求解：
+讲解时放慢关键术语；用 1 个生活类比 + 1 个反例加深印象。</aside>
+</div>
 <!-- ==================== 第4页：斐波那契加速示例 ==================== -->
 <div class="slide" id="s4">
 <h1>💻 斐波那契数列 — 矩阵加速 O(log n)</h1>
-
 <h3>从 O(n) 到 O(log n) 的质变</h3>
-
 <p><span class="info">递推关系：</span>fib(n) = fib(n-1) + fib(n-2)</p>
 <p>将递推写成矩阵形式：</p>
-
-<p class="formula">[fib(n) &nbsp;&nbsp; fib(n-1)]ᵀ = [[1,1],[1,0]] · [fib(n-1) &nbsp;&nbsp; fib(n-2)]ᵀ</p>
-
+<p class="formula">[fib(n)    fib(n-1)]ᵀ = [[1,1],[1,0]] · [fib(n-1)    fib(n-2)]ᵀ</p>
 <p>展开后：</p>
-<p class="formula">[fib(n) &nbsp;&nbsp; fib(n-1)]ᵀ = [[1,1],[1,0]]ⁿ⁻¹ · [fib(1) &nbsp;&nbsp; fib(0)]ᵀ</p>
-
+<p class="formula">[fib(n)    fib(n-1)]ᵀ = [[1,1],[1,0]]ⁿ⁻¹ · [fib(1)    fib(0)]ᵀ</p>
 <pre><span class="cmt">// 完整代码 — 仅 O(log n) 时间</span>
 <span class="type">ll</span> <span class="func">fibonacci</span>(<span class="type">ll</span> n) {
     <span class="kw">if</span> (n == <span class="num">0</span>) <span class="kw">return</span> <span class="num">0</span>;
@@ -158,7 +172,6 @@ Matrix <span class="func">mat_pow</span>(Matrix A, <span class="type">ll</span> 
     <span class="kw">return</span> T[<span class="num">0</span>][<span class="num">0</span>];
     <span class="cmt">// 因为 [fib(1), fib(0)] = [1, 0]，结果第一位 = T[0][0]</span>
 }</pre>
-
 <h3>适用范围</h3>
 <table>
 <tr><th>递推类型</th><th>矩阵大小</th><th>总复杂度</th></tr>
@@ -167,20 +180,25 @@ Matrix <span class="func">mat_pow</span>(Matrix A, <span class="type">ll</span> 
 <tr><td>DP 转移（状态数 k）</td><td>k×k</td><td>O(k³·log n)</td></tr>
 <tr><td>图论路径计数（n 个点）</td><td>n×n</td><td>O(n³·log L)</td></tr>
 </table>
-</div>
 
+<aside class="notes">【讲解】💻 斐波那契数列 — 矩阵加速 O(log n)
+本页要点（照着讲即可）：
+· 递推关系： fib(n) = fib(n-1) + fib(n-2)
+· 将递推写成矩阵形式：
+· [fib(n) fib(n-1)]ᵀ = [[1,1],[1,0]] · [fib(n-1) fib(n-2)]ᵀ
+· 展开后：
+· [fib(n) fib(n-1)]ᵀ = [[1,1],[1,0]]ⁿ⁻¹ · [fib(1) fib(0)]ᵀ
+讲解时放慢关键术语；用 1 个生活类比 + 1 个反例加深印象。</aside>
+</div>
 <!-- ==================== 第5页：高斯消元精讲 ==================== -->
 <div class="slide" id="s5">
 <h1>📖 高斯消元精讲</h1>
-
 <h2>解线性方程组 Ax = b</h2>
-
 <h3>算法两步走</h3>
 <ol>
 <li><span class="highlight">前向消元：</span>化为行阶梯形（选主元 → 消下方行）</li>
 <li><span class="highlight">回代：</span>从最后一行向上求解</li>
 </ol>
-
 <h3>三种结果的判定</h3>
 <table>
 <tr><th>情况</th><th>判定条件</th><th>输出</th></tr>
@@ -188,7 +206,6 @@ Matrix <span class="func">mat_pow</span>(Matrix A, <span class="type">ll</span> 
 <tr><td>无解</td><td>存在行 [0...0|c] 且 c ≠ 0</td><td><span class="highlight">No solution</span></td></tr>
 <tr><td>无穷多解</td><td>存在自由变量，无矛盾行</td><td><span class="info">Infinite solutions</span></td></tr>
 </table>
-
 <h3>核心操作：选列主元</h3>
 <p>每列选择绝对值<span class="accent">最大</span>的元素所在行，交换到当前行</p>
 <ul>
@@ -196,34 +213,39 @@ Matrix <span class="func">mat_pow</span>(Matrix A, <span class="type">ll</span> 
 <li>减少浮点数累积误差</li>
 <li>比较时使用 <span class="func">fabs()</span>，精度判零用 <span class="num">EPS = 1e-9</span></li>
 </ul>
-
 <h3>进阶应用</h3>
 <p><span class="accent">求行列式：</span>化为上三角矩阵 → 对角线乘积（注意行交换变号）</p>
 <p><span class="accent">求逆矩阵：</span>增广矩阵法 [A | I] → [I | A⁻¹]</p>
-</div>
 
+<aside class="notes">【讲解】📖 高斯消元精讲
+本页要点（照着讲即可）：
+· 前向消元： 化为行阶梯形（选主元 → 消下方行）
+· 回代： 从最后一行向上求解
+· 每列选择绝对值 最大 的元素所在行，交换到当前行
+· 避免除以 0 → NaN 错误
+· 减少浮点数累积误差
+· 比较时使用 fabs() ，精度判零用 EPS = 1e-9
+讲解时放慢关键术语；用 1 个生活类比 + 1 个反例加深印象。</aside>
+</div>
 <!-- ==================== 第6页：真题精练 ==================== -->
 <div class="slide" id="s6">
 <h1>📝 真题精练</h1>
-
 <h3>真题一：斐波那契第 n 项（n ≤ 10¹⁸）</h3>
 <p><span class="info">题目：</span>fib(0)=0, fib(1)=1, fib(n)=fib(n-1)+fib(n-2)，n ≤ 10¹⁸，对 1e9+7 取模</p>
 <p><span class="highlight">矩阵加速策略：</span></p>
 <pre>转移矩阵 T = [[<span class="num">1</span>,<span class="num">1</span>],[<span class="num">1</span>,<span class="num">0</span>]]
 fib(n) = (T^(n-<span class="num">1</span>))[<span class="num">0</span>][<span class="num">0</span>]  <span class="cmt">// n≥1，n=0 特判</span>
 <span class="accent">复杂度：O(log n)，轻松处理 n=10^18</span></pre>
-
 <h3 style="margin-top:20px">真题二：解线性方程组（高斯消元模板）</h3>
 <p><span class="info">题目：</span>n 个方程 n 个未知数，判断：无解 / 唯一解 / 无穷多解</p>
 <p><span class="info">数据范围：</span>n ≤ 100</p>
 <pre><span class="cmt">// 三步骤：前向消元 → 矛盾检测 → 自由变量检测 → 回代</span>
-<span class="type">int</span> <span class="func">gauss</span>(vector&lt;vector&lt;<span class="type">double</span>&gt;&gt; a, vector&lt;<span class="type">double</span>&gt;& x) {
+<span class="type">int</span> <span class="func">gauss</span>(vector&lt;vector&lt;<span class="type">double</span>&gt;&gt; a, vector&lt;<span class="type">double</span>&gt;&amp; x) {
     <span class="cmt">// 1. 选主元 + 消元</span>
     <span class="cmt">// 2. 检查 0=c (c≠0) → 无解 return -1</span>
     <span class="cmt">// 3. 检查自由变量 → 无穷多解 return 0</span>
     <span class="cmt">// 4. 回代 → 唯一解 return 1</span>
 }</pre>
-
 <h3 style="margin-top:20px">常见易错点</h3>
 <ul>
 <li><span class="highlight">矩阵乘法维度</span> → A(n×m) × B(m×p)，必须匹配</li>
@@ -231,8 +253,18 @@ fib(n) = (T^(n-<span class="num">1</span>))[<span class="num">0</span>][<span cl
 <li><span class="highlight">浮点判零</span> → 必须用 EPS，不能用 == 0</li>
 <li><span class="highlight">行列式变号</span> → 交换行时 det = -det</li>
 </ul>
-</div>
 
+<aside class="notes">【讲解】📝 真题精练
+本页要点（照着讲即可）：
+· 题目： fib(0)=0, fib(1)=1, fib(n)=fib(n-1)+fib(n-2)，n ≤ 10¹⁸，对 1e9+7 取模
+· 矩阵加速策略：
+· 题目： n 个方程 n 个未知数，判断：无解 / 唯一解 / 无穷多解
+· 数据范围： n ≤ 100
+· 矩阵乘法维度 → A(n×m) × B(m×p)，必须匹配
+· 快速幂初始值 → 单位矩阵，不是全零矩阵
+练习页节奏：先独立想 1 分钟 → 再点拨思路 → 最后对答案讲为什么。
+可联系：Fibonacci加速、线性方程组求解</aside>
+</div>
 <!-- ==================== 第7页：总结 ==================== -->
 <div class="slide" id="s7">
 <h1>🎯 本课小结</h1>
@@ -266,8 +298,19 @@ fib(n) = (T^(n-<span class="num">1</span>))[<span class="num">0</span>][<span cl
 <p>浮点数直接用 == 0</p>
 </div>
 </div>
-</div>
 
+<aside class="notes">【收尾】回顾本课主线：🎯 本课小结
+对照大纲再过一遍：矩阵乘法、矩阵快速幂、高斯消元（解线性方程组）
+板书/口述要点：
+· 核心： 结合律 保证二分有效
+· 递推加速：k阶递推 → k×k矩阵
+· 复杂度： O(k³·log n)
+· 初始化： 单位矩阵
+· 选主元 → 避免除零
+· 前向消元 + 回代
+课后任务：Fibonacci加速、线性方程组求解
+结束前留 2 分钟答疑；布置 1 道小练习检验是否真正掌握。</aside>
+</div>
 <!-- ==================== 导航 ==================== -->
 <div class="nav">
 <button onclick="prevSlide()">◀ 上一页</button>
@@ -275,7 +318,6 @@ fib(n) = (T^(n-<span class="num">1</span>))[<span class="num">0</span>][<span cl
 <button onclick="nextSlide()">下一页 ▶</button>
 </div>
 </div>
-
 <script>
 let current = 0;
 const slides = document.querySelectorAll('.slide');
