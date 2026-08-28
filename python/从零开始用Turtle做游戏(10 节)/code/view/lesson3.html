@@ -1,0 +1,185 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>lesson3.py</title>
+<style>
+  :root {
+    --bg: #f5f7fa; --panel: #ffffff; --text: #1a1a2e; --muted: #5a6570;
+    --gold: #b8860b; --code-bg: #ffffff; --code-text: #1f2933;
+    --border: #d8dee6; --top-bg: #ffffff; --top-border: #e5e9ef;
+  }
+  * { box-sizing: border-box; }
+  html, body {
+    margin: 0; padding: 0; background: var(--bg); color: var(--text);
+    font-family: -apple-system, BlinkMacSystemFont, "PingFang SC", "Microsoft YaHei", sans-serif;
+    min-height: 100%;
+  }
+  .top {
+    position: sticky; top: 0; z-index: 10;
+    display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between;
+    gap: 10px; padding: 12px 18px; background: var(--top-bg);
+    border-bottom: 1px solid var(--top-border); box-shadow: 0 1px 8px rgba(15, 23, 42, 0.06);
+  }
+  .brand { color: var(--gold); font-weight: 700; font-size: 14px; letter-spacing: 0.04em; }
+  .title { font-size: 15px; font-weight: 600; color: var(--text); }
+  .actions { display: flex; gap: 8px; flex-wrap: wrap; }
+  .btn {
+    appearance: none; border: 1px solid var(--border); background: #fff; color: var(--text);
+    border-radius: 999px; padding: 8px 14px; font-size: 13px; font-weight: 600;
+    text-decoration: none; cursor: pointer;
+  }
+  .btn.gold { background: linear-gradient(135deg, #f0d78c, #d4a853); color: #0a2540; border-color: #e0c06a; }
+  .meta {
+    padding: 10px 18px; color: var(--muted); font-size: 12px;
+    border-bottom: 1px solid var(--border); background: var(--panel);
+  }
+  .wrap { padding: 16px 18px 40px; }
+  pre {
+    margin: 0; background: var(--code-bg); color: var(--code-text);
+    border: 1px solid var(--border); border-radius: 12px; padding: 18px 20px;
+    overflow: auto; font-family: "SF Mono", "JetBrains Mono", Consolas, "Courier New", monospace;
+    font-size: 13.5px; line-height: 1.55; white-space: pre; tab-size: 4;
+  }
+  .hint { margin-top: 12px; color: var(--muted); font-size: 12px; }
+  @media print {
+    html, body { background: #fff !important; color: #000 !important; }
+    .top { position: static; box-shadow: none; border-bottom: 1px solid #ccc; background: #fff !important; }
+    .actions { display: none !important; }
+    .meta { background: #fff !important; border-color: #ddd; color: #333; }
+    .wrap { padding: 0; }
+    pre {
+      background: #fff !important; color: #000 !important;
+      border: 1px solid #bbb; box-shadow: none; border-radius: 0;
+      white-space: pre-wrap; word-break: break-word; font-size: 11pt; line-height: 1.4;
+    }
+    .hint { display: none; }
+    a { color: #000; text-decoration: none; }
+  }
+</style>
+</head>
+<body>
+  <div class="top">
+    <div class="brand">从零开始用 Turtle 做游戏 · 配套代码</div>
+    <div class="title">lesson3.py</div>
+    <div class="actions">
+      <a class="btn" href="../lesson3.py" download="lesson3.py">⬇️ 下载源文件</a>
+      <a class="btn" href="javascript:window.print()">🖨️ 打印代码</a>
+      <a class="btn gold" href="javascript:history.back()">← 返回课件</a>
+    </div>
+  </div>
+  <div class="meta">编码：UTF-8 · 文件：lesson3.py · 共 107 行 · 浅色主题便于打印</div>
+  <div class="wrap">
+    <pre id="code"># ============================================
+# 第 3 课  点哪里打哪里
+# 小游戏：打地鼠
+# 知识：onscreenclick、随机坐标、计分、倒计时
+# 操作：地鼠出现后尽快点中；30 秒结束
+# ============================================
+
+import turtle
+import random
+
+GAME_SECONDS = 30
+screen = turtle.Screen()
+screen.setup(800, 600)
+screen.title(&quot;第 3 课 · 打地鼠&quot;)
+screen.bgcolor(&quot;#1b140c&quot;)
+screen.tracer(0)
+
+score = 0
+time_left = GAME_SECONDS
+alive = True
+
+# 地鼠
+mole = turtle.Turtle()
+mole.shape(&quot;turtle&quot;)
+mole.color(&quot;#E67E22&quot;)
+mole.shapesize(2.2, 2.2)
+mole.penup()
+mole.speed(0)
+
+hud = turtle.Turtle()
+hud.hideturtle()
+hud.penup()
+hud.color(&quot;#F8E9C8&quot;)
+
+hint = turtle.Turtle()
+hint.hideturtle()
+hint.penup()
+hint.color(&quot;#D4A574&quot;)
+hint.goto(0, -260)
+hint.write(&quot;点中橙色地鼠得分  ·  点空了不扣分  ·  30 秒挑战&quot;,
+           align=&quot;center&quot;, font=(&quot;PingFang SC&quot;, 14, &quot;normal&quot;))
+
+
+def jump_mole():
+    if not alive:
+        return
+    x = random.randint(-320, 320)
+    y = random.randint(-180, 180)
+    mole.goto(x, y)
+    mole.setheading(random.randint(0, 360))
+    mole.showturtle()
+    screen.update()
+
+
+def draw_hud():
+    hud.clear()
+    hud.goto(0, 240)
+    hud.write(f&quot;得分 {score}    剩余 {time_left} 秒&quot;,
+              align=&quot;center&quot;, font=(&quot;PingFang SC&quot;, 22, &quot;bold&quot;))
+    screen.update()
+
+
+def hit(x, y):
+    global score
+    if not alive:
+        return
+    # 点到地鼠附近 40 像素内算打中
+    if mole.distance(x, y) &lt; 40:
+        score += 1
+        mole.hideturtle()
+        draw_hud()
+        jump_mole()
+
+
+def tick_timer():
+    global time_left, alive
+    if not alive:
+        return
+    time_left -= 1
+    draw_hud()
+    if time_left &lt;= 0:
+        alive = False
+        mole.hideturtle()
+        hud.goto(0, 40)
+        hud.write(f&quot;时间到！最终得分 {score}&quot;,
+                  align=&quot;center&quot;, font=(&quot;PingFang SC&quot;, 28, &quot;bold&quot;))
+        screen.update()
+        return
+    screen.ontimer(tick_timer, 1000)
+
+
+def mole_wander():
+    if not alive:
+        return
+    jump_mole()
+    # 地鼠自己也会换洞，越往后越快一点点
+    wait = max(500, 1400 - score * 80)
+    screen.ontimer(mole_wander, wait)
+
+
+draw_hud()
+jump_mole()
+screen.onscreenclick(hit)
+screen.ontimer(tick_timer, 1000)
+screen.ontimer(mole_wander, 1400)
+screen.update()
+turtle.done()
+</pre>
+    <p class="hint">本页使用浅色主题与 UTF-8 编码，可直接打印或导出 PDF。</p>
+  </div>
+</body>
+</html>

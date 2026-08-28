@@ -1,0 +1,193 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>lesson4.py</title>
+<style>
+  :root {
+    --bg: #f5f7fa; --panel: #ffffff; --text: #1a1a2e; --muted: #5a6570;
+    --gold: #b8860b; --code-bg: #ffffff; --code-text: #1f2933;
+    --border: #d8dee6; --top-bg: #ffffff; --top-border: #e5e9ef;
+  }
+  * { box-sizing: border-box; }
+  html, body {
+    margin: 0; padding: 0; background: var(--bg); color: var(--text);
+    font-family: -apple-system, BlinkMacSystemFont, "PingFang SC", "Microsoft YaHei", sans-serif;
+    min-height: 100%;
+  }
+  .top {
+    position: sticky; top: 0; z-index: 10;
+    display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between;
+    gap: 10px; padding: 12px 18px; background: var(--top-bg);
+    border-bottom: 1px solid var(--top-border); box-shadow: 0 1px 8px rgba(15, 23, 42, 0.06);
+  }
+  .brand { color: var(--gold); font-weight: 700; font-size: 14px; letter-spacing: 0.04em; }
+  .title { font-size: 15px; font-weight: 600; color: var(--text); }
+  .actions { display: flex; gap: 8px; flex-wrap: wrap; }
+  .btn {
+    appearance: none; border: 1px solid var(--border); background: #fff; color: var(--text);
+    border-radius: 999px; padding: 8px 14px; font-size: 13px; font-weight: 600;
+    text-decoration: none; cursor: pointer;
+  }
+  .btn.gold { background: linear-gradient(135deg, #f0d78c, #d4a853); color: #0a2540; border-color: #e0c06a; }
+  .meta {
+    padding: 10px 18px; color: var(--muted); font-size: 12px;
+    border-bottom: 1px solid var(--border); background: var(--panel);
+  }
+  .wrap { padding: 16px 18px 40px; }
+  pre {
+    margin: 0; background: var(--code-bg); color: var(--code-text);
+    border: 1px solid var(--border); border-radius: 12px; padding: 18px 20px;
+    overflow: auto; font-family: "SF Mono", "JetBrains Mono", Consolas, "Courier New", monospace;
+    font-size: 13.5px; line-height: 1.55; white-space: pre; tab-size: 4;
+  }
+  .hint { margin-top: 12px; color: var(--muted); font-size: 12px; }
+  @media print {
+    html, body { background: #fff !important; color: #000 !important; }
+    .top { position: static; box-shadow: none; border-bottom: 1px solid #ccc; background: #fff !important; }
+    .actions { display: none !important; }
+    .meta { background: #fff !important; border-color: #ddd; color: #333; }
+    .wrap { padding: 0; }
+    pre {
+      background: #fff !important; color: #000 !important;
+      border: 1px solid #bbb; box-shadow: none; border-radius: 0;
+      white-space: pre-wrap; word-break: break-word; font-size: 11pt; line-height: 1.4;
+    }
+    .hint { display: none; }
+    a { color: #000; text-decoration: none; }
+  }
+</style>
+</head>
+<body>
+  <div class="top">
+    <div class="brand">从零开始用 Turtle 做游戏 · 配套代码</div>
+    <div class="title">lesson4.py</div>
+    <div class="actions">
+      <a class="btn" href="../lesson4.py" download="lesson4.py">⬇️ 下载源文件</a>
+      <a class="btn" href="javascript:window.print()">🖨️ 打印代码</a>
+      <a class="btn gold" href="javascript:history.back()">← 返回课件</a>
+    </div>
+  </div>
+  <div class="meta">编码：UTF-8 · 文件：lesson4.py · 共 115 行 · 浅色主题便于打印</div>
+  <div class="wrap">
+    <pre id="code"># ============================================
+# 第 4 课  让画面自己动
+# 小游戏：接住金币
+# 知识：ontimer 游戏循环、下落、左右移动
+# 操作：左右方向键移动篮子，接住掉下来的金币
+# ============================================
+
+import turtle
+import random
+
+screen = turtle.Screen()
+screen.setup(800, 600)
+screen.title(&quot;第 4 课 · 接住金币&quot;)
+screen.bgcolor(&quot;#101828&quot;)
+screen.tracer(0)
+
+score = 0
+missed = 0
+alive = True
+vx = 0  # 篮子水平速度
+
+basket = turtle.Turtle()
+basket.shape(&quot;square&quot;)
+basket.color(&quot;#F4D03F&quot;)
+basket.shapesize(1, 5)
+basket.penup()
+basket.goto(0, -240)
+
+coin = turtle.Turtle()
+coin.shape(&quot;circle&quot;)
+coin.color(&quot;#F7DC6F&quot;)
+coin.penup()
+coin.goto(random.randint(-340, 340), 260)
+
+hud = turtle.Turtle()
+hud.hideturtle()
+hud.penup()
+hud.color(&quot;#F8E9C8&quot;)
+
+
+def reset_coin():
+    coin.goto(random.randint(-340, 340), 280)
+
+
+def press_left():
+    global vx
+    vx = -8
+
+
+def press_right():
+    global vx
+    vx = 8
+
+
+def stop():
+    global vx
+    vx = 0
+
+
+def draw_hud():
+    hud.clear()
+    hud.goto(0, 250)
+    hud.write(f&quot;接到 {score}    漏掉 {missed}/8&quot;,
+              align=&quot;center&quot;, font=(&quot;PingFang SC&quot;, 20, &quot;bold&quot;))
+
+
+def game_over(msg):
+    global alive
+    alive = False
+    hud.goto(0, 20)
+    hud.write(msg, align=&quot;center&quot;, font=(&quot;PingFang SC&quot;, 28, &quot;bold&quot;))
+
+
+def tick():
+    global score, missed
+    if not alive:
+        screen.update()
+        return
+
+    # 篮子移动，并限制在窗口里
+    basket.setx(basket.xcor() + vx)
+    if basket.xcor() &gt; 350:
+        basket.setx(350)
+    if basket.xcor() &lt; -350:
+        basket.setx(-350)
+
+    # 金币往下落；接到越多掉得越快
+    coin.sety(coin.ycor() - (5 + score // 3))
+
+    if coin.ycor() &lt; -280:
+        missed += 1
+        reset_coin()
+        if missed &gt;= 8:
+            draw_hud()
+            game_over(&quot;金币漏光了……再开一局试试&quot;)
+            screen.update()
+            return
+
+    if coin.ycor() &lt; -210 and basket.distance(coin) &lt; 70:
+        score += 1
+        reset_coin()
+
+    draw_hud()
+    screen.update()
+    screen.ontimer(tick, 20)
+
+
+draw_hud()
+screen.listen()
+screen.onkeypress(press_left, &quot;Left&quot;)
+screen.onkeypress(press_right, &quot;Right&quot;)
+screen.onkeyrelease(stop, &quot;Left&quot;)
+screen.onkeyrelease(stop, &quot;Right&quot;)
+screen.ontimer(tick, 20)
+turtle.done()
+</pre>
+    <p class="hint">本页使用浅色主题与 UTF-8 编码，可直接打印或导出 PDF。</p>
+  </div>
+</body>
+</html>

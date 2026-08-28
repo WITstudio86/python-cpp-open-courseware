@@ -1,0 +1,217 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>lesson5.py</title>
+<style>
+  :root {
+    --bg: #f5f7fa; --panel: #ffffff; --text: #1a1a2e; --muted: #5a6570;
+    --gold: #b8860b; --code-bg: #ffffff; --code-text: #1f2933;
+    --border: #d8dee6; --top-bg: #ffffff; --top-border: #e5e9ef;
+  }
+  * { box-sizing: border-box; }
+  html, body {
+    margin: 0; padding: 0; background: var(--bg); color: var(--text);
+    font-family: -apple-system, BlinkMacSystemFont, "PingFang SC", "Microsoft YaHei", sans-serif;
+    min-height: 100%;
+  }
+  .top {
+    position: sticky; top: 0; z-index: 10;
+    display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between;
+    gap: 10px; padding: 12px 18px; background: var(--top-bg);
+    border-bottom: 1px solid var(--top-border); box-shadow: 0 1px 8px rgba(15, 23, 42, 0.06);
+  }
+  .brand { color: var(--gold); font-weight: 700; font-size: 14px; letter-spacing: 0.04em; }
+  .title { font-size: 15px; font-weight: 600; color: var(--text); }
+  .actions { display: flex; gap: 8px; flex-wrap: wrap; }
+  .btn {
+    appearance: none; border: 1px solid var(--border); background: #fff; color: var(--text);
+    border-radius: 999px; padding: 8px 14px; font-size: 13px; font-weight: 600;
+    text-decoration: none; cursor: pointer;
+  }
+  .btn.gold { background: linear-gradient(135deg, #f0d78c, #d4a853); color: #0a2540; border-color: #e0c06a; }
+  .meta {
+    padding: 10px 18px; color: var(--muted); font-size: 12px;
+    border-bottom: 1px solid var(--border); background: var(--panel);
+  }
+  .wrap { padding: 16px 18px 40px; }
+  pre {
+    margin: 0; background: var(--code-bg); color: var(--code-text);
+    border: 1px solid var(--border); border-radius: 12px; padding: 18px 20px;
+    overflow: auto; font-family: "SF Mono", "JetBrains Mono", Consolas, "Courier New", monospace;
+    font-size: 13.5px; line-height: 1.55; white-space: pre; tab-size: 4;
+  }
+  .hint { margin-top: 12px; color: var(--muted); font-size: 12px; }
+  @media print {
+    html, body { background: #fff !important; color: #000 !important; }
+    .top { position: static; box-shadow: none; border-bottom: 1px solid #ccc; background: #fff !important; }
+    .actions { display: none !important; }
+    .meta { background: #fff !important; border-color: #ddd; color: #333; }
+    .wrap { padding: 0; }
+    pre {
+      background: #fff !important; color: #000 !important;
+      border: 1px solid #bbb; box-shadow: none; border-radius: 0;
+      white-space: pre-wrap; word-break: break-word; font-size: 11pt; line-height: 1.4;
+    }
+    .hint { display: none; }
+    a { color: #000; text-decoration: none; }
+  }
+</style>
+</head>
+<body>
+  <div class="top">
+    <div class="brand">从零开始用 Turtle 做游戏 · 配套代码</div>
+    <div class="title">lesson5.py</div>
+    <div class="actions">
+      <a class="btn" href="../lesson5.py" download="lesson5.py">⬇️ 下载源文件</a>
+      <a class="btn" href="javascript:window.print()">🖨️ 打印代码</a>
+      <a class="btn gold" href="javascript:history.back()">← 返回课件</a>
+    </div>
+  </div>
+  <div class="meta">编码：UTF-8 · 文件：lesson5.py · 共 139 行 · 浅色主题便于打印</div>
+  <div class="wrap">
+    <pre id="code"># ============================================
+# 第 5 课  碰一碰
+# 小游戏：星星收集者
+# 知识：distance 碰撞、多种角色、胜负判定
+# 操作：方向键移动；吃到星星 +1；碰到石头就结束
+#       吃满 10 颗星星获胜
+# ============================================
+
+import turtle
+import random
+
+screen = turtle.Screen()
+screen.setup(800, 600)
+screen.title(&quot;第 5 课 · 星星收集者&quot;)
+screen.bgcolor(&quot;#0d1b2a&quot;)
+screen.tracer(0)
+
+score = 0
+alive = True
+keys = {&quot;Up&quot;: False, &quot;Down&quot;: False, &quot;Left&quot;: False, &quot;Right&quot;: False}
+
+player = turtle.Turtle()
+player.shape(&quot;turtle&quot;)
+player.color(&quot;#48C9B0&quot;)
+player.shapesize(1.5, 1.5)
+player.penup()
+player.goto(0, 0)
+
+star = turtle.Turtle()
+star.shape(&quot;triangle&quot;)
+star.color(&quot;#F7DC6F&quot;)
+star.penup()
+star.goto(180, 120)
+
+rocks = []
+for _ in range(4):
+    rock = turtle.Turtle()
+    rock.shape(&quot;circle&quot;)
+    rock.color(&quot;#E74C3C&quot;)
+    rock.penup()
+    rock.goto(random.randint(-320, 320), random.randint(-200, 200))
+    rocks.append(rock)
+
+hud = turtle.Turtle()
+hud.hideturtle()
+hud.penup()
+hud.color(&quot;#D6EAF8&quot;)
+
+
+def place_star():
+    while True:
+        x = random.randint(-330, 330)
+        y = random.randint(-220, 200)
+        star.goto(x, y)
+        # 不要刷在玩家或石头身上
+        if star.distance(player) &lt; 60:
+            continue
+        if any(star.distance(r) &lt; 50 for r in rocks):
+            continue
+        break
+
+
+def press(name):
+    def inner():
+        keys[name] = True
+    return inner
+
+
+def release(name):
+    def inner():
+        keys[name] = False
+    return inner
+
+
+def draw_hud():
+    hud.clear()
+    hud.goto(0, 250)
+    hud.write(f&quot;星星 {score} / 10    躲开红色石头&quot;,
+              align=&quot;center&quot;, font=(&quot;PingFang SC&quot;, 20, &quot;bold&quot;))
+
+
+def finish(msg):
+    global alive
+    alive = False
+    hud.goto(0, 30)
+    hud.write(msg, align=&quot;center&quot;, font=(&quot;PingFang SC&quot;, 28, &quot;bold&quot;))
+
+
+def tick():
+    global score
+    if not alive:
+        screen.update()
+        return
+
+    if keys[&quot;Left&quot;]:
+        player.setheading(180)
+        player.forward(6)
+    if keys[&quot;Right&quot;]:
+        player.setheading(0)
+        player.forward(6)
+    if keys[&quot;Up&quot;]:
+        player.setheading(90)
+        player.forward(6)
+    if keys[&quot;Down&quot;]:
+        player.setheading(270)
+        player.forward(6)
+
+    # 不出界
+    player.setx(max(-370, min(370, player.xcor())))
+    player.sety(max(-270, min(250, player.ycor())))
+
+    if player.distance(star) &lt; 28:
+        score += 1
+        place_star()
+        if score &gt;= 10:
+            draw_hud()
+            finish(&quot;收集完成！你赢了&quot;)
+            screen.update()
+            return
+
+    for rock in rocks:
+        if player.distance(rock) &lt; 26:
+            finish(&quot;撞到石头了……&quot;)
+            screen.update()
+            return
+
+    draw_hud()
+    screen.update()
+    screen.ontimer(tick, 20)
+
+
+place_star()
+draw_hud()
+screen.listen()
+for k in keys:
+    screen.onkeypress(press(k), k)
+    screen.onkeyrelease(release(k), k)
+screen.ontimer(tick, 20)
+turtle.done()
+</pre>
+    <p class="hint">本页使用浅色主题与 UTF-8 编码，可直接打印或导出 PDF。</p>
+  </div>
+</body>
+</html>

@@ -1,0 +1,247 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>lesson9.py</title>
+<style>
+  :root {
+    --bg: #f5f7fa; --panel: #ffffff; --text: #1a1a2e; --muted: #5a6570;
+    --gold: #b8860b; --code-bg: #ffffff; --code-text: #1f2933;
+    --border: #d8dee6; --top-bg: #ffffff; --top-border: #e5e9ef;
+  }
+  * { box-sizing: border-box; }
+  html, body {
+    margin: 0; padding: 0; background: var(--bg); color: var(--text);
+    font-family: -apple-system, BlinkMacSystemFont, "PingFang SC", "Microsoft YaHei", sans-serif;
+    min-height: 100%;
+  }
+  .top {
+    position: sticky; top: 0; z-index: 10;
+    display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between;
+    gap: 10px; padding: 12px 18px; background: var(--top-bg);
+    border-bottom: 1px solid var(--top-border); box-shadow: 0 1px 8px rgba(15, 23, 42, 0.06);
+  }
+  .brand { color: var(--gold); font-weight: 700; font-size: 14px; letter-spacing: 0.04em; }
+  .title { font-size: 15px; font-weight: 600; color: var(--text); }
+  .actions { display: flex; gap: 8px; flex-wrap: wrap; }
+  .btn {
+    appearance: none; border: 1px solid var(--border); background: #fff; color: var(--text);
+    border-radius: 999px; padding: 8px 14px; font-size: 13px; font-weight: 600;
+    text-decoration: none; cursor: pointer;
+  }
+  .btn.gold { background: linear-gradient(135deg, #f0d78c, #d4a853); color: #0a2540; border-color: #e0c06a; }
+  .meta {
+    padding: 10px 18px; color: var(--muted); font-size: 12px;
+    border-bottom: 1px solid var(--border); background: var(--panel);
+  }
+  .wrap { padding: 16px 18px 40px; }
+  pre {
+    margin: 0; background: var(--code-bg); color: var(--code-text);
+    border: 1px solid var(--border); border-radius: 12px; padding: 18px 20px;
+    overflow: auto; font-family: "SF Mono", "JetBrains Mono", Consolas, "Courier New", monospace;
+    font-size: 13.5px; line-height: 1.55; white-space: pre; tab-size: 4;
+  }
+  .hint { margin-top: 12px; color: var(--muted); font-size: 12px; }
+  @media print {
+    html, body { background: #fff !important; color: #000 !important; }
+    .top { position: static; box-shadow: none; border-bottom: 1px solid #ccc; background: #fff !important; }
+    .actions { display: none !important; }
+    .meta { background: #fff !important; border-color: #ddd; color: #333; }
+    .wrap { padding: 0; }
+    pre {
+      background: #fff !important; color: #000 !important;
+      border: 1px solid #bbb; box-shadow: none; border-radius: 0;
+      white-space: pre-wrap; word-break: break-word; font-size: 11pt; line-height: 1.4;
+    }
+    .hint { display: none; }
+    a { color: #000; text-decoration: none; }
+  }
+</style>
+</head>
+<body>
+  <div class="top">
+    <div class="brand">从零开始用 Turtle 做游戏 · 配套代码</div>
+    <div class="title">lesson9.py</div>
+    <div class="actions">
+      <a class="btn" href="../lesson9.py" download="lesson9.py">⬇️ 下载源文件</a>
+      <a class="btn" href="javascript:window.print()">🖨️ 打印代码</a>
+      <a class="btn gold" href="javascript:history.back()">← 返回课件</a>
+    </div>
+  </div>
+  <div class="meta">编码：UTF-8 · 文件：lesson9.py · 共 169 行 · 浅色主题便于打印</div>
+  <div class="wrap">
+    <pre id="code"># ============================================
+# 第 9 课  长长的身体
+# 小游戏：贪吃蛇
+# 知识：列表当身体、每一节跟着走、吃食物变长、撞自己
+# 操作：方向键转弯；吃到黄点身体 +1；撞墙或撞自己结束
+#       R 重新开始
+# ============================================
+
+import turtle
+import random
+
+STEP = 20
+screen = turtle.Screen()
+screen.setup(600, 600)
+screen.title(&quot;第 9 课 · 贪吃蛇&quot;)
+screen.bgcolor(&quot;#0e1a12&quot;)
+screen.tracer(0)
+
+alive = True
+direction = 0  # 0 右  90 上  180 左  270 下
+pending = None  # 缓冲下一次转弯，避免同一帧掉头
+
+snake = []
+for i in range(3):
+    s = turtle.Turtle()
+    s.shape(&quot;square&quot;)
+    s.color(&quot;#58D68D&quot; if i == 0 else &quot;#1E8449&quot;)
+    s.penup()
+    s.goto(-i * STEP, 0)
+    snake.append(s)
+
+food = turtle.Turtle()
+food.shape(&quot;circle&quot;)
+food.color(&quot;#F4D03F&quot;)
+food.penup()
+food.goto(80, 80)
+
+hud = turtle.Turtle()
+hud.hideturtle()
+hud.penup()
+hud.color(&quot;#D5F5E3&quot;)
+
+
+def grid_point():
+    x = random.randint(-13, 13) * STEP
+    y = random.randint(-13, 12) * STEP
+    return x, y
+
+
+def place_food():
+    while True:
+        x, y = grid_point()
+        if any(seg.distance(x, y) &lt; 10 for seg in snake):
+            continue
+        food.goto(x, y)
+        break
+
+
+def draw_hud():
+    hud.clear()
+    hud.goto(0, 260)
+    hud.write(f&quot;长度 {len(snake)}    方向键转向  ·  R 重开&quot;,
+              align=&quot;center&quot;, font=(&quot;PingFang SC&quot;, 16, &quot;bold&quot;))
+
+
+def turn(heading):
+    global pending
+    # 不能直接 180 度掉头
+    if abs(heading - direction) == 180:
+        return
+    pending = heading
+
+
+def grow():
+    tail = turtle.Turtle()
+    tail.shape(&quot;square&quot;)
+    tail.color(&quot;#1E8449&quot;)
+    tail.penup()
+    last = snake[-1]
+    tail.goto(last.xcor(), last.ycor())
+    snake.append(tail)
+
+
+def restart():
+    global alive, direction, pending
+    alive = True
+    direction = 0
+    pending = None
+    while len(snake) &gt; 3:
+        extra = snake.pop()
+        extra.hideturtle()
+        extra.clear()
+    for i, seg in enumerate(snake):
+        seg.showturtle()
+        seg.goto(-i * STEP, 0)
+    snake[0].color(&quot;#58D68D&quot;)
+    place_food()
+    hud.clear()
+    tick()
+
+
+def game_over():
+    global alive
+    alive = False
+    hud.goto(0, 0)
+    hud.write(&quot;游戏结束  按 R 再来一局&quot;,
+              align=&quot;center&quot;, font=(&quot;PingFang SC&quot;, 24, &quot;bold&quot;))
+
+
+def tick():
+    global direction, pending
+    if not alive:
+        screen.update()
+        return
+
+    if pending is not None:
+        direction = pending
+        pending = None
+
+    head = snake[0]
+    nx = head.xcor()
+    ny = head.ycor()
+    if direction == 0:
+        nx += STEP
+    elif direction == 180:
+        nx -= STEP
+    elif direction == 90:
+        ny += STEP
+    else:
+        ny -= STEP
+
+    # 从尾巴往前挪：每一节走到前一节刚才的位置
+    for i in range(len(snake) - 1, 0, -1):
+        snake[i].goto(snake[i - 1].xcor(), snake[i - 1].ycor())
+    head.goto(nx, ny)
+    head.setheading(direction)
+
+    if abs(nx) &gt; 280 or abs(ny) &gt; 280:
+        game_over()
+        screen.update()
+        return
+
+    for seg in snake[1:]:
+        if head.distance(seg) &lt; 10:
+            game_over()
+            screen.update()
+            return
+
+    if head.distance(food) &lt; 15:
+        grow()
+        place_food()
+
+    draw_hud()
+    screen.update()
+    # 身体越长稍微越快
+    wait = max(70, 140 - len(snake) * 3)
+    screen.ontimer(tick, wait)
+
+
+place_food()
+draw_hud()
+screen.listen()
+screen.onkeypress(lambda: turn(90), &quot;Up&quot;)
+screen.onkeypress(lambda: turn(270), &quot;Down&quot;)
+screen.onkeypress(lambda: turn(180), &quot;Left&quot;)
+screen.onkeypress(lambda: turn(0), &quot;Right&quot;)
+screen.onkeypress(restart, &quot;r&quot;)
+screen.ontimer(tick, 140)
+turtle.done()
+</pre>
+    <p class="hint">本页使用浅色主题与 UTF-8 编码，可直接打印或导出 PDF。</p>
+  </div>
+</body>
+</html>

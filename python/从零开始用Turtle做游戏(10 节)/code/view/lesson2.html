@@ -1,0 +1,177 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>lesson2.py</title>
+<style>
+  :root {
+    --bg: #f5f7fa; --panel: #ffffff; --text: #1a1a2e; --muted: #5a6570;
+    --gold: #b8860b; --code-bg: #ffffff; --code-text: #1f2933;
+    --border: #d8dee6; --top-bg: #ffffff; --top-border: #e5e9ef;
+  }
+  * { box-sizing: border-box; }
+  html, body {
+    margin: 0; padding: 0; background: var(--bg); color: var(--text);
+    font-family: -apple-system, BlinkMacSystemFont, "PingFang SC", "Microsoft YaHei", sans-serif;
+    min-height: 100%;
+  }
+  .top {
+    position: sticky; top: 0; z-index: 10;
+    display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between;
+    gap: 10px; padding: 12px 18px; background: var(--top-bg);
+    border-bottom: 1px solid var(--top-border); box-shadow: 0 1px 8px rgba(15, 23, 42, 0.06);
+  }
+  .brand { color: var(--gold); font-weight: 700; font-size: 14px; letter-spacing: 0.04em; }
+  .title { font-size: 15px; font-weight: 600; color: var(--text); }
+  .actions { display: flex; gap: 8px; flex-wrap: wrap; }
+  .btn {
+    appearance: none; border: 1px solid var(--border); background: #fff; color: var(--text);
+    border-radius: 999px; padding: 8px 14px; font-size: 13px; font-weight: 600;
+    text-decoration: none; cursor: pointer;
+  }
+  .btn.gold { background: linear-gradient(135deg, #f0d78c, #d4a853); color: #0a2540; border-color: #e0c06a; }
+  .meta {
+    padding: 10px 18px; color: var(--muted); font-size: 12px;
+    border-bottom: 1px solid var(--border); background: var(--panel);
+  }
+  .wrap { padding: 16px 18px 40px; }
+  pre {
+    margin: 0; background: var(--code-bg); color: var(--code-text);
+    border: 1px solid var(--border); border-radius: 12px; padding: 18px 20px;
+    overflow: auto; font-family: "SF Mono", "JetBrains Mono", Consolas, "Courier New", monospace;
+    font-size: 13.5px; line-height: 1.55; white-space: pre; tab-size: 4;
+  }
+  .hint { margin-top: 12px; color: var(--muted); font-size: 12px; }
+  @media print {
+    html, body { background: #fff !important; color: #000 !important; }
+    .top { position: static; box-shadow: none; border-bottom: 1px solid #ccc; background: #fff !important; }
+    .actions { display: none !important; }
+    .meta { background: #fff !important; border-color: #ddd; color: #333; }
+    .wrap { padding: 0; }
+    pre {
+      background: #fff !important; color: #000 !important;
+      border: 1px solid #bbb; box-shadow: none; border-radius: 0;
+      white-space: pre-wrap; word-break: break-word; font-size: 11pt; line-height: 1.4;
+    }
+    .hint { display: none; }
+    a { color: #000; text-decoration: none; }
+  }
+</style>
+</head>
+<body>
+  <div class="top">
+    <div class="brand">从零开始用 Turtle 做游戏 · 配套代码</div>
+    <div class="title">lesson2.py</div>
+    <div class="actions">
+      <a class="btn" href="../lesson2.py" download="lesson2.py">⬇️ 下载源文件</a>
+      <a class="btn" href="javascript:window.print()">🖨️ 打印代码</a>
+      <a class="btn gold" href="javascript:history.back()">← 返回课件</a>
+    </div>
+  </div>
+  <div class="meta">编码：UTF-8 · 文件：lesson2.py · 共 99 行 · 浅色主题便于打印</div>
+  <div class="wrap">
+    <pre id="code"># ============================================
+# 第 2 课  方向盘
+# 小游戏：遥控小车
+# 知识：onkeypress、listen、setheading、goto、边界
+# 操作：方向键开车；空格加速；R 重置
+# ============================================
+
+import turtle
+
+WIDTH, HEIGHT = 800, 600
+STEP = 20
+BOOST = 40
+
+screen = turtle.Screen()
+screen.setup(WIDTH, HEIGHT)
+screen.title(&quot;第 2 课 · 遥控小车&quot;)
+screen.bgcolor(&quot;#102018&quot;)
+
+car = turtle.Turtle()
+car.shape(&quot;turtle&quot;)
+car.color(&quot;#7CFFB2&quot;)
+car.shapesize(1.8, 1.8)
+car.pensize(3)
+car.speed(0)
+car.penup()
+car.goto(0, -180)
+car.pendown()
+car.setheading(90)
+
+hud = turtle.Turtle()
+hud.hideturtle()
+hud.penup()
+hud.color(&quot;#c8f5d4&quot;)
+hud.goto(0, 250)
+hud.write(&quot;方向键开车  ·  空格加速冲刺  ·  R 重新出发&quot;,
+          align=&quot;center&quot;, font=(&quot;PingFang SC&quot;, 16, &quot;normal&quot;))
+
+
+def bounce_inside():
+    &quot;&quot;&quot;碰到窗口边缘就轻轻弹回来，车子不会开丢。&quot;&quot;&quot;
+    x, y = car.xcor(), car.ycor()
+    limit_x = WIDTH // 2 - 20
+    limit_y = HEIGHT // 2 - 20
+    if x &gt; limit_x:
+        car.setx(limit_x)
+        car.setheading(180)
+    elif x &lt; -limit_x:
+        car.setx(-limit_x)
+        car.setheading(0)
+    if y &gt; limit_y:
+        car.sety(limit_y)
+        car.setheading(270)
+    elif y &lt; -limit_y:
+        car.sety(-limit_y)
+        car.setheading(90)
+
+
+def drive(heading, distance):
+    car.setheading(heading)
+    car.forward(distance)
+    bounce_inside()
+
+
+def go_up():
+    drive(90, STEP)
+
+
+def go_down():
+    drive(270, STEP)
+
+
+def go_left():
+    drive(180, STEP)
+
+
+def go_right():
+    drive(0, STEP)
+
+
+def boost():
+    drive(car.heading(), BOOST)
+
+
+def reset_car():
+    car.clear()
+    car.penup()
+    car.goto(0, -180)
+    car.pendown()
+    car.setheading(90)
+
+
+screen.listen()
+screen.onkeypress(go_up, &quot;Up&quot;)
+screen.onkeypress(go_down, &quot;Down&quot;)
+screen.onkeypress(go_left, &quot;Left&quot;)
+screen.onkeypress(go_right, &quot;Right&quot;)
+screen.onkeypress(boost, &quot;space&quot;)
+screen.onkeypress(reset_car, &quot;r&quot;)
+turtle.done()
+</pre>
+    <p class="hint">本页使用浅色主题与 UTF-8 编码，可直接打印或导出 PDF。</p>
+  </div>
+</body>
+</html>

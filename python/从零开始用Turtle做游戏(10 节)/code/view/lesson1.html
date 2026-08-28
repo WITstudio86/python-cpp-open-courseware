@@ -1,0 +1,157 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>lesson1.py</title>
+<style>
+  :root {
+    --bg: #f5f7fa; --panel: #ffffff; --text: #1a1a2e; --muted: #5a6570;
+    --gold: #b8860b; --code-bg: #ffffff; --code-text: #1f2933;
+    --border: #d8dee6; --top-bg: #ffffff; --top-border: #e5e9ef;
+  }
+  * { box-sizing: border-box; }
+  html, body {
+    margin: 0; padding: 0; background: var(--bg); color: var(--text);
+    font-family: -apple-system, BlinkMacSystemFont, "PingFang SC", "Microsoft YaHei", sans-serif;
+    min-height: 100%;
+  }
+  .top {
+    position: sticky; top: 0; z-index: 10;
+    display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between;
+    gap: 10px; padding: 12px 18px; background: var(--top-bg);
+    border-bottom: 1px solid var(--top-border); box-shadow: 0 1px 8px rgba(15, 23, 42, 0.06);
+  }
+  .brand { color: var(--gold); font-weight: 700; font-size: 14px; letter-spacing: 0.04em; }
+  .title { font-size: 15px; font-weight: 600; color: var(--text); }
+  .actions { display: flex; gap: 8px; flex-wrap: wrap; }
+  .btn {
+    appearance: none; border: 1px solid var(--border); background: #fff; color: var(--text);
+    border-radius: 999px; padding: 8px 14px; font-size: 13px; font-weight: 600;
+    text-decoration: none; cursor: pointer;
+  }
+  .btn.gold { background: linear-gradient(135deg, #f0d78c, #d4a853); color: #0a2540; border-color: #e0c06a; }
+  .meta {
+    padding: 10px 18px; color: var(--muted); font-size: 12px;
+    border-bottom: 1px solid var(--border); background: var(--panel);
+  }
+  .wrap { padding: 16px 18px 40px; }
+  pre {
+    margin: 0; background: var(--code-bg); color: var(--code-text);
+    border: 1px solid var(--border); border-radius: 12px; padding: 18px 20px;
+    overflow: auto; font-family: "SF Mono", "JetBrains Mono", Consolas, "Courier New", monospace;
+    font-size: 13.5px; line-height: 1.55; white-space: pre; tab-size: 4;
+  }
+  .hint { margin-top: 12px; color: var(--muted); font-size: 12px; }
+  @media print {
+    html, body { background: #fff !important; color: #000 !important; }
+    .top { position: static; box-shadow: none; border-bottom: 1px solid #ccc; background: #fff !important; }
+    .actions { display: none !important; }
+    .meta { background: #fff !important; border-color: #ddd; color: #333; }
+    .wrap { padding: 0; }
+    pre {
+      background: #fff !important; color: #000 !important;
+      border: 1px solid #bbb; box-shadow: none; border-radius: 0;
+      white-space: pre-wrap; word-break: break-word; font-size: 11pt; line-height: 1.4;
+    }
+    .hint { display: none; }
+    a { color: #000; text-decoration: none; }
+  }
+</style>
+</head>
+<body>
+  <div class="top">
+    <div class="brand">从零开始用 Turtle 做游戏 · 配套代码</div>
+    <div class="title">lesson1.py</div>
+    <div class="actions">
+      <a class="btn" href="../lesson1.py" download="lesson1.py">⬇️ 下载源文件</a>
+      <a class="btn" href="javascript:window.print()">🖨️ 打印代码</a>
+      <a class="btn gold" href="javascript:history.back()">← 返回课件</a>
+    </div>
+  </div>
+  <div class="meta">编码：UTF-8 · 文件：lesson1.py · 共 79 行 · 浅色主题便于打印</div>
+  <div class="wrap">
+    <pre id="code"># ============================================
+# 第 1 课  海龟登场
+# 小游戏：彩虹点击画家
+# 知识：Screen、Turtle、前进转弯、颜色、点击、盖章
+# 操作：鼠标点击画面 → 盖一只彩色小海龟
+#       空格换下一种颜色    C 清屏
+# ============================================
+
+import turtle
+import random
+
+screen = turtle.Screen()
+screen.setup(800, 600)
+screen.title(&quot;第 1 课 · 彩虹点击画家&quot;)
+screen.bgcolor(&quot;#0b1220&quot;)
+screen.colormode(255)
+
+# 调色盘：点一下换一种心情
+PALETTE = [
+    (255, 99, 132),
+    (54, 162, 235),
+    (255, 206, 86),
+    (75, 192, 192),
+    (153, 102, 255),
+    (255, 159, 64),
+    (46, 204, 113),
+]
+color_index = 0
+
+# 画家海龟：抬笔，这样移动时不会拖出线
+painter = turtle.Turtle()
+painter.shape(&quot;turtle&quot;)
+painter.shapesize(1.6, 1.6)
+painter.speed(0)
+painter.penup()
+painter.color(PALETTE[0])
+
+# 专门写字的海龟，hideturtle 后只留下文字
+writer = turtle.Turtle()
+writer.hideturtle()
+writer.penup()
+writer.color(&quot;#d0e6ff&quot;)
+writer.goto(0, 250)
+writer.write(&quot;点击画面盖章  ·  空格换色  ·  C 清屏&quot;,
+             align=&quot;center&quot;, font=(&quot;PingFang SC&quot;, 18, &quot;normal&quot;))
+
+
+def current_color():
+    return PALETTE[color_index % len(PALETTE)]
+
+
+def paint(x, y):
+    &quot;&quot;&quot;鼠标点哪里，海龟就走到哪里盖一个章。&quot;&quot;&quot;
+    painter.goto(x, y)
+    painter.setheading(random.randint(0, 360))
+    painter.color(current_color())
+    painter.stamp()
+
+
+def next_color():
+    global color_index
+    color_index += 1
+    painter.color(current_color())
+
+
+def clear_canvas():
+    painter.clear()
+
+
+# 热身可以先自己在交互里试：
+# painter.forward(100)
+# painter.left(90)
+# 连走 4 次就是正方形
+
+screen.onscreenclick(paint)
+screen.listen()
+screen.onkeypress(next_color, &quot;space&quot;)
+screen.onkeypress(clear_canvas, &quot;c&quot;)
+turtle.done()
+</pre>
+    <p class="hint">本页使用浅色主题与 UTF-8 编码，可直接打印或导出 PDF。</p>
+  </div>
+</body>
+</html>

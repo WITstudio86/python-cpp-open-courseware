@@ -1,0 +1,236 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>lesson8.py</title>
+<style>
+  :root {
+    --bg: #f5f7fa; --panel: #ffffff; --text: #1a1a2e; --muted: #5a6570;
+    --gold: #b8860b; --code-bg: #ffffff; --code-text: #1f2933;
+    --border: #d8dee6; --top-bg: #ffffff; --top-border: #e5e9ef;
+  }
+  * { box-sizing: border-box; }
+  html, body {
+    margin: 0; padding: 0; background: var(--bg); color: var(--text);
+    font-family: -apple-system, BlinkMacSystemFont, "PingFang SC", "Microsoft YaHei", sans-serif;
+    min-height: 100%;
+  }
+  .top {
+    position: sticky; top: 0; z-index: 10;
+    display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between;
+    gap: 10px; padding: 12px 18px; background: var(--top-bg);
+    border-bottom: 1px solid var(--top-border); box-shadow: 0 1px 8px rgba(15, 23, 42, 0.06);
+  }
+  .brand { color: var(--gold); font-weight: 700; font-size: 14px; letter-spacing: 0.04em; }
+  .title { font-size: 15px; font-weight: 600; color: var(--text); }
+  .actions { display: flex; gap: 8px; flex-wrap: wrap; }
+  .btn {
+    appearance: none; border: 1px solid var(--border); background: #fff; color: var(--text);
+    border-radius: 999px; padding: 8px 14px; font-size: 13px; font-weight: 600;
+    text-decoration: none; cursor: pointer;
+  }
+  .btn.gold { background: linear-gradient(135deg, #f0d78c, #d4a853); color: #0a2540; border-color: #e0c06a; }
+  .meta {
+    padding: 10px 18px; color: var(--muted); font-size: 12px;
+    border-bottom: 1px solid var(--border); background: var(--panel);
+  }
+  .wrap { padding: 16px 18px 40px; }
+  pre {
+    margin: 0; background: var(--code-bg); color: var(--code-text);
+    border: 1px solid var(--border); border-radius: 12px; padding: 18px 20px;
+    overflow: auto; font-family: "SF Mono", "JetBrains Mono", Consolas, "Courier New", monospace;
+    font-size: 13.5px; line-height: 1.55; white-space: pre; tab-size: 4;
+  }
+  .hint { margin-top: 12px; color: var(--muted); font-size: 12px; }
+  @media print {
+    html, body { background: #fff !important; color: #000 !important; }
+    .top { position: static; box-shadow: none; border-bottom: 1px solid #ccc; background: #fff !important; }
+    .actions { display: none !important; }
+    .meta { background: #fff !important; border-color: #ddd; color: #333; }
+    .wrap { padding: 0; }
+    pre {
+      background: #fff !important; color: #000 !important;
+      border: 1px solid #bbb; box-shadow: none; border-radius: 0;
+      white-space: pre-wrap; word-break: break-word; font-size: 11pt; line-height: 1.4;
+    }
+    .hint { display: none; }
+    a { color: #000; text-decoration: none; }
+  }
+</style>
+</head>
+<body>
+  <div class="top">
+    <div class="brand">从零开始用 Turtle 做游戏 · 配套代码</div>
+    <div class="title">lesson8.py</div>
+    <div class="actions">
+      <a class="btn" href="../lesson8.py" download="lesson8.py">⬇️ 下载源文件</a>
+      <a class="btn" href="javascript:window.print()">🖨️ 打印代码</a>
+      <a class="btn gold" href="javascript:history.back()">← 返回课件</a>
+    </div>
+  </div>
+  <div class="meta">编码：UTF-8 · 文件：lesson8.py · 共 158 行 · 浅色主题便于打印</div>
+  <div class="wrap">
+    <pre id="code"># ============================================
+# 第 8 课  对打
+# 小游戏：乒乓球大战
+# 知识：挡板、反弹、双人键位、先到 5 分获胜
+# 操作：左边 W / S，右边 上 / 下
+# ============================================
+
+import turtle
+
+screen = turtle.Screen()
+screen.setup(800, 600)
+screen.title(&quot;第 8 课 · 乒乓球大战&quot;)
+screen.bgcolor(&quot;#0b1d2a&quot;)
+screen.tracer(0)
+
+left_score = 0
+right_score = 0
+alive = True
+left_v = 0
+right_v = 0
+
+
+def make_paddle(x):
+    p = turtle.Turtle()
+    p.shape(&quot;square&quot;)
+    p.color(&quot;#EAF2F8&quot;)
+    p.shapesize(5, 0.8)
+    p.penup()
+    p.goto(x, 0)
+    return p
+
+
+left = make_paddle(-350)
+right = make_paddle(350)
+
+ball = turtle.Turtle()
+ball.shape(&quot;circle&quot;)
+ball.color(&quot;#F4D03F&quot;)
+ball.penup()
+ball.dx = 4
+ball.dy = 3
+
+hud = turtle.Turtle()
+hud.hideturtle()
+hud.penup()
+hud.color(&quot;#D4E6F1&quot;)
+
+# 中间虚线
+mid = turtle.Turtle()
+mid.hideturtle()
+mid.color(&quot;#1F618D&quot;)
+mid.penup()
+mid.goto(0, 260)
+mid.setheading(270)
+mid.pensize(2)
+for _ in range(18):
+    mid.pendown()
+    mid.forward(14)
+    mid.penup()
+    mid.forward(14)
+
+
+def draw_hud():
+    hud.clear()
+    hud.goto(0, 250)
+    hud.write(f&quot;{left_score}    先到 5 分    {right_score}&quot;,
+              align=&quot;center&quot;, font=(&quot;PingFang SC&quot;, 22, &quot;bold&quot;))
+
+
+def reset_ball(direction):
+    ball.goto(0, 0)
+    ball.dx = 4 * direction
+    ball.dy = 3 if direction &gt; 0 else -3
+
+
+def finish(winner):
+    global alive
+    alive = False
+    hud.goto(0, 20)
+    hud.write(winner, align=&quot;center&quot;, font=(&quot;PingFang SC&quot;, 28, &quot;bold&quot;))
+
+
+def tick():
+    global left_score, right_score
+    if not alive:
+        screen.update()
+        return
+
+    left.sety(max(-230, min(230, left.ycor() + left_v)))
+    right.sety(max(-230, min(230, right.ycor() + right_v)))
+
+    ball.setx(ball.xcor() + ball.dx)
+    ball.sety(ball.ycor() + ball.dy)
+
+    # 上下墙壁反弹
+    if ball.ycor() &gt; 280:
+        ball.sety(280)
+        ball.dy *= -1
+    if ball.ycor() &lt; -280:
+        ball.sety(-280)
+        ball.dy *= -1
+
+    # 挡板反弹：打到后稍微加速
+    if ball.xcor() &lt; -330 and left.distance(ball) &lt; 70:
+        ball.setx(-330)
+        ball.dx = abs(ball.dx) + 0.3
+    if ball.xcor() &gt; 330 and right.distance(ball) &lt; 70:
+        ball.setx(330)
+        ball.dx = -(abs(ball.dx) + 0.3)
+
+    if ball.xcor() &lt; -390:
+        right_score += 1
+        reset_ball(1)
+        if right_score &gt;= 5:
+            draw_hud()
+            finish(&quot;右边获胜！&quot;)
+            screen.update()
+            return
+    if ball.xcor() &gt; 390:
+        left_score += 1
+        reset_ball(-1)
+        if left_score &gt;= 5:
+            draw_hud()
+            finish(&quot;左边获胜！&quot;)
+            screen.update()
+            return
+
+    draw_hud()
+    screen.update()
+    screen.ontimer(tick, 16)
+
+
+def lv(v):
+    def inner():
+        global left_v
+        left_v = v
+    return inner
+
+
+def rv(v):
+    def inner():
+        global right_v
+        right_v = v
+    return inner
+
+
+draw_hud()
+screen.listen()
+screen.onkeypress(lv(7), &quot;w&quot;)
+screen.onkeypress(lv(-7), &quot;s&quot;)
+screen.onkeyrelease(lv(0), &quot;w&quot;)
+screen.onkeyrelease(lv(0), &quot;s&quot;)
+screen.onkeypress(rv(7), &quot;Up&quot;)
+screen.onkeypress(rv(-7), &quot;Down&quot;)
+screen.onkeyrelease(rv(0), &quot;Up&quot;)
+screen.onkeyrelease(rv(0), &quot;Down&quot;)
+screen.ontimer(tick, 16)
+turtle.done()
+</pre>
+    <p class="hint">本页使用浅色主题与 UTF-8 编码，可直接打印或导出 PDF。</p>
+  </div>
+</body>
+</html>
