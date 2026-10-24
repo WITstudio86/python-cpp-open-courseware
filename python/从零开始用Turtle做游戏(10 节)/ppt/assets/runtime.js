@@ -163,8 +163,11 @@
         mini.style.pointerEvents = 'none';
         mini.style.background = 'var(--bg)';
         
-        // Clone the slide content
+        // Clone the slide content (strip heavy code so overview stays light)
         const clone = s.cloneNode(true);
+        clone.querySelectorAll('pre, .follow-code, .code-card').forEach(function (el) {
+          el.textContent = '…';
+        });
         clone.className = 'slide is-active'; // force active styles
         clone.style.position = 'absolute';
         clone.style.inset = '0';

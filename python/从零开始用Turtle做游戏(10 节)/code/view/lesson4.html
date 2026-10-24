@@ -69,7 +69,7 @@
       <a class="btn gold" href="javascript:history.back()">← 返回课件</a>
     </div>
   </div>
-  <div class="meta">编码：UTF-8 · 文件：lesson4.py · 共 115 行 · 浅色主题便于打印</div>
+  <div class="meta">编码：UTF-8 · 文件：lesson4.py · 共 88 行 · 浅色主题便于打印</div>
   <div class="wrap">
     <pre id="code"># ============================================
 # 第 4 课  让画面自己动
@@ -84,101 +84,74 @@ import random
 screen = turtle.Screen()
 screen.setup(800, 600)
 screen.title(&quot;第 4 课 · 接住金币&quot;)
-screen.bgcolor(&quot;#101828&quot;)
+screen.bgcolor(&quot;navy&quot;)
 screen.tracer(0)
-
 score = 0
 missed = 0
 alive = True
-vx = 0  # 篮子水平速度
-
+vx = 0
 basket = turtle.Turtle()
 basket.shape(&quot;square&quot;)
-basket.color(&quot;#F4D03F&quot;)
+basket.color(&quot;gold&quot;)
 basket.shapesize(1, 5)
 basket.penup()
 basket.goto(0, -240)
-
 coin = turtle.Turtle()
 coin.shape(&quot;circle&quot;)
-coin.color(&quot;#F7DC6F&quot;)
+coin.color(&quot;yellow&quot;)
 coin.penup()
-coin.goto(random.randint(-340, 340), 260)
-
+coin.goto(0, 260)
 hud = turtle.Turtle()
 hud.hideturtle()
 hud.penup()
-hud.color(&quot;#F8E9C8&quot;)
-
+hud.color(&quot;white&quot;)
 
 def reset_coin():
     coin.goto(random.randint(-340, 340), 280)
-
-
 def press_left():
     global vx
     vx = -8
-
-
 def press_right():
     global vx
     vx = 8
-
-
 def stop():
     global vx
     vx = 0
-
-
 def draw_hud():
     hud.clear()
     hud.goto(0, 250)
-    hud.write(f&quot;接到 {score}    漏掉 {missed}/8&quot;,
-              align=&quot;center&quot;, font=(&quot;PingFang SC&quot;, 20, &quot;bold&quot;))
-
-
+    hud.write(f&quot;接到 {score}    漏掉 {missed}/8&quot;, align=&quot;center&quot;, font=(&quot;Arial&quot;, 20, &quot;bold&quot;))
 def game_over(msg):
     global alive
     alive = False
     hud.goto(0, 20)
-    hud.write(msg, align=&quot;center&quot;, font=(&quot;PingFang SC&quot;, 28, &quot;bold&quot;))
-
-
+    hud.write(msg, align=&quot;center&quot;, font=(&quot;Arial&quot;, 28, &quot;bold&quot;))
 def tick():
     global score, missed
     if not alive:
         screen.update()
         return
-
-    # 篮子移动，并限制在窗口里
     basket.setx(basket.xcor() + vx)
     if basket.xcor() &gt; 350:
         basket.setx(350)
     if basket.xcor() &lt; -350:
         basket.setx(-350)
-
-    # 金币往下落；接到越多掉得越快
     coin.sety(coin.ycor() - (5 + score // 3))
-
     if coin.ycor() &lt; -280:
-        missed += 1
+        missed = missed + 1
         reset_coin()
         if missed &gt;= 8:
             draw_hud()
             game_over(&quot;金币漏光了……再开一局试试&quot;)
             screen.update()
             return
-
     if coin.ycor() &lt; -210 and basket.distance(coin) &lt; 70:
-        score += 1
+        score = score + 1
         reset_coin()
-
     draw_hud()
     screen.update()
     screen.ontimer(tick, 20)
 
-
-draw_hud()
 screen.listen()
 screen.onkeypress(press_left, &quot;Left&quot;)
 screen.onkeypress(press_right, &quot;Right&quot;)

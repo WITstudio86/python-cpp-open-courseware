@@ -13,74 +13,74 @@ STEP = 20
 screen = turtle.Screen()
 screen.setup(600, 600)
 screen.title("第 9 课 · 贪吃蛇")
-screen.bgcolor("#0e1a12")
+screen.bgcolor("black")
 screen.tracer(0)
-
 alive = True
-direction = 0  # 0 右  90 上  180 左  270 下
-pending = None  # 缓冲下一次转弯，避免同一帧掉头
-
+direction = 0
+pending = None
 snake = []
 for i in range(3):
     s = turtle.Turtle()
     s.shape("square")
-    s.color("#58D68D" if i == 0 else "#1E8449")
+    if i == 0:
+        s.color("lime")
+    else:
+        s.color("green")
     s.penup()
     s.goto(-i * STEP, 0)
     snake.append(s)
-
 food = turtle.Turtle()
 food.shape("circle")
-food.color("#F4D03F")
+food.color("yellow")
 food.penup()
 food.goto(80, 80)
-
 hud = turtle.Turtle()
 hud.hideturtle()
 hud.penup()
-hud.color("#D5F5E3")
-
-
-def grid_point():
-    x = random.randint(-13, 13) * STEP
-    y = random.randint(-13, 12) * STEP
-    return x, y
-
-
-def place_food():
-    while True:
-        x, y = grid_point()
-        if any(seg.distance(x, y) < 10 for seg in snake):
-            continue
-        food.goto(x, y)
-        break
-
-
-def draw_hud():
-    hud.clear()
-    hud.goto(0, 260)
-    hud.write(f"长度 {len(snake)}    方向键转向  ·  R 重开",
-              align="center", font=("PingFang SC", 16, "bold"))
-
+hud.color("white")
 
 def turn(heading):
     global pending
-    # 不能直接 180 度掉头
     if abs(heading - direction) == 180:
         return
     pending = heading
-
-
+def turn_up():
+    turn(90)
+def turn_down():
+    turn(270)
+def turn_left():
+    turn(180)
+def turn_right():
+    turn(0)
+def place_food():
+    while True:
+        x = random.randint(-13, 13) * STEP
+        y = random.randint(-13, 12) * STEP
+        ok = True
+        for seg in snake:
+            if seg.distance(x, y) < 10:
+                ok = False
+                break
+        if ok:
+            food.goto(x, y)
+            break
 def grow():
     tail = turtle.Turtle()
     tail.shape("square")
-    tail.color("#1E8449")
+    tail.color("green")
     tail.penup()
     last = snake[-1]
     tail.goto(last.xcor(), last.ycor())
     snake.append(tail)
-
-
+def draw_hud():
+    hud.clear()
+    hud.goto(0, 260)
+    hud.write(f"长度 {len(snake)}    方向键转向  ·  R 重开", align="center", font=("Arial", 16, "bold"))
+def game_over():
+    global alive
+    alive = False
+    hud.goto(0, 0)
+    hud.write("游戏结束  按 R 再来一局", align="center", font=("Arial", 24, "bold"))
 def restart():
     global alive, direction, pending
     alive = True
@@ -89,81 +89,62 @@ def restart():
     while len(snake) > 3:
         extra = snake.pop()
         extra.hideturtle()
-        extra.clear()
-    for i, seg in enumerate(snake):
-        seg.showturtle()
-        seg.goto(-i * STEP, 0)
-    snake[0].color("#58D68D")
+    for i in range(3):
+        snake[i].showturtle()
+        snake[i].goto(-i * STEP, 0)
+    snake[0].color("lime")
     place_food()
     hud.clear()
     tick()
-
-
-def game_over():
-    global alive
-    alive = False
-    hud.goto(0, 0)
-    hud.write("游戏结束  按 R 再来一局",
-              align="center", font=("PingFang SC", 24, "bold"))
-
-
 def tick():
     global direction, pending
     if not alive:
         screen.update()
         return
-
     if pending is not None:
         direction = pending
         pending = None
-
+    for i in range(len(snake) - 1, 0, -1):
+        snake[i].goto(snake[i - 1].xcor(), snake[i - 1].ycor())
     head = snake[0]
     nx = head.xcor()
     ny = head.ycor()
     if direction == 0:
-        nx += STEP
-    elif direction == 180:
-        nx -= STEP
-    elif direction == 90:
-        ny += STEP
-    else:
-        ny -= STEP
-
-    # 从尾巴往前挪：每一节走到前一节刚才的位置
-    for i in range(len(snake) - 1, 0, -1):
-        snake[i].goto(snake[i - 1].xcor(), snake[i - 1].ycor())
+        nx = nx + STEP
+    if direction == 180:
+        nx = nx - STEP
+    if direction == 90:
+        ny = ny + STEP
+    if direction == 270:
+        ny = ny - STEP
     head.goto(nx, ny)
     head.setheading(direction)
-
     if abs(nx) > 280 or abs(ny) > 280:
         game_over()
         screen.update()
         return
-
     for seg in snake[1:]:
         if head.distance(seg) < 10:
             game_over()
             screen.update()
             return
-
     if head.distance(food) < 15:
         grow()
         place_food()
-
     draw_hud()
     screen.update()
-    # 身体越长稍微越快
-    wait = max(70, 140 - len(snake) * 3)
+    wait = 140 - len(snake) * 3
+    if wait < 70:
+        wait = 70
     screen.ontimer(tick, wait)
-
 
 place_food()
 draw_hud()
 screen.listen()
-screen.onkeypress(lambda: turn(90), "Up")
-screen.onkeypress(lambda: turn(270), "Down")
-screen.onkeypress(lambda: turn(180), "Left")
-screen.onkeypress(lambda: turn(0), "Right")
+screen.onkeypress(turn_up, "Up")
+screen.onkeypress(turn_down, "Down")
+screen.onkeypress(turn_left, "Left")
+screen.onkeypress(turn_right, "Right")
 screen.onkeypress(restart, "r")
 screen.ontimer(tick, 140)
 turtle.done()

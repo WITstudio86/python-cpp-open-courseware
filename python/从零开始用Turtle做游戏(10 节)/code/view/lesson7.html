@@ -69,12 +69,12 @@
       <a class="btn gold" href="javascript:history.back()">← 返回课件</a>
     </div>
   </div>
-  <div class="meta">编码：UTF-8 · 文件：lesson7.py · 共 146 行 · 浅色主题便于打印</div>
+  <div class="meta">编码：UTF-8 · 文件：lesson7.py · 共 121 行 · 浅色主题便于打印</div>
   <div class="wrap">
     <pre id="code"># ============================================
 # 第 7 课  发射！
 # 小游戏：打气球
-# 知识：列表里装子弹和气球、空格发射、打中删除
+# 知识：列表里装子弹和气球、空格开火、打中删除
 # 操作：左右移动，空格发射；打到气球得分
 #       漏掉 8 个气球就结束
 # ============================================
@@ -85,130 +85,105 @@ import random
 screen = turtle.Screen()
 screen.setup(800, 600)
 screen.title(&quot;第 7 课 · 打气球&quot;)
-screen.bgcolor(&quot;#08141f&quot;)
+screen.bgcolor(&quot;navy&quot;)
 screen.tracer(0)
-
 score = 0
 missed = 0
 alive = True
 vx = 0
-cool = 0  # 发射冷却，避免连发成一条线
-
+cool = 0
 cannon = turtle.Turtle()
 cannon.shape(&quot;triangle&quot;)
-cannon.color(&quot;#85C1E9&quot;)
+cannon.color(&quot;skyblue&quot;)
 cannon.penup()
 cannon.goto(0, -250)
 cannon.setheading(90)
-
 bullets = []
+COLORS = [&quot;red&quot;, &quot;purple&quot;, &quot;skyblue&quot;, &quot;lime&quot;, &quot;orange&quot;]
 balloons = []
 for _ in range(5):
     b = turtle.Turtle()
     b.shape(&quot;circle&quot;)
-    b.color(random.choice([&quot;#E74C3C&quot;, &quot;#AF7AC5&quot;, &quot;#5DADE2&quot;, &quot;#58D68D&quot;]))
+    b.color(random.choice(COLORS))
     b.penup()
     b.goto(random.randint(-340, 340), random.randint(40, 260))
     balloons.append(b)
-
 hud = turtle.Turtle()
 hud.hideturtle()
 hud.penup()
-hud.color(&quot;#D6EAF8&quot;)
-
+hud.color(&quot;white&quot;)
 
 def make_bullet():
     shot = turtle.Turtle()
-    shot.hideturtle()
     shot.shape(&quot;square&quot;)
     shot.shapesize(0.4, 0.8)
-    shot.color(&quot;#F7DC6F&quot;)
+    shot.color(&quot;yellow&quot;)
     shot.penup()
     shot.goto(cannon.xcor(), cannon.ycor() + 20)
     shot.setheading(90)
-    shot.showturtle()
     bullets.append(shot)
-
-
 def reset_balloon(b):
-    b.color(random.choice([&quot;#E74C3C&quot;, &quot;#AF7AC5&quot;, &quot;#5DADE2&quot;, &quot;#58D68D&quot;]))
+    b.color(random.choice(COLORS))
     b.goto(random.randint(-340, 340), random.randint(200, 320))
-
-
 def press_left():
     global vx
     vx = -8
-
-
 def press_right():
     global vx
     vx = 8
-
-
 def stop():
     global vx
     vx = 0
-
-
 def fire():
     global cool
     if alive and cool &lt;= 0 and len(bullets) &lt; 4:
         make_bullet()
         cool = 10
-
-
 def draw_hud():
     hud.clear()
     hud.goto(0, 250)
-    hud.write(f&quot;打中 {score}    漏掉 {missed}/8    空格发射&quot;,
-              align=&quot;center&quot;, font=(&quot;PingFang SC&quot;, 18, &quot;bold&quot;))
-
-
+    hud.write(f&quot;打中 {score}    漏掉 {missed}/8    空格发射&quot;, align=&quot;center&quot;, font=(&quot;Arial&quot;, 18, &quot;bold&quot;))
 def tick():
-    global score, missed, alive, cool
+    global cool, score, missed, alive
     if not alive:
         screen.update()
         return
-
     if cool &gt; 0:
-        cool -= 1
-
-    cannon.setx(max(-370, min(370, cannon.xcor() + vx)))
-
+        cool = cool - 1
+    cannon.setx(cannon.xcor() + vx)
+    if cannon.xcor() &gt; 370:
+        cannon.setx(370)
+    if cannon.xcor() &lt; -370:
+        cannon.setx(-370)
     for shot in bullets[:]:
         shot.forward(12)
         if shot.ycor() &gt; 300:
             shot.hideturtle()
             bullets.remove(shot)
-
     for balloon in balloons:
         balloon.sety(balloon.ycor() - (2 + score // 8))
         balloon.left(2)
         if balloon.ycor() &lt; -280:
-            missed += 1
+            missed = missed + 1
             reset_balloon(balloon)
             if missed &gt;= 8:
                 alive = False
                 draw_hud()
                 hud.goto(0, 20)
-                hud.write(&quot;气球飘走太多了……&quot;,
-                          align=&quot;center&quot;, font=(&quot;PingFang SC&quot;, 28, &quot;bold&quot;))
+                hud.write(&quot;气球飘走太多了……&quot;, align=&quot;center&quot;, font=(&quot;Arial&quot;, 28, &quot;bold&quot;))
                 screen.update()
                 return
         for shot in bullets[:]:
             if balloon.distance(shot) &lt; 22:
-                score += 1
+                score = score + 1
                 shot.hideturtle()
                 bullets.remove(shot)
                 reset_balloon(balloon)
                 break
-
     draw_hud()
     screen.update()
     screen.ontimer(tick, 20)
 
-
-draw_hud()
 screen.listen()
 screen.onkeypress(press_left, &quot;Left&quot;)
 screen.onkeypress(press_right, &quot;Right&quot;)

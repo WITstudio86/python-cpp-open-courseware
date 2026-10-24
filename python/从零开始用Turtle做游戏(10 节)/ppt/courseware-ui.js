@@ -50,6 +50,17 @@
 "  white-space: pre !important;",
 "  line-height: 1.45 !important;",
 "}",
+".slide pre.follow-code, .slide pre.follow-code code, .follow-code .line-old, .follow-code .line-new {",
+"  font-size: 20px !important;",
+"  line-height: 1.15 !important;",
+"  min-height: 0 !important;",
+"}",
+".tok-kw { color: #ff79c6; }",
+".tok-str { color: #f1fa8c; }",
+".tok-num { color: #bd93f9; }",
+".tok-cmt { color: #6272a4; font-style: italic; }",
+".tok-fn { color: #50fa7b; }",
+".tok-bi { color: #8be9fd; }",
 ".code-block > pre, .code-block pre, .code-block > code, .code-block code {",
 "  max-height: none !important;",
 "  min-height: 0 !important;",
@@ -140,9 +151,175 @@
     }
   }
 
+  var PY_KW = {
+    and:1, as:1, assert:1, break:1, class:1, continue:1, def:1, del:1,
+    elif:1, else:1, except:1, False:1, finally:1, for:1, from:1, global:1,
+    if:1, import:1, in:1, is:1, lambda:1, None:1, nonlocal:1, not:1, or:1,
+    pass:1, raise:1, return:1, True:1, try:1, while:1, with:1, yield:1
+  };
+  var PY_BI = {
+    abs:1, bool:1, dict:1, enumerate:1, float:1, int:1, len:1, list:1,
+    max:1, min:1, print:1, range:1, set:1, str:1, tuple:1, zip:1, input:1
+  };
+
+  function escHtml(s) {
+    return s.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+  }
+
+  function highlightPythonLine(line) {
+    if (!line) return '';
+    var html = '';
+    var i = 0;
+    var n = line.length;
+    var afterDef = false;
+    function wrap(cls, s) {
+      return '<span class="' + cls + '">' + escHtml(s) + '</span>';
+    }
+    function isIdentStart(c) {
+      return (c >= 'A' && c <= 'Z') || (c >= 'a' && c <= 'z') || c === '_';
+    }
+    function isIdent(c) {
+      return isIdentStart(c) || (c >= '0' && c <= '9');
+    }
+    while (i < n) {
+      var ch = line.charAt(i);
+      if (ch === '#') {
+        html += wrap('tok-cmt', line.slice(i));
+        break;
+      }
+      if (ch === '"' || ch === "'") {
+        var q = ch;
+        var j = i + 1;
+        while (j < n) {
+          if (line.charAt(j) === '\\') { j += 2; continue; }
+          if (line.charAt(j) === q) { j += 1; break; }
+          j += 1;
+        }
+        html += wrap('tok-str', line.slice(i, j));
+        i = j;
+        continue;
+      }
+      if ((ch === 'f' || ch === 'F' || ch === 'r' || ch === 'R' || ch === 'b' || ch === 'B') &&
+          i + 1 < n && (line.charAt(i + 1) === '"' || line.charAt(i + 1) === "'" ||
+            ((line.charAt(i + 1) === 'f' || line.charAt(i + 1) === 'F' ||
+              line.charAt(i + 1) === 'r' || line.charAt(i + 1) === 'R') &&
+             i + 2 < n && (line.charAt(i + 2) === '"' || line.charAt(i + 2) === "'")))) {
+        var prev = i === 0 ? '' : line.charAt(i - 1);
+        if (!isIdent(prev)) {
+          var p = i + 1;
+          while (p < n && isIdentStart(line.charAt(p)) && line.charAt(p) !== '"' && line.charAt(p) !== "'") p += 1;
+          if (p < n && (line.charAt(p) === '"' || line.charAt(p) === "'")) {
+            html += wrap('tok-kw', line.slice(i, p));
+            i = p;
+            continue;
+          }
+        }
+      }
+      if ((ch >= '0' && ch <= '9') && (i === 0 || !isIdent(line.charAt(i - 1)))) {
+        var k = i + 1;
+        while (k < n && ((line.charAt(k) >= '0' && line.charAt(k) <= '9') || line.charAt(k) === '.')) k += 1;
+        html += wrap('tok-num', line.slice(i, k));
+        i = k;
+        continue;
+      }
+      if (isIdentStart(ch)) {
+        var e = i + 1;
+        while (e < n && isIdent(line.charAt(e))) e += 1;
+        var word = line.slice(i, e);
+        if (afterDef) {
+          html += wrap('tok-fn', word);
+          afterDef = false;
+        } else if (PY_KW[word]) {
+          html += wrap('tok-kw', word);
+          afterDef = word === 'def';
+        } else if (PY_BI[word]) {
+          html += wrap('tok-bi', word);
+        } else {
+          html += escHtml(word);
+        }
+        i = e;
+        continue;
+      }
+      html += escHtml(ch);
+      i += 1;
+    }
+    return html;
+  }
+
+  function parseNewSpec(spec) {
+    var set = {};
+    if (!spec) return set;
+    spec.split(',').forEach(function (part) {
+      part = part.trim();
+      if (!part) return;
+      var dash = part.indexOf('-');
+      if (dash > 0) {
+        var a = parseInt(part.slice(0, dash), 10);
+        var b = parseInt(part.slice(dash + 1), 10);
+        if (!a || !b) return;
+        for (var i = a; i <= b; i++) set[i] = true;
+      } else {
+        var n = parseInt(part, 10);
+        if (n) set[n] = true;
+      }
+    });
+    return set;
+  }
+
+  function markNewLines() {
+    document.querySelectorAll('.deck pre[data-new]').forEach(function (pre) {
+      if (pre.getAttribute('data-marked') === '1') return;
+      var code = pre.querySelector('code') || pre;
+      var set = parseNewSpec(pre.getAttribute('data-new'));
+      var raw = (code.textContent || '').replace(/\n$/, '');
+      var lines = raw.split('\n');
+      code.innerHTML = lines.map(function (line, idx) {
+        var cls = set[idx + 1] ? 'line-new' : 'line-old';
+        return '<span class="' + cls + '">' + (highlightPythonLine(line) || ' ') + '</span>';
+      }).join('');
+      pre.setAttribute('data-marked', '1');
+    });
+    document.querySelectorAll('pre code.language-python').forEach(function (code) {
+      var pre = code.closest('pre');
+      if (pre && pre.getAttribute('data-marked') === '1') return;
+      if (code.getAttribute('data-hl') === '1') return;
+      var raw = (code.textContent || '').replace(/\n$/, '');
+      code.innerHTML = raw.split('\n').map(highlightPythonLine).join('\n');
+      code.setAttribute('data-hl', '1');
+    });
+  }
+
+  function scrollNewIn(slide) {
+    if (!slide) return;
+    var neu = slide.querySelector('.line-new');
+    if (!neu) return;
+    var pre = neu.closest('pre');
+    if (!pre) return;
+    var nr = neu.getBoundingClientRect();
+    var pr = pre.getBoundingClientRect();
+    pre.scrollTop += (nr.top - pr.top) - pre.clientHeight * 0.28;
+  }
+
+  function watchSlides() {
+    var slides = document.querySelectorAll('.deck > .slide');
+    if (!slides.length || !window.MutationObserver) return;
+    slides.forEach(function (slide) {
+      var obs = new MutationObserver(function () {
+        if (slide.classList.contains('is-active') || slide.classList.contains('active')) {
+          scrollNewIn(slide);
+        }
+      });
+      obs.observe(slide, { attributes: true, attributeFilter: ['class'] });
+    });
+    var current = document.querySelector('.slide.is-active, .slide.active') || slides[0];
+    scrollNewIn(current);
+  }
+
   function boot() {
     injectCss();
     addCoverCodeButton();
+    markNewLines();
+    watchSlides();
   }
 
   if (document.readyState === 'loading') {

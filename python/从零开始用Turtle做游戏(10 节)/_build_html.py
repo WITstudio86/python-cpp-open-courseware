@@ -1173,6 +1173,8 @@ def build_ppt(lesson):
     out = []
     for i, (t, body, note) in enumerate(tmp, 1):
         klass = "slide full" if i in (1, total) else "slide"
+        if i == 1:
+            klass += " is-active"
         out.append(
             f'<section class="{klass}" data-title="{html.escape(t)}">\n'
             f"{body}\n{footer(lesson, i, total)}\n{notes(note)}\n</section>"
@@ -1188,10 +1190,6 @@ def build_ppt(lesson):
 <link rel="stylesheet" href="assets/base.css">
 <link rel="stylesheet" id="theme-link" href="assets/themes/dracula.css">
 <link rel="stylesheet" href="assets/animations/animations.css">
-<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/highlight.js@11.10.0/styles/dracula.min.css">
-<script src="https://cdn.jsdelivr.net/npm/highlight.js@11.10.0/lib/core.min.js"></script>
-<script src="https://cdn.jsdelivr.net/npm/highlight.js@11.10.0/lib/languages/python.min.js"></script>
-<script>addEventListener('DOMContentLoaded',()=>{{hljs.registerLanguage('python',window.hljsLangPython||window.hljs.getLanguage('python'));document.querySelectorAll('pre code').forEach(el=>hljs.highlightElement(el))}})</script>
 <style>{PPT_CSS}</style>
 </head>
 <body>
@@ -1462,7 +1460,8 @@ def build_print_index():
 def build_print_all():
     sheets = []
     for L in LESSONS:
-        page = build_print(L)
+        path = PRINT / f"lesson{L['n']:02d}.html"
+        page = path.read_text(encoding="utf-8") if path.exists() else build_print(L)
         start = page.find("<article")
         end = page.find("</article>") + len("</article>")
         sheets.append(page[start:end])
@@ -1662,15 +1661,20 @@ def build_overview():
 """
 
 
+HAND_FOLLOWALONG = set(range(1, 11))
+
+
 def main():
     VIEW.mkdir(parents=True, exist_ok=True)
     PPT.mkdir(parents=True, exist_ok=True)
     PRINT.mkdir(parents=True, exist_ok=True)
 
+    from followalong import write_all
+
+    write_all()
+
     for L in LESSONS:
         n = L["n"]
-        (PPT / f"lesson{n:02d}.html").write_text(build_ppt(L), encoding="utf-8")
-        (PRINT / f"lesson{n:02d}.html").write_text(build_print(L), encoding="utf-8")
         src = CODE / f"lesson{n}.py"
         text = src.read_text(encoding="utf-8")
         lines = text.count("\n") + (0 if text.endswith("\n") else 1)
