@@ -1,240 +1,1001 @@
 <!DOCTYPE html>
-
 <html lang="zh-CN">
 <head>
-<meta charset="utf-8"/><meta content="width=device-width,initial-scale=1" name="viewport"/>
-<title>第22节 · 简易计算器（下）· Python Tkinter 课程</title>
-<link href="assets/fonts.css" rel="stylesheet"/>
-<link href="assets/base.css" rel="stylesheet"/>
-<link href="assets/themes/soft-pastel.css" id="theme-link" rel="stylesheet"/>
-<link href="assets/animations/animations.css" rel="stylesheet"/>
-<link href="style.css" rel="stylesheet"/>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>第22节 · 项目2：简易计算器（下） · Python Tkinter</title>
+<link rel="stylesheet" href="assets/fonts.css">
+<link rel="stylesheet" href="assets/base.css">
+<link rel="stylesheet" id="theme-link" href="assets/themes/soft-pastel.css">
+<link rel="stylesheet" href="assets/animations/animations.css">
+<link rel="stylesheet" href="style.css">
 </head>
 <body class="tpl-tkinter-course" data-theme-base="assets/themes/" data-themes="soft-pastel,rainbow-gradient,sunset-warm,minimal-white">
 <div class="deck">
-<!-- 1. Cover -->
-<section class="slide full" data-title="封面">
+<section class="slide full is-active" data-title="封面">
+
 <p class="kicker">Python Tkinter · 第 22 节</p>
-<h1 class="h1 mt-s">项目2 · 简易计算器（下）<br/>完整版计算器 <em>⌨️</em></h1>
-<p class="lede mt-l" style="max-width:62ch">上节课我们搭好了计算器的"骨架"，这节课给它装上"大脑"——让它真正能算、能清空、能退格，还能用键盘操作！</p>
-<div class="row mt-l" style="gap:16px">
-<span class="pill-academic">~ 60 分钟</span>
-<span class="pill-academic">难度 · ⭐⭐</span>
-<span class="pill-academic">前置 · 第 21 节</span>
+<h1 class="h1 mt-s">项目2：简易计算器（下）</h1>
+<p class="lede mt-m">看着课件，一步一步打出今天的程序。灰掉的行是已经打过的，绿底是这一步要补上的。</p>
+<div class="row wrap mt-l" style="gap:10px">
+  <span class="pill-academic">60–90 分钟</span>
+  <span class="pill-academic">同一份文件打到底</span>
+  <span class="pill-academic">6 步 · 一步一运行</span>
 </div>
-<div class="deck-footer"><span>Python Tkinter 趣味编程课</span><span class="slide-number" data-current="1" data-total="6"></span></div>
+<div class="cspj-code-btn-wrap">
+  <a class="cspj-code-btn" href="../程序/view/L22-简易计算器下.html" target="_blank" rel="noopener">📄 查看配套代码</a>
+  <div class="cspj-code-meta">L22-简易计算器下.py</div>
+</div>
 
-<aside class="notes">【开场】第 1/6 页 · 连续运算、清除（C）/ 退格（←）、键盘按键绑定
-用 30 秒说明本课目标与学完能做什么，再进入正题。
-封面关键词：
-· Python Tkinter · 第 22 节
-· 上节课我们搭好了计算器的"骨架"，这节课给它装上"大脑"——让它真正能算、能清空、能退格，还能用键盘操作！
-互动：问学生「今天最想搞清楚什么？」，收 1–2 个期待。</aside>
+<div class="deck-footer"><span>第 22 节 · 项目2：简易计算器（下）</span><span class="slide-number" data-current="1" data-total="19"></span></div>
+<aside class="notes">开场先演示成品 10 秒。然后让学生新建今天的文件，从空文件打起。翻一页，打一段，运行一次。</aside>
 </section>
-<!-- 2. Objectives -->
-<section class="slide" data-title="学习目标">
-<aside class="sidebar">
-<div class="brand">Tkinter 022</div>
-<h5>学习目标</h5>
-<ul class="obj-list">
-<li class="current">C 清除 + ← 退格</li>
-<li>连续运算逻辑</li>
-<li>eval() 安全使用</li>
-<li>键盘按键绑定 bind()</li>
-</ul>
-<h5>本节成品</h5>
-<p class="dim" style="font-size:13px">一个真正能用的计算器 🧮</p>
-</aside>
-<div class="main">
-<p class="kicker">学习目标</p>
-<h2 class="h2 mt-s">学完这节课，你将能够…</h2>
-<div class="stack mt-l">
-<div class="concept-box"><h4>① 实现 C 清除和 ← 退格</h4><p class="dim">用 StringVar 和字符串切片，让计算器可以"改错"。<code>entry_var.set("")</code> 清空，<code>current[:-1]</code> 删末位。</p></div>
-<div class="concept-box"><h4>② 实现连续运算</h4><p class="dim">算完一次不重置，结果留在输入框里继续参与下一个运算。表达式字符串自然拼接。</p></div>
-<div class="concept-box"><h4>③ 安全使用 eval() 求值</h4><p class="dim">把输入框的字符串变成计算结果。用 <code>try-except</code> 防止非法表达式崩溃。</p></div>
-<div class="concept-box"><h4>④ 键盘按键绑定</h4><p class="dim">用 <code>root.bind("&lt;Key&gt;", key_press)</code> 让键盘也能操控计算器！Enter 等于 =，ESC 等于 C。</p></div>
-</div>
-</div>
 
-<aside class="notes">【讲解】学完这节课，你将能够…
-本页要点（照着讲即可）：
-· C 清除 + ← 退格
-· 连续运算逻辑
-· eval() 安全使用
-· 键盘按键绑定 bind()
-· 一个真正能用的计算器 🧮
-· 学习目标
-讲解时放慢关键术语；用 1 个生活类比 + 1 个反例加深印象。</aside>
+<section class="slide follow-plain" data-title="今天做出来长这样">
+
+<p class="kicker">今天的成品</p>
+<h2 class="h2 mt-s">项目2：简易计算器（下）</h2>
+<div class="concept-box mt-m">
+  <h4>运行之后</h4>
+  <p class="dim">上一节我们做了一个简易计算器的&quot;前半截&quot;——用 grid 布局排列按钮，用 lambda 传参，数字和运算符点击后能拼接到输入框里。但它还不会&quot;算&quot;！ 本节课我们给它装上&quot;大脑&quot;，让它变成一个真正能用的计算器：按下 <span class="ic">=</span> 算出结果，<span class="ic">C</span> 清空一切，<span class="ic">←</span> 删掉最后输入的字符，甚至还能用键盘直接输入！</p>
+</div>
+<div class="callout"><b>过关线：</b> 文件保存为 <span class="ic">L22-简易计算器下.py</span>，打完最后一步能运行，窗口里能看到这一课的成品。</div>
+
+<div class="deck-footer"><span>第 22 节 · 项目2：简易计算器（下）</span><span class="slide-number" data-current="2" data-total="19"></span></div>
+<aside class="notes">先让学生说出成品里能看见什么，再打开空文件。不要先把完整代码发下去。</aside>
 </section>
-<!-- 3. C清除 + ←退格 + eval -->
-<section class="slide" data-title="核心功能">
-<aside class="sidebar">
-<div class="brand">Tkinter 022</div>
-<h5>学习目标</h5>
-<ul class="obj-list">
-<li class="done">C 清除 + ← 退格</li>
-<li class="current">连续运算逻辑</li>
-<li>eval() 安全使用</li>
-<li>键盘按键绑定 bind()</li>
-</ul>
-<h5>三个核心函数</h5>
-<p class="dim" style="font-size:13px">clear · backspace · calculate</p>
-</aside>
-<div class="main">
-<p class="kicker">核心功能</p>
-<h2 class="h2 mt-s">C 清除 + ← 退格 + eval 求值</h2>
-<p class="lede mt-m">计算器的三个核心操作，用三个函数实现。</p>
-<div class="code mt-m"><pre style="margin:0"><span class="cmt"># ① C 按钮：一键清空</span>
-<span class="kw">def</span> <span class="fn">clear</span>():
-    entry_var.<span class="fn">set</span>(<span class="str">""</span>)
 
-<span class="cmt"># ② ← 按钮：删除最后一个字符</span>
-<span class="kw">def</span> <span class="fn">backspace</span>():
-    current = entry_var.<span class="fn">get</span>()
-    entry_var.<span class="fn">set</span>(current[:-1])      <span class="cmt"># 切片去尾</span>
+<section class="slide follow-plain" data-title="开工">
 
-<span class="cmt"># ③ = 按钮：计算表达式结果</span>
-<span class="kw">def</span> <span class="fn">calculate</span>():
-    <span class="kw">try</span>:
-        result = <span class="fn">eval</span>(entry_var.<span class="fn">get</span>())  <span class="cmt"># 把字符串当代码执行</span>
-        entry_var.<span class="fn">set</span>(<span class="fn">str</span>(result))
-    <span class="kw">except</span>:
-        entry_var.<span class="fn">set</span>(<span class="str">"错误"</span>)</pre></div>
-<div class="grid g2 mt-l">
-<div class="concept-box"><h4>🧹 clear() + ⌫ backspace()</h4><p class="dim"><code>set("")</code> 一键清空；<code>[:-1]</code> 切片去掉最后一个字符，空字符串也不报错。</p></div>
-<div class="concept-box"><h4>🧠 eval() + 🛡️ try-except</h4><p class="dim">把 <code>"2+3*4"</code> 当成代码执行得 14。用 try-except 兜底，表达式出问题显示"错误"而不是崩溃。</p></div>
-</div>
-</div>
+<p class="kicker">开工检查</p>
+<h2 class="h2 mt-s">先把文件建好</h2>
+<div class="stack mt-m"><div class="bullet-card"><h4>1. 新建文件</h4><p>保存为 <span class="ic">L22-简易计算器下.py</span>。今天只改这一份，打到最后。</p></div><div class="bullet-card"><h4>2. 今天要会</h4><p>学会连续运算（结果继续参与运算）</p></div><div class="bullet-card"><h4>3. 今天要会</h4><p>学会 C（清除）和 ←（退格）功能</p></div></div>
 
-<aside class="notes">【讲解】C 清除 + ← 退格 + eval 求值
-结合讲义《知识点 1：C 清除 和 ← 退格》强调：
-· 这两个功能是每个计算器的"标配"。C（Clear）一键清空所有内容，←（Backspace）退格删掉最后一个字符。
-· def clear():
-· """C 按钮：清空所有内容"""
-· entry_var.set("") # 把 Entry 的 StringVar 设为空字符串
-· def backspace():
-幻灯片上可见要点：
-· C 清除 + ← 退格
-· 连续运算逻辑
-· eval() 安全使用
-· 键盘按键绑定 bind()
-讲解时放慢关键术语；用 1 个生活类比 + 1 个反例加深印象。</aside>
+<div class="deck-footer"><span>第 22 节 · 项目2：简易计算器（下）</span><span class="slide-number" data-current="3" data-total="19"></span></div>
+<aside class="notes">确认每个人都新建了今天的文件。还在上一课文件里接着写的，让他另存为今天的文件名。</aside>
 </section>
-<!-- 4. 键盘按键绑定 -->
-<section class="slide" data-title="键盘绑定">
-<aside class="sidebar">
-<div class="brand">Tkinter 022</div>
-<h5>学习目标</h5>
-<ul class="obj-list">
-<li class="done">C 清除 + ← 退格</li>
-<li class="done">连续运算逻辑</li>
-<li class="done">eval() 安全使用</li>
-<li class="current">键盘按键绑定 bind()</li>
-</ul>
-<h5>事件属性</h5>
-<p class="dim" style="font-size:13px">event.char · event.keysym</p>
-</aside>
-<div class="main">
-<p class="kicker">键盘交互</p>
-<h2 class="h2 mt-s">键盘按键绑定 —— bind()</h2>
-<p class="lede mt-m">不用鼠标也能操作计算器！按下键盘，tkinter 能"听"到并响应。</p>
-<div class="code mt-m"><pre style="margin:0">root.<span class="fn">bind</span>(<span class="str">"&lt;Key&gt;"</span>, key_press)      <span class="cmt"># 绑定所有按键</span>
 
-<span class="kw">def</span> <span class="fn">key_press</span>(event):
-    key = event.<span class="fn">char</span>              <span class="cmt"># 可打印字符（如 "1"、"+"）</span>
+<section class="slide follow-plain" data-title="6步地图">
 
-    <span class="kw">if</span> key <span class="kw">in</span> <span class="str">"0123456789+-*/.="</span>:
-        <span class="kw">if</span> key == <span class="str">"="</span>:
-            <span class="fn">calculate</span>()
-        <span class="kw">else</span>:
-            <span class="fn">click</span>(key)
-    <span class="kw">elif</span> event.<span class="fn">keysym</span> == <span class="str">"Return"</span>:   <span class="cmt"># 回车 → =</span>
-        <span class="fn">calculate</span>()
-    <span class="kw">elif</span> event.<span class="fn">keysym</span> == <span class="str">"BackSpace"</span>: <span class="cmt"># 退格 → ←</span>
-        <span class="fn">backspace</span>()
-    <span class="kw">elif</span> event.<span class="fn">keysym</span> == <span class="str">"Escape"</span>:    <span class="cmt"># ESC → C</span>
-        <span class="fn">clear</span>()</pre></div>
-<div class="callout mt-m">
-<b>💡 关键区别：</b><code>event.char</code> 用于普通按键（数字、字母），返回字符本身。但回车、退格等<em>特殊按键</em>没有字符，要用 <code>event.keysym</code> 获取按键名称。两者搭配，覆盖所有按键！
-      </div>
-</div>
+<p class="kicker">今天走 6 步</p>
+<h2 class="h2 mt-s">每一步都要<span class="grad">运行一次</span></h2>
+<div class="step-grid"><div class="step-card"><div class="n">第 1 步</div><h4>创建窗口</h4><p>标题栏换成了这一步写的文字。</p></div><div class="step-card"><div class="n">第 2 步</div><h4>② 按钮回调函数 —— 计算器的&quot;大脑&quot;</h4><p>窗口还能打开。绿底这些新行已经出现在窗口里。</p></div><div class="step-card"><div class="n">第 3 步</div><h4>③ 按钮数据 ——</h4><p>窗口还能打开。绿底这些新行已经出现在窗口里。</p></div><div class="step-card"><div class="n">第 4 步</div><h4>④ 创建按钮 ——</h4><p>窗口里多了按钮。点一下，看它有没有反应。</p></div><div class="step-card"><div class="n">第 5 步</div><h4>把 &lt;Key&gt; 事件绑定到整个窗口</h4><p>按键盘或点鼠标时，程序有反应。</p></div><div class="step-card"><div class="n">第 6 步</div><h4>⑥ 布局权重设置 —— 让按钮均匀分布</h4><p>窗口还能打开。绿底这些新行已经出现在窗口里。</p></div></div>
 
-<aside class="notes">【讲解】键盘按键绑定 —— bind()
-结合讲义《知识点 4：键盘按键绑定》强调：
-· 除了用鼠标点按钮，计算器还应该支持键盘输入——直接按键盘上的数字和运算符就能操作，这才是真正的"好用"！
-· tkinter 用 bind() 方法来绑定键盘事件：
-· root.bind("", key_press) # 绑定所有按键事件
-· def key_press(event):
-· """处理键盘按键"""
-幻灯片上可见要点：
-· C 清除 + ← 退格
-· 连续运算逻辑
-· eval() 安全使用
-· 键盘按键绑定 bind()
-讲解时放慢关键术语；用 1 个生活类比 + 1 个反例加深印象。</aside>
+<div class="deck-footer"><span>第 22 节 · 项目2：简易计算器（下）</span><span class="slide-number" data-current="4" data-total="19"></span></div>
+<aside class="notes">用这一页告诉学生今天停在哪一步算跟上。掉队的人不要跳步。</aside>
 </section>
-<!-- 5. 动手试试 -->
-<section class="slide" data-title="动手试试">
-<aside class="sidebar">
-<div class="brand">Tkinter 022</div>
-<h5>学习目标</h5>
-<ul class="obj-list">
-<li class="done">C 清除 + ← 退格</li>
-<li class="done">连续运算逻辑</li>
-<li class="done">eval() 安全使用</li>
-<li class="done">键盘按键绑定 bind()</li>
-</ul>
-<h5>时间</h5>
-<p class="dim" style="font-size:13px">~15 分钟 · 自己动手</p>
-</aside>
-<div class="main">
-<p class="kicker">动手试试</p>
-<h2 class="h2 mt-s">测试你的计算器</h2>
-<div class="exercise mt-l">
-<ol style="color:var(--text-2);line-height:2;margin:0;padding-left:20px;font-size:16px">
-<li><b>测试连续运算</b>：输入 <code>1 + 2 =</code>，结果出来后再按 <code>+ 3 =</code>，看能不能继续算</li>
-<li><b>测试 C 和 ←</b>：输入一串数字，按 ← 删除一个字符，按 C 全部清空</li>
-<li><b>挑战</b>：不用鼠标，只用键盘操作——数字键、运算符键、回车键（=）、ESC（C）、退格键（←），再故意输入 <code>1++2</code> 测试 try-except！</li>
-</ol>
-</div>
-<p class="dim mt-m" style="font-size:14px">💡 别忘了：<code>state="readonly"</code> 阻止了直接在输入框里打字——所有输入都必须通过按钮或键盘绑定来传递。</p>
-</div>
 
-<aside class="notes">【讲解】测试你的计算器
-本页要点（照着讲即可）：
-· C 清除 + ← 退格
-· 连续运算逻辑
-· eval() 安全使用
-· 键盘按键绑定 bind()
-· ~15 分钟 · 自己动手
-· 动手试试
-讲解时放慢关键术语；用 1 个生活类比 + 1 个反例加深印象。</aside>
+<section class="slide follow-talk" data-title="第1步 · 讲">
+
+<p class="kicker">第 1 / 6 步 · 讲</p>
+<h2 class="h2 mt-s">创建窗口</h2>
+<p class="lede mt-s">标题栏换成了这一步写的文字。</p>
+<div class="callout"><b>为什么：</b> StringVar 是 tkinter 的&quot;魔法变量&quot;——你改它的值，Entry 自动更新</div>
+<ol class="where-list"><li>放上 Entry</li><li>用 grid 按行列摆好</li></ol>
+<div class="run-see"><b>运行后你该看到：</b> 标题栏换成了这一步写的文字。</div>
+
+<div class="deck-footer"><span>第 22 节 · 项目2：简易计算器（下）</span><span class="slide-number" data-current="5" data-total="19"></span></div>
+<aside class="notes">先讲这一步要补在哪，再翻到打页。问学生：运行之后你应该看到什么？约这一步 8 到 12 分钟。</aside>
 </section>
-<!-- 6. Summary -->
-<section class="slide full" data-title="总结">
-<p class="kicker">总结 · 第 22 节</p>
-<h1 class="h1 mt-s">你学会了…</h1>
-<div class="grid g2 mt-l">
-<div class="concept-box"><h4>✓ C 清除 + ← 退格</h4><p class="dim"><code>entry_var.set("")</code> 一键清空，<code>current[:-1]</code> 切片删末位。计算器的"橡皮擦"功能。</p></div>
-<div class="concept-box"><h4>✓ 连续运算</h4><p class="dim">结果留在输入框里不消失，继续输入就能拼接成新表达式，eval 一次性算完——简单又优雅。</p></div>
-<div class="concept-box"><h4>✓ eval() 计算表达式</h4><p class="dim">把字符串 <code>"2+3*4"</code> 直接算出 <code>14</code>。自动处理运算优先级。用 <code>try-except</code> 兜底。</p></div>
-<div class="concept-box"><h4>✓ 键盘按键绑定 bind()</h4><p class="dim"><code>root.bind("&lt;Key&gt;", ...)</code> 让计算器响应键盘。<code>event.char</code> 取字符，<code>event.keysym</code> 取特殊键名。</p></div>
-</div>
-<div class="callout mt-l">
-<b>下节预告 · 项目3：猜数字游戏！</b> 计算器做完了，下个项目我们玩点好玩的——让电脑"想"一个随机数，你来猜！学习 <code>random</code> 模块和条件判断。
-    </div>
 
-<aside class="notes">【收尾】回顾本课主线：你学会了…
-板书/口述要点：
-· 总结 · 第 22 节
-· ✓ C 清除 + ← 退格
-· entry_var.set("") 一键清空， current[:-1] 切片删末位。计算器的"橡皮擦"功能。
-· ✓ 连续运算
-· 结果留在输入框里不消失，继续输入就能拼接成新表达式，eval 一次性算完——简单又优雅。
-· ✓ eval() 计算表达式
-结束前留 2 分钟答疑；布置 1 道小练习检验是否真正掌握。</aside>
+<section class="slide follow-type" data-title="第1步 · 打">
+
+<p class="kicker">第 1 / 6 步 · 打</p>
+<h2 class="h2 mt-s">创建窗口</h2>
+<p class="lede" style="margin-top:4px">这一步补上「创建窗口」。只打绿底的新行，灰掉的旧行不用重打。</p>
+<p class="legend-new"><span class="swatch"></span>绿底是这一步要新打的行。灰掉的行前面已经打过。</p>
+<div class="code-card follow-card"><pre class="follow-code" data-new="1-38"><code class="language-python">import tkinter as tk
+
+# ========================================
+# 第 22 节：项目2 —— 简易计算器（下）
+# 知识点：连续运算、C/← 功能、eval() 求值、键盘绑定 bind()
+# ========================================
+
+# ---------- 创建窗口 ----------
+root = tk.Tk()
+root.title(&quot;简易计算器&quot;)
+root.geometry(&quot;350x450&quot;)
+root.configure(bg=&quot;#2c3e50&quot;)        # 深色背景，衬托出计算器的科技感
+root.resizable(False, False)       # 固定窗口大小，防止布局错乱
+
+# ============================================
+# ① 输入框（显示表达式和计算结果）
+# ============================================
+
+# StringVar 是 tkinter 的&quot;魔法变量&quot;——你改它的值，Entry 自动更新
+entry_var = tk.StringVar()
+entry_var.set(&quot;&quot;)  # 初始为空
+
+entry = tk.Entry(
+    root,
+    textvariable=entry_var,          # 绑定 StringVar，实现动态更新
+    font=(&quot;Consolas&quot;, 24),           # 等宽大字体，数字对齐好看
+    justify=&quot;right&quot;,                 # 文字右对齐（像真正的计算器）
+    state=&quot;readonly&quot;,                # 只读模式，禁止用户直接在输入框打字
+    readonlybackground=&quot;#ecf0f1&quot;,    # 只读时的背景色（米白色）
+    fg=&quot;#2c3e50&quot;                     # 文字颜色（深灰色）
+)
+# 输入框横跨 4 列，占据第 0 行
+entry.grid(row=0, column=0, columnspan=4, padx=10, pady=15, sticky=&quot;nsew&quot;)
+
+# ============================================
+# ⑦ 启动窗口主循环
+# ============================================
+root.mainloop()</code></pre></div>
+<div class="run-see"><b>运行后你该看到：</b> 标题栏换成了这一步写的文字。</div>
+<div class="pitfall"><b>坑：</b> 窗口大小写成 &quot;宽x高&quot;，中间是英文字母 x，不是星号。</div>
+
+<div class="deck-footer"><span>第 22 节 · 项目2：简易计算器（下）</span><span class="slide-number" data-current="6" data-total="19"></span></div>
+<aside class="notes">等全班运行通过再翻下一步。报错的人对照绿底，不要整份重打。</aside>
+</section>
+
+<section class="slide follow-talk" data-title="第2步 · 讲">
+
+<p class="kicker">第 2 / 6 步 · 讲</p>
+<h2 class="h2 mt-s">② 按钮回调函数 —— 计算器的&quot;大脑&quot;</h2>
+<p class="lede mt-s">窗口还能打开。绿底这些新行已经出现在窗口里。</p>
+<div class="callout"><b>为什么：</b> ② 按钮回调函数 —— 计算器的&quot;大脑&quot;</div>
+<ol class="where-list"><li>写出函数 click</li><li>写出函数 clear</li><li>写出函数 backspace</li></ol>
+<div class="run-see"><b>运行后你该看到：</b> 窗口还能打开。绿底这些新行已经出现在窗口里。</div>
+
+<div class="deck-footer"><span>第 22 节 · 项目2：简易计算器（下）</span><span class="slide-number" data-current="7" data-total="19"></span></div>
+<aside class="notes">先讲这一步要补在哪，再翻到打页。问学生：运行之后你应该看到什么？约这一步 8 到 12 分钟。</aside>
+</section>
+
+<section class="slide follow-type" data-title="第2步 · 打">
+
+<p class="kicker">第 2 / 6 步 · 打</p>
+<h2 class="h2 mt-s">② 按钮回调函数 —— 计算器的&quot;大脑&quot;</h2>
+<p class="lede" style="margin-top:4px">这一步新写函数 click。只打绿底的新行，灰掉的旧行不用重打。</p>
+<p class="legend-new"><span class="swatch"></span>绿底是这一步要新打的行。灰掉的行前面已经打过。</p>
+<div class="code-card follow-card"><pre class="follow-code" data-new="36-84"><code class="language-python">import tkinter as tk
+
+# ========================================
+# 第 22 节：项目2 —— 简易计算器（下）
+# 知识点：连续运算、C/← 功能、eval() 求值、键盘绑定 bind()
+# ========================================
+
+# ---------- 创建窗口 ----------
+root = tk.Tk()
+root.title(&quot;简易计算器&quot;)
+root.geometry(&quot;350x450&quot;)
+root.configure(bg=&quot;#2c3e50&quot;)        # 深色背景，衬托出计算器的科技感
+root.resizable(False, False)       # 固定窗口大小，防止布局错乱
+
+# ============================================
+# ① 输入框（显示表达式和计算结果）
+# ============================================
+
+# StringVar 是 tkinter 的&quot;魔法变量&quot;——你改它的值，Entry 自动更新
+entry_var = tk.StringVar()
+entry_var.set(&quot;&quot;)  # 初始为空
+
+entry = tk.Entry(
+    root,
+    textvariable=entry_var,          # 绑定 StringVar，实现动态更新
+    font=(&quot;Consolas&quot;, 24),           # 等宽大字体，数字对齐好看
+    justify=&quot;right&quot;,                 # 文字右对齐（像真正的计算器）
+    state=&quot;readonly&quot;,                # 只读模式，禁止用户直接在输入框打字
+    readonlybackground=&quot;#ecf0f1&quot;,    # 只读时的背景色（米白色）
+    fg=&quot;#2c3e50&quot;                     # 文字颜色（深灰色）
+)
+# 输入框横跨 4 列，占据第 0 行
+entry.grid(row=0, column=0, columnspan=4, padx=10, pady=15, sticky=&quot;nsew&quot;)
+
+# ============================================
+# ② 按钮回调函数 —— 计算器的&quot;大脑&quot;
+# ============================================
+
+def click(key):
+    &quot;&quot;&quot;
+    普通按键回调：把按下的字符追加到输入框的表达式末尾
+    参数 key: 要追加的字符（如 &quot;1&quot;、&quot;+&quot;、&quot;*&quot; 等）
+    &quot;&quot;&quot;
+    current = entry_var.get()        # 获取当前输入框的内容
+    entry_var.set(current + str(key))  # 把新字符拼接到末尾
+
+
+def clear():
+    &quot;&quot;&quot;
+    C 按钮回调：一键清空输入框
+    把 StringVar 设成空字符串，输入框立刻变空
+    &quot;&quot;&quot;
+    entry_var.set(&quot;&quot;)
+
+
+def backspace():
+    &quot;&quot;&quot;
+    ← 按钮回调：删除最后一个字符（退格）
+    用字符串切片 [:-1] 去掉末尾字符
+    空字符串 [:-1] 仍然是空字符串，不会报错
+    &quot;&quot;&quot;
+    current = entry_var.get()
+    entry_var.set(current[:-1])      # 切片：从开头取到倒数第二个字符
+
+
+def calculate():
+    &quot;&quot;&quot;
+    = 按钮回调：计算表达式的值
+    用 eval() 把输入框的字符串当成 Python 代码执行
+    try-except 是&quot;安全网&quot;——表达式非法时不崩溃，显示&quot;错误&quot;
+    &quot;&quot;&quot;
+    try:
+        # eval() 会自动处理运算优先级，比如 &quot;2+3*4&quot; 会算出 14 而不是 20
+        result = eval(entry_var.get())
+        # 把结果转成字符串，写回输入框
+        # 如果是整数就去掉 .0（比如 3.0 → 3），保留小数
+        if isinstance(result, float) and result == int(result):
+            result = int(result)
+        entry_var.set(str(result))
+    except:
+        # 表达式出错（如除以 0、连续运算符等），显示&quot;错误&quot;
+        entry_var.set(&quot;错误&quot;)
+
+# ============================================
+# ⑦ 启动窗口主循环
+# ============================================
+root.mainloop()</code></pre></div>
+<div class="run-see"><b>运行后你该看到：</b> 窗口还能打开。绿底这些新行已经出现在窗口里。</div>
+<div class="pitfall"><b>坑：</b> Entry 的 get() 得到的是字符串。要拿来计算，先用 int() 转成数字。</div>
+
+<div class="deck-footer"><span>第 22 节 · 项目2：简易计算器（下）</span><span class="slide-number" data-current="8" data-total="19"></span></div>
+<aside class="notes">等全班运行通过再翻下一步。报错的人对照绿底，不要整份重打。</aside>
+</section>
+
+<section class="slide follow-talk" data-title="第3步 · 讲">
+
+<p class="kicker">第 3 / 6 步 · 讲</p>
+<h2 class="h2 mt-s">③ 按钮数据 ——</h2>
+<p class="lede mt-s">窗口还能打开。绿底这些新行已经出现在窗口里。</p>
+<div class="callout"><b>为什么：</b> ③ 按钮数据 —— 定义每个按钮的文字和位置</div>
+<ol class="where-list"><li>补上「③ 按钮数据 ——」</li></ol>
+<div class="run-see"><b>运行后你该看到：</b> 窗口还能打开。绿底这些新行已经出现在窗口里。</div>
+
+<div class="deck-footer"><span>第 22 节 · 项目2：简易计算器（下）</span><span class="slide-number" data-current="9" data-total="19"></span></div>
+<aside class="notes">先讲这一步要补在哪，再翻到打页。问学生：运行之后你应该看到什么？约这一步 8 到 12 分钟。</aside>
+</section>
+
+<section class="slide follow-type" data-title="第3步 · 打">
+
+<p class="kicker">第 3 / 6 步 · 打</p>
+<h2 class="h2 mt-s">③ 按钮数据 ——</h2>
+<p class="lede" style="margin-top:4px">这一步补上「③ 按钮数据 ——」。只打绿底的新行，灰掉的旧行不用重打。</p>
+<p class="legend-new"><span class="swatch"></span>绿底是这一步要新打的行。灰掉的行前面已经打过。</p>
+<div class="code-card follow-card"><pre class="follow-code" data-new="84-101"><code class="language-python">import tkinter as tk
+
+# ========================================
+# 第 22 节：项目2 —— 简易计算器（下）
+# 知识点：连续运算、C/← 功能、eval() 求值、键盘绑定 bind()
+# ========================================
+
+# ---------- 创建窗口 ----------
+root = tk.Tk()
+root.title(&quot;简易计算器&quot;)
+root.geometry(&quot;350x450&quot;)
+root.configure(bg=&quot;#2c3e50&quot;)        # 深色背景，衬托出计算器的科技感
+root.resizable(False, False)       # 固定窗口大小，防止布局错乱
+
+# ============================================
+# ① 输入框（显示表达式和计算结果）
+# ============================================
+
+# StringVar 是 tkinter 的&quot;魔法变量&quot;——你改它的值，Entry 自动更新
+entry_var = tk.StringVar()
+entry_var.set(&quot;&quot;)  # 初始为空
+
+entry = tk.Entry(
+    root,
+    textvariable=entry_var,          # 绑定 StringVar，实现动态更新
+    font=(&quot;Consolas&quot;, 24),           # 等宽大字体，数字对齐好看
+    justify=&quot;right&quot;,                 # 文字右对齐（像真正的计算器）
+    state=&quot;readonly&quot;,                # 只读模式，禁止用户直接在输入框打字
+    readonlybackground=&quot;#ecf0f1&quot;,    # 只读时的背景色（米白色）
+    fg=&quot;#2c3e50&quot;                     # 文字颜色（深灰色）
+)
+# 输入框横跨 4 列，占据第 0 行
+entry.grid(row=0, column=0, columnspan=4, padx=10, pady=15, sticky=&quot;nsew&quot;)
+
+# ============================================
+# ② 按钮回调函数 —— 计算器的&quot;大脑&quot;
+# ============================================
+
+def click(key):
+    &quot;&quot;&quot;
+    普通按键回调：把按下的字符追加到输入框的表达式末尾
+    参数 key: 要追加的字符（如 &quot;1&quot;、&quot;+&quot;、&quot;*&quot; 等）
+    &quot;&quot;&quot;
+    current = entry_var.get()        # 获取当前输入框的内容
+    entry_var.set(current + str(key))  # 把新字符拼接到末尾
+
+
+def clear():
+    &quot;&quot;&quot;
+    C 按钮回调：一键清空输入框
+    把 StringVar 设成空字符串，输入框立刻变空
+    &quot;&quot;&quot;
+    entry_var.set(&quot;&quot;)
+
+
+def backspace():
+    &quot;&quot;&quot;
+    ← 按钮回调：删除最后一个字符（退格）
+    用字符串切片 [:-1] 去掉末尾字符
+    空字符串 [:-1] 仍然是空字符串，不会报错
+    &quot;&quot;&quot;
+    current = entry_var.get()
+    entry_var.set(current[:-1])      # 切片：从开头取到倒数第二个字符
+
+
+def calculate():
+    &quot;&quot;&quot;
+    = 按钮回调：计算表达式的值
+    用 eval() 把输入框的字符串当成 Python 代码执行
+    try-except 是&quot;安全网&quot;——表达式非法时不崩溃，显示&quot;错误&quot;
+    &quot;&quot;&quot;
+    try:
+        # eval() 会自动处理运算优先级，比如 &quot;2+3*4&quot; 会算出 14 而不是 20
+        result = eval(entry_var.get())
+        # 把结果转成字符串，写回输入框
+        # 如果是整数就去掉 .0（比如 3.0 → 3），保留小数
+        if isinstance(result, float) and result == int(result):
+            result = int(result)
+        entry_var.set(str(result))
+    except:
+        # 表达式出错（如除以 0、连续运算符等），显示&quot;错误&quot;
+        entry_var.set(&quot;错误&quot;)
+
+
+# ============================================
+# ③ 按钮数据 —— 定义每个按钮的文字和位置
+# ============================================
+# 格式：(按钮文字, 所在行, 所在列, 占几列)
+buttons = [
+    # 第 1 行：功能键 + 乘除
+    (&quot;C&quot;,  1, 0, 1), (&quot;←&quot;, 1, 1, 1), (&quot;/&quot;,  1, 2, 1), (&quot;*&quot;, 1, 3, 1),
+    # 第 2 行：7 8 9 -
+    (&quot;7&quot;,  2, 0, 1), (&quot;8&quot;, 2, 1, 1), (&quot;9&quot;,  2, 2, 1), (&quot;-&quot;, 2, 3, 1),
+    # 第 3 行：4 5 6 +
+    (&quot;4&quot;,  3, 0, 1), (&quot;5&quot;, 3, 1, 1), (&quot;6&quot;,  3, 2, 1), (&quot;+&quot;, 3, 3, 1),
+    # 第 4 行：1 2 3
+    (&quot;1&quot;,  4, 0, 1), (&quot;2&quot;, 4, 1, 1), (&quot;3&quot;,  4, 2, 1),
+    # 第 5 行：0 . =
+    (&quot;0&quot;,  5, 0, 1), (&quot;.&quot;, 5, 1, 1), (&quot;=&quot;,  5, 2, 2),   # = 占 2 列
+]
+
+# ============================================
+# ⑦ 启动窗口主循环
+# ============================================
+root.mainloop()</code></pre></div>
+<div class="run-see"><b>运行后你该看到：</b> 窗口还能打开。绿底这些新行已经出现在窗口里。</div>
+<div class="pitfall"><b>坑：</b> 打完先运行。报错时先看绿底那几行的引号和缩进。</div>
+
+<div class="deck-footer"><span>第 22 节 · 项目2：简易计算器（下）</span><span class="slide-number" data-current="10" data-total="19"></span></div>
+<aside class="notes">等全班运行通过再翻下一步。报错的人对照绿底，不要整份重打。</aside>
+</section>
+
+<section class="slide follow-talk" data-title="第4步 · 讲">
+
+<p class="kicker">第 4 / 6 步 · 讲</p>
+<h2 class="h2 mt-s">④ 创建按钮 ——</h2>
+<p class="lede mt-s">窗口里多了按钮。点一下，看它有没有反应。</p>
+<div class="callout"><b>为什么：</b> ④ 创建按钮 —— 把数据变成真正的按钮控件</div>
+<ol class="where-list"><li>放上 Button</li><li>用 grid 按行列摆好</li></ol>
+<div class="run-see"><b>运行后你该看到：</b> 窗口里多了按钮。点一下，看它有没有反应。</div>
+
+<div class="deck-footer"><span>第 22 节 · 项目2：简易计算器（下）</span><span class="slide-number" data-current="11" data-total="19"></span></div>
+<aside class="notes">先讲这一步要补在哪，再翻到打页。问学生：运行之后你应该看到什么？约这一步 8 到 12 分钟。</aside>
+</section>
+
+<section class="slide follow-type" data-title="第4步 · 打">
+
+<p class="kicker">第 4 / 6 步 · 打</p>
+<h2 class="h2 mt-s">④ 创建按钮 ——</h2>
+<p class="lede" style="margin-top:4px">这一步补上「④ 创建按钮 ——」。只打绿底的新行，灰掉的旧行不用重打。</p>
+<p class="legend-new"><span class="swatch"></span>绿底是这一步要新打的行。灰掉的行前面已经打过。</p>
+<div class="code-card follow-card"><pre class="follow-code" data-new="103-137"><code class="language-python">import tkinter as tk
+
+# ========================================
+# 第 22 节：项目2 —— 简易计算器（下）
+# 知识点：连续运算、C/← 功能、eval() 求值、键盘绑定 bind()
+# ========================================
+
+# ---------- 创建窗口 ----------
+root = tk.Tk()
+root.title(&quot;简易计算器&quot;)
+root.geometry(&quot;350x450&quot;)
+root.configure(bg=&quot;#2c3e50&quot;)        # 深色背景，衬托出计算器的科技感
+root.resizable(False, False)       # 固定窗口大小，防止布局错乱
+
+# ============================================
+# ① 输入框（显示表达式和计算结果）
+# ============================================
+
+# StringVar 是 tkinter 的&quot;魔法变量&quot;——你改它的值，Entry 自动更新
+entry_var = tk.StringVar()
+entry_var.set(&quot;&quot;)  # 初始为空
+
+entry = tk.Entry(
+    root,
+    textvariable=entry_var,          # 绑定 StringVar，实现动态更新
+    font=(&quot;Consolas&quot;, 24),           # 等宽大字体，数字对齐好看
+    justify=&quot;right&quot;,                 # 文字右对齐（像真正的计算器）
+    state=&quot;readonly&quot;,                # 只读模式，禁止用户直接在输入框打字
+    readonlybackground=&quot;#ecf0f1&quot;,    # 只读时的背景色（米白色）
+    fg=&quot;#2c3e50&quot;                     # 文字颜色（深灰色）
+)
+# 输入框横跨 4 列，占据第 0 行
+entry.grid(row=0, column=0, columnspan=4, padx=10, pady=15, sticky=&quot;nsew&quot;)
+
+# ============================================
+# ② 按钮回调函数 —— 计算器的&quot;大脑&quot;
+# ============================================
+
+def click(key):
+    &quot;&quot;&quot;
+    普通按键回调：把按下的字符追加到输入框的表达式末尾
+    参数 key: 要追加的字符（如 &quot;1&quot;、&quot;+&quot;、&quot;*&quot; 等）
+    &quot;&quot;&quot;
+    current = entry_var.get()        # 获取当前输入框的内容
+    entry_var.set(current + str(key))  # 把新字符拼接到末尾
+
+
+def clear():
+    &quot;&quot;&quot;
+    C 按钮回调：一键清空输入框
+    把 StringVar 设成空字符串，输入框立刻变空
+    &quot;&quot;&quot;
+    entry_var.set(&quot;&quot;)
+
+
+def backspace():
+    &quot;&quot;&quot;
+    ← 按钮回调：删除最后一个字符（退格）
+    用字符串切片 [:-1] 去掉末尾字符
+    空字符串 [:-1] 仍然是空字符串，不会报错
+    &quot;&quot;&quot;
+    current = entry_var.get()
+    entry_var.set(current[:-1])      # 切片：从开头取到倒数第二个字符
+
+
+def calculate():
+    &quot;&quot;&quot;
+    = 按钮回调：计算表达式的值
+    用 eval() 把输入框的字符串当成 Python 代码执行
+    try-except 是&quot;安全网&quot;——表达式非法时不崩溃，显示&quot;错误&quot;
+    &quot;&quot;&quot;
+    try:
+        # eval() 会自动处理运算优先级，比如 &quot;2+3*4&quot; 会算出 14 而不是 20
+        result = eval(entry_var.get())
+        # 把结果转成字符串，写回输入框
+        # 如果是整数就去掉 .0（比如 3.0 → 3），保留小数
+        if isinstance(result, float) and result == int(result):
+            result = int(result)
+        entry_var.set(str(result))
+    except:
+        # 表达式出错（如除以 0、连续运算符等），显示&quot;错误&quot;
+        entry_var.set(&quot;错误&quot;)
+
+
+# ============================================
+# ③ 按钮数据 —— 定义每个按钮的文字和位置
+# ============================================
+# 格式：(按钮文字, 所在行, 所在列, 占几列)
+buttons = [
+    # 第 1 行：功能键 + 乘除
+    (&quot;C&quot;,  1, 0, 1), (&quot;←&quot;, 1, 1, 1), (&quot;/&quot;,  1, 2, 1), (&quot;*&quot;, 1, 3, 1),
+    # 第 2 行：7 8 9 -
+    (&quot;7&quot;,  2, 0, 1), (&quot;8&quot;, 2, 1, 1), (&quot;9&quot;,  2, 2, 1), (&quot;-&quot;, 2, 3, 1),
+    # 第 3 行：4 5 6 +
+    (&quot;4&quot;,  3, 0, 1), (&quot;5&quot;, 3, 1, 1), (&quot;6&quot;,  3, 2, 1), (&quot;+&quot;, 3, 3, 1),
+    # 第 4 行：1 2 3
+    (&quot;1&quot;,  4, 0, 1), (&quot;2&quot;, 4, 1, 1), (&quot;3&quot;,  4, 2, 1),
+    # 第 5 行：0 . =
+    (&quot;0&quot;,  5, 0, 1), (&quot;.&quot;, 5, 1, 1), (&quot;=&quot;,  5, 2, 2),   # = 占 2 列
+]
+
+# ============================================
+# ④ 创建按钮 —— 把数据变成真正的按钮控件
+# ============================================
+for (text, row, col, colspan) in buttons:
+    # 根据按钮文字，决定点击后调用哪个函数
+    if text == &quot;C&quot;:
+        cmd = clear                      # C → 清空
+    elif text == &quot;←&quot;:
+        cmd = backspace                  # ← → 退格
+    elif text == &quot;=&quot;:
+        cmd = calculate                  # = → 计算
+    else:
+        # lambda 技巧：用默认参数 t=text 把当前的 text 值&quot;捕获&quot;进去
+        # 如果不这样做，lambda 会延迟取值，所有按钮都会传最后一个 text
+        cmd = lambda t=text: click(t)    # 数字/运算符 → 追加
+
+    btn = tk.Button(
+        root,
+        text=text,                       # 按钮上显示的文字
+        font=(&quot;Consolas&quot;, 16, &quot;bold&quot;),  # 等宽字体，加粗
+        width=5,                         # 按钮宽度（字符数）
+        height=2,                        # 按钮高度（行数）
+        command=cmd,                     # 点击后调用的函数
+        bg=&quot;#34495e&quot;,                    # 默认背景色（深蓝灰）
+        fg=&quot;white&quot;,                      # 文字颜色（白色）
+        activebackground=&quot;#1abc9c&quot;,      # 鼠标按下时的背景色（青色）
+        relief=&quot;flat&quot;,                   # 扁平风格，无边框凸起
+        bd=1                             # 边框宽度为 1 像素
+    )
+    btn.grid(row=row, column=col, columnspan=colspan, padx=2, pady=2, sticky=&quot;nsew&quot;)
+
+    # 把 = 按钮标成醒目的橙色，和其他按钮区分开
+    if text == &quot;=&quot;:
+        btn.configure(bg=&quot;#e67e22&quot;, activebackground=&quot;#d35400&quot;)
+
+# ============================================
+# ⑦ 启动窗口主循环
+# ============================================
+root.mainloop()</code></pre></div>
+<div class="run-see"><b>运行后你该看到：</b> 窗口里多了按钮。点一下，看它有没有反应。</div>
+<div class="pitfall"><b>坑：</b> command 后面写函数名，不要加括号。加了括号会马上执行。</div>
+
+<div class="deck-footer"><span>第 22 节 · 项目2：简易计算器（下）</span><span class="slide-number" data-current="12" data-total="19"></span></div>
+<aside class="notes">等全班运行通过再翻下一步。报错的人对照绿底，不要整份重打。</aside>
+</section>
+
+<section class="slide follow-talk" data-title="第5步 · 讲">
+
+<p class="kicker">第 5 / 6 步 · 讲</p>
+<h2 class="h2 mt-s">把 &lt;Key&gt; 事件绑定到整个窗口</h2>
+<p class="lede mt-s">按键盘或点鼠标时，程序有反应。</p>
+<div class="callout"><b>为什么：</b> ⑤ 键盘按键绑定 —— 不用鼠标也能操作！</div>
+<ol class="where-list"><li>写出函数 key_press</li></ol>
+<div class="run-see"><b>运行后你该看到：</b> 按键盘或点鼠标时，程序有反应。</div>
+
+<div class="deck-footer"><span>第 22 节 · 项目2：简易计算器（下）</span><span class="slide-number" data-current="13" data-total="19"></span></div>
+<aside class="notes">先讲这一步要补在哪，再翻到打页。问学生：运行之后你应该看到什么？约这一步 8 到 12 分钟。</aside>
+</section>
+
+<section class="slide follow-type" data-title="第5步 · 打">
+
+<p class="kicker">第 5 / 6 步 · 打</p>
+<h2 class="h2 mt-s">把 &lt;Key&gt; 事件绑定到整个窗口</h2>
+<p class="lede" style="margin-top:4px">这一步新写函数 key_press。只打绿底的新行，灰掉的旧行不用重打。</p>
+<p class="legend-new"><span class="swatch"></span>绿底是这一步要新打的行。灰掉的行前面已经打过。</p>
+<div class="code-card follow-card"><pre class="follow-code" data-new="137-175"><code class="language-python">import tkinter as tk
+
+# ========================================
+# 第 22 节：项目2 —— 简易计算器（下）
+# 知识点：连续运算、C/← 功能、eval() 求值、键盘绑定 bind()
+# ========================================
+
+# ---------- 创建窗口 ----------
+root = tk.Tk()
+root.title(&quot;简易计算器&quot;)
+root.geometry(&quot;350x450&quot;)
+root.configure(bg=&quot;#2c3e50&quot;)        # 深色背景，衬托出计算器的科技感
+root.resizable(False, False)       # 固定窗口大小，防止布局错乱
+
+# ============================================
+# ① 输入框（显示表达式和计算结果）
+# ============================================
+
+# StringVar 是 tkinter 的&quot;魔法变量&quot;——你改它的值，Entry 自动更新
+entry_var = tk.StringVar()
+entry_var.set(&quot;&quot;)  # 初始为空
+
+entry = tk.Entry(
+    root,
+    textvariable=entry_var,          # 绑定 StringVar，实现动态更新
+    font=(&quot;Consolas&quot;, 24),           # 等宽大字体，数字对齐好看
+    justify=&quot;right&quot;,                 # 文字右对齐（像真正的计算器）
+    state=&quot;readonly&quot;,                # 只读模式，禁止用户直接在输入框打字
+    readonlybackground=&quot;#ecf0f1&quot;,    # 只读时的背景色（米白色）
+    fg=&quot;#2c3e50&quot;                     # 文字颜色（深灰色）
+)
+# 输入框横跨 4 列，占据第 0 行
+entry.grid(row=0, column=0, columnspan=4, padx=10, pady=15, sticky=&quot;nsew&quot;)
+
+# ============================================
+# ② 按钮回调函数 —— 计算器的&quot;大脑&quot;
+# ============================================
+
+def click(key):
+    &quot;&quot;&quot;
+    普通按键回调：把按下的字符追加到输入框的表达式末尾
+    参数 key: 要追加的字符（如 &quot;1&quot;、&quot;+&quot;、&quot;*&quot; 等）
+    &quot;&quot;&quot;
+    current = entry_var.get()        # 获取当前输入框的内容
+    entry_var.set(current + str(key))  # 把新字符拼接到末尾
+
+
+def clear():
+    &quot;&quot;&quot;
+    C 按钮回调：一键清空输入框
+    把 StringVar 设成空字符串，输入框立刻变空
+    &quot;&quot;&quot;
+    entry_var.set(&quot;&quot;)
+
+
+def backspace():
+    &quot;&quot;&quot;
+    ← 按钮回调：删除最后一个字符（退格）
+    用字符串切片 [:-1] 去掉末尾字符
+    空字符串 [:-1] 仍然是空字符串，不会报错
+    &quot;&quot;&quot;
+    current = entry_var.get()
+    entry_var.set(current[:-1])      # 切片：从开头取到倒数第二个字符
+
+
+def calculate():
+    &quot;&quot;&quot;
+    = 按钮回调：计算表达式的值
+    用 eval() 把输入框的字符串当成 Python 代码执行
+    try-except 是&quot;安全网&quot;——表达式非法时不崩溃，显示&quot;错误&quot;
+    &quot;&quot;&quot;
+    try:
+        # eval() 会自动处理运算优先级，比如 &quot;2+3*4&quot; 会算出 14 而不是 20
+        result = eval(entry_var.get())
+        # 把结果转成字符串，写回输入框
+        # 如果是整数就去掉 .0（比如 3.0 → 3），保留小数
+        if isinstance(result, float) and result == int(result):
+            result = int(result)
+        entry_var.set(str(result))
+    except:
+        # 表达式出错（如除以 0、连续运算符等），显示&quot;错误&quot;
+        entry_var.set(&quot;错误&quot;)
+
+
+# ============================================
+# ③ 按钮数据 —— 定义每个按钮的文字和位置
+# ============================================
+# 格式：(按钮文字, 所在行, 所在列, 占几列)
+buttons = [
+    # 第 1 行：功能键 + 乘除
+    (&quot;C&quot;,  1, 0, 1), (&quot;←&quot;, 1, 1, 1), (&quot;/&quot;,  1, 2, 1), (&quot;*&quot;, 1, 3, 1),
+    # 第 2 行：7 8 9 -
+    (&quot;7&quot;,  2, 0, 1), (&quot;8&quot;, 2, 1, 1), (&quot;9&quot;,  2, 2, 1), (&quot;-&quot;, 2, 3, 1),
+    # 第 3 行：4 5 6 +
+    (&quot;4&quot;,  3, 0, 1), (&quot;5&quot;, 3, 1, 1), (&quot;6&quot;,  3, 2, 1), (&quot;+&quot;, 3, 3, 1),
+    # 第 4 行：1 2 3
+    (&quot;1&quot;,  4, 0, 1), (&quot;2&quot;, 4, 1, 1), (&quot;3&quot;,  4, 2, 1),
+    # 第 5 行：0 . =
+    (&quot;0&quot;,  5, 0, 1), (&quot;.&quot;, 5, 1, 1), (&quot;=&quot;,  5, 2, 2),   # = 占 2 列
+]
+
+# ============================================
+# ④ 创建按钮 —— 把数据变成真正的按钮控件
+# ============================================
+for (text, row, col, colspan) in buttons:
+    # 根据按钮文字，决定点击后调用哪个函数
+    if text == &quot;C&quot;:
+        cmd = clear                      # C → 清空
+    elif text == &quot;←&quot;:
+        cmd = backspace                  # ← → 退格
+    elif text == &quot;=&quot;:
+        cmd = calculate                  # = → 计算
+    else:
+        # lambda 技巧：用默认参数 t=text 把当前的 text 值&quot;捕获&quot;进去
+        # 如果不这样做，lambda 会延迟取值，所有按钮都会传最后一个 text
+        cmd = lambda t=text: click(t)    # 数字/运算符 → 追加
+
+    btn = tk.Button(
+        root,
+        text=text,                       # 按钮上显示的文字
+        font=(&quot;Consolas&quot;, 16, &quot;bold&quot;),  # 等宽字体，加粗
+        width=5,                         # 按钮宽度（字符数）
+        height=2,                        # 按钮高度（行数）
+        command=cmd,                     # 点击后调用的函数
+        bg=&quot;#34495e&quot;,                    # 默认背景色（深蓝灰）
+        fg=&quot;white&quot;,                      # 文字颜色（白色）
+        activebackground=&quot;#1abc9c&quot;,      # 鼠标按下时的背景色（青色）
+        relief=&quot;flat&quot;,                   # 扁平风格，无边框凸起
+        bd=1                             # 边框宽度为 1 像素
+    )
+    btn.grid(row=row, column=col, columnspan=colspan, padx=2, pady=2, sticky=&quot;nsew&quot;)
+
+    # 把 = 按钮标成醒目的橙色，和其他按钮区分开
+    if text == &quot;=&quot;:
+        btn.configure(bg=&quot;#e67e22&quot;, activebackground=&quot;#d35400&quot;)
+
+
+# ============================================
+# ⑤ 键盘按键绑定 —— 不用鼠标也能操作！
+# ============================================
+def key_press(event):
+    &quot;&quot;&quot;
+    键盘按键事件处理函数
+    参数 event: tkinter 传入的事件对象，包含按键信息
+      - event.char:    可打印字符（如 &quot;1&quot;、&quot;+&quot;、&quot;a&quot;）
+      - event.keysym:  按键的名称（如 &quot;Return&quot;、&quot;BackSpace&quot;、&quot;Escape&quot;）
+    &quot;&quot;&quot;
+    key = event.char  # 获取按键对应的字符
+
+    # ① 数字、运算符、小数点 → 和点击按钮一样，追加到表达式
+    if key in &quot;0123456789+-*/.=&quot;:
+        if key == &quot;=&quot;:
+            calculate()       # 键盘上的 = 也是等于
+        else:
+            click(key)
+
+    # ② 回车键（Enter / Return）→ 等于 =
+    elif event.keysym == &quot;Return&quot;:
+        calculate()
+
+    # ③ 退格键（Backspace）→ 删除最后一个字符
+    elif event.keysym == &quot;BackSpace&quot;:
+        backspace()
+
+    # ④ ESC 键 → 清空（等于 C 按钮）
+    elif event.keysym == &quot;Escape&quot;:
+        clear()
+
+    # 其他按键（如字母、空格等）直接忽略，不做任何反应
+
+
+# 把 &lt;Key&gt; 事件绑定到整个窗口
+# 这样无论焦点在哪个控件上，按键都能被捕获
+root.bind(&quot;&lt;Key&gt;&quot;, key_press)
+
+# ============================================
+# ⑦ 启动窗口主循环
+# ============================================
+root.mainloop()</code></pre></div>
+<div class="run-see"><b>运行后你该看到：</b> 按键盘或点鼠标时，程序有反应。</div>
+<div class="pitfall"><b>坑：</b> bind 的事件名要带尖括号，例如 &quot;&lt;Return&gt;&quot;、&quot;&lt;Button-1&gt;&quot;。</div>
+
+<div class="deck-footer"><span>第 22 节 · 项目2：简易计算器（下）</span><span class="slide-number" data-current="14" data-total="19"></span></div>
+<aside class="notes">等全班运行通过再翻下一步。报错的人对照绿底，不要整份重打。</aside>
+</section>
+
+<section class="slide follow-talk" data-title="第6步 · 讲">
+
+<p class="kicker">第 6 / 6 步 · 讲</p>
+<h2 class="h2 mt-s">⑥ 布局权重设置 —— 让按钮均匀分布</h2>
+<p class="lede mt-s">窗口还能打开。绿底这些新行已经出现在窗口里。</p>
+<div class="callout"><b>为什么：</b> ⑥ 布局权重设置 —— 让按钮均匀分布</div>
+<ol class="where-list"><li>补上「⑥ 布局权重设置 —— 让按钮均匀分布」</li></ol>
+<div class="run-see"><b>运行后你该看到：</b> 窗口还能打开。绿底这些新行已经出现在窗口里。</div>
+
+<div class="deck-footer"><span>第 22 节 · 项目2：简易计算器（下）</span><span class="slide-number" data-current="15" data-total="19"></span></div>
+<aside class="notes">先讲这一步要补在哪，再翻到打页。问学生：运行之后你应该看到什么？约这一步 8 到 12 分钟。</aside>
+</section>
+
+<section class="slide follow-type" data-title="第6步 · 打">
+
+<p class="kicker">第 6 / 6 步 · 打</p>
+<h2 class="h2 mt-s">⑥ 布局权重设置 —— 让按钮均匀分布</h2>
+<p class="lede" style="margin-top:4px">这一步补上「⑥ 布局权重设置 —— 让按钮均匀分布」。只打绿底的新行，灰掉的旧行不用重打。</p>
+<p class="legend-new"><span class="swatch"></span>绿底是这一步要新打的行。灰掉的行前面已经打过。</p>
+<div class="code-card follow-card"><pre class="follow-code" data-new="176-185"><code class="language-python">import tkinter as tk
+
+# ========================================
+# 第 22 节：项目2 —— 简易计算器（下）
+# 知识点：连续运算、C/← 功能、eval() 求值、键盘绑定 bind()
+# ========================================
+
+# ---------- 创建窗口 ----------
+root = tk.Tk()
+root.title(&quot;简易计算器&quot;)
+root.geometry(&quot;350x450&quot;)
+root.configure(bg=&quot;#2c3e50&quot;)        # 深色背景，衬托出计算器的科技感
+root.resizable(False, False)       # 固定窗口大小，防止布局错乱
+
+# ============================================
+# ① 输入框（显示表达式和计算结果）
+# ============================================
+
+# StringVar 是 tkinter 的&quot;魔法变量&quot;——你改它的值，Entry 自动更新
+entry_var = tk.StringVar()
+entry_var.set(&quot;&quot;)  # 初始为空
+
+entry = tk.Entry(
+    root,
+    textvariable=entry_var,          # 绑定 StringVar，实现动态更新
+    font=(&quot;Consolas&quot;, 24),           # 等宽大字体，数字对齐好看
+    justify=&quot;right&quot;,                 # 文字右对齐（像真正的计算器）
+    state=&quot;readonly&quot;,                # 只读模式，禁止用户直接在输入框打字
+    readonlybackground=&quot;#ecf0f1&quot;,    # 只读时的背景色（米白色）
+    fg=&quot;#2c3e50&quot;                     # 文字颜色（深灰色）
+)
+# 输入框横跨 4 列，占据第 0 行
+entry.grid(row=0, column=0, columnspan=4, padx=10, pady=15, sticky=&quot;nsew&quot;)
+
+# ============================================
+# ② 按钮回调函数 —— 计算器的&quot;大脑&quot;
+# ============================================
+
+def click(key):
+    &quot;&quot;&quot;
+    普通按键回调：把按下的字符追加到输入框的表达式末尾
+    参数 key: 要追加的字符（如 &quot;1&quot;、&quot;+&quot;、&quot;*&quot; 等）
+    &quot;&quot;&quot;
+    current = entry_var.get()        # 获取当前输入框的内容
+    entry_var.set(current + str(key))  # 把新字符拼接到末尾
+
+
+def clear():
+    &quot;&quot;&quot;
+    C 按钮回调：一键清空输入框
+    把 StringVar 设成空字符串，输入框立刻变空
+    &quot;&quot;&quot;
+    entry_var.set(&quot;&quot;)
+
+
+def backspace():
+    &quot;&quot;&quot;
+    ← 按钮回调：删除最后一个字符（退格）
+    用字符串切片 [:-1] 去掉末尾字符
+    空字符串 [:-1] 仍然是空字符串，不会报错
+    &quot;&quot;&quot;
+    current = entry_var.get()
+    entry_var.set(current[:-1])      # 切片：从开头取到倒数第二个字符
+
+
+def calculate():
+    &quot;&quot;&quot;
+    = 按钮回调：计算表达式的值
+    用 eval() 把输入框的字符串当成 Python 代码执行
+    try-except 是&quot;安全网&quot;——表达式非法时不崩溃，显示&quot;错误&quot;
+    &quot;&quot;&quot;
+    try:
+        # eval() 会自动处理运算优先级，比如 &quot;2+3*4&quot; 会算出 14 而不是 20
+        result = eval(entry_var.get())
+        # 把结果转成字符串，写回输入框
+        # 如果是整数就去掉 .0（比如 3.0 → 3），保留小数
+        if isinstance(result, float) and result == int(result):
+            result = int(result)
+        entry_var.set(str(result))
+    except:
+        # 表达式出错（如除以 0、连续运算符等），显示&quot;错误&quot;
+        entry_var.set(&quot;错误&quot;)
+
+
+# ============================================
+# ③ 按钮数据 —— 定义每个按钮的文字和位置
+# ============================================
+# 格式：(按钮文字, 所在行, 所在列, 占几列)
+buttons = [
+    # 第 1 行：功能键 + 乘除
+    (&quot;C&quot;,  1, 0, 1), (&quot;←&quot;, 1, 1, 1), (&quot;/&quot;,  1, 2, 1), (&quot;*&quot;, 1, 3, 1),
+    # 第 2 行：7 8 9 -
+    (&quot;7&quot;,  2, 0, 1), (&quot;8&quot;, 2, 1, 1), (&quot;9&quot;,  2, 2, 1), (&quot;-&quot;, 2, 3, 1),
+    # 第 3 行：4 5 6 +
+    (&quot;4&quot;,  3, 0, 1), (&quot;5&quot;, 3, 1, 1), (&quot;6&quot;,  3, 2, 1), (&quot;+&quot;, 3, 3, 1),
+    # 第 4 行：1 2 3
+    (&quot;1&quot;,  4, 0, 1), (&quot;2&quot;, 4, 1, 1), (&quot;3&quot;,  4, 2, 1),
+    # 第 5 行：0 . =
+    (&quot;0&quot;,  5, 0, 1), (&quot;.&quot;, 5, 1, 1), (&quot;=&quot;,  5, 2, 2),   # = 占 2 列
+]
+
+# ============================================
+# ④ 创建按钮 —— 把数据变成真正的按钮控件
+# ============================================
+for (text, row, col, colspan) in buttons:
+    # 根据按钮文字，决定点击后调用哪个函数
+    if text == &quot;C&quot;:
+        cmd = clear                      # C → 清空
+    elif text == &quot;←&quot;:
+        cmd = backspace                  # ← → 退格
+    elif text == &quot;=&quot;:
+        cmd = calculate                  # = → 计算
+    else:
+        # lambda 技巧：用默认参数 t=text 把当前的 text 值&quot;捕获&quot;进去
+        # 如果不这样做，lambda 会延迟取值，所有按钮都会传最后一个 text
+        cmd = lambda t=text: click(t)    # 数字/运算符 → 追加
+
+    btn = tk.Button(
+        root,
+        text=text,                       # 按钮上显示的文字
+        font=(&quot;Consolas&quot;, 16, &quot;bold&quot;),  # 等宽字体，加粗
+        width=5,                         # 按钮宽度（字符数）
+        height=2,                        # 按钮高度（行数）
+        command=cmd,                     # 点击后调用的函数
+        bg=&quot;#34495e&quot;,                    # 默认背景色（深蓝灰）
+        fg=&quot;white&quot;,                      # 文字颜色（白色）
+        activebackground=&quot;#1abc9c&quot;,      # 鼠标按下时的背景色（青色）
+        relief=&quot;flat&quot;,                   # 扁平风格，无边框凸起
+        bd=1                             # 边框宽度为 1 像素
+    )
+    btn.grid(row=row, column=col, columnspan=colspan, padx=2, pady=2, sticky=&quot;nsew&quot;)
+
+    # 把 = 按钮标成醒目的橙色，和其他按钮区分开
+    if text == &quot;=&quot;:
+        btn.configure(bg=&quot;#e67e22&quot;, activebackground=&quot;#d35400&quot;)
+
+
+# ============================================
+# ⑤ 键盘按键绑定 —— 不用鼠标也能操作！
+# ============================================
+def key_press(event):
+    &quot;&quot;&quot;
+    键盘按键事件处理函数
+    参数 event: tkinter 传入的事件对象，包含按键信息
+      - event.char:    可打印字符（如 &quot;1&quot;、&quot;+&quot;、&quot;a&quot;）
+      - event.keysym:  按键的名称（如 &quot;Return&quot;、&quot;BackSpace&quot;、&quot;Escape&quot;）
+    &quot;&quot;&quot;
+    key = event.char  # 获取按键对应的字符
+
+    # ① 数字、运算符、小数点 → 和点击按钮一样，追加到表达式
+    if key in &quot;0123456789+-*/.=&quot;:
+        if key == &quot;=&quot;:
+            calculate()       # 键盘上的 = 也是等于
+        else:
+            click(key)
+
+    # ② 回车键（Enter / Return）→ 等于 =
+    elif event.keysym == &quot;Return&quot;:
+        calculate()
+
+    # ③ 退格键（Backspace）→ 删除最后一个字符
+    elif event.keysym == &quot;BackSpace&quot;:
+        backspace()
+
+    # ④ ESC 键 → 清空（等于 C 按钮）
+    elif event.keysym == &quot;Escape&quot;:
+        clear()
+
+    # 其他按键（如字母、空格等）直接忽略，不做任何反应
+
+
+# 把 &lt;Key&gt; 事件绑定到整个窗口
+# 这样无论焦点在哪个控件上，按键都能被捕获
+root.bind(&quot;&lt;Key&gt;&quot;, key_press)
+
+
+# ============================================
+# ⑥ 布局权重设置 —— 让按钮均匀分布
+# ============================================
+# 设置每行每列的 weight，让按钮在窗口缩放时能自适应大小
+for i in range(6):     # 6 行（第 0 行是输入框，第 1~5 行是按钮）
+    root.grid_rowconfigure(i, weight=1)
+for j in range(4):     # 4 列
+    root.grid_columnconfigure(j, weight=1)
+
+# ============================================
+# ⑦ 启动窗口主循环
+# ============================================
+root.mainloop()</code></pre></div>
+<div class="run-see"><b>运行后你该看到：</b> 窗口还能打开。绿底这些新行已经出现在窗口里。</div>
+<div class="pitfall"><b>坑：</b> 打完先运行。报错时先看绿底那几行的引号和缩进。</div>
+
+<div class="deck-footer"><span>第 22 节 · 项目2：简易计算器（下）</span><span class="slide-number" data-current="16" data-total="19"></span></div>
+<aside class="notes">等全班运行通过再翻下一步。报错的人对照绿底，不要整份重打。</aside>
+</section>
+
+<section class="slide follow-plain" data-title="改错">
+
+<p class="kicker">改错时刻</p>
+<h2 class="h2 mt-s">这三处最容易错</h2>
+<div class="stack mt-m"><div class="bullet-card"><h4>❌ command=say_hello()</h4><p>✅ command=say_hello<br>加了括号，函数会立刻执行，点击时反而不动。</p></div><div class="bullet-card"><h4>❌ geometry(&quot;500*400&quot;)</h4><p>✅ geometry(&quot;500x400&quot;)<br>中间必须是英文字母 x。</p></div><div class="bullet-card"><h4>❌ bind(&quot;Return&quot;, fn)</h4><p>✅ bind(&quot;&lt;Return&gt;&quot;, fn)<br>事件名少了尖括号。</p></div></div>
+
+<div class="deck-footer"><span>第 22 节 · 项目2：简易计算器（下）</span><span class="slide-number" data-current="17" data-total="19"></span></div>
+<aside class="notes">挑一个学生的报错，对着这三张卡片对一下。先问他错在哪，再公布正确写法。</aside>
+</section>
+
+<section class="slide follow-plain" data-title="改一改">
+
+<p class="kicker">改一改</p>
+<h2 class="h2 mt-s">程序能跑了，再改一处</h2>
+<div class="stack mt-m"><div class="concept-box"><h4>1. 改标题</h4><p class="dim">把窗口标题「简易计算器」改成你的名字，运行看标题栏。</p></div><div class="concept-box"><h4>2. 改颜色</h4><p class="dim">把颜色 #2c3e50 换成 lightyellow 或 #ffe0b2，运行看变化。</p></div><div class="concept-box"><h4>3. 改大小</h4><p class="dim">把窗口大小 350x450 的宽加 100，运行看窗口变宽了没有。</p></div></div>
+
+<div class="deck-footer"><span>第 22 节 · 项目2：简易计算器（下）</span><span class="slide-number" data-current="18" data-total="19"></span></div>
+<aside class="notes">主程序没跑通的人继续改错，不要做改一改。跑通的人只改一处，改完必须再运行。</aside>
+</section>
+
+<section class="slide full" data-title="本课小结">
+
+<p class="kicker">本课小结</p>
+<h1 class="h1 mt-s" style="font-size:42px">你今天<span class="grad">一步一步打出来了</span></h1>
+<div class="card mt-m" style="padding:8px 12px;max-height:46vh;overflow:auto">
+  <table class="sum-table">
+    <thead><tr><th>这一步</th><th>运行后</th><th>记住的坑</th></tr></thead>
+    <tbody><tr><td>创建窗口</td><td>标题栏换成了这一步写的文字。</td><td>窗口大小写成 &quot;宽x高&quot;，中间是英文字母 x，不是星号。</td></tr><tr><td>② 按钮回调函数 —— 计算器的&quot;大脑&quot;</td><td>窗口还能打开。绿底这些新行已经出现在窗口里。</td><td>Entry 的 get() 得到的是字符串。要拿来计算，先用 int() 转成数字。</td></tr><tr><td>③ 按钮数据 ——</td><td>窗口还能打开。绿底这些新行已经出现在窗口里。</td><td>打完先运行。报错时先看绿底那几行的引号和缩进。</td></tr><tr><td>④ 创建按钮 ——</td><td>窗口里多了按钮。点一下，看它有没有反应。</td><td>command 后面写函数名，不要加括号。加了括号会马上执行。</td></tr><tr><td>把 &lt;Key&gt; 事件绑定到整个窗口</td><td>按键盘或点鼠标时，程序有反应。</td><td>bind 的事件名要带尖括号，例如 &quot;&lt;Return&gt;&quot;、&quot;&lt;Button-1&gt;&quot;。</td></tr><tr><td>⑥ 布局权重设置 —— 让按钮均匀分布</td><td>窗口还能打开。绿底这些新行已经出现在窗口里。</td><td>打完先运行。报错时先看绿底那几行的引号和缩进。</td></tr></tbody>
+  </table>
+</div>
+<div class="callout"><b>下一节：</b> 第 23 节 · 项目3：猜数字游戏（上）</div>
+
+<div class="deck-footer"><span>第 22 节 · 项目2：简易计算器（下）</span><span class="slide-number" data-current="19" data-total="19"></span></div>
+<aside class="notes">让两个学生用自己的话说：绿底是什么意思，mainloop 为什么在最后。再预告下一节。</aside>
 </section>
 </div>
 <script src="assets/runtime.js"></script>
 <script src="courseware-ui.js"></script>
-</body></html>
+</body>
+</html>
